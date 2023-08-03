@@ -2441,10 +2441,8 @@ static ULONG WINAPI HTMLNamespaceCollection_Release(IHTMLNamespaceCollection *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -2520,13 +2518,28 @@ static const IHTMLNamespaceCollectionVtbl HTMLNamespaceCollectionVtbl = {
     HTMLNamespaceCollection_add
 };
 
+static inline HTMLNamespaceCollection *HTMLNamespaceCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLNamespaceCollection, dispex);
+}
+
+static void HTMLNamespaceCollection_destructor(DispatchEx *dispex)
+{
+    HTMLNamespaceCollection *This = HTMLNamespaceCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLNamespaceCollection_dispex_vtbl = {
+    HTMLNamespaceCollection_destructor,
+};
+
 static const tid_t HTMLNamespaceCollection_iface_tids[] = {
     IHTMLNamespaceCollection_tid,
     0
 };
 static dispex_static_data_t HTMLNamespaceCollection_dispex = {
     L"MSNamespaceInfoCollection",
-    NULL,
+    &HTMLNamespaceCollection_dispex_vtbl,
     DispHTMLNamespaceCollection_tid,
     HTMLNamespaceCollection_iface_tids
 };
