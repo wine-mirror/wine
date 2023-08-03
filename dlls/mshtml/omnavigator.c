@@ -656,10 +656,8 @@ static ULONG WINAPI OmHistory_Release(IOmHistory *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -748,13 +746,28 @@ static const IOmHistoryVtbl OmHistoryVtbl = {
     OmHistory_go
 };
 
+static inline OmHistory *OmHistory_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, OmHistory, dispex);
+}
+
+static void OmHistory_destructor(DispatchEx *dispex)
+{
+    OmHistory *This = OmHistory_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t OmHistory_dispex_vtbl = {
+    OmHistory_destructor,
+};
+
 static const tid_t OmHistory_iface_tids[] = {
     IOmHistory_tid,
     0
 };
 static dispex_static_data_t OmHistory_dispex = {
     L"History",
-    NULL,
+    &OmHistory_dispex_vtbl,
     DispHTMLHistory_tid,
     OmHistory_iface_tids
 };
