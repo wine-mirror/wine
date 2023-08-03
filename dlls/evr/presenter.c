@@ -55,7 +55,6 @@ enum streaming_thread_message
 {
     EVRM_STOP = WM_USER,
     EVRM_PRESENT = WM_USER + 1,
-    EVRM_PROCESS_INPUT = WM_USER + 2,
 };
 
 struct sample_queue
@@ -706,11 +705,6 @@ static DWORD CALLBACK video_presenter_streaming_thread(void *arg)
                     }
                     break;
 
-                case EVRM_PROCESS_INPUT:
-                    EnterCriticalSection(&presenter->cs);
-                    video_presenter_process_input(presenter);
-                    LeaveCriticalSection(&presenter->cs);
-                    break;
                 default:
                     ;
             }
@@ -1811,9 +1805,9 @@ static HRESULT WINAPI video_presenter_allocator_cb_NotifyRelease(IMFVideoSampleA
 {
     struct video_presenter *presenter = impl_from_IMFVideoSampleAllocatorNotify(iface);
 
-    /* Release notification is executed under allocator lock, instead of processing samples here
-       notify streaming thread. */
-    PostThreadMessageW(presenter->thread.tid, EVRM_PROCESS_INPUT, 0, 0);
+    EnterCriticalSection(&presenter->cs);
+    video_presenter_process_input(presenter);
+    LeaveCriticalSection(&presenter->cs);
 
     return S_OK;
 }
