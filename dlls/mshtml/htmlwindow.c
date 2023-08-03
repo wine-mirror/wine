@@ -3777,13 +3777,15 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         IHTMLStorage_Release(local_storage);
     }
     IHTMLPerformanceTiming_Release(&This->performance_timing->IHTMLPerformanceTiming_iface);
-    VariantClear(&This->performance);
+    unlink_variant(&This->performance);
 }
 
 static void HTMLWindow_destructor(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     unsigned i;
+
+    VariantClear(&This->performance);
 
     for(i = 0; i < This->global_prop_cnt; i++)
         free(This->global_props[i].name);

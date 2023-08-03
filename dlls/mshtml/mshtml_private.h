@@ -1497,6 +1497,12 @@ static inline void unlink_ref(void *p)
     }
 }
 
+static inline void unlink_variant(VARIANT *v)
+{
+    if(V_VT(v) == VT_DISPATCH || V_VT(v) == VT_UNKNOWN)
+        unlink_ref(&V_UNKNOWN(v));
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif

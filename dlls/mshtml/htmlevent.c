@@ -2462,7 +2462,14 @@ static void DOMCustomEvent_unlink(DispatchEx *dispex)
 {
     DOMCustomEvent *custom_event = DOMCustomEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
     DOMEvent_unlink(&custom_event->event.dispex);
+    unlink_variant(&custom_event->detail);
+}
+
+static void DOMCustomEvent_destructor(DispatchEx *dispex)
+{
+    DOMCustomEvent *custom_event = DOMCustomEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
     VariantClear(&custom_event->detail);
+    DOMEvent_destructor(dispex);
 }
 
 typedef struct {
@@ -2607,7 +2614,14 @@ static void DOMMessageEvent_unlink(DispatchEx *dispex)
 {
     DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
     DOMEvent_unlink(&message_event->event.dispex);
+    unlink_variant(&message_event->data);
+}
+
+static void DOMMessageEvent_destructor(DispatchEx *dispex)
+{
+    DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
     VariantClear(&message_event->data);
+    DOMEvent_destructor(dispex);
 }
 
 static void DOMMessageEvent_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
@@ -3038,7 +3052,7 @@ static dispex_static_data_t DOMPageTransitionEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
-    DOMEvent_destructor,
+    DOMCustomEvent_destructor,
     DOMCustomEvent_unlink
 };
 
@@ -3056,7 +3070,7 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
-    DOMEvent_destructor,
+    DOMMessageEvent_destructor,
     DOMMessageEvent_unlink
 };
 
