@@ -731,10 +731,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     if (y < 0)
         y = INT_MIN - y;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return compare_uint(x, y, ulps);
 }
 
 static BOOL compare_colour_f(const D2D1_COLOR_F *colour, float r, float g, float b, float a, unsigned int ulps)
