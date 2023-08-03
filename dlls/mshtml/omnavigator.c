@@ -1022,12 +1022,8 @@ static ULONG WINAPI HTMLMimeTypesCollection_Release(IHTMLMimeTypesCollection *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->navigator)
-            This->navigator->mime_types = NULL;
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1084,13 +1080,38 @@ static const IHTMLMimeTypesCollectionVtbl HTMLMimeTypesCollectionVtbl = {
     HTMLMimeTypesCollection_get_length
 };
 
+static inline HTMLMimeTypesCollection *HTMLMimeTypesCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLMimeTypesCollection, dispex);
+}
+
+static void HTMLMimeTypesCollection_unlink(DispatchEx *dispex)
+{
+    HTMLMimeTypesCollection *This = HTMLMimeTypesCollection_from_DispatchEx(dispex);
+    if(This->navigator) {
+        This->navigator->mime_types = NULL;
+        This->navigator = NULL;
+    }
+}
+
+static void HTMLMimeTypesCollection_destructor(DispatchEx *dispex)
+{
+    HTMLMimeTypesCollection *This = HTMLMimeTypesCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLMimeTypesCollection_dispex_vtbl = {
+    HTMLMimeTypesCollection_destructor,
+    HTMLMimeTypesCollection_unlink
+};
+
 static const tid_t HTMLMimeTypesCollection_iface_tids[] = {
     IHTMLMimeTypesCollection_tid,
     0
 };
 static dispex_static_data_t HTMLMimeTypesCollection_dispex = {
     L"MimeTypeArray",
-    NULL,
+    &HTMLMimeTypesCollection_dispex_vtbl,
     IHTMLMimeTypesCollection_tid,
     HTMLMimeTypesCollection_iface_tids
 };
