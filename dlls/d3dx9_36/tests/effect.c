@@ -23,6 +23,13 @@
 #include "d3dx9.h"
 
 /* helper functions */
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_float(FLOAT f, FLOAT g, UINT ulps)
 {
     INT x = *(INT *)&f;
@@ -33,10 +40,7 @@ static BOOL compare_float(FLOAT f, FLOAT g, UINT ulps)
     if (y < 0)
         y = INT_MIN - y;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return compare_uint(x, y, ulps);
 }
 
 static inline INT get_int(D3DXPARAMETER_TYPE type, const void *data)
