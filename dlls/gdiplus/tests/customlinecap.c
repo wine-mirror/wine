@@ -26,6 +26,13 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 #define expectf(expected, got) ok(got == expected, "Expected %.2f, got %.2f\n", expected, got)
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -36,10 +43,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     if (y < 0)
         y = INT_MIN - y;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return compare_uint(x, y, ulps);
 }
 
 static void test_constructor_destructor(void)
