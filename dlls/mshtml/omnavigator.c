@@ -99,13 +99,8 @@ static ULONG WINAPI HTMLDOMImplementation_Release(IHTMLDOMImplementation *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        assert(!This->browser);
-        if(This->implementation)
-            nsIDOMDOMImplementation_Release(This->implementation);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -294,6 +289,29 @@ static const IHTMLDOMImplementation2Vtbl HTMLDOMImplementation2Vtbl = {
     HTMLDOMImplementation2_hasFeature
 };
 
+static inline HTMLDOMImplementation *HTMLDOMImplementation_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMImplementation, dispex);
+}
+
+static void HTMLDOMImplementation_unlink(DispatchEx *dispex)
+{
+    HTMLDOMImplementation *This = HTMLDOMImplementation_from_DispatchEx(dispex);
+    unlink_ref(&This->implementation);
+}
+
+static void HTMLDOMImplementation_destructor(DispatchEx *dispex)
+{
+    HTMLDOMImplementation *This = HTMLDOMImplementation_from_DispatchEx(dispex);
+    assert(!This->browser);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLDOMImplementation_dispex_vtbl = {
+    HTMLDOMImplementation_destructor,
+    HTMLDOMImplementation_unlink
+};
+
 static void HTMLDOMImplementation_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
 {
     if(compat_mode >= COMPAT_MODE_IE9)
@@ -306,7 +324,7 @@ static const tid_t HTMLDOMImplementation_iface_tids[] = {
 };
 static dispex_static_data_t HTMLDOMImplementation_dispex = {
     L"DOMImplementation",
-    NULL,
+    &HTMLDOMImplementation_dispex_vtbl,
     DispHTMLDOMImplementation_tid,
     HTMLDOMImplementation_iface_tids,
     HTMLDOMImplementation_init_dispex_info
