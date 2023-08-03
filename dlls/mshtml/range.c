@@ -855,14 +855,8 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->nsrange)
-            nsIDOMRange_Release(This->nsrange);
-        if(This->doc)
-            list_remove(&This->entry);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1718,13 +1712,39 @@ static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
     RangeCommandTarget_Exec
 };
 
+static inline HTMLTxtRange *HTMLTxtRange_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTxtRange, dispex);
+}
+
+static void HTMLTxtRange_unlink(DispatchEx *dispex)
+{
+    HTMLTxtRange *This = HTMLTxtRange_from_DispatchEx(dispex);
+    unlink_ref(&This->nsrange);
+    if(This->doc) {
+        This->doc = NULL;
+        list_remove(&This->entry);
+    }
+}
+
+static void HTMLTxtRange_destructor(DispatchEx *dispex)
+{
+    HTMLTxtRange *This = HTMLTxtRange_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLTxtRange_dispex_vtbl = {
+    HTMLTxtRange_destructor,
+    HTMLTxtRange_unlink
+};
+
 static const tid_t HTMLTxtRange_iface_tids[] = {
     IHTMLTxtRange_tid,
     0
 };
 static dispex_static_data_t HTMLTxtRange_dispex = {
     L"TextRange",
-    NULL,
+    &HTMLTxtRange_dispex_vtbl,
     IHTMLTxtRange_tid,
     HTMLTxtRange_iface_tids
 };
