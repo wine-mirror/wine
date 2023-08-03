@@ -79,13 +79,8 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        assert(!This->elem);
+    if(!ref)
         release_dispex(&This->dispex);
-        VariantClear(&This->value);
-        free(This->name);
-        free(This);
-    }
 
     return ref;
 }
@@ -480,6 +475,31 @@ static const IHTMLDOMAttribute2Vtbl HTMLDOMAttribute2Vtbl = {
     HTMLDOMAttribute2_cloneNode
 };
 
+static inline HTMLDOMAttribute *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMAttribute, dispex);
+}
+
+static void HTMLDOMAttribute_unlink(DispatchEx *dispex)
+{
+    HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+    unlink_variant(&This->value);
+}
+
+static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
+{
+    HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+    assert(!This->elem);
+    VariantClear(&This->value);
+    free(This->name);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
+    HTMLDOMAttribute_destructor,
+    HTMLDOMAttribute_unlink
+};
+
 static const tid_t HTMLDOMAttribute_iface_tids[] = {
     IHTMLDOMAttribute_tid,
     IHTMLDOMAttribute2_tid,
@@ -487,7 +507,7 @@ static const tid_t HTMLDOMAttribute_iface_tids[] = {
 };
 static dispex_static_data_t HTMLDOMAttribute_dispex = {
     L"Attr",
-    NULL,
+    &HTMLDOMAttribute_dispex_vtbl,
     DispHTMLDOMAttribute_tid,
     HTMLDOMAttribute_iface_tids
 };
