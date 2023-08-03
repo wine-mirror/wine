@@ -44,6 +44,13 @@ static ULONG get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -54,10 +61,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     if (y < 0)
         y = INT_MIN - y;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return compare_uint(x, y, ulps);
 }
 
 #define expect_matrix(m, m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44, u) \
@@ -101,13 +105,6 @@ static void expect_vector_(unsigned int line, const D3DVECTOR *v, float x, float
 static void vector_eq_(unsigned int line, const D3DVECTOR *left, const D3DVECTOR *right)
 {
     expect_vector_(line, left, U1(*right).x, U2(*right).y, U3(*right).z, 0);
-}
-
-static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
-{
-    unsigned int diff = x > y ? x - y : y - x;
-
-    return diff <= max_diff;
 }
 
 static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
