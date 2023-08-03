@@ -2035,11 +2035,8 @@ static ULONG WINAPI HTMLPerformanceNavigation_Release(IHTMLPerformanceNavigation
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        IHTMLPerformanceTiming_Release(&This->timing->IHTMLPerformanceTiming_iface);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -2129,13 +2126,39 @@ static const IHTMLPerformanceNavigationVtbl HTMLPerformanceNavigationVtbl = {
     HTMLPerformanceNavigation_toJSON
 };
 
+static inline HTMLPerformanceNavigation *HTMLPerformanceNavigation_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLPerformanceNavigation, dispex);
+}
+
+static void HTMLPerformanceNavigation_unlink(DispatchEx *dispex)
+{
+    HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
+    if(This->timing) {
+        HTMLPerformanceTiming *timing = This->timing;
+        This->timing = NULL;
+        IHTMLPerformanceTiming_Release(&timing->IHTMLPerformanceTiming_iface);
+    }
+}
+
+static void HTMLPerformanceNavigation_destructor(DispatchEx *dispex)
+{
+    HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLPerformanceNavigation_dispex_vtbl = {
+    HTMLPerformanceNavigation_destructor,
+    HTMLPerformanceNavigation_unlink
+};
+
 static const tid_t HTMLPerformanceNavigation_iface_tids[] = {
     IHTMLPerformanceNavigation_tid,
     0
 };
 static dispex_static_data_t HTMLPerformanceNavigation_dispex = {
     L"PerformanceNavigation",
-    NULL,
+    &HTMLPerformanceNavigation_dispex_vtbl,
     IHTMLPerformanceNavigation_tid,
     HTMLPerformanceNavigation_iface_tids
 };
