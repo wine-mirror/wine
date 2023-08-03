@@ -1179,14 +1179,8 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->plugins)
-            This->plugins->navigator = NULL;
-        if(This->mime_types)
-            This->mime_types->navigator = NULL;
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1533,13 +1527,42 @@ static const IOmNavigatorVtbl OmNavigatorVtbl = {
     OmNavigator_get_userProfile
 };
 
+static inline OmNavigator *OmNavigator_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, OmNavigator, dispex);
+}
+
+static void OmNavigator_unlink(DispatchEx *dispex)
+{
+    OmNavigator *This = OmNavigator_from_DispatchEx(dispex);
+    if(This->plugins) {
+        This->plugins->navigator = NULL;
+        This->plugins = NULL;
+    }
+    if(This->mime_types) {
+        This->mime_types->navigator = NULL;
+        This->mime_types = NULL;
+    }
+}
+
+static void OmNavigator_destructor(DispatchEx *dispex)
+{
+    OmNavigator *This = OmNavigator_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t OmNavigator_dispex_vtbl = {
+    OmNavigator_destructor,
+    OmNavigator_unlink
+};
+
 static const tid_t OmNavigator_iface_tids[] = {
     IOmNavigator_tid,
     0
 };
 static dispex_static_data_t OmNavigator_dispex = {
     L"Navigator",
-    NULL,
+    &OmNavigator_dispex_vtbl,
     DispHTMLNavigator_tid,
     OmNavigator_iface_tids
 };
