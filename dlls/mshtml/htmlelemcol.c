@@ -252,16 +252,8 @@ static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        unsigned i;
-
-        for(i=0; i < This->len; i++)
-            node_release(&This->elems[i]->node);
-        free(This->elems);
-
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -550,6 +542,25 @@ static inline HTMLElementCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLElementCollection, dispex);
 }
 
+static void HTMLElementCollection_unlink(DispatchEx *dispex)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+    unsigned i, len = This->len;
+
+    if(len) {
+        This->len = 0;
+        for(i = 0; i < len; i++)
+            node_release(&This->elems[i]->node);
+        free(This->elems);
+    }
+}
+
+static void HTMLElementCollection_destructor(DispatchEx *dispex)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
 #define DISPID_ELEMCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
 static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
@@ -622,8 +633,8 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
-    NULL,
-    NULL,
+    HTMLElementCollection_destructor,
+    HTMLElementCollection_unlink,
     NULL,
     HTMLElementCollection_get_dispid,
     HTMLElementCollection_get_name,
