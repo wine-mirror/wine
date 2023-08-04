@@ -8135,9 +8135,7 @@ static ULONG WINAPI HTMLFiltersCollection_Release(IHTMLFiltersCollection *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-    {
-        free(This);
-    }
+        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -8213,6 +8211,17 @@ static const IHTMLFiltersCollectionVtbl HTMLFiltersCollectionVtbl = {
     HTMLFiltersCollection_item
 };
 
+static inline HTMLFiltersCollection *HTMLFiltersCollection_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLFiltersCollection, dispex);
+}
+
+static void HTMLFiltersCollection_destructor(DispatchEx *dispex)
+{
+    HTMLFiltersCollection *This = HTMLFiltersCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     WCHAR *ptr;
@@ -8252,7 +8261,7 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
-    NULL,
+    HTMLFiltersCollection_destructor,
     NULL,
     NULL,
     HTMLFiltersCollection_get_dispid,
