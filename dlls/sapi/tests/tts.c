@@ -34,6 +34,46 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "Unexpected refcount %ld, expected %ld.\n", rc, ref);
 }
 
+#define APTTYPE_UNITIALIZED APTTYPE_CURRENT
+static struct
+{
+    APTTYPE type;
+    APTTYPEQUALIFIER qualifier;
+} test_apt_data;
+
+static DWORD WINAPI test_apt_thread(void *param)
+{
+    HRESULT hr;
+
+    hr = CoGetApartmentType(&test_apt_data.type, &test_apt_data.qualifier);
+    if (hr == CO_E_NOTINITIALIZED)
+    {
+        test_apt_data.type = APTTYPE_UNITIALIZED;
+        test_apt_data.qualifier = 0;
+    }
+
+    return 0;
+}
+
+static void check_apttype(void)
+{
+    HANDLE thread;
+    MSG msg;
+
+    memset(&test_apt_data, 0xde, sizeof(test_apt_data));
+
+    thread = CreateThread(NULL, 0, test_apt_thread, NULL, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+}
+
 static void test_interfaces(void)
 {
     ISpeechVoice *speech_voice, *speech_voice2;
@@ -380,6 +420,7 @@ static void test_spvoice(void)
     static const WCHAR test_text[] = L"Hello! This is a test sentence.";
 
     ISpVoice *voice;
+    IUnknown *dummy;
     ISpMMSysAudio *audio_out;
     ISpObjectTokenCategory *token_cat;
     ISpObjectToken *token;
@@ -397,22 +438,56 @@ static void test_spvoice(void)
         return;
     }
 
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
     hr = CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpVoice, (void **)&voice);
     ok(hr == S_OK, "Failed to create SpVoice: %#lx.\n", hr);
 
-    hr = ISpVoice_SetOutput(voice, NULL, TRUE);
-    ok(hr == S_OK, "got %#lx.\n", hr);
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    /* SpVoice initializes a MTA in SetOutput even if an invalid output object is given. */
+    hr = CoCreateInstance(&CLSID_SpDataKey, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IUnknown, (void **)&dummy);
+    ok(hr == S_OK, "Failed to create dummy: %#lx.\n", hr);
+
+    hr = ISpVoice_SetOutput(voice, dummy, TRUE);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_MTA || broken(test_apt_data.type == APTTYPE_UNITIALIZED) /* w8, w10v1507 */,
+       "got apt type %d.\n", test_apt_data.type);
+    if (test_apt_data.type == APTTYPE_MTA)
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+    else
+        win_skip("apt type is not MTA.\n");
+
+    IUnknown_Release(dummy);
 
     hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpMMSysAudio, (void **)&audio_out);
     ok(hr == S_OK, "Failed to create SpMMAudioOut: %#lx.\n", hr);
+
+    hr = ISpVoice_SetOutput(voice, NULL, TRUE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = ISpVoice_SetOutput(voice, (IUnknown *)audio_out, TRUE);
     todo_wine ok(hr == S_FALSE, "got %#lx.\n", hr);
 
     hr = ISpVoice_SetVoice(voice, NULL);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_MTA || broken(test_apt_data.type == APTTYPE_UNITIALIZED) /* w8, w10v1507 */,
+       "got apt type %d.\n", test_apt_data.type);
+    if (test_apt_data.type == APTTYPE_MTA)
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+    else
+        win_skip("apt type is not MTA.\n");
 
     hr = ISpVoice_GetVoice(voice, &token);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
@@ -517,6 +592,15 @@ static void test_spvoice(void)
     hr = ISpVoice_SetVoice(voice, token);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_MTA || broken(test_apt_data.type == APTTYPE_UNITIALIZED) /* w8, w10v1507 */,
+       "got apt type %d.\n", test_apt_data.type);
+    if (test_apt_data.type == APTTYPE_MTA)
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+    else
+        win_skip("apt type is not MTA.\n");
+
     test_engine.speak_called = FALSE;
     hr = ISpVoice_Speak(voice, NULL, SPF_PURGEBEFORESPEAK, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -547,6 +631,11 @@ static void test_spvoice(void)
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
     ok(stream_num == 1, "got %lu.\n", stream_num);
     ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
+
+    check_apttype();
+    ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
+    ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+       "got apt type qualifier %d.\n", test_apt_data.qualifier);
 
     start = GetTickCount();
     hr = ISpVoice_WaitUntilDone(voice, INFINITE);
@@ -602,7 +691,8 @@ done:
 START_TEST(tts)
 {
     CoInitialize(NULL);
-    test_interfaces();
+    /* Run spvoice tests before interface tests so that a MTA won't be created before this test is run. */
     test_spvoice();
+    test_interfaces();
     CoUninitialize();
 }
