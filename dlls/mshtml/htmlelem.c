@@ -582,12 +582,8 @@ static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->nsrect)
-            nsIDOMClientRect_Release(This->nsrect);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -841,11 +837,33 @@ static const IHTMLRect2Vtbl HTMLRect2Vtbl = {
     HTMLRect2_get_height,
 };
 
+static inline HTMLRect *HTMLRect_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLRect, dispex);
+}
+
+static void HTMLRect_unlink(DispatchEx *dispex)
+{
+    HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
+    unlink_ref(&This->nsrect);
+}
+
+static void HTMLRect_destructor(DispatchEx *dispex)
+{
+    HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
+    free(This);
+}
+
 void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if (mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLRect2_tid, NULL);
 }
+
+static const dispex_static_data_vtbl_t HTMLRect_dispex_vtbl = {
+    HTMLRect_destructor,
+    HTMLRect_unlink
+};
 
 static const tid_t HTMLRect_iface_tids[] = {
     IHTMLRect_tid,
@@ -853,7 +871,7 @@ static const tid_t HTMLRect_iface_tids[] = {
 };
 static dispex_static_data_t HTMLRect_dispex = {
     L"ClientRect",
-    NULL,
+    &HTMLRect_dispex_vtbl,
     IHTMLRect_tid,
     HTMLRect_iface_tids,
     HTMLRect_init_dispex_info
