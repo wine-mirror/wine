@@ -1084,12 +1084,8 @@ static ULONG WINAPI HTMLRectCollection_Release(IHTMLRectCollection *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->rect_list)
-            nsIDOMClientRectList_Release(This->rect_list);
+    if(!ref)
         release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -1212,6 +1208,18 @@ static inline HTMLRectCollection *HTMLRectCollection_from_DispatchEx(DispatchEx 
     return CONTAINING_RECORD(iface, HTMLRectCollection, dispex);
 }
 
+static void HTMLRectCollection_unlink(DispatchEx *dispex)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    unlink_ref(&This->rect_list);
+}
+
+static void HTMLRectCollection_destructor(DispatchEx *dispex)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
@@ -1287,8 +1295,8 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 }
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
-    NULL,
-    NULL,
+    HTMLRectCollection_destructor,
+    HTMLRectCollection_unlink,
     NULL,
     HTMLRectCollection_get_dispid,
     HTMLRectCollection_get_name,
