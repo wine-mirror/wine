@@ -591,6 +591,9 @@ static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL all
     if (!allow_format_changes)
         FIXME("ignoring allow_format_changes = FALSE.\n");
 
+    if (FAILED(hr = async_start_queue(&This->queue)))
+        return hr;
+
     if (!unk)
     {
         /* TODO: Create the default SpAudioOut token here once SpMMAudioEnum is implemented. */
