@@ -2609,10 +2609,8 @@ static ULONG WINAPI console_Release(IWineMSHTMLConsole *iface)
 
     TRACE("(%p) ref=%ld\n", console, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&console->dispex);
-        free(console);
-    }
 
     return ref;
 }
@@ -2789,13 +2787,28 @@ static const IWineMSHTMLConsoleVtbl WineMSHTMLConsoleVtbl = {
     console_warn,
 };
 
+static inline struct console *console_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct console, dispex);
+}
+
+static void console_destructor(DispatchEx *dispex)
+{
+    struct console *console = console_from_DispatchEx(dispex);
+    free(console);
+}
+
+static const dispex_static_data_vtbl_t console_dispex_vtbl = {
+    console_destructor,
+};
+
 static const tid_t console_iface_tids[] = {
     IWineMSHTMLConsole_tid,
     0
 };
 static dispex_static_data_t console_dispex = {
     L"Console",
-    NULL,
+    &console_dispex_vtbl,
     IWineMSHTMLConsole_tid,
     console_iface_tids
 };
