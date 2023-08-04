@@ -63,6 +63,12 @@ static BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, si
     return TRUE;
 }
 
+/* Convert 100ns to seconds */
+static double mftime_to_seconds(MFTIME time)
+{
+    return (double)time / 10000000.0;
+}
+
 enum media_engine_mode
 {
     MEDIA_ENGINE_INVALID,
@@ -1248,10 +1254,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
     /* Assume live source if duration was not provided. */
     if (SUCCEEDED(IMFPresentationDescriptor_GetUINT64(pd, &MF_PD_DURATION, &duration)))
-    {
-        /* Convert 100ns to seconds. */
-        engine->duration = duration / 10000000;
-    }
+        engine->duration = mftime_to_seconds(duration);
     else
         engine->duration = INFINITY;
 
@@ -1749,7 +1752,7 @@ static double WINAPI media_engine_GetCurrentTime(IMFMediaEngineEx *iface)
     }
     else if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
     {
-        ret = (double)clocktime / 10000000.0;
+        ret = mftime_to_seconds(clocktime);
     }
     LeaveCriticalSection(&engine->cs);
 

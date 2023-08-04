@@ -1961,7 +1961,6 @@ static void test_GetDuration(void)
     ok(!res, "Unexpected res %#lx.\n", res);
 
     duration = IMFMediaEngineEx_GetDuration(media_engine);
-    todo_wine
     ok(compare_double(duration, 0.133467, allowed_error), "Got unexpected duration %lf.\n", duration);
 
     SysFreeString(url);
