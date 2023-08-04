@@ -8594,17 +8594,8 @@ static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        while(!list_empty(&This->attrs)) {
-            HTMLDOMAttribute *attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
-
-            list_remove(&attr->entry);
-            attr->elem = NULL;
-            IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
-        }
-
-        free(This);
-    }
+    if(!ref)
+        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -8953,6 +8944,24 @@ static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(D
     return CONTAINING_RECORD(iface, HTMLAttributeCollection, dispex);
 }
 
+static void HTMLAttributeCollection_unlink(DispatchEx *dispex)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    while(!list_empty(&This->attrs)) {
+        HTMLDOMAttribute *attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
+
+        list_remove(&attr->entry);
+        attr->elem = NULL;
+        IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
+    }
+}
+
+static void HTMLAttributeCollection_destructor(DispatchEx *dispex)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    free(This);
+}
+
 static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
@@ -9019,8 +9028,8 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 }
 
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
-    NULL,
-    NULL,
+    HTMLAttributeCollection_destructor,
+    HTMLAttributeCollection_unlink,
     NULL,
     HTMLAttributeCollection_get_dispid,
     HTMLAttributeCollection_get_name,
