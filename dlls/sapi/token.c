@@ -1305,7 +1305,7 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
     HKEY root, key;
     const WCHAR *subkey;
 
-    FIXME( "(%p)->(%s %s %d): semi-stub\n", This, debugstr_w( category_id ),
+    TRACE( "(%p)->(%s %s %d)\n", This, debugstr_w( category_id ),
            debugstr_w(token_id), create );
 
     if (This->data_key) return SPERR_ALREADY_INITIALIZED;
