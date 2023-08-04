@@ -550,17 +550,8 @@ static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        remove_target_tasks(This->task_magic);
-        detach_xhr_event_listener(This->event_listener);
-        if(This->pending_progress_event)
-            IDOMEvent_Release(&This->pending_progress_event->IDOMEvent_iface);
-        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
-        release_event_target(&This->event_target);
+    if(!ref)
         release_dispex(&This->event_target.dispex);
-        nsIXMLHttpRequest_Release(This->nsxhr);
-        free(This);
-    }
 
     return ref;
 }
@@ -1530,6 +1521,35 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
 }
 
+static void HTMLXMLHttpRequest_unlink(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+    remove_target_tasks(This->task_magic);
+    if(This->event_listener) {
+        XMLHttpReqEventListener *event_listener = This->event_listener;
+        This->event_listener = NULL;
+        detach_xhr_event_listener(event_listener);
+    }
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+    if(This->pending_progress_event) {
+        DOMEvent *pending_progress_event = This->pending_progress_event;
+        This->pending_progress_event = NULL;
+        IDOMEvent_Release(&pending_progress_event->IDOMEvent_iface);
+    }
+    unlink_ref(&This->nsxhr);
+    release_event_target(&This->event_target);
+}
+
+static void HTMLXMLHttpRequest_destructor(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
 static nsISupports *HTMLXMLHttpRequest_get_gecko_target(DispatchEx *dispex)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
@@ -1574,7 +1594,8 @@ static void HTMLXMLHttpRequest_init_dispex_info(dispex_data_t *info, compat_mode
 
 static event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     {
-        NULL,
+        HTMLXMLHttpRequest_destructor,
+        HTMLXMLHttpRequest_unlink
     },
     HTMLXMLHttpRequest_get_gecko_target,
     HTMLXMLHttpRequest_bind_event
