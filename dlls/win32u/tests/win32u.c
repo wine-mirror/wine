@@ -1362,7 +1362,7 @@ struct lparam_hook_test
     const void *lparam;
     const void *change_lparam;
     const void *check_lparam;
-    const void *default_lparam;
+    const void *in_lparam;
     size_t lparam_size;
     size_t lparam_init_size;
     size_t check_size;
@@ -1425,10 +1425,12 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
     default:
         if (test->check_size) {
             const void *expected;
-            if (is_ret && test->change_lparam)
+            if (is_ret && test->check_lparam)
+                expected = test->check_lparam;
+            else if (is_ret && test->change_lparam)
                 expected = test->change_lparam;
-            else if (test->default_lparam)
-                expected = test->default_lparam;
+            else if (test->in_lparam)
+                expected = test->in_lparam;
             else
                 expected = test->lparam;
             ok( !memcmp( (const void *)lparam, expected, test->check_size ), "unexpected lparam content\n" );
@@ -1686,7 +1688,9 @@ static void test_wndproc_hook(void)
     static const MDINEXTMENU nm_in = { .hmenuIn = (HMENU)0xdeadbeef };
     static const MDINEXTMENU nm_out = { .hmenuIn = (HMENU)1 };
     static const MDICREATESTRUCTW mcs_in = { .x = 1, .y = 2 };
-    static const COMBOBOXINFO cbi_in = {};
+    static const COMBOBOXINFO cbi_in = { .cbSize = 1, .hwndList = HWND_MESSAGE };
+    static const COMBOBOXINFO cbi_check =
+        { .cbSize = sizeof(void *) == 4 ? sizeof(cbi_in) : 1, .hwndList = HWND_MESSAGE };
     static const COMBOBOXINFO cbi_out = { .hwndList = (HWND)2 };
     static const COMBOBOXINFO cbi_ret = { .hwndList = (HWND)2,
         .cbSize = sizeof(void *) == 4 ? sizeof(cbi_in) : 0 };
@@ -1920,8 +1924,8 @@ static void test_wndproc_hook(void)
         },
         {
             "CB_GETCOMBOBOXINFO", CB_GETCOMBOBOXINFO,
-            .lparam_size = sizeof(cbi_in), .change_lparam = &cbi_out, .default_lparam = &cbi_in,
-            .check_lparam = &cbi_ret,
+            .lparam_size = sizeof(cbi_in), .change_lparam = &cbi_out, .lparam = &cbi_in,
+            .check_lparam = &cbi_ret, .check_size = sizeof(cbi_in), .in_lparam = &cbi_check,
         },
         /* messages that don't change lparam */
         { "WM_USER", WM_USER },

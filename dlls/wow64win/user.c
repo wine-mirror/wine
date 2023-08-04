@@ -802,6 +802,22 @@ static size_t packed_message_64to32( UINT message, WPARAM wparam,
             memcpy( params32, &mcs32, sizeof(mcs32) );
             return sizeof(mcs32) + size;
         }
+
+    case CB_GETCOMBOBOXINFO:
+        {
+            COMBOBOXINFO32 ci32;
+            const COMBOBOXINFO *ci64 = params64;
+
+            ci32.cbSize      = sizeof(ci32);
+            ci32.rcItem      = ci64->rcItem;
+            ci32.rcButton    = ci64->rcButton;
+            ci32.stateButton = ci64->stateButton;
+            ci32.hwndCombo   = HandleToLong( ci64->hwndCombo );
+            ci32.hwndItem    = HandleToLong( ci64->hwndItem );
+            ci32.hwndList    = HandleToLong( ci64->hwndList );
+            memcpy( params32, &ci32, sizeof(ci32) );
+            return sizeof(ci32);
+        }
     }
 
     memmove( params32, params64, size );

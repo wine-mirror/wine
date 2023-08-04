@@ -1843,8 +1843,14 @@ void pack_user_message( void *buffer, size_t size, UINT message,
         return;
     }
     case CB_GETCOMBOBOXINFO:
-        memset( buffer, 0, size );
-        return;
+        if (sizeof(void *) == 4)
+        {
+            COMBOBOXINFO *cbi = buffer;
+            memcpy( cbi, lparam_ptr, sizeof(*cbi) );
+            cbi->cbSize = sizeof(*cbi);
+            return;
+        }
+        break;
     }
 
     if (size) memcpy( buffer, lparam_ptr, size );
