@@ -7886,6 +7886,75 @@ done:
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_zero_size(IUnknown *device, BOOL is_d3d12)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    unsigned int i, expected;
+    IDXGIFactory *factory;
+    HWND window;
+    HRESULT hr;
+    RECT r;
+
+    static const struct
+    {
+        INT w, h;
+    }
+    tests[] =
+    {
+        {0, 0},
+        {200, 0},
+        {0, 200},
+        {200, 200},
+        /* FIXME: How to create a window with a client rect width or height above 0 but less than 8?
+         * If I try to AdjustWindowRect a (100,100)-(104,104) rectangle I get a larger window. I
+         * suspect the decoration style and DPI will play into it too. The size below creates a
+         * 176x4 client rect on my system. */
+        {100, 60}
+    };
+
+    get_factory(device, is_d3d12, &factory);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        window = CreateWindowA("static", "dxgi_test", WS_VISIBLE, 0, 0, tests[i].w, tests[i].h, 0, 0, 0, 0);
+        swapchain_desc.BufferDesc.Width = 0;
+        swapchain_desc.BufferDesc.Height = 0;
+        swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+        swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+        swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+        swapchain_desc.SampleDesc.Count = 1;
+        swapchain_desc.SampleDesc.Quality = 0;
+        swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
+        swapchain_desc.OutputWindow = window;
+        swapchain_desc.Windowed = TRUE;
+        swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+        swapchain_desc.Flags = 0;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!swapchain_desc.BufferDesc.Width && !swapchain_desc.BufferDesc.Height, "Input desc was modified.\n");
+
+        hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        GetClientRect(swapchain_desc.OutputWindow, &r);
+        expected = r.right > 0 ? r.right : 8;
+        ok(swapchain_desc.BufferDesc.Width == expected, "Got width %u, expected %u, test %u.\n",
+                swapchain_desc.BufferDesc.Width, expected, i);
+        expected = r.bottom > 0 ? r.bottom : 8;
+        ok(swapchain_desc.BufferDesc.Height == expected, "Got height %u, expected %u, test %u.\n",
+                swapchain_desc.BufferDesc.Height, expected, i);
+
+        IDXGISwapChain_Release(swapchain);
+        DestroyWindow(window);
+    }
+
+    IDXGIFactory_Release(factory);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -8010,6 +8079,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_swapchain_present_count);
     run_on_d3d10(test_resize_target_wndproc);
     run_on_d3d10(test_swapchain_window_messages);
+    run_on_d3d10(test_zero_size);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -8043,6 +8113,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_swapchain_present_count);
     run_on_d3d12(test_resize_target_wndproc);
     run_on_d3d12(test_swapchain_window_messages);
+    run_on_d3d12(test_zero_size);
 
     FreeLibrary(d3d12_module);
 }
