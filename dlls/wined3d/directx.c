@@ -238,6 +238,9 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
  * 24 -> Windows 10 April 2018 Update - WDDM 2.4
  * 25 -> Windows 10 October 2018 Update - WDDM 2.5
  * 26 -> Windows 10 May 2019 Update - WDDM 2.6
+ * 27 -> Windows 10 May 2020 Update - WDDM 2.7
+ * 30 -> Windows 11 21H2 - WDDM 3.0
+ * 31 -> Windows 11 22H2 - WDDM 3.1
  *
  * "y" is the maximum Direct3D version / feature level the driver supports.
  * 11 -> 6
@@ -285,7 +288,7 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_AMD_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll",    10, 1280},
     {DRIVER_AMD_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 741 },
     {DRIVER_AMD_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 1280},
-    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll", 15002,   61},
+    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll", 21023, 2010}, /* Adrenalin 23.7.2 */
 
     /* Intel
      * The drivers are unified but not all versions support all GPUs. At some point the 2k/xp
@@ -297,7 +300,7 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT5X,  "igxprd32.dll",    10, 5218},
     {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT6X,  "igdumd32.dll",    10, 1504},
     {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT6X,  "igdumd32.dll",    10, 1666},
-    {DRIVER_INTEL_HD4000,       DRIVER_MODEL_NT6X,  "igdumdim32.dll",  15, 4352},
+    {DRIVER_INTEL_HD4000,       DRIVER_MODEL_NT6X,  "igdumdim32.dll", 101, 4577},
 
     /* Nvidia
      * - Geforce8 and newer is supported by the current 340.52 driver on XP-Win8
@@ -314,7 +317,7 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_NVIDIA_GEFORCE6,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",     13,  783},
     {DRIVER_NVIDIA_GEFORCE8,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",     13, 4052},
     {DRIVER_NVIDIA_FERMI,       DRIVER_MODEL_NT6X,  "nvd3dum.dll",     13, 9135},
-    {DRIVER_NVIDIA_KEPLER,      DRIVER_MODEL_NT6X,  "nvd3dum.dll",     14, 4587},
+    {DRIVER_NVIDIA_KEPLER,      DRIVER_MODEL_NT6X,  "nvd3dum.dll",     15, 3118}, /* 531.18 */
 
     /* Red Hat */
     {DRIVER_REDHAT_VIRGL,       DRIVER_MODEL_GENERIC, "virgl.dll",      0,    0},
@@ -773,7 +776,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                 break;
 
             case 10:
-                driver_os_version = 26;
+                driver_os_version = 31;
                 driver_model = DRIVER_MODEL_NT6X;
                 break;
 
@@ -828,6 +831,10 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         driver_feature_level = min(driver_feature_level, 18);
     else if (os_version.dwMajorVersion < 6)
         driver_feature_level = min(driver_feature_level, 14);
+
+    /* Drivers with the OS version 30+ all have the feature level word set to 0 */
+    if (driver_os_version >= 30)
+        driver_feature_level = 0;
 
     driver_info->vendor = gpu_desc->vendor;
     driver_info->device = gpu_desc->device;
