@@ -7427,11 +7427,8 @@ static ULONG WINAPI token_list_Release(IWineDOMTokenList *iface)
 
     TRACE("(%p) ref=%ld\n", token_list, ref);
 
-    if(!ref) {
-        IHTMLElement_Release(token_list->element);
+    if(!ref)
         release_dispex(&token_list->dispex);
-        free(token_list);
-    }
 
     return ref;
 }
@@ -7750,6 +7747,18 @@ static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, struct token_list, dispex);
 }
 
+static void token_list_unlink(DispatchEx *dispex)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+    unlink_ref(&token_list->element);
+}
+
+static void token_list_destructor(DispatchEx *dispex)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+    free(token_list);
+}
+
 static HRESULT token_list_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -7825,8 +7834,8 @@ static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 }
 
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
-    NULL,
-    NULL,
+    token_list_destructor,
+    token_list_unlink,
     token_list_value,
     token_list_get_dispid,
     token_list_get_name,
