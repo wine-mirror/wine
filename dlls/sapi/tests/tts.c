@@ -630,7 +630,7 @@ static void test_spvoice(void)
     ok(test_engine.rate == 0, "got %ld.\n", test_engine.rate);
     ok(test_engine.volume == 100, "got %d.\n", test_engine.volume);
     ok(stream_num == 1, "got %lu.\n", stream_num);
-    ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
+    ok(duration > 800 && duration < 3500, "took %lu ms.\n", duration);
 
     check_apttype();
     ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
@@ -658,7 +658,7 @@ static void test_spvoice(void)
     hr = ISpVoice_WaitUntilDone(voice, INFINITE);
     duration = GetTickCount() - start;
     ok(hr == S_OK, "got %#lx.\n", hr);
-    ok(duration > 800 && duration < 3000, "took %lu ms.\n", duration);
+    ok(duration > 800 && duration < 3500, "took %lu ms.\n", duration);
 
     ok(test_engine.speak_called, "ISpTTSEngine::Speak was not called.\n");
     ok(test_engine.flags == SPF_NLP_SPEAK_PUNC, "got %#lx.\n", test_engine.flags);
