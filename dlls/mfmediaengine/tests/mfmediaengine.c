@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #define COBJMACROS
 
@@ -64,6 +65,11 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
+}
+
+static BOOL compare_double(double a, double b, double allowed_error)
+{
+    return fabs(a - b) <= allowed_error;
 }
 
 static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
@@ -1931,6 +1937,40 @@ done:
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
+static void test_GetDuration(void)
+{
+    static const double allowed_error = 0.000001;
+    struct test_transfer_notify *notify;
+    IMFMediaEngineEx *media_engine;
+    IMFByteStream *stream;
+    double duration;
+    HRESULT hr;
+    DWORD res;
+    BSTR url;
+
+    notify = create_transfer_notify();
+    media_engine = create_media_engine_ex(&notify->IMFMediaEngineNotify_iface, NULL, DXGI_FORMAT_B8G8R8X8_UNORM);
+    notify->media_engine = media_engine;
+    ok(!!media_engine, "create_media_engine_ex failed.\n");
+
+    stream = load_resource(L"i420-64x64.avi", L"video/avi");
+    url = SysAllocString(L"i420-64x64.avi");
+    hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    res = WaitForSingleObject(notify->ready_event, 5000);
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    duration = IMFMediaEngineEx_GetDuration(media_engine);
+    todo_wine
+    ok(compare_double(duration, 0.133467, allowed_error), "Got unexpected duration %lf.\n", duration);
+
+    SysFreeString(url);
+    IMFByteStream_Release(stream);
+    IMFMediaEngineEx_Shutdown(media_engine);
+    IMFMediaEngineEx_Release(media_engine);
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -1963,6 +2003,7 @@ START_TEST(mfmediaengine)
     test_audio_configuration();
     test_TransferVideoFrame();
     test_effect();
+    test_GetDuration();
 
     IMFMediaEngineClassFactory_Release(factory);
 
