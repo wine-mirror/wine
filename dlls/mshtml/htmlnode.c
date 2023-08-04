@@ -239,10 +239,8 @@ static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        nsIDOMNodeList_Release(This->nslist);
-        free(This);
-    }
+    if(!ref)
+        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -364,6 +362,18 @@ static inline HTMLDOMChildrenCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMChildrenCollection, dispex);
 }
 
+static void HTMLDOMChildrenCollection_unlink(DispatchEx *dispex)
+{
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
+    unlink_ref(&This->nslist);
+}
+
+static void HTMLDOMChildrenCollection_destructor(DispatchEx *dispex)
+{
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
 #define DISPID_CHILDCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
 static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
@@ -433,8 +443,8 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
-    NULL,
-    NULL,
+    HTMLDOMChildrenCollection_destructor,
+    HTMLDOMChildrenCollection_unlink,
     NULL,
     HTMLDOMChildrenCollection_get_dispid,
     HTMLDOMChildrenCollection_get_name,
