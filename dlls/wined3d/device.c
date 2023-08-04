@@ -1407,6 +1407,8 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     struct wined3d_resource *resource, *cursor;
     struct wined3d_rendertarget_view *view;
     struct wined3d_texture *texture;
+    struct wined3d_buffer *buffer;
+    unsigned int i;
 
     TRACE("device %p.\n", device);
 
@@ -1431,6 +1433,13 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
         device->cursor_texture = NULL;
         wined3d_texture_decref(texture);
     }
+
+    for (i = 0; i < ARRAY_SIZE(device->push_constants); ++i)
+    {
+        if ((buffer = device->push_constants[i]))
+            wined3d_buffer_decref(buffer);
+    }
+    memset(device->push_constants, 0, sizeof(device->push_constants));
 
     wined3d_device_context_emit_reset_state(&device->cs->c, true);
     state_cleanup(state);
