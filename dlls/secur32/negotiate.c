@@ -225,6 +225,8 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
         ctxt->krb  = cred->krb;
         ctxt->ntlm = cred->ntlm;
+        ctxt->user_krb  = cred->user_krb;
+        ctxt->user_ntlm = cred->user_ntlm;
     }
     if (!handle) return SEC_E_INVALID_HANDLE;
 
@@ -278,6 +280,8 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if (!(new_ctxt = ctxt = calloc( 1, sizeof(*ctxt) ))) return SEC_E_INSUFFICIENT_MEMORY;
         ctxt->krb  = cred->krb;
         ctxt->ntlm = cred->ntlm;
+        ctxt->user_krb  = cred->user_krb;
+        ctxt->user_ntlm = cred->user_ntlm;
     }
     if (!handle) return SEC_E_INVALID_HANDLE;
 
