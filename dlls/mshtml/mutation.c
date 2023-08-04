@@ -1127,11 +1127,8 @@ static ULONG WINAPI MutationObserver_Release(IWineMSHTMLMutationObserver *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
+    if(!ref)
         release_dispex(&This->dispex);
-        IDispatch_Release(This->callback);
-        free(This);
-    }
 
     return ref;
 }
@@ -1213,13 +1210,35 @@ static const IWineMSHTMLMutationObserverVtbl WineMSHTMLMutationObserverVtbl = {
     MutationObserver_takeRecords
 };
 
+static inline struct mutation_observer *mutation_observer_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct mutation_observer, dispex);
+}
+
+static void mutation_observer_unlink(DispatchEx *dispex)
+{
+    struct mutation_observer *This = mutation_observer_from_DispatchEx(dispex);
+    unlink_ref(&This->callback);
+}
+
+static void mutation_observer_destructor(DispatchEx *dispex)
+{
+    struct mutation_observer *This = mutation_observer_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t mutation_observer_dispex_vtbl = {
+    mutation_observer_destructor,
+    mutation_observer_unlink
+};
+
 static const tid_t mutation_observer_iface_tids[] = {
     IWineMSHTMLMutationObserver_tid,
     0
 };
 static dispex_static_data_t mutation_observer_dispex = {
     L"MutationObserver",
-    NULL,
+    &mutation_observer_dispex_vtbl,
     IWineMSHTMLMutationObserver_tid,
     mutation_observer_iface_tids
 };
