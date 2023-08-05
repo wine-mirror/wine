@@ -50,8 +50,6 @@ typedef struct _DriverFuncs {
      *   all of the elements in both arrays with HeapFree() */
     HRESULT (WINAPI *pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
             GUID **guids, UINT *num, UINT *default_index);
-    HRESULT (WINAPI *pGetPropValue)(GUID *guid,
-            const PROPERTYKEY *prop, PROPVARIANT *out);
 } DriverFuncs;
 
 extern DriverFuncs drvs DECLSPEC_HIDDEN;

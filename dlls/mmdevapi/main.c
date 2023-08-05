@@ -102,9 +102,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
     LDFC(GetEndpointIDs);
 #undef LDFC
 
-    /* optional - do not fail if not found */
-    driver->pGetPropValue = (void*)GetProcAddress(driver->module, "GetPropValue");
-
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     params.name     = wcsrchr(path, '\\');
     params.name     = params.name ? params.name + 1 : path;
