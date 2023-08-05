@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(data);
 struct application_data_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IApplicationDataStatics IApplicationDataStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IApplicationDataStatics ))
+    {
+        *out = &impl->IApplicationDataStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( application_data_statics, IApplicationDataStatics, struct application_data_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI application_data_statics_get_Current( IApplicationDataStatics *iface, IApplicationData **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IApplicationDataStaticsVtbl application_data_statics_vtbl =
+{
+    application_data_statics_QueryInterface,
+    application_data_statics_AddRef,
+    application_data_statics_Release,
+    /* IInspectable methods */
+    application_data_statics_GetIids,
+    application_data_statics_GetRuntimeClassName,
+    application_data_statics_GetTrustLevel,
+    /* IApplicationDataStatics methods */
+    application_data_statics_get_Current,
+};
+
 static struct application_data_statics application_data_statics =
 {
     {&factory_vtbl},
+    {&application_data_statics_vtbl},
     1,
 };
 

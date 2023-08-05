@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_ApplicationDataStatics(void)
 {
     static const WCHAR *application_data_statics_name = L"Windows.Storage.ApplicationData";
+    IApplicationDataStatics *application_data_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -69,6 +70,11 @@ static void test_ApplicationDataStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IApplicationDataStatics, (void **)&application_data_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IApplicationDataStatics_Release( application_data_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
