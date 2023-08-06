@@ -75,7 +75,7 @@ static void test_ApplicationDataStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IApplicationDataStatics_get_Current( application_data_statics, NULL );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = IApplicationDataStatics_get_Current( application_data_statics, &application_data );
     todo_wine ok( hr == 0x80073d54, "got hr %#lx.\n", hr );
     todo_wine ok( !application_data, "got application_data %p.\n", application_data );

@@ -85,12 +85,13 @@ static void test_ApplicationDataStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IApplicationDataStatics_get_Current( application_data_statics, NULL );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = IApplicationDataStatics_get_Current( application_data_statics, &application_data );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( application_data != NULL, "got NULL application_data %p.\n", application_data );
-    if (application_data) IApplicationData_Release( application_data );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( application_data != NULL, "got NULL application_data %p.\n", application_data );
 
+    ref = IApplicationData_Release( application_data );
+    ok( ref == 1, "got ref %ld.\n", ref );
     ref = IApplicationDataStatics_Release( application_data_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
