@@ -823,6 +823,7 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
     static TW_UINT32 possible_values[ARRAY_SIZE(supported_sizes)];
     unsigned int i;
     TW_UINT32 val;
+    double max_width, max_height;
     TW_UINT16 default_size = get_default_paper_size(supported_sizes, ARRAY_SIZE(supported_sizes));
     TW_UINT16 current_size = get_current_paper_size(supported_sizes, ARRAY_SIZE(supported_sizes));
 
@@ -849,7 +850,10 @@ static TW_UINT16 SANE_ICAPSupportedSizes (pTW_CAPABILITY pCapability, TW_UINT16 
                 for (i = 1; i < ARRAY_SIZE(supported_sizes); i++)
                     if (supported_sizes[i].size == val)
                         return set_width_height(supported_sizes[i].x, supported_sizes[i].y);
-
+            /* TWAIN: For devices that support physical dimensions TWSS_NONE indicates that the maximum
+               image size supported by the device is to be used. */
+            if (val == TWSS_NONE && get_width_height(&max_width, &max_height, TRUE) == TWCC_SUCCESS)
+                return set_width_height(max_width, max_height);
             ERR("Unsupported size %ld\n", val);
             twCC = TWCC_BADCAP;
             break;
