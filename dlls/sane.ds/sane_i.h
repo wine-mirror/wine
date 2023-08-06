@@ -208,6 +208,7 @@ TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry ) DE
 TW_UINT16 sane_option_get_max_scan_area( int *tlx, int *tly, int *brx, int *bry ) DECLSPEC_HIDDEN;
 TW_UINT16 sane_option_set_scan_area( int tlx, int tly, int brx, int bry, BOOL *reload ) DECLSPEC_HIDDEN;
 TW_FIX32 convert_sane_res_to_twain( int res ) DECLSPEC_HIDDEN;
+int convert_twain_res_to_sane( TW_FIX32 res ) DECLSPEC_HIDDEN;
 TW_UINT16 get_sane_params( struct frame_parameters *params ) DECLSPEC_HIDDEN;
 
 #endif

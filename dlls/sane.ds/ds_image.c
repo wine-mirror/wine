@@ -164,10 +164,10 @@ TW_UINT16 SANE_ImageLayoutSet (pTW_IDENTITY pOrigin,
             img->Frame.Right.Whole, img->Frame.Right.Frac,
             img->Frame.Bottom.Whole, img->Frame.Bottom.Frac);
 
-    tlx = img->Frame.Left.Whole   * 65536 + img->Frame.Left.Frac;
-    tly = img->Frame.Top.Whole    * 65536 + img->Frame.Top.Frac;
-    brx = img->Frame.Right.Whole  * 65536 + img->Frame.Right.Frac;
-    bry = img->Frame.Bottom.Whole * 65536 + img->Frame.Bottom.Frac;
+    tlx = convert_twain_res_to_sane( img->Frame.Left );
+    tly = convert_twain_res_to_sane( img->Frame.Top );
+    brx = convert_twain_res_to_sane( img->Frame.Right );
+    bry = convert_twain_res_to_sane( img->Frame.Bottom );
 
     twrc = sane_option_set_scan_area( tlx, tly, brx, bry, &changed );
     if (twrc != TWRC_SUCCESS)

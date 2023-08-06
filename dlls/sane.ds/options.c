@@ -200,6 +200,11 @@ TW_FIX32 convert_sane_res_to_twain(int res)
     return value;
 }
 
+int convert_twain_res_to_sane( TW_FIX32 res )
+{
+    return MulDiv( res.Whole * 65536 + res.Frac, 254, 10 );  /* inch -> mm */
+}
+
 TW_UINT16 get_sane_params( struct frame_parameters *params )
 {
     return SANE_CALL( get_params, params );
