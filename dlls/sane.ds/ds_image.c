@@ -301,10 +301,11 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     BITMAPINFOHEADER *header = NULL;
     int dib_bytes;
     int dib_bytes_per_line;
-    BYTE *line;
+    BYTE *line, color_buffer;
     RGBQUAD *colors;
+    RGBTRIPLE *pixels;
     int color_size = 0;
-    int i;
+    int i, j;
     BYTE *p;
 
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
@@ -425,6 +426,17 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             twRC = SANE_CALL( read_data, &params );
             if (twRC != TWCC_SUCCESS) break;
             if (retlen < activeDS.frame_params.bytes_per_line) break;
+            /* TWAIN: for 24 bit color DIBs, the pixels are stored in BGR order */
+            if (activeDS.frame_params.format == FMT_RGB && activeDS.frame_params.depth == 8)
+            {
+                pixels = (RGBTRIPLE *) line;
+                for (j = 0; j < activeDS.frame_params.pixels_per_line; ++j)
+                {
+                    color_buffer = pixels[j].rgbtRed;
+                    pixels[j].rgbtRed = pixels[j].rgbtBlue;
+                    pixels[j].rgbtBlue = color_buffer;
+                }
+            }
             line -= dib_bytes_per_line;
         }
         activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
