@@ -335,10 +335,8 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         switch (activeDS.frame_params.format)
         {
         case FMT_GRAY:
-            if (activeDS.frame_params.depth == 8)
-                color_size = (1 << 8) * sizeof(*colors);
-            else if (activeDS.frame_params.depth == 1)
-                ;
+            if (activeDS.frame_params.depth == 8 || activeDS.frame_params.depth == 1)
+                color_size = (1 << activeDS.frame_params.depth) * sizeof(*colors);
             else
             {
                 FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.frame_params.depth);
@@ -405,8 +403,15 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         {
             colors = (RGBQUAD *) p;
             p += color_size;
-            for (i = 0; i < (color_size / sizeof(*colors)); i++)
-                colors[i].rgbBlue = colors[i].rgbRed = colors[i].rgbGreen = i;
+            if (activeDS.frame_params.depth == 1)
+            {
+                /* Sane uses 1 to represent minimum intensity (black) and 0 for maximum (white) */
+                colors[0].rgbBlue = colors[0].rgbRed = colors[0].rgbGreen = 255;
+                colors[1].rgbBlue = colors[1].rgbRed = colors[1].rgbGreen = 0;
+            }
+            else
+                for (i = 0; i < (color_size / sizeof(*colors)); i++)
+                    colors[i].rgbBlue = colors[i].rgbRed = colors[i].rgbGreen = i;
         }
 
 
