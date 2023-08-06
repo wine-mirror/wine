@@ -49,6 +49,7 @@ static void test_ApplicationDataStatics(void)
 {
     static const WCHAR *application_data_statics_name = L"Windows.Storage.ApplicationData";
     IApplicationDataStatics *application_data_statics;
+    IApplicationData *application_data = NULL;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -72,6 +73,13 @@ static void test_ApplicationDataStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IApplicationDataStatics, (void **)&application_data_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IApplicationDataStatics_get_Current( application_data_statics, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IApplicationDataStatics_get_Current( application_data_statics, &application_data );
+    todo_wine ok( hr == 0x80073d54, "got hr %#lx.\n", hr );
+    todo_wine ok( !application_data, "got application_data %p.\n", application_data );
+    if (application_data) IApplicationData_Release( application_data );
 
     ref = IApplicationDataStatics_Release( application_data_statics );
     ok( ref == 2, "got ref %ld.\n", ref );

@@ -571,6 +571,7 @@ static void test_PackageStatics(void)
     hr = IPackageStatics_get_Current( package_statics, &package );
     todo_wine ok( hr == 0x80073d54, "got hr %#lx.\n", hr );
     todo_wine ok( !package, "got package %p.\n", package );
+    if (package) IPackage_Release( package );
 
     ref = IPackageStatics_Release( package_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
