@@ -552,15 +552,15 @@ static const BYTE spcidcWithEverything[] = {
  0x74,0x04,0x14,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,
  0x0e,0x0f,0x10,0x11,0x12,0x13,0x14 };
 
+static BYTE fakeDigest[] = {
+ 0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,
+ 0x11,0x12,0x13,0x14 };
+static BYTE parameters[] = { 't','e','s','t' };
+
 static void test_encodeSPCIndirectDataContent(void)
 {
     static char SPC_PE_IMAGE_DATA_OBJID_[] = SPC_PE_IMAGE_DATA_OBJID;
     static char szOID_OIWSEC_sha1_[] = szOID_OIWSEC_sha1;
-
-    static BYTE fakeDigest[] = {
-     0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,
-     0x11,0x12,0x13,0x14 };
-    static BYTE parameters[] = { 't','e','s','t' };
 
     SPC_INDIRECT_DATA_CONTENT indirectData = { { 0 } };
     DWORD size = 0;
@@ -672,6 +672,114 @@ static void test_encodeSPCIndirectDataContent(void)
              "Unexpected value\n");
         LocalFree(buf);
     }
+}
+
+static void test_decodeSPCIndirectDataContent(void)
+{
+    static const BYTE asn1Null[] = { 0x05,0x00 };
+
+    BOOL ret;
+    LPBYTE buf = NULL;
+    DWORD size = 0;
+    SPC_INDIRECT_DATA_CONTENT *indirectData;
+
+    if (!pCryptDecodeObjectEx)
+    {
+        win_skip("CryptDecodeObjectEx() is not available. Skipping the decodeSPCIndirectDataContent tests\n");
+        return;
+    }
+
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     emptyIndirectData, sizeof(emptyIndirectData),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        indirectData = (SPC_INDIRECT_DATA_CONTENT *)buf;
+        todo_wine
+        ok(indirectData->Data.pszObjId != NULL, "Expected non-NULL data objid\n");
+        if (indirectData->Data.pszObjId)
+            ok(!strcmp(indirectData->Data.pszObjId, ""),
+             "Expected empty data objid\n");
+        ok(indirectData->Data.Value.cbData == 0, "Expected no data value\n");
+        todo_wine
+        ok(indirectData->DigestAlgorithm.pszObjId != NULL,
+         "Expected non-NULL digest algorithm objid\n");
+        if (indirectData->DigestAlgorithm.pszObjId)
+            ok(!strcmp(indirectData->DigestAlgorithm.pszObjId, ""),
+             "Expected empty digest algorithm objid\n");
+        ok(indirectData->DigestAlgorithm.Parameters.cbData == 0,
+         "Expected no digest algorithm parameters\n");
+        ok(indirectData->Digest.cbData == 0, "Expected no digest\n");
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     spcidcWithOnlyDigest, sizeof(spcidcWithOnlyDigest),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        indirectData = (SPC_INDIRECT_DATA_CONTENT *)buf;
+        ok(indirectData->Digest.cbData == sizeof(fakeDigest),
+         "Unexpected digest size %ld\n", indirectData->Digest.cbData);
+        if (indirectData->Digest.cbData == sizeof(fakeDigest))
+            ok(!memcmp(indirectData->Digest.pbData, fakeDigest,
+                       sizeof(fakeDigest)),
+             "Unexpected flags\n");
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     spcidcWithDigestAndAlgorithm, sizeof(spcidcWithDigestAndAlgorithm),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (ret)
+    {
+        indirectData = (SPC_INDIRECT_DATA_CONTENT *)buf;
+        ok(indirectData->DigestAlgorithm.pszObjId != NULL,
+         "Expected non-NULL digest algorithm objid\n");
+        if (indirectData->DigestAlgorithm.pszObjId)
+            ok(!strcmp(indirectData->DigestAlgorithm.pszObjId, szOID_OIWSEC_sha1),
+             "Expected szOID_OIWSEC_sha1, got \"%s\"\n",
+             indirectData->DigestAlgorithm.pszObjId);
+        ok(indirectData->DigestAlgorithm.Parameters.cbData == sizeof(asn1Null),
+         "Unexpected digest algorithm parameters size %ld\n",
+         indirectData->DigestAlgorithm.Parameters.cbData);
+        if (indirectData->DigestAlgorithm.Parameters.cbData == sizeof(asn1Null))
+            ok(!memcmp(indirectData->DigestAlgorithm.Parameters.pbData,
+                       asn1Null, sizeof(asn1Null)),
+             "Unexpected digest algorithm parameters\n");
+        ok(indirectData->Digest.cbData == sizeof(fakeDigest),
+         "Unexpected digest size %ld\n", indirectData->Digest.cbData);
+        if (indirectData->Digest.cbData == sizeof(fakeDigest))
+            ok(!memcmp(indirectData->Digest.pbData, fakeDigest,
+                       sizeof(fakeDigest)),
+             "Unexpected flags\n");
+        LocalFree(buf);
+    }
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     spcidcWithDigestAndAlgorithmParams, sizeof(spcidcWithDigestAndAlgorithmParams),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    /* what? */
+    ok(!ret && GetLastError () == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+    if (ret)
+        LocalFree(buf);
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     spcidcWithEverythingExceptDataValue, sizeof(spcidcWithEverythingExceptDataValue),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    /* huh??? */
+    ok(!ret && GetLastError () == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+    if (ret)
+        LocalFree(buf);
+    ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
+     spcidcWithEverything, sizeof(spcidcWithEverything),
+     CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
+    /* ?????? */
+    ok(!ret && GetLastError () == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+    if (ret)
+        LocalFree(buf);
 }
 
 static WCHAR foo[] = { 'f','o','o',0 };
@@ -1096,6 +1204,7 @@ START_TEST(asn)
     test_encodeSPCPEImage();
     test_decodeSPCPEImage();
     test_encodeSPCIndirectDataContent();
+    test_decodeSPCIndirectDataContent();
     test_encodeCatMemberInfo();
     test_decodeCatMemberInfo();
     test_encodeCatNameValue();
