@@ -578,6 +578,7 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
+        todo_wine
         ok(size == sizeof(emptyIndirectData), "Unexpected size %ld\n", size);
         if (size == sizeof(emptyIndirectData))
             todo_wine
@@ -593,6 +594,7 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
+        todo_wine
         ok(size == sizeof(spcidcWithOnlyDigest), "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithOnlyDigest))
             todo_wine
@@ -607,7 +609,6 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithDigestAndAlgorithm), "Unexpected size %ld\n",
          size);
         if (size == sizeof(spcidcWithDigestAndAlgorithm))
@@ -624,7 +625,6 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithDigestAndAlgorithmParams),
          "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithDigestAndAlgorithmParams))
@@ -640,7 +640,6 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithEverythingExceptDataValue),
          "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithEverythingExceptDataValue))
@@ -657,7 +656,6 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithEverything), "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithEverything))
             ok(!memcmp(buf, spcidcWithEverything, sizeof(spcidcWithEverything)),

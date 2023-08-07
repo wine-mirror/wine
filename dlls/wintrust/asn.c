@@ -702,7 +702,7 @@ static BOOL WINAPI CRYPT_AsnEncodeSPCDigest(DWORD dwCertEncodingType,
     const struct SPCDigest *digest = pvStructInfo;
     struct AsnEncodeSequenceItem items[] = {
      { &digest->DigestAlgorithm, CRYPT_AsnEncodeAlgorithmIdWithNullParams, 0 },
-     { &digest->Digest,          CRYPT_CopyEncodedBlob, 0 },
+     { &digest->Digest,          CRYPT_AsnEncodeOctets, 0 },
     };
 
     return CRYPT_AsnEncodeSequence(X509_ASN_ENCODING, items, ARRAY_SIZE(items),
