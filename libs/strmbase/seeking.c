@@ -56,6 +56,7 @@ HRESULT strmbase_seeking_init(SourceSeeking *pSeeking, const IMediaSeekingVtbl *
 
 void strmbase_seeking_cleanup(SourceSeeking *seeking)
 {
+    seeking->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&seeking->cs);
 }
 
