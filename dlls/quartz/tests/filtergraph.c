@@ -23,6 +23,7 @@
 #define CONST_VTABLE
 
 #include "dshow.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
 
 static const GUID testguid = {0xabbccdde};
@@ -5076,6 +5077,8 @@ static void test_add_source_filter(void)
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
     ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_MPEG1Audio), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
     IFileSourceFilter_Release(filesource);
+    CoTaskMemFree(ret_filename);
+    FreeMediaType(&mt);
 
     hr = IFilterGraph2_AddSourceFilter(graph, filename, L"test", &filter2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5115,6 +5118,8 @@ static void test_add_source_filter(void)
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
     ok(IsEqualGUID(&mt.subtype, &MEDIATYPE_Midi), "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
     IFileSourceFilter_Release(filesource);
+    CoTaskMemFree(ret_filename);
+    FreeMediaType(&mt);
 
     hr = IFilterGraph2_RemoveFilter(graph, filter);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
