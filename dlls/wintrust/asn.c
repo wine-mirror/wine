@@ -652,6 +652,7 @@ static BOOL WINAPI CRYPT_CopyEncodedBlob(DWORD dwCertEncodingType,
     return ret;
 }
 
+/* Different from the one in crypt32 */
 static BOOL WINAPI CRYPT_AsnEncodeAlgorithmIdWithNullParams(
  DWORD dwCertEncodingType, LPCSTR lpszStructType, const void *pvStructInfo,
  BYTE *pbEncoded, DWORD *pcbEncoded)
@@ -665,12 +666,15 @@ static BOOL WINAPI CRYPT_AsnEncodeAlgorithmIdWithNullParams(
      { algo->pszObjId, CRYPT_AsnEncodeOid, 0 },
      { NULL,           CRYPT_CopyEncodedBlob, 0 },
     };
+    DWORD cItem = 2;
 
     if (algo->Parameters.cbData)
         items[1].pvStructInfo = &algo->Parameters;
-    else
+    else if (algo->pszObjId)
         items[1].pvStructInfo = &nullBlob;
-    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, ARRAY_SIZE(items),
+    else
+        cItem -= 1;
+    ret = CRYPT_AsnEncodeSequence(dwCertEncodingType, items, cItem,
      pbEncoded, pcbEncoded);
     return ret;
 }

@@ -578,10 +578,8 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(emptyIndirectData), "Unexpected size %ld\n", size);
         if (size == sizeof(emptyIndirectData))
-            todo_wine
             ok(!memcmp(buf, emptyIndirectData, sizeof(emptyIndirectData)),
              "Unexpected value\n");
         LocalFree(buf);
@@ -594,10 +592,8 @@ static void test_encodeSPCIndirectDataContent(void)
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithOnlyDigest), "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithOnlyDigest))
-            todo_wine
             ok(!memcmp(buf, spcidcWithOnlyDigest, sizeof(spcidcWithOnlyDigest)),
              "Unexpected value\n");
         LocalFree(buf);
