@@ -536,6 +536,8 @@ static void dsound_render_destroy(struct strmbase_filter *iface)
         IDirectSound8_Release(filter->dsound);
     filter->dsound = NULL;
 
+    IUnknown_Release(filter->system_clock);
+
     if (filter->sink.pin.peer)
         IPin_Disconnect(filter->sink.pin.peer);
     IPin_Disconnect(&filter->sink.pin.IPin_iface);
