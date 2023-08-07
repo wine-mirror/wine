@@ -1878,6 +1878,8 @@ static BOOL WINAPI CRYPT_AsnDecodeOidIgnoreTag(DWORD dwCertEncodingType,
                 }
             }
         }
+        else
+            bytesNeeded += 1;
         if (!pvStructInfo)
             *pcbStructInfo = bytesNeeded;
         else if (*pcbStructInfo < bytesNeeded)
@@ -1888,12 +1890,13 @@ static BOOL WINAPI CRYPT_AsnDecodeOidIgnoreTag(DWORD dwCertEncodingType,
         }
         else
         {
+            LPSTR pszObjId = *(LPSTR *)pvStructInfo;
+
+            *pszObjId = 0;
             if (dataLen)
             {
                 const BYTE *ptr;
-                LPSTR pszObjId = *(LPSTR *)pvStructInfo;
 
-                *pszObjId = 0;
                 pszObjId += sprintf(pszObjId, "%d.%d", pbEncoded[1 + lenBytes] / 40,
                  pbEncoded[1 + lenBytes] - (pbEncoded[1 + lenBytes] /
                  40) * 40);
@@ -1914,8 +1917,6 @@ static BOOL WINAPI CRYPT_AsnDecodeOidIgnoreTag(DWORD dwCertEncodingType,
                     pszObjId += sprintf(pszObjId, ".%d", val);
                 }
             }
-            else
-                *(LPSTR *)pvStructInfo = NULL;
             *pcbStructInfo = bytesNeeded;
         }
     }

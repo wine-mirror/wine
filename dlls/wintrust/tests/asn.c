@@ -682,13 +682,11 @@ static void test_decodeSPCIndirectDataContent(void)
     if (ret)
     {
         indirectData = (SPC_INDIRECT_DATA_CONTENT *)buf;
-        todo_wine
         ok(indirectData->Data.pszObjId != NULL, "Expected non-NULL data objid\n");
         if (indirectData->Data.pszObjId)
             ok(!strcmp(indirectData->Data.pszObjId, ""),
              "Expected empty data objid\n");
         ok(indirectData->Data.Value.cbData == 0, "Expected no data value\n");
-        todo_wine
         ok(indirectData->DigestAlgorithm.pszObjId != NULL,
          "Expected non-NULL digest algorithm objid\n");
         if (indirectData->DigestAlgorithm.pszObjId)
