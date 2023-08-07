@@ -2600,6 +2600,13 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
             goto failed;
         }
 
+        /* read-only files cannot be replaced */
+        if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            goto failed;
+        }
+
         /* can't replace an opened file */
         if ((inode = get_inode( st.st_dev, st.st_ino, -1 )))
         {
