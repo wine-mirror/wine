@@ -1595,6 +1595,53 @@ static void key_destroy( struct key *key )
     destroy_object( &key->hdr );
 }
 
+static NTSTATUS convert_legacy_rsaprivate_blob( struct algorithm *alg, BCRYPT_RSAKEY_BLOB **rsa_data,
+                                                ULONG *rsa_len, UCHAR *input, ULONG input_len )
+{
+    struct {
+        PUBLICKEYSTRUC header;
+        RSAPUBKEY rsapubkey;
+    } *blob = (void *)input;
+    ULONG len, pos;
+    UCHAR *conv;
+    int i;
+
+    if (alg->id != ALG_ID_RSA) return STATUS_NOT_SUPPORTED;
+    if (input_len < sizeof(*blob)) return NTE_BAD_DATA;
+    if (blob->header.bType != PRIVATEKEYBLOB || blob->header.bVersion != CUR_BLOB_VERSION ||
+            blob->header.aiKeyAlg != CALG_RSA_KEYX ||
+            blob->rsapubkey.magic != BCRYPT_RSAPRIVATE_MAGIC ||
+            input_len != sizeof(*blob) + blob->rsapubkey.bitlen / 16 * 9) return NTE_BAD_DATA;
+    if (blob->rsapubkey.bitlen & 0xf) return STATUS_INVALID_PARAMETER;
+
+    len = sizeof(**rsa_data) + sizeof(blob->rsapubkey.pubexp) + blob->rsapubkey.bitlen / 4;
+    if (!(conv = malloc( len ))) return STATUS_NO_MEMORY;
+
+    *rsa_data = (BCRYPT_RSAKEY_BLOB *)conv;
+    (*rsa_data)->Magic = blob->rsapubkey.magic;
+    (*rsa_data)->BitLength = blob->rsapubkey.bitlen;
+    (*rsa_data)->cbPublicExp = sizeof(blob->rsapubkey.pubexp);
+    (*rsa_data)->cbModulus = blob->rsapubkey.bitlen / 8;
+    (*rsa_data)->cbPrime1 = blob->rsapubkey.bitlen / 16;
+    (*rsa_data)->cbPrime2 = blob->rsapubkey.bitlen / 16;
+    len = sizeof(**rsa_data);
+
+    for(i = 0; i < (*rsa_data)->cbPublicExp; i++)
+        conv[len++] = ((UCHAR *)&blob->rsapubkey.pubexp)[(*rsa_data)->cbPublicExp - i - 1];
+    pos = sizeof(*blob);
+    for(i = 0; i < (*rsa_data)->cbModulus; i++)
+        conv[len++] = input[pos + (*rsa_data)->cbModulus - i - 1];
+    pos += (*rsa_data)->cbModulus;
+    for(i = 0; i < (*rsa_data)->cbPrime1; i++)
+        conv[len++] = input[pos + (*rsa_data)->cbPrime1 - i - 1];
+    pos += (*rsa_data)->cbPrime1;
+    for(i = 0; i < (*rsa_data)->cbPrime2; i++)
+        conv[len++] = input[pos + (*rsa_data)->cbPrime2 - i - 1];
+
+    *rsa_len = len;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
                                  ULONG input_len )
 {
@@ -1748,6 +1795,19 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         *ret_key = key;
         return STATUS_SUCCESS;
+    }
+    else if (!wcscmp( type, LEGACY_RSAPRIVATE_BLOB ))
+    {
+        BCRYPT_RSAKEY_BLOB *rsa_blob;
+
+        status = convert_legacy_rsaprivate_blob( alg, &rsa_blob, &input_len, input, input_len );
+        if (status != STATUS_SUCCESS)
+                return status;
+
+        status = key_import_pair( alg, BCRYPT_RSAPRIVATE_BLOB, ret_key, (UCHAR *)rsa_blob, input_len );
+        SecureZeroMemory( rsa_blob, input_len );
+        free( rsa_blob );
+        return status;
     }
     else if (!wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ))
     {
