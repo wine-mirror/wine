@@ -575,11 +575,9 @@ static void test_encodeSPCIndirectDataContent(void)
 
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(emptyIndirectData), "Unexpected size %ld\n", size);
         if (size == sizeof(emptyIndirectData))
             todo_wine
@@ -592,11 +590,9 @@ static void test_encodeSPCIndirectDataContent(void)
     indirectData.Digest.pbData = fakeDigest;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(size == sizeof(spcidcWithOnlyDigest), "Unexpected size %ld\n", size);
         if (size == sizeof(spcidcWithOnlyDigest))
             todo_wine
@@ -608,7 +604,6 @@ static void test_encodeSPCIndirectDataContent(void)
     indirectData.DigestAlgorithm.pszObjId = szOID_OIWSEC_sha1_;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
@@ -626,7 +621,6 @@ static void test_encodeSPCIndirectDataContent(void)
     indirectData.DigestAlgorithm.Parameters.pbData = parameters;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
@@ -643,7 +637,6 @@ static void test_encodeSPCIndirectDataContent(void)
     indirectData.Data.pszObjId = SPC_PE_IMAGE_DATA_OBJID_;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
@@ -661,7 +654,6 @@ static void test_encodeSPCIndirectDataContent(void)
     indirectData.Data.Value.pbData = (void*)emptySequence;
     ret = pCryptEncodeObjectEx(X509_ASN_ENCODING, SPC_INDIRECT_DATA_CONTENT_STRUCT,
      &indirectData, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
-    todo_wine
     ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {

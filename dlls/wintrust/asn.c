@@ -681,7 +681,7 @@ static BOOL WINAPI CRYPT_AsnEncodeAttributeTypeValue(DWORD dwCertEncodingType,
 {
     const CRYPT_ATTRIBUTE_TYPE_VALUE *typeValue = pvStructInfo;
     struct AsnEncodeSequenceItem items[] = {
-     { &typeValue->pszObjId, CRYPT_AsnEncodeOid, 0 },
+     { typeValue->pszObjId,  CRYPT_AsnEncodeOid, 0 },
      { &typeValue->Value,    CRYPT_CopyEncodedBlob, 0 },
     };
 
