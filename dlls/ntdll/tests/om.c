@@ -412,6 +412,16 @@ static void test_name_collisions(void)
     ok( iosb.Information == FILE_OPENED, "wrong info %Ix\n", iosb.Information );
     pNtClose(h1);
 
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = pNtCreateNamedPipeFile( &h1, GENERIC_READ|GENERIC_WRITE, &attr, &iosb,
+                                     FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                     FILE_OPEN_IF, FILE_PIPE_FULL_DUPLEX,
+                                     FALSE, FALSE, FALSE, 10, 256, 256, NULL );
+    ok(status == STATUS_SUCCESS, "failed to create pipe %08lx\n", status);
+    ok( iosb.Status == STATUS_SUCCESS, "wrong status %08lx\n", status);
+    ok( iosb.Information == FILE_OPENED, "wrong info %Ix\n", iosb.Information );
+    pNtClose(h1);
+
     h1 = CreateNamedPipeA( "\\\\.\\pipe\\named_pipe", PIPE_ACCESS_DUPLEX,
                           PIPE_READMODE_BYTE, 10, 256, 256, 1000, NULL );
     winerr = GetLastError();
