@@ -1451,11 +1451,25 @@ typedef struct _FILE_RENAME_INFORMATION {
 #define FILE_RENAME_IGNORE_READONLY_ATTRIBUTE               0x00000040
 
 typedef struct _FILE_LINK_INFORMATION {
-    BOOLEAN ReplaceIfExists;
+    union {
+        BOOLEAN ReplaceIfExists;
+        ULONG Flags;
+    } DUMMYUNIONNAME;
     HANDLE RootDirectory;
     ULONG FileNameLength;
     WCHAR FileName[1];
 } FILE_LINK_INFORMATION, *PFILE_LINK_INFORMATION;
+
+#define FILE_LINK_REPLACE_IF_EXISTS                         0x00000001
+#define FILE_LINK_POSIX_SEMANTICS                           0x00000002
+#define FILE_LINK_SUPPRESS_STORAGE_RESERVE_INHERITANCE      0x00000008
+#define FILE_LINK_NO_INCREASE_AVAILABLE_SPACE               0x00000010
+#define FILE_LINK_NO_DECREASE_AVAILABLE_SPACE               0x00000020
+#define FILE_LINK_PRESERVE_AVAILABLE_SPACE                  0x00000030
+#define FILE_LINK_IGNORE_READONLY_ATTRIBUTE                 0x00000040
+#define FILE_LINK_FORCE_RESIZE_TARGET_SR                    0x00000080
+#define FILE_LINK_FORCE_RESIZE_SOURCE_SR                    0x00000100
+#define FILE_LINK_FORCE_RESIZE_SR                           0x00000180
 
 typedef struct _FILE_NAMES_INFORMATION {
     ULONG NextEntryOffset;
