@@ -1733,6 +1733,15 @@ static NTSTATUS unix_is_started(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_get_prop_value(void *args)
+{
+    struct get_prop_value_params *params = args;
+
+    params->result = E_NOTIMPL;
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS unix_set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
@@ -1816,7 +1825,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_set_event_handle,
     unix_not_implemented,
     unix_is_started,
-    unix_not_implemented,
+    unix_get_prop_value,
     unix_midi_init,
     unix_midi_release,
     unix_midi_out_message,
@@ -2184,6 +2193,62 @@ static NTSTATUS unix_wow64_set_event_handle(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS unix_wow64_get_prop_value(void *args)
+{
+    struct propvariant32
+    {
+        WORD vt;
+        WORD pad1, pad2, pad3;
+        union
+        {
+            ULONG ulVal;
+            PTR32 ptr;
+            ULARGE_INTEGER uhVal;
+        };
+    } *value32;
+    struct
+    {
+        PTR32 device;
+        EDataFlow flow;
+        PTR32 guid;
+        PTR32 prop;
+        HRESULT result;
+        PTR32 value;
+        PTR32 buffer; /* caller allocated buffer to hold value's strings */
+        PTR32 buffer_size;
+    } *params32 = args;
+    PROPVARIANT value;
+    struct get_prop_value_params params =
+    {
+        .device = ULongToPtr(params32->device),
+        .flow = params32->flow,
+        .guid = ULongToPtr(params32->guid),
+        .prop = ULongToPtr(params32->prop),
+        .value = &value,
+        .buffer = ULongToPtr(params32->buffer),
+        .buffer_size = ULongToPtr(params32->buffer_size)
+    };
+    unix_get_prop_value(&params);
+    params32->result = params.result;
+    if (SUCCEEDED(params.result))
+    {
+        value32 = UlongToPtr(params32->value);
+        value32->vt = value.vt;
+        switch (value.vt)
+        {
+        case VT_UI4:
+            value32->ulVal = value.ulVal;
+            break;
+        case VT_LPWSTR:
+            value32->ptr = params32->buffer;
+            break;
+        default:
+            FIXME("Unhandled vt %04x\n", value.vt);
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     unix_process_attach,
@@ -2213,7 +2278,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_wow64_set_event_handle,
     unix_not_implemented,
     unix_is_started,
-    unix_not_implemented,
+    unix_wow64_get_prop_value,
     unix_wow64_midi_init,
     unix_midi_release,
     unix_wow64_midi_out_message,
