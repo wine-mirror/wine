@@ -2851,10 +2851,10 @@ static struct topo_node *session_get_node_object(struct media_session *session, 
     LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
     {
         if (node->type == node_type && object == node->object.object)
-            break;
+            return node;
     }
 
-    return node;
+    return NULL;
 }
 
 static BOOL session_set_node_object_state(struct media_session *session, IUnknown *object,
