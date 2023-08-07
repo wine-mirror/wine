@@ -2601,7 +2601,8 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
         }
 
         /* read-only files cannot be replaced */
-        if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+        if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) &&
+            !(flags & FILE_RENAME_IGNORE_READONLY_ATTRIBUTE))
         {
             set_error( STATUS_ACCESS_DENIED );
             goto failed;
