@@ -521,7 +521,10 @@ static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
     ULONG refcount = InterlockedDecrement(&callback->refcount);
 
     if (!refcount)
+    {
+        CloseHandle(callback->event);
         free(callback);
+    }
 
     return refcount;
 }
@@ -804,6 +807,7 @@ static struct test_callback * create_test_callback(const IMFAsyncCallbackVtbl *v
 
     callback->IMFAsyncCallback_iface.lpVtbl = vtbl ? vtbl : &testcallbackvtbl;
     callback->refcount = 1;
+    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     return callback;
 }
@@ -816,7 +820,6 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
     HRESULT hr;
 
     callback = create_test_callback(&events_callback_vtbl);
-    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     for (;;)
     {
@@ -847,7 +850,6 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
         }
     }
 
-    CloseHandle(callback->event);
     if (callback->media_event)
         IMFMediaEvent_Release(callback->media_event);
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
@@ -937,7 +939,6 @@ static void test_source_resolver(void)
     IMFByteStream_Release(stream);
 
     /* Create from URL. */
-    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"nonexisting.mp4", MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
             (IUnknown **)&stream);
@@ -1234,7 +1235,6 @@ static void test_source_resolver(void)
             (void **)&scheme_handler);
     ok(hr == S_OK, "Failed to create handler object, hr %#lx.\n", hr);
 
-    callback2->event = callback->event;
     cancel_cookie = NULL;
     hr = IMFSchemeHandler_BeginCreateObject(scheme_handler, pathW, MF_RESOLUTION_MEDIASOURCE, NULL, &cancel_cookie,
             &callback2->IMFAsyncCallback_iface, (IUnknown *)scheme_handler);
@@ -1248,8 +1248,6 @@ static void test_source_resolver(void)
 
     if (do_uninit)
         CoUninitialize();
-
-    CloseHandle(callback->event);
 
     IMFSourceResolver_Release(resolver);
 
@@ -3524,15 +3522,11 @@ static void test_event_queue(void)
     hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback2->IMFAsyncCallback_iface, (IUnknown *)&callback->IMFAsyncCallback_iface);
     ok(hr == MF_E_MULTIPLE_SUBSCRIBERS, "Unexpected hr %#lx.\n", hr);
 
-    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
-
     hr = IMFMediaEventQueue_QueueEvent(queue, event);
     ok(hr == S_OK, "Failed to queue event, hr %#lx.\n", hr);
 
     ret = WaitForSingleObject(callback->event, 500);
     ok(ret == WAIT_OBJECT_0, "Unexpected return value %#lx.\n", ret);
-
-    CloseHandle(callback->event);
 
     IMFMediaEvent_Release(event);
 
@@ -4957,8 +4951,6 @@ static void test_async_create_file(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Fail to start up, hr %#lx.\n", hr);
 
-    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
-
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     GetTempFileNameW(pathW, NULL, 0, fileW);
 
@@ -4970,8 +4962,6 @@ static void test_async_create_file(void)
     WaitForSingleObject(callback->event, INFINITE);
 
     IUnknown_Release(cancel_cookie);
-
-    CloseHandle(callback->event);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -5856,7 +5846,6 @@ static void test_queue_com_state(const char *name)
     HRESULT hr;
 
     callback = create_test_callback(&test_queue_com_state_callback_vtbl);
-    callback->event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -5887,8 +5876,6 @@ static void test_queue_com_state(const char *name)
             ok(hr == S_OK, "Failed to unlock the queue, hr %#lx.\n", hr);
         }
     }
-
-    CloseHandle(callback->event);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
