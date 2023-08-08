@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <bcrypt.h>
 #include <ncrypt.h>
+#include <wincrypt.h>
 
 #include "wine/test.h"
 
@@ -2365,6 +2366,56 @@ static UCHAR rsaFullPrivateBlob[] =
     0x9d, 0xe2, 0xcc, 0x5a, 0xf1, 0x68, 0x30, 0xe5, 0xbc, 0x8d, 0xad,
 };
 
+static struct
+{
+    PUBLICKEYSTRUC header;
+    RSAPUBKEY rsapubkey;
+    BYTE modulus[512 / 8];
+    BYTE prime1[512 / 16];
+    BYTE prime2[512 / 16];
+    BYTE exp1[512 / 16];
+    BYTE exp2[512 / 16];
+    BYTE coefficient[512 / 16];
+    BYTE private_exp[512 / 8];
+
+} rsaLegacyPrivateBlob =
+{
+    { PRIVATEKEYBLOB, CUR_BLOB_VERSION, 0, CALG_RSA_KEYX },
+    { BCRYPT_RSAPRIVATE_MAGIC, 512, 0x10001 },
+    {
+        0x91, 0xe3, 0x6b, 0x5b, 0xea, 0x13, 0x39, 0xca, 0x99, 0x99, 0x6f, 0x1f, 0x69, 0xfd, 0x37, 0x50,
+        0xa7, 0xe8, 0xc5, 0xa5, 0x1d, 0xbb, 0x8a, 0x1e, 0xd1, 0x86, 0xa6, 0xe2, 0xf3, 0xf9, 0xa2, 0x0d,
+        0xc4, 0x62, 0xb3, 0xfe, 0x1f, 0x8b, 0x48, 0xb2, 0x66, 0x45, 0x9e, 0x81, 0xd7, 0xcd, 0xc8, 0xeb,
+        0xe9, 0x74, 0x95, 0x33, 0xf3, 0xa7, 0x66, 0x94, 0x83, 0x69, 0xa9, 0xb5, 0x26, 0x46, 0x8b, 0xa6
+    },
+    {
+        0xc3, 0x94, 0x22, 0xdd, 0x05, 0x73, 0x05, 0xce, 0x48, 0x38, 0x91, 0x7d, 0xeb, 0x2e, 0x7f, 0x88,
+        0xcb, 0x34, 0x1b, 0x1f, 0xa4, 0x6d, 0xa0, 0xe8, 0xa9, 0xac, 0xb1, 0x21, 0x0b, 0x2c, 0xd2, 0xc0
+    },
+    {
+        0x1b, 0xd1, 0x31, 0x1c, 0xb5, 0xb5, 0x1a, 0x04, 0xd7, 0x6e, 0x56, 0x6a, 0x52, 0x92, 0xb8, 0x60,
+        0x49, 0xf8, 0x06, 0x3f, 0x5f, 0x92, 0xe5, 0xed, 0xf9, 0x94, 0x2e, 0x41, 0xc5, 0xfd, 0x1c, 0xdd
+    },
+    {
+        0x1b, 0xf9, 0x5b, 0xc7, 0x0c, 0xec, 0x21, 0xec, 0xb3, 0xd3, 0x24, 0x20, 0x6f, 0x32, 0x49, 0xda,
+        0xf5, 0x59, 0x2d, 0xbb, 0x19, 0x7b, 0x40, 0xb6, 0xc1, 0xfe, 0xab, 0x61, 0x69, 0xd1, 0xf3, 0xa3
+    },
+    {
+        0x25, 0xe6, 0xe3, 0xf2, 0x03, 0xe4, 0x55, 0x09, 0x36, 0xee, 0x7a, 0x36, 0x02, 0x9b, 0x0d, 0xc5,
+        0xa9, 0x49, 0xcb, 0x3c, 0x3f, 0x66, 0x2d, 0xfd, 0x72, 0xc6, 0x55, 0xda, 0x61, 0xe9, 0x6e, 0xba
+    },
+    {
+        0x24, 0x1c, 0x6e, 0xb6, 0x98, 0xb4, 0x7c, 0x21, 0x88, 0x9f, 0xda, 0xfa, 0x5e, 0xd4, 0x4a, 0x38,
+        0x4e, 0x43, 0x79, 0x10, 0xad, 0xfd, 0x84, 0x37, 0x8d, 0x0e, 0x27, 0xfb, 0x2b, 0x7f, 0x89, 0x14
+    },
+    {
+        0xad, 0x8d, 0xbc, 0xe5, 0x30, 0x68, 0xf1, 0x5a, 0xcc, 0xe2, 0x9d, 0x02, 0xec, 0x72, 0xa7, 0xb1,
+        0xd5, 0x2e, 0x55, 0xcd, 0x82, 0xef, 0x77, 0xd0, 0x7a, 0xb3, 0x2b, 0x5e, 0xf1, 0x6d, 0xe2, 0x1a,
+        0x6f, 0x81, 0xe4, 0xb9, 0xe7, 0x09, 0xd5, 0x83, 0xad, 0x69, 0x64, 0xb5, 0x80, 0x24, 0xb3, 0x47,
+        0x5f, 0x8b, 0x96, 0x4b, 0xaf, 0x09, 0x36, 0xdc, 0xc0, 0x84, 0xd3, 0x6f, 0x22, 0xe7, 0xe5, 0x09
+    }
+};
+
 
 static UCHAR rsaPublicBlobWithInvalidPublicExpSize[] =
 {
@@ -2395,15 +2446,16 @@ static void test_rsa_encrypt(void)
 {
     static UCHAR input[] = "Hello World!";
     static UCHAR input_no_padding[64] = { 0 };
+    UCHAR encrypted[64], decrypted[64];
     BCRYPT_ALG_HANDLE rsa = 0;
-    BCRYPT_KEY_HANDLE key = 0;
+    BCRYPT_KEY_HANDLE key = 0, key2;
     NTSTATUS ret = 0;
     DWORD encrypted_size = 60;
     UCHAR *encrypted_a = NULL;
     UCHAR *encrypted_b = NULL;
     DWORD decrypted_size = 0;
-    UCHAR *decrypted = NULL;
     BCRYPT_OAEP_PADDING_INFO oaep_pad;
+
     oaep_pad.pszAlgId = BCRYPT_MD5_ALGORITHM;
     oaep_pad.pbLabel = (PUCHAR)"test";
     oaep_pad.cbLabel = 5;
@@ -2453,10 +2505,9 @@ static void test_rsa_encrypt(void)
     ok(!memcmp(encrypted_b, rsa_encrypted_no_padding, encrypted_size), "Data mismatch.\n");
 
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_NONE);
-    decrypted = malloc(decrypted_size);
+    ok(decrypted_size == sizeof(input_no_padding), "got %lu\n", decrypted_size);
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size, &decrypted_size, BCRYPT_PAD_NONE);
     ok(!memcmp(decrypted, input_no_padding, sizeof(input_no_padding)), "Decrypted output it's not what expected\n");
-    free(decrypted);
     }
 
     encrypted_size = 60;
@@ -2478,10 +2529,8 @@ static void test_rsa_encrypt(void)
 
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_PKCS1);
     ok(decrypted_size == sizeof(input), "got size of %ld\n", decrypted_size);
-    decrypted = malloc(decrypted_size);
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, decrypted, decrypted_size, &decrypted_size, BCRYPT_PAD_PKCS1);
     ok(!memcmp(decrypted, input, sizeof(input)), "Decrypted output it's not what expected\n");
-    free(decrypted);
 
     todo_wine {
     encrypted_size = 60;
@@ -2501,15 +2550,34 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs are the same\n");
 
+    decrypted_size = 0;
+    memset(decrypted, 0, sizeof(decrypted));
     BCryptDecrypt(key, encrypted_a, encrypted_size, &oaep_pad, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_OAEP);
-    decrypted = malloc(decrypted_size);
+    ok(decrypted_size == sizeof(input), "got %lu\n", decrypted_size);
     BCryptDecrypt(key, encrypted_a, encrypted_size, &oaep_pad, NULL, 0, decrypted, decrypted_size, &decrypted_size, BCRYPT_PAD_OAEP);
     ok(!memcmp(decrypted, input, sizeof(input)), "Decrypted output it's not what expected\n");
-    free(decrypted);
     }
 
     free(encrypted_a);
     free(encrypted_b);
+
+    ret = BCryptImportKeyPair(rsa, NULL, LEGACY_RSAPRIVATE_BLOB, &key2,
+            (UCHAR *)&rsaLegacyPrivateBlob, sizeof(rsaLegacyPrivateBlob), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptEncrypt(key2, input, sizeof(input), NULL, NULL, 0,
+            encrypted, sizeof(encrypted), &encrypted_size, BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(encrypted_size == 64, "got size of %ld\n", encrypted_size);
+
+    memset(decrypted, 0, sizeof(decrypted));
+    ret = BCryptDecrypt(key, encrypted, sizeof(encrypted), NULL, NULL, 0,
+            decrypted, sizeof(decrypted), &decrypted_size, BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
+    ok(decrypted_size == sizeof(input), "got size of %ld\n", decrypted_size);
+    ok(!memcmp(decrypted, input, sizeof(input)), "Decrypted output it's not what expected\n");
+
+    BCryptDestroyKey(key2);
     BCryptDestroyKey(key);
 
     if (pBCryptHash)
