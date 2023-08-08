@@ -75,6 +75,8 @@ typedef LONG NTSTATUS;
 #define LEGACY_DSA_PRIVATE_BLOB     L"CAPIDSAPRIVATEBLOB"
 #define LEGACY_DSA_V2_PUBLIC_BLOB   L"V2CAPIDSAPUBLICBLOB"
 #define LEGACY_DSA_V2_PRIVATE_BLOB  L"V2CAPIDSAPRIVATEBLOB"
+#define LEGACY_RSAPUBLIC_BLOB       L"CAPIPUBLICBLOB"
+#define LEGACY_RSAPRIVATE_BLOB      L"CAPIPRIVATEBLOB"
 
 #define MS_PRIMITIVE_PROVIDER       L"Microsoft Primitive Provider"
 #define MS_PLATFORM_CRYPTO_PROVIDER L"Microsoft Platform Crypto Provider"
@@ -148,6 +150,8 @@ static const WCHAR LEGACY_DSA_PUBLIC_BLOB[] = {'C','A','P','I','D','S','A','P','
 static const WCHAR LEGACY_DSA_PRIVATE_BLOB[] = {'C','A','P','I','D','S','A','P','R','I','V','A','T','E','B','L','O','B',0};
 static const WCHAR LEGACY_DSA_V2_PUBLIC_BLOB[] = {'V','2','C','A','P','I','D','S','A','P','U','B','L','I','C','B','L','O','B',0};
 static const WCHAR LEGACY_DSA_V2_PRIVATE_BLOB[] = {'V','2','C','A','P','I','D','S','A','P','R','I','V','A','T','E','B','L','O','B',0};
+static const WCHAR LEGACY_RSAPUBLIC_BLOB[] = {'C','A','P','I','P','U','B','L','I','C','B','L','O','B',0};
+static const WCHAR LEGACY_RSAPRIVATE_BLOB[] = {'C','A','P','I','P','R','I','V','A','T','E','B','L','O','B',0};
 
 static const WCHAR MS_PRIMITIVE_PROVIDER[] = \
 {'M','i','c','r','o','s','o','f','t',' ','P','r','i','m','i','t','i','v','e',' ','P','r','o','v','i','d','e','r',0};
