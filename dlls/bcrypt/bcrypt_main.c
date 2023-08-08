@@ -122,7 +122,7 @@ builtin_algorithms[] =
     {  BCRYPT_RNG_ALGORITHM,        BCRYPT_RNG_INTERFACE,                   0,      0,    0 },
 };
 
-static inline BOOL is_symmetric_key( struct key *key )
+static inline BOOL is_symmetric_key( const struct key *key )
 {
     return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
@@ -902,6 +902,18 @@ static NTSTATUS get_hash_property( const struct hash *hash, const WCHAR *prop, U
 
 static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
+    if (!wcscmp( prop, BCRYPT_KEY_STRENGTH ))
+    {
+        *ret_size = sizeof(DWORD);
+        if (size < sizeof(DWORD)) return STATUS_BUFFER_TOO_SMALL;
+        if (buf)
+        {
+            if (is_symmetric_key(key)) *(DWORD *)buf = key->u.s.block_size * 8;
+            else *(DWORD *)buf = key->u.a.bitlen;
+        }
+        return STATUS_SUCCESS;
+    }
+
     switch (key->alg_id)
     {
     case ALG_ID_3DES:

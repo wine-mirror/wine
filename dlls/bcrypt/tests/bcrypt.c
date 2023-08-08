@@ -781,6 +781,12 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(key != NULL, "key not set\n");
 
+    keylen = 0;
+    ret = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&keylen, sizeof(keylen), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == sizeof(keylen), "got %lu\n", size);
+    ok(keylen == 128, "got %lu\n", keylen);
+
     ret = BCryptSetProperty(aes, BCRYPT_CHAINING_MODE, (UCHAR *)BCRYPT_CHAIN_MODE_CBC,
                             sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -2176,6 +2182,7 @@ static void test_ECDSA(void)
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_KEY_HANDLE key;
     NTSTATUS status;
+    DWORD keylen;
     ULONG size;
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
@@ -2210,6 +2217,12 @@ static void test_ECDSA(void)
 
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
+
+    keylen = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&keylen, sizeof(keylen), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(keylen), "got %lu\n", size);
+    ok(keylen == 256, "got %lu\n", keylen);
 
     memset(buffer, 0xcc, sizeof(buffer));
     status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
@@ -2542,6 +2555,12 @@ static void test_RSA(void)
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
     ok(!ret, "BCryptImportKeyPair failed: %#lx\n", ret);
 
+    keylen = 0;
+    ret = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&keylen, sizeof(keylen), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == sizeof(keylen), "got %lu\n", size);
+    ok(keylen == 2048, "got %lu\n", keylen);
+
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
     ok(!ret, "BCryptVerifySignature failed: %#lx\n", ret);
@@ -2579,6 +2598,12 @@ static void test_RSA(void)
 
     ret = BCryptFinalizeKeyPair(key, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    keylen = 0;
+    ret = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&keylen, sizeof(keylen), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(size == sizeof(keylen), "got %lu\n", size);
+    ok(keylen == 2048, "got %lu\n", keylen);
 
     ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
