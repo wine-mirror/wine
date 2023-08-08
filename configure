@@ -1195,6 +1195,7 @@ enable_loadperf
 enable_localspl
 enable_localui
 enable_lz32
+enable_magnification
 enable_mapi32
 enable_mapistub
 enable_mciavi32
@@ -21465,6 +21466,7 @@ wine_fn_config_makefile dlls/localui/tests enable_tests
 wine_fn_config_makefile dlls/lz32 enable_lz32
 wine_fn_config_makefile dlls/lz32/tests enable_tests
 wine_fn_config_makefile dlls/lzexpand.dll16 enable_win16
+wine_fn_config_makefile dlls/magnification enable_magnification
 wine_fn_config_makefile dlls/mapi32 enable_mapi32
 wine_fn_config_makefile dlls/mapi32/tests enable_tests
 wine_fn_config_makefile dlls/mapistub enable_mapistub
