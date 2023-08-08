@@ -155,6 +155,7 @@ struct transform_stream
     struct list samples;
     unsigned int requests;
     unsigned int min_buffer_size;
+    BOOL draining;
 };
 
 enum topo_node_flags
@@ -892,7 +893,9 @@ static HRESULT session_subscribe_sources(struct media_session *session)
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
+    struct topo_node *topo_node;
     HRESULT hr;
+    UINT i;
 
     switch (session->state)
     {
@@ -925,6 +928,18 @@ static void session_start(struct media_session *session, const GUID *time_format
                     WARN("Failed to start media source %p, hr %#lx.\n", source->source, hr);
                     session_command_complete_with_event(session, MESessionStarted, hr, NULL);
                     return;
+                }
+            }
+
+            LIST_FOR_EACH_ENTRY(topo_node, &session->presentation.nodes, struct topo_node, entry)
+            {
+                if (topo_node->type == MF_TOPOLOGY_TRANSFORM_NODE)
+                {
+                    for (i = 0; i < topo_node->u.transform.input_count; i++)
+                    {
+                        struct transform_stream *stream = &topo_node->u.transform.inputs[i];
+                        stream->draining = FALSE;
+                    }
                 }
             }
 
@@ -3151,12 +3166,27 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
     return hr;
 }
 
+static BOOL transform_node_is_drained(struct topo_node *topo_node)
+{
+    UINT i;
+
+    for (i = 0; i < topo_node->u.transform.input_count; i++)
+    {
+        struct transform_stream *stream = &topo_node->u.transform.inputs[i];
+        if (!stream->draining)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
         IMFSample *sample);
 
 static void transform_node_deliver_samples(struct media_session *session, struct topo_node *topo_node)
 {
     IMFTopologyNode *up_node = topo_node->node, *down_node;
+    BOOL drained = transform_node_is_drained(topo_node);
     struct sample *sample, *next;
     DWORD output, input;
     HRESULT hr;
@@ -3183,6 +3213,12 @@ static void transform_node_deliver_samples(struct media_session *session, struct
             transform_release_sample(sample);
         }
 
+        while (stream->requests && drained)
+        {
+            session_deliver_sample_to_node(session, down_node, input, NULL);
+            stream->requests--;
+        }
+
         IMFTopologyNode_Release(down_node);
     }
 }
@@ -3194,7 +3230,6 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
     DWORD stream_id;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
-    BOOL drain = FALSE;
     TOPOID node_id;
     unsigned int i;
     HRESULT hr;
@@ -3253,30 +3288,16 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
                     }
                     else
                     {
-                        transform_stream_drop_samples(stream);
-                        drain = TRUE;
-
                         if (FAILED(hr = IMFTransform_ProcessMessage(topo_node->object.transform,
                                 MFT_MESSAGE_COMMAND_DRAIN, stream_id)))
                             WARN("Drain command failed for transform, hr %#lx.\n", hr);
+                        else
+                            stream->draining = TRUE;
                     }
                 }
             }
 
             transform_node_pull_samples(session, topo_node);
-
-            /* Remaining unprocessed input has been discarded, now queue markers for every output. */
-            if (drain)
-            {
-                for (i = 0; i < topo_node->u.transform.output_count; ++i)
-                {
-                    struct transform_stream *stream = &topo_node->u.transform.outputs[i];
-
-                    if ((sample_entry = transform_create_sample(NULL)))
-                         list_add_tail(&stream->samples, &sample_entry->entry);
-                }
-            }
-
             transform_node_deliver_samples(session, topo_node);
             break;
         }
