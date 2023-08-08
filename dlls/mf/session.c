@@ -681,12 +681,41 @@ static void transform_release_sample(struct sample *sample)
     free(sample);
 }
 
+static HRESULT transform_stream_push_sample(struct transform_stream *stream, IMFSample *sample)
+{
+    struct sample *entry;
+
+    if (!(entry = calloc(1, sizeof(*entry))))
+        return E_OUTOFMEMORY;
+
+    entry->sample = sample;
+    IMFSample_AddRef(entry->sample);
+
+    list_add_tail(&stream->samples, &entry->entry);
+    return S_OK;
+}
+
+static HRESULT transform_stream_pop_sample(struct transform_stream *stream, IMFSample **sample)
+{
+    struct sample *entry;
+    struct list *ptr;
+
+    if (!(ptr = list_head(&stream->samples)))
+        return E_FAIL;
+
+    entry = LIST_ENTRY(ptr, struct sample, entry);
+    list_remove(&entry->entry);
+    *sample = entry->sample;
+    free(entry);
+    return S_OK;
+}
+
 static void transform_stream_drop_samples(struct transform_stream *stream)
 {
-    struct sample *sample, *sample2;
+    IMFSample *sample;
 
-    LIST_FOR_EACH_ENTRY_SAFE(sample, sample2, &stream->samples, struct sample, entry)
-        transform_release_sample(sample);
+    while (SUCCEEDED(transform_stream_pop_sample(stream, &sample)))
+        IMFSample_Release(sample);
 }
 
 static void release_topo_node(struct topo_node *node)
@@ -3049,20 +3078,6 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     }
 }
 
-static struct sample *transform_create_sample(IMFSample *sample)
-{
-    struct sample *sample_entry = calloc(1, sizeof(*sample_entry));
-
-    if (sample_entry)
-    {
-        sample_entry->sample = sample;
-        if (sample_entry->sample)
-            IMFSample_AddRef(sample_entry->sample);
-    }
-
-    return sample_entry;
-}
-
 static HRESULT transform_get_external_output_sample(const struct media_session *session, struct topo_node *transform,
         unsigned int output_index, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
 {
@@ -3111,7 +3126,6 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
 {
     MFT_OUTPUT_STREAM_INFO stream_info;
     MFT_OUTPUT_DATA_BUFFER *buffers;
-    struct sample *queued_sample;
     HRESULT hr = E_UNEXPECTED;
     DWORD status = 0;
     unsigned int i;
@@ -3152,9 +3166,8 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
         {
             if (session->quality_manager)
                 IMFQualityManager_NotifyProcessOutput(session->quality_manager, node->node, i, buffers[i].pSample);
-
-            queued_sample = transform_create_sample(buffers[i].pSample);
-            list_add_tail(&stream->samples, &queued_sample->entry);
+            if (FAILED(hr = transform_stream_push_sample(stream, buffers[i].pSample)))
+                WARN("Failed to queue output sample, hr %#lx\n", hr);
         }
 
         if (buffers[i].pSample)
@@ -3187,8 +3200,8 @@ static void transform_node_deliver_samples(struct media_session *session, struct
 {
     IMFTopologyNode *up_node = topo_node->node, *down_node;
     BOOL drained = transform_node_is_drained(topo_node);
-    struct sample *sample, *next;
     DWORD output, input;
+    IMFSample *sample;
     HRESULT hr;
 
     /* Push down all available output. */
@@ -3202,15 +3215,11 @@ static void transform_node_deliver_samples(struct media_session *session, struct
             continue;
         }
 
-        LIST_FOR_EACH_ENTRY_SAFE(sample, next, &stream->samples, struct sample, entry)
+        while (stream->requests && SUCCEEDED(hr = transform_stream_pop_sample(stream, &sample)))
         {
-            if (!stream->requests)
-                break;
-
-            session_deliver_sample_to_node(session, down_node, input, sample->sample);
+            session_deliver_sample_to_node(session, down_node, input, sample);
             stream->requests--;
-
-            transform_release_sample(sample);
+            IMFSample_Release(sample);
         }
 
         while (stream->requests && drained)
@@ -3266,8 +3275,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
 
             transform_node_pull_samples(session, topo_node);
 
-            sample_entry = transform_create_sample(sample);
-            list_add_tail(&input_stream->samples, &sample_entry->entry);
+            transform_stream_push_sample(input_stream, sample);
 
             for (i = 0; i < topo_node->u.transform.input_count; ++i)
             {
@@ -3338,7 +3346,7 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
     DWORD downstream_input, upstream_output;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
-    struct sample *sample;
+    IMFSample *sample;
     TOPOID node_id;
     HRESULT hr;
 
@@ -3357,7 +3365,7 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
         {
             struct transform_stream *stream = &topo_node->u.transform.outputs[output];
 
-            if (list_empty(&stream->samples))
+            if (FAILED(hr = transform_stream_pop_sample(stream, &sample)))
             {
                 /* Forward request to upstream node. */
                 if (SUCCEEDED(hr = IMFTopologyNode_GetInput(node, 0 /* FIXME */, &upstream_node, &upstream_output)))
@@ -3371,11 +3379,11 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
             {
                 if (SUCCEEDED(hr = IMFTopologyNode_GetOutput(node, output, &downstream_node, &downstream_input)))
                 {
-                    sample = LIST_ENTRY(list_head(&stream->samples), struct sample, entry);
-                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample->sample);
-                    transform_release_sample(sample);
+                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample);
                     IMFTopologyNode_Release(downstream_node);
                 }
+
+                IMFSample_Release(sample);
             }
 
             break;
