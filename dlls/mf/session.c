@@ -673,14 +673,6 @@ static void session_set_caps(struct media_session *session, DWORD caps)
     IMFMediaEvent_Release(event);
 }
 
-static void transform_release_sample(struct sample *sample)
-{
-    list_remove(&sample->entry);
-    if (sample->sample)
-        IMFSample_Release(sample->sample);
-    free(sample);
-}
-
 static HRESULT transform_stream_push_sample(struct transform_stream *stream, IMFSample *sample)
 {
     struct sample *entry;
@@ -3193,6 +3185,31 @@ static BOOL transform_node_is_drained(struct topo_node *topo_node)
     return TRUE;
 }
 
+static HRESULT transform_node_push_sample(const struct media_session *session, struct topo_node *topo_node,
+        UINT input, IMFSample *sample)
+{
+    struct transform_stream *stream = &topo_node->u.transform.inputs[input];
+    UINT id = transform_node_get_stream_id(topo_node, FALSE, input);
+    IMFTransform *transform = topo_node->object.transform;
+    HRESULT hr;
+
+    if (sample)
+    {
+        hr = IMFTransform_ProcessInput(transform, id, sample, 0);
+        if (hr == MF_E_NOTACCEPTING)
+            hr = transform_stream_push_sample(stream, sample);
+    }
+    else
+    {
+        if (FAILED(hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, id)))
+            WARN("Drain command failed for transform, hr %#lx.\n", hr);
+        else
+            stream->draining = TRUE;
+    }
+
+    return hr;
+}
+
 static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
         IMFSample *sample);
 
@@ -3235,12 +3252,9 @@ static void transform_node_deliver_samples(struct media_session *session, struct
 static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
         IMFSample *sample)
 {
-    struct sample *sample_entry, *sample_entry2;
-    DWORD stream_id;
     struct topo_node *topo_node;
     MF_TOPOLOGY_TYPE node_type;
     TOPOID node_id;
-    unsigned int i;
     HRESULT hr;
 
     if (session->quality_manager)
@@ -3270,45 +3284,11 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
             }
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
-        {
-            struct transform_stream *input_stream = &topo_node->u.transform.inputs[input];
-
-            transform_node_pull_samples(session, topo_node);
-
-            transform_stream_push_sample(input_stream, sample);
-
-            for (i = 0; i < topo_node->u.transform.input_count; ++i)
-            {
-                struct transform_stream *stream = &topo_node->u.transform.inputs[i];
-
-                stream_id = transform_node_get_stream_id(topo_node, FALSE, i);
-
-                LIST_FOR_EACH_ENTRY_SAFE(sample_entry, sample_entry2, &stream->samples, struct sample, entry)
-                {
-                    if (sample_entry->sample)
-                    {
-                        if ((hr = IMFTransform_ProcessInput(topo_node->object.transform, stream_id,
-                                sample_entry->sample, 0)) == MF_E_NOTACCEPTING)
-                            break;
-                        if (FAILED(hr))
-                            WARN("Failed to process input for stream %u/%lu, hr %#lx.\n", i, stream_id, hr);
-                        transform_release_sample(sample_entry);
-                    }
-                    else
-                    {
-                        if (FAILED(hr = IMFTransform_ProcessMessage(topo_node->object.transform,
-                                MFT_MESSAGE_COMMAND_DRAIN, stream_id)))
-                            WARN("Drain command failed for transform, hr %#lx.\n", hr);
-                        else
-                            stream->draining = TRUE;
-                    }
-                }
-            }
-
+            if (FAILED(hr = transform_node_push_sample(session, topo_node, input, sample)))
+                WARN("Failed to push or queue sample to transform, hr %#lx\n", hr);
             transform_node_pull_samples(session, topo_node);
             transform_node_deliver_samples(session, topo_node);
             break;
-        }
         case MF_TOPOLOGY_TEE_NODE:
             FIXME("Unhandled downstream node type %d.\n", node_type);
             break;
