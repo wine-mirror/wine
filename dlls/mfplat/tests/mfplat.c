@@ -488,6 +488,7 @@ struct test_callback
     HANDLE event;
     DWORD param;
     IMFMediaEvent *media_event;
+    IMFAsyncResult *result;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -533,6 +534,37 @@ static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD 
 {
     ok(flags != NULL && queue != NULL, "Unexpected arguments.\n");
     return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_async_callback_result_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+
+    callback->result = result;
+    IMFAsyncResult_AddRef(callback->result);
+    SetEvent(callback->event);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl test_async_callback_result_vtbl =
+{
+    testcallback_QueryInterface,
+    testcallback_AddRef,
+    testcallback_Release,
+    testcallback_GetParameters,
+    test_async_callback_result_Invoke,
+};
+
+static DWORD wait_async_callback_result(IMFAsyncCallback *iface, DWORD timeout, IMFAsyncResult **result)
+{
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    DWORD res = WaitForSingleObject(callback->event, timeout);
+
+    *result = callback->result;
+    callback->result = NULL;
+
+    return res;
 }
 
 static BOOL check_clsid(CLSID *clsids, UINT32 count)
@@ -2129,15 +2161,191 @@ static void test_attributes(void)
     IMFAttributes_Release(attributes1);
 }
 
+struct test_stream
+{
+    IStream IStream_iface;
+    LONG refcount;
+
+    HANDLE read_event;
+    HANDLE done_event;
+};
+
+static struct test_stream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_stream, IStream_iface);
+}
+
+static HRESULT WINAPI test_stream_QueryInterface(IStream *iface, REFIID iid, void **out)
+{
+    if (IsEqualIID(iid, &IID_IUnknown)
+            || IsEqualIID(iid, &IID_IStream))
+    {
+        *out = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_stream_AddRef(IStream *iface)
+{
+    struct test_stream *stream = impl_from_IStream(iface);
+    return InterlockedIncrement(&stream->refcount);
+}
+
+static ULONG WINAPI test_stream_Release(IStream *iface)
+{
+    struct test_stream *stream = impl_from_IStream(iface);
+    ULONG ref = InterlockedDecrement(&stream->refcount);
+
+    if (!ref)
+    {
+        CloseHandle(stream->read_event);
+        CloseHandle(stream->done_event);
+        free(stream);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI test_stream_Read(IStream *iface, void *data, ULONG size, ULONG *ret_size)
+{
+    struct test_stream *stream = impl_from_IStream(iface);
+    DWORD res;
+
+    SetEvent(stream->read_event);
+    res = WaitForSingleObject(stream->done_event, 1000);
+    ok(res == 0, "got %#lx\n", res);
+
+    *ret_size = size;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_stream_Write(IStream *iface, const void *data, ULONG size, ULONG *ret_size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_Seek(IStream *iface, LARGE_INTEGER offset, DWORD method, ULARGE_INTEGER *ret_offset)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI test_stream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *read_size, ULARGE_INTEGER *write_size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_Commit(IStream *iface, DWORD flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_Revert(IStream *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_LockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_stream_Stat(IStream *iface, STATSTG *stat, DWORD flags)
+{
+    memset(stat, 0, sizeof(STATSTG));
+    stat->pwcsName = NULL;
+    stat->type = STGTY_STREAM;
+    stat->cbSize.QuadPart = 16;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_stream_Clone(IStream *iface, IStream **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl test_stream_vtbl =
+{
+    test_stream_QueryInterface,
+    test_stream_AddRef,
+    test_stream_Release,
+    test_stream_Read,
+    test_stream_Write,
+    test_stream_Seek,
+    test_stream_SetSize,
+    test_stream_CopyTo,
+    test_stream_Commit,
+    test_stream_Revert,
+    test_stream_LockRegion,
+    test_stream_UnlockRegion,
+    test_stream_Stat,
+    test_stream_Clone,
+};
+
+static HRESULT test_stream_create(IStream **out)
+{
+    struct test_stream *stream;
+
+    if (!(stream = calloc(1, sizeof(*stream))))
+        return E_OUTOFMEMORY;
+
+    stream->IStream_iface.lpVtbl = &test_stream_vtbl;
+    stream->refcount = 1;
+
+    stream->read_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    stream->done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    *out = &stream->IStream_iface;
+    return S_OK;
+}
+
+static DWORD test_stream_wait_read(IStream *iface, DWORD timeout)
+{
+    struct test_stream *stream = impl_from_IStream(iface);
+    return WaitForSingleObject(stream->read_event, timeout);
+}
+
+static void test_stream_complete_read(IStream *iface)
+{
+    struct test_stream *stream = impl_from_IStream(iface);
+    SetEvent(stream->done_event);
+}
+
 static void test_MFCreateMFByteStreamOnStream(void)
 {
+    struct test_callback *read_callback, *test_callback;
     IMFByteStream *bytestream;
     IMFByteStream *bytestream2;
     IStream *stream;
     IMFAttributes *attributes = NULL;
+    IMFAsyncResult *result;
     DWORD caps, written;
     IUnknown *unknown;
+    BYTE buffer[16];
     ULONG ref, size;
+    DWORD res, len;
     HRESULT hr;
     UINT count;
     QWORD to;
@@ -2266,6 +2474,52 @@ static void test_MFCreateMFByteStreamOnStream(void)
     IMFAttributes_Release(attributes);
     IMFByteStream_Release(bytestream);
     IStream_Release(stream);
+
+
+    /* test that BeginRead doesn't use MFASYNC_CALLBACK_QUEUE_STANDARD */
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    read_callback = create_test_callback(&test_async_callback_result_vtbl);
+    test_callback = create_test_callback(&test_async_callback_result_vtbl);
+
+    hr = test_stream_create(&stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = pMFCreateMFByteStreamOnStream(stream, &bytestream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFByteStream_BeginRead(bytestream, buffer, 1, &read_callback->IMFAsyncCallback_iface, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    res = test_stream_wait_read(stream, 1000);
+    ok(res == 0, "got %#lx\n", res);
+    res = wait_async_callback_result(&read_callback->IMFAsyncCallback_iface, 10, &result);
+    ok(res == WAIT_TIMEOUT, "got %#lx\n", res);
+
+    /* MFASYNC_CALLBACK_QUEUE_STANDARD is not blocked */
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &test_callback->IMFAsyncCallback_iface, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&test_callback->IMFAsyncCallback_iface, 100, &result);
+    todo_wine ok(res == 0, "got %#lx\n", res);
+    if (res == 0) IMFAsyncResult_Release(result);
+
+    test_stream_complete_read(stream);
+    res = wait_async_callback_result(&read_callback->IMFAsyncCallback_iface, 1000, &result);
+    ok(res == 0, "got %#lx\n", res);
+    hr = IMFByteStream_EndRead(bytestream, result, &len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(len == 1, "got %#lx\n", len);
+    IMFAsyncResult_Release(result);
+
+    IMFByteStream_Release(bytestream);
+    IStream_Release(stream);
+
+    IMFAsyncCallback_Release(&read_callback->IMFAsyncCallback_iface);
+    IMFAsyncCallback_Release(&test_callback->IMFAsyncCallback_iface);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 }
 
 static void test_file_stream(void)
