@@ -1400,7 +1400,31 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
         return hr;
     }
 
-    if (!desc->windowed)
+    if (state->desc.windowed)
+    {
+        RECT client_rect;
+
+        GetClientRect(window, &client_rect);
+        TRACE("Client rect %s.\n", wine_dbgstr_rect(&client_rect));
+
+        if (!state->desc.backbuffer_width)
+        {
+            state->desc.backbuffer_width = client_rect.right ? client_rect.right : 8;
+            TRACE("Updating width to %u.\n", state->desc.backbuffer_width);
+        }
+        if (!state->desc.backbuffer_height)
+        {
+            state->desc.backbuffer_height = client_rect.bottom ? client_rect.bottom : 8;
+            TRACE("Updating height to %u.\n", state->desc.backbuffer_height);
+        }
+
+        if (state->desc.backbuffer_format == WINED3DFMT_UNKNOWN)
+        {
+            state->desc.backbuffer_format = state->original_mode.format_id;
+            TRACE("Updating format to %s.\n", debug_d3dformat(state->original_mode.format_id));
+        }
+    }
+    else
     {
         if (desc->flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
         {
@@ -1487,7 +1511,6 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     struct wined3d_output_desc output_desc;
     BOOL displaymode_set = FALSE;
     HRESULT hr = E_FAIL;
-    RECT client_rect;
     unsigned int i;
     HWND window;
 
@@ -1523,29 +1546,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     swapchain->swap_interval = WINED3D_SWAP_INTERVAL_DEFAULT;
     swapchain_set_max_frame_latency(swapchain, device);
 
-    GetClientRect(window, &client_rect);
-    if (swapchain->state.desc.windowed)
-    {
-        TRACE("Client rect %s.\n", wine_dbgstr_rect(&client_rect));
-
-        if (!swapchain->state.desc.backbuffer_width)
-        {
-            swapchain->state.desc.backbuffer_width = client_rect.right ? client_rect.right : 8;
-            TRACE("Updating width to %u.\n", swapchain->state.desc.backbuffer_width);
-        }
-        if (!desc->backbuffer_height)
-        {
-            swapchain->state.desc.backbuffer_height = client_rect.bottom ? client_rect.bottom : 8;
-            TRACE("Updating height to %u.\n", swapchain->state.desc.backbuffer_height);
-        }
-
-        if (swapchain->state.desc.backbuffer_format == WINED3DFMT_UNKNOWN)
-        {
-            swapchain->state.desc.backbuffer_format = swapchain->state.original_mode.format_id;
-            TRACE("Updating format to %s.\n", debug_d3dformat(swapchain->state.original_mode.format_id));
-        }
-    }
-    else
+    if (!swapchain->state.desc.windowed)
     {
         if (FAILED(hr = wined3d_output_get_desc(desc->output, &output_desc)))
         {
