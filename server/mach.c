@@ -273,20 +273,20 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
 
-    if (thread->unix_pid == -1 || !process_port ||
-        mach_port_extract_right( process_port, thread->unix_tid,
-                                 MACH_MSG_TYPE_COPY_SEND, &port, &type ))
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-
     if (is_rosetta())
     {
         /* Setting debug registers of a translated process is not supported cross-process
          * (and even in-process, setting debug registers never has the desired effect).
          */
         set_error( STATUS_UNSUCCESSFUL );
+        return;
+    }
+
+    if (thread->unix_pid == -1 || !process_port ||
+        mach_port_extract_right( process_port, thread->unix_tid,
+                                 MACH_MSG_TYPE_COPY_SEND, &port, &type ))
+    {
+        set_error( STATUS_ACCESS_DENIED );
         return;
     }
 
