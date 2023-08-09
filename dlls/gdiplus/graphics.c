@@ -3049,11 +3049,11 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
           count, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
           callbackData);
 
-    if (count > 3)
+    if (count == 4)
         return NotImplemented;
 
     if(!graphics || !image || !points || count != 3)
-         return InvalidParameter;
+        return InvalidParameter;
 
     TRACE("%s %s %s\n", debugstr_pointf(&points[0]), debugstr_pointf(&points[1]),
         debugstr_pointf(&points[2]));
@@ -3421,7 +3421,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRectI(GpGraphics *graphics, GpImage *imag
           srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
           callbackData);
 
-    if(!points || count!=3)
+    if (count == 4)
+        return NotImplemented;
+
+    if (!points || count != 3)
         return InvalidParameter;
 
     for(i = 0; i < count; i++){

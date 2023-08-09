@@ -1341,6 +1341,8 @@ static void test_GdipDrawImagePointsRect(void)
     ptf[3].Y = 10;
     status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 4, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
     expect(NotImplemented, status);
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 5, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(InvalidParameter, status);
     status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 2, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
     expect(InvalidParameter, status);
     status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 3, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
