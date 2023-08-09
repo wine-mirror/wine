@@ -617,6 +617,19 @@ GpStatus convert_pixels(INT width, INT height,
     return Ok; \
 } while (0);
 
+#define convert_indexed_to_indexed(getpixel_function, setpixel_function) do { \
+    for (y=0; y<height; y++) \
+        for (x=0; x<width; x++) { \
+            BYTE index; \
+            ARGB argb; \
+            BYTE *color = (BYTE *)&argb; \
+            getpixel_function(&index, src_bits+src_stride*y, x); \
+            argb = (src_palette && index < src_palette->Count) ? src_palette->Entries[index] : 0; \
+            setpixel_function(color[2], color[1], color[0], color[3], dst_bits+dst_stride*y, x, dst_palette); \
+        } \
+    return Ok; \
+} while (0);
+
 #define convert_rgb_to_rgb(getpixel_function, setpixel_function) do { \
     for (y=0; y<height; y++) \
         for (x=0; x<width; x++) { \
@@ -642,6 +655,10 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat1bppIndexed:
         switch (dst_format)
         {
+        case PixelFormat4bppIndexed:
+            convert_indexed_to_indexed(getpixel_1bppIndexed, setpixel_4bppIndexed);
+        case PixelFormat8bppIndexed:
+            convert_indexed_to_indexed(getpixel_1bppIndexed, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_indexed_to_rgb(getpixel_1bppIndexed, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -669,6 +686,10 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat4bppIndexed:
         switch (dst_format)
         {
+        case PixelFormat1bppIndexed:
+            convert_indexed_to_indexed(getpixel_4bppIndexed, setpixel_1bppIndexed);
+        case PixelFormat8bppIndexed:
+            convert_indexed_to_indexed(getpixel_4bppIndexed, setpixel_8bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_indexed_to_rgb(getpixel_4bppIndexed, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -696,6 +717,10 @@ GpStatus convert_pixels(INT width, INT height,
     case PixelFormat8bppIndexed:
         switch (dst_format)
         {
+        case PixelFormat1bppIndexed:
+            convert_indexed_to_indexed(getpixel_8bppIndexed, setpixel_1bppIndexed);
+        case PixelFormat4bppIndexed:
+            convert_indexed_to_indexed(getpixel_8bppIndexed, setpixel_4bppIndexed);
         case PixelFormat16bppGrayScale:
             convert_indexed_to_rgb(getpixel_8bppIndexed, setpixel_16bppGrayScale);
         case PixelFormat16bppRGB555:
@@ -1067,7 +1092,9 @@ GpStatus convert_pixels(INT width, INT height,
     }
 
 #undef convert_indexed_to_rgb
+#undef convert_indexed_to_indexed
 #undef convert_rgb_to_rgb
+#undef convert_rgb_to_indexed
 
     return NotImplemented;
 }
