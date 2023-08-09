@@ -1957,7 +1957,7 @@ static void test_GetDuration(void)
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    res = WaitForSingleObject(notify->ready_event, 5000);
+    res = WaitForSingleObject(notify->frame_ready_event, 5000);
     ok(!res, "Unexpected res %#lx.\n", res);
 
     duration = IMFMediaEngineEx_GetDuration(media_engine);
