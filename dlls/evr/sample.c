@@ -395,6 +395,7 @@ struct sample_allocator
     unsigned int free_sample_count;
     struct list free_samples;
     struct list used_samples;
+    BOOL lock_notify_release;
     CRITICAL_SECTION cs;
 };
 
@@ -809,6 +810,7 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
     struct queued_sample *iter;
     IUnknown *object = NULL;
     IMFSample *sample = NULL;
+    IMFVideoSampleAllocatorNotify *callback = NULL;
     HRESULT hr;
 
     if (FAILED(IMFAsyncResult_GetObject(result, &object)))
@@ -836,9 +838,23 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
     IMFSample_Release(sample);
 
     if (allocator->callback)
-        IMFVideoSampleAllocatorNotify_NotifyRelease(allocator->callback);
+    {
+        if (allocator->lock_notify_release)
+            IMFVideoSampleAllocatorNotify_NotifyRelease(allocator->callback);
+        else
+        {
+            callback = allocator->callback;
+            IMFVideoSampleAllocatorNotify_AddRef(callback);
+        }
+    }
 
     LeaveCriticalSection(&allocator->cs);
+
+    if (callback)
+    {
+        IMFVideoSampleAllocatorNotify_NotifyRelease(callback);
+        IMFVideoSampleAllocatorNotify_Release(callback);
+    }
 
     return S_OK;
 }
@@ -852,12 +868,10 @@ static const IMFAsyncCallbackVtbl sample_allocator_tracking_callback_vtbl =
     sample_allocator_tracking_callback_Invoke,
 };
 
-HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **obj)
+HRESULT create_video_sample_allocator(BOOL lock_notify_release, REFIID riid, void **obj)
 {
     struct sample_allocator *object;
     HRESULT hr;
-
-    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -868,12 +882,20 @@ HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **obj)
     object->refcount = 1;
     list_init(&object->used_samples);
     list_init(&object->free_samples);
+    object->lock_notify_release = lock_notify_release;
     InitializeCriticalSection(&object->cs);
 
     hr = IMFVideoSampleAllocator_QueryInterface(&object->IMFVideoSampleAllocator_iface, riid, obj);
     IMFVideoSampleAllocator_Release(&object->IMFVideoSampleAllocator_iface);
 
     return hr;
+}
+
+HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **obj)
+{
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
+
+    return create_video_sample_allocator(TRUE, riid, obj);
 }
 
 static HRESULT WINAPI video_sample_QueryInterface(IMFSample *iface, REFIID riid, void **out)

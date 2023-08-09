@@ -55,4 +55,6 @@ HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 HRESULT evr_mixer_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 HRESULT evr_presenter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 
+HRESULT create_video_sample_allocator(BOOL lock_notify_release, REFIID riid, void **obj);
+
 #endif /* __EVR_PRIVATE_INCLUDED__ */

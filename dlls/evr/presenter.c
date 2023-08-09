@@ -2149,7 +2149,7 @@ static HRESULT video_presenter_init_d3d(struct video_presenter *presenter)
     if (FAILED(hr))
         WARN("Failed to set new device for the manager, hr %#lx.\n", hr);
 
-    if (SUCCEEDED(hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&presenter->allocator)))
+    if (SUCCEEDED(hr = create_video_sample_allocator(FALSE, &IID_IMFVideoSampleAllocator, (void **)&presenter->allocator)))
     {
         hr = IMFVideoSampleAllocator_SetDirectXManager(presenter->allocator, (IUnknown *)presenter->device_manager);
     }
