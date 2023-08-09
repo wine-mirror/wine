@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct stream_sink
 {
     IMFStreamSink IMFStreamSink_iface;
+    IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     LONG refcount;
     DWORD id;
 
@@ -56,6 +57,11 @@ static struct stream_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
     return CONTAINING_RECORD(iface, struct stream_sink, IMFStreamSink_iface);
 }
 
+static struct stream_sink *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_sink, IMFMediaTypeHandler_iface);
+}
+
 static struct media_sink *impl_from_IMFFinalizableMediaSink(IMFFinalizableMediaSink *iface)
 {
     return CONTAINING_RECORD(iface, struct media_sink, IMFFinalizableMediaSink_iface);
@@ -72,6 +78,10 @@ static HRESULT WINAPI stream_sink_QueryInterface(IMFStreamSink *iface, REFIID ri
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = &stream_sink->IMFStreamSink_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaTypeHandler))
+    {
+        *obj = &stream_sink->IMFMediaTypeHandler_iface;
     }
     else
     {
@@ -221,6 +231,90 @@ static const IMFStreamSinkVtbl stream_sink_vtbl =
     stream_sink_Flush,
 };
 
+static HRESULT WINAPI stream_sink_type_handler_QueryInterface(IMFMediaTypeHandler *iface, REFIID riid, void **obj)
+{
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_QueryInterface(&stream_sink->IMFStreamSink_iface, riid, obj);
+}
+
+static ULONG WINAPI stream_sink_type_handler_AddRef(IMFMediaTypeHandler *iface)
+{
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_AddRef(&stream_sink->IMFStreamSink_iface);
+}
+
+static ULONG WINAPI stream_sink_type_handler_Release(IMFMediaTypeHandler *iface)
+{
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
+    return IMFStreamSink_Release(&stream_sink->IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI stream_sink_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
+        IMFMediaType *in_type, IMFMediaType **out_type)
+{
+    FIXME("iface %p, in_type %p, out_type %p.\n", iface, in_type, out_type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
+{
+    FIXME("iface %p, count %p.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
+        IMFMediaType **type)
+{
+    FIXME("iface %p, index %lu, type %p.\n", iface, index, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_sink_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
+{
+    FIXME("iface %p, type %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI stream_sink_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **type)
+{
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("iface %p, type %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+    if (!stream_sink->type)
+        return MF_E_NOT_INITIALIZED;
+
+    IMFMediaType_AddRef((*type = stream_sink->type));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI stream_sink_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
+{
+    FIXME("iface %p, type %p.\n", iface, type);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaTypeHandlerVtbl stream_sink_type_handler_vtbl =
+{
+    stream_sink_type_handler_QueryInterface,
+    stream_sink_type_handler_AddRef,
+    stream_sink_type_handler_Release,
+    stream_sink_type_handler_IsMediaTypeSupported,
+    stream_sink_type_handler_GetMediaTypeCount,
+    stream_sink_type_handler_GetMediaTypeByIndex,
+    stream_sink_type_handler_SetCurrentMediaType,
+    stream_sink_type_handler_GetCurrentMediaType,
+    stream_sink_type_handler_GetMajorType,
+};
+
 static HRESULT stream_sink_create(DWORD stream_sink_id, IMFMediaType *media_type, struct media_sink *media_sink,
         struct stream_sink **out)
 {
@@ -240,6 +334,7 @@ static HRESULT stream_sink_create(DWORD stream_sink_id, IMFMediaType *media_type
     }
 
     stream_sink->IMFStreamSink_iface.lpVtbl = &stream_sink_vtbl;
+    stream_sink->IMFMediaTypeHandler_iface.lpVtbl = &stream_sink_type_handler_vtbl;
     stream_sink->refcount = 1;
     stream_sink->id = stream_sink_id;
     if (media_type)
