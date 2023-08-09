@@ -4334,7 +4334,7 @@ typedef struct _ACL {
 
 typedef enum _ACL_INFORMATION_CLASS
 {
-  AclRevisionInformation = 1, 
+  AclRevisionInformation = 1,
   AclSizeInformation
 } ACL_INFORMATION_CLASS;
 
@@ -7195,6 +7195,11 @@ static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
     __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
 }
 
+static FORCEINLINE void WriteNoFence64( LONG64 volatile *dest, LONG64 value )
+{
+    __WINE_STORE64_NO_FENCE( (__int64 volatile *)dest, value );
+}
+
 #elif defined(__GNUC__)
 
 static FORCEINLINE BOOLEAN WINAPI BitScanForward(DWORD *index, DWORD mask)
@@ -7411,6 +7416,15 @@ static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
     __WINE_ATOMIC_STORE_RELAXED( dest, &value );
 }
 
+static FORCEINLINE void WriteNoFence64( LONG64 volatile *dest, LONG64 value )
+{
+#ifdef __i386__
+    __asm__ __volatile__( "fildq %1\n\tfistpq %0" : "=m" (*dest) : "m" (value) : "memory", "st" );
+#else
+    __WINE_ATOMIC_STORE_RELAXED( dest, &value );
+#endif
+}
+
 static FORCEINLINE DECLSPEC_NORETURN void __fastfail(unsigned int code)
 {
 #if defined(__x86_64__) || defined(__i386__)
@@ -7457,12 +7471,68 @@ static FORCEINLINE unsigned char InterlockedCompareExchange128( volatile __int64
 #define InterlockedDecrementSizeT(a) InterlockedDecrement64((LONGLONG *)(a))
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd64((LONGLONG *)(a), (b))
 #define InterlockedIncrementSizeT(a) InterlockedIncrement64((LONGLONG *)(a))
+#define ReadLongPtrAcquire   ReadAcquire64
+#define ReadLongPtrNoFence   ReadNoFence64
+#define ReadULongPtrAcquire  ReadULong64Acquire
+#define ReadULongPtrNoFence  ReadULong64NoFence
+#define WriteLongPtrRelease  WriteRelease64
+#define WriteLongPtrNoFence  WriteNoFence64
+#define WriteULongPtrRelease WriteULong64Release
+#define WriteULongPtrNoFence WriteULong64NoFence
+
+static FORCEINLINE void *ReadPointerAcquire( void* const volatile *src )
+{
+    return (void *)ReadAcquire64( (const volatile LONG64 *)src );
+}
+
+static FORCEINLINE void *ReadPointerNoFence( void* const volatile *src )
+{
+    return (void *)ReadNoFence64( (const volatile LONG64 *)src );
+}
+
+static FORCEINLINE void WritePointerRelease( void* volatile *dest, void* value )
+{
+    WriteRelease64( (volatile LONG64 *)dest, (LONG64)value );
+}
+
+static FORCEINLINE void WritePointerNoFence( void* volatile *dest, void* value )
+{
+    WriteNoFence64( (volatile LONG64 *)dest, (LONG64)value );
+}
 
 #else /* _WIN64 */
 
 #define InterlockedDecrementSizeT(a) InterlockedDecrement((LONG *)(a))
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd((LONG *)(a), (b))
 #define InterlockedIncrementSizeT(a) InterlockedIncrement((LONG *)(a))
+#define ReadLongPtrAcquire   ReadAcquire
+#define ReadLongPtrNoFence   ReadNoFence
+#define ReadULongPtrAcquire  ReadULongAcquire
+#define ReadULongPtrNoFence  ReadULongNoFence
+#define WriteLongPtrRelease  WriteRelease
+#define WriteLongPtrNoFence  WriteNoFence
+#define WriteULongPtrRelease WriteULongRelease
+#define WriteULongPtrNoFence WriteULongNoFence
+
+static FORCEINLINE void *ReadPointerAcquire( void* const volatile *src )
+{
+    return (void *)ReadAcquire( (const volatile LONG *)src );
+}
+
+static FORCEINLINE void *ReadPointerNoFence( void* const volatile *src )
+{
+    return (void *)ReadNoFence( (const volatile LONG *)src );
+}
+
+static FORCEINLINE void WritePointerRelease( void* volatile *dest, void* value )
+{
+    WriteRelease( (volatile LONG *)dest, (LONG)value );
+}
+
+static FORCEINLINE void WritePointerNoFence( void* volatile *dest, void* value )
+{
+    WriteNoFence( (volatile LONG *)dest, (LONG)value );
+}
 
 #endif /* _WIN64 */
 
