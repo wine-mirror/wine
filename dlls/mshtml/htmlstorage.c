@@ -282,6 +282,8 @@ static HRESULT send_storage_event_impl(struct send_storage_event_ctx *ctx, HTMLI
         origin = storage->session_storage->origin;
         origin_len = ctx->skip_window ? wcslen(origin) : storage->session_storage->origin_len;
         bstr = NULL;
+    }else if(!window->base.outer_window->uri) {
+        return S_OK;
     }else {
         hres = IUri_GetHost(window->base.outer_window->uri, &bstr);
         if(hres != S_OK) {
