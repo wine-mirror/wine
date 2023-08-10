@@ -2819,7 +2819,7 @@ HRESULT __cdecl wined3d_streaming_buffer_upload(struct wined3d_device *device, s
         const void *data, unsigned int size, unsigned int stride, unsigned int *pos);
 
 HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device,
-        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
+        const struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_swapchain **swapchain);
 ULONG __cdecl wined3d_swapchain_decref(struct wined3d_swapchain *swapchain);

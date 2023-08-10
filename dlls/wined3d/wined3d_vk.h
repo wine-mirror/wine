@@ -1035,7 +1035,7 @@ static inline struct wined3d_swapchain_vk *wined3d_swapchain_vk(struct wined3d_s
 
 void wined3d_swapchain_vk_cleanup(struct wined3d_swapchain_vk *swapchain_vk) DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk,
-        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        struct wined3d_device *device, const struct wined3d_swapchain_desc *desc,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 

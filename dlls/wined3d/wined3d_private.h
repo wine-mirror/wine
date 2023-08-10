@@ -2561,7 +2561,7 @@ struct wined3d_adapter_ops
             unsigned int sub_resource_idx, struct wined3d_bo_address *addr);
     void (*adapter_destroy_bo)(struct wined3d_context *context, struct wined3d_bo *bo);
     HRESULT (*adapter_create_swapchain)(struct wined3d_device *device,
-            struct wined3d_swapchain_desc *desc,
+            const struct wined3d_swapchain_desc *desc,
             struct wined3d_swapchain_state_parent *state_parent, void *parent,
             const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
     void (*adapter_destroy_swapchain)(struct wined3d_swapchain *swapchain);
@@ -4315,7 +4315,7 @@ void swapchain_set_max_frame_latency(struct wined3d_swapchain *swapchain,
         const struct wined3d_device *device) DECLSPEC_HIDDEN;
 
 HRESULT wined3d_swapchain_no3d_init(struct wined3d_swapchain *swapchain_no3d,
-        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        struct wined3d_device *device, const struct wined3d_swapchain_desc *desc,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
@@ -4332,7 +4332,7 @@ static inline struct wined3d_swapchain_gl *wined3d_swapchain_gl(struct wined3d_s
 void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
 struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl,
-        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        struct wined3d_device *device, const struct wined3d_swapchain_desc *desc,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
