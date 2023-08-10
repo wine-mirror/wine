@@ -2285,15 +2285,11 @@ static void test_GetSeekable(void)
 
     /* Media engine is not ready */
     hr = IMFMediaEngineEx_GetSeekable(media_engine, &time_range);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        count = IMFMediaTimeRange_GetLength(time_range);
-        ok(!count, "Unexpected count %lu.\n", count);
-        refcount = IMFMediaTimeRange_Release(time_range);
-        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
-    }
+    count = IMFMediaTimeRange_GetLength(time_range);
+    ok(!count, "Unexpected count %lu.\n", count);
+    refcount = IMFMediaTimeRange_Release(time_range);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     hr = IMFMediaEngineEx_Play(media_engine);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2307,22 +2303,18 @@ static void test_GetSeekable(void)
 
     /* Media engine is ready */
     hr = IMFMediaEngineEx_GetSeekable(media_engine, &time_range);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        count = IMFMediaTimeRange_GetLength(time_range);
-        ok(count == 1, "Unexpected count %lu.\n", count);
-        hr = IMFMediaTimeRange_GetStart(time_range, 0, &start);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(start == 0, "Unexpected start %lf.\n", start);
-        hr = IMFMediaTimeRange_GetEnd(time_range, 0, &end);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        duration = IMFMediaEngineEx_GetDuration(media_engine);
-        ok(end == duration, "Unexpected end %lf.\n", end);
-        refcount = IMFMediaTimeRange_Release(time_range);
-        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
-    }
+    count = IMFMediaTimeRange_GetLength(time_range);
+    ok(count == 1, "Unexpected count %lu.\n", count);
+    hr = IMFMediaTimeRange_GetStart(time_range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(start == 0, "Unexpected start %lf.\n", start);
+    hr = IMFMediaTimeRange_GetEnd(time_range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    duration = IMFMediaEngineEx_GetDuration(media_engine);
+    ok(end == duration, "Unexpected end %lf.\n", end);
+    refcount = IMFMediaTimeRange_Release(time_range);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     /* Media engine is shut down */
     hr = IMFMediaEngineEx_Shutdown(media_engine);
@@ -2331,7 +2323,6 @@ static void test_GetSeekable(void)
     time_range = (IMFMediaTimeRange *)0xdeadbeef;
     hr = IMFMediaEngineEx_GetSeekable(media_engine, &time_range);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(time_range == NULL || broken(time_range == (IMFMediaTimeRange *)0xdeadbeef) /* <= Win10 1507 */,
        "Got unexpected pointer.\n");
 
@@ -2357,15 +2348,11 @@ static void test_GetSeekable(void)
     ok(res == S_OK, "Unexpected res %#lx.\n", res);
 
     hr = IMFMediaEngineEx_GetSeekable(media_engine, &time_range);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        count = IMFMediaTimeRange_GetLength(time_range);
-        ok(!count, "Unexpected count %lu.\n", count);
-        refcount = IMFMediaTimeRange_Release(time_range);
-        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
-    }
+    count = IMFMediaTimeRange_GetLength(time_range);
+    ok(!count, "Unexpected count %lu.\n", count);
+    refcount = IMFMediaTimeRange_Release(time_range);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
 done:
     hr = IMFMediaEngineEx_Shutdown(media_engine);

@@ -1899,17 +1899,35 @@ static HRESULT WINAPI media_engine_GetPlayed(IMFMediaEngineEx *iface, IMFMediaTi
 static HRESULT WINAPI media_engine_GetSeekable(IMFMediaEngineEx *iface, IMFMediaTimeRange **seekable)
 {
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
-    HRESULT hr = E_NOTIMPL;
+    IMFMediaTimeRange *time_range = NULL;
+    DWORD flags;
+    HRESULT hr;
 
-    FIXME("(%p, %p): stub.\n", iface, seekable);
+    TRACE("%p, %p.\n", iface, seekable);
 
     EnterCriticalSection(&engine->cs);
 
     if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
+    else
+    {
+        hr = create_time_range(&time_range);
+        if (SUCCEEDED(hr) && !isnan(engine->duration) && engine->presentation.source)
+        {
+            hr = IMFMediaSource_GetCharacteristics(engine->presentation.source, &flags);
+            if (SUCCEEDED(hr) && (flags & MFBYTESTREAM_IS_SEEKABLE))
+                hr = IMFMediaTimeRange_AddRange(time_range, 0.0, engine->duration);
+        }
+    }
 
     LeaveCriticalSection(&engine->cs);
 
+    if (FAILED(hr) && time_range)
+    {
+        IMFMediaTimeRange_Release(time_range);
+        time_range = NULL;
+    }
+    *seekable = time_range;
     return hr;
 }
 
