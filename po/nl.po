@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-05-26 10:45+0200\n"
+"PO-Revision-Date: 2023-08-10 22:50+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -4030,10 +4030,8 @@ msgid "Syntax error in regular expression"
 msgstr "Formuleringsfout in reguliere expressie"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "Verwachte ID"
+msgstr "Onverwachte kwantor"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4096,10 +4094,8 @@ msgid "'this' is not a | object"
 msgstr "'this' is geen | object"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'key' is not an object"
-msgstr "'this' is geen | object"
+msgstr "'key' is geen object"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -14906,52 +14902,39 @@ msgstr "Primair DNS-achtervoegsel"
 
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
-msgstr ""
+msgstr "Gebruik: klist <tickets | tgt | purge | get [service hoofdnaam]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "Onbekende fout"
+msgstr "Onbekende fout\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "Start Menu"
+msgstr "Starttijd"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "Oost-Europa Standaard Tijd"
+msgstr "Eindtijd"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "Voer de nieuwe tijd in: "
+msgstr "Vernieuwingstijd"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "Ticketlabels"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "Tijdelijk opgeslagen Tickets"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "Type Versleuteling"
+msgstr "KerbTicket Encryptie Type"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "Huidige verbindingen"
+msgstr "Huidige LoginId is"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
