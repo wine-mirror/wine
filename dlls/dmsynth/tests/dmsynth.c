@@ -51,6 +51,27 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    ULONG expect_ref = get_refcount(iface_ptr);
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected);
+    if (SUCCEEDED(hr))
+    {
+        LONG ref = get_refcount(unk);
+        ok_(__FILE__, line)(ref == expect_ref + 1, "got %ld\n", ref);
+        IUnknown_Release(unk);
+        ref = get_refcount(iface_ptr);
+        ok_(__FILE__, line)(ref == expect_ref, "got %ld\n", ref);
+    }
+}
+
 static void test_synth_getformat(IDirectMusicSynth *synth, DMUS_PORTPARAMS *params, const char *context)
 {
     WAVEFORMATEX format;
@@ -317,9 +338,6 @@ static void test_dmsynth(void)
 static void test_COM(void)
 {
     IDirectMusicSynth8 *dms8 = (IDirectMusicSynth8*)0xdeadbeef;
-    IKsControl *iksc;
-    IUnknown *unk;
-    ULONG refcount;
     HRESULT hr;
 
     /* COM aggregation */
@@ -334,40 +352,23 @@ static void test_COM(void)
             &IID_IDirectMusicObject, (void**)&dms8);
     ok(hr == E_NOINTERFACE, "DirectMusicSynth create failed: %#lx, expected E_NOINTERFACE\n", hr);
 
-    /* Same refcount for all DirectMusicSynth interfaces */
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicSynth8, (void**)&dms8);
     ok(hr == S_OK, "DirectMusicSynth create failed: %#lx, expected S_OK\n", hr);
-    refcount = IDirectMusicSynth8_AddRef(dms8);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
-    hr = IDirectMusicSynth8_QueryInterface(dms8, &IID_IKsControl, (void**)&iksc);
-    ok(hr == S_OK, "QueryInterface for IID_IKsControl failed: %#lx\n", hr);
-    refcount = IKsControl_AddRef(iksc);
-    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
-    IKsControl_Release(iksc);
-
-    hr = IDirectMusicSynth8_QueryInterface(dms8, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %#lx\n", hr);
-    refcount = IUnknown_AddRef(unk);
-    ok(refcount == 5, "refcount == %lu, expected 5\n", refcount);
-    IUnknown_Release(unk);
+    check_interface(dms8, &IID_IUnknown, TRUE);
+    check_interface(dms8, &IID_IKsControl, TRUE);
 
     /* Unsupported interfaces */
-    hr = IDirectMusicSynth8_QueryInterface(dms8, &IID_IDirectMusicSynthSink, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicSynthSink failed: %#lx\n", hr);
-    hr = IDirectMusicSynth8_QueryInterface(dms8, &IID_IReferenceClock, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IReferenceClock failed: %#lx\n", hr);
+    check_interface(dms8, &IID_IDirectMusicSynthSink, FALSE);
+    check_interface(dms8, &IID_IReferenceClock, FALSE);
 
-    while (IDirectMusicSynth8_Release(dms8));
+    IDirectMusicSynth8_Release(dms8);
 }
 
 static void test_COM_synthsink(void)
 {
     IDirectMusicSynthSink *dmss = (IDirectMusicSynthSink*)0xdeadbeef;
-    IKsControl *iksc;
-    IUnknown *unk;
-    ULONG refcount;
     HRESULT hr;
 
     /* COM aggregation */
@@ -386,27 +387,16 @@ static void test_COM_synthsink(void)
     hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicSynthSink, (void**)&dmss);
     ok(hr == S_OK, "DirectMusicSynthSink create failed: %#lx, expected S_OK\n", hr);
-    refcount = IDirectMusicSynthSink_AddRef(dmss);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
-    hr = IDirectMusicSynthSink_QueryInterface(dmss, &IID_IKsControl, (void**)&iksc);
-    ok(hr == S_OK, "QueryInterface for IID_IKsControl failed: %#lx\n", hr);
-    refcount = IKsControl_AddRef(iksc);
-    ok(refcount == 4, "refcount == %lu, expected 4\n", refcount);
-    IKsControl_Release(iksc);
-
-    hr = IDirectMusicSynthSink_QueryInterface(dmss, &IID_IUnknown, (void**)&unk);
-    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %#lx\n", hr);
-    refcount = IUnknown_AddRef(unk);
-    ok(refcount == 5, "refcount == %lu, expected 5\n", refcount);
-    IUnknown_Release(unk);
+    check_interface(dmss, &IID_IUnknown, TRUE);
+    check_interface(dmss, &IID_IKsControl, TRUE);
 
     /* Unsupported interfaces */
-    hr = IDirectMusicSynthSink_QueryInterface(dmss, &IID_IReferenceClock, (void**)&unk);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IReferenceClock failed: %#lx\n", hr);
+    check_interface(dmss, &IID_IReferenceClock, FALSE);
 
-    while (IDirectMusicSynthSink_Release(dmss));
+    IDirectMusicSynthSink_Release(dmss);
 }
+
 START_TEST(dmsynth)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
