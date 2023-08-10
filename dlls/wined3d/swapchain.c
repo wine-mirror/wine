@@ -2427,6 +2427,15 @@ BOOL CDECL wined3d_swapchain_state_is_windowed(const struct wined3d_swapchain_st
     return state->desc.windowed;
 }
 
+void CDECL wined3d_swapchain_state_get_size(const struct wined3d_swapchain_state *state,
+        unsigned int *width, unsigned int *height)
+{
+    TRACE("state %p.\n", state);
+
+    *width = state->desc.backbuffer_width;
+    *height = state->desc.backbuffer_height;
+}
+
 void CDECL wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state)
 {
     wined3d_swapchain_state_cleanup(state);

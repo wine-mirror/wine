@@ -292,6 +292,7 @@
 
 @ cdecl wined3d_swapchain_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_destroy(ptr)
+@ cdecl wined3d_swapchain_state_get_size(ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_is_windowed(ptr)
 @ cdecl wined3d_swapchain_state_resize_target(ptr ptr)
 @ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr)
