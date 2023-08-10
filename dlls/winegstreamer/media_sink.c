@@ -34,6 +34,7 @@ struct stream_sink
 
     IMFMediaType *type;
     IMFFinalizableMediaSink *media_sink;
+    IMFMediaEventQueue *event_queue;
 
     struct list entry;
 };
@@ -101,6 +102,7 @@ static ULONG WINAPI stream_sink_Release(IMFStreamSink *iface)
 
     if (!refcount)
     {
+        IMFMediaEventQueue_Release(stream_sink->event_queue);
         IMFFinalizableMediaSink_Release(stream_sink->media_sink);
         if (stream_sink->type)
             IMFMediaType_Release(stream_sink->type);
@@ -112,34 +114,42 @@ static ULONG WINAPI stream_sink_Release(IMFStreamSink *iface)
 
 static HRESULT WINAPI stream_sink_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
 {
-    FIXME("iface %p, flags %#lx, event %p.\n", iface, flags, event);
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(stream_sink->event_queue, flags, event);
 }
 
 static HRESULT WINAPI stream_sink_BeginGetEvent(IMFStreamSink *iface, IMFAsyncCallback *callback,
         IUnknown *state)
 {
-    FIXME("iface %p, callback %p, state %p.\n", iface, callback, state);
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, callback %p, state %p.\n", iface, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(stream_sink->event_queue, callback, state);
 }
 
 static HRESULT WINAPI stream_sink_EndGetEvent(IMFStreamSink *iface, IMFAsyncResult *result,
         IMFMediaEvent **event)
 {
-    FIXME("iface %p, result %p, event %p.\n", iface, result, event);
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, result %p, event %p.\n", iface, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(stream_sink->event_queue, result, event);
 }
 
 static HRESULT WINAPI stream_sink_QueueEvent(IMFStreamSink *iface, MediaEventType event_type,
         REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
 {
-    FIXME("iface %p, event_type %lu, ext_type %s, hr %#lx, value %p.\n",
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
+
+    TRACE("iface %p, event_type %lu, ext_type %s, hr %#lx, value %p.\n",
             iface, event_type, debugstr_guid(ext_type), hr, value);
 
-    return E_NOTIMPL;
+    return IMFMediaEventQueue_QueueEventParamVar(stream_sink->event_queue, event_type, ext_type, hr, value);
 }
 
 static HRESULT WINAPI stream_sink_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **ret)
@@ -215,12 +225,19 @@ static HRESULT stream_sink_create(DWORD stream_sink_id, IMFMediaType *media_type
         struct stream_sink **out)
 {
     struct stream_sink *stream_sink;
+    HRESULT hr;
 
     TRACE("stream_sink_id %#lx, media_type %p, media_sink %p, out %p.\n",
             stream_sink_id, media_type, media_sink, out);
 
     if (!(stream_sink = calloc(1, sizeof(*stream_sink))))
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = MFCreateEventQueue(&stream_sink->event_queue)))
+    {
+        free(stream_sink);
+        return hr;
+    }
 
     stream_sink->IMFStreamSink_iface.lpVtbl = &stream_sink_vtbl;
     stream_sink->refcount = 1;
@@ -401,6 +418,7 @@ static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)
     LIST_FOR_EACH_ENTRY_SAFE(stream_sink, next, &media_sink->stream_sinks, struct stream_sink, entry)
     {
         list_remove(&stream_sink->entry);
+        IMFMediaEventQueue_Shutdown(stream_sink->event_queue);
         IMFStreamSink_Release(&stream_sink->IMFStreamSink_iface);
     }
 
