@@ -105,8 +105,9 @@ static GpStatus init_custom_linecap(GpCustomLineCap *cap, GpPathData *pathdata, 
     return Ok;
 }
 
-/* FIXME: Sometimes when fillPath is non-null and stroke path is null, the native
- * version of this function returns NotImplemented. I cannot figure out why. */
+/* Custom line cap position (0, 0) is a place corresponding to the end of line.
+*  If Custom Line Cap is too big and too far from position (0, 0),
+*  then NotImplemented will be returned, due to floating point precision limitation. */
 GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath,
     GpLineCap baseCap, REAL baseInset, GpCustomLineCap **customCap)
 {
