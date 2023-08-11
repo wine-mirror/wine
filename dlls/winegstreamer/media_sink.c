@@ -641,9 +641,31 @@ static HRESULT WINAPI media_sink_GetStreamSinkCount(IMFFinalizableMediaSink *ifa
 static HRESULT WINAPI media_sink_GetStreamSinkByIndex(IMFFinalizableMediaSink *iface, DWORD index,
         IMFStreamSink **stream)
 {
-    FIXME("iface %p, index %lu, stream %p stub!\n", iface, index, stream);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
+    struct stream_sink *stream_sink;
+    HRESULT hr = MF_E_INVALIDINDEX;
+    DWORD entry_index = 0;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %lu, stream %p stub!\n", iface, index, stream);
+
+    if (!stream)
+        return E_POINTER;
+
+    EnterCriticalSection(&media_sink->cs);
+
+    LIST_FOR_EACH_ENTRY(stream_sink, &media_sink->stream_sinks, struct stream_sink, entry)
+    {
+        if (entry_index++ == index)
+        {
+            IMFStreamSink_AddRef((*stream = &stream_sink->IMFStreamSink_iface));
+            hr = S_OK;
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_GetStreamSinkById(IMFFinalizableMediaSink *iface, DWORD stream_sink_id,
