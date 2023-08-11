@@ -1,0 +1,60 @@
+/*
+ * Copyright 2023 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "windows.foundation.idl";
+import "windows.storage.idl";
+import "windows.system.idl";
+import "windows.applicationmodel.idl";
+
+namespace Windows.ApplicationModel {
+    runtimeclass AppDisplayInfo;
+}
+
+namespace Windows.ApplicationModel.Core {
+    interface IAppListEntry;
+
+    runtimeclass AppListEntry;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Core.AppListEntry),
+        uuid(ef00f07f-2108-490a-877a-8a9f17c25fad)
+    ]
+    interface IAppListEntry : IInspectable
+    {
+        [propget] HRESULT DisplayInfo([out, retval] Windows.ApplicationModel.AppDisplayInfo **value);
+        HRESULT LaunchAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AppListEntry
+    {
+        [default] interface Windows.ApplicationModel.Core.IAppListEntry;
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.ApplicationModel.Core.IAppListEntry2;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.ApplicationModel.Core.IAppListEntry3;
+        [contract(Windows.Foundation.UniversalApiContract, 11.0)] interface Windows.ApplicationModel.Core.IAppListEntry4;
+    }
+}

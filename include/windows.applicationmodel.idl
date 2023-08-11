@@ -23,6 +23,11 @@
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
+import "windows.applicationmodel.core.idl";
+
+namespace Windows.ApplicationModel.Core {
+    runtimeclass AppListEntry;
+}
 
 namespace Windows.ApplicationModel {
     typedef struct PackageVersion PackageVersion;
