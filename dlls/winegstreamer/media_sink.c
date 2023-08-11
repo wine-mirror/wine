@@ -671,9 +671,27 @@ static HRESULT WINAPI media_sink_GetStreamSinkByIndex(IMFFinalizableMediaSink *i
 static HRESULT WINAPI media_sink_GetStreamSinkById(IMFFinalizableMediaSink *iface, DWORD stream_sink_id,
         IMFStreamSink **stream)
 {
-    FIXME("iface %p, stream_sink_id %#lx, stream %p stub!\n", iface, stream_sink_id, stream);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
+    struct stream_sink *stream_sink;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, stream_sink_id %#lx, stream %p.\n", iface, stream_sink_id, stream);
+
+    if (!stream)
+        return E_POINTER;
+
+    EnterCriticalSection(&media_sink->cs);
+
+    hr = MF_E_INVALIDSTREAMNUMBER;
+    if ((stream_sink = media_sink_get_stream_sink_by_id(media_sink, stream_sink_id)))
+    {
+        IMFStreamSink_AddRef((*stream = &stream_sink->IMFStreamSink_iface));
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_SetPresentationClock(IMFFinalizableMediaSink *iface, IMFPresentationClock *clock)
