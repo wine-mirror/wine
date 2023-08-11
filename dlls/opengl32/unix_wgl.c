@@ -903,8 +903,15 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     };
     void *ret_ptr;
     ULONG ret_len;
-
     struct wgl_handle *ptr = (struct wgl_handle *)userParam;
+
+    if (!NtCurrentTeb())
+    {
+        fprintf( stderr, "msg:gl_debug_message_callback called from native thread, severity %#x, message \"%.*s\".\n",
+                 severity, length, message );
+        return;
+    }
+
     if (!(params.user_callback = ptr->u.context->debug_callback)) return;
     params.user_data = ptr->u.context->debug_user;
 
