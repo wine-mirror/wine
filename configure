@@ -1123,6 +1123,7 @@ enable_dswave
 enable_dwmapi
 enable_dwrite
 enable_dx8vb
+enable_dxcore
 enable_dxdiagn
 enable_dxgi
 enable_dxtrans
@@ -21225,6 +21226,7 @@ wine_fn_config_makefile dlls/dwmapi/tests enable_tests
 wine_fn_config_makefile dlls/dwrite enable_dwrite
 wine_fn_config_makefile dlls/dwrite/tests enable_tests
 wine_fn_config_makefile dlls/dx8vb enable_dx8vb
+wine_fn_config_makefile dlls/dxcore enable_dxcore
 wine_fn_config_makefile dlls/dxdiagn enable_dxdiagn
 wine_fn_config_makefile dlls/dxdiagn/tests enable_tests
 wine_fn_config_makefile dlls/dxgi enable_dxgi
