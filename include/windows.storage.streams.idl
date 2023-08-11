@@ -34,10 +34,12 @@ namespace Windows.Storage.Streams {
     interface IOutputStream;
     interface IRandomAccessStream;
     interface IRandomAccessStreamReference;
+    interface IRandomAccessStreamReferenceStatics;
     interface IRandomAccessStreamStatics;
     interface IRandomAccessStreamWithContentType;
     runtimeclass Buffer;
     runtimeclass RandomAccessStream;
+    runtimeclass RandomAccessStreamReference;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<Windows.Storage.Streams.IRandomAccessStream *>;
@@ -137,5 +139,15 @@ namespace Windows.Storage.Streams {
     runtimeclass Buffer
     {
         [default] interface Windows.Storage.Streams.IBuffer;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Storage.Streams.IRandomAccessStreamReferenceStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass RandomAccessStreamReference
+    {
+        [default] interface Windows.Storage.Streams.IRandomAccessStreamReference;
     }
 }
