@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "initguid.h"
 #include "winstring.h"
+#include "pathcch.h"
 
 #include "roapi.h"
 
@@ -61,9 +62,11 @@ static void test_PackageStatics(void)
     IStorageFolder *storage_folder;
     IActivationFactory *factory;
     IStorageItem *storage_item;
+    WCHAR buffer[MAX_PATH];
+    HSTRING str, wine_str;
     IPackage *package;
-    HSTRING str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( package_statics_name, wcslen( package_statics_name ), &str );
@@ -106,6 +109,19 @@ static void test_PackageStatics(void)
 
     hr = IStorageFolder_QueryInterface( storage_folder, &IID_IStorageItem, (void **)&storage_item );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IStorageItem_get_Path( storage_item, &str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    GetModuleFileNameW( NULL, buffer, MAX_PATH );
+    hr = PathCchRemoveFileSpec( buffer, ARRAY_SIZE(buffer) );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCreateString( buffer, wcslen(buffer), &wine_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, wine_str, &res );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !res, "got string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( wine_str );
 
     ref = IStorageItem_Release( storage_item );
     ok( ref == 1, "got ref %ld.\n", ref );

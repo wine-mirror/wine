@@ -1,5 +1,5 @@
 TESTDLL = windows.applicationmodel.dll
-IMPORTS = combase advapi32
+IMPORTS = combase advapi32 kernelbase
 
 application_EXTRADLLFLAGS = -mconsole
 
