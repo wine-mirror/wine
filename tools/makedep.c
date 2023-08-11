@@ -87,6 +87,7 @@ struct incl_file
 
 #define FLAG_GENERATED      0x000001  /* generated file */
 #define FLAG_INSTALL        0x000002  /* file to install */
+#define FLAG_TESTDLL        0x000004  /* file is part of a TESTDLL resource */
 #define FLAG_IDL_PROXY      0x000100  /* generates a proxy (_p.c) file */
 #define FLAG_IDL_CLIENT     0x000200  /* generates a client (_c.c) file */
 #define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
@@ -928,6 +929,7 @@ static void parse_pragma_directive( struct file *source, char *str )
             return;
         }
         else if (!strcmp( flag, "install" )) source->flags |= FLAG_INSTALL;
+        else if (!strcmp( flag, "testdll" )) source->flags |= FLAG_TESTDLL;
 
         if (strendswith( source->name, ".idl" ))
         {
@@ -2731,7 +2733,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
-    if (!make->testdll || !find_src_file( make, strmake( "%s.spec", obj ) )) /* RC is for a TESTDLL */
+    if (!(source->file->flags & FLAG_TESTDLL))
     {
         for (arch = 0; arch < archs.count; arch++)
             if (!make->disabled[arch]) strarray_add( &make->res_files[arch], res_file );
@@ -3062,17 +3064,29 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_spec( struct makefile *make, struct incl_file *source, const char *obj )
 {
+    /* nothing to do */
+}
+
+
+/*******************************************************************
+ *         output_source_testdll
+ */
+static void output_source_testdll( struct makefile *make, struct incl_file *source, const char *obj )
+{
     struct strarray imports = get_expanded_file_local_var( make, obj, "IMPORTS" );
     struct strarray dll_flags = empty_strarray;
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
     const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file;
+    struct incl_file *spec_file = find_src_file( make, strmake( "%.spec", obj ));
     unsigned int arch;
 
     if (!imports.count) imports = make->imports;
     strarray_addall( &dll_flags, make->extradllflags );
     strarray_addall( &dll_flags, get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" ));
     if (!strarray_exists( &dll_flags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
+
+    if (!spec_file) fatal_error( "testdll source %s needs a .spec file\n", source->name );
 
     for (arch = 0; arch < archs.count; arch++)
     {
@@ -3099,7 +3113,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
                 tools_path( make, "wrc" ));
 
         output( "%s:", output_file );
-        output_filename( source->filename );
+        output_filename( spec_file->filename );
         output_filename( obj_name );
         if (res_name) output_filename( res_name );
         output_filenames( dep_libs );
@@ -3111,7 +3125,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output_filenames( dll_flags );
         if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", arch ));
         output_filename( "-shared" );
-        output_filename( source->filename );
+        output_filename( spec_file->filename );
         output_filename( obj_name );
         if (res_name) output_filename( res_name );
         if ((debug_file = get_debug_file( make, dll_name, arch )))
@@ -3143,7 +3157,7 @@ static void output_source_xml( struct makefile *make, struct incl_file *source, 
  */
 static void output_source_one_arch( struct makefile *make, struct incl_file *source, const char *obj,
                                     struct strarray defines, struct strarray *targets,
-                                    unsigned int arch, int is_dll_src )
+                                    unsigned int arch )
 {
     const char *obj_name;
 
@@ -3171,7 +3185,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         strarray_add( &make->unixobj_files, obj_name );
     else if (source->file->flags & FLAG_C_IMPLIB)
         strarray_add( &make->implib_files[arch], obj_name );
-    else if (!is_dll_src)
+    else if (!(source->file->flags & FLAG_TESTDLL))
         strarray_add( &make->object_files[arch], obj_name );
     else
         strarray_add( &make->clean_files, obj_name );
@@ -3204,8 +3218,8 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     output_filename( arch_make_variable( "CFLAGS", arch ));
     output( "\n" );
 
-    if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ) &&
-        !(source->file->flags & FLAG_GENERATED))
+    if (make->testdll && strendswith( source->name, ".c" ) &&
+        !(source->file->flags & (FLAG_GENERATED | FLAG_TESTDLL)))
     {
         const char *ok_file, *test_exe;
 
@@ -3228,22 +3242,24 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
 {
     struct strarray defines = get_source_defines( make, source, obj );
     struct strarray targets = empty_strarray;
-    int is_dll_src = (make->testdll && strendswith( source->name, ".c" ) &&
-                      find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
     unsigned int arch;
 
     for (arch = 0; arch < archs.count; arch++)
         if (!source->arch || source->arch == arch)
-            output_source_one_arch( make, source, obj, defines, &targets, arch, is_dll_src );
+            output_source_one_arch( make, source, obj, defines, &targets, arch );
 
     if (source->file->flags & FLAG_GENERATED)
     {
         if (!make->testdll || !strendswith( source->filename, "testlist.c" ))
             strarray_add( &make->clean_files, source->basename );
     }
+    else if (source->file->flags & FLAG_TESTDLL)
+    {
+        output_source_testdll( make, source, obj );
+    }
     else
     {
-        if (make->testdll && !is_dll_src && strendswith( source->name, ".c" ))
+        if (make->testdll && strendswith( source->name, ".c" ))
             strarray_add( &make->test_files, obj );
     }
 
