@@ -624,9 +624,18 @@ static HRESULT WINAPI media_sink_RemoveStreamSink(IMFFinalizableMediaSink *iface
 
 static HRESULT WINAPI media_sink_GetStreamSinkCount(IMFFinalizableMediaSink *iface, DWORD *count)
 {
-    FIXME("iface %p, count %p stub!\n", iface, count);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, count %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    EnterCriticalSection(&media_sink->cs);
+    *count = list_count(&media_sink->stream_sinks);
+    LeaveCriticalSection(&media_sink->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_sink_GetStreamSinkByIndex(IMFFinalizableMediaSink *iface, DWORD index,
