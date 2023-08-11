@@ -27,11 +27,13 @@ import "windows.system.idl";
 namespace Windows.ApplicationModel {
     typedef struct PackageVersion PackageVersion;
 
+    interface IAppDisplayInfo;
     interface IPackage;
     interface IPackageId;
     interface IPackageIdWithMetadata;
     interface IPackageStatics;
 
+    runtimeclass AppDisplayInfo;
     runtimeclass Package;
     runtimeclass PackageId;
 
@@ -51,6 +53,18 @@ namespace Windows.ApplicationModel {
         UINT16 Build;
         UINT16 Revision;
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.AppDisplayInfo),
+        uuid(1aeb1103-e4d4-41aa-a4f6-c4a276e79eac)
+    ]
+    interface IAppDisplayInfo : IInspectable
+    {
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT Description([out, retval] HSTRING *value);
+        HRESULT GetLogo([in] Windows.Foundation.Size size, [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -101,6 +115,16 @@ namespace Windows.ApplicationModel {
     interface IPackageStatics : IInspectable
     {
         [propget] HRESULT Current([out, retval] Windows.ApplicationModel.Package **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AppDisplayInfo
+    {
+        [default] interface Windows.ApplicationModel.IAppDisplayInfo;
     }
 
     [
