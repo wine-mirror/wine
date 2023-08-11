@@ -1,0 +1,54 @@
+/*
+ * Copyright 2023 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "windows.foundation.idl";
+import "windows.applicationmodel.idl";
+
+namespace Windows.Management.Deployment {
+
+    interface IDeploymentResult;
+
+    runtimeclass DeploymentResult;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Management.Deployment.DeploymentResult),
+        uuid(2563b9ae-b77d-4c1f-8a7b-20e6ad515ef3)
+    ]
+    interface IDeploymentResult : IInspectable
+    {
+        [propget] HRESULT ErrorText([out, retval] HSTRING *value);
+        [propget] HRESULT ActivityId([out, retval] GUID *value);
+        [propget] HRESULT ExtendedErrorCode([out, retval] HRESULT *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DeploymentResult
+    {
+        [default] interface Windows.Management.Deployment.IDeploymentResult;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IDeploymentResult2;
+    }
+
+}
