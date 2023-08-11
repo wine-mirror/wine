@@ -282,6 +282,7 @@ SOURCES = \
 	dwrite_1.idl \
 	dwrite_2.idl \
 	dwrite_3.idl \
+	dxcore_interface.h \
 	dxdiag.h \
 	dxerr8.h \
 	dxerr9.h \
