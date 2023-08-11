@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-typedef void *(__cdecl *CFP_ALLOCPROC)(size_t);
-typedef void *(__cdecl *CFP_REALLOCPROC)(void *, size_t);
+typedef void *(__WINE_ALLOC_SIZE(1) __cdecl *CFP_ALLOCPROC)(size_t);
+typedef void *(__WINE_ALLOC_SIZE(2) __cdecl *CFP_REALLOCPROC)(void *, size_t);
 typedef void (__cdecl *CFP_FREEPROC)(void *);
 
 #define TTFCFP_SUBSET  0
