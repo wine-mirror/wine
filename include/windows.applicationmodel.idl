@@ -29,6 +29,7 @@ namespace Windows.ApplicationModel {
 
     interface IAppDisplayInfo;
     interface IPackage;
+    interface IPackageStatus;
     interface IPackageId;
     interface IPackageIdWithMetadata;
     interface IPackageStatics;
@@ -36,6 +37,7 @@ namespace Windows.ApplicationModel {
     runtimeclass AppDisplayInfo;
     runtimeclass Package;
     runtimeclass PackageId;
+    runtimeclass PackageStatus;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *>;
@@ -77,6 +79,27 @@ namespace Windows.ApplicationModel {
         [propget] HRESULT InstalledLocation([out, retval] Windows.Storage.StorageFolder **value);
         [propget] HRESULT IsFramework([out, retval] boolean *value);
         [propget] HRESULT Dependencies([out, retval] Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.PackageStatus),
+        uuid(5fe74f71-a365-4c09-a02d-046d525ea1da)
+    ]
+    interface IPackageStatus : IInspectable
+    {
+        HRESULT VerifyIsOK([out, retval] boolean *value);
+        [propget] HRESULT NotAvailable([out, retval] boolean *value);
+        [propget] HRESULT PackageOffline([out, retval] boolean *value);
+        [propget] HRESULT DataOffline([out, retval] boolean *value);
+        [propget] HRESULT Disabled([out, retval] boolean *value);
+        [propget] HRESULT NeedsRemediation([out, retval] boolean *value);
+        [propget] HRESULT LicenseIssue([out, retval] boolean *value);
+        [propget] HRESULT Modified([out, retval] boolean *value);
+        [propget] HRESULT Tampered([out, retval] boolean *value);
+        [propget] HRESULT DependencyIssue([out, retval] boolean *value);
+        [propget] HRESULT Servicing([out, retval] boolean *value);
+        [propget] HRESULT DeploymentInProgress([out, retval] boolean *value);
     }
 
     [
@@ -144,6 +167,16 @@ namespace Windows.ApplicationModel {
         [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6;
         [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7;
         [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PackageStatus
+    {
+        [default] interface Windows.ApplicationModel.IPackageStatus;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackageStatus2;
     }
 
     [
