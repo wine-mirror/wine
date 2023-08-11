@@ -68,8 +68,7 @@ static void check_wts_process_info(const WTS_PROCESS_INFOW *info, DWORD count)
 
     for (i = 0; i < count; i++)
     {
-        char sid_buffer[50];
-        SID_AND_ATTRIBUTES *sid = (SID_AND_ATTRIBUTES *)sid_buffer;
+        SID_AND_ATTRIBUTES *sid;
         const SYSTEM_PROCESS_INFORMATION *nt_process;
         HANDLE process, token;
         DWORD size;
@@ -88,11 +87,13 @@ static void check_wts_process_info(const WTS_PROCESS_INFOW *info, DWORD count)
 
         if ((process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, info[i].ProcessId)))
         {
+            sid = malloc(50);
             ret = OpenProcessToken(process, TOKEN_QUERY, &token);
             ok(ret, "failed to open token, error %lu\n", GetLastError());
-            ret = GetTokenInformation(token, TokenUser, sid_buffer, sizeof(sid_buffer), &size);
+            ret = GetTokenInformation(token, TokenUser, sid, 50, &size);
             ok(ret, "failed to get token user, error %lu\n", GetLastError());
             ok(EqualSid(info[i].pUserSid, sid->Sid), "SID did not match\n");
+            free(sid);
             CloseHandle(token);
             CloseHandle(process);
         }
