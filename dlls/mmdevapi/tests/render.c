@@ -341,8 +341,28 @@ static void test_audioclient(void)
             broken(hr == E_NOINTERFACE) /* win8 */,
             "Failed to query IAudioClient3 interface: %08lx\n", hr);
 
-    if(hr == S_OK)
+    if(hr == S_OK){
+        UINT32 default_period = 0, unit_period, min_period, max_period;
+
+        hr = IAudioClient3_GetSharedModeEnginePeriod(
+            ac3, pwfx, &default_period, &unit_period, &min_period, &max_period);
+        todo_wine
+        ok(hr == S_OK, "GetSharedModeEnginePeriod returns %08lx\n", hr);
+
+        hr = IAudioClient3_InitializeSharedAudioStream(
+            ac3, AUDCLNT_SHAREMODE_SHARED, default_period, pwfx, NULL);
+        todo_wine
+        ok(hr == S_OK, "InitializeSharedAudioStream returns %08lx\n", hr);
+
         IAudioClient3_Release(ac3);
+        IAudioClient_Release(ac);
+
+        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&ac);
+        ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+    }
+    else
+        win_skip("IAudioClient3 is not present\n");
 
     test_uninitialized(ac);
 
