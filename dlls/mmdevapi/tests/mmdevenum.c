@@ -29,6 +29,7 @@
 #include "dshow.h"
 #include "dsound.h"
 #include "devpkey.h"
+#include "devicetopology.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
@@ -382,6 +383,71 @@ static IMMNotificationClientVtbl notif_vtbl = {
 
 static IMMNotificationClient notif = { &notif_vtbl };
 
+static void test_connectors(IDeviceTopology *dt)
+{
+    HRESULT hr;
+    UINT connector_count;
+
+    hr = IDeviceTopology_GetConnectorCount(dt, &connector_count);
+    ok(hr == S_OK, "GetConnectorCount returns 0x%08lx\n", hr);
+    trace("connector count: %u\n", connector_count);
+
+    if (hr == S_OK && connector_count > 0)
+    {
+        IConnector *connector;
+
+        hr = IDeviceTopology_GetConnector(dt, 0, &connector);
+        ok(hr == S_OK, "GetConnector returns 0x%08lx\n", hr);
+
+        if (hr == S_OK)
+        {
+            ConnectorType type;
+
+            hr = IConnector_GetType(connector, &type);
+            ok(hr == S_OK, "GetConnector returns 0x%08lx\n", hr);
+            trace("connector 0 type: %u\n", connector_count);
+        }
+    }
+}
+
+static void test_DeviceTopology(IMMDeviceEnumerator *mme)
+{
+    IMMDevice *dev = NULL;
+    IDeviceTopology *dt = NULL;
+    HRESULT hr;
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
+    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: 0x%08lx\n", hr);
+    if (hr != S_OK || !dev)
+    {
+        if (hr == E_NOTFOUND)
+            win_skip("No sound card available\n");
+        else
+            skip("GetDefaultAudioEndpoint returns 0x%08lx\n", hr);
+        goto cleanup;
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IDeviceTopology, CLSCTX_INPROC_SERVER, NULL, (void**)&dt);
+    ok(hr == S_OK || hr == E_NOINTERFACE, "IDeviceTopology Activation failed: 0x%08lx\n", hr);
+    if (hr != S_OK || !dev)
+    {
+        if (hr == E_NOINTERFACE)
+            todo_wine
+            win_skip("IDeviceTopology interface not found\n");
+        else
+            skip("IDeviceTopology Activation returns 0x%08lx\n", hr);
+        goto cleanup;
+    }
+
+    test_connectors(dt);
+
+    IDeviceTopology_Release(dt);
+
+cleanup:
+    if (dev)
+        IMMDevice_Release(dev);
+}
+
 /* Only do parameter tests here, the actual MMDevice testing should be a separate test */
 START_TEST(mmdevenum)
 {
@@ -477,6 +543,8 @@ START_TEST(mmdevenum)
 
     hr = IMMDeviceEnumerator_UnregisterEndpointNotificationCallback(mme, &notif);
     ok(hr == E_NOTFOUND, "UnregisterEndpointNotificationCallback failed: %08lx\n", hr);
+
+    test_DeviceTopology(mme);
 
     IMMDeviceEnumerator_Release(mme);
 
