@@ -432,7 +432,6 @@ static void test_DeviceTopology(IMMDeviceEnumerator *mme)
     if (hr != S_OK || !dev)
     {
         if (hr == E_NOINTERFACE)
-            todo_wine
             win_skip("IDeviceTopology interface not found\n");
         else
             skip("IDeviceTopology Activation returns 0x%08lx\n", hr);

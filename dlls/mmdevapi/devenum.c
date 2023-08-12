@@ -87,6 +87,16 @@ typedef struct IPropertyBagImpl {
 
 static const IPropertyBagVtbl PB_Vtbl;
 
+typedef struct IConnectorImpl {
+    IConnector IConnector_iface;
+    LONG ref;
+} IConnectorImpl;
+
+typedef struct IDeviceTopologyImpl {
+    IDeviceTopology IDeviceTopology_iface;
+    LONG ref;
+} IDeviceTopologyImpl;
+
 static HRESULT MMDevPropStore_Create(MMDevice *This, DWORD access, IPropertyStore **ppv);
 
 static inline MMDevPropStore *impl_from_IPropertyStore(IPropertyStore *iface)
@@ -107,6 +117,18 @@ static inline MMDevColImpl *impl_from_IMMDeviceCollection(IMMDeviceCollection *i
 static inline IPropertyBagImpl *impl_from_IPropertyBag(IPropertyBag *iface)
 {
     return CONTAINING_RECORD(iface, IPropertyBagImpl, IPropertyBag_iface);
+}
+
+static HRESULT DeviceTopology_Create(IMMDevice *device, IDeviceTopology **ppv);
+
+static inline IConnectorImpl *impl_from_IConnector(IConnector *iface)
+{
+    return CONTAINING_RECORD(iface, IConnectorImpl, IConnector_iface);
+}
+
+static inline IDeviceTopologyImpl *impl_from_IDeviceTopology(IDeviceTopology *iface)
+{
+    return CONTAINING_RECORD(iface, IDeviceTopologyImpl, IDeviceTopology_iface);
 }
 
 static const WCHAR propkey_formatW[] = L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X},%d";
@@ -667,7 +689,7 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     }
     else if (IsEqualIID(riid, &IID_IDeviceTopology))
     {
-        FIXME("IID_IDeviceTopology unsupported\n");
+        hr = DeviceTopology_Create(iface, (IDeviceTopology**)ppv);
     }
     else if (IsEqualIID(riid, &IID_IDirectSound)
              || IsEqualIID(riid, &IID_IDirectSound8))
@@ -1660,3 +1682,277 @@ static const IMMDeviceVtbl info_device_Vtbl =
 static IMMDevice info_device = {
     &info_device_Vtbl
 };
+
+static HRESULT WINAPI Connector_QueryInterface(IConnector *iface, REFIID riid, void **ppv)
+{
+    IConnectorImpl *This = impl_from_IConnector(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IConnector))
+        *ppv = &This->IConnector_iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI Connector_AddRef(IConnector *iface)
+{
+    IConnectorImpl *This = impl_from_IConnector(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI Connector_Release(IConnector *iface)
+{
+    IConnectorImpl *This = impl_from_IConnector(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI Connector_GetType(
+    IConnector *This,
+    ConnectorType *pType)
+{
+    FIXME("(%p) - partial stub\n", This);
+    *pType = Physical_Internal;
+    return S_OK;
+}
+
+static HRESULT WINAPI Connector_GetDataFlow(
+    IConnector *This,
+    DataFlow *pFlow)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_ConnectTo(
+    IConnector *This,
+    IConnector *pConnectTo)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_Disconnect(
+    IConnector *This)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_IsConnected(
+    IConnector *This,
+    BOOL *pbConnected)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_GetConnectedTo(
+    IConnector *This,
+    IConnector **ppConTo)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_GetConnectorIdConnectedTo(
+    IConnector *This,
+    LPWSTR *ppwstrConnectorId)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Connector_GetDeviceIdConnectedTo(
+    IConnector *This,
+    LPWSTR *ppwstrDeviceId)
+{
+    FIXME("(%p) - stub\n", This);
+    return E_NOTIMPL;
+}
+
+static const IConnectorVtbl Connector_Vtbl =
+{
+    Connector_QueryInterface,
+    Connector_AddRef,
+    Connector_Release,
+    Connector_GetType,
+    Connector_GetDataFlow,
+    Connector_ConnectTo,
+    Connector_Disconnect,
+    Connector_IsConnected,
+    Connector_GetConnectedTo,
+    Connector_GetConnectorIdConnectedTo,
+    Connector_GetDeviceIdConnectedTo,
+};
+
+HRESULT Connector_Create(IConnector **ppv)
+{
+    IConnectorImpl *This;
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IConnector_iface.lpVtbl = &Connector_Vtbl;
+    This->ref = 1;
+
+    *ppv = &This->IConnector_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI DT_QueryInterface(IDeviceTopology *iface, REFIID riid, void **ppv)
+{
+    IDeviceTopologyImpl *This = impl_from_IDeviceTopology(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IDeviceTopology))
+        *ppv = &This->IDeviceTopology_iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+
+    return S_OK;
+}
+
+static ULONG WINAPI DT_AddRef(IDeviceTopology *iface)
+{
+    IDeviceTopologyImpl *This = impl_from_IDeviceTopology(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI DT_Release(IDeviceTopology *iface)
+{
+    IDeviceTopologyImpl *This = impl_from_IDeviceTopology(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) new ref %lu\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI DT_GetConnectorCount(IDeviceTopology *This,
+                                           UINT *pCount)
+{
+    FIXME("(%p)->(%p) - partial stub\n", This, pCount);
+
+    if (!pCount)
+        return E_POINTER;
+
+    *pCount = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI DT_GetConnector(IDeviceTopology *This,
+                                      UINT nIndex,
+                                      IConnector **ppConnector)
+{
+    FIXME("(%p)->(%u, %p) - partial stub\n", This, nIndex, ppConnector);
+
+    if (nIndex == 0)
+    {
+        return Connector_Create(ppConnector);
+    }
+
+    return E_INVALIDARG;
+}
+
+static HRESULT WINAPI DT_GetSubunitCount(IDeviceTopology *This,
+                                         UINT *pCount)
+{
+    FIXME("(%p)->(%p) - stub\n", This, pCount);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DT_GetSubunit(IDeviceTopology *This,
+                                    UINT nIndex,
+                                    ISubUnit **ppConnector)
+{
+    FIXME("(%p)->(%u, %p) - stub\n", This, nIndex, ppConnector);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DT_GetPartById(IDeviceTopology *This,
+                                     UINT nId,
+                                     IPart **ppPart)
+{
+    FIXME("(%p)->(%u, %p) - stub\n", This, nId, ppPart);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DT_GetDeviceId(IDeviceTopology *This,
+                                     LPWSTR *ppwstrDeviceId)
+{
+    FIXME("(%p)->(%p) - stub\n", This, ppwstrDeviceId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DT_GetSignalPath(IDeviceTopology *This,
+                                       IPart *pIPartFrom,
+                                       IPart *pIPartTo,
+                                       BOOL bRejectMixedPaths,
+                                       IPartsList **ppParts)
+{
+    FIXME("(%p)->(%p, %p, %s, %p) - stub\n",
+          This, pIPartFrom, pIPartTo, bRejectMixedPaths ? "TRUE" : "FALSE", ppParts);
+    return E_NOTIMPL;
+}
+
+static const IDeviceTopologyVtbl DeviceTopology_Vtbl =
+{
+    DT_QueryInterface,
+    DT_AddRef,
+    DT_Release,
+    DT_GetConnectorCount,
+    DT_GetConnector,
+    DT_GetSubunitCount,
+    DT_GetSubunit,
+    DT_GetPartById,
+    DT_GetDeviceId,
+    DT_GetSignalPath,
+};
+
+static HRESULT DeviceTopology_Create(IMMDevice *device, IDeviceTopology **ppv)
+{
+    IDeviceTopologyImpl *This;
+
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IDeviceTopology_iface.lpVtbl = &DeviceTopology_Vtbl;
+    This->ref = 1;
+
+    *ppv = &This->IDeviceTopology_iface;
+
+    return S_OK;
+}
