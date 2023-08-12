@@ -849,8 +849,6 @@ do
             ;;
         esac])
 
-    AS_VAR_IF([${wine_arch}_CC],[false],[continue])
-
     saved_CC=$CC
     saved_CFLAGS=$CFLAGS
     saved_LDFLAGS=$LDFLAGS
@@ -864,9 +862,10 @@ do
 
     target=""
     AS_VAR_PUSHDEF([wine_cv_crosscc],[ac_cv_${wine_arch}_crosscc])
-    AC_CACHE_CHECK([whether $CC works],[wine_cv_crosscc],
-       [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-               [AS_VAR_SET([wine_cv_crosscc],[yes])],[AS_VAR_SET([wine_cv_crosscc],[no])])])
+    AS_VAR_IF([${wine_arch}_CC],[false],[],
+        [AC_CACHE_CHECK([whether $CC works],[wine_cv_crosscc],
+            [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                [AS_VAR_SET([wine_cv_crosscc],[yes])],[AS_VAR_SET([wine_cv_crosscc],[no])])])])
     AS_VAR_IF([wine_cv_crosscc],[yes],
        [set x $CC
         shift
@@ -903,6 +902,9 @@ do
 
     if test -z "$target"
     then
+        AS_VAR_SET_IF([enable_archs],
+            [AC_MSG_ERROR([MinGW $wine_arch compiler not found.
+This is an error since --enable-archs=$wine_arch was requested.])])
         CC=$saved_CC
         CFLAGS=$saved_CFLAGS
         LDFLAGS=$saved_LDFLAGS
@@ -930,6 +932,9 @@ do
            CC=$saved_CC
            CFLAGS=$saved_CFLAGS
            LDFLAGS=$saved_LDFLAGS
+           AS_VAR_SET_IF([enable_archs],
+                [AC_MSG_ERROR([MinGW $wine_arch compiler supporting C99 not found.
+This is an error since --enable-archs=$wine_arch was requested.])])
            continue
            ;;
       x*) AC_MSG_RESULT([$res])
@@ -1009,9 +1014,6 @@ if test $HOST_ARCH = aarch64
 then
     test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT=""
-else
-    WINE_NOTICE_WITH(mingw,[test "x$PE_ARCHS" = "x"],
-                 [MinGW compiler not found, cross-compiling PE files won't be supported.])
 fi
 
 dnl **** External libraries ****
