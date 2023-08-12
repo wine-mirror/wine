@@ -351,7 +351,6 @@ static void test_audioclient(void)
 
         hr = IAudioClient3_InitializeSharedAudioStream(
             ac3, AUDCLNT_SHAREMODE_SHARED, default_period, pwfx, NULL);
-        todo_wine
         ok(hr == S_OK, "InitializeSharedAudioStream returns %08lx\n", hr);
 
         IAudioClient3_Release(ac3);
