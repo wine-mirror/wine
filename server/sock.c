@@ -1470,6 +1470,8 @@ static int sock_get_poll_events( struct fd *fd )
     {
         unsigned int i;
 
+        if (req->iosb->status != STATUS_PENDING) continue;
+
         for (i = 0; i < req->count; ++i)
         {
             if (req->sockets[i].sock != sock) continue;
