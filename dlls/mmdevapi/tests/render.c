@@ -346,7 +346,6 @@ static void test_audioclient(void)
 
         hr = IAudioClient3_GetSharedModeEnginePeriod(
             ac3, pwfx, &default_period, &unit_period, &min_period, &max_period);
-        todo_wine
         ok(hr == S_OK, "GetSharedModeEnginePeriod returns %08lx\n", hr);
 
         hr = IAudioClient3_InitializeSharedAudioStream(
