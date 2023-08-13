@@ -42,6 +42,7 @@ typedef struct _DriverFuncs {
      * valid. See enum _DriverPriority. */
     int priority;
 
+    void (WINAPI *pget_device_guid)(EDataFlow flow, const char *name, GUID *guid);
     BOOL (WINAPI *pget_device_name_from_guid)(GUID *guid, char **name, EDataFlow *flow);
     /* ids gets an array of human-friendly endpoint names
      * keys gets an array of driver-specific stuff that is used
