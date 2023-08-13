@@ -117,7 +117,7 @@ exit:
         RegCloseKey(drv_key);
 }
 
-static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
+void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 {
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
