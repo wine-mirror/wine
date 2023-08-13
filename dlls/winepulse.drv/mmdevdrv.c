@@ -103,19 +103,22 @@ static void pulse_call(enum unix_funcs code, void *params)
     assert(!status);
 }
 
-static void get_device_guid(HKEY drv_key, EDataFlow flow, const char *pulse_name, GUID *guid)
+static void get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
 {
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
     DWORD type, size = sizeof(*guid);
     LSTATUS status;
-    HKEY dev_key;
+    HKEY drv_key, dev_key;
 
     if (!pulse_name[0]) {
         *guid = (flow == eRender) ? pulse_render_guid : pulse_capture_guid;
         return;
     }
 
-    if (!drv_key) {
+    status = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0,
+                             KEY_WRITE | KEY_WOW64_64KEY, NULL, &drv_key, NULL);
+    if (status != ERROR_SUCCESS) {
+        ERR("Failed to open devices registry key: %lu\n", status);
         CoCreateGuid(guid);
         return;
     }
@@ -128,6 +131,7 @@ static void get_device_guid(HKEY drv_key, EDataFlow flow, const char *pulse_name
                              NULL, &dev_key, NULL);
     if (status != ERROR_SUCCESS) {
         ERR("Failed to open registry key for device %s: %lu\n", pulse_name, status);
+        RegCloseKey(drv_key);
         CoCreateGuid(guid);
         return;
     }
@@ -140,6 +144,7 @@ static void get_device_guid(HKEY drv_key, EDataFlow flow, const char *pulse_name
             ERR("Failed to store device GUID for %s to registry: %lu\n", pulse_name, status);
     }
     RegCloseKey(dev_key);
+    RegCloseKey(drv_key);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **keys,
@@ -149,8 +154,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **ke
     GUID *guids = NULL;
     WCHAR **ids = NULL;
     unsigned int i = 0;
-    LSTATUS status;
-    HKEY drv_key;
 
     TRACE("%d %p %p %p\n", flow, ids_out, num, def_index);
 
@@ -173,13 +176,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **ke
         goto end;
     }
 
-    status = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0,
-                             KEY_WRITE | KEY_WOW64_64KEY, NULL, &drv_key, NULL);
-    if (status != ERROR_SUCCESS) {
-        ERR("Failed to open devices registry key: %lu\n", status);
-        drv_key = NULL;
-    }
-
     for (i = 0; i < params.num; i++) {
         WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
         char *pulse_name = (char *)params.endpoints + params.endpoints[i].device;
@@ -190,10 +186,8 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **ke
             break;
         }
         memcpy(ids[i], name, size);
-        get_device_guid(drv_key, flow, pulse_name, &guids[i]);
+        get_device_guid(flow, pulse_name, &guids[i]);
     }
-    if (drv_key)
-        RegCloseKey(drv_key);
 
 end:
     HeapFree(GetProcessHeap(), 0, params.endpoints);
