@@ -100,7 +100,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         if(!driver->p##n) { goto fail; } } while(0)
     LDFC(get_device_guid);
     LDFC(get_device_name_from_guid);
-    LDFC(GetEndpointIDs);
 #undef LDFC
 
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));

@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <wchar.h>
 
 #define COBJMACROS
 #include "windef.h"
@@ -526,29 +527,57 @@ static HRESULT set_format(MMDevice *dev)
 
 HRESULT load_driver_devices(EDataFlow flow)
 {
-    WCHAR **ids;
-    GUID *guids;
-    UINT num, def, i;
-    HRESULT hr;
+    struct get_endpoint_ids_params params;
+    WCHAR **ids = NULL;
+    GUID *guids = NULL;
+    UINT i;
 
-    if(!drvs.pGetEndpointIDs)
-        return S_OK;
+    params.flow = flow;
+    params.size = 1024;
+    params.endpoints = NULL;
+    do {
+        HeapFree(GetProcessHeap(), 0, params.endpoints);
+        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
+        __wine_unix_call(drvs.module_unixlib, get_endpoint_ids, &params);
+    } while (params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 
-    hr = drvs.pGetEndpointIDs(flow, &ids, &guids, &num, &def);
-    if(FAILED(hr))
-        return hr;
+    if (FAILED(params.result))
+        goto end;
 
-    for(i = 0; i < num; ++i){
+    ids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*ids));
+    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
+    if (!ids || !guids) {
+        params.result = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    for (i = 0; i < params.num; i++) {
+        const WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
+        const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
+        const unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
+
+        if (!(ids[i] = HeapAlloc(GetProcessHeap(), 0, size))) {
+            while (i--) HeapFree(GetProcessHeap(), 0, ids[i]);
+            params.result = E_OUTOFMEMORY;
+            goto end;
+        }
+        memcpy(ids[i], name, size);
+        drvs.pget_device_guid(flow, dev_name, &guids[i]);
+    }
+
+    for (i = 0; i < params.num; i++) {
         MMDevice *dev;
         dev = MMDevice_Create(ids[i], &guids[i], flow, DEVICE_STATE_ACTIVE,
-                def == i);
+                params.default_idx == i);
         set_format(dev);
     }
 
+end:
+    HeapFree(GetProcessHeap(), 0, params.endpoints);
     HeapFree(GetProcessHeap(), 0, guids);
     HeapFree(GetProcessHeap(), 0, ids);
 
-    return S_OK;
+    return params.result;
 }
 
 static void MMDevice_Destroy(MMDevice *This)

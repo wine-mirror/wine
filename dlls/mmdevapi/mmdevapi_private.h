@@ -44,13 +44,6 @@ typedef struct _DriverFuncs {
 
     void (WINAPI *pget_device_guid)(EDataFlow flow, const char *name, GUID *guid);
     BOOL (WINAPI *pget_device_name_from_guid)(GUID *guid, char **name, EDataFlow *flow);
-    /* ids gets an array of human-friendly endpoint names
-     * keys gets an array of driver-specific stuff that is used
-     *   in GetAudioEndpoint to identify the endpoint
-     * it is the caller's responsibility to free both arrays, and
-     *   all of the elements in both arrays with HeapFree() */
-    HRESULT (WINAPI *pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
-            GUID **guids, UINT *num, UINT *default_index);
 } DriverFuncs;
 
 extern DriverFuncs drvs DECLSPEC_HIDDEN;

@@ -96,13 +96,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
-static void pulse_call(enum unix_funcs code, void *params)
-{
-    NTSTATUS status;
-    status = WINE_UNIX_CALL(code, params);
-    assert(!status);
-}
-
 void WINAPI get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
 {
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
@@ -145,63 +138,6 @@ void WINAPI get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
     }
     RegCloseKey(dev_key);
     RegCloseKey(drv_key);
-}
-
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **keys,
-        UINT *num, UINT *def_index)
-{
-    struct get_endpoint_ids_params params;
-    GUID *guids = NULL;
-    WCHAR **ids = NULL;
-    unsigned int i = 0;
-
-    TRACE("%d %p %p %p\n", flow, ids_out, num, def_index);
-
-    params.flow = flow;
-    params.size = MAX_PULSE_NAME_LEN * 4;
-    params.endpoints = NULL;
-    do {
-        HeapFree(GetProcessHeap(), 0, params.endpoints);
-        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
-        pulse_call(get_endpoint_ids, &params);
-    } while(params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-
-    if (FAILED(params.result))
-        goto end;
-
-    ids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*ids));
-    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
-    if (!ids || !guids) {
-        params.result = E_OUTOFMEMORY;
-        goto end;
-    }
-
-    for (i = 0; i < params.num; i++) {
-        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
-        char *pulse_name = (char *)params.endpoints + params.endpoints[i].device;
-        unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
-
-        if (!(ids[i] = HeapAlloc(GetProcessHeap(), 0, size))) {
-            params.result = E_OUTOFMEMORY;
-            break;
-        }
-        memcpy(ids[i], name, size);
-        get_device_guid(flow, pulse_name, &guids[i]);
-    }
-
-end:
-    HeapFree(GetProcessHeap(), 0, params.endpoints);
-    if (FAILED(params.result)) {
-        HeapFree(GetProcessHeap(), 0, guids);
-        while (i--) HeapFree(GetProcessHeap(), 0, ids[i]);
-        HeapFree(GetProcessHeap(), 0, ids);
-    } else {
-        *ids_out = ids;
-        *keys = guids;
-        *num = params.num;
-        *def_index = params.default_idx;
-    }
-    return params.result;
 }
 
 BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
