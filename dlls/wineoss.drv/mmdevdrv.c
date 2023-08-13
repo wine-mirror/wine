@@ -95,6 +95,18 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     return TRUE;
 }
 
+static void device_add(OSSDevice *oss_dev)
+{
+    OSSDevice *dev_item;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
+        if(IsEqualGUID(&oss_dev->guid, &dev_item->guid)){ /* already in list */
+            HeapFree(GetProcessHeap(), 0, oss_dev);
+            return;
+        }
+
+    list_add_tail(&g_devices, &oss_dev->entry);
+}
+
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         GUID *guid)
 {
@@ -135,6 +147,15 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
     WCHAR key_name[256];
+    const unsigned int dev_size = strlen(device) + 1;
+    OSSDevice *oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
+
+    if(oss_dev){
+        oss_dev->flow = flow;
+        oss_dev->guid = *guid;
+        memcpy(oss_dev->devnode, device, dev_size);
+        device_add(oss_dev);
+    }
 
     if(flow == eCapture)
         key_name[0] = '1';
@@ -185,18 +206,6 @@ BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
     return FALSE;
 }
 
-static void device_add(OSSDevice *oss_dev)
-{
-    OSSDevice *dev_item;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
-        if(IsEqualGUID(&oss_dev->guid, &dev_item->guid)){ /* already in list */
-            HeapFree(GetProcessHeap(), 0, oss_dev);
-            return;
-        }
-
-    list_add_tail(&g_devices, &oss_dev->entry);
-}
-
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
         UINT *num, UINT *def_index)
 {
@@ -229,23 +238,14 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
         WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
         char *device = (char *)params.endpoints + params.endpoints[i].device;
         unsigned int name_size = (wcslen(name) + 1) * sizeof(WCHAR);
-        unsigned int dev_size = strlen(device) + 1;
-        OSSDevice *oss_dev;
 
         ids[i] = HeapAlloc(GetProcessHeap(), 0, name_size);
-        oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
-        if(!ids[i] || !oss_dev){
-            HeapFree(GetProcessHeap(), 0, oss_dev);
+        if(!ids[i]){
             params.result = E_OUTOFMEMORY;
             goto end;
         }
         memcpy(ids[i], name, name_size);
         get_device_guid(flow, device, guids + i);
-
-        oss_dev->flow = flow;
-        oss_dev->guid = guids[i];
-        memcpy(oss_dev->devnode, device, dev_size);
-        device_add(oss_dev);
     }
     *def_index = params.default_idx;
 
