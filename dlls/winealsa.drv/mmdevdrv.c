@@ -154,67 +154,6 @@ void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
-        UINT *num, UINT *def_index)
-{
-    struct get_endpoint_ids_params params;
-    unsigned int i;
-    GUID *guids = NULL;
-    WCHAR **ids = NULL;
-
-    TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
-
-    params.flow = flow;
-    params.size = 1000;
-    params.endpoints = NULL;
-    do{
-        HeapFree(GetProcessHeap(), 0, params.endpoints);
-        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
-        ALSA_CALL(get_endpoint_ids, &params);
-    }while(params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-
-    if(FAILED(params.result)) goto end;
-
-    ids = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, params.num * sizeof(*ids));
-    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
-    if(!ids || !guids){
-        params.result = E_OUTOFMEMORY;
-        goto end;
-    }
-
-    for(i = 0; i < params.num; i++){
-        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
-        char *device = (char *)params.endpoints + params.endpoints[i].device;
-        unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
-
-        ids[i] = HeapAlloc(GetProcessHeap(), 0, size);
-        if(!ids[i]){
-            params.result = E_OUTOFMEMORY;
-            goto end;
-        }
-        memcpy(ids[i], name, size);
-        get_device_guid(flow, device, guids + i);
-    }
-    *def_index = params.default_idx;
-
-end:
-    HeapFree(GetProcessHeap(), 0, params.endpoints);
-    if(FAILED(params.result)){
-        HeapFree(GetProcessHeap(), 0, guids);
-        if(ids){
-            for(i = 0; i < params.num; i++)
-                HeapFree(GetProcessHeap(), 0, ids[i]);
-            HeapFree(GetProcessHeap(), 0, ids);
-        }
-    }else{
-        *ids_out = ids;
-        *guids_out = guids;
-        *num = params.num;
-    }
-
-    return params.result;
-}
-
 BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
     HKEY devices_key;
