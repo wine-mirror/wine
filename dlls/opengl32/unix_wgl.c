@@ -71,6 +71,7 @@ struct opengl_context
     GLubyte *extensions;         /* extension string */
     GLuint *disabled_exts;       /* indices of disabled extensions */
     struct wgl_context *drv_ctx; /* driver context */
+    GLubyte *version_string;
 };
 
 struct wgl_handle
@@ -412,7 +413,7 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
     return FALSE;
 }
 
-static void parse_gl_version( const char *gl_version, int *major, int *minor )
+static const char *parse_gl_version( const char *gl_version, int *major, int *minor )
 {
     const char *ptr = gl_version;
 
@@ -425,6 +426,9 @@ static void parse_gl_version( const char *gl_version, int *major, int *minor )
         ERR( "Invalid OpenGL version string %s.\n", debugstr_a(gl_version) );
 
     *minor = atoi( ptr );
+
+    while (isdigit( *ptr )) ++ptr;
+    return ptr;
 }
 
 static void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
@@ -469,13 +473,25 @@ static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
         }
         else if (name == GL_VERSION && is_win64 && is_wow64())
         {
+            struct wgl_handle *ptr = get_current_context_ptr( teb );
             int major, minor;
+            const char *rest;
 
-            parse_gl_version( (const char *)ret, &major, &minor );
+            if (ptr->u.context->version_string)
+                return ptr->u.context->version_string;
+
+            rest = parse_gl_version( (const char *)ret, &major, &minor );
 
             /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
             if (major > 4 || (major == 4 && minor >= 4))
-                return (const GLubyte *)"4.3";
+            {
+                char *str = malloc( 3 + strlen( rest ) + 1 );
+
+                sprintf( str, "4.3%s", rest );
+                if (InterlockedCompareExchangePointer( (void **)&ptr->u.context->version_string, str, NULL ))
+                    free( str );
+                return ptr->u.context->version_string;
+            }
         }
     }
 
@@ -700,6 +716,7 @@ static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     }
     if (hglrc == teb->glCurrentRC) wrap_wglMakeCurrent( teb, 0, 0 );
     ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
+    free( ptr->u.context->version_string );
     free( ptr->u.context->disabled_exts );
     free( ptr->u.context->extensions );
     free( ptr->u.context );
