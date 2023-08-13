@@ -103,7 +103,7 @@ static void pulse_call(enum unix_funcs code, void *params)
     assert(!status);
 }
 
-static void get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
+void WINAPI get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
 {
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
     DWORD type, size = sizeof(*guid);
