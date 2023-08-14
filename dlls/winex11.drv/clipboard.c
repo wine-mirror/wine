@@ -1308,7 +1308,7 @@ struct format_entry *import_xdnd_selection( Display *display, Window win, Atom s
         if (!(data = import_selection( display, win, selection, format, &size ))) continue;
 
         entry_size = (FIELD_OFFSET( struct format_entry, data[size] ) + 7) & ~7;
-        if (buf_size < size + entry_size)
+        if (buf_size < *ret_size + entry_size)
         {
             if (!(tmp = realloc( ret, *ret_size + entry_size + 1024 ))) continue;
             ret = tmp;
