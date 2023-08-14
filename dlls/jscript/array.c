@@ -870,6 +870,8 @@ static HRESULT Array_splice(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
         }
 
         add_args = argc-2;
+    } else if (argc && ctx->version >= SCRIPTLANGUAGEVERSION_ES5) {
+        delete_cnt = length-start;
     }
 
     if(r) {

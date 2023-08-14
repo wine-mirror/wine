@@ -374,6 +374,13 @@ sync_test("isArray", function() {
     expect_array(new C(), false);
 });
 
+sync_test("array_splice", function() {
+    var arr = [1,2,3,4,5]
+    var tmp = arr.splice(2);
+    ok(arr.toString() === "1,2", "arr = " + arr);
+    ok(tmp.toString() === "3,4,5", "tmp = " + tmp);
+});
+
 sync_test("array_map", function() {
     var calls, m, arr, ctx;
 

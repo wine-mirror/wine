@@ -1310,8 +1310,8 @@ ok(arr.toString() == "1,2,3,4,5", "arr.splice(2,-1) is " + arr.toString());
 
 arr = [1,2,3,4,5];
 tmp = arr.splice(2);
-ok(tmp.toString() == "", "arr.splice(2,-1) returned " + tmp.toString());
-ok(arr.toString() == "1,2,3,4,5", "arr.splice(2,-1) is " + arr.toString());
+ok(tmp.toString() == "", "arr.splice(2) returned " + tmp.toString());
+ok(arr.toString() == "1,2,3,4,5", "arr.splice(2) is " + arr.toString());
 
 arr = [1,2,3,4,5];
 tmp = arr.splice();
