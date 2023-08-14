@@ -993,6 +993,20 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     if (!xinerama_get_fullscreen_monitors( &data->whole_rect, monitors ))
         return;
 
+    /* If _NET_WM_FULLSCREEN_MONITORS is not set and the fullscreen monitors are spanning only one
+     * monitor then do not set _NET_WM_FULLSCREEN_MONITORS.
+     *
+     * If _NET_WM_FULLSCREEN_MONITORS is set then the property needs to be updated because it can't
+     * be deleted by sending a _NET_WM_FULLSCREEN_MONITORS client message to the root window
+     * according to the wm-spec version 1.5. Having the window spanning more than two monitors also
+     * needs the property set. In other cases, _NET_WM_FULLSCREEN_MONITORS doesn't need to be set.
+     * What's more, setting _NET_WM_FULLSCREEN_MONITORS adds a constraint on Mutter so that such a
+     * window can't be moved to another monitor by using the Shift+Super+Up/Down/Left/Right
+     * shortcut. So the property should be added only when necessary. */
+    if (monitors[0] == monitors[1] && monitors[1] == monitors[2] && monitors[2] == monitors[3]
+        && !data->net_wm_fullscreen_monitors_set)
+        return;
+
     if (!data->mapped)
     {
         XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
@@ -1012,6 +1026,7 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         XSendEvent( data->display, root_window, False,
                     SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     }
+    data->net_wm_fullscreen_monitors_set = TRUE;
 }
 
 /***********************************************************************
