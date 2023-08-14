@@ -11262,6 +11262,86 @@ static void test_copy_context(void)
                 dst_xs->Mask == 4, sizeof(dst_xs->YmmContext));
     }
 }
+
+#if defined(__i386__)
+# define IP_REG(ctx) ctx.Eip
+#else
+# define IP_REG(ctx) ctx.Rip
+#endif
+
+static volatile int exit_ip_test;
+static WINAPI DWORD ip_test_thread_proc( void *param )
+{
+    SetEvent( param );
+    while (!exit_ip_test);
+    return ERROR_SUCCESS;
+}
+
+static void test_set_live_context(void)
+{
+    UINT_PTR old_ip, target;
+    HANDLE thread, event;
+    char *target_ptr;
+    CONTEXT ctx;
+    DWORD res;
+    int i;
+
+    /* jmp to self at offset 0 and 4 */
+    static const char target_code[] = {0xeb, 0xfe, 0x90, 0x90, 0xeb, 0xfe};
+
+    target_ptr = VirtualAlloc( NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    memcpy( target_ptr, target_code, sizeof(target_code) );
+    target = (UINT_PTR)target_ptr;
+
+    event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    thread = CreateThread( NULL, 65536, ip_test_thread_proc, event, 0, NULL );
+    ok( thread != NULL, "Failed to create thread: %lx\n", GetLastError() );
+    res = WaitForSingleObject( event, 1000 );
+    ok( !res, "wait returned: %ld\n", res );
+    CloseHandle( event );
+
+    memset( &ctx, 0, sizeof(ctx) );
+    ctx.ContextFlags = CONTEXT_ALL;
+    res = GetThreadContext( thread, &ctx );
+    ok( res, "Failed to get thread context: %lx\n", GetLastError() );
+    old_ip = IP_REG(ctx);
+
+    IP_REG(ctx) = target;
+    res = SetThreadContext( thread, &ctx );
+    ok( res, "Failed to set thread context: %lx\n", GetLastError() );
+
+    for (i = 0; i < 10; i++)
+    {
+        IP_REG(ctx) = target;
+        res = SetThreadContext( thread, &ctx );
+        ok( res, "Failed to set thread context: %lx\n", GetLastError() );
+
+        ctx.ContextFlags = CONTEXT_ALL;
+        res = GetThreadContext( thread, &ctx );
+        ok( res, "Failed to get thread context: %lx\n", GetLastError() );
+        ok( IP_REG(ctx) == target, "IP = %p, expected %p\n", (void *)IP_REG(ctx), target_ptr );
+
+        IP_REG(ctx) = target + 4;
+        res = SetThreadContext( thread, &ctx );
+        ok( res, "Failed to set thread context: %lx\n", GetLastError()) ;
+
+        ctx.ContextFlags = CONTEXT_ALL;
+        res = GetThreadContext( thread, &ctx );
+        ok( res, "Failed to get thread context: %lx\n", GetLastError() );
+        ok( IP_REG(ctx) == target + 4, "IP = %p, expected %p\n", (void *)IP_REG(ctx), target_ptr + 4 );
+    }
+
+    exit_ip_test = 1;
+    ctx.ContextFlags = CONTEXT_ALL;
+    IP_REG(ctx) = old_ip;
+    res = SetThreadContext( thread, &ctx );
+    ok( res, "Failed to restore thread context: %lx\n", GetLastError() );
+
+    res = WaitForSingleObject( thread, 1000 );
+    ok( !res, "wait returned: %ld\n", res );
+
+    VirtualFree( target_ptr, 0, MEM_RELEASE );
+}
 #endif
 
 START_TEST(exception)
@@ -11445,6 +11525,7 @@ START_TEST(exception)
     test_kiuserexceptiondispatcher();
     test_extended_context();
     test_copy_context();
+    test_set_live_context();
 
 #elif defined(__x86_64__)
 
@@ -11487,6 +11568,7 @@ START_TEST(exception)
       win_skip( "Dynamic unwind functions not found\n" );
     test_extended_context();
     test_copy_context();
+    test_set_live_context();
     test_unwind_from_apc();
     test_syscall_clobbered_regs();
     test_raiseexception_regs();
