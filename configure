@@ -15853,12 +15853,14 @@ fi
 
     if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes && test "$ac_cv_header_PCSC_pcsclite_h" = "yes"
     then
-        PCSCLITE_LIBS="-framework PCSC"
-
-        ac_cv_lib_pcsclite_SCardEstablishContext=yes
+        case $host_os in
+          darwin*|macosx*)
+            PCSCLITE_LIBS="-framework PCSC"
+ ;;
+        esac
     fi
 fi
-if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes
+if test "x$PCSCLITE_LIBS" = x || test "$ac_cv_header_PCSC_pcsclite_h" != "yes"
 then :
   case "x$with_pcsclite" in
   x)   as_fn_append wine_notices "|libpcsclite not found, smart cards won't be supported." ;;

@@ -1396,11 +1396,13 @@ then
     AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])])
     if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes && test "$ac_cv_header_PCSC_pcsclite_h" = "yes"
     then
-        AC_SUBST(PCSCLITE_LIBS,"-framework PCSC")
-        ac_cv_lib_pcsclite_SCardEstablishContext=yes
+        case $host_os in
+          darwin*|macosx*)
+            AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
+        esac
     fi
 fi
-WINE_NOTICE_WITH(pcsclite,[test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes],
+WINE_NOTICE_WITH(pcsclite,[test "x$PCSCLITE_LIBS" = x || test "$ac_cv_header_PCSC_pcsclite_h" != "yes"],
                  [libpcsclite not found, smart cards won't be supported.],
                  [enable_winscard])
 
