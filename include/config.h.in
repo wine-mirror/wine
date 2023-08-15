@@ -51,9 +51,6 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
-/* Define to 1 if you have the <fontconfig/fontconfig.h> header file. */
-#undef HAVE_FONTCONFIG_FONTCONFIG_H
-
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
 
@@ -326,9 +323,6 @@
 
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
-
-/* Define to 1 if you have the <pulse/pulseaudio.h> header file. */
-#undef HAVE_PULSE_PULSEAUDIO_H
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
@@ -648,14 +642,8 @@
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #undef HAVE_VALGRIND_VALGRIND_H
 
-/* Define to 1 if you have the <wayland-client.h> header file. */
-#undef HAVE_WAYLAND_CLIENT_H
-
 /* Define to 1 if you have the <X11/extensions/shape.h> header file. */
 #undef HAVE_X11_EXTENSIONS_SHAPE_H
-
-/* Define to 1 if you have the <X11/extensions/Xcomposite.h> header file. */
-#undef HAVE_X11_EXTENSIONS_XCOMPOSITE_H
 
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
@@ -672,9 +660,6 @@
 /* Define to 1 if you have the <X11/extensions/XInput2.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XINPUT2_H
 
-/* Define to 1 if you have the <X11/extensions/XInput.h> header file. */
-#undef HAVE_X11_EXTENSIONS_XINPUT_H
-
 /* Define to 1 if you have the <X11/extensions/Xrandr.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XRANDR_H
 
@@ -683,18 +668,6 @@
 
 /* Define to 1 if you have the <X11/extensions/XShm.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
-
-/* Define to 1 if you have the <X11/Xcursor/Xcursor.h> header file. */
-#undef HAVE_X11_XCURSOR_XCURSOR_H
-
-/* Define to 1 if you have the <X11/XKBlib.h> header file. */
-#undef HAVE_X11_XKBLIB_H
-
-/* Define to 1 if you have the <X11/Xlib.h> header file. */
-#undef HAVE_X11_XLIB_H
-
-/* Define to 1 if you have the <X11/Xutil.h> header file. */
-#undef HAVE_X11_XUTIL_H
 
 /* Define to 1 if `xcookie' is a member of `XEvent'. */
 #undef HAVE_XEVENT_XCOOKIE

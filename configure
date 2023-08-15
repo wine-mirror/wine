@@ -14295,180 +14295,66 @@ printf "%s\n" "#define SONAME_LIBXEXT \"$ac_cv_lib_soname_Xext\"" >>confdefs.h
 fi
     X_LIBS="$X_LIBS -lX11"
 
-        ac_fn_c_check_header_compile "$LINENO" "X11/Xlib.h" "ac_cv_header_X11_Xlib_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_Xlib_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_XLIB_H 1" >>confdefs.h
+    xlib_includes="#include <X11/Xlib.h>
+#include <X11/Xutil.h>"
 
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/XKBlib.h" "ac_cv_header_X11_XKBlib_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_XKBlib_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_XKBLIB_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/Xutil.h" "ac_cv_header_X11_Xutil_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_Xutil_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_XUTIL_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/Xcursor/Xcursor.h" "ac_cv_header_X11_Xcursor_Xcursor_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_Xcursor_Xcursor_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_XCURSOR_XCURSOR_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/shape.h" "ac_cv_header_X11_extensions_shape_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+        ac_fn_c_check_header_compile "$LINENO" "X11/extensions/shape.h" "ac_cv_header_X11_extensions_shape_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_shape_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_SHAPE_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XInput.h" "ac_cv_header_X11_extensions_XInput_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_extensions_XInput_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_EXTENSIONS_XINPUT_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XInput2.h" "ac_cv_header_X11_extensions_XInput2_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XInput2.h" "ac_cv_header_X11_extensions_XInput2_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_XInput2_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XINPUT2_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XShm.h" "ac_cv_header_X11_extensions_XShm_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XShm.h" "ac_cv_header_X11_extensions_XShm_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_XShm_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XSHM_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xcomposite.h" "ac_cv_header_X11_extensions_Xcomposite_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
-"
-if test "x$ac_cv_header_X11_extensions_Xcomposite_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_X11_EXTENSIONS_XCOMPOSITE_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xfixes.h" "ac_cv_header_X11_extensions_Xfixes_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xfixes.h" "ac_cv_header_X11_extensions_Xfixes_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_Xfixes_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XFIXES_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xinerama.h" "ac_cv_header_X11_extensions_Xinerama_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xinerama.h" "ac_cv_header_X11_extensions_Xinerama_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_Xinerama_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XINERAMA_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xrandr.h" "ac_cv_header_X11_extensions_Xrandr_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xrandr.h" "ac_cv_header_X11_extensions_Xrandr_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_Xrandr_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XRANDR_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xrender.h" "ac_cv_header_X11_extensions_Xrender_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xrender.h" "ac_cv_header_X11_extensions_Xrender_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_Xrender_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XRENDER_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmode.h" "ac_cv_header_X11_extensions_xf86vmode_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmode.h" "ac_cv_header_X11_extensions_xf86vmode_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_xf86vmode_h" = xyes
 then :
   printf "%s\n" "#define HAVE_X11_EXTENSIONS_XF86VMODE_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmproto.h" "ac_cv_header_X11_extensions_xf86vmproto_h" "#ifdef HAVE_X11_XLIB_H
-# include <X11/Xlib.h>
-#endif
-#ifdef HAVE_X11_XUTIL_H
-# include <X11/Xutil.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmproto.h" "ac_cv_header_X11_extensions_xf86vmproto_h" "$xlib_includes
 "
 if test "x$ac_cv_header_X11_extensions_xf86vmproto_h" = xyes
 then :
@@ -14477,9 +14363,11 @@ then :
 fi
 
 
-                if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcursor" >&5
+                ac_fn_c_check_header_compile "$LINENO" "X11/Xcursor/Xcursor.h" "ac_cv_header_X11_Xcursor_Xcursor_h" "$xlib_includes
+"
+if test "x$ac_cv_header_X11_Xcursor_Xcursor_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcursor" >&5
 printf %s "checking for -lXcursor... " >&6; }
 if test ${ac_cv_lib_soname_Xcursor+y}
 then :
@@ -14533,7 +14421,8 @@ printf "%s\n" "#define SONAME_LIBXCURSOR \"$ac_cv_lib_soname_Xcursor\"" >>confde
 
 
 fi
-        fi
+fi
+
         if test "x$ac_cv_lib_soname_Xcursor" = "x"
 then :
   case "x$with_xcursor" in
@@ -14545,9 +14434,11 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXi" >&5
+                ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XInput.h" "ac_cv_header_X11_extensions_XInput_h" "$xlib_includes
+"
+if test "x$ac_cv_header_X11_extensions_XInput_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXi" >&5
 printf %s "checking for -lXi... " >&6; }
 if test ${ac_cv_lib_soname_Xi+y}
 then :
@@ -14601,7 +14492,8 @@ printf "%s\n" "#define SONAME_LIBXI \"$ac_cv_lib_soname_Xi\"" >>confdefs.h
 
 
 fi
-        fi
+fi
+
         if test "x$ac_cv_lib_soname_Xi" = "x"
 then :
   case "x$with_xinput" in
@@ -15231,9 +15123,11 @@ esac
 
 fi
 
-                if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcomposite" >&5
+                ac_fn_c_check_header_compile "$LINENO" "X11/extensions/Xcomposite.h" "ac_cv_header_X11_extensions_Xcomposite_h" "$xlib_includes
+"
+if test "x$ac_cv_header_X11_extensions_Xcomposite_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lXcomposite" >&5
 printf %s "checking for -lXcomposite... " >&6; }
 if test ${ac_cv_lib_soname_Xcomposite+y}
 then :
@@ -15287,7 +15181,8 @@ printf "%s\n" "#define SONAME_LIBXCOMPOSITE \"$ac_cv_lib_soname_Xcomposite\"" >>
 
 
 fi
-        fi
+fi
+
         if test "x$ac_cv_lib_soname_Xcomposite" = "x"
 then :
   case "x$with_xcomposite" in
@@ -15299,9 +15194,7 @@ esac
 
 fi
 
-                ac_fn_c_check_member "$LINENO" "XICCallback" "callback" "ac_cv_member_XICCallback_callback" "#ifdef HAVE_X11_XLIB_H
-#include <X11/Xlib.h>
-#endif
+                ac_fn_c_check_member "$LINENO" "XICCallback" "callback" "ac_cv_member_XICCallback_callback" "$xlib_includes
 "
 if test "x$ac_cv_member_XICCallback_callback" = xyes
 then :
@@ -15310,9 +15203,7 @@ printf "%s\n" "#define HAVE_XICCALLBACK_CALLBACK 1" >>confdefs.h
 
 
 fi
-ac_fn_c_check_member "$LINENO" "XEvent" "xcookie" "ac_cv_member_XEvent_xcookie" "#ifdef HAVE_X11_XLIB_H
-#include <X11/Xlib.h>
-#endif
+ac_fn_c_check_member "$LINENO" "XEvent" "xcookie" "ac_cv_member_XEvent_xcookie" "$xlib_includes
 "
 if test "x$ac_cv_member_XEvent_xcookie" = xyes
 then :
@@ -15582,13 +15473,10 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $WAYLAND_CLIENT_CFLAGS"
-       for ac_header in wayland-client.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "wayland-client.h" "ac_cv_header_wayland_client_h" "$ac_includes_default"
+ac_fn_c_check_header_compile "$LINENO" "wayland-client.h" "ac_cv_header_wayland_client_h" "$ac_includes_default"
 if test "x$ac_cv_header_wayland_client_h" = xyes
 then :
-  printf "%s\n" "#define HAVE_WAYLAND_CLIENT_H 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for wl_display_connect in -lwayland-client" >&5
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for wl_display_connect in -lwayland-client" >&5
 printf %s "checking for wl_display_connect in -lwayland-client... " >&6; }
 if test ${ac_cv_lib_wayland_client_wl_display_connect+y}
 then :
@@ -15677,7 +15565,6 @@ fi
 
 fi
 
-done
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -16953,13 +16840,10 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PULSE_CFLAGS"
-       for ac_header in pulse/pulseaudio.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "pulse/pulseaudio.h" "ac_cv_header_pulse_pulseaudio_h" "$ac_includes_default"
+ac_fn_c_check_header_compile "$LINENO" "pulse/pulseaudio.h" "ac_cv_header_pulse_pulseaudio_h" "$ac_includes_default"
 if test "x$ac_cv_header_pulse_pulseaudio_h" = xyes
 then :
-  printf "%s\n" "#define HAVE_PULSE_PULSEAUDIO_H 1" >>confdefs.h
- { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pa_stream_is_corked in -lpulse" >&5
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pa_stream_is_corked in -lpulse" >&5
 printf %s "checking for pa_stream_is_corked in -lpulse... " >&6; }
 if test ${ac_cv_lib_pulse_pa_stream_is_corked+y}
 then :
@@ -17005,7 +16889,6 @@ else $as_nop
   PULSE_LIBS=""
 fi
 
-done
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
@@ -17847,13 +17730,7 @@ CPPFLAGS="$CPPFLAGS $FONTCONFIG_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "fontconfig/fontconfig.h" "ac_cv_header_fontconfig_fontconfig_h" "$ac_includes_default"
 if test "x$ac_cv_header_fontconfig_fontconfig_h" = xyes
 then :
-  printf "%s\n" "#define HAVE_FONTCONFIG_FONTCONFIG_H 1" >>confdefs.h
-
-fi
-
-        if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
-        then
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
 printf %s "checking for -lfontconfig... " >&6; }
 if test ${ac_cv_lib_soname_fontconfig+y}
 then :
@@ -17907,9 +17784,10 @@ printf "%s\n" "#define SONAME_LIBFONTCONFIG \"$ac_cv_lib_soname_fontconfig\"" >>
 
 
 fi
-        else
-            FONTCONFIG_CFLAGS=""
-        fi
+else $as_nop
+  FONTCONFIG_CFLAGS=""
+fi
+
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
