@@ -427,24 +427,17 @@ static void HTMLScriptElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
-    &CLSID_HTMLScriptElement,
-    HTMLScriptElement_QI,
-    HTMLScriptElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLScriptElement_get_readystate,
-    NULL,
-    NULL,
-    NULL,
-    HTMLScriptElement_bind_to_tree,
-    HTMLScriptElement_traverse,
-    HTMLScriptElement_unlink
+    .clsid                 = &CLSID_HTMLScriptElement,
+    .qi                    = HTMLScriptElement_QI,
+    .destructor            = HTMLScriptElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_readystate        = HTMLScriptElement_get_readystate,
+    .bind_to_tree          = HTMLScriptElement_bind_to_tree,
+    .traverse              = HTMLScriptElement_traverse,
+    .unlink                = HTMLScriptElement_unlink
 };
 
 HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)

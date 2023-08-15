@@ -476,24 +476,15 @@ static void HTMLAreaElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
-    &CLSID_HTMLAreaElement,
-    HTMLAreaElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLAreaElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLAreaElement_traverse,
-    HTMLAreaElement_unlink
+    .clsid                 = &CLSID_HTMLAreaElement,
+    .qi                    = HTMLAreaElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLAreaElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLAreaElement_traverse,
+    .unlink                = HTMLAreaElement_unlink
 };
 
 static const tid_t HTMLAreaElement_iface_tids[] = {

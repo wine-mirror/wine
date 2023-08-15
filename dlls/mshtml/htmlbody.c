@@ -973,26 +973,18 @@ static const cpc_entry_t HTMLBodyElement_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
-    &CLSID_HTMLBody,
-    HTMLBodyElement_QI,
-    HTMLElement_destructor,
-    HTMLBodyElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    HTMLBodyElement_get_event_prop_target,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLBodyElement_traverse,
-    HTMLBodyElement_unlink,
-    HTMLBodyElement_is_text_edit,
-    HTMLBodyElement_is_settable
+    .clsid                 = &CLSID_HTMLBody,
+    .qi                    = HTMLBodyElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLBodyElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_event_prop_target = HTMLBodyElement_get_event_prop_target,
+    .traverse              = HTMLBodyElement_traverse,
+    .unlink                = HTMLBodyElement_unlink,
+    .is_text_edit          = HTMLBodyElement_is_text_edit,
+    .is_settable           = HTMLBodyElement_is_settable
 };
 
 static const tid_t HTMLBodyElement_iface_tids[] = {

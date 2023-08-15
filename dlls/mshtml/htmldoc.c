@@ -325,11 +325,10 @@ static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDO
 static const cpc_entry_t DocumentType_cpc[] = {{NULL}};
 
 static const NodeImplVtbl DocumentTypeImplVtbl = {
-    NULL,
-    DocumentType_QI,
-    DocumentType_destructor,
-    DocumentType_cpc,
-    DocumentType_clone
+    .qi                    = DocumentType_QI,
+    .destructor            = DocumentType_destructor,
+    .cpc_entries           = DocumentType_cpc,
+    .clone                 = DocumentType_clone
 };
 
 static nsISupports *DocumentType_get_gecko_target(DispatchEx *dispex)
@@ -5860,24 +5859,12 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
-    &CLSID_HTMLDocument,
-    HTMLDocumentNode_QI,
-    HTMLDocumentNode_destructor,
-    HTMLDocumentNode_cpc,
-    HTMLDocumentNode_clone,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLDocumentNode_unlink
+    .clsid                 = &CLSID_HTMLDocument,
+    .qi                    = HTMLDocumentNode_QI,
+    .destructor            = HTMLDocumentNode_destructor,
+    .cpc_entries           = HTMLDocumentNode_cpc,
+    .clone                 = HTMLDocumentNode_clone,
+    .unlink                = HTMLDocumentNode_unlink
 };
 
 static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -6096,24 +6083,12 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
-    &CLSID_HTMLDocument,
-    HTMLDocumentNode_QI,
-    HTMLDocumentNode_destructor,
-    HTMLDocumentNode_cpc,
-    HTMLDocumentFragment_clone,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLDocumentFragment_unlink
+    .clsid                 = &CLSID_HTMLDocument,
+    .qi                    = HTMLDocumentNode_QI,
+    .destructor            = HTMLDocumentNode_destructor,
+    .cpc_entries           = HTMLDocumentNode_cpc,
+    .clone                 = HTMLDocumentFragment_clone,
+    .unlink                = HTMLDocumentFragment_unlink
 };
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {

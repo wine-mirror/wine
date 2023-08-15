@@ -697,24 +697,16 @@ static void HTMLImgElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
-    &CLSID_HTMLImg,
-    HTMLImgElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLImgElement_get_readystate,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLImgElement_traverse,
-    HTMLImgElement_unlink
+    .clsid                 = &CLSID_HTMLImg,
+    .qi                    = HTMLImgElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_readystate        = HTMLImgElement_get_readystate,
+    .traverse              = HTMLImgElement_traverse,
+    .unlink                = HTMLImgElement_unlink
 };
 
 static const tid_t HTMLImgElement_iface_tids[] = {

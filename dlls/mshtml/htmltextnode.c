@@ -351,11 +351,10 @@ static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTM
 static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
-    NULL,
-    HTMLDOMTextNode_QI,
-    HTMLDOMNode_destructor,
-    HTMLDOMTextNode_cpc,
-    HTMLDOMTextNode_clone
+    .qi                    = HTMLDOMTextNode_QI,
+    .destructor            = HTMLDOMNode_destructor,
+    .cpc_entries           = HTMLDOMTextNode_cpc,
+    .clone                 = HTMLDOMTextNode_clone
 };
 
 static const tid_t HTMLDOMTextNode_iface_tids[] = {

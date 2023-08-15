@@ -386,24 +386,15 @@ static void HTMLOptionElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
-    &CLSID_HTMLOptionElement,
-    HTMLOptionElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLOptionElement_traverse,
-    HTMLOptionElement_unlink
+    .clsid                 = &CLSID_HTMLOptionElement,
+    .qi                    = HTMLOptionElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLOptionElement_traverse,
+    .unlink                = HTMLOptionElement_unlink
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {
@@ -1458,24 +1449,20 @@ static void HTMLSelectElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
-    &CLSID_HTMLSelectElement,
-    HTMLSelectElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    HTMLSelectElementImpl_put_disabled,
-    HTMLSelectElementImpl_get_disabled,
-    NULL,
-    NULL,
-    HTMLSelectElement_get_dispid,
-    HTMLSelectElement_dispex_get_name,
-    HTMLSelectElement_invoke,
-    NULL,
-    HTMLSelectElement_traverse,
-    HTMLSelectElement_unlink
+    .clsid                 = &CLSID_HTMLSelectElement,
+    .qi                    = HTMLSelectElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .put_disabled          = HTMLSelectElementImpl_put_disabled,
+    .get_disabled          = HTMLSelectElementImpl_get_disabled,
+    .get_dispid            = HTMLSelectElement_get_dispid,
+    .get_name              = HTMLSelectElement_dispex_get_name,
+    .invoke                = HTMLSelectElement_invoke,
+    .traverse              = HTMLSelectElement_traverse,
+    .unlink                = HTMLSelectElement_unlink
 };
 
 static const tid_t HTMLSelectElement_tids[] = {

@@ -744,24 +744,19 @@ static void HTMLObjectElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
-    &CLSID_HTMLObjectElement,
-    HTMLObjectElement_QI,
-    HTMLObjectElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLObjectElement_get_readystate,
-    HTMLObjectElement_get_dispid,
-    HTMLObjectElement_dispex_get_name,
-    HTMLObjectElement_invoke,
-    NULL,
-    HTMLObjectElement_traverse,
-    HTMLObjectElement_unlink
+    .clsid                 = &CLSID_HTMLObjectElement,
+    .qi                    = HTMLObjectElement_QI,
+    .destructor            = HTMLObjectElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_readystate        = HTMLObjectElement_get_readystate,
+    .get_dispid            = HTMLObjectElement_get_dispid,
+    .get_name              = HTMLObjectElement_dispex_get_name,
+    .invoke                = HTMLObjectElement_invoke,
+    .traverse              = HTMLObjectElement_traverse,
+    .unlink                = HTMLObjectElement_unlink
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
@@ -1019,13 +1014,13 @@ static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
-    &CLSID_HTMLEmbed,
-    HTMLEmbedElement_QI,
-    HTMLEmbedElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    .clsid                 = &CLSID_HTMLEmbed,
+    .qi                    = HTMLEmbedElement_QI,
+    .destructor            = HTMLEmbedElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLEmbedElement_iface_tids[] = {

@@ -1476,11 +1476,10 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
-    NULL,
-    HTMLDOMNode_QI,
-    HTMLDOMNode_destructor,
-    HTMLDOMNode_cpc,
-    HTMLDOMNode_clone
+    .qi                    = HTMLDOMNode_QI,
+    .destructor            = HTMLDOMNode_destructor,
+    .cpc_entries           = HTMLDOMNode_cpc,
+    .clone                 = HTMLDOMNode_clone
 };
 
 void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsnode, dispex_static_data_t *dispex_data)

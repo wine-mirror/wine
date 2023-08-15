@@ -1421,25 +1421,18 @@ static void HTMLInputElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
-    &CLSID_HTMLInputElement,
-    HTMLInputElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    HTMLInputElementImpl_put_disabled,
-    HTMLInputElementImpl_get_disabled,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLInputElement_traverse,
-    HTMLInputElement_unlink,
-    HTMLInputElement_is_text_edit
+    .clsid                 = &CLSID_HTMLInputElement,
+    .qi                    = HTMLInputElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .put_disabled          = HTMLInputElementImpl_put_disabled,
+    .get_disabled          = HTMLInputElementImpl_get_disabled,
+    .traverse              = HTMLInputElement_traverse,
+    .unlink                = HTMLInputElement_unlink,
+    .is_text_edit          = HTMLInputElement_is_text_edit
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1630,13 +1623,13 @@ static HRESULT HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl HTMLLabelElementImplVtbl = {
-    &CLSID_HTMLLabelElement,
-    HTMLLabelElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
+    .clsid                 = &CLSID_HTMLLabelElement,
+    .qi                    = HTMLLabelElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
 };
 
 static const tid_t HTMLLabelElement_iface_tids[] = {
@@ -1960,25 +1953,18 @@ static void HTMLButtonElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLButtonElementImplVtbl = {
-    &CLSID_HTMLButtonElement,
-    HTMLButtonElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    HTMLButtonElementImpl_put_disabled,
-    HTMLButtonElementImpl_get_disabled,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLButtonElement_traverse,
-    HTMLButtonElement_unlink,
-    HTMLButtonElement_is_text_edit
+    .clsid                 = &CLSID_HTMLButtonElement,
+    .qi                    = HTMLButtonElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .put_disabled          = HTMLButtonElementImpl_put_disabled,
+    .get_disabled          = HTMLButtonElementImpl_get_disabled,
+    .traverse              = HTMLButtonElement_traverse,
+    .unlink                = HTMLButtonElement_unlink,
+    .is_text_edit          = HTMLButtonElement_is_text_edit
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {

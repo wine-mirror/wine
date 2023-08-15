@@ -185,13 +185,13 @@ static HRESULT HTMLCommentElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, 
 }
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
-    &CLSID_HTMLCommentElement,
-    HTMLCommentElement_QI,
-    HTMLCommentElement_destructor,
-    HTMLElement_cpc,
-    HTMLCommentElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    .clsid                 = &CLSID_HTMLCommentElement,
+    .qi                    = HTMLCommentElement_QI,
+    .destructor            = HTMLCommentElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLCommentElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col
 };
 
 static const tid_t HTMLCommentElement_iface_tids[] = {

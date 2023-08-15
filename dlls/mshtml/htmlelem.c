@@ -6945,13 +6945,13 @@ const cpc_entry_t HTMLElement_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLElementImplVtbl = {
-    &CLSID_HTMLUnknownElement,
-    HTMLElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col
+    .clsid                 = &CLSID_HTMLUnknownElement,
+    .qi                    = HTMLElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col
 };
 
 static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)

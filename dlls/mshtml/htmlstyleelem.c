@@ -429,24 +429,15 @@ static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t
 }
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
-    &CLSID_HTMLStyleElement,
-    HTMLStyleElement_QI,
-    HTMLStyleElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLStyleElement_traverse,
-    HTMLStyleElement_unlink
+    .clsid                 = &CLSID_HTMLStyleElement,
+    .qi                    = HTMLStyleElement_QI,
+    .destructor            = HTMLStyleElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLStyleElement_traverse,
+    .unlink                = HTMLStyleElement_unlink
 };
 
 static const tid_t HTMLStyleElement_iface_tids[] = {

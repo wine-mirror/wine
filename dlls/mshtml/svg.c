@@ -193,13 +193,12 @@ static HRESULT SVGElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl SVGElementImplVtbl = {
-    &CLSID_SVGElement,
-    SVGElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    NULL,
-    HTMLElement_get_attr_col,
+    .clsid                 = &CLSID_SVGElement,
+    .qi                    = SVGElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .get_attr_col          = HTMLElement_get_attr_col,
 };
 
 static void init_svg_element(SVGElement *svg_element, HTMLDocumentNode *doc, nsIDOMSVGElement *nselem)
@@ -734,13 +733,12 @@ static HRESULT SVGSVGElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl SVGSVGElementImplVtbl = {
-    &CLSID_SVGSVGElement,
-    SVGSVGElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    NULL,
-    HTMLElement_get_attr_col,
+    .clsid                 = &CLSID_SVGSVGElement,
+    .qi                    = SVGSVGElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .get_attr_col          = HTMLElement_get_attr_col,
 };
 
 static HRESULT create_viewport_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
@@ -903,13 +901,12 @@ static HRESULT SVGCircleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl SVGCircleElementImplVtbl = {
-    &CLSID_SVGCircleElement,
-    SVGCircleElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    NULL,
-    HTMLElement_get_attr_col,
+    .clsid                 = &CLSID_SVGCircleElement,
+    .qi                    = SVGCircleElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .get_attr_col          = HTMLElement_get_attr_col,
 };
 
 static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
@@ -1147,13 +1144,12 @@ static HRESULT SVGTSpanElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl SVGTSpanElementImplVtbl = {
-    &CLSID_SVGTSpanElement,
-    SVGTSpanElement_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    NULL,
-    HTMLElement_get_attr_col,
+    .clsid                 = &CLSID_SVGTSpanElement,
+    .qi                    = SVGTSpanElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .get_attr_col          = HTMLElement_get_attr_col,
 };
 
 static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)

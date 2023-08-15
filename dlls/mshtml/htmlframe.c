@@ -1007,24 +1007,21 @@ static void HTMLFrameElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
-    &CLSID_HTMLFrameElement,
-    HTMLFrameElement_QI,
-    HTMLFrameElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    HTMLFrameElement_get_document,
-    HTMLFrameElement_get_readystate,
-    HTMLFrameElement_get_dispid,
-    HTMLFrameElement_get_name,
-    HTMLFrameElement_invoke,
-    HTMLFrameElement_bind_to_tree,
-    HTMLFrameElement_traverse,
-    HTMLFrameElement_unlink
+    .clsid                 = &CLSID_HTMLFrameElement,
+    .qi                    = HTMLFrameElement_QI,
+    .destructor            = HTMLFrameElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_document          = HTMLFrameElement_get_document,
+    .get_readystate        = HTMLFrameElement_get_readystate,
+    .get_dispid            = HTMLFrameElement_get_dispid,
+    .get_name              = HTMLFrameElement_get_name,
+    .invoke                = HTMLFrameElement_invoke,
+    .bind_to_tree          = HTMLFrameElement_bind_to_tree,
+    .traverse              = HTMLFrameElement_traverse,
+    .unlink                = HTMLFrameElement_unlink
 };
 
 static const tid_t HTMLFrameElement_iface_tids[] = {
@@ -1594,24 +1591,21 @@ static void HTMLIFrame_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
-    &CLSID_HTMLIFrame,
-    HTMLIFrame_QI,
-    HTMLIFrame_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    HTMLIFrame_get_document,
-    HTMLIFrame_get_readystate,
-    HTMLIFrame_get_dispid,
-    HTMLIFrame_get_name,
-    HTMLIFrame_invoke,
-    HTMLIFrame_bind_to_tree,
-    HTMLIFrame_traverse,
-    HTMLIFrame_unlink
+    .clsid                 = &CLSID_HTMLIFrame,
+    .qi                    = HTMLIFrame_QI,
+    .destructor            = HTMLIFrame_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .get_document          = HTMLIFrame_get_document,
+    .get_readystate        = HTMLIFrame_get_readystate,
+    .get_dispid            = HTMLIFrame_get_dispid,
+    .get_name              = HTMLIFrame_get_name,
+    .invoke                = HTMLIFrame_invoke,
+    .bind_to_tree          = HTMLIFrame_bind_to_tree,
+    .traverse              = HTMLIFrame_traverse,
+    .unlink                = HTMLIFrame_unlink
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {

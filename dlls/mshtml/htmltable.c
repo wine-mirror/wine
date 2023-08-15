@@ -489,24 +489,15 @@ static void HTMLTableCell_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
-    &CLSID_HTMLTableCell,
-    HTMLTableCell_QI,
-    HTMLTableCell_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLTableCell_traverse,
-    HTMLTableCell_unlink
+    .clsid                 = &CLSID_HTMLTableCell,
+    .qi                    = HTMLTableCell_QI,
+    .destructor            = HTMLTableCell_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLTableCell_traverse,
+    .unlink                = HTMLTableCell_unlink
 };
 
 static const tid_t HTMLTableCell_iface_tids[] = {
@@ -929,24 +920,15 @@ static void HTMLTableRow_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
-    &CLSID_HTMLTableRow,
-    HTMLTableRow_QI,
-    HTMLElement_destructor,
-    HTMLElement_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLTableRow_traverse,
-    HTMLTableRow_unlink
+    .clsid                 = &CLSID_HTMLTableRow,
+    .qi                    = HTMLTableRow_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLTableRow_traverse,
+    .unlink                = HTMLTableRow_unlink
 };
 
 static const tid_t HTMLTableRow_iface_tids[] = {
@@ -1955,24 +1937,15 @@ static const cpc_entry_t HTMLTable_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLTableImplVtbl = {
-    &CLSID_HTMLTable,
-    HTMLTable_QI,
-    HTMLElement_destructor,
-    HTMLTable_cpc,
-    HTMLElement_clone,
-    HTMLElement_handle_event,
-    HTMLElement_get_attr_col,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    HTMLTable_traverse,
-    HTMLTable_unlink
+    .clsid                 = &CLSID_HTMLTable,
+    .qi                    = HTMLTable_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLTable_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col,
+    .traverse              = HTMLTable_traverse,
+    .unlink                = HTMLTable_unlink
 };
 
 static const tid_t HTMLTable_iface_tids[] = {
