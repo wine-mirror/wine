@@ -1211,8 +1211,8 @@ static void test_check_interface_support(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     trace("UMD version: %u.%u.%u.%u.\n",
-            HIWORD(U(driver_version).HighPart), LOWORD(U(driver_version).HighPart),
-            HIWORD(U(driver_version).LowPart), LOWORD(U(driver_version).LowPart));
+            HIWORD(driver_version.HighPart), LOWORD(driver_version.HighPart),
+            HIWORD(driver_version.LowPart), LOWORD(driver_version.LowPart));
 
     hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface);
     if (SUCCEEDED(hr))
