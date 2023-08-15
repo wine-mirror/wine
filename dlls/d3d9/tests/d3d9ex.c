@@ -562,7 +562,7 @@ static void test_get_adapter_displaymode_ex(void)
 
     devmode = startmode;
     devmode.dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT;
-    S2(U1(devmode)).dmDisplayOrientation = DMDO_180;
+    devmode.dmDisplayOrientation = DMDO_180;
     retval = ChangeDisplaySettingsExW(NULL, &devmode, NULL, 0, NULL);
     if (retval == DISP_CHANGE_BADMODE)
     {
@@ -573,7 +573,7 @@ static void test_get_adapter_displaymode_ex(void)
     ok(retval == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsEx failed with %ld.\n", retval);
     /* try retrieve orientation info with EnumDisplaySettingsEx*/
     devmode.dmFields = 0;
-    S2(U1(devmode)).dmDisplayOrientation = 0;
+    devmode.dmDisplayOrientation = 0;
     ok(EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &devmode, EDS_ROTATEDMODE),
             "EnumDisplaySettingsEx failed.\n");
 
@@ -605,8 +605,8 @@ static void test_get_adapter_displaymode_ex(void)
     ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
     /* Check that orientation is returned correctly by GetAdapterDisplayModeEx
      * and EnumDisplaySettingsEx(). */
-    ok(S2(U1(devmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
-            "rotation is %d instead of %ld\n", rotation, S2(U1(devmode)).dmDisplayOrientation);
+    ok(devmode.dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
+            "rotation is %d instead of %ld\n", rotation, devmode.dmDisplayOrientation);
 
     trace("GetAdapterDisplayModeEx returned Width = %d, Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
           mode_ex.Width, mode_ex.Height, mode_ex.RefreshRate, mode_ex.Format, mode_ex.ScanLineOrdering, rotation);

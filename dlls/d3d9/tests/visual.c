@@ -5560,8 +5560,8 @@ static void texture_transform_flags_test(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         /* What happens if 4 coords are used, but only 2 given ?*/
-        U(mat).m[2][0] = 1.0f;
-        U(mat).m[3][1] = 1.0f;
+        mat.m[2][0] = 1.0f;
+        mat.m[3][1] = 1.0f;
         hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
@@ -12122,8 +12122,8 @@ static void test_pointsize(void)
     ok(color == 0x00ffff00, "pSprite: Pixel (64+4),(64-4) has color 0x%08x, expected 0x00ffff00\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    U(matrix).m[0][0] =  1.0f / 64.0f;
-    U(matrix).m[1][1] = -1.0f / 64.0f;
+    matrix.m[0][0] =  1.0f / 64.0f;
+    matrix.m[1][1] = -1.0f / 64.0f;
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &matrix);
     ok(SUCCEEDED(hr), "SetTransform failed, hr %#lx.\n", hr);
 
@@ -12142,7 +12142,7 @@ static void test_pointsize(void)
     ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#lx.\n", hr);
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
-        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &S(U(matrix))._11, 4);
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &matrix._11, 4);
         ok(SUCCEEDED(hr), "Failed to set vertex shader constants, hr %#lx.\n", hr);
     }
 
@@ -28062,8 +28062,8 @@ START_TEST(visual)
     trace("Device name string: \"%s\"\n", identifier.DeviceName);
     ok(identifier.DeviceName[0], "Empty device name.\n");
     trace("Driver version %d.%d.%d.%d\n",
-            HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
-            HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
+            HIWORD(identifier.DriverVersion.HighPart), LOWORD(identifier.DriverVersion.HighPart),
+            HIWORD(identifier.DriverVersion.LowPart), LOWORD(identifier.DriverVersion.LowPart));
 
     IDirect3D9_Release(d3d);
 

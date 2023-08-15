@@ -1017,14 +1017,14 @@ static void compare_matrix(const char *name, unsigned int chain_stage,
             "\t\t%.8e, %.8e, %.8e, %.8e,\n"
             "\t} received\n",
             chain_stage, name,
-            U(*expected).m[0][0], U(*expected).m[1][0], U(*expected).m[2][0], U(*expected).m[3][0],
-            U(*expected).m[0][1], U(*expected).m[1][1], U(*expected).m[2][1], U(*expected).m[3][1],
-            U(*expected).m[0][2], U(*expected).m[1][2], U(*expected).m[2][2], U(*expected).m[3][2],
-            U(*expected).m[0][3], U(*expected).m[1][3], U(*expected).m[2][3], U(*expected).m[3][3],
-            U(*received).m[0][0], U(*received).m[1][0], U(*received).m[2][0], U(*received).m[3][0],
-            U(*received).m[0][1], U(*received).m[1][1], U(*received).m[2][1], U(*received).m[3][1],
-            U(*received).m[0][2], U(*received).m[1][2], U(*received).m[2][2], U(*received).m[3][2],
-            U(*received).m[0][3], U(*received).m[1][3], U(*received).m[2][3], U(*received).m[3][3]);
+            expected->m[0][0], expected->m[1][0], expected->m[2][0], expected->m[3][0],
+            expected->m[0][1], expected->m[1][1], expected->m[2][1], expected->m[3][1],
+            expected->m[0][2], expected->m[1][2], expected->m[2][2], expected->m[3][2],
+            expected->m[0][3], expected->m[1][3], expected->m[2][3], expected->m[3][3],
+            received->m[0][0], received->m[1][0], received->m[2][0], received->m[3][0],
+            received->m[0][1], received->m[1][1], received->m[2][1], received->m[3][1],
+            received->m[0][2], received->m[1][2], received->m[2][2], received->m[3][2],
+            received->m[0][3], received->m[1][3], received->m[2][3], received->m[3][3]);
 }
 
 static void transform_check_data(IDirect3DDevice9 *device, const struct state_test *test,
