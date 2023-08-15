@@ -18,7 +18,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "ole2.h"

@@ -19,8 +19,6 @@
 #include <assert.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"

@@ -19,7 +19,6 @@
 #include <stdarg.h>
 #include <FACT.h>
 
-#define NONAMELESSUNION
 #define COBJMACROS
 #include "objbase.h"
 

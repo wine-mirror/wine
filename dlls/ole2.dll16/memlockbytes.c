@@ -22,8 +22,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"

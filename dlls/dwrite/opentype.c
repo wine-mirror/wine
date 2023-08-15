@@ -19,7 +19,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
 
 #include <stdint.h>
 #include "dwrite_private.h"

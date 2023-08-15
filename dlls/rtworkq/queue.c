@@ -19,8 +19,6 @@
 #include <assert.h>
 
 #define COBJMACROS
-#define NONAMELESSUNION
-
 #include "initguid.h"
 #include "rtworkq.h"
 #include "wine/debug.h"

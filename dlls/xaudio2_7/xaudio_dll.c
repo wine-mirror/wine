@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #define COBJMACROS
 
 #include "windows.h"

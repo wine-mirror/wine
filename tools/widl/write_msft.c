@@ -36,8 +36,6 @@
 #include <ctype.h>
 #include <time.h>
 
-#define NONAMELESSUNION
-
 #include "widl.h"
 #include "typelib.h"
 #include "typelib_struct.h"

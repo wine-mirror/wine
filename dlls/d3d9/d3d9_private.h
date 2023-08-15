@@ -26,8 +26,6 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
