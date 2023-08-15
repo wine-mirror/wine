@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -1229,7 +1228,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
 
         /* RFC 5929 */
         info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, ctx->cert->pCertInfo->SignatureAlgorithm.pszObjId, 0);
-        if (info && info->u.Algid != CALG_SHA1 && info->u.Algid != CALG_MD5) hash_alg = info->u.Algid;
+        if (info && info->Algid != CALG_SHA1 && info->Algid != CALG_MD5) hash_alg = info->Algid;
 
         hash_size = sizeof(hash);
         ret = CryptHashCertificate(0, hash_alg, 0, ctx->cert->pbCertEncoded, ctx->cert->cbCertEncoded, hash, &hash_size);
