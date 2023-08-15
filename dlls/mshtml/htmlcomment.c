@@ -200,7 +200,7 @@ static const tid_t HTMLCommentElement_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLCommentElement_dispex = {
-    L"Comment",
+    "Comment",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLCommentElement_tid,
     HTMLCommentElement_iface_tids,

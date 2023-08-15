@@ -371,7 +371,7 @@ typedef struct {
 } dispex_static_data_vtbl_t;
 
 typedef struct {
-    const WCHAR *name;
+    const char *name;
     const dispex_static_data_vtbl_t *vtbl;
     const tid_t disp_tid;
     const tid_t* const iface_tids;

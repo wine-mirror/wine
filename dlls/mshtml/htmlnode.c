@@ -458,7 +458,7 @@ static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
-    L"NodeList",
+    "NodeList",
     &HTMLDOMChildrenCollection_dispex_vtbl,
     DispDOMChildrenCollection_tid,
     HTMLDOMChildrenCollection_iface_tids,
@@ -1512,7 +1512,7 @@ static const tid_t HTMLDOMNode_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLDOMNode_dispex = {
-    L"Node",
+    "Node",
     NULL,
     IHTMLDOMNode_tid,
     HTMLDOMNode_iface_tids,

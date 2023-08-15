@@ -1237,7 +1237,7 @@ static const tid_t mutation_observer_iface_tids[] = {
     0
 };
 static dispex_static_data_t mutation_observer_dispex = {
-    L"MutationObserver",
+    "MutationObserver",
     &mutation_observer_dispex_vtbl,
     IWineMSHTMLMutationObserver_tid,
     mutation_observer_iface_tids
@@ -1398,7 +1398,7 @@ static const tid_t mutation_observer_ctor_iface_tids[] = {
 };
 
 static dispex_static_data_t mutation_observer_ctor_dispex = {
-    L"Function",
+    "Function",
     &mutation_observer_ctor_dispex_vtbl,
     NULL_tid,
     mutation_observer_ctor_iface_tids

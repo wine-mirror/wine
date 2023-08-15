@@ -474,7 +474,7 @@ static const tid_t HTMLScriptElement_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLScriptElement_dispex = {
-    L"HTMLScriptElement",
+    "HTMLScriptElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLScriptElement_tid,
     HTMLScriptElement_iface_tids,

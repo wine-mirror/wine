@@ -516,7 +516,7 @@ static const tid_t HTMLTableCell_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTableCell_dispex = {
-    L"HTMLTableDataCellElement",
+    "HTMLTableDataCellElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTableCell_tid,
     HTMLTableCell_iface_tids,
@@ -956,7 +956,7 @@ static const tid_t HTMLTableRow_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTableRow_dispex = {
-    L"HTMLTableRowElement",
+    "HTMLTableRowElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTableRow_tid,
     HTMLTableRow_iface_tids,
@@ -1984,7 +1984,7 @@ static const tid_t HTMLTable_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLTable_dispex = {
-    L"HTMLTableElement",
+    "HTMLTableElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTable_tid,
     HTMLTable_iface_tids,

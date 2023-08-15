@@ -917,7 +917,7 @@ static const dispex_static_data_vtbl_t function_dispex_vtbl = {
 static const tid_t function_iface_tids[] = {0};
 
 static dispex_static_data_t function_dispex = {
-    L"Function",
+    "Function",
     &function_dispex_vtbl,
     NULL_tid,
     function_iface_tids
@@ -1549,8 +1549,7 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     static const WCHAR suffix[] = L"]";
     WCHAR buf[ARRAY_SIZE(prefix) + 28 + ARRAY_SIZE(suffix)], *p = buf;
     compat_mode_t compat_mode = dispex_compat_mode(dispex);
-    const WCHAR *name = dispex->info->desc->name;
-    unsigned len;
+    const char *name = dispex->info->desc->name;
 
     if(!ret)
         return E_INVALIDARG;
@@ -1560,10 +1559,9 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     if(compat_mode < COMPAT_MODE_IE9)
         p--;
     else {
-        len = wcslen(name);
-        assert(len <= 28);
-        memcpy(p, name, len * sizeof(WCHAR));
-        p += len;
+        while(*name)
+            *p++ = *name++;
+        assert(p + ARRAY_SIZE(suffix) - buf <= ARRAY_SIZE(buf));
     }
     memcpy(p, suffix, sizeof(suffix));
 

@@ -1449,7 +1449,7 @@ static const tid_t HTMLInputElement_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLInputElement_dispex = {
-    L"HTMLInputElement",
+    "HTMLInputElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLInputElement_tid,
     HTMLInputElement_iface_tids,
@@ -1646,7 +1646,7 @@ static const tid_t HTMLLabelElement_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLLabelElement_dispex = {
-    L"HTMLLabelElement",
+    "HTMLLabelElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLLabelElement_tid,
     HTMLLabelElement_iface_tids,
@@ -1988,7 +1988,7 @@ static const tid_t HTMLButtonElement_iface_tids[] = {
 };
 
 static dispex_static_data_t HTMLButtonElement_dispex = {
-    L"HTMLButtonElement",
+    "HTMLButtonElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLButtonElement_tid,
     HTMLButtonElement_iface_tids,

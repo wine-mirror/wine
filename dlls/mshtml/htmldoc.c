@@ -386,7 +386,7 @@ static const tid_t DocumentType_iface_tids[] = {
 };
 
 static dispex_static_data_t DocumentType_dispex = {
-    L"DocumentType",
+    "DocumentType",
     &DocumentType_event_target_vtbl.dispex_vtbl,
     DispDOMDocumentType_tid,
     DocumentType_iface_tids
@@ -6180,7 +6180,7 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 }
 
 static dispex_static_data_t HTMLDocumentNode_dispex = {
-    L"HTMLDocument",
+    "HTMLDocument",
     &HTMLDocumentNode_event_target_vtbl.dispex_vtbl,
     DispHTMLDocument_tid,
     HTMLDocumentNode_iface_tids,

@@ -10023,7 +10023,7 @@ static const tid_t HTMLStyle_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLStyle_dispex = {
-    L"MSStyleCSSProperties",
+    "MSStyleCSSProperties",
     &CSSStyle_dispex_vtbl,
     DispHTMLStyle_tid,
     HTMLStyle_iface_tids,
@@ -10119,7 +10119,7 @@ static const tid_t HTMLW3CComputedStyle_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLW3CComputedStyle_dispex = {
-    L"CSSStyleDeclaration",
+    "CSSStyleDeclaration",
     &CSSStyle_dispex_vtbl,
     DispHTMLW3CComputedStyle_tid,
     HTMLW3CComputedStyle_iface_tids,

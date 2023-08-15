@@ -1300,7 +1300,7 @@ static const tid_t HTMLCurrentStyle_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLCurrentStyle_dispex = {
-    L"MSCurrentStyleCSSProperties",
+    "MSCurrentStyleCSSProperties",
     &CSSStyle_dispex_vtbl,
     DispHTMLCurrentStyle_tid,
     HTMLCurrentStyle_iface_tids,
