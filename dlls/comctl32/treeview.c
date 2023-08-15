@@ -4664,7 +4664,7 @@ static INT TREEVIEW_ProcessLetterKeys(TREEVIEW_INFO *infoPtr, WPARAM charCode, L
     if (!charCode || !keyData) return 0;
 
     /* only allow the valid WM_CHARs through */
-    if (!isalnum(charCode) &&
+    if (!iswalnum(charCode) &&
         charCode != '.' && charCode != '`' && charCode != '!' &&
         charCode != '@' && charCode != '#' && charCode != '$' &&
         charCode != '%' && charCode != '^' && charCode != '&' &&
