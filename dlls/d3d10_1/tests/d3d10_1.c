@@ -374,8 +374,8 @@ static void test_create_shader_resource_view(void)
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D10_1_SRV_DIMENSION_BUFFER;
-    U(srv_desc).Buffer.ElementOffset = 0;
-    U(srv_desc).Buffer.ElementWidth = 64;
+    srv_desc.Buffer.ElementOffset = 0;
+    srv_desc.Buffer.ElementWidth = 64;
 
     hr = ID3D10Device1_CreateShaderResourceView1(device, NULL, &srv_desc, &srview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
@@ -437,9 +437,9 @@ static void test_create_shader_resource_view(void)
     ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
     ok(srv_desc.ViewDimension == D3D10_1_SRV_DIMENSION_TEXTURE2D,
             "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
-    ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
-            U(srv_desc).Texture2D.MostDetailedMip);
-    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
+    ok(srv_desc.Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
+            srv_desc.Texture2D.MostDetailedMip);
+    ok(srv_desc.Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", srv_desc.Texture2D.MipLevels);
 
     check_interface(srview, &IID_ID3D10ShaderResourceView, TRUE, FALSE);
     /* Not available on all Windows versions. */
