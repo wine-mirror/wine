@@ -214,7 +214,7 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     if(hres != S_FALSE)
         return hres;
 
-    return EventTarget_QI(&This->event_target, riid, ppv);
+    return EventTarget_QI_no_cc(&This->event_target, riid, ppv);
 }
 
 static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
@@ -251,7 +251,7 @@ static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID ri
     if(hres != S_FALSE)
         return hres;
 
-    return EventTarget_QI(&This->base.inner_window->event_target, riid, ppv);
+    return EventTarget_QI_no_cc(&This->base.inner_window->event_target, riid, ppv);
 }
 
 static ULONG WINAPI outer_window_AddRef(IHTMLWindow2 *iface)

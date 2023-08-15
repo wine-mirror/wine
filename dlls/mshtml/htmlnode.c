@@ -1444,7 +1444,7 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
         *ppv = &This->IHTMLDOMNode_iface;
         return S_OK;
     }else {
-        return EventTarget_QI(&This->event_target, riid, ppv);
+        return EventTarget_QI_no_cc(&This->event_target, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);

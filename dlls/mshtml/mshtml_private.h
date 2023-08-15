@@ -1221,7 +1221,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_d
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*);
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t);
-HRESULT EventTarget_QI(EventTarget*,REFIID,void**);
+HRESULT EventTarget_QI_no_cc(EventTarget*,REFIID,void**);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);

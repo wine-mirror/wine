@@ -526,7 +526,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_QueryInterface(IHTMLXMLHttpRequest *ifa
     }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
         *ppv = &This->IProvideClassInfo2_iface;
     }else {
-        return EventTarget_QI(&This->event_target, riid, ppv);
+        return EventTarget_QI_no_cc(&This->event_target, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);

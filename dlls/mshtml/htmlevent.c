@@ -4478,7 +4478,7 @@ static HRESULT get_gecko_target(IEventTarget *target, nsIDOMEventTarget **ret)
     return S_OK;
 }
 
-HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
+HRESULT EventTarget_QI_no_cc(EventTarget *event_target, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IEventTarget)) {
         if(use_event_quirks(event_target)) {
