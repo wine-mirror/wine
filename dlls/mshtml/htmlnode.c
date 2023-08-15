@@ -1443,6 +1443,7 @@ void HTMLDOMNode_unlink(DispatchEx *dispex)
     if(This->vtbl->unlink)
         This->vtbl->unlink(This);
 
+    release_event_target(&This->event_target);
     unlink_ref(&This->nsnode);
 
     if(This->doc) {
@@ -1456,7 +1457,6 @@ void HTMLDOMNode_unlink(DispatchEx *dispex)
 void HTMLDOMNode_destructor(DispatchEx *dispex)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
-    release_event_target(&This->event_target);
     if(This->vtbl->destructor)
         This->vtbl->destructor(This);
     free(This);

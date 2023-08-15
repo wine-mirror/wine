@@ -4552,11 +4552,12 @@ void release_event_target(EventTarget *event_target)
     WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &event_target->handler_map, listener_container_t, entry) {
         while(!list_empty(&iter->listeners)) {
             event_listener_t *listener = LIST_ENTRY(list_head(&iter->listeners), event_listener_t, entry);
+            list_remove(&listener->entry);
             if(listener->function)
                 IDispatch_Release(listener->function);
-            list_remove(&listener->entry);
             free(listener);
         }
         free(iter);
     }
+    rb_destroy(&event_target->handler_map, NULL, NULL);
 }
