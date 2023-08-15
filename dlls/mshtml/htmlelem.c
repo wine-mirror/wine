@@ -6874,8 +6874,6 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
     }
 
     free(This->filter);
-
-    HTMLDOMNode_destructor(&This->node);
 }
 
 HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -7354,6 +7352,9 @@ static const tid_t HTMLElement_iface_tids[] = {
 
 const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
+        .destructor          = HTMLDOMNode_destructor,
+        .traverse            = HTMLDOMNode_traverse,
+        .unlink              = HTMLDOMNode_unlink,
         .get_dispid          = HTMLElement_get_dispid,
         .get_name            = HTMLElement_get_name,
         .invoke              = HTMLElement_invoke,

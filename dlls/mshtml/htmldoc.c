@@ -308,13 +308,6 @@ static HRESULT DocumentType_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
-static void DocumentType_destructor(HTMLDOMNode *iface)
-{
-    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
-
-    HTMLDOMNode_destructor(&This->node);
-}
-
 static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
@@ -326,7 +319,6 @@ static const cpc_entry_t DocumentType_cpc[] = {{NULL}};
 
 static const NodeImplVtbl DocumentTypeImplVtbl = {
     .qi                    = DocumentType_QI,
-    .destructor            = DocumentType_destructor,
     .cpc_entries           = DocumentType_cpc,
     .clone                 = DocumentType_clone
 };
@@ -366,7 +358,9 @@ static IHTMLEventObj *DocumentType_set_current_event(DispatchEx *dispex, IHTMLEv
 
 static const event_target_vtbl_t DocumentType_event_target_vtbl = {
     {
-        NULL,
+        .destructor          = HTMLDOMNode_destructor,
+        .traverse            = HTMLDOMNode_traverse,
+        .unlink              = HTMLDOMNode_unlink
     },
     .get_gecko_target        = DocumentType_get_gecko_target,
     .get_parent_event_target = DocumentType_get_parent_event_target,
@@ -6070,6 +6064,9 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
 
 static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
+        .destructor          = HTMLDOMNode_destructor,
+        .traverse            = HTMLDOMNode_traverse,
+        .unlink              = HTMLDOMNode_unlink,
         .get_name            = HTMLDocumentNode_get_name,
         .invoke              = HTMLDocumentNode_invoke,
         .next_dispid         = HTMLDocumentNode_next_dispid,

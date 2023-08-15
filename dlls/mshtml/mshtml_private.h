@@ -352,8 +352,10 @@ typedef struct {
    - dynamic props: These props are generally allocated by external code (e.g. 'document.wine = 42' creates 'wine' dynamic prop on document)
 */
 typedef struct {
-    /* Unlike delete_cycle_collectable, unlink is called before the destructor (if available). */
+    /* Used to implement Cycle Collection callbacks; note that the destructor is not optional!
+       Unlike delete_cycle_collectable, unlink is called before the destructor (if available). */
     void (*destructor)(DispatchEx*);
+    void (*traverse)(DispatchEx*,nsCycleCollectionTraversalCallback*);
     void (*unlink)(DispatchEx*);
 
     /* Called when the object wants to handle DISPID_VALUE invocations */
@@ -425,16 +427,28 @@ extern void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjC
 extern void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
 extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
 
+extern ExternalCycleCollectionParticipant dispex_ccp;
+
+static inline LONG dispex_ref_incr(DispatchEx *dispex)
+{
+    return ccref_incr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface);
+}
+
+static inline LONG dispex_ref_decr(DispatchEx *dispex)
+{
+    return ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
+}
+
 void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t);
 void release_dispex(DispatchEx*);
+BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 BOOL dispex_query_interface_no_cc(DispatchEx*,REFIID,void**);
+void dispex_props_unlink(DispatchEx*);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 HRESULT get_dispids(tid_t,DWORD*,DISPID**);
 HRESULT remove_attribute(DispatchEx*,DISPID,VARIANT_BOOL*);
 HRESULT dispex_get_dynid(DispatchEx*,const WCHAR*,BOOL,DISPID*);
-void dispex_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
-void dispex_unlink(DispatchEx*);
 void release_typelib(void);
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**);
 const void *dispex_get_vtbl(DispatchEx*);
@@ -1072,7 +1086,7 @@ BOOL is_gecko_path(const char*);
 void set_viewer_zoom(GeckoBrowser*,float);
 float get_viewer_zoom(GeckoBrowser*);
 
-void init_node_cc(void);
+void init_dispex_cc(void);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 
@@ -1219,11 +1233,14 @@ void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_d
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*);
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t);
+HRESULT EventTarget_QI(EventTarget*,REFIID,void**);
 HRESULT EventTarget_QI_no_cc(EventTarget*,REFIID,void**);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);
-void HTMLDOMNode_destructor(HTMLDOMNode*);
+void HTMLDOMNode_destructor(DispatchEx*);
+void HTMLDOMNode_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
+void HTMLDOMNode_unlink(DispatchEx*);
 void HTMLDOMNode_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 HRESULT HTMLElement_QI(HTMLDOMNode*,REFIID,void**);

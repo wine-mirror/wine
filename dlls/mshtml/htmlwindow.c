@@ -123,7 +123,7 @@ static void detach_inner_window(HTMLInnerWindow *window)
         detach_document_node(doc);
 
     if(outer_window && outer_window->location.dispex.outer)
-        dispex_unlink(&outer_window->location.dispex);
+        dispex_props_unlink(&outer_window->location.dispex);
 
     abort_window_bindings(window);
     remove_target_tasks(window->task_magic);

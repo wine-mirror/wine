@@ -4478,6 +4478,27 @@ static HRESULT get_gecko_target(IEventTarget *target, nsIDOMEventTarget **ret)
     return S_OK;
 }
 
+HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IEventTarget)) {
+        if(use_event_quirks(event_target)) {
+            WARN("IEventTarget queried, but not supported by in document mode\n");
+            *ppv = NULL;
+            return E_NOINTERFACE;
+        }
+        IEventTarget_AddRef(&event_target->IEventTarget_iface);
+        *ppv = &event_target->IEventTarget_iface;
+        return S_OK;
+    }
+
+    if(dispex_query_interface(&event_target->dispex, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
+
+    WARN("(%p)->(%s %p)\n", event_target, debugstr_mshtml_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
 HRESULT EventTarget_QI_no_cc(EventTarget *event_target, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IEventTarget)) {

@@ -352,9 +352,14 @@ static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     .qi                    = HTMLDOMTextNode_QI,
-    .destructor            = HTMLDOMNode_destructor,
     .cpc_entries           = HTMLDOMTextNode_cpc,
     .clone                 = HTMLDOMTextNode_clone
+};
+
+static const dispex_static_data_vtbl_t HTMLDOMTextNode_dispex_vtbl = {
+    .destructor      = HTMLDOMNode_destructor,
+    .traverse        = HTMLDOMNode_traverse,
+    .unlink          = HTMLDOMNode_unlink
 };
 
 static const tid_t HTMLDOMTextNode_iface_tids[] = {
@@ -366,7 +371,7 @@ static const tid_t HTMLDOMTextNode_iface_tids[] = {
 };
 static dispex_static_data_t HTMLDOMTextNode_dispex = {
     "Text",
-    NULL,
+    &HTMLDOMTextNode_dispex_vtbl,
     DispHTMLDOMTextNode_tid,
     HTMLDOMTextNode_iface_tids,
     HTMLDOMNode_init_dispex_info

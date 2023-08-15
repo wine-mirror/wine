@@ -33,6 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define MAX_ARGS 16
 
+ExternalCycleCollectionParticipant dispex_ccp;
+
 static CRITICAL_SECTION cs_dispex_static_data;
 static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
 {
@@ -1969,6 +1971,34 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
+BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        *ppv = &This->IDispatchEx_iface;
+    else if(IsEqualGUID(&IID_IDispatchEx, riid))
+        *ppv = &This->IDispatchEx_iface;
+    else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
+        *ppv = &dispex_ccp;
+        return TRUE;
+    }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
+        *ppv = &This->IDispatchEx_iface;
+        return TRUE;
+    }else if(IsEqualGUID(&IID_IDispatchJS, riid))
+        *ppv = NULL;
+    else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid))
+        *ppv = NULL;
+    else if(IsEqualGUID(&IID_IMarshal, riid))
+        *ppv = NULL;
+    else if(IsEqualGUID(&IID_IManagedObject, riid))
+        *ppv = NULL;
+    else
+        return FALSE;
+
+    if(*ppv)
+        IUnknown_AddRef((IUnknown*)*ppv);
+    return TRUE;
+}
+
 BOOL dispex_query_interface_no_cc(DispatchEx *This, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IDispatch, riid))
@@ -1991,12 +2021,15 @@ BOOL dispex_query_interface_no_cc(DispatchEx *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
-void dispex_traverse(DispatchEx *This, nsCycleCollectionTraversalCallback *cb)
+static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
 {
+    DispatchEx *This = impl_from_IDispatchEx(p);
     dynamic_prop_t *prop;
 
+    describe_cc_node(&This->ccref, This->info->desc->name, cb);
+
     if(!This->dynamic_data)
-        return;
+        return NS_OK;
 
     for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
         if(V_VT(&prop->var) == VT_DISPATCH)
@@ -2014,9 +2047,11 @@ void dispex_traverse(DispatchEx *This, nsCycleCollectionTraversalCallback *cb)
                 note_cc_edge((nsISupports*)V_DISPATCH(&iter->val), "func_val", cb);
         }
     }
+
+    return NS_OK;
 }
 
-void dispex_unlink(DispatchEx *This)
+void dispex_props_unlink(DispatchEx *This)
 {
     dynamic_prop_t *prop;
 
@@ -2042,6 +2077,33 @@ void dispex_unlink(DispatchEx *This)
         free(This->dynamic_data->func_disps);
         This->dynamic_data->func_disps = NULL;
     }
+}
+
+static nsresult NSAPI dispex_unlink(void *p)
+{
+    DispatchEx *This = impl_from_IDispatchEx(p);
+
+    if(This->info->desc->vtbl->unlink)
+        This->info->desc->vtbl->unlink(This);
+
+    dispex_props_unlink(This);
+    return NS_OK;
+}
+
+static void NSAPI dispex_delete_cycle_collectable(void *p)
+{
+    DispatchEx *This = impl_from_IDispatchEx(p);
+    release_dispex(This);
+}
+
+void init_dispex_cc(void)
+{
+    static const CCObjCallback dispex_ccp_callback = {
+        dispex_traverse,
+        dispex_unlink,
+        dispex_delete_cycle_collectable
+    };
+    ccp_init(&dispex_ccp, &dispex_ccp_callback);
 }
 
 const void *dispex_get_vtbl(DispatchEx *dispex)
@@ -2083,7 +2145,7 @@ void release_dispex(DispatchEx *This)
     free(This->dynamic_data);
 
 destructor:
-    if(This->info->desc->vtbl && This->info->desc->vtbl->destructor)
+    if(This->info->desc->vtbl)
         This->info->desc->vtbl->destructor(This);
 }
 
