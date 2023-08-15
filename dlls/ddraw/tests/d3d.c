@@ -138,10 +138,10 @@ static BOOL CreateDirect3D(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(ddsd).ddpfPixelFormat).dwZBufferBitDepth = 16;
-    U3(U4(ddsd).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd.ddpfPixelFormat.dwZBitMask = 0x0000FFFF;
     ddsd.dwWidth = 256;
     ddsd.dwHeight = 256;
     rc = IDirectDraw7_CreateSurface(lpDD, &ddsd, &lpDDSdepth, NULL);
@@ -236,10 +236,10 @@ static void LightTest(void)
     /* Set a few lights with funky indices. */
     memset(&light, 0, sizeof(light));
     light.dltType = D3DLIGHT_DIRECTIONAL;
-    U1(light.dcvDiffuse).r = 0.5f;
-    U2(light.dcvDiffuse).g = 0.6f;
-    U3(light.dcvDiffuse).b = 0.7f;
-    U2(light.dvDirection).y = 1.f;
+    light.dcvDiffuse.r = 0.5f;
+    light.dcvDiffuse.g = 0.6f;
+    light.dcvDiffuse.b = 0.7f;
+    light.dvDirection.y = 1.f;
 
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 5, &light);
     ok(rc==D3D_OK, "Got hr %#lx.\n", rc);
@@ -271,10 +271,10 @@ static void LightTest(void)
        they have been initialized with proper default values. */
     memset(&defaultlight, 0, sizeof(D3DLIGHT7));
     defaultlight.dltType = D3DLIGHT_DIRECTIONAL;
-    U1(defaultlight.dcvDiffuse).r = 1.f;
-    U2(defaultlight.dcvDiffuse).g = 1.f;
-    U3(defaultlight.dcvDiffuse).b = 1.f;
-    U3(defaultlight.dvDirection).z = 1.f;
+    defaultlight.dcvDiffuse.r = 1.f;
+    defaultlight.dcvDiffuse.g = 1.f;
+    defaultlight.dcvDiffuse.b = 1.f;
+    defaultlight.dvDirection.z = 1.f;
 
     rc = IDirect3DDevice7_LightEnable(lpD3DDevice, 20, TRUE);
     ok(rc==D3D_OK, "Got hr %#lx.\n", rc);
@@ -320,19 +320,19 @@ static void LightTest(void)
     /* Set some lights with invalid parameters */
     memset(&light, 0, sizeof(D3DLIGHT7));
     light.dltType = 0;
-    U1(light.dcvDiffuse).r = 1.f;
-    U2(light.dcvDiffuse).g = 1.f;
-    U3(light.dcvDiffuse).b = 1.f;
-    U3(light.dvDirection).z = 1.f;
+    light.dcvDiffuse.r = 1.f;
+    light.dcvDiffuse.g = 1.f;
+    light.dcvDiffuse.b = 1.f;
+    light.dvDirection.z = 1.f;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 100, &light);
     ok(rc==DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     memset(&light, 0, sizeof(D3DLIGHT7));
     light.dltType = 12345;
-    U1(light.dcvDiffuse).r = 1.f;
-    U2(light.dcvDiffuse).g = 1.f;
-    U3(light.dcvDiffuse).b = 1.f;
-    U3(light.dvDirection).z = 1.f;
+    light.dcvDiffuse.r = 1.f;
+    light.dcvDiffuse.g = 1.f;
+    light.dcvDiffuse.b = 1.f;
+    light.dvDirection.z = 1.f;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 101, &light);
     ok(rc==DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
@@ -341,10 +341,10 @@ static void LightTest(void)
 
     memset(&light, 0, sizeof(D3DLIGHT7));
     light.dltType = D3DLIGHT_SPOT;
-    U1(light.dcvDiffuse).r = 1.f;
-    U2(light.dcvDiffuse).g = 1.f;
-    U3(light.dcvDiffuse).b = 1.f;
-    U3(light.dvDirection).z = 1.f;
+    light.dcvDiffuse.r = 1.f;
+    light.dcvDiffuse.g = 1.f;
+    light.dcvDiffuse.b = 1.f;
+    light.dvDirection.z = 1.f;
 
     light.dvAttenuation0 = -one / zero; /* -INFINITY */
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
@@ -381,21 +381,21 @@ static void LightTest(void)
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "Got hr %#lx.\n", rc);
 
-    U4(mat).power = 129.0;
+    mat.power = 129.0;
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "Got hr %#lx.\n", rc);
     memset(&mat, 0, sizeof(mat));
     rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "Got hr %#lx.\n", rc);
-    ok(U4(mat).power == 129, "Returned power is %f\n", U4(mat).power);
+    ok(mat.power == 129, "Returned power is %f\n", mat.power);
 
-    U4(mat).power = -1.0;
+    mat.power = -1.0;
     rc = IDirect3DDevice7_SetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "Got hr %#lx.\n", rc);
     memset(&mat, 0, sizeof(mat));
     rc = IDirect3DDevice7_GetMaterial(lpD3DDevice, &mat);
     ok(rc == D3D_OK, "Got hr %#lx.\n", rc);
-    ok(U4(mat).power == -1, "Returned power is %f\n", U4(mat).power);
+    ok(mat.power == -1, "Returned power is %f\n", mat.power);
 
     memset(&caps, 0, sizeof(caps));
     rc = IDirect3DDevice7_GetCaps(lpD3DDevice, &caps);
@@ -1080,7 +1080,7 @@ static void TextureLoadTest(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
     ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 8;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
 
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &TexSurface, NULL);
     ok(hr==D3D_OK, "Got hr %#lx.\n", hr);
@@ -1300,10 +1300,10 @@ static void SetRenderTargetTest(void)
     ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
     ddsd2.dwWidth = 64;
     ddsd2.dwHeight = 64;
-    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
-    U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
-    U3(U4(ddsd2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+    ddsd2.ddpfPixelFormat.dwSize = sizeof(ddsd2.ddpfPixelFormat);
+    ddsd2.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    ddsd2.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    ddsd2.ddpfPixelFormat.dwZBitMask = 0x0000FFFF;
 
     hr = IDirectDraw7_CreateSurface(lpDD, &ddsd2, &failrt, NULL);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
@@ -1657,9 +1657,9 @@ static void BackBuffer3DAttachmentTest(void)
 static void dump_format(const DDPIXELFORMAT *fmt)
 {
     trace("dwFlags %08lx, FourCC %08lx, dwZBufferBitDepth %lu, stencil %08lx\n", fmt->dwFlags, fmt->dwFourCC,
-          U1(*fmt).dwZBufferBitDepth, U2(*fmt).dwStencilBitDepth);
-    trace("dwZBitMask %08lx, dwStencilBitMask %08lx, dwRGBZBitMask %08lx\n", U3(*fmt).dwZBitMask,
-          U4(*fmt).dwStencilBitMask, U5(*fmt).dwRGBZBitMask);
+          fmt->dwZBufferBitDepth, fmt->dwStencilBitDepth);
+    trace("dwZBitMask %08lx, dwStencilBitMask %08lx, dwRGBZBitMask %08lx\n", fmt->dwZBitMask,
+          fmt->dwStencilBitMask, fmt->dwRGBZBitMask);
 }
 
 static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
@@ -1705,7 +1705,7 @@ static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(ddsd).ddpfPixelFormat = *fmt;
+    ddsd.ddpfPixelFormat = *fmt;
     ddsd.dwWidth = 1024;
     ddsd.dwHeight = 1024;
     hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &surface, NULL);
@@ -1721,17 +1721,17 @@ static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
 
     /* 24 bit unpadded depth buffers are actually padded(Geforce 9600, Win7,
      * Radeon 9000M WinXP) */
-    if (U1(*fmt).dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
-    else expected_pitch = ddsd.dwWidth * U1(*fmt).dwZBufferBitDepth / 8;
+    if (fmt->dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
+    else expected_pitch = ddsd.dwWidth * fmt->dwZBufferBitDepth / 8;
 
     /* Some formats(16 bit depth without stencil) return pitch 0
      *
      * The Radeon X1600 Catalyst 10.2 Windows XP driver returns an otherwise sane
      * pitch with an extra 128 bytes, regardless of the format and width */
-    if (U1(ddsd).lPitch != 0 && U1(ddsd).lPitch != expected_pitch
-            && !broken(U1(ddsd).lPitch == expected_pitch + 128))
+    if (ddsd.lPitch != 0 && ddsd.lPitch != expected_pitch
+            && !broken(ddsd.lPitch == expected_pitch + 128))
     {
-        ok(0, "Z buffer pitch is %lu, expected %u\n", U1(ddsd).lPitch, expected_pitch);
+        ok(0, "Z buffer pitch is %lu, expected %u\n", ddsd.lPitch, expected_pitch);
         dump_format(fmt);
     }
 

@@ -90,9 +90,9 @@ static void test_ddraw_objects(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
 
     hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd, &surface, NULL);
     if (!surface)

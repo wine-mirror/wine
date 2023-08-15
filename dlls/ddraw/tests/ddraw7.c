@@ -123,10 +123,10 @@ static void init_format_b8g8r8x8(DDPIXELFORMAT *format)
 {
     format->dwSize = sizeof(*format);
     format->dwFlags = DDPF_RGB;
-    U1(*format).dwRGBBitCount = 32;
-    U2(*format).dwRBitMask = 0x00ff0000;
-    U3(*format).dwGBitMask = 0x0000ff00;
-    U4(*format).dwBBitMask = 0x000000ff;
+    format->dwRGBBitCount = 32;
+    format->dwRBitMask = 0x00ff0000;
+    format->dwGBitMask = 0x0000ff00;
+    format->dwBBitMask = 0x000000ff;
 }
 
 static ULONG get_refcount(IUnknown *iface)
@@ -226,9 +226,9 @@ static IDirectDrawSurface7 *create_overlay(IDirectDraw7 *ddraw,
     desc.dwWidth = width;
     desc.dwHeight = height;
     desc.ddsCaps.dwCaps = DDSCAPS_OVERLAY;
-    U4(desc).ddpfPixelFormat.dwSize = sizeof(U4(desc).ddpfPixelFormat);
-    U4(desc).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-    U4(desc).ddpfPixelFormat.dwFourCC = format;
+    desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+    desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    desc.ddpfPixelFormat.dwFourCC = format;
 
     if (FAILED(IDirectDraw7_CreateSurface(ddraw, &desc, &surface, NULL)))
         return NULL;
@@ -418,7 +418,7 @@ static void fill_surface(IDirectDrawSurface7 *surface, D3DCOLOR color)
 
     for (y = 0; y < surface_desc.dwHeight; ++y)
     {
-        ptr = (DWORD *)((BYTE *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+        ptr = (DWORD *)((BYTE *)surface_desc.lpSurface + y * surface_desc.lPitch);
         for (x = 0; x < surface_desc.dwWidth; ++x)
         {
             ptr[x] = color;
@@ -472,7 +472,7 @@ static HRESULT CALLBACK enum_z_fmt(DDPIXELFORMAT *format, void *ctx)
 {
     DDPIXELFORMAT *z_fmt = ctx;
 
-    if (U1(*format).dwZBufferBitDepth > U1(*z_fmt).dwZBufferBitDepth)
+    if (format->dwZBufferBitDepth > z_fmt->dwZBufferBitDepth)
         *z_fmt = *format;
 
     return DDENUMRET_OK;
@@ -563,7 +563,7 @@ static IDirect3DDevice7 *create_device_ex(HWND window, DWORD coop_level, const G
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     if (is_software_device_type(device_guid))
         surface_desc.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
-    U4(surface_desc).ddpfPixelFormat = z_fmt;
+    surface_desc.ddpfPixelFormat = z_fmt;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
@@ -661,7 +661,7 @@ static void clear_surface(IDirectDrawSurface7 *surface, unsigned int colour)
     DDBLTFX fx = {.dwSize = sizeof(fx)};
     HRESULT hr;
 
-    U5(fx).dwFillColor = colour;
+    fx.dwFillColor = colour;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
@@ -1175,12 +1175,12 @@ static void test_clipper_blt(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create source surface, hr %#lx.\n", hr);
@@ -1196,7 +1196,7 @@ static void test_clipper_blt(void)
 
     hr = IDirectDrawSurface7_Lock(src_surface, NULL, &surface_desc, 0, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#lx.\n", hr);
-    ok(U1(surface_desc).lPitch == 2560, "Got unexpected surface pitch %lu.\n", U1(surface_desc).lPitch);
+    ok(surface_desc.lPitch == 2560, "Got unexpected surface pitch %lu.\n", surface_desc.lPitch);
     ptr = surface_desc.lpSurface;
     memcpy(&ptr[   0], &src_data[ 0], 6 * sizeof(DWORD));
     memcpy(&ptr[ 640], &src_data[ 6], 6 * sizeof(DWORD));
@@ -1223,7 +1223,7 @@ static void test_clipper_blt(void)
         }
     }
 
-    U5(fx).dwFillColor = 0xff0000ff;
+    fx.dwFillColor = 0xff0000ff;
     hr = IDirectDrawSurface7_Blt(dst_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear destination surface, hr %#lx.\n", hr);
     for (i = 0; i < 4; ++i)
@@ -1447,7 +1447,7 @@ static void test_surface_interface_mismatch(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(surface_desc).ddpfPixelFormat = z_fmt;
+    surface_desc.ddpfPixelFormat = z_fmt;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
@@ -1561,7 +1561,7 @@ static void test_depth_blit(const GUID *device_guid)
         ddsd_new.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
     ddsd_new.dwWidth = ddsd_existing.dwWidth;
     ddsd_new.dwHeight = ddsd_existing.dwHeight;
-    U4(ddsd_new).ddpfPixelFormat = U4(ddsd_existing).ddpfPixelFormat;
+    ddsd_new.ddpfPixelFormat = ddsd_existing.ddpfPixelFormat;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd_new, &ds2, NULL);
     ok(SUCCEEDED(hr), "Failed to create a z buffer, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd_new, &ds3, NULL);
@@ -1917,13 +1917,13 @@ static void test_ck_rgba(const GUID *device_guid)
         surface_desc.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
     surface_desc.dwWidth = 256;
     surface_desc.dwHeight = 256;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0xff00ff00;
     surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0xff00ff00;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture, NULL);
@@ -1948,7 +1948,7 @@ static void test_ck_rgba(const GUID *device_guid)
 
         memset(&fx, 0, sizeof(fx));
         fx.dwSize = sizeof(fx);
-        U5(fx).dwFillColor = tests[i].fill_color;
+        fx.dwFillColor = tests[i].fill_color;
         hr = IDirectDrawSurface7_Blt(texture, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -1970,7 +1970,7 @@ static void test_ck_rgba(const GUID *device_guid)
                 "Expected color 0x%08x for test %u, got 0x%08x.\n",
                 tests[i].result1, i, color);
 
-        U5(fx).dwFillColor = 0xff0000ff;
+        fx.dwFillColor = 0xff0000ff;
         hr = IDirectDrawSurface7_Blt(texture, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -2044,12 +2044,12 @@ static void test_ck_default(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
     surface_desc.dwWidth = 256;
     surface_desc.dwHeight = 256;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x000000ff;
     surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
@@ -2059,7 +2059,7 @@ static void test_ck_default(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    U5(fx).dwFillColor = 0x000000ff;
+    fx.dwFillColor = 0x000000ff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to fill surface, hr %#lx.\n", hr);
 
@@ -2181,7 +2181,7 @@ static void test_ck_complex(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -2851,7 +2851,7 @@ static void test_redundant_mode_set(void)
     ok(SUCCEEDED(hr), "GetDisplayMode failed, hr %#lx.\n", hr);
 
     hr = IDirectDraw7_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, 0, 0);
+            surface_desc.ddpfPixelFormat.dwRGBBitCount, 0, 0);
     ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#lx.\n", hr);
 
     GetWindowRect(window, &q);
@@ -2863,7 +2863,7 @@ static void test_redundant_mode_set(void)
     ok(EqualRect(&r, &s), "Expected %s, got %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&s));
 
     hr = IDirectDraw7_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, 0, 0);
+            surface_desc.ddpfPixelFormat.dwRGBBitCount, 0, 0);
     ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#lx.\n", hr);
 
     GetWindowRect(window, &s);
@@ -2909,7 +2909,7 @@ static HRESULT CALLBACK test_coop_level_mode_set_enum_cb(DDSURFACEDESC2 *surface
 {
     struct test_coop_level_mode_set_enum_param *param = context;
 
-    if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
+    if (surface_desc->ddpfPixelFormat.dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
     if (surface_desc->dwWidth == registry_mode.dmPelsWidth
             && surface_desc->dwHeight == registry_mode.dmPelsHeight)
@@ -5183,11 +5183,11 @@ static void test_specular_lighting(void)
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         memset(&material, 0, sizeof(material));
-        U1(U2(material).specular).r = 1.0f;
-        U2(U2(material).specular).g = 1.0f;
-        U3(U2(material).specular).b = 1.0f;
-        U4(U2(material).specular).a = 0.5f;
-        U4(material).power = tests[i].specular_power;
+        material.specular.r = 1.0f;
+        material.specular.g = 1.0f;
+        material.specular.b = 1.0f;
+        material.specular.a = 0.5f;
+        material.power = tests[i].specular_power;
         hr = IDirect3DDevice7_SetMaterial(device, &material);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -5665,7 +5665,7 @@ static void test_lighting_interface_versions(void)
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#lx.\n", hr);
 
     memset(&material, 0, sizeof(material));
-    U2(U3(material).emissive).g = 1.0f;
+    material.emissive.g = 1.0f;
     hr = IDirect3DDevice7_SetMaterial(device, &material);
     ok(SUCCEEDED(hr), "Failed set material, hr %#lx.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
@@ -5826,7 +5826,7 @@ static void test_coop_level_activateapp(void)
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-    U5(ddsd).dwBackBufferCount = 1;
+    ddsd.dwBackBufferCount = 1;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
@@ -6165,9 +6165,9 @@ static void test_block_formats_creation(void)
                     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
                     ddsd.ddsCaps.dwCaps = types[j].caps;
                     ddsd.ddsCaps.dwCaps2 = types[j].caps2;
-                    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-                    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-                    U4(ddsd).ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+                    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+                    ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+                    ddsd.ddpfPixelFormat.dwFourCC = formats[i].fourcc;
                     ddsd.dwWidth = w;
                     ddsd.dwHeight = h;
 
@@ -6211,23 +6211,23 @@ static void test_block_formats_creation(void)
             switch (user_mem_tests[j].size_type)
             {
                 case SIZE_TYPE_ZERO:
-                    U1(ddsd).dwLinearSize = 0;
+                    ddsd.dwLinearSize = 0;
                     break;
 
                 case SIZE_TYPE_PITCH:
-                    U1(ddsd).dwLinearSize = 2 * formats[i].block_size;
+                    ddsd.dwLinearSize = 2 * formats[i].block_size;
                     break;
 
                 case SIZE_TYPE_SIZE:
-                    U1(ddsd).dwLinearSize = 2 * 2 * formats[i].block_size;
+                    ddsd.dwLinearSize = 2 * 2 * formats[i].block_size;
                     break;
             }
-            U1(ddsd).dwLinearSize += user_mem_tests[j].rel_size;
+            ddsd.dwLinearSize += user_mem_tests[j].rel_size;
 
             ddsd.lpSurface = mem;
-            U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-            U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-            U4(ddsd).ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+            ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+            ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+            ddsd.ddpfPixelFormat.dwFourCC = formats[i].fourcc;
             ddsd.dwWidth = 8;
             ddsd.dwHeight = 8;
 
@@ -6244,12 +6244,12 @@ static void test_block_formats_creation(void)
             ok(ddsd.dwFlags == (DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_LINEARSIZE),
                     "Test %u: Got unexpected flags %#lx.\n", j, ddsd.dwFlags);
             if (user_mem_tests[j].flags & DDSD_LPSURFACE)
-                ok(U1(ddsd).dwLinearSize == ~0u, "Test %u: Got unexpected linear size %#lx.\n",
-                        j, U1(ddsd).dwLinearSize);
+                ok(ddsd.dwLinearSize == ~0u, "Test %u: Got unexpected linear size %#lx.\n",
+                        j, ddsd.dwLinearSize);
             else
-                ok(U1(ddsd).dwLinearSize == 2 * 2 * formats[i].block_size,
+                ok(ddsd.dwLinearSize == 2 * 2 * formats[i].block_size,
                         "Test %u: Got unexpected linear size %#lx, expected %#x.\n",
-                        j, U1(ddsd).dwLinearSize, 2 * 2 * formats[i].block_size);
+                        j, ddsd.dwLinearSize, 2 * 2 * formats[i].block_size);
             IDirectDrawSurface7_Release(surface);
         }
     }
@@ -6341,7 +6341,7 @@ static void test_unsupported_formats(void)
             memset(&ddsd, 0, sizeof(ddsd));
             ddsd.dwSize = sizeof(ddsd);
             ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-            U4(ddsd).ddpfPixelFormat = formats[i].fmt;
+            ddsd.ddpfPixelFormat = formats[i].fmt;
             ddsd.dwWidth = 4;
             ddsd.dwHeight = 4;
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | caps[j];
@@ -6643,7 +6643,7 @@ static void test_rt_caps(const GUID *device_guid)
         if (test_data[i].pf)
         {
             surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-            U4(surface_desc).ddpfPixelFormat = *test_data[i].pf;
+            surface_desc.ddpfPixelFormat = *test_data[i].pf;
         }
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
@@ -6727,7 +6727,7 @@ static void test_rt_caps(const GUID *device_guid)
         if (test_data[i].pf)
         {
             surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-            U4(surface_desc).ddpfPixelFormat = *test_data[i].pf;
+            surface_desc.ddpfPixelFormat = *test_data[i].pf;
         }
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
@@ -6895,7 +6895,7 @@ static void test_primary_caps(void)
         if (test_data[i].back_buffer_count != ~0u)
             surface_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
         surface_desc.ddsCaps.dwCaps = test_data[i].caps_in;
-        U5(surface_desc).dwBackBufferCount = test_data[i].back_buffer_count;
+        surface_desc.dwBackBufferCount = test_data[i].back_buffer_count;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#lx, expected %#lx.\n", i, hr, test_data[i].hr);
         if (FAILED(hr))
@@ -7098,7 +7098,7 @@ static void test_surface_lock(void)
         if (tests[i].caps & DDSCAPS_ZBUFFER)
         {
             ddsd.dwFlags |= DDSD_PIXELFORMAT;
-            U4(ddsd).ddpfPixelFormat = z_fmt;
+            ddsd.ddpfPixelFormat = z_fmt;
         }
         ddsd.ddsCaps.dwCaps = tests[i].caps;
         ddsd.ddsCaps.dwCaps2 = tests[i].caps2;
@@ -7301,7 +7301,7 @@ static void test_flip(void)
         surface_desc.ddsCaps.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_FLIP | test_data[i].caps;
         surface_desc.dwWidth = 512;
         surface_desc.dwHeight = 512;
-        U5(surface_desc).dwBackBufferCount = 3;
+        surface_desc.dwBackBufferCount = 3;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
         ok(hr == DDERR_INVALIDCAPS, "%s: Got unexpected hr %#lx.\n", test_data[i].name, hr);
 
@@ -7341,8 +7341,8 @@ static void test_flip(void)
         surface_desc.dwSize = sizeof(surface_desc);
         hr = IDirectDrawSurface7_GetSurfaceDesc(backbuffer1, &surface_desc);
         ok(SUCCEEDED(hr), "%s: Failed to get surface desc, hr %#lx.\n", test_data[i].name, hr);
-        ok(!U5(surface_desc).dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
-                test_data[i].name, U5(surface_desc).dwBackBufferCount);
+        ok(!surface_desc.dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
+                test_data[i].name, surface_desc.dwBackBufferCount);
         expected_caps &= ~(DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER);
         expected_caps |= DDSCAPS_BACKBUFFER;
         ok((surface_desc.ddsCaps.dwCaps & ~placement) == expected_caps,
@@ -7354,8 +7354,8 @@ static void test_flip(void)
         surface_desc.dwSize = sizeof(surface_desc);
         hr = IDirectDrawSurface7_GetSurfaceDesc(backbuffer2, &surface_desc);
         ok(SUCCEEDED(hr), "%s: Failed to get surface desc, hr %#lx.\n", test_data[i].name, hr);
-        ok(!U5(surface_desc).dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
-                test_data[i].name, U5(surface_desc).dwBackBufferCount);
+        ok(!surface_desc.dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
+                test_data[i].name, surface_desc.dwBackBufferCount);
         expected_caps &= ~DDSCAPS_BACKBUFFER;
         ok((surface_desc.ddsCaps.dwCaps & ~placement) == expected_caps,
                 "%s: Got unexpected caps %#lx.\n", test_data[i].name, surface_desc.ddsCaps.dwCaps);
@@ -7366,8 +7366,8 @@ static void test_flip(void)
         surface_desc.dwSize = sizeof(surface_desc);
         hr = IDirectDrawSurface7_GetSurfaceDesc(backbuffer3, &surface_desc);
         ok(SUCCEEDED(hr), "%s: Failed to get surface desc, hr %#lx.\n", test_data[i].name, hr);
-        ok(!U5(surface_desc).dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
-                test_data[i].name, U5(surface_desc).dwBackBufferCount);
+        ok(!surface_desc.dwBackBufferCount, "%s: Got unexpected back buffer count %lu.\n",
+                test_data[i].name, surface_desc.dwBackBufferCount);
         ok((surface_desc.ddsCaps.dwCaps & ~placement) == expected_caps,
                 "%s: Got unexpected caps %#lx.\n", test_data[i].name, surface_desc.ddsCaps.dwCaps);
 
@@ -7503,7 +7503,7 @@ static void test_flip(void)
     surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
-    U5(surface_desc).dwBackBufferCount = 3;
+    surface_desc.dwBackBufferCount = 3;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#lx.\n", hr);
 
@@ -7521,11 +7521,11 @@ static void test_flip(void)
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#lx.\n", hr);
 
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#lx.\n", hr);
 
-    U5(surface_desc).dwBackBufferCount = 0;
+    surface_desc.dwBackBufferCount = 0;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#lx.\n", hr);
 
@@ -7576,12 +7576,12 @@ static void test_set_surface_desc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 8;
     ddsd.dwHeight = 8;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
@@ -7680,7 +7680,7 @@ static void test_set_surface_desc(void)
     /* Pitch and width can be set, but only together, and only with LPSURFACE. They must not be 0. */
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_PITCH;
-    U1(ddsd).lPitch = 8 * 4;
+    ddsd.lPitch = 8 * 4;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
@@ -7699,7 +7699,7 @@ static void test_set_surface_desc(void)
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
     ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
-    U1(ddsd).lPitch = 16 * 4;
+    ddsd.lPitch = 16 * 4;
     ddsd.dwWidth = 16;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#lx.\n", hr);
@@ -7709,59 +7709,59 @@ static void test_set_surface_desc(void)
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
     ok(ddsd.dwWidth == 16, "SetSurfaceDesc: Expected width 8, got %lu.\n", ddsd.dwWidth);
     ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %lu.\n", ddsd.dwHeight);
-    ok(U1(ddsd).lPitch == 16 * 4, "SetSurfaceDesc: Expected pitch 64, got %lu.\n", U1(ddsd).lPitch);
+    ok(ddsd.lPitch == 16 * 4, "SetSurfaceDesc: Expected pitch 64, got %lu.\n", ddsd.lPitch);
 
     /* The pitch must be 32 bit aligned and > 0, but is not verified for sanity otherwise.
      *
      * VMware rejects those calls, but all real drivers accept it. Mark the VMware behavior broken. */
     ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
-    U1(ddsd).lPitch = 4 * 4;
+    ddsd.lPitch = 4 * 4;
     ddsd.lpSurface = data;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPARAMS), "Failed to set surface desc, hr %#lx.\n", hr);
 
-    U1(ddsd).lPitch = 4;
+    ddsd.lPitch = 4;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPARAMS), "Failed to set surface desc, hr %#lx.\n", hr);
 
-    U1(ddsd).lPitch = 16 * 4 + 1;
+    ddsd.lPitch = 16 * 4 + 1;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
-    U1(ddsd).lPitch = 16 * 4 + 3;
+    ddsd.lPitch = 16 * 4 + 3;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
-    U1(ddsd).lPitch = -4;
+    ddsd.lPitch = -4;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
-    U1(ddsd).lPitch = 16 * 4;
+    ddsd.lPitch = 16 * 4;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#lx.\n", hr);
 
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
-    U1(ddsd).lPitch = 0;
+    ddsd.lPitch = 0;
     ddsd.dwWidth = 16;
     ddsd.lpSurface = data;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
     ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
-    U1(ddsd).lPitch = 16 * 4;
+    ddsd.lPitch = 16 * 4;
     ddsd.dwWidth = 0;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
     /* Setting the pixelformat without LPSURFACE is an error, but with LPSURFACE it works. */
     ddsd.dwFlags = DDSD_PIXELFORMAT;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
@@ -7792,15 +7792,15 @@ static void test_set_surface_desc(void)
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
     ddsd.dwWidth = 8;
-    U1(ddsd).lPitch = 8 * 2;
+    ddsd.lPitch = 8 * 2;
     ddsd.dwHeight = 8;
     ddsd.lpSurface = data;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xf800;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07e0;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001f;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xf800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001f;
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -7817,7 +7817,7 @@ static void test_set_surface_desc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
     ddsd.dwWidth = 8;
     ddsd.dwHeight = 8;
-    U2(ddsd).dwMipMapCount = 3;
+    ddsd.dwMipMapCount = 3;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
@@ -7846,7 +7846,7 @@ static void test_set_surface_desc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
     ddsd.dwWidth = 8;
     ddsd.dwHeight = 8;
-    U2(ddsd).dwMipMapCount = 3;
+    ddsd.dwMipMapCount = 3;
     ddsd.lpSurface = data;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
 
@@ -7875,7 +7875,7 @@ static void test_set_surface_desc(void)
         ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
         ddsd.dwWidth = 16;
         ddsd.dwHeight = 16;
-        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lPitch = 16 * 4;
         ddsd.lpSurface = data;
         hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
         todo_wine ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7884,7 +7884,7 @@ static void test_set_surface_desc(void)
         ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
         ddsd.dwWidth = 8;
         ddsd.dwHeight = 8;
-        U1(ddsd).lPitch = 8 * 4;
+        ddsd.lPitch = 8 * 4;
         ddsd.lpSurface = data;
         hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7899,7 +7899,7 @@ static void test_set_surface_desc(void)
         ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
         ddsd.dwWidth = 4;
         ddsd.dwHeight = 4;
-        U1(ddsd).lPitch = 4 * 4;
+        ddsd.lPitch = 4 * 4;
         ddsd.lpSurface = data;
         hr = IDirectDrawSurface7_SetSurfaceDesc(surface2, &ddsd, 0);
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7914,7 +7914,7 @@ static void test_set_surface_desc(void)
         ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
         ddsd.dwWidth = 16;
         ddsd.dwHeight = 16;
-        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lPitch = 16 * 4;
         ddsd.lpSurface = data;
         hr = IDirectDrawSurface7_SetSurfaceDesc(surface2, &ddsd, 0);
         todo_wine ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7929,7 +7929,7 @@ static void test_set_surface_desc(void)
     ddsd.dwWidth = 8;
     ddsd.dwHeight = 8;
     ddsd.lpSurface = data;
-    U1(ddsd).lPitch = 8 * 4;
+    ddsd.lPitch = 8 * 4;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7950,7 +7950,7 @@ static void test_set_surface_desc(void)
     ddsd.dwWidth = 4;
     ddsd.dwHeight = 4;
     ddsd.lpSurface = data;
-    U1(ddsd).lPitch = 8 * 4;
+    ddsd.lPitch = 8 * 4;
     /* Can change the parameters of surface created with DDSD_LPSURFACE. */
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7972,12 +7972,12 @@ static void test_set_surface_desc(void)
             ddsd.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
             ddsd.dwWidth = 8;
             ddsd.dwHeight = 8;
-            U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-            U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-            U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-            U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-            U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-            U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+            ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+            ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+            ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+            ddsd.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+            ddsd.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+            ddsd.ddpfPixelFormat.dwBBitMask = 0x000000ff;
         }
 
         hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
@@ -8040,12 +8040,12 @@ static void test_user_memory_getdc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
@@ -8076,7 +8076,7 @@ static void test_user_memory_getdc(void)
     ddsd.lpSurface = data;
     ddsd.dwWidth = 4;
     ddsd.dwHeight = 8;
-    U1(ddsd).lPitch = sizeof(*data);
+    ddsd.lPitch = sizeof(*data);
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#lx.\n", hr);
 
@@ -8135,12 +8135,12 @@ static void test_sysmem_overlay(void)
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OVERLAY;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(hr == DDERR_NOOVERLAYHW, "Got unexpected hr %#lx.\n", hr);
 
@@ -8179,7 +8179,7 @@ static void test_primary_palette(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDrawSurface7_GetAttachedSurface(primary, &surface_caps, &backbuffer);
@@ -8262,8 +8262,8 @@ static void test_primary_palette(void)
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
     ok(surface_desc.dwWidth == 640, "Got unexpected surface width %lu.\n", surface_desc.dwWidth);
     ok(surface_desc.dwHeight == 480, "Got unexpected surface height %lu.\n", surface_desc.dwHeight);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 8, "Got unexpected bit count %lu.\n",
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 8, "Got unexpected bit count %lu.\n",
+            surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
     hr = set_display_mode(ddraw, 640, 480);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#lx.\n", hr);
@@ -8274,9 +8274,9 @@ static void test_primary_palette(void)
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
     ok(surface_desc.dwWidth == 640, "Got unexpected surface width %lu.\n", surface_desc.dwWidth);
     ok(surface_desc.dwHeight == 480, "Got unexpected surface height %lu.\n", surface_desc.dwHeight);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 32
-            || U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 24,
-            "Got unexpected bit count %lu.\n", U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 32
+            || surface_desc.ddpfPixelFormat.dwRGBBitCount == 24,
+            "Got unexpected bit count %lu.\n", surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
     hr = IDirectDrawSurface7_IsLost(primary);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#lx.\n", hr);
@@ -8291,9 +8291,9 @@ static void test_primary_palette(void)
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
     ok(surface_desc.dwWidth == 640, "Got unexpected surface width %lu.\n", surface_desc.dwWidth);
     ok(surface_desc.dwHeight == 480, "Got unexpected surface height %lu.\n", surface_desc.dwHeight);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 32
-            || U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 24,
-            "Got unexpected bit count %lu.\n", U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 32
+            || surface_desc.ddpfPixelFormat.dwRGBBitCount == 24,
+            "Got unexpected bit count %lu.\n", surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
 done:
     refcount = IDirectDrawSurface7_Release(backbuffer);
@@ -8337,7 +8337,7 @@ static void test_surface_attachment(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-    U2(surface_desc).dwMipMapCount = 3;
+    surface_desc.dwMipMapCount = 3;
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
     if (FAILED(IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface1, NULL)))
@@ -8485,10 +8485,10 @@ static void test_surface_attachment(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = 16;
-    U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = 0x0000ffff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    surface_desc.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    surface_desc.ddpfPixelFormat.dwZBitMask = 0x0000ffff;
     surface_desc.dwWidth = 32;
     surface_desc.dwHeight = 32;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
@@ -8525,21 +8525,21 @@ static void test_surface_attachment(void)
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0xf800;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x07e0;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x001f;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 16;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0xf800;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x001f;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface3, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = 16;
-    U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = 0x0000ffff;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    surface_desc.ddpfPixelFormat.dwZBufferBitDepth = 16;
+    surface_desc.ddpfPixelFormat.dwZBitMask = 0x0000ffff;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -8757,7 +8757,7 @@ static void test_private_data(void)
         surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
         surface_desc.dwHeight = 4;
         surface_desc.dwWidth = 4;
-        U2(surface_desc).dwMipMapCount = 2;
+        surface_desc.dwMipMapCount = 2;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
         hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &surface2);
@@ -9122,13 +9122,13 @@ static void test_create_surface_pitch(void)
         surface_desc.ddsCaps.dwCaps = test_data[i].caps;
         surface_desc.dwWidth = 63;
         surface_desc.dwHeight = 63;
-        U1(surface_desc).lPitch = test_data[i].pitch_in;
-        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-        U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-        U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        surface_desc.lPitch = test_data[i].pitch_in;
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+        surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+        surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         if (test_data[i].flags_in & DDSD_LPSURFACE)
         {
@@ -9157,13 +9157,13 @@ static void test_create_surface_pitch(void)
         if (!(test_data[i].caps & DDSCAPS_TEXTURE))
         {
             if (is_ddraw64 && test_data[i].pitch_out32 != test_data[i].pitch_out64)
-                todo_wine ok(U1(surface_desc).lPitch == test_data[i].pitch_out64,
+                todo_wine ok(surface_desc.lPitch == test_data[i].pitch_out64,
                         "Test %u: Got unexpected pitch %#lx, expected %#lx.\n",
-                        i, U1(surface_desc).lPitch, test_data[i].pitch_out64);
+                        i, surface_desc.lPitch, test_data[i].pitch_out64);
             else
-                ok(U1(surface_desc).lPitch == test_data[i].pitch_out32,
+                ok(surface_desc.lPitch == test_data[i].pitch_out32,
                         "Test %u: Got unexpected pitch %#lx, expected %#lx.\n",
-                        i, U1(surface_desc).lPitch, test_data[i].pitch_out32);
+                        i, surface_desc.lPitch, test_data[i].pitch_out32);
         }
         ok(!surface_desc.lpSurface, "Test %u: Got unexpected lpSurface %p.\n", i, surface_desc.lpSurface);
 
@@ -9271,7 +9271,7 @@ static void test_mipmap(void)
         surface_desc.dwWidth = tests[i].width;
         surface_desc.dwHeight = tests[i].height;
         if (tests[i].flags & DDSD_MIPMAPCOUNT)
-            U2(surface_desc).dwMipMapCount = tests[i].mipmap_count_in;
+            surface_desc.dwMipMapCount = tests[i].mipmap_count_in;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
@@ -9283,12 +9283,12 @@ static void test_mipmap(void)
         ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#lx.\n", i, hr);
         ok(surface_desc.dwFlags & DDSD_MIPMAPCOUNT,
                 "Test %u: Got unexpected flags %#lx.\n", i, surface_desc.dwFlags);
-        ok(U2(surface_desc).dwMipMapCount == tests[i].mipmap_count_out,
-                "Test %u: Got unexpected mipmap count %lu.\n", i, U2(surface_desc).dwMipMapCount);
+        ok(surface_desc.dwMipMapCount == tests[i].mipmap_count_out,
+                "Test %u: Got unexpected mipmap count %lu.\n", i, surface_desc.dwMipMapCount);
 
         surface_base = surface;
         IDirectDrawSurface7_AddRef(surface_base);
-        mipmap_count = U2(surface_desc).dwMipMapCount;
+        mipmap_count = surface_desc.dwMipMapCount;
         while (mipmap_count > 1)
         {
             hr = IDirectDrawSurface7_GetAttachedSurface(surface_base, &caps, &surface_mip);
@@ -9300,9 +9300,9 @@ static void test_mipmap(void)
             ok(SUCCEEDED(hr), "Test %u, %u: Failed to get surface desc, hr %#lx.\n", i, mipmap_count, hr);
             ok(surface_desc.dwFlags & DDSD_MIPMAPCOUNT,
                     "Test %u, %u: Got unexpected flags %#lx.\n", i, mipmap_count, surface_desc.dwFlags);
-            ok(U2(surface_desc).dwMipMapCount == mipmap_count,
+            ok(surface_desc.dwMipMapCount == mipmap_count,
                     "Test %u, %u: Got unexpected mipmap count %lu.\n",
-                    i, mipmap_count, U2(surface_desc).dwMipMapCount);
+                    i, mipmap_count, surface_desc.dwMipMapCount);
 
             memset(&surface_desc, 0, sizeof(surface_desc));
             surface_desc.dwSize = sizeof(surface_desc);
@@ -9373,9 +9373,9 @@ static void test_palette_complex(void)
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 8;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 8;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -9435,12 +9435,12 @@ static void test_palette_complex(void)
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -9511,9 +9511,9 @@ static void test_p8_blit(void)
     surface_desc.dwWidth = 8;
     surface_desc.dwHeight = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 8;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 8;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_p8, NULL);
@@ -9527,13 +9527,13 @@ static void test_p8_blit(void)
     surface_desc.dwWidth = 8;
     surface_desc.dwHeight = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -9627,23 +9627,23 @@ static void test_material(void)
 
     hr = IDirect3DDevice7_GetMaterial(device, &material);
     ok(SUCCEEDED(hr), "Failed to get material, hr %#lx.\n", hr);
-    ok(!memcmp(&U(material).diffuse, &null_color, sizeof(null_color)),
+    ok(!memcmp(&material.diffuse, &null_color, sizeof(null_color)),
             "Got unexpected diffuse color {%.8e, %.8e, %.8e, %.8e}.\n",
-            U1(U(material).diffuse).r, U2(U(material).diffuse).g,
-            U3(U(material).diffuse).b, U4(U(material).diffuse).a);
-    ok(!memcmp(&U1(material).ambient, &null_color, sizeof(null_color)),
+            material.diffuse.r, material.diffuse.g,
+            material.diffuse.b, material.diffuse.a);
+    ok(!memcmp(&material.ambient, &null_color, sizeof(null_color)),
             "Got unexpected ambient color {%.8e, %.8e, %.8e, %.8e}.\n",
-            U1(U1(material).ambient).r, U2(U1(material).ambient).g,
-            U3(U1(material).ambient).b, U4(U1(material).ambient).a);
-    ok(!memcmp(&U2(material).specular, &null_color, sizeof(null_color)),
+            material.ambient.r, material.ambient.g,
+            material.ambient.b, material.ambient.a);
+    ok(!memcmp(&material.specular, &null_color, sizeof(null_color)),
             "Got unexpected specular color {%.8e, %.8e, %.8e, %.8e}.\n",
-            U1(U2(material).specular).r, U2(U2(material).specular).g,
-            U3(U2(material).specular).b, U4(U2(material).specular).a);
-    ok(!memcmp(&U3(material).emissive, &null_color, sizeof(null_color)),
+            material.specular.r, material.specular.g,
+            material.specular.b, material.specular.a);
+    ok(!memcmp(&material.emissive, &null_color, sizeof(null_color)),
             "Got unexpected emissive color {%.8e, %.8e, %.8e, %.8e}.\n",
-            U1(U3(material).emissive).r, U2(U3(material).emissive).g,
-            U3(U3(material).emissive).b, U4(U3(material).emissive).a);
-    ok(U4(material).power == 0.0f, "Got unexpected power %.8e.\n", U4(material).power);
+            material.emissive.r, material.emissive.g,
+            material.emissive.b, material.emissive.a);
+    ok(material.power == 0.0f, "Got unexpected power %.8e.\n", material.power);
 
     refcount = IDirect3DDevice7_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -9700,9 +9700,9 @@ static void test_palette_gdi(void)
     surface_desc.dwWidth = 16;
     surface_desc.dwHeight = 16;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 8;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 8;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -9828,12 +9828,12 @@ static void test_palette_gdi(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    U5(fx).dwFillColor = 3;
+    fx.dwFillColor = 3;
     SetRect(&r, 0, 0, 319, 479);
     hr = IDirectDrawSurface7_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#lx.\n", hr);
     SetRect(&r, 320, 0, 639, 479);
-    U5(fx).dwFillColor = 4;
+    fx.dwFillColor = 4;
     hr = IDirectDrawSurface7_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#lx.\n", hr);
 
@@ -10099,12 +10099,12 @@ static void test_palette_alpha(void)
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDrawSurface7_SetPalette(surface, palette);
@@ -10217,7 +10217,7 @@ static void test_lost_device(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -10236,12 +10236,12 @@ static void test_lost_device(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     if (FAILED(IDirectDraw7_CreateSurface(ddraw, &surface_desc, &vidmem_surface, NULL)))
     {
         skip("Failed to create video memory surface, skipping related tests.\n");
@@ -10425,7 +10425,7 @@ static void test_lost_device(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 2;
+    surface_desc.dwBackBufferCount = 2;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -10448,7 +10448,7 @@ static void test_lost_device(void)
 
             surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-            U4(surface_desc).ddpfPixelFormat = z_fmt;
+            surface_desc.ddpfPixelFormat = z_fmt;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
             ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -10719,7 +10719,7 @@ static void test_resource_priority(void)
     surface_desc.dwHeight = 32;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
     surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
-    U2(surface_desc).dwMipMapCount = 2;
+    surface_desc.dwMipMapCount = 2;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     caps.dwCaps2 = 0;
@@ -11047,11 +11047,11 @@ static void test_fog_process_vertices(void)
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&material, 0, sizeof(material));
-    U1(U2(material).specular).r = 0.0f;
-    U2(U2(material).specular).g = 1.0f;
-    U3(U2(material).specular).b = 0.0f;
-    U4(U2(material).specular).a = 0.5f;
-    U4(material).power = 5.0f;
+    material.specular.r = 0.0f;
+    material.specular.g = 1.0f;
+    material.specular.b = 0.0f;
+    material.specular.a = 0.5f;
+    material.power = 5.0f;
     hr = IDirect3DDevice7_SetMaterial(device, &material);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -11503,7 +11503,7 @@ static void test_signed_formats(void)
             surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
             surface_desc.dwWidth = width;
             surface_desc.dwHeight = 4;
-            U4(surface_desc).ddpfPixelFormat = formats[i].format;
+            surface_desc.ddpfPixelFormat = formats[i].format;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
             if (FAILED(hr))
@@ -11521,7 +11521,7 @@ static void test_signed_formats(void)
             ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx, format %s.\n", hr, formats[i].name);
             for (y = 0; y < 4; y++)
             {
-                memcpy((char *)surface_desc.lpSurface + y * U1(surface_desc).lPitch,
+                memcpy((char *)surface_desc.lpSurface + y * surface_desc.lPitch,
                         (char *)formats[i].content + y * 4 * formats[i].pixel_size,
                         width * formats[i].pixel_size);
             }
@@ -11800,14 +11800,14 @@ static void test_color_fill(void)
         /* Some Windows drivers modify dwFillColor when it is used on P8 or FourCC formats. */
         memset(&fx, 0, sizeof(fx));
         fx.dwSize = sizeof(fx);
-        U5(fx).dwFillColor = 0xdeadbeef;
+        fx.dwFillColor = 0xdeadbeef;
 
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
         surface_desc.dwWidth = 64;
         surface_desc.dwHeight = 64;
-        U4(surface_desc).ddpfPixelFormat = tests[i].format;
+        surface_desc.ddpfPixelFormat = tests[i].format;
         surface_desc.ddsCaps.dwCaps = tests[i].caps;
         surface_desc.ddsCaps.dwCaps2 = tests[i].caps2;
 
@@ -11825,7 +11825,7 @@ static void test_color_fill(void)
             if (!z_fmt.dwSize)
                 continue;
 
-            U4(surface_desc).ddpfPixelFormat = z_fmt;
+            surface_desc.ddpfPixelFormat = z_fmt;
             /* Some drivers seem to convert depth values incorrectly or not at
              * all. Affects at least AMD PALM, 8.17.10.1247. */
             if (tests[i].caps & DDSCAPS_VIDEOMEMORY)
@@ -11833,7 +11833,7 @@ static void test_color_fill(void)
                 DWORD expected;
                 float f, g;
 
-                expected = tests[i].result & U3(z_fmt).dwZBitMask;
+                expected = tests[i].result & z_fmt.dwZBitMask;
                 f = ceilf(logf(expected + 1.0f) / logf(2.0f));
                 g = (f + 1.0f) / 2.0f;
                 g -= (int)g;
@@ -11882,21 +11882,21 @@ static void test_color_fill(void)
             hr = IDirectDrawSurface7_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
             ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx, surface %s.\n", hr, tests[i].name);
             color = surface_desc.lpSurface;
-            ok((*color & U3(z_fmt).dwZBitMask) == (tests[i].result & U3(z_fmt).dwZBitMask)
-                    || broken((*color & U3(z_fmt).dwZBitMask) == (expected_broken & U3(z_fmt).dwZBitMask)),
+            ok((*color & z_fmt.dwZBitMask) == (tests[i].result & z_fmt.dwZBitMask)
+                    || broken((*color & z_fmt.dwZBitMask) == (expected_broken & z_fmt.dwZBitMask)),
                     "Got clear result 0x%08lx, expected 0x%08lx, surface %s.\n",
-                    *color & U3(z_fmt).dwZBitMask, tests[i].result & U3(z_fmt).dwZBitMask, tests[i].name);
+                    *color & z_fmt.dwZBitMask, tests[i].result & z_fmt.dwZBitMask, tests[i].name);
             hr = IDirectDrawSurface7_Unlock(surface, NULL);
             ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx, surface %s.\n", hr, tests[i].name);
         }
 
-        U5(fx).dwFillColor = 0xdeadbeef;
+        fx.dwFillColor = 0xdeadbeef;
         fx.dwROP = BLACKNESS;
         hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
         ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#lx, expected %s, surface %s.\n",
                 hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
-        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08lx, surface %s\n",
-                U5(fx).dwFillColor, tests[i].name);
+        ok(fx.dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08lx, surface %s\n",
+                fx.dwFillColor, tests[i].name);
 
         if (SUCCEEDED(hr) && tests[i].check_result)
         {
@@ -11915,8 +11915,8 @@ static void test_color_fill(void)
         hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_ROP | DDBLT_WAIT, &fx);
         ok(FAILED(hr) == !tests[i].rop_success, "Blt returned %#lx, expected %s, surface %s.\n",
                 hr, tests[i].rop_success ? "success" : "failure", tests[i].name);
-        ok(U5(fx).dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08lx, surface %s\n",
-                U5(fx).dwFillColor, tests[i].name);
+        ok(fx.dwFillColor == 0xdeadbeef, "dwFillColor was set to 0x%08lx, surface %s\n",
+                fx.dwFillColor, tests[i].name);
 
         if (SUCCEEDED(hr) && tests[i].check_result)
         {
@@ -11937,7 +11937,7 @@ static void test_color_fill(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    U5(fx).dwFillColor = 0xdeadbeef;
+    fx.dwFillColor = 0xdeadbeef;
     fx.dwROP = WHITENESS;
 
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -11945,12 +11945,12 @@ static void test_color_fill(void)
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
@@ -12038,7 +12038,7 @@ static void test_color_fill(void)
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
-    U4(surface_desc).ddpfPixelFormat = z_fmt;
+    surface_desc.ddpfPixelFormat = z_fmt;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
@@ -12159,13 +12159,13 @@ static void test_texcoordindex(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
     surface_desc.dwWidth = 2;
     surface_desc.dwHeight = 2;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture1, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture2, NULL);
@@ -12178,7 +12178,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff00ff00;
-    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
+    ptr += surface_desc.lPitch / sizeof(*ptr);
     ptr[0] = 0xff0000ff;
     ptr[1] = 0xff00ffff;
     hr = IDirectDrawSurface7_Unlock(texture1, NULL);
@@ -12191,7 +12191,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff0000ff;
-    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
+    ptr += surface_desc.lPitch / sizeof(*ptr);
     ptr[0] = 0xffff0000;
     ptr[1] = 0xffff00ff;
     hr = IDirectDrawSurface7_Unlock(texture2, 0);
@@ -12438,7 +12438,7 @@ static void test_colorkey_precision(void)
         surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
         surface_desc.dwWidth = 4;
         surface_desc.dwHeight = 1;
-        U4(surface_desc).ddpfPixelFormat = tests[t].fmt;
+        surface_desc.ddpfPixelFormat = tests[t].fmt;
         /* Windows XP (at least with the r200 driver, other drivers untested) produces
          * garbage when doing color keyed texture->texture blits. */
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
@@ -12446,12 +12446,12 @@ static void test_colorkey_precision(void)
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
-        U5(fx).dwFillColor = tests[t].clear;
+        fx.dwFillColor = tests[t].clear;
         /* On the w8 testbot (WARP driver) the blit result has different values in the
          * X channel. */
-        color_mask = U2(tests[t].fmt).dwRBitMask
-                | U3(tests[t].fmt).dwGBitMask
-                | U4(tests[t].fmt).dwBBitMask;
+        color_mask = tests[t].fmt.dwRBitMask
+                | tests[t].fmt.dwGBitMask
+                | tests[t].fmt.dwBBitMask;
 
         for (c = 0; c <= tests[t].max; ++c)
         {
@@ -12628,12 +12628,12 @@ static void test_range_colorkey(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
     surface_desc.dwWidth = 1;
     surface_desc.dwHeight = 1;
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0x00000000;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0x00000000;
 
     /* Creating a surface with a range color key fails with DDERR_NOCOLORKEY. */
     surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000000;
@@ -12936,12 +12936,12 @@ static void test_lockrect_invalid(void)
         surface_desc.ddsCaps.dwCaps2 = resources[r].caps2;
         surface_desc.dwWidth = 128;
         surface_desc.dwHeight = 128;
-        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0xff0000;
-        U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x00ff00;
-        U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000ff;
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        surface_desc.ddpfPixelFormat.dwRBitMask = 0xff0000;
+        surface_desc.ddpfPixelFormat.dwGBitMask = 0x00ff00;
+        surface_desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
 
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         if (!resources[r].allowed)
@@ -13063,24 +13063,24 @@ static void test_yv12_overlay(void)
     ok(desc.dwWidth == 256, "Got unexpected width %lu.\n", desc.dwWidth);
     ok(desc.dwHeight == 256, "Got unexpected height %lu.\n", desc.dwHeight);
     /* The overlay pitch seems to have 256 byte alignment. */
-    ok(!(U1(desc).lPitch & 0xff), "Got unexpected pitch %lu.\n", U1(desc).lPitch);
+    ok(!(desc.lPitch & 0xff), "Got unexpected pitch %lu.\n", desc.lPitch);
 
     /* Fill the surface with some data for the blit test. */
     base = desc.lpSurface;
     /* Luminance */
     for (y = 0; y < desc.dwHeight; ++y)
     {
-        memset(base + U1(desc).lPitch * y, 0x10, desc.dwWidth);
+        memset(base + desc.lPitch * y, 0x10, desc.dwWidth);
     }
     /* V */
     for (; y < desc.dwHeight + desc.dwHeight / 4; ++y)
     {
-        memset(base + U1(desc).lPitch * y, 0x20, desc.dwWidth);
+        memset(base + desc.lPitch * y, 0x20, desc.dwWidth);
     }
     /* U */
     for (; y < desc.dwHeight + desc.dwHeight / 2; ++y)
     {
-        memset(base + U1(desc).lPitch * y, 0x30, desc.dwWidth);
+        memset(base + desc.lPitch * y, 0x30, desc.dwWidth);
     }
 
     hr = IDirectDrawSurface7_Unlock(src_surface, NULL);
@@ -13094,8 +13094,8 @@ static void test_yv12_overlay(void)
     hr = IDirectDrawSurface7_Lock(src_surface, &rect, &desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
     offset = ((const unsigned char *)desc.lpSurface - base);
-    ok(offset == rect.top * U1(desc).lPitch + rect.left, "Got unexpected offset %u, expected %lu.\n",
-            offset, rect.top * U1(desc).lPitch + rect.left);
+    ok(offset == rect.top * desc.lPitch + rect.left, "Got unexpected offset %u, expected %lu.\n",
+            offset, rect.top * desc.lPitch + rect.left);
     hr = IDirectDrawSurface7_Unlock(src_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
@@ -13122,9 +13122,9 @@ static void test_yv12_overlay(void)
 
         base = desc.lpSurface;
         ok(base[0] == 0x10, "Got unexpected Y data 0x%02x.\n", base[0]);
-        base += desc.dwHeight * U1(desc).lPitch;
+        base += desc.dwHeight * desc.lPitch;
         ok(base[0] == 0x20, "Got unexpected V data 0x%02x.\n", base[0]);
-        base += desc.dwHeight / 4 * U1(desc).lPitch;
+        base += desc.dwHeight / 4 * desc.lPitch;
         ok(base[0] == 0x30, "Got unexpected U data 0x%02x.\n", base[0]);
 
         hr = IDirectDrawSurface7_Unlock(dst_surface, NULL);
@@ -13200,13 +13200,13 @@ static void test_offscreen_overlay(void)
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U4(surface_desc).ddpfPixelFormat.dwFourCC = 0;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0xf800;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x07e0;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x001f;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwFourCC = 0;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 16;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0xf800;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x001f;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &offscreen, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n",hr);
 
@@ -13460,18 +13460,18 @@ static void test_blt_z_alpha(void)
     memset(&pf, 0, sizeof(pf));
     pf.dwSize = sizeof(pf);
     pf.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(pf).dwRGBBitCount = 32;
-    U2(pf).dwRBitMask = 0x00ff0000;
-    U3(pf).dwGBitMask = 0x0000ff00;
-    U4(pf).dwBBitMask = 0x000000ff;
-    U5(pf).dwRGBAlphaBitMask = 0xff000000;
+    pf.dwRGBBitCount = 32;
+    pf.dwRBitMask = 0x00ff0000;
+    pf.dwGBitMask = 0x0000ff00;
+    pf.dwBBitMask = 0x000000ff;
+    pf.dwRGBAlphaBitMask = 0xff000000;
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
-    U4(surface_desc).ddpfPixelFormat = pf;
+    surface_desc.ddpfPixelFormat = pf;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
@@ -13483,23 +13483,23 @@ static void test_blt_z_alpha(void)
     fx.dwSize = sizeof(fx);
     fx.dwZBufferOpCode = D3DCMP_NEVER;
     fx.dwZDestConstBitDepth = 32;
-    U1(fx).dwZDestConst = 0x11111111;
+    fx.dwZDestConst = 0x11111111;
     fx.dwZSrcConstBitDepth = 32;
-    U2(fx).dwZSrcConst = 0xeeeeeeee;
+    fx.dwZSrcConst = 0xeeeeeeee;
     fx.dwAlphaEdgeBlendBitDepth = 8;
     fx.dwAlphaEdgeBlend = 0x7f;
     fx.dwAlphaDestConstBitDepth = 8;
-    U3(fx).dwAlphaDestConst = 0xdd;
+    fx.dwAlphaDestConst = 0xdd;
     fx.dwAlphaSrcConstBitDepth = 8;
-    U4(fx).dwAlphaSrcConst = 0x22;
+    fx.dwAlphaSrcConst = 0x22;
 
     for (i = 0; i < ARRAY_SIZE(blt_flags); ++i)
     {
-        U5(fx).dwFillColor = 0x3300ff00;
+        fx.dwFillColor = 0x3300ff00;
         hr = IDirectDrawSurface7_Blt(src_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
-        U5(fx).dwFillColor = 0xccff0000;
+        fx.dwFillColor = 0xccff0000;
         hr = IDirectDrawSurface7_Blt(dst_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
         ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
@@ -13573,7 +13573,7 @@ static void test_cross_device_blt(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_VIDEOMEMORY;
-    U5(surface_desc).dwBackBufferCount = 2;
+    surface_desc.dwBackBufferCount = 2;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -13583,18 +13583,18 @@ static void test_cross_device_blt(void)
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00007c00;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x000003e0;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000001f;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 16;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00007c00;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x000003e0;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x0000001f;
     hr = IDirectDraw7_CreateSurface(ddraw2, &surface_desc, &surface2, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    U5(fx).dwFillColor = 0xff0000ff;
+    fx.dwFillColor = 0xff0000ff;
     hr = IDirectDrawSurface7_Blt(surface2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to fill surface, hr %#lx.\n", hr);
 
@@ -13814,7 +13814,7 @@ static void test_getdc(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDraw7_GetDisplayMode(ddraw, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get display mode, hr %#lx.\n", hr);
-    screen_bpp = U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount;
+    screen_bpp = surface_desc.ddpfPixelFormat.dwRGBBitCount;
 
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
@@ -13823,7 +13823,7 @@ static void test_getdc(void)
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
         surface_desc.dwWidth = 64;
         surface_desc.dwHeight = 64;
-        U4(surface_desc).ddpfPixelFormat = test_data[i].format;
+        surface_desc.ddpfPixelFormat = test_data[i].format;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
         if (FAILED(IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
@@ -13867,12 +13867,12 @@ static void test_getdc(void)
                     dib.dsBm.bmWidth, test_data[i].name);
             ok(dib.dsBm.bmHeight == surface_desc.dwHeight, "Got unexpected height %d for format %s.\n",
                     dib.dsBm.bmHeight, test_data[i].name);
-            width_bytes = ((dib.dsBm.bmWidth * U1(test_data[i].format).dwRGBBitCount + 31) >> 3) & ~3;
+            width_bytes = ((dib.dsBm.bmWidth * test_data[i].format.dwRGBBitCount + 31) >> 3) & ~3;
             ok(dib.dsBm.bmWidthBytes == width_bytes, "Got unexpected width bytes %d for format %s.\n",
                     dib.dsBm.bmWidthBytes, test_data[i].name);
             ok(dib.dsBm.bmPlanes == 1, "Got unexpected plane count %d for format %s.\n",
                     dib.dsBm.bmPlanes, test_data[i].name);
-            ok(dib.dsBm.bmBitsPixel == U1(test_data[i].format).dwRGBBitCount,
+            ok(dib.dsBm.bmBitsPixel == test_data[i].format.dwRGBBitCount,
                     "Got unexpected bit count %d for format %s.\n",
                     dib.dsBm.bmBitsPixel, test_data[i].name);
             /* Windows XP sets bmBits == NULL for formats that match the screen at least on my r200 GPU. I
@@ -13889,11 +13889,11 @@ static void test_getdc(void)
                     dib.dsBmih.biHeight, test_data[i].name);
             ok(dib.dsBmih.biPlanes == 1, "Got unexpected plane count %u for format %s.\n",
                     dib.dsBmih.biPlanes, test_data[i].name);
-            ok(dib.dsBmih.biBitCount == U1(test_data[i].format).dwRGBBitCount,
+            ok(dib.dsBmih.biBitCount == test_data[i].format.dwRGBBitCount,
                     "Got unexpected bit count %u for format %s.\n",
                     dib.dsBmih.biBitCount, test_data[i].name);
-            ok(dib.dsBmih.biCompression == (U1(test_data[i].format).dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
-                    || broken(U1(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
+            ok(dib.dsBmih.biCompression == (test_data[i].format.dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
+                    || broken(test_data[i].format.dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#lx for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
             ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %lu for format %s.\n",
@@ -13909,9 +13909,9 @@ static void test_getdc(void)
 
             if (dib.dsBmih.biCompression == BI_BITFIELDS)
             {
-                ok((dib.dsBitfields[0] == U2(test_data[i].format).dwRBitMask
-                        && dib.dsBitfields[1] == U3(test_data[i].format).dwGBitMask
-                        && dib.dsBitfields[2] == U4(test_data[i].format).dwBBitMask)
+                ok((dib.dsBitfields[0] == test_data[i].format.dwRBitMask
+                        && dib.dsBitfields[1] == test_data[i].format.dwGBitMask
+                        && dib.dsBitfields[2] == test_data[i].format.dwBBitMask)
                         || broken(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2]),
                         "Got unexpected colour masks 0x%08lx 0x%08lx 0x%08lx for format %s.\n",
                         dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], test_data[i].name);
@@ -14277,12 +14277,12 @@ static void test_edge_antialiasing_blending(void)
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &offscreen, NULL);
     ok(hr == D3D_OK, "Creating the offscreen render target failed, hr %#lx.\n", hr);
 
@@ -14450,13 +14450,13 @@ static void test_display_mode_surface_pixel_format(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     ok(surface_desc.dwWidth == width, "Got width %lu, expected %u.\n", surface_desc.dwWidth, width);
     ok(surface_desc.dwHeight == height, "Got height %lu, expected %u.\n", surface_desc.dwHeight, height);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, bpp);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
+            surface_desc.ddpfPixelFormat.dwRGBBitCount, bpp);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -14464,10 +14464,10 @@ static void test_display_mode_surface_pixel_format(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     ok(surface_desc.dwWidth == width, "Got width %lu, expected %u.\n", surface_desc.dwWidth, width);
     ok(surface_desc.dwHeight == height, "Got height %lu, expected %u.\n", surface_desc.dwHeight, height);
-    ok(U4(surface_desc).ddpfPixelFormat.dwFlags == DDPF_RGB, "Got unexpected pixel format flags %#lx.\n",
-            U4(surface_desc).ddpfPixelFormat.dwFlags);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, bpp);
+    ok(surface_desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got unexpected pixel format flags %#lx.\n",
+            surface_desc.ddpfPixelFormat.dwFlags);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
+            surface_desc.ddpfPixelFormat.dwRGBBitCount, bpp);
     IDirectDrawSurface7_Release(surface);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -14480,10 +14480,10 @@ static void test_display_mode_surface_pixel_format(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(U4(surface_desc).ddpfPixelFormat.dwFlags == DDPF_RGB, "Got unexpected pixel format flags %#lx.\n",
-            U4(surface_desc).ddpfPixelFormat.dwFlags);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
-            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, bpp);
+    ok(surface_desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got unexpected pixel format flags %#lx.\n",
+            surface_desc.ddpfPixelFormat.dwFlags);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == bpp, "Got bpp %lu, expected %u.\n",
+            surface_desc.ddpfPixelFormat.dwRGBBitCount, bpp);
     IDirectDrawSurface7_Release(surface);
 
     /* Test compatibility mode mipmap texture creation. */
@@ -14499,10 +14499,10 @@ static void test_display_mode_surface_pixel_format(void)
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_MIPMAPCOUNT | DDSD_PITCH;
-    U2(surface_desc).dwMipMapCount = 2;
+    surface_desc.dwMipMapCount = 2;
     surface_desc.dwWidth = 4;
     surface_desc.dwHeight = 4;
-    U1(surface_desc).lPitch = surface_desc.dwWidth * bpp / 8;
+    surface_desc.lPitch = surface_desc.dwWidth * bpp / 8;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP | DDSCAPS_VIDEOMEMORY;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW, "Got unexpected hr %#lx.\n", hr);
@@ -14862,11 +14862,11 @@ static void test_ck_operation(void)
     surface_desc.dwWidth = 4;
     surface_desc.dwHeight = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
@@ -15001,12 +15001,12 @@ static void test_ck_operation(void)
     surface_desc.dwWidth = 6;
     surface_desc.dwHeight = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
@@ -15905,14 +15905,14 @@ static void test_depth_readback(void)
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY;
-        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
         if (tests[i].s_depth)
-            U4(surface_desc).ddpfPixelFormat.dwFlags |= DDPF_STENCILBUFFER;
-        U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = tests[i].z_depth;
-        U2(U4(surface_desc).ddpfPixelFormat).dwStencilBitDepth = tests[i].s_depth;
-        U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = tests[i].z_mask;
-        U4(U4(surface_desc).ddpfPixelFormat).dwStencilBitMask = tests[i].s_mask;
+            surface_desc.ddpfPixelFormat.dwFlags |= DDPF_STENCILBUFFER;
+        surface_desc.ddpfPixelFormat.dwZBufferBitDepth = tests[i].z_depth;
+        surface_desc.ddpfPixelFormat.dwStencilBitDepth = tests[i].s_depth;
+        surface_desc.ddpfPixelFormat.dwZBitMask = tests[i].z_mask;
+        surface_desc.ddpfPixelFormat.dwStencilBitMask = tests[i].s_mask;
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
@@ -16039,16 +16039,16 @@ static void test_clear(void)
     ok(SUCCEEDED(hr), "Failed to clear, hr %#lx.\n", hr);
 
     /* Positive x, negative y. */
-    U1(rect[0]).x1 = 0;
-    U2(rect[0]).y1 = 480;
-    U3(rect[0]).x2 = 320;
-    U4(rect[0]).y2 = 240;
+    rect[0].x1 = 0;
+    rect[0].y1 = 480;
+    rect[0].x2 = 320;
+    rect[0].y2 = 240;
 
     /* Positive x, positive y. */
-    U1(rect[1]).x1 = 0;
-    U2(rect[1]).y1 = 0;
-    U3(rect[1]).x2 = 320;
-    U4(rect[1]).y2 = 240;
+    rect[1].x1 = 0;
+    rect[1].y1 = 0;
+    rect[1].x2 = 320;
+    rect[1].y2 = 240;
 
     /* Clear 2 rectangles with one call. Unlike d3d8/9, the refrast does not
      * refuse negative rectangles, but it will not clear them either. */
@@ -16068,10 +16068,10 @@ static void test_clear(void)
     ok(SUCCEEDED(hr), "Failed to clear, hr %#lx.\n", hr);
     /* negative x, negative y.
      * Also ignored, except on WARP, which clears the entire screen. */
-    U1(rect_negneg).x1 = 640;
-    U2(rect_negneg).y1 = 240;
-    U3(rect_negneg).x2 = 320;
-    U4(rect_negneg).y2 = 0;
+    rect_negneg.x1 = 640;
+    rect_negneg.y1 = 240;
+    rect_negneg.x2 = 320;
+    rect_negneg.y2 = 0;
     hr = IDirect3DDevice7_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#lx.\n", hr);
 
@@ -16118,10 +16118,10 @@ static void test_clear(void)
     hr = IDirect3DDevice7_SetViewport(device, &vp);
     ok(SUCCEEDED(hr), "Failed to set viewport, hr %#lx.\n", hr);
 
-    U1(rect[0]).x1 = 160;
-    U2(rect[0]).y1 = 120;
-    U3(rect[0]).x2 = 480;
-    U4(rect[0]).y2 = 360;
+    rect[0].x1 = 160;
+    rect[0].y1 = 120;
+    rect[0].x2 = 480;
+    rect[0].y2 = 360;
     hr = IDirect3DDevice7_Clear(device, 1, &rect[0], D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#lx.\n", hr);
 
@@ -16226,7 +16226,7 @@ static HRESULT WINAPI enum_surfaces_create_cb(IDirectDrawSurface7 *surface, DDSU
         const DDSURFACEDESC2 *expect = &param->modes[param->count];
         ok(desc->dwWidth == expect->dwWidth, "Expected width %lu, got %lu.\n", expect->dwWidth, desc->dwWidth);
         ok(desc->dwHeight == expect->dwHeight, "Expected height %lu, got %lu.\n", expect->dwHeight, desc->dwHeight);
-        ok(!memcmp(&U4(*desc).ddpfPixelFormat, &U4(*expect).ddpfPixelFormat, sizeof(U4(*desc).ddpfPixelFormat)),
+        ok(!memcmp(&desc->ddpfPixelFormat, &expect->ddpfPixelFormat, sizeof(desc->ddpfPixelFormat)),
                 "Pixel formats didn't match.\n");
     }
 
@@ -16251,7 +16251,7 @@ static void test_enum_surfaces(void)
     desc.dwSize = sizeof(desc);
     hr = IDirectDraw7_GetDisplayMode(ddraw, &desc);
     ok(hr == DD_OK, "Failed to get display mode, hr %#lx.\n", hr);
-    current_format = U4(desc).ddpfPixelFormat;
+    current_format = desc.ddpfPixelFormat;
 
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(hr == DD_OK, "Failed to set cooperative level, hr %#lx.\n", hr);
@@ -16270,7 +16270,7 @@ static void test_enum_surfaces(void)
     desc.dwSize = sizeof(desc);
     desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
     desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
-    U2(desc).dwMipMapCount = 3;
+    desc.dwMipMapCount = 3;
     desc.dwWidth = 32;
     desc.dwHeight = 32;
     if (FAILED(IDirectDraw7_CreateSurface(ddraw, &desc, &param.surfaces[0], NULL)))
@@ -16358,7 +16358,7 @@ static void test_enum_surfaces(void)
 
     param.mode_count = 0;
     desc.dwFlags |= DDSD_PIXELFORMAT;
-    U4(desc).ddpfPixelFormat = current_format;
+    desc.ddpfPixelFormat = current_format;
     hr = IDirectDraw7_EnumDisplayModes(ddraw, 0, &desc, &param, build_mode_list_cb);
     ok(hr == DD_OK, "Failed to build mode list, hr %#lx.\n", hr);
 
@@ -16390,9 +16390,9 @@ static void test_enum_surfaces(void)
     IDirectDrawSurface7_Release(param.surfaces[0]);
 
     desc.dwFlags |= DDSD_PIXELFORMAT;
-    U4(desc).ddpfPixelFormat.dwSize = sizeof(U4(desc).ddpfPixelFormat);
-    U4(desc).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-    U4(desc).ddpfPixelFormat.dwFourCC = 0xdeadbeef;
+    desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+    desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    desc.ddpfPixelFormat.dwFourCC = 0xdeadbeef;
 
     param.count = 0;
     hr = IDirectDraw7_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
@@ -16486,7 +16486,7 @@ static void test_viewport(void)
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface7_GetSurfaceDesc(ds, &surface_desc);
-    z_fmt = U4(surface_desc).ddpfPixelFormat;
+    z_fmt = surface_desc.ddpfPixelFormat;
 
     for (i = 0; i < ARRAY_SIZE(rt_sizes); ++i)
     {
@@ -16505,7 +16505,7 @@ static void test_viewport(void)
 
             surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-            U4(surface_desc).ddpfPixelFormat = z_fmt;
+            surface_desc.ddpfPixelFormat = z_fmt;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
             ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
             hr = IDirectDrawSurface7_AddAttachedSurface(rt, ds);
@@ -16604,7 +16604,7 @@ static unsigned int validate_loaded_surface(IDirectDrawSurface7 *surface, unsign
 
     for (y = 0, diff = 0; y < surface_desc.dwHeight; ++y)
     {
-        DWORD *texture_row = (DWORD *)((char *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+        DWORD *texture_row = (DWORD *)((char *)surface_desc.lpSurface + y * surface_desc.lPitch);
 
         for (x = 0; x < surface_desc.dwWidth; ++x)
         {
@@ -16735,13 +16735,13 @@ static void test_device_load(void)
             surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
         surface_desc.dwWidth = tests[i].src_w;
         surface_desc.dwHeight = tests[i].src_h;
-        U2(surface_desc).dwMipMapCount = tests[i].src_mip_count;
-        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-        U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-        U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        surface_desc.dwMipMapCount = tests[i].src_mip_count;
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+        surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+        surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
         ok(SUCCEEDED(hr), "Test %u: Failed to create source surface, hr %#lx.\n", i, hr);
 
@@ -16758,7 +16758,7 @@ static void test_device_load(void)
             surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
         surface_desc.dwWidth = tests[i].dst_w;
         surface_desc.dwHeight = tests[i].dst_h;
-        U2(surface_desc).dwMipMapCount = tests[i].dst_mip_count;
+        surface_desc.dwMipMapCount = tests[i].dst_mip_count;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
         ok(SUCCEEDED(hr), "Test %u: Failed to create destination surface, hr %#lx.\n", i, hr);
 
@@ -16781,9 +16781,9 @@ static void test_device_load(void)
                 surface_desc.dwSize = sizeof(surface_desc);
                 hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
                 ok(SUCCEEDED(hr), "Test %u: Failed to get surface description, hr %#lx.\n", i, hr);
-                ok(U2(surface_desc).dwMipMapCount == src_count,
+                ok(surface_desc.dwMipMapCount == src_count,
                         "Test %u: Got unexpected mip count %lu, expected %u.\n",
-                        i, U2(surface_desc).dwMipMapCount, src_count);
+                        i, surface_desc.dwMipMapCount, src_count);
             }
 
             for (k = 0; ; ++k)
@@ -16795,7 +16795,7 @@ static void test_device_load(void)
 
                 for (y = 0; y < surface_desc.dwHeight; ++y)
                 {
-                    DWORD *texture_row = (DWORD *)((BYTE *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+                    DWORD *texture_row = (DWORD *)((BYTE *)surface_desc.lpSurface + y * surface_desc.lPitch);
 
                     for (x = 0; x < surface_desc.dwWidth; ++x)
                     {
@@ -16838,16 +16838,16 @@ static void test_device_load(void)
                 surface_desc.dwSize = sizeof(surface_desc);
                 hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
                 ok(SUCCEEDED(hr), "Test %u: Failed to get surface description, hr %#lx.\n", i, hr);
-                ok(U2(surface_desc).dwMipMapCount == dst_count,
+                ok(surface_desc.dwMipMapCount == dst_count,
                         "Test %u: Got unexpected mip count %lu, expected %u.\n",
-                        i, U2(surface_desc).dwMipMapCount, dst_count);
+                        i, surface_desc.dwMipMapCount, dst_count);
             }
 
             for (;;)
             {
                 memset(&fx, 0, sizeof(fx));
                 fx.dwSize = sizeof(fx);
-                U5(fx).dwFillColor = 0x00000000;
+                fx.dwFillColor = 0x00000000;
                 hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
                 ok(SUCCEEDED(hr), "Test %u: Failed to clear surface, hr %#lx.\n", i, hr);
 
@@ -16992,9 +16992,9 @@ static void test_device_load(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 8;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 8;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create source surface, hr %#lx.\n", hr);
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
@@ -17165,8 +17165,8 @@ static void test_color_vertex(void)
     ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
 
     memset(&material, 0, sizeof(material));
-    U3(U1(material).ambient).b = 0.5f;
-    U3(U3(material).emissive).b = 0.25f;
+    material.ambient.b = 0.5f;
+    material.emissive.b = 0.25f;
     hr = IDirect3DDevice7_SetMaterial(device, &material);
     ok(SUCCEEDED(hr), "Failed to set material, hr %#lx\n", hr);
 
@@ -17351,13 +17351,13 @@ static void test_sysmem_draw(void)
     surface_desc.dwHeight = 2;
     surface_desc.dwWidth = 2;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+    surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+    surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &texture, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice7_SetTexture(device, 0, texture);
@@ -17434,7 +17434,7 @@ static void test_gdi_surface(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirectDrawSurface7_GetAttachedSurface(primary, &caps, &backbuffer);
@@ -18063,10 +18063,10 @@ static void test_d32_support(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
-    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth = 32;
-    U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask = 0xffffffff;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    surface_desc.ddpfPixelFormat.dwZBufferBitDepth = 32;
+    surface_desc.ddpfPixelFormat.dwZBitMask = 0xffffffff;
     surface_desc.dwWidth = 64;
     surface_desc.dwHeight = 64;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
@@ -18077,12 +18077,12 @@ static void test_d32_support(void)
     hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     ok((surface_desc.dwFlags & DDSD_PIXELFORMAT), "Got unexpected flags %#lx.\n", surface_desc.dwFlags);
-    ok(U4(surface_desc).ddpfPixelFormat.dwFlags & DDPF_ZBUFFER,
-            "Got unexpected format flags %#lx.\n", U4(surface_desc).ddpfPixelFormat.dwFlags);
-    ok(U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth == 32,
-            "Got unexpected dwZBufferBitDepth %lu.\n", U1(U4(surface_desc).ddpfPixelFormat).dwZBufferBitDepth);
-    ok(U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask == 0xffffffff,
-            "Got unexpected Z mask 0x%08lx.\n", U3(U4(surface_desc).ddpfPixelFormat).dwZBitMask);
+    ok(surface_desc.ddpfPixelFormat.dwFlags & DDPF_ZBUFFER,
+            "Got unexpected format flags %#lx.\n", surface_desc.ddpfPixelFormat.dwFlags);
+    ok(surface_desc.ddpfPixelFormat.dwZBufferBitDepth == 32,
+            "Got unexpected dwZBufferBitDepth %lu.\n", surface_desc.ddpfPixelFormat.dwZBufferBitDepth);
+    ok(surface_desc.ddpfPixelFormat.dwZBitMask == 0xffffffff,
+            "Got unexpected Z mask 0x%08lx.\n", surface_desc.ddpfPixelFormat.dwZBitMask);
     ok(!(surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY),
             "Got unexpected surface caps %#lx.\n", surface_desc.ddsCaps.dwCaps);
     IDirectDrawSurface7_Release(surface);
@@ -18329,12 +18329,12 @@ static void test_surface_format_conversion_alpha(void)
                     && dst_format->broken_hardware_blit)
                 continue;
 
-            U4(surface_desc).ddpfPixelFormat = src_format->fmt;
+            surface_desc.ddpfPixelFormat = src_format->fmt;
             surface_desc.ddsCaps.dwCaps = test_caps[j].src_caps;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src_surf, NULL);
             ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#lx.\n", j, i, hr);
 
-            U4(surface_desc).ddpfPixelFormat = dst_format->fmt;
+            surface_desc.ddpfPixelFormat = dst_format->fmt;
             surface_desc.ddsCaps.dwCaps = test_caps[j].dst_caps;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst_surf, NULL);
             ok(hr == DD_OK, "Test (%u, %u), got unexpected hr %#lx.\n", j, i, hr);
@@ -18343,7 +18343,7 @@ static void test_surface_format_conversion_alpha(void)
             lock.dwSize = sizeof(lock);
             hr = IDirectDrawSurface7_Lock(src_surf, NULL, &lock, 0, NULL);
             ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-            pitch = U1(lock).lPitch;
+            pitch = lock.lPitch;
             for (y = 0; y < src_format->y_blocks; ++y)
             {
                 memcpy((BYTE *)lock.lpSurface + y * pitch,
@@ -18370,7 +18370,7 @@ static void test_surface_format_conversion_alpha(void)
             lock.dwSize = sizeof(lock);
             hr = IDirectDrawSurface7_Lock(dst_surf, NULL, &lock, 0, NULL);
             ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-            pitch = U1(lock).lPitch;
+            pitch = lock.lPitch;
 
             for (y = 0; y < dst_format->y_blocks; ++y)
             {
@@ -18514,13 +18514,13 @@ static void test_compressed_surface_stretch(void)
     memset(&rb_surface_desc, 0, sizeof(rb_surface_desc));
     rb_surface_desc.dwSize = sizeof(rb_surface_desc);
     rb_surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-    U4(rb_surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(rb_surface_desc).ddpfPixelFormat);
-    U4(rb_surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(rb_surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(rb_surface_desc).ddpfPixelFormat).dwRBitMask = 0x00007c00;
-    U3(U4(rb_surface_desc).ddpfPixelFormat).dwGBitMask = 0x000003e0;
-    U4(U4(rb_surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000001f;
-    U5(U4(rb_surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0x00008000;
+    rb_surface_desc.ddpfPixelFormat.dwSize = sizeof(rb_surface_desc.ddpfPixelFormat);
+    rb_surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    rb_surface_desc.ddpfPixelFormat.dwRGBBitCount = 16;
+    rb_surface_desc.ddpfPixelFormat.dwRBitMask = 0x00007c00;
+    rb_surface_desc.ddpfPixelFormat.dwGBitMask = 0x000003e0;
+    rb_surface_desc.ddpfPixelFormat.dwBBitMask = 0x0000001f;
+    rb_surface_desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0x00008000;
     rb_surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
 
     memset(&fx, 0, sizeof(fx));
@@ -18555,11 +18555,11 @@ static void test_compressed_surface_stretch(void)
 
             for (k = 0; k < ARRAY_SIZE(test_formats); ++k)
             {
-                U4(src_surface_desc).ddpfPixelFormat = test_formats[k].fmt;
+                src_surface_desc.ddpfPixelFormat = test_formats[k].fmt;
                 hr = IDirectDraw7_CreateSurface(ddraw, &src_surface_desc, &src_surf, NULL);
                 ok(hr == DD_OK, "Test (%u, %u, %u), got unexpected hr %#lx.\n", i, j, k, hr);
 
-                U5(fx).dwFillColor = 0x801f;
+                fx.dwFillColor = 0x801f;
                 hr = IDirectDrawSurface7_Blt(rb_surf, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
                 ok(hr == DD_OK, "Test (%u, %u, %u), got unexpected hr %#lx.\n", i, j, k, hr);
 
@@ -18581,7 +18581,7 @@ static void test_compressed_surface_stretch(void)
                         continue;
                     }
 
-                    U4(dst_surface_desc).ddpfPixelFormat = test_formats[l].fmt;
+                    dst_surface_desc.ddpfPixelFormat = test_formats[l].fmt;
 
                     hr = IDirectDraw7_CreateSurface(ddraw, &dst_surface_desc, &dst_surf, NULL);
                     ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#lx.\n", i, j, k, l, hr);
@@ -18598,7 +18598,7 @@ static void test_compressed_surface_stretch(void)
                     {
                         hr = IDirectDrawSurface7_Lock(dst_surf, NULL, &lock, 0, NULL);
                         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-                        memset(lock.lpSurface, 0, U1(lock).dwLinearSize);
+                        memset(lock.lpSurface, 0, lock.dwLinearSize);
                         hr = IDirectDrawSurface7_Unlock(dst_surf, NULL);
                         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
                     }
@@ -18612,7 +18612,7 @@ static void test_compressed_surface_stretch(void)
                         continue;
                     }
 
-                    U5(fx).dwFillColor = 0xffffffff;
+                    fx.dwFillColor = 0xffffffff;
                     hr = IDirectDrawSurface7_Blt(rb_surf, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
                     ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#lx.\n", i, j, k, l, hr);
 
@@ -18620,7 +18620,7 @@ static void test_compressed_surface_stretch(void)
                     ok(hr == DD_OK, "Test (%u, %u, %u, %u), got unexpected hr %#lx.\n", i, j, k, l, hr);
                     hr = IDirectDrawSurface7_Lock(rb_surf, NULL, &lock, 0, NULL);
                     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
-                    pitch = U1(lock).lPitch;
+                    pitch = lock.lPitch;
 
                     passed = TRUE;
                     for (y = dst_rect.top; y < dst_rect.bottom && passed; ++y)
@@ -18664,7 +18664,7 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC2 *surface_des
 {
     struct find_different_mode_param *param = context;
 
-    if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
+    if (surface_desc->ddpfPixelFormat.dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
 
     /* Windows will advertise 59hz (for 59.94) and 60hz (for proper 60hz) on monitors that support
@@ -19073,7 +19073,7 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     ddsd.dwHeight = 16;
     ddsd.dwWidth = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    U4(ddsd).ddpfPixelFormat = fmt;
+    ddsd.ddpfPixelFormat = fmt;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -19669,7 +19669,7 @@ static void test_user_memory(const GUID *device_guid)
     desc.dwWidth = 16;
     desc.dwHeight = 16;
     desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
-    init_format_b8g8r8x8(&U4(desc).ddpfPixelFormat);
+    init_format_b8g8r8x8(&desc.ddpfPixelFormat);
     hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &dst_surface, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -19678,10 +19678,10 @@ static void test_user_memory(const GUID *device_guid)
     reset_ddsd(&desc);
     desc.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LPSURFACE;
     desc.dwWidth = 16;
-    U1(desc).lPitch = 16 * 4;
+    desc.lPitch = 16 * 4;
     desc.dwHeight = 16;
     desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY;
-    init_format_b8g8r8x8(&U4(desc).ddpfPixelFormat);
+    init_format_b8g8r8x8(&desc.ddpfPixelFormat);
     desc.lpSurface = mem;
     hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &surfaces[0], NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -19690,7 +19690,7 @@ static void test_user_memory(const GUID *device_guid)
     hr = IDirectDrawSurface7_Lock(surfaces[0], NULL, &desc, DDLOCK_WAIT, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(desc.lpSurface == mem, "Surface pointers didn't match.\n");
-    memset(desc.lpSurface, 0x55, desc.dwHeight * U1(desc).lPitch);
+    memset(desc.lpSurface, 0x55, desc.dwHeight * desc.lPitch);
     hr = IDirectDrawSurface7_Unlock(surfaces[0], NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -19719,12 +19719,12 @@ static void test_user_memory(const GUID *device_guid)
         desc.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_HEIGHT | DDSD_CAPS
                 | DDSD_PIXELFORMAT | DDSD_LPSURFACE | create_tests[i].flags;
         desc.dwWidth = 16;
-        U1(desc).lPitch = 16 * 4;
+        desc.lPitch = 16 * 4;
         desc.dwHeight = 16;
         desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | create_tests[i].caps;
         desc.ddsCaps.dwCaps2 = create_tests[i].caps2;
-        init_format_b8g8r8x8(&U4(desc).ddpfPixelFormat);
-        U2(desc).dwMipMapCount = 1;
+        init_format_b8g8r8x8(&desc.ddpfPixelFormat);
+        desc.dwMipMapCount = 1;
         desc.lpSurface = mem;
         hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &surfaces[0], NULL);
         todo_wine_if (create_tests[i].caps & DDSCAPS_COMPLEX)
@@ -19740,11 +19740,11 @@ static void test_user_memory(const GUID *device_guid)
     reset_ddsd(&desc);
     desc.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT;
     desc.dwWidth = 16;
-    U1(desc).lPitch = 16 * 4;
+    desc.lPitch = 16 * 4;
     desc.dwHeight = 16;
     desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX;
-    init_format_b8g8r8x8(&U4(desc).ddpfPixelFormat);
-    U2(desc).dwMipMapCount = 5;
+    init_format_b8g8r8x8(&desc.ddpfPixelFormat);
+    desc.dwMipMapCount = 5;
     hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &surfaces[0], NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -19774,7 +19774,7 @@ static void test_user_memory(const GUID *device_guid)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (i == 2)
             ok(desc.lpSurface == mem, "Got surface pointer %p.\n", desc.lpSurface);
-        memset(desc.lpSurface, 0x11 * (i + 1), desc.dwHeight * U1(desc).lPitch);
+        memset(desc.lpSurface, 0x11 * (i + 1), desc.dwHeight * desc.lPitch);
         hr = IDirectDrawSurface7_Unlock(surfaces[i], NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
     }
@@ -19801,11 +19801,11 @@ static void test_user_memory(const GUID *device_guid)
     reset_ddsd(&desc);
     desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     desc.dwWidth = 16;
-    U1(desc).lPitch = 16 * 4;
+    desc.lPitch = 16 * 4;
     desc.dwHeight = 16;
     desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX;
     desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
-    init_format_b8g8r8x8(&U4(desc).ddpfPixelFormat);
+    init_format_b8g8r8x8(&desc.ddpfPixelFormat);
     hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &surfaces[0], NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -19834,7 +19834,7 @@ static void test_user_memory(const GUID *device_guid)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (i == 2)
             ok(desc.lpSurface == mem, "Got surface pointer %p.\n", desc.lpSurface);
-        memset(desc.lpSurface, 0x11 * (i + 1), desc.dwHeight * U1(desc).lPitch);
+        memset(desc.lpSurface, 0x11 * (i + 1), desc.dwHeight * desc.lPitch);
         hr = IDirectDrawSurface7_Unlock(surfaces[i], NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
     }
@@ -19900,8 +19900,8 @@ START_TEST(ddraw7)
         trace("Driver string: \"%s\"\n", identifier.szDriver);
         trace("Description string: \"%s\"\n", identifier.szDescription);
         trace("Driver version %d.%d.%d.%d\n",
-                HIWORD(U(identifier.liDriverVersion).HighPart), LOWORD(U(identifier.liDriverVersion).HighPart),
-                HIWORD(U(identifier.liDriverVersion).LowPart), LOWORD(U(identifier.liDriverVersion).LowPart));
+                HIWORD(identifier.liDriverVersion.HighPart), LOWORD(identifier.liDriverVersion.HighPart),
+                HIWORD(identifier.liDriverVersion.LowPart), LOWORD(identifier.liDriverVersion.LowPart));
     }
 
     if (IDirectDraw7_QueryInterface(ddraw, &IID_IDirect3D7, (void **)&d3d) == DD_OK)

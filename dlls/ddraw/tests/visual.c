@@ -64,7 +64,7 @@ static HRESULT WINAPI enum_z_fmt(DDPIXELFORMAT *fmt, void *ctx)
 {
     DDPIXELFORMAT *zfmt = ctx;
 
-    if(U1(*fmt).dwZBufferBitDepth > U1(*zfmt).dwZBufferBitDepth)
+    if(fmt->dwZBufferBitDepth > zfmt->dwZBufferBitDepth)
     {
         *zfmt = *fmt;
     }
@@ -133,7 +133,7 @@ static BOOL createObjects(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
-    U5(ddsd).dwBackBufferCount = 1;
+    ddsd.dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &Surface, NULL);
     if(FAILED(hr)) goto err;
 
@@ -150,7 +150,7 @@ static BOOL createObjects(void)
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(ddsd).ddpfPixelFormat = zfmt;
+    ddsd.ddpfPixelFormat = zfmt;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &depth_buffer, NULL);
@@ -198,7 +198,7 @@ static DWORD getPixelColor(IDirect3DDevice7 *device, UINT x, UINT y)
      */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
@@ -213,7 +213,7 @@ static DWORD getPixelColor(IDirect3DDevice7 *device, UINT x, UINT y)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
 
     hr = IDirectDrawSurface_BltFast(surf, 0, 0, Surface, NULL, 0);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
@@ -558,7 +558,7 @@ static void offscreen_test(IDirect3DDevice7 *device)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
@@ -692,12 +692,12 @@ static void test_blend(IDirect3DDevice7 *device)
     ddsd.dwWidth = 128;
     ddsd.dwHeight = 128;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount      = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask         = 0x00ff0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask         = 0x0000ff00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask         = 0x000000ff;
-    U5(U4(ddsd).ddpfPixelFormat).dwRGBAlphaBitMask  = 0xff000000;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    ddsd.ddpfPixelFormat.dwRGBBitCount      = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask         = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask         = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask         = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwRGBAlphaBitMask  = 0xff000000;
     hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &offscreen, NULL);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     if(!offscreen) {
@@ -884,7 +884,7 @@ static DWORD D3D3_getPixelColor(IDirectDraw4 *DirectDraw, IDirectDrawSurface4 *S
      */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
@@ -899,7 +899,7 @@ static DWORD D3D3_getPixelColor(IDirectDraw4 *DirectDraw, IDirectDrawSurface4 *S
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
 
     hr = IDirectDrawSurface4_BltFast(surf, 0, 0, Surface, NULL, 0);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
@@ -1085,9 +1085,9 @@ static void D3D3_ViewportClearTest(void)
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr)) {
-        U1(rect).x1 = U2(rect).y1 = 0;
-        U3(rect).x2 = 640;
-        U4(rect).y2 = 480;
+        rect.x1 = rect.y1 = 0;
+        rect.x2 = 640;
+        rect.y2 = 480;
 
         hr = IDirect3DViewport3_Clear2(Viewport3, 1, &rect, D3DCLEAR_TARGET, 0x00ff00, 0.0f, 0);
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
@@ -1230,24 +1230,24 @@ static void cubemap_test(IDirect3DDevice7 *device)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
     ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_TEXTUREMANAGE;
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00FF0000;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000FF00;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000FF;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
 
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &cubemap, NULL);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
     IDirectDraw7_Release(ddraw);
 
     /* Positive X */
-    U5(DDBltFx).dwFillColor = 0x00ff0000;
+    DDBltFx.dwFillColor = 0x00ff0000;
     hr = IDirectDrawSurface7_Blt(cubemap, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
@@ -1256,35 +1256,35 @@ static void cubemap_test(IDirect3DDevice7 *device)
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEX;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
-    U5(DDBltFx).dwFillColor = 0x0000ffff;
+    DDBltFx.dwFillColor = 0x0000ffff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEZ;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
-    U5(DDBltFx).dwFillColor = 0x0000ff00;
+    DDBltFx.dwFillColor = 0x0000ff00;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEZ;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
-    U5(DDBltFx).dwFillColor = 0x000000ff;
+    DDBltFx.dwFillColor = 0x000000ff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEY;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
-    U5(DDBltFx).dwFillColor = 0x00ffff00;
+    DDBltFx.dwFillColor = 0x00ffff00;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     caps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEY;
     hr = IDirectDrawSurface_GetAttachedSurface(cubemap, &caps, &surface);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
-    U5(DDBltFx).dwFillColor = 0x00ff00ff;
+    DDBltFx.dwFillColor = 0x00ff00ff;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL, &DDBltFx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
@@ -1530,10 +1530,10 @@ static void DX1_BackBufferFlipTest(void)
     ddsd.dwHeight = 480;
     ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask         = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask         = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask         = 0x000000ff;
+    ddsd.ddpfPixelFormat.dwRGBBitCount      = 32;
+    ddsd.ddpfPixelFormat.dwRBitMask         = 0x00ff0000;
+    ddsd.ddpfPixelFormat.dwGBitMask         = 0x0000ff00;
+    ddsd.ddpfPixelFormat.dwBBitMask         = 0x000000ff;
 
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Backbuffer, NULL);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
@@ -1547,11 +1547,11 @@ static void DX1_BackBufferFlipTest(void)
 
     memset(&ddbltfx, 0, sizeof(ddbltfx));
     ddbltfx.dwSize = sizeof(ddbltfx);
-    U5(ddbltfx).dwFillColor = red;
+    ddbltfx.dwFillColor = red;
     hr = IDirectDrawSurface_Blt(Backbuffer, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
-    U5(ddbltfx).dwFillColor = white;
+    ddbltfx.dwFillColor = white;
     hr = IDirectDrawSurface_Blt(Primary, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &ddbltfx);
     ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 

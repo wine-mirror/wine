@@ -339,13 +339,13 @@ static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     if (winetest_debug > 1)
         trace("Width = %li, Height = %li, bpp = %li, Refresh Rate = %li, Pitch = %li, flags = %#lx\n",
-              lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
-              U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
+              lpddsd->dwWidth, lpddsd->dwHeight, lpddsd->ddpfPixelFormat.dwRGBBitCount,
+              lpddsd->dwRefreshRate, lpddsd->lPitch, lpddsd->dwFlags);
 
     /* Check that the pitch is valid if applicable */
     if(lpddsd->dwFlags & DDSD_PITCH)
     {
-        ok(U1(*lpddsd).lPitch != 0, "EnumDisplayModes callback with bad pitch\n");
+        ok(lpddsd->lPitch != 0, "EnumDisplayModes callback with bad pitch\n");
     }
 
     /* Check that frequency is valid if applicable
@@ -354,12 +354,12 @@ static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
      * apparently
     if(lpddsd->dwFlags & DDSD_REFRESHRATE)
     {
-        ok(U2(*lpddsd).dwRefreshRate != 0, "EnumDisplayModes callback with bad refresh rate\n");
+        ok(lpddsd->dwRefreshRate != 0, "EnumDisplayModes callback with bad refresh rate\n");
     }
      */
 
     adddisplaymode(lpddsd);
-    if(U1(lpddsd->ddpfPixelFormat).dwRGBBitCount == 16)
+    if(lpddsd->ddpfPixelFormat.dwRGBBitCount == 16)
         modes16bpp_cnt++;
 
     return DDENUMRET_OK;
@@ -369,33 +369,33 @@ static HRESULT WINAPI enummodescallback_16bit(DDSURFACEDESC *lpddsd, void *lpCon
 {
     if (winetest_debug > 1)
         trace("Width = %li, Height = %li, bpp = %li, Refresh Rate = %li, Pitch = %li, flags = %#lx\n",
-              lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
-              U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
+              lpddsd->dwWidth, lpddsd->dwHeight, lpddsd->ddpfPixelFormat.dwRGBBitCount,
+              lpddsd->dwRefreshRate, lpddsd->lPitch, lpddsd->dwFlags);
 
     ok(lpddsd->dwFlags == (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE),
             "Wrong surface description flags %#lx\n", lpddsd->dwFlags);
     ok(lpddsd->ddpfPixelFormat.dwFlags == DDPF_RGB, "Wrong pixel format flag %#lx\n",
             lpddsd->ddpfPixelFormat.dwFlags);
-    ok(U1(lpddsd->ddpfPixelFormat).dwRGBBitCount == 16, "Expected 16 bpp got %li\n",
-            U1(lpddsd->ddpfPixelFormat).dwRGBBitCount);
+    ok(lpddsd->ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16 bpp got %li\n",
+            lpddsd->ddpfPixelFormat.dwRGBBitCount);
 
     /* Check that the pitch is valid if applicable */
     if(lpddsd->dwFlags & DDSD_PITCH)
     {
-        ok(U1(*lpddsd).lPitch != 0, "EnumDisplayModes callback with bad pitch\n");
+        ok(lpddsd->lPitch != 0, "EnumDisplayModes callback with bad pitch\n");
     }
 
     if(!refresh_rate)
     {
-        if(U2(*lpddsd).dwRefreshRate )
+        if(lpddsd->dwRefreshRate )
         {
-            refresh_rate = U2(*lpddsd).dwRefreshRate;
+            refresh_rate = lpddsd->dwRefreshRate;
             refresh_rate_cnt++;
         }
     }
     else
     {
-        if(refresh_rate == U2(*lpddsd).dwRefreshRate)
+        if(refresh_rate == lpddsd->dwRefreshRate)
             refresh_rate_cnt++;
     }
 
@@ -434,28 +434,28 @@ static void enumdisplaymodes(void)
     modes16bpp_cnt = 0;
     ddsd.dwFlags = DDSD_PIXELFORMAT;
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xf800;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x07e0;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x001F;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xf800;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x001F;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0x0000;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0000;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x0000;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xF0F0;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0F00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000F;
+    ddsd.ddpfPixelFormat.dwRBitMask = 0xF0F0;
+    ddsd.ddpfPixelFormat.dwGBitMask = 0x0F00;
+    ddsd.ddpfPixelFormat.dwBBitMask = 0x000F;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc == DD_OK, "Got hr %#lx.\n", rc);
@@ -493,7 +493,7 @@ static void enumdisplaymodes(void)
 
     modes16bpp_cnt = 0;
     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_PITCH;
-    U1(ddsd).lPitch = 123;
+    ddsd.lPitch = 123;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc == DD_OK, "Got hr %#lx.\n", rc);
@@ -504,7 +504,7 @@ static void enumdisplaymodes(void)
     /* Ask for a refresh rate that could not possibly be used. But note that
      * the Windows 'Standard VGA' driver claims to run the display at 1Hz!
      */
-    U2(ddsd).dwRefreshRate = 2;
+    ddsd.dwRefreshRate = 2;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc == DD_OK, "Got hr %#lx.\n", rc);
@@ -526,7 +526,7 @@ static void enumdisplaymodes(void)
     {
         modes16bpp_cnt = 0;
         ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_REFRESHRATE;
-        U2(ddsd).dwRefreshRate = refresh_rate;
+        ddsd.dwRefreshRate = refresh_rate;
 
         rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
         ok(rc == DD_OK, "Got hr %#lx.\n", rc);
@@ -554,7 +554,7 @@ static void setdisplaymode(int i)
         {
             rc = IDirectDraw_SetDisplayMode(lpDD,
                 modes[i].dwWidth, modes[i].dwHeight,
-                U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
+                modes[i].ddpfPixelFormat.dwRGBBitCount);
             ok(rc == DD_OK || rc == DDERR_UNSUPPORTED, "Got hr %#lx.\n", rc);
             if (rc == DD_OK)
             {
@@ -594,7 +594,7 @@ static void setdisplaymode(int i)
                     {
                         rc = IDirectDraw_SetDisplayMode(lpDD,
                             modes[i].dwWidth, modes[i].dwHeight,
-                            U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
+                            modes[i].ddpfPixelFormat.dwRGBBitCount);
                         ok(rc == DD_OK, "Got hr %#lx.\n", rc);
                     }
                 }
