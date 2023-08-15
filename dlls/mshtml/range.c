@@ -1734,8 +1734,8 @@ static void HTMLTxtRange_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLTxtRange_dispex_vtbl = {
-    HTMLTxtRange_destructor,
-    HTMLTxtRange_unlink
+    .destructor       = HTMLTxtRange_destructor,
+    .unlink           = HTMLTxtRange_unlink
 };
 
 static const tid_t HTMLTxtRange_iface_tids[] = {
@@ -2097,8 +2097,8 @@ static void HTMLDOMRange_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMRange_dispex_vtbl = {
-    HTMLDOMRange_destructor,
-    HTMLDOMRange_unlink
+    .destructor       = HTMLDOMRange_destructor,
+    .unlink           = HTMLDOMRange_unlink
 };
 
 static const tid_t HTMLDOMRange_iface_tids[] = {

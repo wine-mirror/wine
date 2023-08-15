@@ -4163,23 +4163,16 @@ static IHTMLEventObj *HTMLWindow_set_current_event(DispatchEx *dispex, IHTMLEven
 
 static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     {
-        HTMLWindow_destructor,
-        HTMLWindow_unlink,
-        NULL,
-        NULL,
-        HTMLWindow_get_name,
-        HTMLWindow_invoke,
-        NULL,
-        HTMLWindow_next_dispid,
-        HTMLWindow_get_compat_mode,
-        NULL
+        .destructor          = HTMLWindow_destructor,
+        .unlink              = HTMLWindow_unlink,
+        .get_name            = HTMLWindow_get_name,
+        .invoke              = HTMLWindow_invoke,
+        .next_dispid         = HTMLWindow_next_dispid,
+        .get_compat_mode     = HTMLWindow_get_compat_mode,
     },
-    HTMLWindow_get_gecko_target,
-    HTMLWindow_bind_event,
-    NULL,
-    NULL,
-    NULL,
-    HTMLWindow_set_current_event
+    .get_gecko_target        = HTMLWindow_get_gecko_target,
+    .bind_event              = HTMLWindow_bind_event,
+    .set_current_event       = HTMLWindow_set_current_event
 };
 
 static const tid_t HTMLWindow_iface_tids[] = {

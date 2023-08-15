@@ -633,13 +633,11 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
-    HTMLElementCollection_destructor,
-    HTMLElementCollection_unlink,
-    NULL,
-    HTMLElementCollection_get_dispid,
-    HTMLElementCollection_get_name,
-    HTMLElementCollection_invoke,
-    NULL
+    .destructor       = HTMLElementCollection_destructor,
+    .unlink           = HTMLElementCollection_unlink,
+    .get_dispid       = HTMLElementCollection_get_dispid,
+    .get_name         = HTMLElementCollection_get_name,
+    .invoke           = HTMLElementCollection_invoke,
 };
 
 static const tid_t HTMLElementCollection_iface_tids[] = {

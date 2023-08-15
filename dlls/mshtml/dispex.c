@@ -906,12 +906,8 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 }
 
 static const dispex_static_data_vtbl_t function_dispex_vtbl = {
-    function_destructor,
-    NULL,
-    function_value,
-    NULL,
-    NULL,
-    NULL
+    .destructor       = function_destructor,
+    .value            = function_value,
 };
 
 static const tid_t function_iface_tids[] = {0};

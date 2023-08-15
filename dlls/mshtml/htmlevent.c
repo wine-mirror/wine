@@ -890,8 +890,8 @@ static void HTMLEventObj_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLEventObj_dispex_vtbl = {
-    HTMLEventObj_destructor,
-    HTMLEventObj_unlink
+    .destructor       = HTMLEventObj_destructor,
+    .unlink           = HTMLEventObj_unlink
 };
 
 static const tid_t HTMLEventObj_iface_tids[] = {
@@ -2965,8 +2965,8 @@ static void DOMStorageEvent_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t DOMEvent_dispex_vtbl = {
-    DOMEvent_destructor,
-    DOMEvent_unlink
+    .destructor       = DOMEvent_destructor,
+    .unlink           = DOMEvent_unlink
 };
 
 static const tid_t DOMEvent_iface_tids[] = {
@@ -2982,8 +2982,8 @@ static dispex_static_data_t DOMEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMUIEvent_dispex_vtbl = {
-    DOMEvent_destructor,
-    DOMUIEvent_unlink
+    .destructor       = DOMEvent_destructor,
+    .unlink           = DOMUIEvent_unlink
 };
 
 static const tid_t DOMUIEvent_iface_tids[] = {
@@ -3000,8 +3000,8 @@ static dispex_static_data_t DOMUIEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMouseEvent_dispex_vtbl = {
-    DOMEvent_destructor,
-    DOMMouseEvent_unlink
+    .destructor       = DOMEvent_destructor,
+    .unlink           = DOMMouseEvent_unlink
 };
 
 static const tid_t DOMMouseEvent_iface_tids[] = {
@@ -3019,8 +3019,8 @@ static dispex_static_data_t DOMMouseEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMKeyboardEvent_dispex_vtbl = {
-    DOMEvent_destructor,
-    DOMKeyboardEvent_unlink
+    .destructor       = DOMEvent_destructor,
+    .unlink           = DOMKeyboardEvent_unlink
 };
 
 static const tid_t DOMKeyboardEvent_iface_tids[] = {
@@ -3052,8 +3052,8 @@ static dispex_static_data_t DOMPageTransitionEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
-    DOMCustomEvent_destructor,
-    DOMCustomEvent_unlink
+    .destructor       = DOMCustomEvent_destructor,
+    .unlink           = DOMCustomEvent_unlink
 };
 
 static const tid_t DOMCustomEvent_iface_tids[] = {
@@ -3070,8 +3070,8 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
-    DOMMessageEvent_destructor,
-    DOMMessageEvent_unlink
+    .destructor       = DOMMessageEvent_destructor,
+    .unlink           = DOMMessageEvent_unlink
 };
 
 static const tid_t DOMMessageEvent_iface_tids[] = {
@@ -3088,8 +3088,8 @@ static dispex_static_data_t DOMMessageEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMProgressEvent_dispex_vtbl = {
-    DOMEvent_destructor,
-    DOMProgressEvent_unlink
+    .destructor       = DOMEvent_destructor,
+    .unlink           = DOMProgressEvent_unlink
 };
 
 static const tid_t DOMProgressEvent_iface_tids[] = {
@@ -3106,8 +3106,8 @@ static dispex_static_data_t DOMProgressEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
-    DOMStorageEvent_destructor,
-    DOMEvent_unlink
+    .destructor       = DOMStorageEvent_destructor,
+    .unlink           = DOMEvent_unlink
 };
 
 static const tid_t DOMStorageEvent_iface_tids[] = {

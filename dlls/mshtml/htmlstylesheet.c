@@ -220,8 +220,8 @@ static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRule_dispex_vtbl = {
-    HTMLStyleSheetRule_destructor,
-    HTMLStyleSheetRule_unlink
+    .destructor       = HTMLStyleSheetRule_destructor,
+    .unlink           = HTMLStyleSheetRule_unlink
 };
 
 static const tid_t HTMLStyleSheetRule_iface_tids[] = {
@@ -492,12 +492,11 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
-    HTMLStyleSheetRulesCollection_destructor,
-    HTMLStyleSheetRulesCollection_unlink,
-    NULL,
-    HTMLStyleSheetRulesCollection_get_dispid,
-    HTMLStyleSheetRulesCollection_get_name,
-    HTMLStyleSheetRulesCollection_invoke
+    .destructor       = HTMLStyleSheetRulesCollection_destructor,
+    .unlink           = HTMLStyleSheetRulesCollection_unlink,
+    .get_dispid       = HTMLStyleSheetRulesCollection_get_dispid,
+    .get_name         = HTMLStyleSheetRulesCollection_get_name,
+    .invoke           = HTMLStyleSheetRulesCollection_invoke
 };
 static const tid_t HTMLStyleSheetRulesCollection_iface_tids[] = {
     IHTMLStyleSheetRulesCollection_tid,
@@ -929,12 +928,11 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
-    HTMLStyleSheetsCollection_destructor,
-    HTMLStyleSheetsCollection_unlink,
-    NULL,
-    HTMLStyleSheetsCollection_get_dispid,
-    HTMLStyleSheetsCollection_get_name,
-    HTMLStyleSheetsCollection_invoke
+    .destructor       = HTMLStyleSheetsCollection_destructor,
+    .unlink           = HTMLStyleSheetsCollection_unlink,
+    .get_dispid       = HTMLStyleSheetsCollection_get_dispid,
+    .get_name         = HTMLStyleSheetsCollection_get_name,
+    .invoke           = HTMLStyleSheetsCollection_invoke
 };
 static const tid_t HTMLStyleSheetsCollection_iface_tids[] = {
     IHTMLStyleSheetsCollection_tid,
@@ -1520,8 +1518,8 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheet_dispex_vtbl = {
-    HTMLStyleSheet_destructor,
-    HTMLStyleSheet_unlink
+    .destructor       = HTMLStyleSheet_destructor,
+    .unlink           = HTMLStyleSheet_unlink
 };
 
 static const tid_t HTMLStyleSheet_iface_tids[] = {

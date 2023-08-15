@@ -345,8 +345,8 @@ static void HTMLSelectionObject_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLSelectionObject_dispex_vtbl = {
-    HTMLSelectionObject_destructor,
-    HTMLSelectionObject_unlink
+    .destructor       = HTMLSelectionObject_destructor,
+    .unlink           = HTMLSelectionObject_unlink
 };
 
 static const tid_t HTMLSelectionObject_iface_tids[] = {

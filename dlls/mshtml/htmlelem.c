@@ -861,8 +861,8 @@ void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 static const dispex_static_data_vtbl_t HTMLRect_dispex_vtbl = {
-    HTMLRect_destructor,
-    HTMLRect_unlink
+    .destructor       = HTMLRect_destructor,
+    .unlink           = HTMLRect_unlink
 };
 
 static const tid_t HTMLRect_iface_tids[] = {
@@ -1295,13 +1295,11 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 }
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
-    HTMLRectCollection_destructor,
-    HTMLRectCollection_unlink,
-    NULL,
-    HTMLRectCollection_get_dispid,
-    HTMLRectCollection_get_name,
-    HTMLRectCollection_invoke,
-    NULL
+    .destructor       = HTMLRectCollection_destructor,
+    .unlink           = HTMLRectCollection_unlink,
+    .get_dispid       = HTMLRectCollection_get_dispid,
+    .get_name         = HTMLRectCollection_get_name,
+    .invoke           = HTMLRectCollection_invoke,
 };
 static const tid_t HTMLRectCollection_iface_tids[] = {
     IHTMLRectCollection_tid,
@@ -7356,23 +7354,17 @@ static const tid_t HTMLElement_iface_tids[] = {
 
 const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
-        NULL,
-        NULL,
-        NULL,
-        HTMLElement_get_dispid,
-        HTMLElement_get_name,
-        HTMLElement_invoke,
-        NULL,
-        NULL,
-        NULL,
-        HTMLElement_populate_props
+        .get_dispid          = HTMLElement_get_dispid,
+        .get_name            = HTMLElement_get_name,
+        .invoke              = HTMLElement_invoke,
+        .populate_props      = HTMLElement_populate_props
     },
-    HTMLElement_get_gecko_target,
-    HTMLElement_bind_event,
-    HTMLElement_get_parent_event_target,
-    HTMLElement_handle_event_default,
-    HTMLElement_get_cp_container,
-    HTMLElement_set_current_event
+    .get_gecko_target        = HTMLElement_get_gecko_target,
+    .bind_event              = HTMLElement_bind_event,
+    .get_parent_event_target = HTMLElement_get_parent_event_target,
+    .handle_event_default    = HTMLElement_handle_event_default,
+    .get_cp_container        = HTMLElement_get_cp_container,
+    .set_current_event       = HTMLElement_set_current_event
 };
 
 struct token_list {
@@ -7834,12 +7826,12 @@ static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 }
 
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
-    token_list_destructor,
-    token_list_unlink,
-    token_list_value,
-    token_list_get_dispid,
-    token_list_get_name,
-    token_list_invoke
+    .destructor       = token_list_destructor,
+    .unlink           = token_list_unlink,
+    .value            = token_list_value,
+    .get_dispid       = token_list_get_dispid,
+    .get_name         = token_list_get_name,
+    .invoke           = token_list_invoke
 };
 
 static const tid_t token_list_iface_tids[] = {
@@ -8261,13 +8253,10 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
-    HTMLFiltersCollection_destructor,
-    NULL,
-    NULL,
-    HTMLFiltersCollection_get_dispid,
-    HTMLFiltersCollection_get_name,
-    HTMLFiltersCollection_invoke,
-    NULL
+    .destructor       = HTMLFiltersCollection_destructor,
+    .get_dispid       = HTMLFiltersCollection_get_dispid,
+    .get_name         = HTMLFiltersCollection_get_name,
+    .invoke           = HTMLFiltersCollection_invoke,
 };
 
 static const tid_t HTMLFiltersCollection_iface_tids[] = {
@@ -9028,13 +9017,11 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 }
 
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
-    HTMLAttributeCollection_destructor,
-    HTMLAttributeCollection_unlink,
-    NULL,
-    HTMLAttributeCollection_get_dispid,
-    HTMLAttributeCollection_get_name,
-    HTMLAttributeCollection_invoke,
-    NULL
+    .destructor       = HTMLAttributeCollection_destructor,
+    .unlink           = HTMLAttributeCollection_unlink,
+    .get_dispid       = HTMLAttributeCollection_get_dispid,
+    .get_name         = HTMLAttributeCollection_get_name,
+    .invoke           = HTMLAttributeCollection_invoke,
 };
 
 static const tid_t HTMLAttributeCollection_iface_tids[] = {

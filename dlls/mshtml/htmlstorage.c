@@ -1314,15 +1314,12 @@ static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pi
 }
 
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
-    HTMLStorage_destructor,
-    NULL,
-    NULL,
-    HTMLStorage_get_dispid,
-    HTMLStorage_get_name,
-    HTMLStorage_invoke,
-    HTMLStorage_delete,
-    HTMLStorage_next_dispid,
-    NULL
+    .destructor       = HTMLStorage_destructor,
+    .get_dispid       = HTMLStorage_get_dispid,
+    .get_name         = HTMLStorage_get_name,
+    .invoke           = HTMLStorage_invoke,
+    .delete           = HTMLStorage_delete,
+    .next_dispid      = HTMLStorage_next_dispid,
 };
 
 static const tid_t HTMLStorage_iface_tids[] = {

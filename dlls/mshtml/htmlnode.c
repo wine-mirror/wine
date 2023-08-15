@@ -443,13 +443,11 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
-    HTMLDOMChildrenCollection_destructor,
-    HTMLDOMChildrenCollection_unlink,
-    NULL,
-    HTMLDOMChildrenCollection_get_dispid,
-    HTMLDOMChildrenCollection_get_name,
-    HTMLDOMChildrenCollection_invoke,
-    NULL
+    .destructor       = HTMLDOMChildrenCollection_destructor,
+    .unlink           = HTMLDOMChildrenCollection_unlink,
+    .get_dispid       = HTMLDOMChildrenCollection_get_dispid,
+    .get_name         = HTMLDOMChildrenCollection_get_name,
+    .invoke           = HTMLDOMChildrenCollection_invoke,
 };
 
 static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {

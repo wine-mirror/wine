@@ -369,12 +369,9 @@ static const event_target_vtbl_t DocumentType_event_target_vtbl = {
     {
         NULL,
     },
-    DocumentType_get_gecko_target,
-    NULL,
-    DocumentType_get_parent_event_target,
-    NULL,
-    NULL,
-    DocumentType_set_current_event
+    .get_gecko_target        = DocumentType_get_gecko_target,
+    .get_parent_event_target = DocumentType_get_parent_event_target,
+    .set_current_event       = DocumentType_set_current_event
 };
 
 static const tid_t DocumentType_iface_tids[] = {
@@ -6086,23 +6083,16 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
 
 static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        HTMLDocumentNode_get_name,
-        HTMLDocumentNode_invoke,
-        NULL,
-        HTMLDocumentNode_next_dispid,
-        HTMLDocumentNode_get_compat_mode,
-        NULL
+        .get_name            = HTMLDocumentNode_get_name,
+        .invoke              = HTMLDocumentNode_invoke,
+        .next_dispid         = HTMLDocumentNode_next_dispid,
+        .get_compat_mode     = HTMLDocumentNode_get_compat_mode,
     },
-    HTMLDocumentNode_get_gecko_target,
-    HTMLDocumentNode_bind_event,
-    HTMLDocumentNode_get_parent_event_target,
-    NULL,
-    HTMLDocumentNode_get_cp_container,
-    HTMLDocumentNode_set_current_event
+    .get_gecko_target        = HTMLDocumentNode_get_gecko_target,
+    .bind_event              = HTMLDocumentNode_bind_event,
+    .get_parent_event_target = HTMLDocumentNode_get_parent_event_target,
+    .get_cp_container        = HTMLDocumentNode_get_cp_container,
+    .set_current_event       = HTMLDocumentNode_set_current_event
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {

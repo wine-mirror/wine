@@ -308,8 +308,8 @@ static void HTMLDOMImplementation_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMImplementation_dispex_vtbl = {
-    HTMLDOMImplementation_destructor,
-    HTMLDOMImplementation_unlink
+    .destructor       = HTMLDOMImplementation_destructor,
+    .unlink           = HTMLDOMImplementation_unlink
 };
 
 static void HTMLDOMImplementation_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
@@ -581,7 +581,7 @@ static void HTMLScreen_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLScreen_dispex_vtbl = {
-    HTMLScreen_destructor,
+    .destructor       = HTMLScreen_destructor,
 };
 
 static const tid_t HTMLScreen_iface_tids[] = {
@@ -758,7 +758,7 @@ static void OmHistory_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t OmHistory_dispex_vtbl = {
-    OmHistory_destructor,
+    .destructor       = OmHistory_destructor,
 };
 
 static const tid_t OmHistory_iface_tids[] = {
@@ -935,8 +935,8 @@ static void HTMLPluginsCollection_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPluginsCollection_dispex_vtbl = {
-    HTMLPluginsCollection_destructor,
-    HTMLPluginsCollection_unlink
+    .destructor       = HTMLPluginsCollection_destructor,
+    .unlink           = HTMLPluginsCollection_unlink
 };
 
 static const tid_t HTMLPluginsCollection_iface_tids[] = {
@@ -1101,8 +1101,8 @@ static void HTMLMimeTypesCollection_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLMimeTypesCollection_dispex_vtbl = {
-    HTMLMimeTypesCollection_destructor,
-    HTMLMimeTypesCollection_unlink
+    .destructor       = HTMLMimeTypesCollection_destructor,
+    .unlink           = HTMLMimeTypesCollection_unlink
 };
 
 static const tid_t HTMLMimeTypesCollection_iface_tids[] = {
@@ -1552,8 +1552,8 @@ static void OmNavigator_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t OmNavigator_dispex_vtbl = {
-    OmNavigator_destructor,
-    OmNavigator_unlink
+    .destructor       = OmNavigator_destructor,
+    .unlink           = OmNavigator_unlink
 };
 
 static const tid_t OmNavigator_iface_tids[] = {
@@ -2148,8 +2148,8 @@ static void HTMLPerformanceNavigation_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPerformanceNavigation_dispex_vtbl = {
-    HTMLPerformanceNavigation_destructor,
-    HTMLPerformanceNavigation_unlink
+    .destructor       = HTMLPerformanceNavigation_destructor,
+    .unlink           = HTMLPerformanceNavigation_unlink
 };
 
 static const tid_t HTMLPerformanceNavigation_iface_tids[] = {
@@ -2350,8 +2350,8 @@ static void HTMLPerformance_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPerformance_dispex_vtbl = {
-    HTMLPerformance_destructor,
-    HTMLPerformance_unlink
+    .destructor       = HTMLPerformance_destructor,
+    .unlink           = HTMLPerformance_unlink
 };
 
 static const tid_t HTMLPerformance_iface_tids[] = {
@@ -2530,7 +2530,7 @@ static void HTMLNamespaceCollection_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLNamespaceCollection_dispex_vtbl = {
-    HTMLNamespaceCollection_destructor,
+    .destructor       = HTMLNamespaceCollection_destructor,
 };
 
 static const tid_t HTMLNamespaceCollection_iface_tids[] = {
@@ -2799,7 +2799,7 @@ static void console_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t console_dispex_vtbl = {
-    console_destructor,
+    .destructor       = console_destructor,
 };
 
 static const tid_t console_iface_tids[] = {
@@ -3142,8 +3142,8 @@ static void media_query_list_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t media_query_list_dispex_vtbl = {
-    media_query_list_destructor,
-    media_query_list_unlink
+    .destructor       = media_query_list_destructor,
+    .unlink           = media_query_list_unlink
 };
 
 static const tid_t media_query_list_iface_tids[] = {

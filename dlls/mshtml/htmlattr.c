@@ -496,8 +496,8 @@ static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
-    HTMLDOMAttribute_destructor,
-    HTMLDOMAttribute_unlink
+    .destructor       = HTMLDOMAttribute_destructor,
+    .unlink           = HTMLDOMAttribute_unlink
 };
 
 static const tid_t HTMLDOMAttribute_iface_tids[] = {

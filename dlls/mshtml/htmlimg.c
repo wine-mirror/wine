@@ -979,12 +979,8 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
 };
 
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
-    HTMLImageElementFactory_destructor,
-    NULL,
-    HTMLImageElementFactory_value,
-    NULL,
-    NULL,
-    NULL
+    .destructor       = HTMLImageElementFactory_destructor,
+    .value            = HTMLImageElementFactory_value,
 };
 
 static dispex_static_data_t HTMLImageElementFactory_dispex = {

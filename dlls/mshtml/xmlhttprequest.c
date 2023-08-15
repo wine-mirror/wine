@@ -1594,11 +1594,11 @@ static void HTMLXMLHttpRequest_init_dispex_info(dispex_data_t *info, compat_mode
 
 static const event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     {
-        HTMLXMLHttpRequest_destructor,
-        HTMLXMLHttpRequest_unlink
+        .destructor          = HTMLXMLHttpRequest_destructor,
+        .unlink              = HTMLXMLHttpRequest_unlink
     },
-    HTMLXMLHttpRequest_get_gecko_target,
-    HTMLXMLHttpRequest_bind_event
+    .get_gecko_target        = HTMLXMLHttpRequest_get_gecko_target,
+    .bind_event              = HTMLXMLHttpRequest_bind_event
 };
 
 static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
@@ -1815,9 +1815,8 @@ static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WOR
 }
 
 static const dispex_static_data_vtbl_t HTMLXMLHttpRequestFactory_dispex_vtbl = {
-    HTMLXMLHttpRequestFactory_destructor,
-    NULL,
-    HTMLXMLHttpRequestFactory_value
+    .destructor       = HTMLXMLHttpRequestFactory_destructor,
+    .value            = HTMLXMLHttpRequestFactory_value
 };
 
 static const tid_t HTMLXMLHttpRequestFactory_iface_tids[] = {
