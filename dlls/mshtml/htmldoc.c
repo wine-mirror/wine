@@ -365,7 +365,7 @@ static IHTMLEventObj *DocumentType_set_current_event(DispatchEx *dispex, IHTMLEv
     return default_set_current_event(This->node.doc->window, event);
 }
 
-static event_target_vtbl_t DocumentType_event_target_vtbl = {
+static const event_target_vtbl_t DocumentType_event_target_vtbl = {
     {
         NULL,
     },
