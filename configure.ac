@@ -403,7 +403,6 @@ AC_CHECK_HEADERS(\
 	CL/cl.h \
 	EGL/egl.h \
 	OpenCL/opencl.h \
-	PCSC/pcsclite.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
@@ -1395,16 +1394,12 @@ WINE_NOTICE_WITH(pcap,[test "x$ac_cv_lib_pcap_pcap_init" != xyes],
 dnl **** Check for libpcsclite ****
 if test "x$with_pcsclite" != "xno"
 then
-    AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])])
-    if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes && test "$ac_cv_header_PCSC_pcsclite_h" = "yes"
-    then
-        case $host_os in
-          darwin*|macosx*)
-            AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
-        esac
-    fi
+    AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])],
+                 [case $host_os in
+                    darwin*|macosx*) AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
+                  esac])
 fi
-WINE_NOTICE_WITH(pcsclite,[test "x$PCSCLITE_LIBS" = x || test "$ac_cv_header_PCSC_pcsclite_h" != "yes"],
+WINE_NOTICE_WITH(pcsclite,[test "x$PCSCLITE_LIBS" = x],
                  [libpcsclite not found, smart cards won't be supported.],
                  [enable_winscard])
 
