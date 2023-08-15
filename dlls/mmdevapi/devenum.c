@@ -18,7 +18,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
@@ -1546,13 +1545,13 @@ static ULONG WINAPI PB_Release(IPropertyBag *iface)
 static HRESULT WINAPI PB_Read(IPropertyBag *iface, LPCOLESTR name, VARIANT *var, IErrorLog *log)
 {
     IPropertyBagImpl *This = impl_from_IPropertyBag(iface);
-    TRACE("Trying to read %s, type %u\n", debugstr_w(name), var->n1.n2.vt);
+    TRACE("Trying to read %s, type %u\n", debugstr_w(name), var->vt);
     if (!lstrcmpW(name, L"DSGuid"))
     {
         WCHAR guidstr[39];
         StringFromGUID2(&This->devguid, guidstr,ARRAY_SIZE(guidstr));
-        var->n1.n2.vt = VT_BSTR;
-        var->n1.n2.n3.bstrVal = SysAllocString(guidstr);
+        var->vt = VT_BSTR;
+        var->bstrVal = SysAllocString(guidstr);
         return S_OK;
     }
     ERR("Unknown property '%s' queried\n", debugstr_w(name));
