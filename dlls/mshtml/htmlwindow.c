@@ -257,9 +257,6 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        if (This->console)
-            IWineMSHTMLConsole_Release(This->console);
-
         if(is_outer_window(This))
             release_outer_window(This->outer_window);
         else
@@ -3255,15 +3252,16 @@ static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, 
 static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
 {
     HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("iface %p, console %p.\n", iface, console);
 
-    if (!This->console)
-        create_console(dispex_compat_mode(&This->inner_window->event_target.dispex), &This->console);
+    if (!window->console)
+        create_console(dispex_compat_mode(&window->event_target.dispex), &window->console);
 
-    *console = (IDispatch *)This->console;
-    if (This->console)
-        IWineMSHTMLConsole_AddRef(This->console);
+    *console = (IDispatch *)window->console;
+    if (window->console)
+        IWineMSHTMLConsole_AddRef(window->console);
     return S_OK;
 }
 
@@ -3725,7 +3723,7 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
 
     TRACE("%p\n", This);
 
-    unlink_ref(&This->base.console);
+    unlink_ref(&This->console);
     detach_inner_window(This);
 
     if(This->doc) {

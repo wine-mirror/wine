@@ -569,8 +569,6 @@ struct HTMLWindow {
     IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
     IWineHTMLWindowCompatPrivate IWineHTMLWindowCompatPrivate_iface;
 
-    IWineMSHTMLConsole *console;
-
     LONG ref;
 
     HTMLInnerWindow *inner_window;
@@ -625,6 +623,7 @@ struct HTMLInnerWindow {
     IOmNavigator *navigator;
     IHTMLStorage *session_storage;
     IHTMLStorage *local_storage;
+    IWineMSHTMLConsole *console;
 
     BOOL performance_initialized;
     VARIANT performance;
