@@ -7736,8 +7736,8 @@ static void test_pointsize(void)
     ok(color == 0x00ffff00, "pSprite: Pixel (64 + 4),(64 - 4) has color 0x%08x, expected 0x00ffff00\n", color);
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
-    U(matrix).m[0][0] =  1.0f / 64.0f;
-    U(matrix).m[1][1] = -1.0f / 64.0f;
+    matrix.m[0][0] =  1.0f / 64.0f;
+    matrix.m[1][1] = -1.0f / 64.0f;
     hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &matrix);
     ok(SUCCEEDED(hr), "Failed to set projection matrix, hr %#lx.\n", hr);
 
@@ -7756,7 +7756,7 @@ static void test_pointsize(void)
     ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_POINTSCALE_C, *(DWORD *)&c);
     ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#lx.\n", hr);
-    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, &S(U(matrix))._11, 4);
+    hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, &matrix._11, 4);
     ok(SUCCEEDED(hr), "Failed to set vertex shader constants, hr %#lx.\n", hr);
 
     if (caps.MaxPointSize < 63.0f)
@@ -12222,8 +12222,8 @@ START_TEST(visual)
     /* Only Windows XP's default VGA driver should have an empty description */
     ok(identifier.Description[0] || broken(!strcmp(identifier.Driver, "vga.dll")), "Empty driver description.\n");
     trace("Driver version %d.%d.%d.%d\n",
-            HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
-            HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
+            HIWORD(identifier.DriverVersion.HighPart), LOWORD(identifier.DriverVersion.HighPart),
+            HIWORD(identifier.DriverVersion.LowPart), LOWORD(identifier.DriverVersion.LowPart));
 
     IDirect3D8_Release(d3d);
 
