@@ -501,7 +501,7 @@ static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
     LONG ref;
 
-    ref = ccref_incr(&This->ccref, (nsISupports*)&This->IHTMLDOMNode_iface);
+    ref = ccref_incr(&This->event_target.dispex.ccref, (nsISupports*)&This->IHTMLDOMNode_iface);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -511,7 +511,7 @@ static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
 static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    LONG ref = ccref_decr(&This->ccref, (nsISupports*)&This->IHTMLDOMNode_iface, &node_ccp);
+    LONG ref = ccref_decr(&This->event_target.dispex.ccref, (nsISupports*)&This->IHTMLDOMNode_iface, &node_ccp);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -1490,7 +1490,6 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
     node->IHTMLDOMNode3_iface.lpVtbl = &HTMLDOMNode3Vtbl;
 
-    ccref_init(&node->ccref, 1);
     EventTarget_Init(&node->event_target, (IUnknown*)&node->IHTMLDOMNode_iface, dispex_data, doc->document_mode);
 
     if(&doc->node != node)
@@ -1582,7 +1581,7 @@ static nsresult NSAPI HTMLDOMNode_traverse(void *ccp, void *p, nsCycleCollection
 
     TRACE("%p\n", This);
 
-    describe_cc_node(&This->ccref, "HTMLDOMNode", cb);
+    describe_cc_node(&This->event_target.dispex.ccref, "HTMLDOMNode", cb);
 
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "This->nsnode", cb);

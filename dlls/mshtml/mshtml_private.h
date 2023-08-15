@@ -337,6 +337,11 @@ typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 #define MSHTML_CUSTOM_DISPID_CNT (MSHTML_DISPID_CUSTOM_MAX-MSHTML_DISPID_CUSTOM_MIN)
 
 typedef struct DispatchEx DispatchEx;
+typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;
+
+typedef struct {
+    UINT_PTR x;
+} nsCycleCollectingAutoRefCnt;
 
 /*
    dispex is our base IDispatchEx implementation for all mshtml objects, and the vtbl allows
@@ -393,22 +398,17 @@ struct DispatchEx {
     IDispatchEx IDispatchEx_iface;
 
     IUnknown *outer;
+    nsCycleCollectingAutoRefCnt ccref;
 
     dispex_data_t *info;
     dispex_dynamic_data_t *dynamic_data;
 };
 
 typedef struct {
-    UINT_PTR x;
-} nsCycleCollectingAutoRefCnt;
-
-typedef struct {
     void *vtbl;
     int ref_flags;
     void *callbacks;
 } ExternalCycleCollectionParticipant;
-
-typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;
 
 typedef struct {
     nsresult (NSAPI *traverse)(void*,void*,nsCycleCollectionTraversalCallback*);
@@ -850,8 +850,6 @@ struct HTMLDOMNode {
     IHTMLDOMNode2 IHTMLDOMNode2_iface;
     IHTMLDOMNode3 IHTMLDOMNode3_iface;
     const NodeImplVtbl *vtbl;
-
-    nsCycleCollectingAutoRefCnt ccref;
 
     nsIDOMNode *nsnode;
     HTMLDocumentNode *doc;

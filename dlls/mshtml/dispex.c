@@ -2094,6 +2094,7 @@ void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *da
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->outer = outer;
     dispex->dynamic_data = NULL;
+    ccref_init(&dispex->ccref, 1);
 
     if(data->vtbl && data->vtbl->get_compat_mode) {
         /* delayed init */
