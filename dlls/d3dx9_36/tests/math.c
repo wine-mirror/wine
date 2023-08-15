@@ -96,7 +96,7 @@ static BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2, unsigned 
     {
         for (j = 0; j < 4; ++j)
         {
-            if (!compare_float(U(*m1).m[i][j], U(*m2).m[i][j], ulps))
+            if (!compare_float(m1->m[i][j], m2->m[i][j], ulps))
                 return FALSE;
         }
     }
@@ -169,14 +169,14 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             "%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e}, "
             "expected {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, "
             "%.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
-            U(*matrix).m[0][0], U(*matrix).m[0][1], U(*matrix).m[0][2], U(*matrix).m[0][3],
-            U(*matrix).m[1][0], U(*matrix).m[1][1], U(*matrix).m[1][2], U(*matrix).m[1][3],
-            U(*matrix).m[2][0], U(*matrix).m[2][1], U(*matrix).m[2][2], U(*matrix).m[2][3],
-            U(*matrix).m[3][0], U(*matrix).m[3][1], U(*matrix).m[3][2], U(*matrix).m[3][3],
-            U(*expected).m[0][0], U(*expected).m[0][1], U(*expected).m[0][2], U(*expected).m[0][3],
-            U(*expected).m[1][0], U(*expected).m[1][1], U(*expected).m[1][2], U(*expected).m[1][3],
-            U(*expected).m[2][0], U(*expected).m[2][1], U(*expected).m[2][2], U(*expected).m[2][3],
-            U(*expected).m[3][0], U(*expected).m[3][1], U(*expected).m[3][2], U(*expected).m[3][3]);
+            matrix->m[0][0], matrix->m[0][1], matrix->m[0][2], matrix->m[0][3],
+            matrix->m[1][0], matrix->m[1][1], matrix->m[1][2], matrix->m[1][3],
+            matrix->m[2][0], matrix->m[2][1], matrix->m[2][2], matrix->m[2][3],
+            matrix->m[3][0], matrix->m[3][1], matrix->m[3][2], matrix->m[3][3],
+            expected->m[0][0], expected->m[0][1], expected->m[0][2], expected->m[0][3],
+            expected->m[1][0], expected->m[1][1], expected->m[1][2], expected->m[1][3],
+            expected->m[2][0], expected->m[2][1], expected->m[2][2], expected->m[2][3],
+            expected->m[3][0], expected->m[3][1], expected->m[3][2], expected->m[3][3]);
 }
 
 #define expect_vec4_array(count, expected, vector, ulps) expect_vec4_array_(__LINE__, count, expected, vector, ulps)
@@ -204,10 +204,10 @@ static void set_matrix(D3DXMATRIX* mat,
         float m20, float m21, float m22, float m23,
         float m30, float m31, float m32, float m33)
 {
-    U(mat)->m[0][0] = m00; U(mat)->m[0][1] = m01; U(mat)->m[0][2] = m02; U(mat)->m[0][3] = m03;
-    U(mat)->m[1][0] = m10; U(mat)->m[1][1] = m11; U(mat)->m[1][2] = m12; U(mat)->m[1][3] = m13;
-    U(mat)->m[2][0] = m20; U(mat)->m[2][1] = m21; U(mat)->m[2][2] = m22; U(mat)->m[2][3] = m23;
-    U(mat)->m[3][0] = m30; U(mat)->m[3][1] = m31; U(mat)->m[3][2] = m32; U(mat)->m[3][3] = m33;
+    mat->m[0][0] = m00; mat->m[0][1] = m01; mat->m[0][2] = m02; mat->m[0][3] = m03;
+    mat->m[1][0] = m10; mat->m[1][1] = m11; mat->m[1][2] = m12; mat->m[1][3] = m13;
+    mat->m[2][0] = m20; mat->m[2][1] = m21; mat->m[2][2] = m22; mat->m[2][3] = m23;
+    mat->m[3][0] = m30; mat->m[3][1] = m31; mat->m[3][2] = m32; mat->m[3][3] = m33;
 }
 
 static HWND create_window(void)
@@ -379,19 +379,19 @@ static void D3DXMatrixTest(void)
     D3DXVECTOR4 light;
     D3DXMATRIX *ret;
 
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
-    U(mat).m[3][3] = -40.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = 10.0f; mat.m[1][1] = 20.0f; mat.m[2][2] = 30.0f;
+    mat.m[3][3] = -40.0f;
 
-    U(mat2).m[0][0] = 1.0f; U(mat2).m[1][0] = 2.0f; U(mat2).m[2][0] = 3.0f;
-    U(mat2).m[3][0] = 4.0f; U(mat2).m[0][1] = 5.0f; U(mat2).m[1][1] = 6.0f;
-    U(mat2).m[2][1] = 7.0f; U(mat2).m[3][1] = 8.0f; U(mat2).m[0][2] = -8.0f;
-    U(mat2).m[1][2] = -7.0f; U(mat2).m[2][2] = -6.0f; U(mat2).m[3][2] = -5.0f;
-    U(mat2).m[0][3] = -4.0f; U(mat2).m[1][3] = -3.0f; U(mat2).m[2][3] = -2.0f;
-    U(mat2).m[3][3] = -1.0f;
+    mat2.m[0][0] = 1.0f; mat2.m[1][0] = 2.0f; mat2.m[2][0] = 3.0f;
+    mat2.m[3][0] = 4.0f; mat2.m[0][1] = 5.0f; mat2.m[1][1] = 6.0f;
+    mat2.m[2][1] = 7.0f; mat2.m[3][1] = 8.0f; mat2.m[0][2] = -8.0f;
+    mat2.m[1][2] = -7.0f; mat2.m[2][2] = -6.0f; mat2.m[3][2] = -5.0f;
+    mat2.m[0][3] = -4.0f; mat2.m[1][3] = -3.0f; mat2.m[2][3] = -2.0f;
+    mat2.m[3][3] = -1.0f;
 
     plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
 
@@ -417,15 +417,15 @@ static void D3DXMatrixTest(void)
     expect_matrix(&expectedmat, &gotmat, 0);
 
     /* Test the NULL case */
-    U(expectedmat).m[3][0] = 1.0f; U(expectedmat).m[3][1] = -3.0f; U(expectedmat).m[3][2] = 7.0f; U(expectedmat).m[3][3] = 1.0f;
+    expectedmat.m[3][0] = 1.0f; expectedmat.m[3][1] = -3.0f; expectedmat.m[3][2] = 7.0f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, &q, &axis);
     expect_matrix(&expectedmat, &gotmat, 0);
 
-    U(expectedmat).m[3][0] = -1240.0f; U(expectedmat).m[3][1] = 670.0f; U(expectedmat).m[3][2] = 560.0f; U(expectedmat).m[3][3] = 1.0f;
+    expectedmat.m[3][0] = -1240.0f; expectedmat.m[3][1] = 670.0f; expectedmat.m[3][2] = 560.0f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, &q, NULL);
     expect_matrix(&expectedmat, &gotmat, 0);
 
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = 0.0f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, NULL, &q, NULL);
     expect_matrix(&expectedmat, &gotmat, 0);
 
@@ -440,7 +440,7 @@ static void D3DXMatrixTest(void)
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, NULL, &axis);
     expect_matrix(&expectedmat, &gotmat, 0);
 
-    U(expectedmat).m[3][0] = 0.0f; U(expectedmat).m[3][1] = 0.0f; U(expectedmat).m[3][2] = 0.0f; U(expectedmat).m[3][3] = 1.0f;
+    expectedmat.m[3][0] = 0.0f; expectedmat.m[3][1] = 0.0f; expectedmat.m[3][2] = 0.0f; expectedmat.m[3][3] = 1.0f;
     D3DXMatrixAffineTransformation(&gotmat, 3.56f, &at, NULL, NULL);
     expect_matrix(&expectedmat, &gotmat, 0);
 
@@ -478,7 +478,7 @@ static void D3DXMatrixTest(void)
     expected = TRUE;
     got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
-    U(mat3).m[0][0] = 0.000009f;
+    mat3.m[0][0] = 0.000009f;
     expected = FALSE;
     got = D3DXMatrixIsIdentity(&mat3);
     ok(expected == got, "Expected : %d, Got : %d\n", expected, got);
@@ -1436,12 +1436,12 @@ static void D3DXPlaneTest(void)
     D3DXVECTOR4 vec;
     FLOAT expected, got;
 
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
-    U(mat).m[3][3] = -40.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = 10.0f; mat.m[1][1] = 20.0f; mat.m[2][2] = 30.0f;
+    mat.m[3][3] = -40.0f;
 
     plane.a = -3.0f; plane.b = -1.0f; plane.c = 4.0f; plane.d = 7.0f;
 
@@ -1694,132 +1694,132 @@ static void D3DXQuaternionTest(void)
 
 /*_______________D3DXQuaternionRotationMatrix___________________*/
     /* test when the trace is >0 */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = 10.0f; U(mat).m[1][1] = 20.0f; U(mat).m[2][2] = 30.0f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = 10.0f; mat.m[1][1] = 20.0f; mat.m[2][2] = 30.0f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 2.368682f; expectedquat.y = 0.768221f; expectedquat.z = -0.384111f; expectedquat.w = 3.905125f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 16);
     /* test the case when the greater element is (2,2) */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = -60.0f; U(mat).m[2][2] = 40.0f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = -60.0f; mat.m[2][2] = 40.0f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.233905f; expectedquat.y = -0.237290f; expectedquat.z = 5.267827f; expectedquat.w = -0.284747f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 64);
     /* test the case when the greater element is (1,1) */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 60.0f; U(mat).m[2][2] = -80.0f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 60.0f; mat.m[2][2] = -80.0f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 0.651031f; expectedquat.y = 6.144103f; expectedquat.z = -0.203447f; expectedquat.w = 0.488273f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is near 0 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.9f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = -0.9f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.709495f; expectedquat.y = 2.339872f; expectedquat.z = -0.534217f; expectedquat.w = 1.282122f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.49 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.51f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = -0.51f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.724923f; expectedquat.y = 2.318944f; expectedquat.z = -0.539039f; expectedquat.w = 1.293692f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.51 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.49f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = -0.49f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.725726f; expectedquat.y = 2.317865f; expectedquat.z = -0.539289f; expectedquat.w = 1.294294f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.99 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = -0.01f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = -0.01f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.745328f; expectedquat.y = 2.291833f; expectedquat.z = -0.545415f; expectedquat.w = 1.308996f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.0 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.0f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 0.0f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 1.745743f; expectedquat.y = 2.291288f; expectedquat.z = -0.545545f; expectedquat.w = 1.309307f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 1.01 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.01f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 0.01f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 18.408188f; expectedquat.y = 5.970223f; expectedquat.z = -2.985111f; expectedquat.w = 0.502494f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.5 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.5f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 0.5f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 15.105186f; expectedquat.y = 4.898980f; expectedquat.z = -2.449490f; expectedquat.w = 0.612372f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 1.7 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.70f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 0.70f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 14.188852f; expectedquat.y = 4.601790f; expectedquat.z = -2.300895f; expectedquat.w = 0.651920f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.99 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 0.99f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 0.99f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 13.114303f; expectedquat.y = 4.253287f; expectedquat.z = -2.126644f; expectedquat.w = 0.705337f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 2.0 in a matrix which is not a rotation */
-    U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
-    U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
-    U(mat).m[2][0] = 19.0f; U(mat).m[2][1] = -21.0f; U(mat).m[2][3] = 43.0f;
-    U(mat).m[3][0] = 2.0f; U(mat).m[3][1] = 3.0f; U(mat).m[3][2] = -4.0f;
-    U(mat).m[0][0] = -10.0f; U(mat).m[1][1] = 10.0f; U(mat).m[2][2] = 2.0f;
-    U(mat).m[3][3] = 48.0f;
+    mat.m[0][1] = 5.0f; mat.m[0][2] = 7.0f; mat.m[0][3] = 8.0f;
+    mat.m[1][0] = 11.0f; mat.m[1][2] = 16.0f; mat.m[1][3] = 33.0f;
+    mat.m[2][0] = 19.0f; mat.m[2][1] = -21.0f; mat.m[2][3] = 43.0f;
+    mat.m[3][0] = 2.0f; mat.m[3][1] = 3.0f; mat.m[3][2] = -4.0f;
+    mat.m[0][0] = -10.0f; mat.m[1][1] = 10.0f; mat.m[2][2] = 2.0f;
+    mat.m[3][3] = 48.0f;
     expectedquat.x = 10.680980f; expectedquat.y = 3.464102f; expectedquat.z = -1.732051f; expectedquat.w = 0.866025f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
     expect_quaternion(&expectedquat, &gotquat, 8);
@@ -2116,12 +2116,12 @@ static void D3DXVector3Test(void)
             9.0f, 10.0f, 11.0f, 12.0f,
             13.0f, 14.0f, 15.0f, 16.0f);
 
-    U(view).m[0][1] = 5.0f; U(view).m[0][2] = 7.0f; U(view).m[0][3] = 8.0f;
-    U(view).m[1][0] = 11.0f; U(view).m[1][2] = 16.0f; U(view).m[1][3] = 33.0f;
-    U(view).m[2][0] = 19.0f; U(view).m[2][1] = -21.0f; U(view).m[2][3] = 43.0f;
-    U(view).m[3][0] = 2.0f; U(view).m[3][1] = 3.0f; U(view).m[3][2] = -4.0f;
-    U(view).m[0][0] = 10.0f; U(view).m[1][1] = 20.0f; U(view).m[2][2] = 30.0f;
-    U(view).m[3][3] = -40.0f;
+    view.m[0][1] = 5.0f; view.m[0][2] = 7.0f; view.m[0][3] = 8.0f;
+    view.m[1][0] = 11.0f; view.m[1][2] = 16.0f; view.m[1][3] = 33.0f;
+    view.m[2][0] = 19.0f; view.m[2][1] = -21.0f; view.m[2][3] = 43.0f;
+    view.m[3][0] = 2.0f; view.m[3][1] = 3.0f; view.m[3][2] = -4.0f;
+    view.m[0][0] = 10.0f; view.m[1][1] = 20.0f; view.m[2][2] = 30.0f;
+    view.m[3][3] = -40.0f;
 
     set_matrix(&world,
             21.0f, 2.0f, 3.0f, 4.0f,
@@ -2568,22 +2568,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    U(exp_mat).m[0][0] = 10.0f;
-    U(exp_mat).m[1][0] = -17.320507f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = -1.035898f;
-    U(exp_mat).m[0][1] = 17.320507f;
-    U(exp_mat).m[1][1] = 10.0f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 6.401924f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = -1.035898f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 6.401924f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, &position);
     expect_matrix(&exp_mat, &got_mat, 2);
@@ -2597,22 +2597,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    U(exp_mat).m[0][0] = 10.0f;
-    U(exp_mat).m[1][0] = -17.320507f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = 4.964102f;
-    U(exp_mat).m[0][1] = 17.320507f;
-    U(exp_mat).m[1][1] = 10.0f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = -0.598076f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 4.964102f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = -0.598076f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, &center, angle, NULL);
     expect_matrix(&exp_mat, &got_mat, 8);
@@ -2626,22 +2626,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = 20.0f;
 
-    U(exp_mat).m[0][0] = 10.0f;
-    U(exp_mat).m[1][0] = -17.320507f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = -6.0f;
-    U(exp_mat).m[0][1] = 17.320507f;
-    U(exp_mat).m[1][1] = 10.0f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 7.0f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 10.0f;
+    exp_mat.m[1][0] = -17.320507f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = -6.0f;
+    exp_mat.m[0][1] = 17.320507f;
+    exp_mat.m[1][1] = 10.0f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 7.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, &position);
     expect_matrix(&exp_mat, &got_mat, 1);
@@ -2652,22 +2652,22 @@ static void test_Matrix_AffineTransformation2D(void)
 
     scale = -20.0f;
 
-    U(exp_mat).m[0][0] = 14.142133f;
-    U(exp_mat).m[1][0] = -14.142133f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = 0.0f;
-    U(exp_mat).m[0][1] = 14.142133;
-    U(exp_mat).m[1][1] = 14.142133f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 0.0f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 14.142133f;
+    exp_mat.m[1][0] = -14.142133f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 0.0f;
+    exp_mat.m[0][1] = 14.142133;
+    exp_mat.m[1][1] = 14.142133f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 0.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixAffineTransformation2D(&got_mat, scale, NULL, angle, NULL);
     expect_matrix(&exp_mat, &got_mat, 8);
@@ -2683,22 +2683,22 @@ static void test_Matrix_Decompose(void)
 
 /*___________*/
 
-    U(pm).m[0][0] = -9.23879206e-01f;
-    U(pm).m[1][0] = -2.70598412e-01f;
-    U(pm).m[2][0] =  2.70598441e-01f;
-    U(pm).m[3][0] = -5.00000000e+00f;
-    U(pm).m[0][1] =  2.70598471e-01f;
-    U(pm).m[1][1] =  3.80604863e-02f;
-    U(pm).m[2][1] =  9.61939573e-01f;
-    U(pm).m[3][1] =  0.00000000e+00f;
-    U(pm).m[0][2] = -2.70598441e-01f;
-    U(pm).m[1][2] =  9.61939573e-01f;
-    U(pm).m[2][2] =  3.80603075e-02f;
-    U(pm).m[3][2] =  1.00000000e+01f;
-    U(pm).m[0][3] =  0.00000000e+00f;
-    U(pm).m[1][3] =  0.00000000e+00f;
-    U(pm).m[2][3] =  0.00000000e+00f;
-    U(pm).m[3][3] =  1.00000000e+00f;
+    pm.m[0][0] = -9.23879206e-01f;
+    pm.m[1][0] = -2.70598412e-01f;
+    pm.m[2][0] =  2.70598441e-01f;
+    pm.m[3][0] = -5.00000000e+00f;
+    pm.m[0][1] =  2.70598471e-01f;
+    pm.m[1][1] =  3.80604863e-02f;
+    pm.m[2][1] =  9.61939573e-01f;
+    pm.m[3][1] =  0.00000000e+00f;
+    pm.m[0][2] = -2.70598441e-01f;
+    pm.m[1][2] =  9.61939573e-01f;
+    pm.m[2][2] =  3.80603075e-02f;
+    pm.m[3][2] =  1.00000000e+01f;
+    pm.m[0][3] =  0.00000000e+00f;
+    pm.m[1][3] =  0.00000000e+00f;
+    pm.m[2][3] =  0.00000000e+00f;
+    pm.m[3][3] =  1.00000000e+00f;
 
     exp_scale.x = 9.99999881e-01f;
     exp_scale.y = 9.99999881e-01f;
@@ -2720,22 +2720,22 @@ static void test_Matrix_Decompose(void)
 
 /*_________*/
 
-    U(pm).m[0][0] = -2.255813f;
-    U(pm).m[1][0] = 1.302324f;
-    U(pm).m[2][0] = 1.488373f;
-    U(pm).m[3][0] = 1.0f;
-    U(pm).m[0][1] = 1.302327f;
-    U(pm).m[1][1] = -0.7209296f;
-    U(pm).m[2][1] = 2.60465f;
-    U(pm).m[3][1] = 2.0f;
-    U(pm).m[0][2] = 1.488371f;
-    U(pm).m[1][2] = 2.604651f;
-    U(pm).m[2][2] = -0.02325551f;
-    U(pm).m[3][2] = 3.0f;
-    U(pm).m[0][3] = 0.0f;
-    U(pm).m[1][3] = 0.0f;
-    U(pm).m[2][3] = 0.0f;
-    U(pm).m[3][3] = 1.0f;
+    pm.m[0][0] = -2.255813f;
+    pm.m[1][0] = 1.302324f;
+    pm.m[2][0] = 1.488373f;
+    pm.m[3][0] = 1.0f;
+    pm.m[0][1] = 1.302327f;
+    pm.m[1][1] = -0.7209296f;
+    pm.m[2][1] = 2.60465f;
+    pm.m[3][1] = 2.0f;
+    pm.m[0][2] = 1.488371f;
+    pm.m[1][2] = 2.604651f;
+    pm.m[2][2] = -0.02325551f;
+    pm.m[3][2] = 3.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
 
     exp_scale.x = 2.99999928e+00f;
     exp_scale.y = 2.99999905e+00f;
@@ -2757,22 +2757,22 @@ static void test_Matrix_Decompose(void)
 
 /*_____________*/
 
-    U(pm).m[0][0] = 2.427051f;
-    U(pm).m[1][0] = 0.0f;
-    U(pm).m[2][0] = 1.763355f;
-    U(pm).m[3][0] = 5.0f;
-    U(pm).m[0][1] = 0.0f;
-    U(pm).m[1][1] = 3.0f;
-    U(pm).m[2][1] = 0.0f;
-    U(pm).m[3][1] = 5.0f;
-    U(pm).m[0][2] = -1.763355f;
-    U(pm).m[1][2] = 0.0f;
-    U(pm).m[2][2] = 2.427051f;
-    U(pm).m[3][2] = 5.0f;
-    U(pm).m[0][3] = 0.0f;
-    U(pm).m[1][3] = 0.0f;
-    U(pm).m[2][3] = 0.0f;
-    U(pm).m[3][3] = 1.0f;
+    pm.m[0][0] = 2.427051f;
+    pm.m[1][0] = 0.0f;
+    pm.m[2][0] = 1.763355f;
+    pm.m[3][0] = 5.0f;
+    pm.m[0][1] = 0.0f;
+    pm.m[1][1] = 3.0f;
+    pm.m[2][1] = 0.0f;
+    pm.m[3][1] = 5.0f;
+    pm.m[0][2] = -1.763355f;
+    pm.m[1][2] = 0.0f;
+    pm.m[2][2] = 2.427051f;
+    pm.m[3][2] = 5.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
 
     exp_scale.x = 2.99999976e+00f;
     exp_scale.y = 3.00000000e+00f;
@@ -2794,22 +2794,22 @@ static void test_Matrix_Decompose(void)
 
 /*_____________*/
 
-    U(pm).m[0][0] = -9.23879206e-01f;
-    U(pm).m[1][0] = -2.70598412e-01f;
-    U(pm).m[2][0] =  2.70598441e-01f;
-    U(pm).m[3][0] = -5.00000000e+00f;
-    U(pm).m[0][1] =  2.70598471e-01f;
-    U(pm).m[1][1] =  3.80604863e-02f;
-    U(pm).m[2][1] =  9.61939573e-01f;
-    U(pm).m[3][1] =  0.00000000e+00f;
-    U(pm).m[0][2] = -2.70598441e-01f;
-    U(pm).m[1][2] =  9.61939573e-01f;
-    U(pm).m[2][2] =  3.80603075e-02f;
-    U(pm).m[3][2] =  1.00000000e+01f;
-    U(pm).m[0][3] =  0.00000000e+00f;
-    U(pm).m[1][3] =  0.00000000e+00f;
-    U(pm).m[2][3] =  0.00000000e+00f;
-    U(pm).m[3][3] =  1.00000000e+00f;
+    pm.m[0][0] = -9.23879206e-01f;
+    pm.m[1][0] = -2.70598412e-01f;
+    pm.m[2][0] =  2.70598441e-01f;
+    pm.m[3][0] = -5.00000000e+00f;
+    pm.m[0][1] =  2.70598471e-01f;
+    pm.m[1][1] =  3.80604863e-02f;
+    pm.m[2][1] =  9.61939573e-01f;
+    pm.m[3][1] =  0.00000000e+00f;
+    pm.m[0][2] = -2.70598441e-01f;
+    pm.m[1][2] =  9.61939573e-01f;
+    pm.m[2][2] =  3.80603075e-02f;
+    pm.m[3][2] =  1.00000000e+01f;
+    pm.m[0][3] =  0.00000000e+00f;
+    pm.m[1][3] =  0.00000000e+00f;
+    pm.m[2][3] =  0.00000000e+00f;
+    pm.m[3][3] =  1.00000000e+00f;
 
     exp_scale.x = 9.99999881e-01f;
     exp_scale.y = 9.99999881e-01f;
@@ -2831,22 +2831,22 @@ static void test_Matrix_Decompose(void)
 
 /*__________*/
 
-    U(pm).m[0][0] = -9.23878908e-01f;
-    U(pm).m[1][0] = -5.41196704e-01f;
-    U(pm).m[2][0] =  8.11795175e-01f;
-    U(pm).m[3][0] = -5.00000000e+00f;
-    U(pm).m[0][1] =  2.70598322e-01f;
-    U(pm).m[1][1] =  7.61209577e-02f;
-    U(pm).m[2][1] =  2.88581824e+00f;
-    U(pm).m[3][1] =  0.00000000e+00f;
-    U(pm).m[0][2] = -2.70598352e-01f;
-    U(pm).m[1][2] =  1.92387879e+00f;
-    U(pm).m[2][2] =  1.14180908e-01f;
-    U(pm).m[3][2] =  1.00000000e+01f;
-    U(pm).m[0][3] =  0.00000000e+00f;
-    U(pm).m[1][3] =  0.00000000e+00f;
-    U(pm).m[2][3] =  0.00000000e+00f;
-    U(pm).m[3][3] =  1.00000000e+00f;
+    pm.m[0][0] = -9.23878908e-01f;
+    pm.m[1][0] = -5.41196704e-01f;
+    pm.m[2][0] =  8.11795175e-01f;
+    pm.m[3][0] = -5.00000000e+00f;
+    pm.m[0][1] =  2.70598322e-01f;
+    pm.m[1][1] =  7.61209577e-02f;
+    pm.m[2][1] =  2.88581824e+00f;
+    pm.m[3][1] =  0.00000000e+00f;
+    pm.m[0][2] = -2.70598352e-01f;
+    pm.m[1][2] =  1.92387879e+00f;
+    pm.m[2][2] =  1.14180908e-01f;
+    pm.m[3][2] =  1.00000000e+01f;
+    pm.m[0][3] =  0.00000000e+00f;
+    pm.m[1][3] =  0.00000000e+00f;
+    pm.m[2][3] =  0.00000000e+00f;
+    pm.m[3][3] =  1.00000000e+00f;
 
     exp_scale.x = 9.99999583e-01f;
     exp_scale.y = 1.99999940e+00f;
@@ -2872,22 +2872,22 @@ static void test_Matrix_Decompose(void)
 
 /*__________*/
 
-    U(pm).m[0][0] = 0.7156004f;
-    U(pm).m[1][0] = -0.5098283f;
-    U(pm).m[2][0] = -0.4774843f;
-    U(pm).m[3][0] = -5.0f;
-    U(pm).m[0][1] = -0.6612288f;
-    U(pm).m[1][1] = -0.7147621f;
-    U(pm).m[2][1] = -0.2277977f;
-    U(pm).m[3][1] = 0.0f;
-    U(pm).m[0][2] = -0.2251499f;
-    U(pm).m[1][2] = 0.4787385f;
-    U(pm).m[2][2] = -0.8485972f;
-    U(pm).m[3][2] = 10.0f;
-    U(pm).m[0][3] = 0.0f;
-    U(pm).m[1][3] = 0.0f;
-    U(pm).m[2][3] = 0.0f;
-    U(pm).m[3][3] = 1.0f;
+    pm.m[0][0] = 0.7156004f;
+    pm.m[1][0] = -0.5098283f;
+    pm.m[2][0] = -0.4774843f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = -0.6612288f;
+    pm.m[1][1] = -0.7147621f;
+    pm.m[2][1] = -0.2277977f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = -0.2251499f;
+    pm.m[1][2] = 0.4787385f;
+    pm.m[2][2] = -0.8485972f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
 
     exp_scale.x = 9.99999940e-01f;
     exp_scale.y = 1.00000012e+00f;
@@ -2909,22 +2909,22 @@ static void test_Matrix_Decompose(void)
 
 /*_____________*/
 
-    U(pm).m[0][0] = 0.06554436f;
-    U(pm).m[1][0] = -0.6873012f;
-    U(pm).m[2][0] = 0.7234092f;
-    U(pm).m[3][0] = -5.0f;
-    U(pm).m[0][1] = -0.9617381f;
-    U(pm).m[1][1] = -0.2367795f;
-    U(pm).m[2][1] = -0.1378230f;
-    U(pm).m[3][1] = 0.0f;
-    U(pm).m[0][2] = 0.2660144f;
-    U(pm).m[1][2] = -0.6866967f;
-    U(pm).m[2][2] = -0.6765233f;
-    U(pm).m[3][2] = 10.0f;
-    U(pm).m[0][3] = 0.0f;
-    U(pm).m[1][3] = 0.0f;
-    U(pm).m[2][3] = 0.0f;
-    U(pm).m[3][3] = 1.0f;
+    pm.m[0][0] = 0.06554436f;
+    pm.m[1][0] = -0.6873012f;
+    pm.m[2][0] = 0.7234092f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = -0.9617381f;
+    pm.m[1][1] = -0.2367795f;
+    pm.m[2][1] = -0.1378230f;
+    pm.m[3][1] = 0.0f;
+    pm.m[0][2] = 0.2660144f;
+    pm.m[1][2] = -0.6866967f;
+    pm.m[2][2] = -0.6765233f;
+    pm.m[3][2] = 10.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
 
     exp_scale.x = 9.99999940e-01f;
     exp_scale.y = 9.99999940e-01f;
@@ -2946,22 +2946,22 @@ static void test_Matrix_Decompose(void)
 
 /*_________*/
 
-    U(pm).m[0][0] =  7.12104797e+00f;
-    U(pm).m[1][0] = -5.88348627e+00f;
-    U(pm).m[2][0] =  1.18184204e+01f;
-    U(pm).m[3][0] = -5.00000000e+00f;
-    U(pm).m[0][1] =  5.88348627e+00f;
-    U(pm).m[1][1] = -1.06065865e+01f;
-    U(pm).m[2][1] = -8.82523251e+00f;
-    U(pm).m[3][1] =  0.00000000e+00f;
-    U(pm).m[0][2] =  1.18184204e+01f;
-    U(pm).m[1][2] =  8.82523155e+00f;
-    U(pm).m[2][2] = -2.72764111e+00f;
-    U(pm).m[3][2] =  2.00000000e+00f;
-    U(pm).m[0][3] =  0.00000000e+00f;
-    U(pm).m[1][3] =  0.00000000e+00f;
-    U(pm).m[2][3] =  0.00000000e+00f;
-    U(pm).m[3][3] =  1.00000000e+00f;
+    pm.m[0][0] =  7.12104797e+00f;
+    pm.m[1][0] = -5.88348627e+00f;
+    pm.m[2][0] =  1.18184204e+01f;
+    pm.m[3][0] = -5.00000000e+00f;
+    pm.m[0][1] =  5.88348627e+00f;
+    pm.m[1][1] = -1.06065865e+01f;
+    pm.m[2][1] = -8.82523251e+00f;
+    pm.m[3][1] =  0.00000000e+00f;
+    pm.m[0][2] =  1.18184204e+01f;
+    pm.m[1][2] =  8.82523155e+00f;
+    pm.m[2][2] = -2.72764111e+00f;
+    pm.m[3][2] =  2.00000000e+00f;
+    pm.m[0][3] =  0.00000000e+00f;
+    pm.m[1][3] =  0.00000000e+00f;
+    pm.m[2][3] =  0.00000000e+00f;
+    pm.m[3][3] =  1.00000000e+00f;
 
     exp_scale.x = 1.49999933e+01f;
     exp_scale.y = 1.49999933e+01f;
@@ -2983,22 +2983,22 @@ static void test_Matrix_Decompose(void)
 
 /*__________*/
 
-    U(pm).m[0][0] = 0.0f;
-    U(pm).m[1][0] = 4.0f;
-    U(pm).m[2][0] = 5.0f;
-    U(pm).m[3][0] = -5.0f;
-    U(pm).m[0][1] = 0.0f;
-    U(pm).m[1][1] = -10.60660f;
-    U(pm).m[2][1] = -8.825232f;
-    U(pm).m[3][1] = 6.0f;
-    U(pm).m[0][2] = 0.0f;
-    U(pm).m[1][2] = 8.8252320f;
-    U(pm).m[2][2] = 2.727645;
-    U(pm).m[3][2] = 3.0f;
-    U(pm).m[0][3] = 0.0f;
-    U(pm).m[1][3] = 0.0f;
-    U(pm).m[2][3] = 0.0f;
-    U(pm).m[3][3] = 1.0f;
+    pm.m[0][0] = 0.0f;
+    pm.m[1][0] = 4.0f;
+    pm.m[2][0] = 5.0f;
+    pm.m[3][0] = -5.0f;
+    pm.m[0][1] = 0.0f;
+    pm.m[1][1] = -10.60660f;
+    pm.m[2][1] = -8.825232f;
+    pm.m[3][1] = 6.0f;
+    pm.m[0][2] = 0.0f;
+    pm.m[1][2] = 8.8252320f;
+    pm.m[2][2] = 2.727645;
+    pm.m[3][2] = 3.0f;
+    pm.m[0][3] = 0.0f;
+    pm.m[1][3] = 0.0f;
+    pm.m[2][3] = 0.0f;
+    pm.m[3][3] = 1.0f;
 
     hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %lx\n", hr);
@@ -3026,22 +3026,22 @@ static void test_Matrix_Transformation2D(void)
 
     sca_rot = 5.0f*D3DX_PI/4.0f;
 
-    U(exp_mat).m[0][0] = -4.245192f;
-    U(exp_mat).m[1][0] = -0.147116f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = 45.265373f;
-    U(exp_mat).m[0][1] = 7.647113f;
-    U(exp_mat).m[1][1] = 8.745192f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = -13.401899f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = -4.245192f;
+    exp_mat.m[1][0] = -0.147116f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 45.265373f;
+    exp_mat.m[0][1] = 7.647113f;
+    exp_mat.m[1][1] = 8.745192f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = -13.401899f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, &sca, &rot_center, rot, &trans);
     expect_matrix(&exp_mat, &got_mat, 64);
@@ -3058,44 +3058,44 @@ static void test_Matrix_Transformation2D(void)
 
     sca_rot = 5.0f*D3DX_PI/4.0f;
 
-    U(exp_mat).m[0][0] = 0.50f;
-    U(exp_mat).m[1][0] = -0.866025f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = -6.0f;
-    U(exp_mat).m[0][1] = 0.866025f;
-    U(exp_mat).m[1][1] = 0.50f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 7.0f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 0.50f;
+    exp_mat.m[1][0] = -0.866025f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = -6.0f;
+    exp_mat.m[0][1] = 0.866025f;
+    exp_mat.m[1][1] = 0.50f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 7.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, &sca_center, sca_rot, NULL, NULL, rot, &trans);
     expect_matrix(&exp_mat, &got_mat, 8);
 
 /*_________*/
 
-    U(exp_mat).m[0][0] = 0.50f;
-    U(exp_mat).m[1][0] = -0.866025f;
-    U(exp_mat).m[2][0] = 0.0f;
-    U(exp_mat).m[3][0] = 0.0f;
-    U(exp_mat).m[0][1] = 0.866025f;
-    U(exp_mat).m[1][1] = 0.50f;
-    U(exp_mat).m[2][1] = 0.0f;
-    U(exp_mat).m[3][1] = 0.0f;
-    U(exp_mat).m[0][2] = 0.0f;
-    U(exp_mat).m[1][2] = 0.0f;
-    U(exp_mat).m[2][2] = 1.0f;
-    U(exp_mat).m[3][2] = 0.0f;
-    U(exp_mat).m[0][3] = 0.0f;
-    U(exp_mat).m[1][3] = 0.0f;
-    U(exp_mat).m[2][3] = 0.0f;
-    U(exp_mat).m[3][3] = 1.0f;
+    exp_mat.m[0][0] = 0.50f;
+    exp_mat.m[1][0] = -0.866025f;
+    exp_mat.m[2][0] = 0.0f;
+    exp_mat.m[3][0] = 0.0f;
+    exp_mat.m[0][1] = 0.866025f;
+    exp_mat.m[1][1] = 0.50f;
+    exp_mat.m[2][1] = 0.0f;
+    exp_mat.m[3][1] = 0.0f;
+    exp_mat.m[0][2] = 0.0f;
+    exp_mat.m[1][2] = 0.0f;
+    exp_mat.m[2][2] = 1.0f;
+    exp_mat.m[3][2] = 0.0f;
+    exp_mat.m[0][3] = 0.0f;
+    exp_mat.m[1][3] = 0.0f;
+    exp_mat.m[2][3] = 0.0f;
+    exp_mat.m[3][3] = 1.0f;
 
     D3DXMatrixTransformation2D(&got_mat, NULL, sca_rot, NULL, NULL, rot, NULL);
     expect_matrix(&exp_mat, &got_mat, 8);
@@ -3131,12 +3131,12 @@ static void test_D3DXVec_Array(void)
 
     D3DXMatrixPerspectiveFovLH(&projection, D3DX_PI / 4.0f, 20.0f / 17.0f, 1.0f, 1000.0f);
 
-    U(view).m[0][1] = 5.0f; U(view).m[0][2] = 7.0f; U(view).m[0][3] = 8.0f;
-    U(view).m[1][0] = 11.0f; U(view).m[1][2] = 16.0f; U(view).m[1][3] = 33.0f;
-    U(view).m[2][0] = 19.0f; U(view).m[2][1] = -21.0f; U(view).m[2][3] = 43.0f;
-    U(view).m[3][0] = 2.0f; U(view).m[3][1] = 3.0f; U(view).m[3][2] = -4.0f;
-    U(view).m[0][0] = 10.0f; U(view).m[1][1] = 20.0f; U(view).m[2][2] = 30.0f;
-    U(view).m[3][3] = -40.0f;
+    view.m[0][1] = 5.0f; view.m[0][2] = 7.0f; view.m[0][3] = 8.0f;
+    view.m[1][0] = 11.0f; view.m[1][2] = 16.0f; view.m[1][3] = 33.0f;
+    view.m[2][0] = 19.0f; view.m[2][1] = -21.0f; view.m[2][3] = 43.0f;
+    view.m[3][0] = 2.0f; view.m[3][1] = 3.0f; view.m[3][2] = -4.0f;
+    view.m[0][0] = 10.0f; view.m[1][1] = 20.0f; view.m[2][2] = 30.0f;
+    view.m[3][3] = -40.0f;
 
     set_matrix(&world,
             21.0f, 2.0f, 3.0f, 4.0f,

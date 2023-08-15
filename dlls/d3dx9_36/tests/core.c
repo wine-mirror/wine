@@ -49,19 +49,19 @@ static inline void check_mat(D3DXMATRIX got, D3DXMATRIX exp)
     int i, j, equal=1;
     for (i=0; i<4; i++)
         for (j=0; j<4; j++)
-            if (fabs(U(exp).m[i][j]-U(got).m[i][j]) > admitted_error)
+            if (fabs(exp.m[i][j]-got.m[i][j]) > admitted_error)
                 equal=0;
 
     ok(equal, "Got matrix\n\t(%f,%f,%f,%f\n\t %f,%f,%f,%f\n\t %f,%f,%f,%f\n\t %f,%f,%f,%f)\n"
        "Expected matrix=\n\t(%f,%f,%f,%f\n\t %f,%f,%f,%f\n\t %f,%f,%f,%f\n\t %f,%f,%f,%f)\n",
-       U(got).m[0][0],U(got).m[0][1],U(got).m[0][2],U(got).m[0][3],
-       U(got).m[1][0],U(got).m[1][1],U(got).m[1][2],U(got).m[1][3],
-       U(got).m[2][0],U(got).m[2][1],U(got).m[2][2],U(got).m[2][3],
-       U(got).m[3][0],U(got).m[3][1],U(got).m[3][2],U(got).m[3][3],
-       U(exp).m[0][0],U(exp).m[0][1],U(exp).m[0][2],U(exp).m[0][3],
-       U(exp).m[1][0],U(exp).m[1][1],U(exp).m[1][2],U(exp).m[1][3],
-       U(exp).m[2][0],U(exp).m[2][1],U(exp).m[2][2],U(exp).m[2][3],
-       U(exp).m[3][0],U(exp).m[3][1],U(exp).m[3][2],U(exp).m[3][3]);
+       got.m[0][0],got.m[0][1],got.m[0][2],got.m[0][3],
+       got.m[1][0],got.m[1][1],got.m[1][2],got.m[1][3],
+       got.m[2][0],got.m[2][1],got.m[2][2],got.m[2][3],
+       got.m[3][0],got.m[3][1],got.m[3][2],got.m[3][3],
+       exp.m[0][0],exp.m[0][1],exp.m[0][2],exp.m[0][3],
+       exp.m[1][0],exp.m[1][1],exp.m[1][2],exp.m[1][3],
+       exp.m[2][0],exp.m[2][1],exp.m[2][2],exp.m[2][3],
+       exp.m[3][0],exp.m[3][1],exp.m[3][2],exp.m[3][3]);
 }
 
 #define check_rect(rect, left, top, right, bottom) _check_rect(__LINE__, rect, left, top, right, bottom)
@@ -169,10 +169,10 @@ static void test_ID3DXSprite(IDirect3DDevice9 *device)
 
     /* Test ID3DXSprite_SetTransform */
     /* Set a transform and test if it gets returned correctly */
-    U(mat).m[0][0]=2.1f;  U(mat).m[0][1]=6.5f;  U(mat).m[0][2]=-9.6f; U(mat).m[0][3]=1.7f;
-    U(mat).m[1][0]=4.2f;  U(mat).m[1][1]=-2.5f; U(mat).m[1][2]=2.1f;  U(mat).m[1][3]=5.5f;
-    U(mat).m[2][0]=-2.6f; U(mat).m[2][1]=0.3f;  U(mat).m[2][2]=8.6f;  U(mat).m[2][3]=8.4f;
-    U(mat).m[3][0]=6.7f;  U(mat).m[3][1]=-5.1f; U(mat).m[3][2]=6.1f;  U(mat).m[3][3]=2.2f;
+    mat.m[0][0]=2.1f;  mat.m[0][1]=6.5f;  mat.m[0][2]=-9.6f; mat.m[0][3]=1.7f;
+    mat.m[1][0]=4.2f;  mat.m[1][1]=-2.5f; mat.m[1][2]=2.1f;  mat.m[1][3]=5.5f;
+    mat.m[2][0]=-2.6f; mat.m[2][1]=0.3f;  mat.m[2][2]=8.6f;  mat.m[2][3]=8.4f;
+    mat.m[3][0]=6.7f;  mat.m[3][1]=-5.1f; mat.m[3][2]=6.1f;  mat.m[3][3]=2.2f;
 
     hr = ID3DXSprite_SetTransform(sprite, NULL);
     ok (hr == D3DERR_INVALIDCALL, "SetTransform returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);

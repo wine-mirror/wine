@@ -31,7 +31,7 @@ static inline BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2)
     {
         for (j = 0; j < 4; ++j)
         {
-            if (relative_error(U(*m1).m[i][j], U(*m2).m[i][j]) > admitted_error)
+            if (relative_error(m1->m[i][j], m2->m[i][j]) > admitted_error)
                 return FALSE;
         }
     }
@@ -45,14 +45,14 @@ do { \
     const D3DXMATRIX *__m2 = (gotmat); \
     ok(compare_matrix(__m1, __m2), "Expected matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n)\n\n" \
             "Got matrix=\n(%f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f\n %f,%f,%f,%f)\n", \
-            U(*__m1).m[0][0], U(*__m1).m[0][1], U(*__m1).m[0][2], U(*__m1).m[0][3], \
-            U(*__m1).m[1][0], U(*__m1).m[1][1], U(*__m1).m[1][2], U(*__m1).m[1][3], \
-            U(*__m1).m[2][0], U(*__m1).m[2][1], U(*__m1).m[2][2], U(*__m1).m[2][3], \
-            U(*__m1).m[3][0], U(*__m1).m[3][1], U(*__m1).m[3][2], U(*__m1).m[3][3], \
-            U(*__m2).m[0][0], U(*__m2).m[0][1], U(*__m2).m[0][2], U(*__m2).m[0][3], \
-            U(*__m2).m[1][0], U(*__m2).m[1][1], U(*__m2).m[1][2], U(*__m2).m[1][3], \
-            U(*__m2).m[2][0], U(*__m2).m[2][1], U(*__m2).m[2][2], U(*__m2).m[2][3], \
-            U(*__m2).m[3][0], U(*__m2).m[3][1], U(*__m2).m[3][2], U(*__m2).m[3][3]); \
+            __m1->m[0][0], __m1->m[0][1], __m1->m[0][2], __m1->m[0][3], \
+            __m1->m[1][0], __m1->m[1][1], __m1->m[1][2], __m1->m[1][3], \
+            __m1->m[2][0], __m1->m[2][1], __m1->m[2][2], __m1->m[2][3], \
+            __m1->m[3][0], __m1->m[3][1], __m1->m[3][2], __m1->m[3][3], \
+            __m2->m[0][0], __m2->m[0][1], __m2->m[0][2], __m2->m[0][3], \
+            __m2->m[1][0], __m2->m[1][1], __m2->m[1][2], __m2->m[1][3], \
+            __m2->m[2][0], __m2->m[2][1], __m2->m[2][2], __m2->m[2][3], \
+            __m2->m[3][0], __m2->m[3][1], __m2->m[3][2], __m2->m[3][3]); \
 } while(0)
 
 static void test_create_line(IDirect3DDevice9* device)
@@ -90,7 +90,7 @@ static void test_create_line(IDirect3DDevice9* device)
 
     D3DXMatrixIdentity(&world);
     D3DXMatrixIdentity(&identity);
-    S(U(world))._11 = r11; S(U(world))._12 = r12; S(U(world))._13 = r13; S(U(world))._14 = r14;
+    world._11 = r11; world._12 = r12; world._13 = r13; world._14 = r14;
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &world);
     ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
