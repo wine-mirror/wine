@@ -427,7 +427,7 @@ extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTr
 
 void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t);
 void release_dispex(DispatchEx*);
-BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
+BOOL dispex_query_interface_no_cc(DispatchEx*,REFIID,void**);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 HRESULT get_dispids(tid_t,DWORD*,DISPID**);

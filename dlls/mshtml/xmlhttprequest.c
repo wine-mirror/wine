@@ -1632,7 +1632,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_QueryInterface(IHTMLXMLHttpReque
         *ppv = &This->IHTMLXMLHttpRequestFactory_iface;
     }else if(IsEqualGUID(&IID_IHTMLXMLHttpRequestFactory, riid)) {
         *ppv = &This->IHTMLXMLHttpRequestFactory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;

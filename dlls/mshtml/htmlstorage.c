@@ -370,7 +370,7 @@ static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID rii
         *ppv = &This->IHTMLStorage_iface;
     }else if(IsEqualGUID(&IID_IHTMLStorage, riid)) {
         *ppv = &This->IHTMLStorage_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;

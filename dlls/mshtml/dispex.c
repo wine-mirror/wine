@@ -798,7 +798,7 @@ static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = &This->IUnknown_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -1969,7 +1969,7 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
+BOOL dispex_query_interface_no_cc(DispatchEx *This, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IDispatch, riid))
         *ppv = &This->IDispatchEx_iface;

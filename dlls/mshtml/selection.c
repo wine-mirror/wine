@@ -64,7 +64,7 @@ static HRESULT WINAPI HTMLSelectionObject_QueryInterface(IHTMLSelectionObject *i
         *ppv = &This->IHTMLSelectionObject_iface;
     }else if(IsEqualGUID(&IID_IHTMLSelectionObject2, riid)) {
         *ppv = &This->IHTMLSelectionObject2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;

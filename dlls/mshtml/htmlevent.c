@@ -356,7 +356,7 @@ static HRESULT WINAPI HTMLEventObj_QueryInterface(IHTMLEventObj *iface, REFIID r
         *ppv = &This->IHTMLEventObj_iface;
     }else if(IsEqualGUID(&IID_IHTMLEventObj, riid)) {
         *ppv = &This->IHTMLEventObj_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -958,7 +958,7 @@ static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, voi
         *ppv = &This->IDOMEvent_iface;
     else if(IsEqualGUID(&IID_IDOMEvent, riid))
         *ppv = &This->IDOMEvent_iface;
-    else if(dispex_query_interface(&This->dispex, riid, ppv))
+    else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
     else if(!This->query_interface || !(*ppv = This->query_interface(This, riid))) {
         *ppv = NULL;
@@ -4491,7 +4491,7 @@ HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
         return S_OK;
     }
 
-    if(dispex_query_interface(&event_target->dispex, riid, ppv))
+    if(dispex_query_interface_no_cc(&event_target->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
 
     WARN("(%p)->(%s %p)\n", event_target, debugstr_mshtml_guid(riid), ppv);

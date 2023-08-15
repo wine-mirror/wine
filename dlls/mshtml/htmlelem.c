@@ -553,7 +553,7 @@ static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, voi
         *ppv = &This->IHTMLRect_iface;
     }else if (IsEqualGUID(&IID_IHTMLRect2, riid)) {
         *ppv = &This->IHTMLRect2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
@@ -1055,7 +1055,7 @@ static HRESULT WINAPI HTMLRectCollection_QueryInterface(IHTMLRectCollection *ifa
         *ppv = &This->IHTMLRectCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLRectCollection, riid)) {
         *ppv = &This->IHTMLRectCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
@@ -7390,7 +7390,7 @@ static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID
         *ppv = &token_list->IWineDOMTokenList_iface;
     }else if(IsEqualGUID(&IID_IWineDOMTokenList, riid)) {
         *ppv = &token_list->IWineDOMTokenList_iface;
-    }else if(dispex_query_interface(&token_list->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&token_list->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
@@ -8097,7 +8097,7 @@ static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollectio
     }else if(IsEqualGUID(&IID_IHTMLFiltersCollection, riid)) {
         TRACE("(%p)->(IID_IHTMLFiltersCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLFiltersCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -8554,7 +8554,7 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
         *ppv = &This->IHTMLAttributeCollection2_iface;
     }else if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid)) {
         *ppv = &This->IHTMLAttributeCollection3_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
