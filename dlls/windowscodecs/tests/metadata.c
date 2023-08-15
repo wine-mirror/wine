@@ -721,13 +721,13 @@ static void test_metadata_hIST(void)
     PropVariantClear(&schema);
 
     ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
-    ok(!lstrcmpW(U(id).pwszVal, Frequencies), "unexpected value: %s\n", wine_dbgstr_w(U(id).pwszVal));
+    ok(!lstrcmpW(id.pwszVal, Frequencies), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
     PropVariantClear(&id);
 
     ok(value.vt == (VT_UI2|VT_VECTOR), "unexpected vt: %i\n", value.vt);
-    ok(20 == U(value).caui.cElems, "expected cElems %d, got %ld\n", 20, U(value).caub.cElems);
-    for (i = 0; i < U(value).caui.cElems; i++)
-        ok(i+1 == U(value).caui.pElems[i], "%u: expected value %u, got %u\n", i, i+1, U(value).caui.pElems[i]);
+    ok(20 == value.caui.cElems, "expected cElems %d, got %ld\n", 20, value.caub.cElems);
+    for (i = 0; i < value.caui.cElems; i++)
+        ok(i+1 == value.caui.pElems[i], "%u: expected value %u, got %u\n", i, i+1, value.caui.pElems[i]);
     PropVariantClear(&value);
 
     IWICMetadataReader_Release(reader);
