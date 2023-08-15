@@ -1720,7 +1720,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             wasVisible = [self isVisible];
 
             if (activate)
-                [NSApp activateIgnoringOtherApps:YES];
+                [controller tryToActivateIgnoringOtherApps:YES];
 
             NSDisableScreenUpdates();
 
@@ -2084,8 +2084,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         if (activate)
         {
-            [[WineApplicationController sharedController] transformProcessToForeground:YES];
-            [NSApp activateIgnoringOtherApps:YES];
+            WineApplicationController *controller = [WineApplicationController sharedController];
+            [controller transformProcessToForeground:YES];
+            [controller tryToActivateIgnoringOtherApps:YES];
         }
 
         causing_becomeKeyWindow = self;
