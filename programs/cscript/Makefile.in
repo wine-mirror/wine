@@ -3,7 +3,7 @@ IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32
 EXTRADEFS = -DCSCRIPT_BUILD
 PARENTSRC = ../wscript
 
-EXTRADLLFLAGS = -mwindows -municode
+EXTRADLLFLAGS = -mconsole -municode
 
 C_SRCS = \
 	arguments.c \
