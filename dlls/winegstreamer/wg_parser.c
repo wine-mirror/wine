@@ -258,7 +258,7 @@ static NTSTATUS wg_parser_stream_enable(void *args)
         gst_util_set_object_arg(G_OBJECT(stream->flip), "method", flip ? "vertical-flip" : "none");
     }
 
-    gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
+    push_event(stream->my_sink, gst_event_new_reconfigure());
     return S_OK;
 }
 
@@ -450,7 +450,7 @@ static NTSTATUS wg_parser_stream_seek(void *args)
     if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
         stop_type = GST_SEEK_TYPE_NONE;
 
-    if (!gst_pad_push_event(get_stream(params->stream)->my_sink, gst_event_new_seek(params->rate, GST_FORMAT_TIME,
+    if (!push_event(get_stream(params->stream)->my_sink, gst_event_new_seek(params->rate, GST_FORMAT_TIME,
             flags, start_type, params->start_pos * 100, stop_type, params->stop_pos * 100)))
         GST_ERROR("Failed to seek.\n");
 
@@ -480,7 +480,7 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
     if (!(event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
             params->proportion, params->diff * 100, stream_time)))
         GST_ERROR("Failed to create QOS event.\n");
-    gst_pad_push_event(stream->my_sink, event);
+    push_event(stream->my_sink, event);
 
     return S_OK;
 }
@@ -1292,7 +1292,7 @@ static void *push_data(void *arg)
 
     gst_buffer_unref(buffer);
 
-    gst_pad_push_event(parser->my_src, gst_event_new_eos());
+    push_event(parser->my_src, gst_event_new_eos());
 
     GST_DEBUG("Stopping push thread.");
 
@@ -1421,7 +1421,7 @@ static gboolean src_perform_seek(struct wg_parser *parser, GstEvent *event)
     {
         flush_event = gst_event_new_flush_start();
         gst_event_set_seqnum(flush_event, seqnum);
-        gst_pad_push_event(parser->my_src, flush_event);
+        push_event(parser->my_src, flush_event);
         if (thread)
             gst_pad_set_active(parser->my_src, 1);
     }
@@ -1433,7 +1433,7 @@ static gboolean src_perform_seek(struct wg_parser *parser, GstEvent *event)
     {
         flush_event = gst_event_new_flush_stop(TRUE);
         gst_event_set_seqnum(flush_event, seqnum);
-        gst_pad_push_event(parser->my_src, flush_event);
+        push_event(parser->my_src, flush_event);
         if (thread)
             gst_pad_set_active(parser->my_src, 1);
     }

@@ -443,10 +443,10 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
 
     if (!(event = gst_event_new_stream_start("stream"))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto out;
     if (!(event = gst_event_new_caps(src_caps))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto out;
 
     /* We need to use GST_FORMAT_TIME here because it's the only format
@@ -455,7 +455,7 @@ NTSTATUS wg_transform_create(void *args)
     transform->segment.start = 0;
     transform->segment.stop = -1;
     if (!(event = gst_event_new_segment(&transform->segment))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto out;
 
     gst_caps_unref(src_caps);
@@ -531,7 +531,7 @@ NTSTATUS wg_transform_set_output_format(void *args)
             value = "none";
         gst_util_set_object_arg(G_OBJECT(transform->video_flip), "method", value);
     }
-    if (!gst_pad_push_event(transform->my_sink, gst_event_new_reconfigure()))
+    if (!push_event(transform->my_sink, gst_event_new_reconfigure()))
     {
         GST_ERROR("Failed to reconfigure transform %p.", transform);
         return STATUS_UNSUCCESSFUL;
@@ -892,16 +892,16 @@ NTSTATUS wg_transform_drain(void *args)
     }
 
     if (!(event = gst_event_new_segment_done(GST_FORMAT_TIME, -1))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto error;
     if (!(event = gst_event_new_eos())
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto error;
     if (!(event = gst_event_new_stream_start("stream"))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto error;
     if (!(event = gst_event_new_segment(&transform->segment))
-            || !gst_pad_push_event(transform->my_src, event))
+            || !push_event(transform->my_src, event))
         goto error;
 
     return STATUS_SUCCESS;
