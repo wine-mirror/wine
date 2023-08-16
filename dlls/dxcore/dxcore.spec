@@ -1,1 +1,1 @@
-@ stub DXCoreCreateAdapterFactory
+@ stdcall DXCoreCreateAdapterFactory(ptr ptr)
