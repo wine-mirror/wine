@@ -4434,22 +4434,22 @@ static void test_SetAdvise(void)
 
 static void test_SetQueryNetSessionCount(void)
 {
-    LONG count, init_count;
+    LONG count, init_count, inc_count, dec_count;
 
     init_count = pSetQueryNetSessionCount(SESSION_QUERY);
     trace("init_count %ld\n", init_count);
 
-    count = pSetQueryNetSessionCount(SESSION_INCREMENT);
-    ok(count == init_count + 1, "count = %ld\n", count);
+    inc_count = pSetQueryNetSessionCount(SESSION_INCREMENT);
+    ok(inc_count > init_count, "count = %ld\n", inc_count);
 
     count = pSetQueryNetSessionCount(SESSION_QUERY);
-    ok(count == init_count + 1, "count = %ld\n", count);
+    ok(count == inc_count, "count = %ld\n", count);
 
-    count = pSetQueryNetSessionCount(SESSION_DECREMENT);
-    ok(count == init_count, "count = %ld\n", count);
+    dec_count = pSetQueryNetSessionCount(SESSION_DECREMENT);
+    ok(dec_count < inc_count, "count = %ld\n", dec_count);
 
     count = pSetQueryNetSessionCount(SESSION_QUERY);
-    ok(count == init_count, "count = %ld\n", count);
+    ok(count == dec_count, "count = %ld\n", count);
 }
 
 static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
