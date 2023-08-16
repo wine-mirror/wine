@@ -181,6 +181,7 @@ static void *working_set_limit   = (void *)0x7fff0000;
 
 static struct file_view *arm64ec_view;
 
+ULONG_PTR user_space_wow_limit = 0;
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
 /* TEB allocation blocks */
@@ -568,8 +569,7 @@ static void mmap_init( const struct preload_info *preload_info )
 static void *get_wow_user_space_limit(void)
 {
 #ifdef _WIN64
-    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) return (void *)0xffff0000;
-    return (void *)0x7fff0000;
+    return (void *)(user_space_wow_limit & ~granularity_mask);
 #endif
     return user_space_limit;
 }
@@ -3422,8 +3422,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         {
             SIZE_T total = 32 * block_size;
 
-            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr,
-                                                   is_win64 && is_wow64() ? limit_2g - 1 : 0,
+            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, user_space_wow_limit,
                                                    &total, MEM_RESERVE, PAGE_READWRITE )))
             {
                 server_leave_uninterrupted_section( &virtual_mutex, &sigset );

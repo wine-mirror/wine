@@ -63,6 +63,7 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 #endif
 
 extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
+extern ULONG_PTR user_space_wow_limit DECLSPEC_HIDDEN;
 
 static inline WOW_TEB *get_wow_teb( TEB *teb )
 {
@@ -516,7 +517,7 @@ static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, UL
 {
     *ptr = NULL;
     *size = 0;
-    return NtMapViewOfSection( mapping, NtCurrentProcess(), ptr, is_win64 && wow_peb ? limit_2g - 1 : 0,
+    return NtMapViewOfSection( mapping, NtCurrentProcess(), ptr, user_space_wow_limit,
                                0, NULL, size, ViewShare, 0, protect );
 }
 

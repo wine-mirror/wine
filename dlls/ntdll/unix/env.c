@@ -1864,6 +1864,7 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
         NtCurrentTeb()->WowTebOffset = teb_offset;
         NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
         wow_peb = (PEB32 *)((char *)peb + page_size);
+        user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
         set_thread_id( NtCurrentTeb(), GetCurrentProcessId(), GetCurrentThreadId() );
         ERR( "starting %s in experimental wow64 mode\n", debugstr_us(&params->ImagePathName) );
         break;

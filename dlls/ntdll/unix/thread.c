@@ -1201,7 +1201,7 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
         teb->DeallocationStack = stack.DeallocationStack;
 
         /* 32-bit stack */
-        if (!limit || limit >= limit_2g) limit = limit_2g - 1;
+        if (!limit || limit > user_space_wow_limit) limit = user_space_wow_limit;
         if ((status = virtual_alloc_thread_stack( &stack, 0, limit, reserve_size, commit_size, TRUE )))
             return status;
         wow_teb->Tib.StackBase = PtrToUlong( stack.StackBase );
