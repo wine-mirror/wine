@@ -103,7 +103,7 @@ TW_UINT16 sane_option_set_str(const char *option_name, char *val, BOOL *needs_re
     struct option_descriptor opt;
     TW_UINT16 rc = sane_find_option(option_name, TYPE_STRING, &opt);
 
-    if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, &val, needs_reload );
+    if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, val, needs_reload );
     return rc;
 }
 
