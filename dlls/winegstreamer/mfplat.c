@@ -804,8 +804,9 @@ static void mf_media_type_to_wg_format_audio_wma(IMFMediaType *type, const GUID 
 
 static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_format *format)
 {
+    UINT32 profile, level, codec_data_len;
     UINT64 frame_rate, frame_size;
-    UINT32 profile, level;
+    BYTE *codec_data;
 
     memset(format, 0, sizeof(*format));
     format->major_type = WG_MAJOR_TYPE_VIDEO_H264;
@@ -832,6 +833,20 @@ static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_LEVEL, &level)))
         format->u.video_h264.level = level;
+
+    if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(type, &MF_MT_MPEG_SEQUENCE_HEADER, &codec_data, &codec_data_len)))
+    {
+        if (codec_data_len <= sizeof(format->u.video_h264.codec_data))
+        {
+            format->u.video_h264.codec_data_len = codec_data_len;
+            memcpy(format->u.video_h264.codec_data, codec_data, codec_data_len);
+        }
+        else
+        {
+            WARN("Codec data buffer too small, codec data size %u.\n", codec_data_len);
+        }
+        CoTaskMemFree(codec_data);
+    }
 }
 
 static void mf_media_type_to_wg_format_video_indeo(IMFMediaType *type, uint32_t version, struct wg_format *format)

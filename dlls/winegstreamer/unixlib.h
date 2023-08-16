@@ -148,6 +148,8 @@ struct wg_format
             uint32_t fps_n, fps_d;
             uint32_t profile;
             uint32_t level;
+            uint32_t codec_data_len;
+            unsigned char codec_data[64];
         } video_h264;
         struct
         {

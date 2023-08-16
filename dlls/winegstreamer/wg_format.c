@@ -553,6 +553,7 @@ static GstCaps *wg_format_to_caps_audio_wma(const struct wg_format *format)
 static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
 {
     const char *profile, *level;
+    GstBuffer *buffer;
     GstCaps *caps;
 
     if (!(caps = gst_caps_new_empty_simple("video/x-h264")))
@@ -608,6 +609,19 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     }
     if (level)
         gst_caps_set_simple(caps, "level", G_TYPE_STRING, level, NULL);
+
+    if (format->u.video_h264.codec_data_len)
+    {
+        if (!(buffer = gst_buffer_new_and_alloc(format->u.video_h264.codec_data_len)))
+        {
+            gst_caps_unref(caps);
+            return NULL;
+        }
+
+        gst_buffer_fill(buffer, 0, format->u.video_h264.codec_data, format->u.video_h264.codec_data_len);
+        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
 
     return caps;
 }
