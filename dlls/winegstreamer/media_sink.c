@@ -588,6 +588,7 @@ static HRESULT WINAPI media_sink_AddStreamSink(IMFFinalizableMediaSink *iface, D
 {
     struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
     struct stream_sink *object;
+    struct wg_format format;
     HRESULT hr;
 
     TRACE("iface %p, stream_sink_id %#lx, media_type %p, stream_sink %p.\n",
@@ -605,6 +606,14 @@ static HRESULT WINAPI media_sink_AddStreamSink(IMFFinalizableMediaSink *iface, D
     {
         WARN("Failed to create stream sink, hr %#lx.\n", hr);
         LeaveCriticalSection(&media_sink->cs);
+        return hr;
+    }
+
+    mf_media_type_to_wg_format(media_type, &format);
+    if (FAILED(hr = wg_muxer_add_stream(media_sink->muxer, stream_sink_id, &format)))
+    {
+        LeaveCriticalSection(&media_sink->cs);
+        IMFStreamSink_Release(&object->IMFStreamSink_iface);
         return hr;
     }
 

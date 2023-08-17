@@ -112,6 +112,7 @@ HRESULT wg_transform_flush(wg_transform_t transform);
 
 HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer);
 void wg_muxer_destroy(wg_muxer_t muxer);
+HRESULT wg_muxer_add_stream(wg_muxer_t muxer, UINT32 stream_id, const struct wg_format *format);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 

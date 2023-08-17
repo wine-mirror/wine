@@ -67,6 +67,7 @@ extern NTSTATUS wg_transform_flush(void *args) DECLSPEC_HIDDEN;
 
 extern NTSTATUS wg_muxer_create(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_muxer_destroy(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_muxer_add_stream(void *args) DECLSPEC_HIDDEN;
 
 /* wg_allocator.c */
 

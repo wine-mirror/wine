@@ -22,16 +22,33 @@
 #pragma makedep unix
 #endif
 
+#include <stdio.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
 
 #include "unix_private.h"
 
+#include "wine/list.h"
+
 struct wg_muxer
 {
     GstElement *container, *muxer;
     GstPad *my_sink;
+    struct list streams;
+};
+
+struct wg_muxer_stream
+{
+    struct wg_muxer *muxer;
+    struct wg_format format;
+    uint32_t id;
+
+    GstPad *my_src;
+    GstCaps *my_src_caps;
+
+    struct list entry;
 };
 
 static struct wg_muxer *get_muxer(wg_muxer_t muxer)
@@ -57,6 +74,13 @@ static gboolean muxer_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *qu
     }
 }
 
+static void stream_free(struct wg_muxer_stream *stream)
+{
+    gst_object_unref(stream->my_src);
+    gst_caps_unref(stream->my_src_caps);
+    free(stream);
+}
+
 NTSTATUS wg_muxer_create(void *args)
 {
     struct wg_muxer_create_params *params = args;
@@ -69,6 +93,7 @@ NTSTATUS wg_muxer_create(void *args)
     /* Create wg_muxer object. */
     if (!(muxer = calloc(1, sizeof(*muxer))))
         return STATUS_NO_MEMORY;
+    list_init(&muxer->streams);
     if (!(muxer->container = gst_bin_new("wg_muxer")))
         goto out;
 
@@ -132,11 +157,66 @@ out:
 NTSTATUS wg_muxer_destroy(void *args)
 {
     struct wg_muxer *muxer = get_muxer(*(wg_muxer_t *)args);
+    struct wg_muxer_stream *stream, *next;
 
+    LIST_FOR_EACH_ENTRY_SAFE(stream, next, &muxer->streams, struct wg_muxer_stream, entry)
+    {
+        list_remove(&stream->entry);
+        stream_free(stream);
+    }
     gst_object_unref(muxer->my_sink);
     gst_element_set_state(muxer->container, GST_STATE_NULL);
     gst_object_unref(muxer->container);
     free(muxer);
 
     return S_OK;
+}
+
+NTSTATUS wg_muxer_add_stream(void *args)
+{
+    struct wg_muxer_add_stream_params *params = args;
+    struct wg_muxer *muxer = get_muxer(params->muxer);
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    GstPadTemplate *template = NULL;
+    struct wg_muxer_stream *stream;
+    char src_pad_name[64];
+
+    GST_DEBUG("muxer %p, stream_id %u, format %p.", muxer, params->stream_id, params->format);
+
+    /* Create stream object. */
+    if (!(stream = calloc(1, sizeof(*stream))))
+        return STATUS_NO_MEMORY;
+    stream->muxer = muxer;
+    stream->format = *params->format;
+    stream->id = params->stream_id;
+
+    /* Create stream my_src pad. */
+    if (!(stream->my_src_caps = wg_format_to_caps(params->format)))
+        goto out;
+    if (!(template = gst_pad_template_new("src", GST_PAD_SRC, GST_PAD_ALWAYS, stream->my_src_caps)))
+        goto out;
+    sprintf(src_pad_name, "wg_muxer_stream_src_%u", stream->id);
+    if (!(stream->my_src = gst_pad_new_from_template(template, src_pad_name)))
+        goto out;
+    gst_pad_set_element_private(stream->my_src, stream);
+
+    /* Add to muxer stream list. */
+    list_add_tail(&muxer->streams, &stream->entry);
+
+    gst_object_unref(template);
+
+    GST_INFO("Created winegstreamer muxer stream %p.", stream);
+
+    return STATUS_SUCCESS;
+
+out:
+    if (stream->my_src)
+        gst_object_unref(stream->my_src);
+    if (template)
+        gst_object_unref(template);
+    if (stream->my_src_caps)
+        gst_caps_unref(stream->my_src_caps);
+    free(stream);
+
+    return status;
 }

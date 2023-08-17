@@ -1945,6 +1945,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
     X(wg_muxer_create),
     X(wg_muxer_destroy),
+    X(wg_muxer_add_stream),
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_wg_funcs_count);
@@ -2171,6 +2172,23 @@ NTSTATUS wow64_wg_muxer_create(void *args)
     return ret;
 }
 
+NTSTATUS wow64_wg_muxer_add_stream(void *args)
+{
+    struct
+    {
+        wg_muxer_t muxer;
+        UINT32 stream_id;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_muxer_add_stream_params params =
+    {
+        .muxer = params32->muxer,
+        .stream_id = params32->stream_id,
+        .format = ULongToPtr(params32->format),
+    };
+    return wg_muxer_add_stream(&params);
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
 #define X64(name) [unix_ ## name] = wow64_ ## name
@@ -2214,6 +2232,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 
     X64(wg_muxer_create),
     X(wg_muxer_destroy),
+    X64(wg_muxer_add_stream),
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_wg_funcs_count);

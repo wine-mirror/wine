@@ -372,6 +372,13 @@ struct wg_muxer_create_params
     const char *format;
 };
 
+struct wg_muxer_add_stream_params
+{
+    wg_muxer_t muxer;
+    UINT32 stream_id;
+    const struct wg_format *format;
+};
+
 enum unix_funcs
 {
     unix_wg_init_gstreamer,
@@ -414,6 +421,7 @@ enum unix_funcs
 
     unix_wg_muxer_create,
     unix_wg_muxer_destroy,
+    unix_wg_muxer_add_stream,
 
     unix_wg_funcs_count,
 };

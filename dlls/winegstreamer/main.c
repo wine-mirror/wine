@@ -486,6 +486,27 @@ void wg_muxer_destroy(wg_muxer_t muxer)
     WINE_UNIX_CALL(unix_wg_muxer_destroy, &muxer);
 }
 
+HRESULT wg_muxer_add_stream(wg_muxer_t muxer, UINT32 stream_id, const struct wg_format *format)
+{
+    struct wg_muxer_add_stream_params params =
+    {
+        .muxer = muxer,
+        .stream_id = stream_id,
+        .format = format,
+    };
+    NTSTATUS status;
+
+    TRACE("muxer %#I64x, stream_id %u, format %p.\n", muxer, stream_id, format);
+
+    if ((status = WINE_UNIX_CALL(unix_wg_muxer_add_stream, &params)))
+    {
+        WARN("Failed to add stream, status %#lx.\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    return S_OK;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)
