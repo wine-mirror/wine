@@ -1236,6 +1236,25 @@ static void test_freopen( void )
     ok(ret == EOF, "fclose(file) succeeded\n");
     ok(errno == 0xdeadbeef, "errno is %d\n", errno);
 
+    file = fopen(filename1, "rb");
+    ok(file != NULL, "couldn't open %s\n", filename1);
+    close(file->_file);
+    file->_file = -1;
+
+    new = freopen(filename2, "rb", file);
+    ok(new == file, "freopen() didn't return same FILE*\n");
+
+    fd = fileno(file);
+    ok(fd > 0, "fileno() returned %d\n", fd);
+
+    ch = '#';
+    ret = fread(&ch, 1, 1, file);
+    ok(ret == 1, "fread() returned %d\n", ret);
+    ok(ch == '2', "Unexpected char\n");
+
+    ret = fclose(file);
+    ok(ret == 0, "fclose(file) returned %d\n", ret);
+
     unlink(filename1);
     unlink(filename2);
 }

@@ -4588,9 +4588,7 @@ FILE* CDECL _wfreopen(const wchar_t *path, const wchar_t *mode, FILE* file)
     TRACE(":path (%s) mode (%s) file (%p) fd (%d)\n", debugstr_w(path), debugstr_w(mode), file, file ? file->_file : -1);
 
     LOCK_FILES();
-    if (!file || ((fd = file->_file) < 0))
-        file = NULL;
-    else
+    if (file)
     {
         fclose(file);
         if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
