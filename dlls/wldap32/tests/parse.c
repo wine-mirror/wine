@@ -593,6 +593,45 @@ static void test_opt_server_certificate(void)
     ldap_unbind( ld );
 }
 
+static void test_opt_auto_reconnect(void)
+{
+    LDAP *ld;
+    ULONG ret, value;
+
+    ld = ldap_initA( (char *)"db.debian.org", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    ret = ldap_set_optionA( ld, LDAP_OPT_AUTO_RECONNECT, LDAP_OPT_ON );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_get_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_get_optionA should succeed, got %#lx\n", ret );
+    ok( value == 1, "got %lu\n", ret );
+
+    ret = ldap_set_optionA( ld, LDAP_OPT_AUTO_RECONNECT, LDAP_OPT_OFF );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_get_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_get_optionA should succeed, got %#lx\n", ret );
+    ok( value == 0, "got %lu\n", ret );
+
+    value = 1;
+    ret = ldap_set_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_get_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_get_optionA should succeed, got %#lx\n", ret );
+    ok( value == 1, "got %lu\n", ret );
+
+    value = 0;
+    ret = ldap_set_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
+    ret = ldap_get_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( !ret, "ldap_get_optionA should succeed, got %#lx\n", ret );
+    ok( value == 0, "got %lu\n", ret );
+
+    value = 2;
+    ret = ldap_set_optionA( ld, LDAP_OPT_AUTO_RECONNECT, &value );
+    ok( ret == LDAP_PARAM_ERROR, "ldap_set_optionA should fail, got %#lx\n", ret );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
@@ -602,6 +641,7 @@ START_TEST (parse)
     test_ldap_bind_sA();
     test_opt_ssl();
     test_opt_server_certificate();
+    test_opt_auto_reconnect();
 
     ld = ldap_initA( (char *)"db.debian.org", 389 );
     ok( ld != NULL, "ldap_init failed\n" );

@@ -92,6 +92,7 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_SUCCESS;
     }
 
+    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
     case WLDAP32_LDAP_OPT_ERROR_NUMBER:
@@ -115,7 +116,6 @@ ULONG CDECL ldap_get_optionA( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_LOCAL_ERROR;
 
     case WLDAP32_LDAP_OPT_AREC_EXCLUSIVE:
-    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_CLIENT_CERTIFICATE:
     case WLDAP32_LDAP_OPT_DNSDOMAIN_NAME:
     case WLDAP32_LDAP_OPT_ENCRYPT:
@@ -218,6 +218,13 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
 
         return WLDAP32_LDAP_SUCCESS;
     }
+    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
+    {
+        BOOL *on = value;
+        ret = map_error( ldap_get_option( CTX(ld), LDAP_OPT_RESTART, value ) );
+        if (!ret) *on = !!*on;
+        return ret;
+    }
 
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
@@ -242,7 +249,6 @@ ULONG CDECL ldap_get_optionW( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_LOCAL_ERROR;
 
     case WLDAP32_LDAP_OPT_AREC_EXCLUSIVE:
-    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_CLIENT_CERTIFICATE:
     case WLDAP32_LDAP_OPT_DNSDOMAIN_NAME:
     case WLDAP32_LDAP_OPT_ENCRYPT:
@@ -300,6 +306,7 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
         controlarrayfreeW( ctrlsW );
         return ret;
     }
+    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
     case WLDAP32_LDAP_OPT_ERROR_NUMBER:
@@ -327,7 +334,6 @@ ULONG CDECL ldap_set_optionA( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_UNWILLING_TO_PERFORM;
 
     case WLDAP32_LDAP_OPT_AREC_EXCLUSIVE:
-    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_CLIENT_CERTIFICATE:
     case WLDAP32_LDAP_OPT_DNSDOMAIN_NAME:
     case WLDAP32_LDAP_OPT_ENCRYPT:
@@ -473,6 +479,22 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
 
         return map_error( ldap_set_option( CTX(ld), option, value ) );
     }
+    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
+    {
+        if (value == WLDAP32_LDAP_OPT_ON)
+            value = LDAP_OPT_ON;
+        else if (value == WLDAP32_LDAP_OPT_OFF)
+            value = LDAP_OPT_OFF;
+        else if (*(ULONG *)value == 1)
+            value = LDAP_OPT_ON;
+        else if (*(ULONG *)value == 0)
+            value = LDAP_OPT_OFF;
+        else
+            return WLDAP32_LDAP_PARAM_ERROR;
+
+        return map_error( ldap_set_option( CTX(ld), LDAP_OPT_RESTART, value ) );
+    }
+
     case WLDAP32_LDAP_OPT_REFERRAL_HOP_LIMIT:
         return map_error( ldap_set_option( CTX(ld), LDAP_OPT_REFHOPLIMIT, value ) );
 
@@ -533,7 +555,6 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         return WLDAP32_LDAP_UNWILLING_TO_PERFORM;
 
     case WLDAP32_LDAP_OPT_AREC_EXCLUSIVE:
-    case WLDAP32_LDAP_OPT_AUTO_RECONNECT:
     case WLDAP32_LDAP_OPT_CLIENT_CERTIFICATE:
     case WLDAP32_LDAP_OPT_DNSDOMAIN_NAME:
     case WLDAP32_LDAP_OPT_ENCRYPT:
