@@ -740,6 +740,8 @@ JPEG_PE_LIBS
 JPEG_PE_CFLAGS
 GSM_PE_LIBS
 GSM_PE_CFLAGS
+FLUIDSYNTH_PE_LIBS
+FLUIDSYNTH_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
 MINGW_PKG_CONFIG
@@ -1591,6 +1593,7 @@ enable_dxerr8
 enable_dxerr9
 enable_dxguid
 enable_faudio
+enable_fluidsynth
 enable_gsm
 enable_jpeg
 enable_jxr
@@ -1746,6 +1749,8 @@ OBJC
 OBJCFLAGS
 FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS
+FLUIDSYNTH_PE_CFLAGS
+FLUIDSYNTH_PE_LIBS
 GSM_PE_CFLAGS
 GSM_PE_LIBS
 JPEG_PE_CFLAGS
@@ -2528,6 +2533,12 @@ Some influential environment variables:
               version
   FAUDIO_PE_LIBS
               Linker flags for the PE faudio, overriding the bundled version
+  FLUIDSYNTH_PE_CFLAGS
+              C compiler flags for the PE fluidsynth, overriding the bundled
+              version
+  FLUIDSYNTH_PE_LIBS
+              Linker flags for the PE fluidsynth, overriding the bundled
+              version
   GSM_PE_CFLAGS
               C compiler flags for the PE gsm, overriding the bundled version
   GSM_PE_LIBS Linker flags for the PE gsm, overriding the bundled version
@@ -11827,6 +11838,116 @@ CPPFLAGS=$ac_save_CPPFLAGS
         as_fn_append wine_notices "|FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version."
     fi
 
+    if ${FLUIDSYNTH_PE_CFLAGS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  FLUIDSYNTH_PE_CFLAGS=`$MINGW_PKG_CONFIG --cflags fluidsynth 2>/dev/null`
+fi
+fi
+if ${FLUIDSYNTH_PE_LIBS:+false} :
+then :
+  if test ${MINGW_PKG_CONFIG+y}
+then :
+  FLUIDSYNTH_PE_LIBS=`$MINGW_PKG_CONFIG --libs fluidsynth 2>/dev/null`
+fi
+fi
+FLUIDSYNTH_PE_LIBS=${FLUIDSYNTH_PE_LIBS:-"-lfluidsynth"}
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FLUIDSYNTH_PE_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW fluidsynth.h" >&5
+printf %s "checking for MinGW fluidsynth.h... " >&6; }
+if test ${ac_cv_mingw_header_fluidsynth_h+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+eval CC=\$${wine_arch}_CC
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <fluidsynth.h>
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_mingw_header_fluidsynth_h=yes
+else $as_nop
+  ac_cv_mingw_header_fluidsynth_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_header_fluidsynth_h" >&5
+printf "%s\n" "$ac_cv_mingw_header_fluidsynth_h" >&6; }
+if test "x$ac_cv_mingw_header_fluidsynth_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for new_fluid_synth in MinGW -lfluidsynth" >&5
+printf %s "checking for new_fluid_synth in MinGW -lfluidsynth... " >&6; }
+if test ${ac_cv_mingw_lib_fluidsynth+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_check_headers_saved_cc=$CC
+ac_wine_check_headers_saved_exeext=$ac_exeext
+ac_wine_check_headers_saved_libs=$LIBS
+eval CC=\$${wine_arch}_CC
+ac_exeext=".exe"
+LIBS="-lfluidsynth $FLUIDSYNTH_PE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char new_fluid_synth ();
+int
+main (void)
+{
+return new_fluid_synth ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_mingw_lib_fluidsynth=yes
+else $as_nop
+  ac_cv_mingw_lib_fluidsynth=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CC=$ac_wine_check_headers_saved_cc
+ac_exeext=$ac_wine_check_headers_saved_exeext
+LIBS=$ac_wine_check_headers_saved_libs
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mingw_lib_fluidsynth" >&5
+printf "%s\n" "$ac_cv_mingw_lib_fluidsynth" >&6; }
+if test "x$ac_cv_mingw_lib_fluidsynth" = xyes
+then :
+  :
+else $as_nop
+  FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""
+fi
+else $as_nop
+  FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+    if test "x$FLUIDSYNTH_PE_LIBS" = "x"
+    then
+        as_fn_append wine_notices "|Fluidsynth ${notice_platform}MinGW development files not found (or too old); using bundled version."
+    fi
+
     if ${JPEG_PE_CFLAGS:+false} :
 then :
   if test ${MINGW_PKG_CONFIG+y}
@@ -13052,6 +13173,21 @@ else $as_nop
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_PE_LIBS" >&5
+
+if ${FLUIDSYNTH_PE_LIBS:+false} :
+then :
+  FLUIDSYNTH_PE_LIBS="fluidsynth"
+   if ${FLUIDSYNTH_PE_CFLAGS:+false} :
+then :
+  FLUIDSYNTH_PE_CFLAGS="-I\$(top_srcdir)/libs/fluidsynth/include"
+else $as_nop
+  enable_fluidsynth=no
+fi
+else $as_nop
+  enable_fluidsynth=no
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: fluidsynth cflags: $FLUIDSYNTH_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: fluidsynth libs: $FLUIDSYNTH_PE_LIBS" >&5
 
 if ${GSM_PE_LIBS:+false} :
 then :
@@ -21951,6 +22087,7 @@ wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
 wine_fn_config_makefile libs/dxguid enable_dxguid
 wine_fn_config_makefile libs/faudio enable_faudio
+wine_fn_config_makefile libs/fluidsynth enable_fluidsynth
 wine_fn_config_makefile libs/gsm enable_gsm
 wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/jxr enable_jxr
@@ -23104,6 +23241,8 @@ PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
+FLUIDSYNTH_PE_CFLAGS = $FLUIDSYNTH_PE_CFLAGS
+FLUIDSYNTH_PE_LIBS = $FLUIDSYNTH_PE_LIBS
 GSM_PE_CFLAGS = $GSM_PE_CFLAGS
 GSM_PE_LIBS = $GSM_PE_LIBS
 JPEG_PE_CFLAGS = $JPEG_PE_CFLAGS

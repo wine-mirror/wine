@@ -1036,6 +1036,15 @@ then
         WINE_NOTICE([FAudio ${notice_platform}MinGW development files not found (or too old); using bundled version.])
     fi
 
+    WINE_MINGW_PACKAGE_FLAGS(FLUIDSYNTH,[fluidsynth],[-lfluidsynth],
+        [WINE_CHECK_MINGW_HEADER(fluidsynth.h,
+            [WINE_CHECK_MINGW_LIB(fluidsynth,new_fluid_synth,[:],[FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""],[$FLUIDSYNTH_PE_LIBS])],
+            [FLUIDSYNTH_PE_CFLAGS=""; FLUIDSYNTH_PE_LIBS=""])])
+    if test "x$FLUIDSYNTH_PE_LIBS" = "x"
+    then
+        WINE_NOTICE([Fluidsynth ${notice_platform}MinGW development files not found (or too old); using bundled version.])
+    fi
+
     WINE_MINGW_PACKAGE_FLAGS(JPEG,[libjpeg],,
         [WINE_CHECK_MINGW_HEADER(jpeglib.h,
             [WINE_CHECK_MINGW_LIB(jpeg,jpeg_start_decompress,[:],[JPEG_PE_CFLAGS=""; JPEG_PE_LIBS=""],[$JPEG_PE_LIBS])],
@@ -1146,6 +1155,7 @@ then
 fi
 
 WINE_EXTLIB_FLAGS(FAUDIO, faudio, "faudio mfplat mfreadwrite mfuuid propsys", "-I\$(top_srcdir)/libs/faudio/include")
+WINE_EXTLIB_FLAGS(FLUIDSYNTH, fluidsynth, "fluidsynth", "-I\$(top_srcdir)/libs/fluidsynth/include")
 WINE_EXTLIB_FLAGS(GSM, gsm, gsm, "-I\$(top_srcdir)/libs/gsm/inc")
 WINE_EXTLIB_FLAGS(JPEG, jpeg, jpeg, "-I\$(top_srcdir)/libs/jpeg")
 WINE_EXTLIB_FLAGS(JXR, jxr, jxr, "-I\$(top_srcdir)/libs/jxr/jxrgluelib -I\$(top_srcdir)/libs/jxr/image/sys")
@@ -3324,6 +3334,7 @@ WINE_CONFIG_MAKEFILE(libs/dxerr8)
 WINE_CONFIG_MAKEFILE(libs/dxerr9)
 WINE_CONFIG_MAKEFILE(libs/dxguid)
 WINE_CONFIG_MAKEFILE(libs/faudio)
+WINE_CONFIG_MAKEFILE(libs/fluidsynth)
 WINE_CONFIG_MAKEFILE(libs/gsm)
 WINE_CONFIG_MAKEFILE(libs/jpeg)
 WINE_CONFIG_MAKEFILE(libs/jxr)

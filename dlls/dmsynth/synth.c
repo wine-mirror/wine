@@ -26,6 +26,8 @@
 
 #include "dmsynth_private.h"
 
+#include <fluidsynth.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 static void dump_dmus_instrument(DMUS_INSTRUMENT *instrument)
@@ -228,6 +230,8 @@ struct synth
 
     struct list instruments;
     struct list waves;
+
+    fluid_settings_t *fluid_settings;
 };
 
 static inline struct synth *impl_from_IDirectMusicSynth8(IDirectMusicSynth8 *iface)
@@ -299,6 +303,7 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
             wave_release(wave);
         }
 
+        delete_fluid_settings(This->fluid_settings);
         free(This);
     }
 
@@ -1084,7 +1089,13 @@ HRESULT synth_create(IUnknown **ret_iface)
     list_init(&obj->instruments);
     list_init(&obj->waves);
 
+    if (!(obj->fluid_settings = new_fluid_settings())) goto failed;
+
     TRACE("Created DirectMusicSynth %p\n", obj);
     *ret_iface = (IUnknown *)&obj->IDirectMusicSynth8_iface;
     return S_OK;
+
+failed:
+    free(obj);
+    return E_OUTOFMEMORY;
 }

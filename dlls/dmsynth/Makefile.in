@@ -1,5 +1,6 @@
 MODULE    = dmsynth.dll
-IMPORTS   = dxguid uuid ole32 advapi32
+IMPORTS   = $(FLUIDSYNTH_PE_LIBS) dxguid uuid ole32 advapi32 user32
+EXTRAINCL = $(FLUIDSYNTH_PE_CFLAGS)
 
 C_SRCS = \
 	dmsynth_main.c \
