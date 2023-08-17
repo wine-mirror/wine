@@ -1945,6 +1945,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_transform_get_status),
     X(wg_transform_drain),
     X(wg_transform_flush),
+
+    X(wg_muxer_create),
+    X(wg_muxer_destroy),
 };
 
 #ifdef _WIN64
@@ -2052,7 +2055,6 @@ static NTSTATUS wow64_wg_parser_stream_copy_buffer(void *args)
     return wg_parser_stream_copy_buffer(&params);
 }
 
-
 static NTSTATUS wow64_wg_parser_stream_get_tag(void *args)
 {
     struct
@@ -2152,6 +2154,24 @@ NTSTATUS wow64_wg_transform_read_data(void *args)
     return ret;
 }
 
+NTSTATUS wow64_wg_muxer_create(void *args)
+{
+    struct
+    {
+        wg_muxer_t muxer;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_muxer_create_params params =
+    {
+        .format = ULongToPtr(params32->format),
+    };
+    NTSTATUS ret;
+
+    ret = wg_muxer_create(&params);
+    params32->muxer = params.muxer;
+    return ret;
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
 #define X64(name) [unix_ ## name] = wow64_ ## name
@@ -2192,6 +2212,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X(wg_transform_get_status),
     X(wg_transform_drain),
     X(wg_transform_flush),
+
+    X64(wg_muxer_create),
+    X(wg_muxer_destroy),
 };
 
 #endif  /* _WIN64 */

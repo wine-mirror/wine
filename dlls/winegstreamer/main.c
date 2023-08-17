@@ -456,6 +456,32 @@ HRESULT wg_transform_flush(wg_transform_t transform)
     return S_OK;
 }
 
+HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer)
+{
+    struct wg_muxer_create_params params =
+    {
+        .format = format,
+    };
+    NTSTATUS status;
+
+    TRACE("format %p, muxer %p.\n", format, muxer);
+
+    if (SUCCEEDED(status = WINE_UNIX_CALL(unix_wg_muxer_create, &params)))
+    {
+        *muxer = params.muxer;
+        TRACE("Created wg_muxer %#I64x.\n", params.muxer);
+    }
+
+    return status;
+}
+
+void wg_muxer_destroy(wg_muxer_t muxer)
+{
+    TRACE("muxer %#I64x.\n", muxer);
+
+    WINE_UNIX_CALL(unix_wg_muxer_destroy, &muxer);
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

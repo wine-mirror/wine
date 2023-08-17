@@ -22,6 +22,7 @@ C_SRCS = \
 	video_processor.c \
 	wg_allocator.c \
 	wg_format.c \
+	wg_muxer.c \
 	wg_parser.c \
 	wg_sample.c \
 	wg_transform.c \

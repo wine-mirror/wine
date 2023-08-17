@@ -87,15 +87,21 @@ GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstC
     if (!(transforms = gst_element_factory_list_get_elements(type, GST_RANK_MARGINAL)))
         goto done;
 
-    tmp = gst_element_factory_list_filter(transforms, src_caps, GST_PAD_SINK, FALSE);
-    gst_plugin_feature_list_free(transforms);
-    if (!(transforms = tmp))
-        goto done;
+    if (src_caps)
+    {
+        tmp = gst_element_factory_list_filter(transforms, src_caps, GST_PAD_SINK, FALSE);
+        gst_plugin_feature_list_free(transforms);
+        if (!(transforms = tmp))
+            goto done;
+    }
 
-    tmp = gst_element_factory_list_filter(transforms, sink_caps, GST_PAD_SRC, FALSE);
-    gst_plugin_feature_list_free(transforms);
-    if (!(transforms = tmp))
-        goto done;
+    if (sink_caps)
+    {
+        tmp = gst_element_factory_list_filter(transforms, sink_caps, GST_PAD_SRC, FALSE);
+        gst_plugin_feature_list_free(transforms);
+        if (!(transforms = tmp))
+            goto done;
+    }
 
     transforms = g_list_sort(transforms, gst_plugin_feature_rank_compare_func);
     for (tmp = transforms; tmp != NULL && element == NULL; tmp = tmp->next)

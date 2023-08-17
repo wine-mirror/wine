@@ -110,6 +110,9 @@ bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input);
 HRESULT wg_transform_drain(wg_transform_t transform);
 HRESULT wg_transform_flush(wg_transform_t transform);
 
+HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer);
+void wg_muxer_destroy(wg_muxer_t muxer);
+
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out);
