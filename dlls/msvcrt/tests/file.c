@@ -1167,6 +1167,79 @@ static void test_fputwc(void)
     _unlink(tempfile);
 }
 
+static void test_freopen( void )
+{
+    char filename1[8] = "AXXXXXX";
+    char filename2[8] = "BXXXXXX";
+    FILE *file;
+    FILE *new;
+    int ret;
+    int fd;
+    char ch;
+    long pos;
+
+    mktemp(filename1);
+    mktemp(filename2);
+
+    file = fopen(filename1, "wt");
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    ret = fwrite("1", 1, 1, file);
+    ok(ret == 1, "fwrite() returned %d (%d)\n", ret, errno);
+    ret = fclose(file);
+    ok(ret == 0, "fclose() returned %d\n", ret);
+
+    file = fopen(filename2, "wt");
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    ret = fwrite("2", 1, 1, file);
+    ok(ret == 1, "fwrite() returned %d (%d)\n", ret, errno);
+    ret = fclose(file);
+    ok(ret == 0, "fclose() returned %d\n", ret);
+
+    file = fopen(filename1, "rt");
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    file = freopen(filename2, "rt", file);
+    ok(file != NULL, "fopen(filename2) returned NULL\n");
+    ch = '#';
+    ret = fread(&ch, 1, 1, file);
+    ok(ret == 1, "fread() returned %d\n", ret);
+    ok(ch == '2', "fread() read %c\n", ch);
+    ret = fclose(file);
+    ok(ret == 0, "fclose() returned %d\n", ret);
+
+    file = fopen(filename1, "at");
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    file = freopen(filename1, "rt", file);
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    pos = ftell(file);
+    ok(pos == 0, "ftell() returned %ld\n", pos);
+    ch = '#';
+    ret = fread(&ch, 1, 1, file);
+    ok(ret == 1, "fread() returned %d\n", ret);
+    ok(ch == '1', "fread() read %c\n", ch);
+    ret = fclose(file);
+    ok(ret == 0, "fclose() returned %d\n", ret);
+
+    file = fopen(filename1, "rt");
+    ok(file != NULL, "fopen(filename1) returned NULL\n");
+    fd = fileno(file);
+    ok(fd > 0, "fileno() returned %d\n", fd);
+    /* invalid filename */
+    new = freopen("_:", "rt", file);
+    ok(new == NULL, "fopen(_:) returned non NULL\n");
+    errno = 0xdeadbeef;
+    ch = '#';
+    ret = read(fd, &ch, 1);
+    ok(ret == -1, "read() returned %d\n", ret);
+    ok(errno == EBADF, "errno is %d\n", errno);
+    errno = 0xdeadbeef;
+    ret = fclose(file);
+    ok(ret == EOF, "fclose(file) succeeded\n");
+    ok(errno == 0xdeadbeef, "errno is %d\n", errno);
+
+    unlink(filename1);
+    unlink(filename2);
+}
+
 static void test_ctrlz( void )
 {
   char* tempf;
@@ -2977,6 +3050,7 @@ START_TEST(file)
     test_fgetwc_locale("AB\x83\xa9", "C", 0);
     test_fgetwc_unicode();
     test_fputwc();
+    test_freopen();
     test_ctrlz();
     test_file_put_get();
     test_tmpnam();
