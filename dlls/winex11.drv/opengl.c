@@ -1201,18 +1201,19 @@ static void mark_drawable_dirty( struct gl_drawable *old, struct gl_drawable *ne
 static inline void sync_context(struct wgl_context *context)
 {
     BOOL refresh = FALSE;
+    struct gl_drawable *old[2] = { NULL };
 
     pthread_mutex_lock( &context_mutex );
     if (context->new_drawables[0])
     {
-        release_gl_drawable( context->drawables[0] );
+        old[0] = context->drawables[0];
         context->drawables[0] = context->new_drawables[0];
         context->new_drawables[0] = NULL;
         refresh = TRUE;
     }
     if (context->new_drawables[1])
     {
-        release_gl_drawable( context->drawables[1] );
+        old[1] = context->drawables[1];
         context->drawables[1] = context->new_drawables[1];
         context->new_drawables[1] = NULL;
         refresh = TRUE;
@@ -1224,6 +1225,8 @@ static inline void sync_context(struct wgl_context *context)
                                    context->drawables[1]->drawable, context->ctx);
         else
             pglXMakeCurrent(gdi_display, context->drawables[0]->drawable, context->ctx);
+        release_gl_drawable( old[0] );
+        release_gl_drawable( old[1] );
     }
     pthread_mutex_unlock( &context_mutex );
 }
