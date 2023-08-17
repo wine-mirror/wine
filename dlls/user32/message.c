@@ -814,8 +814,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT
  */
 BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
 {
+    enum wm_char_mapping mapping;
     MSG msg = *pmsg;
-    map_wparam_AtoW( msg.message, &msg.wParam, WMCHAR_MAP_NOMAPPING );
+
+    mapping = GetSystemMetrics( SM_DBCSENABLED ) ? WMCHAR_MAP_ISDIALOGMESSAGE : WMCHAR_MAP_NOMAPPING;
+    if (!map_wparam_AtoW( msg.message, &msg.wParam, mapping ))
+        return TRUE;
     return IsDialogMessageW( hwndDlg, &msg );
 }
 

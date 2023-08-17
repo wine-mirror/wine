@@ -575,10 +575,7 @@ static LRESULT CALLBACK test_IsDialogMessageA_proc(HWND hwnd, UINT msg, WPARAM w
     {
     case WM_CHAR:
         if (GetSystemMetrics(SM_DBCSENABLED))
-        {
-            todo_wine
             ok(wparam == 0x5b57, "Got unexpected wparam %#Ix.\n", wparam);
-        }
         else
             ok(wparam == 0x3f, "Got unexpected wparam %#Ix.\n", wparam);
         wm_char_count++;
@@ -879,7 +876,6 @@ static void test_IsDialogMessage(void)
             DispatchMessageA(&msg);
         }
     }
-    todo_wine_if(GetSystemMetrics(SM_DBCSENABLED))
     ok(wm_char_count == 1, "Got unexpected WM_CHAR count %d.\n", wm_char_count);
     DestroyWindow(g_hwndMain);
 }
