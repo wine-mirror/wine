@@ -252,9 +252,9 @@ BOOL WINAPI LogonUserA( LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassw
     ret = LogonUserW( usernameW, domainW, passwordW, dwLogonType, dwLogonProvider, phToken );
 
 done:
-    heap_free( usernameW );
-    heap_free( domainW );
-    heap_free( passwordW );
+    free( usernameW );
+    free( domainW );
+    free( passwordW );
     return ret;
 }
 

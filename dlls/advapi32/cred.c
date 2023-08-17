@@ -229,7 +229,7 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     key.Length = key.MaximumLength = KEY_SIZE;
     key.Buffer = (unsigned char *)key_data;
 
-    encrypted_credential_blob = heap_alloc(credential_blob_size);
+    encrypted_credential_blob = malloc(credential_blob_size);
     if (!encrypted_credential_blob) return ERROR_OUTOFMEMORY;
 
     memcpy(encrypted_credential_blob, credential_blob, credential_blob_size);
@@ -238,7 +238,7 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     SystemFunction032(&data, &key);
 
     ret = RegSetValueExW(hkey, L"Password", 0, REG_BINARY, encrypted_credential_blob, credential_blob_size);
-    heap_free(encrypted_credential_blob);
+    free(encrypted_credential_blob);
 
     return ret;
 }
@@ -320,7 +320,7 @@ static DWORD host_write_credential( const CREDENTIALW *credential, BOOL preserve
     size = sizeof(*cred) + (lstrlenW( credential->TargetName ) + lstrlenW( credential->UserName ) + 2) * sizeof(WCHAR);
     size += credential->CredentialBlobSize;
     if (credential->Comment) size += (lstrlenW( credential->Comment ) + 1) * sizeof(WCHAR);
-    if (!(cred = heap_alloc( size )))
+    if (!(cred = malloc( size )))
     {
         CloseHandle( mgr );
         return ERROR_OUTOFMEMORY;
@@ -356,7 +356,7 @@ static DWORD host_write_credential( const CREDENTIALW *credential, BOOL preserve
     else cred->comment_size = 0;
 
     ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_WRITE_CREDENTIAL, cred, size, NULL, 0, NULL, NULL );
-    heap_free( cred );
+    free( cred );
     CloseHandle( mgr );
 
     return ret ? ERROR_SUCCESS : GetLastError();
@@ -435,7 +435,7 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
         len += ARRAY_SIZE(L"DomPasswd: ");
     }
 
-    key_name = heap_alloc(len * sizeof(WCHAR));
+    key_name = malloc(len * sizeof(WCHAR));
     if (!key_name) return NULL;
 
     lstrcpyW(key_name, prefix);
@@ -463,13 +463,13 @@ static BOOL registry_credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
     else if (type != REG_SZ)
         return FALSE;
 
-    target_name = heap_alloc(count);
+    target_name = malloc(count);
     if (!target_name)
         return FALSE;
     ret = RegQueryValueExW(hkeyCred, NULL, 0, &type, (LPVOID)target_name, &count);
     if (ret != ERROR_SUCCESS || type != REG_SZ)
     {
-        heap_free(target_name);
+        free(target_name);
         return FALSE;
     }
 
@@ -481,7 +481,7 @@ static BOOL registry_credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
                          (p && !p[1] ? p - filter : -1), target_name,
                          (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
 
-    heap_free(target_name);
+    free(target_name);
     return ret;
 }
 
@@ -730,7 +730,7 @@ BOOL WINAPI CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags)
     }
 
     len = MultiByteToWideChar(CP_ACP, 0, TargetName, -1, NULL, 0);
-    TargetNameW = heap_alloc(len * sizeof(WCHAR));
+    TargetNameW = malloc(len * sizeof(WCHAR));
     if (!TargetNameW)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -740,7 +740,7 @@ BOOL WINAPI CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags)
 
     ret = CredDeleteW(TargetNameW, Type, Flags);
 
-    heap_free(TargetNameW);
+    free(TargetNameW);
 
     return ret;
 }
@@ -758,7 +758,7 @@ static DWORD host_delete_credential( const WCHAR *targetname )
     if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
 
     size = sizeof(*cred) + name_size;
-    if (!(cred = heap_alloc( size )))
+    if (!(cred = malloc( size )))
     {
         CloseHandle( mgr );
         return ERROR_OUTOFMEMORY;
@@ -769,7 +769,7 @@ static DWORD host_delete_credential( const WCHAR *targetname )
     lstrcpyW( ptr, targetname );
 
     ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_DELETE_CREDENTIAL, cred, size, NULL, 0, NULL, NULL );
-    heap_free( cred );
+    free( cred );
     CloseHandle( mgr );
 
     return ret ? ERROR_SUCCESS : GetLastError();
@@ -823,7 +823,7 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
 
     key_name = get_key_name_for_target(TargetName, Type);
     ret = RegDeleteKeyW(hkeyMgr, key_name);
-    heap_free(key_name);
+    free(key_name);
     RegCloseKey(hkeyMgr);
     if (ret != ERROR_SUCCESS)
     {
@@ -852,7 +852,7 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
     if (Filter)
     {
         len = MultiByteToWideChar(CP_ACP, 0, Filter, -1, NULL, 0);
-        FilterW = heap_alloc(len * sizeof(WCHAR));
+        FilterW = malloc(len * sizeof(WCHAR));
         if (!FilterW)
         {
             SetLastError(ERROR_OUTOFMEMORY);
@@ -865,16 +865,16 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
 
     if (!CredEnumerateW(FilterW, Flags, Count, &CredentialsW))
     {
-        heap_free(FilterW);
+        free(FilterW);
         return FALSE;
     }
-    heap_free(FilterW);
+    free(FilterW);
 
     len = *Count * sizeof(PCREDENTIALA);
     for (i = 0; i < *Count; i++)
         len += convert_PCREDENTIALW_to_PCREDENTIALA(CredentialsW[i], NULL, 0);
 
-    *Credentials = heap_alloc(len);
+    *Credentials = malloc(len);
     if (!*Credentials)
     {
         CredFree(CredentialsW);
@@ -917,7 +917,7 @@ static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **cred
     if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
 
     size = FIELD_OFFSET( struct mountmgr_credential_list, creds[CRED_LIST_COUNT] ) + filter_size + CRED_DATA_SIZE;
-    if (!(list = heap_alloc( size )))
+    if (!(list = malloc( size )))
     {
         CloseHandle( mgr );
         return ERROR_OUTOFMEMORY;
@@ -934,7 +934,7 @@ static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **cred
         if ((ret = GetLastError()) != ERROR_MORE_DATA) goto done;
 
         size = list->size + filter_size;
-        if (!(tmp = heap_realloc( list, size )))
+        if (!(tmp = realloc( list, size )))
         {
             ret = ERROR_OUTOFMEMORY;
             goto done;
@@ -994,7 +994,7 @@ static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **cred
     ret = ERROR_SUCCESS;
 
 done:
-    heap_free( list );
+    free( list );
     CloseHandle( mgr );
     return ret;
 }
@@ -1044,7 +1044,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
         return FALSE;
     }
 
-    target_name = heap_alloc((target_name_len+1)*sizeof(WCHAR));
+    target_name = malloc((target_name_len + 1) * sizeof(WCHAR));
     if (!target_name)
     {
         RegCloseKey(hkeyMgr);
@@ -1065,7 +1065,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
         ret = ERROR_NOT_FOUND;
     if (ret != ERROR_SUCCESS)
     {
-        heap_free(target_name);
+        free(target_name);
         RegCloseKey(hkeyMgr);
         SetLastError(ret);
         return FALSE;
@@ -1074,7 +1074,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
 
     if (ret == ERROR_SUCCESS)
     {
-        buffer = heap_alloc(len);
+        buffer = malloc(len);
         *Credentials = (PCREDENTIALW *)buffer;
         if (buffer)
         {
@@ -1091,7 +1091,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
         else ret = ERROR_OUTOFMEMORY;
     }
 
-    heap_free(target_name);
+    free(target_name);
     RegCloseKey(hkeyMgr);
 
     if (ret != ERROR_SUCCESS)
@@ -1107,7 +1107,7 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIA
  */
 VOID WINAPI CredFree(PVOID Buffer)
 {
-    heap_free(Buffer);
+    free(Buffer);
 }
 
 /******************************************************************************
@@ -1128,7 +1128,7 @@ BOOL WINAPI CredReadA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALA *
     }
 
     len = MultiByteToWideChar(CP_ACP, 0, TargetName, -1, NULL, 0);
-    TargetNameW = heap_alloc(len * sizeof(WCHAR));
+    TargetNameW = malloc(len * sizeof(WCHAR));
     if (!TargetNameW)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1138,13 +1138,13 @@ BOOL WINAPI CredReadA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALA *
 
     if (!CredReadW(TargetNameW, Type, Flags, &CredentialW))
     {
-        heap_free(TargetNameW);
+        free(TargetNameW);
         return FALSE;
     }
-    heap_free(TargetNameW);
+    free(TargetNameW);
 
     len = convert_PCREDENTIALW_to_PCREDENTIALA(CredentialW, NULL, 0);
-    *Credential = heap_alloc(len);
+    *Credential = malloc(len);
     if (!*Credential)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1170,7 +1170,7 @@ static DWORD host_read_credential( const WCHAR *targetname, CREDENTIALW **ret_cr
     if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
 
     size_in = sizeof(*cred_in) + size_name;
-    if (!(cred_in = heap_alloc( size_in )))
+    if (!(cred_in = malloc( size_in )))
     {
         CloseHandle( mgr );
         return ERROR_OUTOFMEMORY;
@@ -1181,14 +1181,14 @@ static DWORD host_read_credential( const WCHAR *targetname, CREDENTIALW **ret_cr
     lstrcpyW( ptr, targetname );
 
     size_out = 256;
-    if (!(cred_out = heap_alloc( size_out ))) goto done;
+    if (!(cred_out = malloc( size_out ))) goto done;
 
     for (;;)
     {
         ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_READ_CREDENTIAL, cred_in, size_in, cred_out, size_out, NULL, NULL );
         if (ret || (err = GetLastError()) != ERROR_MORE_DATA) break;
         size_out *= 2;
-        if (!(tmp = heap_realloc( cred_out, size_out ))) goto done;
+        if (!(tmp = realloc( cred_out, size_out ))) goto done;
         cred_out = tmp;
     }
 
@@ -1198,7 +1198,7 @@ static DWORD host_read_credential( const WCHAR *targetname, CREDENTIALW **ret_cr
         DWORD size = sizeof(*credential) + cred_out->targetname_size + cred_out->username_size + cred_out->comment_size +
                      cred_out->blob_size;
 
-        if (!(credential = heap_alloc_zero( size )))
+        if (!(credential = calloc( 1, size )))
         {
             err = ERROR_OUTOFMEMORY;
             goto done;
@@ -1231,8 +1231,8 @@ static DWORD host_read_credential( const WCHAR *targetname, CREDENTIALW **ret_cr
     }
 
 done:
-    heap_free( cred_in );
-    heap_free( cred_out );
+    free( cred_in );
+    free( cred_out );
     CloseHandle( mgr );
     return err;
 }
@@ -1300,7 +1300,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
 
     key_name = get_key_name_for_target(TargetName, Type);
     ret = RegOpenKeyExW(hkeyMgr, key_name, 0, KEY_QUERY_VALUE, &hkeyCred);
-    heap_free(key_name);
+    free(key_name);
     if (ret != ERROR_SUCCESS)
     {
         TRACE("credentials for target name %s not found\n", debugstr_w(TargetName));
@@ -1312,7 +1312,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
     ret = registry_read_credential(hkeyCred, NULL, key_data, NULL, &len);
     if (ret == ERROR_SUCCESS)
     {
-        *Credential = heap_alloc(len);
+        *Credential = malloc(len);
         if (*Credential)
         {
             len = sizeof(**Credential);
@@ -1375,7 +1375,7 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
     if (TargetInformation->PackageName)
         len += MultiByteToWideChar(CP_ACP, 0, TargetInformation->PackageName, -1, NULL, 0) * sizeof(WCHAR);
 
-    TargetInformationW = heap_alloc(len);
+    TargetInformationW = malloc(len);
     if (!TargetInformationW)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1446,7 +1446,7 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
 
     ret = CredReadDomainCredentialsW(TargetInformationW, Flags, Size, &CredentialsW);
 
-    heap_free(TargetInformationW);
+    free(TargetInformationW);
 
     if (ret)
     {
@@ -1457,7 +1457,7 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
         for (i = 0; i < *Size; i++)
             len += convert_PCREDENTIALW_to_PCREDENTIALA(CredentialsW[i], NULL, 0);
 
-        *Credentials = heap_alloc(len);
+        *Credentials = malloc(len);
         if (!*Credentials)
         {
             CredFree(CredentialsW);
@@ -1519,7 +1519,7 @@ BOOL WINAPI CredWriteA(PCREDENTIALA Credential, DWORD Flags)
     }
 
     len = convert_PCREDENTIALA_to_PCREDENTIALW(Credential, NULL, 0);
-    CredentialW = heap_alloc(len);
+    CredentialW = malloc(len);
     if (!CredentialW)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -1530,7 +1530,7 @@ BOOL WINAPI CredWriteA(PCREDENTIALA Credential, DWORD Flags)
 
     ret = CredWriteW(CredentialW, Flags);
 
-    heap_free(CredentialW);
+    free(CredentialW);
 
     return ret;
 }
@@ -1621,7 +1621,7 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
     ret = RegCreateKeyExW(hkeyMgr, key_name, 0, NULL,
                           Credential->Persist == CRED_PERSIST_SESSION ? REG_OPTION_VOLATILE : REG_OPTION_NON_VOLATILE,
                           KEY_READ|KEY_WRITE, NULL, &hkeyCred, NULL);
-    heap_free(key_name);
+    free(key_name);
     if (ret != ERROR_SUCCESS)
     {
         TRACE("credentials for target name %s not found\n",
@@ -1677,13 +1677,13 @@ BOOL WINAPI CredMarshalCredentialA( CRED_MARSHAL_TYPE type, PVOID cred, LPSTR *o
     if ((ret = CredMarshalCredentialW( type, cred, &outW )))
     {
         int len = WideCharToMultiByte( CP_ACP, 0, outW, -1, NULL, 0, NULL, NULL );
-        if (!(*out = heap_alloc( len )))
+        if (!(*out = malloc( len )))
         {
-            heap_free( outW );
+            free( outW );
             return FALSE;
         }
         WideCharToMultiByte( CP_ACP, 0, outW, -1, *out, len, NULL, NULL );
-        heap_free( outW );
+        free( outW );
     }
     return ret;
 }
@@ -1741,7 +1741,7 @@ BOOL WINAPI CredMarshalCredentialW( CRED_MARSHAL_TYPE type, PVOID cred, LPWSTR *
     case CertCredential:
     {
         size = (sizeof(cert->rgbHashOfCert) + 2) * 4 / 3;
-        if (!(p = heap_alloc( (size + 4) * sizeof(WCHAR) ))) return FALSE;
+        if (!(p = malloc( (size + 4) * sizeof(WCHAR) ))) return FALSE;
         p[0] = '@';
         p[1] = '@';
         p[2] = 'A' + type;
@@ -1753,7 +1753,7 @@ BOOL WINAPI CredMarshalCredentialW( CRED_MARSHAL_TYPE type, PVOID cred, LPWSTR *
     {
         len = lstrlenW( target->UserName );
         size = (sizeof(DWORD) + len * sizeof(WCHAR) + 2) * 4 / 3;
-        if (!(p = heap_alloc( (size + 4) * sizeof(WCHAR) ))) return FALSE;
+        if (!(p = malloc( (size + 4) * sizeof(WCHAR) ))) return FALSE;
         p[0] = '@';
         p[1] = '@';
         p[2] = 'A' + type;
@@ -1786,11 +1786,11 @@ BOOL WINAPI CredUnmarshalCredentialA( LPCSTR cred, PCRED_MARSHAL_TYPE type, PVOI
     if (cred)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, cred, -1, NULL, 0 );
-        if (!(credW = heap_alloc( len * sizeof(WCHAR) ))) return FALSE;
+        if (!(credW = malloc( len * sizeof(WCHAR) ))) return FALSE;
         MultiByteToWideChar( CP_ACP, 0, cred, -1, credW, len );
     }
     ret = CredUnmarshalCredentialW( credW, type, out );
-    heap_free( credW );
+    free( credW );
     return ret;
 }
 
@@ -1876,7 +1876,7 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
-        if (!(cert = heap_alloc( sizeof(*cert) ))) return FALSE;
+        if (!(cert = malloc( sizeof(*cert) ))) return FALSE;
         memcpy( cert->rgbHashOfCert, hash, sizeof(cert->rgbHashOfCert) );
         cert->cbSize = sizeof(*cert);
         *out = cert;
@@ -1894,10 +1894,10 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
             return FALSE;
         }
         buflen = sizeof(*target) + size + sizeof(WCHAR);
-        if (!(target = heap_alloc( buflen ))) return FALSE;
+        if (!(target = malloc( buflen ))) return FALSE;
         if (!cred_decode( cred + 9, len - 6, (char *)(target + 1) ))
         {
-            heap_free( target );
+            free( target );
             return FALSE;
         }
         target->UserName = (WCHAR *)(target + 1);
@@ -1973,11 +1973,11 @@ BOOL WINAPI CredIsMarshaledCredentialA(LPCSTR name)
     if (name)
     {
         len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
-        nameW = heap_alloc(len * sizeof(WCHAR));
+        nameW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, len);
     }
 
     res = CredIsMarshaledCredentialW(nameW);
-    heap_free(nameW);
+    free(nameW);
     return res;
 }

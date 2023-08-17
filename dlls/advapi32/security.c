@@ -234,12 +234,12 @@ BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
     if (!ServerName || !ServerName[0])
         return TRUE;
 
-    buf = heap_alloc(dwSize * sizeof(WCHAR));
+    buf = malloc(dwSize * sizeof(WCHAR));
     Result = GetComputerNameW(buf,  &dwSize);
     if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
         ServerName += 2;
     Result = Result && !wcscmp(ServerName, buf);
-    heap_free(buf);
+    free(buf);
 
     return Result;
 }
@@ -599,7 +599,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
     ret = LookupPrivilegeNameW(lpSystemNameW.Buffer, lpLuid, NULL, &wLen);
     if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
-        LPWSTR lpNameW = heap_alloc(wLen * sizeof(WCHAR));
+        LPWSTR lpNameW = malloc(wLen * sizeof(WCHAR));
 
         ret = LookupPrivilegeNameW(lpSystemNameW.Buffer, lpLuid, lpNameW,
          &wLen);
@@ -628,7 +628,7 @@ LookupPrivilegeNameA( LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName,
                 *cchName = len - 1;
             }
         }
-        heap_free(lpNameW);
+        free(lpNameW);
     }
     RtlFreeUnicodeString(&lpSystemNameW);
     return ret;
@@ -726,7 +726,7 @@ GetFileSecurityA( LPCSTR lpFileName,
     name = strdupAW(lpFileName);
     r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
                           nLength, lpnLengthNeeded );
-    heap_free( name );
+    free( name );
 
     return r;
 }
@@ -754,9 +754,9 @@ LookupAccountSidA(
 
     systemW = strdupAW(system);
     if (account)
-        accountW = heap_alloc( accountSizeW * sizeof(WCHAR) );
+        accountW = malloc( accountSizeW * sizeof(WCHAR) );
     if (domain)
-        domainW = heap_alloc( domainSizeW * sizeof(WCHAR) );
+        domainW = malloc( domainSizeW * sizeof(WCHAR) );
 
     r = LookupAccountSidW( systemW, sid, accountW, &accountSizeW, domainW, &domainSizeW, name_use );
 
@@ -781,9 +781,9 @@ LookupAccountSidA(
         *domainSize = domainSizeW + 1;
     }
 
-    heap_free( systemW );
-    heap_free( accountW );
-    heap_free( domainW );
+    free( systemW );
+    free( accountW );
+    free( domainW );
 
     return r;
 }
@@ -867,7 +867,7 @@ LookupAccountSidW(
             DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
             BOOL result;
 
-            computer_name = heap_alloc(size * sizeof(WCHAR));
+            computer_name = malloc(size * sizeof(WCHAR));
             result = GetComputerNameW(computer_name,  &size);
 
             if (result) {
@@ -921,7 +921,7 @@ LookupAccountSidW(
                             break;
                         case 1000:	/* first user account */
                             size = UNLEN + 1;
-                            account_name = heap_alloc(size * sizeof(WCHAR));
+                            account_name = malloc(size * sizeof(WCHAR));
                             if (GetUserNameW(account_name, &size))
                                 ac = account_name;
                             else
@@ -968,14 +968,14 @@ LookupAccountSidW(
         else
             *accountSize = ac_len + 1;
 
-        heap_free(account_name);
-        heap_free(computer_name);
+        free(account_name);
+        free(computer_name);
         if (status) *name_use = use;
         return status;
     }
 
-    heap_free(account_name);
-    heap_free(computer_name);
+    free(account_name);
+    free(computer_name);
     SetLastError(ERROR_NONE_MAPPED);
     return FALSE;
 }
@@ -1009,7 +1009,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
 
     name = strdupAW(lpFileName);
     r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
-    heap_free( name );
+    free( name );
 
     return r;
 }
@@ -1079,7 +1079,7 @@ LookupAccountNameA(
     RtlCreateUnicodeStringFromAsciiz(&lpAccountW, account);
 
     if (ReferencedDomainName)
-        lpReferencedDomainNameW = heap_alloc(*cbReferencedDomainName * sizeof(WCHAR));
+        lpReferencedDomainNameW = malloc(*cbReferencedDomainName * sizeof(WCHAR));
 
     ret = LookupAccountNameW(lpSystemW.Buffer, lpAccountW.Buffer, sid, cbSid, lpReferencedDomainNameW,
         cbReferencedDomainName, name_use);
@@ -1092,7 +1092,7 @@ LookupAccountNameA(
 
     RtlFreeUnicodeString(&lpSystemW);
     RtlFreeUnicodeString(&lpAccountW);
-    heap_free(lpReferencedDomainNameW);
+    free(lpReferencedDomainNameW);
 
     return ret;
 }
@@ -1279,7 +1279,7 @@ BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
         {
             DWORD len, sidLen = SECURITY_MAX_SID_SIZE;
 
-            if (!(pSid = heap_alloc( sidLen ))) return FALSE;
+            if (!(pSid = malloc( sidLen ))) return FALSE;
 
             if ((ret = CreateWellKnownSid( ACCOUNT_SIDS[i].type, NULL, pSid, &sidLen )))
             {
@@ -1311,7 +1311,7 @@ BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
             if (ret)
                 *peUse = ACCOUNT_SIDS[i].name_use;
 
-            heap_free(pSid);
+            free(pSid);
             *handled = TRUE;
             return ret;
         }
@@ -1336,7 +1336,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
     /* Let the current Unix user id masquerade as first Windows user account */
 
     nameLen = UNLEN + 1;
-    if (!(userName = heap_alloc( nameLen * sizeof(WCHAR) ))) return FALSE;
+    if (!(userName = malloc( nameLen * sizeof(WCHAR) ))) return FALSE;
 
     if (domain.Buffer)
     {
@@ -1367,7 +1367,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
         }
     }
 
-    heap_free(userName);
+    free(userName);
     return ret;
 }
 
@@ -1975,7 +1975,7 @@ static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR *
 
         if (objA)
         {
-            if (!(objW = heap_alloc( sizeof(OBJECTS_AND_NAME_W) )))
+            if (!(objW = malloc( sizeof(OBJECTS_AND_NAME_W) )))
                 return ERROR_NOT_ENOUGH_MEMORY;
 
             objW->ObjectsPresent = objA->ObjectsPresent;
@@ -2003,7 +2003,7 @@ static void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
     switch (form)
     {
     case TRUSTEE_IS_NAME:
-        heap_free( trustee_nameW );
+        free( trustee_nameW );
         break;
     case TRUSTEE_IS_OBJECTS_AND_NAME:
     {
@@ -2011,10 +2011,10 @@ static void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
 
         if (objW)
         {
-            heap_free( objW->ptstrName );
-            heap_free( objW->InheritedObjectTypeName );
-            heap_free( objW->ObjectTypeName );
-            heap_free( objW );
+            free( objW->ptstrName );
+            free( objW->InheritedObjectTypeName );
+            free( objW->ObjectTypeName );
+            free( objW );
         }
 
         break;
@@ -2093,7 +2093,7 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
     if (!count && !OldAcl)
         return ERROR_SUCCESS;
 
-    pEntriesW = heap_alloc( count * sizeof(EXPLICIT_ACCESSW) );
+    pEntriesW = malloc( count * sizeof(EXPLICIT_ACCESSW) );
     if (!pEntriesW)
         return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -2129,7 +2129,7 @@ cleanup:
     for (free_index = 0; free_index < alloc_index; ++free_index)
         free_trustee_name( pEntriesW[free_index].Trustee.TrusteeForm, pEntriesW[free_index].Trustee.ptstrName );
 
-    heap_free( pEntriesW );
+    free( pEntriesW );
     return err;
 }
 
@@ -2154,7 +2154,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
         return ERROR_SUCCESS;
 
     /* allocate array of maximum sized sids allowed */
-    ppsid = heap_alloc(count * (sizeof(SID *) + FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES])));
+    ppsid = malloc(count * (sizeof(SID *) + FIELD_OFFSET(SID, SubAuthority[SID_MAX_SUB_AUTHORITIES])));
     if (!ppsid)
         return ERROR_OUTOFMEMORY;
 
@@ -2344,7 +2344,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
     }
 
 exit:
-    heap_free(ppsid);
+    free(ppsid);
     return ret;
 }
 
@@ -2365,7 +2365,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
                            psidGroup, pDacl, pSacl );
 
-    heap_free( wstr );
+    free( wstr );
 
     return r;
 }
@@ -2565,7 +2565,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
     ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
                                                                StringSDRevision, SecurityDescriptor,
                                                                SecurityDescriptorSize);
-    heap_free(StringSecurityDescriptorW);
+    free(StringSecurityDescriptorW);
 
     return ret;
 }
@@ -2582,7 +2582,7 @@ BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorA(PSECURITY_DESCR
         int lenA;
 
         lenA = WideCharToMultiByte(CP_ACP, 0, wstr, len, NULL, 0, NULL, NULL);
-        *OutputString = heap_alloc(lenA);
+        *OutputString = malloc(lenA);
         WideCharToMultiByte(CP_ACP, 0, wstr, len, *OutputString, lenA, NULL, NULL);
         LocalFree(wstr);
 
@@ -2615,7 +2615,7 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
     {
         WCHAR *wStringSid = strdupAW(StringSid);
         bret = ConvertStringSidToSidW(wStringSid, Sid);
-        heap_free(wStringSid);
+        free(wStringSid);
     }
     return bret;
 }
@@ -2691,7 +2691,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     r = GetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, ppsidOwner,
                            ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor );
 
-    heap_free( wstr );
+    free( wstr );
 
     return r;
 }
@@ -2852,14 +2852,14 @@ static NTSTATUS combine_dacls(ACL *parent, ACL *child, ACL **result)
     int i;
 
     /* initialize a combined DACL containing both inherited and new ACEs */
-    combined = heap_alloc_zero(child->AclSize+parent->AclSize);
+    combined = calloc(1, child->AclSize + parent->AclSize);
     if (!combined)
         return STATUS_NO_MEMORY;
 
     status = RtlCreateAcl(combined, parent->AclSize+child->AclSize, ACL_REVISION);
     if (status != STATUS_SUCCESS)
     {
-        heap_free(combined);
+        free(combined);
         return status;
     }
 
@@ -2934,19 +2934,19 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
             if (status != STATUS_BUFFER_TOO_SMALL)
                 return RtlNtStatusToDosError(status);
 
-            psd = heap_alloc(size);
+            psd = malloc(size);
             if (!psd)
                 return ERROR_NOT_ENOUGH_MEMORY;
 
             status = NtQuerySecurityObject(handle, SecurityInfo, psd, size, &size);
             if (status)
             {
-                heap_free(psd);
+                free(psd);
                 return RtlNtStatusToDosError(status);
             }
 
             status = RtlGetControlSecurityDescriptor(psd, &control, &rev);
-            heap_free(psd);
+            free(psd);
             if (status)
                 return RtlNtStatusToDosError(status);
             /* TODO: copy some control flags to new sd */
@@ -2958,14 +2958,14 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                 if (status != STATUS_INFO_LENGTH_MISMATCH)
                     return RtlNtStatusToDosError(status);
 
-                name_info = heap_alloc(size);
+                name_info = malloc(size);
                 if (!name_info)
                     return ERROR_NOT_ENOUGH_MEMORY;
 
                 status = NtQueryObject(handle, ObjectNameInformation, name_info, size, NULL);
                 if (status)
                 {
-                    heap_free(name_info);
+                    free(name_info);
                     return RtlNtStatusToDosError(status);
                 }
 
@@ -2992,7 +2992,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                     status = NtOpenFile(&parent, READ_CONTROL|SYNCHRONIZE, &attr, &io,
                             FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                             FILE_OPEN_FOR_BACKUP_INTENT);
-                    heap_free(name_info);
+                    free(name_info);
                     if (!status)
                     {
                         err = GetSecurityInfo(parent, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
@@ -3009,7 +3009,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                     }
                 }
                 else
-                    heap_free(name_info);
+                    free(name_info);
             }
         }
 
@@ -3029,7 +3029,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
         break;
     }
     if (dacl != pDacl)
-        heap_free(dacl);
+        free(dacl);
     return RtlNtStatusToDosError(status);
 }
 

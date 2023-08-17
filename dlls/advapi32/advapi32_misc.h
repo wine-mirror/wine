@@ -23,7 +23,6 @@
 #include "ntsecapi.h"
 #include "winsvc.h"
 #include "winnls.h"
-#include "wine/heap.h"
 
 const char * debugstr_sid(PSID sid);
 BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName);
@@ -41,7 +40,7 @@ static inline WCHAR *strdupAW( const char *src )
     if (src)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-        if ((dst = heap_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+        if ((dst = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     }
     return dst;
 }
