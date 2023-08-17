@@ -8786,6 +8786,147 @@ static SAFEARRAY WINAPI *test_uia_provider_callback(HWND hwnd, enum ProviderType
 }
 
 /*
+ * Windows 11 will infinitely loop if a clientside provider isn't returned for
+ * an HWND in certain circumstances. In order to prevent this, we use these
+ * temporary clientside providers.
+ */
+struct ClientSideProvider
+{
+    IRawElementProviderSimple IRawElementProviderSimple_iface;
+    LONG ref;
+
+    enum ProviderType prov_type;
+    HWND hwnd;
+};
+
+static inline struct ClientSideProvider *impl_from_ClientSideProvider(IRawElementProviderSimple *iface)
+{
+    return CONTAINING_RECORD(iface, struct ClientSideProvider, IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI ClientSideProvider_QueryInterface(IRawElementProviderSimple *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IRawElementProviderSimple) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IRawElementProviderSimple_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI ClientSideProvider_AddRef(IRawElementProviderSimple *iface)
+{
+    struct ClientSideProvider *This = impl_from_ClientSideProvider(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ClientSideProvider_Release(IRawElementProviderSimple *iface)
+{
+    struct ClientSideProvider *This = impl_from_ClientSideProvider(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI ClientSideProvider_get_ProviderOptions(IRawElementProviderSimple *iface,
+        enum ProviderOptions *ret_val)
+{
+    struct ClientSideProvider *This = impl_from_ClientSideProvider(iface);
+
+    *ret_val = ProviderOptions_ClientSideProvider;
+    if (This->prov_type == ProviderType_NonClientArea)
+        *ret_val |= ProviderOptions_NonClientAreaProvider;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ClientSideProvider_GetPatternProvider(IRawElementProviderSimple *iface,
+        PATTERNID pattern_id, IUnknown **ret_val)
+{
+    *ret_val = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClientSideProvider_GetPropertyValue(IRawElementProviderSimple *iface, PROPERTYID prop_id,
+    VARIANT *ret_val)
+{
+    struct ClientSideProvider *This = impl_from_ClientSideProvider(iface);
+
+    VariantInit(ret_val);
+    switch (prop_id)
+    {
+    case UIA_NativeWindowHandlePropertyId:
+        if (This->prov_type == ProviderType_BaseHwnd)
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = HandleToULong(This->hwnd);
+        }
+        break;
+
+    case UIA_ProviderDescriptionPropertyId:
+        V_VT(ret_val) = VT_BSTR;
+        V_BSTR(ret_val) = SysAllocString(L"ClientSideProvider");
+        break;
+
+    default:
+        break;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ClientSideProvider_get_HostRawElementProvider(IRawElementProviderSimple *iface,
+        IRawElementProviderSimple **ret_val)
+{
+    struct ClientSideProvider *This = impl_from_ClientSideProvider(iface);
+
+    return UiaHostProviderFromHwnd(This->hwnd, ret_val);
+}
+
+static IRawElementProviderSimpleVtbl ClientSideProviderVtbl = {
+    ClientSideProvider_QueryInterface,
+    ClientSideProvider_AddRef,
+    ClientSideProvider_Release,
+    ClientSideProvider_get_ProviderOptions,
+    ClientSideProvider_GetPatternProvider,
+    ClientSideProvider_GetPropertyValue,
+    ClientSideProvider_get_HostRawElementProvider,
+};
+
+static IRawElementProviderSimple *create_temporary_clientside_provider(HWND hwnd, enum ProviderType prov_type)
+{
+    struct ClientSideProvider *prov = HeapAlloc(GetProcessHeap(), 0, sizeof(*prov));
+
+    if (!prov)
+    {
+        trace("Failed to allocate memory for temporary clientside provider\n");
+        return NULL;
+    }
+
+    prov->IRawElementProviderSimple_iface.lpVtbl = &ClientSideProviderVtbl;
+    prov->ref = 1;
+    prov->prov_type = prov_type;
+    prov->hwnd = hwnd;
+
+    return &prov->IRawElementProviderSimple_iface;
+}
+
+static CRITICAL_SECTION clientside_provider_callback_cs;
+static CRITICAL_SECTION_DEBUG clientside_provider_callback_cs_debug =
+{
+    0, 0, &clientside_provider_callback_cs,
+    { &clientside_provider_callback_cs_debug.ProcessLocksList, &clientside_provider_callback_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": clientside_provider_callback_cs") }
+};
+static CRITICAL_SECTION clientside_provider_callback_cs = { &clientside_provider_callback_cs_debug, -1, 0, 0, 0, 0 };
+static CONDITION_VARIABLE *clientside_provider_callback_cv;
+
+/*
  * Same deal as test_uia_provider_callback, except we only return a provider
  * if we can match one by HWND. This is necessary due to certain versions of
  * Windows 10 unpredictably attempting to create elements in the background.
@@ -8793,7 +8934,12 @@ static SAFEARRAY WINAPI *test_uia_provider_callback(HWND hwnd, enum ProviderType
 static SAFEARRAY WINAPI *uia_com_win_event_clientside_provider_callback(HWND hwnd, enum ProviderType prov_type)
 {
     IRawElementProviderSimple *elprov = NULL;
+    SAFEARRAY *sa = NULL;
 
+    EnterCriticalSection(&clientside_provider_callback_cs);
+    if (clientside_provider_callback_cv)
+        WakeConditionVariable(clientside_provider_callback_cv);
+    LeaveCriticalSection(&clientside_provider_callback_cs);
     switch (prov_type)
     {
     case ProviderType_BaseHwnd:
@@ -8829,7 +8975,53 @@ static SAFEARRAY WINAPI *uia_com_win_event_clientside_provider_callback(HWND hwn
         break;
     }
 
-    return get_safearray_for_elprov(elprov);
+    if (!elprov)
+    {
+        if (!(elprov = create_temporary_clientside_provider(hwnd, prov_type)))
+            return NULL;
+    }
+    else
+        IRawElementProviderSimple_AddRef(elprov);
+
+    sa = get_safearray_for_elprov(elprov);
+    IRawElementProviderSimple_Release(elprov);
+    return sa;
+}
+
+/*
+ * Some versions of Windows 10 query multiple unrelated HWNDs when
+ * winevents are fired, this function waits for these to stop before
+ * continuing to the next test.
+ */
+#define TIME_SINCE_LAST_CALLBACK_TIMEOUT 200
+static BOOL wait_for_clientside_callbacks(DWORD total_timeout)
+{
+    DWORD start_time = GetTickCount();
+    CONDITION_VARIABLE cv;
+    BOOL ret = FALSE;
+
+    InitializeConditionVariable(&cv);
+    EnterCriticalSection(&clientside_provider_callback_cs);
+    clientside_provider_callback_cv = &cv;
+    while (1)
+    {
+        BOOL ret_val = SleepConditionVariableCS(&cv, &clientside_provider_callback_cs, TIME_SINCE_LAST_CALLBACK_TIMEOUT);
+
+        if ((GetTickCount() - start_time) >= total_timeout)
+            ret = TRUE;
+        else if (!ret_val && (GetLastError() == ERROR_TIMEOUT))
+            ret = FALSE;
+        else if (!ret_val)
+            trace("SleepConditionVariableCS failed, last err %ld\n", GetLastError());
+        else
+            continue;
+
+        break;
+    }
+
+    clientside_provider_callback_cv = NULL;
+    LeaveCriticalSection(&clientside_provider_callback_cs);
+    return ret;
 }
 
 static void test_UiaRegisterProviderCallback(void)
@@ -9391,6 +9583,14 @@ static void test_cache_req_sa_(SAFEARRAY *sa, LONG exp_lbound[2], LONG exp_elems
 
         UiaNodeRelease(node);
     }
+}
+
+#define test_provider_event_advise_added( prov, event_id, todo) \
+        test_provider_event_advise_added_( (prov), (event_id), (todo), __FILE__, __LINE__)
+static void test_provider_event_advise_added_(struct Provider *prov, int event_id, BOOL todo, const char *file, int line)
+{
+    todo_wine_if (todo) ok_(file, line)(prov->advise_events_added_event_id == event_id, "%s: Unexpected advise event added, event ID %d.\n",
+            prov->prov_name, prov->advise_events_added_event_id);
 }
 
 static const struct prov_method_sequence cache_req_seq1[] = {
@@ -14864,8 +15064,43 @@ struct com_win_event_test_thread_data
     HWND test_child_hwnd;
 };
 
+static void set_method_event_handle_for_providers(struct Provider *main, struct Provider *hwnd, struct Provider *nc,
+        HANDLE *handles, int method)
+{
+    if (!handles || method < 0)
+    {
+        set_provider_method_event_data(main, NULL, -1);
+        set_provider_method_event_data(hwnd, NULL, -1);
+        set_provider_method_event_data(nc, NULL, -1);
+    }
+    else
+    {
+        set_provider_method_event_data(main, handles[0], method);
+        set_provider_method_event_data(hwnd, handles[1], method);
+        set_provider_method_event_data(nc, handles[2], method);
+    }
+}
+
+static void reset_event_advise_values_for_hwnd_providers(struct Provider *main, struct Provider *hwnd, struct Provider *nc)
+{
+    initialize_provider_advise_events_ids(main);
+    initialize_provider_advise_events_ids(hwnd);
+    initialize_provider_advise_events_ids(nc);
+}
+
+#define test_hwnd_providers_event_advise_added( main, hwnd, nc, event_id, todo) \
+        test_hwnd_providers_event_advise_added_( (main), (hwnd), (nc), (event_id), (todo), __FILE__, __LINE__)
+static void test_hwnd_providers_event_advise_added_(struct Provider *main, struct Provider *hwnd, struct Provider *nc,
+        int event_id, BOOL todo, const char *file, int line)
+{
+    test_provider_event_advise_added_(main, event_id, todo, file, line);
+    test_provider_event_advise_added_(hwnd, event_id, todo, file, line);
+    test_provider_event_advise_added_(nc, event_id, todo, file, line);
+}
+
 static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface, HWND test_hwnd, HWND test_child_hwnd)
 {
+    GUITHREADINFO info = { .cbSize = sizeof(info) };
     IUIAutomationElement *elem;
     HANDLE method_event[4];
     int event_handle_count;
@@ -15078,6 +15313,173 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     set_provider_method_event_data(&Provider, NULL, -1);
     if (is_win11)
         set_provider_method_event_data(&Provider2, NULL, -1);
+
+    /*
+     * IUIAutomationFocusChangedEventHandler is treated differently than all
+     * other event handlers - it only advises providers of events the first
+     * time it encounters an EVENT_OBJECT_FOCUS WinEvent for an HWND.
+     */
+    reset_event_advise_values_for_hwnd_providers(&Provider_proxy, &Provider_hwnd, &Provider_nc);
+    reset_event_advise_values_for_hwnd_providers(&Provider, &Provider_hwnd2, &Provider_nc2);
+    reset_event_advise_values_for_hwnd_providers(&Provider2, &Provider_hwnd3, &Provider_nc3);
+
+    set_uia_hwnd_expects(0, 6, 6, 5, 0);
+    SET_EXPECT(child_winproc_GETOBJECT_UiaRoot); /* Only sent on Win11. */
+    FocusChangedHandler.event_handler_added = FALSE;
+    hr = IUIAutomation_AddFocusChangedEventHandler(uia_iface, NULL,
+            &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(FocusChangedHandler.ref > 1, "Unexpected refcnt %ld\n", FocusChangedHandler.ref);
+    check_uia_hwnd_expects_at_most(0, 6, 6, 5, 0);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 1);
+
+    /*
+     * Windows 10 version 1507 and below only advise the currently focused
+     * HWNDs providers of events being added - newer versions instead advise
+     * the desktop HWND's providers of events being added. We're matching the
+     * newer behavior, so skip the tests on older versions.
+     */
+    if (!Provider_nc.advise_events_added_event_id && !Provider_hwnd.advise_events_added_event_id &&
+            !Provider_proxy.advise_events_added_event_id)
+    {
+        win_skip("Win10v1507 and below advise the currently focused HWND and not the desktop HWND, skipping tests.\n");
+
+        test_hwnd_providers_event_advise_added(&Provider, &Provider_hwnd2, &Provider_nc2, UIA_AutomationFocusChangedEventId, FALSE);
+        set_uia_hwnd_expects(0, 1, 1, 0, 0);
+        hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,
+                &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 0, FALSE, 0, FALSE);
+        goto exit;
+    }
+
+    /*
+     * Currently focused HWND is not advised, it's expected that the desktop
+     * providers will advise it using GetEmbeddedFragmentRoots.
+     */
+    test_provider_event_advise_added(&Provider_hwnd2, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc2, 0, FALSE);
+    test_hwnd_providers_event_advise_added(&Provider_proxy, &Provider_hwnd, &Provider_nc, UIA_AutomationFocusChangedEventId, FALSE);
+
+    /*
+     * EVENT_OBJECT_SHOW doesn't advise events on anything other than the
+     * desktop HWND for focus changed event handlers.
+     */
+    event_handle_count = 3;
+    set_uia_hwnd_expects(0, 1, 1, 2, 0); /* Win11 sends WM_GETOBJECT twice. */
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, method_event, ADVISE_EVENTS_EVENT_ADDED);
+    NotifyWinEvent(EVENT_OBJECT_SHOW, test_hwnd, OBJID_WINDOW, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_most(0, 1, 1, 2, 0);
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, NULL, -1);
+
+    set_method_event_handle_for_providers(&Provider2, &Provider_hwnd3, &Provider_nc3, method_event, ADVISE_EVENTS_EVENT_ADDED);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 2); /* Only done twice on Win11. */
+    set_uia_hwnd_expects(0, 1, 1, 1, 0);
+    NotifyWinEvent(EVENT_OBJECT_SHOW, test_child_hwnd, OBJID_WINDOW, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    set_method_event_handle_for_providers(&Provider2, &Provider_hwnd3, &Provider_nc3, NULL, -1);
+    check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 1, TRUE, 0, FALSE);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 2);
+
+    /*
+     * This will advise events.
+     */
+    set_method_event_handle_for_providers(&Provider_proxy, &Provider_hwnd, &Provider_nc, method_event, ADVISE_EVENTS_EVENT_ADDED);
+    reset_event_advise_values_for_hwnd_providers(&Provider_proxy, &Provider_hwnd, &Provider_nc);
+    SET_EXPECT(child_winproc_GETOBJECT_UiaRoot); /* Only sent on Win11. */
+    set_uia_hwnd_expects(0, 3, 3, 1, 0); /* Only Win11 sends WM_GETOBJECT. */
+
+    NotifyWinEvent(EVENT_OBJECT_SHOW, GetDesktopWindow(), OBJID_WINDOW, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    test_hwnd_providers_event_advise_added(&Provider_proxy, &Provider_hwnd, &Provider_nc, UIA_AutomationFocusChangedEventId, FALSE);
+    set_method_event_handle_for_providers(&Provider_proxy, &Provider_hwnd, &Provider_nc, NULL, -1);
+    check_uia_hwnd_expects_at_most(0, 3, 3, 1, 0);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 1);
+
+    /*
+     * The HWND that was focused when adding the event handler is ignored,
+     * EVENT_OBJECT_FOCUS only advises of events the first time
+     * EVENT_OBJECT_FOCUS is raised on an HWND, and it tracks if it has
+     * encountered a particular HWND before.
+     */
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, method_event, ADVISE_EVENTS_EVENT_ADDED);
+    set_uia_hwnd_expects(0, 1, 1, 3, 0); /* Only Win11 sends WM_GETOBJECT 3 times. */
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, NULL, -1);
+    check_uia_hwnd_expects_at_most(0, 1, 1, 3, 0);
+
+    /* Only OBJID_CLIENT is listened for, all other OBJIDs are ignored. */
+    set_method_event_handle_for_providers(&Provider2, &Provider_hwnd3, &Provider_nc3, method_event, ADVISE_EVENTS_EVENT_ADDED);
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_WINDOW, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    /*
+     * First time EVENT_OBJECT_FOCUS is fired for this HWND, it will be
+     * advised of UIA_AutomationFocusChangedEventId being listened for.
+     * But only the serverside provider.
+     */
+    set_method_event_handle_for_providers(&Provider2, &Provider_hwnd3, &Provider_nc3, NULL, -1);
+    reset_event_advise_values_for_hwnd_providers(&Provider2, &Provider_hwnd3, &Provider_nc3);
+    set_provider_method_event_data(&Provider2, method_event[0], ADVISE_EVENTS_EVENT_ADDED);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 3); /* Only sent 3 times on Win11. */
+    set_uia_hwnd_expects(0, 1, 1, 2, 0); /* Only Win11 sends WM_GETOBJECT 2 times. */
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    todo_wine ok(msg_wait_for_all_events(method_event, 1, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    check_uia_hwnd_expects_at_most(0, 1, 1, 2, 0);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 3);
+    test_provider_event_advise_added(&Provider2, UIA_AutomationFocusChangedEventId, TRUE);
+    test_provider_event_advise_added(&Provider_hwnd3, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc3, 0, FALSE);
+
+    /* Doing it again has no effect, it has already been advised. */
+    reset_event_advise_values_for_hwnd_providers(&Provider2, &Provider_hwnd3, &Provider_nc3);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 3); /* Only sent 3 times on Win11. */
+    set_uia_hwnd_expects(0, 1, 1, 2, 0); /* Only Win11 sends WM_GETOBJECT 2 times. */
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, 1, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    set_provider_method_event_data(&Provider2, NULL, -1);
+    check_uia_hwnd_expects_at_most(0, 1, 1, 2, 0);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 3);
+    test_hwnd_providers_event_advise_added(&Provider2, &Provider_hwnd3, &Provider_nc3, 0, FALSE);
+
+    /*
+     * Same deal here - we've already encountered this HWND and advised it
+     * when the event handler was added initially, so it too is ignored.
+     */
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, method_event, ADVISE_EVENTS_EVENT_ADDED);
+    reset_event_advise_values_for_hwnd_providers(&Provider, &Provider_hwnd2, &Provider_nc2);
+    set_uia_hwnd_expects(0, 1, 1, 3, 0); /* Only Win11 sends WM_GETOBJECT 3 times. */
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 750) == WAIT_TIMEOUT, "Wait for method_event(s) didn't time out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    set_method_event_handle_for_providers(&Provider, &Provider_hwnd2, &Provider_nc2, NULL, -1);
+    check_uia_hwnd_expects_at_most(0, 1, 1, 3, 0);
+    test_hwnd_providers_event_advise_added(&Provider, &Provider_hwnd2, &Provider_nc2, 0, FALSE);
+
+    set_uia_hwnd_expects(0, 1, 1, 0, 0);
+    hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,
+            &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 0, FALSE, 0, FALSE);
 
 exit:
     for (i = 0; i < ARRAY_SIZE(method_event); i++)
@@ -17111,14 +17513,6 @@ static void test_uia_event_win_event_mapping_(DWORD win_event, HWND hwnd, LONG o
         todo_wine_if(todo) CHECK_CALLED(uia_event_callback);
     if (expect_event2)
         todo_wine_if(todo) CHECK_CALLED(uia_event_callback2);
-}
-
-#define test_provider_event_advise_added( prov, event_id, todo) \
-        test_provider_event_advise_added_( (prov), (event_id), (todo), __FILE__, __LINE__)
-static void test_provider_event_advise_added_(struct Provider *prov, int event_id, BOOL todo, const char *file, int line)
-{
-    todo_wine_if (todo) ok_(file, line)(prov->advise_events_added_event_id == event_id, "%s: Unexpected advise event added, event ID %d.\n",
-            prov->prov_name, prov->advise_events_added_event_id);
 }
 
 static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID param)
