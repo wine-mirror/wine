@@ -19,8 +19,6 @@
 #ifndef _ADSLDP_PRIVATE_H
 #define _ADSLDP_PRIVATE_H
 
-#include "wine/heap.h"
-
 static inline LPWSTR strnUtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
 {
     LPWSTR ret = NULL;
@@ -28,7 +26,7 @@ static inline LPWSTR strnUtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_UTF8, 0, str, inlen, NULL, 0 );
-        if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+        if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
         {
             MultiByteToWideChar( CP_UTF8, 0, str, inlen, ret, len );
             ret[len] = 0;

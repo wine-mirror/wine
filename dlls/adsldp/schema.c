@@ -116,9 +116,9 @@ ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, 
 
 static void free_attribute_type(struct attribute_type *at)
 {
-    heap_free(at->oid);
-    heap_free(at->name);
-    heap_free(at->syntax);
+    free(at->oid);
+    free(at->name);
+    free(at->syntax);
 }
 
 void free_attribute_types(struct attribute_type *at, ULONG count)
@@ -128,7 +128,7 @@ void free_attribute_types(struct attribute_type *at, ULONG count)
     for (i = 0; i < count; i++)
         free_attribute_type(&at[i]);
 
-    heap_free(at);
+    free(at);
 }
 
 static BOOL is_space(WCHAR c)
@@ -156,7 +156,7 @@ static WCHAR *parse_oid(WCHAR **str)
     }
 
     count = end - p;
-    oid = heap_alloc((count + 1) * sizeof(WCHAR));
+    oid = malloc((count + 1) * sizeof(WCHAR));
     if (!oid) return NULL;
 
     memcpy(oid, p, count * sizeof(WCHAR));
@@ -202,17 +202,14 @@ static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
 
             count = wcslen(tmp_name);
 
-            if (!name)
-                new_name = heap_alloc((count + 1) * sizeof(WCHAR));
-            else
-                new_name = heap_realloc(name, (total_count + count + 1) * sizeof(WCHAR));
+            new_name = realloc(name, (total_count + count + 1) * sizeof(WCHAR));
 
             if (!new_name) break;
 
             memcpy(new_name + total_count, tmp_name, (count + 1) * sizeof(WCHAR));
 
             name = new_name;
-            heap_free(tmp_name);
+            free(tmp_name);
             total_count += count + 1;
 
             *name_count += 1;
@@ -221,7 +218,7 @@ static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
 
         *str = *p ? p + 1 : p;
 
-        heap_free(name);
+        free(name);
         return NULL;
     }
 
@@ -236,7 +233,7 @@ static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
     if (!end) return NULL;
 
     count = end - p;
-    name = heap_alloc((count + 1) * sizeof(WCHAR));
+    name = malloc((count + 1) * sizeof(WCHAR));
     if (!name) return NULL;
 
     memcpy(name, p, count * sizeof(WCHAR));
@@ -400,7 +397,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_m
         {
             ULONG i, total = ldap_count_valuesW(types);
 
-            at = heap_alloc(total * sizeof(*at));
+            at = malloc(total * sizeof(*at));
             if (!at) goto exit;
 
             for (i = 0; i < total; i++)
