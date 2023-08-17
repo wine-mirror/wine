@@ -196,6 +196,8 @@ enum debugger_stages
     STAGE_RTLRAISE_HANDLE_LAST_CHANCE,
     STAGE_OUTPUTDEBUGSTRINGA_CONTINUE,
     STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED,
+    STAGE_OUTPUTDEBUGSTRINGW_CONTINUE,
+    STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED,
     STAGE_RIPEVENT_CONTINUE,
     STAGE_RIPEVENT_NOT_HANDLED,
     STAGE_SERVICE_CONTINUE,
@@ -1077,7 +1079,7 @@ static void test_exceptions(void)
     ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %lx\n", res );
 }
 
-static void test_debugger(DWORD cont_status)
+static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -1097,6 +1099,12 @@ static void test_debugger(DWORD cont_status)
         return;
     }
 
+    if (with_WaitForDebugEventEx && !pWaitForDebugEventEx)
+    {
+        skip("WaitForDebugEventEx not found, skipping unicode strings in OutputDebugStringW\n");
+        return;
+    }
+
     sprintf(cmdline, "%s %s %s %p", my_argv[0], my_argv[1], "debuggee", &test_stage);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "could not create child process error: %lu\n", GetLastError());
@@ -1106,7 +1114,8 @@ static void test_debugger(DWORD cont_status)
     do
     {
         continuestatus = cont_status;
-        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+        ret = with_WaitForDebugEventEx ? pWaitForDebugEventEx(&de, INFINITE) : WaitForDebugEvent(&de, INFINITE);
+        ok(ret, "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
         ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
@@ -1279,27 +1288,43 @@ static void test_debugger(DWORD cont_status)
         else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
         {
             enum debugger_stages stage;
-            char buffer[64];
+            char buffer[64 * sizeof(WCHAR)];
+            unsigned char_size = de.u.DebugString.fUnicode ? sizeof(WCHAR) : sizeof(char);
 
             status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            ok(!de.u.DebugString.fUnicode, "unexpected unicode debug string event\n");
-            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
-               de.u.DebugString.nDebugStringLength);
+            if (de.u.DebugString.fUnicode)
+                ok(with_WaitForDebugEventEx &&
+                   (stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED),
+                   "unexpected unicode debug string event\n");
+            else
+                ok(!with_WaitForDebugEventEx || stage != STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || cont_status != DBG_CONTINUE,
+                   "unexpected ansi debug string event %u %s %lx\n",
+                   stage, with_WaitForDebugEventEx ? "with" : "without", cont_status);
+
+            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) / char_size - 1,
+               "buffer not large enough to hold %d bytes\n", de.u.DebugString.nDebugStringLength);
 
             memset(buffer, 0, sizeof(buffer));
             status = pNtReadVirtualMemory(pi.hProcess, de.u.DebugString.lpDebugStringData, buffer,
-                                          de.u.DebugString.nDebugStringLength, &size_read);
+                                          de.u.DebugString.nDebugStringLength * char_size, &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED)
-                ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED ||
+                stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+            {
+                if (de.u.DebugString.fUnicode)
+                    ok(!wcscmp((WCHAR*)buffer, L"Hello World"), "got unexpected debug string '%ls'\n", (WCHAR*)buffer);
+                else
+                    ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            }
             else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
                 ok(strstr(buffer, "SHIMVIEW") != NULL, "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+                continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
         else if (de.dwDebugEventCode == RIP_EVENT)
         {
@@ -3783,7 +3808,7 @@ static void test_rtlraiseexception(void)
     run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
 }
 
-static void test_debugger(DWORD cont_status)
+static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -3803,6 +3828,12 @@ static void test_debugger(DWORD cont_status)
         return;
     }
 
+    if (with_WaitForDebugEventEx && !pWaitForDebugEventEx)
+    {
+        skip("WaitForDebugEventEx not found, skipping unicode strings in OutputDebugStringW\n");
+        return;
+    }
+
     sprintf(cmdline, "%s %s %s %p", my_argv[0], my_argv[1], "debuggee", &test_stage);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "could not create child process error: %lu\n", GetLastError());
@@ -3812,7 +3843,8 @@ static void test_debugger(DWORD cont_status)
     do
     {
         continuestatus = cont_status;
-        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+        ret = with_WaitForDebugEventEx ? pWaitForDebugEventEx(&de, INFINITE) : WaitForDebugEvent(&de, INFINITE);
+        ok(ret, "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
         ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
@@ -3980,27 +4012,43 @@ static void test_debugger(DWORD cont_status)
         else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
         {
             enum debugger_stages stage;
-            char buffer[64];
+            char buffer[64 * sizeof(WCHAR)];
+            unsigned char_size = de.u.DebugString.fUnicode ? sizeof(WCHAR) : sizeof(char);
 
             status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            ok(!de.u.DebugString.fUnicode, "unexpected unicode debug string event\n");
-            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
-               de.u.DebugString.nDebugStringLength);
+            if (de.u.DebugString.fUnicode)
+                ok(with_WaitForDebugEventEx &&
+                   (stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED),
+                   "unexpected unicode debug string event\n");
+            else
+                ok(!with_WaitForDebugEventEx || stage != STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || cont_status != DBG_CONTINUE,
+                   "unexpected ansi debug string event %u %s %lx\n",
+                   stage, with_WaitForDebugEventEx ? "with" : "without", cont_status);
+
+            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) / char_size - 1,
+               "buffer not large enough to hold %d bytes\n", de.u.DebugString.nDebugStringLength);
 
             memset(buffer, 0, sizeof(buffer));
             status = pNtReadVirtualMemory(pi.hProcess, de.u.DebugString.lpDebugStringData, buffer,
-                                          de.u.DebugString.nDebugStringLength, &size_read);
+                                          de.u.DebugString.nDebugStringLength * char_size, &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED)
-                ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED ||
+                stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+            {
+                if (de.u.DebugString.fUnicode)
+                    ok(!wcscmp((WCHAR*)buffer, L"Hello World"), "got unexpected debug string '%ls'\n", (WCHAR*)buffer);
+                else
+                    ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            }
             else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
                 ok(strstr(buffer, "SHIMVIEW") != NULL, "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+                continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
         else if (de.dwDebugEventCode == RIP_EVENT)
         {
@@ -6601,7 +6649,7 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
-static void test_debugger(DWORD cont_status)
+static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -6621,6 +6669,12 @@ static void test_debugger(DWORD cont_status)
         return;
     }
 
+    if (with_WaitForDebugEventEx && !pWaitForDebugEventEx)
+    {
+        skip("WaitForDebugEventEx not found, skipping unicode strings in OutputDebugStringW\n");
+        return;
+    }
+
     sprintf(cmdline, "%s %s %s %p", my_argv[0], my_argv[1], "debuggee", &test_stage);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "could not create child process error: %lu\n", GetLastError());
@@ -6630,7 +6684,8 @@ static void test_debugger(DWORD cont_status)
     do
     {
         continuestatus = cont_status;
-        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+        ret = with_WaitForDebugEventEx ? pWaitForDebugEventEx(&de, INFINITE) : WaitForDebugEvent(&de, INFINITE);
+        ok(ret, "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
         ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
@@ -6772,27 +6827,43 @@ static void test_debugger(DWORD cont_status)
         else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
         {
             enum debugger_stages stage;
-            char buffer[64];
+            char buffer[64 * sizeof(WCHAR)];
+            unsigned char_size = de.u.DebugString.fUnicode ? sizeof(WCHAR) : sizeof(char);
 
             status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            ok(!de.u.DebugString.fUnicode, "unexpected unicode debug string event\n");
-            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
-               de.u.DebugString.nDebugStringLength);
+           if (de.u.DebugString.fUnicode)
+                ok(with_WaitForDebugEventEx &&
+                   (stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED),
+                   "unexpected unicode debug string event\n");
+            else
+                ok(!with_WaitForDebugEventEx || stage != STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || cont_status != DBG_CONTINUE,
+                   "unexpected ansi debug string event %u %s %lx\n",
+                   stage, with_WaitForDebugEventEx ? "with" : "without", cont_status);
+
+            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) / char_size - 1,
+               "buffer not large enough to hold %d bytes\n", de.u.DebugString.nDebugStringLength);
 
             memset(buffer, 0, sizeof(buffer));
             status = pNtReadVirtualMemory(pi.hProcess, de.u.DebugString.lpDebugStringData, buffer,
-                                          de.u.DebugString.nDebugStringLength, &size_read);
+                                          de.u.DebugString.nDebugStringLength * char_size, &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED)
-                ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED ||
+                stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+            {
+                if (de.u.DebugString.fUnicode)
+                    ok(!wcscmp((WCHAR*)buffer, L"Hello World"), "got unexpected debug string '%ls'\n", (WCHAR*)buffer);
+                else
+                    ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            }
             else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
                 ok(strstr(buffer, "SHIMVIEW") != NULL, "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+                continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
         else if (de.dwDebugEventCode == RIP_EVENT)
         {
@@ -7856,7 +7927,7 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
-static void test_debugger(DWORD cont_status)
+static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -7876,6 +7947,12 @@ static void test_debugger(DWORD cont_status)
         return;
     }
 
+    if (with_WaitForDebugEventEx && !pWaitForDebugEventEx)
+    {
+        skip("WaitForDebugEventEx not found, skipping unicode strings in OutputDebugStringW\n");
+        return;
+    }
+
     sprintf(cmdline, "%s %s %s %p", my_argv[0], my_argv[1], "debuggee", &test_stage);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "could not create child process error: %lu\n", GetLastError());
@@ -7885,7 +7962,8 @@ static void test_debugger(DWORD cont_status)
     do
     {
         continuestatus = cont_status;
-        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+        ret = with_WaitForDebugEventEx ? pWaitForDebugEventEx(&de, INFINITE) : WaitForDebugEvent(&de, INFINITE);
+        ok(ret, "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
         ok(!ret, "ContinueDebugEvent unexpectedly succeeded\n");
@@ -8027,28 +8105,44 @@ static void test_debugger(DWORD cont_status)
         else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
         {
             enum debugger_stages stage;
-            char buffer[128];
+            char buffer[128 * sizeof(WCHAR)];
+            unsigned char_size = de.u.DebugString.fUnicode ? sizeof(WCHAR) : sizeof(char);
 
             status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            ok(!de.u.DebugString.fUnicode, "unexpected unicode debug string event\n");
-            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
-               de.u.DebugString.nDebugStringLength);
+            if (de.u.DebugString.fUnicode)
+                ok(with_WaitForDebugEventEx &&
+                   (stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED),
+                   "unexpected unicode debug string event\n");
+            else
+                ok(!with_WaitForDebugEventEx || stage != STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || cont_status != DBG_CONTINUE,
+                   "unexpected ansi debug string event %u %s %lx\n",
+                   stage, with_WaitForDebugEventEx ? "with" : "without", cont_status);
+
+            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) / char_size - 1,
+               "buffer not large enough to hold %d bytes\n", de.u.DebugString.nDebugStringLength);
 
             memset(buffer, 0, sizeof(buffer));
             status = pNtReadVirtualMemory(pi.hProcess, de.u.DebugString.lpDebugStringData, buffer,
-                                          de.u.DebugString.nDebugStringLength, &size_read);
+                                          de.u.DebugString.nDebugStringLength * char_size, &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%lx\n", status);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED)
-                ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED ||
+                stage == STAGE_OUTPUTDEBUGSTRINGW_CONTINUE || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+            {
+                if (de.u.DebugString.fUnicode)
+                    ok(!wcscmp((WCHAR*)buffer, L"Hello World"), "got unexpected debug string '%ls'\n", (WCHAR*)buffer);
+                else
+                    ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            }
             else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
                 ok(strstr(buffer, "SHIMVIEW") || !strncmp(buffer, "RTL:", 4),
-                   "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
+                     "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
 
-            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            if (stage == STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED || stage == STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED)
+                continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
         else if (de.dwDebugEventCode == RIP_EVENT)
         {
@@ -8645,7 +8739,7 @@ static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_an
     ok(outputdebugstring_exceptions_ansi == numexc_ansi,
        "OutputDebugString%c generated %ld ansi exceptions, expected %ld\n",
        unicode ? 'W' : 'A', outputdebugstring_exceptions_ansi, numexc_ansi);
-    todo_wine_if(unicode)
+    todo_wine_if(unicode && numexc_unicode)
     ok(outputdebugstring_exceptions_unicode == numexc_unicode,
        "OutputDebugString%c generated %lu unicode exceptions, expected %ld\n",
        unicode ? 'W' : 'A', outputdebugstring_exceptions_unicode, numexc_unicode);
@@ -11235,6 +11329,10 @@ START_TEST(exception)
         test_outputdebugstring(FALSE, 0, FALSE, 0);
         test_stage = STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED;
         test_outputdebugstring(FALSE, 2, TRUE,  0); /* is 2 a Windows bug? */
+        test_stage = STAGE_OUTPUTDEBUGSTRINGW_CONTINUE;
+        test_outputdebugstring(TRUE, 0, FALSE, 0);
+        test_stage = STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED;
+        test_outputdebugstring(TRUE, 2, TRUE, 1); /* is 2 a Windows bug? */
         test_stage = STAGE_RIPEVENT_CONTINUE;
         test_ripevent(0);
         test_stage = STAGE_RIPEVENT_NOT_HANDLED;
@@ -11346,8 +11444,10 @@ START_TEST(exception)
 
 #endif
 
-    test_debugger(DBG_EXCEPTION_HANDLED);
-    test_debugger(DBG_CONTINUE);
+    test_debugger(DBG_EXCEPTION_HANDLED, FALSE);
+    test_debugger(DBG_CONTINUE, FALSE);
+    test_debugger(DBG_EXCEPTION_HANDLED, TRUE);
+    test_debugger(DBG_CONTINUE, TRUE);
     test_thread_context();
     test_outputdebugstring(FALSE, 1, FALSE, 0);
     test_outputdebugstring(TRUE,  1, FALSE, 1);
