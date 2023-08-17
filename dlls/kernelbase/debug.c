@@ -264,6 +264,11 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
     }
 }
 
+static LONG WINAPI debug_exception_handler_wide( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+    return (rec->ExceptionCode == DBG_PRINTEXCEPTION_WIDE_C) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH;
+}
 
 /***********************************************************************
  *           OutputDebugStringW   (kernelbase.@)
@@ -273,10 +278,32 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringW( LPCWSTR str )
     UNICODE_STRING strW;
     STRING strA;
 
+    WARN( "%s\n", debugstr_w(str) );
+
     RtlInitUnicodeString( &strW, str );
     if (!RtlUnicodeStringToAnsiString( &strA, &strW, TRUE ))
     {
-        OutputDebugStringA( strA.Buffer );
+        BOOL exc_handled;
+
+        __TRY
+        {
+            ULONG_PTR args[4];
+            args[0] = wcslen(str) + 1;
+            args[1] = (ULONG_PTR)str;
+            args[2] = strlen(strA.Buffer) + 1;
+            args[3] = (ULONG_PTR)strA.Buffer;
+            RaiseException( DBG_PRINTEXCEPTION_WIDE_C, 0, 4, args );
+            exc_handled = TRUE;
+        }
+        __EXCEPT(debug_exception_handler_wide)
+        {
+            exc_handled = FALSE;
+        }
+        __ENDTRY
+
+        if (!exc_handled)
+            OutputDebugStringA( strA.Buffer );
+
         RtlFreeAnsiString( &strA );
     }
 }

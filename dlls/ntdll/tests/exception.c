@@ -8715,7 +8715,8 @@ static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *Exce
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_ansi, DWORD numexc_unicode)
+static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_ansi,
+                                   DWORD numexc_unicode_low, DWORD numexc_unicode_high)
 {
     PVOID vectored_handler;
 
@@ -8739,10 +8740,11 @@ static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_an
     ok(outputdebugstring_exceptions_ansi == numexc_ansi,
        "OutputDebugString%c generated %ld ansi exceptions, expected %ld\n",
        unicode ? 'W' : 'A', outputdebugstring_exceptions_ansi, numexc_ansi);
-    todo_wine_if(unicode && numexc_unicode)
-    ok(outputdebugstring_exceptions_unicode == numexc_unicode,
-       "OutputDebugString%c generated %lu unicode exceptions, expected %ld\n",
-       unicode ? 'W' : 'A', outputdebugstring_exceptions_unicode, numexc_unicode);
+    todo_wine_if(unicode && numexc_unicode_low)
+    ok(outputdebugstring_exceptions_unicode >= numexc_unicode_low &&
+       outputdebugstring_exceptions_unicode <= numexc_unicode_high,
+       "OutputDebugString%c generated %lu unicode exceptions, expected %ld-%ld\n",
+       unicode ? 'W' : 'A', outputdebugstring_exceptions_unicode, numexc_unicode_low, numexc_unicode_high);
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
@@ -8804,11 +8806,6 @@ static void test_outputdebugstring_newmodel(void)
     };
     int i;
 
-    if (!pWaitForDebugEventEx)
-    {
-        skip("Unsupported new unicode debug string model\n");
-        return;
-    }
     if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler)
     {
         skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
@@ -11326,13 +11323,16 @@ START_TEST(exception)
 #endif
 
         test_stage = STAGE_OUTPUTDEBUGSTRINGA_CONTINUE;
-        test_outputdebugstring(FALSE, 0, FALSE, 0);
+
+        test_outputdebugstring(FALSE, 0, FALSE, 0, 0);
         test_stage = STAGE_OUTPUTDEBUGSTRINGA_NOT_HANDLED;
-        test_outputdebugstring(FALSE, 2, TRUE,  0); /* is 2 a Windows bug? */
+        test_outputdebugstring(FALSE, 2, TRUE,  0, 0); /* is 2 a Windows bug? */
         test_stage = STAGE_OUTPUTDEBUGSTRINGW_CONTINUE;
-        test_outputdebugstring(TRUE, 0, FALSE, 0);
+        /* depending on value passed DebugContinue we can get the unicode exception or not */
+        test_outputdebugstring(TRUE, 0, FALSE, 0, 1);
         test_stage = STAGE_OUTPUTDEBUGSTRINGW_NOT_HANDLED;
-        test_outputdebugstring(TRUE, 2, TRUE, 1); /* is 2 a Windows bug? */
+        /* depending on value passed DebugContinue we can get the unicode exception or not */
+        test_outputdebugstring(TRUE, 2, TRUE, 0, 1); /* is 2 a Windows bug? */
         test_stage = STAGE_RIPEVENT_CONTINUE;
         test_ripevent(0);
         test_stage = STAGE_RIPEVENT_NOT_HANDLED;
@@ -11449,9 +11449,15 @@ START_TEST(exception)
     test_debugger(DBG_EXCEPTION_HANDLED, TRUE);
     test_debugger(DBG_CONTINUE, TRUE);
     test_thread_context();
-    test_outputdebugstring(FALSE, 1, FALSE, 0);
-    test_outputdebugstring(TRUE,  1, FALSE, 1);
-    test_outputdebugstring_newmodel();
+    test_outputdebugstring(FALSE, 1, FALSE, 0, 0);
+    if (pWaitForDebugEventEx)
+    {
+        test_outputdebugstring(TRUE, 1, FALSE, 1, 1);
+        test_outputdebugstring_newmodel();
+    }
+    else
+        skip("Unsupported new unicode debug string model\n");
+
     test_ripevent(1);
     test_fastfail();
     test_breakpoint(1);

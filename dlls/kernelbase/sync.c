@@ -404,6 +404,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitForDebugEvent( DEBUG_EVENT *event, DWORD timeo
         switch (status)
         {
         case STATUS_SUCCESS:
+            /* continue on wide print exceptions to force resending an ANSI one. */
+            if (state.NewState == DbgExceptionStateChange)
+            {
+                DBGKM_EXCEPTION *info = &state.StateInfo.Exception;
+                DWORD code = info->ExceptionRecord.ExceptionCode;
+                if (code == DBG_PRINTEXCEPTION_WIDE_C && info->ExceptionRecord.NumberParameters >= 2)
+                {
+                    DbgUiContinue( &state.AppClientId, DBG_EXCEPTION_NOT_HANDLED );
+                    break;
+                }
+            }
             DbgUiConvertStateChangeStructure( &state, event );
             return TRUE;
         case STATUS_USER_APC:
