@@ -59,6 +59,9 @@ struct wg_muxer
     GstPad *my_sink;
     GstCaps *my_sink_caps;
 
+    pthread_mutex_t mutex;
+    guint64 offset;
+
     struct list streams;
 };
 
@@ -79,6 +82,19 @@ struct wg_muxer_stream
 static struct wg_muxer *get_muxer(wg_muxer_t muxer)
 {
     return (struct wg_muxer *)(ULONG_PTR)muxer;
+}
+
+static struct wg_muxer_stream *muxer_get_stream_by_id(struct wg_muxer *muxer, DWORD id)
+{
+    struct wg_muxer_stream *stream;
+
+    LIST_FOR_EACH_ENTRY(stream, &muxer->streams, struct wg_muxer_stream, entry)
+    {
+        if (stream->id == id)
+            return stream;
+    }
+
+    return NULL;
 }
 
 static bool muxer_try_muxer_factory(struct wg_muxer *muxer, GstElementFactory *muxer_factory)
@@ -146,6 +162,46 @@ static gboolean muxer_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *qu
     }
 }
 
+static gboolean muxer_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
+{
+    struct wg_muxer *muxer = gst_pad_get_element_private(pad);
+    const GstSegment *segment;
+
+    GST_DEBUG("pad %p, parent %p, event %p, muxer %p, type \"%s\".",
+            pad, parent, event, muxer, GST_EVENT_TYPE_NAME(event));
+
+    switch (event->type)
+    {
+        case GST_EVENT_SEGMENT:
+            pthread_mutex_lock(&muxer->mutex);
+
+            gst_event_parse_segment(event, &segment);
+            if (segment->format != GST_FORMAT_BYTES)
+            {
+                pthread_mutex_unlock(&muxer->mutex);
+                GST_FIXME("Unhandled segment format \"%s\".", gst_format_get_name(segment->format));
+                break;
+            }
+            muxer->offset = segment->start;
+
+            pthread_mutex_unlock(&muxer->mutex);
+            break;
+
+        default:
+            GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
+            break;
+    }
+
+    gst_event_unref(event);
+    return TRUE;
+}
+
+static GstFlowReturn muxer_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
+{
+    GST_FIXME("Stub.");
+    return GST_FLOW_ERROR;
+}
+
 static void stream_free(struct wg_muxer_stream *stream)
 {
     if (stream->parser_src_caps)
@@ -166,6 +222,8 @@ NTSTATUS wg_muxer_create(void *args)
     if (!(muxer = calloc(1, sizeof(*muxer))))
         return STATUS_NO_MEMORY;
     list_init(&muxer->streams);
+    muxer->offset = GST_BUFFER_OFFSET_NONE;
+    pthread_mutex_init(&muxer->mutex, NULL);
     if (!(muxer->container = gst_bin_new("wg_muxer")))
         goto out;
 
@@ -182,6 +240,8 @@ NTSTATUS wg_muxer_create(void *args)
         goto out;
     gst_pad_set_element_private(muxer->my_sink, muxer);
     gst_pad_set_query_function(muxer->my_sink, muxer_sink_query_cb);
+    gst_pad_set_event_function(muxer->my_sink, muxer_sink_event_cb);
+    gst_pad_set_chain_function(muxer->my_sink, muxer_sink_chain_cb);
 
     gst_object_unref(template);
 
@@ -199,6 +259,7 @@ out:
         gst_caps_unref(muxer->my_sink_caps);
     if (muxer->container)
         gst_object_unref(muxer->container);
+    pthread_mutex_destroy(&muxer->mutex);
     free(muxer);
 
     return status;
@@ -214,10 +275,14 @@ NTSTATUS wg_muxer_destroy(void *args)
         list_remove(&stream->entry);
         stream_free(stream);
     }
+
     gst_object_unref(muxer->my_sink);
     gst_caps_unref(muxer->my_sink_caps);
     gst_element_set_state(muxer->container, GST_STATE_NULL);
     gst_object_unref(muxer->container);
+
+    pthread_mutex_destroy(&muxer->mutex);
+
     free(muxer);
 
     return S_OK;
@@ -346,5 +411,43 @@ NTSTATUS wg_muxer_start(void *args)
 
 NTSTATUS wg_muxer_push_sample(void *args)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct wg_muxer_push_sample_params *params = args;
+    struct wg_muxer *muxer = get_muxer(params->muxer);
+    struct wg_sample *sample = params->sample;
+    struct wg_muxer_stream *stream;
+    GstFlowReturn ret;
+    GstBuffer *buffer;
+
+    if (!(stream = muxer_get_stream_by_id(muxer, params->stream_id)))
+        return STATUS_NOT_FOUND;
+
+    /* Create sample data buffer. */
+    if (!(buffer = gst_buffer_new_and_alloc(sample->size))
+            || !gst_buffer_fill(buffer, 0, wg_sample_data(sample), sample->size))
+    {
+        GST_ERROR("Failed to allocate input buffer.");
+        return STATUS_NO_MEMORY;
+    }
+
+    GST_INFO("Copied %u bytes from sample %p to buffer %p.", sample->size, sample, buffer);
+
+    /* Set sample properties. */
+    if (sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
+        GST_BUFFER_PTS(buffer) = sample->pts * 100;
+    if (sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
+        GST_BUFFER_DURATION(buffer) = sample->duration * 100;
+    if (!(sample->flags & WG_SAMPLE_FLAG_SYNC_POINT))
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    if (sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY)
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+
+    /* Push sample data buffer to stream src pad. */
+    if ((ret = gst_pad_push(stream->my_src, buffer)) < 0)
+    {
+        GST_ERROR("Failed to push buffer %p to pad %s, reason %s.",
+                buffer, gst_pad_get_name(stream->my_src), gst_flow_get_name(ret));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
 }
