@@ -1604,6 +1604,7 @@
 @ stdcall WTSGetActiveConsoleSessionId()
 @ stdcall -import WaitCommEvent(long ptr ptr)
 @ stdcall -import WaitForDebugEvent(ptr long)
+@ stdcall -import WaitForDebugEventEx(ptr long)
 @ stdcall -import WaitForMultipleObjects(long ptr long long)
 @ stdcall -import WaitForMultipleObjectsEx(long ptr long long long)
 @ stdcall -import WaitForSingleObject(long long)

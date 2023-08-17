@@ -511,6 +511,13 @@ NTSTATUS WINAPI DbgUiConvertStateChangeStructure( DBGUI_WAIT_STATE_CHANGE *state
             event->u.DebugString.fUnicode           = FALSE;
             event->u.DebugString.nDebugStringLength = info->ExceptionRecord.ExceptionInformation[0];
         }
+        else if (code == DBG_PRINTEXCEPTION_WIDE_C && info->ExceptionRecord.NumberParameters >= 2)
+        {
+            event->dwDebugEventCode = OUTPUT_DEBUG_STRING_EVENT;
+            event->u.DebugString.lpDebugStringData  = (void *)info->ExceptionRecord.ExceptionInformation[1];
+            event->u.DebugString.fUnicode           = TRUE;
+            event->u.DebugString.nDebugStringLength = info->ExceptionRecord.ExceptionInformation[0];
+        }
         else if (code == DBG_RIPEXCEPTION && info->ExceptionRecord.NumberParameters >= 2)
         {
             event->dwDebugEventCode = RIP_EVENT;

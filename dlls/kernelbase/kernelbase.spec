@@ -1729,7 +1729,7 @@
 # @ stub WTSIsServerContainer
 @ stdcall WaitCommEvent(long ptr ptr)
 @ stdcall WaitForDebugEvent(ptr long)
-# @ stub WaitForDebugEventEx
+@ stdcall WaitForDebugEventEx(ptr long)
 # @ stub WaitForMachinePolicyForegroundProcessingInternal
 @ stdcall WaitForMultipleObjects(long ptr long long)
 @ stdcall WaitForMultipleObjectsEx(long ptr long long long)

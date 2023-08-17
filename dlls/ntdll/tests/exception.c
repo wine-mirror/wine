@@ -8740,7 +8740,6 @@ static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_an
     ok(outputdebugstring_exceptions_ansi == numexc_ansi,
        "OutputDebugString%c generated %ld ansi exceptions, expected %ld\n",
        unicode ? 'W' : 'A', outputdebugstring_exceptions_ansi, numexc_ansi);
-    todo_wine_if(unicode && numexc_unicode_low)
     ok(outputdebugstring_exceptions_unicode >= numexc_unicode_low &&
        outputdebugstring_exceptions_unicode <= numexc_unicode_high,
        "OutputDebugString%c generated %lu unicode exceptions, expected %ld-%ld\n",
