@@ -7051,6 +7051,22 @@ static void test_mpeg4_media_sink(void)
     IMFMediaType_Release(audio_type);
 }
 
+static void test_MFCreateSequencerSegmentOffset(void)
+{
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    hr = MFCreateSequencerSegmentOffset(0, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    propvar.vt = VT_EMPTY;
+    hr = MFCreateSequencerSegmentOffset(0, 0, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_UNKNOWN, "Unexpected type %d.\n", propvar.vt);
+    ok(!!propvar.punkVal, "Unexpected pointer.\n");
+    PropVariantClear(&propvar);
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -7085,4 +7101,5 @@ START_TEST(mf)
     test_MFGetTopoNodeCurrentType();
     test_MFRequireProtectedEnvironment();
     test_mpeg4_media_sink();
+    test_MFCreateSequencerSegmentOffset();
 }

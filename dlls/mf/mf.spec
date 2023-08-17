@@ -56,7 +56,7 @@
 @ stdcall MFCreateSampleCopierMFT(ptr)
 @ stdcall MFCreateSampleGrabberSinkActivate(ptr ptr ptr)
 @ stub MFCreateSecureHttpSchemePlugin
-@ stub MFCreateSequencerSegmentOffset
+@ stdcall MFCreateSequencerSegmentOffset(long int64 ptr)
 @ stdcall MFCreateSequencerSource(ptr ptr)
 @ stub MFCreateSequencerSourceRemoteStream
 @ stdcall MFCreateSimpleTypeHandler(ptr)
