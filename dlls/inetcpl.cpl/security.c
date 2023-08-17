@@ -37,7 +37,6 @@
 
 #include "inetcpl.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 
@@ -273,8 +272,8 @@ static INT_PTR security_on_destroy(secdlg_data * sd)
 {
     TRACE("(%p)\n", sd);
 
-    heap_free(sd->zone_attr);
-    heap_free(sd->zones);
+    free(sd->zone_attr);
+    free(sd->zones);
     if (sd->himages) {
         SendMessageW(sd->hlv, LVM_SETIMAGELIST, LVSIL_NORMAL, 0);
         ImageList_Destroy(sd->himages);
@@ -282,7 +281,7 @@ static INT_PTR security_on_destroy(secdlg_data * sd)
 
     security_cleanup_zones(sd);
     SetWindowLongPtrW(sd->hsec, DWLP_USER, 0);
-    heap_free(sd);
+    free(sd);
     return TRUE;
 }
 
@@ -300,7 +299,7 @@ static INT_PTR security_on_initdialog(HWND hsec)
     DWORD lv_index = 0;
     DWORD i;
 
-    sd = heap_alloc_zero(sizeof(secdlg_data));
+    sd = calloc(1, sizeof(secdlg_data));
     SetWindowLongPtrW(hsec, DWLP_USER, (LONG_PTR) sd);
     if (!sd) {
         return FALSE;
@@ -338,14 +337,14 @@ static INT_PTR security_on_initdialog(HWND hsec)
     TRACE("found %ld zones\n", sd->num_zones);
 
     /* remember ZONEATTRIBUTES for a listview entry */
-    sd->zone_attr = heap_alloc(sizeof(ZONEATTRIBUTES) * sd->num_zones);
+    sd->zone_attr = calloc(sd->num_zones, sizeof(ZONEATTRIBUTES));
     if (!sd->zone_attr) {
         security_on_destroy(sd);
         return FALSE;
     }
 
     /* remember zone number and current security level for a listview entry */
-    sd->zones = heap_alloc((sizeof(DWORD) + sizeof(DWORD)) * sd->num_zones);
+    sd->zones = calloc(sd->num_zones, sizeof(DWORD) + sizeof(DWORD));
     if (!sd->zones) {
         security_on_destroy(sd);
         return FALSE;
