@@ -414,6 +414,28 @@ static void test_peb_teb(void)
                 }
                 ok( i < limit, "wow64info not found in PEB\n" );
             }
+            if (wow64info->SectionHandle && wow64info->CrossProcessWorkList)
+            {
+                HANDLE handle;
+                void *data, *addr = NULL;
+                SIZE_T size = 0;
+
+                ret = DuplicateHandle( pi.hProcess, (HANDLE)(ULONG_PTR)wow64info->SectionHandle,
+                                       GetCurrentProcess(), &handle, 0, FALSE, DUPLICATE_SAME_ACCESS );
+                ok( ret, "DuplicateHandle failed %lu\n", GetLastError() );
+                status = NtMapViewOfSection( handle, GetCurrentProcess(), &addr, 0, 0, NULL,
+                                             &size, ViewShare, 0, PAGE_READWRITE );
+                ok( !status, "NtMapViewOfSection failed %lx\n", status );
+                data = malloc( size );
+                ret = ReadProcessMemory( pi.hProcess, (void *)(ULONG_PTR)wow64info->CrossProcessWorkList,
+                                         data, size, &size );
+                ok( ret, "ReadProcessMemory failed %lu\n", GetLastError() );
+                ok( !memcmp( data, addr, size ), "wrong data\n" );
+                free( data );
+                UnmapViewOfFile( addr );
+                CloseHandle( handle );
+            }
+            else trace( "no WOW64INFO section handle\n" );
         }
         else win_skip( "RtlWow64GetSharedInfoProcess not supported\n" );
 

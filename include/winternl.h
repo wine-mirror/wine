@@ -4103,14 +4103,16 @@ typedef struct _WOW64_CPU_AREA_INFO
 
 typedef struct _WOW64INFO
 {
-    ULONG   NativeSystemPageSize;
-    ULONG   CpuFlags;
-    ULONG   Wow64ExecuteFlags;
-    ULONG   unknown[5];
-    USHORT  NativeMachineType;
-    USHORT  EmulatedMachineType;
-    ULONG   unknown2;
+    ULONG     NativeSystemPageSize;
+    ULONG     CpuFlags;
+    ULONG     Wow64ExecuteFlags;
+    ULONG     unknown;
+    ULONGLONG SectionHandle;
+    ULONGLONG CrossProcessWorkList;
+    USHORT    NativeMachineType;
+    USHORT    EmulatedMachineType;
 } WOW64INFO;
+C_ASSERT( sizeof(WOW64INFO) == 40 );
 
 #define WOW64_CPUFLAGS_MSFT64   0x01
 #define WOW64_CPUFLAGS_SOFTWARE 0x02
