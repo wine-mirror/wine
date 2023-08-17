@@ -123,7 +123,7 @@ static BOOL get_app_key(HKEY *defkey, HKEY *appkey)
  * set_config_key [internal]
  * Writes a string value to a registry key, deletes the key if value == NULL
  */
-static DWORD set_config_key(HKEY defkey, HKEY appkey, const WCHAR *name, const WCHAR *value, DWORD size)
+static DWORD set_config_key(HKEY defkey, HKEY appkey, const WCHAR *name, const WCHAR *value)
 {
     if (value == NULL)
     {
@@ -135,6 +135,8 @@ static DWORD set_config_key(HKEY defkey, HKEY appkey, const WCHAR *name, const W
     }
     else
     {
+        DWORD size = wcslen(value);
+
         if (appkey && !RegSetValueExW(appkey, name, 0, REG_SZ, (const BYTE*) value, (size + 1)*sizeof(WCHAR)))
             return 0;
 
@@ -157,9 +159,9 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
     get_app_key(&hkey, &appkey);
 
     if (!enable)
-        set_config_key(hkey, appkey, joy_name, L"disabled", wcslen(L"disabled"));
+        set_config_key(hkey, appkey, joy_name, L"disabled");
     else
-        set_config_key(hkey, appkey, joy_name, NULL, 0);
+        set_config_key(hkey, appkey, joy_name, NULL);
 
     if (hkey) RegCloseKey(hkey);
     if (appkey) RegCloseKey(appkey);
@@ -230,9 +232,9 @@ static void override_joystick(WCHAR *joy_name, BOOL override)
     get_app_key(&hkey, &appkey);
 
     if (override)
-        set_config_key(hkey, appkey, joy_name, L"override", wcslen(L"override"));
+        set_config_key(hkey, appkey, joy_name, L"override");
     else
-        set_config_key(hkey, appkey, joy_name, NULL, 0);
+        set_config_key(hkey, appkey, joy_name, NULL);
 
     if (hkey) RegCloseKey(hkey);
     if (appkey) RegCloseKey(appkey);
