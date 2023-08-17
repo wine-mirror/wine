@@ -76,6 +76,7 @@ static BOOL      (WINAPI *pInitializeContext2)(void *buffer, DWORD context_flags
 static void *    (WINAPI *pLocateXStateFeature)(CONTEXT *context, DWORD feature_id, DWORD *length);
 static BOOL      (WINAPI *pSetXStateFeaturesMask)(CONTEXT *context, DWORD64 feature_mask);
 static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *feature_mask);
+static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -8564,25 +8565,43 @@ static void test_debug_service(DWORD numexc)
 }
 #endif /* defined(__i386__) || defined(__x86_64__) */
 
-static DWORD outputdebugstring_exceptions;
+static DWORD outputdebugstring_exceptions_ansi;
+static DWORD outputdebugstring_exceptions_unicode;
 
 static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
     trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
-    ok(rec->ExceptionCode == DBG_PRINTEXCEPTION_C, "ExceptionCode is %08lx instead of %08lx\n",
-        rec->ExceptionCode, DBG_PRINTEXCEPTION_C);
-    ok(rec->NumberParameters == 2, "ExceptionParameters is %ld instead of 2\n", rec->NumberParameters);
-    ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
-    ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
-        "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+    switch (rec->ExceptionCode)
+    {
+    case DBG_PRINTEXCEPTION_C:
+        ok(rec->NumberParameters == 2, "ExceptionParameters is %ld instead of 2\n", rec->NumberParameters);
+        ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+        ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
+           "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+        outputdebugstring_exceptions_ansi++;
+        break;
+    case DBG_PRINTEXCEPTION_WIDE_C:
+        ok(outputdebugstring_exceptions_ansi == 0, "Unicode exception should come first\n");
+        ok(rec->NumberParameters == 4, "ExceptionParameters is %ld instead of 4\n", rec->NumberParameters);
+        ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+        ok(!wcscmp((WCHAR *)rec->ExceptionInformation[1], L"Hello World"),
+           "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+        ok(rec->ExceptionInformation[2] == 12, "ExceptionInformation[2] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[2]);
+        ok(!strcmp((char *)rec->ExceptionInformation[3], "Hello World"),
+           "ExceptionInformation[3] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[3]);
+        outputdebugstring_exceptions_unicode++;
+        break;
+    default:
+        ok(0, "ExceptionCode is %08lx unexpected\n", rec->ExceptionCode);
+        break;
+    }
 
-    outputdebugstring_exceptions++;
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static void test_outputdebugstring(DWORD numexc, BOOL todo)
+static void test_outputdebugstring(BOOL unicode, DWORD numexc_ansi, BOOL todo_ansi, DWORD numexc_unicode)
 {
     PVOID vectored_handler;
 
@@ -8595,12 +8614,111 @@ static void test_outputdebugstring(DWORD numexc, BOOL todo)
     vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &outputdebugstring_vectored_handler);
     ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
 
-    outputdebugstring_exceptions = 0;
-    OutputDebugStringA("Hello World");
+    outputdebugstring_exceptions_ansi = outputdebugstring_exceptions_unicode = 0;
 
-    todo_wine_if(todo)
-    ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %ld exceptions, expected %ld\n",
-       outputdebugstring_exceptions, numexc);
+    if (unicode)
+        OutputDebugStringW(L"Hello World");
+    else
+        OutputDebugStringA("Hello World");
+
+    todo_wine_if(todo_ansi)
+    ok(outputdebugstring_exceptions_ansi == numexc_ansi,
+       "OutputDebugString%c generated %ld ansi exceptions, expected %ld\n",
+       unicode ? 'W' : 'A', outputdebugstring_exceptions_ansi, numexc_ansi);
+    todo_wine_if(unicode)
+    ok(outputdebugstring_exceptions_unicode == numexc_unicode,
+       "OutputDebugString%c generated %lu unicode exceptions, expected %ld\n",
+       unicode ? 'W' : 'A', outputdebugstring_exceptions_unicode, numexc_unicode);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
+static DWORD outputdebugstring_exceptions_newmodel_order;
+static DWORD outputdebugstring_newmodel_return;
+
+static LONG CALLBACK outputdebugstring_new_model_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    switch (rec->ExceptionCode)
+    {
+    case DBG_PRINTEXCEPTION_C:
+        ok(rec->NumberParameters == 2, "ExceptionParameters is %ld instead of 2\n", rec->NumberParameters);
+        ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+        ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
+           "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+        outputdebugstring_exceptions_newmodel_order =
+            (outputdebugstring_exceptions_newmodel_order << 8) | 'A';
+        break;
+    case DBG_PRINTEXCEPTION_WIDE_C:
+        ok(rec->NumberParameters == 4, "ExceptionParameters is %ld instead of 4\n", rec->NumberParameters);
+        ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+        ok(!wcscmp((WCHAR *)rec->ExceptionInformation[1], L"Hello World"),
+           "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+        ok(rec->ExceptionInformation[2] == 12, "ExceptionInformation[2] = %ld instead of 12\n", (DWORD)rec->ExceptionInformation[2]);
+        ok(!strcmp((char *)rec->ExceptionInformation[3], "Hello World"),
+           "ExceptionInformation[3] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[3]);
+        outputdebugstring_exceptions_newmodel_order =
+            (outputdebugstring_exceptions_newmodel_order << 8) | 'W';
+        break;
+    default:
+        ok(0, "ExceptionCode is %08lx unexpected\n", rec->ExceptionCode);
+        break;
+    }
+
+    return outputdebugstring_newmodel_return;
+}
+
+static void test_outputdebugstring_newmodel(void)
+{
+    PVOID vectored_handler;
+    struct
+    {
+        /* input */
+        BOOL unicode;
+        DWORD ret_code;
+        /* expected output */
+        DWORD exceptions_order;
+    }
+    tests[] =
+    {
+        {FALSE, EXCEPTION_CONTINUE_EXECUTION, 'A'},
+        {FALSE, EXCEPTION_CONTINUE_SEARCH,    'A'},
+        {TRUE,  EXCEPTION_CONTINUE_EXECUTION, 'W'},
+        {TRUE,  EXCEPTION_CONTINUE_SEARCH,    ('W' << 8) | 'A'},
+    };
+    int i;
+
+    if (!pWaitForDebugEventEx)
+    {
+        skip("Unsupported new unicode debug string model\n");
+        return;
+    }
+    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler)
+    {
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
+        return;
+    }
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &outputdebugstring_new_model_vectored_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        outputdebugstring_exceptions_newmodel_order = 0;
+        outputdebugstring_newmodel_return = tests[i].ret_code;
+
+        if (tests[i].unicode)
+            OutputDebugStringW(L"Hello World");
+        else
+            OutputDebugStringA("Hello World");
+
+        ok(outputdebugstring_exceptions_newmodel_order == tests[i].exceptions_order,
+           "OutputDebugString%c/%u generated exceptions %04lxs, expected %04lx\n",
+           tests[i].unicode ? 'W' : 'A', i,
+           outputdebugstring_exceptions_newmodel_order, tests[i].exceptions_order);
+    }
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
@@ -11044,6 +11162,7 @@ START_TEST(exception)
     X(LocateXStateFeature);
     X(SetXStateFeaturesMask);
     X(GetXStateFeaturesMask);
+    X(WaitForDebugEventEx);
 #undef X
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
@@ -11092,9 +11211,9 @@ START_TEST(exception)
         else skip( "RtlRaiseException not found\n" );
 #endif
         test_stage = 3;
-        test_outputdebugstring(0, FALSE);
+        test_outputdebugstring(FALSE, 0, FALSE, 0);
         test_stage = 4;
-        test_outputdebugstring(2, TRUE); /* is this a Windows bug? */
+        test_outputdebugstring(FALSE, 2, TRUE,  0); /* is 2 a Windows bug? */
         test_stage = 5;
         test_ripevent(0);
         test_stage = 6;
@@ -11209,7 +11328,9 @@ START_TEST(exception)
     test_debugger(DBG_EXCEPTION_HANDLED);
     test_debugger(DBG_CONTINUE);
     test_thread_context();
-    test_outputdebugstring(1, FALSE);
+    test_outputdebugstring(FALSE, 1, FALSE, 0);
+    test_outputdebugstring(TRUE,  1, FALSE, 1);
+    test_outputdebugstring_newmodel();
     test_ripevent(1);
     test_fastfail();
     test_breakpoint(1);
