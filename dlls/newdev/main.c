@@ -30,7 +30,6 @@
 #include "newdev.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -118,7 +117,7 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND parent, const WCHAR *hardwar
         {
             if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
                 continue;
-            device_ids = heap_realloc(device_ids, size);
+            device_ids = realloc(device_ids, size);
             SetupDiGetDeviceRegistryPropertyW(set, &device, SPDRP_HARDWAREID, NULL, (BYTE *)device_ids, size, NULL);
         }
 
@@ -144,7 +143,7 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND parent, const WCHAR *hardwar
     }
 
     SetupDiDestroyDeviceInfoList(set);
-    heap_free(device_ids);
+    free(device_ids);
     return TRUE;
 }
 
