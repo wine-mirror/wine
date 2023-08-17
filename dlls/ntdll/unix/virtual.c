@@ -1010,7 +1010,10 @@ static BOOL alloc_pages_vprot( const void *addr, size_t size )
     {
         if (pages_vprot[i]) continue;
         if ((ptr = anon_mmap_alloc( pages_vprot_mask + 1, PROT_READ | PROT_WRITE )) == MAP_FAILED)
+        {
+            ERR( "anon mmap error %s for vprot table, size %08lx\n", strerror(errno), pages_vprot_mask + 1 );
             return FALSE;
+        }
         pages_vprot[i] = ptr;
     }
 #endif
@@ -1355,7 +1358,10 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
     }
 
     if (!first)
-        return try_map_free_area( base, end, step, start, size, unix_prot );
+        start = try_map_free_area( base, end, step, start, size, unix_prot );
+
+    if (!start)
+        ERR( "couldn't map free area in range %p-%p, size %p", base, end, (void *)size );
 
     return start;
 }
@@ -1949,9 +1955,18 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
     return STATUS_SUCCESS;
 
 failed:
-    if (errno == ENOMEM) status = STATUS_NO_MEMORY;
+    if (errno == ENOMEM)
+    {
+        ERR( "out of memory for %p-%p\n", base, (char *)base + size );
+        status = STATUS_NO_MEMORY;
+    }
     else if (errno == EEXIST) status = STATUS_CONFLICTING_ADDRESSES;
-    else status = STATUS_INVALID_PARAMETER;
+    else
+    {
+        ERR( "mmap error %s for %p-%p, unix_prot %#x\n",
+             strerror(errno), base, (char *)base + size, unix_prot );
+        status = STATUS_INVALID_PARAMETER;
+    }
     unmap_area( base, start - (char *)base );
     return status;
 }
@@ -2028,8 +2043,10 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         {
             if ((ptr = anon_mmap_alloc( view_size, get_unix_prot(vprot) )) == MAP_FAILED)
             {
-                if (errno == ENOMEM) return STATUS_NO_MEMORY;
-                return STATUS_INVALID_PARAMETER;
+                status = (errno == ENOMEM) ? STATUS_NO_MEMORY : STATUS_INVALID_PARAMETER;
+                ERR( "anon mmap error %s, size %p, unix_prot %#x\n",
+                     strerror(errno), (void *)view_size, get_unix_prot( vprot ) );
+                return status;
             }
             TRACE( "got mem with anon mmap %p-%p\n", ptr, (char *)ptr + size );
             /* if we got something beyond the user limit, unmap it and retry */
@@ -2098,13 +2115,20 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             if (prot & PROT_EXEC) WARN( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
             break;
         default:
+            ERR( "mmap error %s, range %p-%p, unix_prot %#x\n",
+                 strerror(errno), (char *)view->base + start, (char *)view->base + start + size, prot );
             return STATUS_NO_MEMORY;
         }
     }
 
     /* Reserve the memory with an anonymous mmap */
     ptr = anon_mmap_fixed( (char *)view->base + start, size, PROT_READ | PROT_WRITE, 0 );
-    if (ptr == MAP_FAILED) return STATUS_NO_MEMORY;
+    if (ptr == MAP_FAILED)
+    {
+        ERR( "anon mmap error %s, range %p-%p\n",
+             strerror(errno), (char *)view->base + start, (char *)view->base + start + size );
+        return STATUS_NO_MEMORY;
+    }
     /* Now read in the file */
     pread( fd, ptr, size, offset );
     if (prot != (PROT_READ|PROT_WRITE)) mprotect( ptr, size, prot );  /* Set the right protection */
@@ -2407,6 +2431,7 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
             WARN( "file system doesn't support mmap, falling back to read\n" );
             break;
         default:
+            ERR( "mmap error %s, range %p-%p\n", strerror(errno), ptr, (char *)ptr + size );
             return STATUS_NO_MEMORY;
         }
         *removable = TRUE;
@@ -4282,6 +4307,9 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
         *ret = base;
         *size_ptr = size;
     }
+    else if (status == STATUS_NO_MEMORY)
+        ERR( "out of memory for allocation, base %p size %08lx\n", base, size );
+
     return status;
 }
 
@@ -4327,6 +4355,11 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
         {
             *ret      = wine_server_get_ptr( result.virtual_alloc.addr );
             *size_ptr = result.virtual_alloc.size;
+        }
+        else
+        {
+            WARN( "cross-process allocation failed, process=%p base=%p size=%08lx status=%08x",
+                  process, *ret, *size_ptr, result.virtual_alloc.status );
         }
         return result.virtual_alloc.status;
     }
