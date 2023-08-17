@@ -1631,6 +1631,19 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   return;
 }
 
+static BOOL option_equals(WCHAR **haystack, const WCHAR *needle)
+{
+  int len = wcslen(needle);
+
+  if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                     *haystack, len, needle, len) == CSTR_EQUAL) {
+    *haystack += len;
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 /*****************************************************************************
  * WCMD_parse_forf_options
  *
@@ -1653,11 +1666,6 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
 
   WCHAR *pos = options;
   int    len = lstrlenW(pos);
-  const int eol_len = lstrlenW(L"eol=");
-  const int skip_len = lstrlenW(L"skip=");
-  const int tokens_len = lstrlenW(L"tokens=");
-  const int delims_len = lstrlenW(L"delims=");
-  const int usebackq_len = lstrlenW(L"usebackq");
 
   /* Initialize to defaults */
   lstrcpyW(delims, L" \t");
@@ -1678,36 +1686,28 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
       pos++;
 
     /* Save End of line character (Ignore line if first token (based on delims) starts with it) */
-    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                       pos, eol_len, L"eol=", eol_len) == CSTR_EQUAL) {
-      *eol = *(pos + eol_len);
-      pos = pos + eol_len + 1;
+    } else if (option_equals(&pos, L"eol=")) {
+      *eol = *pos++;
       WINE_TRACE("Found eol as %c(%x)\n", *eol, *eol);
 
     /* Save number of lines to skip (Can be in base 10, hex (0x...) or octal (0xx) */
-    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                       pos, skip_len, L"skip=", skip_len) == CSTR_EQUAL) {
+    } else if (option_equals(&pos, L"skip=")) {
       WCHAR *nextchar = NULL;
-      pos = pos + skip_len;
       *skip = wcstoul(pos, &nextchar, 0);
       WINE_TRACE("Found skip as %d lines\n", *skip);
       pos = nextchar;
 
     /* Save if usebackq semantics are in effect */
-    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, pos,
-                       usebackq_len, L"usebackq", usebackq_len) == CSTR_EQUAL) {
+    } else if (option_equals(&pos, L"usebackq")) {
       *usebackq = TRUE;
-      pos = pos + usebackq_len;
       WINE_TRACE("Found usebackq\n");
 
     /* Save the supplied delims. Slightly odd as space can be a delimiter but only
        if you finish the optionsroot string with delims= otherwise the space is
        just a token delimiter!                                                     */
-    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                       pos, delims_len, L"delims=", delims_len) == CSTR_EQUAL) {
+    } else if (option_equals(&pos, L"delims=")) {
       int i=0;
 
-      pos = pos + delims_len;
       while (*pos && *pos != ' ') {
         delims[i++] = *pos;
         pos++;
@@ -1717,11 +1717,9 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
       WINE_TRACE("Found delims as '%s'\n", wine_dbgstr_w(delims));
 
     /* Save the tokens being requested */
-    } else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                       pos, tokens_len, L"tokens=", tokens_len) == CSTR_EQUAL) {
+    } else if (option_equals(&pos, L"tokens=")) {
       int i=0;
 
-      pos = pos + tokens_len;
       while (*pos && *pos != ' ') {
         tokens[i++] = *pos;
         pos++;
