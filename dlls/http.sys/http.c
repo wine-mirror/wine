@@ -25,7 +25,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 static HANDLE directory_obj;
@@ -118,17 +117,17 @@ static void accept_connection(SOCKET socket)
     if ((peer = accept(socket, NULL, NULL)) == INVALID_SOCKET)
         return;
 
-    if (!(conn = heap_alloc_zero(sizeof(*conn))))
+    if (!(conn = calloc(1, sizeof(*conn))))
     {
         ERR("Failed to allocate memory.\n");
         shutdown(peer, SD_BOTH);
         closesocket(peer);
         return;
     }
-    if (!(conn->buffer = heap_alloc(8192)))
+    if (!(conn->buffer = malloc(8192)))
     {
         ERR("Failed to allocate buffer memory.\n");
-        heap_free(conn);
+        free(conn);
         shutdown(peer, SD_BOTH);
         closesocket(peer);
         return;
@@ -142,11 +141,11 @@ static void accept_connection(SOCKET socket)
 
 static void close_connection(struct connection *conn)
 {
-    heap_free(conn->buffer);
+    free(conn->buffer);
     shutdown(conn->socket, SD_BOTH);
     closesocket(conn->socket);
     list_remove(&conn->entry);
-    heap_free(conn);
+    free(conn);
 }
 
 static HTTP_VERB parse_verb(const char *verb, int len)
@@ -629,7 +628,7 @@ static void receive_data(struct connection *conn)
         if (available)
         {
             TRACE("%lu more bytes of data available, trying with larger buffer.\n", available);
-            if (!(conn->buffer = heap_realloc(conn->buffer, conn->len + available)))
+            if (!(conn->buffer = realloc(conn->buffer, conn->len + available)))
             {
                 ERR("Failed to allocate %lu bytes of memory.\n", conn->len + available);
                 close_connection(conn);
