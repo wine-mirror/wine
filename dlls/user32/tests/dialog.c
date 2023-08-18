@@ -567,8 +567,38 @@ static LRESULT CALLBACK test_control_procA(HWND hwnd, UINT msg, WPARAM wparam, L
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+static int wm_char_count;
+
+static LRESULT CALLBACK test_IsDialogMessageA_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_CHAR:
+        if (GetSystemMetrics(SM_DBCSENABLED))
+        {
+            todo_wine
+            ok(wparam == 0x5b57, "Got unexpected wparam %#Ix.\n", wparam);
+        }
+        else
+            ok(wparam == 0x3f, "Got unexpected wparam %#Ix.\n", wparam);
+        wm_char_count++;
+        return 0;
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return 0;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    case WM_GETDLGCODE:
+        return DLGC_WANTCHARS;
+    default:
+        return DefWindowProcW(hwnd, msg, wparam, lparam);
+    }
+}
+
 static BOOL RegisterWindowClasses (void)
 {
+    WNDCLASSW cls_w;
     WNDCLASSA cls;
 
     cls.style = 0;
@@ -597,6 +627,11 @@ static BOOL RegisterWindowClasses (void)
     cls.lpszClassName = "WM_NEXTDLGCTLWndClass";
     if (!RegisterClassA (&cls)) return FALSE;
 
+    memset (&cls_w, 0, sizeof(cls_w));
+    cls_w.lpfnWndProc = test_IsDialogMessageA_proc;
+    cls_w.hInstance = g_hinst;
+    cls_w.lpszClassName = L"TestIsDialogMessageAClass";
+    if (!RegisterClassW (&cls_w)) return FALSE;
     return TRUE;
 }
 
@@ -729,6 +764,8 @@ static LRESULT CALLBACK hook_proc2(INT code, WPARAM wParam, LPARAM lParam)
 static void test_IsDialogMessage(void)
 {
     HHOOK hook;
+    HWND child;
+    BOOL ret;
     MSG msg;
 
     g_hwndMain = CreateWindowA("IsDialogMessageWindowClass", "IsDialogMessageWindowClass",
@@ -816,6 +853,34 @@ static void test_IsDialogMessage(void)
     ok(IsDialogMessageA(g_hwndMain, &msg), "Did not handle the ENTER\n");
     ok(g_button1Clicked, "Did not receive button 1 click notification\n");
 
+    /* Test IsDialogMessageA converting a WM_CHAR wparam in ASCII to Unicode */
+    child = CreateWindowW(L"TestIsDialogMessageAClass", L"test", WS_CHILD | WS_VISIBLE, 0, 0, 10,
+                          10, g_hwndMain, 0, g_hinst, 0);
+    ok(!!child, "Failed to create a window, error %#lx.\n", GetLastError());
+
+    /* \u5b57 is a '字' in Chinese */
+    PostMessageW(child, WM_CHAR, 0x5b57, 0x1);
+    PostMessageW(child, WM_CLOSE, 0, 0);
+
+    while (GetMessageA(&msg, child, 0, 0) > 0)
+    {
+        if (msg.message == WM_CHAR)
+        {
+            if (GetSystemMetrics(SM_DBCSENABLED))
+                ok(msg.wParam != 0x3f && msg.wParam != 0x5b57, "Got unexpected wparam %#Ix.\n", msg.wParam);
+            else
+                ok(msg.wParam == 0x3f, "Got unexpected wparam %#Ix.\n", msg.wParam);
+            ret = IsDialogMessageA(g_hwndMain, &msg);
+            ok(ret, "IsDialogMessageA failed.\n");
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+    }
+    todo_wine_if(GetSystemMetrics(SM_DBCSENABLED))
+    ok(wm_char_count == 1, "Got unexpected WM_CHAR count %d.\n", wm_char_count);
     DestroyWindow(g_hwndMain);
 }
 
