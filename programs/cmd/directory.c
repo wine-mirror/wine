@@ -503,16 +503,14 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 /*****************************************************************************
  * WCMD_dir_trailer
  *
- * Print out the trailer for the supplied drive letter
+ * Print out the trailer for the supplied path
  */
-static void WCMD_dir_trailer(WCHAR drive) {
-    ULARGE_INTEGER avail, total, freebytes;
-    DWORD status;
-    WCHAR driveName[] = L"c:\\";
+static void WCMD_dir_trailer(const WCHAR *path) {
+    ULARGE_INTEGER freebytes;
+    BOOL status;
 
-    driveName[0] = drive;
-    status = GetDiskFreeSpaceExW(driveName, &avail, &total, &freebytes);
-    WINE_TRACE("Writing trailer for '%s' gave %ld(%ld)\n", wine_dbgstr_w(driveName),
+    status = GetDiskFreeSpaceExW(path, NULL, NULL, &freebytes);
+    WINE_TRACE("Writing trailer for '%s' gave %d(%ld)\n", wine_dbgstr_w(path),
                status, GetLastError());
 
     if (errorlevel==0 && !bare) {
@@ -828,7 +826,7 @@ void WCMD_directory (WCHAR *args)
       /* Trailer Information */
       if (lastDrive != '?') {
         trailerReqd = FALSE;
-        WCMD_dir_trailer(prevEntry->dirName[0]);
+        WCMD_dir_trailer(prevEntry->dirName);
       }
 
       lastDrive = towupper(thisEntry->dirName[0]);
@@ -858,7 +856,7 @@ void WCMD_directory (WCHAR *args)
 
   /* Trailer Information */
   if (trailerReqd) {
-    WCMD_dir_trailer(prevEntry->dirName[0]);
+    WCMD_dir_trailer(prevEntry->dirName);
   }
 
 exit:
