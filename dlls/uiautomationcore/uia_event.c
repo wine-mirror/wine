@@ -1734,8 +1734,8 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     return S_OK;
 }
 
-static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAFEARRAY *rt_id,
-        struct uia_event_args *args, struct uia_event *event);
+static HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
+        HUIANODE *clientside_nav_node_out);
 static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args, struct uia_event *event)
 {
     HRESULT hr = S_OK;
@@ -1745,8 +1745,8 @@ static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct u
         SAFEARRAY *out_req;
         BSTR tree_struct;
 
-        if (nav_start_node)
-            return uia_event_check_match(node, nav_start_node, NULL, args, event);
+        if (nav_start_node && (hr = uia_event_check_node_within_event_scope(event, nav_start_node, NULL, NULL)) != S_OK)
+            return hr;
 
         hr = UiaGetUpdatedCache(node, &event->u.clientside.cache_req, NormalizeState_View, NULL, &out_req,
                 &tree_struct);
@@ -1807,35 +1807,41 @@ static void set_refuse_hwnd_providers(struct uia_node *node, BOOL refuse_hwnd_pr
 }
 
 /*
- * Check if the provider that raised the event matches this particular event.
+ * Check if a node is within the scope of a registered event.
+ * If it is, return S_OK.
+ * If it isn't, return S_FALSE.
+ * Upon failure, return a failure HR.
  */
-static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAFEARRAY *rt_id,
-        struct uia_event_args *args, struct uia_event *event)
+static HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
+        HUIANODE *clientside_nav_node_out)
 {
     struct UiaPropertyCondition prop_cond = { ConditionType_Property, UIA_RuntimeIdPropertyId };
-    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)nav_start_node);
-    HRESULT hr = S_OK;
+    struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+    BOOL in_scope = FALSE;
+    HRESULT hr = S_FALSE;
+
+    if (clientside_nav_node_out)
+        *clientside_nav_node_out = NULL;
+
+    if (event->event_type == EVENT_TYPE_SERVERSIDE)
+        assert(clientside_nav_node_out);
 
     /* Event is no longer valid. */
     if (InterlockedCompareExchange(&event->event_defunct, 0, 0) != 0)
-        return S_OK;
+        return S_FALSE;
 
     /* Can't match an event that doesn't have a runtime ID, early out. */
     if (!event->runtime_id)
-        return S_OK;
+        return S_FALSE;
 
     if (event->desktop_subtree_event)
-        return uia_event_invoke(node, NULL, args, event);
+        return S_OK;
 
     if (rt_id && !uia_compare_safearrays(rt_id, event->runtime_id, UIAutomationType_IntArray))
-    {
-        if (event->scope & TreeScope_Element)
-            hr = uia_event_invoke(node, NULL, args, event);
-        return hr;
-    }
+        return (event->scope & TreeScope_Element) ? S_OK : S_FALSE;
 
     if (!(event->scope & (TreeScope_Descendants | TreeScope_Children)))
-        return S_OK;
+        return S_FALSE;
 
     V_VT(&prop_cond.Value) = VT_I4 | VT_ARRAY;
     V_ARRAY(&prop_cond.Value) = event->runtime_id;
@@ -1855,16 +1861,19 @@ static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAF
         {
             if (node_data->hwnd)
             {
-                hr = uia_event_invoke(node, (HUIANODE)&node_data->IWineUiaNode_iface, args, event);
+                *clientside_nav_node_out = (HUIANODE)&node_data->IWineUiaNode_iface;
+                IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
+                in_scope = TRUE;
                 break;
             }
             set_refuse_hwnd_providers(node_data, TRUE);
         }
 
         hr = navigate_uia_node(node_data, NavigateDirection_Parent, &node2);
-        IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
         if (FAILED(hr) || !node2)
-            return hr;
+            break;
+
+        IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
 
         node_data = impl_from_IWineUiaNode((IWineUiaNode *)node2);
         hr = uia_condition_check(node2, (struct UiaCondition *)&prop_cond);
@@ -1873,7 +1882,7 @@ static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAF
 
         if (uia_condition_matched(hr))
         {
-            hr = uia_event_invoke(node, NULL, args, event);
+            in_scope = TRUE;
             break;
         }
 
@@ -1882,13 +1891,17 @@ static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAF
     }
     IWineUiaNode_Release(&node_data->IWineUiaNode_iface);
 
-    return hr;
+    if (FAILED(hr))
+        return hr;
+
+    return in_scope ? S_OK : S_FALSE;
 }
 
 static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *data)
 {
     struct uia_elprov_event_data *event_data = (struct uia_elprov_event_data *)data;
-    HRESULT hr;
+    HUIANODE nav_node = NULL;
+    HRESULT hr = S_OK;
 
     if (!event_data->node)
     {
@@ -1905,7 +1918,12 @@ static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *da
             return hr;
     }
 
-    return uia_event_check_match(event_data->node, event_data->node, event_data->rt_id, event_data->args, event);
+    hr = uia_event_check_node_within_event_scope(event, event_data->node, event_data->rt_id, &nav_node);
+    if (hr == S_OK)
+        hr = uia_event_invoke(event_data->node, nav_node, event_data->args, event);
+
+    UiaNodeRelease(nav_node);
+    return hr;
 }
 
 static HRESULT uia_raise_elprov_event(IRawElementProviderSimple *elprov, struct uia_event_args *args)
