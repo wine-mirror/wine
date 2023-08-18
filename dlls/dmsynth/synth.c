@@ -28,6 +28,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
+typedef struct IDirectMusicSynth8Impl IDirectMusicSynth8Impl;
+
+struct IDirectMusicSynth8Impl
+{
+    IDirectMusicSynth8 IDirectMusicSynth8_iface;
+    IKsControl IKsControl_iface;
+    LONG ref;
+
+    DMUS_PORTCAPS caps;
+    DMUS_PORTPARAMS params;
+    BOOL active;
+    BOOL open;
+    IReferenceClock *latency_clock;
+    IDirectMusicSynthSink *sink;
+};
+
 static inline IDirectMusicSynth8Impl *impl_from_IDirectMusicSynth8(IDirectMusicSynth8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicSynth8Impl, IDirectMusicSynth8_iface);

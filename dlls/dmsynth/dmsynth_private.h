@@ -41,30 +41,10 @@
 #include "dmksctrl.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicSynth8Impl IDirectMusicSynth8Impl;
-
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj);
 extern HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ppobj);
-
-/*****************************************************************************
- * IDirectMusicSynth8Impl implementation structure
- */
-struct IDirectMusicSynth8Impl {
-    IDirectMusicSynth8 IDirectMusicSynth8_iface;
-    IKsControl IKsControl_iface;
-    LONG ref;
-    DMUS_PORTCAPS caps;
-    DMUS_PORTPARAMS params;
-    BOOL active;
-    BOOL open;
-    IReferenceClock *latency_clock;
-    IDirectMusicSynthSink *sink;
-};
 
 /*****************************************************************************
  * Misc.
