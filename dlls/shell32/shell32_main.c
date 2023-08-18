@@ -585,7 +585,7 @@ HICON WINAPI ExtractIconA(HINSTANCE hInstance, const char *file, UINT nIconIndex
 
     fileW = strdupAtoW(file);
     ret = ExtractIconW(hInstance, fileW, nIconIndex);
-    heap_free(fileW);
+    free(fileW);
 
     return ret;
 }

@@ -202,17 +202,6 @@ static inline IShellLinkImpl *impl_from_IPropertyStore(IPropertyStore *iface)
 
 static HRESULT ShellLink_UpdatePath(LPCWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
 
-/* strdup on the process heap */
-static inline LPWSTR heap_strdupAtoW( LPCSTR str)
-{
-    INT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    WCHAR *p = malloc( len * sizeof(WCHAR) );
-    if( !p )
-        return p;
-    MultiByteToWideChar( CP_ACP, 0, str, -1, p, len );
-    return p;
-}
-
 /**************************************************************************
  *  IPersistFile_QueryInterface
  */
@@ -1342,7 +1331,7 @@ static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA *iface, LPCSTR ps
 
     if (pszName)
     {
-        descrW = heap_strdupAtoW(pszName);
+        descrW = strdupAtoW(pszName);
         if (!descrW) return E_OUTOFMEMORY;
     }
     else
@@ -1378,7 +1367,7 @@ static HRESULT WINAPI IShellLinkA_fnSetWorkingDirectory(IShellLinkA *iface, LPCS
 
     TRACE("(%p)->(dir=%s)\n",This, pszDir);
 
-    dirW = heap_strdupAtoW(pszDir);
+    dirW = strdupAtoW(pszDir);
     if (!dirW) return E_OUTOFMEMORY;
 
     hr = IShellLinkW_SetWorkingDirectory(&This->IShellLinkW_iface, dirW);
@@ -1412,7 +1401,7 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA *iface, LPCSTR pszA
 
     if (pszArgs)
     {
-        argsW = heap_strdupAtoW(pszArgs);
+        argsW = strdupAtoW(pszArgs);
         if (!argsW) return E_OUTOFMEMORY;
     }
     else
@@ -1475,7 +1464,7 @@ static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA *iface, LPCSTR p
 
     if (path)
     {
-        pathW = heap_strdupAtoW(path);
+        pathW = strdupAtoW(path);
         if (!pathW)
             return E_OUTOFMEMORY;
     }
@@ -1495,7 +1484,7 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA *iface, LPCSTR p
 
     TRACE("(%p)->(path=%s %lx)\n",This, pszPathRel, dwReserved);
 
-    pathW = heap_strdupAtoW(pszPathRel);
+    pathW = strdupAtoW(pszPathRel);
     if (!pathW) return E_OUTOFMEMORY;
 
     hr = IShellLinkW_SetRelativePath(&This->IShellLinkW_iface, pathW, dwReserved);
@@ -1523,9 +1512,8 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA *iface, LPCSTR pszFile)
 
     if (!pszFile) return E_INVALIDARG;
 
-    str = heap_strdupAtoW(pszFile);
-    if( !str ) 
-        return E_OUTOFMEMORY;
+    str = strdupAtoW(pszFile);
+    if (!str) return E_OUTOFMEMORY;
 
     r = IShellLinkW_SetPath(&This->IShellLinkW_iface, str);
     free( str );
