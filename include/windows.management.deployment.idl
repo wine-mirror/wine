@@ -25,9 +25,23 @@ import "windows.applicationmodel.idl";
 
 namespace Windows.Management.Deployment {
 
+    typedef enum PackageInstallState PackageInstallState;
+
     interface IDeploymentResult;
+    interface IPackageUserInformation;
 
     runtimeclass DeploymentResult;
+    runtimeclass PackageUserInformation;
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum PackageInstallState
+    {
+        NotInstalled = 0,
+        Staged       = 1,
+        Installed    = 2,
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)]
+        Paused       = 6,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -43,12 +57,32 @@ namespace Windows.Management.Deployment {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Management.Deployment.PackageUserInformation),
+        uuid(f6383423-fa09-4cbc-9055-15ca275e2e7e)
+    ]
+    interface IPackageUserInformation : IInspectable
+    {
+        [propget] HRESULT UserSecurityId([out, retval] HSTRING *value);
+        [propget] HRESULT InstallState([out, retval] Windows.Management.Deployment.PackageInstallState *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
     ]
     runtimeclass DeploymentResult
     {
         [default] interface Windows.Management.Deployment.IDeploymentResult;
         [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Management.Deployment.IDeploymentResult2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PackageUserInformation
+    {
+        [default] interface Windows.Management.Deployment.IPackageUserInformation;
     }
 
 }
