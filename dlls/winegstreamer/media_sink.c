@@ -77,6 +77,8 @@ struct media_sink
     IMFMediaEventQueue *event_queue;
 
     struct list stream_sinks;
+
+    wg_muxer_t muxer;
 };
 
 static struct stream_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -567,6 +569,7 @@ static ULONG WINAPI media_sink_Release(IMFFinalizableMediaSink *iface)
         IMFByteStream_Release(media_sink->bytestream);
         media_sink->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&media_sink->cs);
+        wg_muxer_destroy(media_sink->muxer);
         free(media_sink);
     }
 
@@ -1022,7 +1025,7 @@ static const IMFAsyncCallbackVtbl media_sink_callback_vtbl =
     media_sink_callback_Invoke,
 };
 
-static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **out)
+static HRESULT media_sink_create(IMFByteStream *bytestream, const char *format, struct media_sink **out)
 {
     struct media_sink *media_sink;
     HRESULT hr;
@@ -1035,11 +1038,10 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **
     if (!(media_sink = calloc(1, sizeof(*media_sink))))
         return E_OUTOFMEMORY;
 
+    if (FAILED(hr = wg_muxer_create(format, &media_sink->muxer)))
+        goto fail;
     if (FAILED(hr = MFCreateEventQueue(&media_sink->event_queue)))
-    {
-        free(media_sink);
-        return hr;
-    }
+        goto fail;
 
     media_sink->IMFFinalizableMediaSink_iface.lpVtbl = &media_sink_vtbl;
     media_sink->IMFMediaEventGenerator_iface.lpVtbl = &media_sink_event_vtbl;
@@ -1056,6 +1058,12 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, struct media_sink **
     TRACE("Created media sink %p.\n", media_sink);
 
     return S_OK;
+
+fail:
+    if (media_sink->muxer)
+        wg_muxer_destroy(media_sink->muxer);
+    free(media_sink);
+    return hr;
 }
 
 static HRESULT WINAPI sink_class_factory_QueryInterface(IMFSinkClassFactory *iface, REFIID riid, void **out)
@@ -1082,8 +1090,8 @@ static ULONG WINAPI sink_class_factory_Release(IMFSinkClassFactory *iface)
     return 1;
 }
 
-static HRESULT WINAPI sink_class_factory_CreateMediaSink(IMFSinkClassFactory *iface, IMFByteStream *bytestream,
-        IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **out)
+static HRESULT WINAPI sink_class_factory_create_media_sink(IMFSinkClassFactory *iface, IMFByteStream *bytestream,
+        const char *format, IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **out)
 {
     IMFFinalizableMediaSink *media_sink_iface;
     struct media_sink *media_sink;
@@ -1092,7 +1100,7 @@ static HRESULT WINAPI sink_class_factory_CreateMediaSink(IMFSinkClassFactory *if
     TRACE("iface %p, bytestream %p, video_type %p, audio_type %p, out %p.\n",
             iface, bytestream, video_type, audio_type, out);
 
-    if (FAILED(hr = media_sink_create(bytestream, &media_sink)))
+    if (FAILED(hr = media_sink_create(bytestream, format, &media_sink)))
         return hr;
     media_sink_iface = &media_sink->IMFFinalizableMediaSink_iface;
 
@@ -1119,18 +1127,49 @@ static HRESULT WINAPI sink_class_factory_CreateMediaSink(IMFSinkClassFactory *if
     return S_OK;
 }
 
-static const IMFSinkClassFactoryVtbl sink_class_factory_vtbl =
+static HRESULT WINAPI mp3_sink_class_factory_CreateMediaSink(IMFSinkClassFactory *iface, IMFByteStream *bytestream,
+        IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **out)
+{
+    const char *format = "application/x-id3";
+
+    return sink_class_factory_create_media_sink(iface, bytestream, format, video_type, audio_type, out);
+}
+
+static HRESULT WINAPI mpeg4_sink_class_factory_CreateMediaSink(IMFSinkClassFactory *iface, IMFByteStream *bytestream,
+        IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **out)
+{
+    const char *format = "video/quicktime, variant=iso";
+
+    return sink_class_factory_create_media_sink(iface, bytestream, format, video_type, audio_type, out);
+}
+
+static const IMFSinkClassFactoryVtbl mp3_sink_class_factory_vtbl =
 {
     sink_class_factory_QueryInterface,
     sink_class_factory_AddRef,
     sink_class_factory_Release,
-    sink_class_factory_CreateMediaSink,
+    mp3_sink_class_factory_CreateMediaSink,
 };
 
-static IMFSinkClassFactory sink_class_factory = { &sink_class_factory_vtbl };
-
-HRESULT sink_class_factory_create(IUnknown *outer, IUnknown **out)
+static const IMFSinkClassFactoryVtbl mpeg4_sink_class_factory_vtbl =
 {
-    *out = (IUnknown *)&sink_class_factory;
+    sink_class_factory_QueryInterface,
+    sink_class_factory_AddRef,
+    sink_class_factory_Release,
+    mpeg4_sink_class_factory_CreateMediaSink,
+};
+
+static IMFSinkClassFactory mp3_sink_class_factory = { &mp3_sink_class_factory_vtbl };
+static IMFSinkClassFactory mpeg4_sink_class_factory = { &mpeg4_sink_class_factory_vtbl };
+
+HRESULT mp3_sink_class_factory_create(IUnknown *outer, IUnknown **out)
+{
+    *out = (IUnknown *)&mp3_sink_class_factory;
+    return S_OK;
+}
+
+HRESULT mpeg4_sink_class_factory_create(IUnknown *outer, IUnknown **out)
+{
+    *out = (IUnknown *)&mpeg4_sink_class_factory;
     return S_OK;
 }

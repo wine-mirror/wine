@@ -638,7 +638,8 @@ static struct class_factory wma_decoder_cf = {{&class_factory_vtbl}, wma_decoder
 static struct class_factory wmv_decoder_cf = {{&class_factory_vtbl}, wmv_decoder_create};
 static struct class_factory resampler_cf = {{&class_factory_vtbl}, resampler_create};
 static struct class_factory color_convert_cf = {{&class_factory_vtbl}, color_convert_create};
-static struct class_factory sink_class_factory_cf = {{&class_factory_vtbl}, sink_class_factory_create};
+static struct class_factory mp3_sink_class_factory_cf = {{&class_factory_vtbl}, mp3_sink_class_factory_create};
+static struct class_factory mpeg4_sink_class_factory_cf = {{&class_factory_vtbl}, mpeg4_sink_class_factory_create};
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
@@ -674,9 +675,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
     else if (IsEqualGUID(clsid, &CLSID_CColorConvertDMO))
         factory = &color_convert_cf;
     else if (IsEqualGUID(clsid, &CLSID_MFMP3SinkClassFactory))
-        factory = &sink_class_factory_cf;
+        factory = &mp3_sink_class_factory_cf;
     else if (IsEqualGUID(clsid, &CLSID_MFMPEG4SinkClassFactory))
-        factory = &sink_class_factory_cf;
+        factory = &mpeg4_sink_class_factory_cf;
     else
     {
         FIXME("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(clsid));
