@@ -25,6 +25,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
+typedef struct IDirectMusicSynthSinkImpl IDirectMusicSynthSinkImpl;
+
+struct IDirectMusicSynthSinkImpl
+{
+    IDirectMusicSynthSink IDirectMusicSynthSink_iface;
+    IKsControl IKsControl_iface;
+    LONG ref;
+
+    IReferenceClock *latency_clock;
+    IReferenceClock *master_clock;
+    IDirectMusicSynth *synth;   /* No reference hold! */
+    BOOL active;
+};
+
 static inline IDirectMusicSynthSinkImpl *impl_from_IDirectMusicSynthSink(IDirectMusicSynthSink *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicSynthSinkImpl, IDirectMusicSynthSink_iface);

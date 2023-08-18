@@ -44,7 +44,6 @@
  * Interfaces
  */
 typedef struct IDirectMusicSynth8Impl IDirectMusicSynth8Impl;
-typedef struct IDirectMusicSynthSinkImpl IDirectMusicSynthSinkImpl;
 
 /*****************************************************************************
  * ClassFactory
@@ -65,19 +64,6 @@ struct IDirectMusicSynth8Impl {
     BOOL open;
     IReferenceClock *latency_clock;
     IDirectMusicSynthSink *sink;
-};
-
-/*****************************************************************************
- * IDirectMusicSynthSinkImpl implementation structure
- */
-struct IDirectMusicSynthSinkImpl {
-    IDirectMusicSynthSink IDirectMusicSynthSink_iface;
-    IKsControl IKsControl_iface;
-    LONG ref;
-    IReferenceClock *latency_clock;
-    IReferenceClock *master_clock;
-    IDirectMusicSynth *synth;   /* No reference hold! */
-    BOOL active;
 };
 
 /*****************************************************************************
