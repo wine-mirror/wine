@@ -1234,7 +1234,7 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
     WCHAR *user_agent;
     unsigned len;
     HRESULT hres;
-    const unsigned skip_prefix = 8; /* strlen("Mozilla/") */
+    const unsigned skip_prefix = strlen("Mozilla/");
 
     TRACE("(%p)->(%p)\n", This, p);
 
