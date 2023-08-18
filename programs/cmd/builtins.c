@@ -3496,7 +3496,7 @@ void WCMD_setshow_default (const WCHAR *args) {
       /* Restore old directory if drive letter would change, and
            CD x:\directory /D (or pushd c:\directory) not supplied */
       if ((wcsstr(quals, L"/D") == NULL) &&
-          (param1[1] == ':') && (toupper(param1[0]) != toupper(cwd[0]))) {
+          (param1[1] == ':') && (towupper(param1[0]) != towupper(cwd[0]))) {
         SetCurrentDirectoryW(cwd);
       }
     }

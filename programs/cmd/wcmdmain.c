@@ -347,7 +347,7 @@ static void WCMD_show_prompt (BOOL newLine) {
     }
     else {
       p++;
-      switch (toupper(*p)) {
+      switch (towupper(*p)) {
         case '$':
 	  *q++ = '$';
 	  break;
