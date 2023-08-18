@@ -520,6 +520,7 @@ void push_import( const char *import_name, struct location *where )
 
     LIST_FOR_EACH_ENTRY( import, &imports, struct import, entry )
         if (!strcmp( import->name, import_name )) return;  /* already imported */
+    if (!strcmp( idl_name, import_name )) return;  /* already imported */
 
     import = xmalloc( sizeof(struct import) );
     import->name = xstrdup( import_name );
