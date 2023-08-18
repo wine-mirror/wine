@@ -31,7 +31,6 @@
 #include "oledb_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
@@ -102,7 +101,7 @@ static ULONG WINAPI convert_Release(IDataConvert* iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -1705,7 +1704,7 @@ HRESULT create_oledb_convert(IUnknown *outer, void **obj)
 
     if(outer) return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataConvert_iface.lpVtbl = &convert_vtbl;

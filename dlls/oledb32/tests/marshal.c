@@ -81,7 +81,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
             DispatchMessageW(&msg);
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     CoUninitialize();
 
@@ -92,7 +92,7 @@ static DWORD start_host_object2(IStream *stream, REFIID riid, IUnknown *object, 
 {
     DWORD tid = 0;
     HANDLE marshal_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    struct host_object_data *data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+    struct host_object_data *data = malloc(sizeof(*data));
 
     data->stream = stream;
     data->iid = *riid;

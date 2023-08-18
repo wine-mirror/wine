@@ -35,7 +35,6 @@
 #include "resource.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
@@ -49,7 +48,7 @@ struct datasource
 
 static struct datasource *create_datasource(WCHAR *guid)
 {
-    struct datasource *data = heap_alloc_zero(sizeof(struct datasource));
+    struct datasource *data = calloc(1, sizeof(struct datasource));
     if (data)
     {
         CLSIDFromString(guid, &data->clsid);
@@ -75,7 +74,7 @@ static void destroy_datasource(struct datasource *data)
     if (data->provider)
         IDBProperties_Release(data->provider);
 
-    heap_free(data);
+    free(data);
 }
 
 static BOOL initialize_datasource(struct datasource *data)
@@ -191,7 +190,7 @@ static ULONG WINAPI dslocator_Release(IDataSourceLocator *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -775,7 +774,7 @@ HRESULT create_dslocator(IUnknown *outer, void **obj)
 
     if(outer) return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataSourceLocator_iface.lpVtbl = &DSLocatorVtbl;
