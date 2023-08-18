@@ -34,6 +34,7 @@ namespace Windows.ApplicationModel {
 
     interface IAppDisplayInfo;
     interface IPackage;
+    interface IPackage3;
     interface IPackageStatus;
     interface IPackageId;
     interface IPackageIdWithMetadata;
@@ -48,6 +49,9 @@ namespace Windows.ApplicationModel {
         interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *>;
         interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.Package *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *> *>;
     }
 
     [
@@ -84,6 +88,18 @@ namespace Windows.ApplicationModel {
         [propget] HRESULT InstalledLocation([out, retval] Windows.Storage.StorageFolder **value);
         [propget] HRESULT IsFramework([out, retval] boolean *value);
         [propget] HRESULT Dependencies([out, retval] Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *> **value);
+    }
+
+    [
+        exclusiveto(Windows.ApplicationModel.Package),
+        uuid(5f738b61-f86a-4917-93d1-f1ee9d3b35d9),
+        version(0x0a000000)
+    ]
+    interface IPackage3 : IInspectable
+    {
+        [propget] HRESULT Status([out, retval] Windows.ApplicationModel.PackageStatus **value);
+        [propget] HRESULT InstalledDate([out, retval] Windows.Foundation.DateTime *value);
+        HRESULT GetAppListEntriesAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *> *> **operation);
     }
 
     [
