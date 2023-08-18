@@ -34,7 +34,6 @@
 
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
@@ -114,7 +113,7 @@ static int32_t FAPOCALL XAPO_Release(void *iface)
         IXAPO_Release(This->xapo);
         if(This->xapo_params)
             IXAPOParameters_Release(This->xapo_params);
-        heap_free(This);
+        free(This);
     }
     return r;
 }
@@ -290,7 +289,7 @@ static XA2XAPOImpl *wrap_xapo(IUnknown *unk)
         xapo_params = NULL;
     }
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
 
     ret->xapo = xapo;
     ret->xapo_params = xapo_params;
@@ -310,7 +309,7 @@ FAudioEffectChain *wrap_effect_chain(const XAUDIO2_EFFECT_CHAIN *pEffectChain)
     if(!pEffectChain)
         return NULL;
 
-    ret = heap_alloc(sizeof(*ret) + sizeof(FAudioEffectDescriptor) * pEffectChain->EffectCount);
+    ret = malloc(sizeof(*ret) + sizeof(FAudioEffectDescriptor) * pEffectChain->EffectCount);
 
     ret->EffectCount = pEffectChain->EffectCount;
     ret->pEffectDescriptors = (void*)(ret + 1);
@@ -331,7 +330,7 @@ static void free_effect_chain(FAudioEffectChain *chain)
         return;
     for(i = 0; i < chain->EffectCount; ++i)
         XAPO_Release(chain->pEffectDescriptors[i].pEffect);
-    heap_free(chain);
+    free(chain);
 }
 
 /* Send Wrapping */
@@ -345,7 +344,7 @@ static FAudioVoiceSends *wrap_voice_sends(const XAUDIO2_VOICE_SENDS *sends)
         return NULL;
 
 #if XAUDIO2_VER <= 3
-    ret = heap_alloc(sizeof(*ret) + sends->OutputCount * sizeof(FAudioSendDescriptor));
+    ret = malloc(sizeof(*ret) + sends->OutputCount * sizeof(FAudioSendDescriptor));
     ret->SendCount = sends->OutputCount;
     ret->pSends = (FAudioSendDescriptor*)(ret + 1);
     for(i = 0; i < sends->OutputCount; ++i){
@@ -354,7 +353,7 @@ static FAudioVoiceSends *wrap_voice_sends(const XAUDIO2_VOICE_SENDS *sends)
         ret->pSends[i].Flags = 0;
     }
 #else
-    ret = heap_alloc(sizeof(*ret) + sends->SendCount * sizeof(FAudioSendDescriptor));
+    ret = malloc(sizeof(*ret) + sends->SendCount * sizeof(FAudioSendDescriptor));
     ret->SendCount = sends->SendCount;
     ret->pSends = (FAudioSendDescriptor*)(ret + 1);
     for(i = 0; i < sends->SendCount; ++i){
@@ -370,7 +369,7 @@ static void free_voice_sends(FAudioVoiceSends *sends)
 {
     if(!sends)
         return;
-    heap_free(sends);
+    free(sends);
 }
 
 /* Voice Callbacks */
@@ -1453,15 +1452,15 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
         LIST_FOR_EACH_ENTRY_SAFE(v, v2, &This->voices, XA2VoiceImpl, entry){
             v->lock.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&v->lock);
-            HeapFree(GetProcessHeap(), 0, v);
+            free(v);
         }
 
-        HeapFree(GetProcessHeap(), 0, This->cbs);
+        free(This->cbs);
 
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -1515,7 +1514,7 @@ static HRESULT WINAPI IXAudio2Impl_RegisterForCallbacks(IXAudio2 *iface,
     }
 
     This->ncbs++;
-    This->cbs = heap_realloc(This->cbs, This->ncbs * sizeof(*This->cbs));
+    This->cbs = realloc(This->cbs, This->ncbs * sizeof(*This->cbs));
 
     This->cbs[i] = pCallback;
 
@@ -1557,7 +1556,7 @@ static inline XA2VoiceImpl *create_voice(IXAudio2Impl *This)
 {
     XA2VoiceImpl *voice;
 
-    voice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*voice));
+    voice = calloc(1, sizeof(*voice));
     if(!voice)
         return NULL;
 
@@ -1872,7 +1871,7 @@ static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
     ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p)->(): Refcount now %lu\n", This, ref);
     if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     return ref;
 }
 
@@ -1890,7 +1889,7 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     if(pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if(!object)
         return E_OUTOFMEMORY;
 
@@ -1949,12 +1948,12 @@ static const IClassFactoryVtbl XAudio2CF_Vtbl =
 static inline HRESULT make_xaudio2_factory(REFIID riid, void **ppv)
 {
     HRESULT hr;
-    struct xaudio2_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xaudio2_cf));
+    struct xaudio2_cf *ret = malloc(sizeof(struct xaudio2_cf));
     ret->IClassFactory_iface.lpVtbl = &XAudio2CF_Vtbl;
     ret->ref = 0;
     hr = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
     if(FAILED(hr))
-        HeapFree(GetProcessHeap(), 0, ret);
+        free(ret);
     return hr;
 }
 
