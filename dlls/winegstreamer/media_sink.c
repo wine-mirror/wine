@@ -542,6 +542,28 @@ static HRESULT media_sink_queue_stream_event(struct media_sink *media_sink, Medi
     return S_OK;
 }
 
+static HRESULT media_sink_write_stream(struct media_sink *media_sink)
+{
+    BYTE buffer[1024];
+    UINT32 size = sizeof(buffer);
+    ULONG written;
+    QWORD offset;
+    HRESULT hr;
+
+    while (SUCCEEDED(hr = wg_muxer_read_data(media_sink->muxer, buffer, &size, &offset)))
+    {
+        if (offset != UINT64_MAX && FAILED(hr = IMFByteStream_SetCurrentPosition(media_sink->bytestream, offset)))
+            return hr;
+
+        if (FAILED(hr = IMFByteStream_Write(media_sink->bytestream, buffer, size, &written)))
+            return hr;
+
+        size = sizeof(buffer);
+    }
+
+    return S_OK;
+}
+
 static HRESULT media_sink_start(struct media_sink *media_sink)
 {
     HRESULT hr;
@@ -576,6 +598,9 @@ static HRESULT media_sink_process(struct media_sink *media_sink, IMFSample *samp
     HRESULT hr;
 
     TRACE("media_sink %p, sample %p, stream_id %u.\n", media_sink, sample, stream_id);
+
+    if (FAILED(hr = media_sink_write_stream(media_sink)))
+        WARN("Failed to write output samples to stream, hr %#lx.\n", hr);
 
     if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
         return hr;

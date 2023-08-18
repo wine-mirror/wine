@@ -451,3 +451,9 @@ NTSTATUS wg_muxer_push_sample(void *args)
 
     return STATUS_SUCCESS;
 }
+
+NTSTATUS wg_muxer_read_data(void *args)
+{
+    GST_FIXME("Not implemented.");
+    return STATUS_NOT_IMPLEMENTED;
+}

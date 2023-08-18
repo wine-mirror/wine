@@ -70,6 +70,7 @@ extern NTSTATUS wg_muxer_destroy(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_muxer_add_stream(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_muxer_start(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_muxer_push_sample(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_muxer_read_data(void *args) DECLSPEC_HIDDEN;
 
 /* wg_allocator.c */
 

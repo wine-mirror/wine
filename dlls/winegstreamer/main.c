@@ -544,6 +544,29 @@ HRESULT wg_muxer_push_sample(wg_muxer_t muxer, struct wg_sample *sample, UINT32 
     return S_OK;
 }
 
+HRESULT wg_muxer_read_data(wg_muxer_t muxer, void *buffer, UINT32 *size, UINT64 *offset)
+{
+    struct wg_muxer_read_data_params params =
+    {
+        .muxer = muxer,
+        .buffer = buffer,
+        .size = *size,
+        .offset = UINT64_MAX,
+    };
+    NTSTATUS status;
+
+    TRACE("muxer %#I64x, buffer %p, size %u.\n", muxer, buffer, *size);
+
+    if (SUCCEEDED(status = WINE_UNIX_CALL(unix_wg_muxer_read_data, &params)))
+    {
+        *size = params.size;
+        *offset = params.offset;
+        TRACE("Read %u bytes, offset %#I64x.\n", *size, *offset);
+    }
+
+    return HRESULT_FROM_NT(status);
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

@@ -392,6 +392,14 @@ struct wg_muxer_push_sample_params
     UINT32 stream_id;
 };
 
+struct wg_muxer_read_data_params
+{
+    wg_muxer_t muxer;
+    void *buffer;
+    UINT32 size;
+    UINT64 offset;
+};
+
 enum unix_funcs
 {
     unix_wg_init_gstreamer,
@@ -437,6 +445,7 @@ enum unix_funcs
     unix_wg_muxer_add_stream,
     unix_wg_muxer_start,
     unix_wg_muxer_push_sample,
+    unix_wg_muxer_read_data,
 
     unix_wg_funcs_count,
 };
