@@ -100,8 +100,6 @@ typedef struct
 	RECT format_rect;
 	INT text_width;			/* width of the widest line in pixels for multi line controls
 					   and just line width for single line controls	*/
-	INT region_posx;		/* Position of cursor relative to region: */
-	INT region_posy;		/* -1: to left, 0: within, 1: to right */
 	void *word_break_proc;		/* 32-bit word break proc: ANSI or Unicode */
 	INT line_count;			/* number of lines */
 	INT y_offset;			/* scroll offset in number of lines */
@@ -3587,8 +3585,6 @@ static LRESULT EDIT_WM_LButtonDblClk(EDITSTATE *es)
 	e = li + EDIT_CallWordBreakProc(es, li, e - li, ll, WB_RIGHT);
 	EDIT_EM_SetSel(es, s, e, FALSE);
 	EDIT_EM_ScrollCaret(es);
-	es->region_posx = es->region_posy = 0;
-	SetTimer(es->hwndSelf, 0, 100, NULL);
 	return 0;
 }
 
@@ -3609,8 +3605,6 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 	e = EDIT_CharFromPos(es, x, y, &after_wrap);
 	EDIT_EM_SetSel(es, (keys & MK_SHIFT) ? es->selection_start : e, e, after_wrap);
 	EDIT_EM_ScrollCaret(es);
-	es->region_posx = es->region_posy = 0;
-	SetTimer(es->hwndSelf, 0, 100, NULL);
 
 	if (!(es->flags & EF_FOCUSED))
             NtUserSetFocus(es->hwndSelf);
@@ -3627,7 +3621,6 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 static LRESULT EDIT_WM_LButtonUp(EDITSTATE *es)
 {
 	if (es->bCaptureState) {
-		NtUserKillTimer(es->hwndSelf, 0);
 		if (GetCapture() == es->hwndSelf) ReleaseCapture();
 	}
 	es->bCaptureState = FALSE;
@@ -3656,7 +3649,6 @@ static LRESULT EDIT_WM_MouseMove(EDITSTATE *es, INT x, INT y)
 {
 	INT e;
 	BOOL after_wrap;
-	INT prex, prey;
 
         /* If the mouse has been captured by process other than the edit control itself,
          * the windows edit controls will not select the strings with mouse move.
@@ -3664,17 +3656,10 @@ static LRESULT EDIT_WM_MouseMove(EDITSTATE *es, INT x, INT y)
         if (!es->bCaptureState || GetCapture() != es->hwndSelf)
 		return 0;
 
-	/*
-	 *	FIXME: gotta do some scrolling if outside client
-	 *		area.  Maybe reset the timer ?
-	 */
-	prex = x; prey = y;
-	EDIT_ConfinePoint(es, &x, &y);
-	es->region_posx = (prex < x) ? -1 : ((prex > x) ? 1 : 0);
-	es->region_posy = (prey < y) ? -1 : ((prey > y) ? 1 : 0);
 	e = EDIT_CharFromPos(es, x, y, &after_wrap);
 	EDIT_EM_SetSel(es, es->selection_start, e, after_wrap);
 	EDIT_SetCaretPos(es,es->selection_end,es->flags & EF_AFTER_WRAP);
+	EDIT_EM_ScrollCaret(es);
 	return 0;
 }
 
@@ -4047,25 +4032,6 @@ static LRESULT EDIT_WM_SysKeyDown(EDITSTATE *es, INT key, DWORD key_data)
 			return 0;
 	}
 	return DefWindowProcW(es->hwndSelf, WM_SYSKEYDOWN, key, key_data);
-}
-
-
-/*********************************************************************
- *
- *	WM_TIMER
- *
- */
-static void EDIT_WM_Timer(EDITSTATE *es)
-{
-	if (es->region_posx < 0) {
-		EDIT_MoveBackward(es, TRUE);
-	} else if (es->region_posx > 0) {
-		EDIT_MoveForward(es, TRUE);
-	}
-/*
- *	FIXME: gotta do some vertical scrolling here, like
- *		EDIT_EM_LineScroll(hwnd, 0, 1);
- */
 }
 
 /*********************************************************************
@@ -5064,10 +5030,6 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	case WM_SYSKEYDOWN:
 		result = EDIT_WM_SysKeyDown(es, (INT)wParam, (DWORD)lParam);
-		break;
-
-	case WM_TIMER:
-		EDIT_WM_Timer(es);
 		break;
 
 	case WM_VSCROLL:
