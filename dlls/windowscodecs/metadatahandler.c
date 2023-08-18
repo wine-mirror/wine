@@ -64,7 +64,7 @@ static void MetadataHandler_FreeItems(MetadataHandler *This)
         PropVariantClear(&This->items[i].value);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->items);
+    free(This->items);
 }
 
 static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
@@ -122,7 +122,7 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
         MetadataHandler_FreeItems(This);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -400,7 +400,7 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, voi
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataHandler));
+    This = malloc(sizeof(MetadataHandler));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICMetadataWriter_iface.lpVtbl = &MetadataHandler_Vtbl;
@@ -475,7 +475,7 @@ static ULONG WINAPI MetadataHandlerEnum_Release(IWICEnumMetadataItem *iface)
     if (ref == 0)
     {
         IWICMetadataWriter_Release(&This->parent->IWICMetadataWriter_iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -594,7 +594,7 @@ static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
 
     *ppIEnumMetadataItem = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(MetadataHandlerEnum));
+    This = malloc(sizeof(MetadataHandlerEnum));
     if (!This) return E_OUTOFMEMORY;
 
     IWICMetadataWriter_AddRef(&parent->IWICMetadataWriter_iface);
@@ -635,7 +635,7 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
         return hr;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    result = calloc(1, sizeof(MetadataItem));
     if (!result)
     {
         CoTaskMemFree(data);
@@ -1019,14 +1019,14 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
 
     SWAP_USHORT(count);
 
-    entry = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*entry));
+    entry = malloc(count * sizeof(*entry));
     if (!entry) return E_OUTOFMEMORY;
 
     hr = IStream_Read(input, entry, count * sizeof(*entry), &bytesread);
     if (bytesread != count * sizeof(*entry)) hr = E_FAIL;
     if (hr != S_OK)
     {
-        HeapFree(GetProcessHeap(), 0, entry);
+        free(entry);
         return hr;
     }
 
@@ -1061,14 +1061,14 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
 
     if (hr != S_OK || i == 4096)
     {
-        HeapFree(GetProcessHeap(), 0, entry);
+        free(entry);
         return WINCODEC_ERR_BADMETADATAHEADER;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(*result));
+    result = calloc(count, sizeof(*result));
     if (!result)
     {
-        HeapFree(GetProcessHeap(), 0, entry);
+        free(entry);
         return E_OUTOFMEMORY;
     }
 
@@ -1077,13 +1077,13 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
         hr = load_IFD_entry(input, &entry[i], &result[i], native_byte_order);
         if (FAILED(hr))
         {
-            HeapFree(GetProcessHeap(), 0, entry);
-            HeapFree(GetProcessHeap(), 0, result);
+            free(entry);
+            free(result);
             return hr;
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, entry);
+    free(entry);
 
     *items = result;
     *item_count = count;

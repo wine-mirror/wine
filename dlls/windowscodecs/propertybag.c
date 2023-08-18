@@ -96,9 +96,9 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag2 *iface)
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, This->properties);
-        HeapFree(GetProcessHeap(), 0, This->values);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->properties);
+        free(This->values);
+        free(This);
     }
 
     return ref;
@@ -282,7 +282,7 @@ HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
     HRESULT res = S_OK;
     PropertyBag *This;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(PropertyBag));
+    This = malloc(sizeof(PropertyBag));
     if (!This) return E_OUTOFMEMORY;
 
     This->IPropertyBag2_iface.lpVtbl = &PropertyBag_Vtbl;
@@ -296,8 +296,8 @@ HRESULT CreatePropertyBag2(const PROPBAG2 *options, UINT count,
     }
     else
     {
-        This->properties = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PROPBAG2)*count);
-        This->values = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(VARIANT)*count);
+        This->properties = calloc(count, sizeof(PROPBAG2));
+        This->values = calloc(count, sizeof(VARIANT));
 
         if (!This->properties || !This->values)
             res = E_OUTOFMEMORY;

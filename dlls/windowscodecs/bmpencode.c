@@ -125,8 +125,8 @@ static ULONG WINAPI BmpFrameEncode_Release(IWICBitmapFrameEncode *iface)
     if (ref == 0)
     {
         if (This->stream) IStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This->bits);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->bits);
+        free(This);
     }
 
     return ref;
@@ -249,7 +249,7 @@ static HRESULT BmpFrameEncode_AllocateBits(BmpFrameEncode *This)
             return WINCODEC_ERR_WRONGSTATE;
 
         This->stride = (((This->width * This->format->bpp)+31)/32)*4;
-        This->bits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->stride * This->height);
+        This->bits = calloc(This->stride, This->height);
         if (!This->bits) return E_OUTOFMEMORY;
     }
 
@@ -482,7 +482,7 @@ static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
     {
         if (This->stream) IStream_Release(This->stream);
         if (This->frame) IWICBitmapFrameEncode_Release(&This->frame->IWICBitmapFrameEncode_iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -581,7 +581,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         if (FAILED(hr)) return hr;
     }
 
-    encode = HeapAlloc(GetProcessHeap(), 0, sizeof(BmpFrameEncode));
+    encode = malloc(sizeof(BmpFrameEncode));
     if (!encode)
     {
         IPropertyBag2_Release(*ppIEncoderOptions);
@@ -651,7 +651,7 @@ HRESULT BmpEncoder_CreateInstance(REFIID iid, void** ppv)
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(BmpEncoder));
+    This = malloc(sizeof(BmpEncoder));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapEncoder_iface.lpVtbl = &BmpEncoder_Vtbl;

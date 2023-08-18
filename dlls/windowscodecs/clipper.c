@@ -89,7 +89,7 @@ static ULONG WINAPI BitmapClipper_Release(IWICBitmapClipper *iface)
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         if (This->source) IWICBitmapSource_Release(This->source);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -244,7 +244,7 @@ HRESULT BitmapClipper_Create(IWICBitmapClipper **clipper)
 {
     BitmapClipper *This;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapClipper));
+    This = malloc(sizeof(BitmapClipper));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapClipper_iface.lpVtbl = &BitmapClipper_Vtbl;

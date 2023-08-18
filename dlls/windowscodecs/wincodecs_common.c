@@ -151,7 +151,7 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
 
     stride = (bpp * width + 7)/8;
 
-    pixeldata = HeapAlloc(GetProcessHeap(), 0, stride * prc->Height);
+    pixeldata = malloc(stride * prc->Height);
     if (!pixeldata)
     {
         IWICBitmapSource_Release(converted_source);
@@ -167,7 +167,7 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
             stride*prc->Height, pixeldata);
     }
 
-    HeapFree(GetProcessHeap(), 0, pixeldata);
+    free(pixeldata);
     IWICBitmapSource_Release(converted_source);
 
     return hr;

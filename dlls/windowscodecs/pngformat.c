@@ -61,19 +61,19 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
 
     if (!name_end_ptr || name_len > 79)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_FAIL;
     }
 
     value_len = data_size - name_len - 1;
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    result = calloc(1, sizeof(MetadataItem));
     name = CoTaskMemAlloc(name_len + 1);
     value = CoTaskMemAlloc(value_len + 1);
     if (!result || !name || !value)
     {
-        HeapFree(GetProcessHeap(), 0, data);
-        HeapFree(GetProcessHeap(), 0, result);
+        free(data);
+        free(result);
         CoTaskMemFree(name);
         CoTaskMemFree(value);
         return E_OUTOFMEMORY;
@@ -95,7 +95,7 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
     *items = result;
     *item_count = 1;
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     return S_OK;
 }
@@ -127,19 +127,19 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
 
     if (data_size < 4)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_FAIL;
     }
 
     gamma = read_ulong_be(data);
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    result = calloc(1, sizeof(MetadataItem));
     SHStrDupW(L"ImageGamma", &name);
     if (!result || !name)
     {
-        HeapFree(GetProcessHeap(), 0, result);
+        free(result);
         CoTaskMemFree(name);
         return E_OUTOFMEMORY;
     }
@@ -196,11 +196,11 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
 
     if (data_size < 32)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_FAIL;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem)*8);
+    result = calloc(8, sizeof(MetadataItem));
     for (i=0; i<8; i++)
     {
         SHStrDupW(names[i], &dyn_names[i]);
@@ -208,10 +208,10 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
     }
     if (!result || i < 8)
     {
-        HeapFree(GetProcessHeap(), 0, result);
+        free(result);
         for (i=0; i<8; i++)
             CoTaskMemFree(dyn_names[i]);
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_OUTOFMEMORY;
     }
 
@@ -231,7 +231,7 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
     *items = result;
     *item_count = 8;
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     return S_OK;
 }
@@ -265,18 +265,18 @@ static HRESULT LoadHistMetadata(IStream *stream, const GUID *preferred_vendor,
     elements = CoTaskMemAlloc(element_count * sizeof(USHORT));
     if (!elements)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_OUTOFMEMORY;
     }
     for (i = 0; i < element_count; i++)
         elements[i] = read_ushort_be(data + i * 2);
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    result = calloc(1, sizeof(MetadataItem));
     SHStrDupW(L"Frequencies", &name);
     if (!result || !name) {
-        HeapFree(GetProcessHeap(), 0, result);
+        free(result);
         CoTaskMemFree(name);
         CoTaskMemFree(elements);
         return E_OUTOFMEMORY;
@@ -335,11 +335,11 @@ static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
 
     if (data_size != 7)
     {
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_FAIL;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 6);
+    result = calloc(6, sizeof(MetadataItem));
     for (i = 0; i < 6; i++)
     {
         SHStrDupW(names[i], &id_values[i]);
@@ -347,10 +347,10 @@ static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
     }
     if (!result || i < 6)
     {
-        HeapFree(GetProcessHeap(), 0, result);
+        free(result);
         for (i = 0; i < 6; i++)
             CoTaskMemFree(id_values[i]);
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_OUTOFMEMORY;
     }
 
@@ -380,7 +380,7 @@ static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
     *items = result;
     *item_count = 6;
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     return S_OK;
 }

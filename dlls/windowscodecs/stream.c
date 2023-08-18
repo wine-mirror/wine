@@ -91,7 +91,7 @@ static ULONG WINAPI StreamOnMemory_Release(IStream *iface)
     if (ref == 0) {
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -326,7 +326,7 @@ static ULONG WINAPI StreamOnFileHandle_Release(IStream *iface)
         IWICStream_Release(This->stream);
         UnmapViewOfFile(This->mem);
         CloseHandle(This->map);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -501,7 +501,7 @@ static ULONG WINAPI StreamOnStreamRange_Release(IStream *iface)
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         IStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -795,7 +795,7 @@ static ULONG WINAPI IWICStreamImpl_Release(IWICStream *iface)
 
     if (ref == 0) {
         if (This->pStream) IStream_Release(This->pStream);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -994,7 +994,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
     if (!pbBuffer) return E_INVALIDARG;
     if (This->pStream) return WINCODEC_ERR_WRONGSTATE;
 
-    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnMemory));
+    pObject = malloc(sizeof(StreamOnMemory));
     if (!pObject) return E_OUTOFMEMORY;
 
     pObject->IStream_iface.lpVtbl = &StreamOnMemory_Vtbl;
@@ -1058,7 +1058,7 @@ HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE file)
     hr = IWICStreamImpl_InitializeFromMemory(stream, mem, size.u.LowPart);
     if (FAILED(hr)) goto error;
 
-    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnFileHandle));
+    pObject = malloc(sizeof(StreamOnFileHandle));
     if (!pObject)
     {
         hr = E_OUTOFMEMORY;
@@ -1097,7 +1097,7 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *ifa
     if (!pIStream) return E_INVALIDARG;
     if (This->pStream) return WINCODEC_ERR_WRONGSTATE;
 
-    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnStreamRange));
+    pObject = malloc(sizeof(StreamOnStreamRange));
     if (!pObject) return E_OUTOFMEMORY;
 
     pObject->IStream_iface.lpVtbl = &StreamOnStreamRange_Vtbl;
@@ -1153,7 +1153,7 @@ HRESULT StreamImpl_Create(IWICStream **stream)
 
     if( !stream ) return E_INVALIDARG;
 
-    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(IWICStreamImpl));
+    pObject = malloc(sizeof(IWICStreamImpl));
     if( !pObject ) {
         *stream = NULL;
         return E_OUTOFMEMORY;

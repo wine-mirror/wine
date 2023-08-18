@@ -170,8 +170,8 @@ static ULONG WINAPI TgaDecoder_Release(IWICBitmapDecoder *iface)
         DeleteCriticalSection(&This->lock);
         if (This->stream)
             IStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This->imagebits);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->imagebits);
+        free(This);
     }
 
     return ref;
@@ -623,7 +623,7 @@ static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
         return E_FAIL;
     }
 
-    colormap_data = HeapAlloc(GetProcessHeap(), 0, This->colormap_length);
+    colormap_data = malloc(This->colormap_length);
     if (!colormap_data) return E_OUTOFMEMORY;
 
     wcolormap_data = (WORD*)colormap_data;
@@ -743,7 +743,7 @@ static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, colormap_data);
+    free(colormap_data);
 
     if (SUCCEEDED(hr))
         hr = IWICPalette_InitializeCustom(pIPalette, colors, 256);
@@ -831,7 +831,7 @@ static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
         if (SUCCEEDED(hr))
         {
             datasize = This->header.width * This->header.height * (This->header.depth / 8);
-            This->imagebits = HeapAlloc(GetProcessHeap(), 0, datasize);
+            This->imagebits = malloc(datasize);
             if (!This->imagebits) hr = E_OUTOFMEMORY;
         }
 
@@ -870,7 +870,7 @@ static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
         }
         else
         {
-            HeapFree(GetProcessHeap(), 0, This->imagebits);
+            free(This->imagebits);
             This->imagebits = NULL;
         }
     }
@@ -944,7 +944,7 @@ HRESULT TgaDecoder_CreateInstance(REFIID iid, void** ppv)
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(TgaDecoder));
+    This = malloc(sizeof(TgaDecoder));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapDecoder_iface.lpVtbl = &TgaDecoder_Vtbl;

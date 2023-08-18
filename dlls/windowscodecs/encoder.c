@@ -130,7 +130,7 @@ static ULONG WINAPI CommonEncoderFrame_Release(IWICBitmapFrameEncode *iface)
     if (ref == 0)
     {
         IWICBitmapEncoder_Release(&This->parent->IWICBitmapEncoder_iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -546,7 +546,7 @@ static ULONG WINAPI CommonEncoder_Release(IWICBitmapEncoder *iface)
         if (This->stream)
             IStream_Release(This->stream);
         encoder_destroy(This->encoder);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -779,7 +779,7 @@ static HRESULT WINAPI CommonEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         return WINCODEC_ERR_NOTINITIALIZED;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*result));
+    result = calloc(1, sizeof(*result));
     if (!result)
     {
         LeaveCriticalSection(&This->lock);
@@ -802,7 +802,7 @@ static HRESULT WINAPI CommonEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         if (FAILED(hr))
         {
             LeaveCriticalSection(&This->lock);
-            HeapFree(GetProcessHeap(), 0, result);
+            free(result);
             return hr;
         }
     }
@@ -874,7 +874,7 @@ HRESULT CommonEncoder_CreateInstance(struct encoder *encoder,
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(CommonEncoder));
+    This = malloc(sizeof(CommonEncoder));
     if (!This)
     {
         encoder_destroy(encoder);

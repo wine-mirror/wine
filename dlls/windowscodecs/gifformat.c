@@ -81,7 +81,7 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     hr = IStream_Read(stream, &lsd_data, sizeof(lsd_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(lsd_data)) return S_OK;
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 9);
+    result = calloc(9, sizeof(MetadataItem));
     if (!result) return E_OUTOFMEMORY;
 
     for (i = 0; i < 9; i++)
@@ -169,7 +169,7 @@ static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     hr = IStream_Read(stream, &imd_data, sizeof(imd_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(imd_data)) return S_OK;
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 8);
+    result = calloc(8, sizeof(MetadataItem));
     if (!result) return E_OUTOFMEMORY;
 
     for (i = 0; i < 8; i++)
@@ -262,7 +262,7 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     hr = IStream_Read(stream, &gce_data, sizeof(gce_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(gce_data)) return S_OK;
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 5);
+    result = calloc(5, sizeof(MetadataItem));
     if (!result) return E_OUTOFMEMORY;
 
     for (i = 0; i < 5; i++)
@@ -377,7 +377,7 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
         data_size += subblock_size + 1;
     }
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem) * 2);
+    result = calloc(2, sizeof(MetadataItem));
     if (!result)
     {
         CoTaskMemFree(data);
@@ -482,7 +482,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
 
     data[data_size] = 0;
 
-    result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
+    result = calloc(1, sizeof(MetadataItem));
     if (!result)
     {
         CoTaskMemFree(data);
@@ -652,7 +652,7 @@ static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
     if (ref == 0)
     {
         IWICBitmapDecoder_Release(&This->parent->IWICBitmapDecoder_iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -1072,7 +1072,7 @@ static ULONG WINAPI GifDecoder_Release(IWICBitmapDecoder *iface)
         }
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -1267,7 +1267,7 @@ static HRESULT WINAPI GifDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     if (index >= This->gif->ImageCount) return E_INVALIDARG;
 
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(GifFrameDecode));
+    result = malloc(sizeof(GifFrameDecode));
     if (!result) return E_OUTOFMEMORY;
 
     result->IWICBitmapFrameDecode_iface.lpVtbl = &GifFrameDecode_Vtbl;
@@ -1405,7 +1405,7 @@ HRESULT GifDecoder_CreateInstance(REFIID iid, void** ppv)
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(GifDecoder));
+    This = malloc(sizeof(GifDecoder));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapDecoder_iface.lpVtbl = &GifDecoder_Vtbl;
@@ -1511,8 +1511,8 @@ static ULONG WINAPI GifFrameEncode_Release(IWICBitmapFrameEncode *iface)
     if (!ref)
     {
         IWICBitmapEncoder_Release(&This->encoder->IWICBitmapEncoder_iface);
-        HeapFree(GetProcessHeap(), 0, This->image_data);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->image_data);
+        free(This);
     }
 
     return ref;
@@ -1553,9 +1553,9 @@ static HRESULT WINAPI GifFrameEncode_SetSize(IWICBitmapFrameEncode *iface, UINT 
 
     if (This->initialized)
     {
-        HeapFree(GetProcessHeap(), 0, This->image_data);
+        free(This->image_data);
 
-        This->image_data = HeapAlloc(GetProcessHeap(), 0, width * height);
+        This->image_data = malloc(width * height);
         if (This->image_data)
         {
             This->width = width;
@@ -2158,7 +2158,7 @@ static ULONG WINAPI GifEncoder_Release(IWICBitmapEncoder *iface)
         if (This->stream) IStream_Release(This->stream);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -2370,7 +2370,7 @@ static HRESULT WINAPI GifEncoder_CreateNewFrame(IWICBitmapEncoder *iface, IWICBi
 
     if (This->initialized && !This->committed)
     {
-        GifFrameEncode *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(*ret));
+        GifFrameEncode *ret = malloc(sizeof(*ret));
         if (ret)
         {
             This->n_frames++;
@@ -2475,7 +2475,7 @@ HRESULT GifEncoder_CreateInstance(REFIID iid, void **ppv)
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapEncoder_iface.lpVtbl = &GifEncoder_Vtbl;

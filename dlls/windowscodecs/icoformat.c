@@ -123,8 +123,8 @@ static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
 
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This->bits);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->bits);
+        free(This);
     }
 
     return ref;
@@ -247,7 +247,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
 
             if (SUCCEEDED(hr))
             {
-                result->bits = HeapAlloc(GetProcessHeap(), 0, result->width * result->height * 4);
+                result->bits = malloc(result->width * result->height * 4);
                 if (!result->bits) hr = E_OUTOFMEMORY;
             }
 
@@ -336,7 +336,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
 
                 if (SUCCEEDED(hr))
                 {
-                    tempdata = HeapAlloc(GetProcessHeap(), 0, andBytes);
+                    tempdata = malloc(andBytes);
                     if (!tempdata) hr = E_OUTOFMEMORY;
                 }
 
@@ -376,7 +376,7 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
                     }
                 }
 
-                HeapFree(GetProcessHeap(), 0, tempdata);
+                free(tempdata);
             }
         }
 
@@ -412,7 +412,7 @@ static HRESULT ReadIcoPng(IStream *stream, IcoFrameDecode *result)
     hr = IWICBitmapFrameDecode_GetResolution(sourceFrame, &result->dpiX, &result->dpiY);
     if (FAILED(hr))
         goto end;
-    result->bits = HeapAlloc(GetProcessHeap(), 0, 4 * result->width * result->height);
+    result->bits = malloc(4 * result->width * result->height);
     if (result->bits == NULL)
     {
         hr = E_OUTOFMEMORY;
@@ -480,7 +480,7 @@ static ULONG WINAPI IcoDecoder_Release(IWICBitmapDecoder *iface)
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         if (This->stream) IStream_Release(This->stream);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -668,7 +668,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         goto fail;
     }
 
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(IcoFrameDecode));
+    result = malloc(sizeof(IcoFrameDecode));
     if (!result)
     {
         hr = E_OUTOFMEMORY;
@@ -730,7 +730,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 
 fail:
     LeaveCriticalSection(&This->lock);
-    HeapFree(GetProcessHeap(), 0, result);
+    free(result);
     if (substream) IWICStream_Release(substream);
     if (SUCCEEDED(hr)) hr = E_FAIL;
     TRACE("<-- %lx\n", hr);
@@ -763,7 +763,7 @@ HRESULT IcoDecoder_CreateInstance(REFIID iid, void** ppv)
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(IcoDecoder));
+    This = malloc(sizeof(IcoDecoder));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapDecoder_iface.lpVtbl = &IcoDecoder_Vtbl;
