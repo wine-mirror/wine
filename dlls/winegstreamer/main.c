@@ -567,6 +567,21 @@ HRESULT wg_muxer_read_data(wg_muxer_t muxer, void *buffer, UINT32 *size, UINT64 
     return HRESULT_FROM_NT(status);
 }
 
+HRESULT wg_muxer_finalize(wg_muxer_t muxer)
+{
+    NTSTATUS status;
+
+    TRACE("muxer %#I64x.\n", muxer);
+
+    if ((status = WINE_UNIX_CALL(unix_wg_muxer_finalize, &muxer)))
+    {
+        WARN("Failed to finalize, status %#lx.\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    return S_OK;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

@@ -446,6 +446,7 @@ enum unix_funcs
     unix_wg_muxer_start,
     unix_wg_muxer_push_sample,
     unix_wg_muxer_read_data,
+    unix_wg_muxer_finalize,
 
     unix_wg_funcs_count,
 };

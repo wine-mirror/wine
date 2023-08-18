@@ -32,6 +32,7 @@ enum async_op
     ASYNC_STOP,
     ASYNC_PAUSE,
     ASYNC_PROCESS,
+    ASYNC_FINALIZE,
 };
 
 struct async_command
@@ -48,6 +49,10 @@ struct async_command
             IMFSample *sample;
             UINT32 stream_id;
         } process;
+        struct
+        {
+            IMFAsyncResult *result;
+        } finalize;
     } u;
 };
 
@@ -80,6 +85,7 @@ struct media_sink
         STATE_STARTED,
         STATE_STOPPED,
         STATE_PAUSED,
+        STATE_FINALIZED,
         STATE_SHUTDOWN,
     } state;
 
@@ -155,6 +161,8 @@ static ULONG WINAPI async_command_Release(IUnknown *iface)
     {
         if (command->op == ASYNC_PROCESS && command->u.process.sample)
             IMFSample_Release(command->u.process.sample);
+        else if (command->op == ASYNC_FINALIZE && command->u.finalize.result)
+            IMFAsyncResult_Release(command->u.finalize.result);
         free(command);
     }
 
@@ -631,6 +639,51 @@ static HRESULT media_sink_process(struct media_sink *media_sink, IMFSample *samp
     return hr;
 }
 
+static HRESULT media_sink_begin_finalize(struct media_sink *media_sink, IMFAsyncCallback *callback, IUnknown *state)
+{
+    struct async_command *command;
+    IMFAsyncResult *result;
+    HRESULT hr;
+
+    if (media_sink->state == STATE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
+    if (!callback)
+        return S_OK;
+
+    if (FAILED(hr = async_command_create(ASYNC_FINALIZE, &command)))
+        return hr;
+
+    if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &result)))
+    {
+        IUnknown_Release(&command->IUnknown_iface);
+        return hr;
+    }
+    IMFAsyncResult_AddRef((command->u.finalize.result = result));
+
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD,
+            &media_sink->async_callback, &command->IUnknown_iface);
+    IUnknown_Release(&command->IUnknown_iface);
+
+    return hr;
+}
+
+static HRESULT media_sink_finalize(struct media_sink *media_sink, IMFAsyncResult *result)
+{
+    HRESULT hr;
+
+    media_sink->state = STATE_FINALIZED;
+
+    hr = wg_muxer_finalize(media_sink->muxer);
+
+    if (SUCCEEDED(hr))
+        hr = media_sink_write_stream(media_sink);
+
+    IMFAsyncResult_SetStatus(result, hr);
+    MFInvokeCallback(result);
+
+    return hr;
+}
+
 static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
 {
     struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
@@ -870,16 +923,23 @@ static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)
 
 static HRESULT WINAPI media_sink_BeginFinalize(IMFFinalizableMediaSink *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
-    FIXME("iface %p, callback %p, state %p stub!\n", iface, callback, state);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, callback %p, state %p.\n", iface, callback, state);
+
+    EnterCriticalSection(&media_sink->cs);
+    hr =  media_sink_begin_finalize(media_sink, callback, state);
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_EndFinalize(IMFFinalizableMediaSink *iface, IMFAsyncResult *result)
 {
-    FIXME("iface %p, result %p stub!\n", iface, result);
+    TRACE("iface %p, result %p.\n", iface, result);
 
-    return E_NOTIMPL;
+    return result ? IMFAsyncResult_GetStatus(result) : E_INVALIDARG;
 }
 
 static const IMFFinalizableMediaSinkVtbl media_sink_vtbl =
@@ -1135,6 +1195,10 @@ static HRESULT WINAPI media_sink_callback_Invoke(IMFAsyncCallback *iface, IMFAsy
         case ASYNC_PROCESS:
             if (FAILED(hr = media_sink_process(media_sink, command->u.process.sample, command->u.process.stream_id)))
                 WARN("Failed to process sample, hr %#lx.\n", hr);
+            break;
+        case ASYNC_FINALIZE:
+            if (FAILED(hr = media_sink_finalize(media_sink, command->u.finalize.result)))
+                WARN("Failed to finalize, hr %#lx.\n", hr);
             break;
         default:
             WARN("Unsupported op %u.\n", command->op);
