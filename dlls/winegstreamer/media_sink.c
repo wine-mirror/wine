@@ -31,6 +31,7 @@ enum async_op
     ASYNC_START,
     ASYNC_STOP,
     ASYNC_PAUSE,
+    ASYNC_PROCESS,
 };
 
 struct async_command
@@ -39,6 +40,15 @@ struct async_command
     LONG refcount;
 
     enum async_op op;
+
+    union
+    {
+        struct
+        {
+            IMFSample *sample;
+            UINT32 stream_id;
+        } process;
+    } u;
 };
 
 struct stream_sink
@@ -142,7 +152,11 @@ static ULONG WINAPI async_command_Release(IUnknown *iface)
     ULONG refcount = InterlockedDecrement(&command->refcount);
 
     if (!refcount)
+    {
+        if (command->op == ASYNC_PROCESS && command->u.process.sample)
+            IMFSample_Release(command->u.process.sample);
         free(command);
+    }
 
     return refcount;
 }
@@ -301,9 +315,41 @@ static HRESULT WINAPI stream_sink_GetMediaTypeHandler(IMFStreamSink *iface, IMFM
 
 static HRESULT WINAPI stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
-    FIXME("iface %p, sample %p stub!\n", iface, sample);
+    struct stream_sink *stream_sink = impl_from_IMFStreamSink(iface);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(stream_sink->media_sink);
+    struct async_command *command;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, sample %p.\n", iface, sample);
+
+    EnterCriticalSection(&media_sink->cs);
+
+    if (media_sink->state == STATE_SHUTDOWN)
+    {
+        LeaveCriticalSection(&media_sink->cs);
+        return MF_E_SHUTDOWN;
+    }
+
+    if (media_sink->state != STATE_STARTED && media_sink->state != STATE_PAUSED)
+    {
+        LeaveCriticalSection(&media_sink->cs);
+        return MF_E_INVALIDREQUEST;
+    }
+
+    if (FAILED(hr = (async_command_create(ASYNC_PROCESS, &command))))
+    {
+        LeaveCriticalSection(&media_sink->cs);
+        return hr;
+    }
+    IMFSample_AddRef((command->u.process.sample = sample));
+    command->u.process.stream_id = stream_sink->id;
+
+    if (FAILED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &media_sink->async_callback, &command->IUnknown_iface)))
+        IUnknown_Release(&command->IUnknown_iface);
+
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
@@ -519,6 +565,40 @@ static HRESULT media_sink_pause(struct media_sink *media_sink)
 {
     media_sink->state = STATE_PAUSED;
     return media_sink_queue_stream_event(media_sink, MEStreamSinkPaused);
+}
+
+static HRESULT media_sink_process(struct media_sink *media_sink, IMFSample *sample, UINT32 stream_id)
+{
+    wg_muxer_t muxer = media_sink->muxer;
+    struct wg_sample *wg_sample;
+    LONGLONG time, duration;
+    UINT32 value;
+    HRESULT hr;
+
+    TRACE("media_sink %p, sample %p, stream_id %u.\n", media_sink, sample, stream_id);
+
+    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
+        return hr;
+
+    if (SUCCEEDED(IMFSample_GetSampleTime(sample, &time)))
+    {
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_PTS;
+        wg_sample->pts = time;
+    }
+    if (SUCCEEDED(IMFSample_GetSampleDuration(sample, &duration)))
+    {
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+        wg_sample->duration = duration;
+    }
+    if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value)) && value)
+        wg_sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+    if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_Discontinuity, &value)) && value)
+        wg_sample->flags |= WG_SAMPLE_FLAG_DISCONTINUITY;
+
+    hr = wg_muxer_push_sample(muxer, wg_sample, stream_id);
+    wg_sample_release(wg_sample);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_QueryInterface(IMFFinalizableMediaSink *iface, REFIID riid, void **obj)
@@ -1021,6 +1101,10 @@ static HRESULT WINAPI media_sink_callback_Invoke(IMFAsyncCallback *iface, IMFAsy
             break;
         case ASYNC_PAUSE:
             hr = media_sink_pause(media_sink);
+            break;
+        case ASYNC_PROCESS:
+            if (FAILED(hr = media_sink_process(media_sink, command->u.process.sample, command->u.process.stream_id)))
+                WARN("Failed to process sample, hr %#lx.\n", hr);
             break;
         default:
             WARN("Unsupported op %u.\n", command->op);

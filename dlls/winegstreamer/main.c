@@ -523,6 +523,27 @@ HRESULT wg_muxer_start(wg_muxer_t muxer)
     return S_OK;
 }
 
+HRESULT wg_muxer_push_sample(wg_muxer_t muxer, struct wg_sample *sample, UINT32 steam_id)
+{
+    struct wg_muxer_push_sample_params params =
+    {
+        .muxer = muxer,
+        .sample = sample,
+        .stream_id = steam_id,
+    };
+    NTSTATUS status;
+
+    TRACE("muxer %#I64x, sample %p.\n", muxer, sample);
+
+    if ((status = WINE_UNIX_CALL(unix_wg_muxer_push_sample, &params)))
+    {
+        WARN("Failed to push sample, status %#lx.\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    return S_OK;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

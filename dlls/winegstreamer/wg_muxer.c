@@ -343,3 +343,8 @@ NTSTATUS wg_muxer_start(void *args)
 
     return STATUS_SUCCESS;
 }
+
+NTSTATUS wg_muxer_push_sample(void *args)
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
