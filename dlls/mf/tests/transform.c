@@ -1973,8 +1973,6 @@ static IMFSample *create_sample(const BYTE *data, ULONG size)
     return sample;
 }
 
-static const BYTE aac_codec_data[14] = {0x00,0x00,0x29,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x12,0x08};
-
 static void test_aac_encoder(void)
 {
     const GUID *const class_id = &CLSID_AACMFTEncoder;
@@ -2045,7 +2043,7 @@ static void test_aac_encoder(void)
         ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
         ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
         ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
-        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data)),
+        ATTR_BLOB(MF_MT_USER_DATA, test_aac_codec_data, sizeof(test_aac_codec_data)),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO initial_output_info = {0}, output_info = {.cbSize = 0x600};
@@ -2506,7 +2504,7 @@ static void test_aac_decoder(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
-        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data), .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, test_aac_codec_data, sizeof(test_aac_codec_data), .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
