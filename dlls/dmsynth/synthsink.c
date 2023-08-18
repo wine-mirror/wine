@@ -44,7 +44,7 @@ static inline IDirectMusicSynthSinkImpl *impl_from_IDirectMusicSynthSink(IDirect
     return CONTAINING_RECORD(iface, IDirectMusicSynthSinkImpl, IDirectMusicSynthSink_iface);
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_QueryInterface(IDirectMusicSynthSink *iface,
         REFIID riid, void **ret_iface)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -72,7 +72,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface(IDirectMusicSynth
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef(IDirectMusicSynthSink *iface)
+static ULONG WINAPI synth_sink_AddRef(IDirectMusicSynthSink *iface)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -82,7 +82,7 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef(IDirectMusicSynthSink *ifac
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(IDirectMusicSynthSink *iface)
+static ULONG WINAPI synth_sink_Release(IDirectMusicSynthSink *iface)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -100,7 +100,7 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(IDirectMusicSynthSink *ifa
     return ref;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_Init(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_Init(IDirectMusicSynthSink *iface,
         IDirectMusicSynth *synth)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -114,7 +114,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_Init(IDirectMusicSynthSink *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_SetMasterClock(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_SetMasterClock(IDirectMusicSynthSink *iface,
         IReferenceClock *clock)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -132,7 +132,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_SetMasterClock(IDirectMusicSynth
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_GetLatencyClock(IDirectMusicSynthSink *iface,
         IReferenceClock **clock)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -148,7 +148,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock(IDirectMusicSynt
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_Activate(IDirectMusicSynthSink *iface,
         BOOL enable)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -158,7 +158,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate(IDirectMusicSynthSink *
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_SampleToRefTime(IDirectMusicSynthSink *iface,
         LONGLONG sample_time, REFERENCE_TIME *ref_time)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -168,7 +168,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime(IDirectMusicSynt
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_RefTimeToSample(IDirectMusicSynthSink *iface,
         REFERENCE_TIME ref_time, LONGLONG *sample_time)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -178,7 +178,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample(IDirectMusicSynt
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_SetDirectSound(IDirectMusicSynthSink *iface,
         IDirectSound *dsound, IDirectSoundBuffer *dsound_buffer)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -188,7 +188,7 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound(IDirectMusicSynth
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize(IDirectMusicSynthSink *iface,
+static HRESULT WINAPI synth_sink_GetDesiredBufferSize(IDirectMusicSynthSink *iface,
         DWORD *size)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IDirectMusicSynthSink(iface);
@@ -209,18 +209,19 @@ static HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize(IDirectMusi
     return S_OK;
 }
 
-static const IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl = {
-	IDirectMusicSynthSinkImpl_QueryInterface,
-	IDirectMusicSynthSinkImpl_AddRef,
-	IDirectMusicSynthSinkImpl_Release,
-	IDirectMusicSynthSinkImpl_Init,
-	IDirectMusicSynthSinkImpl_SetMasterClock,
-	IDirectMusicSynthSinkImpl_GetLatencyClock,
-	IDirectMusicSynthSinkImpl_Activate,
-	IDirectMusicSynthSinkImpl_SampleToRefTime,
-	IDirectMusicSynthSinkImpl_RefTimeToSample,
-	IDirectMusicSynthSinkImpl_SetDirectSound,
-	IDirectMusicSynthSinkImpl_GetDesiredBufferSize
+static const IDirectMusicSynthSinkVtbl synth_sink_vtbl =
+{
+	synth_sink_QueryInterface,
+	synth_sink_AddRef,
+	synth_sink_Release,
+	synth_sink_Init,
+	synth_sink_SetMasterClock,
+	synth_sink_GetLatencyClock,
+	synth_sink_Activate,
+	synth_sink_SampleToRefTime,
+	synth_sink_RefTimeToSample,
+	synth_sink_SetDirectSound,
+	synth_sink_GetDesiredBufferSize,
 };
 
 static inline IDirectMusicSynthSinkImpl *impl_from_IKsControl(IKsControl *iface)
@@ -228,29 +229,29 @@ static inline IDirectMusicSynthSinkImpl *impl_from_IKsControl(IKsControl *iface)
     return CONTAINING_RECORD(iface, IDirectMusicSynthSinkImpl, IKsControl_iface);
 }
 
-static HRESULT WINAPI DMSynthSinkImpl_IKsControl_QueryInterface(IKsControl* iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI synth_sink_control_QueryInterface(IKsControl* iface, REFIID riid, LPVOID *ppobj)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IKsControl(iface);
 
-    return IDirectMusicSynthSinkImpl_QueryInterface(&This->IDirectMusicSynthSink_iface, riid, ppobj);
+    return synth_sink_QueryInterface(&This->IDirectMusicSynthSink_iface, riid, ppobj);
 }
 
-static ULONG WINAPI DMSynthSinkImpl_IKsControl_AddRef(IKsControl* iface)
+static ULONG WINAPI synth_sink_control_AddRef(IKsControl* iface)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IKsControl(iface);
 
-    return IDirectMusicSynthSinkImpl_AddRef(&This->IDirectMusicSynthSink_iface);
+    return synth_sink_AddRef(&This->IDirectMusicSynthSink_iface);
 }
 
-static ULONG WINAPI DMSynthSinkImpl_IKsControl_Release(IKsControl* iface)
+static ULONG WINAPI synth_sink_control_Release(IKsControl* iface)
 {
     IDirectMusicSynthSinkImpl *This = impl_from_IKsControl(iface);
 
-    return IDirectMusicSynthSinkImpl_Release(&This->IDirectMusicSynthSink_iface);
+    return synth_sink_Release(&This->IDirectMusicSynthSink_iface);
 }
 
-static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsProperty(IKsControl* iface, PKSPROPERTY Property, ULONG PropertyLength, LPVOID PropertyData,
-                                                            ULONG DataLength, ULONG* BytesReturned)
+static HRESULT WINAPI synth_sink_control_KsProperty(IKsControl* iface, PKSPROPERTY Property,
+        ULONG PropertyLength, LPVOID PropertyData, ULONG DataLength, ULONG* BytesReturned)
 {
     TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
@@ -280,16 +281,16 @@ static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsProperty(IKsControl* iface, P
     return S_OK;
 }
 
-static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsMethod(IKsControl* iface, PKSMETHOD Method, ULONG MethodLength, LPVOID MethodData,
-                                                          ULONG DataLength, ULONG* BytesReturned)
+static HRESULT WINAPI synth_sink_control_KsMethod(IKsControl* iface, PKSMETHOD Method,
+        ULONG MethodLength, LPVOID MethodData, ULONG DataLength, ULONG* BytesReturned)
 {
     FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, Method, MethodLength, MethodData, DataLength, BytesReturned);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsEvent(IKsControl* iface, PKSEVENT Event, ULONG EventLength, LPVOID EventData,
-                                                         ULONG DataLength, ULONG* BytesReturned)
+static HRESULT WINAPI synth_sink_control_KsEvent(IKsControl* iface, PKSEVENT Event,
+        ULONG EventLength, LPVOID EventData, ULONG DataLength, ULONG* BytesReturned)
 {
     FIXME("(%p, %p, %lu, %p, %lu, %p): stub\n", iface, Event, EventLength, EventData, DataLength, BytesReturned);
 
@@ -297,13 +298,14 @@ static HRESULT WINAPI DMSynthSinkImpl_IKsControl_KsEvent(IKsControl* iface, PKSE
 }
 
 
-static const IKsControlVtbl DMSynthSinkImpl_IKsControl_Vtbl = {
-    DMSynthSinkImpl_IKsControl_QueryInterface,
-    DMSynthSinkImpl_IKsControl_AddRef,
-    DMSynthSinkImpl_IKsControl_Release,
-    DMSynthSinkImpl_IKsControl_KsProperty,
-    DMSynthSinkImpl_IKsControl_KsMethod,
-    DMSynthSinkImpl_IKsControl_KsEvent
+static const IKsControlVtbl synth_sink_control =
+{
+    synth_sink_control_QueryInterface,
+    synth_sink_control_AddRef,
+    synth_sink_control_Release,
+    synth_sink_control_KsProperty,
+    synth_sink_control_KsMethod,
+    synth_sink_control_KsEvent,
 };
 
 HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
@@ -319,8 +321,8 @@ HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
     if (!obj)
         return E_OUTOFMEMORY;
 
-    obj->IDirectMusicSynthSink_iface.lpVtbl = &DirectMusicSynthSink_Vtbl;
-    obj->IKsControl_iface.lpVtbl = &DMSynthSinkImpl_IKsControl_Vtbl;
+    obj->IDirectMusicSynthSink_iface.lpVtbl = &synth_sink_vtbl;
+    obj->IKsControl_iface.lpVtbl = &synth_sink_control;
     obj->ref = 1;
 
     hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&obj->latency_clock);
