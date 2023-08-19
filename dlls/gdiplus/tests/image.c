@@ -120,7 +120,6 @@ static void expect_bitmap_locked_data(GpBitmap *bitmap, const BYTE *expect_bits,
     ok_(__FILE__, line)(lockeddata.Stride == stride, "Expected %d, got %d\n", stride, lockeddata.Stride);
     ok_(__FILE__, line)(lockeddata.PixelFormat == PixelFormat32bppARGB,
             "Expected %d, got %d\n", PixelFormat32bppARGB, lockeddata.PixelFormat);
-    todo_wine
     ok_(__FILE__, line)(!memcmp(expect_bits, lockeddata.Scan0, lockeddata.Height * lockeddata.Stride),
             "data mismatch\n");
     GdipBitmapUnlockBits(bitmap, &lockeddata);

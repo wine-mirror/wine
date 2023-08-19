@@ -1626,12 +1626,13 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     GpRect rect;
     BitmapData lockeddata;
     HDC screendc;
-    BOOL has_alpha;
     int x, y;
     BITMAPINFOHEADER bih;
     DWORD *src;
     BYTE *dst_row;
     DWORD *dst;
+    BYTE *bits;
+    int mask_scanlines = 0, color_scanlines = 0;
 
     TRACE("%p, %p\n", hicon, bitmap);
 
@@ -1682,52 +1683,55 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     bih.biClrUsed = 0;
     bih.biClrImportant = 0;
 
+    bits = heap_alloc(height * stride);
+    if (!bits)
+    {
+        DeleteObject(iinfo.hbmColor);
+        DeleteObject(iinfo.hbmMask);
+        GdipBitmapUnlockBits(*bitmap, &lockeddata);
+        GdipDisposeImage(&(*bitmap)->image);
+        return OutOfMemory;
+    }
+
     screendc = CreateCompatibleDC(0);
-    GetDIBits(screendc, iinfo.hbmColor, 0, height, lockeddata.Scan0, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
-
-    if (bm.bmBitsPixel == 32)
+    if (screendc)
     {
-        has_alpha = FALSE;
-
-        /* If any pixel has a non-zero alpha, ignore hbmMask */
-        src = (DWORD*)lockeddata.Scan0;
-        for (y=0; y<height && !has_alpha; y++)
-            for (x=0; x<width && !has_alpha; x++)
-                if ((*src++ & 0xff000000) != 0)
-                    has_alpha = TRUE;
+        color_scanlines = GetDIBits(screendc, iinfo.hbmColor, 0, height, lockeddata.Scan0,
+            (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+        mask_scanlines = GetDIBits(screendc, iinfo.hbmMask, 0, height, bits,
+            (BITMAPINFO*)&bih, DIB_RGB_COLORS);
+        DeleteDC(screendc);
     }
-    else has_alpha = FALSE;
-
-    if (!has_alpha)
-    {
-        BYTE *bits = heap_alloc(height * stride);
-
-        /* read alpha data from the mask - the mask can safely be assumed to exist */
-        GetDIBits(screendc, iinfo.hbmMask, 0, height, bits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
-
-        src = (DWORD*)bits;
-        dst_row = lockeddata.Scan0;
-        for (y=0; y<height; y++)
-        {
-            dst = (DWORD*)dst_row;
-            for (x=0; x<width; x++)
-            {
-                DWORD src_value = *src++;
-                if (src_value)
-                    *dst++ = 0;
-                else
-                    *dst++ |= 0xff000000;
-            }
-            dst_row += lockeddata.Stride;
-        }
-
-        heap_free(bits);
-    }
-
-    DeleteDC(screendc);
 
     DeleteObject(iinfo.hbmColor);
     DeleteObject(iinfo.hbmMask);
+
+    if (!screendc || ((color_scanlines == 0 || mask_scanlines == 0) &&
+                      GetLastError() == ERROR_INVALID_PARAMETER))
+    {
+        heap_free(bits);
+        GdipBitmapUnlockBits(*bitmap, &lockeddata);
+        GdipDisposeImage(&(*bitmap)->image);
+        return GenericError;
+    }
+
+    src = (DWORD*)bits;
+    dst_row = lockeddata.Scan0;
+    for (y=0; y<height; y++)
+    {
+        dst = (DWORD*)dst_row;
+        for (x=0; x<width; x++)
+        {
+            DWORD src_value = *src++;
+            if (src_value)
+                *dst++ = 0;
+            else
+                *dst++ |= 0xff000000;
+        }
+        dst_row += lockeddata.Stride;
+    }
+
+    heap_free(bits);
 
     GdipBitmapUnlockBits(*bitmap, &lockeddata);
 
