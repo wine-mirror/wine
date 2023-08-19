@@ -1612,6 +1612,19 @@ static void test_fromhicon(void)
        GdipDisposeImage((GpImage*)bitmap);
     DestroyIcon(hIcon);
 
+    /* mask-only icon */
+    info = iconinfo_base;
+    info.hbmMask = hbmMask;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+
+    stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
+    todo_wine
+    expect(InvalidParameter, stat);
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bitmap);
+    DestroyIcon(hIcon);
+
     DeleteObject(hbmMask);
     DeleteObject(hbmColor);
 
