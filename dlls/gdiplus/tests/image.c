@@ -1538,7 +1538,7 @@ static void test_fromhicon(void)
 {
     static const BYTE bmp_bits[1024];
     HBITMAP hbmMask, hbmColor;
-    ICONINFO info;
+    ICONINFO info, iconinfo_base = {TRUE, 0, 0, 0, 0};
     HICON hIcon;
     GpStatus stat;
     GpBitmap *bitmap = NULL;
@@ -1557,9 +1557,7 @@ static void test_fromhicon(void)
     ok(hbmMask != 0, "CreateBitmap failed\n");
     hbmColor = CreateBitmap(16, 16, 1, 1, bmp_bits);
     ok(hbmColor != 0, "CreateBitmap failed\n");
-    info.fIcon = TRUE;
-    info.xHotspot = 8;
-    info.yHotspot = 8;
+    info = iconinfo_base;
     info.hbmMask = hbmMask;
     info.hbmColor = hbmColor;
     hIcon = CreateIconIndirect(&info);
@@ -1596,9 +1594,7 @@ static void test_fromhicon(void)
     ok(hbmMask != 0, "CreateBitmap failed\n");
     hbmColor = CreateBitmap(16, 16, 1, 8, bmp_bits);
     ok(hbmColor != 0, "CreateBitmap failed\n");
-    info.fIcon = TRUE;
-    info.xHotspot = 8;
-    info.yHotspot = 8;
+    info = iconinfo_base;
     info.hbmMask = hbmMask;
     info.hbmColor = hbmColor;
     hIcon = CreateIconIndirect(&info);
