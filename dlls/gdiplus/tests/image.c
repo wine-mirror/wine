@@ -1606,7 +1606,6 @@ static void test_fromhicon(void)
     ok(hIcon != 0, "CreateIconIndirect failed\n");
 
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
-    todo_wine
     expect(InvalidParameter, stat);
     if (stat == Ok)
        GdipDisposeImage((GpImage*)bitmap);
@@ -1619,10 +1618,7 @@ static void test_fromhicon(void)
     ok(hIcon != 0, "CreateIconIndirect failed\n");
 
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
-    todo_wine
     expect(InvalidParameter, stat);
-    if (stat == Ok)
-        GdipDisposeImage((GpImage*)bitmap);
     DestroyIcon(hIcon);
 
     DeleteObject(hbmMask);
