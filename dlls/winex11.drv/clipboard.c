@@ -1850,7 +1850,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
 {
     int aformat;
     unsigned long pos = 0, nitems, remain, count;
-    unsigned char *val = NULL, *buffer;
+    unsigned char *val = NULL, *new_val, *buffer;
 
     for (;;)
     {
@@ -1863,15 +1863,13 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
         }
 
         count = get_property_size( aformat, nitems );
-        *data = realloc( val, pos * sizeof(int) + count + 1 );
-
-        if (!*data)
+        if (!(new_val = realloc( val, pos * sizeof(int) + count + 1 )))
         {
             XFree( buffer );
             free( val );
             return FALSE;
         }
-        val = *data;
+        val = new_val;
         memcpy( (int *)val + pos, buffer, count );
         XFree( buffer );
         if (!remain)
@@ -1889,6 +1887,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
     XDeleteProperty(display, w, prop);
+    *data = val;
     return TRUE;
 }
 
