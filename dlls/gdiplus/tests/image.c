@@ -1646,6 +1646,28 @@ static void test_fromhicon(void)
         GdipDisposeImage((GpImage*)bitmap);
     }
     DestroyIcon(hIcon);
+
+    /* 32 bpp icon */
+    hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+    hbmColor = CreateBitmap(16, 16, 1, 32, bmp_bits);
+    ok(hbmColor != 0, "CreateBitmap failed\n");
+    info = iconinfo_base;
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmColor;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
+    expect(Ok, stat);
+    if(stat == Ok){
+        expect_image_properties((GpImage*)bitmap, 16, 16, __LINE__);
+        expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
+        GdipDisposeImage((GpImage*)bitmap);
+    }
+    DestroyIcon(hIcon);
 }
 
 /* 1x1 pixel png */
