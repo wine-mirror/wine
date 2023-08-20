@@ -182,7 +182,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(IEnumIDList *iface)
             SHFree(cur->pidl);
             SHFree(cur);
         }
-        heap_free(This);
+        free(This);
     }
 
     return refCount;
@@ -291,7 +291,7 @@ static const IEnumIDListVtbl eidlvt =
 
 IEnumIDListImpl *IEnumIDList_Constructor(void)
 {
-    IEnumIDListImpl *lpeidl = heap_alloc(sizeof(*lpeidl));
+    IEnumIDListImpl *lpeidl = malloc(sizeof(*lpeidl));
 
     if (lpeidl)
     {

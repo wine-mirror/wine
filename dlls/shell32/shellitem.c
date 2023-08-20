@@ -117,7 +117,7 @@ static ULONG WINAPI ShellItem_Release(IShellItem2 *iface)
     if (ref == 0)
     {
         ILFree(This->pidl);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -608,7 +608,7 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     This->IShellItem2_iface.lpVtbl = &ShellItem2_Vtbl;
     This->ref = 1;
     This->pidl = NULL;
@@ -976,7 +976,7 @@ static ULONG WINAPI IEnumShellItems_fnRelease(IEnumShellItems *iface)
     {
         TRACE("Freeing.\n");
         IShellItemArray_Release(This->array);
-        heap_free(This);
+        free(This);
         return 0;
     }
 
@@ -1065,7 +1065,7 @@ static HRESULT IEnumShellItems_Constructor(IShellItemArray *array, IEnumShellIte
     IEnumShellItemsImpl *This;
     HRESULT ret;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -1146,8 +1146,8 @@ static ULONG WINAPI IShellItemArray_fnRelease(IShellItemArray *iface)
         for(i = 0; i < This->item_count; i++)
             IShellItem_Release(This->array[i]);
 
-        heap_free(This->array);
-        heap_free(This);
+        free(This->array);
+        free(This);
         return 0;
     }
 
@@ -1294,17 +1294,17 @@ static HRESULT create_shellitemarray(IShellItem **items, DWORD count, IShellItem
 
     TRACE("(%p, %ld, %p)\n", items, count, ret);
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 
     This->IShellItemArray_iface.lpVtbl = &vt_IShellItemArray;
     This->ref = 1;
 
-    This->array = heap_alloc(count*sizeof(IShellItem*));
+    This->array = malloc(count * sizeof(IShellItem*));
     if (!This->array)
     {
-        heap_free(This);
+        free(This);
         return E_OUTOFMEMORY;
     }
     memcpy(This->array, items, count*sizeof(IShellItem*));
@@ -1334,7 +1334,7 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
     if(!ppidl)
         return E_INVALIDARG;
 
-    array = heap_alloc_zero(cidl*sizeof(IShellItem*));
+    array = calloc(cidl, sizeof(IShellItem*));
     if(!array)
         return E_OUTOFMEMORY;
 
@@ -1354,7 +1354,7 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
         for(i = 0; i < cidl; i++)
             if(array[i]) IShellItem_Release(array[i]);
     }
-    heap_free(array);
+    free(array);
     return ret;
 }
 
@@ -1411,13 +1411,13 @@ HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID rii
 
         parent_pidl = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[0]);
 
-        children = heap_alloc(sizeof(LPCITEMIDLIST)*pida->cidl);
+        children = malloc(sizeof(const ITEMIDLIST*) * pida->cidl);
         for(i = 0; i < pida->cidl; i++)
             children[i] = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[i+1]);
 
         ret = SHCreateShellItemArray(parent_pidl, NULL, pida->cidl, children, &psia);
 
-        heap_free(children);
+        free(children);
 
         GlobalUnlock(medium.hGlobal);
         GlobalFree(medium.hGlobal);
@@ -1446,7 +1446,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     if(cidl == 0)
         return E_INVALIDARG;
 
-    array = heap_alloc_zero(cidl*sizeof(IShellItem*));
+    array = calloc(cidl, sizeof(IShellItem*));
     if(!array)
         return E_OUTOFMEMORY;
 
@@ -1468,7 +1468,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
             if(array[i]) IShellItem_Release(array[i]);
         *psia = NULL;
     }
-    heap_free(array);
+    free(array);
     return ret;
 }
 
@@ -1528,7 +1528,7 @@ static ULONG WINAPI CustomDestinationList_Release(ICustomDestinationList *iface)
     TRACE("(%p), new refcount=%li\n", This, ref);
 
     if (ref == 0)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -1640,7 +1640,7 @@ HRESULT WINAPI CustomDestinationList_Constructor(IUnknown *outer, REFIID riid, v
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if(!(list = heap_alloc(sizeof(*list))))
+    if(!(list = malloc(sizeof(*list))))
         return E_OUTOFMEMORY;
 
     list->ICustomDestinationList_iface.lpVtbl = &CustomDestinationListVtbl;

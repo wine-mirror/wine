@@ -136,7 +136,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     const WCHAR *src;
     WCHAR *dest, *result, *result_end=NULL;
 
-    result = heap_alloc(sizeof(WCHAR)*(lstrlenW(cmdline)+5));
+    result = malloc(sizeof(WCHAR) * (wcslen(cmdline) + 5));
 
     src = cmdline;
     dest = result;
@@ -176,7 +176,7 @@ static LPWSTR RunDlg_GetParentDir(LPCWSTR cmdline)
     }
     else
     {
-        heap_free(result);
+        free(result);
         return NULL;
     }
 }
@@ -231,7 +231,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         ZeroMemory (&sei, sizeof(sei)) ;
                         sei.cbSize = sizeof(sei) ;
-                        psz = heap_alloc( (ic + 1)*sizeof(WCHAR) );
+                        psz = malloc( (ic + 1) * sizeof(WCHAR) );
                         GetWindowTextW (htxt, psz, ic + 1) ;
 
                         /* according to http://www.codeproject.com/KB/shell/runfiledlg.aspx we should send a
@@ -248,8 +248,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         if (!ShellExecuteExW( &sei ))
                         {
-                            heap_free(psz);
-                            heap_free(parent);
+                            free(psz);
+                            free(parent);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
                         }
@@ -258,8 +258,8 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         GetWindowTextA (htxt, (LPSTR)psz, ic + 1) ;
                         FillList (htxt, (LPSTR)psz, FALSE) ;
 
-                        heap_free(psz);
-                        heap_free(parent);
+                        free(psz);
+                        free(parent);
                         EndDialog (hwnd, 0);
                         }
                     }
@@ -327,14 +327,14 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
     if (icList > 0)
         {
-        pszList = heap_alloc(icList) ;
+        pszList = malloc(icList) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, "MRUList", NULL, NULL, (LPBYTE)pszList, &icList))
             MessageBoxA (hCb, "Unable to grab MRUList !", "Nix", MB_OK) ;
         }
     else
         {
         icList = 1 ;
-        pszList = heap_alloc(icList) ;
+        pszList = malloc(icList) ;
         pszList[0] = 0 ;
         }
 
@@ -347,10 +347,7 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, NULL, &icCmd))
             MessageBoxA (hCb, "Unable to grab size of index", "Nix", MB_OK) ;
-        if( pszCmd )
-            pszCmd = heap_realloc(pszCmd, icCmd) ;
-        else
-            pszCmd = heap_alloc(icCmd) ;
+        pszCmd = realloc(pszCmd, icCmd) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, (LPBYTE)pszCmd, &icCmd))
             MessageBoxA (hCb, "Unable to grab index", "Nix", MB_OK) ;
 
@@ -416,10 +413,7 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
         SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
 
         cMatch = ++cMax ;
-        if( pszList )
-            pszList = heap_realloc(pszList, ++icList) ;
-        else
-            pszList = heap_alloc(++icList) ;
+        pszList = realloc(pszList, ++icList) ;
         memmove (&pszList[1], pszList, icList - 1) ;
         pszList[0] = cMatch ;
         szIndex[0] = cMatch ;
@@ -428,8 +422,8 @@ static void FillList (HWND hCb, char *pszLatest, BOOL fShowDefault)
 
     RegSetValueExA (hkey, "MRUList", 0, REG_SZ, (LPBYTE)pszList, strlen (pszList) + 1) ;
 
-    heap_free(pszCmd) ;
-    heap_free(pszList) ;
+    free(pszCmd) ;
+    free(pszList) ;
 }
 
 /*************************************************************************

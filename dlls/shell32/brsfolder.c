@@ -1000,13 +1000,13 @@ static BOOL BrsFolder_OnSetSelectionA(browse_info *info, LPVOID selection, BOOL 
         return BrsFolder_OnSetSelectionW(info, selection, is_str);
 
     if ((length = MultiByteToWideChar(CP_ACP, 0, selection, -1, NULL, 0)) &&
-        (selectionW = heap_alloc(length * sizeof(WCHAR))) &&
+        (selectionW = malloc(length * sizeof(WCHAR))) &&
         MultiByteToWideChar(CP_ACP, 0, selection, -1, selectionW, length))
     {
         result = BrsFolder_OnSetSelectionW(info, selectionW, is_str);
     }
 
-    heap_free(selectionW);
+    free(selectionW);
     return result;
 }
 
@@ -1173,14 +1173,14 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
     bi.hwndOwner = lpbi->hwndOwner;
     bi.pidlRoot = lpbi->pidlRoot;
     if (lpbi->pszDisplayName)
-        bi.pszDisplayName = heap_alloc( MAX_PATH * sizeof(WCHAR) );
+        bi.pszDisplayName = malloc( MAX_PATH * sizeof(WCHAR) );
     else
         bi.pszDisplayName = NULL;
 
     if (lpbi->lpszTitle)
     {
         len = MultiByteToWideChar( CP_ACP, 0, lpbi->lpszTitle, -1, NULL, 0 );
-        title = heap_alloc( len * sizeof(WCHAR) );
+        title = malloc( len * sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, lpbi->lpszTitle, -1, title, len );
     }
     else
@@ -1196,9 +1196,9 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
     {
         WideCharToMultiByte( CP_ACP, 0, bi.pszDisplayName, -1,
                              lpbi->pszDisplayName, MAX_PATH, 0, NULL);
-        heap_free( bi.pszDisplayName );
+        free( bi.pszDisplayName );
     }
-    heap_free(title);
+    free( title );
     lpbi->iImage = bi.iImage;
     return lpid;
 }

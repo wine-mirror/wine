@@ -807,7 +807,7 @@ static void get_display_name( WCHAR dest[MAX_PATH], const WCHAR *path, LPCITEMID
         if (!is_unix)
         {
             len = WideCharToMultiByte( CP_UNIXCP, 0, path + 8, -1, NULL, 0, NULL, NULL );
-            buffer = heap_alloc( len );
+            buffer = malloc( len );
             len = WideCharToMultiByte( CP_UNIXCP, 0, path + 8, -1, buffer, len, NULL, NULL );
             for (i = 0; i < len; i++) if (buffer[i] == '\\') buffer[i] = '/';
             if ((res = wine_get_dos_file_name( buffer )))
@@ -1232,7 +1232,7 @@ static WCHAR *build_paths_list(LPCWSTR wszBasePath, int cidl, const LPCITEMIDLIS
     int i;
     
     iPathLen = lstrlenW(wszBasePath);
-    wszPathsList = heap_alloc(MAX_PATH*sizeof(WCHAR)*cidl+1);
+    wszPathsList = malloc(MAX_PATH * sizeof(WCHAR) * cidl + 1);
     wszListPos = wszPathsList;
     
     for (i = 0; i < cidl; i++) {
@@ -1310,7 +1310,7 @@ ISFHelper_fnDeleteItems (ISFHelper * iface, UINT cidl, LPCITEMIDLIST * apidl)
 
         wszCurrentPath += lstrlenW(wszCurrentPath)+1;
     }
-    heap_free(wszPathsList);
+    free(wszPathsList);
     return ret;
 }
 
@@ -1360,7 +1360,7 @@ ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl,
                 WARN("Copy failed\n");
                 ret = E_FAIL;
             }
-            heap_free(wszSrcPathsList);
+            free(wszSrcPathsList);
         }
         SHFree(pidl);
         IPersistFolder2_Release(ppf2);

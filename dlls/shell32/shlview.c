@@ -1577,7 +1577,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		  }
 
 		  /* allocate memory for the pidl array */
-		  pItems = heap_alloc(sizeof(LPITEMIDLIST) * count);
+		  pItems = malloc(sizeof(ITEMIDLIST*) * count);
 
 		  /* retrieve all selected items */
 		  i = 0;
@@ -1603,7 +1603,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		  ISFHelper_Release(psfhlp);
 
 		  /* free pidl array memory */
-		  heap_free(pItems);
+		  free(pItems);
                 }
 		break;
 
@@ -1825,7 +1825,7 @@ static ULONG WINAPI IShellView_fnRelease(IShellView3 *iface)
 	  if(This->pAdvSink)
 	    IAdviseSink_Release(This->pAdvSink);
 
-	  heap_free(This);
+	  free(This);
 	}
 	return refCount;
 }
@@ -3756,7 +3756,7 @@ IShellView *IShellView_Constructor(IShellFolder *folder)
 {
     IShellViewImpl *sv;
 
-    sv = heap_alloc_zero(sizeof(*sv));
+    sv = calloc(1, sizeof(*sv));
     if (!sv)
         return NULL;
 

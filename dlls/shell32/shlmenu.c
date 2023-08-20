@@ -213,7 +213,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPCITEMIDLIST pAlternatePidl)
 		    MENUINFO MenuInfo;
 		    HMENU hMenuPopup = CreatePopupMenu();
 
-		    lpFmMi = heap_alloc_zero(sizeof(*lpFmMi));
+		    lpFmMi = calloc(1, sizeof(*lpFmMi));
 
 		    lpFmMi->pidl = ILCombine(pidl, pidlTemp);
 		    lpFmMi->uEnumFlags = SHCONTF_FOLDERS | SHCONTF_NONFOLDERS;
@@ -283,7 +283,7 @@ HMENU WINAPI FileMenu_Create (
 	TRACE("0x%08lx 0x%08x %p 0x%08x 0x%08x  hMenu=%p\n",
 	crBorderColor, nBorderWidth, hBorderBmp, nSelHeight, uFlags, hMenu);
 
-	menudata = heap_alloc_zero(sizeof(*menudata));
+	menudata = calloc(1, sizeof(*menudata));
 	menudata->crBorderColor = crBorderColor;
 	menudata->nBorderWidth = nBorderWidth;
 	menudata->hBorderBmp = hBorderBmp;
@@ -313,7 +313,7 @@ void WINAPI FileMenu_Destroy (HMENU hmenu)
 	menudata = FM_GetMenuInfo(hmenu);
 
 	SHFree( menudata->pidl);
-	heap_free(menudata);
+	free(menudata);
 
 	DestroyMenu (hmenu);
 }
@@ -416,11 +416,11 @@ BOOL WINAPI FileMenu_AppendItemAW(
         else
 	{
 	  DWORD len = MultiByteToWideChar( CP_ACP, 0, lpText, -1, NULL, 0 );
-	  LPWSTR lpszText = heap_alloc( len*sizeof(WCHAR) );
+	  WCHAR *lpszText = malloc(len * sizeof(WCHAR));
 	  if (!lpszText) return FALSE;
 	  MultiByteToWideChar( CP_ACP, 0, lpText, -1, lpszText, len );
 	  ret = FileMenu_AppendItemW(hMenu, lpszText, uID, icon, hMenuPopup, nItemHeight);
-	  heap_free( lpszText );
+	  free(lpszText);
 	}
 
 	return ret;
@@ -1040,22 +1040,22 @@ static HRESULT CompositeCMenu_Constructor(IContextMenu **menus,UINT menu_count, 
 
     TRACE("(%p,%u,%s,%p)\n",menus,menu_count,shdebugstr_guid(riid),ppv);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
     ret->IContextMenu3_iface.lpVtbl = &CompositeCMenuVtbl;
     ret->menu_count = menu_count;
-    ret->menus = heap_alloc(menu_count*sizeof(IContextMenu*));
+    ret->menus = malloc(menu_count * sizeof(IContextMenu*));
     if(!ret->menus)
     {
-        heap_free(ret);
+        free(ret);
         return E_OUTOFMEMORY;
     }
-    ret->offsets = heap_alloc_zero(menu_count*sizeof(UINT));
+    ret->offsets = calloc(menu_count, sizeof(UINT));
     if(!ret->offsets)
     {
-        heap_free(ret->menus);
-        heap_free(ret);
+        free(ret->menus);
+        free(ret);
         return E_OUTOFMEMORY;
     }
     ret->refCount=0;
@@ -1070,9 +1070,9 @@ static void CompositeCMenu_Destroy(CompositeCMenu *This)
     UINT i;
     for(i=0;i<This->menu_count;i++)
         IContextMenu_Release(This->menus[i]);
-    heap_free(This->menus);
-    heap_free(This->offsets);
-    heap_free(This);
+    free(This->menus);
+    free(This->offsets);
+    free(This);
 }
 
 static HRESULT WINAPI CompositeCMenu_QueryInterface(IContextMenu3 *iface, REFIID riid, void **ppv)

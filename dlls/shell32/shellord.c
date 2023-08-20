@@ -1268,7 +1268,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
         }
     }
 
-    lpGroups = heap_alloc(dwSize);
+    lpGroups = malloc(dwSize);
     if (lpGroups == NULL)
     {
         CloseHandle(hToken);
@@ -1277,7 +1277,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
 
     if (!GetTokenInformation(hToken, TokenGroups, lpGroups, dwSize, &dwSize))
     {
-        heap_free(lpGroups);
+        free(lpGroups);
         CloseHandle(hToken);
         return FALSE;
     }
@@ -1287,7 +1287,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
                                   DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
                                   &lpSid))
     {
-        heap_free(lpGroups);
+        free(lpGroups);
         return FALSE;
     }
 
@@ -1301,7 +1301,7 @@ BOOL WINAPI IsUserAnAdmin(VOID)
     }
 
     FreeSid(lpSid);
-    heap_free(lpGroups);
+    free(lpGroups);
     return bResult;
 }
 
@@ -1427,7 +1427,7 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
 
     TRACE("(%s, %d)\n", debugstr_a(pszString), cchString);
 
-    if ((dst = heap_alloc(cchString * sizeof(CHAR))))
+    if ((dst = malloc(cchString * sizeof(CHAR))))
     {
         len = ExpandEnvironmentStringsA(pszString, dst, cchString);
         /* len includes the terminating 0 */
@@ -1439,7 +1439,7 @@ DWORD WINAPI DoEnvironmentSubstA(LPSTR pszString, UINT cchString)
         else
             len = cchString;
 
-        heap_free(dst);
+        free(dst);
     }
     return MAKELONG(len, res);
 }
@@ -1471,7 +1471,7 @@ DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
 
     TRACE("(%s, %d)\n", debugstr_w(pszString), cchString);
 
-    if ((cchString < MAXLONG) && (dst = heap_alloc(cchString * sizeof(WCHAR))))
+    if ((cchString < MAXLONG) && (dst = malloc(cchString * sizeof(WCHAR))))
     {
         len = ExpandEnvironmentStringsW(pszString, dst, cchString);
         /* len includes the terminating 0 */
@@ -1483,7 +1483,7 @@ DWORD WINAPI DoEnvironmentSubstW(LPWSTR pszString, UINT cchString)
         else
             len = cchString;
 
-        heap_free(dst);
+        free(dst);
     }
     return MAKELONG(len, res);
 }

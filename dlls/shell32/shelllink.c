@@ -1516,7 +1516,7 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA *iface, LPCSTR pszFile)
     if (!str) return E_OUTOFMEMORY;
 
     r = IShellLinkW_SetPath(&This->IShellLinkW_iface, str);
-    free( str );
+    free(str);
 
     return r;
 }

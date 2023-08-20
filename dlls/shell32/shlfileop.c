@@ -316,7 +316,7 @@ static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChar
 	if (len < minChars)
 	  len = minChars;
 
-	*wPath = heap_alloc(len * sizeof(WCHAR));
+	*wPath = malloc(len * sizeof(WCHAR));
 	if (*wPath)
 	{
 	  MultiByteToWideChar(CP_ACP, 0, aPath, -1, *wPath, len);
@@ -395,7 +395,7 @@ static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec)
 	if (!retCode)
 	{
 	  retCode = SHNotifyCreateDirectoryW(wPath, sec);
-	  heap_free(wPath);
+	  free(wPath);
 	}
 	return retCode;
 }
@@ -449,7 +449,7 @@ static DWORD SHNotifyRemoveDirectoryA(LPCSTR path)
 	if (!retCode)
 	{
 	  retCode = SHNotifyRemoveDirectoryW(wPath);
-	  heap_free(wPath);
+	  free(wPath);
 	}
 	return retCode;
 }
@@ -513,7 +513,7 @@ static DWORD SHNotifyDeleteFileA(LPCSTR path)
 	if (!retCode)
 	{
 	  retCode = SHNotifyDeleteFileW(wPath);
-	  heap_free(wPath);
+	  free(wPath);
 	}
 	return retCode;
 }
@@ -709,7 +709,7 @@ int WINAPI SHCreateDirectoryExA(HWND hWnd, LPCSTR path, LPSECURITY_ATTRIBUTES se
 	if (!retCode)
 	{
 	  retCode = SHCreateDirectoryExW(hWnd, wPath, sec);
-	  heap_free(wPath);
+	  free(wPath);
 	}
 	return retCode;
 }
@@ -881,12 +881,12 @@ int WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 	    if (retCode == ERROR_ACCESS_DENIED && (GetVersion() & 0x80000000))
 	      retCode = S_OK;
 
-	    heap_free(ForFree); /* we cannot use wString, it was changed */
+	    free(ForFree); /* we cannot use wString, it was changed */
 	    break;
 	  }
 	  else
 	  {
-	    wString = ForFree = heap_alloc(size * sizeof(WCHAR));
+	    wString = ForFree = malloc(size * sizeof(WCHAR));
 	    if (ForFree) continue;
 	    retCode = ERROR_OUTOFMEMORY;
 	    nFileOp.fAnyOperationsAborted = TRUE;
@@ -925,8 +925,7 @@ typedef struct
 
 static inline void grow_list(FILE_LIST *list)
 {
-    FILE_ENTRY *new = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, list->feFiles,
-                                  list->num_alloc * 2 * sizeof(*new) );
+    FILE_ENTRY *new = _recalloc(list->feFiles, list->num_alloc * 2, sizeof(*new));
     list->feFiles = new;
     list->num_alloc *= 2;
 }
@@ -938,18 +937,18 @@ static void add_file_to_entry(FILE_ENTRY *feFile, LPCWSTR szFile)
     DWORD dwLen = lstrlenW(szFile) + 1;
     LPCWSTR ptr;
 
-    feFile->szFullPath = heap_alloc(dwLen * sizeof(WCHAR));
+    feFile->szFullPath = malloc(dwLen * sizeof(WCHAR));
     lstrcpyW(feFile->szFullPath, szFile);
 
     ptr = StrRChrW(szFile, NULL, '\\');
     if (ptr)
     {
         dwLen = ptr - szFile + 1;
-        feFile->szDirectory = heap_alloc(dwLen * sizeof(WCHAR));
+        feFile->szDirectory = malloc(dwLen * sizeof(WCHAR));
         lstrcpynW(feFile->szDirectory, szFile, dwLen);
 
         dwLen = lstrlenW(feFile->szFullPath) - dwLen + 1;
-        feFile->szFilename = heap_alloc(dwLen * sizeof(WCHAR));
+        feFile->szFilename = malloc(dwLen * sizeof(WCHAR));
         lstrcpyW(feFile->szFilename, ptr + 1); /* skip over backslash */
     }
     feFile->bFromWildcard = FALSE;
@@ -965,7 +964,7 @@ static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
     dwDirLen = ptr - szWildCard + 1;
 
     dwFullLen = dwDirLen + lstrlenW(szFileName) + 1;
-    szFullPath = heap_alloc(dwFullLen * sizeof(WCHAR));
+    szFullPath = malloc(dwFullLen * sizeof(WCHAR));
 
     lstrcpynW(szFullPath, szWildCard, dwDirLen + 1);
     lstrcatW(szFullPath, szFileName);
@@ -993,7 +992,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
         file->bFromWildcard = TRUE;
         file->attributes = wfd.dwFileAttributes;
         if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
-        heap_free(szFullPath);
+        free(szFullPath);
     }
 
     FindClose(hFile);
@@ -1019,8 +1018,8 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
     /* empty list */
     if (!szFiles[0])
         return ERROR_ACCESS_DENIED;
-        
-    flList->feFiles = heap_alloc_zero(flList->num_alloc * sizeof(FILE_ENTRY));
+
+    flList->feFiles = calloc(flList->num_alloc, sizeof(FILE_ENTRY));
 
     while (*ptr)
     {
@@ -1077,12 +1076,12 @@ static void destroy_file_list(FILE_LIST *flList)
 
     for (i = 0; i < flList->dwNumFiles; i++)
     {
-        heap_free(flList->feFiles[i].szDirectory);
-        heap_free(flList->feFiles[i].szFilename);
-        heap_free(flList->feFiles[i].szFullPath);
+        free(flList->feFiles[i].szDirectory);
+        free(flList->feFiles[i].szFilename);
+        free(flList->feFiles[i].szFullPath);
     }
 
-    heap_free(flList->feFiles);
+    free(flList->feFiles);
 }
 
 static void copy_dir_to_dir(FILE_OPERATION *op, const FILE_ENTRY *feFrom, LPCWSTR szDestPath)
@@ -1211,9 +1210,9 @@ static int copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *fl
             /* Free all but the first entry. */
             for (i = 1; i < flTo->dwNumFiles; i++)
             {
-                heap_free(flTo->feFiles[i].szDirectory);
-                heap_free(flTo->feFiles[i].szFilename);
-                heap_free(flTo->feFiles[i].szFullPath);
+                free(flTo->feFiles[i].szDirectory);
+                free(flTo->feFiles[i].szFilename);
+                free(flTo->feFiles[i].szFullPath);
             }
 
             flTo->dwNumFiles = 1;
@@ -1751,7 +1750,7 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
             len = 1;
         else
             len = last_slash - path + 1;
-        temppath = heap_alloc(len * sizeof(WCHAR));
+        temppath = malloc(len * sizeof(WCHAR));
         if (!temppath)
             return E_OUTOFMEMORY;
         StrCpyNW(temppath, path, len);
@@ -1774,7 +1773,7 @@ HRESULT WINAPI SHPathPrepareForWriteW(HWND hwnd, IUnknown *modless, LPCWSTR path
     /* check if we can access the directory */
     res = GetFileAttributesW(realpath);
 
-    heap_free(temppath);
+    free(temppath);
 
     if (res == INVALID_FILE_ATTRIBUTES)
     {
@@ -1849,7 +1848,7 @@ static ULONG WINAPI file_operation_Release(IFileOperation *iface)
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, operation);
+        free(operation);
     }
 
     return ref;
@@ -2033,7 +2032,7 @@ HRESULT WINAPI IFileOperation_Constructor(IUnknown *outer, REFIID riid, void **o
     struct file_operation *object;
     HRESULT hr;
 
-    object = heap_alloc_zero(sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 

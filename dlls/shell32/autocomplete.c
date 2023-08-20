@@ -209,7 +209,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
 
     do
     {
-        if ((tmp = heap_realloc(strs, array_size * sizeof(*strs))) == NULL)
+        if ((tmp = realloc(strs, array_size * sizeof(*strs))) == NULL)
             goto fail;
         strs = tmp;
 
@@ -223,7 +223,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
     } while (read != 0);
 
     /* Allocate even if there were zero strings enumerated, to mark it non-NULL */
-    if ((tmp = heap_realloc(strs, cur * sizeof(*strs))))
+    if ((tmp = realloc(strs, cur * sizeof(*strs))))
     {
         strs = tmp;
         if (cur > 0)
@@ -237,7 +237,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
 fail:
     while (cur--)
         CoTaskMemFree(strs[cur]);
-    heap_free(strs);
+    free(strs);
 }
 
 static UINT find_matching_enum_str(IAutoCompleteImpl *ac, UINT start, WCHAR *text,
@@ -269,7 +269,7 @@ static void free_enum_strs(IAutoCompleteImpl *ac)
         ac->enum_strs = NULL;
         while (i--)
             CoTaskMemFree(strs[i]);
-        heap_free(strs);
+        free(strs);
     }
 }
 
@@ -519,7 +519,7 @@ static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *
        so merge text and str into a new string */
     size = len + lstrlenW(&str[len]) + 1;
 
-    if ((tmp = heap_alloc(size * sizeof(*tmp))))
+    if ((tmp = malloc(size * sizeof(*tmp))))
     {
         memcpy(tmp, text, len * sizeof(*tmp));
         memcpy(&tmp[len], &str[len], (size - len) * sizeof(*tmp));
@@ -528,7 +528,7 @@ static void autoappend_str(IAutoCompleteImpl *ac, WCHAR *text, UINT len, WCHAR *
 
     set_text_and_selection(ac, hwnd, tmp, len, size - 1);
     if (tmp != str)
-        heap_free(tmp);
+        free(tmp);
 }
 
 static BOOL display_matching_strs(IAutoCompleteImpl *ac, WCHAR *text, UINT len,
@@ -608,7 +608,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     }
 
     size = len + 1;
-    if (!(text = heap_alloc(size * sizeof(WCHAR))))
+    if (!(text = malloc(size * sizeof(WCHAR))))
     {
         /* Reset the listbox to prevent potential crash from ResetEnumerator */
         SendMessageW(ac->hwndListBox, LB_RESETCONTENT, 0, 0);
@@ -616,7 +616,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
     }
     len = SendMessageW(hwnd, WM_GETTEXT, size, (LPARAM)text);
     if (len + 1 != size)
-        text = heap_realloc(text, (len + 1) * sizeof(WCHAR));
+        text = realloc(text, (len + 1) * sizeof(WCHAR));
 
     if (ac->aclist)
     {
@@ -634,7 +634,7 @@ static void autocomplete_text(IAutoCompleteImpl *ac, HWND hwnd, enum autoappend_
 
     /* Set txtbackup to point to text itself (which must not be released),
        and it must be done here since aclist_expand uses it to track changes */
-    heap_free(ac->txtbackup);
+    free(ac->txtbackup);
     ac->txtbackup = text;
 
     if (!display_matching_strs(ac, text, len, pfx_filter, hwnd, flag))
@@ -676,21 +676,21 @@ static LRESULT ACEditSubclassProc_KeyDown(IAutoCompleteImpl *ac, HWND hwnd, UINT
                 UINT len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
                 ac->no_fwd_char = '\n';  /* CTRL+RETURN char */
 
-                if (!(text = heap_alloc((len + 1) * sizeof(WCHAR))))
+                if (!(text = malloc((len + 1) * sizeof(WCHAR))))
                     return 0;
                 len = SendMessageW(hwnd, WM_GETTEXT, len + 1, (LPARAM)text);
                 sz = lstrlenW(ac->quickComplete) + 1 + len;
 
-                if ((buf = heap_alloc(sz * sizeof(WCHAR))))
+                if ((buf = malloc(sz * sizeof(WCHAR))))
                 {
                     len = format_quick_complete(buf, ac->quickComplete, text, len);
                     set_text_and_selection(ac, hwnd, buf, 0, len);
-                    heap_free(buf);
+                    free(buf);
                 }
 
                 if (ac->options & ACO_AUTOSUGGEST)
                     hide_listbox(ac, ac->hwndListBox, TRUE);
-                heap_free(text);
+                free(text);
                 return 0;
             }
 
@@ -970,13 +970,13 @@ static ULONG WINAPI IAutoComplete2_fnRelease(
 
     if (!refCount) {
         TRACE("destroying IAutoComplete(%p)\n", This);
-        heap_free(This->quickComplete);
-        heap_free(This->txtbackup);
+        free(This->quickComplete);
+        free(This->txtbackup);
         if (This->enumstr)
             IEnumString_Release(This->enumstr);
         if (This->aclist)
             IACList_Release(This->aclist);
-        heap_free(This);
+        free(This);
     }
     return refCount;
 }
@@ -1032,7 +1032,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     }
 
     /* Prevent txtbackup from ever being NULL to simplify aclist_expand */
-    if ((This->txtbackup = heap_alloc_zero(sizeof(WCHAR))) == NULL)
+    if ((This->txtbackup = calloc(1, sizeof(WCHAR))) == NULL)
     {
         IEnumString_Release(This->enumstr);
         This->enumstr = NULL;
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
         value = wcsrchr(pwzsRegKeyPath, '\\');
         len = value - pwzsRegKeyPath;
 
-        if (value && (key = heap_alloc((len+1) * sizeof(*key))) != NULL)
+        if (value && (key = malloc((len + 1) * sizeof(*key))) != NULL)
         {
             memcpy(key, pwzsRegKeyPath, len * sizeof(*key));
             key[len] = '\0';
@@ -1091,29 +1091,29 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
                     continue;
                 sz = MAX_PATH * sizeof(WCHAR);
 
-                while ((qc = heap_alloc(sz)) != NULL)
+                while ((qc = malloc(sz)) != NULL)
                 {
                     res = RegQueryValueExW(hKey, value, NULL, &type, qc, &sz);
                     if (res == ERROR_SUCCESS && type == REG_SZ)
                     {
-                        This->quickComplete = heap_realloc(qc, sz);
+                        This->quickComplete = realloc(qc, sz);
                         i = ARRAY_SIZE(roots);
                         break;
                     }
-                    heap_free(qc);
+                    free(qc);
                     if (res != ERROR_MORE_DATA || type != REG_SZ)
                         break;
                 }
                 RegCloseKey(hKey);
             }
-            heap_free(key);
+            free(key);
         }
     }
 
     if (!This->quickComplete && pwszQuickComplete)
     {
         size_t len = lstrlenW(pwszQuickComplete)+1;
-        if ((This->quickComplete = heap_alloc(len * sizeof(WCHAR))) != NULL)
+        if ((This->quickComplete = malloc(len * sizeof(WCHAR))) != NULL)
             memcpy(This->quickComplete, pwszQuickComplete, len * sizeof(WCHAR));
     }
 
@@ -1285,7 +1285,7 @@ HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVO
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
 
-    lpac = heap_alloc_zero(sizeof(*lpac));
+    lpac = calloc(1, sizeof(*lpac));
     if (!lpac)
         return E_OUTOFMEMORY;
 

@@ -90,7 +90,7 @@ static ULONG WINAPI FileSystemBindData_Release(IFileSystemBindData *iface)
     TRACE("(%p)->(%lu)\n", This, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -141,7 +141,7 @@ HRESULT WINAPI IFileSystemBindData_Constructor(const WIN32_FIND_DATAW *find_data
 
     *ppV = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IFileSystemBindData_iface.lpVtbl = &FileSystemBindDataVtbl;
@@ -163,6 +163,6 @@ HRESULT WINAPI IFileSystemBindData_Constructor(const WIN32_FIND_DATAW *find_data
         IFileSystemBindData_Release(&This->IFileSystemBindData_iface);
     }
     else
-        heap_free(This);
+        free(This);
     return ret;
 }
