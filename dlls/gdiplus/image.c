@@ -1693,8 +1693,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
 
             /* If any pixel has a non-zero alpha, ignore hbmMask */
             src = (DWORD*)lockeddata.Scan0;
-            for (x=0; x<width && !has_alpha; x++)
-                for (y=0; y<height && !has_alpha; y++)
+            for (y=0; y<height && !has_alpha; y++)
+                for (x=0; x<width && !has_alpha; x++)
                     if ((*src++ & 0xff000000) != 0)
                         has_alpha = TRUE;
         }
@@ -1723,7 +1723,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
             for (y=0; y<height; y++)
             {
                 dst = (DWORD*)dst_row;
-                for (x=0; x<height; x++)
+                for (x=0; x<width; x++)
                 {
                     DWORD src_value = *src++;
                     if (src_value)
@@ -1743,7 +1743,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
             for (y=0; y<height; y++)
             {
                 dst = (DWORD*)dst_row;
-                for (x=0; x<height; x++)
+                for (x=0; x<width; x++)
                     *dst++ |= 0xff000000;
                 dst_row += lockeddata.Stride;
             }

@@ -771,8 +771,8 @@ PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
         max_green = (key->high>>8)&0xff;
         max_red = (key->high>>16)&0xff;
 
-        for (x=0; x<width; x++)
-            for (y=0; y<height; y++)
+        for (y=0; y<height; y++)
+            for (x=0; x<width; x++)
             {
                 ARGB *src_color;
                 BYTE blue, green, red;
@@ -799,8 +799,8 @@ PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
         else
             table = &attributes->colorremaptables[ColorAdjustTypeDefault];
 
-        for (x=0; x<width; x++)
-            for (y=0; y<height; y++)
+        for (y=0; y<height; y++)
+            for (x=0; x<width; x++)
             {
                 ARGB *src_color;
                 src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
@@ -838,9 +838,9 @@ PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
 
         if (!identity)
         {
-            for (x=0; x<width; x++)
+            for (y=0; y<height; y++)
             {
-                for (y=0; y<height; y++)
+                for (x=0; x<width; x++)
                 {
                     ARGB *src_color;
                     src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
@@ -872,8 +872,8 @@ PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
         else
             gamma = attributes->gamma[ColorAdjustTypeDefault];
 
-        for (x=0; x<width; x++)
-            for (y=0; y<height; y++)
+        for (y=0; y<height; y++)
+            for (x=0; x<width; x++)
             {
                 ARGB *src_color;
                 BYTE blue, green, red;
@@ -1201,8 +1201,8 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
     {
         int x, y;
         GpSolidFill *fill = (GpSolidFill*)brush;
-        for (x=0; x<fill_area->Width; x++)
-            for (y=0; y<fill_area->Height; y++)
+        for (y=0; y<fill_area->Height; y++)
+            for (x=0; x<fill_area->Width; x++)
                 argb_pixels[x + y*cdwStride] = fill->color;
         return Ok;
     }
