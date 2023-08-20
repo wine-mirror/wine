@@ -106,6 +106,26 @@ static void expect_image_properties(GpImage *image, UINT width, UINT height, int
     ok_(__FILE__, line)(format == PixelFormat32bppARGB, "Expected %d, got %d\n", PixelFormat32bppARGB, format);
 }
 
+static void expect_bitmap_locked_data(GpBitmap *bitmap, const BYTE *expect_bits,
+        UINT width, UINT height, UINT stride, int line)
+{
+    GpStatus stat;
+    BitmapData lockeddata;
+
+    memset(&lockeddata, 0x55, sizeof(lockeddata));
+    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppARGB, &lockeddata);
+    ok_(__FILE__, line)(stat == Ok, "Expected %d, got %d\n", Ok, stat);
+    ok_(__FILE__, line)(lockeddata.Width == width, "Expected %d, got %d\n", width, lockeddata.Width);
+    ok_(__FILE__, line)(lockeddata.Height == height, "Expected %d, got %d\n", height, lockeddata.Height);
+    ok_(__FILE__, line)(lockeddata.Stride == stride, "Expected %d, got %d\n", stride, lockeddata.Stride);
+    ok_(__FILE__, line)(lockeddata.PixelFormat == PixelFormat32bppARGB,
+            "Expected %d, got %d\n", PixelFormat32bppARGB, lockeddata.PixelFormat);
+    todo_wine
+    ok_(__FILE__, line)(!memcmp(expect_bits, lockeddata.Scan0, lockeddata.Height * lockeddata.Stride),
+            "data mismatch\n");
+    GdipBitmapUnlockBits(bitmap, &lockeddata);
+}
+
 static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
 {
     GpStatus status;
@@ -1560,12 +1580,16 @@ static void test_testcontrol(void)
 
 static void test_fromhicon(void)
 {
-    static const BYTE bmp_bits[1024];
+    BYTE bmp_bits[1024], bmp_bits_masked[1024];
     HBITMAP hbmMask, hbmColor;
     ICONINFO info, iconinfo_base = {TRUE, 0, 0, 0, 0};
     HICON hIcon;
     GpStatus stat;
     GpBitmap *bitmap = NULL;
+    UINT i;
+
+    for (i = 0; i < sizeof(bmp_bits); ++i)
+        bmp_bits[i] = 111 * i;
 
     /* NULL */
     stat = GdipCreateBitmapFromHICON(NULL, NULL);
@@ -1660,11 +1684,18 @@ static void test_fromhicon(void)
     DeleteObject(hbmMask);
     DeleteObject(hbmColor);
 
+    for (i = 0; i < sizeof(bmp_bits_masked)/sizeof(ARGB); i++)
+    {
+        BYTE mask = bmp_bits[i / 8] & (1 << (7 - (i % 8)));
+        ((ARGB *)bmp_bits_masked)[i] = mask ? 0 : ((ARGB *)bmp_bits)[i] | 0xff000000;
+    }
+
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
     expect(Ok, stat);
     if(stat == Ok){
         expect_image_properties((GpImage*)bitmap, 16, 16, __LINE__);
         expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
+        expect_bitmap_locked_data(bitmap, bmp_bits_masked, 16, 16, 64, __LINE__);
         GdipDisposeImage((GpImage*)bitmap);
     }
     DestroyIcon(hIcon);
@@ -1687,6 +1718,7 @@ static void test_fromhicon(void)
     if(stat == Ok){
         expect_image_properties((GpImage*)bitmap, 16, 8, __LINE__);
         expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
+        expect_bitmap_locked_data(bitmap, bmp_bits_masked, 16, 8, 64, __LINE__);
         GdipDisposeImage((GpImage*)bitmap);
     }
     DestroyIcon(hIcon);
