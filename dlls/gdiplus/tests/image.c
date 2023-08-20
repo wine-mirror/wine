@@ -82,6 +82,30 @@ static void expect_rawformat(REFGUID expected, GpImage *img, int line, BOOL todo
     expect_guid(expected, &raw, line, todo);
 }
 
+static void expect_image_properties(GpImage *image, UINT width, UINT height, int line)
+{
+    GpStatus stat;
+    UINT dim;
+    ImageType type;
+    PixelFormat format;
+
+    stat = GdipGetImageWidth(image, &dim);
+    ok_(__FILE__, line)(stat == Ok, "Expected %d, got %d\n", Ok, stat);
+    ok_(__FILE__, line)(dim == width, "Expected %d, got %d\n", width, dim);
+
+    stat = GdipGetImageHeight(image, &dim);
+    ok_(__FILE__, line)(stat == Ok, "Expected %d, got %d\n", Ok, stat);
+    ok_(__FILE__, line)(dim == height, "Expected %d, got %d\n", height, dim);
+
+    stat = GdipGetImageType(image, &type);
+    ok_(__FILE__, line)(stat == Ok, "Expected %d, got %d\n", Ok, stat);
+    ok_(__FILE__, line)(type == ImageTypeBitmap, "Expected %d, got %d\n", ImageTypeBitmap, type);
+
+    stat = GdipGetImagePixelFormat(image, &format);
+    ok_(__FILE__, line)(stat == Ok, "Expected %d, got %d\n", Ok, stat);
+    ok_(__FILE__, line)(format == PixelFormat32bppARGB, "Expected %d, got %d\n", PixelFormat32bppARGB, format);
+}
+
 static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
 {
     GpStatus status;
@@ -1542,9 +1566,6 @@ static void test_fromhicon(void)
     HICON hIcon;
     GpStatus stat;
     GpBitmap *bitmap = NULL;
-    UINT dim;
-    ImageType type;
-    PixelFormat format;
 
     /* NULL */
     stat = GdipCreateBitmapFromHICON(NULL, NULL);
@@ -1570,20 +1591,7 @@ static void test_fromhicon(void)
        broken(stat == InvalidParameter), /* Win98 */
        "Expected Ok, got %.8x\n", stat);
     if(stat == Ok){
-       /* check attributes */
-       stat = GdipGetImageHeight((GpImage*)bitmap, &dim);
-       expect(Ok, stat);
-       expect(16, dim);
-       stat = GdipGetImageWidth((GpImage*)bitmap, &dim);
-       expect(Ok, stat);
-       expect(16, dim);
-       stat = GdipGetImageType((GpImage*)bitmap, &type);
-       expect(Ok, stat);
-       expect(ImageTypeBitmap, type);
-       stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
-       expect(Ok, stat);
-       expect(PixelFormat32bppARGB, format);
-       /* raw format */
+       expect_image_properties((GpImage*)bitmap, 16, 16, __LINE__);
        expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
        GdipDisposeImage((GpImage*)bitmap);
     }
@@ -1605,20 +1613,7 @@ static void test_fromhicon(void)
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
     expect(Ok, stat);
     if(stat == Ok){
-        /* check attributes */
-        stat = GdipGetImageHeight((GpImage*)bitmap, &dim);
-        expect(Ok, stat);
-        expect(16, dim);
-        stat = GdipGetImageWidth((GpImage*)bitmap, &dim);
-        expect(Ok, stat);
-        expect(16, dim);
-        stat = GdipGetImageType((GpImage*)bitmap, &type);
-        expect(Ok, stat);
-        expect(ImageTypeBitmap, type);
-        stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
-	expect(Ok, stat);
-        expect(PixelFormat32bppARGB, format);
-        /* raw format */
+        expect_image_properties((GpImage*)bitmap, 16, 16, __LINE__);
         expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
         GdipDisposeImage((GpImage*)bitmap);
     }
