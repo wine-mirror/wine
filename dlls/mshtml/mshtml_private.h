@@ -1160,8 +1160,6 @@ struct HTMLAttributeCollection {
     IHTMLAttributeCollection2 IHTMLAttributeCollection2_iface;
     IHTMLAttributeCollection3 IHTMLAttributeCollection3_iface;
 
-    LONG ref;
-
     HTMLElement *elem;
     struct list attrs;
 };

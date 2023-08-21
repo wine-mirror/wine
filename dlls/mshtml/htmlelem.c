@@ -8549,7 +8549,7 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
         *ppv = &This->IHTMLAttributeCollection2_iface;
     }else if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid)) {
         *ppv = &This->IHTMLAttributeCollection3_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -8564,7 +8564,7 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
 static ULONG WINAPI HTMLAttributeCollection_AddRef(IHTMLAttributeCollection *iface)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -8574,12 +8574,9 @@ static ULONG WINAPI HTMLAttributeCollection_AddRef(IHTMLAttributeCollection *ifa
 static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *iface)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -8928,6 +8925,15 @@ static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(D
     return CONTAINING_RECORD(iface, HTMLAttributeCollection, dispex);
 }
 
+static void HTMLAttributeCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    HTMLDOMAttribute *attr;
+
+    LIST_FOR_EACH_ENTRY(attr, &This->attrs, HTMLDOMAttribute, entry)
+        note_cc_edge((nsISupports*)&attr->IHTMLDOMAttribute_iface, "attr", cb);
+}
+
 static void HTMLAttributeCollection_unlink(DispatchEx *dispex)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
@@ -9013,6 +9019,7 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     .destructor       = HTMLAttributeCollection_destructor,
+    .traverse         = HTMLAttributeCollection_traverse,
     .unlink           = HTMLAttributeCollection_unlink,
     .get_dispid       = HTMLAttributeCollection_get_dispid,
     .get_name         = HTMLAttributeCollection_get_name,
@@ -9050,7 +9057,6 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
     This->attrs->IHTMLAttributeCollection_iface.lpVtbl = &HTMLAttributeCollectionVtbl;
     This->attrs->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
     This->attrs->IHTMLAttributeCollection3_iface.lpVtbl = &HTMLAttributeCollection3Vtbl;
-    This->attrs->ref = 2;
 
     This->attrs->elem = This;
     list_init(&This->attrs->attrs);
@@ -9058,5 +9064,6 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
                   &HTMLAttributeCollection_dispex, dispex_compat_mode(&iface->event_target.dispex));
 
     *ac = This->attrs;
+    IHTMLAttributeCollection_AddRef(&This->attrs->IHTMLAttributeCollection_iface);
     return S_OK;
 }
