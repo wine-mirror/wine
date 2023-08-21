@@ -1573,18 +1573,17 @@ static void test_fromhicon(void)
     stat = GdipCreateBitmapFromHICON(NULL, &bitmap);
     expect(InvalidParameter, stat);
 
-    /* color icon 1 bit */
+    /* monochrome icon */
     hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
     ok(hbmMask != 0, "CreateBitmap failed\n");
     hbmColor = CreateBitmap(16, 16, 1, 1, bmp_bits);
     ok(hbmColor != 0, "CreateBitmap failed\n");
+
     info = iconinfo_base;
     info.hbmMask = hbmMask;
     info.hbmColor = hbmColor;
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    DeleteObject(hbmMask);
-    DeleteObject(hbmColor);
 
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
     ok(stat == Ok ||
@@ -1597,11 +1596,31 @@ static void test_fromhicon(void)
     }
     DestroyIcon(hIcon);
 
-    /* color icon 8 bpp */
-    hbmMask = CreateBitmap(16, 16, 1, 8, bmp_bits);
+    /* monochrome cursor */
+    info.fIcon = FALSE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmColor;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+
+    stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
+    todo_wine
+    expect(InvalidParameter, stat);
+    if (stat == Ok)
+       GdipDisposeImage((GpImage*)bitmap);
+    DestroyIcon(hIcon);
+
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    /* 8 bpp icon */
+    hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
     ok(hbmMask != 0, "CreateBitmap failed\n");
     hbmColor = CreateBitmap(16, 16, 1, 8, bmp_bits);
     ok(hbmColor != 0, "CreateBitmap failed\n");
+
     info = iconinfo_base;
     info.hbmMask = hbmMask;
     info.hbmColor = hbmColor;
