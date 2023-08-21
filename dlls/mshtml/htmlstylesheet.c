@@ -36,8 +36,6 @@ struct HTMLStyleSheet {
     IHTMLStyleSheet IHTMLStyleSheet_iface;
     IHTMLStyleSheet4 IHTMLStyleSheet4_iface;
 
-    LONG ref;
-
     nsIDOMCSSStyleSheet *nsstylesheet;
 };
 
@@ -986,7 +984,7 @@ static HRESULT WINAPI HTMLStyleSheet_QueryInterface(IHTMLStyleSheet *iface, REFI
         *ppv = &This->IHTMLStyleSheet_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyleSheet4, riid)) {
         *ppv = &This->IHTMLStyleSheet4_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -1001,7 +999,7 @@ static HRESULT WINAPI HTMLStyleSheet_QueryInterface(IHTMLStyleSheet *iface, REFI
 static ULONG WINAPI HTMLStyleSheet_AddRef(IHTMLStyleSheet *iface)
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -1011,12 +1009,9 @@ static ULONG WINAPI HTMLStyleSheet_AddRef(IHTMLStyleSheet *iface)
 static ULONG WINAPI HTMLStyleSheet_Release(IHTMLStyleSheet *iface)
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -1499,6 +1494,13 @@ static inline HTMLStyleSheet *HTMLStyleSheet_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLStyleSheet, dispex);
 }
 
+static void HTMLStyleSheet_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
+    if(This->nsstylesheet)
+        note_cc_edge((nsISupports*)This->nsstylesheet, "nsstylesheet", cb);
+}
+
 static void HTMLStyleSheet_unlink(DispatchEx *dispex)
 {
     HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
@@ -1519,6 +1521,7 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
 
 static const dispex_static_data_vtbl_t HTMLStyleSheet_dispex_vtbl = {
     .destructor       = HTMLStyleSheet_destructor,
+    .traverse         = HTMLStyleSheet_traverse,
     .unlink           = HTMLStyleSheet_unlink
 };
 
@@ -1544,7 +1547,6 @@ HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, compat_mode_t compat_
 
     style_sheet->IHTMLStyleSheet_iface.lpVtbl = &HTMLStyleSheetVtbl;
     style_sheet->IHTMLStyleSheet4_iface.lpVtbl = &HTMLStyleSheet4Vtbl;
-    style_sheet->ref = 1;
     style_sheet->nsstylesheet = NULL;
 
     init_dispatch(&style_sheet->dispex, (IUnknown*)&style_sheet->IHTMLStyleSheet_iface,
