@@ -2183,8 +2183,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLPerformance IHTMLPerformance_iface;
 
-    LONG ref;
-
     IHTMLPerformanceNavigation *navigation;
     HTMLPerformanceTiming *timing;
 } HTMLPerformance;
@@ -2204,7 +2202,7 @@ static HRESULT WINAPI HTMLPerformance_QueryInterface(IHTMLPerformance *iface, RE
         *ppv = &This->IHTMLPerformance_iface;
     }else if(IsEqualGUID(&IID_IHTMLPerformance, riid)) {
         *ppv = &This->IHTMLPerformance_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
@@ -2219,7 +2217,7 @@ static HRESULT WINAPI HTMLPerformance_QueryInterface(IHTMLPerformance *iface, RE
 static ULONG WINAPI HTMLPerformance_AddRef(IHTMLPerformance *iface)
 {
     HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -2229,12 +2227,9 @@ static ULONG WINAPI HTMLPerformance_AddRef(IHTMLPerformance *iface)
 static ULONG WINAPI HTMLPerformance_Release(IHTMLPerformance *iface)
 {
     HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -2348,6 +2343,15 @@ static inline HTMLPerformance *HTMLPerformance_from_DispatchEx(DispatchEx *iface
     return CONTAINING_RECORD(iface, HTMLPerformance, dispex);
 }
 
+static void HTMLPerformance_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
+    if(This->navigation)
+        note_cc_edge((nsISupports*)This->navigation, "navigation", cb);
+    if(This->timing)
+        note_cc_edge((nsISupports*)&This->timing->IHTMLPerformanceTiming_iface, "timing", cb);
+}
+
 static void HTMLPerformance_unlink(DispatchEx *dispex)
 {
     HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
@@ -2367,6 +2371,7 @@ static void HTMLPerformance_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLPerformance_dispex_vtbl = {
     .destructor       = HTMLPerformance_destructor,
+    .traverse         = HTMLPerformance_traverse,
     .unlink           = HTMLPerformance_unlink
 };
 
@@ -2391,7 +2396,6 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
         return E_OUTOFMEMORY;
 
     performance->IHTMLPerformance_iface.lpVtbl = &HTMLPerformanceVtbl;
-    performance->ref = 1;
 
     init_dispatch(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
                   &HTMLPerformance_dispex, compat_mode);
