@@ -600,7 +600,7 @@ static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *da
     if (FAILED(hr))
         return hr;
 
-    hr = create_uia_node_from_elprov(elprov, &node, TRUE);
+    hr = create_uia_node_from_elprov(elprov, &node, TRUE, NODE_FLAG_IGNORE_COM_THREADING);
     IRawElementProviderSimple_Release(elprov);
     if (FAILED(hr))
         return hr;
@@ -1700,7 +1700,7 @@ static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *da
          * For events raised on server-side providers, we don't want to add any
          * clientside HWND providers.
          */
-        hr = create_uia_node_from_elprov(event_data->elprov, &event_data->node, event_data->clientside_only);
+        hr = create_uia_node_from_elprov(event_data->elprov, &event_data->node, event_data->clientside_only, 0);
         if (FAILED(hr))
             return hr;
 

@@ -16717,12 +16717,6 @@ static const struct prov_method_sequence win_event_handler_seq[] = {
     { &Provider_hwnd2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
     { &Provider_nc2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_hwnd2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
-    /*
-     * The following two are currently only done on Wine. Windows doesn't do
-     * this because the node created is never passed out of the event thread.
-     */
-    { &Provider_nc2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
-    { &Provider_hwnd2, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
     { &Provider_nc2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT, METHOD_TODO },
     { &Provider_hwnd2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT, METHOD_TODO },
     NODE_CREATE_SEQ_TODO(&Provider_child),

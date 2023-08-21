@@ -613,6 +613,8 @@ static HRESULT create_uia_node(struct uia_node **out_node, int node_flags)
         node->ignore_clientside_hwnd_provs = TRUE;
     if (node_flags & NODE_FLAG_NO_PREPARE)
         node->no_prepare = TRUE;
+    if (node_flags & NODE_FLAG_IGNORE_COM_THREADING)
+        node->ignore_com_threading = TRUE;
 
     *out_node = node;
     return S_OK;
@@ -663,6 +665,9 @@ static HRESULT prepare_uia_node(struct uia_node *node)
 
         prov_idx++;
     }
+
+    if (node->ignore_com_threading)
+        return S_OK;
 
     for (i = 0; i < PROV_TYPE_COUNT; i++)
     {
@@ -1361,7 +1366,7 @@ static HRESULT get_variant_for_elprov_node(IRawElementProviderSimple *elprov, BO
 
     VariantInit(v);
 
-    hr = create_uia_node_from_elprov(elprov, &node, !refuse_hwnd_providers);
+    hr = create_uia_node_from_elprov(elprov, &node, !refuse_hwnd_providers, 0);
     IRawElementProviderSimple_Release(elprov);
     if (SUCCEEDED(hr))
     {
@@ -1910,7 +1915,7 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
             if (FAILED(hr))
                 goto exit;
 
-            hr = create_uia_node_from_elprov(elprov, &node, !prov->refuse_hwnd_node_providers);
+            hr = create_uia_node_from_elprov(elprov, &node, !prov->refuse_hwnd_node_providers, 0);
             IRawElementProviderSimple_Release(elprov);
             if (SUCCEEDED(hr))
             {
@@ -1969,7 +1974,7 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
 
 static HRESULT uia_get_providers_for_hwnd(struct uia_node *node);
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
-        BOOL get_hwnd_providers)
+        BOOL get_hwnd_providers, int node_flags)
 {
     static const int unsupported_prov_opts = ProviderOptions_ProviderOwnsSetFocus | ProviderOptions_HasNativeIAccessible |
         ProviderOptions_UseClientCoordinates;
@@ -1998,7 +2003,7 @@ HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE 
     else
         prov_type = PROV_TYPE_MAIN;
 
-    hr = create_uia_node(&node, 0);
+    hr = create_uia_node(&node, node_flags);
     if (FAILED(hr))
         return hr;
 
@@ -2040,7 +2045,7 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     if (!elprov || !huianode)
         return E_INVALIDARG;
 
-    return create_uia_node_from_elprov(elprov, huianode, TRUE);
+    return create_uia_node_from_elprov(elprov, huianode, TRUE, 0);
 }
 
 /*

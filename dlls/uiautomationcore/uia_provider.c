@@ -2275,7 +2275,7 @@ LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wparam,
         return 0;
     }
 
-    hr = create_uia_node_from_elprov(elprov, &node, FALSE);
+    hr = create_uia_node_from_elprov(elprov, &node, FALSE, 0);
     if (FAILED(hr))
     {
         WARN("Failed to create HUIANODE with hr %#lx\n", hr);
@@ -2296,7 +2296,7 @@ HRESULT WINAPI UiaDisconnectProvider(IRawElementProviderSimple *elprov)
 
     TRACE("(%p)\n", elprov);
 
-    hr = create_uia_node_from_elprov(elprov, &node, FALSE);
+    hr = create_uia_node_from_elprov(elprov, &node, FALSE, 0);
     if (FAILED(hr))
         return hr;
 

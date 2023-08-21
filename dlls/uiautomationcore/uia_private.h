@@ -57,6 +57,7 @@ enum uia_node_prov_type {
 enum uia_node_flags {
     NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS = 0x01,
     NODE_FLAG_NO_PREPARE = 0x02,
+    NODE_FLAG_IGNORE_COM_THREADING = 0x04,
 };
 
 struct uia_node {
@@ -74,6 +75,7 @@ struct uia_node {
     BOOL nested_node;
     BOOL disconnected;
     int creator_prov_type;
+    BOOL ignore_com_threading;
     BOOL ignore_clientside_hwnd_provs;
 
     struct list prov_thread_list_entry;
@@ -212,7 +214,7 @@ HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPE
 HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
-        BOOL get_hwnd_providers) DECLSPEC_HIDDEN;
+        BOOL get_hwnd_providers, int node_flags) DECLSPEC_HIDDEN;
 HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode) DECLSPEC_HIDDEN;
 HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;
 BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
