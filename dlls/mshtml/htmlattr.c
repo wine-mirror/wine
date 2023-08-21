@@ -50,7 +50,7 @@ static HRESULT WINAPI HTMLDOMAttribute_QueryInterface(IHTMLDOMAttribute *iface,
         *ppv = &This->IHTMLDOMAttribute_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMAttribute2, riid)) {
         *ppv = &This->IHTMLDOMAttribute2_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("%s not supported\n", debugstr_mshtml_guid(riid));
@@ -65,7 +65,7 @@ static HRESULT WINAPI HTMLDOMAttribute_QueryInterface(IHTMLDOMAttribute *iface,
 static ULONG WINAPI HTMLDOMAttribute_AddRef(IHTMLDOMAttribute *iface)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -75,12 +75,9 @@ static ULONG WINAPI HTMLDOMAttribute_AddRef(IHTMLDOMAttribute *iface)
 static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -480,6 +477,12 @@ static inline HTMLDOMAttribute *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, dispex);
 }
 
+static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+    traverse_variant(&This->value, "value", cb);
+}
+
 static void HTMLDOMAttribute_unlink(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
@@ -497,6 +500,7 @@ static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
     .destructor       = HTMLDOMAttribute_destructor,
+    .traverse         = HTMLDOMAttribute_traverse,
     .unlink           = HTMLDOMAttribute_unlink
 };
 
@@ -529,7 +533,6 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
 
     ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
     ret->IHTMLDOMAttribute2_iface.lpVtbl = &HTMLDOMAttribute2Vtbl;
-    ret->ref = 1;
     ret->dispid = dispid;
     ret->elem = elem;
 
