@@ -66,8 +66,6 @@ struct HTMLStyleSheetRule {
     DispatchEx dispex;
     IHTMLStyleSheetRule IHTMLStyleSheetRule_iface;
 
-    LONG ref;
-
     nsIDOMCSSRule *nsstylesheetrule;
 };
 
@@ -87,7 +85,7 @@ static HRESULT WINAPI HTMLStyleSheetRule_QueryInterface(IHTMLStyleSheetRule *ifa
         *ppv = &This->IHTMLStyleSheetRule_iface;
     else if (IsEqualGUID(&IID_IHTMLStyleSheetRule, riid))
         *ppv = &This->IHTMLStyleSheetRule_iface;
-    else if (dispex_query_interface_no_cc(&This->dispex, riid, ppv))
+    else if (dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
     else
     {
@@ -103,7 +101,7 @@ static HRESULT WINAPI HTMLStyleSheetRule_QueryInterface(IHTMLStyleSheetRule *ifa
 static ULONG WINAPI HTMLStyleSheetRule_AddRef(IHTMLStyleSheetRule *iface)
 {
     HTMLStyleSheetRule *This = impl_from_IHTMLStyleSheetRule(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -113,12 +111,9 @@ static ULONG WINAPI HTMLStyleSheetRule_AddRef(IHTMLStyleSheetRule *iface)
 static ULONG WINAPI HTMLStyleSheetRule_Release(IHTMLStyleSheetRule *iface)
 {
     HTMLStyleSheetRule *This = impl_from_IHTMLStyleSheetRule(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -201,6 +196,13 @@ static inline HTMLStyleSheetRule *HTMLStyleSheetRule_from_DispatchEx(DispatchEx 
     return CONTAINING_RECORD(iface, HTMLStyleSheetRule, dispex);
 }
 
+static void HTMLStyleSheetRule_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
+    if(This->nsstylesheetrule)
+        note_cc_edge((nsISupports*)This->nsstylesheetrule, "nsstylesheetrule", cb);
+}
+
 static void HTMLStyleSheetRule_unlink(DispatchEx *dispex)
 {
     HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
@@ -215,6 +217,7 @@ static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRule_dispex_vtbl = {
     .destructor       = HTMLStyleSheetRule_destructor,
+    .traverse         = HTMLStyleSheetRule_traverse,
     .unlink           = HTMLStyleSheetRule_unlink
 };
 
@@ -239,7 +242,6 @@ static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_m
         return E_OUTOFMEMORY;
 
     rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
-    rule->ref = 1;
     rule->nsstylesheetrule = NULL;
 
     init_dispatch(&rule->dispex, (IUnknown *)&rule->IHTMLStyleSheetRule_iface, &HTMLStyleSheetRule_dispex,
