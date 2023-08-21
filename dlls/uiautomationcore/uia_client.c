@@ -597,7 +597,7 @@ static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
     return CONTAINING_RECORD(iface, struct uia_node, IWineUiaNode_iface);
 }
 
-static HRESULT create_uia_node(struct uia_node **out_node)
+static HRESULT create_uia_node(struct uia_node **out_node, int node_flags)
 {
     struct uia_node *node;
 
@@ -609,6 +609,10 @@ static HRESULT create_uia_node(struct uia_node **out_node)
     list_init(&node->prov_thread_list_entry);
     list_init(&node->node_map_list_entry);
     node->ref = 1;
+    if (node_flags & NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS)
+        node->ignore_clientside_hwnd_provs = TRUE;
+    if (node_flags & NODE_FLAG_NO_PREPARE)
+        node->no_prepare = TRUE;
 
     *out_node = node;
     return S_OK;
@@ -619,6 +623,9 @@ static HRESULT prepare_uia_node(struct uia_node *node)
 {
     int i, prov_idx;
     HRESULT hr;
+
+    if (node->no_prepare)
+        return S_OK;
 
     /* Get the provider index for the provider that created the node. */
     for (i = prov_idx = 0; i < PROV_TYPE_COUNT; i++)
@@ -714,7 +721,7 @@ HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node)
         }
     }
 
-    hr = create_uia_node(&node);
+    hr = create_uia_node(&node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -1980,7 +1987,7 @@ HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE 
     else
         prov_type = PROV_TYPE_MAIN;
 
-    hr = create_uia_node(&node);
+    hr = create_uia_node(&node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -2503,7 +2510,7 @@ HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
 
     *huianode = NULL;
 
-    hr = create_uia_node(&node);
+    hr = create_uia_node(&node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -2564,25 +2571,20 @@ static HRESULT uia_get_provider_from_hwnd(struct uia_node *node)
     return SendMessageW(client_thread.hwnd, WM_UIA_CLIENT_GET_NODE_PROV, (WPARAM)&args, (LPARAM)node);
 }
 
-/***********************************************************************
- *          UiaNodeFromHandle (uiautomationcore.@)
- */
-HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
+static HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags)
 {
     struct uia_node *node;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", hwnd, huianode);
-
-    if (!huianode)
+    if (!out_node)
         return E_INVALIDARG;
 
-    *huianode = NULL;
+    *out_node = NULL;
 
     if (!IsWindow(hwnd))
         return UIA_E_ELEMENTNOTAVAILABLE;
 
-    hr = create_uia_node(&node);
+    hr = create_uia_node(&node, node_flags);
     if (FAILED(hr))
         return hr;
 
@@ -2601,9 +2603,19 @@ HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
         return hr;
     }
 
-    *huianode = (void *)&node->IWineUiaNode_iface;
+    *out_node = (void *)&node->IWineUiaNode_iface;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *          UiaNodeFromHandle (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaNodeFromHandle(HWND hwnd, HUIANODE *huianode)
+{
+    TRACE("(%p, %p)\n", hwnd, huianode);
+
+    return create_uia_node_from_hwnd(hwnd, huianode, 0);
 }
 
 /***********************************************************************
@@ -2621,8 +2633,15 @@ HRESULT WINAPI UiaGetRootNode(HUIANODE *huianode)
  */
 BOOL WINAPI UiaHasServerSideProvider(HWND hwnd)
 {
-    FIXME("(%p): stub\n", hwnd);
-    return FALSE;
+    HUIANODE node = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)\n", hwnd);
+
+    hr = create_uia_node_from_hwnd(hwnd, &node, NODE_FLAG_NO_PREPARE | NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
+    UiaNodeRelease(node);
+
+    return SUCCEEDED(hr);
 }
 
 static HRESULT get_focused_uia_node(HUIANODE in_node, HUIANODE *out_node)
@@ -3025,6 +3044,9 @@ static HRESULT uia_get_clientside_provider(struct uia_node *node, int prov_type,
     IUnknown *unk;
     VARTYPE vt;
     HRESULT hr;
+
+    if (node->ignore_clientside_hwnd_provs)
+        return S_OK;
 
     if (!(sa = uia_provider_callback(node->hwnd, prov_type)))
         return S_OK;

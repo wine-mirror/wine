@@ -54,6 +54,11 @@ enum uia_node_prov_type {
     PROV_TYPE_COUNT,
 };
 
+enum uia_node_flags {
+    NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS = 0x01,
+    NODE_FLAG_NO_PREPARE = 0x02,
+};
+
 struct uia_node {
     IWineUiaNode IWineUiaNode_iface;
     LONG ref;
@@ -65,9 +70,12 @@ struct uia_node {
     int creator_prov_idx;
 
     HWND hwnd;
+    BOOL no_prepare;
     BOOL nested_node;
     BOOL disconnected;
     int creator_prov_type;
+    BOOL ignore_clientside_hwnd_provs;
+
     struct list prov_thread_list_entry;
     struct list node_map_list_entry;
     struct uia_provider_thread_map_entry *map;

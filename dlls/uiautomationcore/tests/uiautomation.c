@@ -15302,6 +15302,64 @@ static void test_UiaAddEvent(const char *name)
     UnregisterClassA("UiaAddEvent test class", NULL);
 }
 
+static const struct prov_method_sequence serverside_prov_seq[] = {
+    NODE_CREATE_SEQ2(&Provider),
+    /* Windows 10+ calls this. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { 0 }
+};
+
+static void test_UiaHasServerSideProvider(void)
+{
+    BOOL ret_val;
+    HWND hwnd;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hwnd = create_test_hwnd("UiaHasServerSideProvider test class");
+
+    /* NULL hwnd. */
+    ret_val = UiaHasServerSideProvider(NULL);
+    ok(!ret_val, "UiaHasServerSideProvider returned TRUE\n");
+
+    /* Desktop window has no serverside providers. */
+    UiaRegisterProviderCallback(test_uia_provider_callback);
+    ret_val = UiaHasServerSideProvider(GetDesktopWindow());
+    ok(!ret_val, "UiaHasServerSideProvider returned TRUE\n");
+
+    /* No provider to pass to UiaReturnRawElementProvider, returns FALSE. */
+    prov_root = NULL;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    ret_val = UiaHasServerSideProvider(hwnd);
+    ok(!ret_val, "UiaHasServerSideProvider returned TRUE\n");
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+
+    /*
+     * Provider passed to UiaReturnRawElementProvider returns a failure from
+     * get_ProviderOptions. Returns FALSE.
+     */
+    initialize_provider(&Provider, 0, hwnd, TRUE);
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    ret_val = UiaHasServerSideProvider(hwnd);
+    ok(!ret_val, "UiaHasServerSideProvider returned TRUE\n");
+    ok_method_sequence(node_from_hwnd1, NULL);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+
+    /* Successfully return a provider from UiaReturnRawElementProvider. */
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    ret_val = UiaHasServerSideProvider(hwnd);
+    ok(ret_val, "UiaHasServerSideProvider returned FALSE\n");
+    ok_method_sequence(serverside_prov_seq, "serverside_prov_seq");
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+
+    UiaRegisterProviderCallback(NULL);
+    prov_root = NULL;
+    CoUninitialize();
+    DestroyWindow(hwnd);
+    UnregisterClassA("UiaHasServerSideProvider test class", NULL);
+}
+
 /*
  * Once a process returns a UI Automation provider with
  * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
@@ -15375,6 +15433,7 @@ START_TEST(uiautomation)
     test_UiaGetRootNode();
     test_UiaNodeFromFocus();
     test_UiaAddEvent(argv[0]);
+    test_UiaHasServerSideProvider();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
