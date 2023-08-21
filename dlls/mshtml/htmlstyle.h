@@ -23,8 +23,6 @@ struct CSSStyle {
     DispatchEx dispex;
     IHTMLCSSStyleDeclaration IHTMLCSSStyleDeclaration_iface;
     IHTMLCSSStyleDeclaration2 IHTMLCSSStyleDeclaration2_iface;
-
-    LONG ref;
     style_qi_t qi;
 
     nsIDOMCSSStyleDeclaration *nsstyle;

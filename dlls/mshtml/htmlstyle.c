@@ -4743,7 +4743,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_QueryInterface(IHTMLCSSStyleDeclar
         *ppv = &This->IHTMLCSSStyleDeclaration_iface;
     }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid)) {
         *ppv = &This->IHTMLCSSStyleDeclaration2_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else if(!This->qi || !(*ppv = This->qi(This, riid))) {
         *ppv = NULL;
@@ -4758,7 +4758,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_QueryInterface(IHTMLCSSStyleDeclar
 static ULONG WINAPI HTMLCSSStyleDeclaration_AddRef(IHTMLCSSStyleDeclaration *iface)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -4768,12 +4768,9 @@ static ULONG WINAPI HTMLCSSStyleDeclaration_AddRef(IHTMLCSSStyleDeclaration *ifa
 static ULONG WINAPI HTMLCSSStyleDeclaration_Release(IHTMLCSSStyleDeclaration *iface)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -9965,6 +9962,13 @@ static inline CSSStyle *impl_from_DispatchEx(DispatchEx *dispex)
     return CONTAINING_RECORD(dispex, CSSStyle, dispex);
 }
 
+static void CSSStyle_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    CSSStyle *This = impl_from_DispatchEx(dispex);
+    if(This->nsstyle)
+        note_cc_edge((nsISupports*)This->nsstyle, "nsstyle", cb);
+}
+
 static void CSSStyle_unlink(DispatchEx *dispex)
 {
     CSSStyle *This = impl_from_DispatchEx(dispex);
@@ -10006,6 +10010,7 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
 const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
     .destructor        = CSSStyle_destructor,
+    .traverse          = CSSStyle_traverse,
     .unlink            = CSSStyle_unlink,
     .get_dispid        = CSSStyle_get_dispid,
 };
@@ -10070,7 +10075,6 @@ void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, style_q
 {
     style->IHTMLCSSStyleDeclaration_iface.lpVtbl = &HTMLCSSStyleDeclarationVtbl;
     style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
-    style->ref = 1;
     style->qi = qi;
     style->nsstyle = nsstyle;
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
