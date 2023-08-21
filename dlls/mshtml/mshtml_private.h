@@ -1517,6 +1517,12 @@ static inline void unlink_variant(VARIANT *v)
         unlink_ref(&V_UNKNOWN(v));
 }
 
+static inline void traverse_variant(VARIANT *v, const char *name, nsCycleCollectionTraversalCallback *cb)
+{
+    if(V_VT(v) == VT_DISPATCH || V_VT(v) == VT_UNKNOWN)
+        note_cc_edge((nsISupports*)V_UNKNOWN(v), "dispex_data", cb);
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif

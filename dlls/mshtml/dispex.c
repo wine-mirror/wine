@@ -2031,10 +2031,8 @@ static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTrave
     if(!This->dynamic_data)
         return NS_OK;
 
-    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
-        if(V_VT(&prop->var) == VT_DISPATCH)
-            note_cc_edge((nsISupports*)V_DISPATCH(&prop->var), "dispex_data", cb);
-    }
+    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++)
+        traverse_variant(&prop->var, "dispex_data", cb);
 
     if(This->dynamic_data->func_disps) {
         func_obj_entry_t *iter = This->dynamic_data->func_disps, *end = iter + This->info->func_disp_cnt;
@@ -2043,8 +2041,7 @@ static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTrave
             if(!iter->func_obj)
                 continue;
             note_cc_edge((nsISupports*)&iter->func_obj->dispex.IDispatchEx_iface, "func_obj", cb);
-            if(V_VT(&iter->val) == VT_DISPATCH)
-                note_cc_edge((nsISupports*)V_DISPATCH(&iter->val), "func_val", cb);
+            traverse_variant(&iter->val, "func_val", cb);
         }
     }
 
