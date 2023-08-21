@@ -32,6 +32,8 @@ import "windows.storage.streams.idl";
 import "windows.system.idl";
 
 namespace Windows.Storage {
+    typedef enum ApplicationDataCreateDisposition ApplicationDataCreateDisposition;
+    typedef enum ApplicationDataLocality ApplicationDataLocality;
     typedef enum CreationCollisionOption CreationCollisionOption;
     typedef enum FileAccessMode FileAccessMode;
     typedef enum FileAttributes FileAttributes;
@@ -41,6 +43,12 @@ namespace Windows.Storage {
     typedef enum StorageDeleteOption StorageDeleteOption;
     typedef enum StorageItemTypes StorageItemTypes;
 
+    interface IApplicationData;
+    interface IApplicationData2;
+    interface IApplicationData3;
+    interface IApplicationDataContainer;
+    interface IApplicationDataStatics;
+    interface IApplicationDataStatics2;
     interface IKnownFoldersCameraRollStatics;
     interface IKnownFoldersPlaylistsStatics;
     interface IKnownFoldersSavedPicturesStatics;
@@ -48,6 +56,8 @@ namespace Windows.Storage {
     interface IKnownFoldersStatics2;
     interface IKnownFoldersStatics3;
     interface IKnownFoldersStatics4;
+    interface ISetVersionDeferral;
+    interface ISetVersionRequest;
     interface IStorageFolder;
     interface IStorageFolderStatics;
     interface IStorageFolderStatics2;
@@ -55,18 +65,27 @@ namespace Windows.Storage {
     interface IStorageFileStatics2;
     interface IStorageItem;
 
+    runtimeclass ApplicationData;
+    runtimeclass ApplicationDataContainer;
     runtimeclass KnownFolders;
+    runtimeclass SetVersionDeferral;
+    runtimeclass SetVersionRequest;
     runtimeclass StorageFolder;
     runtimeclass StorageFile;
     runtimeclass StorageStreamTransaction;
 
     declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.ApplicationDataContainer *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.ApplicationData *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.KnownFoldersAccessStatus>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.StorageFile *>;
@@ -75,12 +94,36 @@ namespace Windows.Storage {
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.ApplicationData *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.KnownFoldersAccessStatus>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageStreamTransaction *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Storage.ApplicationData *, IInspectable *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationDataCreateDisposition
+    {
+        Always   = 0,
+        Existing = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ApplicationDataLocality
+    {
+        Local       = 0,
+        Roaming     = 1,
+        Temporary   = 2,
+        LocalCache  = 3,
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)]
+        SharedLocal = 4,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -190,6 +233,118 @@ namespace Windows.Storage {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(a05791e6-cc9f-4687-acab-a364fd785463)
+    ]
+    delegate HRESULT ApplicationDataSetVersionHandler([in] Windows.Storage.SetVersionRequest *version);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationData),
+        uuid(c3da6fb7-b744-4b45-b0b8-223a0938d0dc)
+    ]
+    interface IApplicationData : IInspectable
+    {
+        [propget] HRESULT Version([out, retval] UINT32 *value);
+        HRESULT SetVersionAsync(
+            [in] UINT32 version,
+            [in] Windows.Storage.ApplicationDataSetVersionHandler *handler,
+            [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+        [overload("ClearAsync")]
+        HRESULT ClearAllAsync(
+            [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+        [overload("ClearAsync")]
+        HRESULT ClearAsync(
+            [in] Windows.Storage.ApplicationDataLocality locality,
+            [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+        [propget] HRESULT LocalSettings([out, retval] Windows.Storage.ApplicationDataContainer **value);
+        [propget] HRESULT RoamingSettings([out, retval] Windows.Storage.ApplicationDataContainer **value);
+        [propget] HRESULT LocalFolder([out, retval] Windows.Storage.StorageFolder **value);
+        [propget] HRESULT RoamingFolder([out, retval] Windows.Storage.StorageFolder **value);
+        [propget] HRESULT TemporaryFolder([out, retval] Windows.Storage.StorageFolder **value);
+        [eventadd] HRESULT DataChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Storage.ApplicationData *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT DataChanged([in] EventRegistrationToken token);
+        HRESULT SignalDataChanged();
+        [propget] HRESULT RoamingStorageQuota([out, retval] UINT64 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationData),
+        uuid(9e65cd69-0ba3-4e32-be29-b02de6607638)
+    ]
+    interface IApplicationData2 : IInspectable
+    {
+        [propget] HRESULT LocalCacheFolder([out, retval] Windows.Storage.StorageFolder **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationData),
+        uuid(dc222cf4-2772-4c1d-aa2c-c9f743ade8d1)
+    ]
+    interface IApplicationData3 : IInspectable
+    {
+        HRESULT GetPublisherCacheFolder(
+            [in] HSTRING folder_name,
+            [out, retval] Windows.Storage.StorageFolder **value
+        );
+        HRESULT ClearPublisherCacheFolderAsync(
+            [in] HSTRING folder_name,
+            [out, retval] Windows.Foundation.IAsyncAction **operation
+        );
+        [propget] HRESULT SharedLocalFolder([out, retval] Windows.Storage.StorageFolder **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationDataContainer),
+        uuid(c5aefd1e-f467-40ba-8566-ab640a441e1d)
+    ]
+    interface IApplicationDataContainer : IInspectable
+    {
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT Locality([out, retval] Windows.Storage.ApplicationDataLocality *value);
+        [propget] HRESULT Values([out, retval] Windows.Foundation.Collections.IPropertySet **value);
+        [propget] HRESULT Containers([out, retval] Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.ApplicationDataContainer *> **value);
+        HRESULT CreateContainer(
+            [in] HSTRING name,
+            [in] Windows.Storage.ApplicationDataCreateDisposition disposition,
+            [out, retval] Windows.Storage.ApplicationDataContainer **container
+        );
+        HRESULT DeleteContainer([in] HSTRING name);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationData),
+        uuid(5612147b-e843-45e3-94d8-06169e3c8e17)
+    ]
+    interface IApplicationDataStatics : IInspectable
+    {
+        [propget] HRESULT Current([out, retval] Windows.Storage.ApplicationData **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.ApplicationData),
+        uuid(cd606211-cf49-40a4-a47c-c7f0dbba8107)
+    ]
+    interface IApplicationDataStatics2 : IInspectable
+    {
+        HRESULT GetForUserAsync(
+            [in] Windows.System.User *user,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.ApplicationData *> **operation
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Storage.KnownFolders),
         uuid(5d115e66-27e8-492f-b8e5-2f90896cd4cd)
     ]
@@ -280,6 +435,28 @@ namespace Windows.Storage {
             [in] Windows.Storage.KnownFolderId folder_id,
             [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *> **operation
         );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.SetVersionDeferral),
+        uuid(033508a2-781a-437a-b078-3f32badcfe47)
+    ]
+    interface ISetVersionDeferral : IInspectable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.SetVersionRequest),
+        uuid(b9c76b9b-1056-4e69-8330-162619956f9b)
+    ]
+    interface ISetVersionRequest : IInspectable
+    {
+        [propget] HRESULT CurrentVersion([out, retval] UINT32 *version);
+        [propget] HRESULT DesiredVersion([out, retval] UINT32 *version);
+        HRESULT GetDeferral([out, retval] Windows.Storage.SetVersionDeferral **deferral);
     }
 
     [
@@ -416,6 +593,31 @@ namespace Windows.Storage {
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
+        static(Windows.Storage.IApplicationDataStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Storage.IApplicationDataStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(mta)
+    ]
+    runtimeclass ApplicationData
+    {
+        [default] interface Windows.Storage.IApplicationData;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IApplicationData2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IApplicationData3;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ApplicationDataContainer
+    {
+        [default] interface Windows.Storage.IApplicationDataContainer;
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)] interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
         static(Windows.Storage.IKnownFoldersCameraRollStatics, Windows.Foundation.UniversalApiContract, 1.0),
         static(Windows.Storage.IKnownFoldersPlaylistsStatics, Windows.Foundation.UniversalApiContract, 1.0),
         static(Windows.Storage.IKnownFoldersSavedPicturesStatics, Windows.Foundation.UniversalApiContract, 1.0),
@@ -426,6 +628,24 @@ namespace Windows.Storage {
     ]
     runtimeclass KnownFolders
     {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SetVersionDeferral
+    {
+        [default] interface Windows.Storage.ISetVersionDeferral;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SetVersionRequest
+    {
+        [default] interface Windows.Storage.ISetVersionRequest;
     }
 
     [
