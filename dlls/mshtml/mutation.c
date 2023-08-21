@@ -1271,8 +1271,6 @@ static HRESULT create_mutation_observer(compat_mode_t compat_mode, IDispatch *ca
 struct mutation_observer_ctor {
     IUnknown IUnknown_iface;
     DispatchEx dispex;
-
-    LONG ref;
 };
 
 static inline struct mutation_observer_ctor *mutation_observer_ctor_from_IUnknown(IUnknown *iface)
@@ -1293,7 +1291,7 @@ static HRESULT WINAPI mutation_observer_ctor_QueryInterface(IUnknown *iface, REF
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = &This->IUnknown_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
@@ -1308,7 +1306,7 @@ static HRESULT WINAPI mutation_observer_ctor_QueryInterface(IUnknown *iface, REF
 static ULONG WINAPI mutation_observer_ctor_AddRef(IUnknown *iface)
 {
     struct mutation_observer_ctor *This = mutation_observer_ctor_from_IUnknown(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -1318,12 +1316,9 @@ static ULONG WINAPI mutation_observer_ctor_AddRef(IUnknown *iface)
 static ULONG WINAPI mutation_observer_ctor_Release(IUnknown *iface)
 {
     struct mutation_observer_ctor *This = mutation_observer_ctor_from_IUnknown(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -1417,7 +1412,6 @@ HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret
     }
 
     obj->IUnknown_iface.lpVtbl = &mutation_observer_ctor_vtbl;
-    obj->ref = 1;
     init_dispatch(&obj->dispex, (IUnknown*)&obj->IUnknown_iface,
                   &mutation_observer_ctor_dispex, compat_mode);
 

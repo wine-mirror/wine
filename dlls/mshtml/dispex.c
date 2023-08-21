@@ -90,7 +90,6 @@ typedef struct {
 typedef struct {
     DispatchEx dispex;
     IUnknown IUnknown_iface;
-    LONG ref;
     DispatchEx *obj;
     func_info_t *info;
 } func_disp_t;
@@ -800,7 +799,7 @@ static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = &This->IUnknown_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -814,7 +813,7 @@ static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void
 static ULONG WINAPI Function_AddRef(IUnknown *iface)
 {
     func_disp_t *This = impl_from_IUnknown(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -824,12 +823,9 @@ static ULONG WINAPI Function_AddRef(IUnknown *iface)
 static ULONG WINAPI Function_Release(IUnknown *iface)
 {
     func_disp_t *This = impl_from_IUnknown(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -931,7 +927,6 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
 
     ret->IUnknown_iface.lpVtbl = &FunctionUnkVtbl;
     init_dispatch(&ret->dispex, &ret->IUnknown_iface,  &function_dispex, dispex_compat_mode(obj));
-    ret->ref = 1;
     ret->obj = obj;
     ret->info = info;
 

@@ -501,8 +501,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLOptionElementFactory IHTMLOptionElementFactory_iface;
 
-    LONG ref;
-
     HTMLInnerWindow *window;
 } HTMLOptionElementFactory;
 
@@ -510,16 +508,12 @@ typedef struct {
     DispatchEx dispex;
     IHTMLImageElementFactory IHTMLImageElementFactory_iface;
 
-    LONG ref;
-
     HTMLInnerWindow *window;
 } HTMLImageElementFactory;
 
 typedef struct {
     DispatchEx dispex;
     IHTMLXMLHttpRequestFactory IHTMLXMLHttpRequestFactory_iface;
-
-    LONG ref;
 
     HTMLInnerWindow *window;
 } HTMLXMLHttpRequestFactory;
@@ -532,8 +526,6 @@ struct HTMLLocation {
 typedef struct {
     DispatchEx dispex;
     IOmHistory IOmHistory_iface;
-
-    LONG ref;
 
     HTMLInnerWindow *window;
 } OmHistory;
@@ -969,9 +961,6 @@ struct HTMLDocumentNode {
     IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
     nsIDocumentObserver          nsIDocumentObserver_iface;
-
-    LONG ref;
-
     ConnectionPointContainer cp_container;
     HTMLOuterWindow *outer_window;
     HTMLInnerWindow *window;
