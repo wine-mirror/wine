@@ -1631,7 +1631,8 @@ static ULONG WINAPI HTMLPerformanceTiming_Release(IHTMLPerformanceTiming *iface)
     if(!ref) {
         if(This->dispex.outer)
             release_dispex(&This->dispex);
-        free(This);
+        else
+            free(This);
     }
 
     return ref;
@@ -1956,13 +1957,28 @@ static const IHTMLPerformanceTimingVtbl HTMLPerformanceTimingVtbl = {
     HTMLPerformanceTiming_toJSON
 };
 
+static inline HTMLPerformanceTiming *HTMLPerformanceTiming_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLPerformanceTiming, dispex);
+}
+
+static void HTMLPerformanceTiming_destructor(DispatchEx *dispex)
+{
+    HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLPerformanceTiming_dispex_vtbl = {
+    .destructor       = HTMLPerformanceTiming_destructor,
+};
+
 static const tid_t HTMLPerformanceTiming_iface_tids[] = {
     IHTMLPerformanceTiming_tid,
     0
 };
 static dispex_static_data_t HTMLPerformanceTiming_dispex = {
     "PerformanceTiming",
-    NULL,
+    &HTMLPerformanceTiming_dispex_vtbl,
     IHTMLPerformanceTiming_tid,
     HTMLPerformanceTiming_iface_tids
 };
