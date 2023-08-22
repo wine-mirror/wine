@@ -39,8 +39,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLDOMChildrenCollection IHTMLDOMChildrenCollection_iface;
 
-    LONG ref;
-
     nsIDOMNodeList *nslist;
 } HTMLDOMChildrenCollection;
 
@@ -208,7 +206,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
         *ppv = &This->IHTMLDOMChildrenCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid)) {
         *ppv = &This->IHTMLDOMChildrenCollection_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -223,7 +221,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
 static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection *iface)
 {
     HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -233,12 +231,9 @@ static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection 
 static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection *iface)
 {
     HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -360,6 +355,13 @@ static inline HTMLDOMChildrenCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMChildrenCollection, dispex);
 }
 
+static void HTMLDOMChildrenCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
+    if(This->nslist)
+        note_cc_edge((nsISupports*)This->nslist, "nslist", cb);
+}
+
 static void HTMLDOMChildrenCollection_unlink(DispatchEx *dispex)
 {
     HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
@@ -442,6 +444,7 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
     .destructor       = HTMLDOMChildrenCollection_destructor,
+    .traverse         = HTMLDOMChildrenCollection_traverse,
     .unlink           = HTMLDOMChildrenCollection_unlink,
     .get_dispid       = HTMLDOMChildrenCollection_get_dispid,
     .get_name         = HTMLDOMChildrenCollection_get_name,
@@ -469,7 +472,6 @@ HRESULT create_child_collection(nsIDOMNodeList *nslist, compat_mode_t compat_mod
         return E_OUTOFMEMORY;
 
     collection->IHTMLDOMChildrenCollection_iface.lpVtbl = &HTMLDOMChildrenCollectionVtbl;
-    collection->ref = 1;
 
     nsIDOMNodeList_AddRef(nslist);
     collection->nslist = nslist;
