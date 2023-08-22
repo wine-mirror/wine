@@ -785,6 +785,192 @@ static void test_subclass(void)
     DestroyWindow(hwnd);
 }
 
+static void read_process(HWND hMainWnd)
+{
+    SCROLLBARINFO sbi = {0};
+    SCROLLINFO si;
+    BOOL ret;
+    RECT rect, intersection;
+    BOOL (WINAPI *pGetScrollBarInfo)(HWND, LONG, LPSCROLLBARINFO);
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE;
+    si.nMin = si.nMax = si.nPos = (int)0xdeadbeef;
+    si.nPage = 0xdeadbeef;
+    ret = GetScrollInfo( hMainWnd, SB_HORZ, &si );
+    todo_wine ok( ret, "GetScrollInfo should succeed\n" );
+
+    todo_wine ok( si.nMin == 1, "unexpected nMin %i\n", si.nMin );
+    todo_wine ok( si.nMax == 10, "unexpected nMax %i\n", si.nMax );
+    todo_wine ok( si.nPage == 3, "unexpected nPage %u\n", si.nPage );
+    todo_wine ok( si.nPos == 4, "unexpected nPos %i\n", si.nPos );
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE;
+    si.nMin = si.nMax = si.nPos = (int)0xdeadbeef;
+    si.nPage = 0xdeadbeef;
+    ret = GetScrollInfo( hMainWnd, SB_VERT, &si );
+    todo_wine ok( ret, "GetScrollInfo should succeed\n" );
+
+    todo_wine ok( si.nMin == 201, "unexpected nMin %i\n", si.nMin );
+    todo_wine ok( si.nMax == 210, "unexpected nMax %i\n", si.nMax );
+    todo_wine ok( si.nPage == 2, "unexpected nPage %u\n", si.nPage );
+    todo_wine ok( si.nPos == 204, "unexpected nPos %i\n", si.nPos );
+
+    pGetScrollBarInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetScrollBarInfo");
+    if (!pGetScrollBarInfo)
+    {
+        win_skip("GetScrollBarInfo is not available\n");
+        return;
+    }
+
+    ret = GetWindowRect( hMainWnd, &rect );
+    ok( ret, "The GetWindowRect() call should not fail.\n" );
+
+    sbi.cbSize = sizeof(sbi);
+    sbi.rgstate[0] = 0xdeadbeef;
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi );
+    todo_wine ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+
+    if (ret)
+    {
+        IntersectRect( &intersection, &sbi.rcScrollBar, &rect );
+        ok( EqualRect( &intersection, &sbi.rcScrollBar ), "hscroll rect %s outside window rect %s\n",
+            wine_dbgstr_rect( &sbi.rcScrollBar ), wine_dbgstr_rect( &rect ));
+        ok( sbi.rcScrollBar.right - sbi.rcScrollBar.left > sbi.rcScrollBar.bottom - sbi.rcScrollBar.top,
+            "hscroll rect %s should have width > height\n", wine_dbgstr_rect( &rect ));
+        ok( sbi.rgstate[0] == 0, "unexpected hscroll state %#lx\n", sbi.rgstate[0] );
+    }
+
+    sbi.cbSize = sizeof(sbi);
+    sbi.rgstate[0] = 0xdeadbeef;
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi );
+    todo_wine ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+
+    if (ret)
+    {
+        IntersectRect( &intersection, &sbi.rcScrollBar, &rect );
+        ok( EqualRect( &intersection, &sbi.rcScrollBar ), "vscroll rect %s outside window rect %s\n",
+            wine_dbgstr_rect( &sbi.rcScrollBar ), wine_dbgstr_rect( &rect ));
+        ok( sbi.rcScrollBar.right - sbi.rcScrollBar.left < sbi.rcScrollBar.bottom - sbi.rcScrollBar.top,
+            "vscroll rect %s should have width < height\n", wine_dbgstr_rect( &rect ));
+        ok( sbi.rgstate[0] == 0, "unexpected vscroll state %#lx\n", sbi.rgstate[0] );
+    }
+}
+
+static DWORD WINAPI write_process(HWND hMainWnd)
+{
+    SCROLLBARINFO sbi;
+    SCROLLINFO si;
+    BOOL ret;
+    BOOL (WINAPI *pGetScrollBarInfo)(HWND, LONG, LPSCROLLBARINFO);
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_POS;
+    si.nPos = 6;
+    ret = SetScrollInfo( hMainWnd, SB_HORZ, &si, FALSE );
+    todo_wine ok( ret, "SetScrollInfo should succeed\n" );
+
+    si.nPos = 206;
+    ret = SetScrollInfo( hMainWnd, SB_VERT, &si, FALSE );
+    todo_wine ok( ret, "SetScrollInfo should succeed\n" );
+
+    si.nPos = 0xdeadbeef;
+    ret = GetScrollInfo( hMainWnd, SB_HORZ, &si );
+    todo_wine ok( ret, "GetScrollInfo should succeed\n" );
+    todo_wine ok( si.nPos == 6, "unexpected nPos %i\n", si.nPos );
+
+    si.nPos = 0xdeadbeef;
+    ret = GetScrollInfo( hMainWnd, SB_VERT, &si );
+    todo_wine ok( ret, "GetScrollInfo should succeed\n" );
+    todo_wine ok( si.nPos == 206, "unexpected nPos %i\n", si.nPos );
+
+    pGetScrollBarInfo = (void*)GetProcAddress(GetModuleHandleA("user32.dll"), "GetScrollBarInfo");
+    if (!pGetScrollBarInfo)
+    {
+        win_skip("GetScrollBarInfo is not available\n");
+        return 0;
+    }
+
+    ret = EnableScrollBar( hMainWnd, SB_HORZ, ESB_DISABLE_BOTH );
+    todo_wine ok( ret, "EnableScrollBar should succeed\n" );
+
+    ret = ShowScrollBar( hMainWnd, SB_VERT, FALSE );
+    ok( ret, "ShowScrollBar should succeed\n" );
+
+    sbi.cbSize = sizeof(sbi);
+    sbi.rgstate[0] = 0xdeadbeef;
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi );
+    todo_wine ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+    todo_wine ok( sbi.rgstate[0] == STATE_SYSTEM_UNAVAILABLE, "unexpected hscroll state %#lx\n", sbi.rgstate[0] );
+
+    sbi.cbSize = sizeof(sbi);
+    sbi.rgstate[0] = 0xdeadbeef;
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi );
+    todo_wine ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+    todo_wine ok( sbi.rgstate[0] == STATE_SYSTEM_INVISIBLE, "unexpected vscroll state %#lx\n", sbi.rgstate[0] );
+
+    return 0;
+}
+
+static void test_cross_process(const char* argv0)
+{
+    HWND hMainWnd;
+    BOOL ret;
+    SCROLLINFO si;
+    STARTUPINFOA startup_info = {0};
+    PROCESS_INFORMATION process_info;
+    char path[MAX_PATH];
+
+    hMainWnd = create_main_test_wnd();
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_PAGE|SIF_POS|SIF_RANGE;
+    si.nMin = 1;
+    si.nMax = 10;
+    si.nPage = 3;
+    si.nPos = 4;
+    SetScrollInfo( hMainWnd, SB_HORZ, &si, FALSE );
+
+    si.nMin = 201;
+    si.nMax = 210;
+    si.nPage = 2;
+    si.nPos = 204;
+    SetScrollInfo( hMainWnd, SB_VERT, &si, FALSE );
+
+    startup_info.cb = sizeof(startup_info);
+    sprintf( path, "%s scroll read_process %p", argv0, hMainWnd );
+    ret = CreateProcessA( NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &startup_info, &process_info );
+    ok(ret, "CreateProcess \"%s\" failed err %lu.\n", path, GetLastError());
+
+    /* Messages do not need to be processed to read info. */
+    winetest_wait_child_process(process_info.hProcess);
+    CloseHandle(process_info.hProcess);
+    CloseHandle(process_info.hThread);
+
+    sprintf( path, "%s scroll write_process %p", argv0, hMainWnd );
+    ret = CreateProcessA( NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &startup_info, &process_info );
+    ok(ret, "CreateProcess \"%s\" failed err %lu.\n", path, GetLastError());
+
+    /* Modifying info requires a message loop. */
+    while (MsgWaitForMultipleObjects( 1, &process_info.hProcess, FALSE, 5000, QS_SENDMESSAGE ) == 1)
+    {
+        MSG msg;
+        while (PeekMessageA( &msg, NULL, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageA( &msg );
+        }
+    }
+
+    winetest_wait_child_process(process_info.hProcess);
+    CloseHandle(process_info.hProcess);
+    CloseHandle(process_info.hThread);
+
+    DestroyWindow( hScroll );
+    DestroyWindow( hMainWnd );
+}
+
 static void test_visual(void)
 {
     static const int color_indices[] = {COLOR_SCROLLBAR, COLOR_BTNFACE};
@@ -826,9 +1012,25 @@ static void test_visual(void)
 
 START_TEST ( scroll )
 {
+    char **argv;
+    int argc;
     WNDCLASSA wc;
     HMODULE hUxtheme;
     BOOL (WINAPI * pIsThemeActive)(VOID);
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 4 && (!strcmp( argv[2], "read_process" ) || !strcmp( argv[2], "write_process" )))
+    {
+        long wnd_long = strtol( argv[3], NULL, 16 );
+        HWND wnd = (HWND)(INT_PTR)wnd_long;
+
+        if (!strcmp( argv[2], "read_process" ))
+            read_process( wnd );
+        else
+            write_process( wnd );
+
+        return;
+    }
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -849,6 +1051,7 @@ START_TEST ( scroll )
     scrollbar_test_track();
     test_SetScrollInfo();
     test_subclass();
+    test_cross_process( argv[0] );
 
     /* Some test results vary depending of theming being active or not */
     hUxtheme = LoadLibraryA("uxtheme.dll");
