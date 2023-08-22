@@ -81,7 +81,6 @@ static ULONG WINAPI command_track_Release(IDirectMusicTrack8 *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMSTYLE_UnlockModule();
     }
 
     return ref;
@@ -385,7 +384,6 @@ HRESULT create_dmcommandtrack(REFIID lpcGUID, void **ppobj)
     track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
     list_init (&track->Commands);
 
-    DMSTYLE_LockModule();
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface,
                                            lpcGUID, ppobj);
     IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);

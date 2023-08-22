@@ -127,7 +127,6 @@ static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
             heap_free(motif);
         }
         heap_free(This);
-        DMSTYLE_UnlockModule();
     }
 
     return ref;
@@ -991,7 +990,6 @@ HRESULT create_dmstyle(REFIID lpcGUID, void **ppobj)
   list_init(&obj->bands);
   list_init(&obj->motifs);
 
-  DMSTYLE_LockModule();
   hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
   IDirectMusicStyle8_Release(&obj->IDirectMusicStyle8_iface);
 

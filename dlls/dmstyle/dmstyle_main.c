@@ -37,8 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 
-LONG DMSTYLE_refCount = 0;
-
 typedef struct {
         IClassFactory IClassFactory_iface;
         HRESULT (*fnCreateInstance)(REFIID riid, void **ret_iface);
@@ -81,15 +79,11 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-        DMSTYLE_LockModule();
-
         return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-        DMSTYLE_UnlockModule();
-
         return 1; /* non-heap based object */
 }
 
@@ -111,12 +105,6 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
         TRACE("(%d)\n", dolock);
-
-        if (dolock)
-                DMSTYLE_LockModule();
-        else
-                DMSTYLE_UnlockModule();
-
         return S_OK;
 }
 
@@ -136,15 +124,6 @@ static IClassFactoryImpl StyleTrack_CF = {{&classfactory_vtbl}, create_dmstyletr
 static IClassFactoryImpl MotifTrack_CF = {{&classfactory_vtbl}, create_dmmotiftrack};
 static IClassFactoryImpl AuditionTrack_CF = {{&classfactory_vtbl}, create_dmauditiontrack};
 static IClassFactoryImpl MuteTrack_CF = {{&classfactory_vtbl}, create_dmmutetrack};
-
-/******************************************************************
- *		DllCanUnloadNow (DMSTYLE.1)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void) {
-	return DMSTYLE_refCount != 0 ? S_FALSE : S_OK;
-}
 
 
 /******************************************************************

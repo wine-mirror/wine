@@ -61,13 +61,6 @@ typedef struct _DMUS_PRIVATE_COMMAND {
 	IDirectMusicCollection* ppReferenceCollection;
 } DMUS_PRIVATE_COMMAND, *LPDMUS_PRIVATE_COMMAND;
 
-/**********************************************************************
- * Dll lifetime tracking declaration for dmstyle.dll
- */
-extern LONG DMSTYLE_refCount;
-static inline void DMSTYLE_LockModule(void) { InterlockedIncrement( &DMSTYLE_refCount ); }
-static inline void DMSTYLE_UnlockModule(void) { InterlockedDecrement( &DMSTYLE_refCount ); }
-
 /*****************************************************************************
  * Misc.
  */
