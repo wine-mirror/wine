@@ -63,7 +63,6 @@ static ULONG WINAPI IReferenceClockImpl_Release(IReferenceClock *iface)
 
     if (!ref) {
         free(This);
-        DMUSIC_UnlockModule();
     }
 
     return ref;
@@ -137,7 +136,6 @@ HRESULT DMUSIC_CreateReferenceClockImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNO
     clock->rtTime = 0;
     clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
 
-    DMUSIC_LockModule();
     hr = IReferenceClockImpl_QueryInterface(&clock->IReferenceClock_iface, riid, ret_iface);
     IReferenceClock_Release(&clock->IReferenceClock_iface);
 

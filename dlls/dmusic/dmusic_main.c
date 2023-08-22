@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-LONG DMUSIC_refCount = 0;
-
 typedef struct {
         IClassFactory IClassFactory_iface;
         HRESULT (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
@@ -76,15 +74,11 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-        DMUSIC_LockModule();
-
         return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-        DMUSIC_UnlockModule();
-
         return 1; /* non-heap based object */
 }
 
@@ -101,12 +95,6 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
         TRACE("(%d)\n", dolock);
-
-        if (dolock)
-                DMUSIC_LockModule();
-        else
-                DMUSIC_UnlockModule();
-
         return S_OK;
 }
 
@@ -122,15 +110,6 @@ static IClassFactoryImpl DirectMusic_CF = {{&classfactory_vtbl}, DMUSIC_CreateDi
 static IClassFactoryImpl Collection_CF = {{&classfactory_vtbl},
                                           DMUSIC_CreateDirectMusicCollectionImpl};
 
-/******************************************************************
- *		DllCanUnloadNow (DMUSIC.@)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-	return DMUSIC_refCount != 0 ? S_FALSE : S_OK;
-}
 
 
 /******************************************************************

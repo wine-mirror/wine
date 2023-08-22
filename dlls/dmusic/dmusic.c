@@ -201,7 +201,6 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
         free(This->system_ports);
         free(This->ports);
         free(This);
-        DMUSIC_UnlockModule();
     }
 
     return ref;
@@ -606,7 +605,6 @@ HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *un
 
     create_system_ports_list(dmusic);
 
-    DMUSIC_LockModule();
     ret = IDirectMusic8Impl_QueryInterface(&dmusic->IDirectMusic8_iface, riid, ret_iface);
     IDirectMusic8_Release(&dmusic->IDirectMusic8_iface);
 

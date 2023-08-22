@@ -82,7 +82,6 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT i
             free(This->articulations->connections);
         free(This->articulations);
         free(This);
-        DMUSIC_UnlockModule();
     }
 
     return ref;
@@ -133,7 +132,6 @@ HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 	dminst->IDirectMusicInstrument_iface.lpVtbl = &DirectMusicInstrument_Vtbl;
         dminst->ref = 1;
 
-        DMUSIC_LockModule();
         hr = IDirectMusicInstrument_QueryInterface(&dminst->IDirectMusicInstrument_iface, lpcGUID,
                 ppobj);
         IDirectMusicInstrument_Release(&dminst->IDirectMusicInstrument_iface);

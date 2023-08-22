@@ -214,14 +214,6 @@ static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDire
 /* custom :) */
 extern HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream);
 
-/**********************************************************************
- * Dll lifetime tracking declaration for dmusic.dll
- */
-extern LONG DMUSIC_refCount;
-static inline void DMUSIC_LockModule(void) { InterlockedIncrement( &DMUSIC_refCount ); }
-static inline void DMUSIC_UnlockModule(void) { InterlockedDecrement( &DMUSIC_refCount ); }
-
-
 /*****************************************************************************
  * Misc.
  */

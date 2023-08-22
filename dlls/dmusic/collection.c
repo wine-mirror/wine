@@ -99,7 +99,6 @@ static ULONG WINAPI IDirectMusicCollectionImpl_Release(IDirectMusicCollection *i
 
     if (!ref) {
         free(This);
-        DMUSIC_UnlockModule();
     }
 
     return ref;
@@ -544,7 +543,6 @@ HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID lpcGUID, void **ppobj, IUn
 
 	list_init (&obj->Instruments);
 
-        DMUSIC_LockModule();
         hr = IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
         IDirectMusicCollection_Release(&obj->IDirectMusicCollection_iface);
 

@@ -65,7 +65,6 @@ static ULONG WINAPI IDirectMusicDownloadImpl_Release(IDirectMusicDownload *iface
 
     if (!ref) {
         free(This);
-        DMUSIC_UnlockModule();
     }
 
     return ref;
@@ -102,6 +101,5 @@ HRESULT DMUSIC_CreateDirectMusicDownloadImpl(const GUID *guid, void **ret_iface,
     download->ref = 1;
     *ret_iface = download;
 
-    DMUSIC_LockModule();
     return S_OK;
 }
