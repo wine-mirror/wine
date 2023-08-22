@@ -900,8 +900,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLRectCollection IHTMLRectCollection_iface;
 
-    LONG ref;
-
     nsIDOMClientRectList *rect_list;
 } HTMLRectCollection;
 
@@ -1053,7 +1051,7 @@ static HRESULT WINAPI HTMLRectCollection_QueryInterface(IHTMLRectCollection *ifa
         *ppv = &This->IHTMLRectCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLRectCollection, riid)) {
         *ppv = &This->IHTMLRectCollection_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
@@ -1068,7 +1066,7 @@ static HRESULT WINAPI HTMLRectCollection_QueryInterface(IHTMLRectCollection *ifa
 static ULONG WINAPI HTMLRectCollection_AddRef(IHTMLRectCollection *iface)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -1078,12 +1076,9 @@ static ULONG WINAPI HTMLRectCollection_AddRef(IHTMLRectCollection *iface)
 static ULONG WINAPI HTMLRectCollection_Release(IHTMLRectCollection *iface)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -1206,6 +1201,13 @@ static inline HTMLRectCollection *HTMLRectCollection_from_DispatchEx(DispatchEx 
     return CONTAINING_RECORD(iface, HTMLRectCollection, dispex);
 }
 
+static void HTMLRectCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    if(This->rect_list)
+        note_cc_edge((nsISupports*)This->rect_list, "rect_list", cb);
+}
+
 static void HTMLRectCollection_unlink(DispatchEx *dispex)
 {
     HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
@@ -1294,6 +1296,7 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     .destructor       = HTMLRectCollection_destructor,
+    .traverse         = HTMLRectCollection_traverse,
     .unlink           = HTMLRectCollection_unlink,
     .get_dispid       = HTMLRectCollection_get_dispid,
     .get_name         = HTMLRectCollection_get_name,
@@ -3323,7 +3326,6 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
     }
 
     rects->IHTMLRectCollection_iface.lpVtbl = &HTMLRectCollectionVtbl;
-    rects->ref = 1;
     rects->rect_list = rect_list;
     init_dispatch(&rects->dispex, (IUnknown*)&rects->IHTMLRectCollection_iface,
                   &HTMLRectCollection_dispex, dispex_compat_mode(&This->node.event_target.dispex));
