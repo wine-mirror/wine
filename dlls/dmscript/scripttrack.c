@@ -86,7 +86,6 @@ static ULONG WINAPI script_track_Release(IDirectMusicTrack8 *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMSCRIPT_UnlockModule();
     }
 
     return ref;
@@ -338,7 +337,6 @@ HRESULT DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ret_iface, IUnkn
     track->desc.guidClass = CLSID_DirectMusicScriptTrack;
     track->ref = 1;
 
-    DMSCRIPT_LockModule();
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, riid, ret_iface);
     IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);
 

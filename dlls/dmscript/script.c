@@ -94,7 +94,6 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
         HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
         HeapFree(GetProcessHeap(), 0, This->pwzSource);
         HeapFree(GetProcessHeap(), 0, This);
-        DMSCRIPT_UnlockModule();
     }
 
     return ref;
@@ -508,7 +507,6 @@ HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknow
   obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
   obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-  DMSCRIPT_LockModule();
   hr = IDirectMusicScript_QueryInterface(&obj->IDirectMusicScript_iface, lpcGUID, ppobj);
   IDirectMusicScript_Release(&obj->IDirectMusicScript_iface);
 

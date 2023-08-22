@@ -48,13 +48,6 @@ extern HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID riid, void **ppobj, IUn
 
 extern HRESULT DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ppobj, IUnknown *pUnkOuter);
 
-/**********************************************************************
- * Dll lifetime tracking declaration for dmscript.dll
- */
-extern LONG DMSCRIPT_refCount;
-static inline void DMSCRIPT_LockModule(void) { InterlockedIncrement( &DMSCRIPT_refCount ); }
-static inline void DMSCRIPT_UnlockModule(void) { InterlockedDecrement( &DMSCRIPT_refCount ); }
-
 /*****************************************************************************
  * Misc.
  */
