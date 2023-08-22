@@ -113,7 +113,6 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
         }
 
         heap_free(This);
-        DMIME_UnlockModule();
     }
 
     return ref;
@@ -488,7 +487,6 @@ HRESULT create_dmwavetrack(REFIID lpcGUID, void **ppobj)
     track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
     list_init(&track->parts);
 
-    DMIME_LockModule();
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, lpcGUID, ppobj);
     IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);
 

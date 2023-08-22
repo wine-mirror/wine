@@ -78,7 +78,6 @@ static ULONG WINAPI IDirectMusicTrackImpl_Release(IDirectMusicTrack *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMIME_UnlockModule();
     }
 
     return ref;
@@ -237,7 +236,6 @@ HRESULT create_dmmarkertrack(REFIID lpcGUID, void **ppobj)
                   (IUnknown *)&track->IDirectMusicTrack_iface);
     track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-    DMIME_LockModule();
     hr = IDirectMusicTrack_QueryInterface(&track->IDirectMusicTrack_iface, lpcGUID, ppobj);
     IDirectMusicTrack_Release(&track->IDirectMusicTrack_iface);
 

@@ -278,8 +278,6 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_AddRef(IDirectMusicPerformance8
 
   TRACE("(%p): ref=%ld\n", This, ref);
 
-  DMIME_LockModule();
-
   return ref;
 }
 
@@ -296,8 +294,6 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_Release(IDirectMusicPerformance
     DeleteCriticalSection(&This->safe);
     HeapFree(GetProcessHeap(), 0, This);
   }
-
-  DMIME_UnlockModule();
 
   return ref;
 }

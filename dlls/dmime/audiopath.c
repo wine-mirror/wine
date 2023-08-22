@@ -96,7 +96,6 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_AddRef (IDirectMusicAudioPath *ifa
 
     TRACE("(%p): ref=%ld\n", This, ref);
 
-    DMIME_LockModule();
     return ref;
 }
 
@@ -116,7 +115,6 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
         HeapFree(GetProcessHeap(), 0, This);
     }
 
-    DMIME_UnlockModule();
     return ref;
 }
 

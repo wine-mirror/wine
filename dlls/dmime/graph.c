@@ -75,7 +75,6 @@ static ULONG WINAPI DirectMusicGraph_AddRef(IDirectMusicGraph *iface)
 
     TRACE("(%p): %ld\n", This, ref);
 
-    DMIME_LockModule();
     return ref;
 }
 
@@ -89,7 +88,6 @@ static ULONG WINAPI DirectMusicGraph_Release(IDirectMusicGraph *iface)
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
 
-    DMIME_UnlockModule();
     return ref;
 }
 

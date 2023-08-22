@@ -96,13 +96,6 @@ typedef struct _DMUS_PRIVATE_TEMPO_PLAY_STATE {
   DWORD dummy;
 } DMUS_PRIVATE_TEMPO_PLAY_STATE, *LPDMUS_PRIVATE_TEMPO_PLAY_STATE;
 
-/**********************************************************************
- * Dll lifetime tracking declaration for dmime.dll
- */
-extern LONG DMIME_refCount;
-static inline void DMIME_LockModule(void) { InterlockedIncrement( &DMIME_refCount ); }
-static inline void DMIME_UnlockModule(void) { InterlockedDecrement( &DMIME_refCount ); }
-
 /*****************************************************************************
  * Misc.
  */

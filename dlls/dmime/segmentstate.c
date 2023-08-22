@@ -63,8 +63,6 @@ static ULONG WINAPI DirectMusicSegmentState8_AddRef(IDirectMusicSegmentState8 *i
 
     TRACE("(%p): %ld\n", This, ref);
 
-    DMIME_LockModule();
-
     return ref;
 }
 
@@ -77,8 +75,6 @@ static ULONG WINAPI DirectMusicSegmentState8_Release(IDirectMusicSegmentState8 *
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
-
-    DMIME_UnlockModule();
 
     return ref;
 }

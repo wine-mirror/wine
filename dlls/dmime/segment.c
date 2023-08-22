@@ -94,7 +94,6 @@ static ULONG WINAPI IDirectMusicSegment8Impl_Release(IDirectMusicSegment8 *iface
             free(This->wave_data);
 
         HeapFree(GetProcessHeap(), 0, This);
-        DMIME_UnlockModule();
     }
 
     return ref;
@@ -934,8 +933,6 @@ IDirectMusicSegment8Impl *create_segment(void)
     obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
     obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
     list_init (&obj->Tracks);
-
-    DMIME_LockModule();
 
     return obj;
 }
