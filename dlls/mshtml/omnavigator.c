@@ -2826,7 +2826,6 @@ struct media_query_list_callback;
 struct media_query_list {
     DispatchEx dispex;
     IWineMSHTMLMediaQueryList IWineMSHTMLMediaQueryList_iface;
-    LONG ref;
     nsIDOMMediaQueryList *nsquerylist;
     struct media_query_list_callback *callback;
     struct list listeners;
@@ -2851,7 +2850,7 @@ static HRESULT WINAPI media_query_list_QueryInterface(IWineMSHTMLMediaQueryList 
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWineMSHTMLMediaQueryList, riid)) {
         *ppv = &media_query_list->IWineMSHTMLMediaQueryList_iface;
-    }else if(dispex_query_interface_no_cc(&media_query_list->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&media_query_list->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -2865,7 +2864,7 @@ static HRESULT WINAPI media_query_list_QueryInterface(IWineMSHTMLMediaQueryList 
 static ULONG WINAPI media_query_list_AddRef(IWineMSHTMLMediaQueryList *iface)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
-    LONG ref = InterlockedIncrement(&media_query_list->ref);
+    LONG ref = dispex_ref_incr(&media_query_list->dispex);
 
     TRACE("(%p) ref=%ld\n", media_query_list, ref);
 
@@ -2875,12 +2874,9 @@ static ULONG WINAPI media_query_list_AddRef(IWineMSHTMLMediaQueryList *iface)
 static ULONG WINAPI media_query_list_Release(IWineMSHTMLMediaQueryList *iface)
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
-    LONG ref = InterlockedDecrement(&media_query_list->ref);
+    LONG ref = dispex_ref_decr(&media_query_list->dispex);
 
     TRACE("(%p) ref=%ld\n", media_query_list, ref);
-
-    if(!ref)
-        release_dispex(&media_query_list->dispex);
 
     return ref;
 }
@@ -3106,6 +3102,17 @@ static inline struct media_query_list *media_query_list_from_DispatchEx(Dispatch
     return CONTAINING_RECORD(iface, struct media_query_list, dispex);
 }
 
+static void media_query_list_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
+    struct media_query_list_listener *listener;
+
+    LIST_FOR_EACH_ENTRY(listener, &media_query_list->listeners, struct media_query_list_listener, entry)
+        note_cc_edge((nsISupports*)listener->function, "function", cb);
+    if(media_query_list->nsquerylist)
+        note_cc_edge((nsISupports*)media_query_list->nsquerylist, "nsquerylist", cb);
+}
+
 static void media_query_list_unlink(DispatchEx *dispex)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
@@ -3129,6 +3136,7 @@ static void media_query_list_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t media_query_list_dispex_vtbl = {
     .destructor       = media_query_list_destructor,
+    .traverse         = media_query_list_traverse,
     .unlink           = media_query_list_unlink
 };
 
@@ -3180,7 +3188,6 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
     assert(NS_SUCCEEDED(nsres));
 
     media_query_list->IWineMSHTMLMediaQueryList_iface.lpVtbl = &media_query_list_vtbl;
-    media_query_list->ref = 1;
     list_init(&media_query_list->listeners);
     init_dispatch(&media_query_list->dispex, (IUnknown*)&media_query_list->IWineMSHTMLMediaQueryList_iface,
                   &media_query_list_dispex, dispex_compat_mode(&window->inner_window->event_target.dispex));
