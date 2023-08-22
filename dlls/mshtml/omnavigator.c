@@ -47,8 +47,6 @@ typedef struct {
     IHTMLDOMImplementation IHTMLDOMImplementation_iface;
     IHTMLDOMImplementation2 IHTMLDOMImplementation2_iface;
 
-    LONG ref;
-
     nsIDOMDOMImplementation *implementation;
     GeckoBrowser *browser;
 } HTMLDOMImplementation;
@@ -68,7 +66,7 @@ static HRESULT WINAPI HTMLDOMImplementation_QueryInterface(IHTMLDOMImplementatio
         *ppv = &This->IHTMLDOMImplementation_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMImplementation2, riid)) {
         *ppv = &This->IHTMLDOMImplementation2_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
@@ -83,7 +81,7 @@ static HRESULT WINAPI HTMLDOMImplementation_QueryInterface(IHTMLDOMImplementatio
 static ULONG WINAPI HTMLDOMImplementation_AddRef(IHTMLDOMImplementation *iface)
 {
     HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -93,12 +91,9 @@ static ULONG WINAPI HTMLDOMImplementation_AddRef(IHTMLDOMImplementation *iface)
 static ULONG WINAPI HTMLDOMImplementation_Release(IHTMLDOMImplementation *iface)
 {
     HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -292,6 +287,13 @@ static inline HTMLDOMImplementation *HTMLDOMImplementation_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLDOMImplementation, dispex);
 }
 
+static void HTMLDOMImplementation_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLDOMImplementation *This = HTMLDOMImplementation_from_DispatchEx(dispex);
+    if(This->implementation)
+        note_cc_edge((nsISupports*)This->implementation, "implementation", cb);
+}
+
 static void HTMLDOMImplementation_unlink(DispatchEx *dispex)
 {
     HTMLDOMImplementation *This = HTMLDOMImplementation_from_DispatchEx(dispex);
@@ -307,6 +309,7 @@ static void HTMLDOMImplementation_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLDOMImplementation_dispex_vtbl = {
     .destructor       = HTMLDOMImplementation_destructor,
+    .traverse         = HTMLDOMImplementation_traverse,
     .unlink           = HTMLDOMImplementation_unlink
 };
 
@@ -342,7 +345,6 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
 
     dom_implementation->IHTMLDOMImplementation_iface.lpVtbl = &HTMLDOMImplementationVtbl;
     dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
-    dom_implementation->ref = 1;
     dom_implementation->browser = doc_node->browser;
 
     init_dispatch(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
