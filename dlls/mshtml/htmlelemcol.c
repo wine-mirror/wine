@@ -37,8 +37,6 @@ typedef struct {
 
     HTMLElement **elems;
     DWORD len;
-
-    LONG ref;
 } HTMLElementCollection;
 
 typedef struct {
@@ -223,7 +221,7 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
         *ppv = &This->IHTMLElementCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLElementCollection, riid)) {
         *ppv = &This->IHTMLElementCollection_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -238,7 +236,7 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
 static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -248,12 +246,9 @@ static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)
 static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -542,6 +537,15 @@ static inline HTMLElementCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLElementCollection, dispex);
 }
 
+static void HTMLElementCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+    unsigned i;
+
+    for(i = 0; i < This->len; i++)
+        note_cc_edge((nsISupports*)&This->elems[i]->node.IHTMLDOMNode_iface, "elem", cb);
+}
+
 static void HTMLElementCollection_unlink(DispatchEx *dispex)
 {
     HTMLElementCollection *This = impl_from_DispatchEx(dispex);
@@ -634,6 +638,7 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     .destructor       = HTMLElementCollection_destructor,
+    .traverse         = HTMLElementCollection_traverse,
     .unlink           = HTMLElementCollection_unlink,
     .get_dispid       = HTMLElementCollection_get_dispid,
     .get_name         = HTMLElementCollection_get_name,
@@ -864,7 +869,6 @@ static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems,
         return NULL;
 
     ret->IHTMLElementCollection_iface.lpVtbl = &HTMLElementCollectionVtbl;
-    ret->ref = 1;
     ret->elems = elems;
     ret->len = len;
 
