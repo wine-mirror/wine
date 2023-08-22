@@ -69,7 +69,6 @@ static ULONG WINAPI IDirectMusicComposerImpl_Release(IDirectMusicComposer *iface
 
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMCOMPOS_UnlockModule();
     }
 
     return ref;
@@ -183,7 +182,6 @@ HRESULT create_dmcomposer(REFIID riid, void **ret_iface)
     obj->IDirectMusicComposer_iface.lpVtbl = &dmcomposer_vtbl;
     obj->ref = 1;
 
-    DMCOMPOS_LockModule();
     hr = IDirectMusicComposer_QueryInterface(&obj->IDirectMusicComposer_iface, riid, ret_iface);
     IDirectMusicComposer_Release(&obj->IDirectMusicComposer_iface);
 

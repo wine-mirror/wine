@@ -81,7 +81,6 @@ static ULONG WINAPI IDirectMusicChordMapImpl_Release(IDirectMusicChordMap *iface
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMCOMPOS_UnlockModule();
     }
 
     return ref;
@@ -326,7 +325,6 @@ HRESULT create_dmchordmap(REFIID lpcGUID, void **ppobj)
         obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
         obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-        DMCOMPOS_LockModule();
         hr = IDirectMusicChordMap_QueryInterface(&obj->IDirectMusicChordMap_iface, lpcGUID, ppobj);
         IDirectMusicChordMap_Release(&obj->IDirectMusicChordMap_iface);
 

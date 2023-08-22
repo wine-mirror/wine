@@ -38,8 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
-LONG DMCOMPOS_refCount = 0;
-
 typedef struct {
         IClassFactory IClassFactory_iface;
         HRESULT (*fnCreateInstance)(REFIID riid, void **ret_iface);
@@ -82,15 +80,11 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-        DMCOMPOS_LockModule();
-
         return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-        DMCOMPOS_UnlockModule();
-
         return 1; /* non-heap based object */
 }
 
@@ -112,12 +106,6 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
         TRACE("(%d)\n", dolock);
-
-        if (dolock)
-                DMCOMPOS_LockModule();
-        else
-                DMCOMPOS_UnlockModule();
-
         return S_OK;
 }
 
@@ -134,15 +122,6 @@ static IClassFactoryImpl Composer_CF = {{&classfactory_vtbl}, create_dmcomposer}
 static IClassFactoryImpl ChordMapTrack_CF = {{&classfactory_vtbl}, create_dmchordmaptrack};
 static IClassFactoryImpl Template_CF = {{&classfactory_vtbl}, create_direct_music_template};
 static IClassFactoryImpl SignPostTrack_CF = {{&classfactory_vtbl}, create_dmsignposttrack};
-
-/******************************************************************
- *		DllCanUnloadNow (DMCOMPOS.@)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void) {
-    return DMCOMPOS_refCount != 0 ? S_FALSE : S_OK;
-}
 
 
 /******************************************************************
