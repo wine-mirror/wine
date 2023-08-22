@@ -83,7 +83,6 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release(IDirectMusicSynth8 *iface)
         if (This->latency_clock)
             IReferenceClock_Release(This->latency_clock);
         HeapFree(GetProcessHeap(), 0, This);
-        DMSYNTH_UnlockModule();
     }
 
     return ref;
@@ -750,7 +749,6 @@ HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
     obj->caps.dwEffectFlags = DMUS_EFFECT_REVERB;
     lstrcpyW(obj->caps.wszDescription, L"Microsoft Synthesizer");
 
-    DMSYNTH_LockModule();
     hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
     IDirectMusicSynth8_Release(&obj->IDirectMusicSynth8_iface);
 

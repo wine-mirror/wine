@@ -81,7 +81,6 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(IDirectMusicSynthSink *ifa
         if (This->master_clock)
             IReferenceClock_Release(This->master_clock);
         HeapFree(GetProcessHeap(), 0, This);
-        DMSYNTH_UnlockModule();
     }
 
     return ref;
@@ -317,7 +316,6 @@ HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
         return hr;
     }
 
-    DMSYNTH_LockModule();
     hr = IDirectMusicSynthSink_QueryInterface(&obj->IDirectMusicSynthSink_iface, riid, ret_iface);
     IDirectMusicSynthSink_Release(&obj->IDirectMusicSynthSink_iface);
 

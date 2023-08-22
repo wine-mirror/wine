@@ -25,8 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-LONG DMSYNTH_refCount = 0;
-
 typedef struct {
         IClassFactory IClassFactory_iface;
         HRESULT (*fnCreateInstance)(REFIID riid, void **ppv);
@@ -62,15 +60,11 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
 
 static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
 {
-        DMSYNTH_LockModule();
-
         return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 {
-        DMSYNTH_UnlockModule();
-
         return 1; /* non-heap based object */
 }
 
@@ -90,12 +84,6 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 {
         TRACE("(%d)\n", dolock);
-
-        if (dolock)
-                DMSYNTH_LockModule();
-        else
-                DMSYNTH_UnlockModule();
-
         return S_OK;
 }
 
@@ -110,16 +98,6 @@ static const IClassFactoryVtbl classfactory_vtbl = {
 static IClassFactoryImpl Synth_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicSynthImpl};
 static IClassFactoryImpl SynthSink_CF = {{&classfactory_vtbl},
                                          DMUSIC_CreateDirectMusicSynthSinkImpl};
-
-/******************************************************************
- *		DllCanUnloadNow (DMSYNTH.@)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-	return DMSYNTH_refCount != 0 ? S_FALSE : S_OK;
-}
 
 
 /******************************************************************
