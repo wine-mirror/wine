@@ -83,7 +83,6 @@ static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DMBAND_UnlockModule();
     }
 
     return ref;
@@ -527,7 +526,6 @@ HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
   obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
   list_init (&obj->Instruments);
 
-  DMBAND_LockModule();
   hr = IDirectMusicBand_QueryInterface(&obj->IDirectMusicBand_iface, lpcGUID, ppobj);
   IDirectMusicBand_Release(&obj->IDirectMusicBand_iface);
 

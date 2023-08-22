@@ -73,14 +73,6 @@ typedef struct _DMUS_PRIVATE_BAND {
 	IDirectMusicBand *band;
 } DMUS_PRIVATE_BAND, *LPDMUS_PRIVATE_BAND;
 
-
-/**********************************************************************
- * Dll lifetime tracking declaration for dmband.dll
- */
-extern LONG DMBAND_refCount;
-static inline void DMBAND_LockModule(void) { InterlockedIncrement( &DMBAND_refCount ); }
-static inline void DMBAND_UnlockModule(void) { InterlockedDecrement( &DMBAND_refCount ); }
-
 /*****************************************************************************
  * Misc.
  */
