@@ -1,7 +1,7 @@
 MODULE    = mf.dll
 IMPORTLIB = mf
 IMPORTS   = advapi32 mfplat ole32 uuid mfuuid strmiids
-DELAYIMPORTS = evr user32
+DELAYIMPORTS = evr urlmon user32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

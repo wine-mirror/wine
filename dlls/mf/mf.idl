@@ -24,3 +24,9 @@
     uuid(477ec299-1421-4bdd-971f-7ccb933f21ad)
 ]
 coclass FileSchemePlugin { }
+
+[
+    threading(both),
+    uuid(9ec4b4f9-3029-45ad-947b-344de2a249e2)
+]
+coclass UrlmonSchemePlugin {}

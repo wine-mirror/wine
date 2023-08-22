@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+typedef HRESULT (*create_stream_cb)(const WCHAR *url, DWORD flags, IMFByteStream **out);
+
 struct scheme_handler_result
 {
     struct list entry;
@@ -48,6 +50,7 @@ struct scheme_handler
     IMFSourceResolver *resolver;
     struct list results;
     CRITICAL_SECTION cs;
+    create_stream_cb create_stream;
 };
 
 static struct scheme_handler *impl_from_IMFSchemeHandler(IMFSchemeHandler *iface)
@@ -374,7 +377,6 @@ static HRESULT scheme_handler_get_resolver(struct scheme_handler *handler, IMFSo
 
 static HRESULT WINAPI scheme_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
-    static const WCHAR schemeW[] = {'f','i','l','e',':','/','/'};
     struct scheme_handler *handler = impl_from_IMFAsyncCallback(iface);
     struct scheme_handler_result *handler_result;
     MF_OBJECT_TYPE obj_type = MF_OBJECT_INVALID;
@@ -383,7 +385,6 @@ static HRESULT WINAPI scheme_handler_callback_Invoke(IMFAsyncCallback *iface, IM
     IMFSourceResolver *resolver;
     IMFAsyncResult *caller;
     IMFByteStream *stream;
-    const WCHAR *url;
     HRESULT hr;
 
     caller = (IMFAsyncResult *)IMFAsyncResult_GetStateNoAddRef(result);
@@ -396,14 +397,7 @@ static HRESULT WINAPI scheme_handler_callback_Invoke(IMFAsyncCallback *iface, IM
 
     context = impl_from_IUnknown(context_object);
 
-    /* Strip from scheme, MFCreateFile() won't be expecting it. */
-    url = context->url;
-    if (!wcsnicmp(context->url, schemeW, ARRAY_SIZE(schemeW)))
-        url += ARRAY_SIZE(schemeW);
-
-    hr = MFCreateFile(context->flags & MF_RESOLUTION_WRITE ? MF_ACCESSMODE_READWRITE : MF_ACCESSMODE_READ,
-            MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, url, &stream);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = handler->create_stream(context->url, context->flags, &stream)))
     {
         if (context->flags & MF_RESOLUTION_MEDIASOURCE)
         {
@@ -458,6 +452,14 @@ static const IMFAsyncCallbackVtbl scheme_handler_callback_vtbl =
     scheme_handler_callback_Invoke,
 };
 
+static HRESULT file_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
+{
+    if (!wcsnicmp(url, L"file://", 7))
+        url += 7;
+    return MFCreateFile(flags & MF_RESOLUTION_WRITE ? MF_ACCESSMODE_READWRITE : MF_ACCESSMODE_READ,
+            MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, url, out);
+}
+
 HRESULT file_scheme_handler_construct(REFIID riid, void **obj)
 {
     struct scheme_handler *handler;
@@ -473,6 +475,58 @@ HRESULT file_scheme_handler_construct(REFIID riid, void **obj)
     handler->refcount = 1;
     list_init(&handler->results);
     InitializeCriticalSection(&handler->cs);
+    handler->create_stream = file_stream_create;
+
+    hr = IMFSchemeHandler_QueryInterface(&handler->IMFSchemeHandler_iface, riid, obj);
+    IMFSchemeHandler_Release(&handler->IMFSchemeHandler_iface);
+
+    return hr;
+}
+
+static HRESULT urlmon_stream_create(const WCHAR *url, DWORD flags, IMFByteStream **out)
+{
+    IMFAttributes *attributes;
+    IStream *stream;
+    HRESULT hr;
+
+    if (flags & MF_RESOLUTION_WRITE)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = URLOpenBlockingStreamW(NULL, url, &stream, 0, NULL)))
+    {
+        WARN("Failed to open url %s, hr %#lx\n", debugstr_w(url), hr);
+        return hr;
+    }
+
+    hr = MFCreateMFByteStreamOnStream(stream, out);
+    IStream_Release(stream);
+    if (FAILED(hr))
+        return hr;
+
+    IMFByteStream_QueryInterface(*out, &IID_IMFAttributes, (void **)&attributes);
+    IMFAttributes_DeleteItem(attributes, &MF_BYTESTREAM_ORIGIN_NAME);
+    IMFAttributes_SetString(attributes, &MF_BYTESTREAM_EFFECTIVE_URL, url);
+    IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"application/octet-stream");
+    IMFAttributes_Release(attributes);
+    return hr;
+}
+
+HRESULT urlmon_scheme_handler_construct(REFIID riid, void **obj)
+{
+    struct scheme_handler *handler;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
+
+    if (!(handler = calloc(1, sizeof(*handler))))
+        return E_OUTOFMEMORY;
+
+    handler->IMFSchemeHandler_iface.lpVtbl = &scheme_handler_vtbl;
+    handler->IMFAsyncCallback_iface.lpVtbl = &scheme_handler_callback_vtbl;
+    handler->refcount = 1;
+    list_init(&handler->results);
+    InitializeCriticalSection(&handler->cs);
+    handler->create_stream = urlmon_stream_create;
 
     hr = IMFSchemeHandler_QueryInterface(&handler->IMFSchemeHandler_iface, riid, obj);
     IMFSchemeHandler_Release(&handler->IMFSchemeHandler_iface);

@@ -6472,7 +6472,7 @@ static void test_scheme_resolvers(void)
     for (i = 0; i < ARRAY_SIZE(urls); i++)
     {
         hr = IMFSourceResolver_CreateObjectFromURL(resolver, urls[i], MF_RESOLUTION_BYTESTREAM, NULL, &type, &object);
-        todo_wine
+        todo_wine_if(i >= 2)
         ok(hr == S_OK, "got hr %#lx\n", hr);
         if (hr != S_OK)
             continue;
@@ -6485,7 +6485,6 @@ static void test_scheme_resolvers(void)
         PropVariantInit(&propvar);
         hr = IMFAttributes_GetItem(attributes, &MF_BYTESTREAM_EFFECTIVE_URL, &propvar);
         ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "got hr %#lx\n", hr);
-        todo_wine
         ok(!wcsncmp(expect_domain[i], propvar.pwszVal, wcslen(expect_domain[i]))
                 || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */,
                 "got url %s\n", debugstr_w(propvar.pwszVal));
@@ -6493,7 +6492,6 @@ static void test_scheme_resolvers(void)
         ok(hr == S_OK, "got hr %#lx\n", hr);
 
         hr = IMFAttributes_GetItem(attributes, &MF_BYTESTREAM_CONTENT_TYPE, NULL);
-        todo_wine
         ok(hr == S_OK, "got hr %#lx\n", hr);
         hr = IMFAttributes_GetItem(attributes, &MF_BYTESTREAM_LAST_MODIFIED_TIME, NULL);
         todo_wine
