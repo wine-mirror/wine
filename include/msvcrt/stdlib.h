@@ -216,6 +216,7 @@ _ACRTIMP ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 _ACRTIMP lldiv_t       __cdecl lldiv(__int64,__int64);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl exit(int);
 _ACRTIMP char*         __cdecl getenv(const char*);
+_ACRTIMP errno_t       __cdecl getenv_s(size_t*,char*,size_t,const char*);
 _ACRTIMP __msvcrt_long __cdecl labs(__msvcrt_long);
 _ACRTIMP __int64       __cdecl llabs(__int64);
 _ACRTIMP int           __cdecl mblen(const char*,size_t);
@@ -255,6 +256,16 @@ static inline long double strtold(const char *string, char **endptr) { return _s
 #endif /* _UCRT */
 
 #ifdef __cplusplus
+extern "C++" {
+
+template <size_t size>
+inline errno_t getenv_s(size_t *ret, char (&buf)[size], const char *var)
+{
+    return getenv_s(ret, buf, size, var);
+}
+
+} /* extern "C++" */
+
 }
 #endif
 

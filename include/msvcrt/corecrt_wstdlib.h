@@ -24,6 +24,7 @@ _ACRTIMP wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
 _ACRTIMP errno_t       __cdecl _ultow_s(__msvcrt_ulong, wchar_t*, size_t, int);
 _ACRTIMP wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 _ACRTIMP wchar_t*      __cdecl _wgetenv(const wchar_t*);
+_ACRTIMP errno_t       __cdecl _wgetenv_s(size_t *,wchar_t *,size_t,const wchar_t *);
 _ACRTIMP void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 _ACRTIMP int           __cdecl _wmakepath_s(wchar_t*,size_t,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 _ACRTIMP void          __cdecl _wperror(const wchar_t*);
@@ -63,6 +64,16 @@ _ACRTIMP unsigned __int64 __cdecl wcstoull(const wchar_t*,wchar_t**,int);
 _ACRTIMP unsigned __int64 __cdecl _wcstoull_l(const wchar_t*,wchar_t**,int,_locale_t);
 
 #ifdef __cplusplus
+extern "C++" {
+
+template <size_t size>
+inline errno_t _wgetenv_s(size_t *ret, wchar_t (&buf)[size], const wchar_t *var)
+{
+    return _wgetenv_s(ret, buf, size, var);
+}
+
+} /* extern "C++" */
+
 }
 #endif
 
