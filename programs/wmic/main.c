@@ -19,6 +19,7 @@
 
 #define COBJMACROS
 
+#include <locale.h>
 #include <stdio.h>
 #include "windows.h"
 #include "ocidl.h"
@@ -64,7 +65,6 @@ static const WCHAR *find_class( const WCHAR *alias )
 
 static int WINAPIV output_string( HANDLE handle, const WCHAR *msg, ... )
 {
-    BOOL output = GetStdHandle(STD_OUTPUT_HANDLE) == handle;
     static const WCHAR bomW[] = {0xfeff};
     static BOOL bom;
     va_list va_args;
@@ -78,7 +78,7 @@ static int WINAPIV output_string( HANDLE handle, const WCHAR *msg, ... )
 
     if (!WriteConsoleW( handle, buffer, len, &count, NULL ))
     {
-        if (output && !bom)
+        if (!bom)
         {
             WriteFile( handle, bomW, sizeof(bomW), &bom_count, FALSE );
             bom = TRUE;
@@ -94,7 +94,7 @@ static int output_error( int msg )
     WCHAR buffer[8192];
 
     LoadStringW( GetModuleHandleW(NULL), msg, buffer, ARRAY_SIZE(buffer));
-    return output_string( GetStdHandle(STD_ERROR_HANDLE), L"%s", buffer );
+    return fwprintf( stderr, L"%s", buffer );
 }
 
 static int output_text( const WCHAR *str, ULONG column_width )
@@ -339,6 +339,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 {
     const WCHAR *class, *value;
     int i;
+
+    setlocale( LC_ALL, "" );
 
     for (i = 1; i < argc && argv[i][0] == '/'; i++)
         WINE_FIXME( "command line switch %s not supported\n", debugstr_w(argv[i]) );
