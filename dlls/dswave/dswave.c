@@ -86,7 +86,6 @@ static ULONG WINAPI IUnknownImpl_Release(IUnknown *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-        DSWAVE_UnlockModule();
     }
 
     return ref;
@@ -191,7 +190,6 @@ HRESULT create_dswave(REFIID lpcGUID, void **ppobj)
     obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
     obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-    DSWAVE_LockModule();
     hr = IUnknown_QueryInterface(&obj->IUnknown_iface, lpcGUID, ppobj);
     IUnknown_Release(&obj->IUnknown_iface);
     return hr;

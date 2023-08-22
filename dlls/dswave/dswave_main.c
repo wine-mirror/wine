@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dswave);
 
-LONG DSWAVE_refCount = 0;
-
 typedef struct {
         IClassFactory IClassFactory_iface;
 } IClassFactoryImpl;
@@ -70,15 +68,11 @@ static HRESULT WINAPI WaveCF_QueryInterface(IClassFactory * iface, REFIID riid, 
 
 static ULONG WINAPI WaveCF_AddRef(IClassFactory * iface)
 {
-	DSWAVE_LockModule();
-
 	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WaveCF_Release(IClassFactory * iface)
 {
-	DSWAVE_UnlockModule();
-
 	return 1; /* non-heap based object */
 }
 
@@ -98,12 +92,6 @@ static HRESULT WINAPI WaveCF_CreateInstance(IClassFactory * iface, IUnknown *out
 static HRESULT WINAPI WaveCF_LockServer(IClassFactory * iface, BOOL dolock)
 {
 	TRACE("(%d)\n", dolock);
-
-	if (dolock)
-		DSWAVE_LockModule();
-	else
-		DSWAVE_UnlockModule();
-	
 	return S_OK;
 }
 
@@ -116,17 +104,6 @@ static const IClassFactoryVtbl WaveCF_Vtbl = {
 };
 
 static IClassFactoryImpl Wave_CF = {{&WaveCF_Vtbl}};
-
-/******************************************************************
- *		DllCanUnloadNow (DSWAVE.@)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-	return DSWAVE_refCount != 0 ? S_FALSE : S_OK;
-}
-
 
 /******************************************************************
  *		DllGetClassObject (DSWAVE.@)
