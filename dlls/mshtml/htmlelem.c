@@ -7374,8 +7374,6 @@ struct token_list {
     DispatchEx dispex;
     IWineDOMTokenList IWineDOMTokenList_iface;
     IHTMLElement *element;
-
-    LONG ref;
 };
 
 static inline struct token_list *impl_from_IWineDOMTokenList(IWineDOMTokenList *iface)
@@ -7393,7 +7391,7 @@ static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID
         *ppv = &token_list->IWineDOMTokenList_iface;
     }else if(IsEqualGUID(&IID_IWineDOMTokenList, riid)) {
         *ppv = &token_list->IWineDOMTokenList_iface;
-    }else if(dispex_query_interface_no_cc(&token_list->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&token_list->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
@@ -7408,7 +7406,7 @@ static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID
 static ULONG WINAPI token_list_AddRef(IWineDOMTokenList *iface)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-    LONG ref = InterlockedIncrement(&token_list->ref);
+    LONG ref = dispex_ref_incr(&token_list->dispex);
 
     TRACE("(%p) ref=%ld\n", token_list, ref);
 
@@ -7418,12 +7416,9 @@ static ULONG WINAPI token_list_AddRef(IWineDOMTokenList *iface)
 static ULONG WINAPI token_list_Release(IWineDOMTokenList *iface)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-    LONG ref = InterlockedDecrement(&token_list->ref);
+    LONG ref = dispex_ref_decr(&token_list->dispex);
 
     TRACE("(%p) ref=%ld\n", token_list, ref);
-
-    if(!ref)
-        release_dispex(&token_list->dispex);
 
     return ref;
 }
@@ -7742,6 +7737,13 @@ static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, struct token_list, dispex);
 }
 
+static void token_list_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+    if(token_list->element)
+        note_cc_edge((nsISupports*)token_list->element, "element", cb);
+}
+
 static void token_list_unlink(DispatchEx *dispex)
 {
     struct token_list *token_list = token_list_from_DispatchEx(dispex);
@@ -7830,6 +7832,7 @@ static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
     .destructor       = token_list_destructor,
+    .traverse         = token_list_traverse,
     .unlink           = token_list_unlink,
     .value            = token_list_value,
     .get_dispid       = token_list_get_dispid,
@@ -7860,7 +7863,6 @@ static HRESULT create_token_list(compat_mode_t compat_mode, IHTMLElement *elemen
     }
 
     obj->IWineDOMTokenList_iface.lpVtbl = &WineDOMTokenListVtbl;
-    obj->ref = 1;
     init_dispatch(&obj->dispex, (IUnknown*)&obj->IWineDOMTokenList_iface, &token_list_dispex, compat_mode);
     IHTMLElement_AddRef(element);
     obj->element = element;
