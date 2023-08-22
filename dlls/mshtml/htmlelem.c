@@ -529,8 +529,6 @@ typedef struct {
     IHTMLRect IHTMLRect_iface;
     IHTMLRect2 IHTMLRect2_iface;
 
-    LONG ref;
-
     nsIDOMClientRect *nsrect;
 } HTMLRect;
 
@@ -551,7 +549,7 @@ static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, voi
         *ppv = &This->IHTMLRect_iface;
     }else if (IsEqualGUID(&IID_IHTMLRect2, riid)) {
         *ppv = &This->IHTMLRect2_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
@@ -566,7 +564,7 @@ static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, voi
 static ULONG WINAPI HTMLRect_AddRef(IHTMLRect *iface)
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -576,12 +574,9 @@ static ULONG WINAPI HTMLRect_AddRef(IHTMLRect *iface)
 static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -840,6 +835,13 @@ static inline HTMLRect *HTMLRect_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLRect, dispex);
 }
 
+static void HTMLRect_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
+    if(This->nsrect)
+        note_cc_edge((nsISupports*)This->nsrect, "nsrect", cb);
+}
+
 static void HTMLRect_unlink(DispatchEx *dispex)
 {
     HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
@@ -860,6 +862,7 @@ void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
 static const dispex_static_data_vtbl_t HTMLRect_dispex_vtbl = {
     .destructor       = HTMLRect_destructor,
+    .traverse         = HTMLRect_traverse,
     .unlink           = HTMLRect_unlink
 };
 
@@ -885,7 +888,6 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_m
 
     rect->IHTMLRect_iface.lpVtbl = &HTMLRectVtbl;
     rect->IHTMLRect2_iface.lpVtbl = &HTMLRect2Vtbl;
-    rect->ref = 1;
 
     init_dispatch(&rect->dispex, (IUnknown*)&rect->IHTMLRect_iface, &HTMLRect_dispex, compat_mode);
 
