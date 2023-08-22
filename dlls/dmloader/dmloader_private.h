@@ -44,11 +44,6 @@
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-/* dmloader.dll global (for DllCanUnloadNow) */
-extern LONG module_ref;
-static inline void lock_module(void) { InterlockedIncrement( &module_ref ); }
-static inline void unlock_module(void) { InterlockedDecrement( &module_ref ); }
-
 /*****************************************************************************
  * Interfaces
  */

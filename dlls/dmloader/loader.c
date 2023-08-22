@@ -157,7 +157,6 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
         for (i = 0; i < ARRAY_SIZE(classes); i++)
             HeapFree(GetProcessHeap(), 0, This->search_paths[i]);
         HeapFree(GetProcessHeap(), 0, This);
-        unlock_module();
     }
 
     return ref;
@@ -939,8 +938,6 @@ HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
 	if (!IsEqualGUID(&Desc.guidObject, &GUID_DefaultGMCollection)) {
                 dls->bInvalidDefaultDLS = TRUE;
 	}
-
-        lock_module();
 
 	return IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
 }

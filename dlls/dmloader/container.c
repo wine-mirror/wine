@@ -137,7 +137,6 @@ static ULONG WINAPI IDirectMusicContainerImpl_Release(IDirectMusicContainer *ifa
         if (This->pStream)
             destroy_dmcontainer(This);
         HeapFree(GetProcessHeap(), 0, This);
-        unlock_module();
     }
 
     return ref;
@@ -665,8 +664,6 @@ HRESULT create_dmcontainer(REFIID lpcGUID, void **ppobj)
         obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 	obj->pContainedObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pContainedObjects);
-
-	lock_module();
 
         hr = IDirectMusicContainer_QueryInterface(&obj->IDirectMusicContainer_iface, lpcGUID, ppobj);
         IDirectMusicContainer_Release(&obj->IDirectMusicContainer_iface);
