@@ -335,8 +335,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
 
-    LONG ref;
-
     DOMEvent *event;
     VARIANT return_value;
 } HTMLEventObj;
@@ -356,7 +354,7 @@ static HRESULT WINAPI HTMLEventObj_QueryInterface(IHTMLEventObj *iface, REFIID r
         *ppv = &This->IHTMLEventObj_iface;
     }else if(IsEqualGUID(&IID_IHTMLEventObj, riid)) {
         *ppv = &This->IHTMLEventObj_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -371,7 +369,7 @@ static HRESULT WINAPI HTMLEventObj_QueryInterface(IHTMLEventObj *iface, REFIID r
 static ULONG WINAPI HTMLEventObj_AddRef(IHTMLEventObj *iface)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -381,12 +379,9 @@ static ULONG WINAPI HTMLEventObj_AddRef(IHTMLEventObj *iface)
 static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -873,6 +868,13 @@ static inline HTMLEventObj *HTMLEventObj_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, dispex);
 }
 
+static void HTMLEventObj_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLEventObj *This = HTMLEventObj_from_DispatchEx(dispex);
+    if(This->event)
+        note_cc_edge((nsISupports*)&This->event->IDOMEvent_iface, "event", cb);
+}
+
 static void HTMLEventObj_unlink(DispatchEx *dispex)
 {
     HTMLEventObj *This = HTMLEventObj_from_DispatchEx(dispex);
@@ -891,6 +893,7 @@ static void HTMLEventObj_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLEventObj_dispex_vtbl = {
     .destructor       = HTMLEventObj_destructor,
+    .traverse         = HTMLEventObj_traverse,
     .unlink           = HTMLEventObj_unlink
 };
 
@@ -915,7 +918,6 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
         return NULL;
 
     event_obj->IHTMLEventObj_iface.lpVtbl = &HTMLEventObjVtbl;
-    event_obj->ref = 1;
     event_obj->event = event;
     if(event)
         IDOMEvent_AddRef(&event->IDOMEvent_iface);
