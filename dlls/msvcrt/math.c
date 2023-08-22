@@ -1195,7 +1195,7 @@ int CDECL __control87_2( unsigned int newval, unsigned int mask,
 unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 {
     unsigned int flags = 0;
-#ifdef __i386__
+#if defined(__i386__) && (_MSVCR_VER == 0 || _MSVCR_VER >= 80)
     unsigned int sse2_cw;
 
     __control87_2( newval, mask, &flags, &sse2_cw );
