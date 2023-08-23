@@ -1198,6 +1198,32 @@ static void testWaitForConsoleInput(HANDLE input_handle)
     CloseHandle(complete_event);
 }
 
+static BOOL filter_spurious_event(HANDLE input)
+{
+    INPUT_RECORD ir;
+    DWORD r;
+
+    if (!ReadConsoleInputW(input, &ir, 1, &r) || r != 1) return FALSE;
+
+    switch (ir.EventType)
+    {
+    case MOUSE_EVENT:
+        if (ir.Event.MouseEvent.dwEventFlags == MOUSE_MOVED) return TRUE;
+        ok(0, "Unexcepted mouse message: state=%lx ctrl=%lx flags=%lx (%u, %u)\n",
+           ir.Event.MouseEvent.dwButtonState,
+           ir.Event.MouseEvent.dwControlKeyState,
+           ir.Event.MouseEvent.dwEventFlags,
+           ir.Event.MouseEvent.dwMousePosition.X,
+           ir.Event.MouseEvent.dwMousePosition.Y);
+        break;
+    case WINDOW_BUFFER_SIZE_EVENT:
+        return TRUE;
+    default:
+        ok(0, "Unexpected message %u\n", ir.EventType);
+    }
+    return FALSE;
+}
+
 static void test_wait(HANDLE input, HANDLE orig_output)
 {
     HANDLE output, unbound_output, unbound_input;
@@ -1221,25 +1247,47 @@ static void test_wait(HANDLE input, HANDLE orig_output)
 
     ret = SetConsoleActiveScreenBuffer(output);
     ok(ret, "SetConsoleActiveScreenBuffer failed: %lu\n", GetLastError());
-    FlushConsoleInputBuffer(input);
+    ret = FlushConsoleInputBuffer(input);
+    ok(ret, "FlushConsoleInputBuffer failed: %lu\n", GetLastError());
 
     unbound_output = create_unbound_handle(TRUE, TRUE);
     unbound_input = create_unbound_handle(FALSE, TRUE);
 
-    res = WaitForSingleObject(input, 0);
+    while ((res = WaitForSingleObject(input, 0)) == WAIT_OBJECT_0)
+    {
+        if (!filter_spurious_event(input)) break;
+    }
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
-    res = WaitForSingleObject(output, 0);
+    while ((res = WaitForSingleObject(output, 0)) == WAIT_OBJECT_0)
+    {
+        if (!filter_spurious_event(input)) break;
+    }
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
-    res = WaitForSingleObject(orig_output, 0);
+    while ((res = WaitForSingleObject(orig_output, 0)) == WAIT_OBJECT_0)
+    {
+        if (!filter_spurious_event(input)) break;
+    }
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
-    res = WaitForSingleObject(unbound_output, 0);
+    while ((res = WaitForSingleObject(unbound_output, 0)) == WAIT_OBJECT_0)
+    {
+        if (!filter_spurious_event(unbound_input)) break;
+    }
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
-    res = WaitForSingleObject(unbound_input, 0);
+    while ((res = WaitForSingleObject(unbound_input, 0)) == WAIT_OBJECT_0)
+    {
+        if (!filter_spurious_event(unbound_input)) break;
+    }
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %lx\n", res);
-    status = NtWaitForSingleObject(input, FALSE, &zero);
+    while ((status = NtWaitForSingleObject(input, FALSE, &zero)) == STATUS_SUCCESS)
+    {
+        if (!filter_spurious_event(input)) break;
+    }
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %lx\n", status);
-    status = NtWaitForSingleObject(output, FALSE, &zero);
+    while ((status = NtWaitForSingleObject(output, FALSE, &zero)) == STATUS_SUCCESS)
+    {
+        if (!filter_spurious_event(input)) break;
+    }
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %lx\n", status);
 
