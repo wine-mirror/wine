@@ -2380,7 +2380,7 @@ static void test__get_current_locale(void)
     ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     ok(l->locinfo->lc_time_curr->refcount == 1, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
     ok(l2->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l2->locinfo->lc_time_curr->unk);
-    ok(l2->locinfo->lc_time_curr->refcount == 3 || broken(l2->locinfo->lc_time_curr->refcount == 2),
+    ok(l2->locinfo->lc_time_curr->refcount == 2,
             "refcount = %d\n", l2->locinfo->lc_time_curr->refcount);
 
     p__free_locale(l2);
@@ -2491,6 +2491,10 @@ START_TEST(msvcr90)
     if(!init())
         return;
 
+    /* _get_current_locale tests needs to be run first because there's
+     * a C-locale refcount leak in native _create_locale implementation. */
+    test__get_current_locale();
+
     test__initterm_e();
     test__encode_pointer();
     test_error_messages();
@@ -2526,7 +2530,6 @@ START_TEST(msvcr90)
     test___strncnt();
     test_swscanf();
     test____mb_cur_max_l_func();
-    test__get_current_locale();
     test_ioinfo_flags();
     test_strcmp();
 }

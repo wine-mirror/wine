@@ -68,7 +68,7 @@ __lc_time_data cloc_time_data =
 #if _MSVCR_VER < 110
     MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
 #endif
-    1, 0,
+    1, -1,
 #if _MSVCR_VER == 0 || _MSVCR_VER >= 100
     {{L"Sun", L"Mon", L"Tue", L"Wed", L"Thu", L"Fri", L"Sat",
       L"Sunday", L"Monday", L"Tuesday", L"Wednesday", L"Thursday", L"Friday", L"Saturday",
