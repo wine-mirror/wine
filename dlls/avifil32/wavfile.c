@@ -169,19 +169,19 @@ static ULONG WINAPI IUnknown_fnRelease(IUnknown *iface)
         if (This->fDirty)
             AVIFILE_SaveFile(This);
 
-        HeapFree(GetProcessHeap(), 0, This->lpFormat);
+        free(This->lpFormat);
         This->lpFormat = NULL;
         This->cbFormat = 0;
-        HeapFree(GetProcessHeap(), 0, This->extra.lp);
+        free(This->extra.lp);
         This->extra.lp = NULL;
         This->extra.cb = 0;
-        HeapFree(GetProcessHeap(), 0, This->szFileName);
+        free(This->szFileName);
         This->szFileName = NULL;
         if (This->hmmio) {
             mmioClose(This->hmmio, 0);
             This->hmmio = NULL;
         }
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -388,7 +388,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile *iface, DWORD fccType, LO
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
 
-  HeapFree(GetProcessHeap(), 0, This->lpFormat);
+  free(This->lpFormat);
   This->lpFormat = NULL;
   This->cbFormat = 0;
 
@@ -492,7 +492,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface, LPCOLESTR pszFile
   This->uMode = dwMode;
 
   len = lstrlenW(pszFileName) + 1;
-  This->szFileName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+  This->szFileName = malloc(len * sizeof(WCHAR));
   if (This->szFileName == NULL)
     return AVIERR_MEMORY;
   lstrcpyW(This->szFileName, pszFileName);
@@ -504,7 +504,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface, LPCOLESTR pszFile
     LPSTR szFileName;
     len = WideCharToMultiByte(CP_ACP, 0, This->szFileName, -1,
                               NULL, 0, NULL, NULL);
-    szFileName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
+    szFileName = malloc(len * sizeof(CHAR));
     if (szFileName == NULL)
       return AVIERR_MEMORY;
 
@@ -512,7 +512,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface, LPCOLESTR pszFile
 			len, NULL, NULL);
 
     This->hmmio = mmioOpenA(szFileName, NULL, MMIO_ALLOCBUF | dwMode);
-    HeapFree(GetProcessHeap(), 0, szFileName);
+    free(szFileName);
     if (This->hmmio == NULL)
       return AVIERR_FILEOPEN;
   }
@@ -741,7 +741,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream *iface, LONG pos, void *
     return AVIERR_READONLY;
 
   /* get memory for format and copy it */
-  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, formatsize);
+  This->lpFormat = malloc(formatsize);
   if (This->lpFormat == NULL)
     return AVIERR_MEMORY;
 
@@ -982,7 +982,7 @@ HRESULT AVIFILE_CreateWAVFile(IUnknown *outer_unk, REFIID riid, void **ret_iface
 
     *ret_iface = NULL;
 
-    pfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pfile));
+    pfile = calloc(1, sizeof(*pfile));
     if (!pfile)
         return AVIERR_MEMORY;
 
@@ -1028,7 +1028,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
     return AVIERR_FILEREAD;
 
   /* get memory for format and read it */
-  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, ck.cksize);
+  This->lpFormat = malloc(ck.cksize);
   if (This->lpFormat == NULL)
     return AVIERR_FILEREAD;
   This->cbFormat = ck.cksize;
@@ -1117,7 +1117,7 @@ static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This)
     This->cbFormat = sizeof(WAVEFORMATEX); break;
   };
 
-  This->lpFormat = HeapAlloc(GetProcessHeap(), 0, This->cbFormat);
+  This->lpFormat = malloc(This->cbFormat);
   if (This->lpFormat == NULL)
     return AVIERR_MEMORY;
 
