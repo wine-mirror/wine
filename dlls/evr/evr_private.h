@@ -51,9 +51,9 @@ static inline const char *debugstr_normalized_rect(const MFVideoNormalizedRect *
     return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom);
 }
 
-HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
-HRESULT evr_mixer_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
-HRESULT evr_presenter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
+HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv);
+HRESULT evr_mixer_create(IUnknown *outer_unk, void **ppv);
+HRESULT evr_presenter_create(IUnknown *outer_unk, void **ppv);
 
 HRESULT create_video_sample_allocator(BOOL lock_notify_release, REFIID riid, void **obj);
 
