@@ -769,8 +769,14 @@ static void testCtrlHandler(void)
     ok(WaitForSingleObject(mch_event, 3000) == WAIT_OBJECT_0, "event sending didn't work\n");
     CloseHandle(mch_event);
 
+    ok(SetConsoleCtrlHandler(NULL, FALSE), "Couldn't turn on ctrl-c handling\n");
+    ok((RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags & 1) == 0,
+       "Unexpect ConsoleFlags value %lx\n", RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags);
+
     /* Turning off ctrl-c handling doesn't work on win9x such way ... */
     ok(SetConsoleCtrlHandler(NULL, TRUE), "Couldn't turn off ctrl-c handling\n");
+    ok((RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags & 1) != 0,
+       "Unexpect ConsoleFlags value %lx\n", RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags);
     mch_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     mch_count = 0;
     if(!(GetVersion() & 0x80000000))
@@ -4959,6 +4965,7 @@ static DWORD check_child_console_bits(const char* exec, DWORD flags, enum inheri
 #define CP_GROUP_LEADER  0x10   /* whether the child is the process group leader */
 #define CP_INPUT_VALID   0x20   /* whether StdHandle(INPUT) is a valid console handle */
 #define CP_OUTPUT_VALID  0x40   /* whether StdHandle(OUTPUT) is a valid console handle */
+#define CP_ENABLED_CTRLC 0x80   /* whether the ctrl-c handling isn't blocked */
 
 #define CP_OWN_CONSOLE (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_INPUT_VALID | CP_OUTPUT_VALID | CP_ALONE)
 #define CP_INH_CONSOLE (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_INPUT_VALID | CP_OUTPUT_VALID)
@@ -4971,6 +4978,7 @@ static void test_CreateProcessCUI(void)
     char **argv;
     BOOL res;
     int i;
+    BOOL saved_console_flags;
 
     static struct
     {
@@ -5041,6 +5049,36 @@ static void test_CreateProcessCUI(void)
         {TRUE,  DETACHED_PROCESS | CREATE_NO_WINDOW,   STARTUPINFO_STD, CP_INPUT_VALID | CP_OUTPUT_VALID, .is_broken = 0x100},
 /*35*/  {TRUE,  CREATE_NEW_CONSOLE | CREATE_NO_WINDOW, STARTUPINFO_STD, CP_OWN_CONSOLE | CP_WITH_WINDOW,  .is_broken = CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE},
     };
+    static struct group_flags_tests
+    {
+        /* input */
+        BOOL use_cui;
+        DWORD cp_flags;
+        enum inheritance_model inherit;
+        BOOL noctrl_flag;
+        /* output */
+        DWORD expected;
+        BOOL is_todo;
+    }
+    group_flags_tests[] =
+    {
+/*  0 */ {TRUE,  0,                        CONSOLE_STD,     TRUE,   CP_INH_CONSOLE | CP_WITH_WINDOW},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     TRUE,   CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER, .is_todo = TRUE},
+         {TRUE,  0,                        CONSOLE_STD,     FALSE,  CP_INH_CONSOLE | CP_WITH_WINDOW | CP_ENABLED_CTRLC},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     FALSE,  CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER, .is_todo = TRUE},
+         {TRUE,  0,                        STARTUPINFO_STD, TRUE,   CP_INH_CONSOLE | CP_WITH_WINDOW},
+/*  5 */ {TRUE,  CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, TRUE,   CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER, .is_todo = TRUE},
+         {TRUE,  0,                        STARTUPINFO_STD, FALSE,  CP_INH_CONSOLE | CP_WITH_WINDOW | CP_ENABLED_CTRLC},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, FALSE,  CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER, .is_todo = TRUE},
+         {FALSE, 0,                        CONSOLE_STD,     TRUE,   0, .is_todo = TRUE},
+         {FALSE, CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     TRUE,   CP_GROUP_LEADER, .is_todo = TRUE},
+/* 10 */ {FALSE, 0,                        CONSOLE_STD,     FALSE,  CP_ENABLED_CTRLC, .is_todo = TRUE},
+         {FALSE, CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     FALSE,  CP_GROUP_LEADER, .is_todo = TRUE},
+         {FALSE, 0,                        STARTUPINFO_STD, TRUE,   0, .is_todo = TRUE},
+         {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, TRUE,   CP_GROUP_LEADER, .is_todo = TRUE},
+         {FALSE, 0,                        STARTUPINFO_STD, FALSE,  CP_ENABLED_CTRLC, .is_todo = TRUE},
+/* 15 */ {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, FALSE,  CP_GROUP_LEADER, .is_todo = TRUE},
+    };
 
     hstd[0] = GetStdHandle(STD_INPUT_HANDLE);
     hstd[1] = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -5079,6 +5117,25 @@ static void test_CreateProcessCUI(void)
            "[%d] Unexpected result %x (%lx)\n",
            i, res, with_console_tests[i].expected);
     }
+
+    saved_console_flags = RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags;
+
+    for (i = 0; i < ARRAY_SIZE(group_flags_tests); i++)
+    {
+        res = SetConsoleCtrlHandler(NULL, group_flags_tests[i].noctrl_flag);
+        ok(res, "Couldn't set ctrl handler\n");
+        res = check_child_console_bits(group_flags_tests[i].use_cui ? cuiexec : guiexec,
+                                       group_flags_tests[i].cp_flags,
+                                       group_flags_tests[i].inherit);
+        todo_wine_if(group_flags_tests[i].is_todo)
+        ok(res == group_flags_tests[i].expected ||
+           /* Win7 doesn't report group id */
+           broken(res == (group_flags_tests[i].expected & ~CP_GROUP_LEADER)),
+           "[%d] Unexpected result %x (%lx)\n",
+           i, res, group_flags_tests[i].expected);
+    }
+
+    RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags = saved_console_flags;
 
     DeleteFileA(guiexec);
     DeleteFileA(cuiexec);
@@ -5133,6 +5190,8 @@ START_TEST(console)
             exit_code |= CP_INPUT_VALID;
         if (GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)) == FILE_TYPE_CHAR)
             exit_code |= CP_OUTPUT_VALID;
+        if (!(RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags & 1))
+            exit_code |= CP_ENABLED_CTRLC;
         ExitProcess(exit_code);
     }
 
