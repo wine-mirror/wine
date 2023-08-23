@@ -18,6 +18,6 @@
 #ifndef __NETCFG_PRIVATE_H__
 #define __NETCFG_PRIVATE_H__
 
-extern HRESULT INetCfg_CreateInstance(IUnknown **ppUnk) DECLSPEC_HIDDEN;
+extern HRESULT INetCfg_CreateInstance(IUnknown **ppUnk);
 
 #endif
