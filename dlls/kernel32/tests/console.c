@@ -5124,7 +5124,10 @@ START_TEST(console)
         if (IsWindow(GetConsoleWindow())) exit_code |= CP_WITH_WINDOW;
         if (pGetConsoleProcessList && GetConsoleProcessList(&pcslist, 1) == 1)
             exit_code |= CP_ALONE;
-        if (RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId == GetCurrentProcessId())
+        if (RtlGetCurrentPeb()->ProcessParameters->Size >=
+            offsetof(RTL_USER_PROCESS_PARAMETERS, ProcessGroupId) +
+            sizeof(RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId) &&
+            RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId == GetCurrentProcessId())
             exit_code |= CP_GROUP_LEADER;
         if (GetFileType(GetStdHandle(STD_INPUT_HANDLE)) == FILE_TYPE_CHAR)
             exit_code |= CP_INPUT_VALID;
