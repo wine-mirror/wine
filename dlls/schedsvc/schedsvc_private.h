@@ -19,15 +19,15 @@
 #ifndef __WINE_SCHEDSVC_PRIVATE_H__
 #define __WINE_SCHEDSVC_PRIVATE_H__
 
-void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
-void add_job(const WCHAR *name) DECLSPEC_HIDDEN;
-void remove_job(const WCHAR *name) DECLSPEC_HIDDEN;
-void check_task_state(void) DECLSPEC_HIDDEN;
-void add_process_to_queue(HANDLE hproc) DECLSPEC_HIDDEN;
-void update_process_status(DWORD pid) DECLSPEC_HIDDEN;
-BOOL get_next_runtime(LARGE_INTEGER *rt) DECLSPEC_HIDDEN;
-void check_task_time(void) DECLSPEC_HIDDEN;
-void load_at_tasks(void) DECLSPEC_HIDDEN;
-void check_missed_task_time(void) DECLSPEC_HIDDEN;
+void schedsvc_auto_start(void);
+void add_job(const WCHAR *name);
+void remove_job(const WCHAR *name);
+void check_task_state(void);
+void add_process_to_queue(HANDLE hproc);
+void update_process_status(DWORD pid);
+BOOL get_next_runtime(LARGE_INTEGER *rt);
+void check_task_time(void);
+void load_at_tasks(void);
+void check_missed_task_time(void);
 
 #endif /* __WINE_SCHEDSVC_PRIVATE_H__ */

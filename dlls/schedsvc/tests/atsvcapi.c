@@ -177,7 +177,7 @@ skip_tests:
     ok(hr == RPC_S_OK, "RpcBindingFree error %#lx\n", hr);
 }
 
-DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
+handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
     unsigned char *binding_str;
@@ -194,7 +194,7 @@ DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
     return rpc_handle;
 }
 
-DECLSPEC_HIDDEN void __RPC_USER ATSVC_HANDLE_unbind(ATSVC_HANDLE ServerName, handle_t rpc_handle)
+void __RPC_USER ATSVC_HANDLE_unbind(ATSVC_HANDLE ServerName, handle_t rpc_handle)
 {
     RpcBindingFree(&rpc_handle);
 }
