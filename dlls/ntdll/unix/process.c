@@ -441,7 +441,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
     {
         if (!(pid = fork()))  /* grandchild */
         {
-            if (params->ConsoleFlags ||
+            if ((peb->ProcessParameters && params->ProcessGroupId != peb->ProcessParameters->ProcessGroupId) ||
                 params->ConsoleHandle == CONSOLE_HANDLE_ALLOC ||
                 params->ConsoleHandle == CONSOLE_HANDLE_ALLOC_NO_WINDOW ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
@@ -620,7 +620,7 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, int unixdir,
         {
             close( fd[0] );
 
-            if (params->ConsoleFlags ||
+            if ((peb->ProcessParameters && params->ProcessGroupId != peb->ProcessParameters->ProcessGroupId) ||
                 params->ConsoleHandle == CONSOLE_HANDLE_ALLOC ||
                 params->ConsoleHandle == CONSOLE_HANDLE_ALLOC_NO_WINDOW ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))

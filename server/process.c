@@ -1358,7 +1358,10 @@ DECL_HANDLER(new_process)
         /* debug_children is set to 1 by default */
     }
 
-    if (!info->data->console_flags) process->group_id = parent->group_id;
+    if (info->data->process_group_id == parent->group_id)
+        process->group_id = parent->group_id;
+    else
+        info->data->process_group_id = process->group_id;
 
     info->process = (struct process *)grab_object( process );
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, 0 );

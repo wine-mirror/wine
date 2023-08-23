@@ -1823,6 +1823,7 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
     wow64_params->dwFillAttribute = params->dwFillAttribute;
     wow64_params->dwFlags         = params->dwFlags;
     wow64_params->wShowWindow     = params->wShowWindow;
+    wow64_params->ProcessGroupId  = params->ProcessGroupId;
 
     dst = (WCHAR *)(wow64_params + 1);
     dup_unicode_string( &params->CurrentDirectory.DosPath, &dst, &wow64_params->CurrentDirectory.DosPath );
@@ -1981,6 +1982,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     params->Size            = size;
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params->wShowWindow     = 1; /* SW_SHOWNORMAL */
+    params->ProcessGroupId  = GetCurrentProcessId();
 
     params->CurrentDirectory.DosPath.Buffer = (WCHAR *)(params + 1);
     wcscpy( params->CurrentDirectory.DosPath.Buffer, get_dos_path( curdir ));
@@ -2079,6 +2081,7 @@ void init_startup_info(void)
     params->dwFillAttribute = info->attribute;
     params->dwFlags         = info->flags;
     params->wShowWindow     = info->show;
+    params->ProcessGroupId  = info->process_group_id;
 
     src = (WCHAR *)(info + 1);
     dst = (WCHAR *)(params + 1);
@@ -2169,6 +2172,7 @@ void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCES
     info->attribute     = params->dwFillAttribute;
     info->flags         = params->dwFlags;
     info->show          = params->wShowWindow;
+    info->process_group_id = params->ProcessGroupId;
 
     ptr = info + 1;
     info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );

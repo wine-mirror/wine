@@ -187,7 +187,11 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
     }
     RtlFreeUnicodeString( &newdirW );
 
-    if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
+    if (flags & CREATE_NEW_PROCESS_GROUP)
+        params->ConsoleFlags = 1;
+    else
+        params->ProcessGroupId = NtCurrentTeb()->Peb->ProcessParameters->ProcessGroupId;
+
     if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = CONSOLE_HANDLE_ALLOC;
     else if (!(flags & DETACHED_PROCESS))
     {

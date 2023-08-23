@@ -208,6 +208,7 @@ typedef struct
     unsigned int attribute;
     unsigned int flags;
     unsigned int show;
+    process_id_t process_group_id;
     data_size_t  curdir_len;
     data_size_t  dllpath_len;
     data_size_t  imagepath_len;
@@ -6456,7 +6457,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 780
+#define SERVER_PROTOCOL_VERSION 781
 
 /* ### protocol_version end ### */
 

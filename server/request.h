@@ -721,7 +721,7 @@ C_ASSERT( sizeof(property_data_t) == 16 );
 C_ASSERT( sizeof(rectangle_t) == 16 );
 C_ASSERT( sizeof(select_op_t) == 264 );
 C_ASSERT( sizeof(short int) == 2 );
-C_ASSERT( sizeof(startup_info_t) == 92 );
+C_ASSERT( sizeof(startup_info_t) == 96 );
 C_ASSERT( sizeof(struct filesystem_event) == 12 );
 C_ASSERT( sizeof(struct handle_info) == 20 );
 C_ASSERT( sizeof(struct luid) == 8 );

@@ -960,10 +960,11 @@ static void dump_varargs_startup_info( const char *prefix, data_size_t size )
 
     fprintf( stderr,
              "%s{debug_flags=%x,console_flags=%x,console=%04x,hstdin=%04x,hstdout=%04x,hstderr=%04x,"
-             "x=%u,y=%u,xsize=%u,ysize=%u,xchars=%u,ychars=%u,attribute=%02x,flags=%x,show=%u",
+             "x=%u,y=%u,xsize=%u,ysize=%u,xchars=%u,ychars=%u,attribute=%02x,flags=%x,show=%u,"
+             "process_group_id=%u",
              prefix, info.debug_flags, info.console_flags, info.console,
              info.hstdin, info.hstdout, info.hstderr, info.x, info.y, info.xsize, info.ysize,
-             info.xchars, info.ychars, info.attribute, info.flags, info.show );
+             info.xchars, info.ychars, info.attribute, info.flags, info.show, info.process_group_id );
     pos = dump_inline_unicode_string( ",curdir=L\"", pos, info.curdir_len, size );
     pos = dump_inline_unicode_string( "\",dllpath=L\"", pos, info.dllpath_len, size );
     pos = dump_inline_unicode_string( "\",imagepath=L\"", pos, info.imagepath_len, size );
