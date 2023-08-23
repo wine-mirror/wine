@@ -9,6 +9,7 @@ SOURCES = \
 	version.rc \
 	wayland.c \
 	wayland_output.c \
+	wayland_pointer.c \
 	wayland_surface.c \
 	waylanddrv_main.c \
 	window.c \

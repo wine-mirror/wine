@@ -66,6 +66,8 @@ struct wayland
     struct wl_compositor *wl_compositor;
     struct xdg_wm_base *xdg_wm_base;
     struct wl_shm *wl_shm;
+    struct wl_seat *wl_seat;
+    struct wl_pointer *wl_pointer;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
@@ -166,6 +168,13 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
                                                    struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
 void wayland_window_flush(HWND hwnd) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Wayland pointer
+ */
+
+void wayland_pointer_init(struct wl_pointer *wl_pointer) DECLSPEC_HIDDEN;
+void wayland_pointer_deinit(void) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Helpers

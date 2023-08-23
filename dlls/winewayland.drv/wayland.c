@@ -54,6 +54,29 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener =
 };
 
 /**********************************************************************
+ *          wl_seat handling
+ */
+
+static void wl_seat_handle_capabilities(void *data, struct wl_seat *seat,
+                                        enum wl_seat_capability caps)
+{
+    if ((caps & WL_SEAT_CAPABILITY_POINTER) && !process_wayland.wl_pointer)
+        wayland_pointer_init(wl_seat_get_pointer(seat));
+    else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && process_wayland.wl_pointer)
+        wayland_pointer_deinit();
+}
+
+static void wl_seat_handle_name(void *data, struct wl_seat *seat, const char *name)
+{
+}
+
+static const struct wl_seat_listener seat_listener =
+{
+    wl_seat_handle_capabilities,
+    wl_seat_handle_name
+};
+
+/**********************************************************************
  *          Registry handling
  */
 
@@ -98,6 +121,17 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     {
         process_wayland.wl_shm = wl_registry_bind(registry, id, &wl_shm_interface, 1);
     }
+    else if (strcmp(interface, "wl_seat") == 0)
+    {
+        if (process_wayland.wl_seat)
+        {
+            WARN("Only a single seat is currently supported, ignoring additional seats.\n");
+            return;
+        }
+        process_wayland.wl_seat = wl_registry_bind(registry, id, &wl_seat_interface,
+                                                   version < 5 ? version : 5);
+        wl_seat_add_listener(process_wayland.wl_seat, &seat_listener, NULL);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -115,6 +149,15 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
             wayland_output_destroy(output);
             return;
         }
+    }
+
+    if (process_wayland.wl_seat &&
+        wl_proxy_get_id((struct wl_proxy *)process_wayland.wl_seat) == id)
+    {
+        TRACE("removing seat\n");
+        if (process_wayland.wl_pointer) wayland_pointer_deinit();
+        wl_seat_release(process_wayland.wl_seat);
+        process_wayland.wl_seat = NULL;
     }
 }
 
