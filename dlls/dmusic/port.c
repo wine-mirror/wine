@@ -22,7 +22,6 @@
 #include <assert.h>
 #include "dmusic_private.h"
 #include "dmobject.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -104,8 +103,8 @@ static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release(LPDIRECTMUSICDO
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This->data);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->data);
+        free(This);
         DMUSIC_UnlockModule();
     }
 
@@ -131,7 +130,7 @@ static HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDown
 {
     IDirectMusicDownloadedInstrumentImpl *object;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
     {
         *instrument = NULL;
@@ -202,7 +201,7 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
            IDirectSoundBuffer_Release(This->dsbuffer);
         if (This->dsound)
            IDirectSound_Release(This->dsound);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     DMUSIC_UnlockModule();
@@ -255,7 +254,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     IDirectMusicInstrumentImpl *instrument_object;
     HRESULT ret;
-    BOOL free;
+    BOOL on_heap;
     HANDLE download;
     DMUS_DOWNLOADINFO *info;
     DMUS_OFFSETTABLE *offset_table;
@@ -276,7 +275,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
     nb_regions = instrument_object->header.cRegions;
     size = sizeof(DMUS_DOWNLOADINFO) + sizeof(ULONG) * (1 + nb_regions) + sizeof(DMUS_INSTRUMENT) + sizeof(DMUS_REGION) * nb_regions;
 
-    data = HeapAlloc(GetProcessHeap(), 0, size);
+    data = malloc(size);
     if (!data)
         return E_OUTOFMEMORY;
 
@@ -317,7 +316,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
         region->WLOOP[0] = instrument_object->regions[i].wave_loop;
     }
 
-    ret = IDirectMusicSynth8_Download(This->synth, &download, (VOID*)data, &free);
+    ret = IDirectMusicSynth8_Download(This->synth, &download, (void*)data, &on_heap);
 
     if (SUCCEEDED(ret))
         ret = DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(downloaded_instrument);
@@ -331,7 +330,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
     }
 
     *downloaded_instrument = NULL;
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     return E_FAIL;
 }
@@ -349,7 +348,7 @@ static HRESULT WINAPI synth_port_UnloadInstrument(IDirectMusicPort *iface,
     if (!downloaded_object->downloaded)
         return DMUS_E_NOT_DOWNLOADED_TO_PORT;
 
-    HeapFree(GetProcessHeap(), 0, downloaded_object->data);
+    free(downloaded_object->data);
     downloaded_object->data = NULL;
     downloaded_object->downloaded = FALSE;
 
@@ -779,7 +778,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
 
     *port = NULL;
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
     if (!obj)
         return E_OUTOFMEMORY;
 
@@ -843,7 +842,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
         IDirectMusicSynth_Release(obj->synth);
     if (obj->synth_sink)
         IDirectMusicSynthSink_Release(obj->synth_sink);
-    HeapFree(GetProcessHeap(), 0, obj);
+    free(obj);
 
     return hr;
 }
@@ -902,7 +901,7 @@ static ULONG WINAPI midi_IDirectMusicPort_Release(IDirectMusicPort *iface)
     if (!ref) {
         if (This->clock)
             IReferenceClock_Release(This->clock);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1124,7 +1123,7 @@ static HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *para
     struct midi_port *obj;
     HRESULT hr;
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+    if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
 
     obj->IDirectMusicPort_iface.lpVtbl = &midi_port_vtbl;
@@ -1133,7 +1132,7 @@ static HRESULT midi_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *para
 
     hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (void **)&obj->clock, NULL);
     if (hr != S_OK) {
-        HeapFree(GetProcessHeap(), 0, obj);
+        free(obj);
         return hr;
     }
 

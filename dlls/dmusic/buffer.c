@@ -69,8 +69,8 @@ static ULONG WINAPI IDirectMusicBufferImpl_Release(LPDIRECTMUSICBUFFER iface)
     TRACE("(%p): new ref = %lu\n", iface, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This->data);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->data);
+        free(This);
         DMUSIC_UnlockModule();
     }
 
@@ -300,7 +300,7 @@ HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_i
 
     *ret_iface = NULL;
 
-    dmbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBufferImpl));
+    dmbuffer = calloc(1, sizeof(IDirectMusicBufferImpl));
     if (!dmbuffer)
         return E_OUTOFMEMORY;
 
@@ -313,9 +313,9 @@ HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_i
         dmbuffer->format = desc->guidBufferFormat;
     dmbuffer->size = (desc->cbBuffer + 3) & ~3; /* Buffer size must be multiple of 4 bytes */
 
-    dmbuffer->data = HeapAlloc(GetProcessHeap(), 0, dmbuffer->size);
+    dmbuffer->data = malloc(dmbuffer->size);
     if (!dmbuffer->data) {
-        HeapFree(GetProcessHeap(), 0, dmbuffer);
+        free(dmbuffer);
         return E_OUTOFMEMORY;
     }
 

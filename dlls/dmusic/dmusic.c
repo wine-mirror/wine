@@ -23,7 +23,6 @@
 
 #include "dmusic_private.h"
 #include "dmobject.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -75,7 +74,7 @@ static ULONG WINAPI master_IReferenceClock_Release(IReferenceClock *iface)
     TRACE("(%p) ref = %lu\n", iface, ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -136,7 +135,7 @@ static HRESULT master_clock_create(IReferenceClock **clock)
 
     TRACE("(%p)\n", clock);
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+    if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
 
     obj->IReferenceClock_iface.lpVtbl = &master_clock_vtbl;
@@ -199,9 +198,9 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
         IReferenceClock_Release(This->master_clock);
         if (This->dsound)
             IDirectSound_Release(This->dsound);
-        HeapFree(GetProcessHeap(), 0, This->system_ports);
-        HeapFree(GetProcessHeap(), 0, This->ports);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->system_ports);
+        free(This->ports);
+        free(This);
         DMUSIC_UnlockModule();
     }
 
@@ -283,12 +282,7 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort(LPDIRECTMUSIC8 iface, REFCLSI
                  return hr;
             }
             This->num_ports++;
-            if (!This->ports)
-                This->ports = HeapAlloc(GetProcessHeap(), 0,
-                        sizeof(*This->ports) * This->num_ports);
-            else
-                This->ports = HeapReAlloc(GetProcessHeap(), 0, This->ports,
-                        sizeof(*This->ports) * This->num_ports);
+            This->ports = realloc(This->ports, sizeof(*This->ports) * This->num_ports);
             This->ports[This->num_ports - 1] = new_port;
             *port = new_port;
             return S_OK;
@@ -320,15 +314,14 @@ void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port)
     }
 
     if (!--dmusic->num_ports) {
-        HeapFree(GetProcessHeap(), 0, dmusic->ports);
+        free(dmusic->ports);
         dmusic->ports = NULL;
         return;
     }
 
     memmove(&dmusic->ports[i], &dmusic->ports[i + 1],
             (dmusic->num_ports - i) * sizeof(*dmusic->ports));
-    dmusic->ports = HeapReAlloc(GetProcessHeap(), 0, dmusic->ports,
-            sizeof(*dmusic->ports) * dmusic->num_ports);
+    dmusic->ports = realloc(dmusic->ports, sizeof(*dmusic->ports) * dmusic->num_ports);
 }
 
 static HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock(LPDIRECTMUSIC8 iface, DWORD index, LPDMUS_CLOCKINFO clock_info)
@@ -517,7 +510,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     nb_midi_in = midiInGetNumDevs();
     nb_ports = 1 /* midi mapper */ + nb_midi_out + nb_midi_in + 1 /* synth port */;
 
-    port = object->system_ports = HeapAlloc(GetProcessHeap(), 0, nb_ports * sizeof(port_info));
+    port = object->system_ports = malloc(nb_ports * sizeof(port_info));
     if (!object->system_ports)
         return;
 
@@ -599,7 +592,7 @@ HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *un
     if (unkouter)
         return CLASS_E_NOAGGREGATION;
 
-    dmusic = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusic8Impl));
+    dmusic = calloc(1, sizeof(IDirectMusic8Impl));
     if (!dmusic)
         return E_OUTOFMEMORY;
 
@@ -607,7 +600,7 @@ HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *un
     dmusic->ref = 1;
     ret = master_clock_create(&dmusic->master_clock);
     if (FAILED(ret)) {
-        HeapFree(GetProcessHeap(), 0, dmusic);
+        free(dmusic);
         return ret;
     }
 
