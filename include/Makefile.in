@@ -906,6 +906,7 @@ SOURCES = \
 	windows.media.faceanalysis.idl \
 	windows.media.idl \
 	windows.media.mediaproperties.idl \
+	windows.media.playback.idl \
 	windows.media.render.idl \
 	windows.media.speechrecognition.idl \
 	windows.media.speechsynthesis.idl \

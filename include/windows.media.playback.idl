@@ -1,0 +1,396 @@
+/*
+ * Copyright (C) 2025 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.devices.enumeration.idl";
+import "windows.foundation.numerics.idl";
+import "windows.graphics.directx.direct3d11.idl";
+import "windows.media.idl";
+/* import "windows.media.audio.idl"; */
+/* import "windows.media.casting.idl"; */
+import "windows.media.core.idl";
+import "windows.media.mediaproperties.idl";
+/* import "windows.media.protection.idl"; */
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
+import "windows.ui.composition.idl";
+
+namespace Windows.Media.Playback {
+    typedef enum MediaPlayerError MediaPlayerError;
+    typedef enum MediaPlayerState MediaPlayerState;
+
+    interface IBackgroundMediaPlayerStatics;
+    interface IMediaPlayer;
+    interface IMediaPlayerDataReceivedEventArgs;
+    interface IMediaPlayerFailedEventArgs;
+    interface IMediaPlayerRateChangedEventArgs;
+    interface IPlaybackMediaMarker;
+    interface IPlaybackMediaMarkerFactory;
+    interface IPlaybackMediaMarkerReachedEventArgs;
+    interface IPlaybackMediaMarkerSequence;
+
+    runtimeclass BackgroundMediaPlayer;
+    runtimeclass MediaPlayer;
+    runtimeclass MediaPlayerDataReceivedEventArgs;
+    runtimeclass MediaPlayerFailedEventArgs;
+    runtimeclass MediaPlayerRateChangedEventArgs;
+    runtimeclass PlaybackMediaMarker;
+    runtimeclass PlaybackMediaMarkerSequence;
+    runtimeclass PlaybackMediaMarkerReachedEventArgs;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.Playback.PlaybackMediaMarker *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Media.Playback.PlaybackMediaMarker *>;
+        interface Windows.Foundation.EventHandler<Windows.Media.Playback.MediaPlayerDataReceivedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.MediaPlayerFailedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.MediaPlayerRateChangedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.PlaybackMediaMarkerReachedEventArgs *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlayerError
+    {
+        Unknown            = 0,
+        Aborted            = 1,
+        NetworkError       = 2,
+        DecodingError      = 3,
+        SourceNotSupported = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        deprecated("Use MediaPlaybackState", deprecate, Windows.Foundation.UniversalApiContract, 3.0)
+    ]
+    enum MediaPlayerState
+    {
+        Closed    = 0,
+        Opening   = 1,
+        Buffering = 2,
+        Playing   = 3,
+        Paused    = 4,
+        Stopped   = 5,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.BackgroundMediaPlayer),
+        deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0),
+        uuid(856ddbc1-55f7-471f-a0f2-68ac4c904592)
+    ]
+    interface IBackgroundMediaPlayerStatics : IInspectable
+    {
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0), propget] HRESULT Current([out, retval] Windows.Media.Playback.MediaPlayer **player);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0), eventadd] HRESULT MessageReceivedFromBackground(
+            [in] Windows.Foundation.EventHandler<Windows.Media.Playback.MediaPlayerDataReceivedEventArgs *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0), eventremove] HRESULT MessageReceivedFromBackground([in] EventRegistrationToken token);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0), eventadd] HRESULT MessageReceivedFromForeground(
+            [in] Windows.Foundation.EventHandler<Windows.Media.Playback.MediaPlayerDataReceivedEventArgs *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0), eventremove] HRESULT MessageReceivedFromForeground([in] EventRegistrationToken token);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0)] HRESULT SendMessageToBackground([in] Windows.Foundation.Collections.ValueSet *value);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0)] HRESULT SendMessageToForeground([in] Windows.Foundation.Collections.ValueSet *value);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0)] HRESULT IsMediaPlaying([out, retval] boolean *value);
+        [deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0)] HRESULT Shutdown();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.MediaPlayer),
+        uuid(381a83cb-6fff-499b-8d64-2885dfc1249e)
+    ]
+    interface IMediaPlayer : IInspectable
+    {
+        [propget] HRESULT AutoPlay([out, retval] boolean *value);
+        [propput] HRESULT AutoPlay([in] boolean value);
+        [deprecated("Use PlaybackSession.NaturalDuration", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT NaturalDuration([out, retval] Windows.Foundation.TimeSpan *value);
+        [deprecated("Use PlaybackSession.Position", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT Position([out, retval] Windows.Foundation.TimeSpan *value);
+        [deprecated("Use PlaybackSession.Position", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propput] HRESULT Position([in] Windows.Foundation.TimeSpan value);
+        [deprecated("Use PlaybackSession.BufferingProgress", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT BufferingProgress([out, retval] DOUBLE *value);
+        [deprecated("Use PlaybackSession.State", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT CurrentState([out, retval] Windows.Media.Playback.MediaPlayerState *value);
+        [deprecated("Use PlaybackSession.CanSeek", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT CanSeek([out, retval] boolean *value);
+        [deprecated("Use PlaybackSession.CanPause", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT CanPause([out, retval] boolean *value);
+        [propget] HRESULT IsLoopingEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsLoopingEnabled([in] boolean value);
+        [deprecated("Use PlaybackSession.IsProtected", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT IsProtected([out, retval] boolean *value);
+        [propget] HRESULT IsMuted([out, retval] boolean *value);
+        [propput] HRESULT IsMuted([in] boolean value);
+        [deprecated("Use PlaybackSession.PlaybackRate", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propget] HRESULT PlaybackRate([out, retval] DOUBLE *value);
+        [deprecated("Use PlaybackSession.PlaybackRate", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [propput] HRESULT PlaybackRate([in] DOUBLE value);
+        [propget] HRESULT Volume([out, retval] DOUBLE *value);
+        [propput] HRESULT Volume([in] DOUBLE value);
+        [deprecated("Use media tracks on MediaPlaybackItem", deprecate, Windows.Foundation.UniversalApiContract, 2.0)]
+        [propget] HRESULT PlaybackMediaMarkers([out, retval] Windows.Media.Playback.PlaybackMediaMarkerSequence **value);
+        [eventadd] HRESULT MediaOpened(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT MediaOpened([in] EventRegistrationToken token);
+        [eventadd] HRESULT MediaEnded(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT MediaEnded([in] EventRegistrationToken token);
+        [eventadd] HRESULT MediaFailed(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.MediaPlayerFailedEventArgs *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT MediaFailed([in] EventRegistrationToken token);
+        [deprecated("Use PlaybackSession.PlaybackStateChanged", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventadd] HRESULT CurrentStateChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use PlaybackSession.PlaybackStateChanged", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventremove] HRESULT CurrentStateChanged([in] EventRegistrationToken token);
+        [deprecated("Use media tracks on MediaPlaybackItem", deprecate, Windows.Foundation.UniversalApiContract, 2.0)]
+        [eventadd] HRESULT PlaybackMediaMarkerReached(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.PlaybackMediaMarkerReachedEventArgs *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use media tracks on MediaPlaybackItem", deprecate, Windows.Foundation.UniversalApiContract, 2.0)]
+        [eventremove] HRESULT PlaybackMediaMarkerReached([in] EventRegistrationToken token);
+        [deprecated("Use PlaybackSession.PlaybackRateChanged", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventadd] HRESULT MediaPlayerRateChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, Windows.Media.Playback.MediaPlayerRateChangedEventArgs *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use PlaybackSession.PlaybackRateChanged", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventremove] HRESULT MediaPlayerRateChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT VolumeChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT VolumeChanged([in] EventRegistrationToken token);
+        [deprecated("Use PlaybackSession.SeekCompleted", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventadd] HRESULT SeekCompleted(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use PlaybackSession.SeekCompleted", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventremove] HRESULT SeekCompleted([in] EventRegistrationToken token);
+        [deprecated("Use PlaybackSession.BufferingStarted", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventadd] HRESULT BufferingStarted(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use PlaybackSession.BufferingStarted", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventremove] HRESULT BufferingStarted([in] EventRegistrationToken token);
+        [deprecated("Use PlaybackSession.BufferingEnded", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventadd] HRESULT BufferingEnded(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Playback.MediaPlayer *, IInspectable *> *value,
+            [out, retval] EventRegistrationToken *token
+        );
+        [deprecated("Use PlaybackSession.BufferingEnded", deprecate, Windows.Foundation.UniversalApiContract, 3.0)]
+        [eventremove] HRESULT BufferingEnded([in] EventRegistrationToken token);
+        HRESULT Play();
+        HRESULT Pause();
+        [deprecated("Use Source", deprecate, Windows.Foundation.UniversalApiContract, 2.0)]
+        HRESULT SetUriSource([in] Windows.Foundation.Uri *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.MediaPlayerDataReceivedEventArgs),
+        uuid(c75a9405-c801-412a-835b-83fc0e622a8e)
+    ]
+    interface IMediaPlayerDataReceivedEventArgs : IInspectable
+    {
+        [propget] HRESULT Data([out, retval] Windows.Foundation.Collections.ValueSet **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.MediaPlayerFailedEventArgs),
+        uuid(2744e9b9-a7e3-4f16-bac4-7914ebc08301)
+    ]
+    interface IMediaPlayerFailedEventArgs : IInspectable
+    {
+        [propget] HRESULT Error([out, retval] Windows.Media.Playback.MediaPlayerError *value);
+        [propget] HRESULT ExtendedErrorCode([out, retval] HRESULT *value);
+        [propget] HRESULT ErrorMessage([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.MediaPlayerRateChangedEventArgs),
+        uuid(40600d58-3b61-4bb2-989f-fc65608b6cab)
+    ]
+    interface IMediaPlayerRateChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT NewRate([out, retval] DOUBLE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.PlaybackMediaMarker),
+        uuid(c4d22f5c-3c1c-4444-b6b9-778b0422d41a)
+    ]
+    interface IPlaybackMediaMarker : IInspectable
+    {
+        [propget] HRESULT Time([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT MediaMarkerType([out, retval] HSTRING *value);
+        [propget] HRESULT Text([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.PlaybackMediaMarker),
+        uuid(8c530a78-e0ae-4e1a-a8c8-e23f982a937b)
+    ]
+    interface IPlaybackMediaMarkerFactory : IInspectable
+    {
+        HRESULT CreateFromTime([in] Windows.Foundation.TimeSpan value, [out, retval] Windows.Media.Playback.PlaybackMediaMarker **marker);
+        HRESULT Create([in] Windows.Foundation.TimeSpan value, [in] HSTRING media_market_type, [in] HSTRING text, [out, retval] Windows.Media.Playback.PlaybackMediaMarker **marker);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.PlaybackMediaMarkerReachedEventArgs),
+        uuid(578cd1b9-90e2-4e60-abc4-8740b01f6196)
+    ]
+    interface IPlaybackMediaMarkerReachedEventArgs : IInspectable
+    {
+        [propget] HRESULT PlaybackMediaMarker([out, retval] Windows.Media.Playback.PlaybackMediaMarker **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Playback.PlaybackMediaMarkerSequence),
+        uuid(f2810cee-638b-46cf-8817-1d111fe9d8c4)
+    ]
+    interface IPlaybackMediaMarkerSequence : IInspectable
+        requires Windows.Foundation.Collections.IIterable<Windows.Media.Playback.PlaybackMediaMarker *>
+    {
+        [propget] HRESULT Size([out, retval] UINT32 *value);
+        HRESULT Insert([in] Windows.Media.Playback.PlaybackMediaMarker *value);
+        HRESULT Clear();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        deprecated("Use MediaPlayer", deprecate, Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.Playback.IBackgroundMediaPlayerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass BackgroundMediaPlayer
+    {
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 3.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MediaPlayer
+    {
+        [default] interface Windows.Media.Playback.IMediaPlayer;
+        /* interface Windows.Media.Playback.IMediaPlayerSource; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.Playback.IMediaPlayerSource2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.Playback.IMediaPlayer2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.Media.Playback.IMediaPlayerEffects; */
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Foundation.IClosable;
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.Playback.IMediaPlayer3; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.Playback.IMediaPlayer4; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.Playback.IMediaPlayerEffects2; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.Playback.IMediaPlayer5; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Media.Playback.IMediaPlayer6; */
+        /* [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Media.Playback.IMediaPlayer7; */
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass MediaPlayerDataReceivedEventArgs
+    {
+        [default] interface Windows.Media.Playback.IMediaPlayerDataReceivedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass MediaPlayerFailedEventArgs
+    {
+        [default] interface Windows.Media.Playback.IMediaPlayerFailedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass MediaPlayerRateChangedEventArgs
+    {
+        [default] interface Windows.Media.Playback.IMediaPlayerRateChangedEventArgs;
+    }
+
+    [
+        activatable(Windows.Media.Playback.IPlaybackMediaMarkerFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PlaybackMediaMarker
+    {
+        [default] interface Windows.Media.Playback.IPlaybackMediaMarker;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PlaybackMediaMarkerSequence
+    {
+        [default] interface Windows.Media.Playback.IPlaybackMediaMarkerSequence;
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.Playback.PlaybackMediaMarker *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PlaybackMediaMarkerReachedEventArgs
+    {
+        [default] interface Windows.Media.Playback.IPlaybackMediaMarkerReachedEventArgs;
+    }
+}
