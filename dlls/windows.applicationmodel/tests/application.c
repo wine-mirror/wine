@@ -26,8 +26,25 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "initguid.h"
+#include "winstring.h"
+
+#include "roapi.h"
+
+#define WINE_WINRT_TEST
+#include "winrt_test.h"
 
 int main( int argc, char const *argv[] )
 {
+    HRESULT hr;
+
+    if (!winrt_test_init()) return -1;
+
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
+
+    RoUninitialize();
+
+    winrt_test_exit();
     return 0;
 }

@@ -37,6 +37,7 @@
 #include "windows.management.deployment.h"
 
 #include "wine/test.h"
+#include "winrt_test.h"
 
 #define DEFINE_ASYNC_COMPLETED_HANDLER( name, iface_type, async_type )                              \
     struct name                                                                                     \
@@ -192,6 +193,9 @@ static void check_async_info_( int line, void *async, AsyncStatus expect_status,
 
 DEFINE_ASYNC_COMPLETED_HANDLER( async_deployment_result_handler, IAsyncOperationWithProgressCompletedHandler_DeploymentResult_DeploymentProgress,
                                 IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress )
+DEFINE_ASYNC_COMPLETED_HANDLER( async_applist_handler, IAsyncOperationCompletedHandler_IVectorView_AppListEntry,
+                                IAsyncOperation_IVectorView_AppListEntry )
+DEFINE_ASYNC_COMPLETED_HANDLER( async_boolean_handler, IAsyncOperationCompletedHandler_boolean, IAsyncOperation_boolean )
 
 static HRESULT uri_create( const WCHAR *uri, IUriRuntimeClass **out )
 {
@@ -371,6 +375,53 @@ static void test_remove_package( IPackageManager *manager, IPackage *package )
     IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress_Release( operation );
 }
 
+static void test_execute_package( IPackage *package )
+{
+    IAsyncOperation_IVectorView_AppListEntry *async_list;
+    IAsyncOperation_boolean *async_launch;
+    IVectorView_AppListEntry *list;
+    IAppListEntry *app_entry;
+    IPackage3 *package3;
+    boolean launched;
+    HRESULT hr;
+    UINT res;
+
+    if (!winrt_test_init()) return;
+
+    hr = IPackage_QueryInterface( package, &IID_IPackage3, (void **)&package3 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IPackage3_GetAppListEntriesAsync( package3, &async_list );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    res = await_IAsyncOperation_IVectorView_AppListEntry( async_list, 5000 );
+    ok( res == 0, "await_IAsyncOperation_IVectorView_AppListEntry returned %#x.\n", res );
+    check_async_info( async_list, Completed, S_OK );
+    hr = IAsyncOperation_IVectorView_AppListEntry_GetResults( async_list, &list );
+    ok( hr == S_OK, "GetResults returned %#lx\n", hr );
+    IAsyncOperation_IVectorView_AppListEntry_Release( async_list );
+
+    hr = IVectorView_AppListEntry_GetAt( list, 0, &app_entry );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IVectorView_AppListEntry_Release( list );
+
+    IPackage3_Release( package3 );
+
+
+    hr = IAppListEntry_LaunchAsync( app_entry, &async_launch );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    res = await_IAsyncOperation_boolean( async_launch, 5000 );
+    ok( res == 0, "await_IAsyncOperation_boolean returned %#x.\n", res );
+    check_async_info( async_launch, Completed, S_OK );
+
+    hr = IAsyncOperation_boolean_GetResults( async_launch, &launched );
+    ok( hr == S_OK, "GetResults returned %#lx\n", hr );
+    ok( launched == TRUE, "got launched %u.\n", launched );
+
+    IAppListEntry_Release( app_entry );
+
+    winrt_test_exit();
+}
+
 static void test_PackageManager(void)
 {
     static const WCHAR *statics_name = RuntimeClass_Windows_Management_Deployment_PackageManager;
@@ -442,6 +493,7 @@ static void test_PackageManager(void)
 
     if (SUCCEEDED(test_register_package( manager, &package )))
     {
+        test_execute_package( package );
         test_remove_package( manager, package );
         IPackage_Release( package );
     }
