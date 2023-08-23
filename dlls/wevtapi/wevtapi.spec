@@ -2,7 +2,7 @@
 @ stub EvtCancel
 @ stub EvtClearLog
 @ stdcall EvtClose(ptr)
-@ stub EvtCreateBookmark
+@ stdcall EvtCreateBookmark(wstr)
 @ stub EvtCreateRenderContext
 @ stdcall EvtExportLog(ptr wstr wstr wstr long)
 @ stub EvtFormatMessage
