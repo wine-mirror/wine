@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_BackgroundMediaPlayer_Statics(void)
 {
     static const WCHAR *background_media_player_statics_name = L"Windows.Media.Playback.BackgroundMediaPlayer";
+    IBackgroundMediaPlayerStatics *background_media_player_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
@@ -69,6 +70,11 @@ static void test_BackgroundMediaPlayer_Statics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IBackgroundMediaPlayerStatics, (void **)&background_media_player_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IBackgroundMediaPlayerStatics_Release( background_media_player_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(playback);
 struct background_media_player_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IBackgroundMediaPlayerStatics IBackgroundMediaPlayerStatics_iface;
     LONG ref;
 };
 
@@ -47,6 +48,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IBackgroundMediaPlayerStatics ))
+    {
+        *out = &impl->IBackgroundMediaPlayerStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -110,9 +118,92 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( background_media_player_statics, IBackgroundMediaPlayerStatics, struct background_media_player_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI background_media_player_statics_get_Current( IBackgroundMediaPlayerStatics *iface, IMediaPlayer **player )
+{
+    FIXME( "iface %p, player %p stub!\n", iface, player );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_add_MessageReceivedFromBackground( IBackgroundMediaPlayerStatics *iface,
+                                                                                         IEventHandler_MediaPlayerDataReceivedEventArgs *value,
+                                                                                         EventRegistrationToken *token )
+{
+    FIXME( "iface %p, value %p, token %p stub!\n", iface, value, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_remove_MessageReceivedFromBackground( IBackgroundMediaPlayerStatics *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_add_MessageReceivedFromForeground( IBackgroundMediaPlayerStatics *iface,
+                                                                                         IEventHandler_MediaPlayerDataReceivedEventArgs *value,
+                                                                                         EventRegistrationToken *token )
+{
+    FIXME( "iface %p, value %p, token %p stub!\n", iface, value, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_remove_MessageReceivedFromForeground( IBackgroundMediaPlayerStatics *iface, EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_SendMessageToBackground( IBackgroundMediaPlayerStatics *iface, IPropertySet *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_SendMessageToForeground( IBackgroundMediaPlayerStatics *iface, IPropertySet *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_IsMediaPlaying( IBackgroundMediaPlayerStatics *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI background_media_player_statics_Shutdown( IBackgroundMediaPlayerStatics *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct IBackgroundMediaPlayerStaticsVtbl background_media_player_statics_vtbl =
+{
+    /* IUnknown methods */
+    background_media_player_statics_QueryInterface,
+    background_media_player_statics_AddRef,
+    background_media_player_statics_Release,
+    /* IInspectable methods */
+    background_media_player_statics_GetIids,
+    background_media_player_statics_GetRuntimeClassName,
+    background_media_player_statics_GetTrustLevel,
+    /* IBackgroundMediaPlayerStatics methods */
+    background_media_player_statics_get_Current,
+    background_media_player_statics_add_MessageReceivedFromBackground,
+    background_media_player_statics_remove_MessageReceivedFromBackground,
+    background_media_player_statics_add_MessageReceivedFromForeground,
+    background_media_player_statics_remove_MessageReceivedFromForeground,
+    background_media_player_statics_SendMessageToBackground,
+    background_media_player_statics_SendMessageToForeground,
+    background_media_player_statics_IsMediaPlaying,
+    background_media_player_statics_Shutdown,
+};
+
 static struct background_media_player_statics background_media_player_statics =
 {
     {&factory_vtbl},
+    {&background_media_player_statics_vtbl},
     1,
 };
 
