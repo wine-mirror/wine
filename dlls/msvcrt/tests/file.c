@@ -1929,6 +1929,10 @@ static void test_invalid_stdin( const char* selfname )
     ret = RegOpenCurrentUser(KEY_READ, &key);
     ok(!ret, "RegOpenCurrentUser failed: %lx\n", ret);
 
+    ret = DuplicateHandle(GetCurrentProcess(), key, GetCurrentProcess(),
+            (HANDLE *)&key, GENERIC_READ, TRUE, DUPLICATE_CLOSE_SOURCE);
+    ok(ret, "DuplicateHandle failed: %lx\n", GetLastError());
+
     sa.nLength = sizeof(sa);
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
