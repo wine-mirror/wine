@@ -30,7 +30,6 @@ static inline IDirectMusicSynthSinkImpl *impl_from_IDirectMusicSynthSink(IDirect
     return CONTAINING_RECORD(iface, IDirectMusicSynthSinkImpl, IDirectMusicSynthSink_iface);
 }
 
-/* IDirectMusicSynthSinkImpl IUnknown part: */
 static HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface(IDirectMusicSynthSink *iface,
         REFIID riid, void **ret_iface)
 {
@@ -88,7 +87,6 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(IDirectMusicSynthSink *ifa
     return ref;
 }
 
-/* IDirectMusicSynthSinkImpl IDirectMusicSynthSink part: */
 static HRESULT WINAPI IDirectMusicSynthSinkImpl_Init(IDirectMusicSynthSink *iface,
         IDirectMusicSynth *synth)
 {
@@ -295,7 +293,6 @@ static const IKsControlVtbl DMSynthSinkImpl_IKsControl_Vtbl = {
     DMSynthSinkImpl_IKsControl_KsEvent
 };
 
-/* for ClassFactory */
 HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
 {
     IDirectMusicSynthSinkImpl *obj;

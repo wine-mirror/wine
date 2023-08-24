@@ -33,7 +33,6 @@ static inline IDirectMusicSynth8Impl *impl_from_IDirectMusicSynth8(IDirectMusicS
     return CONTAINING_RECORD(iface, IDirectMusicSynth8Impl, IDirectMusicSynth8_iface);
 }
 
-/* IDirectMusicSynth8Impl IUnknown part: */
 static HRESULT WINAPI IDirectMusicSynth8Impl_QueryInterface(IDirectMusicSynth8 *iface, REFIID riid,
         void **ret_iface)
 {
@@ -90,7 +89,6 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release(IDirectMusicSynth8 *iface)
     return ref;
 }
 
-/* IDirectMusicSynth8Impl IDirectMusicSynth part: */
 static HRESULT WINAPI IDirectMusicSynth8Impl_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *params)
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
@@ -539,7 +537,6 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_GetAppend(IDirectMusicSynth8 *iface
     return S_OK;
 }
 
-/* IDirectMusicSynth8Impl IDirectMusicSynth8 part: */
 static HRESULT WINAPI IDirectMusicSynth8Impl_PlayVoice(IDirectMusicSynth8 *iface,
         REFERENCE_TIME ref_time, DWORD voice_id, DWORD channel_group, DWORD channel, DWORD dwDLId,
         LONG prPitch, LONG vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart,
@@ -725,7 +722,6 @@ static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
     DMSynthImpl_IKsControl_KsEvent
 };
 
-/* for ClassFactory */
 HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
 {
     IDirectMusicSynth8Impl *obj;
