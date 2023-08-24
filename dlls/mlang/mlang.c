@@ -830,7 +830,7 @@ static UINT ConvertJISJapaneseToUnicode(LPCSTR input, DWORD count,
 {
     CHAR *sjis_string;
     UINT rc = 0;
-    sjis_string = HeapAlloc(GetProcessHeap(),0,count);
+    sjis_string = malloc(count);
     rc = ConvertJIS2SJIS(input,count,sjis_string);
     if (rc)
     {
@@ -840,7 +840,7 @@ static UINT ConvertJISJapaneseToUnicode(LPCSTR input, DWORD count,
         else
             rc = MultiByteToWideChar(932,0,sjis_string,rc,0,0);
     }
-    HeapFree(GetProcessHeap(),0,sjis_string);
+    free(sjis_string);
     return rc;
 
 }
@@ -877,7 +877,7 @@ static UINT ConvertUnknownJapaneseToUnicode(LPCSTR input, DWORD count,
         break;
 
     case 50220:
-        sjis_string = HeapAlloc(GetProcessHeap(),0,count);
+        sjis_string = malloc(count);
         rc = ConvertJIS2SJIS(input,count,sjis_string);
         if (rc)
         {
@@ -887,7 +887,7 @@ static UINT ConvertUnknownJapaneseToUnicode(LPCSTR input, DWORD count,
             else
                 rc = MultiByteToWideChar(932,0,sjis_string,rc,0,0);
         }
-        HeapFree(GetProcessHeap(),0,sjis_string);
+        free(sjis_string);
         break;
     }
     return rc;
@@ -901,7 +901,7 @@ static UINT ConvertJapaneseUnicodeToJIS(LPCWSTR input, DWORD count,
     UINT rc = 0;
 
     len = WideCharToMultiByte(932,0,input,count,0,0,NULL,NULL);
-    sjis_string = HeapAlloc(GetProcessHeap(),0,len);
+    sjis_string = malloc(len);
     WideCharToMultiByte(932,0,input,count,sjis_string,len,NULL,NULL);
     TRACE("%s\n",debugstr_an(sjis_string,len));
 
@@ -910,7 +910,7 @@ static UINT ConvertJapaneseUnicodeToJIS(LPCWSTR input, DWORD count,
     {
         ConvertSJIS2JIS(sjis_string, len, output);
     }
-    HeapFree(GetProcessHeap(),0,sjis_string);
+    free(sjis_string);
     return rc;
 
 }
@@ -1120,12 +1120,12 @@ HRESULT WINAPI ConvertINetString(
         if (hr != S_OK)
             return hr;
 
-        pDstStrW = HeapAlloc(GetProcessHeap(), 0, cDstSizeW * sizeof(WCHAR));
+        pDstStrW = malloc(cDstSizeW * sizeof(WCHAR));
         hr = ConvertINetMultiByteToUnicode(pdwMode, dwSrcEncoding, pSrcStr, pcSrcSize, pDstStrW, &cDstSizeW);
         if (hr == S_OK)
             hr = ConvertINetUnicodeToMultiByte(pdwMode, dwDstEncoding, pDstStrW, &cDstSizeW, pDstStr, pcDstSize);
 
-        HeapFree(GetProcessHeap(), 0, pDstStrW);
+        free(pDstStrW);
         return hr;
     }
 }
@@ -1360,7 +1360,7 @@ static HRESULT map_font(HDC hdc, DWORD codepages, HFONT src_font, HFONT *dst_fon
             SelectObject(hdc, old_font);
             if (charset == charset_info.ciCharset)
             {
-                font_list_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_list_entry));
+                font_list_entry = malloc(sizeof(*font_list_entry));
                 if (font_list_entry == NULL) return E_OUTOFMEMORY;
 
                 font_list_entry->base_font = src_font;
@@ -1394,7 +1394,7 @@ static HRESULT release_font(HFONT font)
         {
             list_remove(&font_list_entry->list_entry);
             DeleteObject(font);
-            HeapFree(GetProcessHeap(), 0, font_list_entry);
+            free(font_list_entry);
             hr = S_OK;
             break;
         }
@@ -1414,7 +1414,7 @@ static HRESULT clear_font_cache(void)
     {
         list_remove(&font_list_entry->list_entry);
         DeleteObject(font_list_entry->font);
-        HeapFree(GetProcessHeap(), 0, font_list_entry);
+        free(font_list_entry);
     }
     LeaveCriticalSection(&font_cache_critical);
 
@@ -1479,7 +1479,7 @@ static ULONG WINAPI MLANGCF_Release(IClassFactory *iface)
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
-	HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -1551,7 +1551,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     TRACE("Creating a class factory for %s\n",object_creation[i].szClassName);
 
-    factory = HeapAlloc(GetProcessHeap(), 0, sizeof(*factory));
+    factory = malloc(sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
     factory->IClassFactory_iface.lpVtbl = &MLANGCF_Vtbl;
@@ -1634,8 +1634,8 @@ static ULONG WINAPI fnIEnumCodePage_Release(
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
-        HeapFree(GetProcessHeap(), 0, This->cpinfo);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->cpinfo);
+        free(This);
     }
 
     return ref;
@@ -1739,7 +1739,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
     if (!grfFlags) /* enumerate internal data base of encodings */
         grfFlags = MIMECONTF_MIME_LATEST;
 
-    ecp = HeapAlloc( GetProcessHeap(), 0, sizeof (EnumCodePage_impl) );
+    ecp = malloc(sizeof(EnumCodePage_impl));
     ecp->IEnumCodePage_iface.lpVtbl = &IEnumCodePage_vtbl;
     ecp->ref = 1;
     ecp->pos = 0;
@@ -1753,8 +1753,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
         }
     }
 
-    ecp->cpinfo = HeapAlloc(GetProcessHeap(), 0,
-                            sizeof(MIMECPINFO) * ecp->total);
+    ecp->cpinfo = malloc(sizeof(MIMECPINFO) * ecp->total);
     cpinfo = ecp->cpinfo;
 
     for (i = 0; i < ARRAY_SIZE(mlang_data); i++)
@@ -1827,8 +1826,8 @@ static ULONG WINAPI fnIEnumScript_Release(
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
-        HeapFree(GetProcessHeap(), 0, This->script_info);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->script_info);
+        free(This);
     }
 
     return ref;
@@ -1916,13 +1915,13 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
     if (!dwFlags) /* enumerate all available scripts */
         dwFlags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
 
-    es = HeapAlloc( GetProcessHeap(), 0, sizeof (EnumScript_impl) );
+    es = malloc(sizeof(EnumScript_impl));
     es->IEnumScript_iface.lpVtbl = &IEnumScript_vtbl;
     es->ref = 1;
     es->pos = 0;
     /* do not enumerate unicode flavours */
     es->total = ARRAY_SIZE(mlang_data) - 1;
-    es->script_info = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPTINFO) * es->total);
+    es->script_info = malloc(sizeof(SCRIPTINFO) * es->total);
 
     for (i = 0; i < es->total; i++)
     {
@@ -2290,8 +2289,8 @@ static ULONG WINAPI fnIEnumRfc1766_Release(
     if (ref == 0)
     {
         TRACE("Destroying %p\n", This);
-        HeapFree(GetProcessHeap(), 0, This->info);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->info);
+        free(This);
     }
     return ref;
 }
@@ -2393,7 +2392,7 @@ static BOOL CALLBACK enum_locales_proc(LPWSTR locale, DWORD flags, LPARAM lparam
     if (data->total >= data->allocated)
     {
         data->allocated *= 2;
-        data->info = HeapReAlloc(GetProcessHeap(), 0, data->info, data->allocated * sizeof(RFC1766INFO));
+        data->info = realloc(data->info, data->allocated * sizeof(RFC1766INFO));
         if (!data->info) return FALSE;
     }
 
@@ -2421,7 +2420,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
 
     TRACE("%04x, %p\n", LangId, ppEnum);
 
-    rfc = HeapAlloc( GetProcessHeap(), 0, sizeof(EnumRfc1766_impl) );
+    rfc = malloc(sizeof(EnumRfc1766_impl));
     rfc->IEnumRfc1766_iface.lpVtbl = &IEnumRfc1766_vtbl;
     rfc->ref = 1;
     rfc->pos = 0;
@@ -2429,10 +2428,10 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
 
     data.total = 0;
     data.allocated = 160;
-    data.info = HeapAlloc(GetProcessHeap(), 0, data.allocated * sizeof(RFC1766INFO));
+    data.info = malloc(data.allocated * sizeof(RFC1766INFO));
     if (!data.info)
     {
-        HeapFree(GetProcessHeap(), 0, rfc);
+        free(rfc);
         return E_OUTOFMEMORY;
     }
 
@@ -2442,8 +2441,8 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
 
     if (!data.total)
     {
-        HeapFree(GetProcessHeap(), 0, data.info);
-        HeapFree(GetProcessHeap(), 0, rfc);
+        free(data.info);
+        free(rfc);
         return E_FAIL;
     }
 
@@ -2604,7 +2603,7 @@ static ULONG WINAPI fnIMultiLanguage3_Release( IMultiLanguage3* iface )
     TRACE("(%p)->(%ld)\n", This, ref);
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         UnlockModule();
     }
 
@@ -2956,7 +2955,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringInIStream(
     if (FAILED(hr)) return hr;
 
     if (stat.cbSize.QuadPart > MAXLONG) return E_INVALIDARG;
-    if (!(src = HeapAlloc(GetProcessHeap(), 0, stat.cbSize.QuadPart))) return E_OUTOFMEMORY;
+    if (!(src = malloc(stat.cbSize.QuadPart))) return E_OUTOFMEMORY;
 
     hr = IStream_Read(pstmIn, src, stat.cbSize.QuadPart, (ULONG *)&srclen);
     if (FAILED(hr)) goto exit;
@@ -2964,7 +2963,7 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringInIStream(
     hr = ConvertINetString(pdwMode, dwSrcEncoding, dwDstEncoding, src, &srclen, NULL, &dstlen);
     if (FAILED(hr)) goto exit;
 
-    if (!(dst = HeapAlloc(GetProcessHeap(), 0, dstlen)))
+    if (!(dst = malloc(dstlen)))
     {
         hr = E_OUTOFMEMORY;
         goto exit;
@@ -2975,8 +2974,8 @@ static HRESULT WINAPI fnIMultiLanguage3_ConvertStringInIStream(
     hr = IStream_Write(pstmOut, dst, dstlen, NULL);
 
 exit:
-    HeapFree(GetProcessHeap(), 0, src);
-    HeapFree(GetProcessHeap(), 0, dst);
+    free(src);
+    free(dst);
     return hr;
 }
 
@@ -3485,7 +3484,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetFontUnicodeRanges(IMLangFontLink2* Th
 
     if (!puiRanges) return E_INVALIDARG;
     if (!(size = GetFontUnicodeRanges(hDC, NULL))) return E_FAIL;
-    if (!(gs = HeapAlloc(GetProcessHeap(), 0, size))) return E_OUTOFMEMORY;
+    if (!(gs = malloc(size))) return E_OUTOFMEMORY;
 
     GetFontUnicodeRanges(hDC, gs);
     *puiRanges = gs->cRanges;
@@ -3500,7 +3499,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetFontUnicodeRanges(IMLangFontLink2* Th
         }
         *puiRanges = i;
     }
-    HeapFree(GetProcessHeap(), 0, gs);
+    free(gs);
     return S_OK;
 }
 
@@ -3724,7 +3723,7 @@ static ULONG WINAPI MLangConvertCharset_Release(IMLangConvertCharset *iface)
     TRACE("(%p)->(%lu)\n", This, ref);
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         UnlockModule();
     }
 
@@ -3825,7 +3824,7 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if( pUnkOuter )
         return CLASS_E_NOAGGREGATION;
 
-    mlang = HeapAlloc( GetProcessHeap(), 0, sizeof (MLang_impl) );
+    mlang = malloc(sizeof(MLang_impl));
     mlang->IMLangFontLink_iface.lpVtbl = &IMLangFontLink_vtbl;
     mlang->IMultiLanguage_iface.lpVtbl = &IMultiLanguage_vtbl;
     mlang->IMultiLanguage3_iface.lpVtbl = &IMultiLanguage3_vtbl;
@@ -3857,7 +3856,7 @@ static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj)
 
     *obj = NULL;
 
-    convert = HeapAlloc(GetProcessHeap(), 0, sizeof(struct convert_charset));
+    convert = malloc(sizeof(struct convert_charset));
     if (!convert) return E_OUTOFMEMORY;
 
     convert->IMLangConvertCharset_iface.lpVtbl = &MLangConvertCharsetVtbl;
