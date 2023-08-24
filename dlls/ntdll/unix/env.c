@@ -1702,7 +1702,7 @@ static inline void dup_unicode_string( const UNICODE_STRING *src, WCHAR **dst, U
     str->Length = src->Length;
     str->MaximumLength = src->MaximumLength;
     memcpy( *dst, src->Buffer, src->MaximumLength );
-    *dst += src->MaximumLength / sizeof(WCHAR);
+    *dst += (src->MaximumLength + 1) / sizeof(WCHAR);
 }
 
 
@@ -1798,7 +1798,7 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
                    + params->WindowTitle.MaximumLength
                    + params->Desktop.MaximumLength
                    + params->ShellInfo.MaximumLength
-                   + params->RuntimeInfo.MaximumLength
+                   + ((params->RuntimeInfo.MaximumLength + 1) & ~1)
                    + params->EnvironmentSize);
 
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&wow64_params, 0, &size,
