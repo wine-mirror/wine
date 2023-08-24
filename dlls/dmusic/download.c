@@ -23,6 +23,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
+struct IDirectMusicDownloadImpl
+{
+    IDirectMusicDownload IDirectMusicDownload_iface;
+    LONG ref;
+};
+
+typedef struct IDirectMusicDownloadImpl IDirectMusicDownloadImpl;
+
 static inline IDirectMusicDownloadImpl* impl_from_IDirectMusicDownload(IDirectMusicDownload *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicDownloadImpl, IDirectMusicDownload_iface);

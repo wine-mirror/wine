@@ -47,7 +47,6 @@
 typedef struct IDirectMusic8Impl IDirectMusic8Impl;
 typedef struct IDirectMusicBufferImpl IDirectMusicBufferImpl;
 typedef struct IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrumentImpl;
-typedef struct IDirectMusicDownloadImpl IDirectMusicDownloadImpl;
 typedef struct IReferenceClockImpl IReferenceClockImpl;
 
 typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
@@ -143,17 +142,6 @@ struct IDirectMusicDownloadedInstrumentImpl {
     /* IDirectMusicDownloadedInstrumentImpl fields */
     BOOL downloaded;
     void *data;
-};
-
-/*****************************************************************************
- * IDirectMusicDownloadImpl implementation structure
- */
-struct IDirectMusicDownloadImpl {
-    /* IUnknown fields */
-    IDirectMusicDownload IDirectMusicDownload_iface;
-    LONG ref;
-
-    /* IDirectMusicDownloadImpl fields */
 };
 
 /** Internal factory */
