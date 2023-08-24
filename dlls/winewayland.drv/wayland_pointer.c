@@ -24,6 +24,8 @@
 
 #include "config.h"
 
+#include <linux/input.h>
+#undef SW_MAX /* Also defined in winuser.rh */
 #include <math.h>
 
 #include "waylanddrv.h"
@@ -117,6 +119,26 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
                                   uint32_t serial, uint32_t time, uint32_t button,
                                   uint32_t state)
 {
+    INPUT input = {0};
+    HWND hwnd;
+
+    if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
+
+    input.type = INPUT_MOUSE;
+
+    switch (button)
+    {
+    case BTN_LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
+    case BTN_RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
+    case BTN_MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+    default: break;
+    }
+
+    if (state == WL_POINTER_BUTTON_STATE_RELEASED) input.mi.dwFlags <<= 1;
+
+    TRACE("hwnd=%p button=%#x state=%u\n", hwnd, button, state);
+
+    __wine_send_input(hwnd, &input, NULL);
 }
 
 static void pointer_handle_axis(void *data, struct wl_pointer *wl_pointer,
@@ -141,6 +163,29 @@ static void pointer_handle_axis_stop(void *data, struct wl_pointer *wl_pointer,
 static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_pointer,
                                          uint32_t axis, int32_t discrete)
 {
+    INPUT input = {0};
+    HWND hwnd;
+
+    if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
+
+    input.type = INPUT_MOUSE;
+
+    switch (axis)
+    {
+    case WL_POINTER_AXIS_VERTICAL_SCROLL:
+        input.mi.dwFlags = MOUSEEVENTF_WHEEL;
+        input.mi.mouseData = -WHEEL_DELTA * discrete;
+        break;
+    case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+        input.mi.dwFlags = MOUSEEVENTF_HWHEEL;
+        input.mi.mouseData = WHEEL_DELTA * discrete;
+        break;
+    default: break;
+    }
+
+    TRACE("hwnd=%p axis=%u discrete=%d\n", hwnd, axis, discrete);
+
+    __wine_send_input(hwnd, &input, NULL);
 }
 
 static const struct wl_pointer_listener pointer_listener =
