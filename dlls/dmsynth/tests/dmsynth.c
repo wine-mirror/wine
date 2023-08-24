@@ -57,7 +57,7 @@ static void test_synth_getformat(IDirectMusicSynth *synth, DMUS_PORTPARAMS *para
     DWORD size;
     HRESULT hr;
 
-    winetest_push_context(context);
+    winetest_push_context("%s", context);
 
     size = sizeof(format);
     hr = IDirectMusicSynth_GetFormat(synth, &format, &size);
