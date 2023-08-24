@@ -25,7 +25,6 @@
  *  NT EMF 1.006
  *  NT EMF 1.007
  *  NT EMF 1.008
- *  TEXT
  *  XPS2GDI
  *
  * Implement print processor features like e.g. printing multiple copies. */
@@ -66,6 +65,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level
         BYTE *datatypes, DWORD size, DWORD *needed, DWORD *no)
 {
     static const WCHAR raw[] = L"RAW";
+    static const WCHAR text[] = L"TEXT";
 
     DATATYPES_INFO_1W *info = (DATATYPES_INFO_1W *)datatypes;
 
@@ -79,7 +79,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level
     }
 
     *no = 0;
-    *needed = sizeof(*info) + sizeof(raw);
+    *needed = 2 * sizeof(*info) + sizeof(raw) + sizeof(text);
 
     if (level != 1 || (size && !datatypes))
     {
@@ -93,9 +93,11 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level
         return FALSE;
     }
 
-    *no = 1;
-    info->pName = (WCHAR*)(info + 1);
-    memcpy(info + 1, raw, sizeof(raw));
+    *no = 2;
+    info[0].pName = (WCHAR*)(info + 2);
+    info[1].pName = info[0].pName + sizeof(raw) / sizeof(WCHAR);
+    memcpy(info[0].pName, raw, sizeof(raw));
+    memcpy(info[1].pName, text, sizeof(text));
     return TRUE;
 }
 
@@ -111,7 +113,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
-    if (wcscmp(open_data->pDatatype, L"RAW"))
+    if (wcscmp(open_data->pDatatype, L"RAW") && wcscmp(open_data->pDatatype, L"TEXT"))
     {
         SetLastError(ERROR_INVALID_DATATYPE);
         return NULL;
