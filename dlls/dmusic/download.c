@@ -23,21 +23,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
-struct IDirectMusicDownloadImpl
+struct download
 {
     IDirectMusicDownload IDirectMusicDownload_iface;
     LONG ref;
 };
 
-typedef struct IDirectMusicDownloadImpl IDirectMusicDownloadImpl;
-
-static inline IDirectMusicDownloadImpl* impl_from_IDirectMusicDownload(IDirectMusicDownload *iface)
+static inline struct download *impl_from_IDirectMusicDownload(IDirectMusicDownload *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicDownloadImpl, IDirectMusicDownload_iface);
+    return CONTAINING_RECORD(iface, struct download, IDirectMusicDownload_iface);
 }
 
-/* IDirectMusicDownloadImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface(IDirectMusicDownload *iface, REFIID riid, void **ret_iface)
+static HRESULT WINAPI download_QueryInterface(IDirectMusicDownload *iface, REFIID riid, void **ret_iface)
 {
     TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
@@ -54,9 +51,9 @@ static HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface(IDirectMusicDownlo
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicDownloadImpl_AddRef(IDirectMusicDownload *iface)
+static ULONG WINAPI download_AddRef(IDirectMusicDownload *iface)
 {
-    IDirectMusicDownloadImpl *This = impl_from_IDirectMusicDownload(iface);
+    struct download *This = impl_from_IDirectMusicDownload(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -64,9 +61,9 @@ static ULONG WINAPI IDirectMusicDownloadImpl_AddRef(IDirectMusicDownload *iface)
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicDownloadImpl_Release(IDirectMusicDownload *iface)
+static ULONG WINAPI download_Release(IDirectMusicDownload *iface)
 {
-    IDirectMusicDownloadImpl *This = impl_from_IDirectMusicDownload(iface);
+    struct download *This = impl_from_IDirectMusicDownload(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -78,28 +75,28 @@ static ULONG WINAPI IDirectMusicDownloadImpl_Release(IDirectMusicDownload *iface
     return ref;
 }
 
-/* IDirectMusicDownloadImpl IDirectMusicDownload part: */
-static HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer(IDirectMusicDownload *iface, void **buffer, DWORD *size)
+static HRESULT WINAPI download_GetBuffer(IDirectMusicDownload *iface, void **buffer, DWORD *size)
 {
     FIXME("(%p, %p, %p): stub\n", iface, buffer, size);
 
     return S_OK;
 }
 
-static const IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl = {
-    IDirectMusicDownloadImpl_QueryInterface,
-    IDirectMusicDownloadImpl_AddRef,
-    IDirectMusicDownloadImpl_Release,
-    IDirectMusicDownloadImpl_GetBuffer
+static const IDirectMusicDownloadVtbl download_vtbl =
+{
+    download_QueryInterface,
+    download_AddRef,
+    download_Release,
+    download_GetBuffer,
 };
 
 HRESULT download_create(IDirectMusicDownload **ret_iface)
 {
-    IDirectMusicDownloadImpl *download;
+    struct download *download;
 
     *ret_iface = NULL;
     if (!(download = calloc(1, sizeof(*download)))) return E_OUTOFMEMORY;
-    download->IDirectMusicDownload_iface.lpVtbl = &DirectMusicDownload_Vtbl;
+    download->IDirectMusicDownload_iface.lpVtbl = &download_vtbl;
     download->ref = 1;
 
     TRACE("Created DirectMusicDownload %p\n", download);
