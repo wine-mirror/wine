@@ -56,6 +56,13 @@ enum wayland_window_message
     WM_WAYLAND_INIT_DISPLAY_DEVICES = 0x80001000
 };
 
+struct wayland_pointer
+{
+    struct wl_pointer *wl_pointer;
+    HWND focused_hwnd;
+    pthread_mutex_t mutex;
+};
+
 struct wayland
 {
     BOOL initialized;
@@ -67,7 +74,7 @@ struct wayland
     struct xdg_wm_base *xdg_wm_base;
     struct wl_shm *wl_shm;
     struct wl_seat *wl_seat;
-    struct wl_pointer *wl_pointer;
+    struct wayland_pointer pointer;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;

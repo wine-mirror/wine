@@ -25,6 +25,9 @@
 #include "config.h"
 
 #include "waylanddrv.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
                                   uint32_t time, wl_fixed_t sx, wl_fixed_t sy)
@@ -35,11 +38,33 @@ static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
                                  uint32_t serial, struct wl_surface *wl_surface,
                                  wl_fixed_t sx, wl_fixed_t sy)
 {
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+    HWND hwnd;
+
+    if (!wl_surface) return;
+    /* The wl_surface user data remains valid and immutable for the whole
+     * lifetime of the object, so it's safe to access without locking. */
+    hwnd = wl_surface_get_user_data(wl_surface);
+
+    TRACE("hwnd=%p\n", hwnd);
+
+    pthread_mutex_lock(&pointer->mutex);
+    pointer->focused_hwnd = hwnd;
+    pthread_mutex_unlock(&pointer->mutex);
 }
 
 static void pointer_handle_leave(void *data, struct wl_pointer *wl_pointer,
                                  uint32_t serial, struct wl_surface *wl_surface)
 {
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+
+    if (!wl_surface) return;
+
+    TRACE("hwnd=%p\n", wl_surface_get_user_data(wl_surface));
+
+    pthread_mutex_lock(&pointer->mutex);
+    pointer->focused_hwnd = NULL;
+    pthread_mutex_unlock(&pointer->mutex);
 }
 
 static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
@@ -87,12 +112,22 @@ static const struct wl_pointer_listener pointer_listener =
 
 void wayland_pointer_init(struct wl_pointer *wl_pointer)
 {
-    process_wayland.wl_pointer = wl_pointer;
-    wl_pointer_add_listener(process_wayland.wl_pointer, &pointer_listener, NULL);
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+
+    pthread_mutex_lock(&pointer->mutex);
+    pointer->wl_pointer = wl_pointer;
+    pointer->focused_hwnd = NULL;
+    pthread_mutex_unlock(&pointer->mutex);
+    wl_pointer_add_listener(pointer->wl_pointer, &pointer_listener, NULL);
 }
 
 void wayland_pointer_deinit(void)
 {
-    wl_pointer_release(process_wayland.wl_pointer);
-    process_wayland.wl_pointer = NULL;
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+
+    pthread_mutex_lock(&pointer->mutex);
+    wl_pointer_release(pointer->wl_pointer);
+    pointer->wl_pointer = NULL;
+    pointer->focused_hwnd = NULL;
+    pthread_mutex_unlock(&pointer->mutex);
 }

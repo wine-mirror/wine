@@ -108,6 +108,7 @@ struct wayland_surface *wayland_surface_create(HWND hwnd)
         ERR("Failed to create wl_surface Wayland surface\n");
         goto err;
     }
+    wl_surface_set_user_data(surface->wl_surface, hwnd);
 
     return surface;
 
@@ -123,6 +124,11 @@ err:
  */
 void wayland_surface_destroy(struct wayland_surface *surface)
 {
+    pthread_mutex_lock(&process_wayland.pointer.mutex);
+    if (process_wayland.pointer.focused_hwnd == surface->hwnd)
+        process_wayland.pointer.focused_hwnd = NULL;
+    pthread_mutex_unlock(&process_wayland.pointer.mutex);
+
     pthread_mutex_lock(&xdg_data_mutex);
     pthread_mutex_lock(&surface->mutex);
 

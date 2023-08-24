@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 struct wayland process_wayland =
 {
+    .pointer.mutex = PTHREAD_MUTEX_INITIALIZER,
     .output_list = {&process_wayland.output_list, &process_wayland.output_list},
     .output_mutex = PTHREAD_MUTEX_INITIALIZER
 };
@@ -60,9 +61,9 @@ static const struct xdg_wm_base_listener xdg_wm_base_listener =
 static void wl_seat_handle_capabilities(void *data, struct wl_seat *seat,
                                         enum wl_seat_capability caps)
 {
-    if ((caps & WL_SEAT_CAPABILITY_POINTER) && !process_wayland.wl_pointer)
+    if ((caps & WL_SEAT_CAPABILITY_POINTER) && !process_wayland.pointer.wl_pointer)
         wayland_pointer_init(wl_seat_get_pointer(seat));
-    else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && process_wayland.wl_pointer)
+    else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && process_wayland.pointer.wl_pointer)
         wayland_pointer_deinit();
 }
 
@@ -155,7 +156,7 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
         wl_proxy_get_id((struct wl_proxy *)process_wayland.wl_seat) == id)
     {
         TRACE("removing seat\n");
-        if (process_wayland.wl_pointer) wayland_pointer_deinit();
+        if (process_wayland.pointer.wl_pointer) wayland_pointer_deinit();
         wl_seat_release(process_wayland.wl_seat);
         process_wayland.wl_seat = NULL;
     }
