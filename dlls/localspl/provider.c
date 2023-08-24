@@ -277,6 +277,7 @@ typedef struct {
     handle_header_t header;
     printer_info_t *info;
     WCHAR *name;
+    WCHAR *print_proc;
     WCHAR *datatype;
     DEVMODEW *devmode;
     job_info_t *doc;
@@ -1833,6 +1834,8 @@ static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
                                    PRINTER_DEFAULTSW *def)
 {
     printer_t *printer;
+    HKEY hroot, hkey;
+    LSTATUS status;
 
     printer = calloc(1, sizeof(*printer));
     if (!printer)
@@ -1859,6 +1862,20 @@ static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
         printer->datatype = wcsdup(def->pDatatype);
     if (def && def->pDevMode)
         printer->devmode = dup_devmode(def->pDevMode);
+
+    hroot = open_driver_reg(env_arch.envname);
+    if (hroot)
+    {
+        status = RegOpenKeyW(hroot, name, &hkey);
+        RegCloseKey(hroot);
+        if (status == ERROR_SUCCESS)
+        {
+            printer->print_proc = reg_query_value(hkey, L"Print Processor");
+            RegCloseKey(hkey);
+        }
+    }
+    if (!printer->print_proc)
+        printer->print_proc = wcsdup(L"winprint");
 
     return (HANDLE)printer;
 }
@@ -3411,7 +3428,7 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
 {
     printer_t *printer = (printer_t *)hprinter;
     DOC_INFO_1W *info = (DOC_INFO_1W *)doc_info;
-    BOOL datatype_valid;
+    BOOL datatype_valid = FALSE;
     WCHAR *datatype;
     printproc_t *pp;
 
@@ -3470,13 +3487,23 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
     if (!pp)
     {
         WARN("failed to load %s print processor\n", debugstr_w(printer->info->print_proc));
-        pp = print_proc_load(L"winprint");
     }
-    if (!pp)
-        return 0;
+    else
+    {
+        datatype_valid = print_proc_check_datatype(pp, datatype);
+        print_proc_unload(pp);
+    }
 
-    datatype_valid = print_proc_check_datatype(pp, datatype);
-    print_proc_unload(pp);
+    if (!datatype_valid)
+    {
+        pp = print_proc_load(printer->print_proc);
+        if (!pp)
+            return 0;
+
+        datatype_valid = print_proc_check_datatype(pp, datatype);
+        print_proc_unload(pp);
+    }
+
     if (!datatype_valid)
     {
         TRACE("%s datatype not supported by %s\n", debugstr_w(datatype),
@@ -3728,11 +3755,11 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
 {
     printer_t *printer = (printer_t *)hprinter;
     WCHAR output[1024], name[1024], *datatype;
+    BOOL datatype_valid = FALSE, ret = TRUE;
     PRINTPROCESSOROPENDATA pp_data;
     const WCHAR *port_name, *port;
     job_info_t *job;
     printproc_t *pp;
-    BOOL ret = TRUE;
     HANDLE hpp;
     HKEY hkey;
 
@@ -3775,15 +3802,6 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
         RegCloseKey(hkey);
     }
 
-    pp = print_proc_load(printer->info->print_proc);
-    if (!pp)
-    {
-        WARN("failed to load %s print processor\n", debugstr_w(printer->info->print_proc));
-        pp = print_proc_load(L"winprint");
-    }
-    if (!pp)
-        return FALSE;
-
     if (job->datatype)
         datatype = job->datatype;
     else if (printer->datatype)
@@ -3791,7 +3809,28 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     else
         datatype = printer->info->datatype;
 
-    if (!print_proc_check_datatype(pp, datatype))
+    pp = print_proc_load(printer->info->print_proc);
+    if (!pp)
+    {
+        WARN("failed to load %s print processor\n", debugstr_w(printer->info->print_proc));
+    }
+    else
+    {
+        datatype_valid = print_proc_check_datatype(pp, datatype);
+        if (!datatype_valid)
+            print_proc_unload(pp);
+    }
+
+    if (!datatype_valid)
+    {
+        pp = print_proc_load(printer->print_proc);
+        if (!pp)
+            return FALSE;
+
+        datatype_valid = print_proc_check_datatype(pp, datatype);
+    }
+
+    if (!datatype_valid)
     {
         WARN("%s datatype not supported by %s\n", debugstr_w(datatype),
                 debugstr_w(printer->info->print_proc));
@@ -3981,6 +4020,7 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
 
         release_printer_info(printer->info);
         free(printer->name);
+        free(printer->print_proc);
         free(printer->datatype);
         free(printer->devmode);
         free(printer);
