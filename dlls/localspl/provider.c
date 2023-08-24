@@ -2019,6 +2019,12 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     else
         RegSetValueExW(hdrv, L"Previous Names", 0, REG_MULTI_SZ, (const BYTE*)L"", sizeof(L""));
 
+    if (di.pszPrintProcessor)
+        RegSetValueExW(hdrv, L"Print Processor", 0, REG_SZ, (BYTE*)di.pszPrintProcessor,
+                       (wcslen(di.pszPrintProcessor) + 1) * sizeof(WCHAR));
+    else
+        RegSetValueExW(hdrv, L"Print Processor", 0, REG_SZ, (const BYTE*)L"winprint", sizeof(L"winprint"));
+
     if (level > 5) TRACE("level %lu for Driver %s is incomplete\n", level, debugstr_w(di.pName));
 
     RegCloseKey(hdrv);
