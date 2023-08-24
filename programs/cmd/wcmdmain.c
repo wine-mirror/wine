@@ -596,7 +596,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
     /* If there's complex substitution, just need %var% for now
        to get the expanded data to play with                    */
     if (colonpos) {
-        *colonpos = startchar;
+        *colonpos = '%';
         savedchar = *(colonpos+1);
         *(colonpos+1) = 0x00;
     }

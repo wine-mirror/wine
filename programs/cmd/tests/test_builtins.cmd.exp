@@ -927,6 +927,11 @@ x@space@
 A
 ------------ Testing if/set ------------
 C:\Program Files (x86)\dummy
+--- Testing if + var subst in delayed expansion mode
+[DEBUG] checking {abc}
+[DEBUG] checking {10.0}
+SDKVER=10.0
+[DEBUG] checking {11.0}
 ------------ Testing for ------------
 --- plain FOR
 A
