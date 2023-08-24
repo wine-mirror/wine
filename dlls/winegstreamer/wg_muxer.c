@@ -39,6 +39,24 @@ static struct wg_muxer *get_muxer(wg_muxer_t muxer)
     return (struct wg_muxer *)(ULONG_PTR)muxer;
 }
 
+static gboolean muxer_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    struct wg_muxer *muxer = gst_pad_get_element_private(pad);
+
+    GST_DEBUG("pad %p, parent %p, query %p, muxer %p, type \"%s\".",
+            pad, parent, query, muxer, gst_query_type_get_name(query->type));
+
+    switch (query->type)
+    {
+        case GST_QUERY_SEEKING:
+            gst_query_set_seeking(query, GST_FORMAT_BYTES, true, 0, -1);
+            return true;
+        default:
+            GST_WARNING("Ignoring \"%s\" query.", gst_query_type_get_name(query->type));
+            return gst_pad_query_default(pad, parent, query);
+    }
+}
+
 NTSTATUS wg_muxer_create(void *args)
 {
     struct wg_muxer_create_params *params = args;
@@ -66,6 +84,7 @@ NTSTATUS wg_muxer_create(void *args)
     if (!muxer->my_sink)
         goto out;
     gst_pad_set_element_private(muxer->my_sink, muxer);
+    gst_pad_set_query_function(muxer->my_sink, muxer_sink_query_cb);
 
     /* Create gstreamer muxer element. */
     if (!(muxer->muxer = find_element(GST_ELEMENT_FACTORY_TYPE_MUXER | GST_ELEMENT_FACTORY_TYPE_FORMATTER,
