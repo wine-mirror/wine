@@ -336,7 +336,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
 
     if(!cur){
         /* No device found, allocate new one */
-        cur = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cur));
+        cur = calloc(1, sizeof(*cur));
         if (!cur)
             return NULL;
 
@@ -350,7 +350,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
     }else if(cur->ref > 0)
         WARN("Modifying an MMDevice with postitive reference count!\n");
 
-    HeapFree(GetProcessHeap(), 0, cur->drv_id);
+    free(cur->drv_id);
     cur->drv_id = name;
 
     cur->flow = flow;
@@ -483,7 +483,7 @@ HRESULT load_devices_from_reg(void)
             && pv.vt == VT_LPWSTR)
         {
             DWORD size_bytes = (lstrlenW(pv.pwszVal) + 1) * sizeof(WCHAR);
-            WCHAR *name = HeapAlloc(GetProcessHeap(), 0, size_bytes);
+            WCHAR *name = malloc(size_bytes);
             memcpy(name, pv.pwszVal, size_bytes);
             MMDevice_Create(name, &guid, curflow,
                     DEVICE_STATE_NOTPRESENT, FALSE);
@@ -536,16 +536,16 @@ HRESULT load_driver_devices(EDataFlow flow)
     params.size = 1024;
     params.endpoints = NULL;
     do {
-        HeapFree(GetProcessHeap(), 0, params.endpoints);
-        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
+        free(params.endpoints);
+        params.endpoints = malloc(params.size);
         __wine_unix_call(drvs.module_unixlib, get_endpoint_ids, &params);
     } while (params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 
     if (FAILED(params.result))
         goto end;
 
-    ids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*ids));
-    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
+    ids = malloc(params.num * sizeof(*ids));
+    guids = malloc(params.num * sizeof(*guids));
     if (!ids || !guids) {
         params.result = E_OUTOFMEMORY;
         goto end;
@@ -556,8 +556,8 @@ HRESULT load_driver_devices(EDataFlow flow)
         const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
         const unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
 
-        if (!(ids[i] = HeapAlloc(GetProcessHeap(), 0, size))) {
-            while (i--) HeapFree(GetProcessHeap(), 0, ids[i]);
+        if (!(ids[i] = malloc(size))) {
+            while (i--) free(ids[i]);
             params.result = E_OUTOFMEMORY;
             goto end;
         }
@@ -573,9 +573,9 @@ HRESULT load_driver_devices(EDataFlow flow)
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, params.endpoints);
-    HeapFree(GetProcessHeap(), 0, guids);
-    HeapFree(GetProcessHeap(), 0, ids);
+    free(params.endpoints);
+    free(guids);
+    free(ids);
 
     return params.result;
 }
@@ -586,8 +586,8 @@ static void MMDevice_Destroy(MMDevice *This)
     list_remove(&This->entry);
     This->crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crst);
-    HeapFree(GetProcessHeap(), 0, This->drv_id);
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This->drv_id);
+    free(This);
 }
 
 static inline MMDevice *impl_from_IMMDevice(IMMDevice *iface)
@@ -828,7 +828,7 @@ static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD 
 {
     MMDevColImpl *This;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = malloc(sizeof(*This));
     *ppv = NULL;
     if (!This)
         return E_OUTOFMEMORY;
@@ -842,7 +842,7 @@ static HRESULT MMDevCol_Create(IMMDeviceCollection **ppv, EDataFlow flow, DWORD 
 
 static void MMDevCol_Destroy(MMDevColImpl *This)
 {
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
 }
 
 static HRESULT WINAPI MMDevCol_QueryInterface(IMMDeviceCollection *iface, REFIID riid, void **ppv)
@@ -1288,7 +1288,7 @@ static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEn
     if(!client)
         return E_POINTER;
 
-    wrapper = HeapAlloc(GetProcessHeap(), 0, sizeof(*wrapper));
+    wrapper = malloc(sizeof(*wrapper));
     if(!wrapper)
         return E_OUTOFMEMORY;
 
@@ -1324,7 +1324,7 @@ static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDevice
     LIST_FOR_EACH_ENTRY(wrapper, &g_notif_clients, struct NotificationClientWrapper, entry){
         if(wrapper->client == client){
             list_remove(&wrapper->entry);
-            HeapFree(GetProcessHeap(), 0, wrapper);
+            free(wrapper);
             LeaveCriticalSection(&g_notif_lock);
             return S_OK;
         }
@@ -1363,7 +1363,7 @@ static HRESULT MMDevPropStore_Create(MMDevice *parent, DWORD access, IPropertySt
         WARN("Invalid access %08lx\n", access);
         return E_INVALIDARG;
     }
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = malloc(sizeof(*This));
     *ppv = &This->IPropertyStore_iface;
     if (!This)
         return E_OUTOFMEMORY;
@@ -1376,7 +1376,7 @@ static HRESULT MMDevPropStore_Create(MMDevice *parent, DWORD access, IPropertySt
 
 static void MMDevPropStore_Destroy(MMDevPropStore *This)
 {
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
 }
 
 static HRESULT WINAPI MMDevPropStore_QueryInterface(IPropertyStore *iface, REFIID riid, void **ppv)

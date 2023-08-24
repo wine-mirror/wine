@@ -99,7 +99,7 @@ static ULONG WINAPI control_Release(IAudioSessionControl2 *iface)
             IAudioClient3_Release(&This->client->IAudioClient3_iface);
         }
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -557,12 +557,7 @@ static void session_init_vols(struct audio_session *session, UINT channels)
     if (session->channel_count < channels) {
         UINT i;
 
-        if (session->channel_vols)
-            session->channel_vols = HeapReAlloc(GetProcessHeap(), 0, session->channel_vols,
-                                                sizeof(float) * channels);
-        else
-            session->channel_vols = HeapAlloc(GetProcessHeap(), 0, sizeof(float) * channels);
-
+        session->channel_vols = realloc(session->channel_vols, sizeof(float) * channels);
         if (!session->channel_vols)
             return;
 
@@ -575,8 +570,7 @@ static void session_init_vols(struct audio_session *session, UINT channels)
 
 static struct audio_session *session_create(const GUID *guid, IMMDevice *device, UINT channels)
 {
-    struct audio_session *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          sizeof(struct audio_session));
+    struct audio_session *ret = calloc(1, sizeof(struct audio_session));
     if (!ret)
         return NULL;
 
@@ -599,7 +593,7 @@ struct audio_session_wrapper *session_wrapper_create(struct audio_client *client
 {
     struct audio_session_wrapper *ret;
 
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct audio_session_wrapper));
+    ret = calloc(1, sizeof(struct audio_session_wrapper));
     if (!ret)
         return NULL;
 

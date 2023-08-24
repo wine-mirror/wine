@@ -380,7 +380,7 @@ static ULONG WINAPI activate_async_op_Release(IActivateAudioInterfaceAsyncOperat
         if(This->result_iface)
             IUnknown_Release(This->result_iface);
         IActivateAudioInterfaceCompletionHandler_Release(This->callback);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -477,7 +477,7 @@ HRESULT WINAPI ActivateAudioInterfaceAsync(const WCHAR *path, REFIID riid,
     TRACE("(%s, %s, %p, %p, %p)\n", debugstr_w(path), debugstr_guid(riid),
             params, done_handler, op_out);
 
-    op = HeapAlloc(GetProcessHeap(), 0, sizeof(*op));
+    op = malloc(sizeof(*op));
     if (!op)
         return E_OUTOFMEMORY;
 

@@ -460,7 +460,7 @@ static ULONG WINAPI client_Release(IAudioClient3 *iface)
         if (This->stream)
             stream_release(This->stream, This->timer_thread);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -1404,7 +1404,7 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
     }
 
     size = strlen(name) + 1;
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(struct audio_client, device_name[size]));
+    This = calloc(1, FIELD_OFFSET(struct audio_client, device_name[size]));
     if (!This) {
         free(name);
         return E_OUTOFMEMORY;
@@ -1425,7 +1425,7 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return hr;
     }
 
