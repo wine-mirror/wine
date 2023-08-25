@@ -1436,11 +1436,7 @@ static void test_StructuredTaskCollection(void)
     context = p_Context_CurrentContext();
 
     memset(&task_coll, 0x55, sizeof(task_coll));
-    if (!call_func2(p__StructuredTaskCollection_ctor, &task_coll, NULL))
-    {
-        skip("_StructuredTaskCollection constructor not implemented\n");
-        return;
-    }
+    call_func2(p__StructuredTaskCollection_ctor, &task_coll, NULL);
     todo_wine ok(task_coll.unk2 == 0x1fffffff,
             "_StructuredTaskCollection ctor set wrong unk2: 0x%x != 0x1fffffff\n", task_coll.unk2);
     ok(task_coll.unk3 == NULL,
