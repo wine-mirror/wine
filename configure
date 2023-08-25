@@ -1507,6 +1507,7 @@ enable_windows_security_authentication_onlineid
 enable_windows_security_credentials_ui_userconsentverifier
 enable_windows_storage_applicationdata
 enable_windows_system_profile_systemmanufacturers
+enable_windows_ui_xaml
 enable_windows_ui
 enable_windows_web
 enable_windowscodecs
@@ -22908,6 +22909,8 @@ wine_fn_config_makefile dlls/windows.storage.applicationdata enable_windows_stor
 wine_fn_config_makefile dlls/windows.storage.applicationdata/tests enable_tests
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers enable_windows_system_profile_systemmanufacturers
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers/tests enable_tests
+wine_fn_config_makefile dlls/windows.ui.xaml enable_windows_ui_xaml
+wine_fn_config_makefile dlls/windows.ui.xaml/tests enable_tests
 wine_fn_config_makefile dlls/windows.ui enable_windows_ui
 wine_fn_config_makefile dlls/windows.ui/tests enable_tests
 wine_fn_config_makefile dlls/windows.web enable_windows_web
