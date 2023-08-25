@@ -644,98 +644,67 @@ NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
 
 
 /**********************************************************************
- *           get_syscall_num
- */
-static DWORD get_syscall_num( const BYTE *syscall )
-{
-    WORD *arm_syscall = (WORD *)((ULONG_PTR)syscall & ~1);
-    DWORD id = ~0u;
-
-    if (!syscall) return id;
-    switch (current_machine)
-    {
-    case IMAGE_FILE_MACHINE_I386:
-        if (syscall[0] == 0xb8 && syscall[5] == 0xba && syscall[10] == 0xff && syscall[11] == 0xd2)
-            id = *(DWORD *)(syscall + 1);
-        break;
-
-    case IMAGE_FILE_MACHINE_ARMNT:
-        if (*arm_syscall == 0xb40f)
-        {
-            DWORD inst = *(DWORD *)(arm_syscall + 1);
-            id = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
-                ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
-        }
-        break;
-    }
-    return id;
-}
-
-
-/**********************************************************************
  *           get_rva
  */
-static void *get_rva( const IMAGE_NT_HEADERS *nt, HMODULE module, DWORD rva,
-                      IMAGE_SECTION_HEADER **section, BOOL image )
+static void *get_rva( HMODULE module, DWORD rva )
 {
-    if (image) return (void *)((char *)module + rva);
-    return RtlImageRvaToVa( nt, module, rva, section );
+    return (void *)((char *)module + rva);
 }
 
 
 /**********************************************************************
  *           init_syscall_table
  */
-static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table, BOOL image )
+static void init_syscall_table( HMODULE module, void *dispatcher, const SYSTEM_SERVICE_TABLE *orig_table )
 {
     static syscall_thunk thunks[2048];
     static ULONG start_pos;
 
-    const IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
-    IMAGE_SECTION_HEADER *section = NULL;
+    struct syscall_info32
+    {
+        UINT   dispatcher;
+        UINT   version;
+        USHORT id;
+        USHORT limit;
+     /* USHORT names[limit]; */
+     /* BYTE   args[limit]; */
+    } *info = dispatcher;
+
+    const USHORT *name_ptrs = (const USHORT *)(info + 1);
     const IMAGE_EXPORT_DIRECTORY *exports;
-    const ULONG *functions, *names;
-    const USHORT *ordinals;
-    ULONG id, exp_size, exp_pos, wrap_pos, max_pos = 0;
+    const ULONG *names;
+    ULONG id, exp_size, wrap_pos;
     const char **syscall_names = (const char **)orig_table->CounterTable;
 
-    exports = RtlImageDirectoryEntryToData( module, image, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
-    ordinals = get_rva( nt, module, exports->AddressOfNameOrdinals, &section, image );
-    functions = get_rva( nt, module, exports->AddressOfFunctions, &section, image );
-    names = get_rva( nt, module, exports->AddressOfNames, &section, image );
-
-    for (exp_pos = wrap_pos = 0; exp_pos < exports->NumberOfNames; exp_pos++)
+    if (info->version != 0xca110001)
     {
-        char *name = get_rva( nt, module, names[exp_pos], &section, image );
+        WARN( "invalid syscall table version %x\n", info->version );
+        return;
+    }
+    if (syscall_tables[info->id].ServiceTable) return;  /* already initialized */
+
+    exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    names = get_rva( module, exports->AddressOfNames );
+
+    for (id = wrap_pos = 0; id < info->limit; id++)
+    {
+        char *name = get_rva( module, names[name_ptrs[id]] );
         int res = -1;
-
-        if (strncmp( name, "Nt", 2 ) && strncmp( name, "wine", 4 ) && strncmp( name, "__wine", 6 ))
-            continue;  /* not a syscall */
-
-        id = get_syscall_num( get_rva( nt, module, functions[ordinals[exp_pos]], &section, image ));
-        if (id == ~0u) continue; /* not a syscall */
 
         if (wrap_pos < orig_table->ServiceLimit) res = strcmp( name, syscall_names[wrap_pos] );
 
         if (!res)  /* got a match */
         {
-            ULONG table_idx = (id >> 12) & 3, table_pos = id & 0xfff;
-            if (table_idx == idx)
-            {
-                if (start_pos + table_pos < ARRAY_SIZE(thunks))
-                {
-                    thunks[start_pos + table_pos] = (syscall_thunk)orig_table->ServiceTable[wrap_pos++];
-                    max_pos = max( table_pos, max_pos );
-                }
-                else ERR( "invalid syscall id %04lx for %s\n", id, name );
-            }
-            else ERR( "wrong syscall table id %04lx for %s\n", id, name );
+            if (start_pos + id < ARRAY_SIZE(thunks))
+                thunks[start_pos + id] = (syscall_thunk)orig_table->ServiceTable[wrap_pos++];
+            else
+                ERR( "invalid syscall id %04lx for %s\n", id, name );
         }
         else if (res > 0)
         {
             FIXME( "no export for syscall %s\n", syscall_names[wrap_pos] );
             wrap_pos++;
-            exp_pos--;  /* try again */
+            id--;  /* try again */
         }
         else FIXME( "missing wrapper for syscall %04lx %s\n", id, name );
     }
@@ -743,9 +712,9 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
     for ( ; wrap_pos < orig_table->ServiceLimit; wrap_pos++)
         FIXME( "no export for syscall %s\n", syscall_names[wrap_pos] );
 
-    syscall_tables[idx].ServiceTable = (ULONG_PTR *)(thunks + start_pos);
-    syscall_tables[idx].ServiceLimit = max_pos + 1;
-    start_pos += max_pos + 1;
+    syscall_tables[info->id].ServiceTable = (ULONG_PTR *)(thunks + start_pos);
+    syscall_tables[info->id].ServiceLimit = info->limit;
+    start_pos += info->limit;
 }
 
 
@@ -754,55 +723,15 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
  */
 void init_image_mapping( HMODULE module )
 {
-    void **ptr = RtlFindExportedRoutineByName( module, "Wow64Transition" );
+    ULONG *ptr = RtlFindExportedRoutineByName( module, "Wow64Transition" );
 
     if (!ptr) return;
-    *ptr = pBTCpuGetBopCode();
+    *ptr = PtrToUlong( pBTCpuGetBopCode() );
     if (!win32u_module && RtlFindExportedRoutineByName( module, "NtUserInitializeClientPfnArrays" ))
     {
         win32u_module = module;
-        init_syscall_table( win32u_module, 1, psdwhwin32, TRUE );
+        init_syscall_table( win32u_module, ptr, psdwhwin32 );
     }
-}
-
-
-/**********************************************************************
- *           load_32bit_module
- */
-static HMODULE load_32bit_module( const WCHAR *name, WORD machine, BOOL image )
-{
-    NTSTATUS status;
-    OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
-    LARGE_INTEGER size;
-    UNICODE_STRING str;
-    SIZE_T len = 0;
-    void *ptr = NULL;
-    HANDLE handle, mapping;
-    WCHAR path[MAX_PATH];
-    const WCHAR *dir = get_machine_wow64_dir( machine );
-
-    swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
-    RtlInitUnicodeString( &str, path );
-    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
-
-    status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                         FILE_SHARE_READ | FILE_SHARE_DELETE,
-                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE );
-    if (status) return NULL;
-
-    size.QuadPart = 0;
-    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
-                              SECTION_MAP_READ | SECTION_MAP_EXECUTE, NULL,
-                              &size, PAGE_EXECUTE_READ, image ? SEC_IMAGE : SEC_COMMIT, handle );
-    NtClose( handle );
-    if (status) return NULL;
-
-    status = NtMapViewOfSection( mapping, NtCurrentProcess(), &ptr, 0, 0, NULL, &len,
-                                 ViewShare, 0, PAGE_EXECUTE_READ );
-    NtClose( mapping );
-    if (!NT_SUCCESS( status )) ptr = NULL;
-    return ptr;
 }
 
 
@@ -875,9 +804,10 @@ static const WCHAR *get_cpu_dll_name(void)
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
     PEB32 *peb32;
-    HMODULE module, ntdll;
+    HMODULE module;
     UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     SYSTEM_BASIC_INFORMATION info;
+    ULONG *p__wine_syscall_dispatcher, *p__wine_unix_call_dispatcher;
 
     RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
     if (!current_machine) current_machine = native_machine;
@@ -924,16 +854,14 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 
     module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
     init_image_mapping( module );
-    *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
-    *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
     GET_PTR( KiRaiseUserExceptionDispatcher );
+    GET_PTR( __wine_syscall_dispatcher );
+    GET_PTR( __wine_unix_call_dispatcher );
 
-    if ((ntdll = load_32bit_module( L"ntdll.dll", current_machine, FALSE )))
-    {
-        init_syscall_table( ntdll, 0, &ntdll_syscall_table, FALSE );
-        NtUnmapViewOfSection( NtCurrentProcess(), ntdll );
-    }
-    else init_syscall_table( module, 0, &ntdll_syscall_table, TRUE );
+    *p__wine_syscall_dispatcher = PtrToUlong( pBTCpuGetBopCode() );
+    *p__wine_unix_call_dispatcher = PtrToUlong( p__wine_get_unix_opcode() );
+
+    init_syscall_table( module, p__wine_syscall_dispatcher, &ntdll_syscall_table );
 
     init_file_redirects();
     return TRUE;
