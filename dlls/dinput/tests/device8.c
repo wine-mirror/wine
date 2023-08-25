@@ -2486,7 +2486,7 @@ static void test_scan_codes( IDirectInputDevice8W *device, HANDLE event, HWND hw
             hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
 
             if (!map[j].found)
-                todo_wine ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+                ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else if (version < 0x0800)
                 ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else

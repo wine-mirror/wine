@@ -730,7 +730,8 @@ AC_CHECK_HEADERS(\
 	asm/termbits.h \
 	asm/types.h \
 	asm/user.h \
-        bluetooth/bluetooth.h \
+	bluetooth/bluetooth.h \
+	dev/evdev/input.h \
 	elf.h \
 	gettext-po.h \
 	link.h \
