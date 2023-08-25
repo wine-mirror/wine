@@ -1233,24 +1233,31 @@ static NTSTATUS dlopen_dll( const char *so_name, UNICODE_STRING *nt_name, void *
 /***********************************************************************
  *           ntdll_init_syscalls
  */
-NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher )
+NTSTATUS ntdll_init_syscalls( SYSTEM_SERVICE_TABLE *table, void **dispatcher )
 {
     struct syscall_info
     {
         void  *dispatcher;
+        UINT   version;
+        USHORT id;
         USHORT limit;
-        BYTE  args[1];
+     /* USHORT names[limit]; */
+     /* BYTE   args[limit]; */
     } *info = (struct syscall_info *)dispatcher;
 
-    if (id > 3) return STATUS_INVALID_PARAMETER;
+    if (info->version != 0xca110001)
+    {
+        ERR( "invalid syscall table version %x\n", info->version );
+        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
+    }
     if (info->limit != table->ServiceLimit)
     {
         ERR( "syscall count mismatch %u / %lu\n", info->limit, table->ServiceLimit );
         NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
     }
     info->dispatcher = __wine_syscall_dispatcher;
-    memcpy( table->ArgumentTable, info->args, table->ServiceLimit );
-    KeServiceDescriptorTable[id] = *table;
+    memcpy( table->ArgumentTable, (USHORT *)(info + 1) + info->limit, table->ServiceLimit );
+    KeServiceDescriptorTable[info->id] = *table;
     return STATUS_SUCCESS;
 }
 
@@ -2093,7 +2100,7 @@ static void start_main_thread(void)
     load_ntdll();
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
-    ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
+    ntdll_init_syscalls( &syscall_table, p__wine_syscall_dispatcher );
     server_init_process_done();
 }
 

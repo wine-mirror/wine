@@ -36,7 +36,7 @@ extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD d
 extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
 extern int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
 extern int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
-extern NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **dispatcher );
+extern NTSTATUS ntdll_init_syscalls( SYSTEM_SERVICE_TABLE *table, void **dispatcher );
 
 /* exception handling */
 

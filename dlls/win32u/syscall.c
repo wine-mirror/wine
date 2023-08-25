@@ -461,7 +461,7 @@ static NTSTATUS init( void *dispatcher )
     }
 #endif
 
-    return ntdll_init_syscalls( 1, &syscall_table, dispatcher );
+    return ntdll_init_syscalls( &syscall_table, dispatcher );
 }
 
 unixlib_entry_t __wine_unix_call_funcs[] =
