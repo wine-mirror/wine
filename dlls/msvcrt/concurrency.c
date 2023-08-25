@@ -103,6 +103,7 @@ typedef struct {
     unsigned int id;
     union allocator_cache_entry *allocator_cache[8];
     LONG blocked;
+    struct _StructuredTaskCollection *task_collection;
 } ExternalContextBase;
 extern const vtable_ptr ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
@@ -175,7 +176,7 @@ typedef struct
 } SpinWait;
 
 #define FINISHED_INITIAL 0x80000000
-typedef struct
+typedef struct _StructuredTaskCollection
 {
     void *unk1;
     unsigned int unk2;
@@ -186,6 +187,8 @@ typedef struct
     void *exception;
     void *event;
 } _StructuredTaskCollection;
+
+bool __thiscall _StructuredTaskCollection__IsCanceling(_StructuredTaskCollection*);
 
 typedef enum
 {
@@ -851,7 +854,17 @@ void __cdecl Context__SpinYield(void)
 /* ?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ */
 bool __cdecl Context_IsCurrentTaskCollectionCanceling(void)
 {
-    FIXME("()\n");
+    ExternalContextBase *ctx = (ExternalContextBase*)try_get_current_context();
+
+    TRACE("()\n");
+
+    if (ctx && ctx->context.vtable != &ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return FALSE;
+    }
+
+    if (ctx && ctx->task_collection)
+        return _StructuredTaskCollection__IsCanceling(ctx->task_collection);
     return FALSE;
 }
 
@@ -2166,23 +2179,44 @@ static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+static void CALLBACK execute_chore_finally(BOOL normal, void *data)
+{
+    ExternalContextBase *ctx = (ExternalContextBase*)try_get_current_context();
+    _StructuredTaskCollection *old_collection = data;
+
+    if (ctx && ctx->context.vtable == &ExternalContextBase_vtable)
+        ctx->task_collection = old_collection;
+}
+
 static void execute_chore(_UnrealizedChore *chore,
         _StructuredTaskCollection *task_collection)
 {
+    ExternalContextBase *ctx = (ExternalContextBase*)try_get_current_context();
     struct execute_chore_data data = { chore, task_collection };
+    _StructuredTaskCollection *old_collection;
 
     TRACE("(%p %p)\n", chore, task_collection);
 
+    if (ctx && ctx->context.vtable == &ExternalContextBase_vtable)
+    {
+        old_collection = ctx->task_collection;
+        ctx->task_collection = task_collection;
+    }
+
     __TRY
     {
-        if (!((ULONG_PTR)task_collection->exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK) &&
-                chore->chore_proc)
-            chore->chore_proc(chore);
+        __TRY
+        {
+            if (!((ULONG_PTR)task_collection->exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK) &&
+                    chore->chore_proc)
+                chore->chore_proc(chore);
+        }
+        __EXCEPT_CTX(execute_chore_except, &data)
+        {
+        }
+        __ENDTRY
     }
-    __EXCEPT_CTX(execute_chore_except, &data)
-    {
-    }
-    __ENDTRY
+    __FINALLY_CTX(execute_chore_finally, old_collection)
 }
 
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
