@@ -528,8 +528,6 @@ static HRESULT set_format(MMDevice *dev)
 HRESULT load_driver_devices(EDataFlow flow)
 {
     struct get_endpoint_ids_params params;
-    WCHAR **ids = NULL;
-    GUID *guids = NULL;
     UINT i;
 
     params.flow = flow;
@@ -544,38 +542,28 @@ HRESULT load_driver_devices(EDataFlow flow)
     if (FAILED(params.result))
         goto end;
 
-    ids = malloc(params.num * sizeof(*ids));
-    guids = malloc(params.num * sizeof(*guids));
-    if (!ids || !guids) {
-        params.result = E_OUTOFMEMORY;
-        goto end;
-    }
-
     for (i = 0; i < params.num; i++) {
+        GUID guid;
+        WCHAR *id;
+        MMDevice *dev;
         const WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
         const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
         const unsigned int size = (wcslen(name) + 1) * sizeof(WCHAR);
 
-        if (!(ids[i] = malloc(size))) {
-            while (i--) free(ids[i]);
+        if (!(id = malloc(size))) {
             params.result = E_OUTOFMEMORY;
             goto end;
         }
-        memcpy(ids[i], name, size);
-        drvs.pget_device_guid(flow, dev_name, &guids[i]);
-    }
+        memcpy(id, name, size);
 
-    for (i = 0; i < params.num; i++) {
-        MMDevice *dev;
-        dev = MMDevice_Create(ids[i], &guids[i], flow, DEVICE_STATE_ACTIVE,
-                params.default_idx == i);
+        drvs.pget_device_guid(flow, dev_name, &guid);
+
+        dev = MMDevice_Create(id, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i);
         set_format(dev);
     }
 
 end:
     free(params.endpoints);
-    free(guids);
-    free(ids);
 
     return params.result;
 }
