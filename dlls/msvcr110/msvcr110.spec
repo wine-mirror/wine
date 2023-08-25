@@ -17,9 +17,9 @@
 @ stub -arch=arm ??0_CancellationTokenState@details@Concurrency@@AAA@XZ
 @ stub -arch=i386 ??0_CancellationTokenState@details@Concurrency@@AAE@XZ
 @ stub -arch=win64 ??0_CancellationTokenState@details@Concurrency@@AEAA@XZ
-@ stub -arch=arm ??0_Cancellation_beacon@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0_Cancellation_beacon@details@Concurrency@@QAA@XZ(ptr) _Cancellation_beacon_ctor
+@ thiscall -arch=i386 ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ(ptr) _Cancellation_beacon_ctor
+@ cdecl -arch=win64 ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ(ptr) _Cancellation_beacon_ctor
 @ cdecl -arch=arm ??0_Condition_variable@details@Concurrency@@QAA@XZ(ptr) _Condition_variable_ctor
 @ thiscall -arch=i386 ??0_Condition_variable@details@Concurrency@@QAE@XZ(ptr) _Condition_variable_ctor
 @ cdecl -arch=win64 ??0_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) _Condition_variable_ctor
@@ -275,9 +275,9 @@
 @ stub -arch=arm ??1_CancellationTokenState@details@Concurrency@@UAA@XZ
 @ stub -arch=i386 ??1_CancellationTokenState@details@Concurrency@@UAE@XZ
 @ stub -arch=win64 ??1_CancellationTokenState@details@Concurrency@@UEAA@XZ
-@ stub -arch=arm ??1_Cancellation_beacon@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1_Cancellation_beacon@details@Concurrency@@QAA@XZ(ptr) _Cancellation_beacon_dtor
+@ thiscall -arch=i386 ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ(ptr) _Cancellation_beacon_dtor
+@ cdecl -arch=win64 ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ(ptr) _Cancellation_beacon_dtor
 @ cdecl -arch=arm ??1_Condition_variable@details@Concurrency@@QAA@XZ(ptr) _Condition_variable_dtor
 @ thiscall -arch=i386 ??1_Condition_variable@details@Concurrency@@QAE@XZ(ptr) _Condition_variable_dtor
 @ cdecl -arch=win64 ??1_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) _Condition_variable_dtor

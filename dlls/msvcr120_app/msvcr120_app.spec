@@ -12,9 +12,9 @@
 @ cdecl -arch=arm ??0SchedulerPolicy@Concurrency@@QAA@XZ(ptr) msvcr120.??0SchedulerPolicy@Concurrency@@QAA@XZ
 @ thiscall -arch=i386 ??0SchedulerPolicy@Concurrency@@QAE@XZ(ptr) msvcr120.??0SchedulerPolicy@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0SchedulerPolicy@Concurrency@@QEAA@XZ(ptr) msvcr120.??0SchedulerPolicy@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0_Cancellation_beacon@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0_Cancellation_beacon@details@Concurrency@@QAA@XZ(ptr) msvcr120.??0_Cancellation_beacon@details@Concurrency@@QAA@XZ
+@ thiscall -arch=i386 ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_Cancellation_beacon@details@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ
 @ cdecl -arch=arm ??0_Condition_variable@details@Concurrency@@QAA@XZ(ptr) msvcr120.??0_Condition_variable@details@Concurrency@@QAA@XZ
 @ thiscall -arch=i386 ??0_Condition_variable@details@Concurrency@@QAE@XZ(ptr) msvcr120.??0_Condition_variable@details@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??0_Condition_variable@details@Concurrency@@QEAA@XZ
@@ -267,9 +267,9 @@
 @ cdecl -arch=arm ??1SchedulerPolicy@Concurrency@@QAA@XZ(ptr) msvcr120.??1SchedulerPolicy@Concurrency@@QAA@XZ
 @ thiscall -arch=i386 ??1SchedulerPolicy@Concurrency@@QAE@XZ(ptr) msvcr120.??1SchedulerPolicy@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??1SchedulerPolicy@Concurrency@@QEAA@XZ(ptr) msvcr120.??1SchedulerPolicy@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??1_Cancellation_beacon@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1_Cancellation_beacon@details@Concurrency@@QAA@XZ(ptr) msvcr120.??1_Cancellation_beacon@details@Concurrency@@QAA@XZ
+@ thiscall -arch=i386 ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ(ptr) msvcr120.??1_Cancellation_beacon@details@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ
 @ cdecl -arch=arm ??1_Condition_variable@details@Concurrency@@QAA@XZ(ptr) msvcr120.??1_Condition_variable@details@Concurrency@@QAA@XZ
 @ thiscall -arch=i386 ??1_Condition_variable@details@Concurrency@@QAE@XZ(ptr) msvcr120.??1_Condition_variable@details@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??1_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) msvcr120.??1_Condition_variable@details@Concurrency@@QEAA@XZ

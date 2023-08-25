@@ -97,6 +97,12 @@ struct scheduler_list {
     struct scheduler_list *next;
 };
 
+struct beacon {
+    bool cancelling;
+    struct list entry;
+    struct _StructuredTaskCollection *task_collection;
+};
+
 typedef struct {
     Context context;
     struct scheduler_list scheduler;
@@ -104,6 +110,8 @@ typedef struct {
     union allocator_cache_entry *allocator_cache[8];
     LONG blocked;
     struct _StructuredTaskCollection *task_collection;
+    CRITICAL_SECTION beacons_cs;
+    struct list beacons;
 } ExternalContextBase;
 extern const vtable_ptr ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
@@ -320,6 +328,10 @@ typedef struct cv_queue {
     struct cv_queue *next;
     LONG expired;
 } cv_queue;
+
+typedef struct {
+    struct beacon *beacon;
+} _Cancellation_beacon;
 
 typedef struct {
     /* cv_queue structure is not binary compatible */
@@ -1078,6 +1090,10 @@ static void ExternalContextBase_dtor(ExternalContextBase *this)
             operator_delete(scheduler_cur);
         }
     }
+
+    DeleteCriticalSection(&this->beacons_cs);
+    if (!list_empty(&this->beacons))
+        ERR("beacons list is not empty - expect crash\n");
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_vector_dtor, 8)
@@ -1107,6 +1123,8 @@ static void ExternalContextBase_ctor(ExternalContextBase *this)
     memset(this, 0, sizeof(*this));
     this->context.vtable = &ExternalContextBase_vtable;
     this->id = InterlockedIncrement(&context_id);
+    InitializeCriticalSection(&this->beacons_cs);
+    list_init(&this->beacons);
 
     create_default_scheduler();
     this->scheduler.scheduler = &default_scheduler->scheduler;
@@ -2100,6 +2118,7 @@ void __thiscall _StructuredTaskCollection__Cancel(
     ThreadScheduler *scheduler;
     void *prev_exception, *new_exception;
     struct scheduled_chore *sc, *next;
+    struct beacon *beacon;
     LONG removed = 0;
     LONG prev_finished, new_finished;
 
@@ -2121,6 +2140,13 @@ void __thiscall _StructuredTaskCollection__Cancel(
     } while ((new_exception = InterlockedCompareExchangePointer(
                     &this->exception, new_exception, prev_exception))
              != prev_exception);
+
+    EnterCriticalSection(&((ExternalContextBase*)this->context)->beacons_cs);
+    LIST_FOR_EACH_ENTRY(beacon, &((ExternalContextBase*)this->context)->beacons, struct beacon, entry) {
+        if (beacon->task_collection == this)
+            beacon->cancelling = TRUE;
+    }
+    LeaveCriticalSection(&((ExternalContextBase*)this->context)->beacons_cs);
 
     EnterCriticalSection(&scheduler->cs);
     LIST_FOR_EACH_ENTRY_SAFE(sc, next, &scheduler->scheduled_chores,
@@ -3035,6 +3061,60 @@ int __cdecl event_wait_for_multiple(event **events, size_t count, bool wait_all,
 }
 
 #if _MSVCR_VER >= 110
+
+/* ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ */
+/* ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Cancellation_beacon_ctor, 4)
+_Cancellation_beacon* __thiscall _Cancellation_beacon_ctor(_Cancellation_beacon *this)
+{
+    ExternalContextBase *ctx = (ExternalContextBase*)get_current_context();
+    _StructuredTaskCollection *task_collection = NULL;
+    struct beacon *beacon;
+
+    TRACE("(%p)\n", this);
+
+    if (ctx->context.vtable == &ExternalContextBase_vtable) {
+        task_collection = ctx->task_collection;
+        if (task_collection)
+            ctx = (ExternalContextBase*)task_collection->context;
+    }
+
+    if (ctx->context.vtable != &ExternalContextBase_vtable) {
+        ERR("unknown context\n");
+        return NULL;
+    }
+
+    beacon = malloc(sizeof(*beacon));
+    beacon->cancelling = Context_IsCurrentTaskCollectionCanceling();
+    beacon->task_collection = task_collection;
+
+    if (task_collection) {
+        EnterCriticalSection(&ctx->beacons_cs);
+        list_add_head(&ctx->beacons, &beacon->entry);
+        LeaveCriticalSection(&ctx->beacons_cs);
+    }
+
+    this->beacon = beacon;
+    return this;
+}
+
+/* ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ */
+/* ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Cancellation_beacon_dtor, 4)
+void __thiscall _Cancellation_beacon_dtor(_Cancellation_beacon *this)
+{
+    TRACE("(%p)\n", this);
+
+    if (this->beacon->task_collection) {
+        ExternalContextBase *ctx = (ExternalContextBase*)this->beacon->task_collection->context;
+
+        EnterCriticalSection(&ctx->beacons_cs);
+        list_remove(&this->beacon->entry);
+        LeaveCriticalSection(&ctx->beacons_cs);
+    }
+
+    free(this->beacon);
+}
 
 /* ??0_Condition_variable@details@Concurrency@@QAE@XZ */
 /* ??0_Condition_variable@details@Concurrency@@QEAA@XZ */
