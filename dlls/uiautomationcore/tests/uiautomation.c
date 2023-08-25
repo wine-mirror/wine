@@ -32,6 +32,13 @@
 static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, LONG, DWORD, IRawElementProviderSimple **);
 static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
 
+#define ACC_METHOD_TRACE(acc, method) \
+    if(winetest_debug > 1) printf("%#lx:%#lx: %s_" #method "\n", GetCurrentProcessId(), GetCurrentThreadId(), (acc)->interface_name);
+
+#define ACC_METHOD_TRACE2(acc, cid, method) \
+    if(winetest_debug > 1) printf("%#lx:%#lx: %s_" #method ": %s\n", GetCurrentProcessId(), GetCurrentThreadId(), \
+            (acc)->interface_name, debugstr_variant((cid)));
+
 #define DEFINE_EXPECT(func) \
     static int expect_ ## func = 0, called_ ## func = 0
 
@@ -240,6 +247,7 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
     if (IsEqualIID(riid, &IID_IAccIdentity))
     {
         CHECK_ACC_METHOD_EXPECT(This, QI_IAccIdentity);
+        ACC_METHOD_TRACE(This, QI_IAccIdentity);
         return E_NOINTERFACE;
     }
 
@@ -304,6 +312,7 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **o
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accParent);
+    ACC_METHOD_TRACE(This, get_accParent);
     if (This->parent)
         return IAccessible_QueryInterface(This->parent, &IID_IDispatch, (void **)out_parent);
 
@@ -316,6 +325,7 @@ static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accChildCount);
+    ACC_METHOD_TRACE(This, get_accChildCount);
     if (This->child_count)
     {
         *out_count = This->child_count;
@@ -331,6 +341,7 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accChild);
+    ACC_METHOD_TRACE2(This, &child_id, get_accChild);
 
     *out_child = NULL;
     if (V_VT(&child_id) != VT_I4)
@@ -368,6 +379,7 @@ static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT child_i
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accName);
+    ACC_METHOD_TRACE2(This, &child_id, get_accName);
 
     *out_name = NULL;
     if (This->name)
@@ -384,6 +396,7 @@ static HRESULT WINAPI Accessible_get_accValue(IAccessible *iface, VARIANT child_
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accValue);
+    ACC_METHOD_TRACE2(This, &child_id, get_accValue);
     return E_NOTIMPL;
 }
 
@@ -392,6 +405,7 @@ static HRESULT WINAPI Accessible_get_accDescription(IAccessible *iface, VARIANT 
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accDescription);
+    ACC_METHOD_TRACE2(This, &child_id, get_accDescription);
     return E_NOTIMPL;
 }
 
@@ -401,6 +415,7 @@ static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_i
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accRole);
+    ACC_METHOD_TRACE2(This, &child_id, get_accRole);
 
     if (This->role)
     {
@@ -418,6 +433,7 @@ static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_accState);
+    ACC_METHOD_TRACE2(This, &child_id, get_accState);
 
     if (V_VT(&child_id) != VT_I4)
         return E_INVALIDARG;
@@ -458,6 +474,7 @@ static HRESULT WINAPI Accessible_get_accHelp(IAccessible *iface, VARIANT child_i
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accHelp);
+    ACC_METHOD_TRACE2(This, &child_id, get_accHelp);
     return E_NOTIMPL;
 }
 
@@ -466,6 +483,7 @@ static HRESULT WINAPI Accessible_get_accHelpTopic(IAccessible *iface,
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accHelpTopic);
+    ACC_METHOD_TRACE2(This, &child_id, get_accHelpTopic);
     return E_NOTIMPL;
 }
 
@@ -474,6 +492,7 @@ static HRESULT WINAPI Accessible_get_accKeyboardShortcut(IAccessible *iface, VAR
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accKeyboardShortcut);
+    ACC_METHOD_TRACE2(This, &child_id, get_accKeyboardShortcut);
     return E_NOTIMPL;
 }
 
@@ -481,6 +500,7 @@ static HRESULT WINAPI Accessible_get_accFocus(IAccessible *iface, VARIANT *pchil
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accFocus);
+    ACC_METHOD_TRACE(This, get_accFocus);
     return E_NOTIMPL;
 }
 
@@ -488,6 +508,7 @@ static HRESULT WINAPI Accessible_get_accSelection(IAccessible *iface, VARIANT *o
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accSelection);
+    ACC_METHOD_TRACE(This, get_accSelection);
     return E_NOTIMPL;
 }
 
@@ -496,6 +517,7 @@ static HRESULT WINAPI Accessible_get_accDefaultAction(IAccessible *iface, VARIAN
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_accDefaultAction);
+    ACC_METHOD_TRACE2(This, &child_id, get_accDefaultAction);
     return E_NOTIMPL;
 }
 
@@ -504,6 +526,7 @@ static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG select_flags
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, accSelect);
+    ACC_METHOD_TRACE2(This, &child_id, accSelect);
     return E_NOTIMPL;
 }
 
@@ -513,6 +536,7 @@ static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, accLocation);
+    ACC_METHOD_TRACE2(This, &child_id, accLocation);
 
     if (This->width && This->height)
     {
@@ -532,6 +556,7 @@ static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG nav_direct
     struct Accessible *This = impl_from_Accessible(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, accNavigate);
+    ACC_METHOD_TRACE2(This, &child_id_start, accNavigate);
 
     VariantInit(out_var);
 
@@ -554,6 +579,7 @@ static HRESULT WINAPI Accessible_accHitTest(IAccessible *iface, LONG left, LONG 
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, accHitTest);
+    ACC_METHOD_TRACE(This, accHitTest);
     return E_NOTIMPL;
 }
 
@@ -561,6 +587,7 @@ static HRESULT WINAPI Accessible_accDoDefaultAction(IAccessible *iface, VARIANT 
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, accDoDefaultAction);
+    ACC_METHOD_TRACE2(This, &child_id, accDoDefaultAction);
     return E_NOTIMPL;
 }
 
@@ -569,6 +596,7 @@ static HRESULT WINAPI Accessible_put_accName(IAccessible *iface, VARIANT child_i
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, put_accName);
+    ACC_METHOD_TRACE2(This, &child_id, put_accName);
     return E_NOTIMPL;
 }
 
@@ -577,6 +605,7 @@ static HRESULT WINAPI Accessible_put_accValue(IAccessible *iface, VARIANT child_
 {
     struct Accessible *This = impl_from_Accessible(iface);
     CHECK_ACC_METHOD_EXPECT(This, put_accValue);
+    ACC_METHOD_TRACE2(This, &child_id, put_accValue);
     return E_NOTIMPL;
 }
 
@@ -815,6 +844,7 @@ static HRESULT WINAPI Accessible2_get_nRelations(IAccessible2 *iface, LONG *out_
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_nRelations);
+    ACC_METHOD_TRACE(This, get_nRelations);
     return E_NOTIMPL;
 }
 
@@ -823,6 +853,7 @@ static HRESULT WINAPI Accessible2_get_relation(IAccessible2 *iface, LONG relatio
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_relation);
+    ACC_METHOD_TRACE(This, get_relation);
     return E_NOTIMPL;
 }
 
@@ -831,6 +862,7 @@ static HRESULT WINAPI Accessible2_get_relations(IAccessible2 *iface, LONG count,
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_relations);
+    ACC_METHOD_TRACE(This, get_relations);
     return E_NOTIMPL;
 }
 
@@ -838,6 +870,7 @@ static HRESULT WINAPI Accessible2_role(IAccessible2 *iface, LONG *out_role)
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, role);
+    ACC_METHOD_TRACE(This, role);
     return E_NOTIMPL;
 }
 
@@ -845,6 +878,7 @@ static HRESULT WINAPI Accessible2_scrollTo(IAccessible2 *iface, enum IA2ScrollTy
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, scrollTo);
+    ACC_METHOD_TRACE(This, scrollTo);
     return E_NOTIMPL;
 }
 
@@ -853,6 +887,7 @@ static HRESULT WINAPI Accessible2_scrollToPoint(IAccessible2 *iface,
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, scrollToPoint);
+    ACC_METHOD_TRACE(This, scrollToPoint);
     return E_NOTIMPL;
 }
 
@@ -861,6 +896,7 @@ static HRESULT WINAPI Accessible2_get_groupPosition(IAccessible2 *iface, LONG *o
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_groupPosition);
+    ACC_METHOD_TRACE(This, get_groupPosition);
     return E_NOTIMPL;
 }
 
@@ -868,6 +904,7 @@ static HRESULT WINAPI Accessible2_get_states(IAccessible2 *iface, AccessibleStat
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_states);
+    ACC_METHOD_TRACE(This, get_states);
     return E_NOTIMPL;
 }
 
@@ -875,6 +912,7 @@ static HRESULT WINAPI Accessible2_get_extendedRole(IAccessible2 *iface, BSTR *ou
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_extendedRole);
+    ACC_METHOD_TRACE(This, get_extendedRole);
     return E_NOTIMPL;
 }
 
@@ -883,6 +921,7 @@ static HRESULT WINAPI Accessible2_get_localizedExtendedRole(IAccessible2 *iface,
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_localizedExtendedRole);
+    ACC_METHOD_TRACE(This, get_localizedExtendedRole);
     return E_NOTIMPL;
 }
 
@@ -890,6 +929,7 @@ static HRESULT WINAPI Accessible2_get_nExtendedStates(IAccessible2 *iface, LONG 
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_nExtendedStates);
+    ACC_METHOD_TRACE(This, get_nExtendedStates);
     return E_NOTIMPL;
 }
 
@@ -898,6 +938,7 @@ static HRESULT WINAPI Accessible2_get_extendedStates(IAccessible2 *iface, LONG c
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_extendedStates);
+    ACC_METHOD_TRACE(This, get_extendedStates);
     return E_NOTIMPL;
 }
 
@@ -906,6 +947,7 @@ static HRESULT WINAPI Accessible2_get_localizedExtendedStates(IAccessible2 *ifac
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_localizedExtendedStates);
+    ACC_METHOD_TRACE(This, get_localizedExtendedStates);
     return E_NOTIMPL;
 }
 
@@ -914,6 +956,7 @@ static HRESULT WINAPI Accessible2_get_uniqueID(IAccessible2 *iface, LONG *out_un
     struct Accessible *This = impl_from_Accessible2(iface);
 
     CHECK_ACC_METHOD_EXPECT(This, get_uniqueID);
+    ACC_METHOD_TRACE(This, get_uniqueID);
 
     *out_unique_id = 0;
     if (This->unique_id)
@@ -929,6 +972,7 @@ static HRESULT WINAPI Accessible2_get_windowHandle(IAccessible2 *iface, HWND *ou
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_windowHandle);
+    ACC_METHOD_TRACE(This, get_windowHandle);
     return E_NOTIMPL;
 }
 
@@ -936,6 +980,7 @@ static HRESULT WINAPI Accessible2_get_indexInParent(IAccessible2 *iface, LONG *o
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_indexInParent);
+    ACC_METHOD_TRACE(This, get_indexInParent);
     return E_NOTIMPL;
 }
 
@@ -943,6 +988,7 @@ static HRESULT WINAPI Accessible2_get_locale(IAccessible2 *iface, IA2Locale *out
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_locale);
+    ACC_METHOD_TRACE(This, get_locale);
     return E_NOTIMPL;
 }
 
@@ -950,6 +996,7 @@ static HRESULT WINAPI Accessible2_get_attributes(IAccessible2 *iface, BSTR *out_
 {
     struct Accessible *This = impl_from_Accessible2(iface);
     CHECK_ACC_METHOD_EXPECT(This, get_attributes);
+    ACC_METHOD_TRACE(This, get_attributes);
     return E_NOTIMPL;
 }
 
