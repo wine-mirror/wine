@@ -251,6 +251,7 @@ static void (__thiscall *p__Condition_variable_notify_all)(_Condition_variable*)
 
 static Context* (__cdecl *p_Context_CurrentContext)(void);
 static _Context* (__cdecl *p__Context__CurrentContext)(_Context*);
+static MSVCRT_bool (__cdecl *p_Context_IsCurrentTaskCollectionCanceling)(void);
 
 static _StructuredTaskCollection* (__thiscall *p__StructuredTaskCollection_ctor)(_StructuredTaskCollection*, void*);
 static void (__thiscall *p__StructuredTaskCollection_dtor)(_StructuredTaskCollection*);
@@ -317,6 +318,7 @@ static BOOL init(void)
     SET(p__Context__CurrentContext, "?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ");
     SET(p_strcmp, "strcmp");
     SET(p_strncmp, "strncmp");
+    SET(p_Context_IsCurrentTaskCollectionCanceling, "?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p__StructuredTaskCollection_ctor,
                 "??0_StructuredTaskCollection@details@Concurrency@@QEAA@PEAV_CancellationTokenState@12@@Z");
@@ -1409,6 +1411,9 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
                 chore->chore.task_collection);
         ok(!canceling, "Task is already canceling\n");
 
+        ok(!p_Context_IsCurrentTaskCollectionCanceling(),
+                "IsCurrentTaskCollectionCanceling returned TRUE\n");
+
         call_func1(p__Cancellation_beacon_ctor, &beacon);
         ok(!*beacon.cancelling, "beacon signalled %x\n", *beacon.cancelling);
 
@@ -1439,6 +1444,9 @@ static void __cdecl chore_proc(_UnrealizedChore *_this)
                 p__StructuredTaskCollection__IsCanceling,
                 chore->chore.task_collection);
         ok(canceling, "Task is not canceling\n");
+
+        ok(p_Context_IsCurrentTaskCollectionCanceling(),
+                "IsCurrentTaskCollectionCanceling returned FALSE\n");
 
         ok(*beacon.cancelling == 1, "beacon not signalled (%x)\n", *beacon.cancelling);
         call_func1(p__Cancellation_beacon_dtor, &beacon);
@@ -1622,10 +1630,14 @@ static void test_StructuredTaskCollection(void)
     ret = WaitForSingleObject(chore_evt1, 5000);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %ld\n", ret);
 
+    ok(!p_Context_IsCurrentTaskCollectionCanceling(),
+            "IsCurrentTaskCollectionCanceling returned TRUE\n");
     call_func1(p__Cancellation_beacon_ctor, &beacon);
     ok(!*beacon.cancelling, "beacon signalled\n");
 
     call_func1(p__StructuredTaskCollection__Cancel, &task_coll);
+    ok(!p_Context_IsCurrentTaskCollectionCanceling(),
+            "IsCurrentTaskCollectionCanceling returned TRUE\n");
     ok(!*beacon.cancelling, "beacon signalled\n");
 
     b = SetEvent(chore_evt2);
