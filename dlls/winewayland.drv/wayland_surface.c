@@ -126,7 +126,10 @@ void wayland_surface_destroy(struct wayland_surface *surface)
 {
     pthread_mutex_lock(&process_wayland.pointer.mutex);
     if (process_wayland.pointer.focused_hwnd == surface->hwnd)
+    {
         process_wayland.pointer.focused_hwnd = NULL;
+        process_wayland.pointer.enter_serial = 0;
+    }
     pthread_mutex_unlock(&process_wayland.pointer.mutex);
 
     pthread_mutex_lock(&xdg_data_mutex);
