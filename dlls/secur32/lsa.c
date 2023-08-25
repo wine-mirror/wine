@@ -967,10 +967,9 @@ void load_auth_packages(void)
         if (err != ERROR_SUCCESS)
             continue;
 
-        if (!load_package(name, &package, i + 1))
-            continue;
+        if (load_package(name, &package, i + 1))
+            add_package(&package);
 
-        add_package(&package);
         i++;
     }
 
