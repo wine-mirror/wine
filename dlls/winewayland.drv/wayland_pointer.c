@@ -24,14 +24,55 @@
 
 #include "config.h"
 
+#include <math.h>
+
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
+static HWND wayland_pointer_get_focused_hwnd(void)
+{
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+    HWND hwnd;
+
+    pthread_mutex_lock(&pointer->mutex);
+    hwnd = pointer->focused_hwnd;
+    pthread_mutex_unlock(&pointer->mutex);
+
+    return hwnd;
+}
+
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
                                   uint32_t time, wl_fixed_t sx, wl_fixed_t sy)
 {
+    INPUT input = {0};
+    RECT window_rect;
+    HWND hwnd;
+    int screen_x, screen_y;
+
+    if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
+    if (!NtUserGetWindowRect(hwnd, &window_rect)) return;
+
+    screen_x = round(wl_fixed_to_double(sx)) + window_rect.left;
+    screen_y = round(wl_fixed_to_double(sy)) + window_rect.top;
+    /* Sometimes, due to rounding, we may end up with pointer coordinates
+     * slightly outside the target window, so bring them within bounds. */
+    if (screen_x >= window_rect.right) screen_x = window_rect.right - 1;
+    else if (screen_x < window_rect.left) screen_x = window_rect.left;
+    if (screen_y >= window_rect.bottom) screen_y = window_rect.bottom - 1;
+    else if (screen_y < window_rect.top) screen_y = window_rect.top;
+
+    input.type = INPUT_MOUSE;
+    input.mi.dx = screen_x;
+    input.mi.dy = screen_y;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+
+    TRACE("hwnd=%p wayland_xy=%.2f,%.2f screen_xy=%d,%d\n",
+          hwnd, wl_fixed_to_double(sx), wl_fixed_to_double(sy),
+          screen_x, screen_y);
+
+    __wine_send_input(hwnd, &input, NULL);
 }
 
 static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
@@ -51,6 +92,11 @@ static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
     pthread_mutex_lock(&pointer->mutex);
     pointer->focused_hwnd = hwnd;
     pthread_mutex_unlock(&pointer->mutex);
+
+    /* Handle the enter as a motion, to account for cases where the
+     * window first appears beneath the pointer and won't get a separate
+     * motion event. */
+    pointer_handle_motion(data, wl_pointer, 0, sx, sy);
 }
 
 static void pointer_handle_leave(void *data, struct wl_pointer *wl_pointer,
