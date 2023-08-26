@@ -262,7 +262,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 void check_attributes_(const char *file, int line, IMFAttributes *attributes,
         const struct attribute_desc *desc, ULONG limit)
 {
-    char buffer[256], *buf = buffer;
+    char buffer[1024], *buf = buffer;
     PROPVARIANT value;
     int i, j, ret;
     HRESULT hr;
@@ -287,9 +287,9 @@ void check_attributes_(const char *file, int line, IMFAttributes *attributes,
             break;
         case VT_VECTOR | VT_UI1:
             buf += sprintf(buf, "size %lu, data {", value.caub.cElems);
-            for (j = 0; j < 16 && j < value.caub.cElems; ++j)
+            for (j = 0; j < 128 && j < value.caub.cElems; ++j)
                 buf += sprintf(buf, "0x%02x,", value.caub.pElems[j]);
-            if (value.caub.cElems > 16)
+            if (value.caub.cElems > 128)
                 buf += sprintf(buf, "...}");
             else
                 buf += sprintf(buf - (j ? 1 : 0), "}");
@@ -781,13 +781,12 @@ static void check_mft_set_output_type(IMFTransform *transform, const struct attr
     IMFMediaType_Release(media_type);
 }
 
-#define check_mft_get_output_current_type(a, b) check_mft_get_output_current_type_(a, b, FALSE, FALSE)
+#define check_mft_get_output_current_type(a, b) check_mft_get_output_current_type_(a, b, FALSE)
 static void check_mft_get_output_current_type_(IMFTransform *transform, const struct attribute_desc *attributes,
-        BOOL todo_current, BOOL todo_compare)
+        BOOL todo_current)
 {
     HRESULT hr, expect_hr = attributes ? S_OK : MF_E_TRANSFORM_TYPE_NOT_SET;
     IMFMediaType *media_type, *current_type;
-    BOOL result;
 
     hr = IMFTransform_GetOutputCurrentType(transform, 0, &current_type);
     todo_wine_if(todo_current)
@@ -799,11 +798,7 @@ static void check_mft_get_output_current_type_(IMFTransform *transform, const st
     ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
     init_media_type(media_type, attributes, -1);
 
-    hr = IMFMediaType_Compare(current_type, (IMFAttributes *)media_type,
-            MF_ATTRIBUTES_MATCH_ALL_ITEMS, &result);
-    ok(hr == S_OK, "Compare returned hr %#lx.\n", hr);
-    todo_wine_if(todo_compare)
-    ok(result, "got result %u.\n", !!result);
+    check_attributes((IMFAttributes *)current_type, attributes, -1);
 
     IMFMediaType_Release(media_type);
     IMFMediaType_Release(current_type);
@@ -3013,7 +3008,7 @@ static void test_wma_decoder(void)
 
     /* setting output media type first doesn't work */
     check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
-    check_mft_get_output_current_type_(transform, NULL, TRUE, FALSE);
+    check_mft_get_output_current_type_(transform, NULL, TRUE);
 
     check_mft_set_input_type_required(transform, input_type_desc);
     check_mft_set_input_type(transform, input_type_desc);
@@ -3039,7 +3034,7 @@ static void test_wma_decoder(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, TRUE, FALSE);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, TRUE);
 
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &output_info);
@@ -3758,8 +3753,8 @@ static void test_h264_decoder(void)
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 3840),
         ATTR_UINT32(MF_MT_SAMPLE_SIZE, 3840 * input_height * 3 / 2),
         ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
-        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0),
-        ATTR_UINT32(MF_MT_COMPRESSED, 0),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
         {0},
     };
     static const struct attribute_desc new_output_type_desc[] =
@@ -3778,8 +3773,8 @@ static void test_h264_decoder(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_RATIO(MF_MT_FRAME_RATE, 1, 1),
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 2),
-        ATTR_UINT32(MF_MT_COMPRESSED, 0),
-        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0, .todo = TRUE),
         {0},
     };
     static const MFVideoArea actual_aperture = {.Area={82,84}};
@@ -4006,7 +4001,7 @@ static void test_h264_decoder(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE);
 
     /* check that the output media type we've selected don't change the enumeration */
 
@@ -4104,7 +4099,7 @@ static void test_h264_decoder(void)
     ok(i == 5, "%lu output media types\n", i);
 
     /* current output type is still the one we selected */
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE);
 
     hr = MFCreateCollection(&output_samples);
     ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
@@ -4134,7 +4129,7 @@ static void test_h264_decoder(void)
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
 
-    check_mft_get_output_current_type_(transform, expect_new_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type_(transform, expect_new_output_type_desc, FALSE);
 
     output_sample = create_sample(NULL, actual_width * actual_height * 2);
     hr = check_mft_process_output(transform, output_sample, &output_status);
@@ -4538,8 +4533,8 @@ static void test_audio_convert(void)
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100 * 4),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
-        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, .todo = TRUE),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO output_info =
@@ -4676,7 +4671,7 @@ static void test_audio_convert(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE);
 
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &output_info);
@@ -5133,7 +5128,7 @@ static void test_wmv_encoder(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type_(transform, expect_output_type_desc, FALSE);
 
     check_mft_get_input_stream_info(transform, S_OK, &expect_input_info);
     check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
@@ -5713,7 +5708,7 @@ static void test_wmv_decoder(void)
 
         check_mft_set_output_type_required(transform, transform_tests[j].output_type_desc);
         check_mft_set_output_type(transform, transform_tests[j].output_type_desc, S_OK);
-        check_mft_get_output_current_type_(transform, transform_tests[j].expect_output_type_desc, FALSE, TRUE);
+        check_mft_get_output_current_type_(transform, transform_tests[j].expect_output_type_desc, FALSE);
 
         check_mft_get_input_stream_info(transform, S_OK, transform_tests[j].expect_input_info);
         check_mft_get_output_stream_info(transform, S_OK, transform_tests[j].expect_output_info);
@@ -6641,10 +6636,10 @@ static void test_color_convert(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
-        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
-        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
-        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4, .todo = TRUE),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1, .todo = TRUE),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1, .todo = TRUE),
         {0},
     };
     const struct attribute_desc expect_output_type_desc_negative_stride[] =
@@ -6653,10 +6648,10 @@ static void test_color_convert(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, -actual_width * 4),
-        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
-        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
-        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 4, .todo = TRUE),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1, .todo = TRUE),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1, .todo = TRUE),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO output_info =
@@ -6799,7 +6794,7 @@ static void test_color_convert(void)
         winetest_push_context("color conversion #%lu", i);
         check_mft_set_output_type_required(transform, color_conversion_tests[i].output_type_desc);
         check_mft_set_output_type(transform, color_conversion_tests[i].output_type_desc, S_OK);
-        check_mft_get_output_current_type_(transform, color_conversion_tests[i].expect_output_type_desc, FALSE, TRUE);
+        check_mft_get_output_current_type_(transform, color_conversion_tests[i].expect_output_type_desc, FALSE);
 
         check_mft_get_input_stream_info(transform, S_OK, &input_info);
         check_mft_get_output_stream_info(transform, S_OK, &output_info);
