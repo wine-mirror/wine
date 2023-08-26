@@ -1042,8 +1042,6 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 
     if ((ret = user_driver->pMapVirtualKeyEx( code, type, layout )) != -1) return ret;
 
-    kbd_tables_init_vk2char( kbd_tables, vk2char );
-
     switch (type)
     {
     case MAPVK_VK_TO_VSC_EX:
@@ -1096,6 +1094,7 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         }
         break;
     case MAPVK_VK_TO_CHAR:
+        kbd_tables_init_vk2char( kbd_tables, vk2char );
         if (code >= ARRAY_SIZE(vk2char)) ret = 0;
         else if (code >= 'A' && code <= 'Z') ret = code;
         else ret = vk2char[code];
