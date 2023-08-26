@@ -1042,7 +1042,6 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 
     if ((ret = user_driver->pMapVirtualKeyEx( code, type, layout )) != -1) return ret;
 
-    kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
     kbd_tables_init_vk2char( kbd_tables, vk2char );
 
     switch (type)
@@ -1067,6 +1066,7 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         case VK_DECIMAL: code = VK_DELETE; break;
         }
 
+        kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
         for (ret = 0; ret < ARRAY_SIZE(vsc2vk); ++ret) if (vsc2vk[ret] == code) break;
         if (ret >= ARRAY_SIZE(vsc2vk)) ret = 0;
 
@@ -1079,6 +1079,8 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         break;
     case MAPVK_VSC_TO_VK:
     case MAPVK_VSC_TO_VK_EX:
+        kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
+
         if (code & 0xe000) code -= 0xdf00;
         if (code >= ARRAY_SIZE(vsc2vk)) ret = 0;
         else ret = vsc2vk[code];
