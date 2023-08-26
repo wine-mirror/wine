@@ -3602,6 +3602,121 @@ static IMFSample *next_h264_sample_(int line, const BYTE **h264_buf, ULONG *h264
     return create_sample(sample_data, *h264_buf - sample_data);
 }
 
+static void test_h264_encoder(void)
+{
+    static const DWORD actual_width = 96, actual_height = 96;
+    const GUID *const class_id = &CLSID_MSH264EncoderMFT;
+    const struct transform_info expect_mft_info =
+    {
+        .name = L"H264 Encoder MFT",
+        .major_type = &MFMediaType_Video,
+        .inputs =
+        {
+            {.subtype = &MFVideoFormat_IYUV},
+            {.subtype = &MFVideoFormat_YV12},
+            {.subtype = &MFVideoFormat_NV12},
+            {.subtype = &MFVideoFormat_YUY2},
+        },
+        .outputs =
+        {
+            {.subtype = &MFVideoFormat_H264},
+        },
+    };
+    static const struct attribute_desc expect_transform_attributes[] =
+    {
+        ATTR_UINT32(MFT_ENCODER_SUPPORTS_CONFIG_EVENT, 1),
+        {0},
+    };
+    const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        {0},
+    };
+    const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive),
+        {0},
+    };
+    const struct attribute_desc expect_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        {0},
+    };
+    const struct attribute_desc expect_output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
+        ATTR_BLOB(MF_MT_MPEG_SEQUENCE_HEADER, test_h264_sequence_header, sizeof(test_h264_sequence_header)),
+        {0},
+    };
+    static const MFT_OUTPUT_STREAM_INFO expect_output_info = {.cbSize = 0x8000};
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_H264};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    IMFTransform *transform;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("h264enc");
+
+    if (!has_video_processor)
+    {
+        win_skip("Skipping inconsistent h264 encoder tests on Win7.\n");
+        goto failed;
+    }
+
+    if (!check_mft_enum(MFT_CATEGORY_VIDEO_ENCODER, &input_type, &output_type, class_id))
+        goto failed;
+    check_mft_get_info(class_id, &expect_mft_info);
+
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, FALSE);
+    check_interface(transform, &IID_IPropertyStore, FALSE);
+    check_interface(transform, &IID_IPropertyBag, FALSE);
+
+    check_mft_get_attributes(transform, expect_transform_attributes, FALSE);
+    check_mft_get_input_stream_info(transform, S_OK, NULL);
+    check_mft_get_output_stream_info(transform, S_OK, NULL);
+
+    check_mft_set_output_type_required(transform, output_type_desc);
+    check_mft_set_output_type(transform, output_type_desc, S_OK);
+
+    check_mft_set_input_type_required(transform, input_type_desc);
+    check_mft_set_input_type(transform, input_type_desc);
+    check_mft_get_input_current_type(transform, expect_input_type_desc);
+
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
+
+    check_mft_get_input_stream_info(transform, S_OK, NULL);
+    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
 static void test_h264_decoder(void)
 {
     const GUID *const class_id = &CLSID_MSH264DecoderMFT;
@@ -8456,6 +8571,7 @@ START_TEST(transform)
     test_wma_decoder();
     test_wma_decoder_dmo_input_type();
     test_wma_decoder_dmo_output_type();
+    test_h264_encoder();
     test_h264_decoder();
     test_wmv_encoder();
     test_wmv_decoder();
