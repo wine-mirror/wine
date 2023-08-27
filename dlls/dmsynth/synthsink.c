@@ -125,6 +125,7 @@ static HRESULT WINAPI synth_sink_SetMasterClock(IDirectMusicSynthSink *iface,
     if (This->active)
         return E_FAIL;
 
+    if (This->master_clock) IReferenceClock_Release(This->master_clock);
     IReferenceClock_AddRef(clock);
     This->master_clock = clock;
 
