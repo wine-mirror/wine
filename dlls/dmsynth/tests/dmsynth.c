@@ -608,6 +608,548 @@ static void test_COM_synthsink(void)
     IDirectMusicSynthSink_Release(dmss);
 }
 
+struct test_sink
+{
+    IDirectMusicSynthSink IDirectMusicSynthSink_iface;
+    IReferenceClock IReferenceClock_iface;
+    LONG refcount;
+
+    IReferenceClock *clock;
+    IDirectMusicSynth *synth;
+    REFERENCE_TIME activate_time;
+    REFERENCE_TIME latency_time;
+    DWORD written;
+};
+
+static HRESULT WINAPI test_sink_QueryInterface(IDirectMusicSynthSink *iface, REFIID riid, void **ret_iface)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return S_OK;
+}
+
+static ULONG WINAPI test_sink_AddRef(IDirectMusicSynthSink *iface)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    return InterlockedIncrement(&sink->refcount);
+}
+
+static ULONG WINAPI test_sink_Release(IDirectMusicSynthSink *iface)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    ULONG ref = InterlockedDecrement(&sink->refcount);
+    if (!ref) free(sink);
+    return ref;
+}
+
+static HRESULT WINAPI test_sink_Init(IDirectMusicSynthSink *iface, IDirectMusicSynth *synth)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    sink->synth = synth;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_SetMasterClock(IDirectMusicSynthSink *iface, IReferenceClock *clock)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    if (sink->clock)
+        IReferenceClock_Release(sink->clock);
+    if ((sink->clock = clock))
+        IReferenceClock_AddRef(sink->clock);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_GetLatencyClock(IDirectMusicSynthSink *iface, IReferenceClock **clock)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    *clock = &sink->IReferenceClock_iface;
+    IReferenceClock_AddRef(*clock);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_Activate(IDirectMusicSynthSink *iface, BOOL enable)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+
+    if (!sink->clock)
+        return DMUS_E_NO_MASTER_CLOCK;
+
+    IReferenceClock_GetTime(sink->clock, &sink->activate_time);
+    sink->latency_time = sink->activate_time;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_SampleToRefTime(IDirectMusicSynthSink *iface, LONGLONG sample, REFERENCE_TIME *time)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    WAVEFORMATEX format;
+    DWORD format_size = sizeof(format);
+    HRESULT hr;
+
+    hr = IDirectMusicSynth_GetFormat(sink->synth, &format, &format_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    *time = sink->activate_time + ((sample * 10000) / format.nSamplesPerSec) * 1000;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_RefTimeToSample(IDirectMusicSynthSink *iface, REFERENCE_TIME time, LONGLONG *sample)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    WAVEFORMATEX format;
+    DWORD format_size = sizeof(format);
+    HRESULT hr;
+
+    hr = IDirectMusicSynth_GetFormat(sink->synth, &format, &format_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    *sample = (((time - sink->activate_time) / 1000) * format.nSamplesPerSec) / 10000;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_SetDirectSound(IDirectMusicSynthSink *iface, IDirectSound *dsound,
+        IDirectSoundBuffer *dsound_buffer)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_GetDesiredBufferSize(IDirectMusicSynthSink *iface, DWORD *size)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return S_OK;
+}
+
+static const IDirectMusicSynthSinkVtbl test_sink_vtbl =
+{
+    test_sink_QueryInterface,
+    test_sink_AddRef,
+    test_sink_Release,
+    test_sink_Init,
+    test_sink_SetMasterClock,
+    test_sink_GetLatencyClock,
+    test_sink_Activate,
+    test_sink_SampleToRefTime,
+    test_sink_RefTimeToSample,
+    test_sink_SetDirectSound,
+    test_sink_GetDesiredBufferSize,
+};
+
+static HRESULT WINAPI test_sink_latency_clock_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_sink_latency_clock_AddRef(IReferenceClock *iface)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IReferenceClock_iface);
+    return IDirectMusicSynthSink_AddRef(&sink->IDirectMusicSynthSink_iface);
+}
+
+static ULONG WINAPI test_sink_latency_clock_Release(IReferenceClock *iface)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IReferenceClock_iface);
+    return IDirectMusicSynthSink_Release(&sink->IDirectMusicSynthSink_iface);
+}
+
+static HRESULT WINAPI test_sink_latency_clock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IReferenceClock_iface);
+    *time = sink->latency_time;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_sink_latency_clock_AdviseTime(IReferenceClock *iface,
+        REFERENCE_TIME base, REFERENCE_TIME offset, HANDLE event, DWORD *cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_sink_latency_clock_AdvisePeriodic(IReferenceClock *iface,
+        REFERENCE_TIME start, REFERENCE_TIME period, HANDLE semaphore, DWORD *cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_sink_latency_clock_Unadvise(IReferenceClock *iface, DWORD cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static const IReferenceClockVtbl test_sink_latency_clock_vtbl =
+{
+    test_sink_latency_clock_QueryInterface,
+    test_sink_latency_clock_AddRef,
+    test_sink_latency_clock_Release,
+    test_sink_latency_clock_GetTime,
+    test_sink_latency_clock_AdviseTime,
+    test_sink_latency_clock_AdvisePeriodic,
+    test_sink_latency_clock_Unadvise,
+};
+
+static HRESULT test_sink_create(IDirectMusicSynthSink **out)
+{
+    struct test_sink *sink;
+
+    *out = NULL;
+    if (!(sink = calloc(1, sizeof(*sink)))) return E_OUTOFMEMORY;
+    sink->IDirectMusicSynthSink_iface.lpVtbl = &test_sink_vtbl;
+    sink->IReferenceClock_iface.lpVtbl = &test_sink_latency_clock_vtbl;
+    sink->refcount = 1;
+
+    *out = &sink->IDirectMusicSynthSink_iface;
+    return S_OK;
+}
+
+static void test_sink_render(IDirectMusicSynthSink *iface, void *buffer, DWORD buffer_size, HANDLE output)
+{
+    struct test_sink *sink = CONTAINING_RECORD(iface, struct test_sink, IDirectMusicSynthSink_iface);
+    DWORD written, format_size;
+    WAVEFORMATEX format;
+    HRESULT hr;
+
+    format_size = sizeof(format);
+    hr = IDirectMusicSynth_GetFormat(sink->synth, &format, &format_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    memset(buffer, 0, buffer_size);
+    hr = IDirectMusicSynth_Render(sink->synth, buffer, buffer_size / format.nBlockAlign, sink->written / format.nBlockAlign);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    sink->written += buffer_size;
+
+    hr = IDirectMusicSynthSink_SampleToRefTime(iface, sink->written / format.nBlockAlign, &sink->latency_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    if (output)
+    {
+        BOOL ret = WriteFile(output, buffer, buffer_size, &written, NULL);
+        ok(!!ret, "WriteFile failed, error %lu.\n", GetLastError());
+    }
+}
+
+static void test_IDirectMusicSynth(void)
+{
+    static const UINT RENDER_ITERATIONS = 8;
+
+    struct wave_download
+    {
+        DMUS_DOWNLOADINFO info;
+        ULONG offsets[2];
+        DMUS_WAVE wave;
+        union
+        {
+            DMUS_WAVEDATA wave_data;
+            struct
+            {
+                ULONG size;
+                BYTE samples[256];
+            };
+        };
+    } wave_download =
+    {
+        .info =
+        {
+            .dwDLType = DMUS_DOWNLOADINFO_WAVE,
+            .dwDLId = 1,
+            .dwNumOffsetTableEntries = 2,
+            .cbSize = sizeof(struct wave_download),
+        },
+        .offsets =
+        {
+            offsetof(struct wave_download, wave),
+            offsetof(struct wave_download, wave_data),
+        },
+        .wave =
+        {
+            .ulWaveDataIdx = 1,
+            .WaveformatEx =
+            {
+                .wFormatTag = WAVE_FORMAT_PCM,
+                .nChannels = 1,
+                .wBitsPerSample = 8,
+                .nSamplesPerSec = 44100,
+                .nAvgBytesPerSec = 44100,
+                .nBlockAlign = 1,
+            },
+        },
+        .wave_data =
+        {
+            .cbSize = sizeof(wave_download.samples),
+        },
+    };
+    struct instrument_download
+    {
+        DMUS_DOWNLOADINFO info;
+        ULONG offsets[4];
+        DMUS_INSTRUMENT instrument;
+        DMUS_REGION region;
+        DMUS_ARTICULATION articulation;
+        DMUS_ARTICPARAMS artic_params;
+    } instrument_download =
+    {
+        .info =
+        {
+            .dwDLType = DMUS_DOWNLOADINFO_INSTRUMENT,
+            .dwDLId = 2,
+            .dwNumOffsetTableEntries = 4,
+            .cbSize = sizeof(struct instrument_download),
+        },
+        .offsets =
+        {
+            offsetof(struct instrument_download, instrument),
+            offsetof(struct instrument_download, region),
+            offsetof(struct instrument_download, articulation),
+            offsetof(struct instrument_download, artic_params),
+        },
+        .instrument =
+        {
+            .ulPatch = 0,
+            .ulFirstRegionIdx = 1,
+            .ulGlobalArtIdx = 2,
+        },
+        .region =
+        {
+            .RangeKey = {.usLow = 0, .usHigh = 127},
+            .RangeVelocity = {.usLow = 0, .usHigh = 127},
+            .fusOptions = F_RGN_OPTION_SELFNONEXCLUSIVE,
+            .WaveLink = {.ulChannel = 1, .ulTableIndex = 1},
+            .WSMP = {.cbSize = sizeof(WSMPL), .usUnityNote = 60, .fulOptions = F_WSMP_NO_TRUNCATION},
+            .WLOOP[0] = {.cbSize = sizeof(WLOOP), .ulType = WLOOP_TYPE_FORWARD},
+        },
+        .articulation = {.ulArt1Idx = 3},
+        .artic_params =
+        {
+            .VolEG = {.tcAttack = 32768u << 16, .tcDecay = 32768u << 16, .ptSustain = 10000 << 16, .tcRelease = 32768u << 16},
+        },
+    };
+    DMUS_BUFFERDESC buffer_desc =
+    {
+        .dwSize = sizeof(DMUS_BUFFERDESC),
+        .cbBuffer = 4096,
+    };
+    DMUS_PORTPARAMS port_params =
+    {
+        .dwSize = sizeof(DMUS_PORTPARAMS),
+        .dwValidParams = DMUS_PORTPARAMS_AUDIOCHANNELS | DMUS_PORTPARAMS_SAMPLERATE,
+        .dwAudioChannels = 2,
+        .dwSampleRate = 44100,
+    };
+    WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
+    IReferenceClock *latency_clock;
+    IDirectMusicSynthSink *sink;
+    IDirectMusicBuffer *buffer;
+    DWORD format_size, written;
+    IDirectMusicSynth *synth;
+    HANDLE wave_file, handle;
+    IReferenceClock *clock;
+    BOOL can_free = FALSE;
+    REFERENCE_TIME time;
+    WAVEFORMATEX format;
+    IDirectMusic *music;
+    short samples[256];
+    ULONG i, ref;
+    HRESULT hr;
+    DWORD len;
+    BYTE *raw;
+    BOOL ret;
+
+    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusic, (void **)&music);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusic_GetMasterClock(music, NULL, &clock);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = test_sink_create(&sink);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSynth, (void **)&synth);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* SetNumChannelGroups needs Open */
+    hr = IDirectMusicSynth_SetNumChannelGroups(synth, 1);
+    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    /* GetFormat needs Open */
+    hr = IDirectMusicSynth_GetFormat(synth, NULL, NULL);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_GetFormat(synth, NULL, &format_size);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+
+    /* Open / Close don't need a sink */
+    hr = IDirectMusicSynth_Open(synth, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Open(synth, NULL);
+    ok(hr == DMUS_E_ALREADYOPEN, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_SetNumChannelGroups(synth, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    format_size = sizeof(format);
+    hr = IDirectMusicSynth_GetFormat(synth, NULL, &format_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(format_size == sizeof(format), "got %lu\n", format_size);
+    hr = IDirectMusicSynth_Close(synth);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Close(synth);
+    ok(hr == DMUS_E_ALREADYCLOSED, "got %#lx\n", hr);
+
+    /* GetLatencyClock needs a sink */
+    hr = IDirectMusicSynth_GetLatencyClock(synth, NULL);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_GetLatencyClock(synth, &latency_clock);
+    ok(hr == DMUS_E_NOSYNTHSINK, "got %#lx\n", hr);
+
+    /* Activate needs a sink, synth to be open, and a master clock on the sink */
+    hr = IDirectMusicSynth_Open(synth, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    ok(hr == DMUS_E_NOSYNTHSINK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Activate(synth, FALSE);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+
+    hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_SetSynthSink(synth, sink);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ref = get_refcount(sink);
+    todo_wine ok(ref == 2, "got %lu\n", ref);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+
+    /* SetMasterClock does nothing */
+    hr = IDirectMusicSynth_SetMasterClock(synth, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_SetMasterClock(synth, clock);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ref = get_refcount(clock);
+    todo_wine ok(ref == 1, "got %lu\n", ref);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+
+    /* SetMasterClock needs to be called on the sink */
+    hr = IDirectMusicSynthSink_SetMasterClock(sink, clock);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+
+    /* Close is fine while active */
+    hr = IDirectMusicSynth_Close(synth);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    /* Removing the sink is fine while active */
+    hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ref = get_refcount(sink);
+    ok(ref == 1, "got %lu\n", ref);
+
+    /* but Activate might fail then */
+    hr = IDirectMusicSynth_Activate(synth, FALSE);
+    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Activate(synth, FALSE);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+
+
+    /* Test generating some samples */
+    hr = IDirectMusicSynth_Open(synth, &port_params);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    format_size = sizeof(format);
+    hr = IDirectMusicSynth_GetFormat(synth, &format, &format_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_SetSynthSink(synth, sink);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ref = get_refcount(sink);
+    todo_wine ok(ref == 2, "got %lu\n", ref);
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    GetTempPathW(MAX_PATH, temp_path);
+    GetTempFileNameW(temp_path, L"synth", 0, temp_file);
+    wave_file = CreateFileW(temp_file, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(wave_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu.\n", GetLastError());
+    ret = WriteFile(wave_file, "RIFF", 4, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    format_size = (RENDER_ITERATIONS + 1) * sizeof(samples) + sizeof(format) + 20;
+    ret = WriteFile(wave_file, &format_size, 4, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    ret = WriteFile(wave_file, "WAVEfmt ", 8, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    format_size = sizeof(format);
+    ret = WriteFile(wave_file, &format_size, 4, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    ret = WriteFile(wave_file, &format, format_size, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    ret = WriteFile(wave_file, "data", 4, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+    format_size = (RENDER_ITERATIONS + 1) * sizeof(samples);
+    ret = WriteFile(wave_file, &format_size, 4, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu.\n", GetLastError());
+
+    /* native needs to render at least once before producing samples */
+    test_sink_render(sink, samples, sizeof(samples), wave_file);
+
+    for (i = 0; i < ARRAY_SIZE(wave_download.samples); i++)
+        wave_download.samples[i] = i;
+
+    can_free = 0xdeadbeef;
+    handle = (HANDLE)0xdeadbeef;
+    hr = IDirectMusicSynth_Download(synth, &handle, &wave_download, &can_free);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(handle != 0, "got %p\n", handle);
+    todo_wine ok(can_free == FALSE, "got %u\n", can_free);
+
+    can_free = 0xdeadbeef;
+    handle = (HANDLE)0xdeadbeef;
+    hr = IDirectMusicSynth_Download(synth, &handle, &instrument_download, &can_free);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(handle != 0, "got %p\n", handle);
+    todo_wine ok(can_free == TRUE, "got %u\n", can_free);
+
+    /* add a MIDI note to a buffer and play it */
+    hr = IDirectMusicSynth_GetLatencyClock(synth, &latency_clock);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusic_CreateMusicBuffer(music, &buffer_desc, &buffer, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    /* status = 0x90 (NOTEON / channel 0), key = 0x27 (39), vel = 0x78 (120) */
+    hr = IDirectMusicBuffer_PackStructured(buffer, 0, 1, 0x782790);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IReferenceClock_GetTime(latency_clock, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicBuffer_GetRawBufferPtr(buffer, (BYTE **)&raw);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicBuffer_GetUsedBytes(buffer, &len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_PlayBuffer(synth, time, (BYTE *)raw, len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicBuffer_Release(buffer);
+    IReferenceClock_Release(latency_clock);
+
+    for (i = 0; i < RENDER_ITERATIONS; i++)
+        test_sink_render(sink, samples, sizeof(samples), wave_file);
+
+    CloseHandle(wave_file);
+    trace("Rendered samples to %s\n", debugstr_w(temp_file));
+
+    hr = IDirectMusicSynth_Activate(synth, FALSE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ref = get_refcount(sink);
+    ok(ref == 1, "got %lu\n", ref);
+    hr = IDirectMusicSynth_Close(synth);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicSynth_Release(synth);
+
+
+    if (strcmp(winetest_platform, "wine")) IDirectMusicSynthSink_Release(sink);
+    IReferenceClock_Release(clock);
+    IDirectMusic_Release(music);
+}
+
 static void test_IDirectMusicSynthSink(void)
 {
     IReferenceClock *latency_clock;
@@ -796,6 +1338,7 @@ START_TEST(dmsynth)
     test_dmsynth();
     test_COM();
     test_COM_synthsink();
+    test_IDirectMusicSynth();
     test_IDirectMusicSynthSink();
 
     CoUninitialize();
