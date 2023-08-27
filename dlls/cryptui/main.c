@@ -923,7 +923,7 @@ static void get_cert_usages(PCCERT_CONTEXT cert, LPWSTR *str)
             size = MAX_STRING_LEN * sizeof(WCHAR);
             *str = malloc(size);
             if (*str)
-                LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_NONE, *str, size);
+                LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_NONE, *str, MAX_STRING_LEN);
         }
     }
     else
@@ -931,7 +931,7 @@ static void get_cert_usages(PCCERT_CONTEXT cert, LPWSTR *str)
         size = MAX_STRING_LEN * sizeof(WCHAR);
         *str = malloc(size);
         if (*str)
-            LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_ALL, *str, size);
+            LoadStringW(hInstance, IDS_ALLOWED_PURPOSE_ALL, *str, MAX_STRING_LEN);
     }
 }
 
