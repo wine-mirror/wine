@@ -35,12 +35,35 @@ struct synth_sink
     IReferenceClock *master_clock;
     IDirectMusicSynth *synth;   /* No reference hold! */
     IDirectSound *dsound;
+
     BOOL active;
+    REFERENCE_TIME activate_time;
 };
 
 static inline struct synth_sink *impl_from_IDirectMusicSynthSink(IDirectMusicSynthSink *iface)
 {
     return CONTAINING_RECORD(iface, struct synth_sink, IDirectMusicSynthSink_iface);
+}
+
+static HRESULT synth_sink_activate(struct synth_sink *This)
+{
+    HRESULT hr;
+
+    if (!This->synth) return DMUS_E_SYNTHNOTCONFIGURED;
+    if (!This->dsound) return DMUS_E_DSOUND_NOT_SET;
+    if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
+    if (This->active) return DMUS_E_SYNTHACTIVE;
+
+    if (FAILED(hr = IReferenceClock_GetTime(This->master_clock, &This->activate_time))) return hr;
+
+    This->active = TRUE;
+    return S_OK;
+}
+
+static HRESULT synth_sink_deactivate(struct synth_sink *This)
+{
+    This->active = FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI synth_sink_QueryInterface(IDirectMusicSynthSink *iface,
@@ -151,9 +174,9 @@ static HRESULT WINAPI synth_sink_Activate(IDirectMusicSynthSink *iface,
 {
     struct synth_sink *This = impl_from_IDirectMusicSynthSink(iface);
 
-    FIXME("(%p)->(%d): stub\n", This, enable);
+    FIXME("(%p)->(%d): semi-stub\n", This, enable);
 
-    return S_OK;
+    return enable ? synth_sink_activate(This) : synth_sink_deactivate(This);
 }
 
 static HRESULT WINAPI synth_sink_SampleToRefTime(IDirectMusicSynthSink *iface,
