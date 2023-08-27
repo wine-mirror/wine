@@ -1234,7 +1234,7 @@ static void test_IDirectMusicSynthSink(void)
     hr = IDirectMusicSynthSink_SetDirectSound(sink, NULL, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynthSink_SetDirectSound(sink, dsound, NULL);
-    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
 
     /* Activate requires a synth, dsound and a clock */
     ref = get_refcount(synth);

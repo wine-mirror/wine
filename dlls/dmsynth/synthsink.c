@@ -34,6 +34,7 @@ struct synth_sink
     IReferenceClock *latency_clock;
     IReferenceClock *master_clock;
     IDirectMusicSynth *synth;   /* No reference hold! */
+    IDirectSound *dsound;
     BOOL active;
 };
 
@@ -181,7 +182,17 @@ static HRESULT WINAPI synth_sink_SetDirectSound(IDirectMusicSynthSink *iface,
 {
     struct synth_sink *This = impl_from_IDirectMusicSynthSink(iface);
 
-    FIXME("(%p)->(%p, %p): stub\n", This, dsound, dsound_buffer);
+    TRACE("(%p)->(%p, %p)\n", This, dsound, dsound_buffer);
+
+    if (dsound_buffer) FIXME("Ignoring IDirectSoundBuffer parameter.\n");
+    if (This->active) return DMUS_E_SYNTHACTIVE;
+
+    if (This->dsound) IDirectSound_Release(This->dsound);
+    This->dsound = NULL;
+    if (!dsound) return S_OK;
+
+    if (!This->synth) return DMUS_E_SYNTHNOTCONFIGURED;
+    if ((This->dsound = dsound)) IDirectSound_AddRef(This->dsound);
 
     return S_OK;
 }
