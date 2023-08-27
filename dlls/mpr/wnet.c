@@ -1684,7 +1684,7 @@ DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
         if (ret == WN_SUCCESS)
         {
             LPWSTR lpSystemW = NULL;
-            LPVOID lpBufferW;
+            NETRESOURCEW *lpBufferW;
             size = 1024;
             lpBufferW = HeapAlloc(GetProcessHeap(), 0, size);
             if (lpBufferW)
@@ -1705,12 +1705,10 @@ DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
                 {
                     ret = _thunkNetResourceArrayWToA(lpBufferW,
                             &count, lpBuffer, cbBuffer);
-                    HeapFree(GetProcessHeap(), 0, lpNetResourceW);
-                    lpNetResourceW = lpBufferW;
                     size = sizeof(NETRESOURCEA);
-                    size += WideCharToMultiByte(CP_ACP, 0, lpNetResourceW->lpRemoteName,
+                    size += WideCharToMultiByte(CP_ACP, 0, lpBufferW->lpRemoteName,
                             -1, NULL, 0, NULL, NULL);
-                    size += WideCharToMultiByte(CP_ACP, 0, lpNetResourceW->lpProvider,
+                    size += WideCharToMultiByte(CP_ACP, 0, lpBufferW->lpProvider,
                             -1, NULL, 0, NULL, NULL);
 
                     len = WideCharToMultiByte(CP_ACP, 0, lpSystemW,
