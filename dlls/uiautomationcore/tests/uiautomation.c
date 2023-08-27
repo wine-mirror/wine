@@ -11544,7 +11544,7 @@ static void test_CUIAutomation_cache_request_iface(IUIAutomation *uia_iface)
     hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Ancestors | TreeScope_Element);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, ~(TreeScope_SubTree | TreeScope_Parent | TreeScope_Ancestors));
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, ~(TreeScope_Subtree | TreeScope_Parent | TreeScope_Ancestors));
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Invalid values don't change anything. */
@@ -12133,7 +12133,7 @@ static void test_Element_Find(IUIAutomation *uia_iface)
      * Equivalent to: Maximum find depth of -1, find first is FALSE, exclude
      * root is FALSE.
      */
-    hr = IUIAutomationElement_FindAllBuildCache(element, TreeScope_SubTree, condition, cache_req, &element_arr);
+    hr = IUIAutomationElement_FindAllBuildCache(element, TreeScope_Subtree, condition, cache_req, &element_arr);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     set_elem_desc(&exp_elems[0], &Provider, NULL, GetCurrentProcessId(), 2, 2);
@@ -12378,7 +12378,7 @@ static void test_Element_Find(IUIAutomation *uia_iface)
      * root is FALSE. Provider_child_child2 is the only element in the tree
      * to match our condition.
      */
-    hr = IUIAutomationElement_FindFirstBuildCache(element, TreeScope_SubTree, condition, cache_req, &element2);
+    hr = IUIAutomationElement_FindFirstBuildCache(element, TreeScope_Subtree, condition, cache_req, &element2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
 
@@ -12443,7 +12443,7 @@ static void test_Element_Find(IUIAutomation *uia_iface)
     set_provider_prop_override(&Provider_child, &prop_override, 1);
     set_provider_prop_override(&Provider_child_child, &prop_override, 1);
 
-    hr = IUIAutomationElement_FindFirst(element, TreeScope_SubTree, condition, &element2);
+    hr = IUIAutomationElement_FindFirst(element, TreeScope_Subtree, condition, &element2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
 
@@ -13231,11 +13231,11 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
     /*
      * Invalid input argument tests.
      */
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, NULL, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, NULL, TreeScope_Subtree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_Subtree, NULL,
             NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
@@ -13260,14 +13260,14 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      * AddFocusChangedEventHandler. Trying to register it on a regular event
      * handler returns E_INVALIDARG.
      */
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_Subtree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     /* Windows 11 queries the HWND for the element when adding a new handler. */
     set_uia_hwnd_expects(3, 2, 2, 3, 0);
     /* All other event IDs are fine, only focus events are blocked. */
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, 1, elem, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, 1, elem, TreeScope_Subtree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
@@ -13282,7 +13282,7 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      * Test event raising behavior.
      */
     set_uia_hwnd_expects(3, 2, 2, 3, 0);
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem, TreeScope_Subtree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);
@@ -13349,7 +13349,7 @@ static void test_IUIAutomationEventHandler(IUIAutomation *uia_iface, IUIAutomati
      * runtime-id, the only way to unregister the event handler is to call
      * RemoveAllEventHandlers().
      */
-    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2, TreeScope_SubTree, NULL,
+    hr = IUIAutomation_AddAutomationEventHandler(uia_iface, UIA_LiveRegionChangedEventId, elem2, TreeScope_Subtree, NULL,
             &AutomationEventHandler.IUIAutomationEventHandler_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(AutomationEventHandler.ref > 1, "Unexpected refcnt %ld\n", AutomationEventHandler.ref);

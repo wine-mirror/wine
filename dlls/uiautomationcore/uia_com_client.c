@@ -743,7 +743,7 @@ static HRESULT WINAPI uia_cache_request_put_TreeScope(IUIAutomationCacheRequest 
 
     TRACE("%p, %#x\n", iface, scope);
 
-    if (!scope || (scope & ~TreeScope_SubTree))
+    if (!scope || (scope & ~TreeScope_Subtree))
         return E_INVALIDARG;
 
     if ((scope & TreeScope_Children) || (scope & TreeScope_Descendants))
@@ -1366,7 +1366,7 @@ static HRESULT set_find_params_struct(struct UiaFindParams *params, IUIAutomatio
     if (FAILED(hr))
         return hr;
 
-    if (!scope || (scope & (~TreeScope_SubTree)))
+    if (!scope || (scope & (~TreeScope_Subtree)))
         return E_INVALIDARG;
 
     params->FindFirst = find_first;
@@ -3447,7 +3447,7 @@ static HRESULT WINAPI uia_iface_AddFocusChangedEventHandler(IUIAutomation6 *ifac
         return hr;
     }
 
-    hr = uia_add_com_event_handler(iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_SubTree, cache_req,
+    hr = uia_add_com_event_handler(iface, UIA_AutomationFocusChangedEventId, elem, TreeScope_Subtree, cache_req,
             &IID_IUIAutomationFocusChangedEventHandler, handler_unk);
     IUIAutomationElement_Release(elem);
     IUnknown_Release(handler_unk);
