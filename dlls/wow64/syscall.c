@@ -1263,6 +1263,68 @@ void WINAPI Wow64PassExceptionToGuest( EXCEPTION_POINTERS *ptrs )
 
 
 /**********************************************************************
+ *           Wow64ProcessPendingCrossProcessItems  (wow64.@)
+ */
+void WINAPI Wow64ProcessPendingCrossProcessItems(void)
+{
+    CROSS_PROCESS_WORK_LIST *list = (void *)wow64info->CrossProcessWorkList;
+    CROSS_PROCESS_WORK_ENTRY *entry;
+    BOOLEAN flush = FALSE;
+    UINT next;
+
+    if (!list) return;
+    entry = RtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+
+    if (flush)
+    {
+        if (pBTCpuNotifyFlushInstructionCache2) pBTCpuNotifyFlushInstructionCache2( NULL, ~0ull );
+        while (entry)
+        {
+            next = entry->next;
+            RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
+            entry = CROSS_PROCESS_LIST_ENTRY( &list->work_list, next );
+        }
+        return;
+    }
+
+    while (entry)
+    {
+        switch (entry->id)
+        {
+        case CrossProcessPreVirtualAlloc:
+            /* FIXME */
+            break;
+        case CrossProcessPostVirtualAlloc:
+            if (!pBTCpuNotifyMemoryAlloc) break;
+            pBTCpuNotifyMemoryAlloc( (void *)entry->addr, entry->size, entry->args[0], entry->args[1] );
+            break;
+        case CrossProcessPreVirtualFree:
+            if (!pBTCpuNotifyMemoryFree) break;
+            pBTCpuNotifyMemoryFree( (void *)entry->addr, entry->size, entry->args[0] );
+            break;
+        case CrossProcessPostVirtualFree:
+            /* FIXME */
+            break;
+        case CrossProcessPreVirtualProtect:
+            if (!pBTCpuNotifyMemoryProtect) break;
+            pBTCpuNotifyMemoryProtect( (void *)entry->addr, entry->size, entry->args[0] );
+            break;
+        case CrossProcessPostVirtualProtect:
+            /* FIXME */
+            break;
+        case CrossProcessFlushCache:
+            if (!pBTCpuNotifyFlushInstructionCache2) break;
+            pBTCpuNotifyFlushInstructionCache2( (void *)entry->addr, entry->size );
+            break;
+        }
+        next = entry->next;
+        RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
+        entry = CROSS_PROCESS_LIST_ENTRY( &list->work_list, next );
+    }
+}
+
+
+/**********************************************************************
  *           Wow64RaiseException  (wow64.@)
  */
 NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
