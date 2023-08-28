@@ -1402,6 +1402,7 @@ void output_syscalls( DLLSPEC *spec )
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (!(odp->flags & FLAG_SYSCALL)) continue;
+        if (strcmp( odp->name, odp->link_name )) continue;  /* ignore syscall aliases */
         if (!syscalls) syscalls = xmalloc( (spec->nb_entry_points - i) * sizeof(*syscalls) );
         syscalls[count++] = odp;
     }
