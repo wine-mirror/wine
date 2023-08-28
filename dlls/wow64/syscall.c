@@ -799,6 +799,40 @@ static const WCHAR *get_cpu_dll_name(void)
 
 
 /**********************************************************************
+ *           create_cross_process_work_list
+ */
+static NTSTATUS create_cross_process_work_list( WOW64INFO *wow64info )
+{
+    SIZE_T map_size = 0x4000;
+    LARGE_INTEGER size;
+    NTSTATUS status;
+    HANDLE section;
+    CROSS_PROCESS_WORK_LIST *list = NULL;
+    CROSS_PROCESS_WORK_ENTRY *end;
+    UINT i;
+
+    size.QuadPart = map_size;
+    status = NtCreateSection( &section, SECTION_ALL_ACCESS, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    if (status) return status;
+    status = NtMapViewOfSection( section, GetCurrentProcess(), (void **)&list, default_zero_bits, 0, NULL,
+                                 &map_size, ViewShare, MEM_TOP_DOWN, PAGE_READWRITE );
+    if (status)
+    {
+        NtClose( section );
+        return status;
+    }
+
+    end = (CROSS_PROCESS_WORK_ENTRY *)((char *)list + map_size);
+    for (i = 0; list->entries + i + 1 <= end; i++)
+        RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, &list->entries[i] );
+
+    wow64info->SectionHandle = (ULONG_PTR)section;
+    wow64info->CrossProcessWorkList = (ULONG_PTR)list;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
  *           process_init
  */
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
@@ -862,6 +896,8 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     *p__wine_unix_call_dispatcher = PtrToUlong( p__wine_get_unix_opcode() );
 
     init_syscall_table( module, p__wine_syscall_dispatcher, &ntdll_syscall_table );
+
+    if (wow64info->CpuFlags & WOW64_CPUFLAGS_SOFTWARE) create_cross_process_work_list( wow64info );
 
     init_file_redirects();
     return TRUE;

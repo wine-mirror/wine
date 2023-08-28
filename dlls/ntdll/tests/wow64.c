@@ -436,6 +436,7 @@ static void test_peb_teb(void)
                 status = NtMapViewOfSection( handle, GetCurrentProcess(), &addr, 0, 0, NULL,
                                              &size, ViewShare, 0, PAGE_READWRITE );
                 ok( !status, "NtMapViewOfSection failed %lx\n", status );
+                ok( size == 0x4000, "unexpected size %Ix\n", size );
                 data = malloc( size );
                 ret = ReadProcessMemory( pi.hProcess, (void *)(ULONG_PTR)wow64info->CrossProcessWorkList,
                                          data, size, &size );
