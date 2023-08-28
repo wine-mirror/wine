@@ -304,6 +304,34 @@ done:
 
 
 /**********************************************************************
+ *           RtlOpenCrossProcessEmulatorWorkConnection  (NTDLL.@)
+ */
+void WINAPI RtlOpenCrossProcessEmulatorWorkConnection( HANDLE process, HANDLE *section, void **addr )
+{
+    WOW64INFO wow64info;
+    BOOLEAN is_wow64;
+    SIZE_T size = 0;
+
+    *addr = NULL;
+    *section = 0;
+
+    if (RtlWow64GetSharedInfoProcess( process, &is_wow64, &wow64info )) return;
+    if (!is_wow64) return;
+    if (!wow64info.SectionHandle) return;
+
+    if (NtDuplicateObject( process, (HANDLE)(ULONG_PTR)wow64info.SectionHandle,
+                           GetCurrentProcess(), section, 0, 0, DUPLICATE_SAME_ACCESS ))
+        return;
+
+    if (!NtMapViewOfSection( *section, GetCurrentProcess(), addr, 0, 0, NULL,
+                             &size, ViewShare, 0, PAGE_READWRITE )) return;
+
+    NtClose( *section );
+    *section = 0;
+}
+
+
+/**********************************************************************
  *           RtlWow64PopAllCrossProcessWorkFromWorkList  (NTDLL.@)
  */
 CROSS_PROCESS_WORK_ENTRY * WINAPI RtlWow64PopAllCrossProcessWorkFromWorkList( CROSS_PROCESS_WORK_HDR *list, BOOLEAN *flush )

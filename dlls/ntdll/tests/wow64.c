@@ -27,6 +27,7 @@
 static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
+static void     (WINAPI *pRtlOpenCrossProcessEmulatorWorkConnection)(HANDLE,HANDLE*,void**);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INFO*);
@@ -92,6 +93,7 @@ static void init(void)
     GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
+    GET_PROC( RtlOpenCrossProcessEmulatorWorkConnection );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetSharedInfoProcess );
@@ -443,8 +445,33 @@ static void test_peb_teb(void)
                 ok( ret, "ReadProcessMemory failed %lu\n", GetLastError() );
                 ok( !memcmp( data, addr, size ), "wrong data\n" );
                 free( data );
-                UnmapViewOfFile( addr );
                 CloseHandle( handle );
+
+                if (pRtlOpenCrossProcessEmulatorWorkConnection)
+                {
+                    pRtlOpenCrossProcessEmulatorWorkConnection( pi.hProcess, &handle, &data );
+                    ok( handle != 0, "got 0 handle\n" );
+                    ok( data != NULL, "got NULL data\n" );
+                    ok( !memcmp( data, addr, size ), "wrong data\n" );
+                    UnmapViewOfFile( data );
+                    data = NULL;
+                    size = 0;
+                    status = NtMapViewOfSection( handle, GetCurrentProcess(), &data, 0, 0, NULL,
+                                                 &size, ViewShare, 0, PAGE_READWRITE );
+                    ok( !status, "NtMapViewOfSection failed %lx\n", status );
+                    ok( !memcmp( data, addr, size ), "wrong data\n" );
+                    ok( CloseHandle( handle ), "invalid handle\n" );
+                    UnmapViewOfFile( data );
+
+                    handle = (HANDLE)0xdead;
+                    data = (void *)0xdeadbeef;
+                    pRtlOpenCrossProcessEmulatorWorkConnection( GetCurrentProcess(), &handle, &data );
+                    ok( !handle, "got handle %p\n", handle );
+                    ok( !data, "got data %p\n", data );
+                }
+                else skip( "RtlOpenCrossProcessEmulatorWorkConnection not supported\n" );
+
+                UnmapViewOfFile( addr );
             }
             else trace( "no WOW64INFO section handle\n" );
         }

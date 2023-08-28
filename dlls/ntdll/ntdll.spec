@@ -901,6 +901,7 @@
 @ stdcall RtlOemStringToUnicodeSize(ptr)
 @ stdcall RtlOemStringToUnicodeString(ptr ptr long)
 @ stdcall RtlOemToUnicodeN(ptr long ptr ptr long)
+@ stdcall -arch=win64 RtlOpenCrossProcessEmulatorWorkConnection(long ptr ptr)
 @ stdcall RtlOpenCurrentUser(long ptr)
 @ stdcall RtlPcToFileHeader(ptr ptr)
 @ stdcall RtlPinAtomInAtomTable(ptr long)

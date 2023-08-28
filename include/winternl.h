@@ -5017,6 +5017,7 @@ NTSYSAPI NTSTATUS  WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,__ms_v
 /* 32-bit or 64-bit only functions */
 
 #ifdef _WIN64
+NTSYSAPI void      WINAPI RtlOpenCrossProcessEmulatorWorkConnection(HANDLE,HANDLE*,void**);
 NTSYSAPI NTSTATUS  WINAPI RtlWow64GetCpuAreaInfo(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 NTSYSAPI NTSTATUS  WINAPI RtlWow64GetCurrentCpuArea(USHORT*,void**,void**);
 NTSYSAPI NTSTATUS  WINAPI RtlWow64GetThreadContext(HANDLE,WOW64_CONTEXT*);
