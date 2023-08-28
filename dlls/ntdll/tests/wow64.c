@@ -36,6 +36,11 @@ static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
+static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopAllCrossProcessWorkFromWorkList)(CROSS_PROCESS_WORK_HDR*,BOOLEAN*);
+static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopCrossProcessWorkFromFreeList)(CROSS_PROCESS_WORK_HDR*);
+static BOOLEAN (WINAPI *pRtlWow64PushCrossProcessWorkOntoFreeList)(CROSS_PROCESS_WORK_HDR*,CROSS_PROCESS_WORK_ENTRY*);
+static BOOLEAN (WINAPI *pRtlWow64PushCrossProcessWorkOntoWorkList)(CROSS_PROCESS_WORK_HDR*,CROSS_PROCESS_WORK_ENTRY*,void**);
+static BOOLEAN (WINAPI *pRtlWow64RequestCrossProcessHeavyFlush)(CROSS_PROCESS_WORK_HDR*);
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
@@ -95,6 +100,11 @@ static void init(void)
 #ifdef _WIN64
     GET_PROC( RtlWow64GetCpuAreaInfo );
     GET_PROC( RtlWow64GetThreadSelectorEntry );
+    GET_PROC( RtlWow64PopAllCrossProcessWorkFromWorkList );
+    GET_PROC( RtlWow64PopCrossProcessWorkFromFreeList );
+    GET_PROC( RtlWow64PushCrossProcessWorkOntoFreeList );
+    GET_PROC( RtlWow64PushCrossProcessWorkOntoWorkList );
+    GET_PROC( RtlWow64RequestCrossProcessHeavyFlush );
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64GetNativeSystemInformation );
@@ -833,6 +843,142 @@ static void test_image_mappings(void)
 }
 
 #ifdef _WIN64
+
+static void test_cross_process_work_list(void)
+{
+    UINT i, next, count = 10, size = offsetof( CROSS_PROCESS_WORK_LIST, entries[count] );
+    BOOLEAN res, flush;
+    CROSS_PROCESS_WORK_ENTRY *ptr, *ret;
+    CROSS_PROCESS_WORK_LIST *list = calloc( size, 1 );
+
+    if (!pRtlWow64PopAllCrossProcessWorkFromWorkList)
+    {
+        win_skip( "cross process list not supported\n" );
+        return;
+    }
+
+    list = calloc( size, 1 );
+    for (i = 0; i < count; i++)
+    {
+        res = pRtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, &list->entries[i] );
+        ok( res == TRUE, "%u: RtlWow64PushCrossProcessWorkOntoFreeList failed\n", i );
+    }
+
+    ok( list->free_list.counter == count, "wrong counter %u\n", list->free_list.counter );
+    ok( CROSS_PROCESS_LIST_ENTRY( &list->free_list, list->free_list.first ) == &list->entries[count - 1],
+        "wrong offset %u\n", list->free_list.first );
+    for (i = count; i > 1; i--)
+        ok( CROSS_PROCESS_LIST_ENTRY( &list->free_list, list->entries[i - 1].next ) == &list->entries[i - 2],
+            "%u: wrong offset %x / %x\n", i, list->entries[i - 1].next,
+            (UINT)((char *)&list->entries[i - 2] - (char *)&list->free_list) );
+    ok( !list->entries[0].next, "wrong last offset %x\n", list->entries[0].next );
+
+    next = list->entries[count - 1].next;
+    ptr = pRtlWow64PopCrossProcessWorkFromFreeList( &list->free_list );
+    ok( ptr == (void *)&list->entries[count - 1], "wrong ptr %p (%p)\n", ptr, list );
+    ok( !ptr->next, "next not reset %x\n", ptr->next );
+    ok( list->free_list.first == next, "wrong offset %x / %x\n", list->free_list.first, next );
+    ok( list->free_list.counter == count + 1, "wrong counter %u\n", list->free_list.counter );
+
+    ptr->next = 0xdead;
+    ptr->id = 3;
+    ptr->addr = 0xdeadbeef;
+    ptr->size = 0x1000;
+    ptr->args[0] = 7;
+    ret = (void *)0xdeadbeef;
+    res = pRtlWow64PushCrossProcessWorkOntoWorkList( &list->work_list, ptr, (void **)&ret );
+    ok( res == TRUE, "RtlWow64PushCrossProcessWorkOntoWorkList failed\n" );
+    ok( !ret, "got ret ptr %p\n", ret );
+    ok( list->work_list.counter == 1, "wrong counter %u\n", list->work_list.counter );
+    ok( ptr == CROSS_PROCESS_LIST_ENTRY( &list->work_list, list->work_list.first), "wrong ptr %p / %p\n",
+        ptr, CROSS_PROCESS_LIST_ENTRY( &list->work_list, list->work_list.first ));
+    ok( !ptr->next, "got next %x\n", ptr->next );
+
+    next = list->work_list.first;
+    ptr = pRtlWow64PopCrossProcessWorkFromFreeList( &list->free_list );
+    ok( list->free_list.counter == count + 2, "wrong counter %u\n", list->free_list.counter );
+    ptr->id = 20;
+    ptr->addr = 0x123456;
+    ptr->size = 0x2345;
+    res = pRtlWow64PushCrossProcessWorkOntoWorkList( &list->work_list, ptr, (void **)&ret );
+    ok( res == TRUE, "RtlWow64PushCrossProcessWorkOntoWorkList failed\n" );
+    ok( !ret, "got ret ptr %p\n", ret );
+    ok( list->work_list.counter == 2, "wrong counter %u\n", list->work_list.counter );
+    ok( list->work_list.first == (char *)ptr - (char *)&list->work_list, "wrong ptr %p / %p\n",
+        ptr, (char *)list + list->work_list.first );
+    ok( ptr->next == next, "got wrong next %x / %x\n", ptr->next, next );
+
+    flush = 0xcc;
+    ptr = pRtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+    ok( !flush, "RtlWow64PopAllCrossProcessWorkFromWorkList flush is TRUE\n" );
+    ok( list->work_list.counter == 3, "wrong counter %u\n", list->work_list.counter );
+    ok( !list->work_list.first, "list not empty %x\n", list->work_list.first );
+    ok( ptr->addr == 0xdeadbeef, "wrong addr %s\n", wine_dbgstr_longlong(ptr->addr) );
+    ok( ptr->size == 0x1000, "wrong size %s\n", wine_dbgstr_longlong(ptr->size) );
+    ok( ptr->next, "next not set\n" );
+
+    ptr = CROSS_PROCESS_LIST_ENTRY( &list->work_list, ptr->next );
+    ok( ptr->addr == 0x123456, "wrong addr %s\n", wine_dbgstr_longlong(ptr->addr) );
+    ok( ptr->size == 0x2345, "wrong size %s\n", wine_dbgstr_longlong(ptr->size) );
+    ok( !ptr->next, "list not terminated\n" );
+
+    res = pRtlWow64PushCrossProcessWorkOntoWorkList( &list->work_list, ptr, (void **)&ret );
+    ok( res == TRUE, "RtlWow64PushCrossProcessWorkOntoWorkList failed\n" );
+    ok( !ret, "got ret ptr %p\n", ret );
+    ok( list->work_list.counter == 4, "wrong counter %u\n", list->work_list.counter );
+
+    res = pRtlWow64RequestCrossProcessHeavyFlush( &list->work_list );
+    ok( res == TRUE, "RtlWow64RequestCrossProcessHeavyFlush failed\n" );
+    ok( list->work_list.counter == 5, "wrong counter %u\n", list->work_list.counter );
+    ok( list->work_list.first & CROSS_PROCESS_LIST_FLUSH, "flush flag not set %x\n", list->work_list.first );
+    ok( ptr == CROSS_PROCESS_LIST_ENTRY( &list->work_list, list->work_list.first), "wrong ptr %p / %p\n",
+        ptr, CROSS_PROCESS_LIST_ENTRY( &list->work_list, list->work_list.first ));
+
+    flush = 0xcc;
+    ptr = pRtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+    ok( flush == TRUE, "RtlWow64PopAllCrossProcessWorkFromWorkList flush not set\n" );
+    ok( list->work_list.counter == 6, "wrong counter %u\n", list->work_list.counter );
+    ok( !list->work_list.first, "list not empty %x\n", list->work_list.first );
+    ok( ptr->addr == 0x123456, "wrong addr %s\n", wine_dbgstr_longlong(ptr->addr) );
+    ok( ptr->size == 0x2345, "wrong size %s\n", wine_dbgstr_longlong(ptr->size) );
+    ok( !ptr->next, "next not set\n" );
+
+    flush = 0xcc;
+    ptr = pRtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+    ok( flush == FALSE, "RtlWow64PopAllCrossProcessWorkFromWorkList flush set\n" );
+    ok( list->work_list.counter == 6, "wrong counter %u\n", list->work_list.counter );
+    ok( !list->work_list.first, "list not empty %x\n", list->work_list.first );
+    ok( !ptr, "got ptr %p\n", ptr );
+
+    res = pRtlWow64RequestCrossProcessHeavyFlush( &list->work_list );
+    ok( res == TRUE, "RtlWow64RequestCrossProcessHeavyFlush failed\n" );
+    ok( list->work_list.counter == 7, "wrong counter %u\n", list->work_list.counter );
+    ok( list->work_list.first & CROSS_PROCESS_LIST_FLUSH, "flush flag not set %x\n", list->work_list.first );
+
+    res = pRtlWow64RequestCrossProcessHeavyFlush( &list->work_list );
+    ok( res == TRUE, "RtlWow64RequestCrossProcessHeavyFlush failed\n" );
+    ok( list->work_list.counter == 8, "wrong counter %u\n", list->work_list.counter );
+    ok( list->work_list.first & CROSS_PROCESS_LIST_FLUSH, "flush flag not set %x\n", list->work_list.first );
+
+    flush = 0xcc;
+    ptr = pRtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+    ok( flush == TRUE, "RtlWow64PopAllCrossProcessWorkFromWorkList flush set\n" );
+    ok( list->work_list.counter == 9, "wrong counter %u\n", list->work_list.counter );
+    ok( !list->work_list.first, "list not empty %x\n", list->work_list.first );
+    ok( !ptr, "got ptr %p\n", ptr );
+
+    for (i = 0; i < count; i++)
+    {
+        ptr = pRtlWow64PopCrossProcessWorkFromFreeList( &list->free_list );
+        if (!ptr) break;
+        ok( list->free_list.counter == count + 3 + i, "wrong counter %u\n", list->free_list.counter );
+    }
+    ok( list->free_list.counter == count + 2 + i, "wrong counter %u\n", list->free_list.counter );
+    ok( !list->free_list.first, "first still set %x\n", list->free_list.first );
+
+    free( list );
+}
+
 
 static void test_cpu_area(void)
 {
@@ -1634,7 +1780,9 @@ START_TEST(wow64)
     test_peb_teb();
     test_selectors();
     test_image_mappings();
-#ifndef _WIN64
+#ifdef _WIN64
+    test_cross_process_work_list();
+#else
     test_nt_wow64();
     test_modules();
     test_init_block();

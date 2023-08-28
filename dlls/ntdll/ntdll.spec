@@ -1108,6 +1108,11 @@
 @ stdcall -arch=win64 RtlWow64GetThreadContext(long ptr)
 @ stdcall -arch=win64 RtlWow64GetThreadSelectorEntry(long ptr long ptr)
 @ stdcall RtlWow64IsWowGuestMachineSupported(long ptr)
+@ stdcall -arch=win64 RtlWow64PopAllCrossProcessWorkFromWorkList(ptr ptr)
+@ stdcall -arch=win64 RtlWow64PopCrossProcessWorkFromFreeList(ptr)
+@ stdcall -arch=win64 RtlWow64PushCrossProcessWorkOntoFreeList(ptr ptr)
+@ stdcall -arch=win64 RtlWow64PushCrossProcessWorkOntoWorkList(ptr ptr ptr)
+@ stdcall -arch=win64 RtlWow64RequestCrossProcessHeavyFlush(ptr)
 @ stdcall -arch=win64 RtlWow64SetThreadContext(long ptr)
 @ stub RtlWriteMemoryStream
 @ stdcall RtlWriteRegistryValue(long ptr wstr long ptr long)

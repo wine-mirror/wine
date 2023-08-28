@@ -302,7 +302,119 @@ done:
     return STATUS_SUCCESS;
 }
 
-#endif
+
+/**********************************************************************
+ *           RtlWow64PopAllCrossProcessWorkFromWorkList  (NTDLL.@)
+ */
+CROSS_PROCESS_WORK_ENTRY * WINAPI RtlWow64PopAllCrossProcessWorkFromWorkList( CROSS_PROCESS_WORK_HDR *list, BOOLEAN *flush )
+{
+    CROSS_PROCESS_WORK_HDR prev, new;
+    UINT pos, prev_pos = 0;
+
+    do
+    {
+        prev.hdr = list->hdr;
+        if (!prev.first) break;
+        new.first = 0;
+        new.counter = prev.counter + 1;
+    } while (InterlockedCompareExchange64( &list->hdr, new.hdr, prev.hdr ) != prev.hdr);
+
+    *flush = (prev.first & CROSS_PROCESS_LIST_FLUSH) != 0;
+    if (!(pos = prev.first & ~CROSS_PROCESS_LIST_FLUSH)) return NULL;
+
+    /* reverse the list */
+
+    for (;;)
+    {
+        CROSS_PROCESS_WORK_ENTRY *entry = CROSS_PROCESS_LIST_ENTRY( list, pos );
+        UINT next = entry->next;
+        entry->next = prev_pos;
+        if (!next) return entry;
+        prev_pos = pos;
+        pos = next;
+    }
+}
+
+
+/**********************************************************************
+ *           RtlWow64PopCrossProcessWorkFromFreeList  (NTDLL.@)
+ */
+CROSS_PROCESS_WORK_ENTRY * WINAPI RtlWow64PopCrossProcessWorkFromFreeList( CROSS_PROCESS_WORK_HDR *list )
+{
+    CROSS_PROCESS_WORK_ENTRY *ret;
+    CROSS_PROCESS_WORK_HDR prev, new;
+
+    do
+    {
+        prev.hdr = list->hdr;
+        if (!prev.first) return NULL;
+        ret = CROSS_PROCESS_LIST_ENTRY( list, prev.first );
+        new.first = ret->next;
+        new.counter = prev.counter + 1;
+    } while (InterlockedCompareExchange64( &list->hdr, new.hdr, prev.hdr ) != prev.hdr);
+
+    ret->next = 0;
+    return ret;
+}
+
+
+/**********************************************************************
+ *           RtlWow64PushCrossProcessWorkOntoFreeList  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlWow64PushCrossProcessWorkOntoFreeList( CROSS_PROCESS_WORK_HDR *list, CROSS_PROCESS_WORK_ENTRY *entry )
+{
+    CROSS_PROCESS_WORK_HDR prev, new;
+
+    do
+    {
+        prev.hdr = list->hdr;
+        entry->next = prev.first;
+        new.first = (char *)entry - (char *)list;
+        new.counter = prev.counter + 1;
+    } while (InterlockedCompareExchange64( &list->hdr, new.hdr, prev.hdr ) != prev.hdr);
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *           RtlWow64PushCrossProcessWorkOntoWorkList  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlWow64PushCrossProcessWorkOntoWorkList( CROSS_PROCESS_WORK_HDR *list, CROSS_PROCESS_WORK_ENTRY *entry, void **unknown )
+{
+    CROSS_PROCESS_WORK_HDR prev, new;
+
+    *unknown = NULL;
+    do
+    {
+        prev.hdr = list->hdr;
+        entry->next = prev.first;
+        new.first = ((char *)entry - (char *)list) | (prev.first & CROSS_PROCESS_LIST_FLUSH);
+        new.counter = prev.counter + 1;
+    } while (InterlockedCompareExchange64( &list->hdr, new.hdr, prev.hdr ) != prev.hdr);
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *           RtlWow64RequestCrossProcessHeavyFlush  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlWow64RequestCrossProcessHeavyFlush( CROSS_PROCESS_WORK_HDR *list )
+{
+    CROSS_PROCESS_WORK_HDR prev, new;
+
+    do
+    {
+        prev.hdr = list->hdr;
+        new.first = prev.first | CROSS_PROCESS_LIST_FLUSH;
+        new.counter = prev.counter + 1;
+    } while (InterlockedCompareExchange64( &list->hdr, new.hdr, prev.hdr ) != prev.hdr);
+
+    return TRUE;
+}
+
+#endif /* _WIN64 */
 
 /**********************************************************************
  *           RtlCreateUserProcess  (NTDLL.@)
