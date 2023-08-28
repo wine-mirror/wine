@@ -43,7 +43,7 @@ extern void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T )
 extern void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * );
 extern void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG );
 extern void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T );
-extern void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T );
+extern void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG );
 extern void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG );
 extern void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void * );
 extern void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * );
