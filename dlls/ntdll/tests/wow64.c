@@ -276,6 +276,255 @@ static void test_query_architectures(void)
     }
 }
 
+static void push_onto_free_list( CROSS_PROCESS_WORK_HDR *list, CROSS_PROCESS_WORK_ENTRY *entry )
+{
+#ifdef _WIN64
+    pRtlWow64PushCrossProcessWorkOntoFreeList( list, entry );
+#else
+    entry->next = list->first;
+    list->first = (char *)entry - (char *)list;
+#endif
+}
+
+CROSS_PROCESS_WORK_ENTRY *pop_from_work_list( CROSS_PROCESS_WORK_HDR *list )
+{
+#ifdef _WIN64
+    BOOLEAN flush;
+
+    return pRtlWow64PopAllCrossProcessWorkFromWorkList( list, &flush );
+#else
+    UINT pos = list->first, prev_pos = 0;
+
+    list->first = 0;
+    if (!pos) return NULL;
+
+    for (;;)  /* reverse the list */
+    {
+        CROSS_PROCESS_WORK_ENTRY *entry = CROSS_PROCESS_LIST_ENTRY( list, pos );
+        UINT next = entry->next;
+        entry->next = prev_pos;
+        if (!next) return entry;
+        prev_pos = pos;
+        pos = next;
+    }
+#endif
+}
+
+#define expect_cross_work_entry(list,entry,id,addr,size,arg0,arg1,arg2,arg3) \
+    expect_cross_work_entry_(list,entry,id,addr,size,arg0,arg1,arg2,arg3,__LINE__)
+static CROSS_PROCESS_WORK_ENTRY *expect_cross_work_entry_( CROSS_PROCESS_WORK_LIST *list,
+                                                           CROSS_PROCESS_WORK_ENTRY *entry,
+                                                           UINT id, void *addr, SIZE_T size,
+                                                           UINT arg0, UINT arg1, UINT arg2, UINT arg3,
+                                                           int line )
+{
+    CROSS_PROCESS_WORK_ENTRY *next;
+
+    ok_(__FILE__,line)( entry != NULL, "no more entries in list\n" );
+    if (!entry) return NULL;
+    ok_(__FILE__,line)( entry->addr == (ULONG_PTR)addr, "wrong address %s / %p\n",
+                        wine_dbgstr_longlong(entry->addr), addr );
+    ok_(__FILE__,line)( entry->size == size, "wrong size %s / %Ix\n",
+                        wine_dbgstr_longlong(entry->size), size );
+    ok_(__FILE__,line)( entry->args[0] == arg0, "wrong args[0] %x / %x\n", entry->args[0], arg0 );
+    ok_(__FILE__,line)( entry->args[1] == arg1, "wrong args[1] %x / %x\n", entry->args[1], arg1 );
+    ok_(__FILE__,line)( entry->args[2] == arg2, "wrong args[2] %x / %x\n", entry->args[2], arg2 );
+    ok_(__FILE__,line)( entry->args[3] == arg3, "wrong args[3] %x / %x\n", entry->args[3], arg3 );
+    next = entry->next ? CROSS_PROCESS_LIST_ENTRY( &list->work_list, entry->next ) : NULL;
+    memset( entry, 0xcc, sizeof(*entry) );
+    push_onto_free_list( &list->free_list, entry );
+    return next;
+}
+
+static void test_cross_process_notifications( HANDLE process, void *ptr )
+{
+    CROSS_PROCESS_WORK_ENTRY *entry;
+    CROSS_PROCESS_WORK_LIST *list = ptr;
+    UINT pos;
+    void *addr, *addr2;
+    SIZE_T size;
+    DWORD old_prot;
+    LARGE_INTEGER offset;
+    HANDLE file, mapping;
+    NTSTATUS status;
+    BYTE data[] = { 0xcc, 0xcc, 0xcc };
+
+    NtSuspendProcess( process );
+
+    /* set argument values in free list to detect changes */
+    for (pos = list->free_list.first; pos; pos = entry->next )
+    {
+        entry = CROSS_PROCESS_LIST_ENTRY( &list->free_list, pos );
+        memset( entry->args, 0xcc, sizeof(entry->args) );
+    }
+
+    addr = VirtualAllocEx( process, NULL, 0x1234, MEM_COMMIT, PAGE_READWRITE );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualAlloc, NULL, 0x1234,
+                                         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE, 0, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualAlloc, addr, 0x2000,
+                                         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE, 0, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    VirtualProtectEx( process, (char *)addr + 0x333, 17, PAGE_READONLY, &old_prot );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect,
+                                         (char *)addr + 0x333, 17,
+                                         PAGE_READONLY, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualProtect, addr, 0x1000,
+                                         PAGE_READONLY, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    VirtualFreeEx( process, addr, 0, MEM_RELEASE );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualFree, addr, 0,
+                                         MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualFree, addr, 0x2000,
+                                         MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    addr = NULL;
+    size = 0x4321;
+    status = NtAllocateVirtualMemory( process, &addr, 0, &size, MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+    ok( !status, "NtAllocateVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualAlloc, NULL, 0x4321,
+                                         MEM_RESERVE, PAGE_EXECUTE_READWRITE, 0, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualAlloc, addr, 0x5000,
+                                         MEM_RESERVE, PAGE_EXECUTE_READWRITE, 0, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    size = 0x4321;
+    status = NtAllocateVirtualMemory( process, &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE );
+    ok( !status, "NtAllocateVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualAlloc, addr, 0x4321,
+                                         MEM_COMMIT, PAGE_READWRITE, 0, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualAlloc, addr, 0x5000,
+                                         MEM_COMMIT, PAGE_READWRITE, 0, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    addr2 = (char *)addr + 0x111;
+    size = 23;
+    status = NtProtectVirtualMemory( process, &addr2, &size, PAGE_EXECUTE_READWRITE, &old_prot );
+    ok( !status, "NtProtectVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect, (char *)addr + 0x111, 23,
+                                         PAGE_EXECUTE_READWRITE, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualProtect, addr, 0x1000,
+                                         PAGE_EXECUTE_READWRITE, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    status = NtWriteVirtualMemory( process, (char *)addr + 0x1111, data, sizeof(data), &size );
+    ok( !status, "NtWriteVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    ok( !entry, "not at end of list\n" );
+
+    addr2 = (char *)addr + 0x1234;
+    size = 45;
+    status = NtFreeVirtualMemory( process, &addr2, &size, MEM_DECOMMIT );
+    ok( !status, "NtFreeVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualFree, (char *)addr + 0x1234, 45,
+                                         MEM_DECOMMIT, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualFree, addr2, 0x1000,
+                                         MEM_DECOMMIT, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    size = 0;
+    status = NtFreeVirtualMemory( process, &addr, &size, MEM_RELEASE );
+    ok( !status, "NtFreeVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualFree, addr, 0,
+                                         MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualFree, addr, 0x5000,
+                                         MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    file = CreateFileA( "c:\\windows\\syswow64\\version.dll", GENERIC_READ | GENERIC_EXECUTE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+    addr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection( mapping, process, &addr, 0, 0, &offset, &size, ViewShare, 0, PAGE_READONLY );
+    ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    ok( !entry, "list not empty\n" );
+
+    FlushInstructionCache( process, addr, 0x1234 );
+    entry = pop_from_work_list( &list->work_list );
+    entry = expect_cross_work_entry( list, entry, CrossProcessFlushCache, addr, 0x1234,
+                                     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc );
+    ok( !entry, "not at end of list\n" );
+
+    NtFlushInstructionCache( process, addr, 0x1234 );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessFlushCache, addr, 0x1234,
+                                         0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    WriteProcessMemory( process, (char *)addr + 0x1ffe, data, sizeof(data), &size );
+    entry = pop_from_work_list( &list->work_list );
+    todo_wine
+    {
+    entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect,
+                                     (char *)addr + 0x1000, 0x2000, 0x60000000 | PAGE_EXECUTE_WRITECOPY,
+                                     (current_machine != IMAGE_FILE_MACHINE_ARM64) ? 0 : 0xcccccccc,
+                                     0xcccccccc, 0xcccccccc );
+    entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualProtect,
+                                     (char *)addr + 0x1000, 0x2000,
+                                     0x60000000 | PAGE_EXECUTE_WRITECOPY, 0, 0xcccccccc, 0xcccccccc );
+    entry = expect_cross_work_entry( list, entry, CrossProcessFlushCache,
+                                     (char *)addr + 0x1ffe, sizeof(data),
+                                     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc );
+    entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect,
+                                     (char *)addr + 0x1000, 0x2000, 0x60000000 | PAGE_EXECUTE_READ,
+                                     (current_machine != IMAGE_FILE_MACHINE_ARM64) ? 0 : 0xcccccccc,
+                                     0xcccccccc, 0xcccccccc );
+    entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualProtect,
+                                     (char *)addr + 0x1000, 0x2000,
+                                     0x60000000 | PAGE_EXECUTE_READ, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    status = NtUnmapViewOfSection( process, addr );
+    ok( !status, "NtUnmapViewOfSection failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    ok( !entry, "list not empty\n" );
+
+    CloseHandle( mapping );
+    CloseHandle( file );
+}
+
 static void test_peb_teb(void)
 {
     PROCESS_BASIC_INFORMATION proc_info;
@@ -471,6 +720,7 @@ static void test_peb_teb(void)
                 }
                 else skip( "RtlOpenCrossProcessEmulatorWorkConnection not supported\n" );
 
+                test_cross_process_notifications( pi.hProcess, addr );
                 UnmapViewOfFile( addr );
             }
             else trace( "no WOW64INFO section handle\n" );
@@ -740,7 +990,7 @@ static void test_image_mappings(void)
     }
 
     offset.QuadPart = 0;
-    file = CreateFileA( "c:\\windows\\system32\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    file = CreateFileA( "c:\\windows\\system32\\version.dll", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
     mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
     ok( mapping != 0, "CreateFileMapping failed\n" );
@@ -847,7 +1097,7 @@ static void test_image_mappings(void)
     }
     else if (native_machine == IMAGE_FILE_MACHINE_AMD64 || native_machine == IMAGE_FILE_MACHINE_ARM64)
     {
-        file = CreateFileA( "c:\\windows\\syswow64\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+        file = CreateFileA( "c:\\windows\\syswow64\\version.dll", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
 
         mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
