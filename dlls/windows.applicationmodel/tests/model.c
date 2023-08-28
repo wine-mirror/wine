@@ -135,7 +135,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
     HRESULT hr;
 
     hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
-    ok_(__FILE__, line)( hr == S_OK || broken( hr == E_NOINTERFACE ) , "got hr %#lx.\n", hr );
+    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
     if (SUCCEEDED(hr))
         IUnknown_Release( unk );
 }
@@ -441,21 +441,20 @@ static void test_PackageManager(void)
 
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
     WindowsDeleteString( str );
-    todo_wine
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
-        todo_wine
         win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( statics_name ) );
         return;
     }
 
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
-    check_interface( factory, &IID_IAgileObject );
 
     hr = IActivationFactory_ActivateInstance( factory, (IInspectable **)&manager );
+    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr != S_OK) goto skip_manager;
 
     check_interface( manager, &IID_IUnknown );
     check_interface( manager, &IID_IInspectable );
@@ -501,6 +500,7 @@ static void test_PackageManager(void)
 skip_tests:
     ref = IPackageManager_Release( manager );
     ok( !ref, "got ref %ld.\n", ref );
+skip_manager:
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
@@ -527,7 +527,6 @@ static void test_PackageStatics(void)
 
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
-    check_interface( factory, &IID_IAgileObject );
 
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
