@@ -431,6 +431,20 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
     return cmp;
 }
 
+#define test_implements_interface( unk, iid, exp_implemented ) \
+        test_implements_interface_( ((IUnknown *)(unk)), (iid), (exp_implemented), __FILE__, __LINE__)
+static void test_implements_interface_(IUnknown *unk, const GUID *iid, BOOL exp_implemented, const char *file, int line)
+{
+    IUnknown *unk2 = NULL;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(unk, iid, (void **)&unk2);
+    ok_(file, line)(hr == (exp_implemented ? S_OK : E_NOINTERFACE), "Unexpected hr %#lx\n", hr);
+    ok_(file, line)(!!unk2 == exp_implemented, "Unexpected iface %p\n", unk2);
+    if (unk2)
+        IUnknown_Release(unk2);
+}
+
 #define DEFINE_ACC_METHOD_EXPECT(method) \
     int expect_ ## method , called_ ## method
 
@@ -4435,6 +4449,8 @@ static void test_UiaProviderFromIAccessible(void)
             broken(prov_opt == ProviderOptions_ClientSideProvider), /* Windows < 10 1507 */
             "Unexpected provider options %#x\n", prov_opt);
 
+    test_implements_interface(elprov, &IID_IRawElementProviderFragmentRoot, TRUE);
+
     hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_ProviderDescriptionPropertyId, &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
@@ -4467,6 +4483,9 @@ static void test_UiaProviderFromIAccessible(void)
     hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, 1, UIA_PFIA_DEFAULT, &elprov);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* Even simple children implement IRawElementProviderFragmentRoot. */
+    test_implements_interface(elprov, &IID_IRawElementProviderFragmentRoot, TRUE);
 
     /*
      * Simple child element (IAccessible without CHILDID_SELF) cannot be root
@@ -4526,6 +4545,12 @@ static void test_UiaProviderFromIAccessible(void)
     CHECK_ACC_METHOD_CALLED(&Accessible, get_accChildCount);
     CHECK_ACC_METHOD_CALLED(&Accessible, accLocation);
     CHECK_ACC_METHOD_CALLED(&Accessible, get_accName);
+
+    /*
+     * Interface that isn't the HWND root, still implements
+     * IRawElementProviderFragmentRoot.
+     */
+    test_implements_interface(elprov, &IID_IRawElementProviderFragmentRoot, TRUE);
 
     /* Second call won't send WM_GETOBJECT. */
     elprov2 = (void *)0xdeadbeef;
