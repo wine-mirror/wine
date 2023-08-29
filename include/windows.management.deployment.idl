@@ -29,11 +29,14 @@ namespace Windows.Management.Deployment {
     typedef enum DeploymentProgressState DeploymentProgressState;
     typedef enum PackageInstallState PackageInstallState;
     typedef enum PackageState PackageState;
+    typedef enum PackageTypes PackageTypes;
+    typedef enum RemovalOptions RemovalOptions;
 
     typedef struct DeploymentProgress DeploymentProgress;
 
     interface IDeploymentResult;
     interface IPackageManager;
+    interface IPackageManager2;
     interface IPackageUserInformation;
 
     runtimeclass DeploymentResult;
@@ -100,6 +103,35 @@ namespace Windows.Management.Deployment {
     };
 
     [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [flags]
+    enum PackageTypes
+    {
+        None      = 0x0,
+        Main      = 0x1,
+        Framework = 0x2,
+        Resource  = 0x4,
+        Bundle    = 0x8,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        Xap       = 0x10,
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+        Optional  = 0x20,
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)]
+        All       = 0xffffffff,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [flags]
+    enum RemovalOptions
+    {
+        None                            = 0x0,
+        PreserveApplicationData         = 0x1000,
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)]
+        PreserveRoamableApplicationData = 0x80,
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)]
+        RemoveForAllUsers               = 0x80000,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
     struct DeploymentProgress
     {
         Windows.Management.Deployment.DeploymentProgressState state;
@@ -155,6 +187,44 @@ namespace Windows.Management.Deployment {
         HRESULT FindPackagesByUserSecurityIdPackageFamilyName([in] HSTRING sid, [in] HSTRING family_name, [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
         [overload("FindPackageForUser")]
         HRESULT FindPackageByUserSecurityIdPackageFullName([in] HSTRING sid, [in] HSTRING name, [out, retval] Windows.ApplicationModel.Package **package);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Management.Deployment.PackageManager),
+        uuid(f7aad08d-0840-46f2-b5d8-cad47693a095)
+    ]
+    interface IPackageManager2 : IInspectable
+    {
+        [overload("RemovePackageAsync")]
+        HRESULT RemovePackageWithOptionsAsync([in] HSTRING name, [in] Windows.Management.Deployment.RemovalOptions options,
+                                              [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Management.Deployment.DeploymentResult *, Windows.Management.Deployment.DeploymentProgress> **operation);
+        [overload("StagePackageAsync")]
+        HRESULT StagePackageWithOptionsAsync([in] Windows.Foundation.Uri *uri, [in] Windows.Foundation.Collections.IIterable<Windows.Foundation.Uri *> *dependencies,
+                                             [in] Windows.Management.Deployment.DeploymentOptions options,
+                                             [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Management.Deployment.DeploymentResult *, Windows.Management.Deployment.DeploymentProgress> **operation);
+        HRESULT RegisterPackageByFullNameAsync([in] HSTRING name, [in] Windows.Foundation.Collections.IIterable<HSTRING> *dependencies,
+                                               [in] Windows.Management.Deployment.DeploymentOptions options,
+                                               [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Management.Deployment.DeploymentResult *, Windows.Management.Deployment.DeploymentProgress> **operation);
+        [overload("FindPackagesWithPackageTypes")]
+        HRESULT FindPackagesWithPackageTypes([in] Windows.Management.Deployment.PackageTypes types, [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("FindPackagesForUserWithPackageTypes")]
+        HRESULT FindPackagesByUserSecurityIdWithPackageTypes([in] HSTRING sid, [in] Windows.Management.Deployment.PackageTypes types,
+                                                             [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("FindPackagesWithPackageTypes")]
+        HRESULT FindPackagesByNamePublisherWithPackageTypes([in] HSTRING name, [in] HSTRING publisher, [in] Windows.Management.Deployment.PackageTypes types,
+                                                            [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("FindPackagesForUserWithPackageTypes")]
+        HRESULT FindPackagesByUserSecurityIdNamePublisherWithPackageTypes([in] HSTRING sid, [in] HSTRING name, [in] HSTRING publisher, [in] Windows.Management.Deployment.PackageTypes types,
+                                                                          [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("FindPackagesWithPackageTypes")]
+        HRESULT FindPackagesByPackageFamilyNameWithPackageTypes([in] HSTRING family_name, [in] Windows.Management.Deployment.PackageTypes types,
+                                                                [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("FindPackagesForUserWithPackageTypes")]
+        HRESULT FindPackagesByUserSecurityIdPackageFamilyNameWithPackageTypes([in] HSTRING sid, [in] HSTRING family_name, [in] Windows.Management.Deployment.PackageTypes types,
+                                                                              [out, retval] Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *> **packages);
+        [overload("StageUserDataAsync")]
+        HRESULT StageUserDataAsync([in] HSTRING name, [out, retval] Windows.Foundation.IAsyncOperationWithProgress<Windows.Management.Deployment.DeploymentResult *, Windows.Management.Deployment.DeploymentProgress> **operation);
     }
 
     [
