@@ -407,6 +407,7 @@ static const struct column col_softwarelicensingproduct[] =
 };
 static const struct column col_sounddevice[] =
 {
+    { L"Caption",      CIM_STRING },
     { L"DeviceID",     CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Manufacturer", CIM_STRING },
     { L"Name",         CIM_STRING },
@@ -857,6 +858,7 @@ struct record_softwarelicensingproduct
 };
 struct record_sounddevice
 {
+    const WCHAR *caption;
     const WCHAR *deviceid;
     const WCHAR *manufacturer;
     const WCHAR *name;
@@ -4285,6 +4287,7 @@ static enum fill_status fill_sounddevice( struct table *table, const struct expr
     get_dxgi_adapter_desc( &desc );
 
     rec = (struct record_sounddevice *)table->data;
+    rec->caption = L"Wine Audio Device";
     rec->deviceid = get_sounddevice_pnpdeviceid( &desc );
     rec->manufacturer = L"The Wine Project";
     rec->name = L"Wine Audio Device";
