@@ -25,6 +25,8 @@ import "windows.foundation.idl";
 
 namespace Windows.Media
 {
+    typedef enum AudioProcessing AudioProcessing;
+
     interface IMediaControl;
     interface IMediaMarker;
 
@@ -35,6 +37,15 @@ namespace Windows.Media
         interface Windows.Foundation.Collections.IVectorView<Windows.Media.IMediaMarker*>;
         interface Windows.Foundation.Collections.IVector<Windows.Media.IMediaMarker*>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum AudioProcessing
+    {
+        Default = 0,
+        Raw     = 1,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
