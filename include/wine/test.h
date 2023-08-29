@@ -168,8 +168,8 @@ static const char winetest_color_blue[] = "\x1b[34m";
 static const char winetest_color_bright_red[] = "\x1b[1;91m";
 static const char winetest_color_bright_purple[] = "\x1b[1;95m";
 
-static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-static void winetest_printf( const char *msg, ... )
+static void winetest_print_location( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+static void winetest_print_location( const char *msg, ... )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
     va_list valist;
@@ -185,7 +185,7 @@ static void winetest_print_context( const char *msgtype )
     struct winetest_thread_data *data = winetest_get_thread_data();
     unsigned int i;
 
-    winetest_printf( "%s", msgtype );
+    winetest_print_location( "%s", msgtype );
     for (i = 0; i < data->context_count; ++i)
         printf( "%s: ", data->context[i] );
 }
@@ -193,14 +193,14 @@ static void winetest_print_context( const char *msgtype )
 static inline void winetest_subtest( const char *name )
 {
     winetest_print_lock();
-    winetest_printf( "Subtest %s\n", name );
+    winetest_print_location( "Subtest %s\n", name );
     winetest_print_unlock();
 }
 
 static inline void winetest_ignore_exceptions( BOOL ignore )
 {
     winetest_print_lock();
-    winetest_printf( "IgnoreExceptions=%d\n", ignore ? 1 : 0 );
+    winetest_print_location( "IgnoreExceptions=%d\n", ignore ? 1 : 0 );
     winetest_print_unlock();
 }
 
@@ -226,7 +226,7 @@ static LONG winetest_add_line( void )
     if (count == winetest_mute_threshold)
     {
         winetest_print_lock();
-        winetest_printf( "Line has been silenced after %d occurrences\n", winetest_mute_threshold );
+        winetest_print_location( "Line has been silenced after %d occurrences\n", winetest_mute_threshold );
         winetest_print_unlock();
     }
 
@@ -320,7 +320,7 @@ static int winetest_vok( int condition, const char *msg, va_list args )
             {
                 winetest_print_lock();
                 if (winetest_color) printf( winetest_color_green );
-                winetest_printf("Test succeeded\n");
+                winetest_print_location("Test succeeded\n");
                 if (winetest_color) printf( winetest_color_reset );
                 winetest_print_unlock();
             }
@@ -577,7 +577,7 @@ void winetest_print_lock(void)
     ret = WaitForSingleObject( winetest_mutex, 30000 );
     if (ret != WAIT_OBJECT_0 && ret != WAIT_ABANDONED)
     {
-        winetest_printf( "could not get the print lock: %u\n", ret );
+        winetest_print_location( "could not get the print lock: %u\n", ret );
         winetest_mutex = 0;
     }
 }
@@ -615,7 +615,7 @@ void winetest_wait_child_process( HANDLE process )
             DWORD pid = GetProcessId( process );
             winetest_print_lock();
             if (winetest_color) printf( winetest_color_bright_red );
-            winetest_printf( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
+            winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
             if (winetest_color) printf( winetest_color_reset );
             winetest_print_unlock();
             InterlockedIncrement( &winetest_failures );
@@ -623,7 +623,7 @@ void winetest_wait_child_process( HANDLE process )
         else if (exit_code)
         {
             winetest_print_lock();
-            winetest_printf( "%u failures in child process\n", (UINT)exit_code );
+            winetest_print_location( "%u failures in child process\n", (UINT)exit_code );
             winetest_print_unlock();
             while (exit_code-- > 0) InterlockedIncrement( &winetest_failures );
         }
