@@ -430,6 +430,7 @@ static void test_PackageManager(void)
     IActivationFactory *factory;
     IIterable_Package *packages;
     IInspectable *inspectable;
+    IPackageManager2 *manager2;
     IPackageManager *manager;
     IIterator_Package *iter;
     IPackage *package;
@@ -478,6 +479,17 @@ static void test_PackageManager(void)
     if (hr == S_OK) IIterable_Package_Release( packages );
     WindowsDeleteString( str );
     WindowsDeleteString( str2 );
+
+    hr = IPackageManager_QueryInterface( manager, &IID_IPackageManager2, (void **)&manager2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IPackageManager2_FindPackagesWithPackageTypes( manager2, 1, &packages );
+    todo_wine
+    ok( hr == S_OK || broken(hr == E_ACCESSDENIED) /* Requires admin privileges */, "got hr %#lx.\n", hr );
+    if (hr == S_OK) IIterable_Package_Release( packages );
+
+    ref = IPackageManager2_Release( manager2 );
+    ok( ref == 2, "got ref %ld.\n", ref );
 
     hr = IPackageManager_FindPackages( manager, &packages );
     todo_wine

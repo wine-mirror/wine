@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(appx);
 struct package_manager
 {
     IPackageManager IPackageManager_iface;
+    IPackageManager2 IPackageManager2_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI package_manager_QueryInterface( IPackageManager *iface, RE
         IsEqualGUID( iid, &IID_IPackageManager ))
     {
         *out = &impl->IPackageManager_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IPackageManager2 ))
+    {
+        *out = &impl->IPackageManager2_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -226,6 +234,99 @@ static const struct IPackageManagerVtbl package_manager_vtbl =
     package_manager_FindPackageByUserSecurityIdPackageFullName
 };
 
+DEFINE_IINSPECTABLE( package_manager2, IPackageManager2, struct package_manager, IPackageManager_iface );
+
+static HRESULT WINAPI package_manager2_RemovePackageWithOptionsAsync( IPackageManager2 *iface, HSTRING name, RemovalOptions options,
+    IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress **operation )
+{
+    FIXME( "iface %p, name %s, options %d, operation %p stub!\n", iface, debugstr_hstring(name), options, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_StagePackageWithOptionsAsync( IPackageManager2 *iface, IUriRuntimeClass *uri, IIterable_Uri *dependencies,
+    DeploymentOptions options, IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress **operation )
+{
+    FIXME( "iface %p, uri %p, dependencies %p, options %d, operation %p stub!\n", iface, uri, dependencies, options, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_RegisterPackageByFullNameAsync( IPackageManager2 *iface, HSTRING name, IIterable_HSTRING *dependencies,
+    DeploymentOptions options, IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress **operation )
+{
+    FIXME( "iface %p, name %s, dependencies %p, options %d, operation %p stub!\n", iface, debugstr_hstring(name), dependencies, options, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesWithPackageTypes( IPackageManager2 *iface, PackageTypes types, IIterable_Package **packages )
+{
+    FIXME( "iface %p, types %d, packages %p stub!\n", iface, types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesByUserSecurityIdWithPackageTypes( IPackageManager2 *iface, HSTRING sid,
+    PackageTypes types, IIterable_Package **packages )
+{
+    FIXME( "iface %p, sid %s, types %d, packages %p stub!\n", iface, debugstr_hstring(sid), types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesByNamePublisherWithPackageTypes( IPackageManager2 *iface, HSTRING name, HSTRING publisher,
+    PackageTypes types, IIterable_Package **packages )
+{
+    FIXME( "iface %p, name %s, publisher %s, types %d, packages %p stub!\n", iface, debugstr_hstring(name), debugstr_hstring(publisher), types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesByUserSecurityIdNamePublisherWithPackageTypes( IPackageManager2 *iface, HSTRING sid, HSTRING name,
+    HSTRING publisher, PackageTypes types, IIterable_Package **packages )
+{
+    FIXME( "iface %p, sid %s, name %s, publisher %s, types %d, packages %p stub!\n", iface, debugstr_hstring(sid), debugstr_hstring(name), debugstr_hstring(publisher), types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesByPackageFamilyNameWithPackageTypes( IPackageManager2 *iface, HSTRING family_name, PackageTypes types,
+   IIterable_Package **packages )
+{
+    FIXME( "iface %p, family_name %s, types %d, packages %p stub!\n", iface, debugstr_hstring(family_name), types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_FindPackagesByUserSecurityIdPackageFamilyNameWithPackageTypes( IPackageManager2 *iface, HSTRING sid, HSTRING family_name,
+    PackageTypes types, IIterable_Package **packages )
+{
+    FIXME( "iface %p, sid %s, family_name %s, types %d, packages %p stub!\n", iface, debugstr_hstring(sid), debugstr_hstring(family_name), types, packages );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI package_manager2_StageUserDataAsync( IPackageManager2 *iface, HSTRING name,
+    IAsyncOperationWithProgress_DeploymentResult_DeploymentProgress **operation )
+{
+    FIXME( "iface %p, name %s, operation %p stub!\n", iface, debugstr_hstring(name), operation );
+    return E_NOTIMPL;
+}
+
+static const struct IPackageManager2Vtbl package_manager2_vtbl =
+{
+    package_manager2_QueryInterface,
+    package_manager2_AddRef,
+    package_manager2_Release,
+    /* IInspectable methods */
+    package_manager2_GetIids,
+    package_manager2_GetRuntimeClassName,
+    package_manager2_GetTrustLevel,
+    /* IPackageManager2 methods */
+    package_manager2_RemovePackageWithOptionsAsync,
+    package_manager2_StagePackageWithOptionsAsync,
+    package_manager2_RegisterPackageByFullNameAsync,
+    package_manager2_FindPackagesWithPackageTypes,
+    package_manager2_FindPackagesByUserSecurityIdWithPackageTypes,
+    package_manager2_FindPackagesByNamePublisherWithPackageTypes,
+    package_manager2_FindPackagesByUserSecurityIdNamePublisherWithPackageTypes,
+    package_manager2_FindPackagesByPackageFamilyNameWithPackageTypes,
+    package_manager2_FindPackagesByUserSecurityIdPackageFamilyNameWithPackageTypes,
+    package_manager2_StageUserDataAsync,
+};
+
 struct package_manager_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -304,6 +405,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     }
 
     impl->IPackageManager_iface.lpVtbl = &package_manager_vtbl;
+    impl->IPackageManager2_iface.lpVtbl = &package_manager2_vtbl;
     impl->ref = 1;
 
     *instance = (IInspectable *)&impl->IPackageManager_iface;
