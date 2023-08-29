@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mpr);
  */
 LPVOID WINAPI MPR_Alloc( DWORD dwSize )
 {
-    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize );
+    return calloc( 1, dwSize );
 }
 
 /*****************************************************************
@@ -46,10 +46,7 @@ LPVOID WINAPI MPR_Alloc( DWORD dwSize )
  */
 LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
 {
-    if ( lpSrc )
-        return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSrc, dwSize );
-    else
-        return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize );
+    return _recalloc( lpSrc, 1, dwSize );
 }
 
 /*****************************************************************
@@ -57,10 +54,8 @@ LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
  */
 BOOL WINAPI MPR_Free( LPVOID lpMem )
 {
-    if ( lpMem )
-        return HeapFree( GetProcessHeap(), 0, lpMem );
-    else
-        return FALSE;
+    free( lpMem );
+    return !!lpMem;
 }
 
 /*****************************************************************
