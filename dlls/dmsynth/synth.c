@@ -38,7 +38,6 @@ struct synth
     DMUS_PORTPARAMS params;
     BOOL active;
     BOOL open;
-    IReferenceClock *latency_clock;
     IDirectMusicSynthSink *sink;
 };
 
@@ -93,11 +92,7 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
 
     TRACE("(%p): new ref = %lu\n", This, ref);
 
-    if (!ref) {
-        if (This->latency_clock)
-            IReferenceClock_Release(This->latency_clock);
-        free(This);
-    }
+    if (!ref) free(This);
 
     return ref;
 }
@@ -414,14 +409,10 @@ static HRESULT WINAPI synth_GetLatencyClock(IDirectMusicSynth8 *iface,
 
     if (!clock)
         return E_POINTER;
-
     if (!This->sink)
         return DMUS_E_NOSYNTHSINK;
 
-    *clock = This->latency_clock;
-    IReferenceClock_AddRef(This->latency_clock);
-
-    return S_OK;
+    return IDirectMusicSynthSink_GetLatencyClock(This->sink, clock);
 }
 
 static HRESULT WINAPI synth_Activate(IDirectMusicSynth8 *iface, BOOL enable)
@@ -457,28 +448,20 @@ static HRESULT WINAPI synth_SetSynthSink(IDirectMusicSynth8 *iface,
         IDirectMusicSynthSink *sink)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", iface, sink);
 
     if (sink == This->sink)
         return S_OK;
 
-    if (!sink || This->sink) {
-        /* Disconnect the sink */
-        if (This->latency_clock)
-            IReferenceClock_Release(This->latency_clock);
-        IDirectMusicSynthSink_Release(This->sink);
-    }
+    if (!sink || This->sink) IDirectMusicSynthSink_Release(This->sink);
 
     This->sink = sink;
     if (!sink)
         return S_OK;
 
     IDirectMusicSynthSink_AddRef(This->sink);
-    if (FAILED(hr = IDirectMusicSynthSink_Init(sink, (IDirectMusicSynth *)iface)))
-        return hr;
-    return IDirectMusicSynthSink_GetLatencyClock(sink, &This->latency_clock);
+    return IDirectMusicSynthSink_Init(sink, (IDirectMusicSynth *)iface);
 }
 
 static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,

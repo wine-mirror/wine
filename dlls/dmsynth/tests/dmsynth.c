@@ -1014,7 +1014,7 @@ static void test_IDirectMusicSynth(void)
     hr = IDirectMusicSynth_SetSynthSink(synth, sink);
     ok(hr == S_OK, "got %#lx\n", hr);
     ref = get_refcount(sink);
-    todo_wine ok(ref == 2, "got %lu\n", ref);
+    ok(ref == 2, "got %lu\n", ref);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
     todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
 
@@ -1062,7 +1062,7 @@ static void test_IDirectMusicSynth(void)
     hr = IDirectMusicSynth_SetSynthSink(synth, sink);
     ok(hr == S_OK, "got %#lx\n", hr);
     ref = get_refcount(sink);
-    todo_wine ok(ref == 2, "got %lu\n", ref);
+    ok(ref == 2, "got %lu\n", ref);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
     todo_wine ok(hr == S_OK, "got %#lx\n", hr);
 
@@ -1145,7 +1145,7 @@ static void test_IDirectMusicSynth(void)
     IDirectMusicSynth_Release(synth);
 
 
-    if (strcmp(winetest_platform, "wine")) IDirectMusicSynthSink_Release(sink);
+    IDirectMusicSynthSink_Release(sink);
     IReferenceClock_Release(clock);
     IDirectMusic_Release(music);
 }
