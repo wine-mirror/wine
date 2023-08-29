@@ -3679,7 +3679,9 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
     if (FAILED(hr = IMFMediaEventGenerator_EndGetEvent(event_source, result, &event)))
     {
         WARN("Failed to get event from %p, hr %#lx.\n", event_source, hr);
-        goto failed;
+        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEError, &GUID_NULL, hr, NULL);
+        IMFMediaEventGenerator_Release(event_source);
+        return hr;
     }
 
     if (FAILED(hr = IMFMediaEvent_GetType(event, &event_type)))
@@ -3872,11 +3874,15 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
     PropVariantClear(&value);
 
 failed:
-    if (event)
-        IMFMediaEvent_Release(event);
 
     if (FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(event_source, iface, (IUnknown *)event_source)))
+    {
         WARN("Failed to re-subscribe, hr %#lx.\n", hr);
+        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+    }
+
+    if (event)
+        IMFMediaEvent_Release(event);
 
     IMFMediaEventGenerator_Release(event_source);
 
