@@ -203,7 +203,7 @@ static LONG winetest_muted_todo_successes; /* same as todo_successes but silent 
 static LONG line_counters[16384];
 
 /* The following data must be kept track of on a per-thread basis */
-struct tls_data
+struct winetest_thread_data
 {
     const char* current_file;        /* file of current check */
     int current_line;                /* line of current check */
@@ -218,9 +218,9 @@ struct tls_data
 };
 static DWORD tls_index;
 
-static struct tls_data *get_tls_data(void)
+static struct winetest_thread_data *winetest_get_thread_data(void)
 {
-    struct tls_data *data;
+    struct winetest_thread_data *data;
     DWORD last_error;
 
     last_error=GetLastError();
@@ -244,7 +244,7 @@ static void exit_process( int code )
 
 void winetest_set_location( const char* file, int line )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     data->current_file=strrchr(file,'/');
     if (data->current_file==NULL)
         data->current_file=strrchr(file,'\\');
@@ -276,7 +276,7 @@ static const char color_bright_purple[] = "\x1b[1;95m";
 static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static void winetest_printf( const char *msg, ... )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     va_list valist;
 
     printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
@@ -286,7 +286,7 @@ static void winetest_printf( const char *msg, ... )
 }
 static void winetest_print_context( const char *msgtype )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     unsigned int i;
 
     winetest_printf( "%s", msgtype );
@@ -333,13 +333,13 @@ int broken( int condition )
 
 static LONG winetest_add_line( void )
 {
-    struct tls_data *data;
+    struct winetest_thread_data *data;
     int index, count;
 
     if (winetest_debug > 1)
         return 0;
 
-    data = get_tls_data();
+    data = winetest_get_thread_data();
     index = data->current_line % ARRAY_SIZE(line_counters);
     count = InterlockedIncrement(line_counters + index) - 1;
     if (count == winetest_mute_threshold)
@@ -364,7 +364,7 @@ static LONG winetest_add_line( void )
  */
 int winetest_vok( int condition, const char *msg, va_list args )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
 
     if (data->todo_level)
     {
@@ -512,14 +512,14 @@ void winetest_win_skip( const char *msg, ... )
 
 void winetest_start_flaky( int is_flaky )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     data->flaky_level = (data->flaky_level << 1) | (is_flaky != 0);
     data->flaky_do_loop = 1;
 }
 
 int winetest_loop_flaky(void)
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     int do_flaky = data->flaky_do_loop;
     data->flaky_do_loop = 0;
     return do_flaky;
@@ -527,20 +527,20 @@ int winetest_loop_flaky(void)
 
 void winetest_end_flaky(void)
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     data->flaky_level >>= 1;
 }
 
 void winetest_start_todo( int is_todo )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     data->todo_level = (data->todo_level << 1) | (is_todo != 0);
     data->todo_do_loop=1;
 }
 
 int winetest_loop_todo(void)
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     int do_loop=data->todo_do_loop;
     data->todo_do_loop=0;
     return do_loop;
@@ -548,13 +548,13 @@ int winetest_loop_todo(void)
 
 void winetest_end_todo(void)
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     data->todo_level >>= 1;
 }
 
 void winetest_push_context( const char *fmt, ... )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
     va_list valist;
 
     if (data->context_count < ARRAY_SIZE(data->context))
@@ -569,7 +569,7 @@ void winetest_push_context( const char *fmt, ... )
 
 void winetest_pop_context(void)
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
 
     if (data->context_count)
         --data->context_count;
@@ -707,7 +707,7 @@ static void usage( const char *argv0 )
 /* trap unhandled exceptions */
 static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
 {
-    struct tls_data *data = get_tls_data();
+    struct winetest_thread_data *data = winetest_get_thread_data();
 
     winetest_print_lock();
     if (data->current_file)
