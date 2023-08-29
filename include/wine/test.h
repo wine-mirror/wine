@@ -88,7 +88,6 @@ struct winetest_thread_data
 extern struct winetest_thread_data *winetest_get_thread_data(void);
 extern void winetest_print_lock(void);
 extern void winetest_print_unlock(void);
-extern const char *winetest_elapsed(void);
 
 extern int winetest_get_mainargs( char*** pargv );
 extern void winetest_wait_child_process( HANDLE process );
@@ -168,13 +167,24 @@ static const char winetest_color_blue[] = "\x1b[34m";
 static const char winetest_color_bright_red[] = "\x1b[1;91m";
 static const char winetest_color_bright_purple[] = "\x1b[1;95m";
 
+static const char *winetest_elapsed( char *buffer )
+{
+    DWORD now;
+
+    if (!winetest_time) return "";
+    winetest_last_time = now = GetTickCount();
+    sprintf( buffer, "%.3f", (now - winetest_start_time) / 1000.0 );
+    return buffer;
+}
+
 static void winetest_print_location( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static void winetest_print_location( const char *msg, ... )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
+    char elapsed[64];
     va_list valist;
 
-    printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
+    printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed( elapsed ) );
     va_start( valist, msg );
     vprintf( msg, valist );
     va_end( valist );
@@ -560,15 +570,6 @@ static void exit_process( int code )
     ExitProcess( code );
 }
 
-const char *winetest_elapsed(void)
-{
-    DWORD now;
-
-    if (!winetest_time) return "";
-    winetest_last_time = now = GetTickCount();
-    return wine_dbg_sprintf( "%.3f", (now - winetest_start_time) / 1000.0);
-}
-
 void winetest_print_lock(void)
 {
     UINT ret;
@@ -678,13 +679,15 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
+        char elapsed[64];
+
         winetest_print_lock();
         if (winetest_muted_todo_successes || winetest_muted_skipped || winetest_muted_traces)
             printf( "%04x:%s:%s Silenced %d todos, %d skips and %d traces.\n",
-                    (UINT)GetCurrentProcessId(), test->name, winetest_elapsed(),
+                    (UINT)GetCurrentProcessId(), test->name, winetest_elapsed( elapsed ),
                     (UINT)winetest_muted_todo_successes, (UINT)winetest_muted_skipped, (UINT)winetest_muted_traces);
         printf( "%04x:%s:%s %d tests executed (%d marked as todo, %d as flaky, %d %s), %d skipped.\n",
-                (UINT)GetCurrentProcessId(), test->name, winetest_elapsed(),
+                (UINT)GetCurrentProcessId(), test->name, winetest_elapsed( elapsed ),
                 (UINT)(winetest_successes + winetest_failures + winetest_flaky_failures + winetest_todo_successes + winetest_todo_failures),
                 (UINT)winetest_todo_successes, (UINT)winetest_flaky_failures, (UINT)(winetest_failures + winetest_todo_failures),
                 (winetest_failures + winetest_todo_failures != 1) ? "failures" : "failure",
@@ -710,6 +713,7 @@ static void usage( const char *argv0 )
 static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
+    char elapsed[64];
 
     winetest_print_lock();
     if (data->current_file)
@@ -717,7 +721,7 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
                 data->current_file, data->current_line );
     if (winetest_color) printf( winetest_color_bright_red );
     printf( "%04x:%s:%s unhandled exception %08x at %p\n",
-            (UINT)GetCurrentProcessId(), current_test->name, winetest_elapsed(),
+            (UINT)GetCurrentProcessId(), current_test->name, winetest_elapsed( elapsed ),
             (UINT)ptrs->ExceptionRecord->ExceptionCode, ptrs->ExceptionRecord->ExceptionAddress );
     if (winetest_color) printf( winetest_color_reset );
     fflush( stdout );
