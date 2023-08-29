@@ -33,6 +33,7 @@
 
 #include "wine/list.h"
 
+#define WINE_DRIVER_TEST
 #include "initguid.h"
 #include "driver_hid.h"
 
@@ -246,8 +247,8 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     tmp = queue->pos;
     while (tmp < queue->end)
     {
-        if (running_under_wine && !tmp->todo) break;
-        if (!running_under_wine && !tmp->broken && !tmp->wine_only) break;
+        if (winetest_platform_is_wine && !tmp->todo) break;
+        if (!winetest_platform_is_wine && !tmp->broken && !tmp->wine_only) break;
         if (tmp->code == code && tmp->report_id == id && tmp->report_len == len &&
             (!compare_buf || RtlCompareMemory( tmp->report_buf, buf, len ) == len))
             break;
@@ -260,7 +261,7 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
 
     while (queue->pos < queue->end)
     {
-        if (running_under_wine || !queue->pos->wine_only) break;
+        if (winetest_platform_is_wine || !queue->pos->wine_only) break;
         queue->pos++;
     }
 

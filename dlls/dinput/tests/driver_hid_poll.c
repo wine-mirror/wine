@@ -32,6 +32,7 @@
 
 #include "wine/list.h"
 
+#define WINE_DRIVER_TEST
 #include "initguid.h"
 #include "driver_hid.h"
 

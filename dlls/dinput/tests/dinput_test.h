@@ -39,8 +39,6 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidport.h"
 
-#include "wine/test.h"
-
 #include "driver_hid.h"
 
 #define EXPECT_VIDPID MAKELONG( 0x1209, 0x0001 )
