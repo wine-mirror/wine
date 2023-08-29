@@ -33,6 +33,7 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Management_Deployment
+#define WIDL_using_Windows_ApplicationModel
 #include "windows.management.deployment.h"
 
 extern IActivationFactory *package_manager_factory;

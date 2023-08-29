@@ -429,10 +429,11 @@ static void test_PackageManager(void)
     IStorageItem *storage_item;
     IActivationFactory *factory;
     IIterable_Package *packages;
+    IInspectable *inspectable;
     IPackageManager *manager;
     IIterator_Package *iter;
     IPackage *package;
-    HSTRING str;
+    HSTRING str, str2;
     HRESULT hr;
     LONG ref;
 
@@ -451,20 +452,39 @@ static void test_PackageManager(void)
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
 
-    hr = IActivationFactory_ActivateInstance( factory, (IInspectable **)&manager );
-    todo_wine
+    hr = IActivationFactory_ActivateInstance( factory, &inspectable );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (hr != S_OK) goto skip_manager;
 
-    check_interface( manager, &IID_IUnknown );
-    check_interface( manager, &IID_IInspectable );
-    check_interface( manager, &IID_IAgileObject );
-    check_interface( manager, &IID_IPackageManager );
+    check_interface( inspectable, &IID_IUnknown );
+    check_interface( inspectable, &IID_IInspectable );
+    check_interface( inspectable, &IID_IAgileObject );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IPackageManager, (void **)&manager );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IPackageManager_FindPackagesByNamePublisher( manager, NULL, NULL, &packages );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = WindowsCreateString( L"Wine", wcslen( L"Wine" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IPackageManager_FindPackagesByNamePublisher( manager, str, NULL, &packages );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = WindowsCreateString( L"The Wine Project", wcslen( L"The Wine Project" ), &str2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IPackageManager_FindPackagesByNamePublisher( manager, NULL, str2, &packages );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IPackageManager_FindPackagesByNamePublisher( manager, str, str2, &packages );
+    todo_wine
+    ok( hr == S_OK || broken(hr == E_ACCESSDENIED) /* Requires admin privileges */, "got hr %#lx.\n", hr );
+    if (hr == S_OK) IIterable_Package_Release( packages );
+    WindowsDeleteString( str );
+    WindowsDeleteString( str2 );
 
     hr = IPackageManager_FindPackages( manager, &packages );
+    todo_wine
     ok( hr == S_OK || broken(hr == E_ACCESSDENIED) /* w8adm */, "got hr %#lx.\n", hr );
-    if (broken(hr == E_ACCESSDENIED))
+    if (hr != S_OK)
     {
+        todo_wine
         win_skip("Unable to list packages, skipping package manager tests\n");
         goto skip_tests;
     }
@@ -499,8 +519,9 @@ static void test_PackageManager(void)
 
 skip_tests:
     ref = IPackageManager_Release( manager );
+    ok( ref == 1, "got ref %ld.\n", ref );
+    ref = IInspectable_Release( inspectable );
     ok( !ref, "got ref %ld.\n", ref );
-skip_manager:
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
