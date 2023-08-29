@@ -1007,7 +1007,7 @@ static void test_IDirectMusicSynth(void)
     hr = IDirectMusicSynth_Activate(synth, TRUE);
     ok(hr == DMUS_E_NOSYNTHSINK, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Activate(synth, FALSE);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
     hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1034,7 +1034,7 @@ static void test_IDirectMusicSynth(void)
     hr = IDirectMusicSynth_Activate(synth, TRUE);
     todo_wine ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
     /* Close is fine while active */
     hr = IDirectMusicSynth_Close(synth);
