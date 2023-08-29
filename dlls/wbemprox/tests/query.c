@@ -2122,6 +2122,7 @@ static void test_Win32_SoundDevice( IWbemServices *services )
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
 
+        check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
         check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
         check_property( obj, L"Name", VT_BSTR, CIM_STRING );
