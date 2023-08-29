@@ -915,10 +915,9 @@ static HRESULT WINAPI synth_SetMasterClock(IDirectMusicSynth8 *iface,
 
     TRACE("(%p)->(%p)\n", This, clock);
 
-    if (!This->sink)
-        return DMUS_E_NOSYNTHSINK;
-
-    return IDirectMusicSynthSink_SetMasterClock(This->sink, clock);
+    if (!clock)
+        return E_POINTER;
+    return S_OK;
 }
 
 static HRESULT WINAPI synth_GetLatencyClock(IDirectMusicSynth8 *iface,

@@ -1036,19 +1036,19 @@ static void test_IDirectMusicSynth(void)
 
     /* SetMasterClock does nothing */
     hr = IDirectMusicSynth_SetMasterClock(synth, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicSynth_SetMasterClock(synth, clock);
     ok(hr == S_OK, "got %#lx\n", hr);
     ref = get_refcount(clock);
     todo_wine ok(ref == 1, "got %lu\n", ref);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
-    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
 
     /* SetMasterClock needs to be called on the sink */
     hr = IDirectMusicSynthSink_SetMasterClock(sink, clock);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
     ok(hr == S_FALSE, "got %#lx\n", hr);
 
