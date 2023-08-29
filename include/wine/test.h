@@ -40,7 +40,7 @@ extern int winetest_debug;
 
 /* trace timing information */
 extern int winetest_time;
-extern DWORD winetest_start_time, winetest_last_time;
+extern int winetest_start_time, winetest_last_time;
 
 /* running in interactive mode? */
 extern int winetest_interactive;
@@ -88,6 +88,8 @@ struct winetest_thread_data
 extern struct winetest_thread_data *winetest_get_thread_data(void);
 extern void winetest_print_lock(void);
 extern void winetest_print_unlock(void);
+extern int winetest_vprintf( const char *msg, va_list args );
+extern int winetest_get_time(void);
 
 extern int winetest_get_mainargs( char*** pargv );
 extern void winetest_wait_child_process( HANDLE process );
@@ -167,12 +169,25 @@ static const char winetest_color_blue[] = "\x1b[34m";
 static const char winetest_color_bright_red[] = "\x1b[1;91m";
 static const char winetest_color_bright_purple[] = "\x1b[1;95m";
 
+static int winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+static int winetest_printf( const char *msg, ... )
+{
+    va_list valist;
+    int ret;
+
+    va_start( valist, msg );
+    ret = winetest_vprintf( msg, valist );
+    va_end( valist );
+
+    return ret;
+}
+
 static const char *winetest_elapsed( char *buffer )
 {
-    DWORD now;
+    int now;
 
     if (!winetest_time) return "";
-    winetest_last_time = now = GetTickCount();
+    winetest_last_time = now = winetest_get_time();
     sprintf( buffer, "%.3f", (now - winetest_start_time) / 1000.0 );
     return buffer;
 }
@@ -184,9 +199,9 @@ static void winetest_print_location( const char *msg, ... )
     char elapsed[64];
     va_list valist;
 
-    printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed( elapsed ) );
+    winetest_printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed( elapsed ) );
     va_start( valist, msg );
-    vprintf( msg, valist );
+    winetest_vprintf( msg, valist );
     va_end( valist );
 }
 
@@ -197,7 +212,7 @@ static void winetest_print_context( const char *msgtype )
 
     winetest_print_location( "%s", msgtype );
     for (i = 0; i < data->context_count; ++i)
-        printf( "%s: ", data->context[i] );
+        winetest_printf( "%s: ", data->context[i] );
 }
 
 static inline void winetest_subtest( const char *name )
@@ -264,19 +279,19 @@ static int winetest_vok( int condition, const char *msg, va_list args )
             winetest_print_lock();
             if (data->flaky_level)
             {
-                if (winetest_color) printf( winetest_color_dark_purple );
+                if (winetest_color) winetest_printf( winetest_color_dark_purple );
                 winetest_print_context( "Test succeeded inside flaky todo block: " );
-                vprintf(msg, args);
+                winetest_vprintf( msg, args );
                 InterlockedIncrement( &winetest_flaky_failures );
             }
             else
             {
-                if (winetest_color) printf( winetest_color_dark_red );
+                if (winetest_color) winetest_printf( winetest_color_dark_red );
                 winetest_print_context( "Test succeeded inside todo block: " );
-                vprintf(msg, args);
+                winetest_vprintf( msg, args );
                 InterlockedIncrement( &winetest_todo_failures );
             }
-            if (winetest_color) printf( winetest_color_reset );
+            if (winetest_color) winetest_printf( winetest_color_reset );
             winetest_print_unlock();
             return 0;
         }
@@ -288,10 +303,10 @@ static int winetest_vok( int condition, const char *msg, va_list args )
                 if (winetest_debug > 0)
                 {
                     winetest_print_lock();
-                    if (winetest_color) printf( winetest_color_yellow );
+                    if (winetest_color) winetest_printf( winetest_color_yellow );
                     winetest_print_context( "Test marked todo: " );
-                    vprintf(msg, args);
-                    if (winetest_color) printf( winetest_color_reset );
+                    winetest_vprintf( msg, args );
+                    if (winetest_color) winetest_printf( winetest_color_reset );
                     winetest_print_unlock();
                 }
                 InterlockedIncrement( &winetest_todo_successes );
@@ -307,31 +322,31 @@ static int winetest_vok( int condition, const char *msg, va_list args )
             winetest_print_lock();
             if (data->flaky_level)
             {
-                if (winetest_color) printf( winetest_color_bright_purple );
+                if (winetest_color) winetest_printf( winetest_color_bright_purple );
                 winetest_print_context( "Test marked flaky: " );
-                vprintf(msg, args);
+                winetest_vprintf( msg, args );
                 InterlockedIncrement( &winetest_flaky_failures );
             }
             else
             {
-                if (winetest_color) printf( winetest_color_bright_red );
+                if (winetest_color) winetest_printf( winetest_color_bright_red );
                 winetest_print_context( "Test failed: " );
-                vprintf(msg, args);
+                winetest_vprintf( msg, args );
                 InterlockedIncrement( &winetest_failures );
             }
-            if (winetest_color) printf( winetest_color_reset );
+            if (winetest_color) winetest_printf( winetest_color_reset );
             winetest_print_unlock();
             return 0;
         }
         else
         {
             if (winetest_report_success ||
-                (winetest_time && GetTickCount() >= winetest_last_time + 1000))
+                (winetest_time && winetest_get_time() >= winetest_last_time + 1000))
             {
                 winetest_print_lock();
-                if (winetest_color) printf( winetest_color_green );
+                if (winetest_color) winetest_printf( winetest_color_green );
                 winetest_print_location("Test succeeded\n");
-                if (winetest_color) printf( winetest_color_reset );
+                if (winetest_color) winetest_printf( winetest_color_reset );
                 winetest_print_unlock();
             }
             InterlockedIncrement( &winetest_successes );
@@ -362,7 +377,7 @@ static inline void winetest_trace( const char *msg, ... )
         winetest_print_lock();
         winetest_print_context( "" );
         va_start(valist, msg);
-        vprintf( msg, valist );
+        winetest_vprintf( msg, valist );
         va_end(valist);
         winetest_print_unlock();
     }
@@ -374,10 +389,10 @@ static void winetest_vskip( const char *msg, va_list args )
     if (winetest_add_line() < winetest_mute_threshold)
     {
         winetest_print_lock();
-        if (winetest_color) printf( winetest_color_blue );
+        if (winetest_color) winetest_printf( winetest_color_blue );
         winetest_print_context( "Tests skipped: " );
-        vprintf(msg, args);
-        if (winetest_color) printf( winetest_color_reset );
+        winetest_vprintf( msg, args );
+        if (winetest_color) winetest_printf( winetest_color_reset );
         winetest_print_unlock();
         InterlockedIncrement( &winetest_skipped );
     }
@@ -507,7 +522,7 @@ int winetest_debug = 1;
 
 /* trace timing information */
 int winetest_time = 0;
-DWORD winetest_start_time, winetest_last_time;
+int winetest_start_time, winetest_last_time;
 
 /* interactive mode? */
 int winetest_interactive = 0;
@@ -588,6 +603,16 @@ void winetest_print_unlock(void)
     if (winetest_mutex) ReleaseMutex( winetest_mutex );
 }
 
+int winetest_vprintf( const char *msg, va_list args )
+{
+    return vprintf( msg, args );
+}
+
+int winetest_get_time(void)
+{
+    return GetTickCount();
+}
+
 int winetest_get_mainargs( char ***pargv )
 {
     *pargv = winetest_argv;
@@ -615,9 +640,9 @@ void winetest_wait_child_process( HANDLE process )
         {
             DWORD pid = GetProcessId( process );
             winetest_print_lock();
-            if (winetest_color) printf( winetest_color_bright_red );
+            if (winetest_color) winetest_printf( winetest_color_bright_red );
             winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
-            if (winetest_color) printf( winetest_color_reset );
+            if (winetest_color) winetest_printf( winetest_color_reset );
             winetest_print_unlock();
             InterlockedIncrement( &winetest_failures );
         }
@@ -777,7 +802,7 @@ int main( int argc, char **argv )
     if (GetEnvironmentVariableA( "WINETEST_REPORT_FLAKY", p, sizeof(p) )) winetest_report_flaky = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_TIME", p, sizeof(p) )) winetest_time = atoi(p);
-    winetest_last_time = winetest_start_time = GetTickCount();
+    winetest_last_time = winetest_start_time = winetest_get_time();
 
     if (!strcmp( winetest_platform, "windows" )) SetUnhandledExceptionFilter( exc_filter );
     if (!winetest_interactive) SetErrorMode( SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX );
