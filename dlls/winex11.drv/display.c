@@ -402,7 +402,7 @@ RECT get_host_primary_monitor_rect(void)
     RECT rect = {0};
 
     /* The first monitor is always primary */
-    if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count &&
+    if (host_handler.get_gpus(&gpus, &gpu_count, FALSE) && gpu_count &&
         host_handler.get_adapters(gpus[0].id, &adapters, &adapter_count) && adapter_count &&
         host_handler.get_monitors(adapters[0].id, &monitors, &monitor_count) && monitor_count)
         rect = monitors[0].rc_monitor;
@@ -529,7 +529,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     TRACE( "via %s\n", debugstr_a(host_handler.name) );
 
     /* Initialize GPUs */
-    if (!host_handler.get_gpus( &gpus, &gpu_count )) return FALSE;
+    if (!host_handler.get_gpus( &gpus, &gpu_count, TRUE )) return FALSE;
     TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)

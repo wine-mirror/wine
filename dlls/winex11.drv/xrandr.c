@@ -752,7 +752,7 @@ done:
 
 /* Get a list of GPUs reported by XRandR 1.4. Set get_properties to FALSE if GPU properties are
  * not needed to avoid unnecessary querying */
-static BOOL xrandr14_get_gpus2( struct gdi_gpu **new_gpus, int *count, BOOL get_properties )
+static BOOL xrandr14_get_gpus( struct gdi_gpu **new_gpus, int *count, BOOL get_properties )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
     struct gdi_gpu *gpus = NULL;
@@ -847,11 +847,6 @@ done:
         ERR("Failed to get gpus\n");
     }
     return ret;
-}
-
-static BOOL xrandr14_get_gpus( struct gdi_gpu **new_gpus, int *count )
-{
-    return xrandr14_get_gpus2( new_gpus, count, TRUE );
 }
 
 static void xrandr14_free_gpus( struct gdi_gpu *gpus )
@@ -1233,7 +1228,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     pthread_mutex_lock( &xrandr_mutex );
     if (!current_modes)
     {
-        if (!xrandr14_get_gpus2( &gpus, &gpu_count, FALSE ))
+        if (!xrandr14_get_gpus( &gpus, &gpu_count, FALSE ))
         {
             pthread_mutex_unlock( &xrandr_mutex );
             return FALSE;

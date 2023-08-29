@@ -190,7 +190,7 @@ done:
     return ret;
 }
 
-static BOOL xinerama_get_gpus( struct gdi_gpu **new_gpus, int *count )
+static BOOL xinerama_get_gpus( struct gdi_gpu **new_gpus, int *count, BOOL get_properties )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
     struct gdi_gpu *gpus;

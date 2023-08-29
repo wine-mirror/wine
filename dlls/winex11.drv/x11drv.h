@@ -777,7 +777,7 @@ struct x11drv_display_device_handler
     /* get_gpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_gpus)(struct gdi_gpu **gpus, int *count);
+    BOOL (*get_gpus)(struct gdi_gpu **gpus, int *count, BOOL get_properties);
 
     /* get_adapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
      * The first adapter has to be primary if GPU is primary.
