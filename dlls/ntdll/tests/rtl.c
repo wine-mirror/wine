@@ -5426,8 +5426,6 @@ static void test_RtlDeriveCapabilitySidsFromName(void)
         memset( sid, 0, size );
         memset( group_sid, 0, size );
         RtlInitUnicodeString( &cap_name, tests[i].name );
-        todo_wine
-        {
         status = pRtlDeriveCapabilitySidsFromName( &cap_name, group_sid, sid );
         ok( !status, "got %#lx.\n", status );
 
@@ -5443,7 +5441,6 @@ static void test_RtlDeriveCapabilitySidsFromName(void)
         ok( group_sid->SubAuthorityCount == 9, "got %u.\n", group_sid->SubAuthorityCount );
         ok ( group_sid->SubAuthority[0] == SECURITY_BUILTIN_DOMAIN_RID, "got %lu.\n", group_sid->SubAuthority[0] );
         ok( !memcmp( group_sid->SubAuthority + 1, tests[i].hash, sizeof(tests[i].hash) ), "mismatch.\n" );
-        }
         winetest_pop_context();
     }
 

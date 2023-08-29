@@ -29,7 +29,10 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
+#include "winbase.h"
+#include "tomcrypt.h"
 #include "ntdll_misc.h"
+#include "ddk/ntddk.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -1872,7 +1875,36 @@ NTSTATUS WINAPI RtlDefaultNpAcl(PACL *pAcl)
  */
 NTSTATUS WINAPI RtlDeriveCapabilitySidsFromName( UNICODE_STRING *cap_name, PSID cap_group_sid, PSID cap_sid )
 {
-    FIXME( "cap_name %s, cap_group_sid %p, cap_sid %p.\n", debugstr_us(cap_name), cap_group_sid, cap_sid );
+    static const SID_IDENTIFIER_AUTHORITY app_authority = { SECURITY_APP_PACKAGE_AUTHORITY };
+    static const SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
+    UNICODE_STRING cap_upcase;
+    hash_state hash_ctx;
+    NTSTATUS status;
+    ULONG hash[8];
+    SID *sid;
 
-    return STATUS_NOT_SUPPORTED;
+    TRACE( "cap_name %s, cap_group_sid %p, cap_sid %p.\n", debugstr_us(cap_name), cap_group_sid, cap_sid );
+
+    if ((status = RtlUpcaseUnicodeString( &cap_upcase, cap_name, TRUE ))) return status;
+    sha256_init( &hash_ctx );
+    sha256_process( &hash_ctx, (UCHAR *)cap_upcase.Buffer, cap_upcase.Length );
+    sha256_done( &hash_ctx, (UCHAR *)hash );
+    RtlFreeUnicodeString( &cap_upcase );
+
+    sid = cap_sid;
+    sid->Revision = SID_REVISION;
+    sid->IdentifierAuthority = app_authority;
+    sid->SubAuthorityCount = 2 + ARRAY_SIZE(hash);
+    sid->SubAuthority[0] = SECURITY_BATCH_RID;
+    sid->SubAuthority[1] = SECURITY_CAPABILITY_APP_RID;
+    memcpy( sid->SubAuthority + 2, hash, sizeof(hash) );
+
+    sid = cap_group_sid;
+    sid->Revision = SID_REVISION;
+    sid->IdentifierAuthority = nt_authority;
+    sid->SubAuthorityCount = 1 + ARRAY_SIZE(hash);
+    sid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+    memcpy( sid->SubAuthority + 1, hash, sizeof(hash) );
+
+    return STATUS_SUCCESS;
 }
