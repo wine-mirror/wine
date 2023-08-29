@@ -3077,7 +3077,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     struct strarray dll_flags = empty_strarray;
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
-    const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file;
+    const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file, *ext;
     struct incl_file *spec_file = find_src_file( make, strmake( "%.spec", obj ));
     unsigned int arch;
 
@@ -3086,7 +3086,9 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     strarray_addall( &dll_flags, get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" ));
     if (!strarray_exists( &dll_flags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
 
-    if (!spec_file) fatal_error( "testdll source %s needs a .spec file\n", source->name );
+    if (strarray_exists( &dll_flags, "-mconsole" )) ext = ".exe";
+    else if (!spec_file) fatal_error( "testdll source %s needs a .spec file\n", source->name );
+    else ext = ".dll";
 
     for (arch = 0; arch < archs.count; arch++)
     {
@@ -3095,7 +3097,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ) );
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
         if (!arch) strarray_addall( &all_libs, libs );
-        dll_name = arch_module_name( strmake( "%s.dll", obj ), arch );
+        dll_name = arch_module_name( strmake( "%s%s", obj, ext ), arch );
         obj_name = obj_dir_path( make, strmake( "%s%s.o", arch_dirs[arch], obj ));
         output_file = obj_dir_path( make, dll_name );
         output_rsrc = strmake( "%s.res", dll_name );
@@ -3109,11 +3111,11 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
         output_filename( output_file );
         output_filename( tools_path( make, "wrc" ));
         output( "\n" );
-        output( "\t%secho \"%s.dll TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ), obj, output_file,
+        output( "\t%secho \"%s%s TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ), obj, ext, output_file,
                 tools_path( make, "wrc" ));
 
         output( "%s:", output_file );
-        output_filename( spec_file->filename );
+        if (spec_file) output_filename( spec_file->filename );
         output_filename( obj_name );
         if (res_name) output_filename( res_name );
         output_filenames( dep_libs );
@@ -3124,8 +3126,8 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
         output_filename( "-s" );
         output_filenames( dll_flags );
         if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", arch ));
-        output_filename( "-shared" );
-        output_filename( spec_file->filename );
+        if (!strcmp( ext, ".dll" )) output_filename( "-shared" );
+        if (spec_file) output_filename( spec_file->filename );
         output_filename( obj_name );
         if (res_name) output_filename( res_name );
         if ((debug_file = get_debug_file( make, dll_name, arch )))
