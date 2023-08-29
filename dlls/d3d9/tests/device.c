@@ -6431,6 +6431,7 @@ static void test_occlusion_query(void)
     };
     unsigned int data_size, i, count;
     struct device_desc device_desc;
+    LARGE_INTEGER start, end, freq;
     IDirect3DQuery9 *query = NULL;
     IDirect3DDevice9 *device;
     IDirect3DSurface9 *rt;
@@ -6438,6 +6439,7 @@ static void test_occlusion_query(void)
     D3DVIEWPORT9 vp;
     ULONG refcount;
     D3DCAPS9 caps;
+    DWORD elapsed;
     HWND window;
     HRESULT hr;
     union
@@ -6448,6 +6450,7 @@ static void test_occlusion_query(void)
     } data, expected;
     BOOL broken_occlusion = FALSE;
     expected.uint = registry_mode.dmPelsWidth * registry_mode.dmPelsHeight;
+    QueryPerformanceFrequency(&freq);
 
     window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
@@ -6577,6 +6580,39 @@ static void test_occlusion_query(void)
 
     if (broken_occlusion)
         goto done;
+
+    /* On my system (MacBookPro14,3 - Radeon 560M, i7-7920HQ), this loop
+     * takes about 20 ms with HW rendering and 160 ms with mesa software.
+     * I can't reliably read timings smaller than 20 ms though, so don't
+     * reduce the test count too much.
+     *
+     * wait_query() times out after 5 seconds, so if the 1000 iteration
+     * loop takes more than 100 ms the full test is bound to fail. I put
+     * it to 70 ms below to avoid flaky failures if e.g. a CI machine
+     * has CPU load from other processes. */
+    QueryPerformanceCounter(&start);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Failed to begin scene, hr %#lx.\n", hr);
+    for (i = 0; i < 1000; ++i)
+    {
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    }
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Failed to end scene, hr %#lx.\n", hr);
+
+    wait_query(query);
+    QueryPerformanceCounter(&end);
+
+    elapsed = (end.QuadPart - start.QuadPart) * 1000 / freq.QuadPart;
+
+    if (elapsed > 70)
+    {
+        skip("Test loop took too long (%lu ms), skipping large query tests.\n", elapsed);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "Failed to begin scene, hr %#lx.\n", hr);
