@@ -56,6 +56,7 @@ extern int winetest_mute_threshold;
 
 /* current platform */
 extern const char *winetest_platform;
+extern int winetest_platform_is_wine;
 
 /* use ANSI escape codes for output coloring */
 extern int winetest_color;
@@ -133,14 +134,14 @@ extern void winetest_wait_child_process( HANDLE process );
                                 winetest_loop_flaky(); \
                                 winetest_end_flaky())
 #define flaky                   flaky_if(TRUE)
-#define flaky_wine              flaky_if(!strcmp(winetest_platform, "wine"))
-#define flaky_wine_if(is_flaky) flaky_if((is_flaky) && !strcmp(winetest_platform, "wine"))
+#define flaky_wine              flaky_if(winetest_platform_is_wine)
+#define flaky_wine_if(is_flaky) flaky_if((is_flaky) && winetest_platform_is_wine)
 
 #define todo_if(is_todo) for (winetest_start_todo(is_todo); \
                               winetest_loop_todo(); \
                               winetest_end_todo())
-#define todo_wine               todo_if(!strcmp(winetest_platform, "wine"))
-#define todo_wine_if(is_todo)   todo_if((is_todo) && !strcmp(winetest_platform, "wine"))
+#define todo_wine               todo_if(winetest_platform_is_wine)
+#define todo_wine_if(is_todo)   todo_if((is_todo) && winetest_platform_is_wine)
 
 
 #ifndef ARRAY_SIZE
@@ -231,7 +232,7 @@ static inline void winetest_ignore_exceptions( BOOL ignore )
 
 static inline int broken( int condition )
 {
-    return (strcmp(winetest_platform, "windows") == 0) && condition;
+    return !winetest_platform_is_wine && condition;
 }
 
 static LONG winetest_add_line( void )
@@ -413,7 +414,7 @@ static inline void winetest_win_skip( const char *msg, ... )
 {
     va_list valist;
     va_start(valist, msg);
-    if (strcmp(winetest_platform, "windows") == 0)
+    if (!winetest_platform_is_wine)
         winetest_vskip(msg, valist);
     else
         winetest_vok(0, msg, valist);
@@ -529,6 +530,7 @@ int winetest_interactive = 0;
 
 /* current platform */
 const char *winetest_platform = "windows";
+int winetest_platform_is_wine = 0;
 
 /* report failed flaky tests as failures (BOOL) */
 int winetest_report_flaky = 0;
@@ -781,6 +783,7 @@ int main( int argc, char **argv )
         winetest_platform = strdup(p);
     else if (running_under_wine())
         winetest_platform = "wine";
+    winetest_platform_is_wine = !strcmp( winetest_platform, "wine" );
 
     if (GetEnvironmentVariableA( "WINETEST_COLOR", p, sizeof(p) ))
     {
