@@ -586,6 +586,7 @@ struct HTMLWindow {
 struct HTMLOuterWindow {
     HTMLWindow base;
 
+    nsCycleCollectingAutoRefCnt ccref;
     LONG task_magic;
 
     nsIDOMWindow *nswindow;
@@ -1078,6 +1079,7 @@ void set_viewer_zoom(GeckoBrowser*,float);
 float get_viewer_zoom(GeckoBrowser*);
 
 void init_dispex_cc(void);
+void init_window_cc(void);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 

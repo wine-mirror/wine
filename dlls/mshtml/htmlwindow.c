@@ -45,6 +45,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static ExternalCycleCollectionParticipant outer_window_ccp;
+
 static int window_map_compare(const void *key, const struct wine_rb_entry *entry)
 {
     HTMLOuterWindow *window = WINE_RB_ENTRY_VALUE(entry, HTMLOuterWindow, entry);
@@ -255,62 +257,37 @@ static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID ri
     if(hres != S_FALSE)
         return hres;
 
-    return EventTarget_QI_no_cc(&This->base.inner_window->event_target, riid, ppv);
+    if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
+        *ppv = &outer_window_ccp;
+        return S_OK;
+    }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
+        *ppv = &This->base.IHTMLWindow2_iface;
+        return S_OK;
+    }else {
+        return EventTarget_QI_no_cc(&This->base.inner_window->event_target, riid, ppv);
+    }
 }
 
 static ULONG WINAPI outer_window_AddRef(IHTMLWindow2 *iface)
 {
     HTMLOuterWindow *This = HTMLOuterWindow_from_IHTMLWindow2(iface);
-    LONG ref = InterlockedIncrement(&This->base.ref);
+    LONG ref = ccref_incr(&This->ccref, (nsISupports*)&This->base.IHTMLWindow2_iface);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
     return ref;
 }
 
-static void release_outer_window(HTMLOuterWindow *This)
-{
-    if(This->browser) {
-        list_remove(&This->browser_entry);
-        This->browser = NULL;
-    }
-
-    if(This->pending_window) {
-        abort_window_bindings(This->pending_window);
-        This->pending_window->base.outer_window = NULL;
-        IHTMLWindow2_Release(&This->pending_window->base.IHTMLWindow2_iface);
-    }
-
-    remove_target_tasks(This->task_magic);
-    set_current_mon(This, NULL, 0);
-    set_current_uri(This, NULL);
-    if(This->base.inner_window)
-        detach_inner_window(This->base.inner_window);
-
-    if(This->location)
-        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
-
-    if(This->frame_element)
-        This->frame_element->content_window = NULL;
-
-    if(This->nswindow)
-        nsIDOMWindow_Release(This->nswindow);
-    if(This->window_proxy)
-        mozIDOMWindowProxy_Release(This->window_proxy);
-
-    wine_rb_remove(&window_map, &This->entry);
-    free(This);
-}
-
 static ULONG WINAPI outer_window_Release(IHTMLWindow2 *iface)
 {
     HTMLOuterWindow *This = HTMLOuterWindow_from_IHTMLWindow2(iface);
-    LONG ref = InterlockedDecrement(&This->base.ref);
+    LONG task_magic = This->task_magic;
+    LONG ref = ccref_decr(&This->ccref, (nsISupports*)&This->base.IHTMLWindow2_iface, &outer_window_ccp);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        release_outer_window(This);
+        remove_target_tasks(task_magic);
 
     return ref;
 }
@@ -4198,6 +4175,79 @@ static dispex_static_data_t HTMLWindow_dispex = {
     HTMLWindow_init_dispex_info
 };
 
+static nsresult NSAPI outer_window_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLOuterWindow *window = HTMLOuterWindow_from_IHTMLWindow2(p);
+
+    describe_cc_node(&window->ccref, "OuterWindow", cb);
+
+    if(window->pending_window)
+        note_cc_edge((nsISupports*)&window->pending_window->base.IHTMLWindow2_iface, "pending_window", cb);
+    if(window->base.inner_window)
+        note_cc_edge((nsISupports*)&window->base.inner_window->base.IHTMLWindow2_iface, "inner_window", cb);
+    if(window->location)
+        note_cc_edge((nsISupports*)&window->location->IHTMLLocation_iface, "location", cb);
+    if(window->nswindow)
+        note_cc_edge((nsISupports*)window->nswindow, "nswindow", cb);
+    if(window->window_proxy)
+        note_cc_edge((nsISupports*)window->window_proxy, "window_proxy", cb);
+    return NS_OK;
+}
+
+static nsresult NSAPI outer_window_unlink(void *p)
+{
+    HTMLOuterWindow *window = HTMLOuterWindow_from_IHTMLWindow2(p);
+
+    if(window->browser) {
+        list_remove(&window->browser_entry);
+        window->browser = NULL;
+    }
+    if(window->pending_window) {
+        HTMLInnerWindow *pending_window = window->pending_window;
+        abort_window_bindings(pending_window);
+        pending_window->base.outer_window = NULL;
+        window->pending_window = NULL;
+        IHTMLWindow2_Release(&pending_window->base.IHTMLWindow2_iface);
+    }
+
+    set_current_mon(window, NULL, 0);
+    set_current_uri(window, NULL);
+    if(window->base.inner_window)
+        detach_inner_window(window->base.inner_window);
+    if(window->location) {
+        HTMLLocation *location = window->location;
+        window->location = NULL;
+        IHTMLLocation_Release(&location->IHTMLLocation_iface);
+    }
+    if(window->frame_element) {
+        window->frame_element->content_window = NULL;
+        window->frame_element = NULL;
+    }
+    unlink_ref(&window->nswindow);
+    if(window->window_proxy) {
+        unlink_ref(&window->window_proxy);
+        wine_rb_remove(&window_map, &window->entry);
+    }
+    return NS_OK;
+}
+
+static void NSAPI outer_window_delete_cycle_collectable(void *p)
+{
+    HTMLOuterWindow *window = HTMLOuterWindow_from_IHTMLWindow2(p);
+    outer_window_unlink(p);
+    free(window);
+}
+
+void init_window_cc(void)
+{
+    static const CCObjCallback ccp_callback = {
+        outer_window_traverse,
+        outer_window_unlink,
+        outer_window_delete_cycle_collectable
+    };
+    ccp_init(&outer_window_ccp, &ccp_callback);
+}
+
 static void *alloc_window(size_t size)
 {
     HTMLWindow *window;
@@ -4219,7 +4269,6 @@ static void *alloc_window(size_t size)
     window->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     window->IWineHTMLWindowPrivate_iface.lpVtbl = &WineHTMLWindowPrivateVtbl;
     window->IWineHTMLWindowCompatPrivate_iface.lpVtbl = &WineHTMLWindowCompatPrivateVtbl;
-    window->ref = 1;
 
     return window;
 }
@@ -4248,6 +4297,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
+    window->base.ref = 1;
     EventTarget_Init(&window->event_target, (IUnknown*)&window->base.IHTMLWindow2_iface,
                      &HTMLWindow_dispex, COMPAT_MODE_NONE);
 
@@ -4278,6 +4328,7 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
     window->base.inner_window = NULL;
     window->browser = browser;
     list_add_head(&browser->outer_windows, &window->browser_entry);
+    ccref_init(&window->ccref, 1);
 
     mozIDOMWindowProxy_AddRef(mozwindow);
     window->window_proxy = mozwindow;

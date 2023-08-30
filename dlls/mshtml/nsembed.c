@@ -597,6 +597,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     }
 
     init_dispex_cc();
+    init_window_cc();
 
     return TRUE;
 }
