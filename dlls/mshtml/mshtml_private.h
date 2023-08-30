@@ -437,9 +437,7 @@ static inline LONG dispex_ref_incr(DispatchEx *dispex)
 extern LONG dispex_ref_decr(DispatchEx*);
 
 void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t);
-void release_dispex(DispatchEx*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
-BOOL dispex_query_interface_no_cc(DispatchEx*,REFIID,void**);
 void dispex_props_unlink(DispatchEx*);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
@@ -1209,7 +1207,6 @@ void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_stati
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t);
 HRESULT EventTarget_QI(EventTarget*,REFIID,void**);
-HRESULT EventTarget_QI_no_cc(EventTarget*,REFIID,void**);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode*,REFIID,void**);

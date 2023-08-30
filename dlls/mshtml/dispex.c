@@ -1994,28 +1994,6 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
-BOOL dispex_query_interface_no_cc(DispatchEx *This, REFIID riid, void **ppv)
-{
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_IDispatchEx, riid))
-        *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_IDispatchJS, riid))
-        *ppv = NULL;
-    else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid))
-        *ppv = NULL;
-    else if(IsEqualGUID(&IID_IMarshal, riid))
-        *ppv = NULL;
-    else if(IsEqualGUID(&IID_IManagedObject, riid))
-        *ppv = NULL;
-    else
-        return FALSE;
-
-    if(*ppv)
-        IUnknown_AddRef((IUnknown*)*ppv);
-    return TRUE;
-}
-
 LONG dispex_ref_decr(DispatchEx *dispex)
 {
     LONG ref = ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
@@ -2104,26 +2082,6 @@ static nsresult NSAPI dispex_unlink(void *p)
 static void NSAPI dispex_delete_cycle_collectable(void *p)
 {
     DispatchEx *This = impl_from_IDispatchEx(p);
-    release_dispex(This);
-}
-
-void init_dispex_cc(void)
-{
-    static const CCObjCallback dispex_ccp_callback = {
-        dispex_traverse,
-        dispex_unlink,
-        dispex_delete_cycle_collectable
-    };
-    ccp_init(&dispex_ccp, &dispex_ccp_callback);
-}
-
-const void *dispex_get_vtbl(DispatchEx *dispex)
-{
-    return dispex->info->desc->vtbl;
-}
-
-void release_dispex(DispatchEx *This)
-{
     dynamic_prop_t *prop;
 
     if(This->info->desc->vtbl->unlink)
@@ -2157,6 +2115,21 @@ void release_dispex(DispatchEx *This)
 
 destructor:
     This->info->desc->vtbl->destructor(This);
+}
+
+void init_dispex_cc(void)
+{
+    static const CCObjCallback dispex_ccp_callback = {
+        dispex_traverse,
+        dispex_unlink,
+        dispex_delete_cycle_collectable
+    };
+    ccp_init(&dispex_ccp, &dispex_ccp_callback);
+}
+
+const void *dispex_get_vtbl(DispatchEx *dispex)
+{
+    return dispex->info->desc->vtbl;
 }
 
 void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data, compat_mode_t compat_mode)

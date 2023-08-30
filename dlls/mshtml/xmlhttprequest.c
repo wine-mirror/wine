@@ -136,7 +136,6 @@ struct HTMLXMLHttpRequest {
     IHTMLXMLHttpRequest2 IHTMLXMLHttpRequest2_iface;
     IWineXMLHttpRequestPrivate IWineXMLHttpRequestPrivate_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
-    LONG ref;
     LONG task_magic;
     LONG ready_state;
     response_type_t response_type;
@@ -526,7 +525,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_QueryInterface(IHTMLXMLHttpRequest *ifa
     }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
         *ppv = &This->IProvideClassInfo2_iface;
     }else {
-        return EventTarget_QI_no_cc(&This->event_target, riid, ppv);
+        return EventTarget_QI(&This->event_target, riid, ppv);
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);
@@ -536,7 +535,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_QueryInterface(IHTMLXMLHttpRequest *ifa
 static ULONG WINAPI HTMLXMLHttpRequest_AddRef(IHTMLXMLHttpRequest *iface)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->event_target.dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -546,12 +545,9 @@ static ULONG WINAPI HTMLXMLHttpRequest_AddRef(IHTMLXMLHttpRequest *iface)
 static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->event_target.dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->event_target.dispex);
 
     return ref;
 }
@@ -1521,10 +1517,20 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
 }
 
+static void HTMLXMLHttpRequest_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+    if(This->pending_progress_event)
+        note_cc_edge((nsISupports*)&This->pending_progress_event->IDOMEvent_iface, "pending_progress_event", cb);
+    if(This->nsxhr)
+        note_cc_edge((nsISupports*)This->nsxhr, "nsxhr", cb);
+}
+
 static void HTMLXMLHttpRequest_unlink(DispatchEx *dispex)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
-    remove_target_tasks(This->task_magic);
     if(This->event_listener) {
         XMLHttpReqEventListener *event_listener = This->event_listener;
         This->event_listener = NULL;
@@ -1548,6 +1554,12 @@ static void HTMLXMLHttpRequest_destructor(DispatchEx *dispex)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
     free(This);
+}
+
+static void HTMLXMLHttpRequest_last_release(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
+    remove_target_tasks(This->task_magic);
 }
 
 static nsISupports *HTMLXMLHttpRequest_get_gecko_target(DispatchEx *dispex)
@@ -1595,7 +1607,9 @@ static void HTMLXMLHttpRequest_init_dispex_info(dispex_data_t *info, compat_mode
 static const event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     {
         .destructor          = HTMLXMLHttpRequest_destructor,
-        .unlink              = HTMLXMLHttpRequest_unlink
+        .traverse            = HTMLXMLHttpRequest_traverse,
+        .unlink              = HTMLXMLHttpRequest_unlink,
+        .last_release        = HTMLXMLHttpRequest_last_release
     },
     .get_gecko_target        = HTMLXMLHttpRequest_get_gecko_target,
     .bind_event              = HTMLXMLHttpRequest_bind_event
@@ -1736,7 +1750,6 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     ret->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     EventTarget_Init(&ret->event_target, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
                      &HTMLXMLHttpRequest_dispex, This->window->doc->document_mode);
-    ret->ref = 1;
 
     /* Always register the handlers because we need them to track state */
     event_listener->nsIDOMEventListener_iface.lpVtbl = &XMLHttpReqEventListenerVtbl;
