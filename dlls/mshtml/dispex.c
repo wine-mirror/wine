@@ -639,7 +639,7 @@ static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This)
     if(!This->dynamic_data)
         return NULL;
 
-    if(This->info->desc->vtbl && This->info->desc->vtbl->populate_props)
+    if(This->info->desc->vtbl->populate_props)
         This->info->desc->vtbl->populate_props(This);
 
     return This->dynamic_data;
@@ -736,7 +736,7 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
 {
     HRESULT hres;
 
-    if(This->info->desc->vtbl && This->info->desc->vtbl->value)
+    if(This->info->desc->vtbl->value)
         return This->info->desc->vtbl->value(This, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
@@ -1054,7 +1054,7 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
             min = n+1;
     }
 
-    if(This->info->desc->vtbl && This->info->desc->vtbl->get_dispid) {
+    if(This->info->desc->vtbl->get_dispid) {
         HRESULT hres;
 
         hres = This->info->desc->vtbl->get_dispid(This, name, grfdex, ret);
@@ -1706,7 +1706,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     switch(get_dispid_type(id)) {
     case DISPEXPROP_CUSTOM:
-        if(!This->info->desc->vtbl || !This->info->desc->vtbl->invoke)
+        if(!This->info->desc->vtbl->invoke)
             return DISP_E_MEMBERNOTFOUND;
         return This->info->desc->vtbl->invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
@@ -1759,7 +1759,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPEXPROP_BUILTIN:
         if(wFlags == DISPATCH_CONSTRUCT) {
             if(id == DISPID_VALUE) {
-                if(This->info->desc->vtbl && This->info->desc->vtbl->value) {
+                if(This->info->desc->vtbl->value) {
                     return This->info->desc->vtbl->value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
                 }
                 FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
@@ -1801,7 +1801,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 
     TRACE("(%p)->(%lx)\n", This, id);
 
-    if(is_custom_dispid(id) && This->info->desc->vtbl && This->info->desc->vtbl->delete)
+    if(is_custom_dispid(id) && This->info->desc->vtbl->delete)
         return This->info->desc->vtbl->delete(This, id);
 
     if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
@@ -1844,7 +1844,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BS
         return E_OUTOFMEMORY;
 
     if(is_custom_dispid(id)) {
-        if(This->info->desc->vtbl && This->info->desc->vtbl->get_name)
+        if(This->info->desc->vtbl->get_name)
             return This->info->desc->vtbl->get_name(This, id, pbstrName);
         return DISP_E_MEMBERNOTFOUND;
     }
@@ -1928,7 +1928,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
         id = DISPID_STARTENUM;
     }
 
-    if(This->info->desc->vtbl && This->info->desc->vtbl->next_dispid) {
+    if(This->info->desc->vtbl->next_dispid) {
         hres = This->info->desc->vtbl->next_dispid(This, id, pid);
         if(hres != S_FALSE)
             return hres;
@@ -2110,7 +2110,7 @@ void release_dispex(DispatchEx *This)
 {
     dynamic_prop_t *prop;
 
-    if(This->info->desc->vtbl && This->info->desc->vtbl->unlink)
+    if(This->info->desc->vtbl->unlink)
         This->info->desc->vtbl->unlink(This);
 
     if(!This->dynamic_data)
@@ -2140,8 +2140,7 @@ void release_dispex(DispatchEx *This)
     free(This->dynamic_data);
 
 destructor:
-    if(This->info->desc->vtbl)
-        This->info->desc->vtbl->destructor(This);
+    This->info->desc->vtbl->destructor(This);
 }
 
 void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data, compat_mode_t compat_mode)
@@ -2153,7 +2152,7 @@ void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *da
     dispex->dynamic_data = NULL;
     ccref_init(&dispex->ccref, 1);
 
-    if(data->vtbl && data->vtbl->get_compat_mode) {
+    if(data->vtbl->get_compat_mode) {
         /* delayed init */
         if(!data->delayed_init_info) {
             EnterCriticalSection(&cs_dispex_static_data);

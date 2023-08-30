@@ -3730,7 +3730,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
         free(listeners);
 
     if(event->phase != DEP_CAPTURING_PHASE && event_info[event->event_id].dispid
-       && (vtbl = dispex_get_vtbl(&event_target->dispex)) && vtbl->get_cp_container)
+       && (vtbl = dispex_get_vtbl(&event_target->dispex))->get_cp_container)
         cp_container = vtbl->get_cp_container(&event_target->dispex);
     if(cp_container) {
         if(cp_container->cps) {
@@ -3823,7 +3823,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
 
         target_chain[chain_cnt++] = iter;
 
-        if(!(vtbl = dispex_get_vtbl(&iter->dispex)) || !vtbl->get_parent_event_target)
+        if(!(vtbl = dispex_get_vtbl(&iter->dispex))->get_parent_event_target)
             break;
         iter = vtbl->get_parent_event_target(&iter->dispex);
     } while(iter);
@@ -3835,7 +3835,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     }
 
     target_vtbl = dispex_get_vtbl(&event_target->dispex);
-    if(target_vtbl && target_vtbl->set_current_event)
+    if(target_vtbl->set_current_event)
         prev_event = target_vtbl->set_current_event(&event_target->dispex, event->event_obj);
 
     if(event->target)
@@ -3862,7 +3862,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     if(r)
         *r = variant_bool(!event->prevent_default);
 
-    if(target_vtbl && target_vtbl->set_current_event) {
+    if(target_vtbl->set_current_event) {
         IHTMLEventObj *prev = target_vtbl->set_current_event(&event_target->dispex, prev_event);
         if(prev)
             IHTMLEventObj_Release(prev);
@@ -3875,7 +3875,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         BOOL prevent_default = event->prevent_default;
         for(i = 0; !prevent_default && i < chain_cnt; i++) {
             vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
-            if(!vtbl || !vtbl->handle_event_default)
+            if(!vtbl->handle_event_default)
                 continue;
             hres = vtbl->handle_event_default(&event_target->dispex, event->event_id,
                     event->nsevent, &prevent_default);
