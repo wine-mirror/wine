@@ -521,6 +521,10 @@ typedef struct {
 struct HTMLLocation {
     DispatchEx dispex;
     IHTMLLocation IHTMLLocation_iface;
+
+    LONG ref;
+
+    HTMLOuterWindow *window;
 };
 
 typedef struct {
@@ -599,7 +603,7 @@ struct HTMLOuterWindow {
     BOOL readystate_pending;
 
     HTMLInnerWindow *pending_window;
-    HTMLLocation location;
+    HTMLLocation *location;
     IMoniker *mon;
     IUri *uri;
     IUri *uri_nofrag;
@@ -1013,7 +1017,7 @@ void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**);
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**);
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**);
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFactory**);
-void HTMLLocation_Init(HTMLLocation*);
+HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
 HRESULT create_navigator(compat_mode_t,IOmNavigator**);
 HRESULT create_html_screen(compat_mode_t,IHTMLScreen**);
 HRESULT create_performance(HTMLInnerWindow*,IHTMLPerformance**);
