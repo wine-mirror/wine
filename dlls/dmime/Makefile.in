@@ -1,5 +1,6 @@
 MODULE    = dmime.dll
 IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
+PARENTSRC = ../dmusic
 
 C_SRCS = \
 	audiopath.c \
