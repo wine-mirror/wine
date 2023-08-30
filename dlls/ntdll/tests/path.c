@@ -306,6 +306,9 @@ static void test_RtlGetFullPathName_U(void)
             { "c:/test../file",              "c:\\test.\\file",  "file",
                                              "c:\\test..\\file", "file"},  /* vista */
             { "c:\\test",                    "c:\\test",         "test"},
+            { "c:\\test\\*.",                "c:\\test\\*",      "*"},
+            { "c:\\test\\a*b.*",             "c:\\test\\a*b.*",  "a*b.*"},
+            { "c:\\test\\a*b*.",             "c:\\test\\a*b*",   "a*b*"},
             { "C:\\test",                    "C:\\test",         "test"},
             { "c:/",                         "c:\\",             NULL},
             { "c:.",                         "C:\\windows",      "windows"},
@@ -441,6 +444,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
     tests[] =
     {
         {L"c:\\",           L"\\??\\c:\\",                  -1},
+        {L"c:\\test\\*.",   L"\\??\\c:\\test\\*",            12},
         {L"c:/",            L"\\??\\c:\\",                  -1},
         {L"c:/foo",         L"\\??\\c:\\foo",                7},
         {L"c:/foo.",        L"\\??\\c:\\foo",                7},
