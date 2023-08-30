@@ -358,6 +358,9 @@ typedef struct {
     void (*traverse)(DispatchEx*,nsCycleCollectionTraversalCallback*);
     void (*unlink)(DispatchEx*);
 
+    /* Called on the last release, when the refcount reaches 0 */
+    void (*last_release)(DispatchEx*);
+
     /* Called when the object wants to handle DISPID_VALUE invocations */
     HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 
@@ -427,17 +430,11 @@ extern void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjC
 extern void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
 extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
 
-extern ExternalCycleCollectionParticipant dispex_ccp;
-
 static inline LONG dispex_ref_incr(DispatchEx *dispex)
 {
     return ccref_incr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface);
 }
-
-static inline LONG dispex_ref_decr(DispatchEx *dispex)
-{
-    return ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
-}
+extern LONG dispex_ref_decr(DispatchEx*);
 
 void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t);
 void release_dispex(DispatchEx*);
@@ -576,8 +573,6 @@ struct HTMLWindow {
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
     IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
     IWineHTMLWindowCompatPrivate IWineHTMLWindowCompatPrivate_iface;
-
-    LONG ref;
 
     HTMLInnerWindow *inner_window;
     HTMLOuterWindow *outer_window;

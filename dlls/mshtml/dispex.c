@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define MAX_ARGS 16
 
-ExternalCycleCollectionParticipant dispex_ccp;
+static ExternalCycleCollectionParticipant dispex_ccp;
 
 static CRITICAL_SECTION cs_dispex_static_data;
 static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
@@ -2014,6 +2014,22 @@ BOOL dispex_query_interface_no_cc(DispatchEx *This, REFIID riid, void **ppv)
     if(*ppv)
         IUnknown_AddRef((IUnknown*)*ppv);
     return TRUE;
+}
+
+LONG dispex_ref_decr(DispatchEx *dispex)
+{
+    LONG ref = ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
+
+    /* Gecko ccref may not free the object immediatelly when ref count reaches 0, so we need
+     * an extra care for objects that need an immediate clean up. See
+     * NS_IMPL_CYCLE_COLLECTING_NATIVE_RELEASE_WITH_LAST_RELEASE for details. */
+    if(!ref && dispex->info->desc->vtbl->last_release) {
+        ccref_incr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface);
+        dispex->info->desc->vtbl->last_release(dispex);
+        ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
+    }
+
+    return ref;
 }
 
 static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)

@@ -220,13 +220,13 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
     if(hres != S_FALSE)
         return hres;
 
-    return EventTarget_QI_no_cc(&This->event_target, riid, ppv);
+    return EventTarget_QI(&This->event_target, riid, ppv);
 }
 
 static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 {
     HTMLInnerWindow *This = HTMLInnerWindow_from_IHTMLWindow2(iface);
-    LONG ref = InterlockedIncrement(&This->base.ref);
+    LONG ref = dispex_ref_incr(&This->event_target.dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -236,12 +236,9 @@ static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 {
     HTMLInnerWindow *This = HTMLInnerWindow_from_IHTMLWindow2(iface);
-    LONG ref = InterlockedDecrement(&This->base.ref);
+    LONG ref = dispex_ref_decr(&This->event_target.dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->event_target.dispex);
 
     return ref;
 }
@@ -264,7 +261,7 @@ static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID ri
         *ppv = &This->base.IHTMLWindow2_iface;
         return S_OK;
     }else {
-        return EventTarget_QI_no_cc(&This->base.inner_window->event_target, riid, ppv);
+        return EventTarget_QI(&This->base.inner_window->event_target, riid, ppv);
     }
 }
 
@@ -3827,6 +3824,38 @@ static inline HTMLInnerWindow *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLInnerWindow, event_target.dispex);
 }
 
+static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    HTMLOuterWindow *child;
+
+    LIST_FOR_EACH_ENTRY(child, &This->children, HTMLOuterWindow, sibling_entry)
+        note_cc_edge((nsISupports*)&child->base.IHTMLWindow2_iface, "child", cb);
+    if(This->doc)
+        note_cc_edge((nsISupports*)&This->doc->node.IHTMLDOMNode_iface, "doc", cb);
+    if(This->console)
+        note_cc_edge((nsISupports*)This->console, "console", cb);
+    if(This->image_factory)
+        note_cc_edge((nsISupports*)&This->image_factory->IHTMLImageElementFactory_iface, "image_factory", cb);
+    if(This->option_factory)
+        note_cc_edge((nsISupports*)&This->option_factory->IHTMLOptionElementFactory_iface, "option_factory", cb);
+    if(This->xhr_factory)
+        note_cc_edge((nsISupports*)&This->xhr_factory->IHTMLXMLHttpRequestFactory_iface, "xhr_factory", cb);
+    if(This->mutation_observer_ctor)
+        note_cc_edge((nsISupports*)This->mutation_observer_ctor, "mutation_observer_ctor", cb);
+    if(This->screen)
+        note_cc_edge((nsISupports*)This->screen, "screen", cb);
+    if(This->history)
+        note_cc_edge((nsISupports*)&This->history->IOmHistory_iface, "history", cb);
+    if(This->navigator)
+        note_cc_edge((nsISupports*)This->navigator, "navigator", cb);
+    if(This->session_storage)
+        note_cc_edge((nsISupports*)This->session_storage, "session_storage", cb);
+    if(This->local_storage)
+        note_cc_edge((nsISupports*)This->local_storage, "local_storage", cb);
+    traverse_variant(&This->performance, "performance", cb);
+}
+
 static void HTMLWindow_unlink(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -3903,6 +3932,12 @@ static void HTMLWindow_destructor(DispatchEx *dispex)
         IMoniker_Release(This->mon);
 
     free(This);
+}
+
+static void HTMLWindow_last_release(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    remove_target_tasks(This->task_magic);
 }
 
 static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
@@ -4151,7 +4186,9 @@ static IHTMLEventObj *HTMLWindow_set_current_event(DispatchEx *dispex, IHTMLEven
 static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     {
         .destructor          = HTMLWindow_destructor,
+        .traverse            = HTMLWindow_traverse,
         .unlink              = HTMLWindow_unlink,
+        .last_release        = HTMLWindow_last_release,
         .get_name            = HTMLWindow_get_name,
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
@@ -4297,7 +4334,6 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
-    window->base.ref = 1;
     EventTarget_Init(&window->event_target, (IUnknown*)&window->base.IHTMLWindow2_iface,
                      &HTMLWindow_dispex, COMPAT_MODE_NONE);
 
