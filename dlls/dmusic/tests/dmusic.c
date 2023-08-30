@@ -30,6 +30,95 @@
 #include "dmusicf.h"
 #include "dmksctrl.h"
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    ULONG expect_ref = get_refcount(iface_ptr);
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected);
+    if (SUCCEEDED(hr))
+    {
+        LONG ref = get_refcount(unk);
+        ok_(__FILE__, line)(ref == expect_ref + 1, "got %ld\n", ref);
+        IUnknown_Release(unk);
+        ref = get_refcount(iface_ptr);
+        ok_(__FILE__, line)(ref == expect_ref, "got %ld\n", ref);
+    }
+}
+
+static void stream_begin_chunk(IStream *stream, const char type[5], ULARGE_INTEGER *offset)
+{
+    static const LARGE_INTEGER zero = {0};
+    HRESULT hr;
+    hr = IStream_Write(stream, type, 4, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, offset);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Write(stream, "\0\0\0\0", 4, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+}
+
+static void stream_end_chunk(IStream *stream, ULARGE_INTEGER *offset)
+{
+    static const LARGE_INTEGER zero = {0};
+    ULARGE_INTEGER position;
+    HRESULT hr;
+    UINT size;
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, *(LARGE_INTEGER *)offset, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    size = position.QuadPart - offset->QuadPart - 4;
+    hr = IStream_Write(stream, &size, 4, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, *(LARGE_INTEGER *)&position, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+}
+
+#define CHUNK_BEGIN(stream, type)                                \
+    do {                                                         \
+        ULARGE_INTEGER __off;                                    \
+        stream_begin_chunk(stream, type, &__off);                \
+        do
+
+#define CHUNK_RIFF(stream, form)                                 \
+    do {                                                         \
+        ULARGE_INTEGER __off;                                    \
+        stream_begin_chunk(stream, "RIFF", &__off);              \
+        IStream_Write(stream, form, 4, NULL);                    \
+        do
+
+#define CHUNK_LIST(stream, form)                                 \
+    do {                                                         \
+        ULARGE_INTEGER __off;                                    \
+        stream_begin_chunk(stream, "LIST", &__off);              \
+        IStream_Write(stream, form, 4, NULL);                    \
+        do
+
+#define CHUNK_END                                                \
+        while (0);                                               \
+        stream_end_chunk(stream, &__off);                        \
+    } while (0)
+
+#define CHUNK_DATA(stream, type, data)                           \
+    CHUNK_BEGIN(stream, type)                                    \
+    {                                                            \
+        IStream_Write((stream), &(data), sizeof(data), NULL);    \
+    }                                                            \
+    CHUNK_END
+
 static BOOL compare_time(REFERENCE_TIME x, REFERENCE_TIME y, unsigned int max_diff)
 {
     REFERENCE_TIME diff = x > y ? x - y : y - x;
@@ -95,12 +184,6 @@ static void test_dmusic(void)
     if (port)
         IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
-}
-
-static ULONG get_refcount(IDirectSound *iface)
-{
-    IDirectSound_AddRef(iface);
-    return IDirectSound_Release(iface);
 }
 
 static void test_setdsound(void)
@@ -1091,6 +1174,150 @@ static void test_port_download(void)
 
 skip_tests:
     IDirectMusicPortDownload_Release(port);
+}
+
+static void test_download_instrument(void)
+{
+    static const LARGE_INTEGER zero = {0};
+    IDirectMusicDownloadedInstrument *downloaded;
+    IDirectMusicCollection *collection;
+    IDirectMusicInstrument *instrument;
+    IPersistStream *persist;
+    IDirectMusicPort *port;
+    IDirectMusic *dmusic;
+    WCHAR name[MAX_PATH];
+    IStream *stream;
+    DWORD patch;
+    HRESULT hr;
+
+    port = create_synth_port(&dmusic);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicCollection, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicCollection, (void **)&collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicCollection_QueryInterface(collection, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_RIFF(stream, "DLS ")
+    {
+        DLSHEADER colh = {.cInstruments = 1};
+        struct
+        {
+            POOLTABLE head;
+            POOLCUE cues[1];
+        } ptbl =
+        {
+            .head = {.cbSize = sizeof(POOLTABLE), .cCues = ARRAY_SIZE(ptbl.cues)},
+            .cues = {{.ulOffset = 0}}, /* offsets in wvpl */
+        };
+
+        CHUNK_DATA(stream, "colh", colh);
+        CHUNK_LIST(stream, "lins")
+        {
+            CHUNK_LIST(stream, "ins ")
+            {
+                INSTHEADER insh = {.cRegions = 1, .Locale = {.ulBank = 0x12, .ulInstrument = 0x34}};
+
+                CHUNK_DATA(stream, "insh", insh);
+                CHUNK_LIST(stream, "lrgn")
+                {
+                    CHUNK_LIST(stream, "rgn ")
+                    {
+                        RGNHEADER rgnh =
+                        {
+                            .RangeKey = {.usLow = 0, .usHigh = 127},
+                            .RangeVelocity = {.usLow = 1, .usHigh = 127},
+                        };
+                        WAVELINK wlnk = {.ulChannel = 1, .ulTableIndex = 0};
+                        WSMPL wsmp = {.cbSize = sizeof(WSMPL)};
+
+                        CHUNK_DATA(stream, "rgnh", rgnh);
+                        CHUNK_DATA(stream, "wsmp", wsmp);
+                        CHUNK_DATA(stream, "wlnk", wlnk);
+                    }
+                    CHUNK_END;
+                }
+                CHUNK_END;
+
+                CHUNK_LIST(stream, "lart")
+                {
+                    CONNECTIONLIST connections = {.cbSize = sizeof(connections)};
+                    CHUNK_DATA(stream, "art1", connections);
+                }
+                CHUNK_END;
+            }
+            CHUNK_END;
+        }
+        CHUNK_END;
+        CHUNK_DATA(stream, "ptbl", ptbl);
+        CHUNK_LIST(stream, "wvpl")
+        {
+            CHUNK_LIST(stream, "wave")
+            {
+                WAVEFORMATEX fmt =
+                {
+                    .wFormatTag = WAVE_FORMAT_PCM,
+                    .nChannels = 1,
+                    .wBitsPerSample = 8,
+                    .nSamplesPerSec = 22050,
+                    .nAvgBytesPerSec = 22050,
+                    .nBlockAlign = 1,
+                };
+                BYTE data[16] = {0};
+
+                /* native returns DMUS_E_INVALIDOFFSET from DownloadInstrument if data is last */
+                CHUNK_DATA(stream, "data", data);
+                CHUNK_DATA(stream, "fmt ", fmt);
+            }
+            CHUNK_END;
+        }
+        CHUNK_END;
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+    patch = 0xdeadbeef;
+    wcscpy(name, L"DeadBeef");
+    hr = IDirectMusicCollection_EnumInstrument(collection, 0, &patch, name, ARRAY_SIZE(name));
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(patch == 0x1234, "got %#lx\n", patch);
+    ok(*name == 0, "got %s\n", debugstr_w(name));
+    hr = IDirectMusicCollection_EnumInstrument(collection, 1, &patch, name, ARRAY_SIZE(name));
+    ok(hr == S_FALSE, "got %#lx\n", hr);
+
+    hr = IDirectMusicCollection_GetInstrument(collection, 0x1234, &instrument);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_interface(instrument, &IID_IDirectMusicObject, FALSE);
+    check_interface(instrument, &IID_IDirectMusicDownload, FALSE);
+    check_interface(instrument, &IID_IDirectMusicDownloadedInstrument, FALSE);
+
+    hr = IDirectMusicPort_DownloadInstrument(port, instrument, &downloaded, NULL, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr != S_OK) goto skip_tests;
+
+    check_interface(downloaded, &IID_IDirectMusicObject, FALSE);
+    check_interface(downloaded, &IID_IDirectMusicDownload, FALSE);
+    check_interface(downloaded, &IID_IDirectMusicInstrument, FALSE);
+
+    hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicDownloadedInstrument_Release(downloaded);
+
+    IDirectMusicInstrument_Release(instrument);
+
+skip_tests:
+    IDirectMusicCollection_Release(collection);
+    IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
 }
 
@@ -1115,6 +1342,7 @@ START_TEST(dmusic)
     test_master_clock();
     test_synthport();
     test_port_download();
+    test_download_instrument();
 
     CoUninitialize();
 }
