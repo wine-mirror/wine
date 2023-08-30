@@ -1,5 +1,6 @@
 MODULE    = dmloader.dll
 IMPORTS   = dxguid uuid ole32 advapi32
+PARENTSRC = ../dmusic
 
 C_SRCS = \
 	container.c \
