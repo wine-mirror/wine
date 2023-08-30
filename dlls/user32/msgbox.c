@@ -110,10 +110,12 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     }
 
     /* handle modal message boxes */
-    if (((lpmb->dwStyle & MB_TASKMODAL) && (lpmb->hwndOwner==NULL)))
-        NtUserSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE );
+    if (lpmb->dwStyle & MB_TASKMODAL && lpmb->hwndOwner == NULL)
+        NtUserSetWindowPos( hwnd, lpmb->dwStyle & MB_TOPMOST ? HWND_TOPMOST : HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE );
     else if (lpmb->dwStyle & MB_SYSTEMMODAL)
         NtUserSetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED );
+    else if (lpmb->dwStyle & MB_TOPMOST)
+        NtUserSetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
 
     TRACE_(msgbox)("%s\n", debugstr_w(lpszText));
     SetWindowTextW(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);

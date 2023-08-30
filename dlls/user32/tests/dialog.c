@@ -2149,8 +2149,7 @@ static LRESULT CALLBACK msgbox_hook_proc(INT code, WPARAM wParam, LPARAM lParam)
             if (!system_modal)
                 expected_exstyles |= WS_EX_DLGMODALFRAME;
 
-            todo_wine_if((system_modal && exstyles == (expected_exstyles | WS_EX_DLGMODALFRAME))
-                    || (!system_modal && msgbox_type & MB_TOPMOST))
+            todo_wine_if(system_modal && exstyles == (expected_exstyles | WS_EX_DLGMODALFRAME))
             ok(exstyles == expected_exstyles, "got %#lx, expected %#lx\n", exstyles, expected_exstyles);
 
             text[0] = 0;
