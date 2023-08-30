@@ -84,6 +84,21 @@ static IAccessible *msaa_acc_da_unwrap(IAccessible *acc)
     return acc;
 }
 
+static BOOL msaa_acc_is_oleacc_proxy(IAccessible *acc)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = msaa_acc_get_service(acc, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
+    if (SUCCEEDED(hr) && unk)
+    {
+        IUnknown_Release(unk);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /*
  * Compare role, state, child count, and location properties of the two
  * IAccessibles. If all four are successfully retrieved and are equal, this is
@@ -1103,10 +1118,11 @@ static HRESULT WINAPI msaa_acc_provider_GetIAccessible(ILegacyIAccessibleProvide
 
     TRACE("%p, %p\n", iface, out_acc);
 
-    IAccessible_AddRef(msaa_prov->acc);
-    *out_acc = msaa_prov->acc;
+    *out_acc = NULL;
+    if (msaa_acc_is_oleacc_proxy(msaa_prov->acc))
+        return S_OK;
 
-    return S_OK;
+    return IAccessible_QueryInterface(msaa_prov->acc, &IID_IAccessible, (void **)out_acc);
 }
 
 static HRESULT WINAPI msaa_acc_provider_get_ChildId(ILegacyIAccessibleProvider *iface, int *out_cid)
@@ -1252,7 +1268,6 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD
         IRawElementProviderSimple **elprov)
 {
     HWND hwnd = NULL;
-    IUnknown *unk;
     HRESULT hr;
 
     TRACE("(%p, %ld, %#lx, %p)\n", acc, child_id, flags, elprov);
@@ -1271,11 +1286,9 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD
         return E_NOTIMPL;
     }
 
-    hr = msaa_acc_get_service(acc, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
-    if (SUCCEEDED(hr) && unk)
+    if (msaa_acc_is_oleacc_proxy(acc))
     {
         WARN("Cannot wrap an oleacc proxy IAccessible!\n");
-        IUnknown_Release(unk);
         return E_INVALIDARG;
     }
 

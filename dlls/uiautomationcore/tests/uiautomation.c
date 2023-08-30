@@ -3474,6 +3474,12 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     /*
+     * ILegacyIAccessibleProvider::GetIAccessible returns a NULL
+     * IAccessible if the provider represents an oleacc proxy.
+     */
+    check_msaa_prov_acc(elroot, NULL, CHILDID_SELF);
+
+    /*
      * Returns a provider from get_HostRawElementProvider without having
      * to query the HWND.
      */
@@ -3494,6 +3500,7 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     IRawElementProviderFragment_Release(elfrag2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!elroot2, "elroot2 == NULL\n");
+    check_msaa_prov_acc(elroot2, NULL, CHILDID_SELF);
     CHECK_CALLED(winproc_GETOBJECT_CLIENT);
 
     ok(!iface_cmp((IUnknown *)elroot, (IUnknown *)elroot2), "elroot2 == elroot\n");
