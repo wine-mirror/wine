@@ -967,7 +967,7 @@ int CDECL pcap_dispatch( struct pcap *pcap, int count,
 
     TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
 
-    while (processed < count)
+    while (count <= 0 || processed < count)
     {
         struct pcap_pkthdr_win32 *hdr = NULL;
         const unsigned char *data = NULL;
@@ -1000,7 +1000,7 @@ int CDECL pcap_loop( struct pcap *pcap, int count,
 
     TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
 
-    while (processed < count)
+    while (count <= 0 || processed < count)
     {
         struct pcap_pkthdr_win32 *hdr = NULL;
         const unsigned char *data = NULL;
