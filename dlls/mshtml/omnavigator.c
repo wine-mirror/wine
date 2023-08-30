@@ -1562,7 +1562,6 @@ typedef struct {
     DispatchEx dispex;
     IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
 
-    LONG ref;
     HTMLInnerWindow *window;
 } HTMLPerformanceTiming;
 
@@ -1581,7 +1580,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_QueryInterface(IHTMLPerformanceTimin
         *ppv = &This->IHTMLPerformanceTiming_iface;
     }else if(IsEqualGUID(&IID_IHTMLPerformanceTiming, riid)) {
         *ppv = &This->IHTMLPerformanceTiming_iface;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
@@ -1596,7 +1595,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_QueryInterface(IHTMLPerformanceTimin
 static ULONG WINAPI HTMLPerformanceTiming_AddRef(IHTMLPerformanceTiming *iface)
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -1606,12 +1605,9 @@ static ULONG WINAPI HTMLPerformanceTiming_AddRef(IHTMLPerformanceTiming *iface)
 static ULONG WINAPI HTMLPerformanceTiming_Release(IHTMLPerformanceTiming *iface)
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref)
-        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -1942,6 +1938,13 @@ static inline HTMLPerformanceTiming *HTMLPerformanceTiming_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLPerformanceTiming, dispex);
 }
 
+static void HTMLPerformanceTiming_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
 static void HTMLPerformanceTiming_unlink(DispatchEx *dispex)
 {
     HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
@@ -1960,6 +1963,7 @@ static void HTMLPerformanceTiming_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLPerformanceTiming_dispex_vtbl = {
     .destructor       = HTMLPerformanceTiming_destructor,
+    .traverse         = HTMLPerformanceTiming_traverse,
     .unlink           = HTMLPerformanceTiming_unlink
 };
 
@@ -2291,7 +2295,6 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
             return E_OUTOFMEMORY;
 
         timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
-        timing->ref = 1;
         timing->window = This->window;
         IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
