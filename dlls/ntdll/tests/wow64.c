@@ -392,6 +392,21 @@ static void test_cross_process_notifications( HANDLE process, void *ptr )
     }
     ok( !entry, "not at end of list\n" );
 
+    addr = (void *)0x123;
+    size = 0x321;
+    status = NtAllocateVirtualMemory( process, &addr, 0, &size, MEM_COMMIT, PAGE_EXECUTE_READ );
+    ok( status == STATUS_CONFLICTING_ADDRESSES || status == STATUS_INVALID_PARAMETER,
+        "NtAllocateVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualAlloc, addr, 0x321,
+                                         MEM_COMMIT, PAGE_EXECUTE_READ, 0, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualAlloc, addr, 0x321,
+                                         MEM_COMMIT, PAGE_EXECUTE_READ, status, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
     addr = NULL;
     size = 0x4321;
     status = NtAllocateVirtualMemory( process, &addr, 0, &size, MEM_RESERVE, PAGE_EXECUTE_READWRITE );
@@ -433,6 +448,23 @@ static void test_cross_process_notifications( HANDLE process, void *ptr )
     }
     ok( !entry, "not at end of list\n" );
 
+    addr2 = (char *)addr + 0x222;
+    size = 34;
+    status = NtProtectVirtualMemory( process, &addr2, &size, PAGE_EXECUTE_WRITECOPY, &old_prot );
+    ok( status == STATUS_INVALID_PARAMETER_4 || status == STATUS_INVALID_PAGE_PROTECTION,
+        "NtProtectVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect,
+                                         (char *)addr + 0x222, 34,
+                                         PAGE_EXECUTE_WRITECOPY, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualProtect,
+                                         (char *)addr + 0x222, 34,
+                                         PAGE_EXECUTE_WRITECOPY, status, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
     status = NtWriteVirtualMemory( process, (char *)addr + 0x1111, data, sizeof(data), &size );
     ok( !status, "NtWriteVirtualMemory failed %lx\n", status );
     entry = pop_from_work_list( &list->work_list );
@@ -462,6 +494,21 @@ static void test_cross_process_notifications( HANDLE process, void *ptr )
                                          MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
         entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualFree, addr, 0x5000,
                                          MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    addr = (void *)0x123;
+    size = 0;
+    status = NtFreeVirtualMemory( process, &addr, &size, MEM_RELEASE );
+    ok( status == STATUS_MEMORY_NOT_ALLOCATED || status == STATUS_INVALID_PARAMETER,
+        "NtFreeVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualFree, addr, 0,
+                                         MEM_RELEASE, 0, 0xcccccccc, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualFree, addr, 0,
+                                         MEM_RELEASE, status, 0xcccccccc, 0xcccccccc );
     }
     ok( !entry, "not at end of list\n" );
 

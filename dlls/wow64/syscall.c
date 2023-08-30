@@ -1296,6 +1296,7 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
             break;
         case CrossProcessPostVirtualAlloc:
             if (!pBTCpuNotifyMemoryAlloc) break;
+            if (entry->args[2]) break;
             pBTCpuNotifyMemoryAlloc( (void *)entry->addr, entry->size, entry->args[0], entry->args[1] );
             break;
         case CrossProcessPreVirtualFree:
