@@ -2023,6 +2023,9 @@ static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTrave
 
     describe_cc_node(&This->ccref, This->info->desc->name, cb);
 
+    if(This->info->desc->vtbl->traverse)
+        This->info->desc->vtbl->traverse(This, cb);
+
     if(!This->dynamic_data)
         return NS_OK;
 
