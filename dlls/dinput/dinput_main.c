@@ -320,12 +320,12 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         case NOTIFY_THREAD_STOP:
             state->running = FALSE;
             break;
+        case NOTIFY_FOREGROUND_LOST:
+            handle_foreground_lost( (HWND)lparam );
+            /* fallthrough */
         case NOTIFY_REFRESH_DEVICES:
             while (state->devices_count--) dinput_device_internal_release( state->devices[state->devices_count] );
             input_thread_update_device_list( state );
-            break;
-        case NOTIFY_FOREGROUND_LOST:
-            handle_foreground_lost( (HWND)lparam );
             break;
         }
 
