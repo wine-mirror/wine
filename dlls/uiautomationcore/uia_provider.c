@@ -40,20 +40,29 @@ static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
     return FALSE;
 }
 
+static HRESULT msaa_acc_get_service(IAccessible *acc, REFGUID sid, REFIID riid, void **service)
+{
+    IServiceProvider *sp;
+    HRESULT hr;
+
+    *service = NULL;
+    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&sp);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IServiceProvider_QueryService(sp, sid, riid, (void **)service);
+    IServiceProvider_Release(sp);
+    return hr;
+}
+
 static IAccessible2 *msaa_acc_get_ia2(IAccessible *acc)
 {
-    IServiceProvider *serv_prov;
     IAccessible2 *ia2 = NULL;
     HRESULT hr;
 
-    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&serv_prov);
-    if (SUCCEEDED(hr))
-    {
-        hr = IServiceProvider_QueryService(serv_prov, &IID_IAccessible2, &IID_IAccessible2, (void **)&ia2);
-        IServiceProvider_Release(serv_prov);
-        if (SUCCEEDED(hr) && ia2)
-            return ia2;
-    }
+    hr = msaa_acc_get_service(acc, &IID_IAccessible2, &IID_IAccessible2, (void **)&ia2);
+    if (SUCCEEDED(hr) && ia2)
+        return ia2;
 
     hr = IAccessible_QueryInterface(acc, &IID_IAccessible2, (void **)&ia2);
     if (SUCCEEDED(hr) && ia2)
@@ -64,17 +73,10 @@ static IAccessible2 *msaa_acc_get_ia2(IAccessible *acc)
 
 static IAccessible *msaa_acc_da_unwrap(IAccessible *acc)
 {
-    IServiceProvider *sp;
     IAccessible *acc2;
     HRESULT hr;
 
-    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void**)&sp);
-    if (SUCCEEDED(hr))
-    {
-        hr = IServiceProvider_QueryService(sp, &SID_AccFromDAWrapper, &IID_IAccessible, (void**)&acc2);
-        IServiceProvider_Release(sp);
-    }
-
+    hr = msaa_acc_get_service(acc, &SID_AccFromDAWrapper, &IID_IAccessible, (void **)&acc2);
     if (SUCCEEDED(hr) && acc2)
         return acc2;
 
@@ -1231,8 +1233,8 @@ HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL kn
 HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD flags,
         IRawElementProviderSimple **elprov)
 {
-    IServiceProvider *serv_prov;
     HWND hwnd = NULL;
+    IUnknown *unk;
     HRESULT hr;
 
     TRACE("(%p, %ld, %#lx, %p)\n", acc, child_id, flags, elprov);
@@ -1251,21 +1253,12 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, LONG child_id, DWORD
         return E_NOTIMPL;
     }
 
-    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&serv_prov);
-    if (SUCCEEDED(hr))
+    hr = msaa_acc_get_service(acc, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
+    if (SUCCEEDED(hr) && unk)
     {
-        IUnknown *unk;
-
-        hr = IServiceProvider_QueryService(serv_prov, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
-        if (SUCCEEDED(hr))
-        {
-            WARN("Cannot wrap an oleacc proxy IAccessible!\n");
-            IUnknown_Release(unk);
-            IServiceProvider_Release(serv_prov);
-            return E_INVALIDARG;
-        }
-
-        IServiceProvider_Release(serv_prov);
+        WARN("Cannot wrap an oleacc proxy IAccessible!\n");
+        IUnknown_Release(unk);
+        return E_INVALIDARG;
     }
 
     hr = WindowFromAccessibleObject(acc, &hwnd);
