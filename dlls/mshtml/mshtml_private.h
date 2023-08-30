@@ -522,8 +522,6 @@ struct HTMLLocation {
     DispatchEx dispex;
     IHTMLLocation IHTMLLocation_iface;
 
-    LONG ref;
-
     HTMLOuterWindow *window;
 };
 

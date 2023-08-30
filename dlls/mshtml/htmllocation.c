@@ -73,7 +73,7 @@ static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID r
         *ppv = NULL;
         FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
         return E_NOINTERFACE;
-    }else if(dispex_query_interface_no_cc(&This->dispex, riid, ppv)) {
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
@@ -88,7 +88,7 @@ static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID r
 static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = dispex_ref_incr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
@@ -98,15 +98,9 @@ static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
 static ULONG WINAPI HTMLLocation_Release(IHTMLLocation *iface)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
+    LONG ref = dispex_ref_decr(&This->dispex);
 
     TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref) {
-        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
-        release_dispex(&This->dispex);
-        free(This);
-    }
 
     return ref;
 }
@@ -616,13 +610,47 @@ static const IHTMLLocationVtbl HTMLLocationVtbl = {
     HTMLLocation_toString
 };
 
+static inline HTMLLocation *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLLocation, dispex);
+}
+
+static void HTMLLocation_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLLocation *This = impl_from_DispatchEx(dispex);
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void HTMLLocation_unlink(DispatchEx *dispex)
+{
+    HTMLLocation *This = impl_from_DispatchEx(dispex);
+    if(This->window) {
+        HTMLOuterWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
+static void HTMLLocation_destructor(DispatchEx *dispex)
+{
+    HTMLLocation *This = impl_from_DispatchEx(dispex);
+    free(This);
+}
+
+static const dispex_static_data_vtbl_t HTMLLocation_dispex_vtbl = {
+    .destructor       = HTMLLocation_destructor,
+    .traverse         = HTMLLocation_traverse,
+    .unlink           = HTMLLocation_unlink
+};
+
 static const tid_t HTMLLocation_iface_tids[] = {
     IHTMLLocation_tid,
     0
 };
 static dispex_static_data_t HTMLLocation_dispex = {
     "Location",
-    NULL,
+    &HTMLLocation_dispex_vtbl,
     DispHTMLLocation_tid,
     HTMLLocation_iface_tids
 };
@@ -635,7 +663,6 @@ HRESULT create_location(HTMLOuterWindow *window, HTMLLocation **ret)
         return E_OUTOFMEMORY;
 
     location->IHTMLLocation_iface.lpVtbl = &HTMLLocationVtbl;
-    location->ref = 1;
     location->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
