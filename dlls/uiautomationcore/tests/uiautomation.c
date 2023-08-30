@@ -3360,6 +3360,252 @@ static void test_uia_reserved_value_ifaces(void)
     CoUninitialize();
 }
 
+DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
+static IAccessible *msaa_acc_da_unwrap(IAccessible *acc)
+{
+    IServiceProvider *sp;
+    HRESULT hr;
+
+    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void**)&sp);
+    if (SUCCEEDED(hr))
+    {
+        IAccessible *acc2 = NULL;
+
+        hr = IServiceProvider_QueryService(sp, &SID_AccFromDAWrapper, &IID_IAccessible, (void**)&acc2);
+        IServiceProvider_Release(sp);
+        if (SUCCEEDED(hr) && acc2)
+            return acc2;
+    }
+
+    return NULL;
+}
+
+#define check_msaa_prov_acc( elprov, acc, cid) \
+        check_msaa_prov_acc_( ((IUnknown *)elprov), (acc), (cid), __LINE__)
+static void check_msaa_prov_acc_(IUnknown *elprov, IAccessible *acc, INT cid, int line)
+{
+    ILegacyIAccessibleProvider *accprov;
+    IAccessible *acc2, *acc3;
+    INT child_id;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(elprov, &IID_ILegacyIAccessibleProvider, (void **)&accprov);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(!!accprov, "accprov == NULL\n");
+
+    acc2 = acc3 = NULL;
+    hr = ILegacyIAccessibleProvider_GetIAccessible(accprov, &acc2);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * Potentially get our IAccessible out of a direct annotation wrapper
+     * IAccessible.
+     */
+    if (acc && acc2 && (acc != acc2) && (acc3 = msaa_acc_da_unwrap(acc2)))
+    {
+        IAccessible_Release(acc2);
+        acc2 = acc3;
+    }
+    ok_(__FILE__, line)(acc2 == acc, "acc2 != acc\n");
+    if (acc2)
+        IAccessible_Release(acc2);
+
+    hr = ILegacyIAccessibleProvider_get_ChildId(accprov, &child_id);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(child_id == cid, "child_id != cid\n");
+
+    ILegacyIAccessibleProvider_Release(accprov);
+}
+
+#define check_msaa_prov_host_elem_prov( elem, exp_host_prov) \
+        check_msaa_prov_host_elem_prov_( ((IUnknown *)elem), (exp_host_prov), __LINE__)
+static void check_msaa_prov_host_elem_prov_(IUnknown *elem, BOOL exp_host_prov, int line)
+{
+    IRawElementProviderSimple *elprov, *elprov2;
+    HRESULT hr;
+
+    hr = IUnknown_QueryInterface(elem, &IID_IRawElementProviderSimple, (void **)&elprov);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(!!elprov, "elprov == NULL\n");
+
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)((elprov2 != (void *)0xdeadbeef) && !!elprov2 == exp_host_prov, "Unexpected provider %p from get_HostRawElementProvider\n", elprov2);
+
+    if (elprov2)
+        IRawElementProviderSimple_Release(elprov2);
+    IRawElementProviderSimple_Release(elprov);
+}
+
+static void set_accessible_props(struct Accessible *acc, INT role, INT state,
+        LONG child_count, LPCWSTR name, LONG left, LONG top, LONG width, LONG height);
+static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
+{
+    IRawElementProviderFragmentRoot *elroot, *elroot2;
+    IRawElementProviderFragment *elfrag, *elfrag2;
+    IRawElementProviderSimple *elprov;
+    HRESULT hr;
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, 0, 0, L"acc_name", 0, 0, 0, 0);
+    Accessible.ow_hwnd = hwnd;
+
+    elprov = NULL;
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov, "elprov == NULL\n");
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * get_FragmentRoot does the equivalent of calling
+     * AccessibleObjectFromWindow with OBJID_CLIENT on the HWND associated
+     * with our IAccessible. Unlike UiaProviderFromIAccessible, it will create
+     * a provider from a default oleacc proxy.
+     */
+    elroot = NULL;
+    acc_client = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    /*
+     * Returns a provider from get_HostRawElementProvider without having
+     * to query the HWND.
+     */
+    check_msaa_prov_host_elem_prov(elroot, TRUE);
+
+    hr = IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderFragment, (void **)&elfrag2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+
+    /*
+     * Even on a provider retrieved from get_FragmentRoot, the HWND is
+     * queried and a new fragment root is returned rather than just
+     * returning our current fragment root interface.
+     */
+    elroot2 = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag2, &elroot2);
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot2, "elroot2 == NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    ok(!iface_cmp((IUnknown *)elroot, (IUnknown *)elroot2), "elroot2 == elroot\n");
+    IRawElementProviderFragmentRoot_Release(elroot2);
+    IRawElementProviderFragmentRoot_Release(elroot);
+
+    /*
+     * Accessible is now the IAccessible for our HWND, so we'll get it instead
+     * of an oleacc proxy.
+     */
+    acc_client = &Accessible.IAccessible_iface;
+    elroot = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    check_msaa_prov_acc(elroot, &Accessible.IAccessible_iface, CHILDID_SELF);
+
+    /*
+     * Returns a provider from get_HostRawElementProvider without having
+     * to query the HWND, same as before.
+     */
+    check_msaa_prov_host_elem_prov(elroot, TRUE);
+
+    hr = IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderFragment, (void **)&elfrag2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+
+    /* Same deal as before, unique FragmentRoot even on a known root. */
+    elroot2 = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag2, &elroot2);
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot2, "elroot2 == NULL\n");
+    check_msaa_prov_acc(elroot2, &Accessible.IAccessible_iface, CHILDID_SELF);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    ok(!iface_cmp((IUnknown *)elroot, (IUnknown *)elroot2), "elroot2 == elroot\n");
+    IRawElementProviderFragmentRoot_Release(elroot2);
+
+    IRawElementProviderFragmentRoot_Release(elroot);
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+
+    /*
+     * Test simple child element.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, 1, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * Simple child element queries HWND as well, does not just return its
+     * parent.
+     */
+    elroot = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    check_msaa_prov_acc(elroot, &Accessible.IAccessible_iface, CHILDID_SELF);
+    check_msaa_prov_host_elem_prov(elroot, TRUE);
+
+    IRawElementProviderFragmentRoot_Release(elroot);
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+
+    /*
+     * Test child of root HWND IAccessible.
+     */
+    set_accessible_props(&Accessible_child, ROLE_SYSTEM_TEXT, 0, 0, L"acc_child_name", 0, 0, 0, 0);
+
+    elprov = NULL;
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent); /* Gets HWND from parent IAccessible. */
+    SET_ACC_METHOD_EXPECT(&Accessible_child, accNavigate);
+    hr = pUiaProviderFromIAccessible(&Accessible_child.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov, "elprov == NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, accNavigate);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * Again, same behavior as simple children. It doesn't just retrieve the
+     * parent IAccessible, it queries the HWND.
+     */
+    elroot = NULL;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_FragmentRoot(elfrag, &elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    check_msaa_prov_acc(elroot, &Accessible.IAccessible_iface, CHILDID_SELF);
+
+    IRawElementProviderFragmentRoot_Release(elroot);
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    acc_client = NULL;
+}
+
 struct msaa_role_uia_type {
     INT acc_role;
     INT uia_control_type;
@@ -4955,6 +5201,7 @@ static void test_UiaProviderFromIAccessible(void)
     test_uia_prov_from_acc_properties();
     test_uia_prov_from_acc_navigation();
     test_uia_prov_from_acc_ia2();
+    test_uia_prov_from_acc_fragment_root(hwnd);
 
     CoUninitialize();
     DestroyWindow(hwnd);

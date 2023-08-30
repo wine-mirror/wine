@@ -964,9 +964,27 @@ static HRESULT WINAPI msaa_fragment_SetFocus(IRawElementProviderFragment *iface)
 static HRESULT WINAPI msaa_fragment_get_FragmentRoot(IRawElementProviderFragment *iface,
         IRawElementProviderFragmentRoot **ret_val)
 {
-    FIXME("%p, %p: stub!\n", iface, ret_val);
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    IRawElementProviderSimple *elprov;
+    IAccessible *acc;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, ret_val);
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    hr = AccessibleObjectFromWindow(msaa_prov->hwnd, OBJID_CLIENT, &IID_IAccessible, (void **)&acc);
+    if (FAILED(hr) || !acc)
+        return hr;
+
+    hr = create_msaa_provider(acc, CHILDID_SELF, msaa_prov->hwnd, TRUE, &elprov);
+    IAccessible_Release(acc);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragmentRoot, (void **)ret_val);
+    IRawElementProviderSimple_Release(elprov);
+
+    return hr;
 }
 
 static const IRawElementProviderFragmentVtbl msaa_fragment_vtbl = {
