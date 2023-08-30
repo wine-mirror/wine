@@ -839,6 +839,7 @@ SOURCES = \
 	windows.graphics.holographic.idl \
 	windows.h \
 	windows.management.deployment.idl \
+	windows.media.capture.idl \
 	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
 	windows.media.idl \
