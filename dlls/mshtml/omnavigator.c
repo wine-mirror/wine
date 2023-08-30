@@ -1558,6 +1558,14 @@ HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
     return S_OK;
 }
 
+typedef struct {
+    DispatchEx dispex;
+    IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
+
+    LONG ref;
+    HTMLInnerWindow *window;
+} HTMLPerformanceTiming;
+
 static inline HTMLPerformanceTiming *impl_from_IHTMLPerformanceTiming(IHTMLPerformanceTiming *iface)
 {
     return CONTAINING_RECORD(iface, HTMLPerformanceTiming, IHTMLPerformanceTiming_iface);
@@ -1602,12 +1610,8 @@ static ULONG WINAPI HTMLPerformanceTiming_Release(IHTMLPerformanceTiming *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref) {
-        if(This->dispex.outer)
-            release_dispex(&This->dispex);
-        else
-            free(This);
-    }
+    if(!ref)
+        release_dispex(&This->dispex);
 
     return ref;
 }
@@ -1649,20 +1653,22 @@ static HRESULT WINAPI HTMLPerformanceTiming_Invoke(IHTMLPerformanceTiming *iface
 
 static ULONGLONG get_fetch_time(HTMLPerformanceTiming *This)
 {
+    HTMLInnerWindow *window = This->window;
+
     /* If there's no prior doc unloaded and no redirects, fetch time == navigationStart time */
-    if(!This->unload_event_end_time && !This->redirect_time)
-        return This->navigation_start_time;
+    if(!window->unload_event_end_time && !window->redirect_time)
+        return window->navigation_start_time;
 
-    if(This->dns_lookup_time)
-        return This->dns_lookup_time;
-    if(This->connect_time)
-        return This->connect_time;
-    if(This->request_time)
-        return This->request_time;
-    if(This->unload_event_end_time)
-        return This->unload_event_end_time;
+    if(window->dns_lookup_time)
+        return window->dns_lookup_time;
+    if(window->connect_time)
+        return window->connect_time;
+    if(window->request_time)
+        return window->request_time;
+    if(window->unload_event_end_time)
+        return window->unload_event_end_time;
 
-    return This->redirect_time;
+    return window->redirect_time;
 }
 
 static HRESULT WINAPI HTMLPerformanceTiming_get_navigationStart(IHTMLPerformanceTiming *iface, ULONGLONG *p)
@@ -1671,7 +1677,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_navigationStart(IHTMLPerformance
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->navigation_start_time;
+    *p = This->window->navigation_start_time;
     return S_OK;
 }
 
@@ -1681,7 +1687,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_unloadEventStart(IHTMLPerformanc
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->unload_event_start_time;
+    *p = This->window->unload_event_start_time;
     return S_OK;
 }
 
@@ -1691,7 +1697,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_unloadEventEnd(IHTMLPerformanceT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->unload_event_end_time;
+    *p = This->window->unload_event_end_time;
     return S_OK;
 }
 
@@ -1701,7 +1707,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_redirectStart(IHTMLPerformanceTi
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->redirect_time;
+    *p = This->window->redirect_time;
     return S_OK;
 }
 
@@ -1711,7 +1717,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_redirectEnd(IHTMLPerformanceTimi
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->redirect_time ? get_fetch_time(This) : 0;
+    *p = This->window->redirect_time ? get_fetch_time(This) : 0;
     return S_OK;
 }
 
@@ -1731,7 +1737,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domainLookupStart(IHTMLPerforman
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
+    *p = This->window->dns_lookup_time ? This->window->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1741,8 +1747,8 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domainLookupEnd(IHTMLPerformance
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->connect_time    ? This->connect_time    :
-         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
+    *p = This->window->connect_time    ? This->window->connect_time    :
+         This->window->dns_lookup_time ? This->window->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1752,8 +1758,8 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_connectStart(IHTMLPerformanceTim
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->connect_time    ? This->connect_time    :
-         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
+    *p = This->window->connect_time    ? This->window->connect_time    :
+         This->window->dns_lookup_time ? This->window->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1763,9 +1769,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_connectEnd(IHTMLPerformanceTimin
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->request_time    ? This->request_time    :
-         This->connect_time    ? This->connect_time    :
-         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
+    *p = This->window->request_time    ? This->window->request_time    :
+         This->window->connect_time    ? This->window->connect_time    :
+         This->window->dns_lookup_time ? This->window->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1775,9 +1781,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_requestStart(IHTMLPerformanceTim
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->request_time    ? This->request_time    :
-         This->connect_time    ? This->connect_time    :
-         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
+    *p = This->window->request_time    ? This->window->request_time    :
+         This->window->connect_time    ? This->window->connect_time    :
+         This->window->dns_lookup_time ? This->window->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1787,7 +1793,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_responseStart(IHTMLPerformanceTi
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->response_start_time;
+    *p = This->window->response_start_time;
     return S_OK;
 }
 
@@ -1797,7 +1803,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_responseEnd(IHTMLPerformanceTimi
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->response_end_time;
+    *p = This->window->response_end_time;
     return S_OK;
 }
 
@@ -1808,7 +1814,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domLoading(IHTMLPerformanceTimin
     TRACE("(%p)->(%p)\n", This, p);
 
     /* Make sure this is after responseEnd, when the Gecko parser starts */
-    *p = This->response_end_time;
+    *p = This->window->response_end_time;
     return S_OK;
 }
 
@@ -1818,7 +1824,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domInteractive(IHTMLPerformanceT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->dom_interactive_time;
+    *p = This->window->dom_interactive_time;
     return S_OK;
 }
 
@@ -1828,7 +1834,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domContentLoadedEventStart(IHTML
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->dom_content_loaded_event_start_time;
+    *p = This->window->dom_content_loaded_event_start_time;
     return S_OK;
 }
 
@@ -1838,7 +1844,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domContentLoadedEventEnd(IHTMLPe
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->dom_content_loaded_event_end_time;
+    *p = This->window->dom_content_loaded_event_end_time;
     return S_OK;
 }
 
@@ -1848,7 +1854,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domComplete(IHTMLPerformanceTimi
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->dom_complete_time;
+    *p = This->window->dom_complete_time;
     return S_OK;
 }
 
@@ -1858,7 +1864,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_loadEventStart(IHTMLPerformanceT
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->load_event_start_time;
+    *p = This->window->load_event_start_time;
     return S_OK;
 }
 
@@ -1868,7 +1874,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_loadEventEnd(IHTMLPerformanceTim
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->load_event_end_time;
+    *p = This->window->load_event_end_time;
     return S_OK;
 }
 
@@ -1878,7 +1884,7 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_msFirstPaint(IHTMLPerformanceTim
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->first_paint_time;
+    *p = This->window->first_paint_time;
     return S_OK;
 }
 
@@ -1936,6 +1942,16 @@ static inline HTMLPerformanceTiming *HTMLPerformanceTiming_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLPerformanceTiming, dispex);
 }
 
+static void HTMLPerformanceTiming_unlink(DispatchEx *dispex)
+{
+    HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
 static void HTMLPerformanceTiming_destructor(DispatchEx *dispex)
 {
     HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
@@ -1944,6 +1960,7 @@ static void HTMLPerformanceTiming_destructor(DispatchEx *dispex)
 
 static const dispex_static_data_vtbl_t HTMLPerformanceTiming_dispex_vtbl = {
     .destructor       = HTMLPerformanceTiming_destructor,
+    .unlink           = HTMLPerformanceTiming_unlink
 };
 
 static const tid_t HTMLPerformanceTiming_iface_tids[] = {
@@ -1956,22 +1973,6 @@ static dispex_static_data_t HTMLPerformanceTiming_dispex = {
     IHTMLPerformanceTiming_tid,
     HTMLPerformanceTiming_iface_tids
 };
-
-HRESULT create_performance_timing(HTMLPerformanceTiming **ret)
-{
-    HTMLPerformanceTiming *timing;
-
-    timing = calloc(1, sizeof(*timing));
-    if(!timing)
-        return E_OUTOFMEMORY;
-
-    timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
-    timing->ref = 1;
-
-    /* Defer initializing the dispex until it's actually needed (for compat mode) */
-    *ret = timing;
-    return S_OK;
-}
 
 typedef struct {
     DispatchEx dispex;
@@ -2163,7 +2164,7 @@ typedef struct {
 
     HTMLInnerWindow *window;
     IHTMLPerformanceNavigation *navigation;
-    HTMLPerformanceTiming *timing;
+    IHTMLPerformanceTiming *timing;
 } HTMLPerformance;
 
 static inline HTMLPerformance *impl_from_IHTMLPerformance(IHTMLPerformance *iface)
@@ -2282,7 +2283,25 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    IHTMLPerformanceTiming_AddRef(*p = &This->timing->IHTMLPerformanceTiming_iface);
+    if(!This->timing) {
+        HTMLPerformanceTiming *timing;
+
+        timing = calloc(1, sizeof(*timing));
+        if(!timing)
+            return E_OUTOFMEMORY;
+
+        timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
+        timing->ref = 1;
+        timing->window = This->window;
+        IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
+
+        init_dispatch(&timing->dispex, (IUnknown*)&timing->IHTMLPerformanceTiming_iface,
+                      &HTMLPerformanceTiming_dispex, dispex_compat_mode(&This->dispex));
+
+        This->timing = &timing->IHTMLPerformanceTiming_iface;
+    }
+
+    IHTMLPerformanceTiming_AddRef(*p = This->timing);
     return S_OK;
 }
 
@@ -2329,7 +2348,7 @@ static void HTMLPerformance_traverse(DispatchEx *dispex, nsCycleCollectionTraver
     if(This->navigation)
         note_cc_edge((nsISupports*)This->navigation, "navigation", cb);
     if(This->timing)
-        note_cc_edge((nsISupports*)&This->timing->IHTMLPerformanceTiming_iface, "timing", cb);
+        note_cc_edge((nsISupports*)This->timing, "timing", cb);
 }
 
 static void HTMLPerformance_unlink(DispatchEx *dispex)
@@ -2341,11 +2360,7 @@ static void HTMLPerformance_unlink(DispatchEx *dispex)
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     }
     unlink_ref(&This->navigation);
-    if(This->timing) {
-        HTMLPerformanceTiming *timing = This->timing;
-        This->timing = NULL;
-        IHTMLPerformanceTiming_Release(&timing->IHTMLPerformanceTiming_iface);
-    }
+    unlink_ref(&This->timing);
 }
 
 static void HTMLPerformance_destructor(DispatchEx *dispex)
@@ -2386,12 +2401,6 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
 
     init_dispatch(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
                   &HTMLPerformance_dispex, compat_mode);
-
-    performance->timing = window->performance_timing;
-    IHTMLPerformanceTiming_AddRef(&performance->timing->IHTMLPerformanceTiming_iface);
-
-    init_dispatch(&performance->timing->dispex, (IUnknown*)&performance->timing->IHTMLPerformanceTiming_iface,
-                  &HTMLPerformanceTiming_dispex, compat_mode);
 
     *ret = &performance->IHTMLPerformance_iface;
     return S_OK;

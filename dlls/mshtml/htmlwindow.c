@@ -3913,7 +3913,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         This->local_storage = NULL;
         IHTMLStorage_Release(local_storage);
     }
-    IHTMLPerformanceTiming_Release(&This->performance_timing->IHTMLPerformanceTiming_iface);
     unlink_variant(&This->performance);
 }
 
@@ -4313,18 +4312,11 @@ static void *alloc_window(size_t size)
 static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon, HTMLInnerWindow **ret)
 {
     HTMLInnerWindow *window;
-    HRESULT hres;
 
     window = alloc_window(sizeof(HTMLInnerWindow));
     if(!window)
         return E_OUTOFMEMORY;
     window->base.IHTMLWindow2_iface.lpVtbl = &HTMLWindow2Vtbl;
-
-    hres = create_performance_timing(&window->performance_timing);
-    if(FAILED(hres)) {
-        free(window);
-        return hres;
-    }
 
     list_init(&window->children);
     list_init(&window->script_hosts);

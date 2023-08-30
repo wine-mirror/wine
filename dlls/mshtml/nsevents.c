@@ -238,7 +238,7 @@ static nsresult handle_dom_content_loaded(HTMLDocumentNode *doc, nsIDOMEvent *ns
     HRESULT hres;
 
     if(doc->window)
-        doc->window->performance_timing->dom_content_loaded_event_start_time = get_time_stamp();
+        doc->window->dom_content_loaded_event_start_time = get_time_stamp();
 
     hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
     if(SUCCEEDED(hres)) {
@@ -247,7 +247,7 @@ static nsresult handle_dom_content_loaded(HTMLDocumentNode *doc, nsIDOMEvent *ns
     }
 
     if(doc->window)
-        doc->window->performance_timing->dom_content_loaded_event_end_time = get_time_stamp();
+        doc->window->dom_content_loaded_event_end_time = get_time_stamp();
 
     return NS_OK;
 }
@@ -345,7 +345,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
     if(doc_obj)
         handle_docobj_load(doc_obj);
 
-    doc->window->performance_timing->dom_complete_time = get_time_stamp();
+    doc->window->dom_complete_time = get_time_stamp();
     set_ready_state(doc->outer_window, READYSTATE_COMPLETE);
 
     if(doc_obj) {
@@ -363,7 +363,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
         IUnknown_Release(doc_obj->outer_unk);
     }
 
-    doc->window->performance_timing->load_event_start_time = get_time_stamp();
+    doc->window->load_event_start_time = get_time_stamp();
 
     if(doc->dom_document) {
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
@@ -381,7 +381,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
         IDOMEvent_Release(&load_event->IDOMEvent_iface);
     }
 
-    doc->window->performance_timing->load_event_end_time = get_time_stamp();
+    doc->window->load_event_end_time = get_time_stamp();
     return NS_OK;
 }
 
@@ -406,8 +406,7 @@ static nsresult handle_beforeunload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 
 static nsresult handle_unload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
 {
-    HTMLPerformanceTiming *timing = NULL;
-    HTMLInnerWindow *window;
+    HTMLInnerWindow *window, *pending_window;
     DOMEvent *event;
     HRESULT hres;
 
@@ -415,11 +414,9 @@ static nsresult handle_unload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
         return NS_OK;
     doc->unload_sent = TRUE;
 
-    if(window->base.outer_window->pending_window)
-        timing = window->base.outer_window->pending_window->performance_timing;
-
-    if(timing)
-        timing->unload_event_start_time = get_time_stamp();
+    pending_window = window->base.outer_window->pending_window;
+    if(pending_window)
+        pending_window->unload_event_start_time = get_time_stamp();
 
     hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
     if(SUCCEEDED(hres)) {
@@ -427,8 +424,8 @@ static nsresult handle_unload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
         IDOMEvent_Release(&event->IDOMEvent_iface);
     }
 
-    if(timing)
-        timing->unload_event_end_time = get_time_stamp();
+    if(pending_window)
+        pending_window->unload_event_end_time = get_time_stamp();
 
     return NS_OK;
 }

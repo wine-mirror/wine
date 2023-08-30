@@ -529,30 +529,6 @@ typedef struct {
     HTMLInnerWindow *window;
 } OmHistory;
 
-typedef struct {
-    DispatchEx dispex;
-    IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
-
-    LONG ref;
-
-    ULONGLONG navigation_start_time;
-    ULONGLONG unload_event_start_time;
-    ULONGLONG unload_event_end_time;
-    ULONGLONG redirect_time;
-    ULONGLONG dns_lookup_time;
-    ULONGLONG connect_time;
-    ULONGLONG request_time;
-    ULONGLONG response_start_time;
-    ULONGLONG response_end_time;
-    ULONGLONG dom_interactive_time;
-    ULONGLONG dom_complete_time;
-    ULONGLONG dom_content_loaded_event_start_time;
-    ULONGLONG dom_content_loaded_event_end_time;
-    ULONGLONG load_event_start_time;
-    ULONGLONG load_event_end_time;
-    ULONGLONG first_paint_time;
-} HTMLPerformanceTiming;
-
 typedef struct nsChannelBSC nsChannelBSC;
 
 struct HTMLWindow {
@@ -628,7 +604,6 @@ struct HTMLInnerWindow {
 
     BOOL performance_initialized;
     VARIANT performance;
-    HTMLPerformanceTiming *performance_timing;
 
     unsigned blocking_depth;
     unsigned parser_callback_cnt;
@@ -647,6 +622,23 @@ struct HTMLInnerWindow {
 
     ULONG navigation_type;
     ULONG redirect_count;
+
+    ULONGLONG navigation_start_time;
+    ULONGLONG unload_event_start_time;
+    ULONGLONG unload_event_end_time;
+    ULONGLONG redirect_time;
+    ULONGLONG dns_lookup_time;
+    ULONGLONG connect_time;
+    ULONGLONG request_time;
+    ULONGLONG response_start_time;
+    ULONGLONG response_end_time;
+    ULONGLONG dom_interactive_time;
+    ULONGLONG dom_complete_time;
+    ULONGLONG dom_content_loaded_event_start_time;
+    ULONGLONG dom_content_loaded_event_end_time;
+    ULONGLONG load_event_start_time;
+    ULONGLONG load_event_end_time;
+    ULONGLONG first_paint_time;
 };
 
 typedef enum {
@@ -1015,7 +1007,6 @@ HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
 HRESULT create_navigator(compat_mode_t,IOmNavigator**);
 HRESULT create_html_screen(compat_mode_t,IHTMLScreen**);
 HRESULT create_performance(HTMLInnerWindow*,IHTMLPerformance**);
-HRESULT create_performance_timing(HTMLPerformanceTiming**);
 HRESULT create_history(HTMLInnerWindow*,OmHistory**);
 HRESULT create_namespace_collection(compat_mode_t,IHTMLNamespaceCollection**);
 HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**);

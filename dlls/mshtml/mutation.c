@@ -313,7 +313,7 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
     bind_event_scripts(This);
 
     if(This->window == window) {
-        window->performance_timing->dom_interactive_time = get_time_stamp();
+        window->dom_interactive_time = get_time_stamp();
         set_ready_state(This->outer_window, READYSTATE_INTERACTIVE);
     }
     IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
