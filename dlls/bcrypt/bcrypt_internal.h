@@ -319,6 +319,7 @@ enum key_funcs
     unix_key_asymmetric_destroy,
     unix_key_asymmetric_export,
     unix_key_asymmetric_import,
+    unix_funcs_count,
 };
 
 #endif /* __BCRYPT_INTERNAL_H */
