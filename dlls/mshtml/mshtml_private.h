@@ -535,9 +535,6 @@ typedef struct {
 
     LONG ref;
 
-    ULONG navigation_type;
-    ULONG redirect_count;
-
     ULONGLONG navigation_start_time;
     ULONGLONG unload_event_start_time;
     ULONGLONG unload_event_end_time;
@@ -647,6 +644,9 @@ struct HTMLInnerWindow {
     IDispatch *mutation_observer_ctor;
     nsChannelBSC *bscallback;
     struct list bindings;
+
+    ULONG navigation_type;
+    ULONG redirect_count;
 };
 
 typedef enum {

@@ -1351,9 +1351,9 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
         DWORD flags = This->bsc.window->base.outer_window->load_flags;
 
         if(flags & BINDING_FROMHIST)
-            This->bsc.window->performance_timing->navigation_type = 2;  /* TYPE_BACK_FORWARD */
+            This->bsc.window->navigation_type = 2;  /* TYPE_BACK_FORWARD */
         if(flags & BINDING_REFRESH)
-            This->bsc.window->performance_timing->navigation_type = 1;  /* TYPE_RELOAD */
+            This->bsc.window->navigation_type = 1;  /* TYPE_RELOAD */
 
         This->bsc.window->base.outer_window->base.inner_window->doc->skip_mutation_notif = FALSE;
         This->bsc.window->performance_timing->navigation_start_time = get_time_stamp();
@@ -1726,7 +1726,7 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG t
         break;
     case BINDSTATUS_REDIRECTING:
         if(This->is_doc_channel) {
-            This->bsc.window->performance_timing->redirect_count++;
+            This->bsc.window->redirect_count++;
             if(!This->bsc.window->performance_timing->redirect_time)
                 This->bsc.window->performance_timing->redirect_time = get_time_stamp();
         }

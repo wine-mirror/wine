@@ -1977,7 +1977,7 @@ typedef struct {
     DispatchEx dispex;
     IHTMLPerformanceNavigation IHTMLPerformanceNavigation_iface;
 
-    HTMLPerformanceTiming *timing;
+    HTMLInnerWindow *window;
 } HTMLPerformanceNavigation;
 
 static inline HTMLPerformanceNavigation *impl_from_IHTMLPerformanceNavigation(IHTMLPerformanceNavigation *iface)
@@ -2068,7 +2068,7 @@ static HRESULT WINAPI HTMLPerformanceNavigation_get_type(IHTMLPerformanceNavigat
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->timing->navigation_type;
+    *p = This->window->navigation_type;
     return S_OK;
 }
 
@@ -2078,7 +2078,7 @@ static HRESULT WINAPI HTMLPerformanceNavigation_get_redirectCount(IHTMLPerforman
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = This->timing->redirect_count;
+    *p = This->window->redirect_count;
     return S_OK;
 }
 
@@ -2120,17 +2120,17 @@ static inline HTMLPerformanceNavigation *HTMLPerformanceNavigation_from_Dispatch
 static void HTMLPerformanceNavigation_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
-    if(This->timing)
-        note_cc_edge((nsISupports*)&This->timing->IHTMLPerformanceTiming_iface, "timing", cb);
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
 }
 
 static void HTMLPerformanceNavigation_unlink(DispatchEx *dispex)
 {
     HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
-    if(This->timing) {
-        HTMLPerformanceTiming *timing = This->timing;
-        This->timing = NULL;
-        IHTMLPerformanceTiming_Release(&timing->IHTMLPerformanceTiming_iface);
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     }
 }
 
@@ -2161,6 +2161,7 @@ typedef struct {
     DispatchEx dispex;
     IHTMLPerformance IHTMLPerformance_iface;
 
+    HTMLInnerWindow *window;
     IHTMLPerformanceNavigation *navigation;
     HTMLPerformanceTiming *timing;
 } HTMLPerformance;
@@ -2262,8 +2263,8 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
             return E_OUTOFMEMORY;
 
         navigation->IHTMLPerformanceNavigation_iface.lpVtbl = &HTMLPerformanceNavigationVtbl;
-        navigation->timing = This->timing;
-        IHTMLPerformanceTiming_AddRef(&This->timing->IHTMLPerformanceTiming_iface);
+        navigation->window = This->window;
+        IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
         init_dispatch(&navigation->dispex, (IUnknown*)&navigation->IHTMLPerformanceNavigation_iface,
                       &HTMLPerformanceNavigation_dispex, dispex_compat_mode(&This->dispex));
@@ -2323,6 +2324,8 @@ static inline HTMLPerformance *HTMLPerformance_from_DispatchEx(DispatchEx *iface
 static void HTMLPerformance_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
     if(This->navigation)
         note_cc_edge((nsISupports*)This->navigation, "navigation", cb);
     if(This->timing)
@@ -2332,6 +2335,11 @@ static void HTMLPerformance_traverse(DispatchEx *dispex, nsCycleCollectionTraver
 static void HTMLPerformance_unlink(DispatchEx *dispex)
 {
     HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
     unlink_ref(&This->navigation);
     if(This->timing) {
         HTMLPerformanceTiming *timing = This->timing;
@@ -2373,6 +2381,8 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
         return E_OUTOFMEMORY;
 
     performance->IHTMLPerformance_iface.lpVtbl = &HTMLPerformanceVtbl;
+    performance->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     init_dispatch(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
                   &HTMLPerformance_dispex, compat_mode);
