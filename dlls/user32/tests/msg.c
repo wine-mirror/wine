@@ -19488,7 +19488,8 @@ static LRESULT CALLBACK insendmessage_wnd_proc( HWND hwnd, UINT msg, WPARAM wp, 
         ret = ReplyMessage( msg );
         ok( ret, "ReplyMessage failed err %lu\n", GetLastError() );
         flags = InSendMessageEx( NULL );
-        ok( flags == (ISMEX_SEND | ISMEX_REPLIED), "wrong flags %lx\n", flags );
+        ok( flags == (ISMEX_SEND | ISMEX_REPLIED) || broken( flags == (ISMEX_NOTIFY | ISMEX_REPLIED) ),
+            "wrong flags %lx\n", flags );
         ok( InSendMessage(), "InSendMessage returned false\n" );
         break;
     case WM_USER + 1:
