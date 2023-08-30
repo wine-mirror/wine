@@ -70,6 +70,7 @@ static struct testfile_s {
     { 0, FILE_ATTRIBUTE_NORMAL,    {0xe9,'a','.','t','m','p'}, "normal" },
     { 0, FILE_ATTRIBUTE_NORMAL,    {0xc9,'b','.','t','m','p'}, "normal" },
     { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p'},  "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a'},                  "normal" },
     { 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
     { 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
 };
@@ -237,13 +238,13 @@ static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char 
     }
     ok(numfiles < max_test_dir_size, "too many loops\n");
 
-    if (mask)
+    if (mask && !wcspbrk( mask->Buffer, L"*?" ))
         for (i = 0; i < test_dir_count; i++)
             ok(testfiles[i].nfound == (testfiles[i].name == mask->Buffer),
                "Wrong number %d of %s files found (single_entry=%d,mask=%s)\n",
                testfiles[i].nfound, testfiles[i].description, single_entry,
                wine_dbgstr_wn(mask->Buffer, mask->Length/sizeof(WCHAR) ));
-    else
+    else if (!mask)
         for (i = 0; i < test_dir_count; i++)
             ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (single_entry=%d,restart=%d)\n",
                testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
@@ -448,11 +449,27 @@ static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *ma
 
 static void test_NtQueryDirectoryFile(void)
 {
+    static const struct
+    {
+        const WCHAR *mask;
+        int found[ARRAY_SIZE(testfiles)];
+        BOOL todo_missing;
+    }
+    mask_tests[] =
+    {
+        {L"*.", {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}, TRUE},
+        {L"*.*", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}, TRUE},
+        {L"*.**", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}, TRUE},
+        {L"*", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"**", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"??.???", {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0}},
+    };
+
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING ntdirname, mask;
     char testdirA[MAX_PATH], buffer[MAX_PATH];
     WCHAR testdirW[MAX_PATH];
-    int i;
+    int i, j;
     IO_STATUS_BLOCK io;
     WCHAR short_name[12];
     UINT data_size;
@@ -492,6 +509,19 @@ static void test_NtQueryDirectoryFile(void)
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, FALSE);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, TRUE, TRUE);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, TRUE, FALSE);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(mask_tests); ++i)
+    {
+        winetest_push_context("mask %s", debugstr_w(mask_tests[i].mask));
+        RtlInitUnicodeString(&mask, mask_tests[i].mask);
+        test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, TRUE);
+        for (j = 0; j < test_dir_count; j++)
+        {
+            todo_wine_if(mask_tests[i].todo_missing && !mask_tests[i].found[j])
+            ok(testfiles[j].nfound == mask_tests[i].found[j], "%S, got %d.\n", testfiles[j].name, testfiles[j].nfound);
+        }
+        winetest_pop_context();
     }
 
     /* short path passed as mask */
