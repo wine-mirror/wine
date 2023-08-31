@@ -267,6 +267,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
     struct instrument *instrument_object;
+    struct region *instrument_region;
     HRESULT ret;
     BOOL on_heap;
     HANDLE download;
@@ -312,22 +313,24 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
     instrument_info->ulCopyrightIdx = 0; /* FIXME */
     instrument_info->ulFlags = 0; /* FIXME */
 
-    for (i = 0;  i < nb_regions; i++)
+    i = 0;
+    LIST_FOR_EACH_ENTRY(instrument_region, &instrument_object->regions, struct region, entry)
     {
         DMUS_REGION *region = (DMUS_REGION*)(data + offset);
 
         offset_table->ulOffsetTable[1 + i] = offset;
         offset += sizeof(DMUS_REGION);
-        region->RangeKey = instrument_object->regions[i].header.RangeKey;
-        region->RangeVelocity = instrument_object->regions[i].header.RangeVelocity;
-        region->fusOptions = instrument_object->regions[i].header.fusOptions;
-        region->usKeyGroup = instrument_object->regions[i].header.usKeyGroup;
+        region->RangeKey = instrument_region->header.RangeKey;
+        region->RangeVelocity = instrument_region->header.RangeVelocity;
+        region->fusOptions = instrument_region->header.fusOptions;
+        region->usKeyGroup = instrument_region->header.usKeyGroup;
         region->ulRegionArtIdx = 0; /* FIXME */
         region->ulNextRegionIdx = i != (nb_regions - 1) ? (i + 2) : 0;
         region->ulFirstExtCkIdx = 0; /* FIXME */
-        region->WaveLink = instrument_object->regions[i].wave_link;
-        region->WSMP = instrument_object->regions[i].wave_sample;
-        region->WLOOP[0] = instrument_object->regions[i].wave_loop;
+        region->WaveLink = instrument_region->wave_link;
+        region->WSMP = instrument_region->wave_sample;
+        region->WLOOP[0] = instrument_region->wave_loop;
+        i++;
     }
 
     ret = IDirectMusicSynth8_Download(This->synth, &download, (void*)data, &on_heap);

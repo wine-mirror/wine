@@ -84,13 +84,18 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
     if (!ref)
     {
         struct articulation *articulation, *next_articulation;
-
-        free(This->regions);
+        struct region *region, *next_region;
 
         LIST_FOR_EACH_ENTRY_SAFE(articulation, next_articulation, &This->articulations, struct articulation, entry)
         {
             list_remove(&articulation->entry);
             free(articulation);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(region, next_region, &This->regions, struct region, entry)
+        {
+            list_remove(&region->entry);
+            free(region);
         }
 
         free(This);
@@ -139,6 +144,7 @@ HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
     instrument->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
     instrument->ref = 1;
     list_init(&instrument->articulations);
+    list_init(&instrument->regions);
 
     TRACE("Created DirectMusicInstrument %p\n", instrument);
     *ret_iface = &instrument->IDirectMusicInstrument_iface;
@@ -186,18 +192,20 @@ static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
     return ret;
 }
 
-static HRESULT load_region(struct instrument *This, IStream *stream, instrument_region *region, ULONG length)
+static HRESULT load_region(struct instrument *This, IStream *stream, ULONG length)
 {
+    struct region *region;
     HRESULT ret;
     DMUS_PRIVATE_CHUNK chunk;
 
-    TRACE("(%p, %p, %p, %lu)\n", This, stream, region, length);
+    TRACE("(%p, %p, %lu)\n", This, stream, length);
+
+    if (!(region = malloc(sizeof(*region)))) return E_OUTOFMEMORY;
 
     while (length)
     {
         ret = read_from_stream(stream, &chunk, sizeof(chunk));
-        if (FAILED(ret))
-            return ret;
+        if (FAILED(ret)) goto failed;
 
         length = subtract_bytes(length, sizeof(chunk));
 
@@ -207,8 +215,7 @@ static HRESULT load_region(struct instrument *This, IStream *stream, instrument_
                 TRACE("RGNH chunk (region header): %lu bytes\n", chunk.dwSize);
 
                 ret = read_from_stream(stream, &region->header, sizeof(region->header));
-                if (FAILED(ret))
-                    return ret;
+                if (FAILED(ret)) goto failed;
 
                 length = subtract_bytes(length, sizeof(region->header));
                 break;
@@ -217,16 +224,14 @@ static HRESULT load_region(struct instrument *This, IStream *stream, instrument_
                 TRACE("WSMP chunk (wave sample): %lu bytes\n", chunk.dwSize);
 
                 ret = read_from_stream(stream, &region->wave_sample, sizeof(region->wave_sample));
-                if (FAILED(ret))
-                    return ret;
+                if (FAILED(ret)) goto failed;
                 length = subtract_bytes(length, sizeof(region->wave_sample));
 
                 if (!(region->loop_present = (chunk.dwSize != sizeof(region->wave_sample))))
                     break;
 
                 ret = read_from_stream(stream, &region->wave_loop, sizeof(region->wave_loop));
-                if (FAILED(ret))
-                    return ret;
+                if (FAILED(ret)) goto failed;
 
                 length = subtract_bytes(length, sizeof(region->wave_loop));
                 break;
@@ -235,8 +240,7 @@ static HRESULT load_region(struct instrument *This, IStream *stream, instrument_
                 TRACE("WLNK chunk (wave link): %lu bytes\n", chunk.dwSize);
 
                 ret = read_from_stream(stream, &region->wave_link, sizeof(region->wave_link));
-                if (FAILED(ret))
-                    return ret;
+                if (FAILED(ret)) goto failed;
 
                 length = subtract_bytes(length, sizeof(region->wave_link));
                 break;
@@ -245,15 +249,19 @@ static HRESULT load_region(struct instrument *This, IStream *stream, instrument_
                 TRACE("Unknown chunk %s (skipping): %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
 
                 ret = advance_stream(stream, chunk.dwSize);
-                if (FAILED(ret))
-                    return ret;
+                if (FAILED(ret)) goto failed;
 
                 length = subtract_bytes(length, chunk.dwSize);
                 break;
         }
     }
 
+    list_add_tail(&This->regions, &region->entry);
     return S_OK;
+
+failed:
+    free(region);
+    return ret;
 }
 
 static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG length)
@@ -287,7 +295,6 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
     struct instrument *This = impl_from_IDirectMusicInstrument(iface);
     HRESULT hr;
     DMUS_PRIVATE_CHUNK chunk;
-    ULONG i = 0;
     ULONG length = This->length;
 
     TRACE("(%p, %p): offset = 0x%s, length = %lu)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart), This->length);
@@ -301,10 +308,6 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
         WARN("IStream_Seek failed: %08lx\n", hr);
         return DMUS_E_UNSUPPORTED_STREAM;
     }
-
-    This->regions = malloc(sizeof(*This->regions) * This->header.cRegions);
-    if (!This->regions)
-        return E_OUTOFMEMORY;
 
     while (length)
     {
@@ -362,7 +365,7 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
                             if (chunk.fccID == FOURCC_RGN)
                             {
                                 TRACE("RGN chunk (region): %lu bytes\n", chunk.dwSize);
-                                hr = load_region(This, stream, &This->regions[i++], chunk.dwSize - sizeof(chunk.fccID));
+                                hr = load_region(This, stream, chunk.dwSize - sizeof(chunk.fccID));
                             }
                             else
                             {
@@ -431,8 +434,5 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
     return S_OK;
 
 error:
-    free(This->regions);
-    This->regions = NULL;
-
     return DMUS_E_UNSUPPORTED_STREAM;
 }
