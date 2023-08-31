@@ -40,6 +40,8 @@ struct synth_port {
     DMUS_PORTPARAMS params;
     int nrofgroups;
     DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
+
+    DWORD next_dlid;
 };
 
 static inline IDirectMusicDownloadedInstrumentImpl* impl_from_IDirectMusicDownloadedInstrument(IDirectMusicDownloadedInstrument *iface)
@@ -595,11 +597,17 @@ static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownloa
     return S_OK;
 }
 
-static HRESULT WINAPI synth_port_download_GetDLId(IDirectMusicPortDownload *iface, DWORD *start_DLId, DWORD count)
+static HRESULT WINAPI synth_port_download_GetDLId(IDirectMusicPortDownload *iface, DWORD *first, DWORD count)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    FIXME("(%p/%p, %p, %lu): stub\n", iface, This, start_DLId, count);
+    TRACE("(%p/%p, %p, %lu)\n", iface, This, first, count);
+
+    if (!first) return E_POINTER;
+    if (!count) return E_INVALIDARG;
+
+    *first = This->next_dlid;
+    This->next_dlid += count;
 
     return S_OK;
 }

@@ -1081,14 +1081,14 @@ static void test_port_download(void)
 
     /* GetDLId allocates the given number of slots and returns only the first */
     hr = IDirectMusicPortDownload_GetDLId(port, NULL, 0);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_GetDLId(port, ids, 0);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     memset(ids, 0xcc, sizeof(ids));
     hr = IDirectMusicPortDownload_GetDLId(port, ids, 4);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(ids[0] == 0, "got %#lx\n", ids[0]);
+    ok(ids[0] == 0, "got %#lx\n", ids[0]);
     ok(ids[1] == 0xcccccccc, "got %#lx\n", ids[1]);
 
     /* GetBuffer looks up allocated ids to find downloaded buffers */
@@ -1168,7 +1168,7 @@ static void test_port_download(void)
     /* DLIds are never released */
     hr = IDirectMusicPortDownload_GetDLId(port, ids, 1);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(ids[0] == 4, "got %#lx\n", ids[0]);
+    ok(ids[0] == 4, "got %#lx\n", ids[0]);
 
     IDirectMusicDownload_Release(download);
 
