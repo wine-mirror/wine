@@ -236,7 +236,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   __ASM_CFI(".cfi_same_value %ebp\n\t")
                   "ret")
 
-void CDECL DECLSPEC_HIDDEN chkesp_fail(void)
+void CDECL chkesp_fail(void)
 {
   ERR("Stack pointer incorrect after last function call - Bad prototype/spec entry?\n");
   DebugBreak();

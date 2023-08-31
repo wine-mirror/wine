@@ -33,7 +33,7 @@
 #undef strncpy
 #undef wcsncpy
 
-extern BOOL sse2_supported DECLSPEC_HIDDEN;
+extern BOOL sse2_supported;
 
 #define DBL80_MAX_10_EXP 4932
 #define DBL80_MIN_10_EXP -4951
@@ -128,7 +128,7 @@ void msvcrt_free_handler4(void);
 #endif
 
 /* TLS data */
-extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
+extern DWORD msvcrt_tls_index;
 
 #define LOCALE_FREE     0x1
 #define LOCALE_THREAD   0x2
@@ -184,20 +184,20 @@ struct __thread_data {
 
 typedef struct __thread_data thread_data_t;
 
-extern thread_data_t *CDECL msvcrt_get_thread_data(void) DECLSPEC_HIDDEN;
+extern thread_data_t *CDECL msvcrt_get_thread_data(void);
 
-BOOL locale_to_sname(const char*, unsigned short*, BOOL*, WCHAR*) DECLSPEC_HIDDEN;
-extern _locale_t MSVCRT_locale DECLSPEC_HIDDEN;
-extern __lc_time_data cloc_time_data DECLSPEC_HIDDEN;
+BOOL locale_to_sname(const char*, unsigned short*, BOOL*, WCHAR*);
+extern _locale_t MSVCRT_locale;
+extern __lc_time_data cloc_time_data;
 extern unsigned int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern WORD MSVCRT__ctype [257];
-extern BOOL initial_locale DECLSPEC_HIDDEN;
+extern BOOL initial_locale;
 extern WORD *MSVCRT__pwctype;
 
-void msvcrt_set_errno(int) DECLSPEC_HIDDEN;
+void msvcrt_set_errno(int);
 #if _MSVCR_VER >= 80
-void throw_bad_alloc(void) DECLSPEC_HIDDEN;
+void throw_bad_alloc(void);
 #endif
 
 void __cdecl _purecall(void);
@@ -206,10 +206,10 @@ void __cdecl _amsg_exit(int errnum);
 extern char **MSVCRT__environ;
 extern wchar_t **MSVCRT__wenviron;
 
-extern char ** msvcrt_SnapshotOfEnvironmentA(char **) DECLSPEC_HIDDEN;
-extern wchar_t ** msvcrt_SnapshotOfEnvironmentW(wchar_t **) DECLSPEC_HIDDEN;
+extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
+extern wchar_t ** msvcrt_SnapshotOfEnvironmentW(wchar_t **);
 
-wchar_t *msvcrt_wstrdupa(const char *) DECLSPEC_HIDDEN;
+wchar_t *msvcrt_wstrdupa(const char *);
 
 extern unsigned int MSVCRT__commode;
 
@@ -224,31 +224,31 @@ typedef void* (__cdecl *malloc_func_t)(size_t);
 typedef void  (__cdecl *free_func_t)(void*);
 
 /* Setup and teardown multi threaded locks */
-extern void msvcrt_init_mt_locks(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_locks(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_mt_locks(void);
+extern void msvcrt_free_locks(void);
 
-extern void msvcrt_init_exception(void*) DECLSPEC_HIDDEN;
-extern BOOL msvcrt_init_locale(void) DECLSPEC_HIDDEN;
-extern void msvcrt_init_math(void*) DECLSPEC_HIDDEN;
-extern void msvcrt_init_io(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_io(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_console(void) DECLSPEC_HIDDEN;
-extern void msvcrt_init_args(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_args(void) DECLSPEC_HIDDEN;
-extern void msvcrt_init_signals(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_signals(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_popen_data(void) DECLSPEC_HIDDEN;
-extern BOOL msvcrt_init_heap(void) DECLSPEC_HIDDEN;
-extern void msvcrt_destroy_heap(void) DECLSPEC_HIDDEN;
-extern void msvcrt_init_clock(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_exception(void*);
+extern BOOL msvcrt_init_locale(void);
+extern void msvcrt_init_math(void*);
+extern void msvcrt_init_io(void);
+extern void msvcrt_free_io(void);
+extern void msvcrt_free_console(void);
+extern void msvcrt_init_args(void);
+extern void msvcrt_free_args(void);
+extern void msvcrt_init_signals(void);
+extern void msvcrt_free_signals(void);
+extern void msvcrt_free_popen_data(void);
+extern BOOL msvcrt_init_heap(void);
+extern void msvcrt_destroy_heap(void);
+extern void msvcrt_init_clock(void);
 
 #if _MSVCR_VER >= 100
-extern void msvcrt_init_concurrency(void*) DECLSPEC_HIDDEN;
-extern void msvcrt_free_concurrency(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_scheduler_thread(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_concurrency(void*);
+extern void msvcrt_free_concurrency(void);
+extern void msvcrt_free_scheduler_thread(void);
 #endif
 
-extern BOOL msvcrt_create_io_inherit_block(WORD*, BYTE**) DECLSPEC_HIDDEN;
+extern BOOL msvcrt_create_io_inherit_block(WORD*, BYTE**);
 
 /* run-time error codes */
 #define _RT_STACK       0
@@ -299,14 +299,14 @@ extern FILE MSVCRT__iob[];
 
 #define _MAX__TIME64_T    (((__time64_t)0x00000007 << 32) | 0x93406FFF)
 
-_locale_t CDECL get_current_locale_noalloc(_locale_t locale) DECLSPEC_HIDDEN;
-void CDECL free_locale_noalloc(_locale_t locale) DECLSPEC_HIDDEN;
-pthreadlocinfo CDECL get_locinfo(void) DECLSPEC_HIDDEN;
-pthreadmbcinfo CDECL get_mbcinfo(void) DECLSPEC_HIDDEN;
-threadmbcinfo* create_mbcinfo(int, LCID, threadmbcinfo*) DECLSPEC_HIDDEN;
-void free_locinfo(pthreadlocinfo) DECLSPEC_HIDDEN;
-void free_mbcinfo(pthreadmbcinfo) DECLSPEC_HIDDEN;
-int __cdecl __crtLCMapStringA(LCID, DWORD, const char*, int, char*, int, unsigned int, int) DECLSPEC_HIDDEN;
+_locale_t CDECL get_current_locale_noalloc(_locale_t locale);
+void CDECL free_locale_noalloc(_locale_t locale);
+pthreadlocinfo CDECL get_locinfo(void);
+pthreadmbcinfo CDECL get_mbcinfo(void);
+threadmbcinfo* create_mbcinfo(int, LCID, threadmbcinfo*);
+void free_locinfo(pthreadlocinfo);
+void free_mbcinfo(pthreadmbcinfo);
+int __cdecl __crtLCMapStringA(LCID, DWORD, const char*, int, char*, int, unsigned int, int);
 
 enum fpmod {
     FP_ROUND_ZERO, /* only used when dropped part contains only zeros */
@@ -324,8 +324,8 @@ struct fpnum {
     enum fpmod mod;
 };
 struct fpnum fpnum_parse(wchar_t (*)(void*), void (*)(void*),
-        void*, pthreadlocinfo, BOOL) DECLSPEC_HIDDEN;
-int fpnum_double(struct fpnum*, double*) DECLSPEC_HIDDEN;
+        void*, pthreadlocinfo, BOOL);
+int fpnum_double(struct fpnum*, double*);
 /* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)
  *      #define MSVCRT_INVALID_PMT(x) MSVCRT_call_invalid_parameter_handler(x, __FUNCTION__, __FILE__, __LINE__, 0)
  *      #define MSVCRT_CHECK_PMT(x)   ((x) ? TRUE : MSVCRT_INVALID_PMT(#x),FALSE)
@@ -349,13 +349,13 @@ typedef union _printf_arg
 } printf_arg;
 typedef printf_arg (*args_clbk)(void*, int, int, va_list*);
 int pf_printf_a(puts_clbk_a, void*, const char*, _locale_t,
-        DWORD, args_clbk, void*, va_list*) DECLSPEC_HIDDEN;
+        DWORD, args_clbk, void*, va_list*);
 int pf_printf_w(puts_clbk_w, void*, const wchar_t*, _locale_t,
-        DWORD, args_clbk, void*, va_list*) DECLSPEC_HIDDEN;
-int create_positional_ctx_a(void*, const char*, va_list) DECLSPEC_HIDDEN;
-int create_positional_ctx_w(void*, const wchar_t*, va_list) DECLSPEC_HIDDEN;
-printf_arg arg_clbk_valist(void*, int, int, va_list*) DECLSPEC_HIDDEN;
-printf_arg arg_clbk_positional(void*, int, int, va_list*) DECLSPEC_HIDDEN;
+        DWORD, args_clbk, void*, va_list*);
+int create_positional_ctx_a(void*, const char*, va_list);
+int create_positional_ctx_w(void*, const wchar_t*, va_list);
+printf_arg arg_clbk_valist(void*, int, int, va_list*);
+printf_arg arg_clbk_positional(void*, int, int, va_list*);
 
 extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,unsigned short int);
 

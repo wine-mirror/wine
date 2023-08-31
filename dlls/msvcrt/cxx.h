@@ -315,8 +315,8 @@ typedef struct
     LONG *ref; /* not binary compatible with native msvcr100 */
 } exception_ptr;
 
-void throw_exception(const char*) DECLSPEC_HIDDEN;
-void exception_ptr_from_record(exception_ptr*,EXCEPTION_RECORD*) DECLSPEC_HIDDEN;
+void throw_exception(const char*);
+void exception_ptr_from_record(exception_ptr*,EXCEPTION_RECORD*);
 
 void __cdecl __ExceptionPtrCreate(exception_ptr*);
 void __cdecl __ExceptionPtrDestroy(exception_ptr*);

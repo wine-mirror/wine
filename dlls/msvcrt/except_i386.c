@@ -144,7 +144,7 @@ typedef struct
 DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                                const cxx_function_descr *descr,
-                               catch_func_nested_frame* nested_frame ) DECLSPEC_HIDDEN;
+                               catch_func_nested_frame* nested_frame );
 
 /* call a copy constructor */
 extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
@@ -1025,7 +1025,7 @@ typedef void (__stdcall *MSVCRT_unwind_function)(const _JUMP_BUFFER *);
  *		_setjmp (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp)
-int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp(_JUMP_BUFFER *jmp)
+int CDECL __regs_MSVCRT__setjmp(_JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == ~0UL)
@@ -1042,7 +1042,7 @@ int CDECL DECLSPEC_HIDDEN __regs_MSVCRT__setjmp(_JUMP_BUFFER *jmp)
  *		_setjmp3 (MSVCRT.@)
  */
 DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 )
-int WINAPIV DECLSPEC_HIDDEN __regs_MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, ...)
+int WINAPIV __regs_MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;
