@@ -1115,33 +1115,33 @@ static void test_samplers(void)
         "sampler s;\n"
         "float4 main() : COLOR\n"
         "{\n"
-        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "    return tex2D(s, float2(0.75, 0.25));\n"
         "}",
 
         "SamplerState s;\n"
         "float4 main() : COLOR\n"
         "{\n"
-        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "    return tex2D(s, float2(0.75, 0.25));\n"
         "}",
 
         "sampler2D s;\n"
         "float4 main() : COLOR\n"
         "{\n"
-        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "    return tex2D(s, float2(0.75, 0.25));\n"
         "}",
 
         "sampler s;\n"
         "Texture2D t;\n"
         "float4 main() : COLOR\n"
         "{\n"
-        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "    return t.Sample(s, float2(0.75, 0.25));\n"
         "}",
 
         "SamplerState s;\n"
         "Texture2D t;\n"
         "float4 main() : COLOR\n"
         "{\n"
-        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "    return t.Sample(s, float2(0.75, 0.25));\n"
         "}",
     };
 
@@ -1161,7 +1161,7 @@ static void test_samplers(void)
 
     hr = IDirect3DDevice9_SetTexture(test_context.device, 0, (IDirect3DBaseTexture9 *)texture);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(test_context.device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    hr = IDirect3DDevice9_SetSamplerState(test_context.device, 0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -1174,7 +1174,7 @@ static void test_samplers(void)
             draw_quad(test_context.device, ps_code);
 
             v = get_color_vec4(test_context.device, 0, 0);
-            todo_wine ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 128),
+            todo_wine ok(compare_vec4(&v, 1.0f, 0.0f, 1.0f, 0.0f, 0),
                     "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
 
             ID3D10Blob_Release(ps_code);
