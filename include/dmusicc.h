@@ -635,7 +635,7 @@ DECLARE_INTERFACE_(IDirectMusicPortDownload,IUnknown)
 #define IDirectMusicPortDownload_GetDLId(p,a,b)        (p)->lpVtbl->GetDLId(p,a,b)
 #define IDirectMusicPortDownload_GetAppend(p,a)        (p)->lpVtbl->GetAppend(p,a)
 #define IDirectMusicPortDownload_Download(p,a)         (p)->lpVtbl->Download(p,a)
-#define IDirectMusicPortDownload_Unload(p,a)           (p)->lpVtbl->GetBuffer(p,a)
+#define IDirectMusicPortDownload_Unload(p,a)           (p)->lpVtbl->Unload(p,a)
 #endif
 
 
