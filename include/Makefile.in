@@ -843,6 +843,7 @@ SOURCES = \
 	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
 	windows.media.idl \
+	windows.media.render.idl \
 	windows.media.speechrecognition.idl \
 	windows.media.speechsynthesis.idl \
 	windows.networking.connectivity.idl \
