@@ -25,6 +25,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 static const GUID IID_IDirectMusicInstrumentPRIVATE = { 0xbcb20080, 0xa40c, 0x11d1, { 0x86, 0xbc, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef } };
 
+struct articulation
+{
+    struct list entry;
+    CONNECTIONLIST list;
+    CONNECTION connections[];
+};
+
+C_ASSERT(sizeof(struct articulation) == offsetof(struct articulation, connections[0]));
+
 static HRESULT WINAPI instrument_QueryInterface(LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ret_iface)
 {
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
@@ -74,12 +83,16 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 
     if (!ref)
     {
-        ULONG i;
+        struct articulation *articulation, *next_articulation;
 
         free(This->regions);
-        for (i = 0; i < This->nb_articulations; i++)
-            free(This->articulations->connections);
-        free(This->articulations);
+
+        LIST_FOR_EACH_ENTRY_SAFE(articulation, next_articulation, &This->articulations, struct articulation, entry)
+        {
+            list_remove(&articulation->entry);
+            free(articulation);
+        }
+
         free(This);
     }
 
@@ -125,6 +138,7 @@ HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
     if (!(instrument = calloc(1, sizeof(*instrument)))) return E_OUTOFMEMORY;
     instrument->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
     instrument->ref = 1;
+    list_init(&instrument->articulations);
 
     TRACE("Created DirectMusicInstrument %p\n", instrument);
     *ret_iface = &instrument->IDirectMusicInstrument_iface;
@@ -244,35 +258,27 @@ static HRESULT load_region(struct instrument *This, IStream *stream, instrument_
 
 static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG length)
 {
-    HRESULT ret;
-    instrument_articulation *articulation;
+    struct articulation *articulation;
+    CONNECTIONLIST list;
+    HRESULT hr;
+    UINT size;
 
-    This->articulations = realloc(This->articulations, sizeof(*This->articulations) * (This->nb_articulations + 1));
-    if (!This->articulations)
-        return E_OUTOFMEMORY;
+    if (FAILED(hr = read_from_stream(stream, &list, sizeof(list)))) return hr;
+    if (list.cbSize != sizeof(list)) return E_INVALIDARG;
 
-    articulation = &This->articulations[This->nb_articulations];
+    size = offsetof(struct articulation, connections[list.cConnections]);
+    if (!(articulation = malloc(size))) return E_OUTOFMEMORY;
+    articulation->list = list;
 
-    ret = read_from_stream(stream, &articulation->connections_list, sizeof(CONNECTIONLIST));
-    if (FAILED(ret))
-        return ret;
-
-    articulation->connections = malloc(sizeof(CONNECTION) * articulation->connections_list.cConnections);
-    if (!articulation->connections)
-        return E_OUTOFMEMORY;
-
-    ret = read_from_stream(stream, articulation->connections, sizeof(CONNECTION) * articulation->connections_list.cConnections);
-    if (FAILED(ret))
+    size = sizeof(CONNECTION) * list.cConnections;
+    if (FAILED(hr = read_from_stream(stream, articulation->connections, size))) free(articulation);
+    else
     {
-        free(articulation->connections);
-        return ret;
+        subtract_bytes(length, sizeof(list) + sizeof(CONNECTION) * list.cConnections);
+        list_add_tail(&This->articulations, &articulation->entry);
     }
 
-    subtract_bytes(length, sizeof(CONNECTIONLIST) + sizeof(CONNECTION) * articulation->connections_list.cConnections);
-
-    This->nb_articulations++;
-
-    return S_OK;
+    return hr;
 }
 
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */

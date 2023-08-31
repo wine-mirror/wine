@@ -79,11 +79,6 @@ typedef struct instrument_region {
     BOOL loop_present;
 } instrument_region;
 
-typedef struct instrument_articulation {
-    CONNECTIONLIST connections_list;
-    CONNECTION *connections;
-} instrument_articulation;
-
 /*****************************************************************************
  * ClassFactory
  */
@@ -186,8 +181,8 @@ struct instrument
     /* instrument data */
     BOOL loaded;
     instrument_region *regions;
-    ULONG nb_articulations;
-    instrument_articulation *articulations;
+
+    struct list articulations;
 };
 
 static inline struct instrument *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
