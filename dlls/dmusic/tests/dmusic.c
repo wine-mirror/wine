@@ -1122,7 +1122,7 @@ static void test_port_download(void)
     todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_Download(port, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_Download(port, download);
     todo_wine ok(hr == DMUS_E_UNKNOWNDOWNLOAD, "got %#lx\n", hr);
 
@@ -1145,7 +1145,7 @@ static void test_port_download(void)
     hr = IDirectMusicPortDownload_Download(port, download);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_Download(port, download);
-    todo_wine ok(hr == DMUS_E_ALREADY_DOWNLOADED, "got %#lx\n", hr);
+    ok(hr == DMUS_E_ALREADY_DOWNLOADED, "got %#lx\n", hr);
 
     tmp_download = invalid_ptr;
     hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
@@ -1154,7 +1154,7 @@ static void test_port_download(void)
     if (tmp_download != invalid_ptr) IDirectMusicDownload_Release(tmp_download);
 
     hr = IDirectMusicPortDownload_Unload(port, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_Unload(port, download);
     ok(hr == S_OK, "got %#lx\n", hr);
 

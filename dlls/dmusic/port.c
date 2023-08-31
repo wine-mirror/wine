@@ -25,6 +25,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
+struct download_entry
+{
+    struct list entry;
+    IDirectMusicDownload *download;
+    HANDLE handle;
+    DWORD id;
+};
+
 struct synth_port {
     IDirectMusicPort IDirectMusicPort_iface;
     IDirectMusicPortDownload IDirectMusicPortDownload_iface;
@@ -41,6 +49,7 @@ struct synth_port {
     int nrofgroups;
     DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
 
+    struct list downloads;
     DWORD next_dlid;
 };
 
@@ -190,6 +199,15 @@ static ULONG WINAPI synth_port_Release(IDirectMusicPort *iface)
 
     if (!ref)
     {
+        struct download_entry *entry, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->downloads, struct download_entry, entry)
+        {
+            list_remove(&entry->entry);
+            IDirectMusicDownload_Release(entry->download);
+            free(entry);
+        }
+
         dmusic_remove_port(This->parent, iface);
         IDirectMusicSynthSink_Release(This->synth_sink);
         IDirectMusicSynth_Activate(This->synth, FALSE);
@@ -624,22 +642,61 @@ static HRESULT WINAPI synth_port_download_GetAppend(IDirectMusicPortDownload *if
     return S_OK;
 }
 
-static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *iface, IDirectMusicDownload *IDMDownload)
+static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *iface, IDirectMusicDownload *download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
+    struct download_entry *entry;
+    DMUS_DOWNLOADINFO *info;
+    HANDLE handle;
+    BOOL can_free;
+    DWORD size;
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, IDMDownload);
+    TRACE("(%p/%p)->(%p)\n", iface, This, download);
 
-    return S_OK;
+    if (!download) return E_POINTER;
+
+    LIST_FOR_EACH_ENTRY(entry, &This->downloads, struct download_entry, entry)
+        if (entry->download == download) return DMUS_E_ALREADY_DOWNLOADED;
+
+    if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
+    if (SUCCEEDED(hr = IDirectMusicDownload_GetBuffer(download, (void **)&info, &size))
+            && SUCCEEDED(hr = IDirectMusicSynth_Download(This->synth, &handle, info, &can_free)))
+    {
+        entry->download = download;
+        IDirectMusicDownload_AddRef(download);
+        entry->id = info->dwDLId;
+        entry->handle = handle;
+        list_add_tail(&This->downloads, &entry->entry);
+    }
+
+    if (FAILED(hr)) free(entry);
+    return hr;
 }
 
-static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface, IDirectMusicDownload *IDMDownload)
+static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface, IDirectMusicDownload *download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
+    struct download_entry *entry;
+    HANDLE handle = 0;
 
-    FIXME("(%p/%p)->(%p): stub\n", iface, This, IDMDownload);
+    TRACE("(%p/%p)->(%p)\n", iface, This, download);
 
-    return S_OK;
+    if (!download) return E_POINTER;
+
+    LIST_FOR_EACH_ENTRY(entry, &This->downloads, struct download_entry, entry)
+    {
+        if (entry->download == download)
+        {
+            list_remove(&entry->entry);
+            IDirectMusicDownload_Release(entry->download);
+            handle = entry->handle;
+            free(entry);
+            break;
+        }
+    }
+
+    return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
 }
 
 static const IDirectMusicPortDownloadVtbl synth_port_download_vtbl = {
@@ -795,6 +852,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     obj->parent = parent;
     obj->active = FALSE;
     obj->params = *port_params;
+    list_init(&obj->downloads);
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth,
             (void **)&obj->synth);
