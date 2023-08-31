@@ -151,47 +151,6 @@ HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
     return S_OK;
 }
 
-static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
-{
-    ULONG bytes_read;
-    HRESULT hr;
-
-    hr = IStream_Read(stream, data, size, &bytes_read);
-    if(FAILED(hr)){
-        TRACE("IStream_Read failed: %08lx\n", hr);
-        return hr;
-    }
-    if (bytes_read < size) {
-        TRACE("Didn't read full chunk: %lu < %lu\n", bytes_read, size);
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
-static inline DWORD subtract_bytes(DWORD len, DWORD bytes)
-{
-    if(bytes > len){
-        TRACE("Apparent mismatch in chunk lengths? %lu bytes remaining, %lu bytes read\n", len, bytes);
-        return 0;
-    }
-    return len - bytes;
-}
-
-static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
-{
-    LARGE_INTEGER move;
-    HRESULT ret;
-
-    move.QuadPart = bytes;
-
-    ret = IStream_Seek(stream, move, STREAM_SEEK_CUR, NULL);
-    if (FAILED(ret))
-        WARN("IStream_Seek failed: %08lx\n", ret);
-
-    return ret;
-}
-
 static HRESULT parse_art1_chunk(struct instrument *This, IStream *stream, struct chunk_entry *chunk)
 {
     struct articulation *articulation;
@@ -308,13 +267,45 @@ static HRESULT parse_lrgn_list(struct instrument *This, IStream *stream, struct 
     return hr;
 }
 
+static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case FOURCC_INSH:
+        case FOURCC_DLID:
+            /* Instrument header and id are already set so just skip */
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LRGN):
+            hr = parse_lrgn_list(This, stream, &chunk);
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LART):
+            hr = parse_lart_list(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
 HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
 {
     struct instrument *This = impl_from_IDirectMusicInstrument(iface);
+    struct chunk_entry chunk = {0};
     HRESULT hr;
-    DMUS_PRIVATE_CHUNK chunk;
-    ULONG length = This->length;
 
     TRACE("(%p, %p): offset = 0x%s, length = %lu)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart), This->length);
 
@@ -328,90 +319,26 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
         return DMUS_E_UNSUPPORTED_STREAM;
     }
 
-    while (length)
+    if ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
     {
-        hr = read_from_stream(stream, &chunk, sizeof(chunk));
-        if (FAILED(hr))
-            goto error;
-
-        length = subtract_bytes(length, sizeof(chunk) + chunk.dwSize);
-
-        switch (chunk.fccID)
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
-            case FOURCC_INSH:
-            case FOURCC_DLID:
-                TRACE("Chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
+            hr = parse_ins_chunk(This, stream, &chunk);
+            break;
 
-                /* Instrument header and id are already set so just skip */
-                hr = advance_stream(stream, chunk.dwSize);
-                if (FAILED(hr))
-                    goto error;
-
-                break;
-
-            case FOURCC_LIST: {
-                DWORD size = chunk.dwSize;
-
-                TRACE("LIST chunk: %lu bytes\n", chunk.dwSize);
-
-                hr = read_from_stream(stream, &chunk.fccID, sizeof(chunk.fccID));
-                if (FAILED(hr))
-                    goto error;
-
-                size = subtract_bytes(size, sizeof(chunk.fccID));
-
-                switch (chunk.fccID)
-                {
-                    case FOURCC_LRGN:
-                    {
-                        static const LARGE_INTEGER zero = {0};
-                        struct chunk_entry list_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
-                        TRACE("LRGN chunk (regions list): %lu bytes\n", size);
-                        IStream_Seek(stream, zero, STREAM_SEEK_CUR, &list_chunk.offset);
-                        list_chunk.offset.QuadPart -= 12;
-                        hr = parse_lrgn_list(This, stream, &list_chunk);
-                        break;
-                    }
-
-                    case FOURCC_LART:
-                    {
-                        static const LARGE_INTEGER zero = {0};
-                        struct chunk_entry list_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
-                        TRACE("LART chunk (articulations list): %lu bytes\n", size);
-                        IStream_Seek(stream, zero, STREAM_SEEK_CUR, &list_chunk.offset);
-                        list_chunk.offset.QuadPart -= 12;
-                        hr = parse_lart_list(This, stream, &list_chunk);
-                        break;
-                    }
-
-                    default:
-                        TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-
-                        hr = advance_stream(stream, chunk.dwSize - sizeof(chunk.fccID));
-                        if (FAILED(hr))
-                            goto error;
-
-                        size = subtract_bytes(size, chunk.dwSize - sizeof(chunk.fccID));
-                        break;
-                }
-                break;
-            }
-
-            default:
-                TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-
-                hr = advance_stream(stream, chunk.dwSize);
-                if (FAILED(hr))
-                    goto error;
-
-                break;
+        default:
+            WARN("Invalid instrument chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            goto error;
         }
     }
 
-    This->loaded = TRUE;
+    if (FAILED(hr)) goto error;
 
+    This->loaded = TRUE;
     return S_OK;
 
 error:
+    stream_skip_chunk(stream, &chunk);
     return DMUS_E_UNSUPPORTED_STREAM;
 }
