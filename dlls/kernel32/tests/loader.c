@@ -328,7 +328,6 @@ static DWORD create_test_dll_sections( const IMAGE_DOS_HEADER *dos_header, const
 static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header,
                                  const void *section_data )
 {
-    static BOOL is_winxp;
     SECTION_BASIC_INFORMATION info;
     SECTION_IMAGE_INFORMATION image;
     const IMAGE_COR20_HEADER *cor_header = NULL;
@@ -339,8 +338,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     LARGE_INTEGER map_size;
     SIZE_T max_stack, commit_stack;
     void *entry_point;
-
-    /* truncated header is not handled correctly in windows <= w2k3 */
     BOOL truncated;
 
     file = CreateFileA( dll_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
@@ -400,17 +397,14 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         "%u: TransferAddress wrong %p / %p (%08lx)\n", id,
         image.TransferAddress, entry_point, nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08lx\n", id, image.ZeroBits );
-    ok( image.MaximumStackSize == max_stack || broken(truncated),
+    ok( image.MaximumStackSize == max_stack,
         "%u: MaximumStackSize wrong %Ix / %Ix\n", id, image.MaximumStackSize, max_stack );
-    ok( image.CommittedStackSize == commit_stack || broken(truncated),
+    ok( image.CommittedStackSize == commit_stack,
         "%u: CommittedStackSize wrong %Ix / %Ix\n", id, image.CommittedStackSize, commit_stack );
-    if (truncated)
-        ok( !image.SubSystemType || broken(truncated),
-            "%u: SubSystemType wrong %08lx / 00000000\n", id, image.SubSystemType );
-    else
-        ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
-            "%u: SubSystemType wrong %08lx / %08x\n", id,
-            image.SubSystemType, nt_header->OptionalHeader.Subsystem );
+    todo_wine_if( truncated )
+    ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
+        "%u: SubSystemType wrong %08lx / %08x\n", id,
+        image.SubSystemType, nt_header->OptionalHeader.Subsystem );
     ok( image.MinorSubsystemVersion == nt_header->OptionalHeader.MinorSubsystemVersion,
         "%u: MinorSubsystemVersion wrong %04x / %04x\n", id,
         image.MinorSubsystemVersion, nt_header->OptionalHeader.MinorSubsystemVersion );
@@ -427,15 +421,15 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     ok( image.ImageCharacteristics == nt_header->FileHeader.Characteristics,
         "%u: ImageCharacteristics wrong %04x / %04x\n", id,
         image.ImageCharacteristics, nt_header->FileHeader.Characteristics );
-    ok( image.DllCharacteristics == nt_header->OptionalHeader.DllCharacteristics || broken(truncated),
+    ok( image.DllCharacteristics == nt_header->OptionalHeader.DllCharacteristics,
         "%u: DllCharacteristics wrong %04x / %04x\n", id,
         image.DllCharacteristics, nt_header->OptionalHeader.DllCharacteristics );
     ok( image.Machine == nt_header->FileHeader.Machine, "%u: Machine wrong %04x / %04x\n", id,
         image.Machine, nt_header->FileHeader.Machine );
     ok( image.LoaderFlags == (cor_header != NULL), "%u: LoaderFlags wrong %08lx\n", id, image.LoaderFlags );
-    ok( image.ImageFileSize == file_size || broken(!image.ImageFileSize), /* winxpsp1 */
+    ok( image.ImageFileSize == file_size,
         "%u: ImageFileSize wrong %08lx / %08lx\n", id, image.ImageFileSize, file_size );
-    ok( image.CheckSum == nt_header->OptionalHeader.CheckSum || broken(truncated),
+    ok( image.CheckSum == nt_header->OptionalHeader.CheckSum,
         "%u: CheckSum wrong %08lx / %08lx\n", id,
         image.CheckSum, nt_header->OptionalHeader.CheckSum );
 
@@ -455,11 +449,11 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         (cor_header->MajorRuntimeVersion > 2 ||
          (cor_header->MajorRuntimeVersion == 2 && cor_header->MinorRuntimeVersion >= 5)))
     {
-        ok( image.ComPlusILOnly || broken(is_winxp),
+        ok( image.ComPlusILOnly,
             "%u: wrong ComPlusILOnly flags %02x\n", id, image.ImageFlags );
         if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
             !(cor_header->Flags & COMIMAGE_FLAGS_32BITREQUIRED))
-            ok( image.ComPlusNativeReady || broken(is_winxp),
+            ok( image.ComPlusNativeReady,
                 "%u: wrong ComPlusNativeReady flags %02x\n", id, image.ImageFlags );
         else
             ok( !image.ComPlusNativeReady,
@@ -481,17 +475,14 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     if (!(nt_header->OptionalHeader.SectionAlignment % page_size))
         ok( !image.ImageMappedFlat, "%u: wrong ImageMappedFlat flags %02x\n", id, image.ImageFlags );
     else
-    {
-        /* winxp doesn't support any of the loader flags */
-        if (!image.ImageMappedFlat) is_winxp = TRUE;
-        ok( image.ImageMappedFlat || broken(is_winxp),
+        ok( image.ImageMappedFlat,
         "%u: wrong ImageMappedFlat flags %02x\n", id, image.ImageFlags );
-    }
+
     if (!(nt_header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
         ok( !image.ImageDynamicallyRelocated || broken( image.ComPlusILOnly ), /* <= win7 */
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
     else if (image.ImageContainsCode && !cor_header)
-        ok( image.ImageDynamicallyRelocated || broken(is_winxp),
+        ok( image.ImageDynamicallyRelocated,
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
     else
         ok( !image.ImageDynamicallyRelocated || broken(TRUE), /* <= win8 */
@@ -695,15 +686,12 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
         else if (!lstrcmpiW( path, load_fallback_name ))
         {
             trace( "%u: loaded fallback\n", line );
-            if (!expect_status)
-                ok( expect_fallback ||
-                    /* win10 also falls back for 32-bit dll without code, even though it could be loaded */
-                    (is_win64 && !has_code &&
-                     nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC),
-                    "%u: got fallback but expected test dll\n", line );
-            else
-                ok( broken(expect_status == STATUS_INVALID_IMAGE_FORMAT), /* <= vista */
-                    "%u: got fallback but expected failure %lx\n", line, expect_status );
+            ok( !expect_status, "%u: got fallback but expected failure %lx\n", line, expect_status );
+            ok( expect_fallback ||
+                /* win10 also falls back for 32-bit dll without code, even though it could be loaded */
+                (is_win64 && !has_code &&
+                 nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC),
+                "%u: got fallback but expected test dll\n", line );
         }
         else ok( 0, "%u: got unexpected path %s instead of %s\n", line, wine_dbgstr_w(path), wine_dbgstr_w(load_test_name));
         pLdrUnloadDll( ldr_mod );
@@ -1067,53 +1055,35 @@ static void test_Loader(void)
 
             SetLastError(0xdeadbeef);
             hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE);
-            if (!((ULONG_PTR)hlib_as_data_file & 3) ||  /* winxp */
-                (!hlib_as_data_file && GetLastError() == ERROR_INVALID_PARAMETER))  /* w2k3 */
-            {
-                win_skip( "LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE not supported\n" );
-                FreeLibrary(hlib_as_data_file);
-            }
-            else
-            {
-                ok(hlib_as_data_file != 0, "LoadLibraryEx error %lu\n", GetLastError());
+            ok(hlib_as_data_file != 0, "LoadLibraryEx error %lu\n", GetLastError());
 
-                SetLastError(0xdeadbeef);
-                h = CreateFileA( dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-                ok( h == INVALID_HANDLE_VALUE, "open succeeded\n" );
-                ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error %lu\n", GetLastError() );
-                CloseHandle( h );
+            SetLastError(0xdeadbeef);
+            h = CreateFileA( dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+            ok( h == INVALID_HANDLE_VALUE, "open succeeded\n" );
+            ok( GetLastError() == ERROR_SHARING_VIOLATION, "wrong error %lu\n", GetLastError() );
+            CloseHandle( h );
 
-                SetLastError(0xdeadbeef);
-                h = CreateFileA( dll_name, GENERIC_READ | DELETE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-                ok( h != INVALID_HANDLE_VALUE, "open failed err %lu\n", GetLastError() );
-                CloseHandle( h );
+            SetLastError(0xdeadbeef);
+            h = CreateFileA( dll_name, GENERIC_READ | DELETE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+            ok( h != INVALID_HANDLE_VALUE, "open failed err %lu\n", GetLastError() );
+            CloseHandle( h );
 
-                SetLastError(0xdeadbeef);
-                ret = FreeLibrary(hlib_as_data_file);
-                ok(ret, "FreeLibrary error %ld\n", GetLastError());
-            }
+            SetLastError(0xdeadbeef);
+            ret = FreeLibrary(hlib_as_data_file);
+            ok(ret, "FreeLibrary error %ld\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             hlib_as_data_file = LoadLibraryExA(dll_name, 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-            if (!((ULONG_PTR)hlib_as_data_file & 3) ||  /* winxp */
-                (!hlib_as_data_file && GetLastError() == ERROR_INVALID_PARAMETER))  /* w2k3 */
-            {
-                win_skip( "LOAD_LIBRARY_AS_IMAGE_RESOURCE not supported\n" );
-                FreeLibrary(hlib_as_data_file);
-            }
-            else
-            {
-                ok(hlib_as_data_file != 0, "LoadLibraryEx error %lu\n", GetLastError());
-                ok(((ULONG_PTR)hlib_as_data_file & 3) == 2, "hlib_as_data_file got %p\n",
-                   hlib_as_data_file);
+            ok(hlib_as_data_file != 0, "LoadLibraryEx error %lu\n", GetLastError());
+            ok(((ULONG_PTR)hlib_as_data_file & 3) == 2, "hlib_as_data_file got %p\n",
+               hlib_as_data_file);
 
-                hlib = GetModuleHandleA(dll_name);
-                ok(!hlib, "GetModuleHandle should fail\n");
+            hlib = GetModuleHandleA(dll_name);
+            ok(!hlib, "GetModuleHandle should fail\n");
 
-                SetLastError(0xdeadbeef);
-                ret = FreeLibrary(hlib_as_data_file);
-                ok(ret, "FreeLibrary error %ld\n", GetLastError());
-            }
+            SetLastError(0xdeadbeef);
+            ret = FreeLibrary(hlib_as_data_file);
+            ok(ret, "FreeLibrary error %ld\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             ret = DeleteFileA(dll_name);
@@ -1227,23 +1197,15 @@ static void test_Loader(void)
     nt_header.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
     nt_header.FileHeader.Machine = 0xdead;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-        "NtCreateSection error %08lx\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08lx\n", status );
 
     nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_UNKNOWN;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-        "NtCreateSection error %08lx\n", status );
-
-    nt_header.FileHeader.Machine = get_alt_machine( orig_machine );
-    status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-        "NtCreateSection error %08lx\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08lx\n", status );
 
     nt_header.FileHeader.Machine = get_alt_bitness_machine( orig_machine );
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-                  "NtCreateSection error %08lx\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08lx\n", status );
 
     nt_header.FileHeader.Machine = orig_machine;
     nt_header.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
@@ -2052,9 +2014,7 @@ static void test_section_access(void)
          * due to sharing violation error. Ignore it and skip the test,
          * but leave a not deletable temporary file.
          */
-        ok(hfile != INVALID_HANDLE_VALUE || broken(hfile == INVALID_HANDLE_VALUE) /* nt4 */,
-            "CreateFile error %ld\n", GetLastError());
-        if (hfile == INVALID_HANDLE_VALUE) goto nt4_is_broken;
+        ok(hfile != INVALID_HANDLE_VALUE, "CreateFile error %ld\n", GetLastError());
         SetFilePointer(hfile, sizeof(dos_header), NULL, FILE_BEGIN);
         SetLastError(0xdeadbeef);
         ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
@@ -2110,10 +2070,9 @@ static void test_section_access(void)
 
         test_image_mapping(dll_name, td[i].scn_page_access, FALSE);
 
-nt4_is_broken:
         SetLastError(0xdeadbeef);
         ret = DeleteFileA(dll_name);
-        ok(ret || broken(!ret) /* nt4 */, "DeleteFile error %ld\n", GetLastError());
+        ok(ret, "DeleteFile error %ld\n", GetLastError());
     }
 }
 
@@ -2299,14 +2258,10 @@ static void test_import_resolution(void)
             expect = GetProcAddress( GetModuleHandleA( data.module ), data.function.name );
             ok( (void *)ptr->thunks[0].u1.Function == expect, "thunk %p instead of %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, expect, data.module, data.function.name );
-            ok( ptr->tls_index < 32 || broken(ptr->tls_index == 9999), /* before vista */
-                "wrong tls index %d\n", ptr->tls_index );
-            if (ptr->tls_index != 9999)
-            {
-                str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
-                ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
-                ok(ptr->tls_index_hi == 0, "TLS Index written as a short, high half: %d\n", ptr->tls_index_hi);
-            }
+            ok( ptr->tls_index < 32, "wrong tls index %d\n", ptr->tls_index );
+            str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
+            ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
+            ok(ptr->tls_index_hi == 0, "TLS Index written as a short, high half: %d\n", ptr->tls_index_hi);
             check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod );
             break;
@@ -2345,9 +2300,8 @@ static void test_import_resolution(void)
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
             tls_index_save = ptr->tls_index;
-            ok( ptr->tls_index < 32 || broken(ptr->tls_index == 9999), /* before vista */
-                "wrong tls index %d\n", ptr->tls_index );
-            if (ptr->tls_index != 9999 && sizeof(tls_init_code) > 1)
+            ok( ptr->tls_index < 32, "wrong tls index %d\n", ptr->tls_index );
+            if (sizeof(tls_init_code) > 1)
             {
                 str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
                 ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
@@ -2581,35 +2535,29 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         else if (test_dll_phase == 7) expected_code = 199;
         else expected_code = STILL_ACTIVE;
 
-        if (test_dll_phase == 3)
+        ret = pRtlDllShutdownInProgress();
+        if (test_dll_phase == 0 || test_dll_phase == 1 || test_dll_phase == 3)
         {
-            ret = pRtlDllShutdownInProgress();
             ok(ret, "RtlDllShutdownInProgress returned %ld\n", ret);
         }
         else
         {
-            ret = pRtlDllShutdownInProgress();
-
             /* FIXME: remove once Wine is fixed */
             todo_wine_if (!(expected_code == STILL_ACTIVE || expected_code == 196))
-                ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %ld\n", ret);
+                ok(!ret, "RtlDllShutdownInProgress returned %ld\n", ret);
         }
 
         /* In the case that the process is terminating, FLS slots should still be accessible, but
          * the callback should be already run for this thread and the contents already NULL.
-         * Note that this is broken for Win2k3, which runs the callbacks *after* the DLL entry
-         * point has already run.
          */
         if (param && pFlsGetValue)
         {
             void* value;
             SetLastError(0xdeadbeef);
             value = pFlsGetValue(fls_index);
-            ok(broken(value == (void*) 0x31415) || /* Win2k3 */
-                value == NULL, "FlsGetValue returned %p, expected NULL\n", value);
+            ok(value == NULL, "FlsGetValue returned %p, expected NULL\n", value);
             ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %lu\n", GetLastError());
-            ok(broken(fls_callback_count == thread_detach_count) || /* Win2k3 */
-                fls_callback_count == thread_detach_count + 1,
+            ok(fls_callback_count == thread_detach_count + 1,
                 "wrong FLS callback count %ld, expected %d\n", fls_callback_count, thread_detach_count + 1);
         }
         if (pFlsFree)
@@ -2677,22 +2625,15 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         handle = CreateThread(NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
         if (param)
         {
-            ok(!handle || broken(handle != 0) /* before win7 */, "CreateThread should fail\n");
-            if (!handle)
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
-            else
-            {
-                ret = WaitForSingleObject(handle, 1000);
-                ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#lx\n", ret);
-                CloseHandle(handle);
-            }
+            ok(!handle, "CreateThread should fail\n");
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
         }
         else
         {
             ok(handle != 0, "CreateThread error %ld\n", GetLastError());
             ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#lx\n", ret);
-            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            ok(!noop_thread_started, "thread shouldn't start yet\n");
             CloseHandle(handle);
         }
 
@@ -2705,22 +2646,15 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
         handle = CreateRemoteThread(process, NULL, 0, noop_thread_proc, &noop_thread_started, 0, &ret);
         if (param)
         {
-            ok(!handle || broken(handle != 0) /* before win7 */, "CreateRemoteThread should fail\n");
-            if (!handle)
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
-            else
-            {
-                ret = WaitForSingleObject(handle, 1000);
-                ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#lx\n", ret);
-                CloseHandle(handle);
-            }
+            ok(!handle, "CreateRemoteThread should fail\n");
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
         }
         else
         {
             ok(handle != 0, "CreateRemoteThread error %ld\n", GetLastError());
             ret = WaitForSingleObject(handle, 1000);
             ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %#lx\n", ret);
-            ok(!noop_thread_started || broken(noop_thread_started) /* XP64 */, "thread shouldn't start yet\n");
+            ok(!noop_thread_started, "thread shouldn't start yet\n");
             CloseHandle(handle);
         }
 
@@ -2754,7 +2688,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ok(handle != 0, "winver.exe should not be unloaded\n");
         else
         todo_wine
-            ok(!handle || broken(handle != 0) /* before win7 */, "winver.exe should be unloaded\n");
+            ok(!handle, "winver.exe should be unloaded\n");
 
         SetLastError(0xdeadbeef);
         ret = WaitForDebugEvent(&de, 0);
@@ -2826,8 +2760,6 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ok(!ret, "RtlDllShutdownInProgress returned %ld\n", ret);
 
         /* FLS data should already be destroyed, if FLS is available.
-         * Note that this is broken for Win2k3, which runs the callbacks *after* the DLL entry
-         * point has already run.
          */
         if (pFlsGetValue && fls_index != FLS_OUT_OF_INDEXES)
         {
@@ -2837,8 +2769,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 
             SetLastError(0xdeadbeef);
             value = pFlsGetValue(fls_index);
-            ok(broken(value == (void*) 0x31415) || /* Win2k3 */
-                !value, "FlsGetValue returned %p, expected NULL\n", value);
+            ok(!value, "FlsGetValue returned %p, expected NULL\n", value);
             ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %lu\n", GetLastError());
 
             bret = pFlsSetValue(fls_index2, (void*) 0x31415);
@@ -3017,15 +2948,8 @@ static void child_process(const char *dll_name, DWORD target_offset)
 
         SetLastError(0xdeadbeef);
         thread = CreateThread(NULL, 0, noop_thread_proc, &dummy, 0, &ret);
-        ok(!thread || broken(thread != 0) /* before win7 */, "CreateThread should fail\n");
-        if (!thread)
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
-        else
-        {
-            ret = WaitForSingleObject(thread, 1000);
-            ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#lx\n", ret);
-            CloseHandle(thread);
-        }
+        ok(!thread, "CreateThread should fail\n");
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
 
         trace("call LdrShutdownProcess()\n");
         pLdrShutdownProcess();
@@ -3429,7 +3353,7 @@ static void test_ExitProcess(void)
     ok(ret, "CreateProcess(%s) error %ld\n", cmdline, GetLastError());
     ret = WaitForSingleObject(pi.hProcess, 5000);
     todo_wine
-    ok(ret == WAIT_TIMEOUT || broken(ret == WAIT_OBJECT_0) /* XP */, "child process should fail to terminate\n");
+    ok(ret == WAIT_TIMEOUT, "child process should fail to terminate\n");
     if (ret != WAIT_OBJECT_0)
     {
         trace("terminating child process\n");
@@ -3439,7 +3363,7 @@ static void test_ExitProcess(void)
     ok(ret == WAIT_OBJECT_0, "child process failed to terminate\n");
     GetExitCodeProcess(pi.hProcess, &ret);
     todo_wine
-    ok(ret == 201 || broken(ret == 1) /* XP */, "expected exit code 201, got %lu\n", ret);
+    ok(ret == 201, "expected exit code 201, got %lu\n", ret);
     if (*child_failures)
     {
         trace("%ld failures in child process\n", *child_failures);
@@ -3563,22 +3487,20 @@ static void test_ExitProcess(void)
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
     ret = GetThreadContext(thread, &ctx);
-    ok(!ret || broken(ret) /* XP 64-bit */, "GetThreadContext should fail\n");
-    if (!ret)
-        ok(GetLastError() == ERROR_INVALID_PARAMETER ||
-           GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
-           GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
-           "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    ok(!ret, "GetThreadContext should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
+       GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
+       GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
     ret = SetThreadContext(thread, &ctx);
-    ok(!ret || broken(ret) /* XP 64-bit */, "SetThreadContext should fail\n");
-    if (!ret)
-        ok(GetLastError() == ERROR_ACCESS_DENIED ||
-           GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
-           "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
+    ok(!ret, "SetThreadContext should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED ||
+       GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
+       GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
+       "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = SetThreadPriority(thread, 0);
     ok(ret, "SetThreadPriority error %ld\n", GetLastError());
@@ -3587,22 +3509,20 @@ static void test_ExitProcess(void)
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
     ret = GetThreadContext(pi.hThread, &ctx);
-    ok(!ret || broken(ret) /* XP 64-bit */, "GetThreadContext should fail\n");
-    if (!ret)
-        ok(GetLastError() == ERROR_INVALID_PARAMETER ||
-           GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
-           GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
-           "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    ok(!ret, "GetThreadContext should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
+       GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
+       GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */ ||
+       GetLastError() == ERROR_ACCESS_DENIED /* Win10 32-bit */,
+       "expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
     ret = SetThreadContext(pi.hThread, &ctx);
-    ok(!ret || broken(ret) /* XP 64-bit */, "SetThreadContext should fail\n");
-    if (!ret)
-        ok(GetLastError() == ERROR_ACCESS_DENIED ||
-           GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
-           GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
-           "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
+    ok(!ret, "SetThreadContext should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED ||
+       GetLastError() == ERROR_GEN_FAILURE /* win7 64-bit */ ||
+       GetLastError() == ERROR_INVALID_FUNCTION /* vista 64-bit */,
+       "expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = VirtualProtectEx(pi.hProcess, addr, 4096, PAGE_READWRITE, &old_prot);
     ok(!ret, "VirtualProtectEx should fail\n");
@@ -3663,8 +3583,7 @@ if (0)
       "ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
 
     GetExitCodeProcess(pi.hProcess, &ret);
-    ok(ret == 198 || broken(ret != 198) /* some 32-bit XP version in a VM returns random exit code */,
-       "expected exit code 198, got %lu\n", ret);
+    ok(ret == 198, "expected exit code 198, got %lu\n", ret);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 
@@ -4063,24 +3982,20 @@ static void test_wow64_redirection_for_dll(const char *libname, BOOL will_fail)
     if (!GetModuleHandleA(libname))
     {
         lib = LoadLibraryExA(libname, NULL, 0);
-        ok (broken(lib == NULL) /* Vista/2008 */ ||
-            lib != NULL, "Loading %s should succeed with WOW64 redirection disabled\n", libname);
+        ok(lib != NULL, "Loading %s should succeed with WOW64 redirection disabled\n", libname);
+        /* Win 7/2008R2 return the un-redirected path (i.e. c:\windows\system32\dwrite.dll), test loading it. */
+        GetModuleFileNameA(lib, buf, sizeof(buf));
+        FreeLibrary(lib);
+        lib = LoadLibraryExA(buf, NULL, 0);
+        ok(lib != NULL, "Loading %s from full path should succeed with WOW64 redirection disabled\n", libname);
         if (lib)
-        {
-            /* Win 7/2008R2 return the un-redirected path (i.e. c:\windows\system32\dwrite.dll), test loading it. */
-            GetModuleFileNameA(lib, buf, sizeof(buf));
             FreeLibrary(lib);
-            lib = LoadLibraryExA(buf, NULL, 0);
-            ok(lib != NULL, "Loading %s from full path should succeed with WOW64 redirection disabled\n", libname);
-            if (lib)
-                FreeLibrary(lib);
-            modname = strrchr(libname, '\\');
-            modname = modname ? modname + 1 : libname;
-            todo_wine_if(will_fail)
+        modname = strrchr(libname, '\\');
+        modname = modname ? modname + 1 : libname;
+        todo_wine_if(will_fail)
             ok(is_path_made_of(buf, system_dir, modname) ||
                /* Win7 report from syswow64 */ broken(is_path_made_of(buf, syswow_dir, modname)),
                "Unexpected loaded DLL name %s for %s\n", buf, libname);
-        }
     }
     else
     {
