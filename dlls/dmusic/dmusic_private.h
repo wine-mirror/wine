@@ -201,8 +201,7 @@ static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDire
     return CONTAINING_RECORD(iface, IDirectMusicInstrumentImpl, IDirectMusicInstrument_iface);
 }
 
-/* custom :) */
-extern HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream);
+extern HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream);
 
 /*****************************************************************************
  * Misc.

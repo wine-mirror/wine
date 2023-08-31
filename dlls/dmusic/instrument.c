@@ -25,8 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 static const GUID IID_IDirectMusicInstrumentPRIVATE = { 0xbcb20080, 0xa40c, 0x11d1, { 0x86, 0xbc, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef } };
 
-/* IDirectMusicInstrument IUnknown part: */
-static HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface(LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ret_iface)
+static HRESULT WINAPI instrument_QueryInterface(LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ret_iface)
 {
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
@@ -56,7 +55,7 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_QueryInterface(LPDIRECTMUSICINS
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_AddRef(LPDIRECTMUSICINSTRUMENT iface)
+static ULONG WINAPI instrument_AddRef(LPDIRECTMUSICINSTRUMENT iface)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -66,7 +65,7 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_AddRef(LPDIRECTMUSICINSTRUMENT if
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT iface)
+static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -87,8 +86,7 @@ static ULONG WINAPI IDirectMusicInstrumentImpl_Release(LPDIRECTMUSICINSTRUMENT i
     return ref;
 }
 
-/* IDirectMusicInstrumentImpl IDirectMusicInstrument part: */
-static HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch)
+static HRESULT WINAPI instrument_GetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
 
@@ -99,7 +97,7 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_GetPatch(LPDIRECTMUSICINSTRUMEN
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch)
+static HRESULT WINAPI instrument_SetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
 
@@ -110,13 +108,13 @@ static HRESULT WINAPI IDirectMusicInstrumentImpl_SetPatch(LPDIRECTMUSICINSTRUMEN
     return S_OK;
 }
 
-static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Vtbl =
+static const IDirectMusicInstrumentVtbl instrument_vtbl =
 {
-    IDirectMusicInstrumentImpl_QueryInterface,
-    IDirectMusicInstrumentImpl_AddRef,
-    IDirectMusicInstrumentImpl_Release,
-    IDirectMusicInstrumentImpl_GetPatch,
-    IDirectMusicInstrumentImpl_SetPatch
+    instrument_QueryInterface,
+    instrument_AddRef,
+    instrument_Release,
+    instrument_GetPatch,
+    instrument_SetPatch,
 };
 
 HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
@@ -125,7 +123,7 @@ HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
 
     *ret_iface = NULL;
     if (!(dminst = calloc(1, sizeof(*dminst)))) return E_OUTOFMEMORY;
-    dminst->IDirectMusicInstrument_iface.lpVtbl = &DirectMusicInstrument_Vtbl;
+    dminst->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
     dminst->ref = 1;
 
     TRACE("Created DirectMusicInstrument %p\n", dminst);
@@ -278,7 +276,7 @@ static HRESULT load_articulation(IDirectMusicInstrumentImpl *This, IStream *stre
 }
 
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
-HRESULT IDirectMusicInstrumentImpl_CustomLoad(IDirectMusicInstrument *iface, IStream *stream)
+HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
 {
     IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
     HRESULT hr;

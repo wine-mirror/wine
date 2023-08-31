@@ -115,7 +115,7 @@ static HRESULT WINAPI collection_GetInstrument(IDirectMusicCollection *iface,
         if (patch == inst_patch) {
             *instrument = inst_entry->pInstrument;
             IDirectMusicInstrument_AddRef(inst_entry->pInstrument);
-            IDirectMusicInstrumentImpl_CustomLoad(inst_entry->pInstrument, This->pStm);
+            instrument_load(inst_entry->pInstrument, This->pStm);
             TRACE(": returning instrument %p\n", *instrument);
             return S_OK;
         }
