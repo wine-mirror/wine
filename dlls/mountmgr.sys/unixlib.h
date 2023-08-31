@@ -172,6 +172,7 @@ enum mountmgr_funcs
     unix_write_credential,
     unix_delete_credential,
     unix_enumerate_credentials,
+    unix_funcs_count
 };
 
 #define MOUNTMGR_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
