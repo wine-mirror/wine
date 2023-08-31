@@ -141,6 +141,7 @@ enum unix_funcs
     device_set_output_report,
     device_get_feature_report,
     device_set_feature_report,
+    unix_funcs_count,
 };
 
 static inline const char *debugstr_device_desc(struct device_desc *desc)

@@ -351,6 +351,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_device_set_feature_report,
 };
 
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count);
+
 void bus_event_cleanup(struct bus_event *event)
 {
     struct unix_device *iface = (struct unix_device *)(UINT_PTR)event->device;
