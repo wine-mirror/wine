@@ -947,6 +947,153 @@ static void test_synthport(void)
     IDirectMusic_Release(dmusic);
 }
 
+static void test_port_download(void)
+{
+    struct wave_download
+    {
+        DMUS_DOWNLOADINFO info;
+        ULONG offsets[2];
+        DMUS_WAVE wave;
+        DMUS_WAVEDATA wave_data;
+    };
+
+    static void *invalid_ptr = (void *)0xdeadbeef;
+    IDirectMusicDownload *download, *tmp_download;
+    struct wave_download *wave_download;
+    IDirectMusicPortDownload *port;
+    IDirectMusicPort *tmp_port;
+    DWORD ids[4], append, size;
+    IDirectMusic *dmusic;
+    void *buffer;
+    HRESULT hr;
+
+    tmp_port = create_synth_port(&dmusic);
+    hr = IDirectMusicPort_QueryInterface(tmp_port, &IID_IDirectMusicPortDownload, (void **)&port);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicPort_Release(tmp_port);
+
+    /* GetBuffer only works with pre-allocated DLId */
+    hr = IDirectMusicPortDownload_GetBuffer(port, 0, NULL);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_GetBuffer(port, 0, &download);
+    todo_wine ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_GetBuffer(port, 0xdeadbeef, &download);
+    todo_wine ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
+
+    /* AllocateBuffer use the exact requested size */
+    hr = IDirectMusicPortDownload_AllocateBuffer(port, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_AllocateBuffer(port, 0, &download);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+
+    hr = IDirectMusicPortDownload_AllocateBuffer(port, 1, &download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    size = 0xdeadbeef;
+    buffer = invalid_ptr;
+    hr = IDirectMusicDownload_GetBuffer(download, (void **)&buffer, &size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(size == 1, "got %#lx\n", size);
+    todo_wine ok(buffer != invalid_ptr, "got %p\n", buffer);
+    IDirectMusicDownload_Release(download);
+
+    /* GetDLId allocates the given number of slots and returns only the first */
+    hr = IDirectMusicPortDownload_GetDLId(port, NULL, 0);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_GetDLId(port, ids, 0);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+
+    memset(ids, 0xcc, sizeof(ids));
+    hr = IDirectMusicPortDownload_GetDLId(port, ids, 4);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(ids[0] == 0, "got %#lx\n", ids[0]);
+    ok(ids[1] == 0xcccccccc, "got %#lx\n", ids[1]);
+
+    /* GetBuffer looks up allocated ids to find downloaded buffers */
+    hr = IDirectMusicPortDownload_GetBuffer(port, 2, &download);
+    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+
+    hr = IDirectMusicPortDownload_GetAppend(port, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    append = 0xdeadbeef;
+    hr = IDirectMusicPortDownload_GetAppend(port, &append);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(append == 2, "got %#lx\n", append);
+
+    /* test Download / Unload on invalid and valid buffers */
+
+    download = invalid_ptr;
+    hr = IDirectMusicPortDownload_AllocateBuffer(port, sizeof(struct wave_download), &download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(download != invalid_ptr, "got %p\n", download);
+    if (download == invalid_ptr) goto skip_tests;
+    size = 0xdeadbeef;
+    wave_download = invalid_ptr;
+    hr = IDirectMusicDownload_GetBuffer(download, (void **)&wave_download, &size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(size == sizeof(struct wave_download), "got %#lx\n", size);
+    todo_wine ok(wave_download != invalid_ptr, "got %p\n", wave_download);
+    wave_download->info.cbSize = sizeof(struct wave_download);
+    wave_download->info.dwDLId = 2;
+    wave_download->info.dwDLType = 0;
+    wave_download->info.dwNumOffsetTableEntries = 0;
+    hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
+    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+
+    hr = IDirectMusicPortDownload_Download(port, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_Download(port, download);
+    todo_wine ok(hr == DMUS_E_UNKNOWNDOWNLOAD, "got %#lx\n", hr);
+
+    wave_download->info.dwDLType = DMUS_DOWNLOADINFO_WAVE;
+    wave_download->info.dwNumOffsetTableEntries = 2;
+    wave_download->offsets[0] = offsetof(struct wave_download, wave);
+    wave_download->offsets[1] = offsetof(struct wave_download, wave_data);
+    wave_download->wave.WaveformatEx.wFormatTag = WAVE_FORMAT_PCM;
+    wave_download->wave.WaveformatEx.nChannels = 1;
+    wave_download->wave.WaveformatEx.nSamplesPerSec = 44100;
+    wave_download->wave.WaveformatEx.nAvgBytesPerSec = 44100;
+    wave_download->wave.WaveformatEx.nBlockAlign = 1;
+    wave_download->wave.WaveformatEx.wBitsPerSample = 8;
+    wave_download->wave.WaveformatEx.cbSize = 0;
+    wave_download->wave.ulWaveDataIdx = 1;
+    wave_download->wave.ulCopyrightIdx = 0;
+    wave_download->wave.ulFirstExtCkIdx = 0;
+    wave_download->wave_data.cbSize = 1;
+
+    hr = IDirectMusicPortDownload_Download(port, download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_Download(port, download);
+    todo_wine ok(hr == DMUS_E_ALREADY_DOWNLOADED, "got %#lx\n", hr);
+
+    tmp_download = invalid_ptr;
+    hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(tmp_download == download, "got %p\n", tmp_download);
+    if (tmp_download != invalid_ptr) IDirectMusicDownload_Release(tmp_download);
+
+    hr = IDirectMusicPortDownload_Unload(port, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPortDownload_Unload(port, download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
+    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+
+    hr = IDirectMusicPortDownload_Unload(port, download);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* DLIds are never released */
+    hr = IDirectMusicPortDownload_GetDLId(port, ids, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(ids[0] == 4, "got %#lx\n", ids[0]);
+
+    IDirectMusicDownload_Release(download);
+
+skip_tests:
+    IDirectMusicPortDownload_Release(port);
+    IDirectMusic_Release(dmusic);
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -967,6 +1114,7 @@ START_TEST(dmusic)
     test_parsedescriptor();
     test_master_clock();
     test_synthport();
+    test_port_download();
 
     CoUninitialize();
 }
