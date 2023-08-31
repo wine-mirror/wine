@@ -37,6 +37,12 @@ struct pool
 
 C_ASSERT(sizeof(struct pool) == offsetof(struct pool, cues[0]));
 
+struct wave_entry
+{
+    struct list entry;
+    DWORD offset;
+};
+
 struct collection
 {
     IDirectMusicCollection IDirectMusicCollection_iface;
@@ -46,6 +52,7 @@ struct collection
     DLSHEADER header;
     struct pool *pool;
     struct list instruments;
+    struct list waves;
 };
 
 static inline struct collection *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
@@ -103,6 +110,7 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
     if (!ref)
     {
         struct instrument_entry *instrument_entry;
+        struct wave_entry *wave_entry;
         void *next;
 
         LIST_FOR_EACH_ENTRY_SAFE(instrument_entry, next, &This->instruments, struct instrument_entry, entry)
@@ -110,6 +118,12 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
             list_remove(&instrument_entry->entry);
             IDirectMusicInstrument_Release(instrument_entry->instrument);
             free(instrument_entry);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(wave_entry, next, &This->waves, struct wave_entry, entry)
+        {
+            list_remove(&wave_entry->entry);
+            free(wave_entry);
         }
 
         free(This);
@@ -201,6 +215,33 @@ static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct 
     return hr;
 }
 
+static HRESULT parse_wvpl_list(struct collection *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    struct wave_entry *entry;
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_wave):
+            if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
+            entry->offset = chunk.offset.QuadPart - parent->offset.QuadPart - 12;
+            list_add_tail(&This->waves, &entry->entry);
+            break;
+
+        default:
+            FIXME("Skipping unknown chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
 static HRESULT parse_ptbl_chunk(struct collection *This, IStream *stream, struct chunk_entry *chunk)
 {
     struct pool *pool;
@@ -254,6 +295,10 @@ static HRESULT parse_dls_chunk(struct collection *This, IStream *stream, struct 
 
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LINS):
             hr = parse_lins_list(This, stream, &chunk);
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_WVPL):
+            hr = parse_wvpl_list(This, stream, &chunk);
             break;
 
         default:
@@ -336,6 +381,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
     if (TRACE_ON(dmusic))
     {
         struct instrument_entry *entry;
+        struct wave_entry *wave_entry;
         int i = 0;
 
         TRACE("*** IDirectMusicCollection (%p) ***\n", &This->IDirectMusicCollection_iface);
@@ -346,7 +392,18 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
         TRACE(" - Instruments:\n");
 
         LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
-            TRACE("    - Instrument[%i]: %p\n", i++, entry->instrument);
+        {
+            TRACE("    - Instrument[%i]: %p\n", i, entry->instrument);
+            i++;
+        }
+
+        TRACE(" - cues: size %lu\n", This->pool->table.cbSize);
+        for (i = 0; i < This->pool->table.cCues; i++)
+            TRACE("    - index: %u, offset: %lu\n", i, This->pool->cues[i].ulOffset);
+
+        TRACE(" - waves:\n");
+        LIST_FOR_EACH_ENTRY(wave_entry, &This->waves, struct wave_entry, entry)
+            TRACE("    - offset: %lu\n", wave_entry->offset);
     }
 
     stream_skip_chunk(stream, &chunk);
@@ -378,6 +435,7 @@ HRESULT collection_create(IUnknown **ret_iface)
     collection->dmobj.IDirectMusicObject_iface.lpVtbl = &collection_object_vtbl;
     collection->dmobj.IPersistStream_iface.lpVtbl = &collection_stream_vtbl;
     list_init(&collection->instruments);
+    list_init(&collection->waves);
 
     TRACE("Created DirectMusicCollection %p\n", collection);
     *ret_iface = (IUnknown *)&collection->IDirectMusicCollection_iface;
