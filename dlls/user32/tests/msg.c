@@ -9706,6 +9706,155 @@ static void test_hvredraw(void)
     DestroyWindow( htoplevel );
 }
 
+struct run_in_temp_desktop_args
+{
+    const char *file;
+    int line;
+    const char *name;
+    void (*test_func)(void);
+};
+
+static DWORD WINAPI run_in_temp_desktop_thread_func(LPVOID param)
+{
+    HDESK prev_thr_desktop, prev_inp_desktop, post_inp_desktop, temp_desktop;
+    char temp_desktop_name[1024], curr_desktop_name[1024];
+    struct run_in_temp_desktop_args *args = param;
+    const char *file = args->file;
+    int line = args->line;
+    LARGE_INTEGER qpc;
+    DWORD length;
+    int result;
+
+    result = QueryPerformanceCounter( &qpc );
+    ok_(file, line)( result, "QueryPerformanceCounter error %lu\n", GetLastError() );
+
+    /*
+     * Temporary desktops from previous runs may leak due to a Windows bug.
+     * Generate a unique name that is unlikely to collide with previous runs.
+     */
+    result = snprintf( temp_desktop_name, ARRAY_SIZE(temp_desktop_name),
+                       "WineTest-%08lX-%08lX-%08lX%08lX-%s",
+                       GetCurrentProcessId(), GetCurrentThreadId(),
+                       qpc.HighPart, qpc.LowPart, args->name );
+    ok_(file, line)( result > 0 && result < ARRAY_SIZE(temp_desktop_name),
+                     "sprintf returned %d (out of memory, or name too long?)\n", result );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "creating desktop: %s\n", debugstr_a( temp_desktop_name ) );
+
+    temp_desktop = CreateDesktopA( temp_desktop_name, NULL, NULL, 0, GENERIC_ALL, NULL );
+    ok_(file, line)( temp_desktop != NULL, "CreateDesktopA(%s, ..) error %lu\n",
+                     debugstr_a( temp_desktop_name ), GetLastError() );
+
+    prev_inp_desktop = OpenInputDesktop( 0, FALSE, DESKTOP_SWITCHDESKTOP );
+    ok_(file, line)( prev_inp_desktop != NULL, "OpenInputDesktop [prev] error %lu\n", GetLastError() );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "sanity check: no concurrent WineTest desktop\n" );
+
+    /*
+     * Check if the desktop has not been properly restored.  This is done to
+     * avoid any possible hard-to-debug failures due to unexpected desktop.
+     */
+    result = GetUserObjectInformationA( prev_inp_desktop, UOI_NAME,
+                                        curr_desktop_name, sizeof(curr_desktop_name), &length );
+    ok_(file, line)( result, "GetUserObjectInformationA error %lu [rl = %lu]\n",
+                     GetLastError(), length );
+    ok_(file, line)( _strnicmp( curr_desktop_name, temp_desktop_name, 8 ) != 0,
+                     "unexpected input desktop name %s (concurrent WineTest run?)\n",
+                     debugstr_a( curr_desktop_name ) );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "switching desktop to: %s (%p)\n", debugstr_a( temp_desktop_name ), temp_desktop );
+
+    result = SwitchDesktop( temp_desktop );
+    ok_(file, line)( result, "SwitchDesktop(temp_desktop=%p) error %lu\n",
+                     temp_desktop, GetLastError() );
+
+    prev_thr_desktop = GetThreadDesktop( GetCurrentThreadId() );
+    ok_(file, line)( prev_thr_desktop != NULL, "GetThreadDesktop error %lu\n", GetLastError() );
+
+    result = SetThreadDesktop( temp_desktop );
+    ok_(file, line)( result, "SetThreadDesktop(temp_desktop=%p) error %lu\n",
+                     temp_desktop, GetLastError() );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "running test function %s()\n", args->name );
+
+    args->test_func();
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "sanity check: input desktop has not been changed\n" );
+
+    /*
+     * Check if the input desktop has been tampered with.  This is done to
+     * avoid any possible hard-to-debug failures due to unexpected desktop.
+     */
+    post_inp_desktop = OpenInputDesktop( 0, FALSE, DESKTOP_ENUMERATE );
+    ok_(file, line)( post_inp_desktop != NULL, "OpenInputDesktop [post] error %lu\n", GetLastError() );
+
+    result = GetUserObjectInformationA( post_inp_desktop, UOI_NAME,
+                                        curr_desktop_name, sizeof(curr_desktop_name), &length );
+    ok_(file, line)( result, "GetUserObjectInformationA(post_inp_desktop=%p) error %lu [rl = %lu]\n",
+                     post_inp_desktop, GetLastError(), length );
+    todo_wine
+    ok_(file, line)( strcmp( curr_desktop_name, temp_desktop_name ) == 0,
+                     "different desktop name: %s != %s (no switch or concurrent WineTest run?)\n",
+                     debugstr_a( curr_desktop_name ), debugstr_a( temp_desktop_name ) );
+
+    result = CloseDesktop( post_inp_desktop );
+    ok_(file, line)( result, "CloseDesktop(post_inp_desktop=%p) error %lu\n",
+                     post_inp_desktop, GetLastError() );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "restoring previous desktop\n" );
+
+    result = SetThreadDesktop( prev_thr_desktop );
+    ok_(file, line)( result || broken( GetLastError() == ERROR_BUSY ) /* == W10 */,
+                     "SetThreadDesktop(prev_thr_desktop=%p) error %lu\n",
+                     prev_thr_desktop, GetLastError() );
+
+    result = SwitchDesktop( prev_inp_desktop );
+    ok_(file, line)( result, "SwitchDesktop(prev_inp_desktop=%p) error %lu\n",
+                     prev_inp_desktop, GetLastError() );
+
+    result = CloseDesktop( prev_inp_desktop );
+    ok_(file, line)( result, "CloseDesktop(prev_inp_desktop=%p) error %lu\n",
+                     prev_inp_desktop, GetLastError() );
+
+    if (winetest_debug > 1)
+        trace_(file, line)( "closing desktop: %s (%p)\n", debugstr_a( temp_desktop_name ), temp_desktop );
+
+    result = CloseDesktop( temp_desktop );
+    ok_(file, line)( result || broken( GetLastError() == ERROR_BUSY ) /* == W10 */,
+                     "CloseDesktop(temp_desktop=%p) error %lu\n",
+                     temp_desktop, GetLastError() );
+
+    return 0;
+}
+
+#define run_in_temp_desktop(f) run_in_temp_desktop_(__FILE__, __LINE__, #f, f)
+static void run_in_temp_desktop_(const char *file, int line, const char *name, void (*test_func)(void))
+{
+    struct run_in_temp_desktop_args args;
+    HANDLE thread;
+    DWORD result;
+
+    args.file = file;
+    args.line = line;
+    args.name = name;
+    args.test_func = test_func;
+
+    thread = CreateThread( NULL, 0, run_in_temp_desktop_thread_func, &args, 0, NULL );
+    ok_(file, line)( thread != NULL, "CreateThread error %lu\n", GetLastError() );
+
+    result = WaitForSingleObject( thread, INFINITE );
+    ok_(file, line)( result == WAIT_OBJECT_0, "WaitForSingleObject returned %lu, error %lu\n",
+                     result, GetLastError() );
+
+    CloseHandle( thread );
+}
+
 struct wnd_event
 {
     HWND hwnd;
@@ -19893,10 +20042,10 @@ START_TEST(msg)
     test_combobox_messages();
     test_wmime_keydown_message();
     test_paint_messages();
-    test_swp_paint_regions();
-    test_swp_paint_region_on_show();
-    test_swp_paint_region_on_extend_zerosize();
-    test_hvredraw();
+    run_in_temp_desktop(test_swp_paint_regions);
+    run_in_temp_desktop(test_swp_paint_region_on_show);
+    run_in_temp_desktop(test_swp_paint_region_on_extend_zerosize);
+    run_in_temp_desktop(test_hvredraw);
     test_interthread_messages();
     test_message_conversion();
     test_accelerators();
