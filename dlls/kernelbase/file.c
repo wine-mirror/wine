@@ -1190,6 +1190,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
         if (has_wildcard)
         {
             size = 8192;
+            mask = PathFindFileNameW( filename );
             mask_size = (lstrlenW( mask ) + 1) * sizeof(*mask);
         }
         else size = max_entry_size;
@@ -1408,7 +1409,7 @@ static BOOL match_filename( const WCHAR *name, int length, const WCHAR *mask )
         }
     }
 
-    while (mask < mask_end && (*mask == '.' || *mask == '*'))
+    while (mask < mask_end && (*mask == ' ' || *mask == '.' || *mask == '*'))
         mask++;
     return (name == name_end && mask == mask_end);
 }
