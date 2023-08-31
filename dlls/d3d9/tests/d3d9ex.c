@@ -3015,12 +3015,36 @@ static void test_wndproc(void)
                 expect_messages->message, expect_messages->window, i);
         ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
         expect_messages = NULL;
-        flush_events();
 
         ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         ok(ret, "Failed to get display mode.\n");
         ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth, "Got unexpected width %lu.\n", devmode.dmPelsWidth);
         ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight, "Got unexpected height %lu.\n", devmode.dmPelsHeight);
+
+        flush_events();
+
+        /* Openbox accidentally sets focus to the device window, causing WM_ACTIVATEAPP to be sent to the focus
+         * window. d3d9ex then restores the screen mode. This only happens in the D3DCREATE_NOWINDOWCHANGES case.
+         *
+         * This appears to be a race condition - it goes away if openbox is started with --sync. d3d9:device and
+         * d3d8:device are affected too, but because in their case d3d does not automatically restore the screen
+         * mode (it needs a call to device::Reset), the EnumDisplaySettings check succeeds regardless.
+         *
+         * Note that this is not a case of focus follows mouse. This happens when Openbox is configured to use
+         * click to focus too. */
+        if (GetForegroundWindow() == device_window)
+        {
+            skip("WM set focus to the device window, not checking screen mode.\n");
+        }
+        else
+        {
+            ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+            ok(ret, "Failed to get display mode.\n");
+            ok(devmode.dmPelsWidth == registry_mode.dmPelsWidth,
+                    "Got unexpected width %lu.\n", devmode.dmPelsWidth);
+            ok(devmode.dmPelsHeight == registry_mode.dmPelsHeight,
+                    "Got unexpected height %lu.\n", devmode.dmPelsHeight);
+        }
 
         /* SW_SHOWMINNOACTIVE is needed to make FVWM happy. SW_SHOWNOACTIVATE is needed to make windows
          * send SIZE_RESTORED after ShowWindow(SW_SHOWMINNOACTIVE). */
