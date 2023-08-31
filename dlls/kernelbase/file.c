@@ -1348,6 +1348,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *da
 
 
 /***********************************************************************
+ *	name_has_ext
+ *
+ * Check if the file name has extension (skipping leading dots).
+ */
+static BOOL name_has_ext( const WCHAR *name, const WCHAR *name_end )
+{
+    while (name != name_end && *name == '.') ++name;
+    while (name != name_end && *name != '.') ++name;
+    return name != name_end;
+}
+
+
+/***********************************************************************
  *	match_filename
  *
  * Check if the file name matches mask containing wildcards.
@@ -1359,6 +1372,14 @@ static BOOL match_filename( const WCHAR *name, int length, const WCHAR *mask )
     const WCHAR *mask_end = mask + lstrlenW( mask );
     const WCHAR *lastjoker = NULL;
     const WCHAR *next_to_retry = NULL;
+    const WCHAR *asterisk;
+
+    if (mask != mask_end && mask_end[-1] == '.' && (asterisk = wcschr( mask, '*' )) && asterisk == wcsrchr( mask, '*' )
+        && name_has_ext( name, name_end ))
+    {
+        /* Single '*' mask ending with '.' only matches files without extension. */
+        return FALSE;
+    }
 
     while (name < name_end && mask < mask_end)
     {
