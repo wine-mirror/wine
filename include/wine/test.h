@@ -515,7 +515,7 @@ int winetest_report_success = 0;
 int winetest_mute_threshold = 42;
 
 /* use ANSI escape codes for output coloring */
-int winetest_color;
+int winetest_color = 0;
 
 static HANDLE winetest_mutex;
 
@@ -525,15 +525,15 @@ static char** winetest_argv;
 
 static const struct test *current_test; /* test currently being run */
 
-LONG winetest_successes;       /* number of successful tests */
-LONG winetest_failures;        /* number of failures */
-LONG winetest_flaky_failures;  /* number of failures inside flaky block */
-LONG winetest_skipped;         /* number of skipped test chunks */
-LONG winetest_todo_successes;  /* number of successful tests inside todo block */
-LONG winetest_todo_failures;   /* number of failures inside todo block */
-LONG winetest_muted_traces;    /* number of silenced traces */
-LONG winetest_muted_skipped;   /* same as skipped but silent */
-LONG winetest_muted_todo_successes; /* same as todo_successes but silent */
+LONG winetest_successes = 0;       /* number of successful tests */
+LONG winetest_failures = 0;        /* number of failures */
+LONG winetest_flaky_failures = 0;  /* number of failures inside flaky block */
+LONG winetest_skipped = 0;         /* number of skipped test chunks */
+LONG winetest_todo_successes = 0;  /* number of successful tests inside todo block */
+LONG winetest_todo_failures = 0;   /* number of failures inside todo block */
+LONG winetest_muted_traces = 0;    /* number of silenced traces */
+LONG winetest_muted_skipped = 0;   /* same as skipped but silent */
+LONG winetest_muted_todo_successes = 0; /* same as todo_successes but silent */
 
 static DWORD tls_index;
 
