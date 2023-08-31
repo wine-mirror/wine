@@ -31,7 +31,6 @@ struct collection
     LONG ref;
 
     IStream *pStm; /* stream from which we load collection and later instruments */
-    LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
     CHAR *szCopyright; /* FIXME: should probably be placed somewhere else */
     DLSHEADER *pHeader;
     /* pool table */
@@ -213,7 +212,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
     DMUS_PRIVATE_CHUNK chunk;
     DWORD StreamSize, StreamCount, ListSize[2], ListCount[2];
     LARGE_INTEGER liMove; /* used when skipping chunks */
-    ULARGE_INTEGER dlibInstrumentPosition, dlibWavePoolPosition;
+    ULARGE_INTEGER dlibInstrumentPosition;
 
     IStream_AddRef(stream); /* add count for later references */
     This->pStm = stream;
@@ -357,9 +356,6 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                     }
                     case FOURCC_WVPL: {
                         TRACE_(dmfile)(": wave pool list (mark & skip)\n");
-                        liMove.QuadPart = 0;
-                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dlibWavePoolPosition); /* store position */
-                        This->liWavePoolTablePosition.QuadPart = dlibWavePoolPosition.QuadPart;
                         liMove.QuadPart = chunk.dwSize - sizeof(FOURCC);
                         IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
                         break;
