@@ -338,11 +338,10 @@ HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk)
         }
     }
 
-    if (chunk->id == FOURCC_LIST || chunk->id == FOURCC_RIFF) {
-        hr = stream_read(stream, &chunk->type, sizeof(FOURCC));
-        if (hr != S_OK)
-            return hr != S_FALSE ? hr : E_FAIL;
-    }
+    if (chunk->id != FOURCC_LIST && chunk->id != FOURCC_RIFF)
+        chunk->type = 0;
+    else if ((hr = stream_read(stream, &chunk->type, sizeof(FOURCC))) != S_OK)
+        return hr != S_FALSE ? hr : E_FAIL;
 
     TRACE_(dmfile)("Returning %s\n", debugstr_chunk(chunk));
 
