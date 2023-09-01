@@ -16,7 +16,7 @@
 @ stub WldpCheckWcosDeviceEncryptionSecure
 @ stub WldpDisableDeveloperMode
 @ stub WldpEnableDeveloperMode
-@ stub WldpGetLockdownPolicy
+@ stdcall WldpGetLockdownPolicy(ptr ptr long)
 @ stub WldpIsAllowedEntryPoint
 @ stub WldpIsClassInApprovedList
 @ stub WldpIsDebugAllowed

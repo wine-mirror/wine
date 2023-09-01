@@ -953,6 +953,7 @@ SOURCES = \
 	winuser.rh \
 	winver.h \
 	wlanapi.h \
+	wldp.h \
 	wmcodecdsp.idl \
 	wmdrmsdk.idl \
 	wmistr.h \

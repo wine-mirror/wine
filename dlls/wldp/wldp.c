@@ -22,6 +22,8 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "wldp.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldp);
@@ -34,5 +36,16 @@ HRESULT WINAPI WldpIsDynamicCodePolicyEnabled(BOOL *is_enabled)
     FIXME("%p\n", is_enabled);
 
     *is_enabled = FALSE;
+    return S_OK;
+}
+
+/***********************************************************************
+ *      WldpGetLockdownPolicy (wldp.@)
+ */
+HRESULT WINAPI WldpGetLockdownPolicy(WLDP_HOST_INFORMATION *info, DWORD *state, DWORD flags)
+{
+    FIXME("%p %p %lu\n", info, state, flags);
+
+    *state = 0;
     return S_OK;
 }
