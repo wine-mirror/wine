@@ -846,7 +846,11 @@ static HRESULT get_flt_hash(FLOAT flt, LONG *hash)
 
 static DWORD get_ptr_hash(void *ptr)
 {
-    return PtrToUlong(ptr) % DICT_HASH_MOD;
+    DWORD hash = PtrToUlong(ptr);
+#ifdef _WIN64
+    hash ^= (ULONG_PTR)ptr >> 32;
+#endif
+    return hash % 1201;
 }
 
 static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, VARIANT *hash)

@@ -193,7 +193,11 @@ static DWORD get_num_hash(FLOAT num)
 
 static DWORD get_ptr_hash(void *ptr)
 {
-    return PtrToUlong(ptr) % 1201;
+    DWORD hash = PtrToUlong(ptr);
+#ifdef _WIN64
+    hash ^= (ULONG_PTR)ptr >> 32;
+#endif
+    return hash % 1201;
 }
 
 typedef union
