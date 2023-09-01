@@ -4288,7 +4288,6 @@ INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
 #define SHFORMATDT_UNSUPPORTED_FLAGS (FDTF_RELATIVE | FDTF_LTRDATE | FDTF_RTLDATE | FDTF_NOAUTOREADINGORDER)
     DWORD fmt_flags = flags ? *flags : FDTF_DEFAULT;
     SYSTEMTIME st;
-    FILETIME ft;
     INT ret = 0;
 
     TRACE("%p %p %p %u\n", fileTime, flags, buf, size);
@@ -4299,8 +4298,8 @@ INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
     if (fmt_flags & SHFORMATDT_UNSUPPORTED_FLAGS)
         FIXME("ignoring some flags - 0x%08lx\n", fmt_flags & SHFORMATDT_UNSUPPORTED_FLAGS);
 
-    FileTimeToLocalFileTime(fileTime, &ft);
-    FileTimeToSystemTime(&ft, &st);
+    FileTimeToSystemTime(fileTime, &st);
+    SystemTimeToTzSpecificLocalTime(NULL, &st, &st);
 
     /* first of all date */
     if (fmt_flags & (FDTF_LONGDATE | FDTF_SHORTDATE))

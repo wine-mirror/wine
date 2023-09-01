@@ -1739,7 +1739,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff, buff2) == 0 || broken(!dstMatch) /* pre Windows 7 */,
         "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1748,7 +1747,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff, buff2) == 0 || broken(!dstMatch) /* pre Windows 7 */,
         "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1758,7 +1756,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, st, NULL, buff2, sizeof(buff2));
     ok(ret == lstrlenA(buff2)+1, "got %d\n", ret);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff, buff2) == 0 || broken(!dstMatch) /* pre Windows 7 */,
         "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1790,7 +1787,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ok(ret == lstrlenA(buff)+1, "got %d, length %d\n", ret, lstrlenA(buff)+1);
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff3, buff + lstrlenA(buff) - lstrlenA(buff3)) == 0 || broken(!dstMatch) /* pre Windows 7 */,
        "expected (%s), got (%s) for time part\n",
        buff3, buff + lstrlenA(buff) - lstrlenA(buff3));
@@ -1805,7 +1801,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ok(ret == lstrlenA(buff)+1, "got %d\n", ret);
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff3, buff + lstrlenA(buff) - lstrlenA(buff3)) == 0 || broken(!dstMatch) /* pre Windows 7 */,
        "expected (%s), got (%s) for time part\n",
        buff3, buff + lstrlenA(buff) - lstrlenA(buff3));
@@ -1824,7 +1819,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, TIME_NOSECONDS | LOCALE_USE_CP_ACP, st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     strcat(buff2, buff3);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff, buff2) == 0 || broken(!dstMatch) /* pre Windows 7 */,
         "expected (%s), got (%s)\n", buff2, buff);
 
@@ -1837,7 +1831,6 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
     ret = GetTimeFormatA(LOCALE_USER_DEFAULT, LOCALE_USE_CP_ACP, st, NULL, buff3, sizeof(buff3));
     ok(ret == lstrlenA(buff3)+1, "got %d\n", ret);
     strcat(buff2, buff3);
-    todo_wine_if(!dstMatch)
     ok(lstrcmpA(buff, buff2) == 0 || broken(!dstMatch) /* pre Windows 7 */,
         "expected (%s), got (%s)\n", buff2, buff);
 }
