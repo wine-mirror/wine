@@ -687,7 +687,7 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
        "waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
 
     /* waveOutGetDevCaps allows an open handle instead of a device id */
-    rc=waveOutGetDevCapsW(HandleToUlong(wout),&capsW,sizeof(capsW));
+    rc=waveOutGetDevCapsW((UINT_PTR)wout,&capsW,sizeof(capsW));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR "
        "expected, got %s\n",dev_name(device),wave_out_error(rc));
