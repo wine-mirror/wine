@@ -1625,6 +1625,7 @@ static void test_marshal_VARIANT(void)
     wirev = (DWORD*)buffer;
     wirev = check_variant_header(wirev, &v, next - buffer);
 
+    todo_wine_if( *wirev == (DWORD)(DWORD_PTR)V_UNKNOWN(&v) /* win9x */)
     ok(*wirev == (DWORD)(DWORD_PTR)V_UNKNOWN(&v) + 1, "wv[5] %08lx\n", *wirev);
     wirev++;
     ok(*wirev == next - buffer - 0x20, "wv[6] %08lx\n", *wirev);
@@ -1693,6 +1694,7 @@ static void test_marshal_VARIANT(void)
 
     ok(*wirev == 4, "wv[5] %08lx\n", *wirev);
     wirev++;
+    todo_wine_if( *wirev == (DWORD)(DWORD_PTR)heap_unknown /* win9x */)
     ok(*wirev == (DWORD)(DWORD_PTR)heap_unknown + 1, "wv[6] %08lx\n", *wirev);
     wirev++;
     ok(*wirev == next - buffer - 0x24, "wv[7] %08lx\n", *wirev);
