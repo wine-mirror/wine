@@ -57,6 +57,8 @@
 #  define strcasecmp _stricmp
 # endif
 #else
+extern char **environ;
+# include <spawn.h>
 # include <sys/wait.h>
 # include <unistd.h>
 # ifndef O_BINARY
@@ -283,13 +285,9 @@ static inline int strarray_spawn( struct strarray args )
     pid_t pid, wret;
     int status;
 
-    if (!(pid = fork()))
-    {
-        strarray_add( &args, NULL );
-        execvp( args.str[0], (char **)args.str );
-        _exit(1);
-    }
-    if (pid == -1) return -1;
+    strarray_add( &args, NULL );
+    if (posix_spawnp( &pid, args.str[0], NULL, NULL, (char **)args.str, environ ))
+        return -1;
 
     while (pid != (wret = waitpid( pid, &status, 0 )))
         if (wret == -1 && errno != EINTR) break;
