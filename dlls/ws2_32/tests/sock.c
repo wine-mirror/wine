@@ -161,6 +161,7 @@ static GUID       WSARecvMsg_GUID = WSAID_WSARECVMSG;
 
 static SOCKET setup_server_socket(struct sockaddr_in *addr, int *len);
 static SOCKET setup_connector_socket(const struct sockaddr_in *addr, int len, BOOL nonblock);
+static int sync_recv(SOCKET s, void *buffer, int len, DWORD flags);
 
 static void tcp_socketpair_flags(SOCKET *src, SOCKET *dst, DWORD flags)
 {
@@ -1225,7 +1226,7 @@ static void test_set_getsockopt(void)
         {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_UNICAST_HOPS, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET6, SOCK_DGRAM, IPPROTO_IPV6, IPV6_V6ONLY, TRUE, {1, 1, 1}, {0}, TRUE},
     };
-    SOCKET s, s2;
+    SOCKET s, s2, src, dst;
     int i, j, err, lasterr;
     int timeout;
     LINGER lingval;
@@ -1237,6 +1238,7 @@ static void test_set_getsockopt(void)
     int expected_err, expected_size;
     DWORD value, save_value;
     UINT64 value64;
+    char buffer[4096];
 
     struct _prottest
     {
@@ -1301,6 +1303,61 @@ static void test_set_getsockopt(void)
     err = getsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
     ok( !err, "getsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
     ok( value == 4096, "expected 4096, got %lu\n", value );
+
+    value = 0;
+    size = sizeof(value);
+    err = setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, size);
+    ok( !err, "setsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
+    value = 0xdeadbeef;
+    err = getsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
+    ok( !err, "getsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
+    ok( value == 0, "expected 0, got %lu\n", value );
+
+    /* Test non-blocking receive with too short SO_RCVBUF. */
+    tcp_socketpair(&src, &dst);
+    set_blocking(src, FALSE);
+    set_blocking(dst, FALSE);
+
+    value = 0;
+    size = sizeof(value);
+    err = setsockopt(src, SOL_SOCKET, SO_SNDBUF, (char *)&value, size);
+    ok( !err, "got %d, error %u.\n", err, WSAGetLastError() );
+
+    value = 0xdeadbeef;
+    err = getsockopt(dst, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
+    ok( !err, "got %d, error %u.\n", err, WSAGetLastError() );
+    if (value >= sizeof(buffer) * 3)
+    {
+        value = 1024;
+        size = sizeof(value);
+        err = setsockopt(dst, SOL_SOCKET, SO_RCVBUF, (char *)&value, size);
+        ok( !err, "got %d, error %u.\n", err, WSAGetLastError() );
+        value = 0xdeadbeef;
+        err = getsockopt(dst, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
+        ok( !err, "got %d, error %u.\n", err, WSAGetLastError() );
+        ok( value == 1024, "expected 0, got %lu\n", value );
+
+        err = send(src, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d\n", err);
+        err = send(src, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d\n", err);
+        err = send(src, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d\n", err);
+
+        err = sync_recv(dst, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d, error %u\n", err, WSAGetLastError());
+        err = sync_recv(dst, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d, error %u\n", err, WSAGetLastError());
+        err = sync_recv(dst, buffer, sizeof(buffer), 0);
+        ok(err == sizeof(buffer), "got %d, error %u\n", err, WSAGetLastError());
+    }
+    else
+    {
+        skip("Default SO_RCVBUF %lu is too small, skipping test.\n", value);
+    }
+
+    closesocket(src);
+    closesocket(dst);
 
     /* SO_LINGER */
     for( i = 0; i < ARRAY_SIZE(linger_testvals);i++) {
