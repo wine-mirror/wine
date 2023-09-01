@@ -34,7 +34,7 @@
 /* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
 #define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
 
-#define ALIGN_SIZE(size, alignment) (((size) + (alignment - 1)) & ~((alignment - 1)))
+#define ALIGN_SIZE(size, alignment) (((size) + ((ULONG_PTR)(alignment) - 1)) & ~(((ULONG_PTR)(alignment) - 1)))
 
 struct PROCESS_BASIC_INFORMATION_PRIVATE
 {
@@ -917,8 +917,8 @@ static void test_Loader(void)
             ok(info.BaseAddress == hlib, "%p != %p\n", info.BaseAddress, hlib);
             ok(info.AllocationBase == hlib, "%p != %p\n", info.AllocationBase, hlib);
             ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%lx != PAGE_EXECUTE_WRITECOPY\n", info.AllocationProtect);
-            ok(info.RegionSize == ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size), "got %Ix != expected %lx\n",
-               info.RegionSize, ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size));
+            ok(info.RegionSize == ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size), "got %Ix != expected %x\n",
+               info.RegionSize, (UINT)ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size));
             ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
             if (nt_header.OptionalHeader.SectionAlignment < page_size)
                 ok(info.Protect == PAGE_EXECUTE_WRITECOPY, "%lx != PAGE_EXECUTE_WRITECOPY\n", info.Protect);
@@ -952,8 +952,8 @@ static void test_Loader(void)
                 ok(info.BaseAddress == hlib, "got %p != expected %p\n", info.BaseAddress, hlib);
                 ok(info.AllocationBase == hlib, "%p != %p\n", info.AllocationBase, hlib);
                 ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%lx != PAGE_EXECUTE_WRITECOPY\n", info.AllocationProtect);
-                ok(info.RegionSize == ALIGN_SIZE(file_size, page_size), "got %Ix != expected %lx\n",
-                   info.RegionSize, ALIGN_SIZE(file_size, page_size));
+                ok(info.RegionSize == ALIGN_SIZE(file_size, page_size), "got %Ix != expected %x\n",
+                   info.RegionSize, (UINT)ALIGN_SIZE(file_size, page_size));
                 ok(info.State == MEM_COMMIT, "%lx != MEM_COMMIT\n", info.State);
                 ok(info.Protect == PAGE_READONLY, "%lx != PAGE_READONLY\n", info.Protect);
                 ok(info.Type == SEC_IMAGE, "%lx != SEC_IMAGE\n", info.Type);
@@ -978,15 +978,15 @@ static void test_Loader(void)
                 if (nt_header.OptionalHeader.SectionAlignment < page_size)
                 {
                     ok(info.BaseAddress == hlib, "got %p != expected %p\n", info.BaseAddress, hlib);
-                    ok(info.RegionSize == ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size), "got %Ix != expected %lx\n",
-                       info.RegionSize, ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size));
+                    ok(info.RegionSize == ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size), "got %Ix != expected %x\n",
+                       info.RegionSize, (UINT)ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, page_size));
                     ok(info.Protect == PAGE_EXECUTE_WRITECOPY, "%lx != PAGE_EXECUTE_WRITECOPY\n", info.Protect);
                 }
                 else
                 {
                     ok(info.BaseAddress == (char *)hlib + section.VirtualAddress, "got %p != expected %p\n", info.BaseAddress, (char *)hlib + section.VirtualAddress);
-                    ok(info.RegionSize == ALIGN_SIZE(section.Misc.VirtualSize, page_size), "got %Ix != expected %lx\n",
-                       info.RegionSize, ALIGN_SIZE(section.Misc.VirtualSize, page_size));
+                    ok(info.RegionSize == ALIGN_SIZE(section.Misc.VirtualSize, page_size), "got %Ix != expected %x\n",
+                       info.RegionSize, (UINT)ALIGN_SIZE(section.Misc.VirtualSize, page_size));
                     ok(info.Protect == PAGE_READONLY, "%lx != PAGE_READONLY\n", info.Protect);
                 }
                 ok(info.AllocationBase == hlib, "%p != %p\n", info.AllocationBase, hlib);
