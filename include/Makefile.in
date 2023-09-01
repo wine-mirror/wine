@@ -842,6 +842,7 @@ SOURCES = \
 	windows.media.capture.idl \
 	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
+	windows.media.effects.idl \
 	windows.media.idl \
 	windows.media.render.idl \
 	windows.media.speechrecognition.idl \

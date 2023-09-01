@@ -1,0 +1,87 @@
+/*
+ * Copyright (C) 2023 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "windows.foundation.idl";
+
+namespace Windows.Media.Effects {
+    typedef enum AudioEffectType AudioEffectType;
+
+    interface IAudioEffect;
+
+    runtimeclass AudioEffect;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum AudioEffectType
+    {
+        Other                    = 0,
+        AcousticEchoCancellation = 1,
+        NoiseSuppression         = 2,
+        AutomaticGainControl     = 3,
+        BeamForming              = 4,
+        ConstantToneRemoval      = 5,
+        Equalizer                = 6,
+        LoudnessEqualizer        = 7,
+        BassBoost                = 8,
+        VirtualSurround          = 9,
+        VirtualHeadphones        = 10,
+        SpeakerFill              = 11,
+        RoomCorrection           = 12,
+        BassManagement           = 13,
+        EnvironmentalEffects     = 14,
+        SpeakerProtection        = 15,
+        SpeakerCompensation      = 16,
+        DynamicRangeCompression  = 17,
+        [contract(Windows.Foundation.UniversalApiContract, 12.0)]
+        FarFieldBeamForming      = 18,
+        [contract(Windows.Foundation.UniversalApiContract, 13.0)]
+        DeepNoiseSuppression     = 19,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioEffect),
+        uuid(34aafa51-9207-4055-be93-6e5734a86ae4)
+    ]
+    interface IAudioEffect : IInspectable
+    {
+        [propget] HRESULT AudioEffectType([out, retval] Windows.Media.Effects.AudioEffectType *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass AudioEffect
+    {
+        [default] interface Windows.Media.Effects.IAudioEffect;
+    }
+}
