@@ -2247,7 +2247,7 @@ static void test_token(void)
 
 static void *align_ptr( void *ptr )
 {
-    ULONG align = sizeof(DWORD_PTR) - 1;
+    ULONG_PTR align = sizeof(DWORD_PTR) - 1;
     return (void *)(((DWORD_PTR)ptr + align) & ~align);
 }
 
