@@ -4350,6 +4350,12 @@ static void test_wow64_context(void)
         ok( cpu->Machine == IMAGE_FILE_MACHINE_I386, "wrong machine %04x\n", cpu->Machine );
         ret = pRtlWow64GetCpuAreaInfo( cpu, 0, &cpu_info );
         ok( !ret, "RtlWow64GetCpuAreaInfo failed %lx\n", ret );
+        /* work around pointer truncation bug on win10 <= 1709 */
+        if (!((ULONG_PTR)cpu_info.Context >> 32))
+        {
+            cpu_info.Context = (char *)cpu + (ULONG)((char *)cpu_info.Context - (char *)cpu);
+            cpu_info.ContextEx = (char *)cpu + (ULONG)((char *)cpu_info.ContextEx - (char *)cpu);
+        }
         ctx_ptr = (WOW64_CONTEXT *)cpu_info.Context;
         ok(!*(void **)cpu_info.ContextEx, "got context_ex %p\n", *(void **)cpu_info.ContextEx);
         ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL, "got context flags %#lx\n", ctx_ptr->ContextFlags);

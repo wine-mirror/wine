@@ -1340,8 +1340,10 @@ static void test_cpu_area(void)
                 status = pRtlWow64GetCpuAreaInfo( cpu, 0, &info );
                 ok( status == tests[i].expect, "%lu:%lu: failed %lx\n", i, j, status );
                 if (status) continue;
-                ok( info.Context == ALIGN( cpu + 1, tests[i].align ), "%lu:%lu: wrong offset %lu\n",
-                    i, j, (ULONG)((char *)info.Context - (char *)cpu) );
+                ok( info.Context == ALIGN( cpu + 1, tests[i].align ) ||
+                    broken( (ULONG_PTR)info.Context == (ULONG)(ULONG_PTR)ALIGN( cpu + 1, tests[i].align ) ), /* win10 <= 1709 */
+                    "%lu:%lu: wrong offset %Iu cpu %p context %p\n",
+                    i, j, (ULONG_PTR)((char *)info.Context - (char *)cpu), cpu, info.Context );
                 ok( info.ContextEx == ALIGN( (char *)info.Context + tests[i].size, sizeof(void*) ),
                     "%lu:%lu: wrong ex offset %lu\n", i, j, (ULONG)((char *)info.ContextEx - (char *)cpu) );
                 ok( info.ContextFlagsLocation == (char *)info.Context + tests[i].offset,
