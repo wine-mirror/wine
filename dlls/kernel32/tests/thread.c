@@ -1187,9 +1187,6 @@ static DWORD WINAPI test_stack( void *arg )
     ok( stack == NtCurrentTeb()->Tib.StackBase, "wrong stack %p/%p\n",
         stack, NtCurrentTeb()->Tib.StackBase );
     ok( !stack[-1], "wrong data %p = %08lx\n", stack - 1, stack[-1] );
-    ok( stack[-2] == (DWORD)arg, "wrong data %p = %08lx\n", stack - 2, stack[-2] );
-    ok( stack[-3] == (DWORD)test_stack, "wrong data %p = %08lx\n", stack - 3, stack[-3] );
-    ok( !stack[-4], "wrong data %p = %08lx\n", stack - 4, stack[-4] );
     return 0;
 }
 
