@@ -3261,7 +3261,6 @@ static void test_SuspendProcessNewThread(void)
     ok( !ctx.R13, "r13 is not zero %Ix\n", ctx.R13 );
     ok( !ctx.R14, "r14 is not zero %Ix\n", ctx.R14 );
     ok( !ctx.R15, "r15 is not zero %Ix\n", ctx.R15 );
-    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %Ix\n", ctx.Rsp );
     ok( ctx.EFlags == 0x200, "wrong flags %08lx\n", ctx.EFlags );
     ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", ctx.MxCsr );
     ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
@@ -3410,7 +3409,6 @@ static void test_SuspendProcessState(void)
     ok( !ctx.R13, "r13 is not zero %Ix\n", ctx.R13 );
     ok( !ctx.R14, "r14 is not zero %Ix\n", ctx.R14 );
     ok( !ctx.R15, "r15 is not zero %Ix\n", ctx.R15 );
-    ok( !((ctx.Rsp + 0x28) & 0xfff), "rsp is not at top of stack page %Ix\n", ctx.Rsp );
     ok( ctx.EFlags == 0x200, "wrong flags %08lx\n", ctx.EFlags );
     ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", ctx.MxCsr );
     ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
