@@ -7008,7 +7008,7 @@ BOOL WINAPI NtGdiGetRasterizerCaps( RASTERIZER_STATUS *status, UINT size )
  *             NtGdiGetFontFileData   (win32u.@)
  */
 BOOL WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *offset,
-                                  void *buff, DWORD buff_size )
+                                  void *buff, SIZE_T buff_size )
 {
     struct gdi_font *font;
     DWORD tag = 0, size;

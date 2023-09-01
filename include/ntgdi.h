@@ -341,7 +341,7 @@ INT      WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap );
 BOOL     WINAPI NtGdiGetDeviceGammaRamp( HDC hdc, void *ptr );
 DWORD    WINAPI NtGdiGetFontData( HDC hdc, DWORD table, DWORD offset, void *buffer, DWORD length );
 BOOL     WINAPI NtGdiGetFontFileData( DWORD instance_id, DWORD file_index, UINT64 *offset,
-                                      void *buff, DWORD buff_size );
+                                      void *buff, SIZE_T buff_size );
 BOOL     WINAPI NtGdiGetFontFileInfo( DWORD instance_id, DWORD file_index, struct font_fileinfo *info,
                                       SIZE_T size, SIZE_T *needed );
 DWORD    WINAPI NtGdiGetFontUnicodeRanges( HDC hdc, GLYPHSET *lpgs );

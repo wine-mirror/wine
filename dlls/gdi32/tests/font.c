@@ -46,7 +46,7 @@ static BOOL  (WINAPI *pGetCharWidthInfo)(HDC hdc, void *);
 static BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
 static BOOL  (WINAPI *pGetFontRealizationInfo)(HDC hdc, DWORD *);
 static BOOL  (WINAPI *pGetFontFileInfo)(DWORD, DWORD, void *, SIZE_T, SIZE_T *);
-static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, UINT64, void *, DWORD);
+static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, UINT64, void *, SIZE_T);
 
 static HMODULE hgdi32 = 0;
 static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };

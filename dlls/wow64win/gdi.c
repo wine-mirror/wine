@@ -1136,7 +1136,7 @@ NTSTATUS WINAPI wow64_NtGdiGetFontFileData( UINT *args )
     DWORD file_index = get_ulong( &args );
     UINT64 *offset = get_ptr( &args );
     void *buff = get_ptr( &args );
-    DWORD buff_size = get_ulong( &args );
+    SIZE_T buff_size = get_ulong( &args );
 
     return NtGdiGetFontFileData( instance_id, file_index, offset, buff, buff_size );
 }
