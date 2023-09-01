@@ -2140,10 +2140,15 @@ static void test_import_resolution(void)
         int* tls_init_fn_output;
         UCHAR tls_init_fn[64]; /* Note: Uses rip-relative address of tls_init_fn_output, don't separate */
         UCHAR entry_point_fn[16];
+        struct
+        {
+            IMAGE_BASE_RELOCATION reloc;
+            USHORT type_off[32];
+        } rel;
     } data, *ptr;
     IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER section;
-    int test, tls_index_save;
+    int test, tls_index_save, nb_rel;
 #if defined(__i386__)
     static const UCHAR tls_init_code[] = {
         0xE8, 0x00, 0x00, 0x00, 0x00, /* call 1f */
@@ -2177,10 +2182,11 @@ static void test_import_resolution(void)
     for (test = 0; test < 4; test++)
     {
 #define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
+#define ADD_RELOC(field) data.rel.type_off[nb_rel++] = (IMAGE_REL_BASED_HIGHLOW << 12) + offsetof( struct imports, field )
         nt = nt_header_template;
         nt.FileHeader.NumberOfSections = 1;
         nt.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-        nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_RELOCS_STRIPPED;
+        nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE;
         if (test != 2) nt.FileHeader.Characteristics |= IMAGE_FILE_DLL;
         nt.OptionalHeader.SectionAlignment = page_size;
         nt.OptionalHeader.FileAlignment = 0x200;
@@ -2193,6 +2199,8 @@ static void test_import_resolution(void)
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress = DATA_RVA(data.descr);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size = sizeof(data.tls);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress = DATA_RVA(&data.tls);
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = sizeof(data.rel);
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = DATA_RVA(&data.rel);
 
         memset( &data, 0, sizeof(data) );
         data.descr[0].OriginalFirstThunk = DATA_RVA( data.original_thunks );
@@ -2202,10 +2210,14 @@ static void test_import_resolution(void)
         strcpy( data.function.name, "CreateEventA" );
         data.original_thunks[0].u1.AddressOfData = DATA_RVA( &data.function );
         data.thunks[0].u1.AddressOfData = 0xdeadbeef;
+        nb_rel = 0;
 
         data.tls.StartAddressOfRawData = nt.OptionalHeader.ImageBase + DATA_RVA( data.tls_data );
+        ADD_RELOC( tls.StartAddressOfRawData );
         data.tls.EndAddressOfRawData = data.tls.StartAddressOfRawData + sizeof(data.tls_data);
+        ADD_RELOC( tls.EndAddressOfRawData );
         data.tls.AddressOfIndex = nt.OptionalHeader.ImageBase + DATA_RVA( &data.tls_index );
+        ADD_RELOC( tls.AddressOfIndex );
         strcpy( data.tls_data, "hello world" );
         data.tls_index = 9999;
         data.tls_index_hi = 9999;
@@ -2220,9 +2232,14 @@ static void test_import_resolution(void)
             tls_init_fn_output = 9999;
             data.tls_init_fn_output = &tls_init_fn_output;
             data.tls_init_fn_list[0] = nt.OptionalHeader.ImageBase + DATA_RVA(&data.tls_init_fn);
+            ADD_RELOC( tls_init_fn_list[0] );
             data.tls.AddressOfCallBacks = nt.OptionalHeader.ImageBase + DATA_RVA(&data.tls_init_fn_list);
+            ADD_RELOC( tls.AddressOfCallBacks );
             nt.OptionalHeader.AddressOfEntryPoint = DATA_RVA(&data.entry_point_fn);
         }
+
+        data.rel.reloc.VirtualAddress = nt.OptionalHeader.SectionAlignment;
+        data.rel.reloc.SizeOfBlock = (char *)&data.rel.type_off[nb_rel] - (char *)&data.rel.reloc;
 
         GetTempPathA(MAX_PATH, temp_path);
         GetTempFileNameA(temp_path, "ldr", 0, dll_name);
@@ -3739,7 +3756,7 @@ static void test_ResolveDelayLoadedAPI(void)
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + 2 * sizeof(IMAGE_SECTION_HEADER);
     nt_header.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
     nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress = 0x1000;
-    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size = 0x100;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size = 2 * sizeof(idd);
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
@@ -3752,8 +3769,8 @@ static void test_ResolveDelayLoadedAPI(void)
     /* sections */
     section.PointerToRawData = nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress;
     section.VirtualAddress = nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress;
-    section.Misc.VirtualSize = 2 * sizeof(idd);
-    section.SizeOfRawData = section.Misc.VirtualSize;
+    section.Misc.VirtualSize = 0x1000;
+    section.SizeOfRawData = 2 * sizeof(idd);
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
@@ -3762,10 +3779,10 @@ static void test_ResolveDelayLoadedAPI(void)
     section.PointerToRawData = 0x2000;
     section.VirtualAddress = 0x2000;
     i = ARRAY_SIZE(td);
-    section.Misc.VirtualSize = sizeof(test_dll) + sizeof(hint) + sizeof(test_func) + sizeof(HMODULE) +
+    section.SizeOfRawData = sizeof(test_dll) + sizeof(hint) + sizeof(test_func) + sizeof(HMODULE) +
                                2 * (i + 1) * sizeof(IMAGE_THUNK_DATA);
-    ok(section.Misc.VirtualSize <= 0x1000, "Too much tests, add a new section!\n");
-    section.SizeOfRawData = section.Misc.VirtualSize;
+    ok(section.SizeOfRawData <= 0x1000, "Too much tests, add a new section!\n");
+    section.Misc.VirtualSize = 0x1000;
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
@@ -3880,6 +3897,9 @@ static void test_ResolveDelayLoadedAPI(void)
         for (i = 0; i < ARRAY_SIZE(td); i++)
         {
             void *ret, *load;
+
+            /* relocate thunk address by hand since we don't generate reloc records */
+            itda[i].u1.AddressOfData += (char *)hlib - (char *)nt_header.OptionalHeader.ImageBase;
 
             if (IMAGE_SNAP_BY_ORDINAL(itdn[i].u1.Ordinal))
                 load = (void *)GetProcAddress(htarget, (LPSTR)IMAGE_ORDINAL(itdn[i].u1.Ordinal));
