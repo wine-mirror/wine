@@ -84,9 +84,9 @@ static ULONG WINAPI uia_or_condition_Release(IUIAutomationOrCondition *iface)
             }
         }
 
-        heap_free(uia_or_condition->child_ifaces);
-        heap_free(uia_or_condition->condition.ppConditions);
-        heap_free(uia_or_condition);
+        free(uia_or_condition->child_ifaces);
+        free(uia_or_condition->condition.ppConditions);
+        free(uia_or_condition);
     }
 
     return ref;
@@ -164,21 +164,21 @@ static HRESULT create_uia_or_condition_iface(IUIAutomationCondition **out_cond, 
 
     *out_cond = NULL;
 
-    uia_or_condition = heap_alloc_zero(sizeof(*uia_or_condition));
+    uia_or_condition = calloc(1, sizeof(*uia_or_condition));
     if (!uia_or_condition)
         return E_OUTOFMEMORY;
 
     uia_or_condition->IUIAutomationOrCondition_iface.lpVtbl = &uia_or_condition_vtbl;
     uia_or_condition->ref = 1;
 
-    uia_or_condition->child_ifaces = heap_alloc_zero(sizeof(*in_conds) * in_cond_count);
+    uia_or_condition->child_ifaces = calloc(in_cond_count, sizeof(*in_conds));
     if (!uia_or_condition->child_ifaces)
     {
         IUIAutomationOrCondition_Release(&uia_or_condition->IUIAutomationOrCondition_iface);
         return E_OUTOFMEMORY;
     }
 
-    uia_or_condition->condition.ppConditions = heap_alloc_zero(sizeof(*uia_or_condition->condition.ppConditions) * in_cond_count);
+    uia_or_condition->condition.ppConditions = calloc(in_cond_count, sizeof(*uia_or_condition->condition.ppConditions));
     if (!uia_or_condition->condition.ppConditions)
     {
         IUIAutomationOrCondition_Release(&uia_or_condition->IUIAutomationOrCondition_iface);
@@ -253,7 +253,7 @@ static ULONG WINAPI uia_not_condition_Release(IUIAutomationNotCondition *iface)
     if (!ref)
     {
         IUIAutomationCondition_Release(uia_not_condition->child_iface);
-        heap_free(uia_not_condition);
+        free(uia_not_condition);
     }
 
     return ref;
@@ -295,7 +295,7 @@ static HRESULT create_uia_not_condition_iface(IUIAutomationCondition **out_cond,
     if (FAILED(hr))
         return hr;
 
-    uia_not_condition = heap_alloc_zero(sizeof(*uia_not_condition));
+    uia_not_condition = calloc(1, sizeof(*uia_not_condition));
     if (!uia_not_condition)
         return E_OUTOFMEMORY;
 
@@ -357,7 +357,7 @@ static ULONG WINAPI uia_property_condition_Release(IUIAutomationPropertyConditio
     if (!ref)
     {
         VariantClear(&uia_property_condition->condition.Value);
-        heap_free(uia_property_condition);
+        free(uia_property_condition);
     }
 
     return ref;
@@ -445,7 +445,7 @@ static HRESULT create_uia_property_condition_iface(IUIAutomationCondition **out_
         return E_NOTIMPL;
     }
 
-    uia_property_condition = heap_alloc_zero(sizeof(*uia_property_condition));
+    uia_property_condition = calloc(1, sizeof(*uia_property_condition));
     if (!uia_property_condition)
         return E_OUTOFMEMORY;
 
@@ -504,7 +504,7 @@ static ULONG WINAPI uia_bool_condition_Release(IUIAutomationBoolCondition *iface
 
     TRACE("%p, refcount %ld\n", uia_bool_condition, ref);
     if (!ref)
-        heap_free(uia_bool_condition);
+        free(uia_bool_condition);
 
     return ref;
 }
@@ -540,7 +540,7 @@ static HRESULT create_uia_bool_condition_iface(IUIAutomationCondition **out_cond
     if (!out_cond)
         return E_POINTER;
 
-    uia_bool_condition = heap_alloc_zero(sizeof(*uia_bool_condition));
+    uia_bool_condition = calloc(1, sizeof(*uia_bool_condition));
     if (!uia_bool_condition)
         return E_OUTOFMEMORY;
 
@@ -673,8 +673,8 @@ static ULONG WINAPI uia_cache_request_Release(IUIAutomationCacheRequest *iface)
     if (!ref)
     {
         IUIAutomationCondition_Release(uia_cache_request->view_condition);
-        heap_free(uia_cache_request->prop_ids);
-        heap_free(uia_cache_request);
+        free(uia_cache_request->prop_ids);
+        free(uia_cache_request);
     }
 
     return ref;
@@ -861,7 +861,7 @@ static HRESULT create_uia_cache_request_iface(IUIAutomationCacheRequest **out_ca
     if (FAILED(hr))
         return hr;
 
-    uia_cache_request = heap_alloc_zero(sizeof(*uia_cache_request));
+    uia_cache_request = calloc(1, sizeof(*uia_cache_request));
     if (!uia_cache_request)
     {
         IUIAutomationCondition_Release(view_condition);
@@ -975,7 +975,7 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
         event_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_map_entry, entry);
     else
     {
-        if (!(event_map = heap_alloc_zero(sizeof(*event_map))))
+        if (!(event_map = calloc(1, sizeof(*event_map))))
         {
             hr = E_OUTOFMEMORY;
             goto exit;
@@ -984,7 +984,7 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
         hr = SafeArrayCopy(runtime_id, &event_map->runtime_id);
         if (FAILED(hr))
         {
-            heap_free(event_map);
+            free(event_map);
             goto exit;
         }
 
@@ -1013,7 +1013,7 @@ static void uia_event_handler_destroy(struct uia_com_event *event)
         UiaRemoveEvent(event->event);
     if (event->git_cookie)
         unregister_interface_in_git(event->git_cookie);
-    heap_free(event);
+    free(event);
 }
 
 static void uia_event_handler_map_entry_destroy(struct uia_event_handler_map_entry *entry)
@@ -1029,7 +1029,7 @@ static void uia_event_handler_map_entry_destroy(struct uia_event_handler_map_ent
     rb_remove(&com_event_handlers.handler_map, &entry->entry);
     IUnknown_Release(entry->handler_iface);
     SafeArrayDestroy(entry->runtime_id);
-    heap_free(entry);
+    free(entry);
 }
 
 static void uia_event_handlers_remove_handlers(IUnknown *handler_iface, SAFEARRAY *runtime_id, int event_id)
@@ -1153,8 +1153,8 @@ static ULONG WINAPI uia_element_array_Release(IUIAutomationElementArray *iface)
                     IUIAutomationElement_Release(element_arr->elements[i]);
             }
         }
-        heap_free(element_arr->elements);
-        heap_free(element_arr);
+        free(element_arr->elements);
+        free(element_arr);
     }
 
     return ref;
@@ -1203,7 +1203,7 @@ static const IUIAutomationElementArrayVtbl uia_element_array_vtbl = {
 
 static HRESULT create_uia_element_array_iface(IUIAutomationElementArray **iface, int elements_count)
 {
-    struct uia_element_array *element_arr = heap_alloc_zero(sizeof(*element_arr));
+    struct uia_element_array *element_arr = calloc(1, sizeof(*element_arr));
 
     *iface = NULL;
     if (!element_arr)
@@ -1212,9 +1212,9 @@ static HRESULT create_uia_element_array_iface(IUIAutomationElementArray **iface,
     element_arr->IUIAutomationElementArray_iface.lpVtbl = &uia_element_array_vtbl;
     element_arr->ref = 1;
     element_arr->elements_count = elements_count;
-    if (!(element_arr->elements = heap_alloc_zero(sizeof(*element_arr->elements) * elements_count)))
+    if (!(element_arr->elements = calloc(elements_count, sizeof(*element_arr->elements))))
     {
-        heap_free(element_arr);
+        free(element_arr);
         return E_OUTOFMEMORY;
     }
 
@@ -1293,9 +1293,9 @@ static ULONG WINAPI uia_element_Release(IUIAutomationElement9 *iface)
         }
 
         IUnknown_Release(element->marshal);
-        heap_free(element->cached_props);
+        free(element->cached_props);
         UiaNodeRelease(element->node);
-        heap_free(element);
+        free(element);
     }
 
     return ref;
@@ -2539,7 +2539,7 @@ static const IUIAutomationElement9Vtbl uia_element_vtbl = {
 
 static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node)
 {
-    struct uia_element *element = heap_alloc_zero(sizeof(*element));
+    struct uia_element *element = calloc(1, sizeof(*element));
     HRESULT hr;
 
     *iface = NULL;
@@ -2554,7 +2554,7 @@ static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&element->IUIAutomationElement9_iface, &element->marshal);
     if (FAILED(hr))
     {
-        heap_free(element);
+        free(element);
         return hr;
     }
 
@@ -2603,7 +2603,7 @@ static HRESULT create_uia_element_from_cache_req(IUIAutomationElement **iface, B
     {
         LONG i;
 
-        elem_data->cached_props = heap_alloc_zero(sizeof(*elem_data->cached_props) * cache_req->cProperties);
+        elem_data->cached_props = calloc(cache_req->cProperties, sizeof(*elem_data->cached_props));
         if (!elem_data->cached_props)
         {
             hr = E_OUTOFMEMORY;
@@ -2702,7 +2702,7 @@ static ULONG WINAPI uia_tree_walker_Release(IUIAutomationTreeWalker *iface)
         if (tree_walker->default_cache_req)
             IUIAutomationCacheRequest_Release(tree_walker->default_cache_req);
         IUIAutomationCondition_Release(tree_walker->nav_cond);
-        heap_free(tree_walker);
+        free(tree_walker);
     }
 
     return ref;
@@ -2895,7 +2895,7 @@ static HRESULT create_uia_tree_walker(IUIAutomationTreeWalker **out_tree_walker,
     if (FAILED(hr))
         return hr;
 
-    tree_walker = heap_alloc_zero(sizeof(*tree_walker));
+    tree_walker = calloc(1, sizeof(*tree_walker));
     if (!tree_walker)
         return E_OUTOFMEMORY;
 
@@ -2968,7 +2968,7 @@ static ULONG WINAPI uia_iface_Release(IUIAutomation6 *iface)
 
     TRACE("%p, refcount %ld\n", uia_iface, ref);
     if (!ref)
-        heap_free(uia_iface);
+        free(uia_iface);
     return ref;
 }
 
@@ -3288,7 +3288,7 @@ static HRESULT uia_add_com_event_handler(IUIAutomation6 *iface, EVENTID event_id
     if (FAILED(hr))
         goto exit;
 
-    if (!(com_event = heap_alloc_zero(sizeof(*com_event))))
+    if (!(com_event = calloc(1, sizeof(*com_event))))
     {
         hr = E_OUTOFMEMORY;
         goto exit;
@@ -3925,7 +3925,7 @@ HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8)
 {
     struct uia_iface *uia;
 
-    uia = heap_alloc_zero(sizeof(*uia));
+    uia = calloc(1, sizeof(*uia));
     if (!uia)
         return E_OUTOFMEMORY;
 

@@ -149,7 +149,7 @@ static void uia_condition_destroy(struct UiaCondition *cond)
 
         for (i = 0; i < and_or_cond->cConditions; i++)
             uia_condition_destroy(and_or_cond->ppConditions[i]);
-        heap_free(and_or_cond->ppConditions);
+        free(and_or_cond->ppConditions);
         break;
     }
 
@@ -157,7 +157,7 @@ static void uia_condition_destroy(struct UiaCondition *cond)
         break;
     }
 
-    heap_free(cond);
+    free(cond);
 }
 
 static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaCondition *src)
@@ -169,7 +169,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
     {
     case ConditionType_True:
     case ConditionType_False:
-        if (!(*dst = heap_alloc_zero(sizeof(**dst))))
+        if (!(*dst = calloc(1, sizeof(**dst))))
             return E_OUTOFMEMORY;
 
         (*dst)->ConditionType = src->ConditionType;
@@ -177,7 +177,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
 
     case ConditionType_Property:
     {
-        struct UiaPropertyCondition *prop_cond = heap_alloc_zero(sizeof(*prop_cond));
+        struct UiaPropertyCondition *prop_cond = calloc(1, sizeof(*prop_cond));
         struct UiaPropertyCondition *src_cond = (struct UiaPropertyCondition *)src;
 
         if (!prop_cond)
@@ -194,7 +194,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
 
     case ConditionType_Not:
     {
-        struct UiaNotCondition *not_cond = heap_alloc_zero(sizeof(*not_cond));
+        struct UiaNotCondition *not_cond = calloc(1, sizeof(*not_cond));
         struct UiaNotCondition *src_cond = (struct UiaNotCondition *)src;
 
         if (!not_cond)
@@ -209,7 +209,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
     case ConditionType_And:
     case ConditionType_Or:
     {
-        struct UiaAndOrCondition *and_or_cond = heap_alloc_zero(sizeof(*and_or_cond));
+        struct UiaAndOrCondition *and_or_cond = calloc(1, sizeof(*and_or_cond));
         struct UiaAndOrCondition *src_cond = (struct UiaAndOrCondition *)src;
         int i;
 
@@ -218,7 +218,7 @@ static HRESULT uia_condition_clone(struct UiaCondition **dst, struct UiaConditio
 
         *dst = (struct UiaCondition *)and_or_cond;
         and_or_cond->ConditionType = src_cond->ConditionType;
-        and_or_cond->ppConditions = heap_alloc_zero(sizeof(*and_or_cond->ppConditions) * src_cond->cConditions);
+        and_or_cond->ppConditions = calloc(src_cond->cConditions, sizeof(*and_or_cond->ppConditions));
         if (!and_or_cond->ppConditions)
         {
             hr = E_OUTOFMEMORY;
@@ -257,8 +257,8 @@ exit:
 void uia_cache_request_destroy(struct UiaCacheRequest *cache_req)
 {
     uia_condition_destroy(cache_req->pViewCondition);
-    heap_free(cache_req->pProperties);
-    heap_free(cache_req->pPatterns);
+    free(cache_req->pProperties);
+    free(cache_req->pPatterns);
 }
 
 HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src)
@@ -273,7 +273,7 @@ HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequ
     dst->automationElementMode = src->automationElementMode;
     if (src->cProperties)
     {
-        if (!(dst->pProperties = heap_alloc_zero(sizeof(*dst->pProperties) * src->cProperties)))
+        if (!(dst->pProperties = calloc(src->cProperties, sizeof(*dst->pProperties))))
         {
             uia_cache_request_destroy(dst);
             return E_OUTOFMEMORY;
@@ -285,7 +285,7 @@ HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequ
 
     if (src->cPatterns)
     {
-        if (!(dst->pPatterns = heap_alloc_zero(sizeof(*dst->pPatterns) * src->cPatterns)))
+        if (!(dst->pPatterns = calloc(src->cPatterns, sizeof(*dst->pPatterns))))
         {
             uia_cache_request_destroy(dst);
             return E_OUTOFMEMORY;

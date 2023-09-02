@@ -68,7 +68,7 @@ static ULONG WINAPI uia_object_wrapper_Release(IUnknown *iface)
     if (!refcount)
     {
         IUnknown_Release(wrapper->marshaler);
-        heap_free(wrapper);
+        free(wrapper);
     }
 
     return refcount;
@@ -92,7 +92,7 @@ static HRESULT create_uia_object_wrapper(IUnknown *reserved, void **ppv)
 
     TRACE("%p, %p\n", reserved, ppv);
 
-    wrapper = heap_alloc(sizeof(*wrapper));
+    wrapper = calloc(1, sizeof(*wrapper));
     if (!wrapper)
         return E_OUTOFMEMORY;
 
@@ -102,7 +102,7 @@ static HRESULT create_uia_object_wrapper(IUnknown *reserved, void **ppv)
 
     if (FAILED(hr = CoCreateFreeThreadedMarshaler(&wrapper->IUnknown_iface, &wrapper->marshaler)))
     {
-        heap_free(wrapper);
+        free(wrapper);
         return hr;
     }
 
@@ -193,7 +193,7 @@ ULONG WINAPI hwnd_host_provider_Release(IRawElementProviderSimple *iface)
     TRACE("%p, refcount %ld\n", iface, refcount);
 
     if (!refcount)
-        heap_free(host_prov);
+        free(host_prov);
 
     return refcount;
 }
@@ -370,7 +370,7 @@ HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **pr
     if (!IsWindow(hwnd) || !provider)
         return E_INVALIDARG;
 
-    host_prov = heap_alloc(sizeof(*host_prov));
+    host_prov = calloc(1, sizeof(*host_prov));
     if (!host_prov)
         return E_OUTOFMEMORY;
 
@@ -446,7 +446,7 @@ static ULONG WINAPI uia_cf_Release(IClassFactory *iface)
     TRACE("%p, refcount %ld\n", cf, ref);
 
     if (!ref)
-        heap_free(cf);
+        free(cf);
 
     return ref;
 }
@@ -496,7 +496,7 @@ static const IClassFactoryVtbl uia_cf_Vtbl =
 
 static inline HRESULT create_uia_cf(REFCLSID clsid, REFIID riid, void **ppv)
 {
-    struct uia_cf *cf = heap_alloc_zero(sizeof(*cf));
+    struct uia_cf *cf = calloc(1, sizeof(*cf));
     HRESULT hr;
 
     *ppv = NULL;

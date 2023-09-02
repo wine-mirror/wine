@@ -22,7 +22,6 @@
 #include "uia_classes.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
-#include "wine/heap.h"
 
 extern HMODULE huia_module DECLSPEC_HIDDEN;
 
@@ -187,10 +186,7 @@ static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T c
     if (new_capacity < count)
         new_capacity = count;
 
-    if (!*elements)
-        new_elements = heap_alloc_zero(new_capacity * size);
-    else
-        new_elements = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *elements, new_capacity * size);
+    new_elements = _recalloc(*elements, new_capacity, size);
     if (!new_elements)
         return FALSE;
 

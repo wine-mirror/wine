@@ -342,7 +342,7 @@ static HRESULT msaa_acc_get_child_pos(IAccessible *acc, IAccessible **out_parent
         return hr;
     }
 
-    children = heap_alloc_zero(sizeof(*children) * child_count);
+    children = calloc(child_count, sizeof(*children));
     if (!children)
         return E_OUTOFMEMORY;
 
@@ -396,7 +396,7 @@ exit:
             IAccessible_Release(children[i]);
     }
 
-    heap_free(children);
+    free(children);
 
     return hr;
 }
@@ -572,7 +572,7 @@ ULONG WINAPI msaa_provider_Release(IRawElementProviderSimple *iface)
             IAccessible_Release(msaa_prov->parent);
         if (msaa_prov->ia2)
             IAccessible2_Release(msaa_prov->ia2);
-        heap_free(msaa_prov);
+        free(msaa_prov);
     }
 
     return refcount;
@@ -1136,7 +1136,7 @@ static const ILegacyIAccessibleProviderVtbl msaa_acc_provider_vtbl = {
 HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL known_root_acc,
         IRawElementProviderSimple **elprov)
 {
-    struct msaa_provider *msaa_prov = heap_alloc_zero(sizeof(*msaa_prov));
+    struct msaa_provider *msaa_prov = calloc(1, sizeof(*msaa_prov));
 
     if (!msaa_prov)
         return E_OUTOFMEMORY;
@@ -1337,7 +1337,7 @@ static ULONG WINAPI base_hwnd_provider_Release(IRawElementProviderSimple *iface)
     TRACE("%p, refcount %ld\n", iface, refcount);
 
     if (!refcount)
-        heap_free(base_hwnd_prov);
+        free(base_hwnd_prov);
 
     return refcount;
 }
@@ -1629,7 +1629,7 @@ HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov)
     if (!IsWindow(hwnd))
         return UIA_E_ELEMENTNOTAVAILABLE;
 
-    if (!(base_hwnd_prov = heap_alloc_zero(sizeof(*base_hwnd_prov))))
+    if (!(base_hwnd_prov = calloc(1, sizeof(*base_hwnd_prov))))
         return E_OUTOFMEMORY;
 
     base_hwnd_prov->IRawElementProviderSimple_iface.lpVtbl = &base_hwnd_provider_vtbl;
@@ -1695,7 +1695,7 @@ void uia_provider_thread_remove_node(HUIANODE node)
         {
             rb_remove(&provider_thread.node_map, &node_data->map->entry);
             SafeArrayDestroy(node_data->map->runtime_id);
-            heap_free(node_data->map);
+            free(node_data->map);
         }
         node_data->map = NULL;
     }
@@ -1736,7 +1736,7 @@ static void uia_provider_thread_disconnect_node(SAFEARRAY *sa)
 
         rb_remove(&provider_thread.node_map, &prov_map->entry);
         SafeArrayDestroy(prov_map->runtime_id);
-        heap_free(prov_map);
+        free(prov_map);
     }
 
 exit:
@@ -1768,7 +1768,7 @@ static HRESULT uia_provider_thread_add_node(HUIANODE node, SAFEARRAY *rt_id)
             prov_map = RB_ENTRY_VALUE(rb_entry, struct uia_provider_thread_map_entry, entry);
         else
         {
-            prov_map = heap_alloc_zero(sizeof(*prov_map));
+            prov_map = calloc(1, sizeof(*prov_map));
             if (!prov_map)
             {
                 hr = E_OUTOFMEMORY;
@@ -1778,7 +1778,7 @@ static HRESULT uia_provider_thread_add_node(HUIANODE node, SAFEARRAY *rt_id)
             hr = SafeArrayCopy(rt_id, &prov_map->runtime_id);
             if (FAILED(hr))
             {
-                heap_free(prov_map);
+                free(prov_map);
                 goto exit;
             }
             list_init(&prov_map->nodes_list);

@@ -139,7 +139,7 @@ static HRESULT uia_event_map_add_event(struct uia_event *event)
 
     if (!(event_entry = uia_get_event_map_entry_for_event(event->event_id)))
     {
-        if (!(event_entry = heap_alloc_zero(sizeof(*event_entry))))
+        if (!(event_entry = calloc(1, sizeof(*event_entry))))
         {
             LeaveCriticalSection(&event_map_cs);
             return E_OUTOFMEMORY;
@@ -207,7 +207,7 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
             IWineUiaEvent_Release(&event->IWineUiaEvent_iface);
         }
 
-        heap_free(entry);
+        free(entry);
     }
 }
 
@@ -219,7 +219,7 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
  */
 static struct uia_event_args *create_uia_event_args(const struct uia_event_info *event_info)
 {
-    struct uia_event_args *args = heap_alloc_zero(sizeof(*args));
+    struct uia_event_args *args = calloc(1, sizeof(*args));
 
     if (!args)
         return NULL;
@@ -234,7 +234,7 @@ static struct uia_event_args *create_uia_event_args(const struct uia_event_info 
 static void uia_event_args_release(struct uia_event_args *args)
 {
     if (!InterlockedDecrement(&args->ref))
-        heap_free(args);
+        free(args);
 }
 
 /*
@@ -412,7 +412,7 @@ static void uia_event_thread_process_queue(struct list *event_queue)
 
         uia_event_args_release(event->args);
         IWineUiaEvent_Release(&event->event->IWineUiaEvent_iface);
-        heap_free(event);
+        free(event);
     }
 }
 
@@ -581,8 +581,8 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
 
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
-        heap_free(event->event_advisers);
-        heap_free(event);
+        free(event->event_advisers);
+        free(event);
     }
 
     return ref;
@@ -626,7 +626,7 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
 
         for (i = 0; i < event->event_advisers_count; i++)
             IWineUiaEventAdviser_Release(event->event_advisers[i]);
-        heap_free(event->event_advisers);
+        free(event->event_advisers);
         event->event_advisers_count = event->event_advisers_arr_size = 0;
     }
 
@@ -671,12 +671,12 @@ static HRESULT WINAPI uia_event_raise_event(IWineUiaEvent *iface, VARIANT in_nod
 
     assert(event->event_type != EVENT_TYPE_SERVERSIDE);
 
-    if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
+    if (!(queue_event = calloc(1, sizeof(*queue_event))))
         return E_OUTOFMEMORY;
 
     if (!(args = create_uia_event_args(uia_event_info_from_id(event->event_id))))
     {
-        heap_free(queue_event);
+        free(queue_event);
         return E_OUTOFMEMORY;
     }
 
@@ -712,7 +712,7 @@ static struct uia_event *unsafe_impl_from_IWineUiaEvent(IWineUiaEvent *iface)
 
 static HRESULT create_uia_event(struct uia_event **out_event, LONG event_cookie, int event_type)
 {
-    struct uia_event *event = heap_alloc_zero(sizeof(*event));
+    struct uia_event *event = calloc(1, sizeof(*event));
 
     *out_event = NULL;
     if (!event)
@@ -775,7 +775,7 @@ HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_i
 
     if (!uia_start_event_thread())
     {
-        heap_free(event);
+        free(event);
         hr = E_FAIL;
         goto exit;
     }
@@ -856,7 +856,7 @@ static ULONG WINAPI uia_event_adviser_Release(IWineUiaEventAdviser *iface)
                 WARN("Failed to revoke advise events interface from GIT\n");
         }
         IRawElementProviderAdviseEvents_Release(adv_events->advise_events);
-        heap_free(adv_events);
+        free(adv_events);
     }
 
     return ref;
@@ -920,7 +920,7 @@ HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *ad
     if (FAILED(hr))
         return hr;
 
-    if (!(adv_events = heap_alloc_zero(sizeof(*adv_events))))
+    if (!(adv_events = calloc(1, sizeof(*adv_events))))
         return E_OUTOFMEMORY;
 
     if (prov_opts & ProviderOptions_UseComThreading)
@@ -929,7 +929,7 @@ HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *ad
                 &adv_events->git_cookie);
         if (FAILED(hr))
         {
-            heap_free(adv_events);
+            free(adv_events);
             return hr;
         }
     }
@@ -990,7 +990,7 @@ static ULONG WINAPI uia_serverside_event_adviser_Release(IWineUiaEventAdviser *i
     if (!ref)
     {
         IWineUiaEvent_Release(adv_events->event_iface);
-        heap_free(adv_events);
+        free(adv_events);
     }
     return ref;
 }
@@ -1057,7 +1057,7 @@ HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, 
         }
     }
 
-    if (!(adv_events = heap_alloc_zero(sizeof(*adv_events))))
+    if (!(adv_events = calloc(1, sizeof(*adv_events))))
         return E_OUTOFMEMORY;
 
     adv_events->IWineUiaEventAdviser_iface.lpVtbl = &uia_serverside_event_adviser_vtbl;
@@ -1280,14 +1280,14 @@ static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct u
         struct uia_queue_event *queue_event;
         HUIANODE node2, nav_start_node2;
 
-        if (!(queue_event = heap_alloc_zero(sizeof(*queue_event))))
+        if (!(queue_event = calloc(1, sizeof(*queue_event))))
             return E_OUTOFMEMORY;
 
         node2 = nav_start_node2 = NULL;
         hr = clone_uia_node(node, &node2);
         if (FAILED(hr))
         {
-            heap_free(queue_event);
+            free(queue_event);
             return hr;
         }
 
@@ -1296,7 +1296,7 @@ static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct u
             hr = clone_uia_node(nav_start_node, &nav_start_node2);
             if (FAILED(hr))
             {
-                heap_free(queue_event);
+                free(queue_event);
                 UiaNodeRelease(node2);
                 return hr;
             }
