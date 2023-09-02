@@ -353,7 +353,7 @@ __ASM_GLOBAL_FUNC(_start,
                   "movq %rsp,%rax\n\t"
                   "leaq -144(%rsp),%rsp\n\t" /* allocate some space for extra aux values */
                   "movq %rax,(%rsp)\n\t"     /* orig stack pointer */
-                  "movq thread_data(%rip),%rsi\n\t"
+                  "leaq thread_data(%rip),%rsi\n\t"
                   "movq $0x1002,%rdi\n\t"    /* ARCH_SET_FS */
                   "movq $158,%rax\n\t"       /* SYS_arch_prctl */
                   "syscall\n\t"
