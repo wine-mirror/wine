@@ -250,6 +250,7 @@ exit:
  */
 ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 {
+    QUERYCLIENTCERT *client_cert_callback = CLIENT_CERT_CALLBACK(ld);
     VERIFYSERVERCERT *server_cert_callback = SERVER_CERT_CALLBACK(ld);
     int ret;
 
@@ -257,6 +258,9 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
     if (CONNECTED(ld)) return WLDAP32_LDAP_SUCCESS;
+
+    if (client_cert_callback)
+        FIXME( "mTLS is not implemented\n" );
 
     if (timeout && (timeout->tv_sec || timeout->tv_usec)) FIXME( "ignoring timeout\n" );
     if ((ret = ldap_connect( CTX(ld) ))) return map_error( ret );
