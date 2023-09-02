@@ -181,8 +181,8 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
     {
         PreservedKey* key = LIST_ENTRY(cursor,PreservedKey,entry);
         list_remove(cursor);
-        HeapFree(GetProcessHeap(),0,key->description);
-        HeapFree(GetProcessHeap(),0,key);
+        free(key->description);
+        free(key);
     }
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CreatedDocumentMgrs)
@@ -190,19 +190,19 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
         DocumentMgrEntry *mgr = LIST_ENTRY(cursor,DocumentMgrEntry,entry);
         list_remove(cursor);
         FIXME("Left Over ITfDocumentMgr.  Should we do something with it?\n");
-        HeapFree(GetProcessHeap(),0,mgr);
+        free(mgr);
     }
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->AssociatedFocusWindows)
     {
         AssociatedWindow *wnd = LIST_ENTRY(cursor,AssociatedWindow,entry);
         list_remove(cursor);
-        HeapFree(GetProcessHeap(),0,wnd);
+        free(wnd);
     }
 
     CompartmentMgr_Destructor(This->CompartmentMgr);
 
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgrEx *iface, REFIID iid, LPVOID *ppvOut)
@@ -315,7 +315,7 @@ static HRESULT WINAPI ThreadMgr_CreateDocumentMgr(ITfThreadMgrEx *iface, ITfDocu
     HRESULT hr;
 
     TRACE("(%p)\n",iface);
-    mgrentry = HeapAlloc(GetProcessHeap(),0,sizeof(DocumentMgrEntry));
+    mgrentry = malloc(sizeof(DocumentMgrEntry));
     if (mgrentry == NULL)
         return E_OUTOFMEMORY;
 
@@ -327,7 +327,7 @@ static HRESULT WINAPI ThreadMgr_CreateDocumentMgr(ITfThreadMgrEx *iface, ITfDocu
         list_add_head(&This->CreatedDocumentMgrs,&mgrentry->entry);
     }
     else
-        HeapFree(GetProcessHeap(),0,mgrentry);
+        free(mgrentry);
 
     return hr;
 }
@@ -465,7 +465,7 @@ ITfDocumentMgr *pdimNew, ITfDocumentMgr **ppdimPrev)
         }
     }
 
-    wnd = HeapAlloc(GetProcessHeap(),0,sizeof(AssociatedWindow));
+    wnd = malloc(sizeof(AssociatedWindow));
     wnd->hwnd = hwnd;
     wnd->docmgr = pdimNew;
     list_add_head(&This->AssociatedFocusWindows,&wnd->entry);
@@ -875,7 +875,7 @@ static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,
             return TF_E_ALREADY_EXISTS;
     }
 
-    newkey = HeapAlloc(GetProcessHeap(),0,sizeof(PreservedKey));
+    newkey = malloc(sizeof(PreservedKey));
     if (!newkey)
         return E_OUTOFMEMORY;
 
@@ -885,10 +885,10 @@ static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,
     newkey->description = NULL;
     if (cchDesc)
     {
-        newkey->description = HeapAlloc(GetProcessHeap(),0,cchDesc * sizeof(WCHAR));
+        newkey->description = malloc(cchDesc * sizeof(WCHAR));
         if (!newkey->description)
         {
-            HeapFree(GetProcessHeap(),0,newkey);
+            free(newkey);
             return E_OUTOFMEMORY;
         }
         memcpy(newkey->description, pchDesc, cchDesc*sizeof(WCHAR));
@@ -922,8 +922,8 @@ static HRESULT WINAPI KeystrokeMgr_UnpreserveKey(ITfKeystrokeMgr *iface,
         return CONNECT_E_NOCONNECTION;
 
     list_remove(&key->entry);
-    HeapFree(GetProcessHeap(),0,key->description);
-    HeapFree(GetProcessHeap(),0,key);
+    free(key->description);
+    free(key);
 
     return S_OK;
 }
@@ -1354,7 +1354,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
         return S_OK;
     }
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgr));
+    This = calloc(1, sizeof(ThreadMgr));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -1395,7 +1395,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 static void EnumTfDocumentMgr_Destructor(EnumTfDocumentMgr *This)
 {
     TRACE("destroying %p\n", This);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI EnumTfDocumentMgr_QueryInterface(IEnumTfDocumentMgrs *iface, REFIID iid, LPVOID *ppvOut)
@@ -1520,7 +1520,7 @@ static HRESULT EnumTfDocumentMgr_Constructor(struct list* head, IEnumTfDocumentM
 {
     EnumTfDocumentMgr *This;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EnumTfDocumentMgr));
+    This = calloc(1, sizeof(EnumTfDocumentMgr));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -1546,7 +1546,7 @@ void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *iface, ITfDocumentMgr *mgr
         if (mgrentry->docmgr == mgr)
         {
             list_remove(cursor);
-            HeapFree(GetProcessHeap(),0,mgrentry);
+            free(mgrentry);
             found = TRUE;
             break;
         }

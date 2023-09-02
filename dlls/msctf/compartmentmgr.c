@@ -106,10 +106,10 @@ HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *iface)
         CompartmentValue* value = LIST_ENTRY(cursor,CompartmentValue,entry);
         list_remove(cursor);
         ITfCompartment_Release(value->compartment);
-        HeapFree(GetProcessHeap(),0,value);
+        free(value);
     }
 
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
     return S_OK;
 }
 
@@ -187,7 +187,7 @@ static HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
         }
     }
 
-    value = HeapAlloc(GetProcessHeap(),0,sizeof(CompartmentValue));
+    value = malloc(sizeof(CompartmentValue));
     value->guid = *rguid;
     value->owner = 0;
     hr = Compartment_Constructor(value,&value->compartment);
@@ -199,7 +199,7 @@ static HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
     }
     else
     {
-        HeapFree(GetProcessHeap(),0,value);
+        free(value);
         *ppcomp = NULL;
     }
     return hr;
@@ -222,7 +222,7 @@ static HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
                 return E_UNEXPECTED;
             list_remove(cursor);
             ITfCompartment_Release(value->compartment);
-            HeapFree(GetProcessHeap(),0,value);
+            free(value);
             return S_OK;
         }
     }
@@ -261,7 +261,7 @@ HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(CompartmentMgr));
+    This = calloc(1, sizeof(CompartmentMgr));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -280,7 +280,7 @@ HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **
         HRESULT hr;
         hr = ITfCompartmentMgr_QueryInterface(&This->ITfCompartmentMgr_iface, riid, (void**)ppOut);
         if (FAILED(hr))
-            HeapFree(GetProcessHeap(),0,This);
+            free(This);
         return hr;
     }
 }
@@ -291,7 +291,7 @@ HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **
 static void CompartmentEnumGuid_Destructor(CompartmentEnumGuid *This)
 {
     TRACE("destroying %p\n", This);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI CompartmentEnumGuid_QueryInterface(IEnumGUID *iface, REFIID iid, LPVOID *ppvOut)
@@ -412,7 +412,7 @@ static HRESULT CompartmentEnumGuid_Constructor(struct list *values, IEnumGUID **
 {
     CompartmentEnumGuid *This;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(CompartmentEnumGuid));
+    This = calloc(1, sizeof(CompartmentEnumGuid));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -435,7 +435,7 @@ static void Compartment_Destructor(Compartment *This)
     TRACE("destroying %p\n", This);
     VariantClear(&This->variant);
     free_sinks(&This->CompartmentEventSink);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI Compartment_QueryInterface(ITfCompartment *iface, REFIID iid, LPVOID *ppvOut)
@@ -606,7 +606,7 @@ static HRESULT Compartment_Constructor(CompartmentValue *valueData, ITfCompartme
 {
     Compartment *This;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(Compartment));
+    This = calloc(1, sizeof(Compartment));
     if (This == NULL)
         return E_OUTOFMEMORY;
 

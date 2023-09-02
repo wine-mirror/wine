@@ -46,7 +46,7 @@ static void DisplayAttributeMgr_Destructor(DisplayAttributeMgr *This)
 {
     TRACE("destroying %p\n", This);
 
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI DisplayAttributeMgr_QueryInterface(ITfDisplayAttributeMgr *iface, REFIID iid, LPVOID *ppvOut)
@@ -130,7 +130,7 @@ HRESULT DisplayAttributeMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(),0,sizeof(DisplayAttributeMgr));
+    This = malloc(sizeof(DisplayAttributeMgr));
     if (This == NULL)
         return E_OUTOFMEMORY;
 

@@ -135,7 +135,7 @@ static ULONG WINAPI EnumTfInputProcessorProfiles_Release(IEnumTfInputProcessorPr
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
 
     return ref;
 }
@@ -209,7 +209,7 @@ static void InputProcessorProfiles_Destructor(InputProcessorProfiles *This)
     TRACE("destroying %p\n", This);
 
     free_sinks(&This->LanguageProfileNotifySink);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static void add_userkey( REFCLSID rclsid, LANGID langid,
@@ -825,7 +825,7 @@ static HRESULT WINAPI InputProcessorProfileMgr_EnumProfiles(ITfInputProcessorPro
 
     TRACE("(%p)->(%x %p)\n", This, langid, ppEnum);
 
-    enum_profiles = HeapAlloc(GetProcessHeap(), 0, sizeof(*enum_profiles));
+    enum_profiles = malloc(sizeof(*enum_profiles));
     if(!enum_profiles)
         return E_OUTOFMEMORY;
 
@@ -958,7 +958,7 @@ HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(InputProcessorProfiles));
+    This = calloc(1, sizeof(InputProcessorProfiles));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -982,7 +982,7 @@ static void ProfilesEnumGuid_Destructor(ProfilesEnumGuid *This)
 {
     TRACE("destroying %p\n", This);
     RegCloseKey(This->key);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI ProfilesEnumGuid_QueryInterface(IEnumGUID *iface, REFIID iid, LPVOID *ppvOut)
@@ -1109,7 +1109,7 @@ static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut)
 {
     ProfilesEnumGuid *This;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ProfilesEnumGuid));
+    This = calloc(1, sizeof(ProfilesEnumGuid));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -1119,7 +1119,7 @@ static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut)
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, szwSystemTIPKey, 0, NULL, 0,
                     KEY_READ | KEY_WRITE, NULL, &This->key, NULL) != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_FAIL;
     }
 
@@ -1138,7 +1138,7 @@ static void EnumTfLanguageProfiles_Destructor(EnumTfLanguageProfiles *This)
     if (This->langkey)
         RegCloseKey(This->langkey);
     ITfCategoryMgr_Release(This->catmgr);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 static HRESULT WINAPI EnumTfLanguageProfiles_QueryInterface(IEnumTfLanguageProfiles *iface, REFIID iid, LPVOID *ppvOut)
@@ -1343,7 +1343,7 @@ static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, EnumTfLanguageP
     HRESULT hr;
     EnumTfLanguageProfiles *This;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EnumTfLanguageProfiles));
+    This = calloc(1, sizeof(EnumTfLanguageProfiles));
     if (This == NULL)
         return E_OUTOFMEMORY;
 
@@ -1354,14 +1354,14 @@ static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, EnumTfLanguageP
     hr = CategoryMgr_Constructor(NULL,(IUnknown**)&This->catmgr);
     if (FAILED(hr))
     {
-        HeapFree(GetProcessHeap(),0,This);
+        free(This);
         return hr;
     }
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, szwSystemTIPKey, 0, NULL, 0,
                     KEY_READ | KEY_WRITE, NULL, &This->tipkey, NULL) != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_FAIL;
     }
 
