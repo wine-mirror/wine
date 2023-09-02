@@ -376,13 +376,13 @@ static HRESULT _SHStrDupAToBSTR(LPCSTR src, BSTR *pBstrOut)
     if (src)
     {
         INT len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-        WCHAR* szTemp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        WCHAR *szTemp = malloc(len * sizeof(WCHAR));
 
         if (szTemp)
         {
             MultiByteToWideChar(CP_ACP, 0, src, -1, szTemp, len);
             *pBstrOut = SysAllocString(szTemp);
-            HeapFree(GetProcessHeap(), 0, szTemp);
+            free(szTemp);
 
             if (*pBstrOut)
                 return S_OK;
@@ -1155,7 +1155,7 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
       lenW = len;
       hr = ConvertINetUnicodeToMultiByte(&dwMode, CodePage, lpSrcStr, &lenW, NULL, &needed);
       needed++;
-      mem = HeapAlloc(GetProcessHeap(), 0, needed);
+      mem = malloc(needed);
       if (!mem)
         return 0;
 
@@ -1165,7 +1165,7 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
           reqLen = SHTruncateString(mem, dstlen);
           if (reqLen > 0) memcpy(lpDstStr, mem, reqLen-1);
       }
-      HeapFree(GetProcessHeap(), 0, mem);
+      free(mem);
       return 0;
     }
   default:
@@ -1180,7 +1180,7 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
     reqLen = WideCharToMultiByte(CodePage, 0, lpSrcStr, len, NULL, 0, NULL, NULL);
     if (reqLen)
     {
-      mem = HeapAlloc(GetProcessHeap(), 0, reqLen);
+      mem = malloc(reqLen);
       if (mem)
       {
         WideCharToMultiByte(CodePage, 0, lpSrcStr, len, mem, reqLen, NULL, NULL);
@@ -1189,7 +1189,7 @@ DWORD WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr, 
         reqLen++;
 
         lstrcpynA(lpDstStr, mem, reqLen);
-        HeapFree(GetProcessHeap(), 0, mem);
+        free(mem);
         lpDstStr[reqLen-1] = '\0';
       }
     }
