@@ -175,11 +175,6 @@ struct wld_auxv
  */
 void __bb_init_func(void) { return; }
 
-/* similar to the above but for -fstack-protector */
-void *__stack_chk_guard = 0;
-void __stack_chk_fail_local(void) { return; }
-void __stack_chk_fail(void) { return; }
-
 #ifdef __i386__
 
 /* data for setting up the glibc-style thread-local storage in %gs */
@@ -757,6 +752,33 @@ static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char 
     va_end( args );
     wld_write(2, buffer, len);
     wld_exit(1);
+}
+
+/*
+ * The __stack_chk_* symbols are only used when file is compiled with gcc flags
+ * "-fstack-protector".  This function is normally provided by libc's startup
+ * files, but since we build the preloader with "-nostartfiles -nodefaultlibs",
+ * we have to provide our own version to keep the linker happy.
+ */
+unsigned long __stack_chk_guard = 0;
+
+void __attribute__((noreturn)) __stack_chk_fail(void)
+{
+    static const char message[] = "preloader: stack overrun detected, crashing\n";
+
+    /* Avoid using non-syscall functions that can re-enter this function */
+    wld_write(2, message, sizeof(message) - 1);
+
+    /* Deliberate induce crash and possibly dump core */
+    *(volatile char *)0;
+
+    /* Last resort if the zero page turns out to be actually readable */
+    wld_exit(1);
+}
+
+void __attribute__((noreturn)) __stack_chk_fail_local(void)
+{
+    __stack_chk_fail();
 }
 
 #ifdef DUMP_AUX_INFO
