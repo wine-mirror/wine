@@ -250,7 +250,7 @@ exit:
  */
 ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 {
-    VERIFYSERVERCERT *cert_callback = CERT_CALLBACK(ld);
+    VERIFYSERVERCERT *server_cert_callback = SERVER_CERT_CALLBACK(ld);
     int ret;
 
     TRACE( "(%p, %p)\n", ld, timeout );
@@ -261,7 +261,7 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
     if (timeout && (timeout->tv_sec || timeout->tv_usec)) FIXME( "ignoring timeout\n" );
     if ((ret = ldap_connect( CTX(ld) ))) return map_error( ret );
 
-    if (cert_callback)
+    if (server_cert_callback)
     {
         CtxtHandle *tls_context;
         const CERT_CONTEXT *cert;
@@ -271,7 +271,7 @@ ULONG CDECL WLDAP32_ldap_connect( LDAP *ld, struct l_timeval *timeout )
 
         if (QueryContextAttributesA( tls_context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &cert ) == SEC_E_OK)
         {
-            if (cert_callback( ld, &cert ))
+            if (server_cert_callback( ld, &cert ))
             {
                 TRACE( "accepted\n" );
             }

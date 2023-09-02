@@ -545,7 +545,7 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         return map_error( ldap_set_option( CTX(ld), LDAP_OPT_REFHOPLIMIT, value ) );
 
     case WLDAP32_LDAP_OPT_SERVER_CERTIFICATE:
-        CERT_CALLBACK(ld) = value;
+        SERVER_CERT_CALLBACK(ld) = value;
         return WLDAP32_LDAP_SUCCESS;
 
     case WLDAP32_LDAP_OPT_DEREF:
