@@ -2841,13 +2841,16 @@ int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
     WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     int    len = lstrlenW(param);
 
-    if (!len) goto syntax_err;
-    /* FindFirstFile does not like a directory path ending in '\' or '/', append a '.' */
-    if (param[len-1] == '\\' || param[len-1] == '/') lstrcatW(param, L".");
+    if (!len) {
+        *test = FALSE;
+    } else {
+        /* FindFirstFile does not like a directory path ending in '\' or '/', so append a '.' */
+        if (param[len-1] == '\\' || param[len-1] == '/') wcscat(param, L".");
 
-    hff = FindFirstFileW(param, &fd);
-    *test = (hff != INVALID_HANDLE_VALUE );
-    if (*test) FindClose(hff);
+        hff = FindFirstFileW(param, &fd);
+        *test = (hff != INVALID_HANDLE_VALUE);
+        if (*test) FindClose(hff);
+    }
 
     WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }

@@ -833,6 +833,7 @@ exist subdir with \ and quotes ok
 exist subdir with /. ok
 exist subdir with / ok
 exist subdir with / and quotes ok
+exist empty string works
 ------ for numbers
 negative numbers handled
 negative numbers handled

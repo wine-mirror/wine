@@ -1176,6 +1176,11 @@ if exist "subdir/" (
 ) else (
    echo ERROR exist subdir with / and quotes not working
 )
+if not exist "" (
+    echo exist empty string works
+) else (
+    echo exist empty string broken
+)
 del foo subdir\bar
 rd subdir
 
