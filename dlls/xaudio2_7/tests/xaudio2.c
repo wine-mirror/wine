@@ -39,6 +39,7 @@
 
 static const GUID IID_IXAudio27 =            {0x8bcf1f58, 0x9fe7, 0x4583, {0x8a, 0xc6, 0xe2, 0xad, 0xc4, 0x65, 0xc8, 0xbb}};
 static const GUID IID_IXAudio28 =            {0x60d8dac8, 0x5aa1, 0x4e8e, {0xb5, 0x97, 0x2f, 0x5e, 0x28, 0x83, 0xd4, 0x84}};
+static const GUID IID_IXAudio29 =            {0x2b02e3cf, 0x2e0b, 0x4ec3, {0xbe, 0x45, 0x1b, 0x2a, 0x3f, 0xe7, 0x21, 0x0d}};
 
 static const GUID CLSID_AudioVolumeMeter20 = {0xc0c56f46, 0x29b1, 0x44e9, {0x99, 0x39, 0xa3, 0x2c, 0xe8, 0x68, 0x67, 0xe2}};
 static const GUID CLSID_AudioVolumeMeter21 = {0xc1e3f122, 0xa2ea, 0x442c, {0x85, 0x4f, 0x20, 0xd9, 0x8f, 0x83, 0x57, 0xa1}};
@@ -81,6 +82,39 @@ static IXAudio2 *create_xaudio2(void)
 #endif
 
     return audio;
+}
+
+static void test_interfaces(IXAudio2 *audio)
+{
+    const GUID *td[] =
+    {
+        &IID_IXAudio27, /* DirectX SDK */
+        &IID_IXAudio28, /* Windows 8 */
+        &IID_IXAudio29, /* Windows 10 */
+    };
+    UINT match_count = 0;
+    INT last_match = -1;
+    IXAudio2 *audio2;
+    HRESULT hr;
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        hr = IXAudio2_QueryInterface(audio, td[i], (void **)&audio2);
+        ok(hr == S_OK || hr == E_NOINTERFACE, "%u: Got hr %#lx.\n", i, hr);
+        if (hr == S_OK)
+        {
+            IXAudio2_Release(audio2);
+            ++match_count;
+            last_match = i;
+        }
+    }
+    ok(match_count == 1, "Found %u matching interfaces.\n", match_count);
+#if XAUDIO2_VER <= 7
+    ok(last_match < 1, "Unexpectedly matched interface (%d).\n", last_match);
+#else
+    ok(last_match != 0, "Unexpectedly matched interface (%d).\n", last_match);
+#endif
 }
 
 static HRESULT create_mastering_voice(IXAudio2 *audio, unsigned int channel_count, IXAudio2MasteringVoice **voice)
@@ -1198,8 +1232,7 @@ static UINT32 check_has_devices(IXAudio2 *xa)
 
 START_TEST(xaudio2)
 {
-    IXAudio2 *audio, *audio2;
-    HRESULT hr;
+    IXAudio2 *audio;
     ULONG ref;
 
     CoInitialize(NULL);
@@ -1209,14 +1242,7 @@ START_TEST(xaudio2)
     if (!(audio = create_xaudio2()))
         return;
 
-    hr = IXAudio2_QueryInterface(audio, &IID_IXAudio27, (void **)&audio2);
-    ok(hr == (xaudio27 ? S_OK : E_NOINTERFACE), "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IXAudio2_Release(audio2);
-    hr = IXAudio2_QueryInterface(audio, &IID_IXAudio28, (void **)&audio2);
-    ok(hr == (xaudio27 ? E_NOINTERFACE : S_OK), "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IXAudio2_Release(audio2);
+    test_interfaces(audio);
 
     if (check_has_devices(audio))
     {
