@@ -296,6 +296,19 @@ typedef struct _TEB_FLS_DATA
     void          **fls_data_chunks[8];
 } TEB_FLS_DATA, *PTEB_FLS_DATA;
 
+typedef struct _CHPE_V2_CPU_AREA_INFO
+{
+    BOOLEAN             InSimulation;         /* 000 */
+    BOOLEAN             InSyscallCallback;    /* 001 */
+    ULONG64             EmulatorStackBase;    /* 008 */
+    ULONG64             EmulatorStackLimit;   /* 010 */
+    ARM64EC_NT_CONTEXT *ContextAmd64;         /* 018 */
+    ULONG              *SuspendDoorbell;      /* 020 */
+    ULONG64             LoadingModuleModflag; /* 028 */
+    void               *EmulatorData[4];      /* 030 */
+    ULONG64             EmulatorDataInline;   /* 050 */
+} CHPE_V2_CPU_AREA_INFO, *PCHPE_V2_CPU_AREA_INFO;
+
 #define TEB_ACTIVE_FRAME_CONTEXT_FLAG_EXTENDED 0x00000001
 #define TEB_ACTIVE_FRAME_FLAG_EXTENDED         0x00000001
 
@@ -507,7 +520,10 @@ typedef struct _TEB
     PVOID                        ThreadPoolData;                    /* f90/1778 */
     PVOID                       *TlsExpansionSlots;                 /* f94/1780 */
 #ifdef _WIN64
-    PVOID                        DeallocationBStore;                /*    /1788 */
+    union {
+        PVOID                    DeallocationBStore;                /*    /1788 */
+        CHPE_V2_CPU_AREA_INFO   *ChpeV2CpuAreaInfo;                 /*    /1788 */
+    } DUMMYUNIONNAME;
     PVOID                        BStoreLimit;                       /*    /1790 */
 #endif
     ULONG                        MuiGeneration;                     /* f98/1798 */
@@ -1140,7 +1156,10 @@ typedef struct _TEB64
     ULONG64                      ReservedForCodeCoverage;           /* 1770 */
     ULONG64                      ThreadPoolData;                    /* 1778 */
     ULONG64                      TlsExpansionSlots;                 /* 1780 */
-    ULONG64                      DeallocationBStore;                /* 1788 */
+    union {
+        ULONG64                  DeallocationBStore;                /* 1788 */
+        ULONG64                  ChpeV2CpuAreaInfo;                 /* 1788 */
+    } DUMMYUNIONNAME;
     ULONG64                      BStoreLimit;                       /* 1790 */
     ULONG                        MuiGeneration;                     /* 1798 */
     ULONG                        IsImpersonating;                   /* 179c */
