@@ -28,27 +28,28 @@ struct tool_entry
     IDirectMusicTool *tool;
 };
 
-struct IDirectMusicGraphImpl {
-  IDirectMusicGraph IDirectMusicGraph_iface;
-  struct dmobject dmobj;
-  LONG ref;
+struct graph
+{
+    IDirectMusicGraph IDirectMusicGraph_iface;
+    struct dmobject dmobj;
+    LONG ref;
 
-  struct list tools;
+    struct list tools;
 };
 
-static inline IDirectMusicGraphImpl *impl_from_IDirectMusicGraph(IDirectMusicGraph *iface)
+static inline struct graph *impl_from_IDirectMusicGraph(IDirectMusicGraph *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, IDirectMusicGraph_iface);
+    return CONTAINING_RECORD(iface, struct graph, IDirectMusicGraph_iface);
 }
 
-static inline IDirectMusicGraphImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct graph *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct graph, dmobj.IPersistStream_iface);
 }
 
 static HRESULT WINAPI graph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ret_iface);
 
@@ -76,7 +77,7 @@ static HRESULT WINAPI graph_QueryInterface(IDirectMusicGraph *iface, REFIID riid
 
 static ULONG WINAPI graph_AddRef(IDirectMusicGraph *iface)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p): %ld\n", This, ref);
@@ -86,7 +87,7 @@ static ULONG WINAPI graph_AddRef(IDirectMusicGraph *iface)
 
 static ULONG WINAPI graph_Release(IDirectMusicGraph *iface)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p): %ld\n", This, ref);
@@ -110,7 +111,7 @@ static ULONG WINAPI graph_Release(IDirectMusicGraph *iface)
 
 static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     FIXME("(%p, %p): stub\n", This, msg);
     return S_OK;
 }
@@ -118,7 +119,7 @@ static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 static HRESULT WINAPI graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
         DWORD *channels, DWORD channel_count, LONG index)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry, *next;
 
     TRACE("(%p, %p, %p, %ld, %li)\n", This, tool, channels, channel_count, index);
@@ -142,7 +143,7 @@ static HRESULT WINAPI graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicToo
 
 static HRESULT WINAPI graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **ret_tool)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry;
 
     TRACE("(%p, %ld, %p)\n", This, index, ret_tool);
@@ -164,7 +165,7 @@ static HRESULT WINAPI graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDire
 
 static HRESULT WINAPI graph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
 {
-    IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
+    struct graph *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry;
 
     TRACE("(%p, %p)\n", This, tool);
@@ -240,7 +241,7 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
 
 static HRESULT WINAPI graph_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-    IDirectMusicGraphImpl *This = impl_from_IPersistStream(iface);
+    struct graph *This = impl_from_IPersistStream(iface);
 
     FIXME("(%p, %p): Loading not implemented yet\n", This, stream);
 
@@ -262,7 +263,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT create_dmgraph(REFIID riid, void **ret_iface)
 {
-    IDirectMusicGraphImpl* obj;
+    struct graph *obj;
     HRESULT hr;
 
     *ret_iface = NULL;

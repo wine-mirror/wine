@@ -45,7 +45,6 @@
 /*****************************************************************************
  * Interfaces
  */
-typedef struct IDirectMusicGraphImpl IDirectMusicGraphImpl;
 typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
 
 /*****************************************************************************
