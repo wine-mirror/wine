@@ -705,10 +705,10 @@ static void test_graph(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicGraph_GetTool(graph, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
     if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
     hr = IDirectMusicGraph_GetTool(graph, 1, &tmp_tool);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -723,24 +723,24 @@ static void test_graph(void)
 
     /* test removing the first tool */
     hr = IDirectMusicGraph_RemoveTool(graph, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicGraph_RemoveTool(graph, tool1);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_RemoveTool(graph, tool1);
-    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
 
     hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(tool2 == tmp_tool, "got %p\n", tmp_tool);
     if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
     hr = IDirectMusicGraph_GetTool(graph, 1, &tmp_tool);
-    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
 
     hr = IDirectMusicGraph_InsertTool(graph, tool1, NULL, 0, -1);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
     if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
 
 
@@ -810,7 +810,7 @@ static void test_graph(void)
     hr = IDirectMusicGraph_InsertTool(tmp_graph, tool1, NULL, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_InsertTool(tmp_graph, tool2, NULL, 0, 0);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_StampPMsg(tmp_graph, &msg);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
