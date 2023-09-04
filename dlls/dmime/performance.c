@@ -1293,8 +1293,37 @@ static ULONG WINAPI performance_graph_Release(IDirectMusicGraph *iface)
 static HRESULT WINAPI performance_graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
     struct performance *This = impl_from_IDirectMusicGraph(iface);
-    FIXME("(%p, %p): stub\n", This, msg);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", This, msg);
+
+    if (!msg) return E_POINTER;
+
+    /* FIXME: Implement segment and audio path graphs support */
+    if (!This->pToolGraph) hr = DMUS_S_LAST_TOOL;
+    else if (FAILED(hr = IDirectMusicGraph_StampPMsg(This->pToolGraph, msg))) return hr;
+
+    if (msg->pGraph)
+    {
+        IDirectMusicTool_Release(msg->pGraph);
+        msg->pGraph = NULL;
+    }
+
+    if (hr == DMUS_S_LAST_TOOL)
+    {
+        if (msg->pTool) IDirectMusicTool_Release(msg->pTool);
+        msg->pTool = &This->IDirectMusicTool_iface;
+        IDirectMusicTool_AddRef(msg->pTool);
+        return S_OK;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        msg->pGraph = &This->IDirectMusicGraph_iface;
+        IDirectMusicTool_AddRef(msg->pGraph);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,

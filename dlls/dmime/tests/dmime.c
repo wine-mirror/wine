@@ -1544,13 +1544,13 @@ static void test_performance_graph(void)
 
     /* test IDirectMusicGraph_StampPMsg usage */
     hr = IDirectMusicGraph_StampPMsg(graph, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     memset(&msg, 0, sizeof(msg));
     hr = IDirectMusicGraph_StampPMsg(graph, &msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg.pGraph == NULL, "got %p\n", msg.pGraph);
-    todo_wine ok(msg.pTool != NULL, "got %p\n", msg.pTool);
-    if (msg.pTool) check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
+    ok(msg.pTool != NULL, "got %p\n", msg.pTool);
+    check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
 
     ok(!msg.dwSize, "got %ld\n", msg.dwSize);
     ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
@@ -1564,12 +1564,12 @@ static void test_performance_graph(void)
     ok(!msg.punkUser, "got %p\n", msg.punkUser);
 
     hr = IDirectMusicGraph_StampPMsg(graph, &msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg.pGraph == NULL, "got %p\n", msg.pGraph);
-    todo_wine ok(msg.pTool != NULL, "got %p\n", msg.pTool);
-    if (msg.pTool) check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
+    ok(msg.pTool != NULL, "got %p\n", msg.pTool);
+    check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
 
-    if (msg.pTool) IDirectMusicTool_Release(msg.pTool);
+    IDirectMusicTool_Release(msg.pTool);
     msg.pTool = NULL;
 
     IDirectMusicGraph_Release(graph);
@@ -1604,9 +1604,9 @@ static void test_performance_graph(void)
 
     memset(&msg, 0, sizeof(msg));
     hr = IDirectMusicGraph_StampPMsg(graph, &msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
-    todo_wine ok(msg.pTool == tool, "got %p\n", msg.pTool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    ok(msg.pTool == tool, "got %p\n", msg.pTool);
 
     ok(!msg.dwSize, "got %ld\n", msg.dwSize);
     ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
@@ -1620,12 +1620,12 @@ static void test_performance_graph(void)
     ok(!msg.punkUser, "got %p\n", msg.punkUser);
 
     hr = IDirectMusicGraph_StampPMsg(graph, &msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg.pGraph == NULL, "got %p\n", msg.pGraph);
-    todo_wine ok(msg.pTool != NULL, "got %p\n", msg.pTool);
-    if (msg.pTool) check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
+    ok(msg.pTool != NULL, "got %p\n", msg.pTool);
+    check_interface(msg.pTool, &IID_IDirectMusicPerformance, TRUE);
 
-    if (msg.pTool) IDirectMusicTool_Release(msg.pTool);
+    IDirectMusicTool_Release(msg.pTool);
     msg.pTool = NULL;
 
     IDirectMusicGraph_Release(graph);
@@ -1871,7 +1871,7 @@ static void test_performance_pmsg(void)
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_StampPMsg(graph, msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicGraph_Release(graph);
 
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
@@ -1901,7 +1901,7 @@ static void test_performance_pmsg(void)
         hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
         ok(hr == S_OK, "got %#lx\n", hr);
         hr = IDirectMusicGraph_StampPMsg(graph, msg);
-        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        ok(hr == S_OK, "got %#lx\n", hr);
         IDirectMusicGraph_Release(graph);
 
         msg->dwFlags &= ~(DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME);
