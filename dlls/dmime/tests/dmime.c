@@ -1536,8 +1536,7 @@ static void test_performance_graph(void)
 
     /* performance exposes a graph interface but it's not an actual toolgraph */
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) goto skip_graph;
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
     hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
@@ -1578,7 +1577,6 @@ static void test_performance_graph(void)
     IDirectMusicGraph_Release(graph);
 
 
-skip_graph:
     /* performance doesn't have a default embedded toolgraph */
     hr = IDirectMusicPerformance_GetGraph(performance, &graph);
     ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
@@ -1604,8 +1602,7 @@ skip_graph:
 
     /* test IDirectMusicGraph_StampPMsg usage */
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) goto skip_graph2;
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     memset(&msg, 0, sizeof(msg));
     hr = IDirectMusicGraph_StampPMsg(graph, &msg);
@@ -1636,7 +1633,6 @@ skip_graph:
     IDirectMusicGraph_Release(graph);
 
 
-skip_graph2:
     IDirectMusicPerformance_Release(performance);
     IDirectMusicTool_Release(tool);
 }
@@ -1874,12 +1870,11 @@ static void test_performance_pmsg(void)
     msg->dwFlags = DMUS_PMSGF_REFTIME;
     msg->dwType = DMUS_PMSGT_USER;
 
-    graph = NULL;
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_StampPMsg(graph, msg);
     todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (graph) hr = IDirectMusicGraph_StampPMsg(graph, msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (graph) IDirectMusicGraph_Release(graph);
+    IDirectMusicGraph_Release(graph);
 
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1906,11 +1901,10 @@ static void test_performance_pmsg(void)
         msg->dwType = DMUS_PMSGT_USER;
 
         hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
-        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-        if (!graph) hr = S_OK;
-        else hr = IDirectMusicGraph_StampPMsg(graph, msg);
         ok(hr == S_OK, "got %#lx\n", hr);
-        if (graph) IDirectMusicGraph_Release(graph);
+        hr = IDirectMusicGraph_StampPMsg(graph, msg);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        IDirectMusicGraph_Release(graph);
 
         msg->dwFlags &= ~(DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME);
         msg->dwFlags |= delivery_flags[i];

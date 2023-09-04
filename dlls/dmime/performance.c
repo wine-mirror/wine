@@ -37,6 +37,7 @@ struct pchannel_block {
 struct performance
 {
     IDirectMusicPerformance8 IDirectMusicPerformance8_iface;
+    IDirectMusicGraph IDirectMusicGraph_iface;
     LONG ref;
     IDirectMusic8 *dmusic;
     IDirectSound *dsound;
@@ -254,6 +255,8 @@ static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusi
 /* IDirectMusicPerformance8 IUnknown part: */
 static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface, REFIID riid, void **ret_iface)
 {
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+
     TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -263,6 +266,13 @@ static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface
     {
         *ret_iface = iface;
         IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IDirectMusicGraph))
+    {
+        *ret_iface = &This->IDirectMusicGraph_iface;
+        IDirectMusicGraph_AddRef(&This->IDirectMusicGraph_iface);
         return S_OK;
     }
 
@@ -1249,6 +1259,69 @@ static const IDirectMusicPerformance8Vtbl performance_vtbl =
     performance_GetParamEx,
 };
 
+static inline struct performance *impl_from_IDirectMusicGraph(IDirectMusicGraph *iface)
+{
+    return CONTAINING_RECORD(iface, struct performance, IDirectMusicGraph_iface);
+}
+
+static HRESULT WINAPI performance_graph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicPerformance8_QueryInterface(&This->IDirectMusicPerformance8_iface, riid, ret_iface);
+}
+
+static ULONG WINAPI performance_graph_AddRef(IDirectMusicGraph *iface)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicPerformance8_AddRef(&This->IDirectMusicPerformance8_iface);
+}
+
+static ULONG WINAPI performance_graph_Release(IDirectMusicGraph *iface)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicPerformance8_Release(&This->IDirectMusicPerformance8_iface);
+}
+
+static HRESULT WINAPI performance_graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    FIXME("(%p, %p): stub\n", This, msg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
+        DWORD *channels, DWORD channels_count, LONG index)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    FIXME("(%p, %p, %p, %lu, %ld): stub\n", This, tool, channels, channels_count, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **tool)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    FIXME("(%p, %lu, %p): stub\n", This, index, tool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_graph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
+{
+    struct performance *This = impl_from_IDirectMusicGraph(iface);
+    FIXME("(%p, %p): stub\n", This, tool);
+    return E_NOTIMPL;
+}
+
+static const IDirectMusicGraphVtbl performance_graph_vtbl =
+{
+    performance_graph_QueryInterface,
+    performance_graph_AddRef,
+    performance_graph_Release,
+    performance_graph_StampPMsg,
+    performance_graph_InsertTool,
+    performance_graph_GetTool,
+    performance_graph_RemoveTool,
+};
+
 /* for ClassFactory */
 HRESULT create_dmperformance(REFIID iid, void **ret_iface)
 {
@@ -1260,6 +1333,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     *ret_iface = NULL;
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicPerformance8_iface.lpVtbl = &performance_vtbl;
+    obj->IDirectMusicGraph_iface.lpVtbl = &performance_graph_vtbl;
     obj->ref = 1;
 
     obj->pDefaultPath = NULL;
