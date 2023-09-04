@@ -377,7 +377,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                                             DMUS_PRIVATE_INSTRUMENTENTRY *new_instrument = calloc(1, sizeof(DMUS_PRIVATE_INSTRUMENTENTRY));
                                             TRACE_(dmfile)(": instrument list\n");
                                             /* Only way to create this one... even M$ does it discretely */
-                                            DMUSIC_CreateDirectMusicInstrumentImpl(&IID_IDirectMusicInstrument, (void**)&new_instrument->pInstrument, NULL);
+                                            instrument_create(&new_instrument->pInstrument);
                                             {
                                                 IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
                                                 /* Store offset and length, they will be needed when loading the instrument */

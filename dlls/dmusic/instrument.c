@@ -119,24 +119,18 @@ static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Vtbl =
     IDirectMusicInstrumentImpl_SetPatch
 };
 
-/* for ClassFactory */
-HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicInstrumentImpl* dminst;
-        HRESULT hr;
+HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
+{
+    IDirectMusicInstrumentImpl *dminst;
 
-	dminst = calloc(1, sizeof(IDirectMusicInstrumentImpl));
-	if (NULL == dminst) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	dminst->IDirectMusicInstrument_iface.lpVtbl = &DirectMusicInstrument_Vtbl;
-        dminst->ref = 1;
+    *ret_iface = NULL;
+    if (!(dminst = calloc(1, sizeof(*dminst)))) return E_OUTOFMEMORY;
+    dminst->IDirectMusicInstrument_iface.lpVtbl = &DirectMusicInstrument_Vtbl;
+    dminst->ref = 1;
 
-        hr = IDirectMusicInstrument_QueryInterface(&dminst->IDirectMusicInstrument_iface, lpcGUID,
-                ppobj);
-        IDirectMusicInstrument_Release(&dminst->IDirectMusicInstrument_iface);
-
-        return hr;
+    TRACE("Created DirectMusicInstrument %p\n", dminst);
+    *ret_iface = &dminst->IDirectMusicInstrument_iface;
+    return S_OK;
 }
 
 static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
