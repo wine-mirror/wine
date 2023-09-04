@@ -93,7 +93,7 @@ static ULONG WINAPI IDirectMusicSegment8Impl_Release(IDirectMusicSegment8 *iface
         if (This->wave_data)
             free(This->wave_data);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -266,9 +266,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 
     }
   }
 
-  pNewSegTrack = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_TRACK));
-  if (NULL == pNewSegTrack)
-    return  E_OUTOFMEMORY;
+  if (!(pNewSegTrack = calloc(1, sizeof(*pNewSegTrack)))) return E_OUTOFMEMORY;
 
   pNewSegTrack->dwGroupBits = group;
   pNewSegTrack->pTrack = pTrack;
@@ -296,7 +294,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveTrack(IDirectMusicSegment8 
       list_remove(&pIt->entry);
       IDirectMusicTrack_Init(pIt->pTrack, NULL);
       IDirectMusicTrack_Release(pIt->pTrack);
-      HeapFree(GetProcessHeap(), 0, pIt);   
+      free(pIt);
 
       return S_OK;
     }
@@ -445,13 +443,16 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_Clone(IDirectMusicSegment8 *iface
 
     LIST_FOR_EACH_ENTRY(track_item, &This->Tracks, DMUS_PRIVATE_SEGMENT_TRACK, entry) {
         if (SUCCEEDED(hr = IDirectMusicTrack_Clone(track_item->pTrack, start, end, &track))) {
-            if ((cloned_item = HeapAlloc(GetProcessHeap(), 0, sizeof(*cloned_item)))) {
+            if ((cloned_item = malloc(sizeof(*cloned_item))))
+            {
                 cloned_item->dwGroupBits = track_item->dwGroupBits;
                 cloned_item->flags = track_item->flags;
                 cloned_item->pTrack = track;
                 list_add_tail(&clone->Tracks, &cloned_item->entry);
                 continue;
-            } else {
+            }
+            else
+            {
                 IDirectMusicTrack_Release(track);
             }
         }
@@ -924,8 +925,7 @@ IDirectMusicSegment8Impl *create_segment(void)
 {
     IDirectMusicSegment8Impl *obj;
 
-    if (!(obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj))))
-        return NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return NULL;
 
     obj->IDirectMusicSegment8_iface.lpVtbl = &dmsegment8_vtbl;
     obj->ref = 1;

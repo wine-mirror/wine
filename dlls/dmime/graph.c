@@ -85,8 +85,7 @@ static ULONG WINAPI DirectMusicGraph_Release(IDirectMusicGraph *iface)
 
     TRACE("(%p): %ld\n", This, ref);
 
-    if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
+    if (!ref) free(This);
 
     return ref;
 }
@@ -127,7 +126,7 @@ static HRESULT WINAPI DirectMusicGraph_InsertTool(IDirectMusicGraph *iface, IDir
     }
 
     ++This->num_tools;
-    pNewTool = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_GRAPH_TOOL));
+    pNewTool = calloc(1, sizeof(*pNewTool));
     pNewTool->pTool = pTool;
     pNewTool->dwIndex = lIndex;
     IDirectMusicTool8_AddRef(pTool);
@@ -255,11 +254,7 @@ HRESULT create_dmgraph(REFIID riid, void **ret_iface)
     HRESULT hr;
 
     *ret_iface = NULL;
-  
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));
-    if (!obj)
-        return E_OUTOFMEMORY;
-
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicGraph_iface.lpVtbl = &DirectMusicGraphVtbl;
     obj->ref = 1;
     dmobject_init(&obj->dmobj, &CLSID_DirectMusicGraph, (IUnknown *)&obj->IDirectMusicGraph_iface);

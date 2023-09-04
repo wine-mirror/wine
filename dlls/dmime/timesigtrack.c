@@ -19,7 +19,6 @@
 
 #include "dmime_private.h"
 #include "dmobject.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
@@ -86,8 +85,8 @@ static ULONG WINAPI IDirectMusicTrackImpl_Release(IDirectMusicTrack *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
-        heap_free(This->items);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->items);
+        free(This);
     }
 
     return ref;
@@ -289,11 +288,8 @@ HRESULT create_dmtimesigtrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicTimeSigTrack *track;
     HRESULT hr;
 
-    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
-    if (!track) {
-        *ppobj = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
     track->IDirectMusicTrack_iface.lpVtbl = &dmtack_vtbl;
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicTimeSigTrack,

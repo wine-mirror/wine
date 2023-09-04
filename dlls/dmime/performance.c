@@ -19,7 +19,6 @@
  */
 
 #include "dmime_private.h"
-#include "wine/heap.h"
 #include "wine/rbtree.h"
 #include "dmobject.h"
 
@@ -133,15 +132,15 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
     
     for (it = This->imm_head; NULL != it; ) {
       it_next = it->next;
-      cur = ProceedMsg(This, it);  
-      HeapFree(GetProcessHeap(), 0, cur); 
+      cur = ProceedMsg(This, it);
+      free(cur);
       it = it_next;
     }
 
     for (it = This->head; NULL != it && it->rtItemTime < rtCurTime + dwDec; ) {
       it_next = it->next;
       cur = ProceedMsg(This, it);
-      HeapFree(GetProcessHeap(), 0, cur);
+      free(cur);
       it = it_next;
     }
     if (NULL != it) {
@@ -215,7 +214,7 @@ static void pchannel_block_free(struct wine_rb_entry *entry, void *context)
 {
     struct pchannel_block *b = WINE_RB_ENTRY_VALUE(entry, struct pchannel_block, entry);
 
-    heap_free(b);
+    free(b);
 }
 
 static struct pchannel_block *pchannel_block_set(struct wine_rb_tree *tree, DWORD block_num,
@@ -231,8 +230,7 @@ static struct pchannel_block *pchannel_block_set(struct wine_rb_tree *tree, DWOR
         if (only_set_new)
             return block;
     } else {
-        if (!(block = heap_alloc(sizeof(*block))))
-            return NULL;
+        if (!(block = malloc(sizeof(*block)))) return NULL;
         block->block_num = block_num;
     }
 
@@ -292,7 +290,7 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_Release(IDirectMusicPerformance
     wine_rb_destroy(&This->pchannels, pchannel_block_free, NULL);
     This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
   }
 
   return ref;
@@ -501,10 +499,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AllocPMsg(IDirectMusicPerform
   if (NULL == ppPMSG) {
     return E_POINTER;
   }
-  pItem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb - sizeof(DMUS_PMSG)  + sizeof(DMUS_PMSGItem));
-  if (NULL == pItem) {
-    return E_OUTOFMEMORY;
-  }
+  if (!(pItem = calloc(1, cb - sizeof(DMUS_PMSG) + sizeof(DMUS_PMSGItem)))) return E_OUTOFMEMORY;
   pItem->pMsg.dwSize = cb;
   *ppPMSG = DMUS_ItemToPMSG(pItem);
   return S_OK;
@@ -540,7 +535,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
   if (pPMSG->punkUser)
     IUnknown_Release(pPMSG->punkUser);
 
-  HeapFree(GetProcessHeap(), 0, pItem);  
+  free(pItem);
   return S_OK;
 }
 
@@ -1286,11 +1281,8 @@ HRESULT create_dmperformance(REFIID lpcGUID, void **ppobj)
 
         TRACE("(%s, %p)\n", debugstr_guid(lpcGUID), ppobj);
 
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
-        if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
         obj->IDirectMusicPerformance8_iface.lpVtbl = &DirectMusicPerformance8_Vtbl;
 	obj->ref = 0;  /* will be inited by QueryInterface */
 	obj->pDefaultPath = NULL;

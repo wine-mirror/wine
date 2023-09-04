@@ -19,7 +19,6 @@
 
 #include "dmime_private.h"
 #include "dmobject.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
@@ -107,12 +106,12 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
                 list_remove(&item->entry);
                 if (item->object)
                     IDirectMusicObject_Release(item->object);
-                heap_free(item);
+                free(item);
             }
-            heap_free(part);
+            free(part);
         }
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -323,8 +322,7 @@ static HRESULT parse_wave_item(struct wave_part *part, IStream *stream, struct c
     if (wave.id != FOURCC_LIST || wave.type != DMUS_FOURCC_WAVE_LIST)
         return DMUS_E_UNSUPPORTED_STREAM;
 
-    if (!(item = heap_alloc_zero(sizeof(*item))))
-        return E_OUTOFMEMORY;
+    if (!(item = calloc(1, sizeof(*item)))) return E_OUTOFMEMORY;
 
     /* Wave item header chunk */
     if (FAILED(hr = stream_next_chunk(stream, &chunk)))
@@ -366,7 +364,7 @@ static HRESULT parse_wave_item(struct wave_part *part, IStream *stream, struct c
     return S_OK;
 
 error:
-    heap_free(item);
+    free(item);
     return hr;
 }
 
@@ -383,8 +381,7 @@ static HRESULT parse_wave_part(IDirectMusicWaveTrack *This, IStream *stream,
     if (chunk.id != DMUS_FOURCC_WAVEPART_CHUNK)
         return DMUS_E_UNSUPPORTED_STREAM;
 
-    if (!(part = heap_alloc_zero(sizeof(*part))))
-        return E_OUTOFMEMORY;
+    if (!(part = calloc(1, sizeof(*part)))) return E_OUTOFMEMORY;
     list_init(&part->items);
 
     if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &part->header, sizeof(part->header)))) {
@@ -414,7 +411,7 @@ static HRESULT parse_wave_part(IDirectMusicWaveTrack *This, IStream *stream,
     return S_OK;
 
 error:
-    heap_free(part);
+    free(part);
     return hr;
 }
 
@@ -475,11 +472,8 @@ HRESULT create_dmwavetrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicWaveTrack *track;
     HRESULT hr;
 
-    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
-    if (!track) {
-        *ppobj = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicWaveTrack,

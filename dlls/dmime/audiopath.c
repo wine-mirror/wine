@@ -112,7 +112,7 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
         if (This->pDSBuffer)
             IDirectSoundBuffer_Release(This->pDSBuffer);
         This->pPerf = NULL;
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -328,11 +328,8 @@ HRESULT create_dmaudiopath(REFIID riid, void **ppobj)
     IDirectMusicAudioPathImpl* obj;
     HRESULT hr;
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathImpl));
-    if (NULL == obj) {
-        *ppobj = NULL;
-	return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicAudioPath_iface.lpVtbl = &DirectMusicAudioPathVtbl;
     obj->ref = 1;
     dmobject_init(&obj->dmobj, &CLSID_DirectMusicAudioPathConfig,
