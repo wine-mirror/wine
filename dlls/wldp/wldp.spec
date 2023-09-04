@@ -4,7 +4,7 @@
 @ stub WldpQueryPolicySettingEnabled2
 @ stub WldpQueryPolicySettingEnabled
 @ stub WldpQueryPolicySettingEnabledInternal
-@ stub WldpQueryWindowsLockdownMode
+@ stdcall WldpQueryWindowsLockdownMode(ptr)
 @ stub WldpQueryWindowsLockdownRestriction
 @ stub WldpResetProductionConfiguration
 @ stub WldpResetWcosProductionConfiguration

@@ -49,3 +49,14 @@ HRESULT WINAPI WldpGetLockdownPolicy(WLDP_HOST_INFORMATION *info, DWORD *state, 
     *state = 0;
     return S_OK;
 }
+
+/***********************************************************************
+ *      WldpQueryWindowsLockdownMode (wldp.@)
+ */
+HRESULT WINAPI WldpQueryWindowsLockdownMode(WLDP_WINDOWS_LOCKDOWN_MODE *lockdown_mode)
+{
+    FIXME("%p\n", lockdown_mode);
+
+    *lockdown_mode = WLDP_WINDOWS_LOCKDOWN_MODE_UNLOCKED;
+    return S_OK;
+}
