@@ -1275,24 +1275,28 @@ static const IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT create_dmperformance(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmperformance(REFIID iid, void **ret_iface)
 {
-	IDirectMusicPerformance8Impl *obj;
+    IDirectMusicPerformance8Impl *obj;
+    HRESULT hr;
 
-        TRACE("(%s, %p)\n", debugstr_guid(lpcGUID), ppobj);
+    TRACE("(%s, %p)\n", debugstr_guid(iid), ret_iface);
 
-    *ppobj = NULL;
+    *ret_iface = NULL;
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-        obj->IDirectMusicPerformance8_iface.lpVtbl = &DirectMusicPerformance8_Vtbl;
-	obj->ref = 0;  /* will be inited by QueryInterface */
-	obj->pDefaultPath = NULL;
-	InitializeCriticalSection(&obj->safe);
-	obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
-        wine_rb_init(&obj->pchannels, pchannel_block_compare);
+    obj->IDirectMusicPerformance8_iface.lpVtbl = &DirectMusicPerformance8_Vtbl;
+    obj->ref = 1;
 
-        obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
-        obj->dwBumperLength =   50; /* 50 ms default */
-        obj->dwPrepareTime  = 1000; /* 1000 ms default */
-        return IDirectMusicPerformance8Impl_QueryInterface(&obj->IDirectMusicPerformance8_iface,
-                                                           lpcGUID, ppobj);
+    obj->pDefaultPath = NULL;
+    InitializeCriticalSection(&obj->safe);
+    obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
+    wine_rb_init(&obj->pchannels, pchannel_block_compare);
+
+    obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
+    obj->dwBumperLength =   50; /* 50 ms default */
+    obj->dwPrepareTime  = 1000; /* 1000 ms default */
+
+    hr = IDirectMusicPerformance8_QueryInterface(&obj->IDirectMusicPerformance8_iface, iid, ret_iface);
+    IDirectMusicPerformance_Release(&obj->IDirectMusicPerformance8_iface);
+    return hr;
 }
