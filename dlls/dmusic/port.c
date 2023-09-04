@@ -707,6 +707,7 @@ static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface
         }
     }
 
+    if (!handle) return S_OK;
     return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
 }
 
