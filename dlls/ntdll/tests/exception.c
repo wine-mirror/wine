@@ -5134,7 +5134,7 @@ static LONG CALLBACK test_raiseexception_regs_handle(EXCEPTION_POINTERS *excepti
     ok(rec->NumberParameters == EXCEPTION_MAXIMUM_PARAMETERS, "got %lu.\n", rec->NumberParameters);
     ok(rec->ExceptionCode == 0xdeadbeaf, "got %#lx.\n", rec->ExceptionCode);
     ok(!rec->ExceptionRecord, "got %p.\n", rec->ExceptionRecord);
-    ok(!rec->ExceptionFlags, "got %#lx.\n", rec->ExceptionFlags);
+    ok(!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE, "got %#lx.\n", rec->ExceptionFlags);
     for (i = 0; i < rec->NumberParameters; ++i)
         ok(rec->ExceptionInformation[i] == i, "got %Iu, i %u.\n", rec->ExceptionInformation[i], i);
     return EXCEPTION_CONTINUE_EXECUTION;
