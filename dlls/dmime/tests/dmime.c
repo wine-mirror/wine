@@ -1489,10 +1489,9 @@ static void test_performance_tool(void)
     check_interface(performance, &IID_IDirectMusicTool8, FALSE);
 
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicTool, (void **)&tool);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) goto skip_tool;
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicTool_Init(tool, graph);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
@@ -1514,7 +1513,6 @@ static void test_performance_tool(void)
     IDirectMusicGraph_Release(graph);
     IDirectMusicTool_Release(tool);
 
-skip_tool:
     IDirectMusicPerformance_Release(performance);
 }
 

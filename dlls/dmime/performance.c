@@ -38,6 +38,7 @@ struct performance
 {
     IDirectMusicPerformance8 IDirectMusicPerformance8_iface;
     IDirectMusicGraph IDirectMusicGraph_iface;
+    IDirectMusicTool IDirectMusicTool_iface;
     LONG ref;
     IDirectMusic8 *dmusic;
     IDirectSound *dsound;
@@ -273,6 +274,13 @@ static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface
     {
         *ret_iface = &This->IDirectMusicGraph_iface;
         IDirectMusicGraph_AddRef(&This->IDirectMusicGraph_iface);
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IDirectMusicTool))
+    {
+        *ret_iface = &This->IDirectMusicTool_iface;
+        IDirectMusicTool_AddRef(&This->IDirectMusicTool_iface);
         return S_OK;
     }
 
@@ -1322,6 +1330,86 @@ static const IDirectMusicGraphVtbl performance_graph_vtbl =
     performance_graph_RemoveTool,
 };
 
+static inline struct performance *impl_from_IDirectMusicTool(IDirectMusicTool *iface)
+{
+    return CONTAINING_RECORD(iface, struct performance, IDirectMusicTool_iface);
+}
+
+static HRESULT WINAPI performance_tool_QueryInterface(IDirectMusicTool *iface, REFIID riid, void **ret_iface)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    return IDirectMusicPerformance8_QueryInterface(&This->IDirectMusicPerformance8_iface, riid, ret_iface);
+}
+
+static ULONG WINAPI performance_tool_AddRef(IDirectMusicTool *iface)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    return IDirectMusicPerformance8_AddRef(&This->IDirectMusicPerformance8_iface);
+}
+
+static ULONG WINAPI performance_tool_Release(IDirectMusicTool *iface)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    return IDirectMusicPerformance8_Release(&This->IDirectMusicPerformance8_iface);
+}
+
+static HRESULT WINAPI performance_tool_Init(IDirectMusicTool *iface, IDirectMusicGraph *graph)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p): stub\n", This, graph);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_tool_GetMsgDeliveryType(IDirectMusicTool *iface, DWORD *type)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p): stub\n", This, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_tool_GetMediaTypeArraySize(IDirectMusicTool *iface, DWORD *size)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p): stub\n", This, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_tool_GetMediaTypes(IDirectMusicTool *iface, DWORD **types, DWORD size)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p, %lu): stub\n", This, types, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
+        IDirectMusicPerformance *performance, DMUS_PMSG *msg)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p, %p): stub\n", This, performance, msg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI performance_tool_Flush(IDirectMusicTool *iface,
+        IDirectMusicPerformance *performance, DMUS_PMSG *msg, REFERENCE_TIME time)
+{
+    struct performance *This = impl_from_IDirectMusicTool(iface);
+    FIXME("(%p, %p, %p, %I64d): stub\n", This, performance, msg, time);
+    return E_NOTIMPL;
+}
+
+static const IDirectMusicToolVtbl performance_tool_vtbl =
+{
+    performance_tool_QueryInterface,
+    performance_tool_AddRef,
+    performance_tool_Release,
+    performance_tool_Init,
+    performance_tool_GetMsgDeliveryType,
+    performance_tool_GetMediaTypeArraySize,
+    performance_tool_GetMediaTypes,
+    performance_tool_ProcessPMsg,
+    performance_tool_Flush,
+};
+
 /* for ClassFactory */
 HRESULT create_dmperformance(REFIID iid, void **ret_iface)
 {
@@ -1334,6 +1422,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicPerformance8_iface.lpVtbl = &performance_vtbl;
     obj->IDirectMusicGraph_iface.lpVtbl = &performance_graph_vtbl;
+    obj->IDirectMusicTool_iface.lpVtbl = &performance_tool_vtbl;
     obj->ref = 1;
 
     obj->pDefaultPath = NULL;
