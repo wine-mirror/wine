@@ -592,17 +592,28 @@ static ULONG WINAPI synth_port_download_Release(IDirectMusicPortDownload *iface)
     return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
 }
 
-static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *iface, DWORD DLId,
-        IDirectMusicDownload **IDMDownload)
+static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *iface, DWORD id,
+        IDirectMusicDownload **download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
+    struct download_entry *entry;
 
-    FIXME("(%p/%p, %lu, %p): stub\n", iface, This, DLId, IDMDownload);
+    TRACE("(%p/%p, %lu, %p)\n", iface, This, id, download);
 
-    if (!IDMDownload)
-        return E_POINTER;
+    if (!download) return E_POINTER;
+    if (id >= This->next_dlid) return DMUS_E_INVALID_DOWNLOADID;
 
-    return download_create(0, IDMDownload);
+    LIST_FOR_EACH_ENTRY(entry, &This->downloads, struct download_entry, entry)
+    {
+        if (entry->id == id)
+        {
+            *download = entry->download;
+            IDirectMusicDownload_AddRef(entry->download);
+            return S_OK;
+        }
+    }
+
+    return DMUS_E_NOT_DOWNLOADED_TO_PORT;
 }
 
 static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownload *iface, DWORD size,

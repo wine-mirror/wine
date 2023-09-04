@@ -1059,9 +1059,9 @@ static void test_port_download(void)
     hr = IDirectMusicPortDownload_GetBuffer(port, 0, NULL);
     ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_GetBuffer(port, 0, &download);
-    todo_wine ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
+    ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_GetBuffer(port, 0xdeadbeef, &download);
-    todo_wine ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
+    ok(hr == DMUS_E_INVALID_DOWNLOADID, "got %#lx\n", hr);
 
     /* AllocateBuffer use the exact requested size */
     hr = IDirectMusicPortDownload_AllocateBuffer(port, 0, NULL);
@@ -1093,7 +1093,7 @@ static void test_port_download(void)
 
     /* GetBuffer looks up allocated ids to find downloaded buffers */
     hr = IDirectMusicPortDownload_GetBuffer(port, 2, &download);
-    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_GetAppend(port, NULL);
     todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
@@ -1119,7 +1119,7 @@ static void test_port_download(void)
     wave_download->info.dwDLType = 0;
     wave_download->info.dwNumOffsetTableEntries = 0;
     hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
-    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_Download(port, NULL);
     ok(hr == E_POINTER, "got %#lx\n", hr);
@@ -1150,8 +1150,8 @@ static void test_port_download(void)
     tmp_download = invalid_ptr;
     hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tmp_download == download, "got %p\n", tmp_download);
-    if (tmp_download != invalid_ptr) IDirectMusicDownload_Release(tmp_download);
+    ok(tmp_download == download, "got %p\n", tmp_download);
+    IDirectMusicDownload_Release(tmp_download);
 
     hr = IDirectMusicPortDownload_Unload(port, NULL);
     ok(hr == E_POINTER, "got %#lx\n", hr);
@@ -1159,7 +1159,7 @@ static void test_port_download(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_GetBuffer(port, 2, &tmp_download);
-    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_Unload(port, download);
     ok(hr == S_OK, "got %#lx\n", hr);
