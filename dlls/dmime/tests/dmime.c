@@ -27,6 +27,126 @@
 #include <audioclient.h>
 #include <guiddef.h>
 
+struct test_tool
+{
+    IDirectMusicTool IDirectMusicTool_iface;
+    LONG ref;
+
+    IDirectMusicGraph *graph;
+};
+
+static struct test_tool *impl_from_IDirectMusicTool(IDirectMusicTool *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_tool, IDirectMusicTool_iface);
+}
+
+static HRESULT WINAPI test_tool_QueryInterface(IDirectMusicTool *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IDirectMusicTool))
+    {
+        IDirectMusicTool_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    ok(IsEqualGUID(iid, &IID_IDirectMusicTool8) || IsEqualGUID(iid, &IID_IPersistStream),
+            "got iid %s\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_tool_AddRef(IDirectMusicTool *iface)
+{
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    return InterlockedIncrement(&tool->ref);
+}
+
+static ULONG WINAPI test_tool_Release(IDirectMusicTool *iface)
+{
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    ULONG ref = InterlockedDecrement(&tool->ref);
+
+    if (!ref)
+    {
+        if (tool->graph) IDirectMusicGraph_Release(tool->graph);
+        free(tool);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI test_tool_Init(IDirectMusicTool *iface, IDirectMusicGraph *graph)
+{
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    if ((tool->graph = graph)) IDirectMusicGraph_AddRef(tool->graph);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_tool_GetMsgDeliveryType(IDirectMusicTool *iface, DWORD *type)
+{
+    *type = DMUS_PMSGF_TOOL_IMMEDIATE;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_tool_GetMediaTypeArraySize(IDirectMusicTool *iface, DWORD *size)
+{
+    *size = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_tool_GetMediaTypes(IDirectMusicTool *iface, DWORD **types, DWORD size)
+{
+    ok(0,  "%#04lx: unexpected %s, types %p, size %lu\n", GetCurrentThreadId(), __func__, types, size);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_tool_ProcessPMsg(IDirectMusicTool *iface, IDirectMusicPerformance *performance, DMUS_PMSG *msg)
+{
+    ok(0,  "%#04lx: unexpected %s, iface %p, performance %p, msg %p\n", GetCurrentThreadId(), __func__, iface, performance, msg);
+    return DMUS_S_REQUEUE;
+}
+
+static HRESULT WINAPI test_tool_Flush(IDirectMusicTool *iface, IDirectMusicPerformance *performance,
+        DMUS_PMSG *msg, REFERENCE_TIME time)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return S_OK;
+}
+
+static IDirectMusicToolVtbl test_tool_vtbl =
+{
+    test_tool_QueryInterface,
+    test_tool_AddRef,
+    test_tool_Release,
+    test_tool_Init,
+    test_tool_GetMsgDeliveryType,
+    test_tool_GetMediaTypeArraySize,
+    test_tool_GetMediaTypes,
+    test_tool_ProcessPMsg,
+    test_tool_Flush,
+};
+
+static HRESULT test_tool_create(IDirectMusicTool **ret_iface)
+{
+    struct test_tool *tool;
+
+    *ret_iface = NULL;
+    if (!(tool = calloc(1, sizeof(*tool)))) return E_OUTOFMEMORY;
+    tool->IDirectMusicTool_iface.lpVtbl = &test_tool_vtbl;
+    tool->ref = 1;
+
+    *ret_iface = &tool->IDirectMusicTool_iface;
+    return S_OK;
+}
+
+static HRESULT test_tool_get_graph(IDirectMusicTool *iface, IDirectMusicGraph **graph)
+{
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    if ((*graph = tool->graph)) IDirectMusicGraph_AddRef(tool->graph);
+    return tool->graph ? S_OK : DMUS_E_NOT_FOUND;
+}
+
 static BOOL missing_dmime(void)
 {
     IDirectMusicSegment8 *dms;
@@ -458,18 +578,20 @@ static void test_audiopathconfig(void)
 
 static void test_graph(void)
 {
-    IDirectMusicGraph *dmg;
+    IDirectMusicTool *tool1, *tool2, *tmp_tool;
+    IDirectMusicGraph *graph, *tmp_graph;
     IPersistStream *ps;
     CLSID class = { 0 };
     ULARGE_INTEGER size;
+    DMUS_PMSG msg;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectMusicGraph, (void**)&dmg);
+            &IID_IDirectMusicGraph, (void**)&graph);
     ok(hr == S_OK, "DirectMusicGraph create failed: %#lx, expected S_OK\n", hr);
 
     /* IPersistStream */
-    hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IPersistStream, (void**)&ps);
+    hr = IDirectMusicGraph_QueryInterface(graph, &IID_IPersistStream, (void**)&ps);
     ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %#lx\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
     ok(hr == S_OK || broken(hr == E_NOTIMPL) /* win2k */, "IPersistStream_GetClassID failed: %#lx\n", hr);
@@ -485,7 +607,162 @@ static void test_graph(void)
     hr = IPersistStream_Save(ps, NULL, TRUE);
     ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %#lx\n", hr);
 
-    while (IDirectMusicGraph_Release(dmg));
+    IDirectMusicGraph_Release(graph);
+
+
+    hr = test_tool_create(&tool1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    trace("created tool1 %p\n", tool1);
+    hr = test_tool_create(&tool2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    trace("created tool2 %p\n", tool2);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    hr = IDirectMusicGraph_InsertTool(graph, NULL, NULL, 0, -1);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+
+    /* InsertTool initializes the tool */
+    hr = IDirectMusicGraph_InsertTool(graph, tool1, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = test_tool_get_graph(tool1, &tmp_graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(graph == tmp_graph, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(tmp_graph);
+
+    hr = IDirectMusicGraph_InsertTool(graph, tool2, NULL, 0, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicGraph_GetTool(graph, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
+    if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
+    hr = IDirectMusicGraph_GetTool(graph, 1, &tmp_tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(tool2 == tmp_tool, "got %p\n", tmp_tool);
+    if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
+    hr = IDirectMusicGraph_GetTool(graph, 2, &tmp_tool);
+    ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+
+    /* cannot insert the tool twice */
+    hr = IDirectMusicGraph_InsertTool(graph, tool1, NULL, 0, -1);
+    ok(hr == DMUS_E_ALREADY_EXISTS, "got %#lx\n", hr);
+
+    /* test removing the first tool */
+    hr = IDirectMusicGraph_RemoveTool(graph, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_RemoveTool(graph, tool1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_RemoveTool(graph, tool1);
+    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+
+    hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(tool2 == tmp_tool, "got %p\n", tmp_tool);
+    if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
+    hr = IDirectMusicGraph_GetTool(graph, 1, &tmp_tool);
+    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+
+    hr = IDirectMusicGraph_InsertTool(graph, tool1, NULL, 0, -1);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(tool1 == tmp_tool, "got %p\n", tmp_tool);
+    if (hr == S_OK) IDirectMusicTool_Release(tmp_tool);
+
+
+    /* Test basic IDirectMusicGraph_StampPMsg usage */
+    hr = IDirectMusicGraph_StampPMsg(graph, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    memset(&msg, 0, sizeof(msg));
+    hr = IDirectMusicGraph_StampPMsg(graph, &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == tool1, "got %p\n", msg.pTool);
+
+    ok(!msg.dwSize, "got %ld\n", msg.dwSize);
+    ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
+    ok(!msg.mtTime, "got %ld\n", msg.mtTime);
+    todo_wine ok(msg.dwFlags == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", msg.dwFlags);
+    ok(!msg.dwPChannel, "got %ld\n", msg.dwPChannel);
+    ok(!msg.dwVirtualTrackID, "got %ld\n", msg.dwVirtualTrackID);
+    ok(!msg.dwType, "got %#lx\n", msg.dwType);
+    ok(!msg.dwVoiceID, "got %ld\n", msg.dwVoiceID);
+    ok(!msg.dwGroupID, "got %ld\n", msg.dwGroupID);
+    ok(!msg.punkUser, "got %p\n", msg.punkUser);
+
+    hr = IDirectMusicGraph_StampPMsg(graph, &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == tool2, "got %p\n", msg.pTool);
+    hr = IDirectMusicGraph_StampPMsg(graph, &msg);
+    todo_wine ok(hr == DMUS_S_LAST_TOOL, "got %#lx\n", hr);
+    todo_wine ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    ok(!msg.pTool, "got %p\n", msg.pTool);
+    hr = IDirectMusicGraph_StampPMsg(graph, &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == tool1, "got %p\n", msg.pTool);
+    if (msg.pGraph) IDirectMusicGraph_Release(msg.pGraph);
+    msg.pGraph = NULL;
+    if (msg.pTool) IDirectMusicGraph_Release(msg.pTool);
+    msg.pTool = NULL;
+
+
+    /* test StampPMsg with the wrong graph or innexistant tools */
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&tmp_graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    msg.pGraph = tmp_graph;
+    IDirectMusicGraph_AddRef(msg.pGraph);
+    msg.pTool = tool1;
+    IDirectMusicTool_AddRef(msg.pTool);
+    hr = IDirectMusicGraph_StampPMsg(graph, &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg.pGraph == tmp_graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == tool2, "got %p\n", msg.pTool);
+    if (msg.pGraph) IDirectMusicGraph_Release(msg.pGraph);
+    msg.pGraph = NULL;
+
+    msg.pGraph = graph;
+    IDirectMusicGraph_AddRef(msg.pGraph);
+    hr = IDirectMusicGraph_StampPMsg(tmp_graph, &msg);
+    todo_wine ok(hr == DMUS_S_LAST_TOOL, "got %#lx\n", hr);
+    ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == NULL, "got %p\n", msg.pTool);
+
+    msg.pTool = tool2;
+    IDirectMusicTool_AddRef(msg.pTool);
+    hr = IDirectMusicGraph_InsertTool(tmp_graph, tool1, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(tmp_graph, tool2, NULL, 0, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_StampPMsg(tmp_graph, &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg.pGraph == graph, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == tool1, "got %p\n", msg.pTool);
+    if (msg.pGraph) IDirectMusicGraph_Release(msg.pGraph);
+    msg.pGraph = NULL;
+
+    hr = IDirectMusicGraph_RemoveTool(graph, tool1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_StampPMsg(tmp_graph, &msg);
+    todo_wine ok(hr == DMUS_S_LAST_TOOL, "got %#lx\n", hr);
+    ok(msg.pGraph == NULL, "got %p\n", msg.pGraph);
+    todo_wine ok(msg.pTool == NULL, "got %p\n", msg.pTool);
+
+    IDirectMusicGraph_Release(tmp_graph);
+
+
+    IDirectMusicGraph_Release(graph);
+    IDirectMusicTool_Release(tool2);
+    IDirectMusicTool_Release(tool1);
 }
 
 static void test_segment(void)
