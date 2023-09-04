@@ -1497,12 +1497,12 @@ static void test_performance_tool(void)
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
     value = 0xdeadbeef;
     hr = IDirectMusicTool_GetMsgDeliveryType(tool, &value);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(value == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(value == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", value);
     value = 0xdeadbeef;
     hr = IDirectMusicTool_GetMediaTypeArraySize(tool, &value);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(value == 0, "got %#lx\n", value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(value == 0, "got %#lx\n", value);
     hr = IDirectMusicTool_GetMediaTypes(tool, (DWORD **)&types, 64);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
     hr = IDirectMusicTool_ProcessPMsg(tool, performance, &msg);

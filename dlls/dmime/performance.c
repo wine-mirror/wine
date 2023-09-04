@@ -1356,28 +1356,30 @@ static ULONG WINAPI performance_tool_Release(IDirectMusicTool *iface)
 static HRESULT WINAPI performance_tool_Init(IDirectMusicTool *iface, IDirectMusicGraph *graph)
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
-    FIXME("(%p, %p): stub\n", This, graph);
+    TRACE("(%p, %p)\n", This, graph);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI performance_tool_GetMsgDeliveryType(IDirectMusicTool *iface, DWORD *type)
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
-    FIXME("(%p, %p): stub\n", This, type);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", This, type);
+    *type = DMUS_PMSGF_TOOL_IMMEDIATE;
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_tool_GetMediaTypeArraySize(IDirectMusicTool *iface, DWORD *size)
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
-    FIXME("(%p, %p): stub\n", This, size);
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", This, size);
+    *size = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_tool_GetMediaTypes(IDirectMusicTool *iface, DWORD **types, DWORD size)
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
-    FIXME("(%p, %p, %lu): stub\n", This, types, size);
+    TRACE("(%p, %p, %lu)\n", This, types, size);
     return E_NOTIMPL;
 }
 
