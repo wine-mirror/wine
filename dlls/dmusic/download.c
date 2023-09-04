@@ -85,21 +85,16 @@ static const IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl = {
     IDirectMusicDownloadImpl_GetBuffer
 };
 
-/* for ClassFactory */
-HRESULT DMUSIC_CreateDirectMusicDownloadImpl(const GUID *guid, void **ret_iface, IUnknown *unk_outer)
+HRESULT download_create(IDirectMusicDownload **ret_iface)
 {
     IDirectMusicDownloadImpl *download;
 
-    download = malloc(sizeof(*download));
-    if (!download)
-    {
-        *ret_iface = NULL;
-        return E_OUTOFMEMORY;
-    }
-
+    *ret_iface = NULL;
+    if (!(download = calloc(1, sizeof(*download)))) return E_OUTOFMEMORY;
     download->IDirectMusicDownload_iface.lpVtbl = &DirectMusicDownload_Vtbl;
     download->ref = 1;
-    *ret_iface = download;
 
+    TRACE("Created DirectMusicDownload %p\n", download);
+    *ret_iface = &download->IDirectMusicDownload_iface;
     return S_OK;
 }

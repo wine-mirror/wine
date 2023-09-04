@@ -582,7 +582,7 @@ static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *if
     if (!IDMDownload)
         return E_POINTER;
 
-    return DMUSIC_CreateDirectMusicDownloadImpl(&IID_IDirectMusicDownload, (LPVOID*)IDMDownload, NULL);
+    return download_create(IDMDownload);
 }
 
 static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownload *iface, DWORD size,
