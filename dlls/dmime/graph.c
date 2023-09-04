@@ -112,7 +112,34 @@ static ULONG WINAPI graph_Release(IDirectMusicGraph *iface)
 static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
     struct graph *This = impl_from_IDirectMusicGraph(iface);
-    FIXME("(%p, %p): stub\n", This, msg);
+    struct tool_entry *entry, *next, *first;
+
+    TRACE("(%p, %p)\n", This, msg);
+
+    if (!msg) return E_POINTER;
+
+    first = LIST_ENTRY(This->tools.next, struct tool_entry, entry);
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->tools, struct tool_entry, entry)
+        if (entry->tool == msg->pTool) break;
+    if (&entry->entry == &This->tools) next = first;
+
+    if (msg->pTool)
+    {
+        IDirectMusicTool_Release(msg->pTool);
+        msg->pTool = NULL;
+    }
+
+    if (&next->entry == &This->tools) return DMUS_S_LAST_TOOL;
+
+    if (!msg->pGraph)
+    {
+        msg->pGraph = iface;
+        IDirectMusicGraph_AddRef(msg->pGraph);
+    }
+
+    msg->pTool = next->tool;
+    IDirectMusicTool_AddRef(msg->pTool);
+
     return S_OK;
 }
 
