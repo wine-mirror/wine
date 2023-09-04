@@ -2309,6 +2309,22 @@ static void test_virtual_unwind(void)
         { 0x33,  0x40,  FALSE, 0x000, 0x010, { {rsp,0x008}, {-1,-1}}},
     };
 
+    static const struct results broken_results_0[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x00,  0x40,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x02,  0x40,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x09,  0x40,  FALSE, 0x118, 0x000, { {rsp,0x120}, {rbp,0x110}, {-1,-1} }},
+        { 0x0e,  0x40,  FALSE, 0x128, 0x010, { {rsp,0x130}, {rbp,0x120}, {-1,-1} }},
+        { 0x15,  0x40,  FALSE, 0x128, 0x010, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {-1,-1} }},
+        { 0x1c,  0x40,  TRUE,  0x128, 0x010, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+        { 0x1d,  0x40,  TRUE,  0x128, 0x010, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+        { 0x24,  0x40,  TRUE,  0x128, 0x010, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+        /* On Win11 output frame in epilogue corresponds to context->Rsp - 0x8 when fpreg is set. */
+        { 0x2b,  0x40,  FALSE, 0x128, 0x128, { {rsp,0x130}, {rbp,0x120}, {-1,-1}}},
+        { 0x32,  0x40,  FALSE, 0x008, 0x008, { {rsp,0x010}, {rbp,0x000}, {-1,-1}}},
+        { 0x33,  0x40,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1}}},
+    };
 
     static const BYTE function_1[] =
     {
@@ -2445,7 +2461,7 @@ static void test_virtual_unwind(void)
 
     static const struct unwind_test tests[] =
     {
-        { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0) },
+        { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
         { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) },
         { function_2, sizeof(function_2), unwind_info_2, results_2, ARRAY_SIZE(results_2) },
         { function_2, sizeof(function_2), unwind_info_3, results_3, ARRAY_SIZE(results_3) },
