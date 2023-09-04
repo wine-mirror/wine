@@ -96,25 +96,23 @@ static HRESULT WINAPI master_IReferenceClock_GetTime(IReferenceClock *iface,
     return hr;
 }
 
-static HRESULT WINAPI master_IReferenceClock_AdviseTime(IReferenceClock *iface,
-        REFERENCE_TIME base, REFERENCE_TIME offset, HANDLE event, DWORD *cookie)
+static HRESULT WINAPI master_IReferenceClock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base,
+        REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
 {
-    TRACE("(%p, %s, %s, %p, %p): method not implemented\n", iface, wine_dbgstr_longlong(base),
-            wine_dbgstr_longlong(offset), event, cookie);
+    FIXME("(%p, %I64d, %I64d, %#Ix, %p): stub\n", iface, base, offset, event, cookie);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI master_IReferenceClock_AdvisePeriodic(IReferenceClock *iface,
-        REFERENCE_TIME start, REFERENCE_TIME period, HANDLE semaphore, DWORD *cookie)
+static HRESULT WINAPI master_IReferenceClock_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME start,
+        REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
 {
-    TRACE("(%p, %s, %s, %p, %p): method not implemented\n", iface, wine_dbgstr_longlong(start),
-            wine_dbgstr_longlong(period), semaphore, cookie);
+    FIXME("(%p, %I64d, %I64d, %#Ix, %p): stub\n", iface, start, period, semaphore, cookie);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI master_IReferenceClock_Unadvise(IReferenceClock *iface, DWORD cookie)
+static HRESULT WINAPI master_IReferenceClock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
 {
-    TRACE("(%p, %#lx): method not implemented\n", iface, cookie);
+    FIXME("(%p, %#Ix): stub\n", iface, cookie);
     return E_NOTIMPL;
 }
 

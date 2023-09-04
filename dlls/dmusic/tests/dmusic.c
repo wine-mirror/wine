@@ -862,7 +862,7 @@ static void test_master_clock(void)
     LARGE_INTEGER counter, freq;
     DMUS_CLOCKINFO clock_info;
     IDirectMusic *dmusic;
-    DWORD cookie;
+    DWORD_PTR cookie;
     HRESULT hr;
     ULONG ref;
     GUID guid;
@@ -912,10 +912,10 @@ static void test_master_clock(void)
     ok(time2 - time1 > 80 * 10000, "Expected about %s, but got %s.\n",
             wine_dbgstr_longlong(time1 + 100 * 10000), wine_dbgstr_longlong(time2));
 
-    hr = IReferenceClock_AdviseTime(clock, 0, 0, NULL, &cookie);
+    hr = IReferenceClock_AdviseTime(clock, 0, 0, 0, &cookie);
     ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
 
-    hr = IReferenceClock_AdvisePeriodic(clock, 0, 0, NULL, &cookie);
+    hr = IReferenceClock_AdvisePeriodic(clock, 0, 0, 0, &cookie);
     ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
 
     hr = IReferenceClock_Unadvise(clock, 0);

@@ -760,20 +760,20 @@ static HRESULT WINAPI test_sink_latency_clock_GetTime(IReferenceClock *iface, RE
 }
 
 static HRESULT WINAPI test_sink_latency_clock_AdviseTime(IReferenceClock *iface,
-        REFERENCE_TIME base, REFERENCE_TIME offset, HANDLE event, DWORD *cookie)
+        REFERENCE_TIME base, REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
 {
     ok(0, "unexpected %s\n", __func__);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI test_sink_latency_clock_AdvisePeriodic(IReferenceClock *iface,
-        REFERENCE_TIME start, REFERENCE_TIME period, HANDLE semaphore, DWORD *cookie)
+        REFERENCE_TIME start, REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
 {
     ok(0, "unexpected %s\n", __func__);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI test_sink_latency_clock_Unadvise(IReferenceClock *iface, DWORD cookie)
+static HRESULT WINAPI test_sink_latency_clock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
 {
     ok(0, "unexpected %s\n", __func__);
     return E_NOTIMPL;

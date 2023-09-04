@@ -80,30 +80,26 @@ static HRESULT WINAPI IReferenceClockImpl_GetTime(IReferenceClock *iface, REFERE
     return S_OK;
 }
 
-static HRESULT WINAPI IReferenceClockImpl_AdviseTime(IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie)
+static HRESULT WINAPI IReferenceClockImpl_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base,
+        REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
 {
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
-
-    FIXME("(%p)->(0x%s, 0x%s, %p, %p): stub\n", This, wine_dbgstr_longlong(baseTime), wine_dbgstr_longlong(streamTime), hEvent, pdwAdviseCookie);
-
+    FIXME("(%p)->(%I64d, %I64d, %#Ix, %p): stub\n", This, base, offset, event, cookie);
     return S_OK;
 }
 
-static HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie)
+static HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME start,
+        REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
 {
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
-
-    FIXME("(%p)->(0x%s, 0x%s, %p, %p): stub\n", This, wine_dbgstr_longlong(startTime), wine_dbgstr_longlong(periodTime), hSemaphore, pdwAdviseCookie);
-
+    FIXME("(%p)->(%I64d, %I64d, %#Ix, %p): stub\n", This, start, period, semaphore, cookie);
     return S_OK;
 }
 
-static HRESULT WINAPI IReferenceClockImpl_Unadvise(IReferenceClock *iface, DWORD dwAdviseCookie)
+static HRESULT WINAPI IReferenceClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
 {
     IReferenceClockImpl *This = impl_from_IReferenceClock(iface);
-
-    FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
-
+    FIXME("(%p, %#Ix): stub\n", This, cookie);
     return S_OK;
 }
 
