@@ -1301,21 +1301,21 @@ static HRESULT WINAPI performance_graph_InsertTool(IDirectMusicGraph *iface, IDi
         DWORD *channels, DWORD channels_count, LONG index)
 {
     struct performance *This = impl_from_IDirectMusicGraph(iface);
-    FIXME("(%p, %p, %p, %lu, %ld): stub\n", This, tool, channels, channels_count, index);
+    TRACE("(%p, %p, %p, %lu, %ld)\n", This, tool, channels, channels_count, index);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI performance_graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **tool)
 {
     struct performance *This = impl_from_IDirectMusicGraph(iface);
-    FIXME("(%p, %lu, %p): stub\n", This, index, tool);
+    TRACE("(%p, %lu, %p)\n", This, index, tool);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI performance_graph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
 {
     struct performance *This = impl_from_IDirectMusicGraph(iface);
-    FIXME("(%p, %p): stub\n", This, tool);
+    TRACE("(%p, %p)\n", This, tool);
     return E_NOTIMPL;
 }
 
