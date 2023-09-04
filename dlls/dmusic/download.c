@@ -27,7 +27,12 @@ struct download
 {
     IDirectMusicDownload IDirectMusicDownload_iface;
     LONG ref;
+
+    DWORD size;
+    BYTE data[];
 };
+
+C_ASSERT(sizeof(struct download) == offsetof(struct download, data[0]));
 
 static inline struct download *impl_from_IDirectMusicDownload(IDirectMusicDownload *iface)
 {
@@ -77,7 +82,12 @@ static ULONG WINAPI download_Release(IDirectMusicDownload *iface)
 
 static HRESULT WINAPI download_GetBuffer(IDirectMusicDownload *iface, void **buffer, DWORD *size)
 {
-    FIXME("(%p, %p, %p): stub\n", iface, buffer, size);
+    struct download *This = impl_from_IDirectMusicDownload(iface);
+
+    TRACE("(%p, %p, %p)\n", iface, buffer, size);
+
+    *buffer = This->data;
+    *size = This->size;
 
     return S_OK;
 }
@@ -90,14 +100,15 @@ static const IDirectMusicDownloadVtbl download_vtbl =
     download_GetBuffer,
 };
 
-HRESULT download_create(IDirectMusicDownload **ret_iface)
+HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface)
 {
     struct download *download;
 
     *ret_iface = NULL;
-    if (!(download = calloc(1, sizeof(*download)))) return E_OUTOFMEMORY;
+    if (!(download = malloc(offsetof(struct download, data[size])))) return E_OUTOFMEMORY;
     download->IDirectMusicDownload_iface.lpVtbl = &download_vtbl;
     download->ref = 1;
+    download->size = size;
 
     TRACE("Created DirectMusicDownload %p\n", download);
     *ret_iface = &download->IDirectMusicDownload_iface;

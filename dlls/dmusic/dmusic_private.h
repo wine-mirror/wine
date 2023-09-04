@@ -99,7 +99,7 @@ extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID
 extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 
-extern HRESULT download_create(IDirectMusicDownload **ret_iface);
+extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure

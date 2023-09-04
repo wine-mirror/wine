@@ -584,17 +584,20 @@ static HRESULT WINAPI synth_port_download_GetBuffer(IDirectMusicPortDownload *if
     if (!IDMDownload)
         return E_POINTER;
 
-    return download_create(IDMDownload);
+    return download_create(0, IDMDownload);
 }
 
 static HRESULT WINAPI synth_port_download_AllocateBuffer(IDirectMusicPortDownload *iface, DWORD size,
-        IDirectMusicDownload **IDMDownload)
+        IDirectMusicDownload **download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
 
-    FIXME("(%p/%p, %lu, %p): stub\n", iface, This, size, IDMDownload);
+    TRACE("(%p/%p, %lu, %p)\n", iface, This, size, download);
 
-    return S_OK;
+    if (!download) return E_POINTER;
+    if (!size) return E_INVALIDARG;
+
+    return download_create(size, download);
 }
 
 static HRESULT WINAPI synth_port_download_GetDLId(IDirectMusicPortDownload *iface, DWORD *first, DWORD count)

@@ -1065,9 +1065,9 @@ static void test_port_download(void)
 
     /* AllocateBuffer use the exact requested size */
     hr = IDirectMusicPortDownload_AllocateBuffer(port, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPortDownload_AllocateBuffer(port, 0, &download);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = IDirectMusicPortDownload_AllocateBuffer(port, 1, &download);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1075,8 +1075,8 @@ static void test_port_download(void)
     buffer = invalid_ptr;
     hr = IDirectMusicDownload_GetBuffer(download, (void **)&buffer, &size);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(size == 1, "got %#lx\n", size);
-    todo_wine ok(buffer != invalid_ptr, "got %p\n", buffer);
+    ok(size == 1, "got %#lx\n", size);
+    ok(buffer != invalid_ptr, "got %p\n", buffer);
     IDirectMusicDownload_Release(download);
 
     /* GetDLId allocates the given number of slots and returns only the first */
@@ -1107,14 +1107,13 @@ static void test_port_download(void)
     download = invalid_ptr;
     hr = IDirectMusicPortDownload_AllocateBuffer(port, sizeof(struct wave_download), &download);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(download != invalid_ptr, "got %p\n", download);
-    if (download == invalid_ptr) goto skip_tests;
+    ok(download != invalid_ptr, "got %p\n", download);
     size = 0xdeadbeef;
     wave_download = invalid_ptr;
     hr = IDirectMusicDownload_GetBuffer(download, (void **)&wave_download, &size);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(size == sizeof(struct wave_download), "got %#lx\n", size);
-    todo_wine ok(wave_download != invalid_ptr, "got %p\n", wave_download);
+    ok(size == sizeof(struct wave_download), "got %#lx\n", size);
+    ok(wave_download != invalid_ptr, "got %p\n", wave_download);
     wave_download->info.cbSize = sizeof(struct wave_download);
     wave_download->info.dwDLId = 2;
     wave_download->info.dwDLType = 0;
@@ -1172,7 +1171,6 @@ static void test_port_download(void)
 
     IDirectMusicDownload_Release(download);
 
-skip_tests:
     IDirectMusicPortDownload_Release(port);
 }
 
