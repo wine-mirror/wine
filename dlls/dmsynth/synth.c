@@ -979,9 +979,52 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
         DWORD length, LONGLONG position)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
+    struct event *event, *next;
 
-    FIXME("(%p, %p, %ld, 0x%s): stub\n", This, buffer, length, wine_dbgstr_longlong(position));
+    TRACE("(%p, %p, %ld, %I64d)\n", This, buffer, length, position);
 
+    EnterCriticalSection(&This->cs);
+    LIST_FOR_EACH_ENTRY_SAFE(event, next, &This->events, struct event, entry)
+    {
+        BYTE status = event->midi[0] & 0xf0, chan = event->midi[0] & 0x0f;
+        LONGLONG offset = event->position - position;
+
+        if (offset >= length) break;
+        if (offset > 0)
+        {
+            fluid_synth_write_s16(This->fluid_synth, offset, buffer, 0, 2, buffer, 1, 2);
+            buffer += offset * 2;
+            position += offset;
+            length -= offset;
+        }
+
+        TRACE("status %#x chan %#x midi %#x %#x\n", status, chan, event->midi[1], event->midi[2]);
+
+        switch (status)
+        {
+        case 0x80:
+            fluid_synth_noteoff(This->fluid_synth, chan, event->midi[1]);
+            break;
+        case 0x90:
+            fluid_synth_noteon(This->fluid_synth, chan, event->midi[1], event->midi[2]);
+            break;
+        case 0xb0:
+            fluid_synth_cc(This->fluid_synth, chan, event->midi[1], event->midi[2]);
+            break;
+        case 0xc0:
+            fluid_synth_program_change(This->fluid_synth, chan, event->midi[1]);
+            break;
+        default:
+            FIXME("MIDI event not implemented: %#x %#x %#x\n", event->midi[0], event->midi[1], event->midi[2]);
+            break;
+        }
+
+        list_remove(&event->entry);
+        free(event);
+    }
+    LeaveCriticalSection(&This->cs);
+
+    if (length) fluid_synth_write_s16(This->fluid_synth, length, buffer, 0, 2, buffer, 1, 2);
     return S_OK;
 }
 
