@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
+#define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
+
 #define CONN_SRC_CC2  0x0082
 #define CONN_SRC_RPN0 0x0100
 
@@ -291,6 +293,13 @@ static void instrument_release(struct instrument *instrument)
     }
 }
 
+struct event
+{
+    struct list entry;
+    LONGLONG position;
+    BYTE midi[3];
+};
+
 struct synth
 {
     IDirectMusicSynth8 IDirectMusicSynth8_iface;
@@ -306,6 +315,7 @@ struct synth
     CRITICAL_SECTION cs;
     struct list instruments;
     struct list waves;
+    struct list events;
 
     fluid_settings_t *fluid_settings;
     fluid_sfont_t *fluid_sfont;
@@ -366,6 +376,7 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
     if (!ref)
     {
         struct instrument *instrument;
+        struct event *event;
         struct wave *wave;
         void *next;
 
@@ -379,6 +390,12 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
         {
             list_remove(&wave->entry);
             wave_release(wave);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(event, next, &This->events, struct event, entry)
+        {
+            list_remove(&event->entry);
+            free(event);
         }
 
         fluid_sfont_set_data(This->fluid_sfont, NULL);
@@ -815,11 +832,45 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
 }
 
 static HRESULT WINAPI synth_PlayBuffer(IDirectMusicSynth8 *iface,
-        REFERENCE_TIME rt, BYTE *buffer, DWORD size)
+        REFERENCE_TIME time, BYTE *buffer, DWORD size)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
+    DMUS_EVENTHEADER *head = (DMUS_EVENTHEADER *)buffer;
+    BYTE *end = buffer + size, *data;
+    HRESULT hr;
 
-    FIXME("(%p, 0x%s, %p, %lu): stub\n", This, wine_dbgstr_longlong(rt), buffer, size);
+    TRACE("(%p, %I64d, %p, %lu)\n", This, time, buffer, size);
+
+    while ((data = (BYTE *)(head + 1)) < end)
+    {
+        DMUS_EVENTHEADER *next = ROUND_ADDR(data + head->cbEvent + 7, 7);
+        struct event *event, *next_event;
+        LONGLONG position;
+
+        if ((BYTE *)next > end) return E_INVALIDARG;
+        if (FAILED(hr = IDirectMusicSynthSink_RefTimeToSample(This->sink,
+                time + head->rtDelta, &position)))
+            return hr;
+
+        if (!(head->dwFlags & DMUS_EVENT_STRUCTURED))
+            FIXME("Unstructured events not implemeted\n");
+        else if (head->cbEvent > 3)
+            FIXME("Unexpected MIDI event size %lu\n", head->cbEvent);
+        else
+        {
+            if (!(event = calloc(1, sizeof(*event)))) return E_OUTOFMEMORY;
+            memcpy(event->midi, data, head->cbEvent);
+            event->position = position;
+
+            EnterCriticalSection(&This->cs);
+            LIST_FOR_EACH_ENTRY(next_event, &This->events, struct event, entry)
+                if (next_event->position >= event->position) break;
+            list_add_before(&next_event->entry, &event->entry);
+            LeaveCriticalSection(&This->cs);
+        }
+
+        head = next;
+    }
 
     return S_OK;
 }
@@ -1244,6 +1295,7 @@ HRESULT synth_create(IUnknown **ret_iface)
 
     list_init(&obj->instruments);
     list_init(&obj->waves);
+    list_init(&obj->events);
 
     if (!(obj->fluid_settings = new_fluid_settings())) goto failed;
     if (!(obj->fluid_sfont = new_fluid_sfont(synth_sfont_get_name, synth_sfont_get_preset,
