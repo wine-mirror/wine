@@ -371,29 +371,27 @@ static const IKsControlVtbl synth_sink_control =
     synth_sink_control_KsEvent,
 };
 
-HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
+HRESULT synth_sink_create(IUnknown **ret_iface)
 {
     struct synth_sink *obj;
     HRESULT hr;
 
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ret_iface);
+    TRACE("(%p)\n", ret_iface);
 
     *ret_iface = NULL;
-
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicSynthSink_iface.lpVtbl = &synth_sink_vtbl;
     obj->IKsControl_iface.lpVtbl = &synth_sink_control;
     obj->ref = 1;
 
-    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&obj->latency_clock);
+    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (void **)&obj->latency_clock);
     if (FAILED(hr))
     {
         free(obj);
         return hr;
     }
 
-    hr = IDirectMusicSynthSink_QueryInterface(&obj->IDirectMusicSynthSink_iface, riid, ret_iface);
-    IDirectMusicSynthSink_Release(&obj->IDirectMusicSynthSink_iface);
-
-    return hr;
+    TRACE("Created DirectMusicSynthSink %p\n", obj);
+    *ret_iface = (IUnknown *)&obj->IDirectMusicSynthSink_iface;
+    return S_OK;
 }

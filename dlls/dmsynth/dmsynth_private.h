@@ -43,8 +43,8 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj);
-extern HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ppobj);
+extern HRESULT synth_create(IUnknown **ret_iface);
+extern HRESULT synth_sink_create(IUnknown **ret_iface);
 
 /*****************************************************************************
  * Misc.

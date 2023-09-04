@@ -737,19 +737,18 @@ static const IKsControlVtbl synth_control_vtbl =
     synth_control_KsEvent,
 };
 
-HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
+HRESULT synth_create(IUnknown **ret_iface)
 {
     struct synth *obj;
-    HRESULT hr;
 
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppobj);
+    TRACE("(%p)\n", ret_iface);
 
-    *ppobj = NULL;
+    *ret_iface = NULL;
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicSynth8_iface.lpVtbl = &synth_vtbl;
     obj->IKsControl_iface.lpVtbl = &synth_control_vtbl;
     obj->ref = 1;
-    /* fill in caps */
+
     obj->caps.dwSize = sizeof(DMUS_PORTCAPS);
     obj->caps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
     obj->caps.guidPort = CLSID_DirectMusicSynth;
@@ -762,8 +761,7 @@ HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
     obj->caps.dwEffectFlags = DMUS_EFFECT_REVERB;
     lstrcpyW(obj->caps.wszDescription, L"Microsoft Synthesizer");
 
-    hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
-    IDirectMusicSynth8_Release(&obj->IDirectMusicSynth8_iface);
-
-    return hr;
+    TRACE("Created DirectMusicSynth %p\n", obj);
+    *ret_iface = (IUnknown *)&obj->IDirectMusicSynth8_iface;
+    return S_OK;
 }
