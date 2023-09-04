@@ -391,18 +391,21 @@ static void free_devices( struct pcap_interface *devs )
 
 static IP_ADAPTER_ADDRESSES *get_adapters( void )
 {
-    DWORD size = 0;
-    IP_ADAPTER_ADDRESSES *ret;
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
     ULONG flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER;
 
-    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, NULL, &size ) != ERROR_BUFFER_OVERFLOW) return NULL;
     if (!(ret = malloc( size ))) return NULL;
-    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size ))
+    err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
     {
-        free( ret );
-        return NULL;
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
     }
-    return ret;
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
 }
 
 static IP_ADAPTER_ADDRESSES *find_adapter( IP_ADAPTER_ADDRESSES *list, const char *name )
