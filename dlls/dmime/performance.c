@@ -252,21 +252,23 @@ static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusi
 }
 
 /* IDirectMusicPerformance8 IUnknown part: */
-static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface, REFIID riid, void **ret_iface)
 {
-  TRACE("(%p, %s,%p)\n", iface, debugstr_dmguid(riid), ppv);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
-  if (IsEqualIID (riid, &IID_IUnknown) ||
-      IsEqualIID (riid, &IID_IDirectMusicPerformance) ||
-      IsEqualIID (riid, &IID_IDirectMusicPerformance2) ||
-      IsEqualIID (riid, &IID_IDirectMusicPerformance8)) {
-    *ppv = iface;
-    IUnknown_AddRef(iface);
-    return S_OK;
-  }
+    if (IsEqualGUID(riid, &IID_IUnknown)
+            || IsEqualGUID(riid, &IID_IDirectMusicPerformance)
+            || IsEqualGUID(riid, &IID_IDirectMusicPerformance2)
+            || IsEqualGUID(riid, &IID_IDirectMusicPerformance8))
+    {
+        *ret_iface = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
 
-  WARN("(%p, %s,%p): not found\n", iface, debugstr_dmguid(riid), ppv);
-  return E_NOINTERFACE;
+    *ret_iface = NULL;
+    WARN("(%p, %s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI performance_AddRef(IDirectMusicPerformance8 *iface)
