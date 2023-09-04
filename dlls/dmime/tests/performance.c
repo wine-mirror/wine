@@ -334,7 +334,7 @@ static void test_createport(void)
     ok(hr == S_OK, "CloseDown failed: %#lx\n", hr);
 
     IDirectMusic_Release(music);
-    IDirectMusicPerformance_Release(perf);
+    IDirectMusicPerformance8_Release(perf);
 }
 
 static void test_pchannel(void)

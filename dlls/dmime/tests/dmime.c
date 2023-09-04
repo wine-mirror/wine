@@ -223,7 +223,7 @@ static BOOL missing_dmime(void)
 
     if (hr == S_OK && dms)
     {
-        IDirectMusicSegment_Release(dms);
+        IDirectMusicSegment8_Release(dms);
         return FALSE;
     }
     return TRUE;
@@ -1015,7 +1015,7 @@ static void expect_getparam(IDirectMusicTrack *track, REFGUID type, const char *
     HRESULT hr;
     char buf[64] = { 0 };
 
-    hr = IDirectMusicTrack8_GetParam(track, type, 0, NULL, buf);
+    hr = IDirectMusicTrack_GetParam(track, type, 0, NULL, buf);
     ok(hr == expect, "GetParam(%s) failed: %#lx, expected %#lx\n", name, hr, expect);
 }
 
@@ -1025,7 +1025,7 @@ static void expect_setparam(IDirectMusicTrack *track, REFGUID type, const char *
     HRESULT hr;
     char buf[64] = { 0 };
 
-    hr = IDirectMusicTrack8_SetParam(track, type, 0, buf);
+    hr = IDirectMusicTrack_SetParam(track, type, 0, buf);
     ok(hr == expect, "SetParam(%s) failed: %#lx, expected %#lx\n", name, hr, expect);
 }
 
@@ -1103,7 +1103,7 @@ static void test_track(void)
         /* IDirectMusicTrack */
         if (class[i].has_params != ~0) {
             for (j = 0; j < ARRAY_SIZE(param_types); j++) {
-                hr = IDirectMusicTrack8_IsParamSupported(dmt, param_types[j].type);
+                hr = IDirectMusicTrack_IsParamSupported(dmt, param_types[j].type);
                 if (class[i].has_params & (1 << j)) {
                     ok(hr == S_OK, "IsParamSupported(%s) failed: %#lx, expected S_OK\n",
                             param_types[j].name, hr);

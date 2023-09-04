@@ -879,7 +879,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown(IDirectMusicPerform
         This->dsound = NULL;
     }
     if (This->dmusic) {
-        IDirectMusic_SetDirectSound(This->dmusic, NULL, NULL);
+        IDirectMusic8_SetDirectSound(This->dmusic, NULL, NULL);
         IDirectMusic8_Release(This->dmusic);
         This->dmusic = NULL;
     }

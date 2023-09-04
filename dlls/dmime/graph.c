@@ -129,8 +129,8 @@ static HRESULT WINAPI DirectMusicGraph_InsertTool(IDirectMusicGraph *iface, IDir
     pNewTool = calloc(1, sizeof(*pNewTool));
     pNewTool->pTool = pTool;
     pNewTool->dwIndex = lIndex;
-    IDirectMusicTool8_AddRef(pTool);
-    IDirectMusicTool8_Init(pTool, iface);
+    IDirectMusicTool_AddRef(pTool);
+    IDirectMusicTool_Init(pTool, iface);
     list_add_tail (pPrevEntry->next, &pNewTool->entry);
 
 #if 0
