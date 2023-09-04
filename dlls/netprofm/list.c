@@ -1739,26 +1739,34 @@ static struct connection *create_connection( const GUID *id )
     return ret;
 }
 
+static IP_ADAPTER_ADDRESSES *get_network_adapters(void)
+{
+    ULONG err, size = 4096, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+                                    GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_GATEWAYS;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static void init_networks( struct list_manager *mgr )
 {
-    DWORD size = 0;
     IP_ADAPTER_ADDRESSES *buf, *aa;
     GUID id;
-    ULONG ret, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
-                       GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_GATEWAYS;
 
     list_init( &mgr->networks );
     list_init( &mgr->connections );
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, NULL, &size );
-    if (ret != ERROR_BUFFER_OVERFLOW) return;
-
-    if (!(buf = malloc( size ))) return;
-    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, buf, &size ))
-    {
-        free( buf );
-        return;
-    }
+    if (!(buf = get_network_adapters())) return;
 
     memset( &id, 0, sizeof(id) );
     for (aa = buf; aa; aa = aa->Next)
