@@ -232,6 +232,7 @@ struct synth
     struct list waves;
 
     fluid_settings_t *fluid_settings;
+    fluid_sfont_t *fluid_sfont;
     fluid_synth_t *fluid_synth;
 };
 
@@ -304,6 +305,9 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
             wave_release(wave);
         }
 
+        fluid_sfont_set_data(This->fluid_sfont, NULL);
+        delete_fluid_sfont(This->fluid_sfont);
+        This->fluid_sfont = NULL;
         delete_fluid_settings(This->fluid_settings);
         free(This);
     }
@@ -328,6 +332,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
     };
     UINT size = sizeof(DMUS_PORTPARAMS);
     BOOL modified = FALSE;
+    UINT id;
 
     TRACE("(%p, %p)\n", This, params);
 
@@ -388,6 +393,8 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
     fluid_settings_setnum(This->fluid_settings, "synth.sample-rate", actual.dwSampleRate);
     if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings))) return E_OUTOFMEMORY;
+    if ((id = fluid_synth_add_sfont(This->fluid_synth, This->fluid_sfont)) == FLUID_FAILED)
+        WARN("Failed to add fluid_sfont to fluid_synth\n");
 
     This->params = actual;
     This->open = TRUE;
@@ -404,6 +411,7 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
     if (!This->open)
         return DMUS_E_ALREADYCLOSED;
 
+    fluid_synth_remove_sfont(This->fluid_synth, This->fluid_sfont);
     delete_fluid_synth(This->fluid_synth);
     This->fluid_synth = NULL;
     This->open = FALSE;
@@ -1063,6 +1071,44 @@ static const IKsControlVtbl synth_control_vtbl =
     synth_control_KsEvent,
 };
 
+static const char *synth_sfont_get_name(fluid_sfont_t *fluid_sfont)
+{
+    return "DirectMusicSynth";
+}
+
+static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int bank, int patch)
+{
+    struct synth *synth = fluid_sfont_get_data(fluid_sfont);
+    struct instrument *instrument;
+
+    TRACE("(%p, %d, %d)\n", fluid_sfont, bank, patch);
+
+    if (!synth) return NULL;
+
+    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
+        if (instrument->patch == patch) break;
+    if (&instrument->entry == &synth->instruments) return NULL;
+
+    FIXME("Preset not implemented yet\n");
+    return NULL;
+}
+
+static void synth_sfont_iter_start(fluid_sfont_t *fluid_sfont)
+{
+    FIXME("(%p): stub\n", fluid_sfont);
+}
+
+static fluid_preset_t *synth_sfont_iter_next(fluid_sfont_t *fluid_sfont)
+{
+    FIXME("(%p): stub\n", fluid_sfont);
+    return NULL;
+}
+
+static int synth_sfont_free(fluid_sfont_t *fluid_sfont)
+{
+    return 0;
+}
+
 HRESULT synth_create(IUnknown **ret_iface)
 {
     struct synth *obj;
@@ -1091,12 +1137,17 @@ HRESULT synth_create(IUnknown **ret_iface)
     list_init(&obj->waves);
 
     if (!(obj->fluid_settings = new_fluid_settings())) goto failed;
+    if (!(obj->fluid_sfont = new_fluid_sfont(synth_sfont_get_name, synth_sfont_get_preset,
+            synth_sfont_iter_start, synth_sfont_iter_next, synth_sfont_free)))
+        goto failed;
+    fluid_sfont_set_data(obj->fluid_sfont, obj);
 
     TRACE("Created DirectMusicSynth %p\n", obj);
     *ret_iface = (IUnknown *)&obj->IDirectMusicSynth8_iface;
     return S_OK;
 
 failed:
+    delete_fluid_settings(obj->fluid_settings);
     free(obj);
     return E_OUTOFMEMORY;
 }
