@@ -9894,6 +9894,20 @@ static void wait_for_thread_next_suspend(HANDLE thread)
 
 #define CONTEXT_NATIVE (CONTEXT_XSTATE & CONTEXT_CONTROL)
 
+struct context_parameters
+{
+    ULONG flag;
+    ULONG supported_flags;
+    ULONG broken_flags;
+    ULONG context_length;
+    ULONG legacy_length;
+    ULONG context_ex_length;
+    ULONG align;
+    ULONG flags_offset;
+    ULONG xsavearea_offset;
+    ULONG vector_reg_count;
+};
+
 static void test_extended_context(void)
 {
     static BYTE except_code_reset_ymm_state[] =
@@ -9915,20 +9929,7 @@ static void test_extended_context(void)
         0xc3,                         /* ret  */
     };
 
-    static const struct
-    {
-        ULONG flag;
-        ULONG supported_flags;
-        ULONG broken_flags;
-        ULONG context_length;
-        ULONG legacy_length;
-        ULONG context_ex_length;
-        ULONG align;
-        ULONG flags_offset;
-        ULONG xsavearea_offset;
-        ULONG vector_reg_count;
-    }
-    context_arch[] =
+    static const struct context_parameters context_arch_old[] =
     {
         {
             0x00100000,  /* CONTEXT_AMD64 */
@@ -9955,6 +9956,36 @@ static void test_extended_context(void)
             8,
         },
     };
+
+    static const struct context_parameters context_arch_new[] =
+    {
+        {
+            0x00100000,  /* CONTEXT_AMD64 */
+            0xf800005f,
+            0xf8000000,
+            0x4d0,       /* sizeof(CONTEXT) */
+            0x4d0,       /* sizeof(CONTEXT) */
+            0x20,        /* sizeof(CONTEXT_EX) */
+            15,
+            0x30,
+            0x100,       /* offsetof(CONTEXT, FltSave) */
+            16,
+        },
+        {
+            0x00010000,  /* CONTEXT_X86  */
+            0xf800007f,
+            0xf8000000,
+            0x2cc,       /* sizeof(CONTEXT) */
+            0xcc,        /* offsetof(CONTEXT, ExtendedRegisters) */
+            0x20,        /* sizeof(CONTEXT_EX) */
+            3,
+            0,
+            0xcc,        /* offsetof(CONTEXT, ExtendedRegisters) */
+            8,
+        },
+    };
+    const struct context_parameters *context_arch;
+
     const ULONG64 supported_features = 7, supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
     ULONG expected_length, expected_length_xstate, context_flags, expected_offset;
     ULONG64 enabled_features, expected_compaction;
@@ -10000,7 +10031,15 @@ static void test_extended_context(void)
     ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef, "Got unexpected result ret %#lx, length %#lx.\n",
             ret, length);
 
-    for (test = 0; test < ARRAY_SIZE(context_arch); ++test)
+    ret = pRtlGetExtendedContextLength(context_arch_new[0].flag, &length);
+    ok(!ret, "Got %#lx.\n", ret);
+    if (length == context_arch_new[0].context_length + context_arch_new[0].context_ex_length
+                + context_arch_new[0].align)
+        context_arch = context_arch_new;
+    else
+        context_arch = context_arch_old;
+
+    for (test = 0; test < 2; ++test)
     {
         expected_length = context_arch[test].context_length + context_arch[test].context_ex_length
                 + context_arch[test].align;
@@ -10031,18 +10070,19 @@ static void test_extended_context(void)
             }
             else
             {
-                ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef,
+                ok((ret == STATUS_INVALID_PARAMETER || ret == STATUS_NOT_SUPPORTED) && length == 0xdeadbeef,
                         "Got unexpected result ret %#lx, length %#lx, flags 0x%08lx.\n", ret, length, flags);
             }
 
             SetLastError(0xdeadbeef);
             bret = pInitializeContext(NULL, flags, NULL, &length2);
             ok(!bret && length2 == length && GetLastError()
-                    == (!ret ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
+                    == (!ret ? ERROR_INSUFFICIENT_BUFFER
+                    : (ret == STATUS_INVALID_PARAMETER ? ERROR_INVALID_PARAMETER : ERROR_NOT_SUPPORTED)),
                     "Got unexpected bret %#x, length2 %#lx, GetLastError() %lu, flags %#lx.\n",
                     bret, length2, GetLastError(), flags);
 
-            if (GetLastError() == ERROR_INVALID_PARAMETER)
+            if (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED)
                 continue;
 
             SetLastError(0xdeadbeef);
@@ -10074,11 +10114,11 @@ static void test_extended_context(void)
             ok(context_ex->All.Offset == -(int)context_arch[test].context_length,
                     "Got unexpected Offset %ld, flags %#lx.\n", context_ex->All.Offset, flags);
 
-            /* No extra 8 bytes in x64 CONTEXT_EX here. */
+            /* No extra 8 bytes in x64 CONTEXT_EX here (before Win11). */
             ok(context_ex->All.Length == context_arch[test].context_length + context_arch[1].context_ex_length,
                     "Got unexpected Length %#lx, flags %#lx.\n", context_ex->All.Length, flags);
 
-            ok(context_ex->XState.Offset == 25,
+            ok(context_ex->XState.Offset == context_arch[1].context_ex_length + 1,
                     "Got unexpected Offset %ld, flags %#lx.\n", context_ex->XState.Offset, flags);
             ok(!context_ex->XState.Length,
                     "Got unexpected Length %#lx, flags %#lx.\n", context_ex->XState.Length, flags);
@@ -10608,8 +10648,7 @@ static void test_extended_context(void)
     *(void **)(call_func_code_set_ymm0 + call_func_offsets.ymm0_save) = data;
     memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
     xs->CompactionMask = 2;
-    if (!compaction_enabled)
-        xs->Mask = 0;
+    xs->Mask = compaction_enabled ? 2 : 0;
     context_ex->XState.Length = sizeof(XSTATE);
 
     bret = func();
