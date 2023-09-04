@@ -2849,26 +2849,36 @@ static WCHAR *get_networkadapter_guid( const IF_LUID *luid )
     return guid_to_str( &guid );
 }
 
+static IP_ADAPTER_ADDRESSES *get_network_adapters(void)
+{
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static enum fill_status fill_networkadapter( struct table *table, const struct expr *cond )
 {
     WCHAR device_id[11];
     struct record_networkadapter *rec;
     IP_ADAPTER_ADDRESSES *aa, *buffer;
     UINT row = 0, offset = 0, count = 0;
-    DWORD size = 0, ret;
     int adaptertypeid, physical;
     UINT16 connection_status;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
-    if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
+    if (!(buffer = get_network_adapters())) return FILL_STATUS_FAILED;
 
-    if (!(buffer = malloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
-    {
-        free( buffer );
-        return FILL_STATUS_FAILED;
-    }
     for (aa = buffer; aa; aa = aa->Next)
     {
         if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK) count++;
@@ -3092,18 +3102,10 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     struct record_networkadapterconfig *rec;
     IP_ADAPTER_ADDRESSES *aa, *buffer;
     UINT row = 0, offset = 0, count = 0;
-    DWORD size = 0, ret;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, NULL, &size );
-    if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
+    if (!(buffer = get_network_adapters())) return FILL_STATUS_FAILED;
 
-    if (!(buffer = malloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, buffer, &size ))
-    {
-        free( buffer );
-        return FILL_STATUS_FAILED;
-    }
     for (aa = buffer; aa; aa = aa->Next)
     {
         if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK) count++;
