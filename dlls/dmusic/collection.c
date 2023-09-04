@@ -520,31 +520,22 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     unimpl_IPersistStream_GetSizeMax
 };
 
-
-HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
+HRESULT collection_create(IUnknown **ret_iface)
 {
-	IDirectMusicCollectionImpl* obj;
-        HRESULT hr;
+    IDirectMusicCollectionImpl *obj;
 
-        *ppobj = NULL;
-        if (pUnkOuter)
-                return CLASS_E_NOAGGREGATION;
+    *ret_iface = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IDirectMusicCollection_iface.lpVtbl = &DirectMusicCollection_Collection_Vtbl;
+    obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicCollection,
+            (IUnknown *)&obj->IDirectMusicCollection_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-        obj = calloc(1, sizeof(IDirectMusicCollectionImpl));
-        if (!obj)
-                return E_OUTOFMEMORY;
+    list_init(&obj->Instruments);
 
-	obj->IDirectMusicCollection_iface.lpVtbl = &DirectMusicCollection_Collection_Vtbl;
-        obj->ref = 1;
-        dmobject_init(&obj->dmobj, &CLSID_DirectMusicCollection,
-                (IUnknown*)&obj->IDirectMusicCollection_iface);
-        obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-        obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-
-	list_init (&obj->Instruments);
-
-        hr = IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
-        IDirectMusicCollection_Release(&obj->IDirectMusicCollection_iface);
-
-        return hr;
+    TRACE("Created DirectMusicCollection %p\n", obj);
+    *ret_iface = (IUnknown *)&obj->IDirectMusicCollection_iface;
+    return S_OK;
 }

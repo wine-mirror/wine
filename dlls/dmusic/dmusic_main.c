@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT (*create_instance)(IUnknown **ret_iface);
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -82,14 +82,23 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
         return 1; /* non-heap based object */
 }
 
-static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
-        REFIID riid, void **ppv)
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *unk_outer, REFIID riid, void **ret_iface)
 {
-        IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    IUnknown *object;
+    HRESULT hr;
 
-        TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
+    TRACE("(%p, %s, %p)\n", unk_outer, debugstr_dmguid(riid), ret_iface);
 
-        return This->fnCreateInstance(riid, ppv, pUnkOuter);
+    *ret_iface = NULL;
+    if (unk_outer) return CLASS_E_NOAGGREGATION;
+    if (SUCCEEDED(hr = This->create_instance(&object)))
+    {
+        hr = IUnknown_QueryInterface(object, riid, ret_iface);
+        IUnknown_Release(object);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -106,9 +115,8 @@ static const IClassFactoryVtbl classfactory_vtbl = {
         ClassFactory_LockServer
 };
 
-static IClassFactoryImpl DirectMusic_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicImpl};
-static IClassFactoryImpl Collection_CF = {{&classfactory_vtbl},
-                                          DMUSIC_CreateDirectMusicCollectionImpl};
+static IClassFactoryImpl DirectMusic_CF = {{&classfactory_vtbl}, music_create};
+static IClassFactoryImpl Collection_CF = {{&classfactory_vtbl}, collection_create};
 
 
 

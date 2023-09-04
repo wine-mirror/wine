@@ -91,8 +91,8 @@ typedef struct instrument_articulation {
  */
 
 /* CLSID */
-extern HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *pUnkOuter);
-extern HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID riid, void **ppobj, IUnknown *pUnkOuter);
+extern HRESULT music_create(IUnknown **ret_iface);
+extern HRESULT collection_create(IUnknown **ret_iface);
 
 /* Internal */
 extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface);

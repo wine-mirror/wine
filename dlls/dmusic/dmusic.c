@@ -577,22 +577,15 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     object->num_system_ports = nb_ports;
 }
 
-/* For ClassFactory */
-HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *unkouter)
+HRESULT music_create(IUnknown **ret_iface)
 {
     IDirectMusic8Impl *dmusic;
     HRESULT ret;
 
-    TRACE("(%s, %p, %p)\n", debugstr_guid(riid), ret_iface, unkouter);
+    TRACE("(%p)\n", ret_iface);
 
     *ret_iface = NULL;
-    if (unkouter)
-        return CLASS_E_NOAGGREGATION;
-
-    dmusic = calloc(1, sizeof(IDirectMusic8Impl));
-    if (!dmusic)
-        return E_OUTOFMEMORY;
-
+    if (!(dmusic = calloc(1, sizeof(*dmusic)))) return E_OUTOFMEMORY;
     dmusic->IDirectMusic8_iface.lpVtbl = &DirectMusic8_Vtbl;
     dmusic->ref = 1;
     ret = master_clock_create(&dmusic->master_clock);
@@ -603,8 +596,7 @@ HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *un
 
     create_system_ports_list(dmusic);
 
-    ret = IDirectMusic8Impl_QueryInterface(&dmusic->IDirectMusic8_iface, riid, ret_iface);
-    IDirectMusic8_Release(&dmusic->IDirectMusic8_iface);
-
-    return ret;
+    TRACE("Created DirectMusic %p\n", dmusic);
+    *ret_iface = (IUnknown *)&dmusic->IDirectMusic8_iface;
+    return S_OK;
 }
