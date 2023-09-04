@@ -4947,7 +4947,8 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
         return ExceptionContinueExecution;
     }
 
-    if (rec->ExceptionCode == 0xdeadbeef && rec->ExceptionFlags == EH_NESTED_CALL)
+    if (rec->ExceptionCode == 0xdeadbeef && (rec->ExceptionFlags == EH_NESTED_CALL
+            || rec->ExceptionFlags == (EH_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
     {
         ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         got_nested_exception = TRUE;
@@ -4955,7 +4956,7 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
         return ExceptionContinueSearch;
     }
 
-    ok(rec->ExceptionCode == 0xdeadbeef && !rec->ExceptionFlags,
+    ok(rec->ExceptionCode == 0xdeadbeef && (!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE),
             "Got unexpected exception code %#lx, flags %#lx.\n", rec->ExceptionCode, rec->ExceptionFlags);
     ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
     ok(frame == (void *)((BYTE *)nested_exception_initial_frame + 8),
