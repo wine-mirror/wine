@@ -1121,8 +1121,8 @@ static void test_IDirectMusicSynth(void)
     instrument_handle = NULL;
     hr = IDirectMusicSynth_Download(synth, &instrument_handle, &instrument_download, &can_free);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(!!instrument_handle, "got %p\n", instrument_handle);
-    todo_wine ok(can_free == TRUE, "got %u\n", can_free);
+    ok(!!instrument_handle, "got %p\n", instrument_handle);
+    ok(can_free == TRUE, "got %u\n", can_free);
 
     /* add a MIDI note to a buffer and play it */
     hr = IDirectMusicSynth_GetLatencyClock(synth, &latency_clock);
@@ -1158,11 +1158,11 @@ static void test_IDirectMusicSynth(void)
     ok(ref == 1, "got %lu\n", ref);
 
     hr = IDirectMusicSynth_Unload(synth, 0, NULL, NULL);
-    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    ok(hr == E_FAIL, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Unload(synth, (HANDLE)0xdeadbeef, test_unload_no_callback, (HANDLE)0xdeadbeef);
-    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    ok(hr == E_FAIL, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Unload(synth, wave_handle, test_unload_callback, (HANDLE)0xdeadbeef);
-    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
     ok(!unload_called, "callback called\n");
     hr = IDirectMusicSynth_Unload(synth, instrument_handle, NULL, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
