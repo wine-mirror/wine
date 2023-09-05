@@ -138,64 +138,70 @@ static BOOL socket_address_to_string(WCHAR *buf, DWORD len, SOCKET_ADDRESS *addr
                                buf, &len) == 0;
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters(void)
+{
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static void print_basic_information(void)
 {
-    IP_ADAPTER_ADDRESSES *adapters;
-    ULONG out = 0;
+    IP_ADAPTER_ADDRESSES *adapters, *p;
 
-    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
-                             NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
+    adapters = get_adapters();
+    if (!adapters)
+        exit(1);
+
+    for (p = adapters; p; p = p->Next)
     {
-        adapters = malloc(out);
-        if (!adapters)
-            exit(1);
+        IP_ADAPTER_UNICAST_ADDRESS *addr;
+        IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
+        WCHAR addr_buf[54];
 
-        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
-                                 NULL, adapters, &out) == ERROR_SUCCESS)
+        ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
+        ipconfig_printfW(L"\n");
+        print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
+
+        for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
         {
-            IP_ADAPTER_ADDRESSES *p;
-
-            for (p = adapters; p; p = p->Next)
-            {
-                IP_ADAPTER_UNICAST_ADDRESS *addr;
-                IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
-                WCHAR addr_buf[54];
-
-                ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
-                ipconfig_printfW(L"\n");
-                print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
-
-                for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
-                {
-                    if (addr->Address.lpSockaddr->sa_family == AF_INET &&
-                        socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
-                        print_field(STRING_IP_ADDRESS, addr_buf);
-                    else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
-                             socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
-                        print_field(STRING_IP6_ADDRESS, addr_buf);
-                    /* FIXME: Output corresponding subnet mask. */
-                }
-
-                if (p->FirstGatewayAddress)
-                {
-                    if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &p->FirstGatewayAddress->Address))
-                        print_field(STRING_DEFAULT_GATEWAY, addr_buf);
-
-                    for (gateway = p->FirstGatewayAddress->Next; gateway; gateway = gateway->Next)
-                    {
-                        if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &gateway->Address))
-                            print_value(addr_buf);
-                    }
-                }
-                else
-                    print_field(STRING_DEFAULT_GATEWAY, L"");
-
-                ipconfig_printfW(L"\n");
-            }
+            if (addr->Address.lpSockaddr->sa_family == AF_INET &&
+                socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+                print_field(STRING_IP_ADDRESS, addr_buf);
+            else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
+                     socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+                print_field(STRING_IP6_ADDRESS, addr_buf);
+            /* FIXME: Output corresponding subnet mask. */
         }
 
-        free(adapters);
+        if (p->FirstGatewayAddress)
+        {
+            if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &p->FirstGatewayAddress->Address))
+                print_field(STRING_DEFAULT_GATEWAY, addr_buf);
+
+            for (gateway = p->FirstGatewayAddress->Next; gateway; gateway = gateway->Next)
+            {
+                if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &gateway->Address))
+                    print_value(addr_buf);
+            }
+        }
+        else
+            print_field(STRING_DEFAULT_GATEWAY, L"");
+
+        ipconfig_printfW(L"\n");
     }
+    free(adapters);
 }
 
 static const WCHAR *nodetype_to_string(DWORD type)
@@ -260,8 +266,8 @@ static const WCHAR *boolean_to_string(int value)
 static void print_full_information(void)
 {
     FIXED_INFO *info;
-    IP_ADAPTER_ADDRESSES *adapters;
-    ULONG out = 0;
+    IP_ADAPTER_ADDRESSES *adapters, *p;
+    ULONG out;
 
     if (GetNetworkParams(NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
@@ -291,65 +297,53 @@ static void print_full_information(void)
         free(info);
     }
 
-    if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
-                             NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
+    adapters = get_adapters();
+    if (!adapters)
+        exit(1);
+
+    for (p = adapters; p; p = p->Next)
     {
-        adapters = malloc(out);
-        if (!adapters)
-            exit(1);
+        IP_ADAPTER_UNICAST_ADDRESS *addr;
+        WCHAR physaddr_buf[3 * MAX_ADAPTER_ADDRESS_LENGTH], addr_buf[54];
+        IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
 
-        if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
-                                 NULL, adapters, &out) == ERROR_SUCCESS)
+        ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
+        ipconfig_printfW(L"\n");
+        print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
+        print_field(STRING_DESCRIPTION, p->Description);
+        print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
+        print_field(STRING_DHCP_ENABLED, boolean_to_string(p->Flags & IP_ADAPTER_DHCP_ENABLED));
+
+        /* FIXME: Output autoconfiguration status. */
+
+        for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
         {
-            IP_ADAPTER_ADDRESSES *p;
-
-            for (p = adapters; p; p = p->Next)
-            {
-                IP_ADAPTER_UNICAST_ADDRESS *addr;
-                WCHAR physaddr_buf[3 * MAX_ADAPTER_ADDRESS_LENGTH];
-                IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
-                WCHAR addr_buf[54];
-
-                ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
-                ipconfig_printfW(L"\n");
-                print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
-                print_field(STRING_DESCRIPTION, p->Description);
-                print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
-                print_field(STRING_DHCP_ENABLED, boolean_to_string(p->Flags & IP_ADAPTER_DHCP_ENABLED));
-
-                /* FIXME: Output autoconfiguration status. */
-
-                for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
-                {
-                    if (addr->Address.lpSockaddr->sa_family == AF_INET &&
-                        socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
-                        print_field(STRING_IP_ADDRESS, addr_buf);
-                    else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
-                             socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
-                        print_field(STRING_IP6_ADDRESS, addr_buf);
-                    /* FIXME: Output corresponding subnet mask. */
-                }
-
-                if (p->FirstGatewayAddress)
-                {
-                    if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &p->FirstGatewayAddress->Address))
-                        print_field(STRING_DEFAULT_GATEWAY, addr_buf);
-
-                    for (gateway = p->FirstGatewayAddress->Next; gateway; gateway = gateway->Next)
-                    {
-                        if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &gateway->Address))
-                            print_value(addr_buf);
-                    }
-                }
-                else
-                    print_field(STRING_DEFAULT_GATEWAY, L"");
-
-                ipconfig_printfW(L"\n");
-            }
+            if (addr->Address.lpSockaddr->sa_family == AF_INET &&
+                socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+                print_field(STRING_IP_ADDRESS, addr_buf);
+            else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
+                     socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+                print_field(STRING_IP6_ADDRESS, addr_buf);
+            /* FIXME: Output corresponding subnet mask. */
         }
 
-        free(adapters);
+        if (p->FirstGatewayAddress)
+        {
+            if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &p->FirstGatewayAddress->Address))
+                print_field(STRING_DEFAULT_GATEWAY, addr_buf);
+
+            for (gateway = p->FirstGatewayAddress->Next; gateway; gateway = gateway->Next)
+            {
+                if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &gateway->Address))
+                    print_value(addr_buf);
+            }
+        }
+        else
+            print_field(STRING_DEFAULT_GATEWAY, L"");
+
+        ipconfig_printfW(L"\n");
     }
+    free(adapters);
 }
 
 int __cdecl wmain(int argc, WCHAR *argv[])
