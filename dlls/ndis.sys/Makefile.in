@@ -3,5 +3,6 @@ IMPORTS   = advapi32 ntoskrnl iphlpapi
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
-	main.c
+SOURCES = \
+	main.c \
+	ndis.sys.spec

@@ -2,7 +2,7 @@ MODULE    = ksecdd.sys
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	ksecdd.sys.spec \
+	main.c \
+	version.rc

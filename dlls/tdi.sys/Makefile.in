@@ -2,5 +2,6 @@ MODULE    = tdi.sys
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
-	main.c
+SOURCES = \
+	main.c \
+	tdi.sys.spec

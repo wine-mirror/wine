@@ -3304,14 +3304,12 @@ static const struct
 /*******************************************************************
  *         output_fake_module
  */
-static void output_fake_module( struct makefile *make )
+static void output_fake_module( struct makefile *make, const char *spec_file )
 {
     unsigned int arch = 0;  /* fake modules are always native */
-    const char *spec_file = NULL, *name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
+    const char *name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
 
     if (make->disabled[arch]) return;
-
-    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
     strarray_add( &make->all_targets[arch], name );
     add_install_rule( make, make->module, arch, name, strmake( "d$(dlldir)/%s", name ));
@@ -3324,11 +3322,8 @@ static void output_fake_module( struct makefile *make )
     output( "\n" );
     output_winegcc_command( make, arch );
     output_filename( "-Wb,--fake-module" );
-    if (spec_file)
-    {
-        output_filename( "-shared" );
-        output_filename( spec_file );
-    }
+    if (!make->is_exe) output_filename( "-shared" );
+    if (spec_file) output_filename( spec_file );
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output( "\n" );
@@ -3353,7 +3348,7 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (!make->is_exe)
     {
-        if (make->data_only)
+        if (make->data_only || strarray_exists( &make->extradllflags, "-Wl,--subsystem,native" ))
         {
             /* spec file is optional */
             struct incl_file *spec = find_src_file( make, replace_extension( make->module, ".dll", ".spec" ));
@@ -3415,7 +3410,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_filename( arch_make_variable( "LDFLAGS", arch ));
     output( "\n" );
 
-    if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make );
+    if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make, spec_file );
 }
 
 

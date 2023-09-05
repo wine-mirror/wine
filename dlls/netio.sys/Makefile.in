@@ -4,5 +4,6 @@ IMPORTS   = ntoskrnl ws2_32
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
-	netio.c
+SOURCES = \
+	netio.c \
+	netio.sys.spec
