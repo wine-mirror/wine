@@ -399,55 +399,62 @@ static HRESULT WINAPI performance_GetBumperLength(IDirectMusicPerformance8 *ifac
   return S_OK;
 }
 
-static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *pPMSG)
+static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg)
 {
-  struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-  DMUS_PMSGItem* pItem = NULL;
-  DMUS_PMSGItem* it = NULL;
-  DMUS_PMSGItem* prev_it = NULL;
-  DMUS_PMSGItem** queue = NULL;
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    DMUS_PMSGItem *message;
+    DMUS_PMSGItem *it = NULL;
+    DMUS_PMSGItem *prev_it = NULL;
+    DMUS_PMSGItem **queue;
+    HRESULT hr;
 
-  FIXME("(%p, %p): stub\n", This, pPMSG);
-	 
-  if (NULL == pPMSG) {
-    return E_POINTER;
-  }
-  pItem = DMUS_PMSGToItem(pPMSG);
-  if (pItem->bInUse) {
-    return DMUS_E_ALREADY_SENT;
-  }
-  
-  /* TODO: Valid Flags */
-  /* TODO: DMUS_PMSGF_MUSICTIME */
-  pItem->rtItemTime = pPMSG->rtTime;
+    FIXME("(%p, %p): semi-stub\n", This, msg);
 
-  if (pPMSG->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE) {
-    queue = &This->imm_head;
-  } else {
-    queue = &This->head;
-  }
+    if (!msg) return E_POINTER;
+    if (!This->dmusic) return DMUS_E_NO_MASTER_CLOCK;
+    if (!(msg->dwFlags & (DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_REFTIME))) return E_INVALIDARG;
 
-  EnterCriticalSection(&This->safe);
-  for (it = *queue; NULL != it && it->rtItemTime < pItem->rtItemTime; it = it->next) {
-    prev_it = it;
-  }
-  if (NULL == prev_it) {
-    pItem->prev = NULL;
-    if (NULL != *queue) pItem->next = (*queue)->next;
-    /*assert( NULL == pItem->next->prev );*/
-    if (NULL != pItem->next) pItem->next->prev = pItem;
-    *queue = pItem;
-  } else {
-    pItem->prev = prev_it;
-    pItem->next = prev_it->next;
-    prev_it->next = pItem;
-    if (NULL != pItem->next) pItem->next->prev = pItem;
-  } 
-  LeaveCriticalSection(&This->safe);
+    if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE) queue = &This->imm_head;
+    else queue = &This->head;
 
-  /** now in use, prevent from stupid Frees */
-  pItem->bInUse = TRUE;
-  return S_OK;
+    message = DMUS_PMSGToItem(msg);
+
+    EnterCriticalSection(&This->safe);
+
+    if (message->bInUse)
+        hr = DMUS_E_ALREADY_SENT;
+    else
+    {
+        /* TODO: Valid Flags */
+        /* TODO: DMUS_PMSGF_MUSICTIME */
+        message->rtItemTime = msg->rtTime;
+
+        for (it = *queue; NULL != it && it->rtItemTime < message->rtItemTime; it = it->next)
+            prev_it = it;
+
+        if (!prev_it)
+        {
+            message->prev = NULL;
+            if (*queue) message->next = (*queue)->next;
+            /*assert( NULL == message->next->prev );*/
+            if (message->next) message->next->prev = message;
+            *queue = message;
+        }
+        else
+        {
+            message->prev = prev_it;
+            message->next = prev_it->next;
+            prev_it->next = message;
+            if (message->next) message->next->prev = message;
+        }
+
+        message->bInUse = TRUE;
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&This->safe);
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 *iface,

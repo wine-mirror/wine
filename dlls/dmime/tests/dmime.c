@@ -1767,12 +1767,12 @@ static void test_performance_pmsg(void)
     hr = IDirectMusicPerformance_SendPMsg(performance, NULL);
     ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
-    todo_wine ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_FreePMsg(performance, NULL);
     ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
 
     hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
@@ -1802,7 +1802,7 @@ static void test_performance_pmsg(void)
     ok(!msg->dwGroupID, "got %ld\n", msg->dwGroupID);
     ok(!msg->punkUser, "got %p\n", msg->punkUser);
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, NULL);
     todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
@@ -1816,7 +1816,7 @@ static void test_performance_pmsg(void)
     msg->mtTime = 500;
     msg->dwFlags = DMUS_PMSGF_MUSICTIME;
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
     ok(hr == DMUS_E_ALREADY_SENT, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
