@@ -1691,6 +1691,129 @@ static void test_performance_time(void)
 
 }
 
+static void test_performance_pmsg(void)
+{
+    IDirectMusicPerformance *performance;
+    IDirectMusicGraph *graph;
+    IDirectMusicTool *tool;
+    DMUS_PMSG *msg, *clone;
+    REFERENCE_TIME time;
+    HRESULT hr;
+
+    hr = test_tool_create(&tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    hr = IDirectMusicPerformance_AllocPMsg(performance, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG) - 1, &msg);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG), &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
+    ok(!msg->rtTime, "got %I64d\n", msg->rtTime);
+    ok(!msg->mtTime, "got %ld\n", msg->mtTime);
+    ok(!msg->dwFlags, "got %#lx\n", msg->dwFlags);
+    ok(!msg->dwPChannel, "got %ld\n", msg->dwPChannel);
+    ok(!msg->dwVirtualTrackID, "got %ld\n", msg->dwVirtualTrackID);
+    ok(!msg->dwType, "got %#lx\n", msg->dwType);
+    ok(!msg->dwVoiceID, "got %ld\n", msg->dwVoiceID);
+    ok(!msg->dwGroupID, "got %ld\n", msg->dwGroupID);
+    ok(!msg->punkUser, "got %p\n", msg->punkUser);
+
+    hr = IDirectMusicPerformance_SendPMsg(performance, NULL);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    todo_wine ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_FreePMsg(performance, NULL);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+    hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG), &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
+    ok(!msg->rtTime, "got %I64d\n", msg->rtTime);
+    ok(!msg->mtTime, "got %ld\n", msg->mtTime);
+    ok(!msg->dwFlags, "got %#lx\n", msg->dwFlags);
+    ok(!msg->dwPChannel, "got %ld\n", msg->dwPChannel);
+    ok(!msg->dwVirtualTrackID, "got %ld\n", msg->dwVirtualTrackID);
+    ok(!msg->pTool, "got %p\n", msg->pTool);
+    ok(!msg->pGraph, "got %p\n", msg->pGraph);
+    ok(!msg->dwType, "got %#lx\n", msg->dwType);
+    ok(!msg->dwVoiceID, "got %ld\n", msg->dwVoiceID);
+    ok(!msg->dwGroupID, "got %ld\n", msg->dwGroupID);
+    ok(!msg->punkUser, "got %p\n", msg->punkUser);
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, NULL, &clone);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    clone = NULL;
+    hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, &clone);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(clone != NULL, "got %p\n", clone);
+
+    msg->mtTime = 500;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    ok(hr == DMUS_E_ALREADY_SENT, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == DMUS_E_CANNOT_FREE, "got %#lx\n", hr);
+
+    if (!clone) hr = S_OK;
+    else hr = IDirectMusicPerformance_FreePMsg(performance, clone);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    time = 0xdeadbeef;
+    hr = IDirectMusicPerformance_MusicToReferenceTime(performance, msg->mtTime, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
+    todo_wine ok(msg->rtTime == time, "got %I64d\n", msg->rtTime);
+    ok(msg->mtTime == 500, "got %ld\n", msg->mtTime);
+    todo_wine ok(msg->dwFlags & DMUS_PMSGF_REFTIME, "got %#lx\n", msg->dwFlags);
+    todo_wine ok(msg->dwFlags & (DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_IMMEDIATE), "got %#lx\n", msg->dwFlags);
+    ok(!msg->dwPChannel, "got %ld\n", msg->dwPChannel);
+    ok(!msg->dwVirtualTrackID, "got %ld\n", msg->dwVirtualTrackID);
+    ok(!msg->pTool, "got %p\n", msg->pTool);
+    ok(!msg->pGraph, "got %p\n", msg->pGraph);
+    ok(!msg->dwType, "got %#lx\n", msg->dwType);
+    ok(!msg->dwVoiceID, "got %ld\n", msg->dwVoiceID);
+    ok(!msg->dwGroupID, "got %ld\n", msg->dwGroupID);
+    ok(!msg->punkUser, "got %p\n", msg->punkUser);
+
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    IDirectMusicPerformance_Release(performance);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -1717,6 +1840,7 @@ START_TEST(dmime)
     test_performance_tool();
     test_performance_graph();
     test_performance_time();
+    test_performance_pmsg();
 
     CoUninitialize();
 }
