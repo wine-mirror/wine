@@ -3351,7 +3351,16 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (make->disabled[arch]) return;
 
-    if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    if (!make->is_exe)
+    {
+        if (make->data_only)
+        {
+            /* spec file is optional */
+            struct incl_file *spec = find_src_file( make, replace_extension( make->module, ".dll", ".spec" ));
+            if (spec) spec_file = spec->filename;
+        }
+        else spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    }
 
     if (!make->data_only)
     {
@@ -3394,11 +3403,8 @@ static void output_module( struct makefile *make, unsigned int arch )
     output( "\n" );
     output_winegcc_command( make, arch );
     if (arch) output_filename( "-Wl,--wine-builtin" );
-    if (spec_file)
-    {
-        output_filename( "-shared" );
-        output_filename( spec_file );
-    }
+    if (!make->is_exe) output_filename( "-shared" );
+    if (spec_file) output_filename( spec_file );
     output_filenames( make->extradllflags );
     if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", arch ));
     output_filenames_obj_dir( make, make->object_files[arch] );

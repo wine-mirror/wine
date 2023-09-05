@@ -381,7 +381,8 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.spec$/)
         {
-            next unless defined ${$make}{"TESTDLL"};
+            my $dllflags = ${$make}{"EXTRADLLFLAGS"} || "";
+            next unless defined ${$make}{"TESTDLL"} || ($dllflags =~ /-Wb,--data-only/);
         }
         elsif ($name =~ /\.nls$/)
         {
