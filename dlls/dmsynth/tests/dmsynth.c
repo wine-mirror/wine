@@ -1016,7 +1016,7 @@ static void test_IDirectMusicSynth(void)
     ref = get_refcount(sink);
     ok(ref == 2, "got %lu\n", ref);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
-    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
 
     /* SetMasterClock does nothing */
     hr = IDirectMusicSynth_SetMasterClock(synth, NULL);
@@ -1047,9 +1047,9 @@ static void test_IDirectMusicSynth(void)
 
     /* but Activate might fail then */
     hr = IDirectMusicSynth_Activate(synth, FALSE);
-    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+    ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
     hr = IDirectMusicSynth_Activate(synth, FALSE);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
 
     /* Test generating some samples */
@@ -1064,7 +1064,7 @@ static void test_IDirectMusicSynth(void)
     ref = get_refcount(sink);
     ok(ref == 2, "got %lu\n", ref);
     hr = IDirectMusicSynth_Activate(synth, TRUE);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     GetTempPathW(MAX_PATH, temp_path);
     GetTempFileNameW(temp_path, L"synth", 0, temp_file);

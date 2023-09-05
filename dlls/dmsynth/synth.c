@@ -425,13 +425,16 @@ static HRESULT WINAPI synth_Activate(IDirectMusicSynth8 *iface, BOOL enable)
     if (enable == This->active) return S_FALSE;
 
     if (!This->sink)
-        return DMUS_E_NOSYNTHSINK;
+    {
+        This->active = FALSE;
+        return enable ? DMUS_E_NOSYNTHSINK : DMUS_E_SYNTHNOTCONFIGURED;
+    }
 
-    if ((hr = IDirectMusicSynthSink_Activate(This->sink, enable)) != S_OK) {
-        if (hr == DMUS_E_SYNTHACTIVE || hr == S_FALSE)
-            WARN("Synth and sink active state out of sync. Fixing.\n");
-        else
-            return hr;
+    if (FAILED(hr = IDirectMusicSynthSink_Activate(This->sink, enable))
+            && hr != DMUS_E_SYNTHACTIVE)
+    {
+        This->active = FALSE;
+        return DMUS_E_SYNTHNOTCONFIGURED;
     }
 
     This->active = enable;
