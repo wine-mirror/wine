@@ -3114,7 +3114,7 @@ static void test_WSASocket(void)
     ok(err == WSAENOBUFS, "WSAEnumProtocolsA error is %d, not WSAENOBUFS(%d)\n",
             err, WSAENOBUFS);
 
-    pi = HeapAlloc(GetProcessHeap(), 0, pi_size);
+    pi = malloc(pi_size);
     ok(pi != NULL, "Failed to allocate memory\n");
 
     items = WSAEnumProtocolsA(wsaproviders, pi, &pi_size);
@@ -3123,7 +3123,7 @@ static void test_WSASocket(void)
 
     if (items == 0) {
         skip("No protocols enumerated.\n");
-        HeapFree(GetProcessHeap(), 0, pi);
+        free(pi);
         return;
     }
 
@@ -3210,7 +3210,7 @@ static void test_WSASocket(void)
 
     closesocket(sock);
 
-    HeapFree(GetProcessHeap(), 0, pi);
+    free(pi);
 
     pi_size = 0;
     items = WSAEnumProtocolsA(NULL, NULL, &pi_size);
@@ -3220,7 +3220,7 @@ static void test_WSASocket(void)
     ok(err == WSAENOBUFS, "WSAEnumProtocolsA error is %d, not WSAENOBUFS(%d)\n",
             err, WSAENOBUFS);
 
-    pi = HeapAlloc(GetProcessHeap(), 0, pi_size);
+    pi = malloc(pi_size);
     ok(pi != NULL, "Failed to allocate memory\n");
 
     items = WSAEnumProtocolsA(NULL, pi, &pi_size);
@@ -3277,7 +3277,7 @@ static void test_WSASocket(void)
         closesocket(sock);
     }
 
-    HeapFree(GetProcessHeap(), 0, pi);
+    free(pi);
 
     SetLastError(0xdeadbeef);
     /* starting on vista the socket function returns error during the socket
@@ -5944,7 +5944,7 @@ static void test_send(void)
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, buflen);
+    buffer = malloc(buflen);
 
     /* fill the buffer with some nonsense */
     for (i = 0; i < buflen; ++i)
@@ -6022,7 +6022,7 @@ end:
     }
     if (ov.hEvent)
         CloseHandle(ov.hEvent);
-    HeapFree(GetProcessHeap(), 0, buffer);
+    free(buffer);
 }
 
 #define WM_SOCKET (WM_USER+100)

@@ -96,7 +96,7 @@ static void test_WSAEnumProtocolsA(void)
     error = WSAGetLastError();
     ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, len );
+    buffer = malloc( len );
 
     if (buffer)
     {
@@ -113,7 +113,7 @@ static void test_WSAEnumProtocolsA(void)
                                 buffer[i].dwServiceFlags1);
         }
 
-        HeapFree( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
 
     /* Test invalid protocols in the list */
@@ -123,7 +123,7 @@ static void test_WSAEnumProtocolsA(void)
     ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
        "Expected 10055, received %ld\n", error);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, len );
+    buffer = malloc( len );
 
     if (buffer)
     {
@@ -141,7 +141,7 @@ static void test_WSAEnumProtocolsA(void)
                 }
         ok(found == 0x0A, "Expected 2 bits represented as 0xA, received 0x%x\n", found);
 
-        HeapFree( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
 }
 
@@ -164,7 +164,7 @@ static void test_WSAEnumProtocolsW(void)
     error = WSAGetLastError();
     ok( error == WSAENOBUFS, "Expected 10055, received %ld\n", error);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, len );
+    buffer = malloc( len );
 
     if (buffer)
     {
@@ -181,7 +181,7 @@ static void test_WSAEnumProtocolsW(void)
                                 buffer[i].dwServiceFlags1);
         }
 
-        HeapFree( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
 
     /* Test invalid protocols in the list */
@@ -191,7 +191,7 @@ static void test_WSAEnumProtocolsW(void)
     ok( error == WSAENOBUFS || broken(error == WSAEFAULT) /* NT4 */,
        "Expected 10055, received %ld\n", error);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, len );
+    buffer = malloc( len );
 
     if (buffer)
     {
@@ -209,7 +209,7 @@ static void test_WSAEnumProtocolsW(void)
                 }
         ok(found == 0x0A, "Expected 2 bits represented as 0xA, received 0x%x\n", found);
 
-        HeapFree( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
 }
 
@@ -2595,8 +2595,8 @@ static void test_gethostbyname(void)
     ret = GetIpForwardTable(NULL, &route_size, FALSE);
     ok(ret == ERROR_INSUFFICIENT_BUFFER, "GetIpForwardTable failed with a different error: %d\n", ret);
 
-    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
-    routes = HeapAlloc(GetProcessHeap(), 0, route_size);
+    adapters = malloc(adap_size);
+    routes = malloc(route_size);
 
     ret = GetAdaptersInfo(adapters, &adap_size);
     ok(ret  == NO_ERROR, "GetAdaptersInfo failed, error: %d\n", ret);
@@ -2633,8 +2633,8 @@ static void test_gethostbyname(void)
     ok(found_default, "failed to find the first IP from gethostbyname!\n");
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, adapters);
-    HeapFree(GetProcessHeap(), 0, routes);
+    free(adapters);
+    free(routes);
 }
 
 static void test_gethostbyname_hack(void)
@@ -2792,13 +2792,13 @@ static void test_WSAEnumNameSpaceProvidersA(void)
     todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
-    name = HeapAlloc(GetProcessHeap(), 0, len);
+    name = malloc(len);
 
     ret = WSAEnumNameSpaceProvidersA(&len, name);
     todo_wine
     ok(ret > 0, "Expected more than zero name space providers\n");
 
-    HeapFree(GetProcessHeap(), 0, name);
+    free(name);
 }
 
 static void test_WSAEnumNameSpaceProvidersW(void)
@@ -2839,7 +2839,7 @@ static void test_WSAEnumNameSpaceProvidersW(void)
     todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %lu\n", error);
 
-    name = HeapAlloc(GetProcessHeap(), 0, len);
+    name = malloc(len);
 
     ret = WSAEnumNameSpaceProvidersW(&len, name);
     todo_wine
@@ -2868,7 +2868,7 @@ static void test_WSAEnumNameSpaceProvidersW(void)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, name);
+    free(name);
 }
 
 static void test_WSCGetProviderInfo(void)
