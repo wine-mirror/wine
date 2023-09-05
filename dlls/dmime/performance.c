@@ -72,8 +72,6 @@ struct performance
 struct message
 {
     struct list entry;
-    BOOL bInUse;
-    DWORD cb;
     DMUS_PMSG pMsg;
 };
 
@@ -91,7 +89,7 @@ static struct message *ProceedMsg(struct performance *This, struct message *cur)
     SetEvent(This->hNotification);
   }	
   list_remove(&cur->entry);
-  cur->bInUse = FALSE;
+  list_init(&cur->entry);
   switch (cur->pMsg.dwType) {
   case DMUS_PMSGT_WAVE:
   case DMUS_PMSGT_TEMPO:   
@@ -406,7 +404,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
 
     EnterCriticalSection(&This->safe);
 
-    if (message->bInUse)
+    if (!list_empty(&message->entry))
         hr = DMUS_E_ALREADY_SENT;
     else
     {
@@ -429,7 +427,6 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
             if (next->pMsg.rtTime >= message->pMsg.rtTime) break;
         list_add_before(&next->entry, &message->entry);
 
-        message->bInUse = TRUE;
         hr = S_OK;
     }
 
@@ -515,6 +512,7 @@ static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULO
 
     if (!(message = calloc(1, size - sizeof(DMUS_PMSG) + sizeof(struct message)))) return E_OUTOFMEMORY;
     message->pMsg.dwSize = size;
+    list_init(&message->entry);
     *msg = &message->pMsg;
 
     return S_OK;
@@ -532,7 +530,7 @@ static HRESULT WINAPI performance_FreePMsg(IDirectMusicPerformance8 *iface, DMUS
     message = DMUS_PMSGToItem(msg);
 
     EnterCriticalSection(&This->safe);
-    hr = message->bInUse ? DMUS_E_CANNOT_FREE : S_OK;
+    hr = !list_empty(&message->entry) ? DMUS_E_CANNOT_FREE : S_OK;
     LeaveCriticalSection(&This->safe);
 
     if (SUCCEEDED(hr))
