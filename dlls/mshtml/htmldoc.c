@@ -4762,8 +4762,18 @@ static HRESULT WINAPI DocumentSelector_querySelectorAll(IDocumentSelector *iface
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
 
     nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMDocument_QuerySelectorAll(This->dom_document, &nsstr, &node_list);
+    if(This->dom_document)
+        nsres = nsIDOMDocument_QuerySelectorAll(This->dom_document, &nsstr, &node_list);
+    else {
+        nsIDOMDocumentFragment *frag;
+        nsres = nsIDOMNode_QueryInterface(This->node.nsnode, &IID_nsIDOMDocumentFragment, (void**)&frag);
+        if(NS_SUCCEEDED(nsres)) {
+            nsres = nsIDOMDocumentFragment_QuerySelectorAll(frag, &nsstr, &node_list);
+            nsIDOMDocumentFragment_Release(frag);
+        }
+    }
     nsAString_Finish(&nsstr);
+
     if(NS_FAILED(nsres)) {
         WARN("QuerySelectorAll failed: %08lx\n", nsres);
         return map_nsresult(nsres);

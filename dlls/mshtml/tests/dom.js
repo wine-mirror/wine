@@ -285,6 +285,19 @@ sync_test("query_selector", function() {
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
     e = frag.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
+
+    e = document.querySelectorAll(".class1");
+    ok(e.length === 3, "e.length = " + e.length);
+    e = document.body.querySelectorAll(".class1");
+    ok(e.length === 3, "e.length = " + e.length);
+    e = document.querySelectorAll(".class2");
+    ok(e.length === 1, "e.length = " + e.length);
+    e = document.body.querySelectorAll(".class2");
+    ok(e.length === 1, "e.length = " + e.length);
+    e = frag.querySelectorAll(".class3");
+    ok(e.length === 2, "e.length = " + e.length);
+    e = frag.querySelectorAll(".class4");
+    ok(e.length === 1, "e.length = " + e.length);
 });
 
 sync_test("compare_position", function() {
