@@ -45,6 +45,25 @@ static inline struct synth_sink *impl_from_IDirectMusicSynthSink(IDirectMusicSyn
     return CONTAINING_RECORD(iface, struct synth_sink, IDirectMusicSynthSink_iface);
 }
 
+static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
+{
+    DWORD size = sizeof(*format);
+    HRESULT hr;
+
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nChannels = 2;
+    format->wBitsPerSample = 16;
+    format->nSamplesPerSec = 22050;
+    format->nBlockAlign = format->nChannels * format->wBitsPerSample / 8;
+    format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
+
+    if (This->synth)
+    {
+        if (FAILED(hr = IDirectMusicSynth_GetFormat(This->synth, format, &size)))
+            WARN("Failed to get synth buffer format, hr %#lx\n", hr);
+    }
+}
+
 static HRESULT synth_sink_activate(struct synth_sink *This)
 {
     HRESULT hr;
@@ -183,8 +202,14 @@ static HRESULT WINAPI synth_sink_SampleToRefTime(IDirectMusicSynthSink *iface,
         LONGLONG sample_time, REFERENCE_TIME *ref_time)
 {
     struct synth_sink *This = impl_from_IDirectMusicSynthSink(iface);
+    WAVEFORMATEX format;
 
-    FIXME("(%p)->(0x%s, %p): stub\n", This, wine_dbgstr_longlong(sample_time), ref_time);
+    TRACE("(%p)->(%I64d, %p)\n", This, sample_time, ref_time);
+
+    if (!ref_time) return E_POINTER;
+
+    synth_sink_get_format(This, &format);
+    *ref_time = This->activate_time + ((sample_time * 10000) / format.nSamplesPerSec) * 1000;
 
     return S_OK;
 }
@@ -193,8 +218,15 @@ static HRESULT WINAPI synth_sink_RefTimeToSample(IDirectMusicSynthSink *iface,
         REFERENCE_TIME ref_time, LONGLONG *sample_time)
 {
     struct synth_sink *This = impl_from_IDirectMusicSynthSink(iface);
+    WAVEFORMATEX format;
 
-    FIXME("(%p)->(0x%s, %p): stub\n", This, wine_dbgstr_longlong(ref_time), sample_time);
+    TRACE("(%p)->(%I64d, %p)\n", This, ref_time, sample_time);
+
+    if (!sample_time) return E_POINTER;
+
+    synth_sink_get_format(This, &format);
+    ref_time -= This->activate_time;
+    *sample_time = ((ref_time / 1000) * format.nSamplesPerSec) / 10000;
 
     return S_OK;
 }

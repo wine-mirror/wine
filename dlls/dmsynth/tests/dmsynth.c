@@ -1197,18 +1197,18 @@ static void test_IDirectMusicSynthSink(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicSynthSink_SampleToRefTime(sink, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     time = 0xdeadbeef;
     hr = IDirectMusicSynthSink_SampleToRefTime(sink, 10, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time == 4000, "got %I64d\n", time);
+    ok(time == 4000, "got %I64d\n", time);
 
     hr = IDirectMusicSynthSink_RefTimeToSample(sink, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     sample = 0xdeadbeef;
     hr = IDirectMusicSynthSink_RefTimeToSample(sink, 4000, &sample);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(sample == 8, "got %I64d\n", sample);
+    ok(sample == 8, "got %I64d\n", sample);
 
     hr = IDirectMusicSynthSink_GetDesiredBufferSize(sink, &size);
     ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
@@ -1273,12 +1273,12 @@ static void test_IDirectMusicSynthSink(void)
     sample = 0xdeadbeef;
     hr = IDirectMusicSynthSink_RefTimeToSample(sink, time, &sample);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(sample <= 3000, "got %I64d\n", sample);
+    ok(sample <= 3000, "got %I64d\n", sample);
     tmp_time = time + 1;
     hr = IDirectMusicSynthSink_SampleToRefTime(sink, sample, &tmp_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tmp_time <= time, "got %I64d\n", tmp_time - time);
-    ok(time - tmp_time <= 5000, "got %I64d\n", time - tmp_time);
+    ok(tmp_time <= time, "got %I64d\n", tmp_time - time);
+    ok(time - tmp_time <= 5000, "got %I64d\n", tmp_time);
 
     /* latency clock now works fine */
     tmp_time = time;
