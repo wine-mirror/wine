@@ -19543,6 +19543,8 @@ static void test_SendMessage_other_thread(int thread_n)
     DWORD tid, ret;
     MSG msg;
 
+    winetest_push_context("thread_%i", thread_n);
+
     wnd_event.start_event = CreateEventA(NULL, 0, 0, NULL);
     wnd_event.stop_event = CreateEventA(NULL, 0, 0, NULL);
 
@@ -19619,6 +19621,8 @@ static void test_SendMessage_other_thread(int thread_n)
 
     flush_events();
     flush_sequence();
+
+    winetest_pop_context();
 
     CloseHandle(wnd_event.start_event);
     CloseHandle(wnd_event.stop_event);
