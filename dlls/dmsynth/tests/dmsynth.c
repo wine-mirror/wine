@@ -1294,7 +1294,7 @@ static void test_IDirectMusicSynthSink(void)
     hr = IDirectMusicSynthSink_Activate(sink, TRUE);
     ok(hr == DMUS_E_SYNTHACTIVE, "got %#lx\n", hr);
     ref = get_refcount(synth);
-    ok(ref == 1, "got %#lx\n", ref);
+    todo_wine ok(ref == 1, "got %#lx\n", ref);
 
     hr = IDirectMusicSynthSink_GetDesiredBufferSize(sink, &size);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1328,7 +1328,7 @@ static void test_IDirectMusicSynthSink(void)
     hr = IDirectMusicSynthSink_Init(sink, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     ref = get_refcount(synth);
-    ok(ref == 1, "got %#lx\n", ref);
+    todo_wine ok(ref == 1, "got %#lx\n", ref);
     hr = IDirectMusicSynthSink_Activate(sink, TRUE);
     ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
 
