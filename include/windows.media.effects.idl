@@ -22,6 +22,9 @@
 
 import "inspectable.idl";
 import "windows.foundation.idl";
+import "windows.media.idl";
+import "windows.media.capture.idl";
+import "windows.media.render.idl";
 import "windows.storage.streams.idl";
 
 namespace Windows.Media.Effects {
@@ -29,11 +32,13 @@ namespace Windows.Media.Effects {
 
     interface IAudioCaptureEffectsManager;
     interface IAudioEffect;
+    interface IAudioEffectsManagerStatics;
     interface IAudioRenderEffectsManager;
     interface IAudioRenderEffectsManager2;
 
     runtimeclass AudioCaptureEffectsManager;
     runtimeclass AudioEffect;
+    runtimeclass AudioEffectsManager;
     runtimeclass AudioRenderEffectsManager;
 
     declare {
@@ -104,6 +109,41 @@ namespace Windows.Media.Effects {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioEffectsManager),
+        uuid(66406c04-86fa-47cc-a315-f489d8c3fe10)
+    ]
+    interface IAudioEffectsManagerStatics : IInspectable
+    {
+        [overload("CreateAudioRenderEffectsManager")]
+        HRESULT CreateAudioRenderEffectsManager(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Render.AudioRenderCategory category,
+            [out, retval] Windows.Media.Effects.AudioRenderEffectsManager **value
+        );
+        [overload("CreateAudioRenderEffectsManager")]
+        HRESULT CreateAudioRenderEffectsManagerWithMode(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Render.AudioRenderCategory category,
+            [in] Windows.Media.AudioProcessing mode,
+            [out, retval] Windows.Media.Effects.AudioRenderEffectsManager **value
+        );
+        [overload("CreateAudioCaptureEffectsManager")]
+        HRESULT CreateAudioCaptureEffectsManager(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Capture.MediaCategory category,
+            [out, retval] Windows.Media.Effects.AudioCaptureEffectsManager **value
+        );
+        [overload("CreateAudioCaptureEffectsManager")]
+        HRESULT CreateAudioCaptureEffectsManagerWithMode(
+            [in] HSTRING device_id,
+            [in] Windows.Media.Capture.MediaCategory category,
+            [in] Windows.Media.AudioProcessing mode,
+            [out, retval] Windows.Media.Effects.AudioCaptureEffectsManager **value
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.Effects.AudioRenderEffectsManager),
         uuid(4dc98966-8751-42b2-bfcb-39ca7864bd47)
     ]
@@ -155,6 +195,16 @@ namespace Windows.Media.Effects {
     runtimeclass AudioEffect
     {
         [default] interface Windows.Media.Effects.IAudioEffect;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.Effects.IAudioEffectsManagerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(mta)
+    ]
+    runtimeclass AudioEffectsManager
+    {
     }
 
     [
