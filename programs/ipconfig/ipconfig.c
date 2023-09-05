@@ -45,13 +45,13 @@ static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
          */
         len = WideCharToMultiByte(GetOEMCP(), 0, msg_buffer, wlen,
             NULL, 0, NULL, NULL);
-        msgA = HeapAlloc(GetProcessHeap(), 0, len);
+        msgA = malloc(len);
         if (!msgA)
             return 0;
 
         WideCharToMultiByte(GetOEMCP(), 0, msg_buffer, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
-        HeapFree(GetProcessHeap(), 0, msgA);
+        free(msgA);
     }
 
     return count;
@@ -146,7 +146,7 @@ static void print_basic_information(void)
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                              NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
-        adapters = HeapAlloc(GetProcessHeap(), 0, out);
+        adapters = malloc(out);
         if (!adapters)
             exit(1);
 
@@ -194,7 +194,7 @@ static void print_basic_information(void)
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, adapters);
+        free(adapters);
     }
 }
 
@@ -265,7 +265,7 @@ static void print_full_information(void)
 
     if (GetNetworkParams(NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
-        info = HeapAlloc(GetProcessHeap(), 0, out);
+        info = malloc(out);
         if (!info)
             exit(1);
 
@@ -288,13 +288,13 @@ static void print_full_information(void)
             ipconfig_printfW(L"\n");
         }
 
-        HeapFree(GetProcessHeap(), 0, info);
+        free(info);
     }
 
     if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS,
                              NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
-        adapters = HeapAlloc(GetProcessHeap(), 0, out);
+        adapters = malloc(out);
         if (!adapters)
             exit(1);
 
@@ -348,7 +348,7 @@ static void print_full_information(void)
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, adapters);
+        free(adapters);
     }
 }
 
