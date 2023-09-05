@@ -1805,13 +1805,13 @@ static void test_performance_pmsg(void)
     ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, NULL, &clone);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     clone = NULL;
     hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, &clone);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(clone != NULL, "got %p\n", clone);
+    ok(clone != NULL, "got %p\n", clone);
 
     msg->mtTime = 500;
     msg->dwFlags = DMUS_PMSGF_MUSICTIME;
@@ -1822,8 +1822,7 @@ static void test_performance_pmsg(void)
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == DMUS_E_CANNOT_FREE, "got %#lx\n", hr);
 
-    if (!clone) hr = S_OK;
-    else hr = IDirectMusicPerformance_FreePMsg(performance, clone);
+    hr = IDirectMusicPerformance_FreePMsg(performance, clone);
     ok(hr == S_OK, "got %#lx\n", hr);
 
 

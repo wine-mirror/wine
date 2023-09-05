@@ -1071,13 +1071,22 @@ static HRESULT WINAPI performance_StopEx(IDirectMusicPerformance8 *iface, IUnkno
 	return S_OK;
 }
 
-static HRESULT WINAPI performance_ClonePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *pSourcePMSG,
-        DMUS_PMSG **ppCopyPMSG)
+static HRESULT WINAPI performance_ClonePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg, DMUS_PMSG **clone)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr;
 
-	FIXME("(%p, %p, %p): stub\n", This, pSourcePMSG, ppCopyPMSG);
-	return S_OK;
+    TRACE("(%p, %p, %p)\n", This, msg, clone);
+
+    if (!msg || !clone) return E_POINTER;
+    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(iface, msg->dwSize, clone))) return hr;
+
+    memcpy(*clone, msg, msg->dwSize);
+    if (msg->pTool) IDirectMusicTool_AddRef(msg->pTool);
+    if (msg->pGraph) IDirectMusicGraph_AddRef(msg->pGraph);
+    if (msg->punkUser) IUnknown_AddRef(msg->punkUser);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_CreateAudioPath(IDirectMusicPerformance8 *iface,
