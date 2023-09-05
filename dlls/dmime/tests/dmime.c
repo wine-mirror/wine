@@ -27,6 +27,34 @@
 #include <audioclient.h>
 #include <guiddef.h>
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    ULONG expect_ref = get_refcount(iface_ptr);
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected);
+    if (SUCCEEDED(hr))
+    {
+        LONG ref = get_refcount(unk);
+        ok_(__FILE__, line)(ref == expect_ref + 1, "got %ld\n", ref);
+        IUnknown_Release(unk);
+        ref = get_refcount(iface_ptr);
+        ok_(__FILE__, line)(ref == expect_ref, "got %ld\n", ref);
+    }
+}
+
 struct test_tool
 {
     IDirectMusicTool IDirectMusicTool_iface;
@@ -1405,6 +1433,51 @@ static void test_parsedescriptor(void)
     }
 }
 
+static void test_performance_tool(void)
+{
+    IDirectMusicPerformance *performance;
+    IDirectMusicGraph *graph;
+    IDirectMusicTool *tool;
+    DWORD value, types[1];
+    DMUS_PMSG msg = {0};
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_interface(performance, &IID_IDirectMusicTool8, FALSE);
+
+    hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicTool, (void **)&tool);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr != S_OK) goto skip_tool;
+    hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTool_Init(tool, graph);
+    ok(hr == E_NOTIMPL, "got %#lx\n", hr);
+    value = 0xdeadbeef;
+    hr = IDirectMusicTool_GetMsgDeliveryType(tool, &value);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(value == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", value);
+    value = 0xdeadbeef;
+    hr = IDirectMusicTool_GetMediaTypeArraySize(tool, &value);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(value == 0, "got %#lx\n", value);
+    hr = IDirectMusicTool_GetMediaTypes(tool, (DWORD **)&types, 64);
+    ok(hr == E_NOTIMPL, "got %#lx\n", hr);
+    hr = IDirectMusicTool_ProcessPMsg(tool, performance, &msg);
+    todo_wine ok(hr == DMUS_S_FREE, "got %#lx\n", hr);
+    hr = IDirectMusicTool_Flush(tool, performance, &msg, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicGraph_Release(graph);
+    IDirectMusicTool_Release(tool);
+
+skip_tool:
+    IDirectMusicPerformance_Release(performance);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -1428,6 +1501,7 @@ START_TEST(dmime)
     test_segment_param();
     test_track();
     test_parsedescriptor();
+    test_performance_tool();
 
     CoUninitialize();
 }
