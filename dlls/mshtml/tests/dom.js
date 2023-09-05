@@ -244,9 +244,19 @@ sync_test("query_selector", function() {
         + '</div>'
         + '<script class="class1"></script>';
 
-    var e = document.querySelector("nomatch");
+    var frag = document.createDocumentFragment()
+    var e = document.createElement("div");
+    e.innerHTML = '<div class="class3"></div><a id="class3" class="class4"></a></div>';
+    frag.appendChild(e);
+    var e = document.createElement("script");
+    e.className = "class3";
+    frag.appendChild(e);
+
+    e = document.querySelector("nomatch");
     ok(e === null, "e = " + e);
     e = document.body.querySelector("nomatch");
+    ok(e === null, "e = " + e);
+    e = frag.querySelector("nomatch");
     ok(e === null, "e = " + e);
 
     e = document.querySelector(".class1");
@@ -255,10 +265,25 @@ sync_test("query_selector", function() {
     ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
     ok(e.msMatchesSelector(".class1") === true, "msMatchesSelector returned " + e.msMatchesSelector(".class1"));
     ok(e.msMatchesSelector(".class2") === false, "msMatchesSelector returned " + e.msMatchesSelector(".class2"));
+    e = document.querySelector(".class3");
+    ok(e === null, "e = " + e);
+    e = document.body.querySelector(".class3");
+    ok(e === null, "e = " + e);
+
+    e = frag.querySelector(".class3");
+    ok(e.tagName === "DIV", "e.tagName = " + e.tagName);
+    e = frag.querySelector(".class4");
+    ok(e.tagName === "A", "e.tagName = " + e.tagName);
+    e = frag.querySelector(".class1");
+    ok(e === null, "e = " + e);
+    e = frag.querySelector(".class2");
+    ok(e === null, "e = " + e);
 
     e = document.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
     e = document.body.querySelector("a");
+    ok(e.tagName === "A", "e.tagName = " + e.tagName);
+    e = frag.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
 });
 
