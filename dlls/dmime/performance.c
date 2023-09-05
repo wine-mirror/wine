@@ -80,7 +80,7 @@ struct DMUS_PMSGItem {
   DMUS_PMSG pMsg;
 };
 
-#define DMUS_PMSGToItem(pMSG)   ((DMUS_PMSGItem*) (((unsigned char*) pPMSG) -  offsetof(DMUS_PMSGItem, pMsg)))
+#define DMUS_PMSGToItem(pMSG)   ((DMUS_PMSGItem *)(((unsigned char *)pMSG) - offsetof(DMUS_PMSGItem, pMsg)))
 #define DMUS_ItemRemoveFromQueue(This,pItem) \
 {\
   if (pItem->prev) pItem->prev->next = pItem->next;\
@@ -531,37 +531,30 @@ static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULO
     return S_OK;
 }
 
-static HRESULT WINAPI performance_FreePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *pPMSG)
+static HRESULT WINAPI performance_FreePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg)
 {
-  struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-  DMUS_PMSGItem* pItem = NULL;
-  
-  FIXME("(%p, %p): stub\n", This, pPMSG);
-  
-  if (NULL == pPMSG) {
-    return E_POINTER;
-  }
-  pItem = DMUS_PMSGToItem(pPMSG);
-  if (pItem->bInUse) {
-    /** prevent for freeing PMsg in queue (ie to be processed) */
-    return DMUS_E_CANNOT_FREE;
-  }
-  /** now we can remove it safely */
-  EnterCriticalSection(&This->safe);
-  DMUS_ItemRemoveFromQueue( This, pItem );
-  LeaveCriticalSection(&This->safe);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    DMUS_PMSGItem *message;
+    HRESULT hr;
 
-  if (pPMSG->pTool)
-    IDirectMusicTool_Release(pPMSG->pTool);
+    TRACE("(%p, %p)\n", This, msg);
 
-  if (pPMSG->pGraph)
-    IDirectMusicGraph_Release(pPMSG->pGraph);
+    if (!msg) return E_POINTER;
+    message = DMUS_PMSGToItem(msg);
 
-  if (pPMSG->punkUser)
-    IUnknown_Release(pPMSG->punkUser);
+    EnterCriticalSection(&This->safe);
+    hr = message->bInUse ? DMUS_E_CANNOT_FREE : S_OK;
+    LeaveCriticalSection(&This->safe);
 
-  free(pItem);
-  return S_OK;
+    if (SUCCEEDED(hr))
+    {
+        if (msg->pTool) IDirectMusicTool_Release(msg->pTool);
+        if (msg->pGraph) IDirectMusicGraph_Release(msg->pGraph);
+        if (msg->punkUser) IUnknown_Release(msg->punkUser);
+        free(message);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_GetGraph(IDirectMusicPerformance8 *iface, IDirectMusicGraph **graph)
