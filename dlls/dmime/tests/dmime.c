@@ -61,6 +61,11 @@ struct test_tool
     LONG ref;
 
     IDirectMusicGraph *graph;
+    const DWORD *types;
+    DWORD types_count;
+
+    HANDLE message_event;
+    DMUS_PMSG *message;
 };
 
 static struct test_tool *impl_from_IDirectMusicTool(IDirectMusicTool *iface)
@@ -98,6 +103,8 @@ static ULONG WINAPI test_tool_Release(IDirectMusicTool *iface)
     if (!ref)
     {
         if (tool->graph) IDirectMusicGraph_Release(tool->graph);
+        ok(!tool->message, "got %p\n", tool->message);
+        CloseHandle(tool->message_event);
         free(tool);
     }
 
@@ -119,19 +126,35 @@ static HRESULT WINAPI test_tool_GetMsgDeliveryType(IDirectMusicTool *iface, DWOR
 
 static HRESULT WINAPI test_tool_GetMediaTypeArraySize(IDirectMusicTool *iface, DWORD *size)
 {
-    *size = 0;
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    *size = tool->types_count;
     return S_OK;
 }
 
 static HRESULT WINAPI test_tool_GetMediaTypes(IDirectMusicTool *iface, DWORD **types, DWORD size)
 {
-    ok(0,  "%#04lx: unexpected %s, types %p, size %lu\n", GetCurrentThreadId(), __func__, types, size);
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    UINT i;
+    for (i = 0; i < tool->types_count; i++) (*types)[i] = tool->types[i];
     return S_OK;
 }
 
 static HRESULT WINAPI test_tool_ProcessPMsg(IDirectMusicTool *iface, IDirectMusicPerformance *performance, DMUS_PMSG *msg)
 {
-    ok(0,  "%#04lx: unexpected %s, iface %p, performance %p, msg %p\n", GetCurrentThreadId(), __func__, iface, performance, msg);
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    DMUS_PMSG *clone;
+    HRESULT hr;
+
+    hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, &clone);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    clone = InterlockedExchangePointer((void **)&tool->message, clone);
+    ok(!clone, "got %p\n", clone);
+    SetEvent(tool->message_event);
+
+    hr = IDirectMusicGraph_StampPMsg(msg->pGraph, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
     return DMUS_S_REQUEUE;
 }
 
@@ -155,7 +178,8 @@ static IDirectMusicToolVtbl test_tool_vtbl =
     test_tool_Flush,
 };
 
-static HRESULT test_tool_create(IDirectMusicTool **ret_iface)
+static HRESULT test_tool_create(const DWORD *types, DWORD types_count,
+        IDirectMusicTool **ret_iface)
 {
     struct test_tool *tool;
 
@@ -163,6 +187,11 @@ static HRESULT test_tool_create(IDirectMusicTool **ret_iface)
     if (!(tool = calloc(1, sizeof(*tool)))) return E_OUTOFMEMORY;
     tool->IDirectMusicTool_iface.lpVtbl = &test_tool_vtbl;
     tool->ref = 1;
+
+    tool->types = types;
+    tool->types_count = types_count;
+    tool->message_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!tool->message_event, "CreateEventW failed, error %lu\n", GetLastError());
 
     *ret_iface = &tool->IDirectMusicTool_iface;
     return S_OK;
@@ -173,6 +202,17 @@ static HRESULT test_tool_get_graph(IDirectMusicTool *iface, IDirectMusicGraph **
     struct test_tool *tool = impl_from_IDirectMusicTool(iface);
     if ((*graph = tool->graph)) IDirectMusicGraph_AddRef(tool->graph);
     return tool->graph ? S_OK : DMUS_E_NOT_FOUND;
+}
+
+static DWORD test_tool_wait_message(IDirectMusicTool *iface, DWORD timeout, DMUS_PMSG **msg)
+{
+    struct test_tool *tool = impl_from_IDirectMusicTool(iface);
+    DWORD ret;
+
+    ret = WaitForSingleObject(tool->message_event, timeout);
+    *msg = InterlockedExchangePointer((void **)&tool->message, NULL);
+
+    return ret;
 }
 
 static BOOL missing_dmime(void)
@@ -638,10 +678,10 @@ static void test_graph(void)
     IDirectMusicGraph_Release(graph);
 
 
-    hr = test_tool_create(&tool1);
+    hr = test_tool_create(NULL, 0, &tool1);
     ok(hr == S_OK, "got %#lx\n", hr);
     trace("created tool1 %p\n", tool1);
-    hr = test_tool_create(&tool2);
+    hr = test_tool_create(NULL, 0, &tool2);
     ok(hr == S_OK, "got %#lx\n", hr);
     trace("created tool2 %p\n", tool2);
 
@@ -1486,7 +1526,7 @@ static void test_performance_graph(void)
     DMUS_PMSG msg;
     HRESULT hr;
 
-    hr = test_tool_create(&tool);
+    hr = test_tool_create(NULL, 0, &tool);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
@@ -1693,14 +1733,16 @@ static void test_performance_time(void)
 
 static void test_performance_pmsg(void)
 {
+    static const DWORD message_types[] = {DMUS_PMSGT_MIDI, DMUS_PMSGT_USER};
     IDirectMusicPerformance *performance;
     IDirectMusicGraph *graph;
     IDirectMusicTool *tool;
     DMUS_PMSG *msg, *clone;
     REFERENCE_TIME time;
     HRESULT hr;
+    DWORD ret;
 
-    hr = test_tool_create(&tool);
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
@@ -1805,6 +1847,47 @@ static void test_performance_pmsg(void)
     ok(!msg->dwVoiceID, "got %ld\n", msg->dwVoiceID);
     ok(!msg->dwGroupID, "got %ld\n", msg->dwGroupID);
     ok(!msg->punkUser, "got %p\n", msg->punkUser);
+
+
+    /* SendPMsg skips all the tools unless messages are stamped beforehand */
+
+    hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG), &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
+    msg->rtTime = time;
+    msg->dwFlags = DMUS_PMSGF_REFTIME;
+    msg->dwType = DMUS_PMSGT_USER;
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 10, &msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
+    ok(!msg, "got %p\n", msg);
+
+
+    hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG), &msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
+    msg->rtTime = time;
+    msg->dwFlags = DMUS_PMSGF_REFTIME;
+    msg->dwType = DMUS_PMSGT_USER;
+
+    graph = NULL;
+    hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (graph) hr = IDirectMusicGraph_StampPMsg(graph, msg);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (graph) IDirectMusicGraph_Release(graph);
+
+    hr = IDirectMusicPerformance_SendPMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 50, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    todo_wine ok(msg != NULL, "got %p\n", msg);
+    if (!msg) hr = S_OK;
+    else hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
 
     hr = IDirectMusicPerformance_CloseDown(performance);
