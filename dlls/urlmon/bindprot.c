@@ -815,7 +815,9 @@ static HRESULT WINAPI ProtocolHandler_UnlockRequest(IInternetProtocol *iface)
 
     TRACE("(%p)\n", This);
 
-    return IInternetProtocol_UnlockRequest(This->protocol);
+    if (This->protocol)
+        return IInternetProtocol_UnlockRequest(This->protocol);
+    return S_OK;
 }
 
 static const IInternetProtocolVtbl InternetProtocolHandlerVtbl = {
