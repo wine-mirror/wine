@@ -595,7 +595,7 @@ static void XMLContext_AddNameToNamespace_tests(void)
 START_TEST(xml)
 {
     /* Allocate a large text buffer for use in tests */
-    largeText = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, largeTextSize + sizeof(WCHAR));
+    largeText = calloc(1, largeTextSize + sizeof(WCHAR));
     memset(largeText, 'a', largeTextSize);
 
     BuildAnyForSingleElement_tests();
@@ -606,5 +606,5 @@ START_TEST(xml)
     XMLContext_AddNamespace_tests();
     XMLContext_AddNameToNamespace_tests();
 
-    HeapFree(GetProcessHeap(), 0, largeText);
+    free(largeText);
 }

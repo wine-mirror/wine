@@ -26,7 +26,6 @@
 #include <windows.h>
 
 #include "wine/test.h"
-#include "wine/heap.h"
 #include "initguid.h"
 #include "objbase.h"
 #include "wsdapi.h"
@@ -86,7 +85,7 @@ static LPWSTR utf8_to_wide(const char *utf8String)
     if (sizeNeeded <= 0) return NULL;
 
     memLength = sizeof(WCHAR) * (sizeNeeded + 1);
-    newString = heap_alloc_zero(memLength);
+    newString = calloc(1, memLength);
 
     MultiByteToWideChar(CP_UTF8, 0, utf8String, utf8StringLength, newString, sizeNeeded);
     return newString;
@@ -175,7 +174,7 @@ static DWORD WINAPI listening_thread(LPVOID lpParam)
     int bytesReceived;
     char *buffer;
 
-    buffer = heap_alloc(RECEIVE_BUFFER_SIZE);
+    buffer = malloc(RECEIVE_BUFFER_SIZE);
 
     while (parameter->msgStorage->running)
     {
@@ -193,7 +192,7 @@ static DWORD WINAPI listening_thread(LPVOID lpParam)
 
             if (msgStorage->messageCount < MAX_CACHED_MESSAGES)
             {
-                msgStorage->messages[msgStorage->messageCount] = heap_alloc(bytesReceived);
+                msgStorage->messages[msgStorage->messageCount] = malloc(bytesReceived);
 
                 if (msgStorage->messages[msgStorage->messageCount] != NULL)
                 {
@@ -215,8 +214,8 @@ static DWORD WINAPI listening_thread(LPVOID lpParam)
 
     closesocket(parameter->listeningSocket);
 
-    heap_free(buffer);
-    heap_free(parameter);
+    free(buffer);
+    free(parameter);
 
     return 0;
 }
@@ -244,7 +243,7 @@ static BOOL start_listening_udp_unicast(messageStorage *msgStorage, struct socka
         goto cleanup;
 
     /* Allocate memory for thread parameters */
-    parameter = heap_alloc(sizeof(listenerThreadParams));
+    parameter = malloc(sizeof(*parameter));
 
     parameter->msgStorage = msgStorage;
     parameter->listeningSocket = s;
@@ -259,7 +258,7 @@ static BOOL start_listening_udp_unicast(messageStorage *msgStorage, struct socka
 
 cleanup:
     closesocket(s);
-    heap_free(parameter);
+    free(parameter);
 
     return FALSE;
 }
@@ -309,7 +308,7 @@ static void start_listening(messageStorage *msgStorage, const char *multicastAdd
     if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&receiveTimeout, sizeof(receiveTimeout)) == SOCKET_ERROR) goto cleanup;
 
     /* Allocate memory for thread parameters */
-    parameter = heap_alloc(sizeof(listenerThreadParams));
+    parameter = malloc(sizeof(*parameter));
 
     parameter->msgStorage = msgStorage;
     parameter->listeningSocket = s;
@@ -324,7 +323,7 @@ static void start_listening(messageStorage *msgStorage, const char *multicastAdd
 
 cleanup:
     closesocket(s);
-    heap_free(parameter);
+    free(parameter);
 
 cleanup_addresses:
     freeaddrinfo(multicastAddr);
@@ -346,7 +345,7 @@ static BOOL start_listening_on_all_addresses(messageStorage *msgStorage, ULONG f
     if (retVal != ERROR_BUFFER_OVERFLOW) goto cleanup;
 
     /* Get size of buffer for adapters */
-    adapterAddresses = (IP_ADAPTER_ADDRESSES *)heap_alloc(bufferSize);
+    adapterAddresses = malloc(bufferSize);
     if (adapterAddresses == NULL) goto cleanup;
 
     /* Get list of adapters */
@@ -373,7 +372,7 @@ static BOOL start_listening_on_all_addresses(messageStorage *msgStorage, ULONG f
     ret = TRUE;
 
 cleanup:
-    heap_free(adapterAddresses);
+    free(adapterAddresses);
     return ret;
 }
 
@@ -402,7 +401,7 @@ static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG famil
     retval = GetAdaptersAddresses(family, 0, NULL, NULL, &bufferSize);
     if (retval != ERROR_BUFFER_OVERFLOW) goto cleanup;
 
-    adapter_addresses = (IP_ADAPTER_ADDRESSES *) heap_alloc(bufferSize);
+    adapter_addresses = malloc(bufferSize);
     if (adapter_addresses == NULL) goto cleanup;
 
     /* Get list of adapters */
@@ -438,7 +437,7 @@ static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG famil
 
 cleanup:
     freeaddrinfo(multi_address);
-    heap_free(adapter_addresses);
+    free(adapter_addresses);
     return ret;
 }
 
@@ -495,7 +494,7 @@ static ULONG WINAPI IWSDiscoveryPublisherNotifyImpl_Release(IWSDiscoveryPublishe
 
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -644,7 +643,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
                 IWSDUdpAddress_Release(remote_addr);
 
-                msg_storage = heap_alloc_zero(sizeof(messageStorage));
+                msg_storage = calloc(1, sizeof(*msg_storage));
                 if (msg_storage == NULL) goto after_matchprobe_test;
 
                 msg_storage->running = TRUE;
@@ -736,7 +735,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
                 for (i = 0; i < msg_storage->messageCount; i++)
                 {
-                    heap_free(msg_storage->messages[i]);
+                    free(msg_storage->messages[i]);
                 }
 
                 ok(probe_matches_message_seen == TRUE, "Probe matches message not received\n");
@@ -751,9 +750,9 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
                 ok(types_seen == TRUE, "Types not received\n");
 
 after_matchprobe_test:
-                heap_free(publisherIdW);
-                heap_free(sequenceIdW);
-                heap_free(msg_storage);
+                free(publisherIdW);
+                free(sequenceIdW);
+                free(msg_storage);
             }
         }
     }
@@ -783,7 +782,7 @@ static BOOL create_discovery_publisher_notify(IWSDiscoveryPublisherNotify **publ
 
     *publisherNotify = NULL;
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
 
     if (!obj)
     {
@@ -956,7 +955,7 @@ static void Publish_tests(void)
     sequenceIdW = utf8_to_wide(sequenceId);
     if (sequenceIdW == NULL) goto after_publish_test;
 
-    msgStorage = heap_alloc_zero(sizeof(messageStorage));
+    msgStorage = calloc(1, sizeof(*msgStorage));
     if (msgStorage == NULL) goto after_publish_test;
 
     msgStorage->running = TRUE;
@@ -994,20 +993,20 @@ static void Publish_tests(void)
     another_name.LocalName = (WCHAR *) name_cider;
     another_name.Space = &ns2;
 
-    types_list.Next = heap_alloc(sizeof(WSD_NAME_LIST));
+    types_list.Next = malloc(sizeof(WSD_NAME_LIST));
     types_list.Element = &another_name;
 
     types_list.Next->Next = NULL;
     types_list.Next->Element = &header_any_name;
 
     /* Create scopes and xaddrs lists */
-    scopes_list.Next = heap_alloc(sizeof(WSD_URI_LIST));
+    scopes_list.Next = malloc(sizeof(WSD_URI_LIST));
     scopes_list.Element = uri;
 
     scopes_list.Next->Next = NULL;
     scopes_list.Next->Element = uri_more_tests;
 
-    xaddrs_list.Next = heap_alloc(sizeof(WSD_URI_LIST));
+    xaddrs_list.Next = malloc(sizeof(WSD_URI_LIST));
     xaddrs_list.Element = uri_more_tests;
 
     xaddrs_list.Next->Next = NULL;
@@ -1021,9 +1020,9 @@ static void Publish_tests(void)
     WSDFreeLinkedMemory(body_any_element);
     WSDFreeLinkedMemory(endpoint_any_element);
     WSDFreeLinkedMemory(ref_param_any_element);
-    heap_free(types_list.Next);
-    heap_free(scopes_list.Next);
-    heap_free(xaddrs_list.Next);
+    free(types_list.Next);
+    free(scopes_list.Next);
+    free(xaddrs_list.Next);
 
     ok(rc == S_OK, "Publish failed: %08lx\n", rc);
 
@@ -1076,10 +1075,10 @@ static void Publish_tests(void)
 
     for (i = 0; i < msgStorage->messageCount; i++)
     {
-        heap_free(msgStorage->messages[i]);
+        free(msgStorage->messages[i]);
     }
 
-    heap_free(msgStorage);
+    free(msgStorage);
 
     ok(hello_message_seen == TRUE, "Hello message not received\n");
     ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
@@ -1097,8 +1096,8 @@ static void Publish_tests(void)
 
 after_publish_test:
 
-    heap_free(publisherIdW);
-    heap_free(sequenceIdW);
+    free(publisherIdW);
+    free(sequenceIdW);
 
     /* Test the receiving of a probe message */
     probe_event = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -1172,7 +1171,7 @@ static void UnPublish_tests(void)
     sequenceIdW = utf8_to_wide(sequenceId);
     if (sequenceIdW == NULL) goto after_unpublish_test;
 
-    msg_storage = heap_alloc_zero(sizeof(messageStorage));
+    msg_storage = calloc(1, sizeof(*msg_storage));
     if (msg_storage == NULL) goto after_unpublish_test;
 
     msg_storage->running = TRUE;
@@ -1241,10 +1240,10 @@ static void UnPublish_tests(void)
 
     for (i = 0; i < msg_storage->messageCount; i++)
     {
-        heap_free(msg_storage->messages[i]);
+        free(msg_storage->messages[i]);
     }
 
-    heap_free(msg_storage);
+    free(msg_storage);
 
     ok(hello_message_seen == TRUE, "Bye message not received\n");
     ok(endpoint_reference_seen == TRUE, "EndpointReference not received\n");
@@ -1256,8 +1255,8 @@ static void UnPublish_tests(void)
 
 after_unpublish_test:
 
-    heap_free(publisherIdW);
-    heap_free(sequenceIdW);
+    free(publisherIdW);
+    free(sequenceIdW);
 
     ref = IWSDiscoveryPublisher_Release(publisher);
     ok(ref == 0, "IWSDiscoveryPublisher_Release() has %ld references, should have 0\n", ref);
