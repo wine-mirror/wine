@@ -12,11 +12,8 @@ SOURCES = \
 	device8.c \
 	dinput.c \
 	driver_bus.c \
-	driver_bus.spec \
 	driver_hid.c \
-	driver_hid.spec \
 	driver_hid_poll.c \
-	driver_hid_poll.spec \
 	force_feedback.c \
 	hid.c \
 	hotplug.c \

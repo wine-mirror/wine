@@ -14,13 +14,8 @@ driver_pnp_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
 	driver.c \
-	driver.spec \
 	driver2.c \
-	driver2.spec \
 	driver3.c \
-	driver3.spec \
 	driver_netio.c \
-	driver_netio.spec \
 	driver_pnp.c \
-	driver_pnp.spec \
 	ntoskrnl.c

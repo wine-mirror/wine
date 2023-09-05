@@ -3077,7 +3077,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     struct strarray dll_flags = empty_strarray;
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
-    const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file, *ext;
+    const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file, *ext = ".dll";
     struct incl_file *spec_file = find_src_file( make, strmake( "%.spec", obj ));
     unsigned int arch;
 
@@ -3085,10 +3085,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     strarray_addall( &dll_flags, make->extradllflags );
     strarray_addall( &dll_flags, get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" ));
     if (!strarray_exists( &dll_flags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
-
     if (strarray_exists( &dll_flags, "-mconsole" )) ext = ".exe";
-    else if (!spec_file) fatal_error( "testdll source %s needs a .spec file\n", source->name );
-    else ext = ".dll";
 
     for (arch = 0; arch < archs.count; arch++)
     {
