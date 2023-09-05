@@ -26,14 +26,17 @@ import "windows.foundation.idl";
 namespace Windows.Media.Effects {
     typedef enum AudioEffectType AudioEffectType;
 
+    interface IAudioCaptureEffectsManager;
     interface IAudioEffect;
 
+    runtimeclass AudioCaptureEffectsManager;
     runtimeclass AudioEffect;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<Windows.Media.Effects.AudioEffect *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Media.Effects.AudioEffect *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioCaptureEffectsManager *, IInspectable *>;
     }
 
     [
@@ -67,12 +70,41 @@ namespace Windows.Media.Effects {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.Effects.AudioCaptureEffectsManager),
+        uuid(8f85c271-038d-4393-8298-540110608eef)
+    ]
+    interface IAudioCaptureEffectsManager : IInspectable
+    {
+        [eventadd] HRESULT AudioCaptureEffectsChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.Effects.AudioCaptureEffectsManager *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT AudioCaptureEffectsChanged(
+            [in] EventRegistrationToken token
+        );
+        HRESULT GetAudioCaptureEffects(
+            [out, retval] Windows.Foundation.Collections.IVectorView<Windows.Media.Effects.AudioEffect *> **effects
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.Effects.AudioEffect),
         uuid(34aafa51-9207-4055-be93-6e5734a86ae4)
     ]
     interface IAudioEffect : IInspectable
     {
         [propget] HRESULT AudioEffectType([out, retval] Windows.Media.Effects.AudioEffectType *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(mta)
+    ]
+    runtimeclass AudioCaptureEffectsManager
+    {
+        [default] interface Windows.Media.Effects.IAudioCaptureEffectsManager;
     }
 
     [
