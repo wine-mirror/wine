@@ -25,7 +25,6 @@
 
 #include "wsdapi_internal.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "webservices.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
@@ -106,7 +105,7 @@ static char *wide_to_utf8(LPCWSTR wide_string, int *length)
     if (*length < 0)
         return NULL;
 
-    new_string = heap_alloc(*length);
+    new_string = malloc(*length);
     WideCharToMultiByte(CP_UTF8, 0, wide_string, -1, new_string, *length, NULL, NULL);
 
     return new_string;
@@ -114,7 +113,7 @@ static char *wide_to_utf8(LPCWSTR wide_string, int *length)
 
 static WS_XML_STRING *populate_xml_string(LPCWSTR str)
 {
-    WS_XML_STRING *xml = heap_alloc_zero(sizeof(WS_XML_STRING));
+    WS_XML_STRING *xml = calloc(1, sizeof(*xml));
     int utf8Length;
 
     if (xml == NULL)
@@ -124,7 +123,7 @@ static WS_XML_STRING *populate_xml_string(LPCWSTR str)
 
     if (xml->bytes == NULL)
     {
-        heap_free(xml);
+        free(xml);
         return NULL;
     }
 
@@ -140,9 +139,9 @@ static inline void free_xml_string(WS_XML_STRING *value)
     if (value == NULL)
         return;
 
-    heap_free(value->bytes);
+    free(value->bytes);
 
-    heap_free(value);
+    free(value);
 }
 
 static HRESULT write_xml_attribute(WSDXML_ATTRIBUTE *attribute, WS_XML_WRITER *writer)
@@ -850,7 +849,7 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
     if (ret != S_OK) return ret;
 
     /* Prefix the XML header */
-    full_xml = heap_alloc(xml_length + xml_header_len + 1);
+    full_xml = malloc(xml_length + xml_header_len + 1);
 
     if (full_xml == NULL)
     {
@@ -873,7 +872,7 @@ static HRESULT write_and_send_message(IWSDiscoveryPublisherImpl *impl, WSD_SOAP_
         ret = send_udp_unicast(full_xml, xml_length + xml_header_len, remote_address, max_initial_delay);
     }
 
-    heap_free(full_xml);
+    free(full_xml);
     WsFreeHeap(heap);
 
     return ret;
@@ -1293,7 +1292,7 @@ static HRESULT wide_text_to_ulonglong(LPCWSTR text, ULONGLONG *value)
     if (utf8_length == 1) return E_FAIL;
 
     ret = str_to_uint64((const unsigned char *) utf8_text, utf8_length - 1, MAX_UINT64, value);
-    heap_free(utf8_text);
+    free(utf8_text);
 
     return ret;
 }
@@ -1635,15 +1634,15 @@ static BOOL is_duplicate_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id)
         }
     }
 
-    msg_id = heap_alloc(sizeof(*msg_id));
+    msg_id = malloc(sizeof(*msg_id));
     if (!msg_id) goto end;
 
     len = (lstrlenW(id) + 1) * sizeof(WCHAR);
-    msg_id->id = heap_alloc(len);
+    msg_id->id = malloc(len);
 
     if (!msg_id->id)
     {
-        heap_free(msg_id);
+        free(msg_id);
         goto end;
     }
 
