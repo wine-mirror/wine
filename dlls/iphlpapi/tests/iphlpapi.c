@@ -2080,16 +2080,32 @@ static void test_CreateSortedAddressPairs(void)
     FreeMibTable( pair );
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters( ULONG flags )
+{
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static DWORD get_interface_index(void)
 {
-    DWORD size = 0, ret = 0;
+    DWORD ret = 0;
     IP_ADAPTER_ADDRESSES *buf, *aa;
 
-    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size ) != ERROR_BUFFER_OVERFLOW)
-        return 0;
+    buf = get_adapters( 0 );
+    if (!buf) return 0;
 
-    buf = malloc( size );
-    GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buf, &size );
     for (aa = buf; aa; aa = aa->Next)
     {
         if (aa->IfType == IF_TYPE_ETHERNET_CSMACD)
@@ -2455,7 +2471,7 @@ static void test_GetUnicastIpAddressEntry(void)
 {
     IP_ADAPTER_ADDRESSES *aa, *ptr;
     MIB_UNICASTIPADDRESS_ROW row;
-    DWORD ret, size;
+    DWORD ret;
 
     if (!pGetUnicastIpAddressEntry)
     {
@@ -2498,13 +2514,8 @@ static void test_GetUnicastIpAddressEntry(void)
     ret = pGetUnicastIpAddressEntry( &row );
     ok( ret == ERROR_FILE_NOT_FOUND, "got %lu\n", ret );
 
-    ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES, NULL, NULL, &size);
-    ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %lu\n", ret);
-    if (ret != ERROR_BUFFER_OVERFLOW) return;
-
-    ptr = malloc(size);
-    ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES, NULL, ptr, &size);
-    ok(!ret, "expected ERROR_SUCCESS got %lu\n", ret);
+    ptr = get_adapters( GAA_FLAG_INCLUDE_ALL_INTERFACES );
+    ok(ptr != NULL, "can't get adapters\n");
 
     for (aa = ptr; !ret && aa; aa = aa->Next)
     {
