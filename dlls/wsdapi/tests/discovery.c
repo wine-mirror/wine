@@ -331,26 +331,34 @@ cleanup_addresses:
     freeaddrinfo(interfaceAddr);
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters( ULONG family )
+{
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( family, 0, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( family, 0, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static BOOL start_listening_on_all_addresses(messageStorage *msgStorage, ULONG family)
 {
-    IP_ADAPTER_ADDRESSES *adapterAddresses = NULL, *adapterAddress;
-    ULONG bufferSize = 0;
+    IP_ADAPTER_ADDRESSES *adapterAddresses, *adapterAddress;
     LPSOCKADDR sockaddr;
     DWORD addressLength;
     char address[64];
     BOOL ret = FALSE;
-    ULONG retVal;
 
-    retVal = GetAdaptersAddresses(family, 0, NULL, NULL, &bufferSize); /* family should be AF_INET or AF_INET6 */
-    if (retVal != ERROR_BUFFER_OVERFLOW) goto cleanup;
-
-    /* Get size of buffer for adapters */
-    adapterAddresses = malloc(bufferSize);
-    if (adapterAddresses == NULL) goto cleanup;
-
-    /* Get list of adapters */
-    retVal = GetAdaptersAddresses(family, 0, NULL, adapterAddresses, &bufferSize);
-    if (retVal != ERROR_SUCCESS) goto cleanup;
+    adapterAddresses = get_adapters(family); /* family should be AF_INET or AF_INET6 */
+    if (!adapterAddresses) return FALSE;
 
     for (adapterAddress = adapterAddresses; adapterAddress != NULL; adapterAddress = adapterAddress->Next)
     {
@@ -378,14 +386,11 @@ cleanup:
 
 static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG family)
 {
-    IP_ADAPTER_ADDRESSES *adapter_addresses = NULL, *adapter_addr;
+    IP_ADAPTER_ADDRESSES *adapter_addresses, *adapter_addr;
     static const struct in6_addr i_addr_zero;
     struct addrinfo *multi_address;
-    ULONG bufferSize = 0;
     LPSOCKADDR sockaddr;
-    BOOL ret = FALSE;
     const char ttl = 8;
-    ULONG retval;
     SOCKET s;
 
    /* Resolve the multicast address */
@@ -397,16 +402,8 @@ static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG famil
     if (multi_address == NULL)
         return FALSE;
 
-    /* Get size of buffer for adapters */
-    retval = GetAdaptersAddresses(family, 0, NULL, NULL, &bufferSize);
-    if (retval != ERROR_BUFFER_OVERFLOW) goto cleanup;
-
-    adapter_addresses = malloc(bufferSize);
-    if (adapter_addresses == NULL) goto cleanup;
-
-    /* Get list of adapters */
-    retval = GetAdaptersAddresses(family, 0, NULL, adapter_addresses, &bufferSize);
-    if (retval != ERROR_SUCCESS) goto cleanup;
+    adapter_addresses = get_adapters(family);
+    if (!adapter_addresses) return FALSE;
 
     for (adapter_addr = adapter_addresses; adapter_addr != NULL; adapter_addr = adapter_addr->Next)
     {
@@ -433,12 +430,9 @@ static BOOL send_udp_multicast_of_type(const char *data, int length, ULONG famil
         closesocket(s);
     }
 
-    ret = TRUE;
-
-cleanup:
     freeaddrinfo(multi_address);
     free(adapter_addresses);
-    return ret;
+    return TRUE;
 }
 
 typedef struct IWSDiscoveryPublisherNotifyImpl {
