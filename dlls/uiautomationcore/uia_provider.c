@@ -27,17 +27,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
 
-static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
+/* Returns S_OK if flag is set, S_FALSE if it is not. */
+static HRESULT msaa_check_acc_state_hres(IAccessible *acc, VARIANT cid, ULONG flag)
 {
     HRESULT hr;
     VARIANT v;
 
     VariantInit(&v);
     hr = IAccessible_get_accState(acc, cid, &v);
-    if (SUCCEEDED(hr) && V_VT(&v) == VT_I4 && (V_I4(&v) & flag))
-        return TRUE;
+    if (SUCCEEDED(hr))
+        hr = ((V_VT(&v) == VT_I4) && (V_I4(&v) & flag)) ? S_OK : S_FALSE;
 
-    return FALSE;
+    return hr;
+}
+
+static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
+{
+    return msaa_check_acc_state_hres(acc, cid, flag) == S_OK;
 }
 
 static HRESULT msaa_acc_get_service(IAccessible *acc, REFGUID sid, REFIID riid, void **service)
@@ -657,23 +663,35 @@ HRESULT WINAPI msaa_provider_GetPropertyValue(IRawElementProviderSimple *iface,
         break;
 
     case UIA_HasKeyboardFocusPropertyId:
-        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
-                    STATE_SYSTEM_FOCUSED));
+        hr = msaa_check_acc_state_hres(msaa_prov->acc, msaa_prov->cid, STATE_SYSTEM_FOCUSED);
+        if (FAILED(hr))
+            return hr;
+
+        variant_init_bool(ret_val, hr == S_OK);
         break;
 
     case UIA_IsKeyboardFocusablePropertyId:
-        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
-                    STATE_SYSTEM_FOCUSABLE));
+        hr = msaa_check_acc_state_hres(msaa_prov->acc, msaa_prov->cid, STATE_SYSTEM_FOCUSABLE);
+        if (FAILED(hr))
+            return hr;
+
+        variant_init_bool(ret_val, hr == S_OK);
         break;
 
     case UIA_IsEnabledPropertyId:
-        variant_init_bool(ret_val, !msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
-                    STATE_SYSTEM_UNAVAILABLE));
+        hr = msaa_check_acc_state_hres(msaa_prov->acc, msaa_prov->cid, STATE_SYSTEM_UNAVAILABLE);
+        if (FAILED(hr))
+            return hr;
+
+        variant_init_bool(ret_val, hr == S_FALSE);
         break;
 
     case UIA_IsPasswordPropertyId:
-        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
-                    STATE_SYSTEM_PROTECTED));
+        hr = msaa_check_acc_state_hres(msaa_prov->acc, msaa_prov->cid, STATE_SYSTEM_PROTECTED);
+        if (FAILED(hr))
+            return hr;
+
+        variant_init_bool(ret_val, hr == S_OK);
         break;
 
     case UIA_NamePropertyId:

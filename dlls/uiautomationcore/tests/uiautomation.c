@@ -4476,6 +4476,14 @@ static void test_uia_prov_from_acc_properties(void)
             ok(check_variant_bool(&v, x), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
             CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
         }
+
+        /* Failure HRESULTs are passed through. */
+        Accessible.state = 0;
+        SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+        hr = IRawElementProviderSimple_GetPropertyValue(elprov, state->prop_id, &v);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+        ok(V_VT(&v) == VT_EMPTY, "Unexpected V_VT %d\n", V_VT(&v));
+        CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
     }
     Accessible.state = 0;
 
