@@ -74,7 +74,6 @@ struct DMUS_PMSGItem {
   DMUS_PMSGItem* next;
   DMUS_PMSGItem* prev;
 
-  REFERENCE_TIME rtItemTime;
   BOOL bInUse;
   DWORD cb;
   DMUS_PMSG pMsg;
@@ -141,14 +140,14 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
       it = it_next;
     }
 
-    for (it = This->head; NULL != it && it->rtItemTime < rtCurTime + dwDec; ) {
+    for (it = This->head; NULL != it && it->pMsg.rtTime < rtCurTime + dwDec; ) {
       it_next = it->next;
       cur = ProceedMsg(This, it);
       free(cur);
       it = it_next;
     }
     if (NULL != it) {
-      timeOut = ( it->rtItemTime - rtCurTime ) + This->rtLatencyTime;
+      timeOut = ( it->pMsg.rtTime - rtCurTime ) + This->rtLatencyTime;
     }
 
 outrefresh:
@@ -425,11 +424,22 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
         hr = DMUS_E_ALREADY_SENT;
     else
     {
-        /* TODO: Valid Flags */
-        /* TODO: DMUS_PMSGF_MUSICTIME */
-        message->rtItemTime = msg->rtTime;
+        if (!(msg->dwFlags & DMUS_PMSGF_MUSICTIME))
+        {
+            if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(iface,
+                    msg->rtTime, &msg->mtTime)))
+                goto done;
+            msg->dwFlags |= DMUS_PMSGF_MUSICTIME;
+        }
+        if (!(msg->dwFlags & DMUS_PMSGF_REFTIME))
+        {
+            if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(iface,
+                    msg->mtTime, &msg->rtTime)))
+                goto done;
+            msg->dwFlags |= DMUS_PMSGF_REFTIME;
+        }
 
-        for (it = *queue; NULL != it && it->rtItemTime < message->rtItemTime; it = it->next)
+        for (it = *queue; NULL != it && it->pMsg.rtTime < message->pMsg.rtTime; it = it->next)
             prev_it = it;
 
         if (!prev_it)
@@ -452,6 +462,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
         hr = S_OK;
     }
 
+done:
     LeaveCriticalSection(&This->safe);
 
     return hr;
