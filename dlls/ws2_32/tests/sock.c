@@ -12236,12 +12236,29 @@ static void test_get_interface_list(void)
     closesocket(s);
 }
 
+static IP_ADAPTER_ADDRESSES *get_adapters(void)
+{
+    ULONG err, size = 4096;
+    IP_ADAPTER_ADDRESSES *tmp, *ret;
+
+    if (!(ret = malloc( size ))) return NULL;
+    err = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, ret, &size );
+    while (err == ERROR_BUFFER_OVERFLOW)
+    {
+        if (!(tmp = realloc( ret, size ))) break;
+        ret = tmp;
+        err = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, ret, &size );
+    }
+    if (err == ERROR_SUCCESS) return ret;
+    free( ret );
+    return NULL;
+}
+
 static void test_bind(void)
 {
     const struct sockaddr_in invalid_addr = {.sin_family = AF_INET, .sin_addr.s_addr = inet_addr("192.0.2.0")};
     const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
-    IP_ADAPTER_ADDRESSES *adapters = NULL, *adapter;
-    ULONG ip_addrs_size = 0;
+    IP_ADAPTER_ADDRESSES *adapters, *adapter;
     struct sockaddr addr;
     SOCKET s, s2;
     int ret, len;
@@ -12313,11 +12330,8 @@ static void test_bind(void)
 
     closesocket(s);
 
-    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapters, &ip_addrs_size);
-    ok(ret == ERROR_BUFFER_OVERFLOW, "got error %u\n", ret);
-    adapters = malloc(ip_addrs_size);
-    ret = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapters, &ip_addrs_size);
-    ok(!ret, "got error %u\n", ret);
+    adapters = get_adapters();
+    ok(adapters != NULL, "can't get adapters\n");
 
     for (adapter = adapters; adapter != NULL; adapter = adapter->Next)
     {
