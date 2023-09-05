@@ -62,24 +62,24 @@ struct performance
     DWORD procThreadId;
     BOOL procThreadTicStarted;
     CRITICAL_SECTION safe;
-    struct DMUS_PMSGItem *head;
-    struct DMUS_PMSGItem *imm_head;
+    struct message *head;
+    struct message *imm_head;
 
     IReferenceClock *master_clock;
     REFERENCE_TIME init_time;
 };
 
-typedef struct DMUS_PMSGItem DMUS_PMSGItem;
-struct DMUS_PMSGItem {
-  DMUS_PMSGItem* next;
-  DMUS_PMSGItem* prev;
+struct message
+{
+    struct message *next;
+    struct message *prev;
 
-  BOOL bInUse;
-  DWORD cb;
-  DMUS_PMSG pMsg;
+    BOOL bInUse;
+    DWORD cb;
+    DMUS_PMSG pMsg;
 };
 
-#define DMUS_PMSGToItem(pMSG)   ((DMUS_PMSGItem *)(((unsigned char *)pMSG) - offsetof(DMUS_PMSGItem, pMsg)))
+#define DMUS_PMSGToItem(pMSG)   ((struct message *)(((unsigned char *)pMSG) - offsetof(struct message, pMsg)))
 #define DMUS_ItemRemoveFromQueue(This,pItem) \
 {\
   if (pItem->prev) pItem->prev->next = pItem->next;\
@@ -95,7 +95,8 @@ struct DMUS_PMSGItem {
 #define PROCESSMSG_ADD             (WM_APP + 4)
 
 
-static DMUS_PMSGItem* ProceedMsg(struct performance *This, DMUS_PMSGItem* cur) {
+static struct message *ProceedMsg(struct performance *This, struct message *cur)
+{
   if (cur->pMsg.dwType == DMUS_PMSGT_NOTIFICATION) {
     SetEvent(This->hNotification);
   }	
@@ -117,9 +118,9 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
   MSG msg;
   HRESULT hr;
   REFERENCE_TIME rtCurTime;
-  DMUS_PMSGItem* it = NULL;
-  DMUS_PMSGItem* cur = NULL;
-  DMUS_PMSGItem* it_next = NULL;
+  struct message *it = NULL;
+  struct message *cur = NULL;
+  struct message *it_next = NULL;
 
   while (TRUE) {
     DWORD dwDec = This->rtLatencyTime + This->dwBumperLength;
@@ -401,10 +402,10 @@ static HRESULT WINAPI performance_GetBumperLength(IDirectMusicPerformance8 *ifac
 static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    DMUS_PMSGItem *message;
-    DMUS_PMSGItem *it = NULL;
-    DMUS_PMSGItem *prev_it = NULL;
-    DMUS_PMSGItem **queue;
+    struct message *message;
+    struct message *it = NULL;
+    struct message *prev_it = NULL;
+    struct message **queue;
     HRESULT hr;
 
     FIXME("(%p, %p): semi-stub\n", This, msg);
@@ -535,14 +536,14 @@ static HRESULT WINAPI performance_GetTime(IDirectMusicPerformance8 *iface, REFER
 static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULONG size, DMUS_PMSG **msg)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    DMUS_PMSGItem *message;
+    struct message *message;
 
     TRACE("(%p, %ld, %p)\n", This, size, msg);
 
     if (!msg) return E_POINTER;
     if (size < sizeof(DMUS_PMSG)) return E_INVALIDARG;
 
-    if (!(message = calloc(1, size - sizeof(DMUS_PMSG) + sizeof(DMUS_PMSGItem)))) return E_OUTOFMEMORY;
+    if (!(message = calloc(1, size - sizeof(DMUS_PMSG) + sizeof(struct message)))) return E_OUTOFMEMORY;
     message->pMsg.dwSize = size;
     *msg = &message->pMsg;
 
@@ -552,7 +553,7 @@ static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULO
 static HRESULT WINAPI performance_FreePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    DMUS_PMSGItem *message;
+    struct message *message;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", This, msg);
