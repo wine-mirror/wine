@@ -81,7 +81,6 @@ struct DMUS_PMSGItem {
 };
 
 #define DMUS_PMSGToItem(pMSG)   ((DMUS_PMSGItem*) (((unsigned char*) pPMSG) -  offsetof(DMUS_PMSGItem, pMsg)))
-#define DMUS_ItemToPMSG(pItem)  (&(pItem->pMsg))
 #define DMUS_ItemRemoveFromQueue(This,pItem) \
 {\
   if (pItem->prev) pItem->prev->next = pItem->next;\
@@ -515,23 +514,21 @@ static HRESULT WINAPI performance_GetTime(IDirectMusicPerformance8 *iface, REFER
     return hr;
 }
 
-static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULONG cb, DMUS_PMSG **ppPMSG)
+static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULONG size, DMUS_PMSG **msg)
 {
-  struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-  DMUS_PMSGItem* pItem = NULL;
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    DMUS_PMSGItem *message;
 
-  FIXME("(%p, %ld, %p): stub\n", This, cb, ppPMSG);
+    TRACE("(%p, %ld, %p)\n", This, size, msg);
 
-  if (sizeof(DMUS_PMSG) > cb) {
-    return E_INVALIDARG;
-  }
-  if (NULL == ppPMSG) {
-    return E_POINTER;
-  }
-  if (!(pItem = calloc(1, cb - sizeof(DMUS_PMSG) + sizeof(DMUS_PMSGItem)))) return E_OUTOFMEMORY;
-  pItem->pMsg.dwSize = cb;
-  *ppPMSG = DMUS_ItemToPMSG(pItem);
-  return S_OK;
+    if (!msg) return E_POINTER;
+    if (size < sizeof(DMUS_PMSG)) return E_INVALIDARG;
+
+    if (!(message = calloc(1, size - sizeof(DMUS_PMSG) + sizeof(DMUS_PMSGItem)))) return E_OUTOFMEMORY;
+    message->pMsg.dwSize = size;
+    *msg = &message->pMsg;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_FreePMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *pPMSG)

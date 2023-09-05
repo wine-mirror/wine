@@ -1747,7 +1747,7 @@ static void test_performance_pmsg(void)
 
 
     hr = IDirectMusicPerformance_AllocPMsg(performance, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(DMUS_PMSG) - 1, &msg);
     ok(hr == E_INVALIDARG, "got %#lx\n", hr);
 
