@@ -62,8 +62,8 @@ struct performance
     DWORD procThreadId;
     BOOL procThreadTicStarted;
     CRITICAL_SECTION safe;
-    struct message *head;
-    struct message *imm_head;
+    struct list immediate_messages;
+    struct list queued_messages;
 
     IReferenceClock *master_clock;
     REFERENCE_TIME init_time;
@@ -71,23 +71,13 @@ struct performance
 
 struct message
 {
-    struct message *next;
-    struct message *prev;
-
+    struct list entry;
     BOOL bInUse;
     DWORD cb;
     DMUS_PMSG pMsg;
 };
 
 #define DMUS_PMSGToItem(pMSG)   ((struct message *)(((unsigned char *)pMSG) - offsetof(struct message, pMsg)))
-#define DMUS_ItemRemoveFromQueue(This,pItem) \
-{\
-  if (pItem->prev) pItem->prev->next = pItem->next;\
-  if (pItem->next) pItem->next->prev = pItem->prev;\
-  if (This->head == pItem) This->head = pItem->next;\
-  if (This->imm_head == pItem) This->imm_head = pItem->next;\
-  pItem->bInUse = FALSE;\
-}
 
 #define PROCESSMSG_START           (WM_APP + 0)
 #define PROCESSMSG_EXIT            (WM_APP + 1)
@@ -100,7 +90,8 @@ static struct message *ProceedMsg(struct performance *This, struct message *cur)
   if (cur->pMsg.dwType == DMUS_PMSGT_NOTIFICATION) {
     SetEvent(This->hNotification);
   }	
-  DMUS_ItemRemoveFromQueue(This, cur);
+  list_remove(&cur->entry);
+  cur->bInUse = FALSE;
   switch (cur->pMsg.dwType) {
   case DMUS_PMSGT_WAVE:
   case DMUS_PMSGT_TEMPO:   
@@ -118,9 +109,8 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
   MSG msg;
   HRESULT hr;
   REFERENCE_TIME rtCurTime;
-  struct message *it = NULL;
+  struct message *message, *next;
   struct message *cur = NULL;
-  struct message *it_next = NULL;
 
   while (TRUE) {
     DWORD dwDec = This->rtLatencyTime + This->dwBumperLength;
@@ -134,21 +124,18 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
       goto outrefresh;
     }
     
-    for (it = This->imm_head; NULL != it; ) {
-      it_next = it->next;
-      cur = ProceedMsg(This, it);
-      free(cur);
-      it = it_next;
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->immediate_messages, struct message, entry)
+    {
+        cur = ProceedMsg(This, message);
+        free(cur);
     }
 
-    for (it = This->head; NULL != it && it->pMsg.rtTime < rtCurTime + dwDec; ) {
-      it_next = it->next;
-      cur = ProceedMsg(This, it);
-      free(cur);
-      it = it_next;
-    }
-    if (NULL != it) {
-      timeOut = ( it->pMsg.rtTime - rtCurTime ) + This->rtLatencyTime;
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->queued_messages, struct message, entry)
+    {
+        timeOut = (message->pMsg.rtTime - rtCurTime) + This->rtLatencyTime;
+        if (message->pMsg.rtTime >= rtCurTime + dwDec) break;
+        cur = ProceedMsg(This, message);
+        free(cur);
     }
 
 outrefresh:
@@ -402,10 +389,8 @@ static HRESULT WINAPI performance_GetBumperLength(IDirectMusicPerformance8 *ifac
 static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS_PMSG *msg)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    struct message *message;
-    struct message *it = NULL;
-    struct message *prev_it = NULL;
-    struct message **queue;
+    struct message *message, *next;
+    struct list *queue;
     HRESULT hr;
 
     FIXME("(%p, %p): semi-stub\n", This, msg);
@@ -414,8 +399,8 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
     if (!This->dmusic) return DMUS_E_NO_MASTER_CLOCK;
     if (!(msg->dwFlags & (DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_REFTIME))) return E_INVALIDARG;
 
-    if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE) queue = &This->imm_head;
-    else queue = &This->head;
+    if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE) queue = &This->immediate_messages;
+    else queue = &This->queued_messages;
 
     message = DMUS_PMSGToItem(msg);
 
@@ -440,24 +425,9 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
             msg->dwFlags |= DMUS_PMSGF_REFTIME;
         }
 
-        for (it = *queue; NULL != it && it->pMsg.rtTime < message->pMsg.rtTime; it = it->next)
-            prev_it = it;
-
-        if (!prev_it)
-        {
-            message->prev = NULL;
-            if (*queue) message->next = (*queue)->next;
-            /*assert( NULL == message->next->prev );*/
-            if (message->next) message->next->prev = message;
-            *queue = message;
-        }
-        else
-        {
-            message->prev = prev_it;
-            message->next = prev_it->next;
-            prev_it->next = message;
-            if (message->next) message->next->prev = message;
-        }
+        LIST_FOR_EACH_ENTRY(next, queue, struct message, entry)
+            if (next->pMsg.rtTime >= message->pMsg.rtTime) break;
+        list_add_before(&next->entry, &message->entry);
 
         message->bInUse = TRUE;
         hr = S_OK;
@@ -1516,6 +1486,9 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     InitializeCriticalSection(&obj->safe);
     obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": performance->safe");
     wine_rb_init(&obj->pchannels, pchannel_block_compare);
+
+    list_init(&obj->immediate_messages);
+    list_init(&obj->queued_messages);
 
     obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
     obj->dwBumperLength =   50; /* 50 ms default */
