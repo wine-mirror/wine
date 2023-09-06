@@ -24,8 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(objsel);
 
-LONG dll_refs = 0;
-
 /***********************************************************************
  *		DllGetClassObject (OBJSEL.@)
  */
@@ -40,15 +38,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     FIXME("CLSID: %s, IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-
-/***********************************************************************
- *		DllCanUnloadNow (OBJSEL.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return dll_refs != 0 ? S_FALSE : S_OK;
 }
 
 
@@ -74,20 +63,12 @@ static inline IDsObjectPickerImpl *impl_from_IDsObjectPicker(IDsObjectPicker *if
 static ULONG WINAPI OBJSEL_IDsObjectPicker_AddRef(IDsObjectPicker * iface)
 {
     IDsObjectPickerImpl *This = impl_from_IDsObjectPicker(iface);
-    ULONG ref;
 
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
 
-    ref = InterlockedIncrement(&This->ref);
-
-    if (ref == 1)
-    {
-        InterlockedIncrement(&dll_refs);
-    }
-
-    return ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 
@@ -106,10 +87,7 @@ static ULONG WINAPI OBJSEL_IDsObjectPicker_Release(IDsObjectPicker * iface)
     ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
-    {
-        InterlockedDecrement(&dll_refs);
         OBJSEL_IDsObjectPicker_Destroy(This);
-    }
 
     return ref;
 }

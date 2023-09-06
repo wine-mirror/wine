@@ -66,20 +66,12 @@ static HRESULT WINAPI OBJSEL_IClassFactory_QueryInterface(
 static ULONG WINAPI OBJSEL_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
     ClassFactoryImpl *This = impl_from_IClassFactory(iface);
-    ULONG ref;
     
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
     
-    ref = InterlockedIncrement(&This->ref);
-    
-    if (ref == 1)
-    {
-        InterlockedIncrement(&dll_refs);
-    }
-
-    return ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 
@@ -89,20 +81,12 @@ static ULONG WINAPI OBJSEL_IClassFactory_AddRef(LPCLASSFACTORY iface)
 static ULONG WINAPI OBJSEL_IClassFactory_Release(LPCLASSFACTORY iface)
 {
     ClassFactoryImpl *This = impl_from_IClassFactory(iface);
-    ULONG ref;
     
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
     
-    ref = InterlockedDecrement(&This->ref);
-    
-    if (ref == 0)
-    {
-        InterlockedDecrement(&dll_refs);
-    }
-
-    return ref;
+    return InterlockedDecrement(&This->ref);
 }
 
 

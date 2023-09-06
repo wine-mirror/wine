@@ -24,12 +24,6 @@
 #include "objsel.h"
 
 /**********************************************************************
- * Dll lifetime tracking declaration for objsel.dll
- */
-
-extern LONG dll_refs DECLSPEC_HIDDEN;
-
-/**********************************************************************
  * ClassFactory declaration for objsel.dll
  */
 typedef struct
