@@ -24,14 +24,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-/*****************************************************************************
- * IDirectMusicCollectionImpl implementation
- */
-typedef struct IDirectMusicCollectionImpl {
+struct collection
+{
     IDirectMusicCollection IDirectMusicCollection_iface;
     struct dmobject dmobj;
     LONG ref;
-    /* IDirectMusicCollectionImpl fields */
+
     IStream *pStm; /* stream from which we load collection and later instruments */
     LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
     LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
@@ -42,22 +40,22 @@ typedef struct IDirectMusicCollectionImpl {
     POOLCUE *pPoolCues;
     /* instruments */
     struct list Instruments;
-} IDirectMusicCollectionImpl;
+};
 
-static inline IDirectMusicCollectionImpl *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
+static inline struct collection *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IDirectMusicCollection_iface);
+    return CONTAINING_RECORD(iface, struct collection, IDirectMusicCollection_iface);
 }
 
-static inline IDirectMusicCollectionImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct collection *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct collection, dmobj.IPersistStream_iface);
 }
 
 static HRESULT WINAPI collection_QueryInterface(IDirectMusicCollection *iface,
         REFIID riid, void **ret_iface)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    struct collection *This = impl_from_IDirectMusicCollection(iface);
 
     TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
@@ -81,7 +79,7 @@ static HRESULT WINAPI collection_QueryInterface(IDirectMusicCollection *iface,
 
 static ULONG WINAPI collection_AddRef(IDirectMusicCollection *iface)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    struct collection *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -91,7 +89,7 @@ static ULONG WINAPI collection_AddRef(IDirectMusicCollection *iface)
 
 static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    struct collection *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -106,7 +104,7 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
 static HRESULT WINAPI collection_GetInstrument(IDirectMusicCollection *iface,
         DWORD patch, IDirectMusicInstrument **instrument)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    struct collection *This = impl_from_IDirectMusicCollection(iface);
     DMUS_PRIVATE_INSTRUMENTENTRY *inst_entry;
     struct list *list_entry;
     DWORD inst_patch;
@@ -133,7 +131,7 @@ static HRESULT WINAPI collection_GetInstrument(IDirectMusicCollection *iface,
 static HRESULT WINAPI collection_EnumInstrument(IDirectMusicCollection *iface,
         DWORD index, DWORD *patch, LPWSTR name, DWORD name_length)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
+    struct collection *This = impl_from_IDirectMusicCollection(iface);
     DWORD i = 0;
     DMUS_PRIVATE_INSTRUMENTENTRY *inst_entry;
     struct list *list_entry;
@@ -212,7 +210,7 @@ static const IDirectMusicObjectVtbl collection_object_vtbl =
 static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
         IStream *stream)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
+    struct collection *This = impl_from_IPersistStream(iface);
     DMUS_PRIVATE_CHUNK chunk;
     DWORD StreamSize, StreamCount, ListSize[2], ListCount[2];
     LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -521,20 +519,20 @@ static const IPersistStreamVtbl collection_stream_vtbl =
 
 HRESULT collection_create(IUnknown **ret_iface)
 {
-    IDirectMusicCollectionImpl *obj;
+    struct collection *collection;
 
     *ret_iface = NULL;
-    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-    obj->IDirectMusicCollection_iface.lpVtbl = &collection_vtbl;
-    obj->ref = 1;
-    dmobject_init(&obj->dmobj, &CLSID_DirectMusicCollection,
-            (IUnknown *)&obj->IDirectMusicCollection_iface);
-    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &collection_object_vtbl;
-    obj->dmobj.IPersistStream_iface.lpVtbl = &collection_stream_vtbl;
+    if (!(collection = calloc(1, sizeof(*collection)))) return E_OUTOFMEMORY;
+    collection->IDirectMusicCollection_iface.lpVtbl = &collection_vtbl;
+    collection->ref = 1;
+    dmobject_init(&collection->dmobj, &CLSID_DirectMusicCollection,
+            (IUnknown *)&collection->IDirectMusicCollection_iface);
+    collection->dmobj.IDirectMusicObject_iface.lpVtbl = &collection_object_vtbl;
+    collection->dmobj.IPersistStream_iface.lpVtbl = &collection_stream_vtbl;
 
-    list_init(&obj->Instruments);
+    list_init(&collection->Instruments);
 
-    TRACE("Created DirectMusicCollection %p\n", obj);
-    *ret_iface = (IUnknown *)&obj->IDirectMusicCollection_iface;
+    TRACE("Created DirectMusicCollection %p\n", collection);
+    *ret_iface = (IUnknown *)&collection->IDirectMusicCollection_iface;
     return S_OK;
 }
