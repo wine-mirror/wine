@@ -29,15 +29,16 @@ struct synth_sink
 {
     IDirectMusicSynthSink IDirectMusicSynthSink_iface;
     IKsControl IKsControl_iface;
+    IReferenceClock IReferenceClock_iface;
     LONG ref;
 
-    IReferenceClock *latency_clock;
     IReferenceClock *master_clock;
     IDirectMusicSynth *synth;   /* No reference hold! */
     IDirectSound *dsound;
 
     BOOL active;
     REFERENCE_TIME activate_time;
+    REFERENCE_TIME latency_time;
 };
 
 static inline struct synth_sink *impl_from_IDirectMusicSynthSink(IDirectMusicSynthSink *iface)
@@ -74,6 +75,7 @@ static HRESULT synth_sink_activate(struct synth_sink *This)
     if (This->active) return DMUS_E_SYNTHACTIVE;
 
     if (FAILED(hr = IReferenceClock_GetTime(This->master_clock, &This->activate_time))) return hr;
+    This->latency_time = This->activate_time;
 
     This->active = TRUE;
     return S_OK;
@@ -131,8 +133,6 @@ static ULONG WINAPI synth_sink_Release(IDirectMusicSynthSink *iface)
     TRACE("(%p): new ref = %lu\n", This, ref);
 
     if (!ref) {
-        if (This->latency_clock)
-            IReferenceClock_Release(This->latency_clock);
         if (This->master_clock)
             IReferenceClock_Release(This->master_clock);
         free(This);
@@ -182,8 +182,8 @@ static HRESULT WINAPI synth_sink_GetLatencyClock(IDirectMusicSynthSink *iface,
     if (!clock)
         return E_POINTER;
 
-    *clock = This->latency_clock;
-    IReferenceClock_AddRef(This->latency_clock);
+    *clock = &This->IReferenceClock_iface;
+    IReferenceClock_AddRef(*clock);
 
     return S_OK;
 }
@@ -371,10 +371,87 @@ static const IKsControlVtbl synth_sink_control =
     synth_sink_control_KsEvent,
 };
 
+static inline struct synth_sink *impl_from_IReferenceClock(IReferenceClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct synth_sink, IReferenceClock_iface);
+}
+
+static HRESULT WINAPI latency_clock_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(iid), out);
+
+    if (IsEqualIID(iid, &IID_IUnknown)
+            || IsEqualIID(iid, &IID_IReferenceClock))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    FIXME("no interface for %s\n", debugstr_dmguid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI latency_clock_AddRef(IReferenceClock *iface)
+{
+    struct synth_sink *This = impl_from_IReferenceClock(iface);
+    return IDirectMusicSynthSink_AddRef(&This->IDirectMusicSynthSink_iface);
+}
+
+static ULONG WINAPI latency_clock_Release(IReferenceClock *iface)
+{
+    struct synth_sink *This = impl_from_IReferenceClock(iface);
+    return IDirectMusicSynthSink_Release(&This->IDirectMusicSynthSink_iface);
+}
+
+static HRESULT WINAPI latency_clock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    struct synth_sink *This = impl_from_IReferenceClock(iface);
+
+    TRACE("(%p, %p)\n", iface, time);
+
+    if (!time) return E_INVALIDARG;
+    if (!This->active) return E_FAIL;
+    *time = This->latency_time;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI latency_clock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base,
+        REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
+{
+    FIXME("(%p, %I64d, %I64d, %#Ix, %p): stub\n", iface, base, offset, event, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI latency_clock_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME start,
+        REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
+{
+    FIXME("(%p, %I64d, %I64d, %#Ix, %p): stub\n", iface, start, period, semaphore, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI latency_clock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
+{
+    FIXME("(%p, %#Ix): stub\n", iface, cookie);
+    return E_NOTIMPL;
+}
+
+static const IReferenceClockVtbl latency_clock_vtbl =
+{
+    latency_clock_QueryInterface,
+    latency_clock_AddRef,
+    latency_clock_Release,
+    latency_clock_GetTime,
+    latency_clock_AdviseTime,
+    latency_clock_AdvisePeriodic,
+    latency_clock_Unadvise,
+};
+
 HRESULT synth_sink_create(IUnknown **ret_iface)
 {
     struct synth_sink *obj;
-    HRESULT hr;
 
     TRACE("(%p)\n", ret_iface);
 
@@ -382,14 +459,8 @@ HRESULT synth_sink_create(IUnknown **ret_iface)
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicSynthSink_iface.lpVtbl = &synth_sink_vtbl;
     obj->IKsControl_iface.lpVtbl = &synth_sink_control;
+    obj->IReferenceClock_iface.lpVtbl = &latency_clock_vtbl;
     obj->ref = 1;
-
-    hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (void **)&obj->latency_clock);
-    if (FAILED(hr))
-    {
-        free(obj);
-        return hr;
-    }
 
     TRACE("Created DirectMusicSynthSink %p\n", obj);
     *ret_iface = (IUnknown *)&obj->IDirectMusicSynthSink_iface;

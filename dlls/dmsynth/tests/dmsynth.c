@@ -1222,12 +1222,12 @@ static void test_IDirectMusicSynthSink(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(latency_clock != clock, "got same clock\n");
     ref = get_refcount(sink);
-    todo_wine ok(ref == 2, "got %#lx\n", ref);
+    ok(ref == 2, "got %#lx\n", ref);
 
     hr = IReferenceClock_GetTime(latency_clock, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
     hr = IReferenceClock_GetTime(latency_clock, &time);
-    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    ok(hr == E_FAIL, "got %#lx\n", hr);
 
     hr = IDirectMusicSynthSink_Init(sink, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -1255,7 +1255,7 @@ static void test_IDirectMusicSynthSink(void)
     hr = IDirectMusicSynthSink_SetMasterClock(sink, clock);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IReferenceClock_GetTime(latency_clock, &time);
-    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    ok(hr == E_FAIL, "got %#lx\n", hr);
     hr = IDirectMusicSynthSink_Activate(sink, TRUE);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynthSink_Activate(sink, TRUE);
@@ -1283,8 +1283,8 @@ static void test_IDirectMusicSynthSink(void)
     /* latency clock now works fine */
     tmp_time = time;
     hr = IReferenceClock_GetTime(latency_clock, &tmp_time);
-    todo_wine_if(hr == S_FALSE) ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine_if(tmp_time <= time) ok(tmp_time > time, "got %I64d\n", tmp_time - time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(tmp_time > time, "got %I64d\n", tmp_time - time);
     ok(tmp_time - time <= 2000000, "got %I64d\n", tmp_time - time);
 
     /* setting the clock while active is fine */
