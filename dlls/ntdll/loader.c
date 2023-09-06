@@ -3217,9 +3217,7 @@ done:
  */
 NTSTATUS WINAPI __wine_ctrl_routine( void *arg )
 {
-    DWORD ret = 0;
-
-    if (pCtrlRoutine && NtCurrentTeb()->Peb->ProcessParameters->ConsoleHandle) ret = pCtrlRoutine( arg );
+    DWORD ret = pCtrlRoutine ? pCtrlRoutine( arg ) : 0;
     RtlExitUserThread( ret );
 }
 
