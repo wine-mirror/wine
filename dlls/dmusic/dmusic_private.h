@@ -49,8 +49,6 @@ typedef struct IDirectMusicBufferImpl IDirectMusicBufferImpl;
 typedef struct IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrumentImpl;
 typedef struct IReferenceClockImpl IReferenceClockImpl;
 
-typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
-
 /*****************************************************************************
  * Some stuff to make my life easier :=)
  */
@@ -175,15 +173,11 @@ typedef struct _DMUS_PRIVATE_POOLCUE {
 	struct list entry; /* for listing elements */
 } DMUS_PRIVATE_POOLCUE, *LPDMUS_PRIVATE_POOLCUE;
 
-/*****************************************************************************
- * IDirectMusicInstrumentImpl implementation structure
- */
-struct IDirectMusicInstrumentImpl {
-    /* IUnknown fields */
+struct instrument
+{
     IDirectMusicInstrument IDirectMusicInstrument_iface;
     LONG ref;
 
-    /* IDirectMusicInstrumentImpl fields */
     LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
     ULONG length; /* Length of the instrument in the stream */
     GUID id;
@@ -196,9 +190,9 @@ struct IDirectMusicInstrumentImpl {
     instrument_articulation *articulations;
 };
 
-static inline IDirectMusicInstrumentImpl *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
+static inline struct instrument *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicInstrumentImpl, IDirectMusicInstrument_iface);
+    return CONTAINING_RECORD(iface, struct instrument, IDirectMusicInstrument_iface);
 }
 
 extern HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream);

@@ -140,7 +140,7 @@ static HRESULT WINAPI collection_EnumInstrument(IDirectMusicCollection *iface,
     LIST_FOR_EACH(list_entry, &This->Instruments) {
         inst_entry = LIST_ENTRY(list_entry, DMUS_PRIVATE_INSTRUMENTENTRY, entry);
         if (i == index) {
-            IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(inst_entry->pInstrument);
+            struct instrument *instrument = impl_from_IDirectMusicInstrument(inst_entry->pInstrument);
             IDirectMusicInstrument_GetPatch(inst_entry->pInstrument, patch);
             if (name) {
                 length = min(lstrlenW(instrument->wszName), name_length - 1);
@@ -379,7 +379,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                                             /* Only way to create this one... even M$ does it discretely */
                                             instrument_create(&new_instrument->pInstrument);
                                             {
-                                                IDirectMusicInstrumentImpl *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
+                                                struct instrument *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
                                                 /* Store offset and length, they will be needed when loading the instrument */
                                                 liMove.QuadPart = 0;
                                                 IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dlibInstrumentPosition);

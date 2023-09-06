@@ -266,7 +266,7 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
         IDirectMusicDownloadedInstrument **downloaded_instrument, DMUS_NOTERANGE *note_ranges, DWORD num_note_ranges)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
-    IDirectMusicInstrumentImpl *instrument_object;
+    struct instrument *instrument_object;
     HRESULT ret;
     BOOL on_heap;
     HANDLE download;

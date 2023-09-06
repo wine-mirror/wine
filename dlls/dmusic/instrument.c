@@ -57,7 +57,7 @@ static HRESULT WINAPI instrument_QueryInterface(LPDIRECTMUSICINSTRUMENT iface, R
 
 static ULONG WINAPI instrument_AddRef(LPDIRECTMUSICINSTRUMENT iface)
 {
-    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -67,7 +67,7 @@ static ULONG WINAPI instrument_AddRef(LPDIRECTMUSICINSTRUMENT iface)
 
 static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 {
-    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
@@ -88,7 +88,7 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 
 static HRESULT WINAPI instrument_GetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch)
 {
-    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
 
     TRACE("(%p)->(%p)\n", This, pdwPatch);
 
@@ -99,7 +99,7 @@ static HRESULT WINAPI instrument_GetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD* 
 
 static HRESULT WINAPI instrument_SetPatch(LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch)
 {
-    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
 
     TRACE("(%p, %ld): stub\n", This, dwPatch);
 
@@ -119,15 +119,15 @@ static const IDirectMusicInstrumentVtbl instrument_vtbl =
 
 HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
 {
-    IDirectMusicInstrumentImpl *dminst;
+    struct instrument *instrument;
 
     *ret_iface = NULL;
-    if (!(dminst = calloc(1, sizeof(*dminst)))) return E_OUTOFMEMORY;
-    dminst->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
-    dminst->ref = 1;
+    if (!(instrument = calloc(1, sizeof(*instrument)))) return E_OUTOFMEMORY;
+    instrument->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
+    instrument->ref = 1;
 
-    TRACE("Created DirectMusicInstrument %p\n", dminst);
-    *ret_iface = &dminst->IDirectMusicInstrument_iface;
+    TRACE("Created DirectMusicInstrument %p\n", instrument);
+    *ret_iface = &instrument->IDirectMusicInstrument_iface;
     return S_OK;
 }
 
@@ -172,7 +172,7 @@ static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
     return ret;
 }
 
-static HRESULT load_region(IDirectMusicInstrumentImpl *This, IStream *stream, instrument_region *region, ULONG length)
+static HRESULT load_region(struct instrument *This, IStream *stream, instrument_region *region, ULONG length)
 {
     HRESULT ret;
     DMUS_PRIVATE_CHUNK chunk;
@@ -242,7 +242,7 @@ static HRESULT load_region(IDirectMusicInstrumentImpl *This, IStream *stream, in
     return S_OK;
 }
 
-static HRESULT load_articulation(IDirectMusicInstrumentImpl *This, IStream *stream, ULONG length)
+static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG length)
 {
     HRESULT ret;
     instrument_articulation *articulation;
@@ -278,7 +278,7 @@ static HRESULT load_articulation(IDirectMusicInstrumentImpl *This, IStream *stre
 /* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
 HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
 {
-    IDirectMusicInstrumentImpl *This = impl_from_IDirectMusicInstrument(iface);
+    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
     HRESULT hr;
     DMUS_PRIVATE_CHUNK chunk;
     ULONG i = 0;
