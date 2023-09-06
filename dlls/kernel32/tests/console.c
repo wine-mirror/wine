@@ -5153,6 +5153,142 @@ static void test_CreateProcessCUI(void)
     SetStdHandle(STD_ERROR_HANDLE, hstd[2]);
 }
 
+#define NO_EVENT 0xfe
+
+static HANDLE mch_child_kill_event;
+static DWORD  mch_child_event = NO_EVENT;
+static BOOL WINAPI mch_child(DWORD event)
+{
+    mch_child_event = event;
+    SetEvent(mch_child_kill_event);
+    return TRUE;
+}
+
+static void test_CtrlHandlerSubsystem(void)
+{
+    static char guiexec[MAX_PATH];
+    static char cuiexec[MAX_PATH];
+
+    static struct
+    {
+        /* input */
+        BOOL use_cui;
+        DWORD cp_flags;
+        enum pgid {PGID_PARENT, PGID_ZERO, PGID_CHILD} pgid_kind;
+        /* output */
+        unsigned child_event;
+    }
+    tests[] =
+    {
+/*  0 */ {FALSE, 0,                             PGID_PARENT,      NO_EVENT},
+         {FALSE, 0,                             PGID_ZERO,        NO_EVENT},
+         {FALSE, CREATE_NEW_PROCESS_GROUP,      PGID_CHILD,       NO_EVENT},
+         {FALSE, CREATE_NEW_PROCESS_GROUP,      PGID_PARENT,      NO_EVENT},
+         {FALSE, CREATE_NEW_PROCESS_GROUP,      PGID_ZERO,        NO_EVENT},
+/*  5 */ {TRUE,  0,                             PGID_PARENT,      CTRL_C_EVENT},
+         {TRUE,  0,                             PGID_ZERO,        CTRL_C_EVENT},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP,      PGID_CHILD,       NO_EVENT},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP,      PGID_PARENT,      NO_EVENT},
+         {TRUE,  CREATE_NEW_PROCESS_GROUP,      PGID_ZERO,        NO_EVENT},
+/* 10 */ {TRUE,  CREATE_NEW_CONSOLE,            PGID_PARENT,      NO_EVENT},
+         {TRUE,  CREATE_NEW_CONSOLE,            PGID_ZERO,        NO_EVENT},
+         {TRUE,  DETACHED_PROCESS,              PGID_PARENT,      NO_EVENT},
+         {TRUE,  DETACHED_PROCESS,              PGID_ZERO,        NO_EVENT},
+    };
+    SECURITY_ATTRIBUTES inheritable_attr = { sizeof(inheritable_attr), NULL, TRUE };
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION info;
+    char buf[MAX_PATH];
+    DWORD exit_code;
+    HANDLE event_child;
+    char **argv;
+    DWORD saved_console_flags;
+    DWORD pgid;
+    BOOL ret;
+    DWORD res;
+    int i;
+
+    winetest_get_mainargs(&argv);
+    GetTempPathA(ARRAY_SIZE(guiexec), guiexec);
+    strcat(guiexec, "console_gui.exe");
+    copy_change_subsystem(argv[0], guiexec, IMAGE_SUBSYSTEM_WINDOWS_GUI);
+    GetTempPathA(ARRAY_SIZE(cuiexec), cuiexec);
+    strcat(cuiexec, "console_cui.exe");
+    copy_change_subsystem(argv[0], cuiexec, IMAGE_SUBSYSTEM_WINDOWS_CUI);
+
+    event_child = CreateEventA(&inheritable_attr, FALSE, FALSE, NULL);
+    ok(event_child != NULL, "Couldn't create event\n");
+
+    saved_console_flags = RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags;
+
+    /* protect self against ctrl-c, but don't mask it on child */
+    ret = SetConsoleCtrlHandler(NULL, FALSE);
+    ret = SetConsoleCtrlHandler(mydummych, TRUE);
+    ok(ret, "Couldn't set ctrl-c handler flag\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("test #%u", i);
+
+        res = snprintf(buf, ARRAY_SIZE(buf), "\"%s\" console ctrl_handler %p", tests[i].use_cui ? cuiexec : guiexec, event_child);
+        ok((LONG)res >= 0 && res < ARRAY_SIZE(buf), "Truncated string %s (%lu)\n", buf, res);
+
+        ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, tests[i].cp_flags,
+                             NULL, NULL, &si, &info);
+        ok(ret, "CreateProcess failed: %lu %s\n", GetLastError(), tests[i].use_cui ? cuiexec : guiexec);
+
+        res = WaitForSingleObject(event_child, 5000);
+        ok(res == WAIT_OBJECT_0, "Child didn't init %lu %p\n", res, event_child);
+
+        switch (tests[i].pgid_kind)
+        {
+        case PGID_PARENT:
+            pgid = RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId;
+            break;
+        case PGID_CHILD:
+            ok((tests[i].cp_flags & CREATE_NEW_PROCESS_GROUP) != 0,
+               "PGID should only be used with new process groupw\n");
+            pgid = info.dwProcessId;
+            break;
+        case PGID_ZERO:
+            pgid = 0;
+            break;
+        default:
+            ok(0, "Unexpected pgid kind %u\n", tests[i].pgid_kind);
+            pgid = 0;
+        }
+
+        ret = GenerateConsoleCtrlEvent(CTRL_C_EVENT, pgid);
+        ok(ret || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* Win7 */,
+           "GenerateConsoleCtrlEvent failed: %lu\n", GetLastError());
+
+        res = WaitForSingleObject(info.hProcess, 2000);
+        ok(res == WAIT_OBJECT_0, "Expecting child to be terminated\n");
+
+        if (ret)
+        {
+            ret = GetExitCodeProcess(info.hProcess, &exit_code);
+            ok(ret, "Couldn't get exit code\n");
+
+            ok(tests[i].child_event == exit_code, "Unexpected exit code %#lx, instead of %#x\n",
+               exit_code, tests[i].child_event);
+        }
+
+        CloseHandle(info.hProcess);
+        CloseHandle(info.hThread);
+        winetest_pop_context();
+    }
+
+    CloseHandle(event_child);
+
+    RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags = saved_console_flags;
+    ret = SetConsoleCtrlHandler(mydummych, FALSE);
+    ok(ret, "Couldn't remove ctrl-c handler flag\n");
+
+    DeleteFileA(guiexec);
+    DeleteFileA(cuiexec);
+}
+
 START_TEST(console)
 {
     HANDLE hConIn, hConOut, revert_output = NULL, unbound_output;
@@ -5179,6 +5315,21 @@ START_TEST(console)
     {
         test_AllocConsole_child();
         return;
+    }
+
+    if (argc == 4 && !strcmp(argv[2], "ctrl_handler"))
+    {
+        HANDLE event;
+
+        SetConsoleCtrlHandler(mch_child, TRUE);
+        mch_child_kill_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+        ok(mch_child_kill_event != NULL, "Couldn't create event\n");
+        sscanf(argv[3], "%p", &event);
+        ret = SetEvent(event);
+        ok(ret, "SetEvent failed\n");
+
+        WaitForSingleObject(mch_child_kill_event, 1000); /* enough for all events to be distributed? */
+        ExitProcess(mch_child_event);
     }
 
     if (argc == 3 && !strcmp(argv[2], "check_console"))
@@ -5408,6 +5559,7 @@ START_TEST(console)
         test_AllocConsole();
         test_FreeConsole();
         test_CreateProcessCUI();
+        test_CtrlHandlerSubsystem();
     }
     else if (revert_output) SetConsoleActiveScreenBuffer(revert_output);
 
