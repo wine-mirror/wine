@@ -1516,3 +1516,49 @@ BOOL WINAPI SetCachedSigningLevel( PHANDLE source, ULONG count, ULONG flags, HAN
     FIXME( "%p %lu %lu %p - stub\n", source, count, flags, file );
     return TRUE;
 }
+
+/******************************************************************************
+ * DeriveCapabilitySidsFromName    (kernelbase.@)
+ */
+BOOL WINAPI DeriveCapabilitySidsFromName( const WCHAR *cap_name, PSID **cap_group_sids, DWORD *cap_group_sid_count,
+                                          PSID **cap_sids, DWORD *cap_sid_count )
+{
+    NTSTATUS status = STATUS_NO_MEMORY;
+    UNICODE_STRING name_us;
+    DWORD size;
+
+    TRACE( "cap_name %s, cap_group_sids %p, cap_group_sid_count %p, cap_sids %p, cap_sid_count %p.\n",
+           debugstr_w(cap_name), cap_group_sids, cap_group_sid_count, cap_sids, cap_sid_count );
+
+    *cap_group_sid_count = 1;
+    *cap_sid_count = 1;
+    *cap_group_sids = NULL;
+    *cap_sids = NULL;
+
+    if (!(*cap_group_sids = RtlAllocateHeap( GetProcessHeap(), 0, *cap_group_sid_count * sizeof(**cap_group_sids) )))
+        goto done;
+    if (!(*cap_sids = RtlAllocateHeap( GetProcessHeap(), 0, *cap_sid_count * sizeof(**cap_sids) )))
+        goto done;
+
+    /* There is no obvious way to query returned subauthority count for RtlDeriveCapabilitySidsFromName,
+     * so let's reserve a bit more. */
+    size = RtlLengthRequiredSid( 16 );
+    if (!(**cap_group_sids = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto done;
+    if (!(**cap_sids = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto done;
+    RtlInitUnicodeString( &name_us, cap_name );
+    status = RtlDeriveCapabilitySidsFromName( &name_us, **cap_group_sids, **cap_sids );
+
+done:
+    if (!status) return TRUE;
+    if (*cap_group_sids)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, **cap_group_sids );
+        RtlFreeHeap( GetProcessHeap(), 0, *cap_group_sids );
+    }
+    if (*cap_sids)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, **cap_sids );
+        RtlFreeHeap( GetProcessHeap(), 0, *cap_sids );
+    }
+    return set_ntstatus( status );
+}
