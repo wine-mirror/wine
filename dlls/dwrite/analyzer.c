@@ -658,7 +658,7 @@ static DWRITE_SCRIPT_ANALYSIS get_char_sa(UINT32 c)
 
     sa.script = get_char_script(c);
     sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
-    if ((c >= 0x0001 && c <= 0x001f)           /* C0 controls */
+    if ((c <= 0x001f)                          /* C0 controls */
             || (c >= 0x007f && c <= 0x009f)    /* DELETE, C1 controls */
             || (c == 0x00ad)                   /* SOFT HYPHEN */
             || (c >= 0x200b && c <= 0x200f)    /* ZWSP, ZWNJ, ZWJ, LRM, RLM */
