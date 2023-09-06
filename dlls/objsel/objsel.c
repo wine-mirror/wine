@@ -189,10 +189,6 @@ static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID 
         IClassFactory_AddRef(iface);
         return S_OK;
     }
-    else if (IsEqualGUID(iid, &IID_IDsObjectPicker))
-    {
-        return IClassFactory_CreateInstance(iface, NULL, iid, out);
-    }
 
     WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
     return E_NOINTERFACE;
