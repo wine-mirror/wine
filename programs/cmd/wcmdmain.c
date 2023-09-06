@@ -2411,6 +2411,12 @@ void WCMD_free_commands(CMD_LIST *cmds) {
     }
 }
 
+static BOOL WINAPI my_event_handler(DWORD ctrl)
+{
+    WCMD_output(L"\n");
+    return ctrl == CTRL_C_EVENT;
+}
+
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
@@ -2657,6 +2663,10 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
        * executable is done later */
       if (opt_s && *cmd=='\"')
           WCMD_strip_quotes(cmd);
+  }
+  else
+  {
+      SetConsoleCtrlHandler(my_event_handler, TRUE);
   }
 
   /* Save cwd into appropriate env var (Must be before the /c processing */
