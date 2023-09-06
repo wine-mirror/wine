@@ -127,6 +127,7 @@ static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD
 static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
 static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
 static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
+static NTSTATUS  (WINAPI *pRtlDeriveCapabilitySidsFromName)(UNICODE_STRING *, PSID, PSID);
 static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
                                                     const UINT64 *client_procsW, ULONG procsW_size,
                                                     const void *client_workers, ULONG workers_size );
@@ -193,6 +194,7 @@ static void InitFunctionPtrs(void)
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
+        pRtlDeriveCapabilitySidsFromName = (void *)GetProcAddress(hntdll, "RtlDeriveCapabilitySidsFromName");
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
         pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
         pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
@@ -5386,6 +5388,69 @@ static void test_RtlGetElementGenericTable(void)
     }
 }
 
+static void test_RtlDeriveCapabilitySidsFromName(void)
+{
+    static const SID_IDENTIFIER_AUTHORITY app_authority = { SECURITY_APP_PACKAGE_AUTHORITY };
+    static SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
+    struct
+    {
+        const WCHAR *name;
+        DWORD hash[8];
+    }
+    tests[] =
+    {
+        { NULL,    { 0x42c4b0e3, 0x141cfc98, 0xc8f4fb9a, 0x24b96f99, 0xe441ae27, 0x4c939b64, 0x1b9995a4, 0x55b85278, }},
+        { L"__AB", { 0xddd798eb, 0x367bd9d0, 0x1c9e610a, 0x0c43dc7e, 0xe91d8625, 0x395e7cf8, 0xe6e7c3d2, 0x2661e620 }},
+        { L"__ab", { 0xddd798eb, 0x367bd9d0, 0x1c9e610a, 0x0c43dc7e, 0xe91d8625, 0x395e7cf8, 0xe6e7c3d2, 0x2661e620 }},
+        { L"0123456789012345678901234567890123456789",
+                   { 0x3c45e3e6, 0xa598e751, 0x2eb11e4c, 0x04e073fd, 0xb7c331a3, 0x07b1214d, 0xd8dee260, 0xa0966ecf }},
+    };
+    UNICODE_STRING cap_name;
+    SID *group_sid, *sid;
+    unsigned int i, size;
+    NTSTATUS status;
+
+    if (!pRtlDeriveCapabilitySidsFromName)
+    {
+        win_skip( "RtlDeriveCapabilitySidsFromName is not available.\n" );
+        return;
+    }
+
+    size = RtlLengthRequiredSid( 10 );
+    sid = malloc( size );
+    group_sid = malloc( size );
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context( "%s", debugstr_w(tests[i].name) );
+        memset( sid, 0, size );
+        memset( group_sid, 0, size );
+        RtlInitUnicodeString( &cap_name, tests[i].name );
+        todo_wine
+        {
+        status = pRtlDeriveCapabilitySidsFromName( &cap_name, group_sid, sid );
+        ok( !status, "got %#lx.\n", status );
+
+        ok( sid->Revision == SID_REVISION, "got %u.\n", sid->Revision );
+        ok( !memcmp( &sid->IdentifierAuthority, &app_authority, sizeof(app_authority) ), "mismatch.\n" );
+        ok( sid->SubAuthorityCount == 10, "got %u.\n", sid->SubAuthorityCount );
+        ok ( sid->SubAuthority[0] == SECURITY_BATCH_RID, "got %lu.\n", sid->SubAuthority[0] );
+        ok ( sid->SubAuthority[1] == SECURITY_CAPABILITY_APP_RID, "got %lu.\n", sid->SubAuthority[1] );
+        ok( !memcmp( sid->SubAuthority + 2, tests[i].hash, sizeof(tests[i].hash) ), "mismatch.\n" );
+
+        ok( group_sid->Revision == SID_REVISION, "got %u.\n", group_sid->Revision );
+        ok( !memcmp( &group_sid->IdentifierAuthority, &nt_authority, sizeof(nt_authority) ), "mismatch.\n" );
+        ok( group_sid->SubAuthorityCount == 9, "got %u.\n", group_sid->SubAuthorityCount );
+        ok ( group_sid->SubAuthority[0] == SECURITY_BUILTIN_DOMAIN_RID, "got %lu.\n", group_sid->SubAuthority[0] );
+        ok( !memcmp( group_sid->SubAuthority + 1, tests[i].hash, sizeof(tests[i].hash) ), "mismatch.\n" );
+        }
+        winetest_pop_context();
+    }
+
+    free( sid );
+    free( group_sid );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -5454,4 +5519,5 @@ START_TEST(rtl)
     test_RtlEnumerateGenericTableWithoutSplaying();
     test_RtlEnumerateGenericTable();
     test_RtlGetElementGenericTable();
+    test_RtlDeriveCapabilitySidsFromName();
 }
