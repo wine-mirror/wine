@@ -59,8 +59,6 @@ static ULONG WINAPI OBJSEL_IDsObjectPicker_AddRef(IDsObjectPicker * iface)
 
     TRACE("\n");
 
-    if (This == NULL) return E_POINTER;
-
     return InterlockedIncrement(&This->ref);
 }
 
@@ -74,8 +72,6 @@ static ULONG WINAPI OBJSEL_IDsObjectPicker_Release(IDsObjectPicker * iface)
     ULONG ref;
 
     TRACE("\n");
-
-    if (This == NULL) return E_POINTER;
 
     ref = InterlockedDecrement(&This->ref);
 
@@ -209,9 +205,6 @@ static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
 
     TRACE("\n");
 
-    if (!factory)
-        return E_POINTER;
-
     return InterlockedIncrement(&factory->ref);
 }
 
@@ -221,9 +214,6 @@ static ULONG WINAPI class_factory_Release(IClassFactory *iface)
     struct class_factory *factory = impl_from_IClassFactory(iface);
 
     TRACE("\n");
-
-    if (!factory)
-        return E_POINTER;
 
     return InterlockedDecrement(&factory->ref);
 }
