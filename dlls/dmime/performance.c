@@ -828,14 +828,24 @@ static HRESULT WINAPI performance_PChannelInfo(IDirectMusicPerformance8 *iface, 
 }
 
 static HRESULT WINAPI performance_DownloadInstrument(IDirectMusicPerformance8 *iface,
-        IDirectMusicInstrument *pInst, DWORD dwPChannel,
-        IDirectMusicDownloadedInstrument **ppDownInst, DMUS_NOTERANGE *pNoteRanges,
-        DWORD dwNumNoteRanges, IDirectMusicPort **ppPort, DWORD *pdwGroup, DWORD *pdwMChannel)
+        IDirectMusicInstrument *instrument, DWORD port_channel,
+        IDirectMusicDownloadedInstrument **downloaded, DMUS_NOTERANGE *note_ranges,
+        DWORD note_range_count, IDirectMusicPort **port, DWORD *group, DWORD *music_channel)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicPort *tmp_port = NULL;
+    HRESULT hr;
 
-	FIXME("(%p, %p, %ld, %p, %p, %ld, %p, %p, %p): stub\n", This, pInst, dwPChannel, ppDownInst, pNoteRanges, dwNumNoteRanges, ppPort, pdwGroup, pdwMChannel);
-	return S_OK;
+    TRACE("(%p, %p, %ld, %p, %p, %ld, %p, %p, %p)\n", This, instrument, port_channel, downloaded,
+            note_ranges, note_range_count, port, group, music_channel);
+
+    if (!port) port = &tmp_port;
+    if (FAILED(hr = IDirectMusicPerformance_PChannelInfo(iface, port_channel, port, group, music_channel)))
+        return hr;
+
+    hr = IDirectMusicPort_DownloadInstrument(*port, instrument, downloaded, note_ranges, note_range_count);
+    if (tmp_port) IDirectMusicPort_Release(tmp_port);
+    return hr;
 }
 
 static HRESULT WINAPI performance_Invalidate(IDirectMusicPerformance8 *iface, MUSIC_TIME mtTime, DWORD dwFlags)
