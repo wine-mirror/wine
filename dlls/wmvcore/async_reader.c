@@ -26,6 +26,7 @@
 
 #define EXTERN_GUID DEFINE_GUID
 #include "initguid.h"
+#include "strmif.h"
 #include "wmvcore_private.h"
 
 #include "wmsdk.h"
