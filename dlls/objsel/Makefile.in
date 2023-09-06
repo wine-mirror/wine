@@ -2,7 +2,6 @@ MODULE    = objsel.dll
 IMPORTS   = strmiids uuid ole32 advapi32
 
 C_SRCS = \
-	factory.c \
 	objsel.c
 
 IDL_SRCS = objsel_classes.idl

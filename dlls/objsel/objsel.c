@@ -1,6 +1,8 @@
 /*
  * Object Picker Dialog
  *
+ * Copyright (C) 2002 John K. Hohm
+ * Copyright (C) 2002 Robert Shearman
  * Copyright 2005 Thomas Weidenmueller <w3seek@reactos.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -18,28 +20,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "objsel_private.h"
+#define COBJMACROS
+#include "objidl.h"
+#include "objsel.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(objsel);
 
-/***********************************************************************
- *		DllGetClassObject (OBJSEL.@)
- */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+typedef struct
 {
-    TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
-
-    *ppv = NULL;
-
-    if (IsEqualGUID(rclsid, &CLSID_DsObjectPicker))
-        return IClassFactory_QueryInterface(&OBJSEL_ClassFactory.IClassFactory_iface, iid, ppv);
-
-    FIXME("CLSID: %s, IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
-    return CLASS_E_CLASSNOTAVAILABLE;
-}
-
+    IDsObjectPicker IDsObjectPicker_iface;
+    LONG ref;
+} IDsObjectPickerImpl;
 
 /**********************************************************************
  * OBJSEL_IDsObjectPicker_Destroy (also IUnknown)
@@ -156,10 +149,7 @@ static IDsObjectPickerVtbl IDsObjectPicker_Vtbl =
 };
 
 
-/**********************************************************************
- * OBJSEL_IDsObjectPicker_Create
- */
-HRESULT WINAPI OBJSEL_IDsObjectPicker_Create(LPVOID *ppvObj)
+static HRESULT object_picker_create(void **ppvObj)
 {
     IDsObjectPickerImpl *Instance = HeapAlloc(GetProcessHeap(),
                                               HEAP_ZERO_MEMORY,
@@ -174,4 +164,125 @@ HRESULT WINAPI OBJSEL_IDsObjectPicker_Create(LPVOID *ppvObj)
     }
     else
         return E_OUTOFMEMORY;
+}
+
+
+struct class_factory
+{
+    IClassFactory IClassFactory_iface;
+    LONG ref;
+};
+
+
+static struct class_factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct class_factory, IClassFactory_iface);
+}
+
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
+{
+    TRACE("iid %s, out %p.\n", debugstr_guid(iid), out);
+
+    if (!out)
+        return E_POINTER;
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
+    {
+        *out = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IDsObjectPicker))
+    {
+        return IClassFactory_CreateInstance(iface, NULL, iid, out);
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    struct class_factory *factory = impl_from_IClassFactory(iface);
+
+    TRACE("\n");
+
+    if (!factory)
+        return E_POINTER;
+
+    return InterlockedIncrement(&factory->ref);
+}
+
+
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    struct class_factory *factory = impl_from_IClassFactory(iface);
+
+    TRACE("\n");
+
+    if (!factory)
+        return E_POINTER;
+
+    return InterlockedDecrement(&factory->ref);
+}
+
+
+static HRESULT WINAPI class_factory_CreateInstance(IClassFactory *iface,
+        IUnknown *outer, REFIID iid, void **out)
+{
+    TRACE("outer %p, iid %s, out %p.\n", outer, debugstr_guid(iid), out);
+
+    if (!out)
+        return E_POINTER;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (IsEqualGUID(&IID_IDsObjectPicker, iid))
+        return object_picker_create(out);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    TRACE("lock %d.\n", lock);
+
+    if (lock)
+        IClassFactory_AddRef(iface);
+    else
+        IClassFactory_Release(iface);
+    return S_OK;
+}
+
+
+static IClassFactoryVtbl class_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    class_factory_CreateInstance,
+    class_factory_LockServer
+};
+
+
+static struct class_factory class_factory = {{&class_factory_vtbl}, 0};
+
+/***********************************************************************
+ *		DllGetClassObject (OBJSEL.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
+{
+    TRACE("clsid %s, iid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(iid), out);
+
+    *out = NULL;
+
+    if (IsEqualGUID(clsid, &CLSID_DsObjectPicker))
+        return IClassFactory_QueryInterface(&class_factory.IClassFactory_iface, iid, out);
+
+    FIXME("%s not available, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(clsid));
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
