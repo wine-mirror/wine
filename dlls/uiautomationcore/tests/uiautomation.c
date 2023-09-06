@@ -510,6 +510,8 @@ static struct Accessible
     LONG left, top, width, height;
     BOOL enable_ia2;
     LONG unique_id;
+    INT focus_child_id;
+    IAccessible *focus_acc;
     DEFINE_ACC_METHOD_EXPECTS;
 } Accessible, Accessible2, Accessible_child, Accessible_child2;
 
@@ -674,6 +676,9 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_
         case 4:
             return IAccessible_QueryInterface(&Accessible_child2.IAccessible_iface, &IID_IDispatch, (void **)out_child);
 
+        case 7:
+            return IAccessible_QueryInterface(&Accessible.IAccessible_iface, &IID_IDispatch, (void **)out_child);
+
         default:
             break;
 
@@ -808,8 +813,28 @@ static HRESULT WINAPI Accessible_get_accKeyboardShortcut(IAccessible *iface, VAR
 static HRESULT WINAPI Accessible_get_accFocus(IAccessible *iface, VARIANT *pchild_id)
 {
     struct Accessible *This = impl_from_Accessible(iface);
+
     CHECK_ACC_METHOD_EXPECT(This, get_accFocus);
     ACC_METHOD_TRACE(This, get_accFocus);
+
+    VariantInit(pchild_id);
+    if (This->focus_acc)
+    {
+        HRESULT hr;
+
+        hr = IAccessible_QueryInterface(This->focus_acc, &IID_IDispatch, (void **)&V_DISPATCH(pchild_id));
+        if (SUCCEEDED(hr))
+            V_VT(pchild_id) = VT_DISPATCH;
+
+        return hr;
+    }
+    else if (This->focus_child_id >= 0)
+    {
+        V_VT(pchild_id) = VT_I4;
+        V_I4(pchild_id) = This->focus_child_id;
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -1457,6 +1482,7 @@ static struct Accessible Accessible =
     0, 0, 0, NULL,
     0, 0, 0, 0,
     FALSE, 0,
+    CHILDID_SELF, NULL,
 };
 
 static struct Accessible Accessible2 =
@@ -1472,6 +1498,7 @@ static struct Accessible Accessible2 =
     0, 0, 0, NULL,
     0, 0, 0, 0,
     FALSE, 0,
+    CHILDID_SELF, NULL,
 };
 
 static struct Accessible Accessible_child =
@@ -1487,6 +1514,7 @@ static struct Accessible Accessible_child =
     0, 0, 0, NULL,
     0, 0, 0, 0,
     FALSE, 0,
+    CHILDID_SELF, NULL,
 };
 
 static struct Accessible Accessible_child2 =
@@ -1502,6 +1530,7 @@ static struct Accessible Accessible_child2 =
     0, 0, 0, NULL,
     0, 0, 0, 0,
     FALSE, 0,
+    CHILDID_SELF, NULL,
 };
 
 struct Provider_prop_override
@@ -3440,14 +3469,17 @@ static void check_msaa_prov_host_elem_prov_(IUnknown *elem, BOOL exp_host_prov, 
 
 static void set_accessible_props(struct Accessible *acc, INT role, INT state,
         LONG child_count, LPCWSTR name, LONG left, LONG top, LONG width, LONG height);
+static void set_accessible_ia2_props(struct Accessible *acc, BOOL enable_ia2, LONG unique_id);
 static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
 {
     IRawElementProviderFragmentRoot *elroot, *elroot2;
     IRawElementProviderFragment *elfrag, *elfrag2;
     IRawElementProviderSimple *elprov;
+    ULONG old_ref;
     HRESULT hr;
 
-    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSED, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible, FALSE, 0);
     Accessible.ow_hwnd = hwnd;
 
     elprov = NULL;
@@ -3545,6 +3577,217 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
 
     IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * IRawElementProviderFragmentRoot::GetFocus will call get_accFocus.
+     */
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+
+    /* Focus is CHILDID_SELF, returns NULL. */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = CHILDID_SELF;
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+
+    /*
+     * get_accFocus returns child ID 1, which is a simple child element.
+     * get_accState for child ID 1 returns STATE_SYSTEM_INVISIBLE, so no
+     * element will be returned.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = 1;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+
+    /*
+     * get_accFocus returns child ID 3, which is another simple child
+     * element. get_accState for child ID 3 does not have
+     * STATE_SYSTEM_INVISIBLE set, so it will return an element.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = 3;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    check_msaa_prov_acc(elfrag, &Accessible.IAccessible_iface, 3);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+
+    IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * get_accFocus returns child ID 2 which is a full IAccessible,
+     * Accessible_child.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = 2;
+    Accessible_child.state = STATE_SYSTEM_FOCUSABLE | STATE_SYSTEM_OFFSCREEN;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, accNavigate);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accState);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, accNavigate);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accState);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accFocus);
+
+    check_msaa_prov_acc(elfrag, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * get_accFocus returns child ID 2 which is a full IAccessible,
+     * Accessible_child. It returns failure from get_accState so it isn't
+     * returned.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = 2;
+    Accessible_child.state = 0;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, accNavigate);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accState);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, accNavigate);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accState);
+
+    /*
+     * get_accFocus returns child ID 7 which is a full IAccessible,
+     * Accessible. This is the same IAccessible interface as the one we called
+     * get_accFocus on, so it is ignored. Same behavior as CHILDID_SELF.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_child_id = 7;
+    Accessible.state = STATE_SYSTEM_FOCUSABLE;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+
+    /*
+     * Return E_NOTIMPL from get_accFocus, returns a new provider representing
+     * the same IAccessible.
+     */
+    elfrag = (void *)0xdeadbeef;
+    old_ref = Accessible.ref;
+    Accessible.focus_child_id = -1;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    ok(Accessible.ref > old_ref, "Unexpected ref %ld\n", Accessible.ref);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+
+    /* Two unique COM objects that represent the same IAccessible. */
+    ok(!iface_cmp((IUnknown *)elroot, (IUnknown *)elfrag), "elroot == elfrag\n");
+    check_msaa_prov_acc(elfrag, &Accessible.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag);
+    ok(Accessible.ref == old_ref, "Unexpected ref %ld\n", Accessible.ref);
+    Accessible.focus_child_id = CHILDID_SELF;
+
+    /*
+     * Similar to CHILDID_SELF, if the same IAccessible interface is returned
+     * as a VT_DISPATCH, we'll get no element.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_acc = &Accessible.IAccessible_iface;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+
+    /*
+     * Return Accessible_child as a VT_DISPATCH - will get an element.
+     */
+    elfrag = (void *)0xdeadbeef;
+    Accessible.focus_acc = &Accessible_child.IAccessible_iface;
+    Accessible_child.state = STATE_SYSTEM_FOCUSABLE;
+
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, accNavigate);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accState);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, accNavigate);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accState);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accFocus);
+
+    check_msaa_prov_acc(elfrag, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * Fail get_accFocus on child.
+     */
+    Accessible_child.focus_child_id = -1;
+    Accessible_child.state = STATE_SYSTEM_FOCUSABLE;
+
+    elfrag = (void *)0xdeadbeef;
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, accNavigate);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accState);
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, accNavigate);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accState);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accFocus);
+
+    check_msaa_prov_acc(elfrag, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag);
+
+    IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderSimple_Release(elprov);
 
     /*
@@ -3572,12 +3815,28 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
 
     IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * IRawElementProviderFragmentRoot::GetFocus will not call get_accFocus
+     * on a simple child IAccessible.
+     */
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+
+    elfrag = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag, "elfrag != NULL\n");
+
+    IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderSimple_Release(elprov);
 
     /*
      * Test child of root HWND IAccessible.
      */
     set_accessible_props(&Accessible_child, ROLE_SYSTEM_TEXT, 0, 0, L"acc_child_name", 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible_child, FALSE, 0);
 
     elprov = NULL;
     SET_ACC_METHOD_EXPECT(&Accessible_child, get_accParent); /* Gets HWND from parent IAccessible. */
@@ -3606,8 +3865,38 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
 
     IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderFragment_Release(elfrag);
+
+    /*
+     * GetFocus tests.
+     */
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elroot, "elroot == NULL\n");
+
+    /*
+     * get_accFocus returns E_NOTIMPL, returns new provider for same
+     * IAccessible.
+     */
+    elfrag = (void *)0xdeadbeef;
+    old_ref = Accessible_child.ref;
+    Accessible_child.focus_child_id = -1;
+    SET_ACC_METHOD_EXPECT(&Accessible_child, get_accFocus);
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+    ok(Accessible_child.ref > old_ref, "Unexpected ref %ld\n", Accessible.ref);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child, get_accFocus);
+
+    /* Again, two unique COM objects that represent the same IAccessible. */
+    ok(!iface_cmp((IUnknown *)elroot, (IUnknown *)elfrag), "elroot == elfrag\n");
+    check_msaa_prov_acc(elfrag, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag);
+    ok(Accessible_child.ref == old_ref, "Unexpected ref %ld\n", Accessible.ref);
+
+    IRawElementProviderFragmentRoot_Release(elroot);
     IRawElementProviderSimple_Release(elprov);
 
+    Accessible.focus_child_id = Accessible_child.focus_child_id = CHILDID_SELF;
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
     ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
     acc_client = NULL;
