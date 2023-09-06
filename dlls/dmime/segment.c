@@ -392,12 +392,28 @@ static HRESULT WINAPI segment_GetParam(IDirectMusicSegment8 *iface, REFGUID type
     return hr;
 }
 
-static HRESULT WINAPI segment_SetParam(IDirectMusicSegment8 *iface, REFGUID rguidType,
-        DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void *pParam)
+static HRESULT WINAPI segment_SetParam(IDirectMusicSegment8 *iface, REFGUID type,
+        DWORD group, DWORD index, MUSIC_TIME music_time, void *param)
 {
     struct segment *This = impl_from_IDirectMusicSegment8(iface);
-    FIXME("(%p, %s, %#lx, %ld, %ld, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits,
-            dwIndex, mtTime, pParam);
+    struct track_entry *entry;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %#lx, %ld, %ld, %p)\n", This, debugstr_dmguid(type), group,
+            index, music_time, param);
+
+    LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+    {
+        if (group != -1 && !(group & entry->dwGroupBits)) continue;
+        if (index != DMUS_SEG_ALLTRACKS && index--) continue;
+
+        hr = IDirectMusicTrack_IsParamSupported(entry->pTrack, type);
+        if (hr == DMUS_E_TYPE_UNSUPPORTED) continue;
+
+        hr = IDirectMusicTrack_SetParam(entry->pTrack, type, music_time, param);
+        if (FAILED(hr)) break;
+    }
+
     return S_OK;
 }
 
