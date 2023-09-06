@@ -1168,7 +1168,7 @@ static void test_IDirectMusicSynthSink(void)
     ok(hr == S_OK || broken(hr == DSERR_NODRIVER), "got %#lx\n", hr);
     if (broken(hr == DSERR_NODRIVER))
     {
-        win_skip("Failed to create IDirectSound, skipping tests");
+        win_skip("Failed to create IDirectSound, skipping tests\n");
         return;
     }
 
