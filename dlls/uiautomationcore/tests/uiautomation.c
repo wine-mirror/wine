@@ -32,6 +32,301 @@
 static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, LONG, DWORD, IRawElementProviderSimple **);
 static HRESULT (WINAPI *pUiaDisconnectProvider)(IRawElementProviderSimple *);
 
+struct str_id_pair {
+    int id;
+    const char *str;
+};
+
+static const struct str_id_pair uia_prop_id_strs[] = {
+    { UIA_RuntimeIdPropertyId,                           "UIA_RuntimeIdPropertyId", },
+    { UIA_BoundingRectanglePropertyId,                   "UIA_BoundingRectanglePropertyId", },
+    { UIA_ProcessIdPropertyId,                           "UIA_ProcessIdPropertyId", },
+    { UIA_ControlTypePropertyId,                         "UIA_ControlTypePropertyId", },
+    { UIA_LocalizedControlTypePropertyId,                "UIA_LocalizedControlTypePropertyId", },
+    { UIA_NamePropertyId,                                "UIA_NamePropertyId", },
+    { UIA_AcceleratorKeyPropertyId,                      "UIA_AcceleratorKeyPropertyId", },
+    { UIA_AccessKeyPropertyId,                           "UIA_AccessKeyPropertyId", },
+    { UIA_HasKeyboardFocusPropertyId,                    "UIA_HasKeyboardFocusPropertyId", },
+    { UIA_IsKeyboardFocusablePropertyId,                 "UIA_IsKeyboardFocusablePropertyId", },
+    { UIA_IsEnabledPropertyId,                           "UIA_IsEnabledPropertyId", },
+    { UIA_AutomationIdPropertyId,                        "UIA_AutomationIdPropertyId", },
+    { UIA_ClassNamePropertyId,                           "UIA_ClassNamePropertyId", },
+    { UIA_HelpTextPropertyId,                            "UIA_HelpTextPropertyId", },
+    { UIA_ClickablePointPropertyId,                      "UIA_ClickablePointPropertyId", },
+    { UIA_CulturePropertyId,                             "UIA_CulturePropertyId", },
+    { UIA_IsControlElementPropertyId,                    "UIA_IsControlElementPropertyId", },
+    { UIA_IsContentElementPropertyId,                    "UIA_IsContentElementPropertyId", },
+    { UIA_LabeledByPropertyId,                           "UIA_LabeledByPropertyId", },
+    { UIA_IsPasswordPropertyId,                          "UIA_IsPasswordPropertyId", },
+    { UIA_NativeWindowHandlePropertyId,                  "UIA_NativeWindowHandlePropertyId", },
+    { UIA_ItemTypePropertyId,                            "UIA_ItemTypePropertyId", },
+    { UIA_IsOffscreenPropertyId,                         "UIA_IsOffscreenPropertyId", },
+    { UIA_OrientationPropertyId,                         "UIA_OrientationPropertyId", },
+    { UIA_FrameworkIdPropertyId,                         "UIA_FrameworkIdPropertyId", },
+    { UIA_IsRequiredForFormPropertyId,                   "UIA_IsRequiredForFormPropertyId", },
+    { UIA_ItemStatusPropertyId,                          "UIA_ItemStatusPropertyId", },
+    { UIA_IsDockPatternAvailablePropertyId,              "UIA_IsDockPatternAvailablePropertyId", },
+    { UIA_IsExpandCollapsePatternAvailablePropertyId,    "UIA_IsExpandCollapsePatternAvailablePropertyId", },
+    { UIA_IsGridItemPatternAvailablePropertyId,          "UIA_IsGridItemPatternAvailablePropertyId", },
+    { UIA_IsGridPatternAvailablePropertyId,              "UIA_IsGridPatternAvailablePropertyId", },
+    { UIA_IsInvokePatternAvailablePropertyId,            "UIA_IsInvokePatternAvailablePropertyId", },
+    { UIA_IsMultipleViewPatternAvailablePropertyId,      "UIA_IsMultipleViewPatternAvailablePropertyId", },
+    { UIA_IsRangeValuePatternAvailablePropertyId,        "UIA_IsRangeValuePatternAvailablePropertyId", },
+    { UIA_IsScrollPatternAvailablePropertyId,            "UIA_IsScrollPatternAvailablePropertyId", },
+    { UIA_IsScrollItemPatternAvailablePropertyId,        "UIA_IsScrollItemPatternAvailablePropertyId", },
+    { UIA_IsSelectionItemPatternAvailablePropertyId,     "UIA_IsSelectionItemPatternAvailablePropertyId", },
+    { UIA_IsSelectionPatternAvailablePropertyId,         "UIA_IsSelectionPatternAvailablePropertyId", },
+    { UIA_IsTablePatternAvailablePropertyId,             "UIA_IsTablePatternAvailablePropertyId", },
+    { UIA_IsTableItemPatternAvailablePropertyId,         "UIA_IsTableItemPatternAvailablePropertyId", },
+    { UIA_IsTextPatternAvailablePropertyId,              "UIA_IsTextPatternAvailablePropertyId", },
+    { UIA_IsTogglePatternAvailablePropertyId,            "UIA_IsTogglePatternAvailablePropertyId", },
+    { UIA_IsTransformPatternAvailablePropertyId,         "UIA_IsTransformPatternAvailablePropertyId", },
+    { UIA_IsValuePatternAvailablePropertyId,             "UIA_IsValuePatternAvailablePropertyId", },
+    { UIA_IsWindowPatternAvailablePropertyId,            "UIA_IsWindowPatternAvailablePropertyId", },
+    { UIA_ValueValuePropertyId,                          "UIA_ValueValuePropertyId", },
+    { UIA_ValueIsReadOnlyPropertyId,                     "UIA_ValueIsReadOnlyPropertyId", },
+    { UIA_RangeValueValuePropertyId,                     "UIA_RangeValueValuePropertyId", },
+    { UIA_RangeValueIsReadOnlyPropertyId,                "UIA_RangeValueIsReadOnlyPropertyId", },
+    { UIA_RangeValueMinimumPropertyId,                   "UIA_RangeValueMinimumPropertyId", },
+    { UIA_RangeValueMaximumPropertyId,                   "UIA_RangeValueMaximumPropertyId", },
+    { UIA_RangeValueLargeChangePropertyId,               "UIA_RangeValueLargeChangePropertyId", },
+    { UIA_RangeValueSmallChangePropertyId,               "UIA_RangeValueSmallChangePropertyId", },
+    { UIA_ScrollHorizontalScrollPercentPropertyId,       "UIA_ScrollHorizontalScrollPercentPropertyId", },
+    { UIA_ScrollHorizontalViewSizePropertyId,            "UIA_ScrollHorizontalViewSizePropertyId", },
+    { UIA_ScrollVerticalScrollPercentPropertyId,         "UIA_ScrollVerticalScrollPercentPropertyId", },
+    { UIA_ScrollVerticalViewSizePropertyId,              "UIA_ScrollVerticalViewSizePropertyId", },
+    { UIA_ScrollHorizontallyScrollablePropertyId,        "UIA_ScrollHorizontallyScrollablePropertyId", },
+    { UIA_ScrollVerticallyScrollablePropertyId,          "UIA_ScrollVerticallyScrollablePropertyId", },
+    { UIA_SelectionSelectionPropertyId,                  "UIA_SelectionSelectionPropertyId", },
+    { UIA_SelectionCanSelectMultiplePropertyId,          "UIA_SelectionCanSelectMultiplePropertyId", },
+    { UIA_SelectionIsSelectionRequiredPropertyId,        "UIA_SelectionIsSelectionRequiredPropertyId", },
+    { UIA_GridRowCountPropertyId,                        "UIA_GridRowCountPropertyId", },
+    { UIA_GridColumnCountPropertyId,                     "UIA_GridColumnCountPropertyId", },
+    { UIA_GridItemRowPropertyId,                         "UIA_GridItemRowPropertyId", },
+    { UIA_GridItemColumnPropertyId,                      "UIA_GridItemColumnPropertyId", },
+    { UIA_GridItemRowSpanPropertyId,                     "UIA_GridItemRowSpanPropertyId", },
+    { UIA_GridItemColumnSpanPropertyId,                  "UIA_GridItemColumnSpanPropertyId", },
+    { UIA_GridItemContainingGridPropertyId,              "UIA_GridItemContainingGridPropertyId", },
+    { UIA_DockDockPositionPropertyId,                    "UIA_DockDockPositionPropertyId", },
+    { UIA_ExpandCollapseExpandCollapseStatePropertyId,   "UIA_ExpandCollapseExpandCollapseStatePropertyId", },
+    { UIA_MultipleViewCurrentViewPropertyId,             "UIA_MultipleViewCurrentViewPropertyId", },
+    { UIA_MultipleViewSupportedViewsPropertyId,          "UIA_MultipleViewSupportedViewsPropertyId", },
+    { UIA_WindowCanMaximizePropertyId,                   "UIA_WindowCanMaximizePropertyId", },
+    { UIA_WindowCanMinimizePropertyId,                   "UIA_WindowCanMinimizePropertyId", },
+    { UIA_WindowWindowVisualStatePropertyId,             "UIA_WindowWindowVisualStatePropertyId", },
+    { UIA_WindowWindowInteractionStatePropertyId,        "UIA_WindowWindowInteractionStatePropertyId", },
+    { UIA_WindowIsModalPropertyId,                       "UIA_WindowIsModalPropertyId", },
+    { UIA_WindowIsTopmostPropertyId,                     "UIA_WindowIsTopmostPropertyId", },
+    { UIA_SelectionItemIsSelectedPropertyId,             "UIA_SelectionItemIsSelectedPropertyId", },
+    { UIA_SelectionItemSelectionContainerPropertyId,     "UIA_SelectionItemSelectionContainerPropertyId", },
+    { UIA_TableRowHeadersPropertyId,                     "UIA_TableRowHeadersPropertyId", },
+    { UIA_TableColumnHeadersPropertyId,                  "UIA_TableColumnHeadersPropertyId", },
+    { UIA_TableRowOrColumnMajorPropertyId,               "UIA_TableRowOrColumnMajorPropertyId", },
+    { UIA_TableItemRowHeaderItemsPropertyId,             "UIA_TableItemRowHeaderItemsPropertyId", },
+    { UIA_TableItemColumnHeaderItemsPropertyId,          "UIA_TableItemColumnHeaderItemsPropertyId", },
+    { UIA_ToggleToggleStatePropertyId,                   "UIA_ToggleToggleStatePropertyId", },
+    { UIA_TransformCanMovePropertyId,                    "UIA_TransformCanMovePropertyId", },
+    { UIA_TransformCanResizePropertyId,                  "UIA_TransformCanResizePropertyId", },
+    { UIA_TransformCanRotatePropertyId,                  "UIA_TransformCanRotatePropertyId", },
+    { UIA_IsLegacyIAccessiblePatternAvailablePropertyId, "UIA_IsLegacyIAccessiblePatternAvailablePropertyId", },
+    { UIA_LegacyIAccessibleChildIdPropertyId,            "UIA_LegacyIAccessibleChildIdPropertyId", },
+    { UIA_LegacyIAccessibleNamePropertyId,               "UIA_LegacyIAccessibleNamePropertyId", },
+    { UIA_LegacyIAccessibleValuePropertyId,              "UIA_LegacyIAccessibleValuePropertyId", },
+    { UIA_LegacyIAccessibleDescriptionPropertyId,        "UIA_LegacyIAccessibleDescriptionPropertyId", },
+    { UIA_LegacyIAccessibleRolePropertyId,               "UIA_LegacyIAccessibleRolePropertyId", },
+    { UIA_LegacyIAccessibleStatePropertyId,              "UIA_LegacyIAccessibleStatePropertyId", },
+    { UIA_LegacyIAccessibleHelpPropertyId,               "UIA_LegacyIAccessibleHelpPropertyId", },
+    { UIA_LegacyIAccessibleKeyboardShortcutPropertyId,   "UIA_LegacyIAccessibleKeyboardShortcutPropertyId", },
+    { UIA_LegacyIAccessibleSelectionPropertyId,          "UIA_LegacyIAccessibleSelectionPropertyId", },
+    { UIA_LegacyIAccessibleDefaultActionPropertyId,      "UIA_LegacyIAccessibleDefaultActionPropertyId", },
+    { UIA_AriaRolePropertyId,                            "UIA_AriaRolePropertyId", },
+    { UIA_AriaPropertiesPropertyId,                      "UIA_AriaPropertiesPropertyId", },
+    { UIA_IsDataValidForFormPropertyId,                  "UIA_IsDataValidForFormPropertyId", },
+    { UIA_ControllerForPropertyId,                       "UIA_ControllerForPropertyId", },
+    { UIA_DescribedByPropertyId,                         "UIA_DescribedByPropertyId", },
+    { UIA_FlowsToPropertyId,                             "UIA_FlowsToPropertyId", },
+    { UIA_ProviderDescriptionPropertyId,                 "UIA_ProviderDescriptionPropertyId", },
+    { UIA_IsItemContainerPatternAvailablePropertyId,     "UIA_IsItemContainerPatternAvailablePropertyId", },
+    { UIA_IsVirtualizedItemPatternAvailablePropertyId,   "UIA_IsVirtualizedItemPatternAvailablePropertyId", },
+    { UIA_IsSynchronizedInputPatternAvailablePropertyId, "UIA_IsSynchronizedInputPatternAvailablePropertyId", },
+    { UIA_OptimizeForVisualContentPropertyId,            "UIA_OptimizeForVisualContentPropertyId", },
+    { UIA_IsObjectModelPatternAvailablePropertyId,       "UIA_IsObjectModelPatternAvailablePropertyId", },
+    { UIA_AnnotationAnnotationTypeIdPropertyId,          "UIA_AnnotationAnnotationTypeIdPropertyId", },
+    { UIA_AnnotationAnnotationTypeNamePropertyId,        "UIA_AnnotationAnnotationTypeNamePropertyId", },
+    { UIA_AnnotationAuthorPropertyId,                    "UIA_AnnotationAuthorPropertyId", },
+    { UIA_AnnotationDateTimePropertyId,                  "UIA_AnnotationDateTimePropertyId", },
+    { UIA_AnnotationTargetPropertyId,                    "UIA_AnnotationTargetPropertyId", },
+    { UIA_IsAnnotationPatternAvailablePropertyId,        "UIA_IsAnnotationPatternAvailablePropertyId", },
+    { UIA_IsTextPattern2AvailablePropertyId,             "UIA_IsTextPattern2AvailablePropertyId", },
+    { UIA_StylesStyleIdPropertyId,                       "UIA_StylesStyleIdPropertyId", },
+    { UIA_StylesStyleNamePropertyId,                     "UIA_StylesStyleNamePropertyId", },
+    { UIA_StylesFillColorPropertyId,                     "UIA_StylesFillColorPropertyId", },
+    { UIA_StylesFillPatternStylePropertyId,              "UIA_StylesFillPatternStylePropertyId", },
+    { UIA_StylesShapePropertyId,                         "UIA_StylesShapePropertyId", },
+    { UIA_StylesFillPatternColorPropertyId,              "UIA_StylesFillPatternColorPropertyId", },
+    { UIA_StylesExtendedPropertiesPropertyId,            "UIA_StylesExtendedPropertiesPropertyId", },
+    { UIA_IsStylesPatternAvailablePropertyId,            "UIA_IsStylesPatternAvailablePropertyId", },
+    { UIA_IsSpreadsheetPatternAvailablePropertyId,       "UIA_IsSpreadsheetPatternAvailablePropertyId", },
+    { UIA_SpreadsheetItemFormulaPropertyId,              "UIA_SpreadsheetItemFormulaPropertyId", },
+    { UIA_SpreadsheetItemAnnotationObjectsPropertyId,    "UIA_SpreadsheetItemAnnotationObjectsPropertyId", },
+    { UIA_SpreadsheetItemAnnotationTypesPropertyId,      "UIA_SpreadsheetItemAnnotationTypesPropertyId", },
+    { UIA_IsSpreadsheetItemPatternAvailablePropertyId,   "UIA_IsSpreadsheetItemPatternAvailablePropertyId", },
+    { UIA_Transform2CanZoomPropertyId,                   "UIA_Transform2CanZoomPropertyId", },
+    { UIA_IsTransformPattern2AvailablePropertyId,        "UIA_IsTransformPattern2AvailablePropertyId", },
+    { UIA_LiveSettingPropertyId,                         "UIA_LiveSettingPropertyId", },
+    { UIA_IsTextChildPatternAvailablePropertyId,         "UIA_IsTextChildPatternAvailablePropertyId", },
+    { UIA_IsDragPatternAvailablePropertyId,              "UIA_IsDragPatternAvailablePropertyId", },
+    { UIA_DragIsGrabbedPropertyId,                       "UIA_DragIsGrabbedPropertyId", },
+    { UIA_DragDropEffectPropertyId,                      "UIA_DragDropEffectPropertyId", },
+    { UIA_DragDropEffectsPropertyId,                     "UIA_DragDropEffectsPropertyId", },
+    { UIA_IsDropTargetPatternAvailablePropertyId,        "UIA_IsDropTargetPatternAvailablePropertyId", },
+    { UIA_DropTargetDropTargetEffectPropertyId,          "UIA_DropTargetDropTargetEffectPropertyId", },
+    { UIA_DropTargetDropTargetEffectsPropertyId,         "UIA_DropTargetDropTargetEffectsPropertyId", },
+    { UIA_DragGrabbedItemsPropertyId,                    "UIA_DragGrabbedItemsPropertyId", },
+    { UIA_Transform2ZoomLevelPropertyId,                 "UIA_Transform2ZoomLevelPropertyId", },
+    { UIA_Transform2ZoomMinimumPropertyId,               "UIA_Transform2ZoomMinimumPropertyId", },
+    { UIA_Transform2ZoomMaximumPropertyId,               "UIA_Transform2ZoomMaximumPropertyId", },
+    { UIA_FlowsFromPropertyId,                           "UIA_FlowsFromPropertyId", },
+    { UIA_IsTextEditPatternAvailablePropertyId,          "UIA_IsTextEditPatternAvailablePropertyId", },
+    { UIA_IsPeripheralPropertyId,                        "UIA_IsPeripheralPropertyId", },
+    { UIA_IsCustomNavigationPatternAvailablePropertyId,  "UIA_IsCustomNavigationPatternAvailablePropertyId", },
+    { UIA_PositionInSetPropertyId,                       "UIA_PositionInSetPropertyId", },
+    { UIA_SizeOfSetPropertyId,                           "UIA_SizeOfSetPropertyId", },
+    { UIA_LevelPropertyId,                               "UIA_LevelPropertyId", },
+    { UIA_AnnotationTypesPropertyId,                     "UIA_AnnotationTypesPropertyId", },
+    { UIA_AnnotationObjectsPropertyId,                   "UIA_AnnotationObjectsPropertyId", },
+    { UIA_LandmarkTypePropertyId,                        "UIA_LandmarkTypePropertyId", },
+    { UIA_LocalizedLandmarkTypePropertyId,               "UIA_LocalizedLandmarkTypePropertyId", },
+    { UIA_FullDescriptionPropertyId,                     "UIA_FullDescriptionPropertyId", },
+    { UIA_FillColorPropertyId,                           "UIA_FillColorPropertyId", },
+    { UIA_OutlineColorPropertyId,                        "UIA_OutlineColorPropertyId", },
+    { UIA_FillTypePropertyId,                            "UIA_FillTypePropertyId", },
+    { UIA_VisualEffectsPropertyId,                       "UIA_VisualEffectsPropertyId", },
+    { UIA_OutlineThicknessPropertyId,                    "UIA_OutlineThicknessPropertyId", },
+    { UIA_CenterPointPropertyId,                         "UIA_CenterPointPropertyId", },
+    { UIA_RotationPropertyId,                            "UIA_RotationPropertyId", },
+    { UIA_SizePropertyId,                                "UIA_SizePropertyId", },
+    { UIA_IsSelectionPattern2AvailablePropertyId,        "UIA_IsSelectionPattern2AvailablePropertyId", },
+    { UIA_Selection2FirstSelectedItemPropertyId,         "UIA_Selection2FirstSelectedItemPropertyId", },
+    { UIA_Selection2LastSelectedItemPropertyId,          "UIA_Selection2LastSelectedItemPropertyId", },
+    { UIA_Selection2CurrentSelectedItemPropertyId,       "UIA_Selection2CurrentSelectedItemPropertyId", },
+    { UIA_Selection2ItemCountPropertyId,                 "UIA_Selection2ItemCountPropertyId", },
+    { UIA_HeadingLevelPropertyId,                        "UIA_HeadingLevelPropertyId", },
+    { UIA_IsDialogPropertyId,                            "UIA_IsDialogPropertyId", },
+};
+
+static const struct str_id_pair uia_pattern_id_strs[] = {
+    { UIA_InvokePatternId,            "UIA_InvokePatternId", },
+    { UIA_SelectionPatternId,         "UIA_SelectionPatternId", },
+    { UIA_ValuePatternId,             "UIA_ValuePatternId", },
+    { UIA_RangeValuePatternId,        "UIA_RangeValuePatternId", },
+    { UIA_ScrollPatternId,            "UIA_ScrollPatternId", },
+    { UIA_ExpandCollapsePatternId,    "UIA_ExpandCollapsePatternId", },
+    { UIA_GridPatternId,              "UIA_GridPatternId", },
+    { UIA_GridItemPatternId,          "UIA_GridItemPatternId", },
+    { UIA_MultipleViewPatternId,      "UIA_MultipleViewPatternId", },
+    { UIA_WindowPatternId,            "UIA_WindowPatternId", },
+    { UIA_SelectionItemPatternId,     "UIA_SelectionItemPatternId", },
+    { UIA_DockPatternId,              "UIA_DockPatternId", },
+    { UIA_TablePatternId,             "UIA_TablePatternId", },
+    { UIA_TableItemPatternId,         "UIA_TableItemPatternId", },
+    { UIA_TextPatternId,              "UIA_TextPatternId", },
+    { UIA_TogglePatternId,            "UIA_TogglePatternId", },
+    { UIA_TransformPatternId,         "UIA_TransformPatternId", },
+    { UIA_ScrollItemPatternId,        "UIA_ScrollItemPatternId", },
+    { UIA_LegacyIAccessiblePatternId, "UIA_LegacyIAccessiblePatternId", },
+    { UIA_ItemContainerPatternId,     "UIA_ItemContainerPatternId", },
+    { UIA_VirtualizedItemPatternId,   "UIA_VirtualizedItemPatternId", },
+    { UIA_SynchronizedInputPatternId, "UIA_SynchronizedInputPatternId", },
+    { UIA_ObjectModelPatternId,       "UIA_ObjectModelPatternId", },
+    { UIA_AnnotationPatternId,        "UIA_AnnotationPatternId", },
+    { UIA_TextPattern2Id,             "UIA_TextPattern2Id", },
+    { UIA_StylesPatternId,            "UIA_StylesPatternId", },
+    { UIA_SpreadsheetPatternId,       "UIA_SpreadsheetPatternId", },
+    { UIA_SpreadsheetItemPatternId,   "UIA_SpreadsheetItemPatternId", },
+    { UIA_TransformPattern2Id,        "UIA_TransformPattern2Id", },
+    { UIA_TextChildPatternId,         "UIA_TextChildPatternId", },
+    { UIA_DragPatternId,              "UIA_DragPatternId", },
+    { UIA_DropTargetPatternId,        "UIA_DropTargetPatternId", },
+    { UIA_TextEditPatternId,          "UIA_TextEditPatternId", },
+    { UIA_CustomNavigationPatternId,  "UIA_CustomNavigationPatternId", },
+};
+
+static const struct str_id_pair uia_nav_dir_strs[] = {
+    { NavigateDirection_Parent,          "NavigateDirection_Parent" },
+    { NavigateDirection_NextSibling,     "NavigateDirection_NextSibling" },
+    { NavigateDirection_PreviousSibling, "NavigateDirection_PreviousSibling" },
+    { NavigateDirection_FirstChild,      "NavigateDirection_FirstChild" },
+    { NavigateDirection_LastChild,       "NavigateDirection_LastChild" },
+};
+
+static const struct str_id_pair uia_event_id_strs[] = {
+    { UIA_ToolTipOpenedEventId,                             "UIA_ToolTipOpenedEventId" },
+    { UIA_ToolTipClosedEventId,                             "UIA_ToolTipClosedEventId", },
+    { UIA_StructureChangedEventId,                          "UIA_StructureChangedEventId", },
+    { UIA_MenuOpenedEventId,                                "UIA_MenuOpenedEventId", },
+    { UIA_AutomationPropertyChangedEventId,                 "UIA_AutomationPropertyChangedEventId", },
+    { UIA_AutomationFocusChangedEventId,                    "UIA_AutomationFocusChangedEventId", },
+    { UIA_AsyncContentLoadedEventId,                        "UIA_AsyncContentLoadedEventId", },
+    { UIA_MenuClosedEventId,                                "UIA_MenuClosedEventId", },
+    { UIA_LayoutInvalidatedEventId,                         "UIA_LayoutInvalidatedEventId", },
+    { UIA_Invoke_InvokedEventId,                            "UIA_Invoke_InvokedEventId", },
+    { UIA_SelectionItem_ElementAddedToSelectionEventId,     "UIA_SelectionItem_ElementAddedToSelectionEventId", },
+    { UIA_SelectionItem_ElementRemovedFromSelectionEventId, "UIA_SelectionItem_ElementRemovedFromSelectionEventId", },
+    { UIA_SelectionItem_ElementSelectedEventId,             "UIA_SelectionItem_ElementSelectedEventId", },
+    { UIA_Selection_InvalidatedEventId,                     "UIA_Selection_InvalidatedEventId", },
+    { UIA_Text_TextSelectionChangedEventId,                 "UIA_Text_TextSelectionChangedEventId", },
+    { UIA_Text_TextChangedEventId,                          "UIA_Text_TextChangedEventId", },
+    { UIA_Window_WindowOpenedEventId,                       "UIA_Window_WindowOpenedEventId", },
+    { UIA_Window_WindowClosedEventId,                       "UIA_Window_WindowClosedEventId", },
+    { UIA_MenuModeStartEventId,                             "UIA_MenuModeStartEventId", },
+    { UIA_MenuModeEndEventId,                               "UIA_MenuModeEndEventId", },
+    { UIA_InputReachedTargetEventId,                        "UIA_InputReachedTargetEventId", },
+    { UIA_InputReachedOtherElementEventId,                  "UIA_InputReachedOtherElementEventId", },
+    { UIA_InputDiscardedEventId,                            "UIA_InputDiscardedEventId", },
+    { UIA_SystemAlertEventId,                               "UIA_SystemAlertEventId", },
+    { UIA_LiveRegionChangedEventId,                         "UIA_LiveRegionChangedEventId", },
+    { UIA_HostedFragmentRootsInvalidatedEventId,            "UIA_HostedFragmentRootsInvalidatedEventId", },
+    { UIA_Drag_DragStartEventId,                            "UIA_Drag_DragStartEventId", },
+    { UIA_Drag_DragCancelEventId,                           "UIA_Drag_DragCancelEventId", },
+    { UIA_Drag_DragCompleteEventId,                         "UIA_Drag_DragCompleteEventId", },
+    { UIA_DropTarget_DragEnterEventId,                      "UIA_DropTarget_DragEnterEventId", },
+    { UIA_DropTarget_DragLeaveEventId,                      "UIA_DropTarget_DragLeaveEventId", },
+    { UIA_DropTarget_DroppedEventId,                        "UIA_DropTarget_DroppedEventId", },
+    { UIA_TextEdit_TextChangedEventId,                      "UIA_TextEdit_TextChangedEventId", },
+    { UIA_TextEdit_ConversionTargetChangedEventId,          "UIA_TextEdit_ConversionTargetChangedEventId", },
+    { UIA_ChangesEventId,                                   "UIA_ChangesEventId", },
+    { UIA_NotificationEventId,                              "UIA_NotificationEventId", },
+};
+
+static int __cdecl str_id_pair_compare(const void *a, const void *b)
+{
+    const int *id = a;
+    const struct str_id_pair *pair = b;
+
+    return ((*id) > pair->id) - ((*id) < pair->id);
+}
+
+#define get_str_for_id(id, id_pair) \
+    get_str_from_id_pair( (id), (id_pair), (ARRAY_SIZE(id_pair)) )
+static const char *get_str_from_id_pair(int id, const struct str_id_pair *id_pair, int id_pair_size)
+{
+    const struct str_id_pair *pair;
+
+    if (!(pair = bsearch(&id, id_pair, id_pair_size, sizeof(*pair), str_id_pair_compare)))
+        return "";
+    else
+        return pair->str;
+}
+
+
+#define PROV_METHOD_TRACE(prov, method) \
+    if(winetest_debug > 1) printf("%#lx:%#lx: %s_" #method "\n", GetCurrentProcessId(), GetCurrentThreadId(), (prov)->prov_name);
+
+#define PROV_METHOD_TRACE2(prov, method, arg, str_table) \
+    if(winetest_debug > 1) printf("%#lx:%#lx: %s_" #method ": %d (%s)\n", GetCurrentProcessId(), GetCurrentThreadId(), (prov)->prov_name, \
+            arg, get_str_for_id(arg, str_table)); \
+
 #define ACC_METHOD_TRACE(acc, method) \
     if(winetest_debug > 1) printf("%#lx:%#lx: %s_" #method "\n", GetCurrentProcessId(), GetCurrentThreadId(), (acc)->interface_name);
 
@@ -1748,6 +2043,7 @@ HRESULT WINAPI ProviderSimple_get_ProviderOptions(IRawElementProviderSimple *ifa
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, get_ProviderOptions);
 
     *ret_val = 0;
     if (This->prov_opts)
@@ -1768,6 +2064,7 @@ HRESULT WINAPI ProviderSimple_GetPatternProvider(IRawElementProviderSimple *ifac
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE2(This, GetPatternProvider, pattern_id, uia_pattern_id_strs);
 
     *ret_val = NULL;
     switch (pattern_id)
@@ -1801,6 +2098,7 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE2(This, GetPropertyValue, prop_id, uia_prop_id_strs);
 
     if (This->prop_override && This->prop_override_count)
     {
@@ -2008,6 +2306,7 @@ HRESULT WINAPI ProviderSimple_get_HostRawElementProvider(IRawElementProviderSimp
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, get_HostRawElementProvider);
 
     *ret_val = NULL;
     if (This->hwnd)
@@ -2059,6 +2358,7 @@ static HRESULT WINAPI ProviderFragment_Navigate(IRawElementProviderFragment *ifa
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE2(This, Navigate, direction, uia_nav_dir_strs);
 
     *ret_val = NULL;
     switch (direction)
@@ -2103,6 +2403,7 @@ static HRESULT WINAPI ProviderFragment_GetRuntimeId(IRawElementProviderFragment 
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, GetRuntimeId);
 
     *ret_val = NULL;
     if (This->runtime_id[0] || This->runtime_id[1])
@@ -2131,6 +2432,7 @@ static HRESULT WINAPI ProviderFragment_get_BoundingRectangle(IRawElementProvider
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, get_BoundingRectangle);
 
     *ret_val = This->bounds_rect;
     return S_OK;
@@ -2145,6 +2447,7 @@ static HRESULT WINAPI ProviderFragment_GetEmbeddedFragmentRoots(IRawElementProvi
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, GetEmbeddedFragmentRoots);
 
     *ret_val = NULL;
     if (This->embedded_frag_roots && This->embedded_frag_roots_count)
@@ -2179,6 +2482,7 @@ static HRESULT WINAPI ProviderFragment_get_FragmentRoot(IRawElementProviderFragm
     if (This->expected_tid)
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(This, get_FragmentRoot);
 
     *ret_val = NULL;
     if (This->frag_root)
@@ -2242,6 +2546,7 @@ static HRESULT WINAPI ProviderFragmentRoot_GetFocus(IRawElementProviderFragmentR
     if (Provider->expected_tid)
         ok(Provider->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     Provider->last_call_tid = GetCurrentThreadId();
+    PROV_METHOD_TRACE(Provider, GetFocus);
 
     *ret_val = NULL;
     if (Provider->focus_prov)
@@ -2291,6 +2596,7 @@ static HRESULT WINAPI ProviderHwndOverride_GetOverrideProviderForHwnd(IRawElemen
     struct Provider *This = impl_from_ProviderHwndOverride(iface);
 
     add_method_call(This, HWND_OVERRIDE_GET_OVERRIDE_PROVIDER);
+    PROV_METHOD_TRACE(This, GetOverrideProviderForHwnd);
 
     *ret_val = NULL;
     if (This->override_hwnd == hwnd)
@@ -2343,6 +2649,7 @@ static HRESULT WINAPI ProviderAdviseEvents_AdviseEventAdded(IRawElementProviderA
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
     This->advise_events_added_event_id = event_id;
+    PROV_METHOD_TRACE2(This, AdviseEventAdded, event_id, uia_event_id_strs);
 
     return S_OK;
 }
@@ -2357,6 +2664,7 @@ static HRESULT WINAPI ProviderAdviseEvents_AdviseEventRemoved(IRawElementProvide
         ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
     This->last_call_tid = GetCurrentThreadId();
     This->advise_events_removed_event_id = event_id;
+    PROV_METHOD_TRACE2(This, AdviseEventRemoved, event_id, uia_event_id_strs);
 
     return S_OK;
 }
