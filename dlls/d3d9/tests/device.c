@@ -4230,9 +4230,15 @@ static void test_wndproc(void)
 
         /* I have to minimize and restore the focus window, otherwise native d3d9 fails
          * device::reset with D3DERR_DEVICELOST. This does not happen when the window
-         * restore is triggered by the user. */
+         * restore is triggered by the user.
+         *
+         * fvwm randomly sends a focus loss notification when we minimize, so do it
+         * before checking the incoming messages. It might match WM_ACTIVATEAPP but has
+         * a wrong WPARAM. Use SW_SHOWMINNOACTIVE to make sure we don't accidentally
+         * activate the window at this point and miss our WM_ACTIVATEAPP(wparam=1). */
+        ShowWindow(focus_window, SW_SHOWMINNOACTIVE);
+        flush_events();
         expect_messages = tests[i].reactivate_messages;
-        ShowWindow(focus_window, SW_MINIMIZE);
         ShowWindow(focus_window, SW_RESTORE);
         /* Set focus twice to make KDE and fvwm in focus-follows-mouse mode happy. */
         SetForegroundWindow(focus_window);
