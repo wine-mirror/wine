@@ -21,14 +21,14 @@
 #ifndef __D3DXOF_PRIVATE_INCLUDED__
 #define __D3DXOF_PRIVATE_INCLUDED__
 
+#define COBJMACROS
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
-#include "wtypes.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "dxfile.h"
+
+#include "wine/debug.h"
 
 #define MAX_NAME_LEN 40
 #define MAX_ARRAY_DIM 4
