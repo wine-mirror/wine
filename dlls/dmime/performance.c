@@ -1637,6 +1637,39 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
 
     switch (msg->dwType)
     {
+    case DMUS_PMSGT_MIDI:
+    {
+        static const UINT event_size = sizeof(DMUS_EVENTHEADER) + sizeof(DWORD);
+        DMUS_BUFFERDESC desc = {.dwSize = sizeof(desc), .cbBuffer = 2 * event_size};
+        DMUS_MIDI_PMSG *midi = (DMUS_MIDI_PMSG *)msg;
+        IDirectMusicBuffer *buffer;
+        IDirectMusicPort *port;
+        DWORD group, channel;
+        UINT value = 0;
+
+        if (FAILED(hr = IDirectMusicPerformance_PChannelInfo(performance, msg->dwPChannel,
+                &port, &group, &channel)))
+        {
+            WARN("Failed to get message port, hr %#lx\n", hr);
+            return DMUS_S_FREE;
+        }
+
+        value |= channel;
+        value |= (UINT)midi->bStatus;
+        value |= (UINT)midi->bByte1 << 8;
+        value |= (UINT)midi->bByte2 << 16;
+
+        if (SUCCEEDED(hr = IDirectMusic_CreateMusicBuffer(This->dmusic, &desc, &buffer, NULL)))
+        {
+            hr = IDirectMusicBuffer_PackStructured(buffer, msg->rtTime, group, value);
+            if (SUCCEEDED(hr)) hr = IDirectMusicPort_PlayBuffer(port, buffer);
+            IDirectMusicBuffer_Release(buffer);
+        }
+
+        IDirectMusicPort_Release(port);
+        break;
+    }
+
     case DMUS_PMSGT_NOTIFICATION:
     {
         DMUS_NOTIFICATION_PMSG *notif = (DMUS_NOTIFICATION_PMSG *)msg;
