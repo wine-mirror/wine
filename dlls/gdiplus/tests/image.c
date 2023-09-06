@@ -5733,7 +5733,7 @@ static void test_png_color_formats(void)
     GpImage *image;
     ImageType type;
     PixelFormat format;
-    ImageFlags flags;
+    UINT flags;
     BOOL valid;
     int i, j, PLTE_off = 0, tRNS_off = 0;
     const ImageFlags color_space_mask = ImageFlagsColorSpaceRGB | ImageFlagsColorSpaceCMYK | ImageFlagsColorSpaceGRAY | ImageFlagsColorSpaceYCBCR | ImageFlagsColorSpaceYCCK;
@@ -5925,7 +5925,7 @@ static void test_png_unit_properties(void)
         ULONG unitY;
     } td[] =
     {
-        {},
+        {0, 0, 0},
         {1, 0, 0},
         {0, 1000, 1000},
         {1, 1000, 1000},
