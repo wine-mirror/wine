@@ -3078,7 +3078,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
     const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file, *ext = ".dll";
-    struct incl_file *spec_file = find_src_file( make, strmake( "%.spec", obj ));
+    struct incl_file *spec_file = find_src_file( make, strmake( "%s.spec", obj ));
     unsigned int arch;
 
     if (!imports.count) imports = make->imports;
