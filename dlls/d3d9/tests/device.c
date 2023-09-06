@@ -4757,6 +4757,7 @@ static void test_reset_fullscreen(void)
     IDirect3DDevice9 *device;
     WNDCLASSEXA wc = {0};
     IDirect3D9 *d3d;
+    RECT r1, r2;
     HRESULT hr;
     ATOM atom;
     static const struct message messages[] =
@@ -4835,7 +4836,35 @@ static void test_reset_fullscreen(void)
     device_desc.flags = CREATE_DEVICE_FULLSCREEN;
     ok(SUCCEEDED(reset_device(device, &device_desc)), "Failed to reset device.\n");
 
+    /* We shouldn't receive a WM_SIZE message during the reset because d3d filters
+     * messages sent to the focus window. This is important because some games
+     * respond to WM_SIZE messages by calling Reset(), resulting in an endless
+     * recursion. */
+    ok(!wm_size_received, "Received unexpected WM_SIZE message.\n");
+    GetWindowRect(device_window, &r1);
+
     flush_events();
+    GetWindowRect(device_window, &r2);
+
+    /* fvwm2 and 3 resize the window though. We learn about this when processing
+     * events, after Reset() has finished and d3d is no longer filtering window
+     * messages. This still shouldn't happen but won't lead to an endless recursion.
+     *
+     * As far as I understand the fvwm3 source code, the WM doesn't expect a window
+     * to change from size A maximized to size B maximized. It will un-maximize the
+     * window, picking the stored normal size - which appens to be the size of the
+     * first fullscreen mode above, but not necessarily the screen size at startup.
+     *
+     * fvwm2 on the other hand doesn't understand mode switches at all. It will see
+     * the window is fullscreen (it has separate flags for fullscreen and maximized),
+     * and try to resize it to what it thinks is the display mode - which is the mode
+     * that fvwm2 was started with. The above fvwm3 bug also exists in fvwm2 but is
+     * hidden by the mode bug.
+     *
+     * This comment is based on a very superficial understanding of fvwm's event
+     * and window dimension handling code, which is about 10k lines of code. So it
+     * may be wrong. */
+    todo_wine_if(!EqualRect(&r1, &r2))
     ok(!wm_size_received, "Received unexpected WM_SIZE message.\n");
 
 cleanup:
