@@ -1866,3 +1866,13 @@ NTSTATUS WINAPI RtlDefaultNpAcl(PACL *pAcl)
     *pAcl = NULL;
     return STATUS_SUCCESS;
 }
+
+/******************************************************************************
+ * RtlDeriveCapabilitySidsFromName (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlDeriveCapabilitySidsFromName( UNICODE_STRING *cap_name, PSID cap_group_sid, PSID cap_sid )
+{
+    FIXME( "cap_name %s, cap_group_sid %p, cap_sid %p.\n", debugstr_us(cap_name), cap_group_sid, cap_sid );
+
+    return STATUS_NOT_SUPPORTED;
+}
