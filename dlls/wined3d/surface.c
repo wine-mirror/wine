@@ -368,7 +368,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
 
     restore_texture = context->current_rt.texture;
     restore_idx = context->current_rt.sub_resource_idx;
-    if (restore_texture != texture || restore_idx != sub_resource_idx)
+    if (!wined3d_resource_is_offscreen(resource) && (restore_texture != texture || restore_idx != sub_resource_idx))
         context = context_acquire(device, texture, sub_resource_idx);
     else
         restore_texture = NULL;
