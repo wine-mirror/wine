@@ -18629,7 +18629,7 @@ static void test_hotkey(void)
        "unexpected error %ld\n", GetLastError());
 
     /* Search for a Windows Key + letter combination that hasn't been registered */
-    for (hotkey_letter = 0x41; hotkey_letter <= 0x51; hotkey_letter ++)
+    for (hotkey_letter = 'A'; hotkey_letter <= 'Z'; hotkey_letter ++)
     {
         SetLastError(0xdeadbeef);
         ret = RegisterHotKey(test_window, 5, MOD_WIN, hotkey_letter);
@@ -18645,7 +18645,7 @@ static void test_hotkey(void)
         }
     }
 
-    if (hotkey_letter == 0x52)
+    if (hotkey_letter > 'Z')
     {
         ok(0, "Couldn't find any free Windows Key + letter combination\n");
         goto end;
@@ -18845,7 +18845,7 @@ static void test_hotkey(void)
     ok_sequence(WmHotkeyReleaseLWIN, "thread hotkey release LWIN", FALSE);
 
     /* Search for an ALT + letter combination that hasn't been registered */
-    for (hotkey_letter = 0x41; hotkey_letter <= 0x51; hotkey_letter ++)
+    for (hotkey_letter = 'A'; hotkey_letter <= 'Z'; hotkey_letter ++)
     {
         SetLastError(0xdeadbeef);
         ret = RegisterHotKey(test_window, 6, MOD_ALT, hotkey_letter);
@@ -18861,7 +18861,7 @@ static void test_hotkey(void)
         }
     }
 
-    if (hotkey_letter == 0x52)
+    if (hotkey_letter > 'Z')
     {
         ok(0, "Couldn't find any free ALT + letter combination\n");
         goto end;
