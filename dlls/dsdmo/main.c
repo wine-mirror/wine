@@ -21,6 +21,7 @@
 #include "mmreg.h"
 #include "mmsystem.h"
 #include "uuids.h"
+#include "strmif.h"
 #include "initguid.h"
 #include "medparam.h"
 #include "dsound.h"

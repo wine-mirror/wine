@@ -507,6 +507,7 @@ typedef enum
 
 struct tagVIDEOINFOHEADER;
 typedef struct tagVIDEOINFOHEADER VIDEOINFOHEADER;
+typedef struct _AMMediaType AM_MEDIA_TYPE;
 
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue);

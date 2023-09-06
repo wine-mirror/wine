@@ -16,9 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Don't define those GUIDs here */
+/* strmiids needs guids from evr.idl, but not the rest of the MF guids.
+ * We also need to avoid redefining the rest of the DirectShow guids from
+ * strmif.h. */
 #include "propidl.h"
 #include "mfidl.h"
+#include "strmif.h"
 
 #include "initguid.h"
 

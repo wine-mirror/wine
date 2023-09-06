@@ -22,6 +22,7 @@
 
 #include "dxva2api.h"
 #include "uuids.h"
+#include "strmif.h"
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
