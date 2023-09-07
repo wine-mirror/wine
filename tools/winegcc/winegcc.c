@@ -832,8 +832,6 @@ static struct strarray get_winebuild_args(struct options *opts)
     for (i = 0; i < opts->prefix.count; i++)
         strarray_add( &spec_args, strmake( "-B%s", opts->prefix.str[i] ));
     strarray_addall( &spec_args, opts->winebuild_args );
-    if (opts->unwind_tables) strarray_add( &spec_args, "-fasynchronous-unwind-tables" );
-    else strarray_add( &spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;
 }
 
@@ -961,6 +959,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     {
         if (opts->pic) strarray_add(&spec_args, "-fPIC");
         if (opts->use_msvcrt) strarray_add(&spec_args, "-mno-cygwin");
+        if (opts->unwind_tables) strarray_add( &spec_args, "-fasynchronous-unwind-tables" );
     }
     strarray_add(&spec_args, opts->shared ? "--dll" : "--exe");
     if (opts->fake_module)
