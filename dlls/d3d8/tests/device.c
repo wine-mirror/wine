@@ -3246,7 +3246,12 @@ static void test_wndproc(void)
     SetForegroundWindow(GetDesktopWindow());
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
             expect_messages->message, expect_messages->window);
+
+    /* kwin sometimes resizes hidden windows. The d3d8 version of this test has been reliable on
+     * Windows so far, but the d3d9 equivalent rarely fails since Windows 8. */
+    flaky
     ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it.\n");
+
     expect_messages = NULL;
     flush_events();
 
