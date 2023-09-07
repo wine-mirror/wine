@@ -4281,6 +4281,7 @@ static void test_wndproc(void)
         SetForegroundWindow(GetDesktopWindow());
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        flaky
         ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it.\n");
         expect_messages = NULL;
         flush_events();
@@ -4371,8 +4372,11 @@ static void test_wndproc(void)
         SetForegroundWindow(GetDesktopWindow());
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
-        flaky_if(i == 0)
+
+        /* kwin and Win8+ sometimes resize hidden windows. */
+        flaky
         ok(!windowposchanged_received, "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
+
         expect_messages = NULL;
 
         /* The window is iconic even though no message was sent. */
