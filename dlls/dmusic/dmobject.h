@@ -30,7 +30,9 @@ struct chunk_entry {
     ULARGE_INTEGER offset;              /* chunk offset from start of stream */
     const struct chunk_entry *parent;   /* enclosing RIFF or LIST chunk */
 };
+#define MAKE_IDTYPE(id, type) (((UINT64)type << 32) | (UINT64)id)
 
+HRESULT stream_read(IStream *stream, void *data, ULONG size);
 HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk);
 HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk);
 HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk);

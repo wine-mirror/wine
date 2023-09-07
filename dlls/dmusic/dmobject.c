@@ -287,7 +287,7 @@ const char *debugstr_chunk(const struct chunk_entry *chunk)
     return wine_dbg_sprintf("%s chunk, %ssize %lu", debugstr_fourcc(chunk->id), type, chunk->size);
 }
 
-static HRESULT stream_read(IStream *stream, void *data, ULONG size)
+HRESULT stream_read(IStream *stream, void *data, ULONG size)
 {
     ULONG read;
     HRESULT hr;

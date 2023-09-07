@@ -192,78 +192,6 @@ static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
     return ret;
 }
 
-static HRESULT load_region(struct instrument *This, IStream *stream, ULONG length)
-{
-    struct region *region;
-    HRESULT ret;
-    DMUS_PRIVATE_CHUNK chunk;
-
-    TRACE("(%p, %p, %lu)\n", This, stream, length);
-
-    if (!(region = malloc(sizeof(*region)))) return E_OUTOFMEMORY;
-
-    while (length)
-    {
-        ret = read_from_stream(stream, &chunk, sizeof(chunk));
-        if (FAILED(ret)) goto failed;
-
-        length = subtract_bytes(length, sizeof(chunk));
-
-        switch (chunk.fccID)
-        {
-            case FOURCC_RGNH:
-                TRACE("RGNH chunk (region header): %lu bytes\n", chunk.dwSize);
-
-                ret = read_from_stream(stream, &region->header, sizeof(region->header));
-                if (FAILED(ret)) goto failed;
-
-                length = subtract_bytes(length, sizeof(region->header));
-                break;
-
-            case FOURCC_WSMP:
-                TRACE("WSMP chunk (wave sample): %lu bytes\n", chunk.dwSize);
-
-                ret = read_from_stream(stream, &region->wave_sample, sizeof(region->wave_sample));
-                if (FAILED(ret)) goto failed;
-                length = subtract_bytes(length, sizeof(region->wave_sample));
-
-                if (!(region->loop_present = (chunk.dwSize != sizeof(region->wave_sample))))
-                    break;
-
-                ret = read_from_stream(stream, &region->wave_loop, sizeof(region->wave_loop));
-                if (FAILED(ret)) goto failed;
-
-                length = subtract_bytes(length, sizeof(region->wave_loop));
-                break;
-
-            case FOURCC_WLNK:
-                TRACE("WLNK chunk (wave link): %lu bytes\n", chunk.dwSize);
-
-                ret = read_from_stream(stream, &region->wave_link, sizeof(region->wave_link));
-                if (FAILED(ret)) goto failed;
-
-                length = subtract_bytes(length, sizeof(region->wave_link));
-                break;
-
-            default:
-                TRACE("Unknown chunk %s (skipping): %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-
-                ret = advance_stream(stream, chunk.dwSize);
-                if (FAILED(ret)) goto failed;
-
-                length = subtract_bytes(length, chunk.dwSize);
-                break;
-        }
-    }
-
-    list_add_tail(&This->regions, &region->entry);
-    return S_OK;
-
-failed:
-    free(region);
-    return ret;
-}
-
 static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG length)
 {
     struct articulation *articulation;
@@ -284,6 +212,75 @@ static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG
     {
         subtract_bytes(length, sizeof(list) + sizeof(CONNECTION) * list.cConnections);
         list_add_tail(&This->articulations, &articulation->entry);
+    }
+
+    return hr;
+}
+
+static HRESULT parse_rgn_chunk(struct instrument *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    struct region *region;
+    HRESULT hr;
+
+    if (!(region = malloc(sizeof(*region)))) return E_OUTOFMEMORY;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case FOURCC_RGNH:
+            hr = stream_chunk_get_data(stream, &chunk, &region->header, sizeof(region->header));
+            break;
+
+        case FOURCC_WSMP:
+            if (chunk.size < sizeof(region->wave_sample)) hr = E_INVALIDARG;
+            else hr = stream_read(stream, &region->wave_sample, sizeof(region->wave_sample));
+            if (SUCCEEDED(hr) && region->wave_sample.cSampleLoops)
+            {
+                if (region->wave_sample.cSampleLoops > 1) FIXME("More than one wave loop is not implemented\n");
+                if (chunk.size != sizeof(WSMPL) + region->wave_sample.cSampleLoops * sizeof(WLOOP)) hr = E_INVALIDARG;
+                else hr = stream_read(stream, &region->wave_loop, sizeof(region->wave_loop));
+            }
+            break;
+
+        case FOURCC_WLNK:
+            hr = stream_chunk_get_data(stream, &chunk, &region->wave_link, sizeof(region->wave_link));
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    if (FAILED(hr)) free(region);
+    else list_add_tail(&This->regions, &region->entry);
+
+    return hr;
+}
+
+static HRESULT parse_lrgn_list(struct instrument *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_RGN):
+            hr = parse_rgn_chunk(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
     }
 
     return hr;
@@ -344,40 +341,15 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
                 switch (chunk.fccID)
                 {
                     case FOURCC_LRGN:
+                    {
+                        static const LARGE_INTEGER zero = {0};
+                        struct chunk_entry list_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
                         TRACE("LRGN chunk (regions list): %lu bytes\n", size);
-
-                        while (size)
-                        {
-                            hr = read_from_stream(stream, &chunk, sizeof(chunk));
-                            if (FAILED(hr))
-                                goto error;
-
-                            if (chunk.fccID != FOURCC_LIST)
-                            {
-                                TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                                goto error;
-                            }
-
-                            hr = read_from_stream(stream, &chunk.fccID, sizeof(chunk.fccID));
-                            if (FAILED(hr))
-                                goto error;
-
-                            if (chunk.fccID == FOURCC_RGN)
-                            {
-                                TRACE("RGN chunk (region): %lu bytes\n", chunk.dwSize);
-                                hr = load_region(This, stream, chunk.dwSize - sizeof(chunk.fccID));
-                            }
-                            else
-                            {
-                                TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                                hr = advance_stream(stream, chunk.dwSize - sizeof(chunk.fccID));
-                            }
-                            if (FAILED(hr))
-                                goto error;
-
-                            size = subtract_bytes(size, chunk.dwSize + sizeof(chunk));
-                        }
+                        IStream_Seek(stream, zero, STREAM_SEEK_CUR, &list_chunk.offset);
+                        list_chunk.offset.QuadPart -= 12;
+                        hr = parse_lrgn_list(This, stream, &list_chunk);
                         break;
+                    }
 
                     case FOURCC_LART:
                         TRACE("LART chunk (articulations list): %lu bytes\n", size);
