@@ -830,6 +830,22 @@ static void test_sink_render(IDirectMusicSynthSink *iface, void *buffer, DWORD b
     }
 }
 
+static BOOL unload_called;
+
+static HRESULT CALLBACK test_unload_callback(HANDLE handle, HANDLE user_data)
+{
+    ok(!!handle, "got %p\n", handle);
+    ok(user_data == (HANDLE)0xdeadbeef, "got %p\n", user_data);
+    unload_called = TRUE;
+    return E_FAIL;
+}
+
+static HRESULT CALLBACK test_unload_no_callback(HANDLE handle, HANDLE user_data)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_FAIL;
+}
+
 static void test_IDirectMusicSynth(void)
 {
     static const UINT RENDER_ITERATIONS = 8;
@@ -943,7 +959,7 @@ static void test_IDirectMusicSynth(void)
     IDirectMusicBuffer *buffer;
     DWORD format_size, written;
     IDirectMusicSynth *synth;
-    HANDLE wave_file, handle;
+    HANDLE wave_file, wave_handle, instrument_handle;
     IReferenceClock *clock;
     BOOL can_free = FALSE;
     REFERENCE_TIME time;
@@ -1095,17 +1111,17 @@ static void test_IDirectMusicSynth(void)
         wave_download.samples[i] = i;
 
     can_free = 0xdeadbeef;
-    handle = (HANDLE)0xdeadbeef;
-    hr = IDirectMusicSynth_Download(synth, &handle, &wave_download, &can_free);
+    wave_handle = NULL;
+    hr = IDirectMusicSynth_Download(synth, &wave_handle, &wave_download, &can_free);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(handle != 0, "got %p\n", handle);
+    todo_wine ok(!!wave_handle, "got %p\n", wave_handle);
     todo_wine ok(can_free == FALSE, "got %u\n", can_free);
 
     can_free = 0xdeadbeef;
-    handle = (HANDLE)0xdeadbeef;
-    hr = IDirectMusicSynth_Download(synth, &handle, &instrument_download, &can_free);
+    instrument_handle = NULL;
+    hr = IDirectMusicSynth_Download(synth, &instrument_handle, &instrument_download, &can_free);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(handle != 0, "got %p\n", handle);
+    todo_wine ok(!!instrument_handle, "got %p\n", instrument_handle);
     todo_wine ok(can_free == TRUE, "got %u\n", can_free);
 
     /* add a MIDI note to a buffer and play it */
@@ -1133,14 +1149,31 @@ static void test_IDirectMusicSynth(void)
     CloseHandle(wave_file);
     trace("Rendered samples to %s\n", debugstr_w(temp_file));
 
+
     hr = IDirectMusicSynth_Activate(synth, FALSE);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     ref = get_refcount(sink);
     ok(ref == 1, "got %lu\n", ref);
+
+    hr = IDirectMusicSynth_Unload(synth, 0, NULL, NULL);
+    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Unload(synth, (HANDLE)0xdeadbeef, test_unload_no_callback, (HANDLE)0xdeadbeef);
+    todo_wine ok(hr == E_FAIL, "got %#lx\n", hr);
+    hr = IDirectMusicSynth_Unload(synth, wave_handle, test_unload_callback, (HANDLE)0xdeadbeef);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!unload_called, "callback called\n");
+    hr = IDirectMusicSynth_Unload(synth, instrument_handle, NULL, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(unload_called, "callback not called\n");
+
     hr = IDirectMusicSynth_Close(synth);
     ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSynth_Unload(synth, 0, NULL, NULL);
+    todo_wine ok(hr == DMUS_E_SYNTHNOTCONFIGURED, "got %#lx\n", hr);
+
 
     IDirectMusicSynth_Release(synth);
 
