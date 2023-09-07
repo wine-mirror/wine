@@ -310,13 +310,18 @@ static void test_WTSEnumerateSessions(void)
 {
     BOOL console_found = FALSE, services_found = FALSE;
     WTS_SESSION_INFOW *info;
+    WTS_SESSION_INFOA *infoA;
+    DWORD count, count2;
     unsigned int i;
-    DWORD count;
     BOOL bret;
 
     bret = WTSEnumerateSessionsW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &info, &count);
     ok(bret, "got error %lu.\n", GetLastError());
     todo_wine_if(count == 1) ok(count >= 2, "got %lu.\n", count);
+
+    bret = WTSEnumerateSessionsA(WTS_CURRENT_SERVER_HANDLE, 0, 1, &infoA, &count2);
+    ok(bret, "got error %lu.\n", GetLastError());
+    ok(count2 == count, "got %lu.\n", count2);
 
     for (i = 0; i < count; ++i)
     {
@@ -325,17 +330,20 @@ static void test_WTSEnumerateSessions(void)
         {
             console_found = TRUE;
             ok(info[i].State == WTSActive, "got State %d.\n", info[i].State);
+            ok(!strcmp(infoA[i].pWinStationName, "Console"), "got %s.\n", debugstr_a(infoA[i].pWinStationName));
         }
         else if (!wcscmp(info[i].pWinStationName, L"Services"))
         {
             services_found = TRUE;
             ok(info[i].State == WTSDisconnected, "got State %d.\n", info[i].State);
+            ok(!strcmp(infoA[i].pWinStationName, "Services"), "got %s.\n", debugstr_a(infoA[i].pWinStationName));
         }
     }
     ok(console_found, "Console session not found.\n");
     todo_wine ok(services_found, "Services session not found.\n");
 
     WTSFreeMemory(info);
+    WTSFreeMemory(infoA);
 }
 
 START_TEST (wtsapi)
