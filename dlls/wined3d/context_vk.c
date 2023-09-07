@@ -2119,6 +2119,8 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->vp_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     key->vp_desc.pViewports = key->viewports;
     key->vp_desc.pScissors = key->scissors;
+    key->vp_desc.viewportCount = (context_vk->vk_info->multiple_viewports ? WINED3D_MAX_VIEWPORTS : 1);
+    key->vp_desc.scissorCount = key->vp_desc.viewportCount;
 
     key->rs_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     key->rs_desc.lineWidth = 1.0f;
@@ -2458,9 +2460,6 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SCISSORRECT)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER))
     {
-        key->vp_desc.viewportCount = (context_vk->vk_info->multiple_viewports ? WINED3D_MAX_VIEWPORTS : 1);
-        key->vp_desc.scissorCount = key->vp_desc.viewportCount;
-
         for (i = 0; i < key->vp_desc.viewportCount; ++i)
         {
             const struct wined3d_viewport *src_viewport = &state->viewports[i];
