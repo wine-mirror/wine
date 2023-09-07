@@ -4577,27 +4577,6 @@ void *EventTarget_query_interface(EventTarget *event_target, REFIID riid)
     return NULL;
 }
 
-HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
-{
-    if(IsEqualGUID(riid, &IID_IEventTarget)) {
-        if(use_event_quirks(event_target)) {
-            WARN("IEventTarget queried, but not supported by in document mode\n");
-            *ppv = NULL;
-            return E_NOINTERFACE;
-        }
-        IEventTarget_AddRef(&event_target->IEventTarget_iface);
-        *ppv = &event_target->IEventTarget_iface;
-        return S_OK;
-    }
-
-    if(dispex_query_interface(&event_target->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    WARN("(%p)->(%s %p)\n", event_target, debugstr_mshtml_guid(riid), ppv);
-    *ppv = NULL;
-    return E_NOINTERFACE;
-}
-
 void EventTarget_init_dispex_info(dispex_data_t *dispex_info, compat_mode_t compat_mode)
 {
     static const dispex_hook_t IEventTarget_hooks[] = {
