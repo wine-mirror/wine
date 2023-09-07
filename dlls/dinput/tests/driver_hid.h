@@ -98,8 +98,11 @@ struct winetest_shared_data
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
+    LONG successes;
     LONG failures;
+    LONG todo_successes;
     LONG todo_failures;
+    LONG skipped;
 };
 
 static inline const char *debugstr_pnp( ULONG code )
@@ -339,8 +342,11 @@ static inline void winetest_cleanup_( const char *file )
         {
             data = addr;
 
+            InterlockedExchangeAdd( &data->successes, winetest_successes );
             InterlockedExchangeAdd( &data->failures, winetest_failures );
+            InterlockedExchangeAdd( &data->todo_successes, winetest_todo_successes );
             InterlockedExchangeAdd( &data->todo_failures, winetest_todo_failures );
+            InterlockedExchangeAdd( &data->skipped, winetest_skipped );
 
             ZwUnmapViewOfSection( NtCurrentProcess(), addr );
         }
