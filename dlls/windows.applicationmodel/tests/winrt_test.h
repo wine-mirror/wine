@@ -35,8 +35,11 @@ struct winetest_shared_data
     BOOL running_under_wine;
     BOOL winetest_report_success;
     BOOL winetest_debug;
+    LONG successes;
     LONG failures;
+    LONG todo_successes;
     LONG todo_failures;
+    LONG skipped;
 };
 
 static HANDLE winrt_section;
@@ -102,8 +105,11 @@ static void winrt_test_exit_( const char *file, int line )
 
     data = MapViewOfFile( winrt_section, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024 );
     ok_(file, line)( !!data, "MapViewOfFile failed, error %lu\n", GetLastError() );
+    InterlockedAdd( &winetest_successes, InterlockedExchange( &data->successes, 0 ) );
     winetest_add_failures( InterlockedExchange( &data->failures, 0 ) );
+    InterlockedAdd( &winetest_todo_successes, InterlockedExchange( &data->todo_successes, 0 ) );
     winetest_add_failures( InterlockedExchange( &data->todo_failures, 0 ) );
+    InterlockedAdd( &winetest_skipped, InterlockedExchange( &data->skipped, 0 ) );
     UnmapViewOfFile( data );
     CloseHandle( winrt_section );
 }
@@ -221,8 +227,11 @@ static inline void winrt_test_exit_( const char *file, int line )
 
     data = MapViewOfFile( winrt_section, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024 );
     ok_(file, line)( !!data, "MapViewOfFile failed, error %lu\n", GetLastError() );
+    InterlockedExchangeAdd( &data->successes, winetest_successes );
     InterlockedExchangeAdd( &data->failures, winetest_failures );
+    InterlockedExchangeAdd( &data->todo_successes, winetest_todo_successes );
     InterlockedExchangeAdd( &data->todo_failures, winetest_todo_failures );
+    InterlockedExchangeAdd( &data->skipped, winetest_skipped );
     UnmapViewOfFile( data );
     CloseHandle( winrt_section );
 
