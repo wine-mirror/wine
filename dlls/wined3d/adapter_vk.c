@@ -2303,6 +2303,9 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     if (!device_info.host_query_reset_features.hostQueryReset)
         adapter_vk->vk_info.supported[WINED3D_VK_EXT_HOST_QUERY_RESET] = FALSE;
 
+    if (!device_info.xfb_features.transformFeedback)
+        adapter_vk->vk_info.supported[WINED3D_VK_EXT_TRANSFORM_FEEDBACK] = FALSE;
+
     adapter_vk->a.shader_backend->shader_get_caps(&adapter_vk->a, &shader_caps);
     adapter_vk->a.vertex_pipe->vp_get_caps(&adapter_vk->a, &vertex_caps);
     adapter_vk->a.fragment_pipe->get_caps(&adapter_vk->a, &fragment_caps);
