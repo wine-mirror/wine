@@ -3172,10 +3172,14 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
     ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#lx.\n", hr);
 
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, quad, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    /* Crashes on r200, Windows XP with STATUS_INTEGER_DIVIDE_BY_ZERO. */
+    if (0)
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, 0);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, quad, 0);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    }
 
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#lx.\n", hr);
@@ -3205,12 +3209,16 @@ static void test_draw_primitive(void)
     ok(current_ib == index_buffer, "Unexpected index buffer %p.\n", current_ib);
     IDirect3DIndexBuffer9_Release(current_ib);
 
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
-            indices, D3DFMT_INDEX16, quad, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 0,
-            indices, D3DFMT_INDEX16, quad, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    /* Crashes on r200, Windows XP with STATUS_INTEGER_DIVIDE_BY_ZERO. */
+    if (0)
+    {
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+                indices, D3DFMT_INDEX16, quad, 0);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 0,
+                indices, D3DFMT_INDEX16, quad, 0);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    }
 
     hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
             indices, D3DFMT_INDEX16, quad, sizeof(*quad));
