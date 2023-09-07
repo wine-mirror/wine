@@ -468,17 +468,8 @@ BOOL WINAPI WTSQuerySessionInformationA(HANDLE server, DWORD session_id, WTS_INF
         return FALSE;
     }
 
-    if (class == WTSClientProtocolType)
-    {
-        USHORT *protocol;
-
-        if (!(protocol = heap_alloc(sizeof(*protocol)))) return FALSE;
-        FIXME("returning 0 protocol type\n");
-        *protocol = 0;
-        *buffer = (char *)protocol;
-        *count = sizeof(*protocol);
-        return TRUE;
-    }
+    if (class == WTSClientProtocolType || class == WTSConnectState)
+        return WTSQuerySessionInformationW(server, session_id, class, (WCHAR **)buffer, count);
 
     if (!WTSQuerySessionInformationW(server, session_id, class, &bufferW, count))
         return FALSE;
@@ -518,6 +509,17 @@ BOOL WINAPI WTSQuerySessionInformationW(HANDLE server, DWORD session_id, WTS_INF
     {
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
+    }
+
+    if (class == WTSConnectState)
+    {
+        WTS_CONNECTSTATE_CLASS *state;
+
+        if (!(state = heap_alloc(sizeof(*state)))) return FALSE;
+        *state = WTSActive;
+        *buffer = (WCHAR *)state;
+        *count = sizeof(*state);
+        return TRUE;
     }
 
     if (class == WTSClientProtocolType)

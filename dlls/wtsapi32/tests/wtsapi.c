@@ -192,9 +192,24 @@ static void test_WTSQuerySessionInformation(void)
 {
     WCHAR *buf1, usernameW[UNLEN + 1], computernameW[MAX_COMPUTERNAME_LENGTH + 1];
     char *buf2, username[UNLEN + 1], computername[MAX_COMPUTERNAME_LENGTH + 1];
+    WTS_CONNECTSTATE_CLASS *state;
     DWORD count, tempsize;
     USHORT *protocol;
     BOOL ret;
+
+    count = 0;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSConnectState, (WCHAR **)&state, &count);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(count == sizeof(*state), "got %lu\n", count);
+    ok(*state == WTSActive, "got %d.\n", *state);
+    WTSFreeMemory(state);
+
+    count = 0;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSConnectState, (char **)&state, &count);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(count == sizeof(*state), "got %lu\n", count);
+    ok(*state == WTSActive, "got %d.\n", *state);
+    WTSFreeMemory(state);
 
     SetLastError(0xdeadbeef);
     count = 0;
