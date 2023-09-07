@@ -73,6 +73,26 @@ static void dump_dmus_region(DMUS_REGION *region)
     }
 }
 
+static void dump_connectionlist(CONNECTIONLIST *list)
+{
+    CONNECTION *connections = (CONNECTION *)(list + 1);
+    UINT i;
+
+    TRACE("CONNECTIONLIST:\n");
+    TRACE(" - cbSize        = %lu", list->cbSize);
+    TRACE(" - cConnections  = %lu", list->cConnections);
+
+    for (i = 0; i < list->cConnections; i++)
+    {
+        TRACE("- CONNECTION[%u]:\n", i);
+        TRACE("   - usSource      = %u\n", connections[i].usSource);
+        TRACE("   - usControl     = %u\n", connections[i].usControl);
+        TRACE("   - usDestination = %u\n", connections[i].usDestination);
+        TRACE("   - usTransform   = %u\n", connections[i].usTransform);
+        TRACE("   - lScale        = %lu\n", connections[i].lScale);
+    }
+}
+
 static void dump_dmus_wave(DMUS_WAVE *wave)
 {
     TRACE("DMUS_WAVE:\n");
@@ -113,6 +133,15 @@ static void wave_release(struct wave *wave)
     if (!ref) free(wave);
 }
 
+struct articulation
+{
+    struct list entry;
+    CONNECTIONLIST list;
+    CONNECTION connections[];
+};
+
+C_ASSERT(sizeof(struct articulation) == offsetof(struct articulation, connections[0]));
+
 struct region
 {
     struct list entry;
@@ -122,6 +151,8 @@ struct region
     UINT flags;
     UINT group;
 
+    struct list articulations;
+
     struct wave *wave;
     WAVELINK wave_link;
     WSMPL    wave_sample;
@@ -130,6 +161,15 @@ struct region
 
 static void region_destroy(struct region *region)
 {
+    struct articulation *articulation;
+    void *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(articulation, next, &region->articulations, struct articulation, entry)
+    {
+        list_remove(&articulation->entry);
+        free(articulation);
+    }
+
     wave_release(region->wave);
     free(region);
 }
@@ -143,6 +183,7 @@ struct instrument
     UINT patch;
     UINT flags;
     struct list regions;
+    struct list articulations;
 
     struct synth *synth;
 };
@@ -153,6 +194,7 @@ static void instrument_release(struct instrument *instrument)
 
     if (!ref)
     {
+        struct articulation *articulation;
         struct region *region;
         void *next;
 
@@ -160,6 +202,12 @@ static void instrument_release(struct instrument *instrument)
         {
             list_remove(&region->entry);
             region_destroy(region);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(articulation, next, &instrument->articulations, struct articulation, entry)
+        {
+            list_remove(&articulation->entry);
+            free(articulation);
         }
 
         free(instrument);
@@ -367,6 +415,47 @@ static HRESULT WINAPI synth_SetNumChannelGroups(IDirectMusicSynth8 *iface,
     return S_OK;
 }
 
+static HRESULT synth_download_articulation2(struct synth *This, ULONG *offsets, BYTE *data,
+        UINT index, struct list *articulations)
+{
+    DMUS_ARTICULATION2 *articulation_info;
+    struct articulation *articulation;
+    CONNECTION *connections;
+    CONNECTIONLIST *list;
+    UINT size;
+
+    for (; index; index = articulation_info->ulNextArtIdx)
+    {
+        articulation_info = (DMUS_ARTICULATION2 *)(data + offsets[index]);
+        list = (CONNECTIONLIST *)(data + offsets[articulation_info->ulArtIdx]);
+        connections = (CONNECTION *)list + 1;
+
+        if (TRACE_ON(dmsynth)) dump_connectionlist(list);
+        if (articulation_info->ulFirstExtCkIdx) FIXME("Articulation extensions not implemented\n");
+        if (list->cbSize != sizeof(*list)) return DMUS_E_BADARTICULATION;
+
+        size = offsetof(struct articulation, connections[list->cConnections]);
+        if (!(articulation = calloc(1, size))) return E_OUTOFMEMORY;
+        articulation->list = *list;
+        memcpy(articulation->connections, connections, list->cConnections * sizeof(*connections));
+        list_add_tail(articulations, &articulation->entry);
+    }
+
+    return S_OK;
+}
+
+static HRESULT synth_download_articulation(struct synth *This, DMUS_DOWNLOADINFO *info, ULONG *offsets, BYTE *data,
+        UINT index, struct list *list)
+{
+    if (info->dwDLType == DMUS_DOWNLOADINFO_INSTRUMENT2)
+        return synth_download_articulation2(This, offsets, data, index, list);
+    else
+    {
+        FIXME("DMUS_ARTICPARAMS support not implemented\n");
+        return S_OK;
+    }
+}
+
 static struct wave *synth_find_wave_from_id(struct synth *This, DWORD id)
 {
     struct wave *wave;
@@ -412,6 +501,7 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
     instrument->patch = instrument_info->ulPatch;
     instrument->flags = instrument_info->ulFlags;
     list_init(&instrument->regions);
+    list_init(&instrument->articulations);
     instrument->synth = This;
 
     for (index = instrument_info->ulFirstRegionIdx; index; index = region_info->ulNextRegionIdx)
@@ -428,6 +518,7 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
         region->wave_link = region_info->WaveLink;
         region->wave_sample = region_info->WSMP;
         memcpy(region->wave_loops, region_info->WLOOP, region_info->WSMP.cSampleLoops * sizeof(WLOOP));
+        list_init(&region->articulations);
 
         if (!(region->wave = synth_find_wave_from_id(This, region->wave_link.ulTableIndex)))
         {
@@ -437,7 +528,15 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
         }
 
         list_add_tail(&instrument->regions, &region->entry);
+
+        if (region_info->ulRegionArtIdx && FAILED(synth_download_articulation(This, info, offsets, data,
+                region_info->ulRegionArtIdx, &region->articulations)))
+            goto error;
     }
+
+    if (FAILED(synth_download_articulation(This, info, offsets, data,
+            instrument_info->ulGlobalArtIdx, &instrument->articulations)))
+        goto error;
 
     list_add_tail(&This->instruments, &instrument->entry);
     *ret_handle = instrument;
@@ -517,7 +616,7 @@ static HRESULT WINAPI synth_Download(IDirectMusicSynth8 *iface, HANDLE *ret_hand
     DMUS_DOWNLOADINFO *info = data;
     ULONG *offsets = (ULONG *)(info + 1);
 
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, ret_handle, data, free);
+    TRACE("(%p)->(%p, %p, %p)\n", This, ret_handle, data, free);
 
     if (!ret_handle || !data || !ret_free) return E_POINTER;
     *ret_handle = 0;
