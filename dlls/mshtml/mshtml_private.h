@@ -551,6 +551,7 @@ struct HTMLWindow {
 
 struct HTMLOuterWindow {
     HTMLWindow base;
+    IEventTarget IEventTarget_iface;
 
     nsCycleCollectingAutoRefCnt ccref;
     LONG task_magic;

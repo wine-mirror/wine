@@ -1469,8 +1469,26 @@ EVENT_HANDLER_FUNC_OBJ(onvisibilitychange);
 static HRESULT WINAPI onbeforeunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+    IEventTarget *event_target;
+    IHTMLWindow2 *window2;
+    IDOMEvent *event;
+    HRESULT hres;
+
     CHECK_EXPECT(onbeforeunload);
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&pdp->rgvarg[1]), &IID_IDOMEvent, (void**)&event);
+    ok(hres == S_OK, "Could not get IDOMEvent iface: %08lx\n", hres);
+    hres = IDOMEvent_get_target(event, &event_target);
+    ok(hres == S_OK, "get_target failed: %08lx\n", hres);
+    IDOMEvent_Release(event);
+
+    hres = IEventTarget_QueryInterface(event_target, &IID_IHTMLWindow2, (void**)&window2);
+    ok(hres == S_OK, "Could not get IHTMLWindow2 iface: %08lx\n", hres);
+    ok(window2 == window, "event_target's window iface != window\n");
+    IHTMLWindow2_Release(window2);
+
+    IEventTarget_Release(event_target);
     return S_OK;
 }
 

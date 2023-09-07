@@ -260,9 +260,19 @@ static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID ri
     }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
         *ppv = &This->base.IHTMLWindow2_iface;
         return S_OK;
-    }else {
-        return EventTarget_QI(&This->base.inner_window->event_target, riid, ppv);
+    }else if(IsEqualGUID(&IID_IEventTarget, riid)) {
+        if(!This->base.inner_window->doc || This->base.inner_window->doc->document_mode < COMPAT_MODE_IE9) {
+            *ppv = NULL;
+            return E_NOINTERFACE;
+        }
+        *ppv = &This->IEventTarget_iface;
+        IHTMLWindow2_AddRef(&This->base.IHTMLWindow2_iface);
+        return S_OK;
     }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI outer_window_AddRef(IHTMLWindow2 *iface)
@@ -3771,6 +3781,100 @@ static const IDispatchExVtbl WindowDispExVtbl = {
     WindowDispEx_GetNameSpaceParent
 };
 
+static inline HTMLOuterWindow *impl_from_IEventTarget(IEventTarget *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLOuterWindow, IEventTarget_iface);
+}
+
+static HRESULT WINAPI WindowEventTarget_QueryInterface(IEventTarget *iface, REFIID riid, void **ppv)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IHTMLWindow2_QueryInterface(&This->base.IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI WindowEventTarget_AddRef(IEventTarget *iface)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IHTMLWindow2_AddRef(&This->base.IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI WindowEventTarget_Release(IEventTarget *iface)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IHTMLWindow2_Release(&This->base.IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI WindowEventTarget_GetTypeInfoCount(IEventTarget *iface, UINT *pctinfo)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IDispatchEx_GetTypeInfoCount(&This->base.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI WindowEventTarget_GetTypeInfo(IEventTarget *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->base.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI WindowEventTarget_GetIDsOfNames(IEventTarget *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->base.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI WindowEventTarget_Invoke(IEventTarget *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IDispatchEx_Invoke(&This->base.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
+                              pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI WindowEventTarget_addEventListener(IEventTarget *iface, BSTR type, IDispatch *listener,
+        VARIANT_BOOL capture)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_addEventListener(&This->base.inner_window->event_target.IEventTarget_iface, type, listener, capture);
+}
+
+static HRESULT WINAPI WindowEventTarget_removeEventListener(IEventTarget *iface, BSTR type, IDispatch *listener,
+        VARIANT_BOOL capture)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_removeEventListener(&This->base.inner_window->event_target.IEventTarget_iface, type, listener, capture);
+}
+
+static HRESULT WINAPI WindowEventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *event_iface, VARIANT_BOOL *result)
+{
+    HTMLOuterWindow *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_dispatchEvent(&This->base.inner_window->event_target.IEventTarget_iface, event_iface, result);
+}
+
+static const IEventTargetVtbl EventTargetVtbl = {
+    WindowEventTarget_QueryInterface,
+    WindowEventTarget_AddRef,
+    WindowEventTarget_Release,
+    WindowEventTarget_GetTypeInfoCount,
+    WindowEventTarget_GetTypeInfo,
+    WindowEventTarget_GetIDsOfNames,
+    WindowEventTarget_Invoke,
+    WindowEventTarget_addEventListener,
+    WindowEventTarget_removeEventListener,
+    WindowEventTarget_dispatchEvent
+};
+
 static inline HTMLWindow *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IServiceProvider_iface);
@@ -4075,6 +4179,12 @@ static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex)
     return lock_document_mode(This->doc);
 }
 
+static IDispatch *HTMLWindow_get_dispatch_this(DispatchEx *dispex)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    return (IDispatch*)&This->base.outer_window->base.IHTMLWindow2_iface;
+}
+
 static nsISupports *HTMLWindow_get_gecko_target(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -4193,6 +4303,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .next_dispid         = HTMLWindow_next_dispid,
         .get_compat_mode     = HTMLWindow_get_compat_mode,
     },
+    .get_dispatch_this       = HTMLWindow_get_dispatch_this,
     .get_gecko_target        = HTMLWindow_get_gecko_target,
     .bind_event              = HTMLWindow_bind_event,
     .set_current_event       = HTMLWindow_set_current_event
@@ -4351,6 +4462,7 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
     if(!window)
         return E_OUTOFMEMORY;
     window->base.IHTMLWindow2_iface.lpVtbl = &outer_window_HTMLWindow2Vtbl;
+    window->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
 
     window->base.outer_window = window;
     window->base.inner_window = NULL;

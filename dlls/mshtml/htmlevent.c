@@ -318,6 +318,21 @@ static void remove_event_listener(EventTarget *event_target, const WCHAR *type_n
     }
 }
 
+static IEventTarget *get_event_target_iface(EventTarget *event_target)
+{
+    const event_target_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
+    IEventTarget *ret;
+
+    if(vtbl->get_dispatch_this) {
+        IDispatch *disp = vtbl->get_dispatch_this(&event_target->dispex);
+        IDispatch_QueryInterface(disp, &IID_IEventTarget, (void**)&ret);
+    }else {
+        ret = &event_target->IEventTarget_iface;
+        IEventTarget_AddRef(ret);
+    }
+    return ret;
+}
+
 static HRESULT get_gecko_target(IEventTarget*,nsIDOMEventTarget**);
 
 typedef struct {
@@ -1049,7 +1064,7 @@ static HRESULT WINAPI DOMEvent_get_currentTarget(IDOMEvent *iface, IEventTarget 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->current_target)
-        IEventTarget_AddRef(*p = &This->current_target->IEventTarget_iface);
+        *p = get_event_target_iface(This->current_target);
     else
         *p = NULL;
     return S_OK;
@@ -1082,7 +1097,7 @@ static HRESULT WINAPI DOMEvent_get_target(IDOMEvent *iface, IEventTarget **p)
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->target)
-        IEventTarget_AddRef(*p = &This->target->IEventTarget_iface);
+        *p = get_event_target_iface(This->target);
     else
         *p = NULL;
     return S_OK;
@@ -3573,10 +3588,10 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 static void call_event_handlers(EventTarget *event_target, DOMEvent *event, dispatch_mode_t dispatch_mode)
 {
     const listener_container_t *container = get_listener_container(event_target, event->type, FALSE);
+    const event_target_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
     event_listener_t *listener, listeners_buf[8], *listeners = listeners_buf;
     unsigned listeners_cnt, listeners_size;
     ConnectionPointContainer *cp_container = NULL;
-    const event_target_vtbl_t *vtbl = NULL;
     BOOL skip_onevent_listener = FALSE;
     VARIANT v;
     HRESULT hres;
@@ -3597,9 +3612,14 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             V_VT(&arg) = VT_DISPATCH;
             V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
             V_VT(&v) = VT_EMPTY;
+            if(vtbl->get_dispatch_this)
+                V_DISPATCH(&arg) = vtbl->get_dispatch_this(&event_target->dispex);
+            IDispatch_AddRef(V_DISPATCH(&arg));
 
             TRACE("%p %s >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
+            IDispatch_Release(V_DISPATCH(&arg));
+
             if(hres == S_OK) {
                 TRACE("%p %s <<< %s\n", event_target, debugstr_w(event->type), debugstr_variant(&v));
 
@@ -3673,6 +3693,10 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
 
             V_VT(args) = VT_DISPATCH;
             V_DISPATCH(args) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
+            if(vtbl->get_dispatch_this)
+                V_DISPATCH(args) = vtbl->get_dispatch_this(&event_target->dispex);
+            IDispatch_AddRef(V_DISPATCH(args));
+
             V_VT(args+1) = VT_DISPATCH;
             V_DISPATCH(args+1) = dispatch_mode == DISPATCH_LEGACY
                 ? (IDispatch*)event->event_obj : (IDispatch*)&event->IDOMEvent_iface;
@@ -3680,6 +3704,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
 
             TRACE("%p %s >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
+            IDispatch_Release(V_DISPATCH(args));
+
             if(hres == S_OK) {
                 TRACE("%p %s <<< %s\n", event_target, debugstr_w(event->type),
                       debugstr_variant(&v));
@@ -3729,8 +3755,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
     if(listeners != listeners_buf)
         free(listeners);
 
-    if(event->phase != DEP_CAPTURING_PHASE && event_info[event->event_id].dispid
-       && (vtbl = dispex_get_vtbl(&event_target->dispex))->get_cp_container)
+    if(event->phase != DEP_CAPTURING_PHASE && event_info[event->event_id].dispid && vtbl->get_cp_container)
         cp_container = vtbl->get_cp_container(&event_target->dispex);
     if(cp_container) {
         if(cp_container->cps) {

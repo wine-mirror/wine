@@ -197,6 +197,21 @@ static BOOL skip_loadobject_tests;
 static IActiveScriptSite *site, *site2;
 static SCRIPTSTATE state, state2;
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+
+    if(iface1 == iface2)
+        return TRUE;
+
+    IUnknown_QueryInterface(iface1, &IID_IHTMLWindow2, (void**)&unk1);
+    IUnknown_Release(unk1);
+    IUnknown_QueryInterface(iface2, &IID_IHTMLWindow2, (void**)&unk2);
+    IUnknown_Release(unk2);
+
+    return unk1 == unk2;
+}
+
 static BOOL init_key(const WCHAR *key_name, const WCHAR *def_value, BOOL init)
 {
     HKEY hkey;
@@ -4482,6 +4497,9 @@ static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHA
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+    todo_wine
+    ok(iface_cmp((IUnknown *)window, (IUnknown *)window_dispex), "window != dispex_window\n");
 
     code = SysAllocString(codew);
     lang = SysAllocString(langw);
