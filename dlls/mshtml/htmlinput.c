@@ -1344,35 +1344,22 @@ static inline HTMLInputElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLInputElement, element.node);
 }
 
-static HRESULT HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputElement, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputTextElement, riid))
+        return &This->IHTMLInputTextElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputTextElement2, riid))
+        return &This->IHTMLInputTextElement2_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLInputElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLInputElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLInputElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLInputElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLInputElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLInputTextElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLInputTextElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLInputTextElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLInputTextElement2, riid)) {
-        TRACE("(%p)->(IID_IHTMLInputTextElement2 %p)\n", This, ppv);
-        *ppv = &This->IHTMLInputTextElement2_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
@@ -1602,24 +1589,16 @@ static inline HTMLLabelElement *label_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLLabelElement, element.node);
 }
 
-static HRESULT HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLLabelElement *This = label_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLLabelElement_iface;
+    if(IsEqualGUID(&IID_IHTMLLabelElement, riid))
+        return &This->IHTMLLabelElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLLabelElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLLabelElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLLabelElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLLabelElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static const NodeImplVtbl HTMLLabelElementImplVtbl = {
@@ -1901,24 +1880,16 @@ static inline HTMLButtonElement *button_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLButtonElement, element.node);
 }
 
-static HRESULT HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLButtonElement_iface;
+    if(IsEqualGUID(&IID_IHTMLButtonElement, riid))
+        return &This->IHTMLButtonElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLButtonElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLButtonElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLButtonElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLButtonElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLButtonElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)

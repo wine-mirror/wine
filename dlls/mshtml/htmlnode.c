@@ -493,7 +493,18 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
 
-    return This->vtbl->qi(This, riid, ppv);
+    /* FIXME: Get rid of this when dispex handles QI */
+    if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid) || IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
+        dispex_query_interface(&This->event_target.dispex, riid, ppv);
+        return S_OK;
+    }
+
+    if((*ppv = This->vtbl->qi(This, riid))) {
+        IHTMLDOMNode_AddRef(&This->IHTMLDOMNode_iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLDOMNode_AddRef(IHTMLDOMNode *iface)
@@ -1464,26 +1475,28 @@ void HTMLDOMNode_destructor(DispatchEx *dispex)
     free(This);
 }
 
-HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
+void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
 {
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    IUnknown *unk;
+    HRESULT hres;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLDOMNode_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLDOMNode_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        *ppv = &This->IHTMLDOMNode_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode2, riid)) {
-        *ppv = &This->IHTMLDOMNode2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMNode3, riid)) {
-        *ppv = &This->IHTMLDOMNode3_iface;
-    }else {
-        return EventTarget_QI(&This->event_target, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode2, riid))
+        return &This->IHTMLDOMNode2_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode3, riid))
+        return &This->IHTMLDOMNode3_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    hres = EventTarget_QI(&This->event_target, riid, (void**)&unk);
+    if(hres != S_OK)
+        return NULL;
+
+    IUnknown_Release(unk);
+    return unk;
 }
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)

@@ -700,20 +700,14 @@ static const IHTMLFrameBase2Vtbl HTMLFrameBase2Vtbl = {
     HTMLFrameBase2_get_allowTransparency
 };
 
-static HRESULT HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid, void **ppv)
+static void *HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid)
 {
-    if(IsEqualGUID(&IID_IHTMLFrameBase, riid)) {
-        TRACE("(%p)->(IID_IHTMLFrameBase %p)\n", This, ppv);
-        *ppv = &This->IHTMLFrameBase_iface;
-    }else if(IsEqualGUID(&IID_IHTMLFrameBase2, riid)) {
-        TRACE("(%p)->(IID_IHTMLFrameBase2 %p)\n", This, ppv);
-        *ppv = &This->IHTMLFrameBase2_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IHTMLFrameBase, riid))
+        return &This->IHTMLFrameBase_iface;
+    if(IsEqualGUID(&IID_IHTMLFrameBase2, riid))
+        return &This->IHTMLFrameBase2_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLFrameBase_destructor(HTMLFrameBase *This)
@@ -893,19 +887,14 @@ static inline HTMLFrameElement *frame_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLFrameElement, framebase.element.node);
 }
 
-static HRESULT HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IHTMLFrameElement3, riid)) {
-        TRACE("(%p)->(IID_IHTMLFrameElement3 %p)\n", This, ppv);
-        *ppv = &This->IHTMLFrameElement3_iface;
-    }else {
-        return HTMLFrameBase_QI(&This->framebase, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IHTMLFrameElement3, riid))
+        return &This->IHTMLFrameElement3_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLFrameBase_QI(&This->framebase, riid);
 }
 
 static void HTMLFrameElement_destructor(HTMLDOMNode *iface)
@@ -1471,25 +1460,18 @@ static inline HTMLIFrame *iframe_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLIFrame, framebase.element.node);
 }
 
-static HRESULT HTMLIFrame_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLIFrame_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IHTMLIFrameElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLIFrameElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLIFrameElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLIFrameElement2, riid)) {
-        TRACE("(%p)->(IID_IHTMLIFrameElement2 %p)\n", This, ppv);
-        *ppv = &This->IHTMLIFrameElement2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLIFrameElement3, riid)) {
-        TRACE("(%p)->(IID_IHTMLIFrameElement3 %p)\n", This, ppv);
-        *ppv = &This->IHTMLIFrameElement3_iface;
-    }else {
-        return HTMLFrameBase_QI(&This->framebase, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IHTMLIFrameElement, riid))
+        return &This->IHTMLIFrameElement_iface;
+    if(IsEqualGUID(&IID_IHTMLIFrameElement2, riid))
+        return &This->IHTMLIFrameElement2_iface;
+    if(IsEqualGUID(&IID_IHTMLIFrameElement3, riid))
+        return &This->IHTMLIFrameElement3_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLFrameBase_QI(&This->framebase, riid);
 }
 
 static void HTMLIFrame_destructor(HTMLDOMNode *iface)

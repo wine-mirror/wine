@@ -637,50 +637,43 @@ static inline HTMLObjectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node);
 }
 
-static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    void *elem_iface;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLObjectElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLObjectElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLObjectElement, riid)) {
-        *ppv = &This->IHTMLObjectElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLObjectElement2, riid)) {
-        *ppv = &This->IHTMLObjectElement2_iface;
-    }else if(IsEqualGUID(&IID_HTMLPluginContainer, riid)) {
-        /* Special pseudo-interface returning HTMLPluginContainse struct. */
-        *ppv = &This->plugin_container;
-        node_addref(&This->plugin_container.element.node);
-        return S_OK;
-    }else {
-        HRESULT hres;
-
-        hres = HTMLElement_QI(&This->plugin_container.element.node, riid, ppv);
-        if(hres == E_NOINTERFACE && This->plugin_container.plugin_host && This->plugin_container.plugin_host->plugin_unk) {
-            IUnknown *plugin_iface, *ret;
-
-            hres = IUnknown_QueryInterface(This->plugin_container.plugin_host->plugin_unk, riid, (void**)&plugin_iface);
-            if(hres == S_OK) {
-                hres = wrap_iface(plugin_iface, (IUnknown*)&This->IHTMLObjectElement_iface, &ret);
-                IUnknown_Release(plugin_iface);
-                if(FAILED(hres))
-                    return hres;
-
-                TRACE("returning plugin iface %p wrapped to %p\n", plugin_iface, ret);
-                *ppv = ret;
-                return S_OK;
-            }
-        }
-
-        return hres;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLObjectElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLObjectElement_iface;
+    if(IsEqualGUID(&IID_IHTMLObjectElement, riid))
+        return &This->IHTMLObjectElement_iface;
+    if(IsEqualGUID(&IID_IHTMLObjectElement2, riid))
+        return &This->IHTMLObjectElement2_iface;
+    if(IsEqualGUID(&IID_HTMLPluginContainer, riid)) {
+        /* Special pseudo-interface returning HTMLPluginContainer struct. */
+        return &This->plugin_container;
     }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    elem_iface = HTMLElement_QI(&This->plugin_container.element.node, riid);
+    if(!elem_iface && This->plugin_container.plugin_host && This->plugin_container.plugin_host->plugin_unk) {
+        IUnknown *plugin_iface, *ret;
+        HRESULT hres = IUnknown_QueryInterface(This->plugin_container.plugin_host->plugin_unk, riid, (void**)&plugin_iface);
+
+        if(hres == S_OK) {
+            hres = wrap_iface(plugin_iface, (IUnknown*)&This->IHTMLObjectElement_iface, &ret);
+            IUnknown_Release(plugin_iface);
+            if(FAILED(hres)) {
+                ERR("wrap_iface failed: %08lx\n", hres);
+                return NULL;
+            }
+
+            TRACE("returning plugin iface %p wrapped to %p\n", plugin_iface, ret);
+            return ret;
+        }
+    }
+
+    return elem_iface;
 }
 
 static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
@@ -986,24 +979,18 @@ static inline HTMLEmbed *embed_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLEmbed, element.node);
 }
 
-static HRESULT HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLEmbed *This = embed_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLEmbedElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLEmbedElement_iface;
+    if(IsEqualGUID(&IID_IHTMLEmbedElement, riid))
+        return &This->IHTMLEmbedElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLEmbedElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLEmbedElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLEmbedElement, riid)) {
-        *ppv = &This->IHTMLEmbedElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)

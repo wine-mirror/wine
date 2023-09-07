@@ -146,21 +146,14 @@ static inline HTMLCommentElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLCommentElement, element.node);
 }
 
-static HRESULT HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv =  NULL;
+    if(IsEqualGUID(&IID_IHTMLCommentElement, riid))
+        return &This->IHTMLCommentElement_iface;
 
-    if(IsEqualGUID(&IID_IHTMLCommentElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLCommentElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLCommentElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLCommentElement_destructor(HTMLDOMNode *iface)

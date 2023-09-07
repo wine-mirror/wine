@@ -658,21 +658,14 @@ static inline HTMLImg *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLImg, element.node);
 }
 
-static HRESULT HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLImg *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IHTMLImgElement, riid))
+        return &This->IHTMLImgElement_iface;
 
-    if(IsEqualGUID(&IID_IHTMLImgElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLImgElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLImgElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)

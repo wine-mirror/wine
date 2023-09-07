@@ -890,32 +890,20 @@ static inline HTMLBodyElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLBodyElement, element.node);
 }
 
-static HRESULT HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IHTMLBodyElement, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IHTMLTextContainer, riid))
+        return &This->IHTMLTextContainer_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLBodyElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLBodyElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLBodyElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLBodyElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLBodyElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLTextContainer, riid)) {
-        TRACE("(%p)->(IID_IHTMLTextContainer %p)\n", This, ppv);
-        *ppv = &This->IHTMLTextContainer_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLBodyElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)

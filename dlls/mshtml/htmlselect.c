@@ -346,29 +346,18 @@ static inline HTMLOptionElement *HTMLOptionElement_from_HTMLDOMNode(HTMLDOMNode 
     return CONTAINING_RECORD(iface, HTMLOptionElement, element.node);
 }
 
-static HRESULT HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLOptionElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLOptionElement_iface;
+    if(IsEqualGUID(&IID_IHTMLOptionElement, riid))
+        return &This->IHTMLOptionElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLOptionElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLOptionElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLOptionElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLOptionElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLOptionElement_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLOptionElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
@@ -1326,29 +1315,18 @@ static inline HTMLSelectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLSelectElement, element.node);
 }
 
-static HRESULT HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLSelectElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLSelectElement_iface;
+    if(IsEqualGUID(&IID_IHTMLSelectElement, riid))
+        return &This->IHTMLSelectElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLSelectElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLSelectElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLSelectElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLSelectElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLSelectElement_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)

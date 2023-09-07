@@ -374,19 +374,14 @@ static inline HTMLLinkElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLLinkElement, element.node);
 }
 
-static HRESULT HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IHTMLLinkElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLLinkElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLLinkElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IHTMLLinkElement, riid))
+        return &This->IHTMLLinkElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLLinkElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)

@@ -413,21 +413,14 @@ static inline HTMLAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLAreaElement, element.node);
 }
 
-static HRESULT HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IHTMLAreaElement, riid))
+        return &This->IHTMLAreaElement_iface;
 
-    if(IsEqualGUID(&IID_IHTMLAreaElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLAreaElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLAreaElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLAreaElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)

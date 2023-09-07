@@ -365,28 +365,20 @@ static inline HTMLStyleElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node);
 }
 
-static HRESULT HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLStyleElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLStyleElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyleElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLStyleElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleElement2, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyleElement2 %p)\n", This, ppv);
-        *ppv = &This->IHTMLStyleElement2_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLStyleElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLStyleElement_iface;
+    if(IsEqualGUID(&IID_IHTMLStyleElement, riid))
+        return &This->IHTMLStyleElement_iface;
+    if(IsEqualGUID(&IID_IHTMLStyleElement2, riid))
+        return &This->IHTMLStyleElement2_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLStyleElement_destructor(HTMLDOMNode *iface)

@@ -354,29 +354,18 @@ static inline HTMLScriptElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLScriptElement, element.node);
 }
 
-static HRESULT HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLScriptElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLScriptElement_iface;
+    if(IsEqualGUID(&IID_IHTMLScriptElement, riid))
+        return &This->IHTMLScriptElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLScriptElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLScriptElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLScriptElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLScriptElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLScriptElement_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLScriptElement_destructor(HTMLDOMNode *iface)

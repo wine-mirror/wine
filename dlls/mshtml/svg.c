@@ -177,19 +177,14 @@ static inline SVGElement *SVGElement_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, SVGElement, element.node);
 }
 
-static HRESULT SVGElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *SVGElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     SVGElement *This = SVGElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_ISVGElement, riid))
-        *ppv = &This->ISVGElement_iface;
-    else
-        return HTMLElement_QI(&This->element.node, riid, ppv);
+        return &This->ISVGElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static const NodeImplVtbl SVGElementImplVtbl = {
@@ -717,19 +712,14 @@ static inline SVGSVGElement *SVGSVGElement_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, SVGSVGElement, svg_element.element.node);
 }
 
-static HRESULT SVGSVGElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *SVGSVGElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     SVGSVGElement *This = SVGSVGElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_ISVGSVGElement, riid))
-        *ppv = &This->ISVGSVGElement_iface;
-    else
-        return SVGElement_QI(&This->svg_element.element.node, riid, ppv);
+        return &This->ISVGSVGElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return SVGElement_QI(&This->svg_element.element.node, riid);
 }
 
 static const NodeImplVtbl SVGSVGElementImplVtbl = {
@@ -885,19 +875,14 @@ static inline SVGCircleElement *SVGCircleElement_from_HTMLDOMNode(HTMLDOMNode *i
     return CONTAINING_RECORD(iface, SVGCircleElement, svg_element.element.node);
 }
 
-static HRESULT SVGCircleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *SVGCircleElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     SVGCircleElement *This = SVGCircleElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_ISVGCircleElement, riid))
-        *ppv = &This->ISVGCircleElement_iface;
-    else
-        return SVGElement_QI(&This->svg_element.element.node, riid, ppv);
+        return &This->ISVGCircleElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return SVGElement_QI(&This->svg_element.element.node, riid);
 }
 
 static const NodeImplVtbl SVGCircleElementImplVtbl = {
@@ -1126,21 +1111,16 @@ static inline SVGTSpanElement *SVGTSpanElement_from_HTMLDOMNode(HTMLDOMNode *ifa
     return CONTAINING_RECORD(iface, SVGTSpanElement, svg_element.element.node);
 }
 
-static HRESULT SVGTSpanElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *SVGTSpanElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     SVGTSpanElement *This = SVGTSpanElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_ISVGTSpanElement, riid))
-        *ppv = &This->svg_element.ISVGElement_iface; /* no additional methods */
-    else if(IsEqualGUID(&IID_ISVGTextContentElement, riid))
-        *ppv = &This->text_content.ISVGTextContentElement_iface;
-    else
-        return SVGElement_QI(&This->svg_element.element.node, riid, ppv);
+        return &This->svg_element.ISVGElement_iface; /* no additional methods */
+    if(IsEqualGUID(&IID_ISVGTextContentElement, riid))
+        return &This->text_content.ISVGTextContentElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return SVGElement_QI(&This->svg_element.element.node, riid);
 }
 
 static const NodeImplVtbl SVGTSpanElementImplVtbl = {

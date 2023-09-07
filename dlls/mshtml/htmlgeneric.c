@@ -128,21 +128,14 @@ static inline HTMLGenericElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLGenericElement, element.node);
 }
 
-static HRESULT HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLGenericElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IHTMLGenericElement, riid))
+        return &This->IHTMLGenericElement_iface;
 
-    if(IsEqualGUID(&IID_IHTMLGenericElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLGenericElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLGenericElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLGenericElement_destructor(HTMLDOMNode *iface)

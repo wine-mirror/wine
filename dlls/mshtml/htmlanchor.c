@@ -797,29 +797,18 @@ static inline HTMLAnchorElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node);
 }
 
-static HRESULT HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLAnchorElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLAnchorElement_iface;
+    if(IsEqualGUID(&IID_IHTMLAnchorElement, riid))
+        return &This->IHTMLAnchorElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLAnchorElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLAnchorElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLAnchorElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLAnchorElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLAnchorElement_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)

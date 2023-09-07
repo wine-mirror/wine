@@ -337,7 +337,7 @@ HRESULT wrap_iface(IUnknown *iface, IUnknown *ref_unk, IUnknown **ret)
     IUnknown_AddRef(iface);
     wrapper->iface = iface;
 
-    IUnknown_AddRef(ref_unk);
+    /* Caller AddRefs */
     wrapper->ref_unk = ref_unk;
 
     *ret = &wrapper->IUnknown_iface;

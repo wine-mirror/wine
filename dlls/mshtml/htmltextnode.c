@@ -324,21 +324,16 @@ static inline HTMLDOMTextNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLDOMTextNode, node);
 }
 
-static HRESULT HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_IHTMLDOMTextNode, riid))
-        *ppv = &This->IHTMLDOMTextNode_iface;
-    else if(IsEqualGUID(&IID_IHTMLDOMTextNode2, riid))
-        *ppv = &This->IHTMLDOMTextNode2_iface;
-    else
-        return HTMLDOMNode_QI(&This->node, riid, ppv);
+        return &This->IHTMLDOMTextNode_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMTextNode2, riid))
+        return &This->IHTMLDOMTextNode2_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLDOMNode_QI(&This->node, riid);
 }
 
 static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)

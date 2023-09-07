@@ -773,32 +773,20 @@ static inline HTMLFormElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLFormElement, element.node);
 }
 
-static HRESULT HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLFormElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLFormElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLFormElement_iface;
+    if(IsEqualGUID(&IID_IHTMLFormElement, riid))
+        return &This->IHTMLFormElement_iface;
+    if(IsEqualGUID(&DIID_DispHTMLFormElement, riid))
+        return &This->IHTMLFormElement_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLFormElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLFormElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLFormElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLFormElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLFormElement_iface;
-    }else if(IsEqualGUID(&DIID_DispHTMLFormElement, riid)) {
-        TRACE("(%p)->(DIID_DispHTMLFormElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLFormElement_iface;
-    }
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    return HTMLElement_QI(&This->element.node, riid, ppv);
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,

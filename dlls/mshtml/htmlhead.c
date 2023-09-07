@@ -146,19 +146,14 @@ static inline HTMLTitleElement *HTMLTitleElement_from_HTMLDOMNode(HTMLDOMNode *i
     return CONTAINING_RECORD(iface, HTMLTitleElement, element.node);
 }
 
-static HRESULT HTMLTitleElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLTitleElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLTitleElement *This = HTMLTitleElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_IHTMLTitleElement, riid))
-        *ppv = &This->IHTMLTitleElement_iface;
-    else
-        return HTMLElement_QI(&This->element.node, riid, ppv);
+        return &This->IHTMLTitleElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLTitleElement_destructor(HTMLDOMNode *iface)
@@ -308,19 +303,14 @@ static inline HTMLHtmlElement *HTMLHtmlElement_from_HTMLDOMNode(HTMLDOMNode *ifa
     return CONTAINING_RECORD(iface, HTMLHtmlElement, element.node);
 }
 
-static HRESULT HTMLHtmlElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLHtmlElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLHtmlElement *This = HTMLHtmlElement_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_IHTMLHtmlElement, riid))
-        *ppv = &This->IHTMLHtmlElement_iface;
-    else
-        return HTMLElement_QI(&This->element.node, riid, ppv);
+        return &This->IHTMLHtmlElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLHtmlElement_destructor(HTMLDOMNode *iface)
@@ -549,25 +539,18 @@ static inline HTMLMetaElement *HTMLMetaElement_from_HTMLDOMNode(HTMLDOMNode *ifa
     return CONTAINING_RECORD(iface, HTMLMetaElement, element.node);
 }
 
-static HRESULT HTMLMetaElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLMetaElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLMetaElement *This = HTMLMetaElement_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
-        *ppv = &This->IHTMLMetaElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
-        *ppv = &This->IHTMLMetaElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLMetaElement, riid)) {
-        TRACE("(%p)->(IID_IHTMLMetaElement %p)\n", This, ppv);
-        *ppv = &This->IHTMLMetaElement_iface;
-    }else {
-        return HTMLElement_QI(&This->element.node, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLMetaElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLMetaElement_iface;
+    if(IsEqualGUID(&IID_IHTMLMetaElement, riid))
+        return &This->IHTMLMetaElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLMetaElement_destructor(HTMLDOMNode *iface)
@@ -718,21 +701,16 @@ static inline HTMLHeadElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLHeadElement, element.node);
 }
 
-static HRESULT HTMLHeadElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+static void *HTMLHeadElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLHeadElement *This = impl_from_HTMLDOMNode(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
     if(IsEqualGUID(&IID_IHTMLHeadElement, riid))
-        *ppv = &This->IHTMLHeadElement_iface;
-    else if(IsEqualGUID(&DIID_DispHTMLHeadElement, riid))
-        *ppv = &This->IHTMLHeadElement_iface;
-    else
-        return HTMLElement_QI(&This->element.node, riid, ppv);
+        return &This->IHTMLHeadElement_iface;
+    if(IsEqualGUID(&DIID_DispHTMLHeadElement, riid))
+        return &This->IHTMLHeadElement_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLHeadElement_destructor(HTMLDOMNode *iface)

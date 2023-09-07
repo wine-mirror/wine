@@ -6807,48 +6807,44 @@ static inline HTMLElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLElement, node);
 }
 
-HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
+void *HTMLElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
 
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLElement_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement, riid)) {
-        *ppv = &This->IHTMLElement_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement2, riid)) {
-        *ppv = &This->IHTMLElement2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement3, riid)) {
-        *ppv = &This->IHTMLElement3_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement4, riid)) {
-        *ppv = &This->IHTMLElement4_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement6, riid)) {
-        *ppv = &This->IHTMLElement6_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElement7, riid)) {
-        *ppv = &This->IHTMLElement7_iface;
-    }else if(IsEqualGUID(&IID_IHTMLUniqueName, riid)) {
-        *ppv = &This->IHTMLUniqueName_iface;
-    }else if(IsEqualGUID(&IID_IElementSelector, riid)) {
-        *ppv = &This->IElementSelector_iface;
-    }else if(IsEqualGUID(&IID_IElementTraversal, riid)) {
-        *ppv = &This->IElementTraversal_iface;
-    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
-        *ppv = &This->cp_container.IConnectionPointContainer_iface;
-    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
-        *ppv = &This->IProvideMultipleClassInfo_iface;
-    }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
-        *ppv = &This->IProvideMultipleClassInfo_iface;
-    }else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid)) {
-        *ppv = &This->IProvideMultipleClassInfo_iface;
-    }else if(IsEqualGUID(&IID_IWineHTMLElementPrivate, riid)) {
-        *ppv = &This->IWineHTMLElementPrivate_iface;
-    }else {
-        return HTMLDOMNode_QI(&This->node, riid, ppv);
-    }
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLElement_iface;
+    if(IsEqualGUID(&IID_IHTMLElement, riid))
+        return &This->IHTMLElement_iface;
+    if(IsEqualGUID(&IID_IHTMLElement2, riid))
+        return &This->IHTMLElement2_iface;
+    if(IsEqualGUID(&IID_IHTMLElement3, riid))
+        return &This->IHTMLElement3_iface;
+    if(IsEqualGUID(&IID_IHTMLElement4, riid))
+        return &This->IHTMLElement4_iface;
+    if(IsEqualGUID(&IID_IHTMLElement6, riid))
+        return &This->IHTMLElement6_iface;
+    if(IsEqualGUID(&IID_IHTMLElement7, riid))
+        return &This->IHTMLElement7_iface;
+    if(IsEqualGUID(&IID_IHTMLUniqueName, riid))
+        return &This->IHTMLUniqueName_iface;
+    if(IsEqualGUID(&IID_IElementSelector, riid))
+        return &This->IElementSelector_iface;
+    if(IsEqualGUID(&IID_IElementTraversal, riid))
+        return &This->IElementTraversal_iface;
+    if(IsEqualGUID(&IID_IConnectionPointContainer, riid))
+        return &This->cp_container.IConnectionPointContainer_iface;
+    if(IsEqualGUID(&IID_IProvideClassInfo, riid))
+        return &This->IProvideMultipleClassInfo_iface;
+    if(IsEqualGUID(&IID_IProvideClassInfo2, riid))
+        return &This->IProvideMultipleClassInfo_iface;
+    if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid))
+        return &This->IProvideMultipleClassInfo_iface;
+    if(IsEqualGUID(&IID_IWineHTMLElementPrivate, riid))
+        return &This->IWineHTMLElementPrivate_iface;
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return HTMLDOMNode_QI(&This->node, riid);
 }
 
 void HTMLElement_destructor(HTMLDOMNode *iface)
