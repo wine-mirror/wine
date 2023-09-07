@@ -1063,7 +1063,6 @@ static void test_inter_process_child( HWND hwnd )
     ok( res == 4, "res = %d\n", res );
 
     res = NtUserMessageCall( hwnd, WM_GETDLGCODE, 0, 0, NULL, NtUserSendMessage, TRUE );
-    todo_wine
     ok( res == 1, "res = %d\n", res );
 
     mdi.szClass = "TestClass";

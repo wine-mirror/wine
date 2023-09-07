@@ -1691,7 +1691,7 @@ size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
         size = sizeof(STYLESTRUCT);
         break;
     case WM_GETDLGCODE:
-        size = sizeof(MSG);
+        if (lparam) size = sizeof(MSG);
         break;
     case SBM_SETSCROLLINFO:
     case SBM_GETSCROLLINFO:
