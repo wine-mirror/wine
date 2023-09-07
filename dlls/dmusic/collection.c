@@ -115,7 +115,6 @@ static HRESULT WINAPI collection_GetInstrument(IDirectMusicCollection *iface,
         if (patch == inst_patch) {
             *instrument = inst_entry->pInstrument;
             IDirectMusicInstrument_AddRef(inst_entry->pInstrument);
-            instrument_load(inst_entry->pInstrument, This->pStm);
             TRACE(": returning instrument %p\n", *instrument);
             return S_OK;
         }
@@ -212,7 +211,6 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
     DMUS_PRIVATE_CHUNK chunk;
     DWORD StreamSize, StreamCount, ListSize[2], ListCount[2];
     LARGE_INTEGER liMove; /* used when skipping chunks */
-    ULARGE_INTEGER dlibInstrumentPosition;
 
     IStream_AddRef(stream); /* add count for later references */
     This->pStm = stream;
@@ -374,68 +372,12 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                                     ListCount[1] = 0;
                                     switch (chunk.fccID) {
                                         case FOURCC_INS: {
-                                            DMUS_PRIVATE_INSTRUMENTENTRY *new_instrument = calloc(1, sizeof(DMUS_PRIVATE_INSTRUMENTENTRY));
+                                            DMUS_PRIVATE_INSTRUMENTENTRY *entry = calloc(1, sizeof(DMUS_PRIVATE_INSTRUMENTENTRY));
                                             TRACE_(dmfile)(": instrument list\n");
-                                            /* Only way to create this one... even M$ does it discretely */
-                                            instrument_create(&new_instrument->pInstrument);
-                                            {
-                                                struct instrument *instrument = impl_from_IDirectMusicInstrument(new_instrument->pInstrument);
-                                                /* Store offset and length, they will be needed when loading the instrument */
-                                                liMove.QuadPart = 0;
-                                                IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dlibInstrumentPosition);
-                                                instrument->liInstrumentPosition.QuadPart = dlibInstrumentPosition.QuadPart;
-                                                instrument->length = ListSize[1];
-                                                do {
-                                                    IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
-                                                    ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + chunk.dwSize;
-                                                    TRACE_(dmfile)(": %s chunk (size = %#04lx)", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                                                    switch (chunk.fccID) {
-                                                        case FOURCC_INSH: {
-                                                            TRACE_(dmfile)(": instrument header chunk\n");
-                                                            IStream_Read(stream, &instrument->header, chunk.dwSize, NULL);
-                                                            break;
-                                                        }
-                                                        case FOURCC_DLID: {
-                                                            TRACE_(dmfile)(": DLID (GUID) chunk\n");
-                                                            IStream_Read(stream, &instrument->id, chunk.dwSize, NULL);
-                                                            break;
-                                                        }
-                                                        case FOURCC_LIST: {
-                                                            IStream_Read(stream, &chunk.fccID, sizeof(FOURCC), NULL);
-                                                            TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(chunk.fccID));
-                                                            switch (chunk.fccID) {
-                                                                default: {
-                                                                    TRACE_(dmfile)(": unknown (skipping)\n");
-                                                                    liMove.QuadPart = chunk.dwSize - sizeof(FOURCC);
-                                                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                                                    break;
-                                                                }
-                                                            }
-                                                            break;
-                                                        }
-                                                        default: {
-                                                            TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-                                                            liMove.QuadPart = chunk.dwSize;
-                                                            IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                                            break;
-                                                        }
-                                                    }
-                                                    TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
-                                                } while (ListCount[1] < ListSize[1]);
-                                                /* DEBUG: dumps whole instrument object tree: */
-                                                if (TRACE_ON(dmusic)) {
-                                                    TRACE("*** IDirectMusicInstrument (%p) ***\n", instrument);
-                                                    if (!IsEqualGUID(&instrument->id, &GUID_NULL))
-                                                        TRACE(" - GUID = %s\n", debugstr_dmguid(&instrument->id));
-                                                    TRACE(" - Instrument header:\n");
-                                                    TRACE("    - cRegions: %ld\n", instrument->header.cRegions);
-                                                    TRACE("    - Locale:\n");
-                                                    TRACE("       - ulBank: %ld\n", instrument->header.Locale.ulBank);
-                                                    TRACE("       - ulInstrument: %ld\n", instrument->header.Locale.ulInstrument);
-                                                    TRACE("       => dwPatch: %ld\n", MIDILOCALE2Patch(&instrument->header.Locale));
-                                                }
-                                                list_add_tail(&This->Instruments, &new_instrument->entry);
-                                            }
+                                            liMove.QuadPart = -12;
+                                            IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
+                                            if (FAILED(instrument_create_from_stream(stream, &entry->pInstrument))) free(entry);
+                                            else list_add_tail(&This->Instruments, &entry->entry);
                                             break;
                                         }
                                     }

@@ -135,7 +135,7 @@ static const IDirectMusicInstrumentVtbl instrument_vtbl =
     instrument_SetPatch,
 };
 
-HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
+static HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
 {
     struct instrument *instrument;
 
@@ -277,8 +277,11 @@ static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct 
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
         case FOURCC_INSH:
+            hr = stream_chunk_get_data(stream, &chunk, &This->header, sizeof(This->header));
+            break;
+
         case FOURCC_DLID:
-            /* Instrument header and id are already set so just skip */
+            hr = stream_chunk_get_data(stream, &chunk, &This->id, sizeof(This->id));
             break;
 
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LRGN):
@@ -300,24 +303,17 @@ static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct 
     return hr;
 }
 
-/* Function that loads all instrument data and which is called from IDirectMusicCollection_GetInstrument as in native */
-HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
+HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **ret_iface)
 {
-    struct instrument *This = impl_from_IDirectMusicInstrument(iface);
     struct chunk_entry chunk = {0};
+    IDirectMusicInstrument *iface;
+    struct instrument *This;
     HRESULT hr;
 
-    TRACE("(%p, %p): offset = 0x%s, length = %lu)\n", This, stream, wine_dbgstr_longlong(This->liInstrumentPosition.QuadPart), This->length);
+    TRACE("(%p, %p)\n", stream, ret_iface);
 
-    if (This->loaded)
-        return S_OK;
-
-    hr = IStream_Seek(stream, This->liInstrumentPosition, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-    {
-        WARN("IStream_Seek failed: %08lx\n", hr);
-        return DMUS_E_UNSUPPORTED_STREAM;
-    }
+    if (FAILED(hr = instrument_create(&iface))) return hr;
+    This = impl_from_IDirectMusicInstrument(iface);
 
     if ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
     {
@@ -329,16 +325,32 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
 
         default:
             WARN("Invalid instrument chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
-            goto error;
+            hr = E_INVALIDARG;
+            break;
         }
     }
 
     if (FAILED(hr)) goto error;
 
-    This->loaded = TRUE;
+    if (TRACE_ON(dmusic))
+    {
+        TRACE("Created DirectMusicInstrument (%p) ***\n", This);
+        if (!IsEqualGUID(&This->id, &GUID_NULL))
+            TRACE(" - GUID = %s\n", debugstr_dmguid(&This->id));
+        TRACE(" - Instrument header:\n");
+        TRACE("    - cRegions: %ld\n", This->header.cRegions);
+        TRACE("    - Locale:\n");
+        TRACE("       - ulBank: %ld\n", This->header.Locale.ulBank);
+        TRACE("       - ulInstrument: %ld\n", This->header.Locale.ulInstrument);
+        TRACE("       => dwPatch: %ld\n", MIDILOCALE2Patch(&This->header.Locale));
+    }
+
+    *ret_iface = iface;
     return S_OK;
 
 error:
+    IDirectMusicInstrument_Release(iface);
+
     stream_skip_chunk(stream, &chunk);
     return DMUS_E_UNSUPPORTED_STREAM;
 }

@@ -95,7 +95,7 @@ extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 
 extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
-extern HRESULT instrument_create(IDirectMusicInstrument **ret_iface);
+extern HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **ret_iface);
 
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure
@@ -175,13 +175,10 @@ struct instrument
     IDirectMusicInstrument IDirectMusicInstrument_iface;
     LONG ref;
 
-    LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */
-    ULONG length; /* Length of the instrument in the stream */
     GUID id;
     INSTHEADER header;
     WCHAR wszName[DMUS_MAX_NAME];
     /* instrument data */
-    BOOL loaded;
 
     struct list articulations;
     struct list regions;
@@ -191,8 +188,6 @@ static inline struct instrument *impl_from_IDirectMusicInstrument(IDirectMusicIn
 {
     return CONTAINING_RECORD(iface, struct instrument, IDirectMusicInstrument_iface);
 }
-
-extern HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream);
 
 /*****************************************************************************
  * Misc.
