@@ -5399,7 +5399,8 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
             gl_info->gl_ops.gl.p_glTexCoordPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
                     get_vertex_attrib_pointer(e, state));
             gl_info->gl_ops.gl.p_glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
+            if (bo)
+                wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
         }
         else
         {
@@ -5486,7 +5487,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glVertexPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
-        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
+        if (bo)
+            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
 
     /* Normals */
@@ -5509,7 +5511,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glNormalPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
-        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
+        if (bo)
+            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
     else
     {
@@ -5538,7 +5541,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
-        wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
+        if (bo)
+            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
     }
     else
     {
@@ -5602,7 +5606,8 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             }
             gl_info->gl_ops.gl.p_glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-            wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
+            if (bo)
+                wined3d_buffer_validate_user(state->streams[e->stream_idx].buffer);
         }
         else
         {
@@ -5703,8 +5708,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         format_gl = wined3d_format_gl(element->format);
         stream = &state->streams[element->stream_idx];
-        wined3d_buffer_validate_user(stream->buffer);
-
 
         if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {
@@ -5738,6 +5741,9 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
                 checkGLcall("glBindBuffer");
                 current_bo = bo;
             }
+            if (bo)
+                wined3d_buffer_validate_user(stream->buffer);
+
             /* Use the VBO to find out if a vertex buffer exists, not the vb
              * pointer. vb can point to a user pointer data blob. In that case
              * current_bo will be 0. If there is a vertex buffer but no vbo we
