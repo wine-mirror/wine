@@ -928,6 +928,8 @@ x@space@
 A
 ------------ Testing if/set ------------
 C:\Program Files (x86)\dummy
+' ('
+zeta
 --- Testing if + var subst in delayed expansion mode
 [DEBUG] checking {abc}
 [DEBUG] checking {10.0}
