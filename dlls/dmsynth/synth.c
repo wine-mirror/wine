@@ -39,6 +39,40 @@ static void dump_dmus_instrument(DMUS_INSTRUMENT *instrument)
     TRACE(" - ulFlags          = %lu\n", instrument->ulFlags);
 }
 
+static void dump_dmus_region(DMUS_REGION *region)
+{
+    UINT i;
+
+    TRACE("DMUS_REGION:\n");
+    TRACE(" - RangeKey        = %u - %u\n", region->RangeKey.usLow, region->RangeKey.usHigh);
+    TRACE(" - RangeVelocity   = %u - %u\n", region->RangeVelocity.usLow, region->RangeVelocity.usHigh);
+    TRACE(" - fusOptions      = %#x\n", region->fusOptions);
+    TRACE(" - usKeyGroup      = %u\n", region->usKeyGroup);
+    TRACE(" - ulRegionArtIdx  = %lu\n", region->ulRegionArtIdx);
+    TRACE(" - ulNextRegionIdx = %lu\n", region->ulNextRegionIdx);
+    TRACE(" - ulFirstExtCkIdx = %lu\n", region->ulFirstExtCkIdx);
+    TRACE(" - WaveLink:\n");
+    TRACE("   - fusOptions    = %#x\n", region->WaveLink.fusOptions);
+    TRACE("   - usPhaseGroup  = %u\n", region->WaveLink.usPhaseGroup);
+    TRACE("   - ulChannel     = %lu\n", region->WaveLink.ulChannel);
+    TRACE("   - ulTableIndex  = %lu\n", region->WaveLink.ulTableIndex);
+    TRACE(" - WSMP:\n");
+    TRACE("   - cbSize        = %lu\n", region->WSMP.cbSize);
+    TRACE("   - usUnityNote   = %u\n", region->WSMP.usUnityNote);
+    TRACE("   - sFineTune     = %u\n", region->WSMP.sFineTune);
+    TRACE("   - lAttenuation  = %lu\n", region->WSMP.lAttenuation);
+    TRACE("   - fulOptions    = %#lx\n", region->WSMP.fulOptions);
+    TRACE("   - cSampleLoops  = %lu\n", region->WSMP.cSampleLoops);
+    for (i = 0; i < region->WSMP.cSampleLoops; i++)
+    {
+        TRACE(" - WLOOP[%u]:\n", i);
+        TRACE("   - cbSize        = %lu\n", region->WLOOP[i].cbSize);
+        TRACE("   - ulType        = %#lx\n", region->WLOOP[i].ulType);
+        TRACE("   - ulStart       = %lu\n", region->WLOOP[i].ulStart);
+        TRACE("   - ulLength      = %lu\n", region->WLOOP[i].ulLength);
+    }
+}
+
 static void dump_dmus_wave(DMUS_WAVE *wave)
 {
     TRACE("DMUS_WAVE:\n");
@@ -68,10 +102,36 @@ struct wave
 
 C_ASSERT(sizeof(struct wave) == offsetof(struct wave, samples[0]));
 
+static void wave_addref(struct wave *wave)
+{
+    InterlockedIncrement(&wave->ref);
+}
+
 static void wave_release(struct wave *wave)
 {
     ULONG ref = InterlockedDecrement(&wave->ref);
     if (!ref) free(wave);
+}
+
+struct region
+{
+    struct list entry;
+
+    RGNRANGE key_range;
+    RGNRANGE vel_range;
+    UINT flags;
+    UINT group;
+
+    struct wave *wave;
+    WAVELINK wave_link;
+    WSMPL    wave_sample;
+    WLOOP    wave_loops[];
+};
+
+static void region_destroy(struct region *region)
+{
+    wave_release(region->wave);
+    free(region);
 }
 
 struct instrument
@@ -82,6 +142,7 @@ struct instrument
 
     UINT patch;
     UINT flags;
+    struct list regions;
 
     struct synth *synth;
 };
@@ -89,7 +150,20 @@ struct instrument
 static void instrument_release(struct instrument *instrument)
 {
     ULONG ref = InterlockedDecrement(&instrument->ref);
-    if (!ref) free(instrument);
+
+    if (!ref)
+    {
+        struct region *region;
+        void *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(region, next, &instrument->regions, struct region, entry)
+        {
+            list_remove(&region->entry);
+            region_destroy(region);
+        }
+
+        free(instrument);
+    }
 }
 
 struct synth
@@ -293,11 +367,31 @@ static HRESULT WINAPI synth_SetNumChannelGroups(IDirectMusicSynth8 *iface,
     return S_OK;
 }
 
+static struct wave *synth_find_wave_from_id(struct synth *This, DWORD id)
+{
+    struct wave *wave;
+
+    LIST_FOR_EACH_ENTRY(wave, &This->waves, struct wave, entry)
+    {
+        if (wave->id == id)
+        {
+            wave_addref(wave);
+            return wave;
+        }
+    }
+
+    WARN("Failed to find wave with id %#lx\n", id);
+    return NULL;
+}
+
 static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *info, ULONG *offsets,
         BYTE *data, HANDLE *ret_handle)
 {
     DMUS_INSTRUMENT *instrument_info = (DMUS_INSTRUMENT *)(data + offsets[0]);
     struct instrument *instrument;
+    DMUS_REGION *region_info;
+    struct region *region;
+    ULONG index;
 
     if (TRACE_ON(dmsynth))
     {
@@ -317,12 +411,42 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
     instrument->id = info->dwDLId;
     instrument->patch = instrument_info->ulPatch;
     instrument->flags = instrument_info->ulFlags;
+    list_init(&instrument->regions);
     instrument->synth = This;
+
+    for (index = instrument_info->ulFirstRegionIdx; index; index = region_info->ulNextRegionIdx)
+    {
+        region_info = (DMUS_REGION *)(data + offsets[index]);
+        if (TRACE_ON(dmsynth)) dump_dmus_region(region_info);
+        if (region_info->ulFirstExtCkIdx) FIXME("Region extensions not implemented\n");
+
+        if (!(region = calloc(1, offsetof(struct region, wave_loops[region_info->WSMP.cSampleLoops])))) goto error;
+        region->key_range = region_info->RangeKey;
+        region->vel_range = region_info->RangeVelocity;
+        region->flags = region_info->fusOptions;
+        region->group = region_info->usKeyGroup;
+        region->wave_link = region_info->WaveLink;
+        region->wave_sample = region_info->WSMP;
+        memcpy(region->wave_loops, region_info->WLOOP, region_info->WSMP.cSampleLoops * sizeof(WLOOP));
+
+        if (!(region->wave = synth_find_wave_from_id(This, region->wave_link.ulTableIndex)))
+        {
+            free(region);
+            instrument_release(instrument);
+            return DMUS_E_BADWAVELINK;
+        }
+
+        list_add_tail(&instrument->regions, &region->entry);
+    }
 
     list_add_tail(&This->instruments, &instrument->entry);
     *ret_handle = instrument;
 
     return S_OK;
+
+error:
+    instrument_release(instrument);
+    return E_OUTOFMEMORY;
 }
 
 static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, ULONG *offsets,
