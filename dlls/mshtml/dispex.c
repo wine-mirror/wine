@@ -1968,9 +1968,15 @@ static IDispatchExVtbl DispatchExVtbl = {
 
 BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
 {
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_IDispatchEx, riid))
+    TRACE("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
+
+    if(This->info->desc->vtbl->query_interface) {
+        *ppv = This->info->desc->vtbl->query_interface(This, riid);
+        if(*ppv)
+            goto ret;
+    }
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDispatchEx, riid))
         *ppv = &This->IDispatchEx_iface;
     else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
         *ppv = &dispex_ccp;
@@ -1978,19 +1984,18 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
         *ppv = &This->IDispatchEx_iface;
         return TRUE;
-    }else if(IsEqualGUID(&IID_IDispatchJS, riid))
+    }else if(IsEqualGUID(&IID_IDispatchJS, riid) ||
+             IsEqualGUID(&IID_UndocumentedScriptIface, riid) ||
+             IsEqualGUID(&IID_IMarshal, riid) ||
+             IsEqualGUID(&IID_IManagedObject, riid)) {
         *ppv = NULL;
-    else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid))
-        *ppv = NULL;
-    else if(IsEqualGUID(&IID_IMarshal, riid))
-        *ppv = NULL;
-    else if(IsEqualGUID(&IID_IManagedObject, riid))
-        *ppv = NULL;
-    else
+        return TRUE;
+    }else {
         return FALSE;
+    }
 
-    if(*ppv)
-        IUnknown_AddRef((IUnknown*)*ppv);
+ret:
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
     return TRUE;
 }
 

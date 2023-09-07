@@ -352,6 +352,7 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
 };
 
 static const dispex_static_data_vtbl_t HTMLDOMTextNode_dispex_vtbl = {
+    .query_interface = HTMLDOMNode_query_interface,
     .destructor      = HTMLDOMNode_destructor,
     .traverse        = HTMLDOMNode_traverse,
     .unlink          = HTMLDOMNode_unlink

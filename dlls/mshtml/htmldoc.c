@@ -355,6 +355,7 @@ static IHTMLEventObj *DocumentType_set_current_event(DispatchEx *dispex, IHTMLEv
 
 static const event_target_vtbl_t DocumentType_event_target_vtbl = {
     {
+        .query_interface     = HTMLDOMNode_query_interface,
         .destructor          = HTMLDOMNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink
@@ -6067,6 +6068,7 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
 
 static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
+        .query_interface     = HTMLDOMNode_query_interface,
         .destructor          = HTMLDOMNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink,

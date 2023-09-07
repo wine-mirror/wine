@@ -493,17 +493,11 @@ static HRESULT WINAPI HTMLDOMNode_QueryInterface(IHTMLDOMNode *iface,
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
 
-    /* FIXME: Get rid of this when dispex handles QI */
-    if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid) || IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
-        dispex_query_interface(&This->event_target.dispex, riid, ppv);
-        return S_OK;
-    }
+    if(dispex_query_interface(&This->event_target.dispex, riid, ppv))
+        return *ppv ? S_OK : E_NOINTERFACE;
 
-    if((*ppv = This->vtbl->qi(This, riid))) {
-        IHTMLDOMNode_AddRef(&This->IHTMLDOMNode_iface);
-        return S_OK;
-    }
-
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
     return E_NOINTERFACE;
 }
 
@@ -1437,6 +1431,13 @@ static inline HTMLDOMNode *HTMLDOMNode_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMNode, event_target.dispex);
 }
 
+void *HTMLDOMNode_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
+
+    return This->vtbl->qi(This, riid);
+}
+
 void HTMLDOMNode_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
@@ -1477,9 +1478,6 @@ void HTMLDOMNode_destructor(DispatchEx *dispex)
 
 void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
 {
-    IUnknown *unk;
-    HRESULT hres;
-
     if(IsEqualGUID(&IID_IUnknown, riid))
         return &This->IHTMLDOMNode_iface;
     if(IsEqualGUID(&IID_IDispatch, riid))
@@ -1491,12 +1489,7 @@ void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
     if(IsEqualGUID(&IID_IHTMLDOMNode3, riid))
         return &This->IHTMLDOMNode3_iface;
 
-    hres = EventTarget_QI(&This->event_target, riid, (void**)&unk);
-    if(hres != S_OK)
-        return NULL;
-
-    IUnknown_Release(unk);
-    return unk;
+    return EventTarget_query_interface(&This->event_target, riid);
 }
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -1542,6 +1535,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMNode_dispex_vtbl = {
+    .query_interface = HTMLDOMNode_query_interface,
     .destructor      = HTMLDOMNode_destructor,
     .traverse        = HTMLDOMNode_traverse,
     .unlink          = HTMLDOMNode_unlink

@@ -352,6 +352,9 @@ typedef struct {
    - dynamic props: These props are generally allocated by external code (e.g. 'document.wine = 42' creates 'wine' dynamic prop on document)
 */
 typedef struct {
+    /* Used to provide object specific interfaces (do not AddRef, just return the iface) */
+    void *(*query_interface)(DispatchEx*,REFIID);
+
     /* Used to implement Cycle Collection callbacks; note that the destructor is not optional!
        Unlike delete_cycle_collectable, unlink is called before the destructor (if available). */
     void (*destructor)(DispatchEx*);
@@ -1207,10 +1210,12 @@ void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_d
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*);
 
 void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t);
+void *EventTarget_query_interface(EventTarget*,REFIID);
 HRESULT EventTarget_QI(EventTarget*,REFIID,void**);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 void *HTMLDOMNode_QI(HTMLDOMNode*,REFIID);
+void *HTMLDOMNode_query_interface(DispatchEx*,REFIID);
 void HTMLDOMNode_destructor(DispatchEx*);
 void HTMLDOMNode_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
 void HTMLDOMNode_unlink(DispatchEx*);

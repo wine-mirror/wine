@@ -7350,6 +7350,7 @@ static const tid_t HTMLElement_iface_tids[] = {
 
 const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
+        .query_interface     = HTMLDOMNode_query_interface,
         .destructor          = HTMLDOMNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink,

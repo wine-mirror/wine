@@ -4564,6 +4564,19 @@ static HRESULT get_gecko_target(IEventTarget *target, nsIDOMEventTarget **ret)
     return S_OK;
 }
 
+void *EventTarget_query_interface(EventTarget *event_target, REFIID riid)
+{
+    if(IsEqualGUID(riid, &IID_IEventTarget)) {
+        if(use_event_quirks(event_target)) {
+            WARN("IEventTarget queried, but not supported by in document mode\n");
+            return NULL;
+        }
+        return &event_target->IEventTarget_iface;
+    }
+
+    return NULL;
+}
+
 HRESULT EventTarget_QI(EventTarget *event_target, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IEventTarget)) {
