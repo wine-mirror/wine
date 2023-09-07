@@ -192,14 +192,16 @@ static inline HRESULT advance_stream(IStream *stream, ULONG bytes)
     return ret;
 }
 
-static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG length)
+static HRESULT parse_art1_chunk(struct instrument *This, IStream *stream, struct chunk_entry *chunk)
 {
     struct articulation *articulation;
     CONNECTIONLIST list;
     HRESULT hr;
     UINT size;
 
-    if (FAILED(hr = read_from_stream(stream, &list, sizeof(list)))) return hr;
+    if (chunk->size < sizeof(list)) return E_INVALIDARG;
+    if (FAILED(hr = stream_read(stream, &list, sizeof(list)))) return hr;
+    if (chunk->size != list.cbSize + sizeof(CONNECTION) * list.cConnections) return E_INVALIDARG;
     if (list.cbSize != sizeof(list)) return E_INVALIDARG;
 
     size = offsetof(struct articulation, connections[list.cConnections]);
@@ -207,11 +209,31 @@ static HRESULT load_articulation(struct instrument *This, IStream *stream, ULONG
     articulation->list = list;
 
     size = sizeof(CONNECTION) * list.cConnections;
-    if (FAILED(hr = read_from_stream(stream, articulation->connections, size))) free(articulation);
-    else
+    if (FAILED(hr = stream_read(stream, articulation->connections, size))) free(articulation);
+    else list_add_tail(&This->articulations, &articulation->entry);
+
+    return hr;
+}
+
+static HRESULT parse_lart_list(struct instrument *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
     {
-        subtract_bytes(length, sizeof(list) + sizeof(CONNECTION) * list.cConnections);
-        list_add_tail(&This->articulations, &articulation->entry);
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case FOURCC_ART1:
+            hr = parse_art1_chunk(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
     }
 
     return hr;
@@ -352,30 +374,15 @@ HRESULT instrument_load(IDirectMusicInstrument *iface, IStream *stream)
                     }
 
                     case FOURCC_LART:
+                    {
+                        static const LARGE_INTEGER zero = {0};
+                        struct chunk_entry list_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
                         TRACE("LART chunk (articulations list): %lu bytes\n", size);
-
-                        while (size)
-                        {
-                            hr = read_from_stream(stream, &chunk, sizeof(chunk));
-                            if (FAILED(hr))
-                                goto error;
-
-                            if (chunk.fccID == FOURCC_ART1)
-                            {
-                                TRACE("ART1 chunk (level 1 articulation): %lu bytes\n", chunk.dwSize);
-                                hr = load_articulation(This, stream, chunk.dwSize);
-                            }
-                            else
-                            {
-                                TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                                hr = advance_stream(stream, chunk.dwSize);
-                            }
-                            if (FAILED(hr))
-                                goto error;
-
-                            size = subtract_bytes(size, chunk.dwSize + sizeof(chunk));
-                        }
+                        IStream_Seek(stream, zero, STREAM_SEEK_CUR, &list_chunk.offset);
+                        list_chunk.offset.QuadPart -= 12;
+                        hr = parse_lart_list(This, stream, &list_chunk);
                         break;
+                    }
 
                     default:
                         TRACE("Unknown chunk %s: %lu bytes\n", debugstr_fourcc(chunk.fccID), chunk.dwSize);
