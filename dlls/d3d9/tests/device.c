@@ -9113,7 +9113,7 @@ static void test_getdc(void)
         if (!testdata[i].getdc_supported)
             continue;
 
-        if (FAILED(hr = IDirect3DDevice9_CreateCubeTexture(device, 64, 0, 0,
+        if (FAILED(hr = IDirect3DDevice9_CreateCubeTexture(device, 64, 3, 0,
                 testdata[i].format, D3DPOOL_MANAGED, &cube_texture, NULL)))
         {
             skip("Failed to create cube texture for format %s (hr %#lx), skipping tests.\n", testdata[i].name, hr);
