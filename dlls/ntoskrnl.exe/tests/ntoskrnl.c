@@ -386,8 +386,11 @@ static void cat_okfile(void)
     SetFilePointer(okfile, 0, NULL, FILE_BEGIN);
     SetEndOfFile(okfile);
 
+    InterlockedAdd(&winetest_successes, InterlockedExchange(&test_data->successes, 0));
     winetest_add_failures(InterlockedExchange(&test_data->failures, 0));
+    InterlockedAdd(&winetest_todo_successes, InterlockedExchange(&test_data->todo_successes, 0));
     winetest_add_failures(InterlockedExchange(&test_data->todo_failures, 0));
+    InterlockedAdd(&winetest_skipped, InterlockedExchange(&test_data->skipped, 0));
 }
 
 static ULONG64 modified_value;

@@ -2254,7 +2254,7 @@ static void test_process_memory(const struct main_test_input *test_input)
        win_skip("MmCopyVirtualMemory is not available.\n");
     }
 
-    if (!running_under_wine)
+    if (!winetest_platform_is_wine)
     {
         KeStackAttachProcess((PKPROCESS)process, &state);
         todo_wine ok(!strcmp(teststr, (char *)(base + test_input->teststr_offset)),
