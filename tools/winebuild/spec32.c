@@ -329,28 +329,30 @@ static void output_relay_debug( DLLSPEC *spec )
         }
 
         case CPU_ARM64:
+        {
+            int stack_size = 16 * ((min(odp->u.func.nb_args, 8) + 1) / 2);
+
             output( "\t.align %d\n", get_alignment(4) );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
-            output_cfi( ".cfi_startproc" );
-            switch (odp->u.func.nb_args)
+            output_cfi( ".seh_proc __wine_spec_relay_entry_point_%d", i );
+            output( "\tstp x29, x30, [sp, #-%u]!\n", stack_size + 16 );
+            output_cfi( ".seh_save_fplr_x %u", stack_size + 16 );
+            output( "\tmov x29, sp\n" );
+            output_cfi( ".seh_set_fp" );
+            output_cfi( ".seh_endprologue" );
+            switch (stack_size)
             {
-            default:
-            case 8:
-            case 7:  output( "\tstp x6, x7, [SP,#-16]!\n" );
+            case 64: output( "\tstp x6, x7, [sp, #64]\n" );
             /* fall through */
-            case 6:
-            case 5:  output( "\tstp x4, x5, [SP,#-16]!\n" );
+            case 48: output( "\tstp x4, x5, [sp, #48]\n" );
             /* fall through */
-            case 4:
-            case 3:  output( "\tstp x2, x3, [SP,#-16]!\n" );
+            case 32: output( "\tstp x2, x3, [sp, #32]\n" );
             /* fall through */
-            case 2:
-            case 1:  output( "\tstp x0, x1, [SP,#-16]!\n" );
+            case 16: output( "\tstp x0, x1, [sp, #16]\n" );
             /* fall through */
-            case 0:  break;
+            default: break;
             }
-            output( "\tmov x2, SP\n");
-            output( "\tstp x29, x30, [SP,#-16]!\n" );
+            output( "\tadd x2, sp, #16\n");
             output( "\tstp x8, x9, [SP,#-16]!\n" );
             output( "\tmov w1, #%u\n", odp->u.func.args_str_offset << 16 );
             if (i - spec->base) output( "\tadd w1, w1, #%u\n", i - spec->base );
@@ -358,13 +360,12 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_relay_descr") );
             output( "\tldr x3, [x0, #8]\n");
             output( "\tblr x3\n");
-            output( "\tadd SP, SP, #16\n" );
-            output( "\tldp x29, x30, [SP], #16\n" );
-            if (odp->u.func.nb_args)
-                output( "\tadd SP, SP, #%u\n", 8 * ((min(odp->u.func.nb_args, 8) + 1) & ~1) );
+            output( "\tmov sp, x29\n" );
+            output( "\tldp x29, x30, [sp], #%u\n", stack_size + 16 );
             output( "\tret\n");
-            output_cfi( ".cfi_endproc" );
+            output_cfi( ".seh_endproc" );
             break;
+        }
 
         case CPU_x86_64:
             output( "\t.align %d\n", get_alignment(4) );
