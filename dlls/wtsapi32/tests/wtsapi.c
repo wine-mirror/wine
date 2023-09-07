@@ -306,6 +306,38 @@ static void test_WTSQueryUserToken(void)
     ok(GetLastError()==ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %ld\n", GetLastError());
 }
 
+static void test_WTSEnumerateSessions(void)
+{
+    BOOL console_found = FALSE, services_found = FALSE;
+    WTS_SESSION_INFOW *info;
+    unsigned int i;
+    DWORD count;
+    BOOL bret;
+
+    bret = WTSEnumerateSessionsW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &info, &count);
+    ok(bret, "got error %lu.\n", GetLastError());
+    todo_wine_if(count == 1) ok(count >= 2, "got %lu.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        trace("SessionId %lu, name %s, State %d.\n", info[i].SessionId, debugstr_w(info[i].pWinStationName), info[i].State);
+        if (!wcscmp(info[i].pWinStationName, L"Console"))
+        {
+            console_found = TRUE;
+            ok(info[i].State == WTSActive, "got State %d.\n", info[i].State);
+        }
+        else if (!wcscmp(info[i].pWinStationName, L"Services"))
+        {
+            services_found = TRUE;
+            ok(info[i].State == WTSDisconnected, "got State %d.\n", info[i].State);
+        }
+    }
+    ok(console_found, "Console session not found.\n");
+    todo_wine ok(services_found, "Services session not found.\n");
+
+    WTSFreeMemory(info);
+}
+
 START_TEST (wtsapi)
 {
     pWTSEnumerateProcessesExW = (void *)GetProcAddress(GetModuleHandleA("wtsapi32"), "WTSEnumerateProcessesExW");
@@ -314,4 +346,5 @@ START_TEST (wtsapi)
     test_WTSEnumerateProcessesW();
     test_WTSQuerySessionInformation();
     test_WTSQueryUserToken();
+    test_WTSEnumerateSessions();
 }

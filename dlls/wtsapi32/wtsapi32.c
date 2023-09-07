@@ -309,16 +309,29 @@ BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version,
 /************************************************************
  *                WTSEnumerateEnumerateSessionsW  (WTSAPI32.@)
  */
-BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
-    PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateSessionsW(HANDLE server, DWORD reserved, DWORD version,
+        PWTS_SESSION_INFOW *session_info, DWORD *count)
 {
-    FIXME("Stub %p 0x%08lx 0x%08lx %p %p\n", hServer, Reserved, Version,
-          ppSessionInfo, pCount);
+    static const WCHAR session_name[] = L"Console";
 
-    if (!ppSessionInfo || !pCount) return FALSE;
+    FIXME("%p 0x%08lx 0x%08lx %p %p semi-stub.\n", server, reserved, version, session_info, count);
 
-    *pCount = 0;
-    *ppSessionInfo = NULL;
+    if (!session_info || !count) return FALSE;
+
+    if (!(*session_info = heap_alloc(sizeof(**session_info) + sizeof(session_name))))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+    if (!ProcessIdToSessionId( GetCurrentProcessId(), &(*session_info)->SessionId))
+    {
+        WTSFreeMemory(*session_info);
+        return FALSE;
+    }
+    *count = 1;
+    (*session_info)->State = WTSActive;
+    (*session_info)->pWinStationName = (WCHAR *)((char *)*session_info + sizeof(**session_info));
+    memcpy((*session_info)->pWinStationName, session_name, sizeof(session_name));
 
     return TRUE;
 }
