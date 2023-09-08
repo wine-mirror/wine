@@ -758,22 +758,12 @@ static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFa
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLImageElementFactory_iface;
-    }else if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid)) {
-        *ppv = &This->IHTMLImageElementFactory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLImageElementFactory_AddRef(IHTMLImageElementFactory *iface)
@@ -921,6 +911,16 @@ static inline HTMLImageElementFactory *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLImageElementFactory, dispex);
 }
 
+static void *HTMLImageElementFactory_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid))
+        return &This->IHTMLImageElementFactory_iface;
+
+    return NULL;
+}
+
 static void HTMLImageElementFactory_destructor(DispatchEx *dispex)
 {
     HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
@@ -961,6 +961,7 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
 };
 
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
+    .query_interface  = HTMLImageElementFactory_query_interface,
     .destructor       = HTMLImageElementFactory_destructor,
     .value            = HTMLImageElementFactory_value,
 };

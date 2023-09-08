@@ -430,24 +430,12 @@ static HRESULT WINAPI HTMLOptionElementFactory_QueryInterface(IHTMLOptionElement
 {
     HTMLOptionElementFactory *This = impl_from_IHTMLOptionElementFactory(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLOptionElementFactory_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLOptionElementFactory_iface;
-    }else if(IsEqualGUID(&IID_IHTMLOptionElementFactory, riid)) {
-        *ppv = &This->IHTMLOptionElementFactory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLOptionElementFactory_AddRef(IHTMLOptionElementFactory *iface)
@@ -566,6 +554,16 @@ static inline HTMLOptionElementFactory *HTMLOptionElementFactory_from_DispatchEx
     return CONTAINING_RECORD(iface, HTMLOptionElementFactory, dispex);
 }
 
+static void *HTMLOptionElementFactory_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLOptionElementFactory, riid))
+        return &This->IHTMLOptionElementFactory_iface;
+
+    return NULL;
+}
+
 static void HTMLOptionElementFactory_destructor(DispatchEx *dispex)
 {
     HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
@@ -610,6 +608,7 @@ static const tid_t HTMLOptionElementFactory_iface_tids[] = {
 };
 
 static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
+    .query_interface  = HTMLOptionElementFactory_query_interface,
     .destructor       = HTMLOptionElementFactory_destructor,
     .value            = HTMLOptionElementFactory_value,
 };

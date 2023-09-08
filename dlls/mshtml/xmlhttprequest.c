@@ -1641,24 +1641,12 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_QueryInterface(IHTMLXMLHttpReque
 {
     HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLXMLHttpRequestFactory_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLXMLHttpRequestFactory_iface;
-    }else if(IsEqualGUID(&IID_IHTMLXMLHttpRequestFactory, riid)) {
-        *ppv = &This->IHTMLXMLHttpRequestFactory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLXMLHttpRequestFactory_AddRef(IHTMLXMLHttpRequestFactory *iface)
@@ -1798,6 +1786,16 @@ static inline HTMLXMLHttpRequestFactory *factory_from_DispatchEx(DispatchEx *ifa
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequestFactory, dispex);
 }
 
+static void *HTMLXMLHttpRequestFactory_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLXMLHttpRequestFactory, riid))
+        return &This->IHTMLXMLHttpRequestFactory_iface;
+
+    return NULL;
+}
+
 static void HTMLXMLHttpRequestFactory_destructor(DispatchEx *dispex)
 {
     HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
@@ -1828,6 +1826,7 @@ static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WOR
 }
 
 static const dispex_static_data_vtbl_t HTMLXMLHttpRequestFactory_dispex_vtbl = {
+    .query_interface  = HTMLXMLHttpRequestFactory_query_interface,
     .destructor       = HTMLXMLHttpRequestFactory_destructor,
     .value            = HTMLXMLHttpRequestFactory_value
 };
