@@ -798,22 +798,12 @@ static HRESULT WINAPI HTMLPluginsCollection_QueryInterface(IHTMLPluginsCollectio
 {
     HTMLPluginsCollection *This = impl_from_IHTMLPluginsCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLPluginsCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLPluginsCollection, riid)) {
-        *ppv = &This->IHTMLPluginsCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLPluginsCollection_AddRef(IHTMLPluginsCollection *iface)
@@ -904,6 +894,16 @@ static inline HTMLPluginsCollection *HTMLPluginsCollection_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLPluginsCollection, dispex);
 }
 
+static void *HTMLPluginsCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLPluginsCollection *This = HTMLPluginsCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLPluginsCollection, riid))
+        return &This->IHTMLPluginsCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLPluginsCollection_unlink(DispatchEx *dispex)
 {
     HTMLPluginsCollection *This = HTMLPluginsCollection_from_DispatchEx(dispex);
@@ -920,6 +920,7 @@ static void HTMLPluginsCollection_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPluginsCollection_dispex_vtbl = {
+    .query_interface  = HTMLPluginsCollection_query_interface,
     .destructor       = HTMLPluginsCollection_destructor,
     .unlink           = HTMLPluginsCollection_unlink
 };
