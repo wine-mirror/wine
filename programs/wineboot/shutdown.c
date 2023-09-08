@@ -50,8 +50,7 @@ static BOOL CALLBACK enum_proc( HWND hwnd, LPARAM lp )
     if (win_count >= win_max)
     {
         UINT new_count = win_max * 2;
-        struct window_info *new_win = HeapReAlloc( GetProcessHeap(), 0, windows,
-                                                   new_count * sizeof(windows[0]) );
+        struct window_info *new_win = realloc( windows, new_count * sizeof(windows[0]) );
         if (!new_win) return FALSE;
         windows = new_win;
         win_max = new_count;
@@ -77,7 +76,7 @@ static BOOL get_all_windows(void)
 {
     win_count = 0;
     win_max = 16;
-    windows = HeapAlloc( GetProcessHeap(), 0, win_max * sizeof(windows[0]) );
+    windows = malloc( win_max * sizeof(windows[0]) );
     if (!windows) return FALSE;
     if (!EnumWindows( enum_proc, 0 )) return FALSE;
     /* sort windows by processes */
@@ -114,7 +113,7 @@ static void CALLBACK end_session_message_callback( HWND hwnd, UINT msg, ULONG_PT
     /* cheap way of ref-counting callback_data whilst freeing memory at correct
      * time */
     if (!(cb_data->window_count--) && cb_data->timed_out)
-        HeapFree( GetProcessHeap(), 0, cb_data );
+        free( cb_data );
 }
 
 struct endtask_dlg_data
@@ -175,7 +174,7 @@ static LRESULT send_messages_with_timeout_dialog(
     struct endtask_dlg_data dlg_data;
     LRESULT result;
 
-    cb_data = HeapAlloc( GetProcessHeap(), 0, sizeof(*cb_data) );
+    cb_data = malloc( sizeof(*cb_data) );
     if (!cb_data)
         return 1;
 
@@ -204,7 +203,7 @@ static LRESULT send_messages_with_timeout_dialog(
                                          QS_ALLINPUT );
         if (ret == WAIT_OBJECT_0) /* process exited */
         {
-            HeapFree( GetProcessHeap(), 0, cb_data );
+            free( cb_data );
             result = 1;
             goto cleanup;
         }
@@ -222,7 +221,7 @@ static LRESULT send_messages_with_timeout_dialog(
             if (!cb_data->window_count)
             {
                 result = dlg_data.terminated || cb_data->result;
-                HeapFree( GetProcessHeap(), 0, cb_data );
+                free( cb_data );
                 if (!result)
                     goto cleanup;
                 break;
@@ -327,7 +326,7 @@ BOOL shutdown_close_windows( BOOL force )
     if (n && result)
         result = send_end_session_messages( windows + win_count - n, n, send_flags );
 
-    HeapFree( GetProcessHeap(), 0, windows );
+    free( windows );
 
     return (result != 0);
 }
