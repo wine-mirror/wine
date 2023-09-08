@@ -1047,22 +1047,12 @@ static HRESULT WINAPI HTMLRectCollection_QueryInterface(IHTMLRectCollection *ifa
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLRectCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLRectCollection, riid)) {
-        *ppv = &This->IHTMLRectCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLRectCollection_AddRef(IHTMLRectCollection *iface)
@@ -1203,6 +1193,16 @@ static inline HTMLRectCollection *HTMLRectCollection_from_DispatchEx(DispatchEx 
     return CONTAINING_RECORD(iface, HTMLRectCollection, dispex);
 }
 
+static void *HTMLRectCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLRectCollection, riid))
+        return &This->IHTMLRectCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLRectCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
@@ -1297,6 +1297,7 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
 }
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
+    .query_interface  = HTMLRectCollection_query_interface,
     .destructor       = HTMLRectCollection_destructor,
     .traverse         = HTMLRectCollection_traverse,
     .unlink           = HTMLRectCollection_unlink,
