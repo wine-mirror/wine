@@ -200,22 +200,12 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
 {
     HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLDOMChildrenCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid)) {
-        *ppv = &This->IHTMLDOMChildrenCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection *iface)
@@ -355,6 +345,16 @@ static inline HTMLDOMChildrenCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMChildrenCollection, dispex);
 }
 
+static void *HTMLDOMChildrenCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid))
+        return &This->IHTMLDOMChildrenCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLDOMChildrenCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
@@ -443,6 +443,7 @@ static HRESULT HTMLDOMChildrenCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
+    .query_interface  = HTMLDOMChildrenCollection_query_interface,
     .destructor       = HTMLDOMChildrenCollection_destructor,
     .traverse         = HTMLDOMChildrenCollection_traverse,
     .unlink           = HTMLDOMChildrenCollection_unlink,
