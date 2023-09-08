@@ -13765,12 +13765,12 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_prefix(item, &str);
                 if (test->prefixes[i])
                 {
-                    ok(hr == S_OK, "Failed to get node name, hr %#lx.\n", hr);
+                    ok(hr == S_OK, "Failed to get prefix, hr %#lx.\n", hr);
                     ok(!lstrcmpW(str, _bstr_(test->prefixes[i])), "got %s\n", wine_dbgstr_w(str));
                     SysFreeString(str);
                 }
                 else
-                    ok(hr == S_FALSE, "Failed to get node name, hr %#lx.\n", hr);
+                    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
 
                 str = NULL;
                 hr = IXMLDOMNode_get_baseName(item, &str);
@@ -13782,7 +13782,7 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_namespaceURI(item, &str);
                 if (test->uris[i])
                 {
-                    ok(hr == S_OK, "Failed to get node name, hr %#lx.\n", hr);
+                    ok(hr == S_OK, "Failed to get namespace URI, hr %#lx.\n", hr);
                     if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
                         ok(!lstrcmpW(str, _bstr_(entry->xmlns_uri)), "got %s\n", wine_dbgstr_w(str));
                     else
@@ -13790,7 +13790,7 @@ static void test_namespaces_as_attributes(void)
                     SysFreeString(str);
                 }
                 else
-                    ok(hr == S_FALSE, "Failed to get node name, hr %#lx.\n", hr);
+                    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
 
                 str = NULL;
                 hr = IXMLDOMNode_get_text(item, &str);
