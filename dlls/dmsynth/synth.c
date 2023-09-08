@@ -313,85 +313,79 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
 static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *params)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
-    BOOL modified = FALSE;
-    const DMUS_PORTPARAMS def = {
-        .dwValidParams = DMUS_PORTPARAMS_VOICES|DMUS_PORTPARAMS_CHANNELGROUPS|
-                DMUS_PORTPARAMS_AUDIOCHANNELS|DMUS_PORTPARAMS_SAMPLERATE|DMUS_PORTPARAMS_EFFECTS|
-                DMUS_PORTPARAMS_SHARE|DMUS_PORTPARAMS_FEATURES,
-        .dwSize = sizeof(def), .dwVoices = 32, .dwChannelGroups = 2, .dwAudioChannels = 2,
-        .dwSampleRate = 22050, .dwEffectFlags = DMUS_EFFECT_REVERB
+    DMUS_PORTPARAMS actual =
+    {
+        .dwSize = sizeof(DMUS_PORTPARAMS),
+        .dwValidParams = DMUS_PORTPARAMS_VOICES | DMUS_PORTPARAMS_CHANNELGROUPS
+                | DMUS_PORTPARAMS_AUDIOCHANNELS | DMUS_PORTPARAMS_SAMPLERATE
+                | DMUS_PORTPARAMS_EFFECTS | DMUS_PORTPARAMS_SHARE | DMUS_PORTPARAMS_FEATURES,
+        .dwVoices = 32,
+        .dwChannelGroups = 2,
+        .dwAudioChannels = 2,
+        .dwSampleRate = 22050,
+        .dwEffectFlags = DMUS_EFFECT_REVERB,
     };
+    UINT size = sizeof(DMUS_PORTPARAMS);
+    BOOL modified = FALSE;
 
     TRACE("(%p, %p)\n", This, params);
 
-    if (This->open)
-        return DMUS_E_ALREADYOPEN;
-    if (params && params->dwSize < sizeof(DMUS_PORTPARAMS7))
-        return E_INVALIDARG;
+    if (This->open) return DMUS_E_ALREADYOPEN;
 
-    This->open = TRUE;
+    if (params)
+    {
+        if (params->dwSize < sizeof(DMUS_PORTPARAMS7)) return E_INVALIDARG;
+        if (size > params->dwSize) size = params->dwSize;
 
-    if (!params) {
-        memcpy(&This->params, &def, sizeof(This->params));
-        return S_OK;
+        if ((params->dwValidParams & DMUS_PORTPARAMS_VOICES) && params->dwVoices)
+        {
+            actual.dwVoices = min(params->dwVoices, This->caps.dwMaxVoices);
+            modified |= actual.dwVoices != params->dwVoices;
+        }
+
+        if ((params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) && params->dwChannelGroups)
+        {
+            actual.dwChannelGroups = min(params->dwChannelGroups, This->caps.dwMaxChannelGroups);
+            modified |= actual.dwChannelGroups != params->dwChannelGroups;
+        }
+
+        if ((params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS) && params->dwAudioChannels)
+        {
+            actual.dwAudioChannels = min(params->dwAudioChannels, This->caps.dwMaxAudioChannels);
+            modified |= actual.dwAudioChannels != params->dwAudioChannels;
+        }
+
+        if ((params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE) && params->dwSampleRate)
+        {
+            actual.dwSampleRate = min(max(params->dwSampleRate, 11025), 96000);
+            modified |= actual.dwSampleRate != params->dwSampleRate;
+        }
+
+        if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS)
+        {
+            actual.dwEffectFlags = DMUS_EFFECT_REVERB;
+            modified |= actual.dwEffectFlags != params->dwEffectFlags;
+        }
+
+        if (params->dwValidParams & DMUS_PORTPARAMS_SHARE)
+        {
+            actual.fShare = FALSE;
+            modified |= actual.fShare != params->fShare;
+        }
+
+        if (params->dwSize < sizeof(*params))
+            actual.dwValidParams &= ~DMUS_PORTPARAMS_FEATURES;
+        else if ((params->dwValidParams & DMUS_PORTPARAMS_FEATURES) && params->dwFeatures)
+        {
+            actual.dwFeatures = params->dwFeatures & (DMUS_PORT_FEATURE_AUDIOPATH | DMUS_PORT_FEATURE_STREAMING);
+            modified |= actual.dwFeatures != params->dwFeatures;
+        }
+
+        memcpy(params, &actual, size);
     }
 
-    if (params->dwValidParams & DMUS_PORTPARAMS_VOICES && params->dwVoices) {
-        if (params->dwVoices > This->caps.dwMaxVoices) {
-            modified = TRUE;
-            params->dwVoices = This->caps.dwMaxVoices;
-        }
-    } else
-        params->dwVoices = def.dwVoices;
-
-    if (params->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS && params->dwChannelGroups) {
-        if (params->dwChannelGroups > This->caps.dwMaxChannelGroups) {
-            modified = TRUE;
-            params->dwChannelGroups = This->caps.dwMaxChannelGroups;
-        }
-    } else
-        params->dwChannelGroups = def.dwChannelGroups;
-
-    if (params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS && params->dwAudioChannels) {
-        if (params->dwAudioChannels > This->caps.dwMaxAudioChannels) {
-            modified = TRUE;
-            params->dwAudioChannels = This->caps.dwMaxAudioChannels;
-        }
-    } else
-        params->dwAudioChannels = def.dwAudioChannels;
-
-    if (params->dwValidParams & DMUS_PORTPARAMS_SAMPLERATE && params->dwSampleRate) {
-        if (params->dwSampleRate > 96000) {
-            modified = TRUE;
-            params->dwSampleRate = 96000;
-        } else if (params->dwSampleRate < 11025) {
-            modified = TRUE;
-            params->dwSampleRate = 11025;
-        }
-    } else
-        params->dwSampleRate = def.dwSampleRate;
-
-    if (params->dwValidParams & DMUS_PORTPARAMS_EFFECTS && params->dwEffectFlags != def.dwEffectFlags)
-        modified = TRUE;
-    params->dwEffectFlags = def.dwEffectFlags;
-
-    if (params->dwValidParams & DMUS_PORTPARAMS_SHARE && params->fShare)
-        modified = TRUE;
-    params->fShare = FALSE;
-
-    if (params->dwSize >= sizeof(*params)) {
-        if (params->dwValidParams & DMUS_PORTPARAMS_FEATURES && params->dwFeatures) {
-            if (params->dwFeatures & ~(DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING)) {
-                modified = TRUE;
-                params->dwFeatures &= DMUS_PORT_FEATURE_AUDIOPATH|DMUS_PORT_FEATURE_STREAMING;
-            }
-        } else
-            params->dwFeatures = def.dwFeatures;
-        params->dwValidParams = def.dwValidParams;
-    } else
-        params->dwValidParams = def.dwValidParams & ~DMUS_PORTPARAMS_FEATURES;
-
-    memcpy(&This->params, params, min(params->dwSize, sizeof(This->params)));
+    This->params = actual;
+    This->open = TRUE;
 
     return modified ? S_FALSE : S_OK;
 }
