@@ -213,7 +213,7 @@ static BOOL hash_file_data( HANDLE file, DWORD start, DWORD end, HCRYPTHASH hash
 {
     DWORD bytes_read, size = end - start;
     DWORD buffer_size = min( size, 1024*1024 );
-    BYTE *buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size );
+    BYTE *buffer = malloc( buffer_size );
 
     if (!buffer) return FALSE;
     SetFilePointer( file, start, NULL, FILE_BEGIN );
@@ -224,7 +224,7 @@ static BOOL hash_file_data( HANDLE file, DWORD start, DWORD end, HCRYPTHASH hash
         if (!CryptHashData( hash, buffer, bytes_read, 0 )) break;
         size -= bytes_read;
     }
-    HeapFree( GetProcessHeap(), 0, buffer );
+    free( buffer );
     return !size;
 }
 
