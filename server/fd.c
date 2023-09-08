@@ -104,46 +104,7 @@
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)
 # include <sys/epoll.h>
 # define USE_EPOLL
-#elif defined(linux) && defined(__i386__) && defined(HAVE_STDINT_H)
-# define USE_EPOLL
-# define EPOLLIN POLLIN
-# define EPOLLOUT POLLOUT
-# define EPOLLERR POLLERR
-# define EPOLLHUP POLLHUP
-# define EPOLL_CTL_ADD 1
-# define EPOLL_CTL_DEL 2
-# define EPOLL_CTL_MOD 3
-
-typedef union epoll_data
-{
-  void *ptr;
-  int fd;
-  uint32_t u32;
-  uint64_t u64;
-} epoll_data_t;
-
-struct epoll_event
-{
-  uint32_t events;
-  epoll_data_t data;
-};
-
-static inline int epoll_create( int size )
-{
-    return syscall( 254 /*NR_epoll_create*/, size );
-}
-
-static inline int epoll_ctl( int epfd, int op, int fd, const struct epoll_event *event )
-{
-    return syscall( 255 /*NR_epoll_ctl*/, epfd, op, fd, event );
-}
-
-static inline int epoll_wait( int epfd, struct epoll_event *events, int maxevents, int timeout )
-{
-    return syscall( 256 /*NR_epoll_wait*/, epfd, events, maxevents, timeout );
-}
-
-#endif /* linux && __i386__ && HAVE_STDINT_H */
+#endif /* HAVE_SYS_EPOLL_H && HAVE_EPOLL_CREATE */
 
 #if defined(HAVE_PORT_H) && defined(HAVE_PORT_CREATE)
 # include <port.h>
