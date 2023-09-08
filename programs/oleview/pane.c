@@ -120,7 +120,7 @@ static LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     HIWORD(lParam), TRUE);
             break;
         case WM_DESTROY:
-            HeapFree(GetProcessHeap(), 0, pane);
+            free(pane);
             break;
         default:
             return DefWindowProcW(hWnd, uMsg, wParam, lParam);
@@ -149,12 +149,12 @@ BOOL CreatePanedWindow(HWND hWnd, HWND *hWndCreated, HINSTANCE hInst)
     const WCHAR wszPaneClass[] = { 'P','A','N','E','\0' };
     PANE *pane;
 
-    pane = HeapAlloc(GetProcessHeap(), 0, sizeof(PANE));
+    pane = malloc(sizeof(PANE));
     *hWndCreated = CreateWindowW(wszPaneClass, NULL, WS_CHILD|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,    hWnd, (HMENU)pane, hInst, NULL);
     if(!*hWndCreated)
     {
-        HeapFree(GetProcessHeap(), 0, pane);
+        free(pane);
         return FALSE;
     }
 

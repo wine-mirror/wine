@@ -41,7 +41,7 @@ static LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid, c
 {
     ITEM_INFO *reg;
 
-    reg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ITEM_INFO));
+    reg = calloc(1, sizeof(ITEM_INFO));
 
     reg->cFlag = flag;
     lstrcpyW(reg->info, info);
@@ -651,7 +651,7 @@ static LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     {
                         if (info->loaded)
                             ReleaseInst(nm->itemOld.hItem);
-                        HeapFree(GetProcessHeap(), 0, info);
+                        free(info);
                     }
                     break;
                 }
