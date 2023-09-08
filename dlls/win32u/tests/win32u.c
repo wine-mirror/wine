@@ -964,6 +964,9 @@ static LRESULT WINAPI test_ipc_message_proc( HWND hwnd, UINT msg, WPARAM wparam,
             ok( !wcscmp( mdi->szTitle, L"TestTitle" ), "szTitle = %s\n", wine_dbgstr_w( mdi->szTitle ));
             return 0xdeadbeef;
         }
+
+    case WM_GETDLGCODE:
+        return !lparam;
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -1058,6 +1061,10 @@ static void test_inter_process_child( HWND hwnd )
 
     res = NtUserMessageCall( hwnd, WM_GETTEXTLENGTH, 0, 0, NULL, NtUserSendMessage, TRUE );
     ok( res == 4, "res = %d\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_GETDLGCODE, 0, 0, NULL, NtUserSendMessage, TRUE );
+    todo_wine
+    ok( res == 1, "res = %d\n", res );
 
     mdi.szClass = "TestClass";
     mdi.szTitle = "TestTitle";
