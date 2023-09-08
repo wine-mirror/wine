@@ -36,6 +36,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 #define CONN_SRC_CC2  0x0082
 #define CONN_SRC_RPN0 0x0100
 
+#define CONN_TRN_BIPOLAR (1<<4)
+#define CONN_TRN_INVERT  (1<<5)
+
 static const char *debugstr_conn_src(UINT src)
 {
     switch (src)
@@ -266,6 +269,11 @@ struct instrument
 
     struct synth *synth;
 };
+
+static void instrument_addref(struct instrument *instrument)
+{
+    InterlockedIncrement(&instrument->ref);
+}
 
 static void instrument_release(struct instrument *instrument)
 {
@@ -1274,6 +1282,277 @@ static const IKsControlVtbl synth_control_vtbl =
     synth_control_KsEvent,
 };
 
+static const char *synth_preset_get_name(fluid_preset_t *fluid_preset)
+{
+    return "DirectMusicSynth";
+}
+
+static int synth_preset_get_bank(fluid_preset_t *fluid_preset)
+{
+    TRACE("(%p)\n", fluid_preset);
+    return 0;
+}
+
+static int synth_preset_get_num(fluid_preset_t *fluid_preset)
+{
+    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
+
+    TRACE("(%p)\n", fluid_preset);
+
+    if (!instrument) return 0;
+    return instrument->patch;
+}
+
+static BOOL fluid_gen_from_connection(CONNECTION *conn, UINT *gen)
+{
+    switch (conn->usDestination)
+    {
+    case CONN_DST_FILTER_CUTOFF: *gen = GEN_FILTERFC; return TRUE;
+    case CONN_DST_FILTER_Q: *gen = GEN_FILTERQ; return TRUE;
+    case CONN_DST_CHORUS: *gen = GEN_CHORUSSEND; return TRUE;
+    case CONN_DST_REVERB: *gen = GEN_REVERBSEND; return TRUE;
+    case CONN_DST_PAN: *gen = GEN_PAN; return TRUE;
+    case CONN_DST_LFO_STARTDELAY: *gen = GEN_MODLFODELAY; return TRUE;
+    case CONN_DST_LFO_FREQUENCY: *gen = GEN_MODLFOFREQ; return TRUE;
+    case CONN_DST_VIB_STARTDELAY: *gen = GEN_VIBLFODELAY; return TRUE;
+    case CONN_DST_VIB_FREQUENCY: *gen = GEN_VIBLFOFREQ; return TRUE;
+    case CONN_DST_EG2_DELAYTIME: *gen = GEN_MODENVDELAY; return TRUE;
+    case CONN_DST_EG2_ATTACKTIME: *gen = GEN_MODENVATTACK; return TRUE;
+    case CONN_DST_EG2_HOLDTIME: *gen = GEN_MODENVHOLD; return TRUE;
+    case CONN_DST_EG2_DECAYTIME: *gen = GEN_MODENVDECAY; return TRUE;
+    case CONN_DST_EG2_SUSTAINLEVEL: *gen = GEN_MODENVSUSTAIN; return TRUE;
+    case CONN_DST_EG2_RELEASETIME: *gen = GEN_MODENVRELEASE; return TRUE;
+    case CONN_DST_EG1_DELAYTIME: *gen = GEN_VOLENVDELAY; return TRUE;
+    case CONN_DST_EG1_ATTACKTIME: *gen = GEN_VOLENVATTACK; return TRUE;
+    case CONN_DST_EG1_HOLDTIME: *gen = GEN_VOLENVHOLD; return TRUE;
+    case CONN_DST_EG1_DECAYTIME: *gen = GEN_VOLENVDECAY; return TRUE;
+    case CONN_DST_EG1_SUSTAINLEVEL: *gen = GEN_VOLENVSUSTAIN; return TRUE;
+    case CONN_DST_EG1_RELEASETIME: *gen = GEN_VOLENVRELEASE; return TRUE;
+    case CONN_DST_GAIN: *gen = GEN_ATTENUATION; return TRUE;
+    case CONN_DST_PITCH: *gen = GEN_PITCH; return TRUE;
+    default: FIXME("Unsupported connection %s\n", debugstr_connection(conn)); return FALSE;
+    }
+}
+
+static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn)
+{
+    UINT gen;
+
+    if (conn->usControl != CONN_SRC_NONE) return FALSE;
+    if (conn->usTransform != CONN_TRN_NONE) return FALSE;
+
+    if (conn->usSource == CONN_SRC_NONE)
+    {
+        if (!fluid_gen_from_connection(conn, &gen)) return FALSE;
+    }
+    if (conn->usSource == CONN_SRC_KEYNUMBER)
+    {
+        switch (conn->usDestination)
+        {
+        case CONN_DST_EG2_HOLDTIME: gen = GEN_KEYTOMODENVHOLD; break;
+        case CONN_DST_EG2_DECAYTIME: gen = GEN_KEYTOMODENVDECAY; break;
+        case CONN_DST_EG1_HOLDTIME: gen = GEN_KEYTOVOLENVHOLD; break;
+        case CONN_DST_EG1_DECAYTIME: gen = GEN_KEYTOVOLENVDECAY; break;
+        default: return FALSE;
+        }
+    }
+    else if (conn->usSource == CONN_SRC_LFO)
+    {
+        switch (conn->usDestination)
+        {
+        case CONN_DST_PITCH: gen = GEN_MODLFOTOPITCH; break;
+        case CONN_DST_FILTER_CUTOFF: gen = GEN_MODLFOTOFILTERFC; break;
+        case CONN_DST_GAIN: gen = GEN_MODLFOTOVOL; break;
+        default: return FALSE;
+        }
+    }
+    else if (conn->usSource == CONN_SRC_EG2)
+    {
+        switch (conn->usDestination)
+        {
+        case CONN_DST_PITCH: gen = GEN_MODENVTOPITCH; break;
+        case CONN_DST_FILTER_CUTOFF: gen = GEN_MODENVTOFILTERFC; break;
+        default: return FALSE;
+        }
+    }
+    else if (conn->usSource == CONN_SRC_VIBRATO)
+    {
+        switch (conn->usDestination)
+        {
+        case CONN_DST_PITCH: gen = GEN_VIBLFOTOPITCH; break;
+        default: return FALSE;
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    fluid_voice_gen_set(fluid_voice, gen, conn->lScale);
+    return TRUE;
+}
+
+static BOOL fluid_source_from_connection(USHORT source, USHORT transform, UINT *fluid_source, UINT *fluid_flags)
+{
+    UINT flags = FLUID_MOD_GC;
+    if (source >= CONN_SRC_CC1 && source <= CONN_SRC_CC1 + 0x7f)
+    {
+        *fluid_source = source;
+        flags = FLUID_MOD_CC;
+    }
+    else switch (source)
+    {
+    case CONN_SRC_NONE: *fluid_source = FLUID_MOD_NONE; break;
+    case CONN_SRC_KEYONVELOCITY: *fluid_source = FLUID_MOD_VELOCITY; break;
+    case CONN_SRC_KEYNUMBER: *fluid_source = FLUID_MOD_KEY; break;
+    case CONN_SRC_PITCHWHEEL: *fluid_source = FLUID_MOD_PITCHWHEEL; break;
+    case CONN_SRC_POLYPRESSURE: *fluid_source = FLUID_MOD_KEYPRESSURE; break;
+    case CONN_SRC_CHANNELPRESSURE: *fluid_source = FLUID_MOD_CHANNELPRESSURE; break;
+    case CONN_SRC_RPN0: *fluid_source = FLUID_MOD_PITCHWHEELSENS; break;
+    default: return FALSE;
+    }
+
+    if (transform & CONN_TRN_INVERT) flags |= FLUID_MOD_NEGATIVE;
+    if (transform & CONN_TRN_BIPOLAR) flags |= FLUID_MOD_BIPOLAR;
+    switch (transform & CONN_TRN_SWITCH)
+    {
+    case CONN_TRN_NONE: flags |= FLUID_MOD_LINEAR; break;
+    case CONN_TRN_CONCAVE: flags |= FLUID_MOD_CONCAVE; break;
+    case CONN_TRN_CONVEX: flags |= FLUID_MOD_CONVEX; break;
+    case CONN_TRN_SWITCH: flags |= FLUID_MOD_SWITCH; break;
+    }
+
+    *fluid_flags = flags;
+    return TRUE;
+}
+
+static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn, UINT src1, UINT flags1,
+        UINT src2, UINT flags2)
+{
+    fluid_mod_t *mod;
+    UINT gen = -1;
+
+    switch (MAKELONG(conn->usSource, conn->usDestination))
+    {
+    case MAKELONG(CONN_SRC_LFO, CONN_DST_PITCH): gen = GEN_MODLFOTOPITCH; break;
+    case MAKELONG(CONN_SRC_VIBRATO, CONN_DST_PITCH): gen = GEN_VIBLFOTOPITCH; break;
+    case MAKELONG(CONN_SRC_EG2, CONN_DST_PITCH): gen = GEN_MODENVTOPITCH; break;
+    case MAKELONG(CONN_SRC_LFO, CONN_DST_FILTER_CUTOFF): gen = GEN_MODLFOTOFILTERFC; break;
+    case MAKELONG(CONN_SRC_EG2, CONN_DST_FILTER_CUTOFF): gen = GEN_MODENVTOFILTERFC; break;
+    case MAKELONG(CONN_SRC_LFO, CONN_DST_GAIN): gen = GEN_MODLFOTOVOL; break;
+    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG2_HOLDTIME): gen = GEN_KEYTOMODENVHOLD; break;
+    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG2_DECAYTIME): gen = GEN_KEYTOMODENVDECAY; break;
+    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG1_HOLDTIME): gen = GEN_KEYTOVOLENVHOLD; break;
+    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG1_DECAYTIME): gen = GEN_KEYTOVOLENVDECAY; break;
+    }
+
+    if (conn->usControl != CONN_SRC_NONE && gen != -1)
+    {
+        src1 = src2;
+        flags1 = flags2;
+        src2 = 0;
+        flags2 = 0;
+    }
+
+    if (gen == -1 && !fluid_gen_from_connection(conn, &gen)) return FALSE;
+
+    if (!(mod = new_fluid_mod())) return FALSE;
+    fluid_mod_set_source1(mod, src1, flags1);
+    fluid_mod_set_source2(mod, src2, flags2);
+    fluid_mod_set_dest(mod, gen);
+    fluid_mod_set_amount(mod, conn->lScale);
+    fluid_voice_add_mod(fluid_voice, mod, FLUID_VOICE_OVERWRITE);
+
+    return TRUE;
+}
+
+static void fluid_voice_add_articulation(fluid_voice_t *fluid_voice, struct articulation *articulation)
+{
+    UINT i;
+
+    for (i = 0; i < articulation->list.cConnections; i++)
+    {
+        UINT src1 = FLUID_MOD_NONE, flags1 = 0, src2 = FLUID_MOD_NONE, flags2 = 0;
+        CONNECTION *conn = articulation->connections + i;
+
+        if (set_gen_from_connection(fluid_voice, conn)) continue;
+
+        if (!fluid_source_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f,
+                &src1, &flags1))
+            continue;
+        if (!fluid_source_from_connection(conn->usControl, (conn->usControl >> 4) & 0x3f,
+                &src2, &flags2))
+            continue;
+        add_mod_from_connection(fluid_voice, conn, src1, flags1, src2, flags2);
+    }
+}
+
+static void fluid_voice_add_articulations(fluid_voice_t *fluid_voice, struct list *list)
+{
+    struct articulation *articulation;
+
+    LIST_FOR_EACH_ENTRY(articulation, list, struct articulation, entry)
+        fluid_voice_add_articulation(fluid_voice, articulation);
+}
+
+static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
+{
+    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
+    struct synth *synth = instrument->synth;
+    fluid_sample_t *fluid_sample;
+    fluid_voice_t *fluid_voice;
+    struct region *region;
+
+    TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
+
+    if (!instrument) return FLUID_FAILED;
+
+    LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
+    {
+        struct wave *wave = region->wave;
+
+        if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
+        if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
+
+        if (!(fluid_sample = new_fluid_sample()))
+        {
+            WARN("Failed to allocate FluidSynth sample\n");
+            return FLUID_FAILED;
+        }
+
+        fluid_sample_set_sound_data(fluid_sample, wave->samples, NULL, wave->sample_count,
+                wave->format.nSamplesPerSec, TRUE);
+        if (region->wave_sample.cSampleLoops)
+        {
+            WLOOP *loop = region->wave_loops;
+            fluid_sample_set_loop(fluid_sample, loop->ulStart, loop->ulStart + loop->ulLength);
+        }
+        fluid_sample_set_pitch(fluid_sample, region->wave_sample.usUnityNote, region->wave_sample.sFineTune);
+
+        if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, fluid_sample, chan, key, vel)))
+        {
+            WARN("Failed to allocate FluidSynth voice\n");
+            delete_fluid_sample(fluid_sample);
+            return FLUID_FAILED;
+        }
+
+        fluid_voice_add_articulations(fluid_voice, &instrument->articulations);
+        fluid_voice_add_articulations(fluid_voice, &region->articulations);
+        fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
+        return FLUID_OK;
+    }
+
+    WARN("Failed to find instrument matching note / velocity\n");
+    return FLUID_FAILED;
+}
+
+static void synth_preset_free(fluid_preset_t *fluid_preset)
+{
+    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
+    fluid_preset_set_data(fluid_preset, NULL);
+    if (instrument) instrument_release(instrument);
+}
+
 static const char *synth_sfont_get_name(fluid_sfont_t *fluid_sfont)
 {
     return "DirectMusicSynth";
@@ -1283,17 +1562,34 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
 {
     struct synth *synth = fluid_sfont_get_data(fluid_sfont);
     struct instrument *instrument;
+    fluid_preset_t *fluid_preset;
 
     TRACE("(%p, %d, %d)\n", fluid_sfont, bank, patch);
 
     if (!synth) return NULL;
 
+    EnterCriticalSection(&synth->cs);
+
     LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
         if (instrument->patch == patch) break;
-    if (&instrument->entry == &synth->instruments) return NULL;
 
-    FIXME("Preset not implemented yet\n");
-    return NULL;
+    if (&instrument->entry == &synth->instruments)
+    {
+        fluid_preset = NULL;
+        WARN("Could not find instrument with patch %#x\n", patch);
+    }
+    else if ((fluid_preset = new_fluid_preset(fluid_sfont, synth_preset_get_name, synth_preset_get_bank,
+            synth_preset_get_num, synth_preset_noteon, synth_preset_free)))
+    {
+        fluid_preset_set_data(fluid_preset, instrument);
+        instrument_addref(instrument);
+
+        TRACE("Created fluid_preset %p for instrument %p\n", fluid_preset, instrument);
+    }
+
+    LeaveCriticalSection(&synth->cs);
+
+    return fluid_preset;
 }
 
 static void synth_sfont_iter_start(fluid_sfont_t *fluid_sfont)
