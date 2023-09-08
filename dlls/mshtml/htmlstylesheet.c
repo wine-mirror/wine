@@ -79,23 +79,12 @@ static HRESULT WINAPI HTMLStyleSheetRule_QueryInterface(IHTMLStyleSheetRule *ifa
 {
     HTMLStyleSheetRule *This = impl_from_IHTMLStyleSheetRule(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if (IsEqualGUID(&IID_IUnknown, riid))
-        *ppv = &This->IHTMLStyleSheetRule_iface;
-    else if (IsEqualGUID(&IID_IHTMLStyleSheetRule, riid))
-        *ppv = &This->IHTMLStyleSheetRule_iface;
-    else if (dispex_query_interface(&This->dispex, riid, ppv))
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    else
-    {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown *)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLStyleSheetRule_AddRef(IHTMLStyleSheetRule *iface)
@@ -196,6 +185,16 @@ static inline HTMLStyleSheetRule *HTMLStyleSheetRule_from_DispatchEx(DispatchEx 
     return CONTAINING_RECORD(iface, HTMLStyleSheetRule, dispex);
 }
 
+static void *HTMLStyleSheetRule_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLStyleSheetRule, riid))
+        return &This->IHTMLStyleSheetRule_iface;
+
+    return NULL;
+}
+
 static void HTMLStyleSheetRule_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLStyleSheetRule *This = HTMLStyleSheetRule_from_DispatchEx(dispex);
@@ -216,6 +215,7 @@ static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRule_dispex_vtbl = {
+    .query_interface  = HTMLStyleSheetRule_query_interface,
     .destructor       = HTMLStyleSheetRule_destructor,
     .traverse         = HTMLStyleSheetRule_traverse,
     .unlink           = HTMLStyleSheetRule_unlink
@@ -269,22 +269,12 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_QueryInterface(IHTMLStyleShe
 {
     HTMLStyleSheetRulesCollection *This = impl_from_IHTMLStyleSheetRulesCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLStyleSheetRulesCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleSheetRulesCollection, riid)) {
-        *ppv = &This->IHTMLStyleSheetRulesCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLStyleSheetRulesCollection_AddRef(IHTMLStyleSheetRulesCollection *iface)
@@ -396,6 +386,16 @@ static inline HTMLStyleSheetRulesCollection *HTMLStyleSheetRulesCollection_from_
     return CONTAINING_RECORD(iface, HTMLStyleSheetRulesCollection, dispex);
 }
 
+static void *HTMLStyleSheetRulesCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLStyleSheetRulesCollection, riid))
+        return &This->IHTMLStyleSheetRulesCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLStyleSheetRulesCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
@@ -492,6 +492,7 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
+    .query_interface  = HTMLStyleSheetRulesCollection_query_interface,
     .destructor       = HTMLStyleSheetRulesCollection_destructor,
     .traverse         = HTMLStyleSheetRulesCollection_traverse,
     .unlink           = HTMLStyleSheetRulesCollection_unlink,
@@ -665,24 +666,12 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_QueryInterface(IHTMLStyleSheetsC
 {
     HTMLStyleSheetsCollection *This = impl_from_IHTMLStyleSheetsCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLStyleSheetsCollection_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLStyleSheetsCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleSheetsCollection, riid)) {
-        *ppv = &This->IHTMLStyleSheetsCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("unsupported %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLStyleSheetsCollection_AddRef(IHTMLStyleSheetsCollection *iface)
@@ -836,6 +825,16 @@ static inline HTMLStyleSheetsCollection *HTMLStyleSheetsCollection_from_Dispatch
     return CONTAINING_RECORD(iface, HTMLStyleSheetsCollection, dispex);
 }
 
+static void *HTMLStyleSheetsCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLStyleSheetsCollection, riid))
+        return &This->IHTMLStyleSheetsCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLStyleSheetsCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
@@ -932,6 +931,7 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
+    .query_interface  = HTMLStyleSheetsCollection_query_interface,
     .destructor       = HTMLStyleSheetsCollection_destructor,
     .traverse         = HTMLStyleSheetsCollection_traverse,
     .unlink           = HTMLStyleSheetsCollection_unlink,
@@ -980,26 +980,12 @@ static HRESULT WINAPI HTMLStyleSheet_QueryInterface(IHTMLStyleSheet *iface, REFI
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLStyleSheet_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLStyleSheet_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleSheet, riid)) {
-        *ppv = &This->IHTMLStyleSheet_iface;
-    }else if(IsEqualGUID(&IID_IHTMLStyleSheet4, riid)) {
-        *ppv = &This->IHTMLStyleSheet4_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("unsupported %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLStyleSheet_AddRef(IHTMLStyleSheet *iface)
@@ -1500,6 +1486,18 @@ static inline HTMLStyleSheet *HTMLStyleSheet_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLStyleSheet, dispex);
 }
 
+static void *HTMLStyleSheet_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLStyleSheet, riid))
+        return &This->IHTMLStyleSheet_iface;
+    if(IsEqualGUID(&IID_IHTMLStyleSheet4, riid))
+        return &This->IHTMLStyleSheet4_iface;
+
+    return NULL;
+}
+
 static void HTMLStyleSheet_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLStyleSheet *This = HTMLStyleSheet_from_DispatchEx(dispex);
@@ -1526,6 +1524,7 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 static const dispex_static_data_vtbl_t HTMLStyleSheet_dispex_vtbl = {
+    .query_interface  = HTMLStyleSheet_query_interface,
     .destructor       = HTMLStyleSheet_destructor,
     .traverse         = HTMLStyleSheet_traverse,
     .unlink           = HTMLStyleSheet_unlink
