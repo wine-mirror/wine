@@ -2081,6 +2081,7 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
     IO_STATUS_BLOCK io;
     char buf[256] = "test";
     NTSTATUS status, expected_status;
+    FILE_STANDARD_INFORMATION std_info;
 
     memset(&io, 0xcc, sizeof(io));
     status = pNtQueryInformationFile(pipe, &io, &local_info, sizeof(local_info), FilePipeLocalInformation);
@@ -2102,6 +2103,26 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         else
             ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable, expected zero, in %s state %lu\n",
                 is_server ? "server" : "client", state);
+    }
+
+    status = pNtQueryInformationFile(pipe, &io, &std_info, sizeof(std_info), FileStandardInformation);
+    if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
+        ok(status == STATUS_PIPE_DISCONNECTED,
+            "NtQueryInformationFile(FileStandardInformation) failed in %s state %lu: %lx\n",
+            is_server ? "server" : "client", state, status);
+    else
+        ok(status == STATUS_SUCCESS,
+            "NtQueryInformationFile(FileStandardInformation) failed in %s state %lu: %lx\n",
+            is_server ? "server" : "client", state, status);
+    if (!status)
+    {
+        ok(std_info.AllocationSize.QuadPart == local_info.InboundQuota + local_info.OutboundQuota,
+                "got %I64u, expected %lu.\n",
+                std_info.AllocationSize.QuadPart, local_info.InboundQuota + local_info.OutboundQuota);
+        ok(std_info.EndOfFile.QuadPart == local_info.ReadDataAvailable, "got %I64u.\n", std_info.EndOfFile.QuadPart);
+        ok(std_info.NumberOfLinks == 1, "got %lu.\n", std_info.NumberOfLinks);
+        todo_wine ok(std_info.DeletePending, "got %d.\n", std_info.DeletePending);
+        ok(!std_info.Directory, "got %d.\n", std_info.Directory);
     }
 
     status = pNtQueryInformationFile(pipe, &io, &pipe_info, sizeof(pipe_info), FilePipeInformation);
