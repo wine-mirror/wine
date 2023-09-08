@@ -39,6 +39,41 @@ static void dump_dmus_instrument(DMUS_INSTRUMENT *instrument)
     TRACE(" - ulFlags          = %lu\n", instrument->ulFlags);
 }
 
+static void dump_dmus_wave(DMUS_WAVE *wave)
+{
+    TRACE("DMUS_WAVE:\n");
+    TRACE(" - ulFirstExtCkIdx   = %lu\n", wave->ulFirstExtCkIdx);
+    TRACE(" - ulCopyrightIdx    = %lu\n", wave->ulCopyrightIdx);
+    TRACE(" - ulWaveDataIdx     = %lu\n", wave->ulWaveDataIdx);
+    TRACE(" - WaveformatEx:\n");
+    TRACE("   - wFormatTag      = %u\n", wave->WaveformatEx.wFormatTag);
+    TRACE("   - nChannels       = %u\n", wave->WaveformatEx.nChannels);
+    TRACE("   - nSamplesPerSec  = %lu\n", wave->WaveformatEx.nSamplesPerSec);
+    TRACE("   - nAvgBytesPerSec = %lu\n", wave->WaveformatEx.nAvgBytesPerSec);
+    TRACE("   - nBlockAlign     = %u\n", wave->WaveformatEx.nBlockAlign);
+    TRACE("   - wBitsPerSample  = %u\n", wave->WaveformatEx.wBitsPerSample);
+    TRACE("   - cbSize          = %u\n", wave->WaveformatEx.cbSize);
+}
+
+struct wave
+{
+    struct list entry;
+    LONG ref;
+    UINT id;
+
+    WAVEFORMATEX format;
+    UINT sample_count;
+    short samples[];
+};
+
+C_ASSERT(sizeof(struct wave) == offsetof(struct wave, samples[0]));
+
+static void wave_release(struct wave *wave)
+{
+    ULONG ref = InterlockedDecrement(&wave->ref);
+    if (!ref) free(wave);
+}
+
 struct instrument
 {
     struct list entry;
@@ -70,6 +105,7 @@ struct synth
     IDirectMusicSynthSink *sink;
 
     struct list instruments;
+    struct list waves;
 };
 
 static inline struct synth *impl_from_IDirectMusicSynth8(IDirectMusicSynth8 *iface)
@@ -126,12 +162,19 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
     if (!ref)
     {
         struct instrument *instrument;
+        struct wave *wave;
         void *next;
 
         LIST_FOR_EACH_ENTRY_SAFE(instrument, next, &This->instruments, struct instrument, entry)
         {
             list_remove(&instrument->entry);
             instrument_release(instrument);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(wave, next, &This->waves, struct wave, entry)
+        {
+            list_remove(&wave->entry);
+            wave_release(wave);
         }
 
         free(This);
@@ -282,6 +325,68 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
     return S_OK;
 }
 
+static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, ULONG *offsets,
+        BYTE *data, HANDLE *ret_handle)
+{
+    DMUS_WAVE *wave_info = (DMUS_WAVE *)(data + offsets[0]);
+    DMUS_WAVEDATA *wave_data = (DMUS_WAVEDATA *)(data + offsets[wave_info->ulWaveDataIdx]);
+    struct wave *wave;
+    UINT sample_count;
+
+    if (TRACE_ON(dmsynth))
+    {
+        dump_dmus_wave(wave_info);
+
+        if (wave_info->ulCopyrightIdx)
+        {
+            DMUS_COPYRIGHT *copyright = (DMUS_COPYRIGHT *)(data + offsets[wave_info->ulCopyrightIdx]);
+            TRACE("Copyright = '%s'\n",  (char *)copyright->byCopyright);
+        }
+
+        TRACE("Found %lu bytes of wave data\n", wave_data->cbSize);
+    }
+
+    if (wave_info->ulFirstExtCkIdx) FIXME("Wave extensions not implemented\n");
+    if (wave_info->WaveformatEx.wFormatTag != WAVE_FORMAT_PCM) return DMUS_E_NOTPCM;
+
+    sample_count = wave_data->cbSize / wave_info->WaveformatEx.nBlockAlign;
+    if (!(wave = calloc(1, offsetof(struct wave, samples[sample_count])))) return E_OUTOFMEMORY;
+    wave->ref = 1;
+    wave->id = info->dwDLId;
+    wave->format = wave_info->WaveformatEx;
+    wave->sample_count = sample_count;
+
+    if (wave_info->WaveformatEx.nBlockAlign == 1)
+    {
+        while (sample_count--)
+        {
+            short sample = (wave_data->byData[sample_count] - 0x80) << 8;
+            wave->samples[sample_count] = sample;
+        }
+    }
+    else if (wave_info->WaveformatEx.nBlockAlign == 2)
+    {
+        while (sample_count--)
+        {
+            short sample = ((short *)wave_data->byData)[sample_count];
+            wave->samples[sample_count] = sample;
+        }
+    }
+    else if (wave_info->WaveformatEx.nBlockAlign == 4)
+    {
+        while (sample_count--)
+        {
+            short sample = ((UINT *)wave_data->byData)[sample_count] >> 16;
+            wave->samples[sample_count] = sample;
+        }
+    }
+
+    list_add_tail(&This->waves, &wave->entry);
+    *ret_handle = wave;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI synth_Download(IDirectMusicSynth8 *iface, HANDLE *ret_handle, void *data, BOOL *ret_free)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
@@ -312,8 +417,7 @@ static HRESULT WINAPI synth_Download(IDirectMusicSynth8 *iface, HANDLE *ret_hand
     case DMUS_DOWNLOADINFO_INSTRUMENT2:
         return synth_download_instrument(This, info, offsets, data, ret_handle);
     case DMUS_DOWNLOADINFO_WAVE:
-        FIXME("Download type DMUS_DOWNLOADINFO_WAVE not yet supported\n");
-        return S_OK;
+        return synth_download_wave(This, info, offsets, data, ret_handle);
     case DMUS_DOWNLOADINFO_WAVEARTICULATION:
         FIXME("Download type DMUS_DOWNLOADINFO_WAVEARTICULATION not yet supported\n");
         return E_NOTIMPL;
@@ -336,6 +440,7 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
     struct instrument *instrument;
+    struct wave *wave;
 
     TRACE("(%p)->(%p, %p, %p)\n", This, handle, callback, user_data);
     if (callback) FIXME("Unload callbacks not implemented\n");
@@ -346,6 +451,16 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
         {
             list_remove(&instrument->entry);
             instrument_release(instrument);
+            return S_OK;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY(wave, &This->waves, struct wave, entry)
+    {
+        if (wave == handle)
+        {
+            list_remove(&wave->entry);
+            wave_release(wave);
             return S_OK;
         }
     }
@@ -744,6 +859,7 @@ HRESULT synth_create(IUnknown **ret_iface)
     lstrcpyW(obj->caps.wszDescription, L"Microsoft Synthesizer");
 
     list_init(&obj->instruments);
+    list_init(&obj->waves);
 
     TRACE("Created DirectMusicSynth %p\n", obj);
     *ret_iface = (IUnknown *)&obj->IDirectMusicSynth8_iface;
