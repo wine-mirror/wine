@@ -215,22 +215,12 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLElementCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLElementCollection, riid)) {
-        *ppv = &This->IHTMLElementCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        FIXME("Unsupported iface %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
 
-    IHTMLElementCollection_AddRef(&This->IHTMLElementCollection_iface);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)
@@ -537,6 +527,16 @@ static inline HTMLElementCollection *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLElementCollection, dispex);
 }
 
+static void *HTMLElementCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLElementCollection, riid))
+        return &This->IHTMLElementCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLElementCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLElementCollection *This = impl_from_DispatchEx(dispex);
@@ -637,6 +637,7 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
+    .query_interface  = HTMLElementCollection_query_interface,
     .destructor       = HTMLElementCollection_destructor,
     .traverse         = HTMLElementCollection_traverse,
     .unlink           = HTMLElementCollection_unlink,
