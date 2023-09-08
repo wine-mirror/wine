@@ -8093,23 +8093,12 @@ static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollectio
 {
     HTMLFiltersCollection *This = impl_from_IHTMLFiltersCollection(iface);
 
-    TRACE("%p %s %p\n", This, debugstr_mshtml_guid(riid), ppv );
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLFiltersCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLFiltersCollection, riid)) {
-        TRACE("(%p)->(IID_IHTMLFiltersCollection %p)\n", This, ppv);
-        *ppv = &This->IHTMLFiltersCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLFiltersCollection_AddRef(IHTMLFiltersCollection *iface)
@@ -8208,6 +8197,16 @@ static inline HTMLFiltersCollection *HTMLFiltersCollection_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLFiltersCollection, dispex);
 }
 
+static void *HTMLFiltersCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLFiltersCollection *This = HTMLFiltersCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLFiltersCollection, riid))
+        return &This->IHTMLFiltersCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLFiltersCollection_destructor(DispatchEx *dispex)
 {
     HTMLFiltersCollection *This = HTMLFiltersCollection_from_DispatchEx(dispex);
@@ -8253,6 +8252,7 @@ static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
 }
 
 static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
+    .query_interface  = HTMLFiltersCollection_query_interface,
     .destructor       = HTMLFiltersCollection_destructor,
     .get_dispid       = HTMLFiltersCollection_get_dispid,
     .get_name         = HTMLFiltersCollection_get_name,
