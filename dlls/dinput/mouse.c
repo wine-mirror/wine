@@ -313,13 +313,6 @@ static void warp_check( struct mouse *impl, BOOL force )
         impl->need_warp = FALSE;
         if (!GetClientRect( impl->base.win, &rect )) return;
         MapWindowPoints( impl->base.win, 0, (POINT *)&rect, 2 );
-        if (!impl->clipped)
-        {
-            mapped_center.x = (rect.left + rect.right) / 2;
-            mapped_center.y = (rect.top + rect.bottom) / 2;
-            TRACE( "Warping mouse to x %+ld, y %+ld.\n", mapped_center.x, mapped_center.y );
-            SetCursorPos( mapped_center.x, mapped_center.y );
-        }
         if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
         {
             /* make sure we clip even if the window covers the whole screen */
@@ -329,6 +322,13 @@ static void warp_check( struct mouse *impl, BOOL force )
             rect.bottom = min( rect.bottom, rect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN ) - 2 );
             TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
             impl->clipped = ClipCursor( &rect );
+        }
+        if (!impl->clipped)
+        {
+            mapped_center.x = (rect.left + rect.right) / 2;
+            mapped_center.y = (rect.top + rect.bottom) / 2;
+            TRACE( "Warping mouse to x %+ld, y %+ld.\n", mapped_center.x, mapped_center.y );
+            SetCursorPos( mapped_center.x, mapped_center.y );
         }
     }
 }
