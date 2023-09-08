@@ -36,6 +36,7 @@ namespace Windows.ApplicationModel {
 
     interface IAppDisplayInfo;
     interface IPackage;
+    interface IPackage2;
     interface IPackage3;
     interface IPackageStatus;
     interface IPackageId;
@@ -90,6 +91,22 @@ namespace Windows.ApplicationModel {
         [propget] HRESULT InstalledLocation([out, retval] Windows.Storage.StorageFolder **value);
         [propget] HRESULT IsFramework([out, retval] boolean *value);
         [propget] HRESULT Dependencies([out, retval] Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Package),
+        uuid(a6612fb6-7688-4ace-95fb-359538e7aa01)
+    ]
+    interface IPackage2 : IInspectable
+    {
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT PublisherDisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT Description([out, retval] HSTRING *value);
+        [propget] HRESULT Logo([out, retval] Windows.Foundation.Uri **value);
+        [propget] HRESULT IsResourcePackage([out, retval] boolean *value);
+        [propget] HRESULT IsBundle([out, retval] boolean *value);
+        [propget] HRESULT IsDevelopmentMode([out, retval] boolean *value);
     }
 
     [
