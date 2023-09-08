@@ -4735,24 +4735,12 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_QueryInterface(IHTMLCSSStyleDeclar
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLCSSStyleDeclaration_iface;
-    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration, riid)) {
-        *ppv = &This->IHTMLCSSStyleDeclaration_iface;
-    }else if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid)) {
-        *ppv = &This->IHTMLCSSStyleDeclaration2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else if(!This->qi || !(*ppv = This->qi(This, riid))) {
-        *ppv = NULL;
-        WARN("unsupported iface %s\n", debugstr_mshtml_guid(riid));
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLCSSStyleDeclaration_AddRef(IHTMLCSSStyleDeclaration *iface)
@@ -9962,6 +9950,20 @@ static inline CSSStyle *impl_from_DispatchEx(DispatchEx *dispex)
     return CONTAINING_RECORD(dispex, CSSStyle, dispex);
 }
 
+static void *CSSStyle_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    CSSStyle *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration, riid))
+        return &This->IHTMLCSSStyleDeclaration_iface;
+    if(IsEqualGUID(&IID_IHTMLCSSStyleDeclaration2, riid))
+        return &This->IHTMLCSSStyleDeclaration2_iface;
+    if(This->qi)
+        return This->qi(This, riid);
+
+    return NULL;
+}
+
 static void CSSStyle_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     CSSStyle *This = impl_from_DispatchEx(dispex);
@@ -10009,6 +10011,7 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
+    .query_interface   = CSSStyle_query_interface,
     .destructor        = CSSStyle_destructor,
     .traverse          = CSSStyle_traverse,
     .unlink            = CSSStyle_unlink,
