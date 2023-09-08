@@ -63,26 +63,12 @@ static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID r
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLLocation_iface;
-    }else if(IsEqualGUID(&IID_IHTMLLocation, riid)) {
-        *ppv = &This->IHTMLLocation_iface;
-    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
-        *ppv = NULL;
-        FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
-        return E_NOINTERFACE;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLLocation_AddRef(IHTMLLocation *iface)
@@ -615,6 +601,20 @@ static inline HTMLLocation *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLLocation, dispex);
 }
 
+static void *HTMLLocation_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLLocation *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLLocation, riid))
+        return &This->IHTMLLocation_iface;
+    if(IsEqualGUID(&IID_IMarshal, riid)) {
+        FIXME("(%p)->(IID_IMarshal)\n", This);
+        return NULL;
+    }
+
+    return NULL;
+}
+
 static void HTMLLocation_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLLocation *This = impl_from_DispatchEx(dispex);
@@ -639,6 +639,7 @@ static void HTMLLocation_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLLocation_dispex_vtbl = {
+    .query_interface  = HTMLLocation_query_interface,
     .destructor       = HTMLLocation_destructor,
     .traverse         = HTMLLocation_traverse,
     .unlink           = HTMLLocation_unlink
