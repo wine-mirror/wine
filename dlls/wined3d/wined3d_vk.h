@@ -179,6 +179,12 @@ struct wined3d_device_vk;
     VK_DEVICE_PFN(vkUnmapMemory) \
     VK_DEVICE_PFN(vkUpdateDescriptorSets) \
     VK_DEVICE_PFN(vkWaitForFences) \
+    /* VK_EXT_extended_dynamic_state */ \
+    VK_DEVICE_EXT_PFN(vkCmdSetDepthCompareOpEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetDepthTestEnableEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetDepthWriteEnableEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetStencilOpEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetStencilTestEnableEXT) \
     /* VK_EXT_transform_feedback */ \
     VK_DEVICE_EXT_PFN(vkCmdBeginQueryIndexedEXT) \
     VK_DEVICE_EXT_PFN(vkCmdBeginTransformFeedbackEXT) \
@@ -558,6 +564,8 @@ struct wined3d_context_vk
     struct wined3d_context c;
 
     const struct wined3d_vk_info *vk_info;
+
+    VkDynamicState dynamic_states[11];
 
     uint32_t update_compute_pipeline : 1;
     uint32_t update_stream_output : 1;
