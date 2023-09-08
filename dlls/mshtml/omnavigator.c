@@ -969,22 +969,12 @@ static HRESULT WINAPI HTMLMimeTypesCollection_QueryInterface(IHTMLMimeTypesColle
 {
     HTMLMimeTypesCollection *This = impl_from_IHTMLMimeTypesCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLMimeTypesCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLMimeTypesCollection, riid)) {
-        *ppv = &This->IHTMLMimeTypesCollection_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLMimeTypesCollection_AddRef(IHTMLMimeTypesCollection *iface)
@@ -1064,6 +1054,16 @@ static inline HTMLMimeTypesCollection *HTMLMimeTypesCollection_from_DispatchEx(D
     return CONTAINING_RECORD(iface, HTMLMimeTypesCollection, dispex);
 }
 
+static void *HTMLMimeTypesCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLMimeTypesCollection *This = HTMLMimeTypesCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLMimeTypesCollection, riid))
+        return &This->IHTMLMimeTypesCollection_iface;
+
+    return NULL;
+}
+
 static void HTMLMimeTypesCollection_unlink(DispatchEx *dispex)
 {
     HTMLMimeTypesCollection *This = HTMLMimeTypesCollection_from_DispatchEx(dispex);
@@ -1080,6 +1080,7 @@ static void HTMLMimeTypesCollection_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLMimeTypesCollection_dispex_vtbl = {
+    .query_interface  = HTMLMimeTypesCollection_query_interface,
     .destructor       = HTMLMimeTypesCollection_destructor,
     .unlink           = HTMLMimeTypesCollection_unlink
 };
