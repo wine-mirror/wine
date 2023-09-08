@@ -640,7 +640,7 @@ void fluid_profiling_print(void)
 {
     int i;
 
-    printf("fluid_profiling_print\n");
+    FLUID_LOG(FLUID_INFO, "fluid_profiling_print\n");
 
     FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
 

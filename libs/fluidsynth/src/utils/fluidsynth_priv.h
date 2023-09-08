@@ -51,6 +51,10 @@
 
 #include "fluidsynth.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(fluidsynth);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -275,8 +279,8 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_PRINTF                 post
 #define FLUID_FLUSH()
 #else
-#define FLUID_PRINTF                 printf
-#define FLUID_FLUSH()                fflush(stdout)
+#define FLUID_PRINTF                 WINE_TRACE
+#define FLUID_FLUSH()
 #endif
 
 /* People who want to reduce the size of the may do this by entirely
@@ -287,7 +291,12 @@ do { strncpy(_dst,_src,_n-1); \
 #if 0
 #define FLUID_LOG                    (void)sizeof
 #else
-#define FLUID_LOG                    fluid_log
+#define WINE_FLUID_DBG               WINE_TRACE
+#define WINE_FLUID_INFO              WINE_TRACE
+#define WINE_FLUID_WARN              WINE_WARN
+#define WINE_FLUID_ERR               WINE_ERR
+#define WINE_FLUID_PANIC             WINE_ERR
+#define FLUID_LOG( x, msg, ... )     do { WINE_ ## x( msg, ## __VA_ARGS__ ); WINE_ ## x( "\n" ); } while (0)
 #endif
 
 #if defined(DEBUG) && !defined(NDEBUG)
