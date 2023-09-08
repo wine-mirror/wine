@@ -875,6 +875,15 @@ static void test_peb_teb(void)
             peb64->OSBuildNumber, NtCurrentTeb()->Peb->OSBuildNumber );
         ok( peb64->OSPlatformId == NtCurrentTeb()->Peb->OSPlatformId, "wrong OSPlatformId %lx / %lx\n",
             peb64->OSPlatformId, NtCurrentTeb()->Peb->OSPlatformId );
+        ok( peb64->AnsiCodePageData == PtrToUlong( NtCurrentTeb()->Peb->AnsiCodePageData ),
+            "wrong AnsiCodePageData %I64x / %p\n",
+            peb64->AnsiCodePageData, NtCurrentTeb()->Peb->AnsiCodePageData );
+        ok( peb64->OemCodePageData == PtrToUlong( NtCurrentTeb()->Peb->OemCodePageData ),
+            "wrong OemCodePageData %I64x / %p\n",
+            peb64->OemCodePageData, NtCurrentTeb()->Peb->OemCodePageData );
+        ok( peb64->UnicodeCaseTableData == PtrToUlong( NtCurrentTeb()->Peb->UnicodeCaseTableData ),
+            "wrong UnicodeCaseTableData %I64x / %p\n",
+            peb64->UnicodeCaseTableData, NtCurrentTeb()->Peb->UnicodeCaseTableData );
         return;
     }
 #endif
