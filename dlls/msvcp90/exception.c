@@ -950,6 +950,68 @@ bool __cdecl MSVCP__uncaught_exception(void)
 #if _MSVCP_VER >= 110
 typedef struct
 {
+    int code;
+    void *category;
+} error_code;
+
+typedef struct
+{
+    logic_error base;
+    error_code code;
+} future_error;
+
+extern const vtable_ptr future_error_vtable;
+
+DEFINE_THISCALL_WRAPPER(future_error_copy_ctor, 8)
+future_error* __thiscall future_error_copy_ctor(future_error *this, const future_error *rhs)
+{
+    logic_error_copy_ctor(&this->base, &rhs->base);
+    this->code = rhs->code;
+    this->base.e.vtable = &future_error_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_future_error_what, 4)
+const char* __thiscall MSVCP_future_error_what(future_error *this)
+{
+    const char *names[4] = {
+        "broken promise",
+        "future already retrieved",
+        "promise already satisfied",
+        "no state",
+    };
+#if _MSVCP_VER == 110
+    int code = this->code.code;
+#else
+    int code = this->code.code-1;
+#endif
+    TRACE("%p\n", this);
+    return code >= 0 && code < ARRAY_SIZE(names) ? names[code] : NULL;
+}
+
+DEFINE_RTTI_DATA3(future_error, 0, &future_error_rtti_base_descriptor,
+        &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor,
+        ".?AVfuture_error@std@@")
+DEFINE_CXX_DATA3(future_error, &logic_error_cxx_type_info, &logic_error_cxx_type_info,
+        &exception_cxx_type_info, MSVCP_logic_error_dtor)
+
+/* ?_Throw_future_error@std@@YAXABVerror_code@1@@Z */
+/* ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z */
+void __cdecl DECLSPEC_NORETURN _Throw_future_error( const error_code *error_code )
+{
+    future_error e;
+    const char *name = "";
+
+    TRACE("(%p)\n", error_code);
+
+    MSVCP_logic_error_ctor(&e.base, EXCEPTION_NAME(name));
+    e.code = *error_code;
+    e.base.e.vtable = &future_error_vtable;
+    _CxxThrowException(&e, &future_error_cxx_type);
+}
+
+typedef struct
+{
     EXCEPTION_RECORD *rec;
     LONG *ref; /* not binary compatible with native */
 } exception_ptr;
@@ -1360,6 +1422,11 @@ __ASM_BLOCK_BEGIN(exception_vtables)
     EXCEPTION_VTABLE(runtime_error,
             VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_runtime_error_what));
+#if _MSVCP_VER >= 110
+    EXCEPTION_VTABLE(future_error,
+            VTABLE_ADD_FUNC(MSVCP_logic_error_vector_dtor)
+            VTABLE_ADD_FUNC(MSVCP_future_error_what));
+#endif
 #if _MSVCP_VER > 110
     EXCEPTION_VTABLE(_System_error,
             VTABLE_ADD_FUNC(MSVCP_failure_vector_dtor)
@@ -1422,6 +1489,9 @@ void init_exception(void *base)
     init_out_of_range_rtti(base);
     init_invalid_argument_rtti(base);
     init_runtime_error_rtti(base);
+#if _MSVCP_VER >= 110
+    init_future_error_rtti(base);
+#endif
 #if _MSVCP_VER > 110
     init__System_error_rtti(base);
 #endif
@@ -1439,6 +1509,9 @@ void init_exception(void *base)
     init_out_of_range_cxx(base);
     init_invalid_argument_cxx(base);
     init_runtime_error_cxx(base);
+#if _MSVCP_VER >= 110
+    init_future_error_cxx(base);
+#endif
 #if _MSVCP_VER > 110
     init__System_error_cxx_type_info(base);
 #endif

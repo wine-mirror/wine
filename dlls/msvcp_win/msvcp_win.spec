@@ -1625,8 +1625,8 @@
 @ cdecl -arch=win64 ?_Syserror_map@std@@YAPEBDH@Z(long) msvcp140.?_Syserror_map@std@@YAPEBDH@Z
 @ stub ?_Throw_C_error@std@@YAXH@Z
 @ stub ?_Throw_Cpp_error@std@@YAXH@Z
-@ stub -arch=win32 ?_Throw_future_error@std@@YAXABVerror_code@1@@Z
-@ stub -arch=win64 ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z
+@ cdecl -arch=win32 ?_Throw_future_error@std@@YAXABVerror_code@1@@Z(ptr) msvcp140.?_Throw_future_error@std@@YAXABVerror_code@1@@Z
+@ cdecl -arch=win64 ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z(ptr) msvcp140.?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z
 @ cdecl -arch=arm ?_Tidy@?$_Yarn@D@std@@AAAXXZ(ptr) msvcp140.?_Tidy@?$_Yarn@D@std@@AAAXXZ
 @ thiscall -arch=i386 ?_Tidy@?$_Yarn@D@std@@AAEXXZ(ptr) msvcp140.?_Tidy@?$_Yarn@D@std@@AAEXXZ
 @ cdecl -arch=win64 ?_Tidy@?$_Yarn@D@std@@AEAAXXZ(ptr) msvcp140.?_Tidy@?$_Yarn@D@std@@AEAAXXZ
