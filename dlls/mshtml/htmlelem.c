@@ -8543,26 +8543,12 @@ static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeColle
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLAttributeCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLAttributeCollection, riid)) {
-        *ppv = &This->IHTMLAttributeCollection_iface;
-    }else if(IsEqualGUID(&IID_IHTMLAttributeCollection2, riid)) {
-        *ppv = &This->IHTMLAttributeCollection2_iface;
-    }else if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid)) {
-        *ppv = &This->IHTMLAttributeCollection3_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLAttributeCollection_AddRef(IHTMLAttributeCollection *iface)
@@ -8929,6 +8915,20 @@ static inline HTMLAttributeCollection *HTMLAttributeCollection_from_DispatchEx(D
     return CONTAINING_RECORD(iface, HTMLAttributeCollection, dispex);
 }
 
+static void *HTMLAttributeCollection_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLAttributeCollection, riid))
+        return &This->IHTMLAttributeCollection_iface;
+    if(IsEqualGUID(&IID_IHTMLAttributeCollection2, riid))
+        return &This->IHTMLAttributeCollection2_iface;
+    if(IsEqualGUID(&IID_IHTMLAttributeCollection3, riid))
+        return &This->IHTMLAttributeCollection3_iface;
+
+    return NULL;
+}
+
 static void HTMLAttributeCollection_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
@@ -9022,6 +9022,7 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
 }
 
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
+    .query_interface  = HTMLAttributeCollection_query_interface,
     .destructor       = HTMLAttributeCollection_destructor,
     .traverse         = HTMLAttributeCollection_traverse,
     .unlink           = HTMLAttributeCollection_unlink,
