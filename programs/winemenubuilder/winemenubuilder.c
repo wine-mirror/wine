@@ -1831,10 +1831,13 @@ static BOOL has_association_changed(LPCWSTR extensionW, const WCHAR *mimeType, c
             ret = TRUE;
         free(value);
 
-        value = reg_get_valW(assocKey, extensionW, L"ProgID");
-        if (!value || wcscmp(value, progId))
-            ret = TRUE;
-        free(value);
+        if (progId)
+        {
+            value = reg_get_valW(assocKey, extensionW, L"ProgID");
+            if (!value || wcscmp(value, progId))
+                ret = TRUE;
+            free(value);
+        }
 
         value = reg_get_valW(assocKey, extensionW, L"AppName");
         if (!value || wcscmp(value, appName))
@@ -1878,7 +1881,7 @@ static void update_association(LPCWSTR extension, const WCHAR *mimeType, const W
     }
 
     RegSetValueExW(subkey, L"MimeType", 0, REG_SZ, (const BYTE*) mimeType, (lstrlenW(mimeType) + 1) * sizeof(WCHAR));
-    RegSetValueExW(subkey, L"ProgID", 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
+    if (progId) RegSetValueExW(subkey, L"ProgID", 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, L"AppName", 0, REG_SZ, (const BYTE*) appName, (lstrlenW(appName) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, L"DesktopFile", 0, REG_SZ, (const BYTE*) desktopFile, (lstrlenW(desktopFile) + 1) * sizeof(WCHAR));
     if (openWithIcon)
@@ -1962,14 +1965,18 @@ static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const W
     return ret;
 }
 
-static BOOL is_extension_banned(LPCWSTR extension)
+static BOOL is_type_banned(const WCHAR *win_type)
 {
     /* These are managed through external tools like wine.desktop, to evade malware created file type associations */
-    if (!wcsicmp(extension, L".bat") ||
-        !wcsicmp(extension, L".com") ||
-        !wcsicmp(extension, L".exe") ||
-        !wcsicmp(extension, L".msi") ||
-        !wcsicmp(extension, L".url"))
+    if (!wcsicmp(win_type, L".bat") ||
+        !wcsicmp(win_type, L".com") ||
+        !wcsicmp(win_type, L".exe") ||
+        !wcsicmp(win_type, L".msi") ||
+        !wcsicmp(win_type, L".url"))
+        return TRUE;
+    /* Associating a program with the file URI scheme is like associating it with all file types, which is not allowed
+     * for the same reasons */
+    if (!wcsicmp(win_type, L"file"))
         return TRUE;
     return FALSE;
 }
@@ -2043,11 +2050,15 @@ static BOOL write_freedesktop_association_entry(const WCHAR *desktopPath, const 
         if (prefix)
         {
             char *path = wine_get_unix_file_name( prefix );
-            fprintf(desktop, "Exec=env WINEPREFIX=\"%s\" wine start /ProgIDOpen %s %%f\n", path, escape(progId));
+            fprintf(desktop, "Exec=env WINEPREFIX=\"%s\" wine start ", path);
             heap_free( path );
         }
         else
-            fprintf(desktop, "Exec=wine start /ProgIDOpen %s %%f\n", escape(progId));
+            fprintf(desktop, "Exec=wine start ");
+        if (progId) /* file association */
+            fprintf(desktop, "/ProgIDOpen %s %%f\n", escape(progId));
+        else /* protocol association */
+            fprintf(desktop, "%%u\n");
         fprintf(desktop, "NoDisplay=true\n");
         fprintf(desktop, "StartupNotify=true\n");
         if (openWithIcon)
@@ -2075,12 +2086,19 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
 
     for (i = 0; ; i++)
     {
-        WCHAR *extensionW;
+        WCHAR *winTypeW;
+        BOOL isProtocolType = FALSE;
 
-        if (!(extensionW = reg_enum_keyW(HKEY_CLASSES_ROOT, i)))
+        if (!(winTypeW = reg_enum_keyW(HKEY_CLASSES_ROOT, i)))
             break;
 
-        if (extensionW[0] == '.' && !is_extension_banned(extensionW))
+        if (winTypeW[0] != '.')
+        {
+            if (RegGetValueW(HKEY_CLASSES_ROOT, winTypeW, L"URL Protocol", RRF_RT_ANY, NULL, NULL, NULL) == ERROR_SUCCESS)
+                isProtocolType = TRUE;
+        }
+
+        if ((winTypeW[0] == '.' || isProtocolType) && !is_type_banned(winTypeW))
         {
             WCHAR *commandW = NULL;
             WCHAR *executableW = NULL;
@@ -2094,7 +2112,7 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
             WCHAR *mimeProgId = NULL;
             struct rb_string_entry *entry;
 
-            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, L"open");
+            commandW = assoc_query(ASSOCSTR_COMMAND, winTypeW, L"open");
             if (commandW == NULL)
                 /* no command => no application is associated */
                 goto end;
@@ -2103,78 +2121,88 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
                 /* command is on the exclude list => desktop integration is not desirable */
                 goto end;
 
-            wcslwr(extensionW);
-            friendlyDocNameW = assoc_query(ASSOCSTR_FRIENDLYDOCNAME, extensionW, NULL);
+            iconW = assoc_query(ASSOCSTR_DEFAULTICON, winTypeW, NULL);
 
-            iconW = assoc_query(ASSOCSTR_DEFAULTICON, extensionW, NULL);
-
-            contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
-            if (contentTypeW)
-                wcslwr(contentTypeW);
-
-            mimeType = freedesktop_mime_type_for_extension(&nativeMimeTypes, extensionW);
-
-            if (mimeType == NULL)
+            if (isProtocolType)
             {
-                if (contentTypeW != NULL && wcschr(contentTypeW, '/'))
-                    mimeType = xwcsdup(contentTypeW);
-                else if (!(mimeType = get_special_mime_type(extensionW)))
-                    mimeType = heap_wprintf(L"application/x-wine-extension-%s", &extensionW[1]);
+                mimeType = heap_wprintf(L"x-scheme-handler/%s", winTypeW);
+            }
+            else
+            {
+                wcslwr(winTypeW);
+                friendlyDocNameW = assoc_query(ASSOCSTR_FRIENDLYDOCNAME, winTypeW, NULL);
 
-                /* GNOME seems to ignore the <icon> tag in MIME packages,
-                 * and the default name is more intuitive anyway.
-                 */
-                if (iconW)
+                contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, winTypeW, NULL);
+                if (contentTypeW)
+                    wcslwr(contentTypeW);
+
+                mimeType = freedesktop_mime_type_for_extension(&nativeMimeTypes, winTypeW);
+
+                if (mimeType == NULL)
                 {
-                    WCHAR *flattened_mime = slashes_to_minuses(mimeType);
-                    int index = 0;
-                    WCHAR *comma = wcsrchr(iconW, ',');
-                    if (comma)
+                    if (contentTypeW != NULL && wcschr(contentTypeW, '/'))
+                        mimeType = xwcsdup(contentTypeW);
+                    else if (!(mimeType = get_special_mime_type(winTypeW)))
+                        mimeType = heap_wprintf(L"application/x-wine-extension-%s", &winTypeW[1]);
+
+                    /* GNOME seems to ignore the <icon> tag in MIME packages,
+                     * and the default name is more intuitive anyway.
+                     */
+                    if (iconW)
                     {
-                        *comma = 0;
-                        index = wcstol(comma + 1, NULL, 10);
+                        WCHAR *flattened_mime = slashes_to_minuses(mimeType);
+                        int index = 0;
+                        WCHAR *comma = wcsrchr(iconW, ',');
+                        if (comma)
+                        {
+                            *comma = 0;
+                            index = wcstol(comma + 1, NULL, 10);
+                        }
+                        extract_icon(iconW, index, flattened_mime, FALSE);
+                        free(flattened_mime);
                     }
-                    extract_icon(iconW, index, flattened_mime, FALSE);
-                    free(flattened_mime);
+
+                    write_freedesktop_mime_type_entry(packages_dir, winTypeW, mimeType, friendlyDocNameW);
+                    hasChanged = TRUE;
                 }
 
-                write_freedesktop_mime_type_entry(packages_dir, extensionW, mimeType, friendlyDocNameW);
-                hasChanged = TRUE;
+                progIdW = reg_get_valW(HKEY_CLASSES_ROOT, winTypeW, NULL);
+                if (!progIdW) goto end; /* no progID => not a file type association */
+
+                /* Do not allow duplicate ProgIDs for a MIME type, it causes unnecessary duplication in Open dialogs */
+                mimeProgId = heap_wprintf(L"%s=>%s", mimeType, progIdW);
+                if (wine_rb_get(&mimeProgidTree, mimeProgId))
+                {
+                    heap_free(mimeProgId);
+                    goto end;
+                }
+                entry = xmalloc(sizeof(struct rb_string_entry));
+                entry->string = mimeProgId;
+                if (wine_rb_put(&mimeProgidTree, mimeProgId, &entry->entry))
+                {
+                    WINE_ERR("error updating rb tree\n");
+                    goto end;
+                }
             }
 
-            executableW = assoc_query(ASSOCSTR_EXECUTABLE, extensionW, L"open");
+            executableW = assoc_query(ASSOCSTR_EXECUTABLE, winTypeW, L"open");
             if (executableW)
                 openWithIcon = compute_native_identifier(0, executableW, NULL);
 
-            friendlyAppName = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, L"open");
+            friendlyAppName = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, winTypeW, L"open");
             if (!friendlyAppName) friendlyAppName = L"A Wine application";
 
-            progIdW = reg_get_valW(HKEY_CLASSES_ROOT, extensionW, NULL);
-            if (!progIdW) goto end; /* no progID => not a file type association */
-
-            /* Do not allow duplicate ProgIDs for a MIME type, it causes unnecessary duplication in Open dialogs */
-            mimeProgId = heap_wprintf(L"%s=>%s", mimeType, progIdW);
-            if (wine_rb_get(&mimeProgidTree, mimeProgId))
+            if (has_association_changed(winTypeW, mimeType, progIdW, friendlyAppName, openWithIcon))
             {
-                free(mimeProgId);
-                goto end;
-            }
-            entry = xmalloc(sizeof(struct rb_string_entry));
-            entry->string = mimeProgId;
-            if (wine_rb_put(&mimeProgidTree, mimeProgId, &entry->entry))
-            {
-                WINE_ERR("error updating rb tree\n");
-                goto end;
-            }
-
-            if (has_association_changed(extensionW, mimeType, progIdW, friendlyAppName, openWithIcon))
-            {
-                WCHAR *desktopPath = heap_wprintf(L"%s\\wine-extension-%s.desktop",
-                                                  applications_dir, extensionW + 1 );
+                WCHAR *desktopPath;
+                if (isProtocolType)
+                    desktopPath = heap_wprintf(L"%s\\wine-protocol-%s.desktop", applications_dir, winTypeW);
+                else
+                    desktopPath = heap_wprintf(L"%s\\wine-extension-%s.desktop", applications_dir, winTypeW + 1);
                 if (write_freedesktop_association_entry(desktopPath, friendlyAppName, mimeType, progIdW, openWithIcon))
                 {
                     hasChanged = TRUE;
-                    update_association(extensionW, mimeType, progIdW, friendlyAppName, desktopPath, openWithIcon);
+                    update_association(winTypeW, mimeType, progIdW, friendlyAppName, desktopPath, openWithIcon);
                 }
                 free(desktopPath);
             }
@@ -2191,7 +2219,7 @@ static BOOL generate_associations(const WCHAR *packages_dir, const WCHAR *applic
             free(mimeType);
             free(progIdW);
         }
-        free(extensionW);
+        free(winTypeW);
     }
 
     wine_rb_destroy(&mimeProgidTree, winemenubuilder_rb_destroy, NULL);
