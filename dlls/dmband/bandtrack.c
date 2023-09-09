@@ -80,9 +80,7 @@ static ULONG WINAPI band_track_Release(IDirectMusicTrack8 *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+    if (!ref) free(This);
 
     return ref;
 }
@@ -344,11 +342,8 @@ static HRESULT load_band(IDirectMusicBandTrack *This, IStream *pClonedStream,
    * @TODO insert pBand into This
    */
   if (SUCCEEDED(hr)) {
-    LPDMUS_PRIVATE_BAND pNewBand = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_BAND));
-    if (NULL == pNewBand) {
-      ERR(": no more memory\n");
-      return  E_OUTOFMEMORY;
-    }
+    LPDMUS_PRIVATE_BAND pNewBand;
+    if (!(pNewBand = calloc(1, sizeof(*pNewBand)))) return E_OUTOFMEMORY;
     pNewBand->BandHeader = *pHeader;
     pNewBand->band = *ppBand;
     IDirectMusicBand_AddRef(*ppBand);
@@ -637,11 +632,8 @@ HRESULT create_dmbandtrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicBandTrack *track;
     HRESULT hr;
 
-    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
-    if (!track) {
-        *ppobj = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicBandTrack,
