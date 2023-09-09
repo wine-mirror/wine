@@ -155,8 +155,8 @@ static ULONG WINAPI IDirectMusicLoaderImpl_Release(IDirectMusicLoader8 *iface)
 
         IDirectMusicLoader8_ClearCache(iface, &GUID_DirectMusicAllTypes);
         for (i = 0; i < ARRAY_SIZE(classes); i++)
-            HeapFree(GetProcessHeap(), 0, This->search_paths[i]);
-        HeapFree(GetProcessHeap(), 0, This);
+            free(This->search_paths[i]);
+        free(This);
     }
 
     return ref;
@@ -427,7 +427,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_GetObject(IDirectMusicLoader8 *ifac
         bCache = is_cache_enabled(This, &pDesc->guidClass);
 	if (bCache) {
 		if (!pObjectEntry) {
-                        pObjectEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(*pObjectEntry));
+            pObjectEntry = calloc(1, sizeof(*pObjectEntry));
 			DM_STRUCT_INIT(&pObjectEntry->Desc);
 			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
 			pObjectEntry->pObject = pObject;
@@ -566,7 +566,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	TRACE(": adding alias entry with following info:\n");
 	if (TRACE_ON(dmloader))
 		dump_DMUS_OBJECTDESC(pDesc);
-        pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(*pNewEntry));
+    pNewEntry = calloc(1, sizeof(*pNewEntry));
 	/* use this function instead of pure memcpy due to streams (memcpy just copies pointer), 
 	   which is basically used further by app that called SetDescriptor... better safety than exception */
 	DMUSIC_CopyDescriptor (&pNewEntry->Desc, pDesc);
@@ -601,7 +601,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoad
         return S_OK;
 
     if (!This->search_paths[index])
-        This->search_paths[index] = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+        This->search_paths[index] = malloc(MAX_PATH);
     else if (!wcsncmp(This->search_paths[index], path, MAX_PATH))
         return S_FALSE;
 
@@ -743,7 +743,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ClearCache(IDirectMusicLoader8 *ifa
             /* basically, wrap to ReleaseObject for each object found */
             IDirectMusicLoader8_ReleaseObject(iface, obj->pObject);
             list_remove(&obj->entry);
-            HeapFree(GetProcessHeap(), 0, obj);
+            free(obj);
         }
     }
 
@@ -910,11 +910,8 @@ HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
 	struct list *pEntry;
 
         TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+	*ppobj = NULL;
+	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
 	obj->IDirectMusicLoader8_iface.lpVtbl = &DirectMusicLoader_Loader_Vtbl;
 	obj->ref = 0; /* Will be inited with QueryInterface */
         list_init(&obj->cache);

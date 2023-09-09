@@ -136,7 +136,7 @@ static ULONG WINAPI IDirectMusicContainerImpl_Release(IDirectMusicContainer *ifa
     if (!ref) {
         if (This->pStream)
             destroy_dmcontainer(This);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -388,7 +388,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 														case DMUS_FOURCC_CONTAINED_OBJECT_LIST: {
 															LPWINE_CONTAINER_ENTRY pNewEntry;
 															TRACE_(dmfile)(": contained object list\n");
-															pNewEntry = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(WINE_CONTAINER_ENTRY));
+															pNewEntry = calloc(1, sizeof(*pNewEntry));
 															DM_STRUCT_INIT(&pNewEntry->Desc);
 															do {
 																IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
@@ -397,7 +397,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 																switch (Chunk.fccID) {
 																	case DMUS_FOURCC_CONTAINED_ALIAS_CHUNK: {
 																		TRACE_(dmfile)(": alias chunk\n");
-																		pNewEntry->wszAlias = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+																		pNewEntry->wszAlias = calloc(1, Chunk.dwSize);
 																		IStream_Read (pStm, pNewEntry->wszAlias, Chunk.dwSize, NULL);
 																		TRACE_(dmfile)(": alias: %s\n", debugstr_w(pNewEntry->wszAlias));
 																		break;
@@ -649,24 +649,21 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 HRESULT create_dmcontainer(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicContainerImpl* obj;
-        HRESULT hr;
+    HRESULT hr;
 
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicContainerImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-        obj->IDirectMusicContainer_iface.lpVtbl = &dmcontainer_vtbl;
-        obj->ref = 1;
-        dmobject_init(&obj->dmobj, &CLSID_DirectMusicContainer,
-                        (IUnknown*)&obj->IDirectMusicContainer_iface);
-        obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-        obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+	*ppobj = NULL;
+	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IDirectMusicContainer_iface.lpVtbl = &dmcontainer_vtbl;
+    obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicContainer,
+                    (IUnknown*)&obj->IDirectMusicContainer_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 	obj->pContainedObjects = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(struct list));
 	list_init (obj->pContainedObjects);
 
-        hr = IDirectMusicContainer_QueryInterface(&obj->IDirectMusicContainer_iface, lpcGUID, ppobj);
-        IDirectMusicContainer_Release(&obj->IDirectMusicContainer_iface);
+    hr = IDirectMusicContainer_QueryInterface(&obj->IDirectMusicContainer_iface, lpcGUID, ppobj);
+    IDirectMusicContainer_Release(&obj->IDirectMusicContainer_iface);
 
-        return hr;
+    return hr;
 }

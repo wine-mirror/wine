@@ -120,7 +120,7 @@ static ULONG WINAPI IDirectMusicLoaderFileStream_IStream_Release (LPSTREAM iface
 	if (dwRef == 0) {
 		if (This->hFile)
 			IDirectMusicLoaderFileStream_Detach (iface);
-		HeapFree (GetProcessHeap(), 0, This);
+		free(This);
 	}
 	
 	return dwRef;
@@ -290,11 +290,9 @@ HRESULT DMUSIC_CreateDirectMusicLoaderFileStream (void** ppobj) {
 	IDirectMusicLoaderFileStream *obj;
 
 	TRACE("(%p)\n", ppobj);
-	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderFileStream));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+
+	*ppobj = NULL;
+	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
 	obj->StreamVtbl = &DirectMusicLoaderFileStream_Stream_Vtbl;
 	obj->GetLoaderVtbl = &DirectMusicLoaderFileStream_GetLoader_Vtbl;
 	obj->dwRef = 0; /* will be inited with QueryInterface */
@@ -367,7 +365,7 @@ static ULONG WINAPI IDirectMusicLoaderResourceStream_IStream_Release (LPSTREAM i
 	TRACE("(%p): ReleaseRef to %ld\n", This, dwRef);
 	if (dwRef == 0) {
 		IDirectMusicLoaderResourceStream_Detach (iface);
-		HeapFree (GetProcessHeap(), 0, This);
+		free(This);
 	}
 	
 	return dwRef;
@@ -547,11 +545,9 @@ HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream (void** ppobj) {
 	IDirectMusicLoaderResourceStream *obj;
 
 	TRACE("(%p)\n", ppobj);
-	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderResourceStream));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+
+	*ppobj = NULL;
+	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
 	obj->StreamVtbl = &DirectMusicLoaderResourceStream_Stream_Vtbl;
 	obj->GetLoaderVtbl = &DirectMusicLoaderResourceStream_GetLoader_Vtbl;
 	obj->dwRef = 0; /* will be inited with QueryInterface */
@@ -799,11 +795,9 @@ HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream (void** ppobj) {
 	IDirectMusicLoaderGenericStream *obj;
 
 	TRACE("(%p)\n", ppobj);
-	obj = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderGenericStream));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+
+	*ppobj = NULL;
+	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
 	obj->StreamVtbl = &DirectMusicLoaderGenericStream_Stream_Vtbl;
 	obj->GetLoaderVtbl = &DirectMusicLoaderGenericStream_GetLoader_Vtbl;
 	obj->dwRef = 0; /* will be inited with QueryInterface */
