@@ -52,11 +52,6 @@ struct synth_port {
     DWORD next_dlid;
 };
 
-static inline IDirectMusicDownloadedInstrumentImpl* impl_from_IDirectMusicDownloadedInstrument(IDirectMusicDownloadedInstrument *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicDownloadedInstrumentImpl, IDirectMusicDownloadedInstrument_iface);
-}
-
 static inline struct synth_port *synth_from_IDirectMusicPort(IDirectMusicPort *iface)
 {
     return CONTAINING_RECORD(iface, struct synth_port, IDirectMusicPort_iface);
@@ -75,83 +70,6 @@ static inline struct synth_port *synth_from_IDirectMusicThru(IDirectMusicThru *i
 static inline struct synth_port *synth_from_IKsControl(IKsControl *iface)
 {
     return CONTAINING_RECORD(iface, struct synth_port, IKsControl_iface);
-}
-
-/* IDirectMusicDownloadedInstrument IUnknown part follows: */
-static HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface(IDirectMusicDownloadedInstrument *iface, REFIID riid, VOID **ret_iface)
-{
-    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
-
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicDownloadedInstrument))
-    {
-        IDirectMusicDownloadedInstrument_AddRef(iface);
-        *ret_iface = iface;
-        return S_OK;
-    }
-
-    WARN("(%p, %s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef(LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface)
-{
-    IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p): new ref = %lu\n", iface, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release(LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface)
-{
-    IDirectMusicDownloadedInstrumentImpl *This = impl_from_IDirectMusicDownloadedInstrument(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p): new ref = %lu\n", iface, ref);
-
-    if (!ref)
-    {
-        free(This->data);
-        free(This);
-    }
-
-    return ref;
-}
-
-static const IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl = {
-    IDirectMusicDownloadedInstrumentImpl_QueryInterface,
-    IDirectMusicDownloadedInstrumentImpl_AddRef,
-    IDirectMusicDownloadedInstrumentImpl_Release
-};
-
-static inline IDirectMusicDownloadedInstrumentImpl* unsafe_impl_from_IDirectMusicDownloadedInstrument(IDirectMusicDownloadedInstrument *iface)
-{
-    if (!iface)
-        return NULL;
-    assert(iface->lpVtbl == &DirectMusicDownloadedInstrument_Vtbl);
-
-    return impl_from_IDirectMusicDownloadedInstrument(iface);
-}
-
-static HRESULT DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(IDirectMusicDownloadedInstrument **instrument)
-{
-    IDirectMusicDownloadedInstrumentImpl *object;
-
-    object = calloc(1, sizeof(*object));
-    if (!object)
-    {
-        *instrument = NULL;
-        return E_OUTOFMEMORY;
-    }
-
-    object->IDirectMusicDownloadedInstrument_iface.lpVtbl = &DirectMusicDownloadedInstrument_Vtbl;
-    object->ref = 1;
-
-    *instrument = &object->IDirectMusicDownloadedInstrument_iface;
-
-    return S_OK;
 }
 
 static HRESULT WINAPI synth_port_QueryInterface(IDirectMusicPort *iface, REFIID riid, void **ret_iface)
@@ -265,110 +183,26 @@ static HRESULT WINAPI synth_port_DownloadInstrument(IDirectMusicPort *iface, IDi
         IDirectMusicDownloadedInstrument **downloaded_instrument, DMUS_NOTERANGE *note_ranges, DWORD num_note_ranges)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
-    struct instrument *instrument_object;
-    struct region *instrument_region;
-    HRESULT ret;
-    BOOL on_heap;
-    HANDLE download;
-    DMUS_DOWNLOADINFO *info;
-    DMUS_OFFSETTABLE *offset_table;
-    DMUS_INSTRUMENT *instrument_info;
-    BYTE *data;
-    ULONG offset;
-    ULONG nb_regions;
-    ULONG size;
-    ULONG i;
 
     TRACE("(%p, %p, %p, %p, %ld)\n", iface, instrument, downloaded_instrument, note_ranges, num_note_ranges);
 
     if (!instrument || !downloaded_instrument || (num_note_ranges && !note_ranges))
         return E_POINTER;
 
-    instrument_object = impl_from_IDirectMusicInstrument(instrument);
-
-    nb_regions = instrument_object->header.cRegions;
-    size = sizeof(DMUS_DOWNLOADINFO) + sizeof(ULONG) * (1 + nb_regions) + sizeof(DMUS_INSTRUMENT) + sizeof(DMUS_REGION) * nb_regions;
-
-    data = malloc(size);
-    if (!data)
-        return E_OUTOFMEMORY;
-
-    info = (DMUS_DOWNLOADINFO*)data;
-    offset_table = (DMUS_OFFSETTABLE*)(data + sizeof(DMUS_DOWNLOADINFO));
-    offset = sizeof(DMUS_DOWNLOADINFO) + sizeof(ULONG) * (1 + nb_regions);
-
-    info->dwDLType = DMUS_DOWNLOADINFO_INSTRUMENT2;
-    info->dwDLId = 0;
-    info->dwNumOffsetTableEntries = 1 + instrument_object->header.cRegions;
-    info->cbSize = size;
-
-    offset_table->ulOffsetTable[0] = offset;
-    instrument_info = (DMUS_INSTRUMENT*)(data + offset);
-    offset += sizeof(DMUS_INSTRUMENT);
-    instrument_info->ulPatch = MIDILOCALE2Patch(&instrument_object->header.Locale);
-    instrument_info->ulFirstRegionIdx = 1;
-    instrument_info->ulGlobalArtIdx = 0; /* FIXME */
-    instrument_info->ulFirstExtCkIdx = 0; /* FIXME */
-    instrument_info->ulCopyrightIdx = 0; /* FIXME */
-    instrument_info->ulFlags = 0; /* FIXME */
-
-    i = 0;
-    LIST_FOR_EACH_ENTRY(instrument_region, &instrument_object->regions, struct region, entry)
-    {
-        DMUS_REGION *region = (DMUS_REGION*)(data + offset);
-
-        offset_table->ulOffsetTable[1 + i] = offset;
-        offset += sizeof(DMUS_REGION);
-        region->RangeKey = instrument_region->header.RangeKey;
-        region->RangeVelocity = instrument_region->header.RangeVelocity;
-        region->fusOptions = instrument_region->header.fusOptions;
-        region->usKeyGroup = instrument_region->header.usKeyGroup;
-        region->ulRegionArtIdx = 0; /* FIXME */
-        region->ulNextRegionIdx = i != (nb_regions - 1) ? (i + 2) : 0;
-        region->ulFirstExtCkIdx = 0; /* FIXME */
-        region->WaveLink = instrument_region->wave_link;
-        region->WSMP = instrument_region->wave_sample;
-        region->WLOOP[0] = instrument_region->wave_loop;
-        i++;
-    }
-
-    ret = IDirectMusicSynth8_Download(This->synth, &download, (void*)data, &on_heap);
-
-    if (SUCCEEDED(ret))
-        ret = DMUSIC_CreateDirectMusicDownloadedInstrumentImpl(downloaded_instrument);
-
-    if (SUCCEEDED(ret))
-    {
-        IDirectMusicDownloadedInstrumentImpl *downloaded_object = impl_from_IDirectMusicDownloadedInstrument(*downloaded_instrument);
-
-        downloaded_object->data = data;
-        downloaded_object->downloaded = TRUE;
-    }
-
-    *downloaded_instrument = NULL;
-    free(data);
-
-    return E_FAIL;
+    return instrument_download_to_port(instrument, &This->IDirectMusicPortDownload_iface, downloaded_instrument);
 }
 
 static HRESULT WINAPI synth_port_UnloadInstrument(IDirectMusicPort *iface,
         IDirectMusicDownloadedInstrument *downloaded_instrument)
 {
-    IDirectMusicDownloadedInstrumentImpl *downloaded_object = unsafe_impl_from_IDirectMusicDownloadedInstrument(downloaded_instrument);
+    struct synth_port *This = synth_from_IDirectMusicPort(iface);
 
     TRACE("(%p, %p)\n", iface, downloaded_instrument);
 
     if (!downloaded_instrument)
         return E_POINTER;
 
-    if (!downloaded_object->downloaded)
-        return DMUS_E_NOT_DOWNLOADED_TO_PORT;
-
-    free(downloaded_object->data);
-    downloaded_object->data = NULL;
-    downloaded_object->downloaded = FALSE;
-
-    return S_OK;
+    return instrument_unload_from_port(downloaded_instrument, &This->IDirectMusicPortDownload_iface);
 }
 
 static HRESULT WINAPI synth_port_GetLatencyClock(IDirectMusicPort *iface, IReferenceClock **clock)

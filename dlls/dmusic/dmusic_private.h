@@ -48,7 +48,6 @@
  */
 typedef struct IDirectMusic8Impl IDirectMusic8Impl;
 typedef struct IDirectMusicBufferImpl IDirectMusicBufferImpl;
-typedef struct IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrumentImpl;
 typedef struct IReferenceClockImpl IReferenceClockImpl;
 
 /*****************************************************************************
@@ -73,16 +72,6 @@ typedef struct port_info {
     ULONG device;
 } port_info;
 
-struct region
-{
-    struct list entry;
-    RGNHEADER header;
-    WAVELINK wave_link;
-    WSMPL wave_sample;
-    WLOOP wave_loop;
-    BOOL loop_present;
-};
-
 /*****************************************************************************
  * ClassFactory
  */
@@ -99,6 +88,9 @@ extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
 extern HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
+extern HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicPortDownload *port,
+        IDirectMusicDownloadedInstrument **downloaded);
+extern HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port);
 
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure
@@ -130,19 +122,6 @@ struct IDirectMusicBufferImpl {
     REFERENCE_TIME start_time;
 };
 
-/*****************************************************************************
- * IDirectMusicDownloadedInstrumentImpl implementation structure
- */
-struct IDirectMusicDownloadedInstrumentImpl {
-    /* IUnknown fields */
-    IDirectMusicDownloadedInstrument IDirectMusicDownloadedInstrument_iface;
-    LONG ref;
-
-    /* IDirectMusicDownloadedInstrumentImpl fields */
-    BOOL downloaded;
-    void *data;
-};
-
 /** Internal factory */
 extern HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
         DMUS_PORTCAPS *port_caps, IDirectMusicPort **port);
@@ -167,22 +146,6 @@ struct IReferenceClockImpl {
 typedef struct _DMUS_PRIVATE_POOLCUE {
 	struct list entry; /* for listing elements */
 } DMUS_PRIVATE_POOLCUE, *LPDMUS_PRIVATE_POOLCUE;
-
-struct instrument
-{
-    IDirectMusicInstrument IDirectMusicInstrument_iface;
-    LONG ref;
-
-    INSTHEADER header;
-
-    struct list articulations;
-    struct list regions;
-};
-
-static inline struct instrument *impl_from_IDirectMusicInstrument(IDirectMusicInstrument *iface)
-{
-    return CONTAINING_RECORD(iface, struct instrument, IDirectMusicInstrument_iface);
-}
 
 /*****************************************************************************
  * Misc.
