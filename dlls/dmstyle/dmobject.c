@@ -28,7 +28,6 @@
 #include "dmusics.h"
 #include "dmobject.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmobj);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -375,7 +374,7 @@ HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk)
 /* Reads chunk data of the form:
    DWORD     - size of array element
    element[] - Array of elements
-   The caller needs to heap_free() the array.
+   The caller needs to free() the array.
 */
 HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
         unsigned int *count, DWORD elem_size)
@@ -400,10 +399,10 @@ HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk,
 
     *count = (chunk->size - sizeof(DWORD)) / elem_size;
     size = *count * elem_size;
-    if (!(*array = heap_alloc(size)))
+    if (!(*array = malloc(size)))
         return E_OUTOFMEMORY;
     if (FAILED(hr = stream_read(stream, *array, size))) {
-        heap_free(*array);
+        free(*array);
         *array = NULL;
         return hr;
     }

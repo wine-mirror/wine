@@ -20,7 +20,6 @@
 
 #include "dmstyle_private.h"
 #include "dmobject.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -116,17 +115,17 @@ static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
             list_remove(&band->entry);
             if (band->pBand)
                 IDirectMusicBand_Release(band->pBand);
-            heap_free(band);
+            free(band);
         }
         LIST_FOR_EACH_ENTRY_SAFE(motif, motif2, &This->motifs, struct style_motif, entry) {
             list_remove(&motif->entry);
             LIST_FOR_EACH_ENTRY_SAFE(item, item2, &motif->Items, struct style_partref_item, entry) {
                 list_remove(&item->entry);
-                heap_free(item);
+                free(item);
             }
-            heap_free(motif);
+            free(motif);
         }
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -405,11 +404,7 @@ static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PARTREF_CHUNK: {
       TRACE_(dmfile)(": PartRef chunk\n");
-      pNewItem = heap_alloc_zero(sizeof(*pNewItem));
-      if (!pNewItem) {
-	ERR(": no more memory\n");
-	return E_OUTOFMEMORY;
-      }
+      if (!(pNewItem = calloc(1, sizeof(*pNewItem)))) return E_OUTOFMEMORY;
       hr = IStream_Read (pStm, &pNewItem->part_ref, sizeof(DMUS_IO_PARTREF), NULL);
       /*TRACE_(dmfile)(" - sizeof %lu\n",  sizeof(DMUS_IO_PARTREF));*/
       list_add_tail (&pNewMotif->Items, &pNewItem->entry);      
@@ -630,11 +625,7 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
     case DMUS_FOURCC_PATTERN_CHUNK: {
       TRACE_(dmfile)(": Pattern chunk\n");
       /** alloc new motif entry */
-      pNewMotif = heap_alloc_zero(sizeof(*pNewMotif));
-      if (NULL == pNewMotif) {
-	ERR(": no more memory\n");
-	return  E_OUTOFMEMORY;
-      }
+      if (!(pNewMotif = calloc(1, sizeof(*pNewMotif)))) return E_OUTOFMEMORY;
       list_add_tail(&This->motifs, &pNewMotif->entry);
 
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
@@ -826,11 +817,7 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 	    return hr;
 	  }
 
-          pNewBand = heap_alloc_zero(sizeof(*pNewBand));
-	  if (NULL == pNewBand) {
-	    ERR(": no more memory\n");
-	    return  E_OUTOFMEMORY;
-	  }
+	  if (!(pNewBand = calloc(1, sizeof(*pNewBand)))) return E_OUTOFMEMORY;
 	  pNewBand->pBand = pBand;
 	  IDirectMusicBand_AddRef(pBand);
 	  list_add_tail(&This->bands, &pNewBand->entry);
@@ -977,11 +964,8 @@ HRESULT create_dmstyle(REFIID lpcGUID, void **ppobj)
   IDirectMusicStyle8Impl* obj;
   HRESULT hr;
 
-  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicStyle8Impl));
-  if (NULL == obj) {
-    *ppobj = NULL;
-    return E_OUTOFMEMORY;
-  }
+  *ppobj = NULL;
+  if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
   obj->IDirectMusicStyle8_iface.lpVtbl = &dmstyle8_vtbl;
   obj->ref = 1;
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicStyle, (IUnknown *)&obj->IDirectMusicStyle8_iface);

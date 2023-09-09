@@ -20,8 +20,6 @@
 #include "dmstyle_private.h"
 #include "dmobject.h"
 
-#include "wine/heap.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 
 /*****************************************************************************
@@ -95,7 +93,7 @@ static ULONG WINAPI style_track_Release(IDirectMusicTrack8 *iface)
             free(item);
         }
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -390,11 +388,8 @@ HRESULT create_dmstyletrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicStyleTrack *track;
     HRESULT hr;
 
-    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
-    if (!track) {
-        *ppobj = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicStyleTrack,

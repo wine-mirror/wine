@@ -79,9 +79,7 @@ static ULONG WINAPI command_track_Release(IDirectMusicTrack8 *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+    if (!ref) free(This);
 
     return ref;
 }
@@ -302,7 +300,7 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 			nrCommands = chunkSize/dwSizeOfStruct; /* and this is the number of commands */
 			/* load each command separately in new entry */
 			for (count = 0; count < nrCommands; count++) {
-				LPDMUS_PRIVATE_COMMAND pNewCommand = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_COMMAND));
+				LPDMUS_PRIVATE_COMMAND pNewCommand = calloc(1, sizeof(*pNewCommand));
 				IStream_Read (pStm, &pNewCommand->pCommand, dwSizeOfStruct, NULL);
 				list_add_tail (&This->Commands, &pNewCommand->entry);
 			}
@@ -372,11 +370,8 @@ HRESULT create_dmcommandtrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicCommandTrack *track;
     HRESULT hr;
 
-    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
-    if (!track) {
-        *ppobj = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ppobj = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicCommandTrack,
