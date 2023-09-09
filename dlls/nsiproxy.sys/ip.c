@@ -1482,13 +1482,145 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
     return status;
 }
 
+struct ipv6_route_data
+{
+    NET_LUID luid;
+    UINT if_index;
+    struct in6_addr prefix;
+    UINT prefix_len;
+    struct in6_addr next_hop;
+    UINT metric;
+    UINT protocol;
+    BYTE loopback;
+};
+
+static void ipv6_forward_fill_entry( struct ipv6_route_data *entry, struct nsi_ipv6_forward_key *key,
+                                     struct nsi_ip_forward_rw *rw, struct nsi_ipv6_forward_dynamic *dyn,
+                                     struct nsi_ip_forward_static *stat )
+{
+    if (key)
+    {
+        key->unk = 0;
+        memcpy( key->prefix.u.Byte, entry->prefix.s6_addr, sizeof(entry->prefix.s6_addr) );
+        key->prefix_len = entry->prefix_len;
+        memset( key->unk2, 0, sizeof(key->unk2) );
+        memset( key->unk3, 0, sizeof(key->unk3) );
+        key->luid = entry->luid;
+        key->luid2 = entry->luid;
+        memcpy( key->next_hop.u.Byte, entry->next_hop.s6_addr, sizeof(entry->next_hop.s6_addr) );
+        key->pad = 0;
+    }
+
+    if (rw)
+    {
+        rw->site_prefix_len = 0;
+        rw->valid_lifetime = ~0u;
+        rw->preferred_lifetime = ~0u;
+        rw->metric = entry->metric;
+        rw->protocol = entry->protocol;
+        rw->loopback = entry->loopback;
+        rw->autoconf = 1;
+        rw->publish = 0;
+        rw->immortal = 1;
+        memset( rw->unk, 0, sizeof(rw->unk) );
+        rw->unk2 = 0;
+    }
+
+    if (dyn)
+    {
+        memset( dyn, 0, sizeof(*dyn) );
+    }
+
+    if (stat)
+    {
+        stat->origin = NlroManual;
+        stat->if_index = entry->if_index;
+    }
+}
+
+struct in6_addr str_to_in6_addr(char *nptr, char **endptr)
+{
+    struct in6_addr ret;
+
+    for (int i = 0; i < sizeof(ret); i++)
+    {
+        if (!isxdigit( *nptr ) || !isxdigit( *nptr + 1 ))
+        {
+            /* invalid hex string */
+            if (endptr) *endptr = nptr;
+            return ret;
+        }
+
+        sscanf( nptr, "%2hhx", &ret.s6_addr[i] );
+        nptr += 2;
+    }
+
+    if (endptr) *endptr = nptr;
+
+    return ret;
+}
+
 static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
                                             void *dynamic_data, UINT dynamic_size,
                                             void *static_data, UINT static_size, UINT_PTR *count )
 {
+    UINT num = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOL want_data = key_size || rw_size || dynamic_size || static_size;
+    struct ipv6_route_data entry;
+
+    TRACE( "%p %d %p %d %p %d %p %d %p" , key_data, key_size, rw_data, rw_size,
+        dynamic_data, dynamic_size, static_data, static_size, count );
+
+#ifdef __linux__
+    {
+        char buf[512], *ptr;
+        UINT rtf_flags;
+        FILE *fp;
+
+        if (!(fp = fopen( "/proc/net/ipv6_route", "r" ))) return STATUS_NOT_SUPPORTED;
+
+        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        {
+            while (!isspace( *ptr )) ptr++;
+            *ptr++ = '\0';
+
+            entry.prefix = str_to_in6_addr( ptr, &ptr );
+            entry.prefix_len = strtoul( ptr + 1, &ptr, 16 );
+            str_to_in6_addr( ptr + 1, &ptr ); /* source network, skip */
+            strtoul( ptr + 1, &ptr, 16 ); /* source prefix length, skip */
+            entry.next_hop = str_to_in6_addr( ptr + 1, &ptr );
+            entry.metric = strtoul( ptr + 1, &ptr, 16 );
+            strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
+            strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
+            rtf_flags = strtoul( ptr + 1, &ptr, 16);
+            entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
+            entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
+
+            if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
+            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+
+            if (num < *count)
+            {
+                ipv6_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+                key_data = (BYTE *)key_data + key_size;
+                rw_data = (BYTE *)rw_data + rw_size;
+                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+                static_data = (BYTE *)static_data + static_size;
+            }
+            num++;
+        }
+        fclose(fp);
+    }
+#else
     FIXME( "not implemented\n" );
-    *count = 0;
-    return STATUS_SUCCESS;
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+
+    if (!want_data || num <= *count) *count = num;
+    else status = STATUS_BUFFER_OVERFLOW;
+
+    return status;
 }
 
 static struct module_table ipv4_tables[] =
