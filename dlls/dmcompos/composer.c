@@ -67,9 +67,7 @@ static ULONG WINAPI IDirectMusicComposerImpl_Release(IDirectMusicComposer *iface
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+    if (!ref) free(This);
 
     return ref;
 }
@@ -174,11 +172,8 @@ HRESULT create_dmcomposer(REFIID riid, void **ret_iface)
     IDirectMusicComposerImpl *obj;
     HRESULT hr;
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
-    if (!obj) {
-        *ret_iface = NULL;
-        return E_OUTOFMEMORY;
-    }
+    *ret_iface = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicComposer_iface.lpVtbl = &dmcomposer_vtbl;
     obj->ref = 1;
 

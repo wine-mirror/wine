@@ -79,9 +79,7 @@ static ULONG WINAPI IDirectMusicChordMapImpl_Release(IDirectMusicChordMap *iface
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
+    if (!ref) free(This);
 
     return ref;
 }
@@ -310,23 +308,20 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT create_dmchordmap(REFIID lpcGUID, void **ppobj)
 {
-	IDirectMusicChordMapImpl* obj;
-        HRESULT hr;
+    IDirectMusicChordMapImpl* obj;
+    HRESULT hr;
 
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicChordMapImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-        obj->IDirectMusicChordMap_iface.lpVtbl = &dmchordmap_vtbl;
-        obj->ref = 1;
-        dmobject_init(&obj->dmobj, &CLSID_DirectMusicChordMap,
-                (IUnknown *)&obj->IDirectMusicChordMap_iface);
-        obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-        obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IDirectMusicChordMap_iface.lpVtbl = &dmchordmap_vtbl;
+    obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicChordMap,
+            (IUnknown *)&obj->IDirectMusicChordMap_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
-        hr = IDirectMusicChordMap_QueryInterface(&obj->IDirectMusicChordMap_iface, lpcGUID, ppobj);
-        IDirectMusicChordMap_Release(&obj->IDirectMusicChordMap_iface);
+    hr = IDirectMusicChordMap_QueryInterface(&obj->IDirectMusicChordMap_iface, lpcGUID, ppobj);
+    IDirectMusicChordMap_Release(&obj->IDirectMusicChordMap_iface);
 
-        return hr;
+    return hr;
 }
