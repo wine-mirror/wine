@@ -20,7 +20,6 @@
  */
 
 #include "dmusic_private.h"
-#include "dmobject.h"
 #include "initguid.h"
 #include "dmksctrl.h"
 

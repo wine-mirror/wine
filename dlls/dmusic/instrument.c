@@ -19,7 +19,6 @@
  */
 
 #include "dmusic_private.h"
-#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -303,9 +302,9 @@ static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct 
     return hr;
 }
 
-HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **ret_iface)
+HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
+        IDirectMusicInstrument **ret_iface)
 {
-    struct chunk_entry chunk = {0};
     IDirectMusicInstrument *iface;
     struct instrument *This;
     HRESULT hr;
@@ -315,22 +314,11 @@ HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **
     if (FAILED(hr = instrument_create(&iface))) return hr;
     This = impl_from_IDirectMusicInstrument(iface);
 
-    if ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    if (FAILED(hr = parse_ins_chunk(This, stream, parent)))
     {
-        switch (MAKE_IDTYPE(chunk.id, chunk.type))
-        {
-        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
-            hr = parse_ins_chunk(This, stream, &chunk);
-            break;
-
-        default:
-            WARN("Invalid instrument chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
-            hr = E_INVALIDARG;
-            break;
-        }
+        IDirectMusicInstrument_Release(iface);
+        return DMUS_E_UNSUPPORTED_STREAM;
     }
-
-    if (FAILED(hr)) goto error;
 
     if (TRACE_ON(dmusic))
     {
@@ -347,10 +335,4 @@ HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **
 
     *ret_iface = iface;
     return S_OK;
-
-error:
-    IDirectMusicInstrument_Release(iface);
-
-    stream_skip_chunk(stream, &chunk);
-    return DMUS_E_UNSUPPORTED_STREAM;
 }

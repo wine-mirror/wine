@@ -19,7 +19,6 @@
  */
 
 #include "dmusic_private.h"
-#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -176,6 +175,34 @@ static const IDirectMusicCollectionVtbl collection_vtbl =
     collection_GetInstrument,
     collection_EnumInstrument,
 };
+
+static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    struct instrument_entry *entry;
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
+            if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
+            hr = instrument_create_from_chunk(stream, &chunk, &entry->instrument);
+            if (SUCCEEDED(hr)) list_add_tail(&This->instruments, &entry->entry);
+            else free(entry);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
 
 static HRESULT WINAPI collection_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
@@ -373,39 +400,13 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                         break;
                     }
                     case FOURCC_LINS: {
+                        struct chunk_entry lins_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
                         TRACE_(dmfile)(": instruments list\n");
-                        do {
-                            IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
-                            ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunk.dwSize;
-                            TRACE_(dmfile)(": %s chunk (size = %#04lx)", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                            switch (chunk.fccID) {
-                                case FOURCC_LIST: {
-                                    IStream_Read(stream, &chunk.fccID, sizeof(FOURCC), NULL);
-                                    TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(chunk.fccID));
-                                    ListSize[1] = chunk.dwSize - sizeof(FOURCC);
-                                    ListCount[1] = 0;
-                                    switch (chunk.fccID) {
-                                        case FOURCC_INS: {
-                                            struct instrument_entry *entry = calloc(1, sizeof(*entry));
-                                            TRACE_(dmfile)(": instrument list\n");
-                                            liMove.QuadPart = -12;
-                                            IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                            if (FAILED(instrument_create_from_stream(stream, &entry->instrument))) free(entry);
-                                            else list_add_tail(&This->instruments, &entry->entry);
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                                default: {
-                                    TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-                                    liMove.QuadPart = chunk.dwSize;
-                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    break;
-                                }
-                            }
-                            TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-                        } while (ListCount[0] < ListSize[0]);
+                        liMove.QuadPart = 0;
+                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &lins_chunk.offset);
+                        lins_chunk.offset.QuadPart -= 12;
+                        parse_lins_list(This, stream, &lins_chunk);
+                        stream_skip_chunk(stream, &lins_chunk);
                         break;
                     }
                     default: {

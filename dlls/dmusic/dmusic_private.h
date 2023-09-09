@@ -41,6 +41,8 @@
 #include "dmusics.h"
 #include "dmksctrl.h"
 
+#include "dmobject.h"
+
 /*****************************************************************************
  * Interfaces
  */
@@ -95,7 +97,8 @@ extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 
 extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
-extern HRESULT instrument_create_from_stream(IStream *stream, IDirectMusicInstrument **ret_iface);
+extern HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
+        IDirectMusicInstrument **ret_iface);
 
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure

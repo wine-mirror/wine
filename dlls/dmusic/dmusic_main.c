@@ -35,7 +35,6 @@
 #include "dmusici.h"
 
 #include "dmusic_private.h"
-#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
