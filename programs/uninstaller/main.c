@@ -258,7 +258,7 @@ static int FetchFromRootKey(HKEY root)
                 type == REG_DWORD && value == 1)
             {
                 command = HeapAlloc(GetProcessHeap(), 0,
-                        (lstrlenW(L"msiexec /x%s") + lstrlenW(subKeyName)) * sizeof(WCHAR));
+                        sizeof(L"msiexec /x") + wcslen(subKeyName) * sizeof(WCHAR));
                 wsprintfW(command, L"msiexec /x%s", subKeyName);
             }
             else if (!RegQueryValueExW(hkeyApp, L"UninstallString", NULL, NULL, NULL, &uninstlen))
