@@ -756,7 +756,7 @@ static void test_name_limits(void)
     test_all_kernel_objects( __LINE__, &attr2, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
     test_all_kernel_objects( __LINE__, &attr3, STATUS_ACCESS_VIOLATION, STATUS_ACCESS_VIOLATION );
     attr2.ObjectName = attr3.ObjectName = &str2;
-    str2.Buffer = (WCHAR *)0xdeadbeef;
+    str2.Buffer = (WCHAR *)((char *)pipeW + 1); /* misaligned buffer */
     str2.Length = 3;
     test_all_kernel_objects( __LINE__, &attr2, STATUS_DATATYPE_MISALIGNMENT, STATUS_DATATYPE_MISALIGNMENT );
     test_all_kernel_objects( __LINE__, &attr3, STATUS_DATATYPE_MISALIGNMENT, STATUS_DATATYPE_MISALIGNMENT );
