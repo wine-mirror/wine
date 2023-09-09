@@ -98,7 +98,18 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
 
     TRACE("(%p): new ref = %lu\n", iface, ref);
 
-    if (!ref) {
+    if (!ref)
+    {
+        struct instrument_entry *instrument_entry;
+        void *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(instrument_entry, next, &This->instruments, struct instrument_entry, entry)
+        {
+            list_remove(&instrument_entry->entry);
+            IDirectMusicInstrument_Release(instrument_entry->instrument);
+            free(instrument_entry);
+        }
+
         free(This);
     }
 
