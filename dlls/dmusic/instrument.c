@@ -452,6 +452,39 @@ HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent
     return S_OK;
 }
 
+static void write_articulation_download(struct list *articulations, ULONG *offsets,
+        BYTE **ptr, UINT index, DWORD *first, UINT *end)
+{
+    DMUS_ARTICULATION2 *dmus_articulation2 = NULL;
+    struct articulation *articulation;
+    CONNECTIONLIST *list;
+    UINT size;
+
+    LIST_FOR_EACH_ENTRY(articulation, articulations, struct articulation, entry)
+    {
+        if (dmus_articulation2) dmus_articulation2->ulNextArtIdx = index;
+        else *first = index;
+
+        offsets[index++] = sizeof(DMUS_DOWNLOADINFO) + *ptr - (BYTE *)offsets;
+        dmus_articulation2 = (DMUS_ARTICULATION2 *)*ptr;
+        (*ptr) += sizeof(DMUS_ARTICULATION2);
+
+        dmus_articulation2->ulArtIdx = index;
+        dmus_articulation2->ulFirstExtCkIdx = 0;
+        dmus_articulation2->ulNextArtIdx = 0;
+
+        size = articulation->list.cConnections * sizeof(CONNECTION);
+        offsets[index++] = sizeof(DMUS_DOWNLOADINFO) + *ptr - (BYTE *)offsets;
+        list = (CONNECTIONLIST *)*ptr;
+        (*ptr) += sizeof(CONNECTIONLIST) + size;
+
+        *list = articulation->list;
+        memcpy(list + 1, articulation->connections, size);
+    }
+
+    *end = index;
+}
+
 struct download_buffer
 {
     DMUS_DOWNLOADINFO info;
@@ -464,6 +497,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
         IDirectMusicDownloadedInstrument **downloaded)
 {
     struct instrument *This = impl_from_IDirectMusicInstrument(iface);
+    struct articulation *articulation;
     struct download_buffer *buffer;
     IDirectMusicDownload *download;
     DWORD size, offset_count;
@@ -477,10 +511,26 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
     size += sizeof(ULONG) + sizeof(DMUS_INSTRUMENT);
     offset_count = 1;
 
+    LIST_FOR_EACH_ENTRY(articulation, &This->articulations, struct articulation, entry)
+    {
+        size += sizeof(ULONG) + sizeof(DMUS_ARTICULATION2);
+        size += sizeof(ULONG) + sizeof(CONNECTIONLIST);
+        size += articulation->list.cConnections * sizeof(CONNECTION);
+        offset_count += 2;
+    }
+
     LIST_FOR_EACH_ENTRY(region, &This->regions, struct region, entry)
     {
         size += sizeof(ULONG) + sizeof(DMUS_REGION);
         offset_count++;
+
+        LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
+        {
+            size += sizeof(ULONG) + sizeof(DMUS_ARTICULATION2);
+            size += sizeof(ULONG) + sizeof(CONNECTIONLIST);
+            size += articulation->list.cConnections * sizeof(CONNECTION);
+            offset_count += 2;
+        }
     }
 
     if (FAILED(hr = IDirectMusicPortDownload_AllocateBuffer(port, size, &download))) return hr;
@@ -505,6 +555,9 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
         dmus_instrument->ulFirstRegionIdx = 0;
         dmus_instrument->ulCopyrightIdx = 0;
         dmus_instrument->ulGlobalArtIdx = 0;
+
+        write_articulation_download(&This->articulations, buffer->offsets, &ptr, index,
+                &dmus_instrument->ulGlobalArtIdx, &index);
 
         LIST_FOR_EACH_ENTRY(region, &This->regions, struct region, entry)
         {
@@ -532,6 +585,9 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
                 IUnknown_Release(wave);
             }
             if (FAILED(hr)) goto failed;
+
+            write_articulation_download(&region->articulations, buffer->offsets, &ptr, index,
+                    &dmus_region->ulRegionArtIdx, &index);
         }
 
         if (FAILED(hr = IDirectMusicPortDownload_Download(port, download))) goto failed;
