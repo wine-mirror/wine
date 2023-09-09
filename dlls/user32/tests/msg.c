@@ -9593,7 +9593,7 @@ static void test_swp_paint_region_on_extend_zerosize(void)
     DeleteObject( hrgn_actual );
 }
 
-static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
+static void subtest_hvredraw(HWND hparent, UINT class_style, DWORD style)
 {
     static const struct movesize_test {
         int dx, dy, dw, dh;
@@ -9613,12 +9613,19 @@ static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
     const int x0 = 100, y0 = 100, w0 = 200, h0 = 200;
     size_t i;
     HWND hwnd;
-    UINT class_style;
+    WNDCLASSA cls = {
+        .style = class_style,
+        .lpfnWndProc = DefWindowProcA,
+        .hInstance = GetModuleHandleA(0),
+        .hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW),
+        .hbrBackground = GetStockObject(WHITE_BRUSH),
+        .lpszClassName = "TestHVRedrawClass"
+    };
 
-    hwnd = CreateWindowExA( 0, classname, "Test window", style, x0, y0, w0, h0, hparent, 0, 0, NULL );
+    register_class(&cls);
+
+    hwnd = CreateWindowExA( 0, cls.lpszClassName, "Test window", style, x0, y0, w0, h0, hparent, 0, 0, NULL );
     ok(hwnd != NULL, "Failed to create the window\n");
-
-    class_style = GetClassLongA( hwnd, GCL_STYLE );
 
     ShowWindow( hwnd, SW_SHOW );
     UpdateWindow( hwnd );
@@ -9631,8 +9638,8 @@ static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
         RECT rect_old_vis, rect_new_vis;
         BOOL rgn_ok;
 
-        winetest_push_context( "%s %08lx SetWindowPos redraw #%Id (%d, %d, %d, %d)",
-                               classname, style, i, test->dx, test->dy, test->dw, test->dh );
+        winetest_push_context( "%x %08lx SetWindowPos redraw #%Id (%d, %d, %d, %d)",
+                               class_style, style, i, test->dx, test->dy, test->dw, test->dh );
 
         SetWindowPos( hwnd, HWND_TOP, x0, y0, w0, h0, SWP_NOACTIVATE );
 
@@ -9683,6 +9690,7 @@ static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
     DeleteObject( hrgn_expect );
     DeleteObject( hrgn_new_vis );
     DeleteObject( hrgn_old_vis );
+    UnregisterClassA( cls.lpszClassName, cls.hInstance );
 }
 
 
@@ -9690,18 +9698,18 @@ static void test_hvredraw(void)
 {
     HWND htoplevel;
 
-    subtest_hvredraw( NULL, "SimpleWindowClassWithHRedraw", WS_OVERLAPPEDWINDOW );
-    subtest_hvredraw( NULL, "SimpleWindowClassWithVRedraw", WS_OVERLAPPEDWINDOW );
-    subtest_hvredraw( NULL, "SimpleWindowClassWithHVRedraw", WS_OVERLAPPEDWINDOW );
+    subtest_hvredraw( NULL, CS_HREDRAW, WS_OVERLAPPEDWINDOW );
+    subtest_hvredraw( NULL, CS_VREDRAW, WS_OVERLAPPEDWINDOW );
+    subtest_hvredraw( NULL, CS_HREDRAW|CS_VREDRAW, WS_OVERLAPPEDWINDOW );
 
     htoplevel = CreateWindowExA( 0, "SimpleWindowClass", "Test toplevel",
                                  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE,
                                  100, 100, 400, 400, 0, 0, 0, NULL );
     ok( htoplevel != 0, "Failed to create top-level window: %lu\n", GetLastError() );
 
-    subtest_hvredraw( htoplevel, "SimpleWindowClassWithHRedraw", WS_CHILD | WS_BORDER );
-    subtest_hvredraw( htoplevel, "SimpleWindowClassWithVRedraw", WS_CHILD | WS_BORDER );
-    subtest_hvredraw( htoplevel, "SimpleWindowClassWithHVRedraw", WS_CHILD | WS_BORDER );
+    subtest_hvredraw( htoplevel, CS_HREDRAW, WS_CHILD | WS_BORDER );
+    subtest_hvredraw( htoplevel, CS_VREDRAW, WS_CHILD | WS_BORDER );
+    subtest_hvredraw( htoplevel, CS_HREDRAW|CS_VREDRAW, WS_CHILD | WS_BORDER );
 
     DestroyWindow( htoplevel );
 }
@@ -11204,21 +11212,6 @@ static void register_classes(void)
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_PARENTDC;
     cls.lpszClassName = "SimpleWindowClassWithParentDC";
-    register_class(&cls);
-
-    cls.lpfnWndProc = DefWindowProcA;
-    cls.style = CS_HREDRAW;
-    cls.lpszClassName = "SimpleWindowClassWithHRedraw";
-    register_class(&cls);
-
-    cls.lpfnWndProc = DefWindowProcA;
-    cls.style = CS_VREDRAW;
-    cls.lpszClassName = "SimpleWindowClassWithVRedraw";
-    register_class(&cls);
-
-    cls.lpfnWndProc = DefWindowProcA;
-    cls.style = CS_HREDRAW | CS_VREDRAW;
-    cls.lpszClassName = "SimpleWindowClassWithHVRedraw";
     register_class(&cls);
 
     clsW.style = 0;
