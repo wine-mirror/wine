@@ -453,6 +453,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
     IDirectMusicDownload *download;
     DWORD size, offset_count;
     struct region *region;
+    IUnknown *wave;
     HRESULT hr;
 
     if (This->download) goto done;
@@ -509,6 +510,13 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
             dmus_region->WaveLink = region->wave_link;
             dmus_region->WSMP = region->wave_sample;
             dmus_region->WLOOP[0] = region->wave_loop;
+
+            if (SUCCEEDED(hr = collection_get_wave(This->collection, region->wave_link.ulTableIndex, &wave)))
+            {
+                hr = wave_download_to_port(wave, port, &dmus_region->WaveLink.ulTableIndex);
+                IUnknown_Release(wave);
+            }
+            if (FAILED(hr)) goto failed;
         }
 
         if (FAILED(hr = IDirectMusicPortDownload_Download(port, download))) goto failed;
@@ -530,12 +538,37 @@ failed:
 HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port)
 {
     struct instrument *This = impl_from_IDirectMusicDownloadedInstrument(iface);
+    struct download_buffer *buffer;
+    DWORD size;
     HRESULT hr;
 
     if (!This->download) return DMUS_E_NOT_DOWNLOADED_TO_PORT;
 
     if (FAILED(hr = IDirectMusicPortDownload_Unload(port, This->download)))
         WARN("Failed to unload instrument download buffer, hr %#lx\n", hr);
+    else if (SUCCEEDED(hr = IDirectMusicDownload_GetBuffer(This->download, (void **)&buffer, &size)))
+    {
+        IDirectMusicDownload *wave_download;
+        DMUS_INSTRUMENT *instrument;
+        BYTE *ptr = (BYTE *)buffer;
+        DMUS_REGION *region;
+        UINT index;
+
+        instrument = (DMUS_INSTRUMENT *)(ptr + buffer->offsets[0]);
+        for (index = instrument->ulFirstRegionIdx; index; index = region->ulNextRegionIdx)
+        {
+            region = (DMUS_REGION *)(ptr + buffer->offsets[index]);
+
+            if (FAILED(hr = IDirectMusicPortDownload_GetBuffer(port, region->WaveLink.ulTableIndex, &wave_download)))
+                WARN("Failed to get wave download with id %#lx, hr %#lx\n", region->WaveLink.ulTableIndex, hr);
+            else
+            {
+                if (FAILED(hr = IDirectMusicPortDownload_Unload(port, wave_download)))
+                    WARN("Failed to unload wave download buffer, hr %#lx\n", hr);
+                IDirectMusicDownload_Release(wave_download);
+            }
+        }
+    }
 
     IDirectMusicDownload_Release(This->download);
     This->download = NULL;

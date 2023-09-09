@@ -72,6 +72,27 @@ extern void collection_internal_release(struct collection *collection)
         free(collection);
 }
 
+extern HRESULT collection_get_wave(struct collection *collection, DWORD index, IUnknown **out)
+{
+    struct wave_entry *wave_entry;
+    DWORD offset;
+
+    if (index >= collection->pool->table.cCues) return E_INVALIDARG;
+    offset = collection->pool->cues[index].ulOffset;
+
+    LIST_FOR_EACH_ENTRY(wave_entry, &collection->waves, struct wave_entry, entry)
+    {
+        if (offset == wave_entry->offset)
+        {
+            *out = wave_entry->wave;
+            IUnknown_AddRef(wave_entry->wave);
+            return S_OK;
+        }
+    }
+
+    return E_FAIL;
+}
+
 static inline struct collection *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct collection, IDirectMusicCollection_iface);

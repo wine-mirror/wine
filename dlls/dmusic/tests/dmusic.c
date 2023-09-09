@@ -1300,8 +1300,7 @@ static void test_download_instrument(void)
     check_interface(instrument, &IID_IDirectMusicDownloadedInstrument, FALSE);
 
     hr = IDirectMusicPort_DownloadInstrument(port, instrument, &downloaded, NULL, 0);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) goto skip_tests;
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     check_interface(downloaded, &IID_IDirectMusicObject, FALSE);
     check_interface(downloaded, &IID_IDirectMusicDownload, FALSE);
@@ -1313,7 +1312,6 @@ static void test_download_instrument(void)
 
     IDirectMusicInstrument_Release(instrument);
 
-skip_tests:
     IDirectMusicCollection_Release(collection);
     IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);

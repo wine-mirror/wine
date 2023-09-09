@@ -212,3 +212,46 @@ HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnk
     *ret_iface = iface;
     return S_OK;
 }
+
+HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, DWORD *id)
+{
+    struct download_buffer
+    {
+        DMUS_DOWNLOADINFO info;
+        ULONG offsets[2];
+        DMUS_WAVE wave;
+        DMUS_WAVEDATA data;
+    } *buffer;
+
+    struct wave *This = impl_from_IUnknown(iface);
+    DWORD size = offsetof(struct download_buffer, data.byData[This->data_size]);
+    IDirectMusicDownload *download;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPortDownload_AllocateBuffer(port, size, &download))) return hr;
+
+    if (SUCCEEDED(hr = IDirectMusicDownload_GetBuffer(download, (void **)&buffer, &size))
+            && SUCCEEDED(hr = IDirectMusicPortDownload_GetDLId(port, &buffer->info.dwDLId, 1)))
+    {
+        buffer->info.dwDLType = DMUS_DOWNLOADINFO_WAVE;
+        buffer->info.dwNumOffsetTableEntries = 2;
+        buffer->info.cbSize = size;
+
+        buffer->offsets[0] = offsetof(struct download_buffer, wave);
+        buffer->offsets[1] = offsetof(struct download_buffer, data);
+
+        buffer->wave.WaveformatEx = *This->format;
+        buffer->wave.ulWaveDataIdx = 1;
+        buffer->wave.ulCopyrightIdx = 0;
+        buffer->wave.ulFirstExtCkIdx = 0;
+
+        buffer->data.cbSize = This->data_size;
+        memcpy(buffer->data.byData, This->data, This->data_size);
+
+        if (SUCCEEDED(hr = IDirectMusicPortDownload_Download(port, download))) *id = buffer->info.dwDLId;
+        else WARN("Failed to download wave to port, hr %#lx\n", hr);
+    }
+
+    IDirectMusicDownload_Release(download);
+    return hr;
+}
