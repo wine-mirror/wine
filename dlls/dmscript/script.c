@@ -89,11 +89,11 @@ static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This->pHeader);
-        HeapFree(GetProcessHeap(), 0, This->pVersion);
-        HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
-        HeapFree(GetProcessHeap(), 0, This->pwzSource);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->pHeader);
+        free(This->pVersion);
+        free(This->pwzLanguage);
+        free(This->pwzSource);
+        free(This);
     }
 
     return ref;
@@ -275,36 +275,36 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 						switch (Chunk.fccID) { 
 						        case DMUS_FOURCC_SCRIPT_CHUNK: {
 							        TRACE_(dmfile)(": script header chunk\n");
-								This->pHeader = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								This->pHeader = calloc(1, Chunk.dwSize);
 								IStream_Read (pStm, This->pHeader, Chunk.dwSize, NULL);
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTVERSION_CHUNK: {
 							        TRACE_(dmfile)(": script version chunk\n");
-								This->pVersion = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								This->pVersion = calloc(1, Chunk.dwSize);
 								IStream_Read (pStm, This->pVersion, Chunk.dwSize, NULL); 
 								TRACE_(dmfile)("version: 0x%08lx.0x%08lx\n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK: {
 							        TRACE_(dmfile)(": script language chunk\n");
-								This->pwzLanguage = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								This->pwzLanguage = calloc(1, Chunk.dwSize);
 								IStream_Read (pStm, This->pwzLanguage, Chunk.dwSize, NULL); 
 								TRACE_(dmfile)("using language: %s\n", debugstr_w(This->pwzLanguage));
 								break;
 						        }
 						        case DMUS_FOURCC_SCRIPTSOURCE_CHUNK: {
 							        TRACE_(dmfile)(": script source chunk\n");
-								This->pwzSource = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								This->pwzSource = calloc(1, Chunk.dwSize);
 								IStream_Read (pStm, This->pwzSource, Chunk.dwSize, NULL); 
 								if (TRACE_ON(dmscript)) {
 								    int count = WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, NULL, 0, NULL, NULL);
-								    LPSTR str = HeapAlloc(GetProcessHeap (), 0, count);
+								    LPSTR str = malloc(count);
 								    WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, str, count, NULL, NULL);
 								    str[count-1] = '\n';
 								    TRACE("source:\n");
 								    fwrite( str, 1, count, stderr );
-								    HeapFree(GetProcessHeap(), 0, str);
+								    free(str);
 								}
 								break;
 						        }
@@ -497,10 +497,7 @@ HRESULT DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknow
   if (pUnkOuter)
     return CLASS_E_NOAGGREGATION;
 
-  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptImpl));
-  if (!obj)
-    return E_OUTOFMEMORY;
-
+  if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
   obj->IDirectMusicScript_iface.lpVtbl = &dmscript_vtbl;
   obj->ref = 1;
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicScript, (IUnknown*)&obj->IDirectMusicScript_iface);
