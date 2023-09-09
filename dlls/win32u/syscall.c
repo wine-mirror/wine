@@ -76,6 +76,7 @@ static void * const syscalls[] =
     NtGdiDdDDIOpenAdapterFromDeviceName,
     NtGdiDdDDIOpenAdapterFromHdc,
     NtGdiDdDDIOpenAdapterFromLuid,
+    NtGdiDdDDIQueryAdapterInfo,
     NtGdiDdDDIQueryStatistics,
     NtGdiDdDDIQueryVideoMemoryInfo,
     NtGdiDdDDISetQueuedLimit,

@@ -61,6 +61,7 @@
     SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromDeviceName ) \
     SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromHdc ) \
     SYSCALL_ENTRY( NtGdiDdDDIOpenAdapterFromLuid ) \
+    SYSCALL_ENTRY( NtGdiDdDDIQueryAdapterInfo ) \
     SYSCALL_ENTRY( NtGdiDdDDIQueryStatistics ) \
     SYSCALL_ENTRY( NtGdiDdDDIQueryVideoMemoryInfo ) \
     SYSCALL_ENTRY( NtGdiDdDDISetQueuedLimit ) \

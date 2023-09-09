@@ -295,7 +295,7 @@
 @ stub NtGdiDdDDIPresentMultiPlaneOverlay2
 @ stub NtGdiDdDDIPresentMultiPlaneOverlay3
 @ stub NtGdiDdDDIPresentRedirected
-@ stub NtGdiDdDDIQueryAdapterInfo
+@ stdcall -syscall NtGdiDdDDIQueryAdapterInfo(ptr)
 @ stub NtGdiDdDDIQueryAllocationResidency
 @ stub NtGdiDdDDIQueryClockCalibration
 @ stub NtGdiDdDDIQueryFSEBlock

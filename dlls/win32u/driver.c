@@ -1540,6 +1540,18 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 }
 
 /******************************************************************************
+ *           NtGdiDdDDIQueryAdapterInfo    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc )
+{
+    if (!desc)
+        return STATUS_INVALID_PARAMETER;
+
+    FIXME("desc %p, type %d stub\n", desc, desc->Type);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *           NtGdiDdDDIQueryStatistics    (win32u.@)
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats )

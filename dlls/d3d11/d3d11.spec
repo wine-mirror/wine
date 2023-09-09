@@ -27,7 +27,7 @@
 @ stub D3DKMTOpenAdapterFromHdc
 @ stub D3DKMTOpenResource
 @ stub D3DKMTPresent
-@ stub D3DKMTQueryAdapterInfo
+@ stdcall D3DKMTQueryAdapterInfo(ptr) gdi32.D3DKMTQueryAdapterInfo
 @ stub D3DKMTQueryAllocationResidency
 @ stub D3DKMTQueryResourceInfo
 @ stub D3DKMTRender
