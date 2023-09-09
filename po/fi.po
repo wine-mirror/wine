@@ -18474,7 +18474,9 @@ msgid "MIME types"
 msgstr "MIME-tyypit"
 
 #: programs/winecfg/winecfg.rc:311
-msgid "Manage file &associations"
+#, fuzzy
+#| msgid "Manage file &associations"
+msgid "Manage file and protocol &associations"
 msgstr "&Muokkaa tiedostosidoksia"
 
 #: programs/winecfg/winecfg.rc:314

@@ -18627,7 +18627,9 @@ msgid "MIME types"
 msgstr "MIME türleri"
 
 #: programs/winecfg/winecfg.rc:311
-msgid "Manage file &associations"
+#, fuzzy
+#| msgid "Manage file &associations"
+msgid "Manage file and protocol &associations"
 msgstr "&Dosya ilişkilendirmelerini düzenle"
 
 #: programs/winecfg/winecfg.rc:314

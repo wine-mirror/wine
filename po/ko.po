@@ -18520,7 +18520,9 @@ msgid "MIME types"
 msgstr "MIME 형식"
 
 #: programs/winecfg/winecfg.rc:311
-msgid "Manage file &associations"
+#, fuzzy
+#| msgid "Manage file &associations"
+msgid "Manage file and protocol &associations"
 msgstr "Wine 관련 파일 연결을 데스크톱에 추가합니다(&A)"
 
 #: programs/winecfg/winecfg.rc:314

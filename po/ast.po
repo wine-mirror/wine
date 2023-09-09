@@ -18367,7 +18367,7 @@ msgid "MIME types"
 msgstr "Tribes MIME"
 
 #: programs/winecfg/winecfg.rc:311
-msgid "Manage file &associations"
+msgid "Manage file and protocol &associations"
 msgstr ""
 
 #: programs/winecfg/winecfg.rc:314

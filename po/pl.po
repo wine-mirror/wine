@@ -18808,7 +18808,9 @@ msgid "MIME types"
 msgstr "Typy MIME"
 
 #: programs/winecfg/winecfg.rc:311
-msgid "Manage file &associations"
+#, fuzzy
+#| msgid "Manage file &associations"
+msgid "Manage file and protocol &associations"
 msgstr "Z&arządzaj skojarzeniami plików"
 
 #: programs/winecfg/winecfg.rc:314
