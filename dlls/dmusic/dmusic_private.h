@@ -161,11 +161,6 @@ struct IReferenceClockImpl {
     DMUS_CLOCKINFO pClockInfo;
 };
 
-typedef struct _DMUS_PRIVATE_INSTRUMENT_ENTRY {
-	struct list entry; /* for listing elements */
-	IDirectMusicInstrument* pInstrument;
-} DMUS_PRIVATE_INSTRUMENTENTRY, *LPDMUS_PRIVATE_INSTRUMENTENTRY;
-
 typedef struct _DMUS_PRIVATE_POOLCUE {
 	struct list entry; /* for listing elements */
 } DMUS_PRIVATE_POOLCUE, *LPDMUS_PRIVATE_POOLCUE;
