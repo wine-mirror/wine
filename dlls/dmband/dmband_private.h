@@ -47,10 +47,4 @@
 extern HRESULT create_dmband(REFIID riid, void **ret_iface);
 extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
 
-/*****************************************************************************
- * Misc.
- */
-
-#include "dmutils.h"
-
 #endif	/* __WINE_DMBAND_PRIVATE_H */

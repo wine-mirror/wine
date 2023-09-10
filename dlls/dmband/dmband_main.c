@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "initguid.h"
 #include "dmband_private.h"
 #include "rpcproxy.h"
 #include "dmobject.h"

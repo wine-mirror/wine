@@ -20,7 +20,6 @@
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 struct band_entry
 {
@@ -465,51 +464,53 @@ static inline struct band_track *impl_from_IPersistStream(IPersistStream *iface)
     return CONTAINING_RECORD(iface, struct band_track, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI band_track_persist_stream_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI band_track_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
-  struct band_track *This = impl_from_IPersistStream(iface);
-  DMUS_PRIVATE_CHUNK Chunk;
-  LARGE_INTEGER liMove;
-  HRESULT hr;
+    struct band_track *This = impl_from_IPersistStream(iface);
+    struct chunk_entry chunk = {0};
+    HRESULT hr;
 
-  TRACE("(%p, %p): Loading\n", This, pStm);
+    TRACE("(%p, %p)\n", This, stream);
 
-  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-  switch (Chunk.fccID) {
-  case FOURCC_RIFF: {
-    IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case DMUS_FOURCC_BANDTRACK_FORM: {
-      static const LARGE_INTEGER zero = {0};
-      struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
-      TRACE_(dmfile)(": Band track form\n");
-      IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
-      chunk.offset.QuadPart -= 12;
-      hr = parse_dmbt_chunk(This, pStm, &chunk);
-      if (FAILED(hr)) return hr;
-      break;    
-    }
-    default: {
-      TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      return E_FAIL;
-    }
-    }
-    TRACE_(dmfile)(": reading finished\n");
-    break;
-  }
-  default: {
-    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-    return E_FAIL;
-  }
-  }
+    if ((hr = stream_get_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_BANDTRACK_FORM):
+            hr = parse_dmbt_chunk(This, stream, &chunk);
+            break;
 
-  return S_OK;
+        default:
+            WARN("Invalid band track chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            hr = DMUS_E_UNSUPPORTED_STREAM;
+            break;
+        }
+    }
+
+    if (FAILED(hr)) return hr;
+
+    if (TRACE_ON(dmband))
+    {
+        struct band_entry *entry;
+        int i = 0;
+
+        TRACE("Loaded DirectMusicBandTrack %p\n", This);
+        dump_DMUS_OBJECTDESC(&This->dmobj.desc);
+
+        TRACE(" - header:\n");
+        TRACE("    - bAutoDownload: %u\n", This->header.bAutoDownload);
+
+        TRACE(" - bands:\n");
+        LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+        {
+            TRACE("    - band[%u]: %p\n", i++, entry->band);
+            TRACE("        - lBandTimeLogical: %ld\n", entry->head.lBandTimeLogical);
+            TRACE("        - lBandTimePhysical: %ld\n", entry->head.lBandTimePhysical);
+        }
+    }
+
+    stream_skip_chunk(stream, &chunk);
+    return S_OK;
 }
 
 static const IPersistStreamVtbl band_track_persist_stream_vtbl =
