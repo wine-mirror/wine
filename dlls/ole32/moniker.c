@@ -541,13 +541,14 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
         {
             IStream *pStream;
             hr = create_stream_on_mip_ro(rot_entry->object, &pStream);
+            LeaveCriticalSection(&This->lock);
+
             if (hr == S_OK)
             {
                 hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)ppunkObject);
                 IStream_Release(pStream);
             }
 
-            LeaveCriticalSection(&This->lock);
             HeapFree(GetProcessHeap(), 0, moniker_data);
 
             return hr;
