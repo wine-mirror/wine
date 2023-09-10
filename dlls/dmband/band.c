@@ -23,12 +23,25 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+struct instrument_entry
+{
+    struct list entry;
+    DMUS_IO_INSTRUMENT instrument;
+    IDirectMusicCollection *collection;
+};
+
+static void instrument_entry_destroy(struct instrument_entry *entry)
+{
+    if (entry->collection) IDirectMusicCollection_Release(entry->collection);
+    free(entry);
+}
+
 struct band
 {
     IDirectMusicBand IDirectMusicBand_iface;
     struct dmobject dmobj;
     LONG ref;
-    struct list Instruments;
+    struct list instruments;
 };
 
 static inline struct band *impl_from_IDirectMusicBand(IDirectMusicBand *iface)
@@ -77,7 +90,18 @@ static ULONG WINAPI band_Release(IDirectMusicBand *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) free(This);
+    if (!ref)
+    {
+        struct instrument_entry *entry, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->instruments, struct instrument_entry, entry)
+        {
+            list_remove(&entry->entry);
+            instrument_entry_destroy(entry);
+        }
+
+        free(This);
+    }
 
     return ref;
 }
@@ -192,7 +216,7 @@ static HRESULT parse_instrument(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
   HRESULT hr;
 
   DMUS_IO_INSTRUMENT inst;
-  LPDMUS_PRIVATE_INSTRUMENT pNewInstrument;
+  struct instrument_entry *pNewInstrument;
   IDirectMusicObject* pObject = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_INSTRUMENT_LIST) {
@@ -272,8 +296,8 @@ static HRESULT parse_instrument(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
    * @TODO insert pNewInstrument into This
    */
   if (!(pNewInstrument = calloc(1, sizeof(*pNewInstrument)))) return E_OUTOFMEMORY;
-  memcpy(&pNewInstrument->pInstrument, &inst, sizeof(DMUS_IO_INSTRUMENT));
-  pNewInstrument->ppReferenceCollection = NULL;
+  memcpy(&pNewInstrument->instrument, &inst, sizeof(DMUS_IO_INSTRUMENT));
+  pNewInstrument->collection = NULL;
   if (NULL != pObject) {
     IDirectMusicCollection* pCol = NULL;
     hr = IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (void**) &pCol);
@@ -282,10 +306,10 @@ static HRESULT parse_instrument(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
       free(pNewInstrument);
       return hr;
     }
-    pNewInstrument->ppReferenceCollection = pCol;
+    pNewInstrument->collection = pCol;
     IDirectMusicObject_Release(pObject);
   }
-  list_add_tail (&This->Instruments, &pNewInstrument->entry);
+  list_add_tail(&This->instruments, &pNewInstrument->entry);
 
   return S_OK;
 }
@@ -510,7 +534,7 @@ HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicBand, (IUnknown *)&obj->IDirectMusicBand_iface);
   obj->dmobj.IDirectMusicObject_iface.lpVtbl = &band_object_vtbl;
   obj->dmobj.IPersistStream_iface.lpVtbl = &band_persist_stream_vtbl;
-  list_init (&obj->Instruments);
+  list_init(&obj->instruments);
 
   hr = IDirectMusicBand_QueryInterface(&obj->IDirectMusicBand_iface, lpcGUID, ppobj);
   IDirectMusicBand_Release(&obj->IDirectMusicBand_iface);

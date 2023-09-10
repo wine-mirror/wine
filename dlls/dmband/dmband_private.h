@@ -61,12 +61,6 @@ typedef struct _DMUS_PRIVATE_BAND_ITEM_HEADER {
 	MUSIC_TIME lBandTimePhysical;
 } DMUS_PRIVATE_BAND_ITEM_HEADER;
 
-typedef struct _DMUS_PRIVATE_INSTRUMENT {
-	struct list entry; /* for listing elements */
-	DMUS_IO_INSTRUMENT pInstrument;
-	IDirectMusicCollection* ppReferenceCollection;
-} DMUS_PRIVATE_INSTRUMENT, *LPDMUS_PRIVATE_INSTRUMENT;
-
 /*****************************************************************************
  * Misc.
  */
