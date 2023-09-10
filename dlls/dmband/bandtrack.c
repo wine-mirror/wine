@@ -22,13 +22,26 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+struct band_entry
+{
+    struct list entry;
+    DMUS_PRIVATE_BAND_ITEM_HEADER head;
+    IDirectMusicBand *band;
+};
+
+static void band_entry_destroy(struct band_entry *entry)
+{
+    IDirectMusicTrack_Release(entry->band);
+    free(entry);
+}
+
 struct band_track
 {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj; /* IPersistStream only */
     LONG ref;
     DMUS_IO_BAND_TRACK_HEADER header;
-    struct list Bands;
+    struct list bands;
 };
 
 static inline struct band_track *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
@@ -76,7 +89,18 @@ static ULONG WINAPI band_track_Release(IDirectMusicTrack8 *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) free(This);
+    if (!ref)
+    {
+        struct band_entry *entry, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->bands, struct band_entry, entry)
+        {
+            list_remove(&entry->entry);
+            band_entry_destroy(entry);
+        }
+
+        free(This);
+    }
 
     return ref;
 }
@@ -337,13 +361,14 @@ static HRESULT load_band(struct band_track *This, IStream *pClonedStream,
   /*
    * @TODO insert pBand into This
    */
-  if (SUCCEEDED(hr)) {
-    LPDMUS_PRIVATE_BAND pNewBand;
-    if (!(pNewBand = calloc(1, sizeof(*pNewBand)))) return E_OUTOFMEMORY;
-    pNewBand->BandHeader = *pHeader;
-    pNewBand->band = *ppBand;
-    IDirectMusicBand_AddRef(*ppBand);
-    list_add_tail (&This->Bands, &pNewBand->entry);
+  if (SUCCEEDED(hr))
+  {
+      struct band_entry *entry;
+      if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
+      entry->head = *pHeader;
+      entry->band = *ppBand;
+      IDirectMusicBand_AddRef(*ppBand);
+      list_add_tail(&This->bands, &entry->entry);
   }
 
   return S_OK;
@@ -635,7 +660,7 @@ HRESULT create_dmbandtrack(REFIID lpcGUID, void **ppobj)
     track->ref = 1;
     dmobject_init(&track->dmobj, &CLSID_DirectMusicBandTrack, (IUnknown *)&track->IDirectMusicTrack8_iface);
     track->dmobj.IPersistStream_iface.lpVtbl = &band_track_persist_stream_vtbl;
-    list_init (&track->Bands);
+    list_init(&track->bands);
 
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, lpcGUID, ppobj);
     IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);

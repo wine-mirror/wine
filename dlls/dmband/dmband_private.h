@@ -67,12 +67,6 @@ typedef struct _DMUS_PRIVATE_INSTRUMENT {
 	IDirectMusicCollection* ppReferenceCollection;
 } DMUS_PRIVATE_INSTRUMENT, *LPDMUS_PRIVATE_INSTRUMENT;
 
-typedef struct _DMUS_PRIVATE_BAND {
-	struct list entry; /* for listing elements */
-	DMUS_PRIVATE_BAND_ITEM_HEADER BandHeader;
-	IDirectMusicBand *band;
-} DMUS_PRIVATE_BAND, *LPDMUS_PRIVATE_BAND;
-
 /*****************************************************************************
  * Misc.
  */
