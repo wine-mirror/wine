@@ -707,10 +707,19 @@ static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
     RunningObjectTableImpl_EnumRunning
 };
 
+static RunningObjectTableImpl rot;
+
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &rot.lock,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": RunningObjectTable_section") }
+};
+
 static RunningObjectTableImpl rot =
 {
     .IRunningObjectTable_iface.lpVtbl = &VT_RunningObjectTableImpl,
-    .lock.LockCount = -1,
+    .lock = { &critsect_debug, -1, 0, 0, 0, 0 },
     .rot = LIST_INIT(rot.rot),
 };
 
