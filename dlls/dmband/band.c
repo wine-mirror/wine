@@ -220,6 +220,30 @@ static HRESULT parse_lbin_list(struct band *This, IStream *stream, struct chunk_
     return hr;
 }
 
+static HRESULT parse_lbil_list(struct band *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_INSTRUMENT_LIST):
+            hr = parse_lbin_list(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI band_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
@@ -268,64 +292,6 @@ static const IDirectMusicObjectVtbl band_object_vtbl =
     dmobj_IDirectMusicObject_SetDescriptor,
     band_object_ParseDescriptor,
 };
-
-static HRESULT parse_instruments_list(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
-{
-  HRESULT hr;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-
-  if (pChunk->fccID != DMUS_FOURCC_INSTRUMENTS_LIST) {
-    ERR_(dmfile)(": %s chunk should be an INSTRUMENTS list\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
-
-  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
-  ListCount[0] = 0;
-
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case FOURCC_LIST: {
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[1] = 0;
-      switch (Chunk.fccID) { 
-      case DMUS_FOURCC_INSTRUMENT_LIST: {
-        static const LARGE_INTEGER zero = {0};
-        struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
-	TRACE_(dmfile)(": Instrument list\n");
-        IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
-        chunk.offset.QuadPart -= 12;
-	if (FAILED(hr = parse_lbin_list(This, pStm, &chunk))) return hr;
-	break;
-      }
-      default: {
-	TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	liMove.QuadPart = ListSize[1];
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;						
-      }
-      }
-      break;
-    }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
-
-  return S_OK;
-}
 
 static HRESULT parse_band_form(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
@@ -392,8 +358,12 @@ static HRESULT parse_band_form(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
 	  break;
 	}
 	case DMUS_FOURCC_INSTRUMENTS_LIST: {
+          static const LARGE_INTEGER zero = {0};
+          struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
 	  TRACE_(dmfile)(": INSTRUMENTS list\n");
-          hr = parse_instruments_list(This, &Chunk, pStm);
+          IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
+          chunk.offset.QuadPart -= 12;
+          hr = parse_lbil_list(This, pStm, &chunk);
 	  if (FAILED(hr)) return hr;
 	  break;	
 	}
