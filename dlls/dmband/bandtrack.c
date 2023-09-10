@@ -104,10 +104,13 @@ static ULONG WINAPI band_track_Release(IDirectMusicTrack8 *iface)
     return ref;
 }
 
-static HRESULT WINAPI band_track_Init(IDirectMusicTrack8 *iface, IDirectMusicSegment *pSegment)
+static HRESULT WINAPI band_track_Init(IDirectMusicTrack8 *iface, IDirectMusicSegment *segment)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8(iface);
-    FIXME("(%p, %p): stub\n", This, pSegment);
+
+    FIXME("(%p, %p): stub\n", This, segment);
+
+    if (!segment) return E_POINTER;
     return S_OK;
 }
 
@@ -116,16 +119,42 @@ static HRESULT WINAPI band_track_InitPlay(IDirectMusicTrack8 *iface,
         void **state_data, DWORD virtual_track8id, DWORD flags)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8(iface);
+    struct band_entry *entry;
+    HRESULT hr;
 
-    FIXME("(%p, %p, %p, %p, %ld, %lx): stub\n", This, segment_state, performance, state_data, virtual_track8id, flags);
+    FIXME("(%p, %p, %p, %p, %ld, %lx): semi-stub\n", This, segment_state, performance, state_data, virtual_track8id, flags);
+
+    if (!performance) return E_POINTER;
+
+    if (This->header.bAutoDownload)
+    {
+        LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+        {
+            if (FAILED(hr = IDirectMusicBand_Download(entry->band, performance)))
+                return hr;
+        }
+    }
 
     return S_OK;
 }
 
-static HRESULT WINAPI band_track_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
+static HRESULT WINAPI band_track_EndPlay(IDirectMusicTrack8 *iface, void *state_data)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8(iface);
-    FIXME("(%p, %p): stub\n", This, pStateData);
+    struct band_entry *entry;
+    HRESULT hr;
+
+    FIXME("(%p, %p): semi-stub\n", This, state_data);
+
+    if (This->header.bAutoDownload)
+    {
+        LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+        {
+            if (FAILED(hr = IDirectMusicBand_Unload(entry->band, NULL)))
+                return hr;
+        }
+    }
+
     return S_OK;
 }
 

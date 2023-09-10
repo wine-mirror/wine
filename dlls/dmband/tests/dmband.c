@@ -226,12 +226,10 @@ static void test_bandtrack(void)
     ok(hr == S_OK, "DirectMusicBandTrack create failed: %#lx, expected S_OK\n", hr);
 
     /* IDirectMusicTrack8 */
-    todo_wine {
     hr = IDirectMusicTrack8_Init(dmt8, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_Init failed: %#lx\n", hr);
     hr = IDirectMusicTrack8_InitPlay(dmt8, NULL, NULL, NULL, 0, 0);
     ok(hr == E_POINTER, "IDirectMusicTrack8_InitPlay failed: %#lx\n", hr);
-    }
     hr = IDirectMusicTrack8_EndPlay(dmt8, NULL);
     ok(hr == S_OK, "IDirectMusicTrack8_EndPlay failed: %#lx\n", hr);
     hr = IDirectMusicTrack8_Play(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
