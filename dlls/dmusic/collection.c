@@ -29,6 +29,14 @@ struct instrument_entry
     IDirectMusicInstrument *instrument;
 };
 
+struct pool
+{
+    POOLTABLE table;
+    POOLCUE cues[];
+};
+
+C_ASSERT(sizeof(struct pool) == offsetof(struct pool, cues[0]));
+
 struct collection
 {
     IDirectMusicCollection IDirectMusicCollection_iface;
@@ -38,10 +46,8 @@ struct collection
     IStream *pStm; /* stream from which we load collection and later instruments */
     CHAR *szCopyright; /* FIXME: should probably be placed somewhere else */
     DLSHEADER *pHeader;
-    /* pool table */
-    POOLTABLE *pPoolTable;
-    POOLCUE *pPoolCues;
 
+    struct pool *pool;
     struct list instruments;
 };
 
@@ -204,6 +210,29 @@ static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct 
     return hr;
 }
 
+static HRESULT parse_ptbl_chunk(struct collection *This, IStream *stream, struct chunk_entry *chunk)
+{
+    struct pool *pool;
+    POOLTABLE table;
+    HRESULT hr;
+    UINT size;
+
+    if (chunk->size < sizeof(table)) return E_INVALIDARG;
+    if (FAILED(hr = stream_read(stream, &table, sizeof(table)))) return hr;
+    if (chunk->size != table.cbSize + sizeof(POOLCUE) * table.cCues) return E_INVALIDARG;
+    if (table.cbSize != sizeof(table)) return E_INVALIDARG;
+
+    size = offsetof(struct pool, cues[table.cCues]);
+    if (!(pool = malloc(size))) return E_OUTOFMEMORY;
+    pool->table = table;
+
+    size = sizeof(POOLCUE) * table.cCues;
+    if (FAILED(hr = stream_read(stream, pool->cues, size))) free(pool);
+    else This->pool = pool;
+
+    return hr;
+}
+
 static HRESULT WINAPI collection_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
@@ -303,12 +332,13 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                 break;
             }
             case FOURCC_PTBL: {
+                struct chunk_entry ptbl_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
                 TRACE_(dmfile)(": pool table chunk\n");
-                This->pPoolTable = calloc(1, sizeof(POOLTABLE));
-                IStream_Read(stream, This->pPoolTable, sizeof(POOLTABLE), NULL);
-                chunk.dwSize -= sizeof(POOLTABLE);
-                This->pPoolCues = calloc(This->pPoolTable->cCues, sizeof(POOLCUE));
-                IStream_Read(stream, This->pPoolCues, chunk.dwSize, NULL);
+                liMove.QuadPart = 0;
+                IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &ptbl_chunk.offset);
+                ptbl_chunk.offset.QuadPart -= 12;
+                parse_ptbl_chunk(This, stream, &ptbl_chunk);
+                stream_skip_chunk(stream, &ptbl_chunk);
                 break;
             }
             case FOURCC_LIST: {
