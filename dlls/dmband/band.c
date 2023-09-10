@@ -23,26 +23,23 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-
-/*****************************************************************************
- * IDirectMusicBandImpl implementation
- */
-typedef struct IDirectMusicBandImpl {
+struct band
+{
     IDirectMusicBand IDirectMusicBand_iface;
     struct dmobject dmobj;
     LONG ref;
     struct list Instruments;
-} IDirectMusicBandImpl;
+};
 
-static inline IDirectMusicBandImpl *impl_from_IDirectMusicBand(IDirectMusicBand *iface)
+static inline struct band *impl_from_IDirectMusicBand(IDirectMusicBand *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicBandImpl, IDirectMusicBand_iface);
+    return CONTAINING_RECORD(iface, struct band, IDirectMusicBand_iface);
 }
 
 static HRESULT WINAPI band_QueryInterface(IDirectMusicBand *iface, REFIID riid,
         void **ret_iface)
 {
-    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+    struct band *This = impl_from_IDirectMusicBand(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
 
@@ -65,7 +62,7 @@ static HRESULT WINAPI band_QueryInterface(IDirectMusicBand *iface, REFIID riid,
 
 static ULONG WINAPI band_AddRef(IDirectMusicBand *iface)
 {
-    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+    struct band *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -75,7 +72,7 @@ static ULONG WINAPI band_AddRef(IDirectMusicBand *iface)
 
 static ULONG WINAPI band_Release(IDirectMusicBand *iface)
 {
-    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+    struct band *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -88,7 +85,7 @@ static ULONG WINAPI band_Release(IDirectMusicBand *iface)
 static HRESULT WINAPI band_CreateSegment(IDirectMusicBand *iface,
         IDirectMusicSegment **segment)
 {
-    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+    struct band *This = impl_from_IDirectMusicBand(iface);
     HRESULT hr;
     DMUS_BAND_PARAM bandparam;
 
@@ -112,7 +109,7 @@ static HRESULT WINAPI band_CreateSegment(IDirectMusicBand *iface,
 static HRESULT WINAPI band_Download(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
-        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+        struct band *This = impl_from_IDirectMusicBand(iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
@@ -120,7 +117,7 @@ static HRESULT WINAPI band_Download(IDirectMusicBand *iface,
 static HRESULT WINAPI band_Unload(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
-        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+        struct band *This = impl_from_IDirectMusicBand(iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
@@ -186,7 +183,7 @@ static const IDirectMusicObjectVtbl band_object_vtbl =
 
 #define DMUS_IO_INSTRUMENT_DX7_SIZE offsetof(DMUS_IO_INSTRUMENT, nPitchBendRange)
 
-static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+static HRESULT parse_instrument(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
 {
   DMUS_PRIVATE_CHUNK Chunk;
@@ -293,7 +290,7 @@ static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *
   return S_OK;
 }
 
-static HRESULT parse_instruments_list(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+static HRESULT parse_instruments_list(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
 {
   HRESULT hr;
@@ -348,7 +345,7 @@ static HRESULT parse_instruments_list(IDirectMusicBandImpl *This, DMUS_PRIVATE_C
   return S_OK;
 }
 
-static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
+static HRESULT parse_band_form(struct band *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
 {
   HRESULT hr = E_FAIL;
@@ -441,14 +438,14 @@ static HRESULT parse_band_form(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *p
   return S_OK;
 }
 
-static inline IDirectMusicBandImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct band *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicBandImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct band, dmobj.IPersistStream_iface);
 }
 
 static HRESULT WINAPI band_persist_stream_Load(IPersistStream *iface, IStream *pStm)
 {
-  IDirectMusicBandImpl *This = impl_from_IPersistStream(iface);
+  struct band *This = impl_from_IPersistStream(iface);
   DMUS_PRIVATE_CHUNK Chunk;
   LARGE_INTEGER liMove;
   HRESULT hr;
@@ -503,7 +500,7 @@ static const IPersistStreamVtbl band_persist_stream_vtbl =
 
 HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
 {
-  IDirectMusicBandImpl* obj;
+  struct band* obj;
   HRESULT hr;
 
   *ppobj = NULL;

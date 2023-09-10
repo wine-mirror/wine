@@ -1,5 +1,4 @@
-/* IDirectMusicBandTrack Implementation
- *
+/*
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or
