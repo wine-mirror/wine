@@ -39,8 +39,7 @@ static inline IDirectMusicBandImpl *impl_from_IDirectMusicBand(IDirectMusicBand 
     return CONTAINING_RECORD(iface, IDirectMusicBandImpl, IDirectMusicBand_iface);
 }
 
-/* DirectMusicBandImpl IDirectMusicBand part: */
-static HRESULT WINAPI IDirectMusicBandImpl_QueryInterface(IDirectMusicBand *iface, REFIID riid,
+static HRESULT WINAPI band_QueryInterface(IDirectMusicBand *iface, REFIID riid,
         void **ret_iface)
 {
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
@@ -64,7 +63,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_QueryInterface(IDirectMusicBand *ifac
     return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicBandImpl_AddRef(IDirectMusicBand *iface)
+static ULONG WINAPI band_AddRef(IDirectMusicBand *iface)
 {
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedIncrement(&This->ref);
@@ -74,7 +73,7 @@ static ULONG WINAPI IDirectMusicBandImpl_AddRef(IDirectMusicBand *iface)
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
+static ULONG WINAPI band_Release(IDirectMusicBand *iface)
 {
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
     LONG ref = InterlockedDecrement(&This->ref);
@@ -86,7 +85,7 @@ static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
     return ref;
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface,
+static HRESULT WINAPI band_CreateSegment(IDirectMusicBand *iface,
         IDirectMusicSegment **segment)
 {
     IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
@@ -110,7 +109,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface
     return hr;
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
+static HRESULT WINAPI band_Download(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
         IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
@@ -118,7 +117,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_Unload(IDirectMusicBand *iface,
+static HRESULT WINAPI band_Unload(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
         IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
@@ -126,17 +125,17 @@ static HRESULT WINAPI IDirectMusicBandImpl_Unload(IDirectMusicBand *iface,
 	return S_OK;
 }
 
-static const IDirectMusicBandVtbl dmband_vtbl = {
-    IDirectMusicBandImpl_QueryInterface,
-    IDirectMusicBandImpl_AddRef,
-    IDirectMusicBandImpl_Release,
-    IDirectMusicBandImpl_CreateSegment,
-    IDirectMusicBandImpl_Download,
-    IDirectMusicBandImpl_Unload
+static const IDirectMusicBandVtbl band_vtbl =
+{
+    band_QueryInterface,
+    band_AddRef,
+    band_Release,
+    band_CreateSegment,
+    band_Download,
+    band_Unload,
 };
 
-/* IDirectMusicBandImpl IDirectMusicObject part: */
-static HRESULT WINAPI band_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
+static HRESULT WINAPI band_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
     struct chunk_entry riff = {0};
@@ -175,18 +174,18 @@ static HRESULT WINAPI band_IDirectMusicObject_ParseDescriptor(IDirectMusicObject
     return S_OK;
 }
 
-static const IDirectMusicObjectVtbl dmobject_vtbl = {
+static const IDirectMusicObjectVtbl band_object_vtbl =
+{
     dmobj_IDirectMusicObject_QueryInterface,
     dmobj_IDirectMusicObject_AddRef,
     dmobj_IDirectMusicObject_Release,
     dmobj_IDirectMusicObject_GetDescriptor,
     dmobj_IDirectMusicObject_SetDescriptor,
-    band_IDirectMusicObject_ParseDescriptor
+    band_object_ParseDescriptor,
 };
 
 #define DMUS_IO_INSTRUMENT_DX7_SIZE offsetof(DMUS_IO_INSTRUMENT, nPitchBendRange)
 
-/* IDirectMusicBandImpl IPersistStream part: */
 static HRESULT parse_instrument(IDirectMusicBandImpl *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
 {
@@ -447,7 +446,7 @@ static inline IDirectMusicBandImpl *impl_from_IPersistStream(IPersistStream *ifa
     return CONTAINING_RECORD(iface, IDirectMusicBandImpl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI band_persist_stream_Load(IPersistStream *iface, IStream *pStm)
 {
   IDirectMusicBandImpl *This = impl_from_IPersistStream(iface);
   DMUS_PRIVATE_CHUNK Chunk;
@@ -490,18 +489,18 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
   return S_OK;
 }
 
-static const IPersistStreamVtbl persiststream_vtbl = {
+static const IPersistStreamVtbl band_persist_stream_vtbl =
+{
     dmobj_IPersistStream_QueryInterface,
     dmobj_IPersistStream_AddRef,
     dmobj_IPersistStream_Release,
     unimpl_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    IPersistStreamImpl_Load,
+    band_persist_stream_Load,
     unimpl_IPersistStream_Save,
-    unimpl_IPersistStream_GetSizeMax
+    unimpl_IPersistStream_GetSizeMax,
 };
 
-/* for ClassFactory */
 HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
 {
   IDirectMusicBandImpl* obj;
@@ -509,11 +508,11 @@ HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
 
   *ppobj = NULL;
   if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-  obj->IDirectMusicBand_iface.lpVtbl = &dmband_vtbl;
+  obj->IDirectMusicBand_iface.lpVtbl = &band_vtbl;
   obj->ref = 1;
   dmobject_init(&obj->dmobj, &CLSID_DirectMusicBand, (IUnknown *)&obj->IDirectMusicBand_iface);
-  obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-  obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+  obj->dmobj.IDirectMusicObject_iface.lpVtbl = &band_object_vtbl;
+  obj->dmobj.IPersistStream_iface.lpVtbl = &band_persist_stream_vtbl;
   list_init (&obj->Instruments);
 
   hr = IDirectMusicBand_QueryInterface(&obj->IDirectMusicBand_iface, lpcGUID, ppobj);
