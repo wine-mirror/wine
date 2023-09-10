@@ -23,6 +23,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
+struct track_entry
+{
+    struct list entry;
+    DWORD dwGroupBits;
+    DWORD flags;
+    IDirectMusicTrack *pTrack;
+};
+
+static void track_entry_destroy(struct track_entry *entry)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicTrack_Init(entry->pTrack, NULL)))
+        WARN("Failed to de-init track %p, hr %#lx\n", entry->pTrack, hr);
+    IDirectMusicTrack_Release(entry->pTrack);
+
+    free(entry);
+}
+
 struct segment
 {
     IDirectMusicSegment8 IDirectMusicSegment8_iface;
@@ -30,7 +49,7 @@ struct segment
     LONG ref;
     DMUS_IO_SEGMENT_HEADER header;
     IDirectMusicGraph *pGraph;
-    struct list Tracks;
+    struct list tracks;
 
     PCMWAVEFORMAT wave_format;
     void *wave_data;
@@ -87,6 +106,14 @@ static ULONG WINAPI segment_Release(IDirectMusicSegment8 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
+        struct track_entry *entry, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->tracks, struct track_entry, entry)
+        {
+            list_remove(&entry->entry);
+            track_entry_destroy(entry);
+        }
+
         if (This->wave_data)
             free(This->wave_data);
 
@@ -169,7 +196,7 @@ static HRESULT WINAPI segment_GetTrack(IDirectMusicSegment8 *iface, REFGUID rgui
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
   CLSID pIt_clsid;
   struct list* pEntry = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
+  struct track_entry *pIt = NULL;
   IPersistStream* pCLSIDStream = NULL;
   HRESULT hr = S_OK;
 
@@ -179,8 +206,8 @@ static HRESULT WINAPI segment_GetTrack(IDirectMusicSegment8 *iface, REFGUID rgui
     return E_POINTER;
   }
 
-  LIST_FOR_EACH (pEntry, &This->Tracks) {
-    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+  LIST_FOR_EACH (pEntry, &This->tracks) {
+    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
     TRACE(" - %p -> %#lx,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
     if (FALSE == IsEqualGUID(&GUID_NULL, rguidType)) {
@@ -216,7 +243,7 @@ static HRESULT WINAPI segment_GetTrackGroup(IDirectMusicSegment8 *iface, IDirect
 {
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
   struct list* pEntry = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
+  struct track_entry *pIt = NULL;
 
   TRACE("(%p, %p, %p)\n", This, pTrack, pdwGroupBits);
 
@@ -224,8 +251,8 @@ static HRESULT WINAPI segment_GetTrackGroup(IDirectMusicSegment8 *iface, IDirect
     return E_POINTER;
   }
 
-  LIST_FOR_EACH (pEntry, &This->Tracks) {
-    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+  LIST_FOR_EACH (pEntry, &This->tracks) {
+    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
     TRACE(" - %p -> %#lx, %p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       *pdwGroupBits = pIt->dwGroupBits;
@@ -241,17 +268,17 @@ static HRESULT WINAPI segment_InsertTrack(IDirectMusicSegment8 *iface, IDirectMu
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
   DWORD i = 0;
   struct list* pEntry = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack = NULL;
+  struct track_entry *pIt = NULL;
+  struct track_entry *pNewSegTrack = NULL;
 
   TRACE("(%p, %p, %#lx)\n", This, pTrack, group);
 
   if (!group)
     return E_INVALIDARG;
 
-  LIST_FOR_EACH (pEntry, &This->Tracks) {
+  LIST_FOR_EACH (pEntry, &This->tracks) {
     i++;
-    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
     TRACE(" - #%lu: %p -> %#lx, %p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
     if (NULL != pIt && pIt->pTrack == pTrack) {
       ERR("(%p, %p): track is already in list\n", This, pTrack);
@@ -265,7 +292,7 @@ static HRESULT WINAPI segment_InsertTrack(IDirectMusicSegment8 *iface, IDirectMu
   pNewSegTrack->pTrack = pTrack;
   IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);
   IDirectMusicTrack_AddRef(pTrack);
-  list_add_tail (&This->Tracks, &pNewSegTrack->entry);
+  list_add_tail (&This->tracks, &pNewSegTrack->entry);
 
   return S_OK;
 }
@@ -274,12 +301,12 @@ static HRESULT WINAPI segment_RemoveTrack(IDirectMusicSegment8 *iface, IDirectMu
 {
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
   struct list* pEntry = NULL;
-  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
+  struct track_entry *pIt = NULL;
 
   TRACE("(%p, %p)\n", This, pTrack);
 
-  LIST_FOR_EACH (pEntry, &This->Tracks) {
-    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+  LIST_FOR_EACH (pEntry, &This->tracks) {
+    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
     if (pIt->pTrack == pTrack) {
       TRACE("(%p, %p): track in list\n", This, pTrack);
       
@@ -397,7 +424,7 @@ static HRESULT WINAPI segment_Clone(IDirectMusicSegment8 *iface, MUSIC_TIME star
     struct segment *This = impl_from_IDirectMusicSegment8(iface);
     struct segment *clone;
     IDirectMusicTrack *track;
-    DMUS_PRIVATE_SEGMENT_TRACK *track_item, *cloned_item;
+    struct track_entry *track_item, *cloned_item;
     HRESULT hr;
     BOOL track_clone_fail = FALSE;
 
@@ -417,14 +444,14 @@ static HRESULT WINAPI segment_Clone(IDirectMusicSegment8 *iface, MUSIC_TIME star
     if (clone->pGraph)
         IDirectMusicGraph_AddRef(clone->pGraph);
 
-    LIST_FOR_EACH_ENTRY(track_item, &This->Tracks, DMUS_PRIVATE_SEGMENT_TRACK, entry) {
+    LIST_FOR_EACH_ENTRY(track_item, &This->tracks, struct track_entry, entry) {
         if (SUCCEEDED(hr = IDirectMusicTrack_Clone(track_item->pTrack, start, end, &track))) {
             if ((cloned_item = malloc(sizeof(*cloned_item))))
             {
                 cloned_item->dwGroupBits = track_item->dwGroupBits;
                 cloned_item->flags = track_item->flags;
                 cloned_item->pTrack = track;
-                list_add_tail(&clone->Tracks, &cloned_item->entry);
+                list_add_tail(&clone->tracks, &cloned_item->entry);
                 continue;
             }
             else
@@ -625,7 +652,7 @@ static HRESULT parse_track_form(struct segment *This, IStream *stream, const str
     DMUS_IO_TRACK_HEADER thdr;
     DMUS_IO_TRACK_EXTRAS_HEADER txhdr = {0};
     HRESULT hr;
-    DMUS_PRIVATE_SEGMENT_TRACK *item;
+    struct track_entry *item;
 
     TRACE("Parsing track form in %p: %s\n", stream, debugstr_chunk(riff));
 
@@ -685,7 +712,7 @@ static HRESULT parse_track_form(struct segment *This, IStream *stream, const str
     if (FAILED(hr))
         goto done;
 
-    item = LIST_ENTRY(list_tail(&This->Tracks), DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    item = LIST_ENTRY(list_tail(&This->tracks), struct track_entry, entry);
     item->flags = txhdr.dwFlags;
 
 done:
@@ -892,7 +919,7 @@ static struct segment *segment_create(void)
     dmobject_init(&obj->dmobj, &CLSID_DirectMusicSegment, (IUnknown *)&obj->IDirectMusicSegment8_iface);
     obj->dmobj.IDirectMusicObject_iface.lpVtbl = &segment_object_vtbl;
     obj->dmobj.IPersistStream_iface.lpVtbl = &segment_persist_stream_vtbl;
-    list_init (&obj->Tracks);
+    list_init(&obj->tracks);
 
     return obj;
 }

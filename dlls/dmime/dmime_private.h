@@ -73,13 +73,6 @@ extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSo
 /*****************************************************************************
  * Auxiliary definitions
  */
-typedef struct _DMUS_PRIVATE_SEGMENT_TRACK {
-  struct list entry; /* for listing elements */
-  DWORD dwGroupBits;
-  DWORD flags;
-  IDirectMusicTrack* pTrack;
-} DMUS_PRIVATE_SEGMENT_TRACK, *LPDMUS_PRIVATE_SEGMENT_TRACK;
-
 typedef struct _DMUS_PRIVATE_TEMPO_ITEM {
   struct list entry; /* for listing elements */
   DMUS_IO_TEMPO_ITEM item;
