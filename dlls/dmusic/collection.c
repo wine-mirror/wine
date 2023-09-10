@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 struct instrument_entry
 {
     struct list entry;
+    DWORD patch;
     DMUS_OBJECTDESC desc;
     IDirectMusicInstrument *instrument;
 };
@@ -176,15 +177,12 @@ static HRESULT WINAPI collection_GetInstrument(IDirectMusicCollection *iface,
 {
     struct collection *This = impl_from_IDirectMusicCollection(iface);
     struct instrument_entry *entry;
-    DWORD inst_patch;
-    HRESULT hr;
 
     TRACE("(%p, %lu, %p)\n", iface, patch, instrument);
 
     LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
     {
-        if (FAILED(hr = IDirectMusicInstrument_GetPatch(entry->instrument, &inst_patch))) return hr;
-        if (patch == inst_patch)
+        if (patch == entry->patch)
         {
             *instrument = entry->instrument;
             IDirectMusicInstrument_AddRef(entry->instrument);
@@ -202,14 +200,13 @@ static HRESULT WINAPI collection_EnumInstrument(IDirectMusicCollection *iface,
 {
     struct collection *This = impl_from_IDirectMusicCollection(iface);
     struct instrument_entry *entry;
-    HRESULT hr;
 
     TRACE("(%p, %ld, %p, %p, %ld)\n", iface, index, patch, name, name_length);
 
     LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
     {
         if (index--) continue;
-        if (FAILED(hr = IDirectMusicInstrument_GetPatch(entry->instrument, patch))) return hr;
+        *patch = entry->patch;
         if (name) lstrcpynW(name, entry->desc.wszName, name_length);
         return S_OK;
     }
@@ -239,6 +236,7 @@ static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct 
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
             if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
             hr = instrument_create_from_chunk(stream, &chunk, This, &entry->desc, &entry->instrument);
+            if (SUCCEEDED(hr)) hr = IDirectMusicInstrument_GetPatch(entry->instrument, &entry->patch);
             if (SUCCEEDED(hr)) list_add_tail(&This->instruments, &entry->entry);
             else free(entry);
             break;

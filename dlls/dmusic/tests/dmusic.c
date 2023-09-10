@@ -1184,7 +1184,7 @@ static void test_download_instrument(void)
     static const LARGE_INTEGER zero = {0};
     IDirectMusicDownloadedInstrument *downloaded;
     IDirectMusicCollection *collection;
-    IDirectMusicInstrument *instrument;
+    IDirectMusicInstrument *instrument, *tmp_instrument;
     IPersistStream *persist;
     IDirectMusicPort *port;
     IDirectMusic *dmusic;
@@ -1299,6 +1299,22 @@ static void test_download_instrument(void)
 
     hr = IDirectMusicCollection_GetInstrument(collection, 0x1234, &instrument);
     ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicInstrument_GetPatch(instrument, &patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(patch == 0x1234, "got %#lx\n", patch);
+    hr = IDirectMusicInstrument_SetPatch(instrument, 0x4321);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicInstrument_GetPatch(instrument, &patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(patch == 0x4321, "got %#lx\n", patch);
+
+    hr = IDirectMusicCollection_GetInstrument(collection, 0x1234, &tmp_instrument);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(instrument == tmp_instrument, "got %p\n", tmp_instrument);
+    hr = IDirectMusicInstrument_GetPatch(tmp_instrument, &patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(patch == 0x4321, "got %#lx\n", patch);
+    IDirectMusicInstrument_Release(tmp_instrument);
 
     check_interface(instrument, &IID_IDirectMusicObject, FALSE);
     check_interface(instrument, &IID_IDirectMusicDownload, FALSE);
