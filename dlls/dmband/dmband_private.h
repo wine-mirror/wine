@@ -47,20 +47,6 @@
 extern HRESULT create_dmband(REFIID riid, void **ret_iface);
 extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
 
-
-/*****************************************************************************
- * Auxiliary definitions
- */
-/* i don't like M$'s idea about two different band item headers, so behold: universal one */
-typedef struct _DMUS_PRIVATE_BAND_ITEM_HEADER {
-	DWORD dwVersion; /* 1 or 2 */
-	/* v.1 */
-	MUSIC_TIME lBandTime;
-	/* v.2 */
-	MUSIC_TIME lBandTimeLogical;
-	MUSIC_TIME lBandTimePhysical;
-} DMUS_PRIVATE_BAND_ITEM_HEADER;
-
 /*****************************************************************************
  * Misc.
  */

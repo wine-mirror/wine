@@ -25,7 +25,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 struct band_entry
 {
     struct list entry;
-    DMUS_PRIVATE_BAND_ITEM_HEADER head;
+    DMUS_IO_BAND_ITEM_HEADER2 head;
     IDirectMusicBand *band;
 };
 
@@ -331,170 +331,94 @@ static const IDirectMusicTrack8Vtbl band_track_vtbl =
     band_track_Join,
 };
 
-static HRESULT load_band(struct band_track *This, IStream *pClonedStream,
-        IDirectMusicBand **ppBand, DMUS_PRIVATE_BAND_ITEM_HEADER *pHeader)
+static HRESULT parse_lbnd_list(struct band_track *This, IStream *stream, struct chunk_entry *parent)
 {
-  HRESULT hr = E_FAIL;
-  IPersistStream* pPersistStream = NULL;
-  
-  hr = CoCreateInstance (&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicBand, (LPVOID*) ppBand);
-  if (FAILED(hr)) {
-    ERR(": could not create object\n");
-    return hr;
-  }
-  /* acquire PersistStream interface */
-  hr = IDirectMusicBand_QueryInterface (*ppBand, &IID_IPersistStream, (LPVOID*) &pPersistStream);
-  if (FAILED(hr)) {
-    ERR(": could not acquire IPersistStream\n");
-    return hr;
-  }
-  /* load */
-  hr = IPersistStream_Load (pPersistStream, pClonedStream);
-  if (FAILED(hr)) {
-    ERR(": failed to load object\n");
-    return hr;
-  }
-  
-  /* release all loading-related stuff */
-  IPersistStream_Release (pPersistStream);
+    struct chunk_entry chunk = {.parent = parent};
+    DMUS_IO_BAND_ITEM_HEADER2 header2;
+    struct band_entry *entry;
+    IDirectMusicBand *band;
+    HRESULT hr;
 
-  /*
-   * @TODO insert pBand into This
-   */
-  if (SUCCEEDED(hr))
-  {
-      struct band_entry *entry;
-      if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
-      entry->head = *pHeader;
-      entry->band = *ppBand;
-      IDirectMusicBand_AddRef(*ppBand);
-      list_add_tail(&This->bands, &entry->entry);
-  }
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case DMUS_FOURCC_BANDITEM_CHUNK:
+        {
+            DMUS_IO_BAND_ITEM_HEADER header;
 
-  return S_OK;
+            if (SUCCEEDED(hr = stream_chunk_get_data(stream, &chunk, &header, sizeof(header))))
+            {
+                header2.lBandTimeLogical = header.lBandTime;
+                header2.lBandTimePhysical = header.lBandTime;
+            }
+
+            break;
+        }
+
+        case DMUS_FOURCC_BANDITEM_CHUNK2:
+            hr = stream_chunk_get_data(stream, &chunk, &header2, sizeof(header2));
+            break;
+
+        case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_BAND_FORM):
+        {
+            IPersistStream *persist;
+
+            if (FAILED(hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IDirectMusicBand, (void **)&band)))
+                break;
+
+            if (SUCCEEDED(hr = IDirectMusicBand_QueryInterface(band, &IID_IPersistStream, (void **)&persist)))
+            {
+                if (SUCCEEDED(hr = stream_reset_chunk_start(stream, &chunk)))
+                    hr = IPersistStream_Load(persist, stream);
+                IPersistStream_Release(persist);
+            }
+
+            break;
+        }
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    if (FAILED(hr)) return hr;
+
+    if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
+    entry->head = header2;
+    entry->band = band;
+    IDirectMusicBand_AddRef(band);
+    list_add_tail(&This->bands, &entry->entry);
+
+    return S_OK;
 }
 
-static HRESULT parse_bands_list(struct band_track *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_lbdl_list(struct band_track *This, IStream *stream, struct chunk_entry *parent)
 {
-  HRESULT hr = E_FAIL;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
 
-  IDirectMusicBand* pBand = NULL;
-  DMUS_PRIVATE_BAND_ITEM_HEADER header;
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_BAND_LIST):
+            hr = parse_lbnd_list(This, stream, &chunk);
+            break;
 
-  memset(&header, 0, sizeof header);
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
 
-  if (pChunk->fccID != DMUS_FOURCC_BANDS_LIST) {
-    ERR_(dmfile)(": %s chunk should be a BANDS list\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
-
-  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
-  ListCount[0] = 0;
-
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case FOURCC_LIST: {
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[1] = 0;
-      do {
-	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-	switch (Chunk.fccID) { 
-	case DMUS_FOURCC_BANDITEM_CHUNK: {
-	  DMUS_IO_BAND_ITEM_HEADER tmp_header;
-	  TRACE_(dmfile)(": Band Item chunk v1\n");
-	  
-	  IStream_Read (pStm, &tmp_header, sizeof(DMUS_IO_BAND_ITEM_HEADER), NULL);
-          TRACE_(dmfile)(" - lBandTime: %lu\n", tmp_header.lBandTime);
-
-	  header.dwVersion = 1;
-	  header.lBandTime = tmp_header.lBandTime;
-	  break;
-	}
-	case DMUS_FOURCC_BANDITEM_CHUNK2: { 
-	  DMUS_IO_BAND_ITEM_HEADER2 tmp_header2;
-	  TRACE_(dmfile)(": Band Item chunk v2\n");
-	  
-	  IStream_Read (pStm, &tmp_header2, sizeof(DMUS_IO_BAND_ITEM_HEADER2), NULL);
-          TRACE_(dmfile)(" - lBandTimeLogical: %lu\n", tmp_header2.lBandTimeLogical);
-          TRACE_(dmfile)(" - lBandTimePhysical: %lu\n", tmp_header2.lBandTimePhysical);
-
-	  header.dwVersion = 2;
-	  header.lBandTimeLogical = tmp_header2.lBandTimeLogical;
-	  header.lBandTimePhysical = tmp_header2.lBandTimePhysical;
-	  break;
-	}
-	case FOURCC_RIFF: { 
-	  IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-	  TRACE_(dmfile)(": RIFF chunk of type %s\n", debugstr_fourcc(Chunk.fccID));
-	  StreamSize = Chunk.dwSize - sizeof(FOURCC);
-	  switch (Chunk.fccID) {
-	  case DMUS_FOURCC_BAND_FORM: {
-	    ULARGE_INTEGER liOrigPos;
-	    TRACE_(dmfile)(": BAND RIFF\n");
-
-	    liMove.QuadPart = 0;
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, &liOrigPos);
-
-	    liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-
-            hr = load_band(This, pStm, &pBand, &header);
-	    if (FAILED(hr)) {
-	      ERR(": could not load track\n");
-	      return hr;
-	    }
-	    liMove.QuadPart = (LONGLONG)liOrigPos.QuadPart;
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_SET, NULL);
-	    
-	    IDirectMusicTrack_Release(pBand); pBand = NULL; /* now we can release at as it inserted */
-	    
-	    /** now safe move the cursor */
-	    liMove.QuadPart = StreamSize;
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	    break;
-	  }
-	  default: {
-	    TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	    liMove.QuadPart = StreamSize;
-	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	    break;						
-	  }
-	  }
-	  break;
-	}
-	default: {
-	  TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	  liMove.QuadPart = Chunk.dwSize;
-	  IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	  break;						
-	 }
-	}
-	TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
-      } while (ListCount[1] < ListSize[1]);
-      break;
+        if (FAILED(hr)) break;
     }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
 
-  return S_OK;
+    return S_OK;
 }
 
 static HRESULT parse_bandtrack_form(struct band_track *This, DMUS_PRIVATE_CHUNK *pChunk,
@@ -560,8 +484,12 @@ static HRESULT parse_bandtrack_form(struct band_track *This, DMUS_PRIVATE_CHUNK 
 	  break;
 	}
 	case DMUS_FOURCC_BANDS_LIST: {
+      static const LARGE_INTEGER zero = {0};
+      struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
 	  TRACE_(dmfile)(": TRACK list\n");
-          hr = parse_bands_list(This, &Chunk, pStm);
+      IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
+      chunk.offset.QuadPart -= 12;
+      hr = parse_lbdl_list(This, pStm, &chunk);
 	  if (FAILED(hr)) return hr;
 	  break;
 	}
