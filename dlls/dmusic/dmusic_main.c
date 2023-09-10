@@ -165,11 +165,6 @@ void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale) {
 	pLocale->ulBank |= (dwPatch & F_INSTRUMENT_DRUMS); /* get drum bit */
 }
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-int even_or_odd (DWORD number) {
-	return (number & 0x1); /* basically, check if bit 0 is set ;) */
-}
-
 /* generic flag-dumping function */
 static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
 	char buffer[128] = "", *ptr = &buffer[0];

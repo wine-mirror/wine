@@ -44,7 +44,6 @@ struct collection
     LONG ref;
 
     IStream *pStm; /* stream from which we load collection and later instruments */
-    CHAR *szCopyright; /* FIXME: should probably be placed somewhere else */
     DLSHEADER *pHeader;
 
     struct pool *pool;
@@ -277,9 +276,10 @@ static const IDirectMusicObjectVtbl collection_object_vtbl =
 static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
         IStream *stream)
 {
+    struct chunk_entry dls_chunk = {0};
     struct collection *This = impl_from_IPersistStream(iface);
     DMUS_PRIVATE_CHUNK chunk;
-    DWORD StreamSize, StreamCount, ListSize[2], ListCount[2];
+    DWORD StreamSize, StreamCount;
     LARGE_INTEGER liMove; /* used when skipping chunks */
 
     IStream_AddRef(stream); /* add count for later references */
@@ -307,6 +307,21 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
         return E_FAIL;
     }
 
+    dls_chunk.id = FOURCC_RIFF;
+    dls_chunk.size = chunk.dwSize;
+    dls_chunk.type = chunk.fccID;
+    liMove.QuadPart = 0;
+    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dls_chunk.offset);
+    dls_chunk.offset.QuadPart -= 12;
+    if (FAILED(dmobj_parsedescriptor(stream, &dls_chunk, &This->dmobj.desc,
+            DMUS_OBJ_NAME_INFO|DMUS_OBJ_VERSION|DMUS_OBJ_OBJECT|DMUS_OBJ_GUID_DLID)))
+    {
+        liMove.QuadPart = StreamSize;
+        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
+        return E_FAIL;
+    }
+    stream_reset_chunk_data(stream, &dls_chunk);
+
     TRACE_(dmfile)(": collection form\n");
     do {
         IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
@@ -317,18 +332,6 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
                 TRACE_(dmfile)(": collection header chunk\n");
                 This->pHeader = calloc(1, chunk.dwSize);
                 IStream_Read(stream, This->pHeader, chunk.dwSize, NULL);
-                break;
-            }
-            case FOURCC_DLID: {
-                TRACE_(dmfile)(": DLID (GUID) chunk\n");
-                This->dmobj.desc.dwValidData |= DMUS_OBJ_OBJECT;
-                IStream_Read(stream, &This->dmobj.desc.guidObject, chunk.dwSize, NULL);
-                break;
-            }
-            case FOURCC_VERS: {
-                TRACE_(dmfile)(": version chunk\n");
-                This->dmobj.desc.dwValidData |= DMUS_OBJ_VERSION;
-                IStream_Read(stream, &This->dmobj.desc.vVersion, chunk.dwSize, NULL);
                 break;
             }
             case FOURCC_PTBL: {
@@ -344,85 +347,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
             case FOURCC_LIST: {
                 IStream_Read(stream, &chunk.fccID, sizeof(FOURCC), NULL);
                 TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(chunk.fccID));
-                ListSize[0] = chunk.dwSize - sizeof(FOURCC);
-                ListCount[0] = 0;
                 switch (chunk.fccID) {
-                    case DMUS_FOURCC_INFO_LIST: {
-                        TRACE_(dmfile)(": INFO list\n");
-                        do {
-                            IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
-                            ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunk.dwSize;
-                            TRACE_(dmfile)(": %s chunk (size = %#04lx)", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-                            switch (chunk.fccID) {
-                                case mmioFOURCC('I','N','A','M'): {
-                                    CHAR szName[DMUS_MAX_NAME];
-                                    TRACE_(dmfile)(": name chunk\n");
-                                    This->dmobj.desc.dwValidData |= DMUS_OBJ_NAME;
-                                    IStream_Read(stream, szName, chunk.dwSize, NULL);
-                                    MultiByteToWideChar(CP_ACP, 0, szName, -1, This->dmobj.desc.wszName, DMUS_MAX_NAME);
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        liMove.QuadPart = 1;
-                                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    }
-                                    break;
-                                }
-                                case mmioFOURCC('I','A','R','T'): {
-                                    TRACE_(dmfile)(": artist chunk (ignored)\n");
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        chunk.dwSize++;
-                                    }
-                                    liMove.QuadPart = chunk.dwSize;
-                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    break;
-                                }
-                                case mmioFOURCC('I','C','O','P'): {
-                                    TRACE_(dmfile)(": copyright chunk\n");
-                                    This->szCopyright = calloc(1, chunk.dwSize);
-                                    IStream_Read(stream, This->szCopyright, chunk.dwSize, NULL);
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        liMove.QuadPart = 1;
-                                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    }
-                                    break;
-                                }
-                                case mmioFOURCC('I','S','B','J'): {
-                                    TRACE_(dmfile)(": subject chunk (ignored)\n");
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        chunk.dwSize++;
-                                    }
-                                    liMove.QuadPart = chunk.dwSize;
-                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    break;
-                                }
-                                case mmioFOURCC('I','C','M','T'): {
-                                    TRACE_(dmfile)(": comment chunk (ignored)\n");
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        chunk.dwSize++;
-                                    }
-                                    liMove.QuadPart = chunk.dwSize;
-                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    break;
-                                }
-                                default: {
-                                    TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-                                    if (even_or_odd(chunk.dwSize)) {
-                                        ListCount[0]++;
-                                        chunk.dwSize++;
-                                    }
-                                    liMove.QuadPart = chunk.dwSize;
-                                    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                                    break;
-                                }
-                            }
-                            TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-                        } while (ListCount[0] < ListSize[0]);
-                        break;
-                    }
                     case FOURCC_WVPL: {
                         TRACE_(dmfile)(": wave pool list (mark & skip)\n");
                         liMove.QuadPart = chunk.dwSize - sizeof(FOURCC);

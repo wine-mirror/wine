@@ -92,6 +92,7 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
    DMUS_OBJ_NAME is 'UNAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INAM   0x1000     /* 'INAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INFO   0x2000     /* 'INAM' chunk in INFO list */
+#define DMUS_OBJ_GUID_DLID   0x4000     /* 'dlid' chunk instead of 'guid' */
 
 /* 'DMRF' (reference list) helper */
 HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,

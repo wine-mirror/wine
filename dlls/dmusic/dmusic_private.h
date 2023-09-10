@@ -211,8 +211,6 @@ extern DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale);
 /* MIDILOCALE from dwPatch */
 extern void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale);
 
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number);
 /* Dump whole DMUS_PORTPARAMS struct */
 extern void dump_DMUS_PORTPARAMS(LPDMUS_PORTPARAMS params);
 
