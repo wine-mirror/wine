@@ -3502,30 +3502,21 @@ static void test_sequence_track(void)
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&note);
     ok(!ret, "got %#lx\n", ret);
-    if (note->dwType == DMUS_PMSGT_NOTE)
-    {
     check_dmus_note_pmsg(note, 0, 0, 500, 60, 120);
-    }
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&note);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     check_dmus_note_pmsg(note, 1000, 1, 200, 50, 100);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)note);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     ret = test_tool_wait_message(tool, 500, &msg);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     IDirectMusicSegment_Release(segment);
 

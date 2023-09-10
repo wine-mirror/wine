@@ -108,13 +108,96 @@ static HRESULT WINAPI sequence_track_EndPlay(IDirectMusicTrack8 *iface, void *pS
 	return S_OK;
 }
 
-static HRESULT WINAPI sequence_track_Play(IDirectMusicTrack8 *iface, void *pStateData,
-        MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags,
-        IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
+static HRESULT WINAPI sequence_track_Play(IDirectMusicTrack8 *iface, void *state_data,
+        MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD segment_flags,
+        IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state, DWORD track_id)
 {
-        struct sequence_track *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
-	return S_OK;
+    struct sequence_track *This = impl_from_IDirectMusicTrack8(iface);
+    IDirectMusicGraph *graph;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("(%p, %p, %ld, %ld, %ld, %#lx, %p, %p, %ld)\n", This, state_data, start_time, end_time,
+            time_offset, segment_flags, performance, segment_state, track_id);
+
+    if (start_time != 0) FIXME("start_time %ld not implemented\n", start_time);
+    if (end_time != -1) FIXME("end_time %ld not implemented\n", end_time);
+    if (time_offset != 0) FIXME("time_offset %ld not implemented\n", time_offset);
+    if (segment_flags) FIXME("segment_flags %#lx not implemented\n", segment_flags);
+    if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
+
+    if (FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
+            &IID_IDirectMusicGraph, (void **)&graph)))
+        return hr;
+
+    for (i = 0; SUCCEEDED(hr) &&i < This->count; i++)
+    {
+        DMUS_IO_SEQ_ITEM *item = This->items + i;
+        DMUS_NOTE_PMSG *msg;
+
+        if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
+                (DMUS_PMSG **)&msg)))
+            break;
+
+        msg->mtTime = item->mtTime;
+        msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+        msg->dwPChannel = item->dwPChannel;
+        msg->dwVirtualTrackID = track_id;
+        msg->dwType = DMUS_PMSGT_NOTE;
+        msg->dwGroupID = 1;
+        msg->mtDuration = item->mtDuration;
+        msg->wMusicValue = item->bByte1;
+        msg->nOffset = item->nOffset;
+        msg->bVelocity = item->bByte2;
+        msg->bFlags = 1;
+        msg->bMidiValue = item->bByte1;
+
+        if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
+                || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))
+        {
+            IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)msg);
+            break;
+        }
+    }
+
+    for (i = 0; SUCCEEDED(hr) &&i < This->curve_count; i++)
+    {
+        DMUS_IO_CURVE_ITEM *item = This->curve_items + i;
+        DMUS_CURVE_PMSG *msg;
+
+        if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
+                (DMUS_PMSG **)&msg)))
+            break;
+
+        msg->mtTime = item->mtStart;
+        msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+        msg->dwPChannel = item->dwPChannel;
+        msg->dwVirtualTrackID = track_id;
+        msg->dwType = DMUS_PMSGT_CURVE;
+        msg->mtDuration = item->mtDuration;
+        msg->mtOriginalStart = item->mtStart;
+        msg->mtResetDuration = item->mtResetDuration;
+        msg->nStartValue = item->nStartValue;
+        msg->nEndValue = item->nEndValue;
+        msg->nResetValue = item->nResetValue;
+        msg->nOffset = item->nOffset;
+        msg->bType = item->bType;
+        msg->bCurveShape = item->bCurveShape;
+        msg->bCCData = item->bCCData;
+        msg->bFlags = item->bFlags;
+        msg->wParamType = item->wParamType;
+        msg->wMergeIndex = item->wMergeIndex;
+
+        if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
+                || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))
+        {
+            IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)msg);
+            break;
+        }
+    }
+
+    IDirectMusicGraph_Release(graph);
+    return hr;
 }
 
 static HRESULT WINAPI sequence_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type,
