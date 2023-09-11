@@ -4303,6 +4303,100 @@ static void test_notifyevent(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_changed3ddevice(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biCompression = BI_RGB,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    struct presenter presenter =
+    {
+        .IVMRSurfaceAllocator9_iface.lpVtbl = &allocator_vtbl,
+        .IVMRImagePresenter9_iface.lpVtbl = &presenter_vtbl,
+        .refcount = 1,
+        .accept_flags = VMR9AllocFlag_TextureSurface,
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IFilterGraph2 *graph = create_graph();
+    IVMRSurfaceAllocatorNotify9 *notify;
+    IDirect3DDevice9 *device, *device2;
+    RECT rect = {0, 0, 640, 480};
+    struct testfilter source;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    testfilter_init(&source);
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    if (!(device = create_device(window)))
+    {
+        IBaseFilter_Release(filter);
+        DestroyWindow(window);
+        return;
+    }
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+    presenter.notify = notify;
+
+    hr = IVMRSurfaceAllocatorNotify9_AdviseSurfaceAllocator(notify, 0xabacab,
+            &presenter.IVMRSurfaceAllocator9_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Direct3D does not support video rendering.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    device2 = create_device(window);
+    ok(device2 != NULL, "Couldn't create device\n");
+
+    ok(presenter.got_TerminateDevice == 0, "got %d\n", presenter.got_TerminateDevice);
+
+    hr = IVMRSurfaceAllocatorNotify9_ChangeD3DDevice(notify, device2, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(presenter.got_TerminateDevice == 1, "got %d\n", presenter.got_TerminateDevice);
+
+    IDirect3DDevice9_Release(device2);
+
+out:
+    IPin_Release(pin);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IVMRSurfaceAllocatorNotify9_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -4340,6 +4434,7 @@ START_TEST(vmr9)
     test_mixing_prefs();
     test_unconnected_eos();
     test_notifyevent();
+    test_changed3ddevice();
 
     CoUninitialize();
 }
