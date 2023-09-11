@@ -541,24 +541,12 @@ static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, voi
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLRect_iface;
-    }else if(IsEqualGUID(&IID_IHTMLRect, riid)) {
-        *ppv = &This->IHTMLRect_iface;
-    }else if (IsEqualGUID(&IID_IHTMLRect2, riid)) {
-        *ppv = &This->IHTMLRect2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLRect_AddRef(IHTMLRect *iface)
@@ -835,6 +823,18 @@ static inline HTMLRect *HTMLRect_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLRect, dispex);
 }
 
+static void *HTMLRect_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLRect, riid))
+        return &This->IHTMLRect_iface;
+    if(IsEqualGUID(&IID_IHTMLRect2, riid))
+        return &This->IHTMLRect2_iface;
+
+    return NULL;
+}
+
 static void HTMLRect_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLRect *This = HTMLRect_from_DispatchEx(dispex);
@@ -861,6 +861,7 @@ void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 static const dispex_static_data_vtbl_t HTMLRect_dispex_vtbl = {
+    .query_interface  = HTMLRect_query_interface,
     .destructor       = HTMLRect_destructor,
     .traverse         = HTMLRect_traverse,
     .unlink           = HTMLRect_unlink
