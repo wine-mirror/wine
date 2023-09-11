@@ -38,28 +38,16 @@ static inline HTMLDOMAttribute *impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *i
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_QueryInterface(IHTMLDOMAttribute *iface,
-                                                 REFIID riid, void **ppv)
+                                                      REFIID riid, void **ppv)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLDOMAttribute_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMAttribute, riid)) {
-        *ppv = &This->IHTMLDOMAttribute_iface;
-    }else if(IsEqualGUID(&IID_IHTMLDOMAttribute2, riid)) {
-        *ppv = &This->IHTMLDOMAttribute2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("%s not supported\n", debugstr_mshtml_guid(riid));
-        *ppv =  NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLDOMAttribute_AddRef(IHTMLDOMAttribute *iface)
@@ -477,6 +465,18 @@ static inline HTMLDOMAttribute *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, dispex);
 }
 
+static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLDOMAttribute, riid))
+        return &This->IHTMLDOMAttribute_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMAttribute2, riid))
+        return &This->IHTMLDOMAttribute2_iface;
+
+    return NULL;
+}
+
 static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
@@ -499,6 +499,7 @@ static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
+    .query_interface  = HTMLDOMAttribute_query_interface,
     .destructor       = HTMLDOMAttribute_destructor,
     .traverse         = HTMLDOMAttribute_traverse,
     .unlink           = HTMLDOMAttribute_unlink
