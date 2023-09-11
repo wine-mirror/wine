@@ -1820,8 +1820,8 @@ static void test_thread_context(void)
     ok( context.SegDs == LOWORD(expect.SegDs), "wrong SegDs %08lx/%08lx\n", context.SegDs, expect.SegDs );
     ok( context.SegEs == LOWORD(expect.SegEs), "wrong SegEs %08lx/%08lx\n", context.SegEs, expect.SegEs );
     ok( context.SegFs == LOWORD(expect.SegFs), "wrong SegFs %08lx/%08lx\n", context.SegFs, expect.SegFs );
-    ok( context.SegGs == LOWORD(expect.SegGs), "wrong SegGs %08lx/%08lx\n", context.SegGs, expect.SegGs );
-    ok( context.SegSs == LOWORD(expect.SegSs), "wrong SegSs %08lx/%08lx\n", context.SegSs, expect.SegGs );
+    if (LOWORD(expect.SegGs)) ok( context.SegGs == LOWORD(expect.SegGs), "wrong SegGs %08lx/%08lx\n", context.SegGs, expect.SegGs );
+    ok( context.SegSs == LOWORD(expect.SegSs), "wrong SegSs %08lx/%08lx\n", context.SegSs, expect.SegSs );
 
     ok( LOWORD(context.FloatSave.ControlWord) == LOWORD(expect.x87_control),
             "wrong x87 control word %#lx/%#lx.\n", context.FloatSave.ControlWord, expect.x87_control );
@@ -3106,9 +3106,9 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     ok( context->SegSs == ss, "%u: ss %#x does not match %#x\n", entry, context->SegSs, ss );
     ok( context->SegDs == context->SegSs,
         "%u: ds %#x does not match ss %#x\n", entry, context->SegDs, context->SegSs );
-    todo_wine ok( context->SegEs == context->SegSs,
+    ok( context->SegEs == context->SegSs,
         "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
-    todo_wine ok( context->SegGs == context->SegSs,
+    ok( context->SegGs == context->SegSs,
         "%u: gs %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
     todo_wine ok( context->SegFs && context->SegFs != context->SegSs,
         "%u: got fs %#x\n", entry, context->SegFs );
@@ -3441,14 +3441,12 @@ static void test_exceptions(void)
     ok( ctx.SegDs == ds, "wrong ds %04x / %04x\n", ctx.SegDs, ds );
     ok( ctx.SegEs == es, "wrong es %04x / %04x\n", ctx.SegEs, es );
     ok( ctx.SegFs == fs, "wrong fs %04x / %04x\n", ctx.SegFs, fs );
-    ok( ctx.SegGs == gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
+    ok( ctx.SegGs == gs || !gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
     ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
-    todo_wine ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
-    todo_wine ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+    ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+    ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
     ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
-    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
-    if (ctx.SegDs == ctx.SegSs)  /* FIXME: remove once Wine is fixed */
-    {
+    ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
     ctx.SegDs = 0;
     ctx.SegEs = ctx.SegFs;
     ctx.SegFs = ctx.SegSs;
@@ -3464,13 +3462,12 @@ static void test_exceptions(void)
     ok( ctx.SegDs == ds, "wrong ds %04x / %04x\n", ctx.SegDs, ds );
     ok( ctx.SegEs == es, "wrong es %04x / %04x\n", ctx.SegEs, es );
     ok( ctx.SegFs == fs, "wrong fs %04x / %04x\n", ctx.SegFs, fs );
-    ok( ctx.SegGs == gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
+    ok( ctx.SegGs == gs || !gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
     ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
     ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
     ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
     ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
-    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
-    }
+    ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
 }
 
 static DWORD WINAPI simd_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
@@ -4000,10 +3997,10 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                     USHORT ss;
                     __asm__( "movw %%ss,%0" : "=r" (ss) );
                     ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
-                    todo_wine ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
-                    todo_wine ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+                    ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+                    ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
                     ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
-                    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+                    ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
                     ctx.SegSs = 0;
                     ctx.SegDs = 0;
                     ctx.SegEs = ctx.SegFs;
@@ -4269,7 +4266,7 @@ static void test_thread_context(void)
     COMPARE( SegDs );
     COMPARE( SegEs );
     COMPARE( SegFs );
-    COMPARE( SegGs );
+    if (expect.SegGs) COMPARE( SegGs );
     COMPARE( SegSs );
 
     /* AMD CPUs don't save the opcode or data pointer if no exception is

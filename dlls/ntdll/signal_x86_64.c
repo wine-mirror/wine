@@ -559,10 +559,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
                      context->R12, context->R13, context->R14, context->R15 );
     }
 
-    /* Legends of Runeterra depends on having SegDs == SegSs in an exception
-     * handler. */
-    context->SegDs = context->SegSs;
-
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
 
