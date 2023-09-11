@@ -7383,22 +7383,12 @@ static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
 
-    TRACE("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &token_list->IWineDOMTokenList_iface;
-    }else if(IsEqualGUID(&IID_IWineDOMTokenList, riid)) {
-        *ppv = &token_list->IWineDOMTokenList_iface;
-    }else if(dispex_query_interface(&token_list->dispex, riid, ppv)) {
+    if(dispex_query_interface(&token_list->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI token_list_AddRef(IWineDOMTokenList *iface)
@@ -7735,6 +7725,16 @@ static inline struct token_list *token_list_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, struct token_list, dispex);
 }
 
+static void *token_list_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    struct token_list *token_list = token_list_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IWineDOMTokenList, riid))
+        return &token_list->IWineDOMTokenList_iface;
+
+    return NULL;
+}
+
 static void token_list_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     struct token_list *token_list = token_list_from_DispatchEx(dispex);
@@ -7829,6 +7829,7 @@ static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 }
 
 static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
+    .query_interface  = token_list_query_interface,
     .destructor       = token_list_destructor,
     .traverse         = token_list_traverse,
     .unlink           = token_list_unlink,
