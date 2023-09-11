@@ -970,22 +970,12 @@ static HRESULT WINAPI DOMEvent_QueryInterface(IDOMEvent *iface, REFIID riid, voi
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        *ppv = &This->IDOMEvent_iface;
-    else if(IsEqualGUID(&IID_IDOMEvent, riid))
-        *ppv = &This->IDOMEvent_iface;
-    else if(dispex_query_interface(&This->dispex, riid, ppv))
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    else if(!This->query_interface || !(*ppv = This->query_interface(This, riid))) {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI DOMEvent_AddRef(IDOMEvent *iface)
@@ -1266,6 +1256,18 @@ static const IDOMEventVtbl DOMEventVtbl = {
 static inline DOMEvent *DOMEvent_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, DOMEvent, dispex);
+}
+
+static void *DOMEvent_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    DOMEvent *This = DOMEvent_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IDOMEvent, riid))
+        return &This->IDOMEvent_iface;
+    if(This->query_interface)
+        return This->query_interface(This, riid);
+
+    return NULL;
 }
 
 static void DOMEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -3035,6 +3037,7 @@ static void DOMStorageEvent_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t DOMEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMEvent_traverse,
     .unlink           = DOMEvent_unlink
@@ -3053,6 +3056,7 @@ static dispex_static_data_t DOMEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMUIEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMUIEvent_traverse,
     .unlink           = DOMUIEvent_unlink
@@ -3072,6 +3076,7 @@ static dispex_static_data_t DOMUIEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMouseEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMMouseEvent_traverse,
     .unlink           = DOMMouseEvent_unlink
@@ -3092,6 +3097,7 @@ static dispex_static_data_t DOMMouseEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMKeyboardEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMKeyboardEvent_traverse,
     .unlink           = DOMKeyboardEvent_unlink
@@ -3126,6 +3132,7 @@ static dispex_static_data_t DOMPageTransitionEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMCustomEvent_destructor,
     .traverse         = DOMCustomEvent_traverse,
     .unlink           = DOMCustomEvent_unlink
@@ -3145,6 +3152,7 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMMessageEvent_destructor,
     .traverse         = DOMMessageEvent_traverse,
     .unlink           = DOMMessageEvent_unlink
@@ -3164,6 +3172,7 @@ static dispex_static_data_t DOMMessageEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMProgressEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMProgressEvent_traverse,
     .unlink           = DOMProgressEvent_unlink
@@ -3183,6 +3192,7 @@ static dispex_static_data_t DOMProgressEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
+    .query_interface  = DOMEvent_query_interface,
     .destructor       = DOMStorageEvent_destructor,
     .traverse         = DOMEvent_traverse,
     .unlink           = DOMEvent_unlink
