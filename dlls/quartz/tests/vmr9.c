@@ -4267,6 +4267,42 @@ static void test_unconnected_eos(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_notifyevent(void)
+{
+    IFilterGraph2 *graph = create_graph();
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IVMRSurfaceAllocatorNotify9 *notify;
+    IMediaEvent *eventsrc;
+    unsigned int ret;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IFilterGraph2_AddFilter(graph, filter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = check_event_code(eventsrc, 0, 0x12345678, 0x9ABC, 0xDEF0);
+    ok(ret == 0, "Got %u custom events.\n", ret);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IVMRSurfaceAllocatorNotify9_NotifyEvent(notify, 0x12345678, 0x9ABC, 0xDEF0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = check_event_code(eventsrc, 0, 0x12345678, 0x9ABC, 0xDEF0);
+    ok(ret == 1, "Got %u custom events.\n", ret);
+
+    IMediaEvent_Release(eventsrc);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IVMRSurfaceAllocatorNotify9_Release(notify);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -4303,6 +4339,7 @@ START_TEST(vmr9)
     test_windowless_size();
     test_mixing_prefs();
     test_unconnected_eos();
+    test_notifyevent();
 
     CoUninitialize();
 }
