@@ -514,9 +514,8 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
     return hr;
 }
 
-static void vmr_disconnect(struct strmbase_renderer *This)
+static void deallocate_surfaces(struct quartz_vmr *filter)
 {
-    struct quartz_vmr *filter = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     DWORD i;
 
     if (filter->mode && filter->allocator && filter->presenter)
@@ -528,6 +527,12 @@ static void vmr_disconnect(struct strmbase_renderer *This)
         IVMRSurfaceAllocator9_TerminateDevice(filter->allocator, filter->cookie);
         filter->num_surfaces = 0;
     }
+}
+
+static void vmr_disconnect(struct strmbase_renderer *This)
+{
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
+    deallocate_surfaces(filter);
 }
 
 static void vmr_destroy(struct strmbase_renderer *iface)
@@ -1999,15 +2004,23 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_SetD3DDevice(IVMRSurfaceAllocat
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllocatorNotify9 *iface, IDirect3DDevice9 *device, HMONITOR monitor)
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllocatorNotify9 *iface,
+        IDirect3DDevice9 *device, HMONITOR monitor)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
 
-    FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
+    TRACE("(%p/%p)->(...).\n", iface, This);
+
     if (This->allocator_d3d9_dev)
         IDirect3DDevice9_Release(This->allocator_d3d9_dev);
     This->allocator_d3d9_dev = device;
     IDirect3DDevice9_AddRef(This->allocator_d3d9_dev);
+
+    if (This->mode && This->allocator && This->presenter)
+    {
+        deallocate_surfaces(This);
+        allocate_surfaces(This, &This->renderer.sink.pin.mt);
+    }
 
     return S_OK;
 }
