@@ -2118,9 +2118,17 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_NotifyEvent(IVMRSurfaceAllocatorNotify9 *iface, LONG code, LONG_PTR param1, LONG_PTR param2)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    IMediaEventSink *sink;
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    return E_NOTIMPL;
+    TRACE("filter %p, code %#lx, param1 %#Ix, param2 %#Ix.\n", This, code, param1, param2);
+
+    hr = IFilterGraph_QueryInterface(This->renderer.filter.graph, &IID_IMediaEventSink, (void **)&sink);
+    if (FAILED(hr))
+        return hr;
+    hr = IMediaEventSink_Notify(sink, code, param1, param2);
+    IMediaEventSink_Release(sink);
+    return hr;
 }
 
 static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
