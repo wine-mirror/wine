@@ -52,26 +52,12 @@ static HRESULT WINAPI HTMLSelectionObject_QueryInterface(IHTMLSelectionObject *i
 {
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLSelectionObject_iface;
-    }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        *ppv = &This->IHTMLSelectionObject_iface;
-    }else if(IsEqualGUID(&IID_IHTMLSelectionObject, riid)) {
-        *ppv = &This->IHTMLSelectionObject_iface;
-    }else if(IsEqualGUID(&IID_IHTMLSelectionObject2, riid)) {
-        *ppv = &This->IHTMLSelectionObject2_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLSelectionObject_AddRef(IHTMLSelectionObject *iface)
@@ -323,6 +309,18 @@ static inline HTMLSelectionObject *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLSelectionObject, dispex);
 }
 
+static void *HTMLSelectionObject_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLSelectionObject *This = impl_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLSelectionObject, riid))
+        return &This->IHTMLSelectionObject_iface;
+    if(IsEqualGUID(&IID_IHTMLSelectionObject2, riid))
+        return &This->IHTMLSelectionObject2_iface;
+
+    return NULL;
+}
+
 static void HTMLSelectionObject_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLSelectionObject *This = impl_from_DispatchEx(dispex);
@@ -347,6 +345,7 @@ static void HTMLSelectionObject_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLSelectionObject_dispex_vtbl = {
+    .query_interface  = HTMLSelectionObject_query_interface,
     .destructor       = HTMLSelectionObject_destructor,
     .traverse         = HTMLSelectionObject_traverse,
     .unlink           = HTMLSelectionObject_unlink
