@@ -1,5 +1,4 @@
-/* IDirectMusicStyle8 Implementation
- *
+/*
  * Copyright (C) 2003-2004 Rok Mandeljc
  * Copyright (C) 2003-2004 Raphael Junqueira
  *
@@ -46,27 +45,25 @@ struct style_motif {
     struct list Items;
 };
 
-/*****************************************************************************
- * IDirectMusicStyleImpl implementation
- */
-typedef struct IDirectMusicStyle8Impl {
+struct style
+{
     IDirectMusicStyle8 IDirectMusicStyle8_iface;
     struct dmobject dmobj;
     LONG ref;
     DMUS_IO_STYLE style;
     struct list motifs;
     struct list bands;
-} IDirectMusicStyle8Impl;
+};
 
-static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicStyle8(IDirectMusicStyle8 *iface)
+static inline struct style *impl_from_IDirectMusicStyle8(IDirectMusicStyle8 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicStyle8Impl, IDirectMusicStyle8_iface);
+    return CONTAINING_RECORD(iface, struct style, IDirectMusicStyle8_iface);
 }
 
 static HRESULT WINAPI style_QueryInterface(IDirectMusicStyle8 *iface, REFIID riid,
         void **ret_iface)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
 
@@ -90,7 +87,7 @@ static HRESULT WINAPI style_QueryInterface(IDirectMusicStyle8 *iface, REFIID rii
 
 static ULONG WINAPI style_AddRef(IDirectMusicStyle8 *iface)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -100,7 +97,7 @@ static ULONG WINAPI style_AddRef(IDirectMusicStyle8 *iface)
 
 static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -133,7 +130,7 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
 static HRESULT WINAPI style_GetBand(IDirectMusicStyle8 *iface, WCHAR *name,
         IDirectMusicBand **band)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
     struct style_band *sband;
     HRESULT hr;
 
@@ -168,15 +165,15 @@ static HRESULT WINAPI style_GetBand(IDirectMusicStyle8 *iface, WCHAR *name,
 static HRESULT WINAPI style_EnumBand(IDirectMusicStyle8 *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_GetDefaultBand(IDirectMusicStyle8 *iface,
         IDirectMusicBand **band)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
     FIXME("(%p, %p): stub\n", This, band);
 
     if (!band)
@@ -190,7 +187,7 @@ static HRESULT WINAPI style_GetDefaultBand(IDirectMusicStyle8 *iface,
 static HRESULT WINAPI style_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
         WCHAR *name)
 {
-    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
     const struct style_motif *motif = NULL;
     const struct list *cursor;
     unsigned int i = 0;
@@ -223,64 +220,64 @@ static HRESULT WINAPI style_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
 static HRESULT WINAPI style_GetMotif(IDirectMusicStyle8 *iface, WCHAR *pwszName,
         IDirectMusicSegment **ppSegment)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-        FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszName), ppSegment);
-        return S_FALSE;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszName), ppSegment);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI style_GetDefaultChordMap(IDirectMusicStyle8 *iface,
         IDirectMusicChordMap **ppChordMap)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p): stub\n", This, ppChordMap);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %p): stub\n", This, ppChordMap);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_EnumChordMap(IDirectMusicStyle8 *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %ld, %p): stub\n", This, dwIndex, pwszName);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_GetChordMap(IDirectMusicStyle8 *iface, WCHAR *pwszName,
         IDirectMusicChordMap **ppChordMap)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppChordMap);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %p, %p): stub\n", This, pwszName, ppChordMap);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_GetTimeSignature(IDirectMusicStyle8 *iface,
         DMUS_TIMESIGNATURE *pTimeSig)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p): stub\n", This, pTimeSig);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %p): stub\n", This, pTimeSig);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_GetEmbellishmentLength(IDirectMusicStyle8 *iface,
         DWORD dwType, DWORD dwLevel, DWORD *pdwMin, DWORD *pdwMax)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %ld, %ld, %p, %p): stub\n", This, dwType, dwLevel, pdwMin, pdwMax);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %ld, %ld, %p, %p): stub\n", This, dwType, dwLevel, pdwMin, pdwMax);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_GetTempo(IDirectMusicStyle8 *iface, double *pTempo)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p): stub\n", This, pTempo);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %p): stub\n", This, pTempo);
+    return S_OK;
 }
 
 static HRESULT WINAPI style_EnumPattern(IDirectMusicStyle8 *iface, DWORD dwIndex,
         DWORD dwPatternType, WCHAR *pwszName)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %ld, %ld, %p): stub\n", This, dwIndex, dwPatternType, pwszName);
-	return S_OK;
+    struct style *This = impl_from_IDirectMusicStyle8(iface);
+    FIXME("(%p, %ld, %ld, %p): stub\n", This, dwIndex, dwPatternType, pwszName);
+    return S_OK;
 }
 
 static const IDirectMusicStyle8Vtbl dmstyle8_vtbl = {
@@ -341,9 +338,9 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     style_IDirectMusicObject_ParseDescriptor
 };
 
-static inline IDirectMusicStyle8Impl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct style *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicStyle8Impl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct style, dmobj.IPersistStream_iface);
 }
 
 static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
@@ -595,8 +592,7 @@ static HRESULT parse_part_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
   return S_OK;
 }
 
-static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_pattern_list(struct style *This, DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
@@ -752,8 +748,7 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
   return S_OK;
 }
 
-static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_style_form(struct style *This, DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
@@ -902,7 +897,7 @@ static HRESULT parse_style_form(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHUNK
 
 static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pStm)
 {
-  IDirectMusicStyle8Impl *This = impl_from_IPersistStream(iface);
+  struct style *This = impl_from_IPersistStream(iface);
   DMUS_PRIVATE_CHUNK Chunk;
   LARGE_INTEGER liMove; /* used when skipping chunks */
   HRESULT hr;
@@ -956,21 +951,21 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 
 HRESULT create_dmstyle(REFIID lpcGUID, void **ppobj)
 {
-  IDirectMusicStyle8Impl* obj;
-  HRESULT hr;
+    struct style *obj;
+    HRESULT hr;
 
-  *ppobj = NULL;
-  if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-  obj->IDirectMusicStyle8_iface.lpVtbl = &dmstyle8_vtbl;
-  obj->ref = 1;
-  dmobject_init(&obj->dmobj, &CLSID_DirectMusicStyle, (IUnknown *)&obj->IDirectMusicStyle8_iface);
-  obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-  obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-  list_init(&obj->bands);
-  list_init(&obj->motifs);
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IDirectMusicStyle8_iface.lpVtbl = &dmstyle8_vtbl;
+    obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicStyle, (IUnknown *)&obj->IDirectMusicStyle8_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+    list_init(&obj->bands);
+    list_init(&obj->motifs);
 
-  hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
-  IDirectMusicStyle8_Release(&obj->IDirectMusicStyle8_iface);
+    hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
+    IDirectMusicStyle8_Release(&obj->IDirectMusicStyle8_iface);
 
-  return hr;
+    return hr;
 }
