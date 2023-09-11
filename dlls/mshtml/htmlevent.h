@@ -76,8 +76,6 @@ typedef struct DOMEvent {
     DispatchEx dispex;
     IDOMEvent IDOMEvent_iface;
 
-    void *(*query_interface)(struct DOMEvent*,REFIID);
-
     nsIDOMEvent *nsevent;
 
     eventid_t event_id;

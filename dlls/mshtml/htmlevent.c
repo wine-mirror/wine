@@ -1264,8 +1264,6 @@ static void *DOMEvent_query_interface(DispatchEx *dispex, REFIID riid)
 
     if(IsEqualGUID(&IID_IDOMEvent, riid))
         return &This->IDOMEvent_iface;
-    if(This->query_interface)
-        return This->query_interface(This, riid);
 
     return NULL;
 }
@@ -1437,12 +1435,13 @@ static const IDOMUIEventVtbl DOMUIEventVtbl = {
     DOMUIEvent_initUIEvent
 };
 
-static void *DOMUIEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMUIEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMUIEvent *This = DOMUIEvent_from_DOMEvent(event);
+    DOMUIEvent *This = DOMUIEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMUIEvent, riid))
         return &This->IDOMUIEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&This->event.dispex, riid);
 }
 
 static void DOMUIEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1975,14 +1974,15 @@ static DOMMouseEvent *DOMMouseEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMMouseEvent, ui_event.event);
 }
 
-static void *DOMMouseEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMMouseEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMMouseEvent *This = DOMMouseEvent_from_DOMEvent(event);
+    DOMMouseEvent *This = DOMMouseEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMMouseEvent, riid))
         return &This->IDOMMouseEvent_iface;
     if(IsEqualGUID(&IID_IDOMUIEvent, riid))
         return &This->ui_event.IDOMUIEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&This->ui_event.event.dispex, riid);
 }
 
 static void DOMMouseEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -2282,14 +2282,15 @@ static DOMKeyboardEvent *DOMKeyboardEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMKeyboardEvent, ui_event.event);
 }
 
-static void *DOMKeyboardEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMKeyboardEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMKeyboardEvent *This = DOMKeyboardEvent_from_DOMEvent(event);
+    DOMKeyboardEvent *This = DOMKeyboardEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMKeyboardEvent, riid))
         return &This->IDOMKeyboardEvent_iface;
     if(IsEqualGUID(&IID_IDOMUIEvent, riid))
         return &This->ui_event.IDOMUIEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&This->ui_event.event.dispex, riid);
 }
 
 static void DOMKeyboardEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -2391,12 +2392,13 @@ static DOMPageTransitionEvent *DOMPageTransitionEvent_from_DOMEvent(DOMEvent *ev
     return CONTAINING_RECORD(event, DOMPageTransitionEvent, event);
 }
 
-static void *DOMPageTransitionEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMPageTransitionEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMPageTransitionEvent *page_transition_event = DOMPageTransitionEvent_from_DOMEvent(event);
+    DOMPageTransitionEvent *page_transition_event = DOMPageTransitionEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IWinePageTransitionEvent, riid))
         return &page_transition_event->IWinePageTransitionEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&page_transition_event->event.dispex, riid);
 }
 
 typedef struct {
@@ -2500,12 +2502,13 @@ static DOMCustomEvent *DOMCustomEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMCustomEvent, event);
 }
 
-static void *DOMCustomEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMCustomEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMCustomEvent *custom_event = DOMCustomEvent_from_DOMEvent(event);
+    DOMCustomEvent *custom_event = DOMCustomEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMCustomEvent, riid))
         return &custom_event->IDOMCustomEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&custom_event->event.dispex, riid);
 }
 
 static void DOMCustomEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -2659,12 +2662,13 @@ static DOMMessageEvent *DOMMessageEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMMessageEvent, event);
 }
 
-static void *DOMMessageEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMMessageEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(event);
+    DOMMessageEvent *message_event = DOMMessageEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMMessageEvent, riid))
         return &message_event->IDOMMessageEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&message_event->event.dispex, riid);
 }
 
 static void DOMMessageEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -2847,12 +2851,13 @@ static DOMProgressEvent *DOMProgressEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMProgressEvent, event);
 }
 
-static void *DOMProgressEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMProgressEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMProgressEvent *This = DOMProgressEvent_from_DOMEvent(event);
+    DOMProgressEvent *This = DOMProgressEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMProgressEvent, riid))
         return &This->IDOMProgressEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&This->event.dispex, riid);
 }
 
 static void DOMProgressEvent_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -3018,12 +3023,13 @@ static DOMStorageEvent *DOMStorageEvent_from_DOMEvent(DOMEvent *event)
     return CONTAINING_RECORD(event, DOMStorageEvent, event);
 }
 
-static void *DOMStorageEvent_query_interface(DOMEvent *event, REFIID riid)
+static void *DOMStorageEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    DOMStorageEvent *storage_event = DOMStorageEvent_from_DOMEvent(event);
+    DOMStorageEvent *storage_event = DOMStorageEvent_from_DOMEvent(DOMEvent_from_DispatchEx(dispex));
+
     if(IsEqualGUID(&IID_IDOMStorageEvent, riid))
         return &storage_event->IDOMStorageEvent_iface;
-    return NULL;
+    return DOMEvent_query_interface(&storage_event->event.dispex, riid);
 }
 
 static void DOMStorageEvent_destructor(DispatchEx *dispex)
@@ -3056,7 +3062,7 @@ static dispex_static_data_t DOMEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMUIEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMUIEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMUIEvent_traverse,
     .unlink           = DOMUIEvent_unlink
@@ -3076,7 +3082,7 @@ static dispex_static_data_t DOMUIEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMouseEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMMouseEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMMouseEvent_traverse,
     .unlink           = DOMMouseEvent_unlink
@@ -3097,7 +3103,7 @@ static dispex_static_data_t DOMMouseEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMKeyboardEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMKeyboardEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMKeyboardEvent_traverse,
     .unlink           = DOMKeyboardEvent_unlink
@@ -3123,16 +3129,23 @@ static void DOMPageTransitionEvent_init_dispex_info(dispex_data_t *info, compat_
         dispex_info_add_interface(info, IWinePageTransitionEvent_tid, NULL);
 }
 
+static const dispex_static_data_vtbl_t DOMPageTransitionEvent_dispex_vtbl = {
+    .query_interface  = DOMPageTransitionEvent_query_interface,
+    .destructor       = DOMEvent_destructor,
+    .traverse         = DOMEvent_traverse,
+    .unlink           = DOMEvent_unlink
+};
+
 static dispex_static_data_t DOMPageTransitionEvent_dispex = {
     "PageTransitionEvent",
-    &DOMEvent_dispex_vtbl,
+    &DOMPageTransitionEvent_dispex_vtbl,
     DispDOMEvent_tid,
     DOMEvent_iface_tids,
     DOMPageTransitionEvent_init_dispex_info
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMCustomEvent_query_interface,
     .destructor       = DOMCustomEvent_destructor,
     .traverse         = DOMCustomEvent_traverse,
     .unlink           = DOMCustomEvent_unlink
@@ -3152,7 +3165,7 @@ static dispex_static_data_t DOMCustomEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMMessageEvent_query_interface,
     .destructor       = DOMMessageEvent_destructor,
     .traverse         = DOMMessageEvent_traverse,
     .unlink           = DOMMessageEvent_unlink
@@ -3172,7 +3185,7 @@ static dispex_static_data_t DOMMessageEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMProgressEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMProgressEvent_query_interface,
     .destructor       = DOMEvent_destructor,
     .traverse         = DOMProgressEvent_traverse,
     .unlink           = DOMProgressEvent_unlink
@@ -3192,7 +3205,7 @@ static dispex_static_data_t DOMProgressEvent_dispex = {
 };
 
 static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
-    .query_interface  = DOMEvent_query_interface,
+    .query_interface  = DOMStorageEvent_query_interface,
     .destructor       = DOMStorageEvent_destructor,
     .traverse         = DOMEvent_traverse,
     .unlink           = DOMEvent_unlink
@@ -3211,15 +3224,14 @@ static dispex_static_data_t DOMStorageEvent_dispex = {
     DOMStorageEvent_iface_tids
 };
 
-static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *(*query_interface)(DOMEvent*,REFIID),
-        nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
+static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, nsIDOMEvent *nsevent, eventid_t event_id,
+        compat_mode_t compat_mode)
 {
     DOMEvent *event = calloc(1, size);
 
     if(!event)
         return NULL;
     event->IDOMEvent_iface.lpVtbl = &DOMEventVtbl;
-    event->query_interface = query_interface;
     event->event_id = event_id;
     if(event_id != EVENTID_LAST) {
         event->type = wcsdup(event_info[event_id].name);
@@ -3246,13 +3258,12 @@ static void fill_parent_ui_event(nsIDOMEvent *nsevent, DOMUIEvent *ui_event)
 
 static DOMEvent *generic_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, NULL, nsevent, event_id, compat_mode);
+    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, nsevent, event_id, compat_mode);
 }
 
 static DOMEvent *ui_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMUIEvent *ui_event = event_ctor(sizeof(DOMUIEvent), &DOMUIEvent_dispex,
-            DOMUIEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMUIEvent *ui_event = event_ctor(sizeof(DOMUIEvent), &DOMUIEvent_dispex, nsevent, event_id, compat_mode);
     if(!ui_event) return NULL;
     ui_event->IDOMUIEvent_iface.lpVtbl = &DOMUIEventVtbl;
     ui_event->nsevent = iface;
@@ -3261,8 +3272,7 @@ static DOMEvent *ui_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t even
 
 static DOMEvent *mouse_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMMouseEvent *mouse_event = event_ctor(sizeof(DOMMouseEvent), &DOMMouseEvent_dispex,
-            DOMMouseEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMMouseEvent *mouse_event = event_ctor(sizeof(DOMMouseEvent), &DOMMouseEvent_dispex, nsevent, event_id, compat_mode);
     if(!mouse_event) return NULL;
     mouse_event->IDOMMouseEvent_iface.lpVtbl = &DOMMouseEventVtbl;
     mouse_event->nsevent = iface;
@@ -3272,8 +3282,7 @@ static DOMEvent *mouse_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t e
 
 static DOMEvent *keyboard_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMKeyboardEvent *keyboard_event = event_ctor(sizeof(DOMKeyboardEvent), &DOMKeyboardEvent_dispex,
-            DOMKeyboardEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMKeyboardEvent *keyboard_event = event_ctor(sizeof(DOMKeyboardEvent), &DOMKeyboardEvent_dispex, nsevent, event_id, compat_mode);
     if(!keyboard_event) return NULL;
     keyboard_event->IDOMKeyboardEvent_iface.lpVtbl = &DOMKeyboardEventVtbl;
     keyboard_event->nsevent = iface;
@@ -3283,8 +3292,7 @@ static DOMEvent *keyboard_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 
 static DOMEvent *page_transition_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMPageTransitionEvent *page_transition_event = event_ctor(sizeof(DOMCustomEvent), &DOMPageTransitionEvent_dispex,
-            DOMPageTransitionEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMPageTransitionEvent *page_transition_event = event_ctor(sizeof(DOMCustomEvent), &DOMPageTransitionEvent_dispex, nsevent, event_id, compat_mode);
     if(!page_transition_event) return NULL;
     page_transition_event->IWinePageTransitionEvent_iface.lpVtbl = &DOMPageTransitionEventVtbl;
     return &page_transition_event->event;
@@ -3292,8 +3300,7 @@ static DOMEvent *page_transition_event_ctor(void *iface, nsIDOMEvent *nsevent, e
 
 static DOMEvent *custom_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMCustomEvent *custom_event = event_ctor(sizeof(DOMCustomEvent), &DOMCustomEvent_dispex,
-            DOMCustomEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMCustomEvent *custom_event = event_ctor(sizeof(DOMCustomEvent), &DOMCustomEvent_dispex, nsevent, event_id, compat_mode);
     if(!custom_event) return NULL;
     custom_event->IDOMCustomEvent_iface.lpVtbl = &DOMCustomEventVtbl;
     nsIDOMCustomEvent_Release(iface);
@@ -3304,8 +3311,7 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 {
     DOMProgressEvent *progress_event;
 
-    if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &DOMProgressEvent_dispex,
-            DOMProgressEvent_query_interface, nsevent, event_id, compat_mode)))
+    if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &DOMProgressEvent_dispex, nsevent, event_id, compat_mode)))
         return NULL;
     progress_event->IDOMProgressEvent_iface.lpVtbl = &DOMProgressEventVtbl;
     progress_event->nsevent = iface;
@@ -3314,8 +3320,7 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 
 static DOMEvent *message_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex,
-            DOMMessageEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex, nsevent, event_id, compat_mode);
     if(!message_event) return NULL;
     message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;
     return &message_event->event;
@@ -3323,8 +3328,7 @@ static DOMEvent *message_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t
 
 static DOMEvent *storage_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &DOMStorageEvent_dispex,
-            DOMStorageEvent_query_interface, nsevent, event_id, compat_mode);
+    DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &DOMStorageEvent_dispex, nsevent, event_id, compat_mode);
     if(!storage_event) return NULL;
     storage_event->IDOMStorageEvent_iface.lpVtbl = &DOMStorageEventVtbl;
     return &storage_event->event;
