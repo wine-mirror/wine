@@ -94,7 +94,6 @@ struct quartz_vmr
      * windowed also as a special case of windowless. This is probably the easiest way.
      */
     VMR9Mode mode;
-    BITMAPINFOHEADER bmiheader;
 
     HMODULE hD3d9;
 
@@ -107,10 +106,13 @@ struct quartz_vmr
 
     HWND clipping_window;
 
-    LONG VideoWidth;
-    LONG VideoHeight;
     VMR9AspectRatioMode aspect_mode;
 };
+
+static const BITMAPINFOHEADER *get_filter_bitmap_header(const struct quartz_vmr *filter)
+{
+    return get_bitmap_header(&filter->renderer.sink.pin.mt);
+}
 
 static inline BOOL is_vmr9(const struct quartz_vmr *filter)
 {
@@ -251,7 +253,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     }
     data_size = IMediaSample_GetActualDataLength(sample);
 
-    bitmap_header = get_bitmap_header(&filter->renderer.sink.pin.mt);
+    bitmap_header = get_filter_bitmap_header(filter);
     width = bitmap_header->biWidth;
     height = bitmap_header->biHeight;
     depth = bitmap_header->biBitCount;
@@ -360,6 +362,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     HRESULT hr = E_FAIL;
     DWORD count = 1;
     unsigned int i;
+    const BITMAPINFOHEADER *bmiheader = get_bitmap_header(mt);
 
     static const struct
     {
@@ -392,8 +395,8 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
 
     info.Pool = D3DPOOL_DEFAULT;
     info.MinBuffers = count;
-    info.dwWidth = info.szAspectRatio.cx = info.szNativeSize.cx = filter->bmiheader.biWidth;
-    info.dwHeight = info.szAspectRatio.cy = info.szNativeSize.cy = filter->bmiheader.biHeight;
+    info.dwWidth = info.szAspectRatio.cx = info.szNativeSize.cx = bmiheader->biWidth;
+    info.dwHeight = info.szAspectRatio.cy = info.szNativeSize.cy = bmiheader->biHeight;
 
     if (!(filter->surfaces = calloc(count, sizeof(IDirect3DSurface9 *))))
         return E_OUTOFMEMORY;
@@ -402,15 +405,15 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
 
     if (!is_vmr9(filter))
     {
-        switch (filter->bmiheader.biCompression)
+        switch (bmiheader->biCompression)
         {
         case BI_RGB:
-            switch (filter->bmiheader.biBitCount)
+            switch (bmiheader->biBitCount)
             {
                 case 24: info.Format = D3DFMT_R8G8B8; break;
                 case 32: info.Format = D3DFMT_X8R8G8B8; break;
                 default:
-                    FIXME("Unhandled bit depth %u.\n", filter->bmiheader.biBitCount);
+                    FIXME("Unhandled bit depth %u.\n", bmiheader->biBitCount);
                     free(filter->surfaces);
                     return VFW_E_TYPE_NOT_ACCEPTED;
             }
@@ -422,12 +425,12 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
         case mmioFOURCC('U','Y','V','Y'):
         case mmioFOURCC('Y','U','Y','2'):
         case mmioFOURCC('Y','V','1','2'):
-            info.Format = filter->bmiheader.biCompression;
+            info.Format = bmiheader->biCompression;
             info.dwFlags = VMR9AllocFlag_OffscreenSurface;
             break;
 
         default:
-            WARN("Unhandled video compression %#lx.\n", filter->bmiheader.biCompression);
+            WARN("Unhandled video compression %#lx.\n", bmiheader->biCompression);
             free(filter->surfaces);
             return VFW_E_TYPE_NOT_ACCEPTED;
         }
@@ -495,10 +498,7 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
     HRESULT hr;
     RECT rect;
 
-    filter->bmiheader = *bitmap_header;
-    filter->VideoWidth = bitmap_header->biWidth;
-    filter->VideoHeight = bitmap_header->biHeight;
-    SetRect(&rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    SetRect(&rect, 0, 0, bitmap_header->biWidth, bitmap_header->biHeight);
     filter->window.src = rect;
 
     AdjustWindowRectEx(&rect, GetWindowLongW(window, GWL_STYLE), FALSE,
@@ -645,9 +645,10 @@ static const struct strmbase_renderer_ops renderer_ops =
 static RECT vmr_get_default_rect(struct video_window *This)
 {
     struct quartz_vmr *pVMR9 = impl_from_video_window(This);
+    const BITMAPINFOHEADER *bmiheader = get_filter_bitmap_header(pVMR9);
     static RECT defRect;
 
-    SetRect(&defRect, 0, 0, pVMR9->VideoWidth, pVMR9->VideoHeight);
+    SetRect(&defRect, 0, 0, bmiheader->biWidth, bmiheader->biHeight);
 
     return defRect;
 }
@@ -667,7 +668,7 @@ static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LON
     EnterCriticalSection(&filter->renderer.filter.stream_cs);
     device = filter->allocator_d3d9_dev;
 
-    bih = *get_bitmap_header(&filter->renderer.sink.pin.mt);
+    bih = *get_filter_bitmap_header(filter);
     bih.biSizeImage = bih.biWidth * bih.biHeight * bih.biBitCount / 8;
 
     if (!image)
@@ -1434,6 +1435,7 @@ static HRESULT WINAPI VMR7WindowlessControl_GetNativeVideoSize(IVMRWindowlessCon
         LONG *width, LONG *height, LONG *aspect_width, LONG *aspect_height)
 {
     struct quartz_vmr *filter = impl_from_IVMRWindowlessControl(iface);
+    const BITMAPINFOHEADER *bmiheader = get_filter_bitmap_header(filter);
 
     TRACE("filter %p, width %p, height %p, aspect_width %p, aspect_height %p.\n",
             filter, width, height, aspect_width, aspect_height);
@@ -1441,12 +1443,12 @@ static HRESULT WINAPI VMR7WindowlessControl_GetNativeVideoSize(IVMRWindowlessCon
     if (!width || !height)
         return E_POINTER;
 
-    *width = filter->bmiheader.biWidth;
-    *height = filter->bmiheader.biHeight;
+    *width = bmiheader->biWidth;
+    *height = bmiheader->biHeight;
     if (aspect_width)
-        *aspect_width = filter->bmiheader.biWidth;
+        *aspect_width = bmiheader->biWidth;
     if (aspect_height)
-        *aspect_height = filter->bmiheader.biHeight;
+        *aspect_height = bmiheader->biHeight;
 
     return S_OK;
 }
@@ -1634,6 +1636,7 @@ static HRESULT WINAPI VMR9WindowlessControl_GetNativeVideoSize(IVMRWindowlessCon
         LONG *width, LONG *height, LONG *aspect_width, LONG *aspect_height)
 {
     struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
+    const BITMAPINFOHEADER *bmiheader = get_filter_bitmap_header(filter);
 
     TRACE("filter %p, width %p, height %p, aspect_width %p, aspect_height %p.\n",
             filter, width, height, aspect_width, aspect_height);
@@ -1641,12 +1644,12 @@ static HRESULT WINAPI VMR9WindowlessControl_GetNativeVideoSize(IVMRWindowlessCon
     if (!width || !height)
         return E_POINTER;
 
-    *width = filter->bmiheader.biWidth;
-    *height = filter->bmiheader.biHeight;
+    *width = bmiheader->biWidth;
+    *height = bmiheader->biHeight;
     if (aspect_width)
-        *aspect_width = filter->bmiheader.biWidth;
+        *aspect_width = bmiheader->biWidth;
     if (aspect_height)
-        *aspect_height = filter->bmiheader.biHeight;
+        *aspect_height = bmiheader->biHeight;
 
     return S_OK;
 }
