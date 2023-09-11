@@ -1093,20 +1093,12 @@ static HRESULT WINAPI MutationObserver_QueryInterface(IWineMSHTMLMutationObserve
 {
     struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWineMSHTMLMutationObserver, riid)) {
-        *ppv = &This->IWineMSHTMLMutationObserver_iface;
-    } else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    } else {
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI MutationObserver_AddRef(IWineMSHTMLMutationObserver *iface)
@@ -1211,6 +1203,16 @@ static inline struct mutation_observer *mutation_observer_from_DispatchEx(Dispat
     return CONTAINING_RECORD(iface, struct mutation_observer, dispex);
 }
 
+static void *mutation_observer_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    struct mutation_observer *This = mutation_observer_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IWineMSHTMLMutationObserver, riid))
+        return &This->IWineMSHTMLMutationObserver_iface;
+
+    return NULL;
+}
+
 static void mutation_observer_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     struct mutation_observer *This = mutation_observer_from_DispatchEx(dispex);
@@ -1231,6 +1233,7 @@ static void mutation_observer_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t mutation_observer_dispex_vtbl = {
+    .query_interface  = mutation_observer_query_interface,
     .destructor       = mutation_observer_destructor,
     .traverse         = mutation_observer_traverse,
     .unlink           = mutation_observer_unlink
