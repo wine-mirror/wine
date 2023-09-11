@@ -384,22 +384,12 @@ static HRESULT WINAPI HTMLScreen_QueryInterface(IHTMLScreen *iface, REFIID riid,
 {
     HTMLScreen *This = impl_from_IHTMLScreen(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLScreen_iface;
-    }else if(IsEqualGUID(&IID_IHTMLScreen, riid)) {
-        *ppv = &This->IHTMLScreen_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLScreen_AddRef(IHTMLScreen *iface)
@@ -572,6 +562,16 @@ static inline HTMLScreen *HTMLScreen_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLScreen, dispex);
 }
 
+static void *HTMLScreen_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLScreen *This = HTMLScreen_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLScreen, riid))
+        return &This->IHTMLScreen_iface;
+
+    return NULL;
+}
+
 static void HTMLScreen_destructor(DispatchEx *dispex)
 {
     HTMLScreen *This = HTMLScreen_from_DispatchEx(dispex);
@@ -579,6 +579,7 @@ static void HTMLScreen_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLScreen_dispex_vtbl = {
+    .query_interface  = HTMLScreen_query_interface,
     .destructor       = HTMLScreen_destructor,
 };
 
