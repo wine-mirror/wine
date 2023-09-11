@@ -28,10 +28,11 @@ struct style_band {
     IDirectMusicBand *pBand;
 };
 
-struct style_partref_item {
+struct style_part_ref
+{
     struct list entry;
     DMUS_OBJECTDESC desc;
-    DMUS_IO_PARTREF part_ref;
+    DMUS_IO_PARTREF header;
 };
 
 struct style_part
@@ -69,7 +70,7 @@ struct style_motif {
     /** optional for motifs */
     DMUS_IO_MOTIFSETTINGS settings;
     IDirectMusicBand *pBand;
-    struct list Items;
+    struct list part_refs;
 };
 
 struct style
@@ -133,7 +134,7 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
     if (!ref) {
         struct style_band *band, *band2;
         struct style_motif *motif, *motif2;
-        struct style_partref_item *item, *item2;
+        struct style_part_ref *part_ref;
         struct style_part *part;
         void *next;
 
@@ -145,9 +146,10 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
         }
         LIST_FOR_EACH_ENTRY_SAFE(motif, motif2, &This->motifs, struct style_motif, entry) {
             list_remove(&motif->entry);
-            LIST_FOR_EACH_ENTRY_SAFE(item, item2, &motif->Items, struct style_partref_item, entry) {
-                list_remove(&item->entry);
-                free(item);
+            LIST_FOR_EACH_ENTRY_SAFE(part_ref, next, &motif->part_refs, struct style_part_ref, entry)
+            {
+                list_remove(&part_ref->entry);
+                free(part_ref);
             }
             free(motif);
         }
@@ -409,92 +411,45 @@ static HRESULT load_band(IStream *pClonedStream, IDirectMusicBand **ppBand)
   return S_OK;
 }
 
-static HRESULT parse_part_ref_list(DMUS_PRIVATE_CHUNK *pChunk, IStream *pStm,
-        struct style_motif *pNewMotif)
+static HRESULT parse_pref_list(struct style *This, IStream *stream, struct chunk_entry *parent,
+        struct list *list)
 {
-  HRESULT hr = E_FAIL;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-  struct style_partref_item *pNewItem = NULL;
+    struct chunk_entry chunk = {.parent = parent};
+    struct style_part_ref *part_ref;
+    DMUS_OBJECTDESC desc;
+    HRESULT hr;
 
+    if (FAILED(hr = dmobj_parsedescriptor(stream, parent, &desc, DMUS_OBJ_NAME))
+            || FAILED(hr = stream_reset_chunk_data(stream, parent)))
+        return hr;
 
-  if (pChunk->fccID != DMUS_FOURCC_PARTREF_LIST) {
-    ERR_(dmfile)(": %s chunk should be a PARTREF list\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
+    if (!(part_ref = calloc(1, sizeof(*part_ref)))) return E_OUTOFMEMORY;
+    part_ref->desc = desc;
 
-  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
-  ListCount[0] = 0;
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case DMUS_FOURCC_PARTREF_CHUNK:
+            hr = stream_chunk_get_data(stream, &chunk, &part_ref->header, sizeof(part_ref->header));
+            break;
 
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case DMUS_FOURCC_PARTREF_CHUNK: {
-      TRACE_(dmfile)(": PartRef chunk\n");
-      if (!(pNewItem = calloc(1, sizeof(*pNewItem)))) return E_OUTOFMEMORY;
-      hr = IStream_Read (pStm, &pNewItem->part_ref, sizeof(DMUS_IO_PARTREF), NULL);
-      /*TRACE_(dmfile)(" - sizeof %lu\n",  sizeof(DMUS_IO_PARTREF));*/
-      list_add_tail (&pNewMotif->Items, &pNewItem->entry);      
-      pNewItem->desc.dwSize = sizeof(pNewItem->desc);
-      break;
-    }    
-    case FOURCC_LIST: {
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[1] = 0;
-      switch (Chunk.fccID) {  
-      case DMUS_FOURCC_UNFO_LIST: { 
-	TRACE_(dmfile)(": UNFO list\n");
-	do {
-	  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-	  ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-          TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-	  
-          if (!pNewItem) {
-	    ERR(": pNewItem not yet allocated, chunk order bad?\n");
-	    return E_OUTOFMEMORY;
-          }
-	  hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &pNewItem->desc);
-	  if (FAILED(hr)) return hr;
-	  
-	  if (hr == S_FALSE) {
-	    switch (Chunk.fccID) {
-	    default: {
-	      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-	      liMove.QuadPart = Chunk.dwSize;
-	      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	      break;				
-	    }
-	    }
-	  }  
-          TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
-	} while (ListCount[1] < ListSize[1]);
-	break;
-      }
-      default: {
-	TRACE_(dmfile)(": unknown chunk (skipping)\n");
-	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;						
-      }
-      }
-      break;
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_UNFO_LIST):
+            /* already parsed by dmobj_parsedescriptor */
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
     }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
 
-  return S_OK;
+    if (FAILED(hr)) free(part_ref);
+    else list_add_tail(list, &part_ref->entry);
+
+    return S_OK;
 }
 
 static HRESULT parse_part_list(struct style *This, IStream *stream, struct chunk_entry *parent)
@@ -595,7 +550,7 @@ static HRESULT parse_pattern_list(struct style *This, DMUS_PRIVATE_CHUNK *pChunk
 
       /** reset all data, as a new pattern begin */
       pNewMotif->desc.dwSize = sizeof(pNewMotif->desc);
-      list_init (&pNewMotif->Items);
+      list_init (&pNewMotif->part_refs);
       break;
     }
     case DMUS_FOURCC_RHYTHM_CHUNK: { 
@@ -691,8 +646,12 @@ static HRESULT parse_pattern_list(struct style *This, DMUS_PRIVATE_CHUNK *pChunk
 	break;
       }
       case DMUS_FOURCC_PARTREF_LIST: {
+        static const LARGE_INTEGER zero = {0};
+        struct chunk_entry chunk = {FOURCC_LIST, .size = Chunk.dwSize, .type = Chunk.fccID};
 	TRACE_(dmfile)(": PartRef list\n");
-        hr = parse_part_ref_list(&Chunk, pStm, pNewMotif);
+        IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &chunk.offset);
+        chunk.offset.QuadPart -= 12;
+        hr = parse_pref_list(This, pStm, &chunk, &pNewMotif->part_refs);
 	if (FAILED(hr)) return hr;
 	break;
       }
