@@ -394,20 +394,16 @@ struct syscall_frame
     ULONG64               r14;           /* 0060 */
     ULONG64               r15;           /* 0068 */
     ULONG64               rip;           /* 0070 */
-    WORD                  cs;            /* 0078 */
-    WORD                  ds;            /* 007a */
-    WORD                  es;            /* 007c */
-    WORD                  fs;            /* 007e */
+    ULONG64               cs;            /* 0078 */
     ULONG64               eflags;        /* 0080 */
     ULONG64               rsp;           /* 0088 */
-    WORD                  ss;            /* 0090 */
-    WORD                  gs;            /* 0092 */
-    DWORD                 restore_flags; /* 0094 */
+    ULONG64               ss;            /* 0090 */
     ULONG64               rbp;           /* 0098 */
     struct syscall_frame *prev_frame;    /* 00a0 */
     SYSTEM_SERVICE_TABLE *syscall_table; /* 00a8 */
     DWORD                 syscall_flags; /* 00b0 */
-    DWORD                 align[3];      /* 00b4 */
+    DWORD                 restore_flags; /* 00b4 */
+    DWORD                 align[2];      /* 00b8 */
     XMM_SAVE_AREA32       xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSTATE xstate;    /* 02c0 */
 };
@@ -2592,7 +2588,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "popq 0x80(%rcx)\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
-                   "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
+                   "movl $0,0xb4(%rcx)\n\t"        /* frame->restore_flags */
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movq %rax,0x00(%rcx)\n\t"
@@ -2612,14 +2608,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %r15,0x68(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(r15, rcx, 0xe8, 0x00)
                    "movw %cs,0x78(%rcx)\n\t"
-                   "movw %ds,0x7a(%rcx)\n\t"
-                   "movw %es,0x7c(%rcx)\n\t"
-                   "movw %fs,0x7e(%rcx)\n\t"
                    "movq %rsp,0x88(%rcx)\n\t"
                    __ASM_CFI_CFA_IS_AT2(rcx, 0x88, 0x01)
                    __ASM_CFI_REG_IS_AT2(rsp, rcx, 0x88, 0x01)
                    "movw %ss,0x90(%rcx)\n\t"
-                   "movw %gs,0x92(%rcx)\n\t"
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    /* Legends of Runeterra hooks the first system call return instruction, and
@@ -2711,7 +2703,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* $rcx is now pointing to "frame" again */
                    __ASM_CFI(".cfi_restore_state\n")
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
-                   "movl 0x94(%rcx),%edx\n\t"  /* frame->restore_flags */
+                   "movl 0xb4(%rcx),%edx\n\t"      /* frame->restore_flags */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
@@ -2738,7 +2730,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "xorl %edx,%edx\n\t"
                    "xrstor64 0xc0(%rcx)\n\t"
                    "movq %r11,%rax\n\t"
-                   "movl 0x94(%rcx),%edx\n\t"
+                   "movl 0xb4(%rcx),%edx\n\t"      /* frame->restore_flags */
                    "jmp 4f\n"
                    "3:\tfxrstor64 0xc0(%rcx)\n"
                    "4:\tmovq 0x98(%rcx),%rbp\n\t"
@@ -2832,7 +2824,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
-                   "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
+                   "movl $0,0xb4(%rcx)\n\t"        /* frame->restore_flags */
                    ".globl " __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") ":\n\t"
                    "movq %rbx,0x08(%rcx)\n\t"
@@ -2868,7 +2860,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 2f\n\t"
-                   "movw %fs,0x7e(%rcx)\n\t"
                    "movq %gs:0x330,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
@@ -2895,7 +2886,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movdqa 0x230(%rcx),%xmm13\n\t"
                    "movdqa 0x240(%rcx),%xmm14\n\t"
                    "movdqa 0x250(%rcx),%xmm15\n\t"
-                   "testl $0xffff,0x94(%rcx)\n\t"  /* frame->restore_flags */
+                   "testl $0xffff,0xb4(%rcx)\n\t"  /* frame->restore_flags */
                    "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
