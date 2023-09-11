@@ -2734,7 +2734,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw 0x7e(%rcx),%fs\n"
+                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "testl $0x48,%edx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
@@ -2919,7 +2919,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw 0x7e(%rcx),%fs\n"
+                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "movq 0x60(%rcx),%r14\n\t"
