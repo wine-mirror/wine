@@ -3466,6 +3466,7 @@ static void test_export(void)
 {
     HKEY hkey, subkey;
     DWORD dword;
+    DWORD64 dword64;
     BYTE hex[4];
 
     const char *empty_key_test =
@@ -3540,7 +3541,8 @@ static void test_export(void)
         "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
         "\"Wine3a\"=\"Value\"\r\n"
         "\"Wine3b\"=hex:12,34,56,78\r\n"
-        "\"Wine3c\"=dword:10203040\r\n\r\n";
+        "\"Wine3c\"=dword:10203040\r\n"
+        "\"Wine3d\"=hex(4):80,70,60,50,40,30,20,10\r\n\r\n";
 
     const char *embedded_null_test =
         "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
@@ -3680,18 +3682,21 @@ static void test_export(void)
     ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
-    /* Test registry export with embedded null characters */
+    /* Test registry export with embedded null characters, improperly-sized DWORD */
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine3a\"=hex(1):56,00,61,00,6c,00,75,00,65,00,00,00\n"
                      "\"Wine3b\"=hex(3):12,34,56,78\n"
-                     "\"Wine3c\"=hex(4):40,30,20,10\n\n");
+                     "\"Wine3c\"=hex(4):40,30,20,10\n"
+                     "\"Wine3d\"=hex(4):80,70,60,50,40,30,20,10\n\n");
     open_key(HKEY_CURRENT_USER, KEY_BASE, 0, &hkey);
     verify_reg(hkey, "Wine3a", REG_SZ, "Value", 6, 0);
     memcpy(hex, "\x12\x34\x56\x78", 4);
     verify_reg(hkey, "Wine3b", REG_BINARY, hex, 4, 0);
     dword = 0x10203040;
     verify_reg(hkey, "Wine3c", REG_DWORD, &dword, sizeof(dword), 0);
+    dword64 = 0x1020304050607080;
+    verify_reg(hkey, "Wine3d", REG_DWORD, &dword64, sizeof(dword64), 0);
     close_key(hkey);
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);

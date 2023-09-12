@@ -1282,7 +1282,7 @@ static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type
         export_string_data(&buf, data, size);
         break;
     case REG_DWORD:
-        if (size)
+        if (size == sizeof(DWORD))
         {
             export_dword_data(&buf, data);
             break;
