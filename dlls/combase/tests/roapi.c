@@ -116,12 +116,208 @@ static void test_ActivationFactories(void)
     RoUninitialize();
 }
 
+static APTTYPE check_thread_apttype;
+static APTTYPEQUALIFIER check_thread_aptqualifier;
+static HRESULT check_thread_hr;
+
+static DWORD WINAPI check_apartment_thread(void *dummy)
+{
+    check_thread_apttype = 0xdeadbeef;
+    check_thread_aptqualifier = 0xdeadbeef;
+    check_thread_hr = CoGetApartmentType(&check_thread_apttype, &check_thread_aptqualifier);
+    return 0;
+}
+
+#define check_thread_apartment(a) check_thread_apartment_(__LINE__, FALSE, a)
+#define check_thread_apartment_broken(a) check_thread_apartment_(__LINE__, TRUE, a)
+static void check_thread_apartment_(unsigned int line, BOOL broken_fail, HRESULT expected_hr_thread)
+{
+    HANDLE thread;
+
+    check_thread_hr = 0xdeadbeef;
+    thread = CreateThread(NULL, 0, check_apartment_thread, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    ok_(__FILE__, line)(check_thread_hr == expected_hr_thread
+            || broken(broken_fail && expected_hr_thread == S_OK && check_thread_hr == CO_E_NOTINITIALIZED),
+            "got %#lx, expected %#lx.\n", check_thread_hr, expected_hr_thread);
+    if (SUCCEEDED(check_thread_hr))
+    {
+        ok_(__FILE__, line)(check_thread_apttype == APTTYPE_MTA, "got %d.\n", check_thread_apttype);
+        ok_(__FILE__, line)(check_thread_aptqualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", check_thread_aptqualifier);
+    }
+}
+
+static HANDLE mta_init_thread_init_done_event, mta_init_thread_done_event;
+
+static DWORD WINAPI mta_init_thread(void *dummy)
+{
+    HRESULT hr;
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    SetEvent(mta_init_thread_init_done_event);
+
+    WaitForSingleObject(mta_init_thread_done_event, INFINITE);
+    CoUninitialize();
+    return 0;
+}
+
+static DWORD WINAPI mta_init_implicit_thread(void *dummy)
+{
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = WindowsCreateString(L"Does.Not.Exist", ARRAY_SIZE(L"Does.Not.Exist") - 1, &str);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
+    WindowsDeleteString(str);
+
+    SetEvent(mta_init_thread_init_done_event);
+    WaitForSingleObject(mta_init_thread_done_event, INFINITE);
+
+    /* No CoUninitialize(), testing cleanup on thread exit. */
+    return 0;
+}
+
+static void test_implicit_mta(void)
+{
+    static const struct
+    {
+        BOOL ro_init;
+        BOOL mta;
+    }
+    tests[] =
+    {
+        { FALSE, FALSE },
+        { FALSE, TRUE },
+        { TRUE, FALSE },
+        { TRUE, TRUE },
+    };
+    APTTYPEQUALIFIER aptqualifier;
+    IActivationFactory *factory;
+    APTTYPE apttype;
+    unsigned int i;
+    HANDLE thread;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = WindowsCreateString(L"Does.Not.Exist", ARRAY_SIZE(L"Does.Not.Exist") - 1, &str);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    /* RoGetActivationFactory doesn't implicitly initialize COM. */
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    todo_wine ok(hr == CO_E_NOTINITIALIZED, "got %#lx.\n", hr);
+
+    check_thread_apartment(CO_E_NOTINITIALIZED);
+
+    /* RoGetActivationFactory initializes implicit MTA. */
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        if (tests[i].ro_init)
+            hr = RoInitialize(tests[i].mta ? RO_INIT_MULTITHREADED : RO_INIT_SINGLETHREADED);
+        else
+            hr = CoInitializeEx(NULL, tests[i].mta ? COINIT_MULTITHREADED : COINIT_APARTMENTTHREADED);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        check_thread_apartment(tests[i].mta ? S_OK : CO_E_NOTINITIALIZED);
+        hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+        ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
+        todo_wine_if(!tests[i].mta) check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+        hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+        ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
+        todo_wine_if(!tests[i].mta) check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+        if (tests[i].ro_init)
+            RoUninitialize();
+        else
+            CoUninitialize();
+        check_thread_apartment(CO_E_NOTINITIALIZED);
+        winetest_pop_context();
+    }
+
+    mta_init_thread_init_done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    mta_init_thread_done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    /* RoGetActivationFactory references implicit MTA in a current thread
+     * even if implicit MTA was already initialized: check with STA init
+     * after RoGetActivationFactory(). */
+    thread = CreateThread(NULL, 0, mta_init_thread, NULL, 0, NULL);
+    ok(!!thread, "failed.\n");
+    WaitForSingleObject(mta_init_thread_init_done_event, INFINITE);
+    check_thread_apartment(S_OK);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
+    check_thread_apartment(S_OK);
+
+    hr = CoGetApartmentType(&apttype, &aptqualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(apttype == APTTYPE_MTA, "got %d.\n", apttype);
+    ok(aptqualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", aptqualifier);
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = CoGetApartmentType(&apttype, &aptqualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(apttype == APTTYPE_MAINSTA, "got %d.\n", apttype);
+    ok(aptqualifier == APTTYPEQUALIFIER_NONE, "got %d.\n", aptqualifier);
+
+    SetEvent(mta_init_thread_done_event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    CoUninitialize();
+    check_thread_apartment(CO_E_NOTINITIALIZED);
+
+    /* RoGetActivationFactory references implicit MTA in a current thread
+     * even if implicit MTA was already initialized: check with STA init
+     * before RoGetActivationFactory(). */
+    thread = CreateThread(NULL, 0, mta_init_thread, NULL, 0, NULL);
+    ok(!!thread, "failed.\n");
+    WaitForSingleObject(mta_init_thread_init_done_event, INFINITE);
+    check_thread_apartment(S_OK);
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
+    check_thread_apartment(S_OK);
+
+    SetEvent(mta_init_thread_done_event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    CoUninitialize();
+    check_thread_apartment(CO_E_NOTINITIALIZED);
+
+    /* Test implicit MTA apartment thread exit. */
+    thread = CreateThread(NULL, 0, mta_init_implicit_thread, NULL, 0, NULL);
+    ok(!!thread, "failed.\n");
+    WaitForSingleObject(mta_init_thread_init_done_event, INFINITE);
+    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    SetEvent(mta_init_thread_done_event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    check_thread_apartment(CO_E_NOTINITIALIZED);
+
+    CloseHandle(mta_init_thread_init_done_event);
+    CloseHandle(mta_init_thread_done_event);
+    WindowsDeleteString(str);
+}
+
 START_TEST(roapi)
 {
     BOOL ret;
 
     load_resource(L"wine.combase.test.dll");
 
+    test_implicit_mta();
     test_ActivationFactories();
 
     SetLastError(0xdeadbeef);
