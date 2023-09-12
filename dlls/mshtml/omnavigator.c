@@ -1129,22 +1129,12 @@ static HRESULT WINAPI OmNavigator_QueryInterface(IOmNavigator *iface, REFIID rii
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IOmNavigator_iface;
-    }else if(IsEqualGUID(&IID_IOmNavigator, riid)) {
-        *ppv = &This->IOmNavigator_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI OmNavigator_AddRef(IOmNavigator *iface)
@@ -1514,6 +1504,16 @@ static inline OmNavigator *OmNavigator_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, OmNavigator, dispex);
 }
 
+static void *OmNavigator_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    OmNavigator *This = OmNavigator_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IOmNavigator, riid))
+        return &This->IOmNavigator_iface;
+
+    return NULL;
+}
+
 static void OmNavigator_unlink(DispatchEx *dispex)
 {
     OmNavigator *This = OmNavigator_from_DispatchEx(dispex);
@@ -1534,6 +1534,7 @@ static void OmNavigator_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t OmNavigator_dispex_vtbl = {
+    .query_interface  = OmNavigator_query_interface,
     .destructor       = OmNavigator_destructor,
     .unlink           = OmNavigator_unlink
 };
