@@ -873,8 +873,7 @@ static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems,
     ret->elems = elems;
     ret->len = len;
 
-    init_dispatch(&ret->dispex, (IUnknown*)&ret->IHTMLElementCollection_iface,
-                  &HTMLElementCollection_dispex, compat_mode);
+    init_dispatch(&ret->dispex, &HTMLElementCollection_dispex, compat_mode);
 
     TRACE("ret=%p len=%ld\n", ret, len);
 

@@ -477,8 +477,7 @@ HRESULT create_child_collection(nsIDOMNodeList *nslist, compat_mode_t compat_mod
     nsIDOMNodeList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, (IUnknown*)&collection->IHTMLDOMChildrenCollection_iface,
-                  &HTMLDOMChildrenCollection_dispex, compat_mode);
+    init_dispatch(&collection->dispex, &HTMLDOMChildrenCollection_dispex, compat_mode);
 
     *ret = &collection->IHTMLDOMChildrenCollection_iface;
     return S_OK;
@@ -1522,7 +1521,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
     node->IHTMLDOMNode3_iface.lpVtbl = &HTMLDOMNode3Vtbl;
 
-    EventTarget_Init(&node->event_target, (IUnknown*)&node->IHTMLDOMNode_iface, dispex_data, doc->document_mode);
+    EventTarget_Init(&node->event_target, dispex_data, doc->document_mode);
 
     if(&doc->node != node)
         IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);

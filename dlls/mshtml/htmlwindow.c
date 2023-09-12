@@ -4441,8 +4441,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
-    EventTarget_Init(&window->event_target, (IUnknown*)&window->base.IHTMLWindow2_iface,
-                     &HTMLWindow_dispex, COMPAT_MODE_NONE);
+    EventTarget_Init(&window->event_target, &HTMLWindow_dispex, COMPAT_MODE_NONE);
 
     window->task_magic = get_task_target_magic();
 

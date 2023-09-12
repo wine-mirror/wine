@@ -405,7 +405,6 @@ typedef struct {
 struct DispatchEx {
     IDispatchEx IDispatchEx_iface;
 
-    IUnknown *outer;
     nsCycleCollectingAutoRefCnt ccref;
 
     dispex_data_t *info;
@@ -439,7 +438,7 @@ static inline LONG dispex_ref_incr(DispatchEx *dispex)
 }
 extern LONG dispex_ref_decr(DispatchEx*);
 
-void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t);
+void init_dispatch(DispatchEx*,dispex_static_data_t*,compat_mode_t);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 void dispex_props_unlink(DispatchEx*);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
@@ -1209,7 +1208,7 @@ HRESULT create_svg_element(HTMLDocumentNode*,nsIDOMSVGElement*,const WCHAR*,HTML
 void HTMLDOMNode_Init(HTMLDocumentNode*,HTMLDOMNode*,nsIDOMNode*,dispex_static_data_t*);
 void HTMLElement_Init(HTMLElement*,HTMLDocumentNode*,nsIDOMElement*,dispex_static_data_t*);
 
-void EventTarget_Init(EventTarget*,IUnknown*,dispex_static_data_t*,compat_mode_t);
+void EventTarget_Init(EventTarget*,dispex_static_data_t*,compat_mode_t);
 void *EventTarget_query_interface(EventTarget*,REFIID);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 

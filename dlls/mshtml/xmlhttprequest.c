@@ -1739,8 +1739,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     ret->IHTMLXMLHttpRequest2_iface.lpVtbl = &HTMLXMLHttpRequest2Vtbl;
     ret->IWineXMLHttpRequestPrivate_iface.lpVtbl = &WineXMLHttpRequestPrivateVtbl;
     ret->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
-    EventTarget_Init(&ret->event_target, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
-                     &HTMLXMLHttpRequest_dispex, This->window->doc->document_mode);
+    EventTarget_Init(&ret->event_target, &HTMLXMLHttpRequest_dispex, This->window->doc->document_mode);
 
     /* Always register the handlers because we need them to track state */
     event_listener->nsIDOMEventListener_iface.lpVtbl = &XMLHttpReqEventListenerVtbl;
@@ -1853,8 +1852,7 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
     ret->IHTMLXMLHttpRequestFactory_iface.lpVtbl = &HTMLXMLHttpRequestFactoryVtbl;
     ret->window = window;
 
-    init_dispatch(&ret->dispex, (IUnknown*)&ret->IHTMLXMLHttpRequestFactory_iface,
-                  &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
+    init_dispatch(&ret->dispex, &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
     *ret_ptr = ret;
     return S_OK;

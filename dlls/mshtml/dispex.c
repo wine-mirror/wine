@@ -774,7 +774,7 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&unk);
+    hres = IDispatchEx_QueryInterface(&This->IDispatchEx_iface, tid_ids[func->tid], (void**)&unk);
     if(FAILED(hres)) {
         ERR("Could not get iface %s: %08lx\n", debugstr_mshtml_guid(tid_ids[func->tid]), hres);
         return E_FAIL;
@@ -785,56 +785,6 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     IUnknown_Release(unk);
     return hres;
 }
-
-static inline func_disp_t *impl_from_IUnknown(IUnknown *iface)
-{
-    return CONTAINING_RECORD(iface, func_disp_t, IUnknown_iface);
-}
-
-static HRESULT WINAPI Function_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    func_disp_t *This = impl_from_IUnknown(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IUnknown_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
-        return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI Function_AddRef(IUnknown *iface)
-{
-    func_disp_t *This = impl_from_IUnknown(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI Function_Release(IUnknown *iface)
-{
-    func_disp_t *This = impl_from_IUnknown(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
-}
-
-static const IUnknownVtbl FunctionUnkVtbl = {
-    Function_QueryInterface,
-    Function_AddRef,
-    Function_Release
-};
 
 static inline func_disp_t *impl_from_DispatchEx(DispatchEx *iface)
 {
@@ -925,8 +875,7 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
     if(!ret)
         return NULL;
 
-    ret->IUnknown_iface.lpVtbl = &FunctionUnkVtbl;
-    init_dispatch(&ret->dispex, &ret->IUnknown_iface,  &function_dispex, dispex_compat_mode(obj));
+    init_dispatch(&ret->dispex, &function_dispex, dispex_compat_mode(obj));
     ret->obj = obj;
     ret->info = info;
 
@@ -1115,7 +1064,7 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
 
     assert(func->get_vtbl_off);
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    hres = IDispatchEx_QueryInterface(&This->IDispatchEx_iface, tid_ids[func->tid], (void**)&iface);
     if(SUCCEEDED(hres)) {
         switch(func->prop_vt) {
 #define CASE_VT(vt,type,access) \
@@ -1172,7 +1121,7 @@ static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *
         v = &tmpv;
     }
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    hres = IDispatchEx_QueryInterface(&This->IDispatchEx_iface, tid_ids[func->tid], (void**)&iface);
     if(SUCCEEDED(hres)) {
         switch(func->prop_vt) {
 #define CASE_VT(vt,type,access) \
@@ -1216,7 +1165,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
         return E_INVALIDARG;
     }
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&iface);
+    hres = IDispatchEx_QueryInterface(&This->IDispatchEx_iface, tid_ids[func->tid], (void**)&iface);
     if(FAILED(hres))
         return hres;
 
@@ -1591,21 +1540,57 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
 
-    return IUnknown_QueryInterface(This->outer, riid, ppv);
+    TRACE("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
+
+    if(This->info->desc->vtbl->query_interface) {
+        *ppv = This->info->desc->vtbl->query_interface(This, riid);
+        if(*ppv)
+            goto ret;
+    }
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDispatchEx, riid))
+        *ppv = &This->IDispatchEx_iface;
+    else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
+        *ppv = &dispex_ccp;
+        return S_OK;
+    }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
+        *ppv = &This->IDispatchEx_iface;
+        return S_OK;
+    }else if(IsEqualGUID(&IID_IDispatchJS, riid) ||
+             IsEqualGUID(&IID_UndocumentedScriptIface, riid) ||
+             IsEqualGUID(&IID_IMarshal, riid) ||
+             IsEqualGUID(&IID_IManagedObject, riid)) {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+ret:
+    IDispatchEx_AddRef(&This->IDispatchEx_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
+    LONG ref = dispex_ref_incr(This);
 
-    return IUnknown_AddRef(This->outer);
+    TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
+    LONG ref = dispex_ref_decr(This);
 
-    return IUnknown_Release(This->outer);
+    TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
+
+    return ref;
 }
 
 static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
@@ -1968,35 +1953,7 @@ static IDispatchExVtbl DispatchExVtbl = {
 
 BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
 {
-    TRACE("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
-
-    if(This->info->desc->vtbl->query_interface) {
-        *ppv = This->info->desc->vtbl->query_interface(This, riid);
-        if(*ppv)
-            goto ret;
-    }
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDispatchEx, riid))
-        *ppv = &This->IDispatchEx_iface;
-    else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
-        *ppv = &dispex_ccp;
-        return TRUE;
-    }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
-        *ppv = &This->IDispatchEx_iface;
-        return TRUE;
-    }else if(IsEqualGUID(&IID_IDispatchJS, riid) ||
-             IsEqualGUID(&IID_UndocumentedScriptIface, riid) ||
-             IsEqualGUID(&IID_IMarshal, riid) ||
-             IsEqualGUID(&IID_IManagedObject, riid)) {
-        *ppv = NULL;
-        return TRUE;
-    }else {
-        return FALSE;
-    }
-
-ret:
-    IDispatchEx_AddRef(&This->IDispatchEx_iface);
-    return TRUE;
+    return IDispatchEx_QueryInterface(&This->IDispatchEx_iface, riid, ppv) == S_OK;
 }
 
 LONG dispex_ref_decr(DispatchEx *dispex)
@@ -2137,12 +2094,11 @@ const void *dispex_get_vtbl(DispatchEx *dispex)
     return dispex->info->desc->vtbl;
 }
 
-void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data, compat_mode_t compat_mode)
+void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, compat_mode_t compat_mode)
 {
     assert(compat_mode < COMPAT_MODE_CNT);
 
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
-    dispex->outer = outer;
     dispex->dynamic_data = NULL;
     ccref_init(&dispex->ccref, 1);
 

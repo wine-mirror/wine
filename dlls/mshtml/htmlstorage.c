@@ -1479,8 +1479,7 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->window = window;
 
-    init_dispatch(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex,
-                  dispex_compat_mode(&window->event_target.dispex));
+    init_dispatch(&storage->dispex, &HTMLStorage_dispex, dispex_compat_mode(&window->event_target.dispex));
 
     *p = &storage->IHTMLStorage_iface;
     return S_OK;
