@@ -1865,6 +1865,18 @@ static void test_isvisible(void)
     status = GdipIsVisiblePathPoint(path, 0.0, 0.0, graphics, &result);
     expect(Ok, status);
     expect(TRUE, result);
+    /* not affected by world transform */
+    status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, status);
+    result = FALSE;
+    status = GdipIsVisiblePathPoint(path, 9.0, 9.0, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsVisiblePathPoint(path, 11.0, 11.0, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    GdipResetWorldTransform(graphics);
 
     GdipDeletePath(path);
     GdipDeleteGraphics(graphics);

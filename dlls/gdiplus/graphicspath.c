@@ -1793,7 +1793,7 @@ GpStatus WINGDIPAPI GdipIsVisiblePathPoint(GpPath* path, REAL x, REAL y, GpGraph
     if(status != Ok)
         return status;
 
-    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
     if(status != Ok){
         GdipDeleteRegion(region);
         return status;
