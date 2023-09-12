@@ -328,14 +328,38 @@ HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent
 
     if (TRACE_ON(dmusic))
     {
-        TRACE("Created DirectMusicInstrument (%p) ***\n", This);
-        TRACE(" - Instrument header:\n");
-        TRACE("    - cRegions: %ld\n", This->header.cRegions);
-        TRACE("    - Locale:\n");
-        TRACE("       - ulBank: %ld\n", This->header.Locale.ulBank);
-        TRACE("       - ulInstrument: %ld\n", This->header.Locale.ulInstrument);
-        TRACE("       => dwPatch: %ld\n", MIDILOCALE2Patch(&This->header.Locale));
+        struct region *region;
+        UINT i;
+
+        TRACE("Created DirectMusicInstrument %p\n", This);
+        TRACE(" - header:\n");
+        TRACE("    - regions: %ld\n", This->header.cRegions);
+        TRACE("    - locale: {bank: %#lx, instrument: %#lx} (patch %#lx)\n",
+                This->header.Locale.ulBank, This->header.Locale.ulInstrument,
+                MIDILOCALE2Patch(&This->header.Locale));
         if (desc->dwValidData & DMUS_OBJ_OBJECT) TRACE(" - guid: %s\n", debugstr_dmguid(&desc->guidObject));
+        if (desc->dwValidData & DMUS_OBJ_NAME) TRACE(" - name: %s\n", debugstr_w(desc->wszName));
+
+        TRACE(" - regions:\n");
+        LIST_FOR_EACH_ENTRY(region, &This->regions, struct region, entry)
+        {
+            TRACE("   - region:\n");
+            TRACE("     - header: {key: %u - %u, vel: %u - %u, options: %#x, group: %#x}\n",
+                    region->header.RangeKey.usLow, region->header.RangeKey.usHigh,
+                    region->header.RangeVelocity.usLow, region->header.RangeVelocity.usHigh,
+                    region->header.fusOptions, region->header.usKeyGroup);
+            TRACE("     - wave_link: {options: %#x, group: %u, channel: %lu, index: %lu}\n",
+                    region->wave_link.fusOptions, region->wave_link.usPhaseGroup,
+                    region->wave_link.ulChannel, region->wave_link.ulTableIndex);
+            TRACE("     - wave_sample: {size: %lu, unity_note: %u, fine_tune: %d, attenuation: %ld, options: %#lx, loops: %lu}\n",
+                    region->wave_sample.cbSize, region->wave_sample.usUnityNote,
+                    region->wave_sample.sFineTune, region->wave_sample.lAttenuation,
+                    region->wave_sample.fulOptions, region->wave_sample.cSampleLoops);
+            for (i = 0; i < region->wave_sample.cSampleLoops; i++)
+                TRACE("     - wave_loop[%u]: {size: %lu, type: %lu, start: %lu, length: %lu}\n", i,
+                        region->wave_loop.cbSize, region->wave_loop.ulType,
+                        region->wave_loop.ulStart, region->wave_loop.ulLength);
+        }
     }
 
     *ret_iface = iface;
