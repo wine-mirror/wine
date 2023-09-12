@@ -2595,22 +2595,12 @@ static HRESULT WINAPI console_QueryInterface(IWineMSHTMLConsole *iface, REFIID r
 {
     struct console *console = impl_from_IWineMSHTMLConsole(iface);
 
-    TRACE("(%p)->(%s %p)\n", console, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &console->IWineMSHTMLConsole_iface;
-    }else if(IsEqualGUID(&IID_IWineMSHTMLConsole, riid)) {
-        *ppv = &console->IWineMSHTMLConsole_iface;
-    }else if(dispex_query_interface(&console->dispex, riid, ppv)) {
+    if(dispex_query_interface(&console->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("(%p)->(%s %p)\n", console, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", console, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI console_AddRef(IWineMSHTMLConsole *iface)
@@ -2810,6 +2800,16 @@ static inline struct console *console_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, struct console, dispex);
 }
 
+static void *console_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    struct console *console = console_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IWineMSHTMLConsole, riid))
+        return &console->IWineMSHTMLConsole_iface;
+
+    return NULL;
+}
+
 static void console_destructor(DispatchEx *dispex)
 {
     struct console *console = console_from_DispatchEx(dispex);
@@ -2817,6 +2817,7 @@ static void console_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t console_dispex_vtbl = {
+    .query_interface  = console_query_interface,
     .destructor       = console_destructor,
 };
 
