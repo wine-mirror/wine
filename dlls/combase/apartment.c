@@ -1157,6 +1157,11 @@ void leave_apartment(struct tlsdata *data)
         if (data->ole_inits)
             WARN( "Uninitializing apartment while Ole is still initialized\n" );
         apartment_release(data->apt);
+        if (data->implicit_mta_cookie)
+        {
+            apartment_decrement_mta_usage(data->implicit_mta_cookie);
+            data->implicit_mta_cookie = NULL;
+        }
         data->apt = NULL;
         data->flags &= ~(OLETLS_DISABLE_OLE1DDE | OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED);
     }
@@ -1287,4 +1292,30 @@ void apartment_global_cleanup(void)
         UnregisterClassW((const WCHAR *)MAKEINTATOM(apt_win_class), hProxyDll);
     apartment_release_dlls();
     DeleteCriticalSection(&apt_cs);
+}
+
+HRESULT ensure_mta(void)
+{
+    struct apartment *apt;
+    struct tlsdata *data;
+    HRESULT hr;
+
+    if (FAILED(hr = com_get_tlsdata(&data)))
+        return hr;
+    if ((apt = data->apt) && (data->implicit_mta_cookie || apt->multi_threaded))
+        return S_OK;
+
+    EnterCriticalSection(&apt_cs);
+    if (apt || mta)
+        hr = apartment_increment_mta_usage(&data->implicit_mta_cookie);
+    else
+        hr = CO_E_NOTINITIALIZED;
+    LeaveCriticalSection(&apt_cs);
+
+    if (FAILED(hr))
+    {
+        ERR("Failed, hr %#lx.\n", hr);
+        return hr;
+    }
+    return S_OK;
 }

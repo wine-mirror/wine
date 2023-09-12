@@ -211,7 +211,7 @@ static void test_implicit_mta(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     /* RoGetActivationFactory doesn't implicitly initialize COM. */
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == CO_E_NOTINITIALIZED, "got %#lx.\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "got %#lx.\n", hr);
 
     check_thread_apartment(CO_E_NOTINITIALIZED);
 
@@ -227,10 +227,10 @@ static void test_implicit_mta(void)
         check_thread_apartment(tests[i].mta ? S_OK : CO_E_NOTINITIALIZED);
         hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
         ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
-        todo_wine_if(!tests[i].mta) check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+        check_thread_apartment_broken(S_OK); /* Broken on Win8. */
         hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
         ok(hr == REGDB_E_CLASSNOTREG, "got %#lx.\n", hr);
-        todo_wine_if(!tests[i].mta) check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+        check_thread_apartment_broken(S_OK); /* Broken on Win8. */
         if (tests[i].ro_init)
             RoUninitialize();
         else
@@ -270,7 +270,7 @@ static void test_implicit_mta(void)
     SetEvent(mta_init_thread_done_event);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
-    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    check_thread_apartment_broken(S_OK); /* Broken on Win8. */
     CoUninitialize();
     check_thread_apartment(CO_E_NOTINITIALIZED);
 
@@ -292,7 +292,7 @@ static void test_implicit_mta(void)
     SetEvent(mta_init_thread_done_event);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
-    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    check_thread_apartment_broken(S_OK); /* Broken on Win8. */
     CoUninitialize();
     check_thread_apartment(CO_E_NOTINITIALIZED);
 
@@ -300,7 +300,7 @@ static void test_implicit_mta(void)
     thread = CreateThread(NULL, 0, mta_init_implicit_thread, NULL, 0, NULL);
     ok(!!thread, "failed.\n");
     WaitForSingleObject(mta_init_thread_init_done_event, INFINITE);
-    todo_wine check_thread_apartment_broken(S_OK); /* Broken on Win8. */
+    check_thread_apartment_broken(S_OK); /* Broken on Win8. */
     SetEvent(mta_init_thread_done_event);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);

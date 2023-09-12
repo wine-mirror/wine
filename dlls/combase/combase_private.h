@@ -92,6 +92,7 @@ struct tlsdata
     struct list       spies;         /* Spies installed with CoRegisterInitializeSpy */
     DWORD             spies_lock;
     DWORD             cancelcount;
+    CO_MTA_USAGE_COOKIE implicit_mta_cookie; /* mta referenced by roapi from sta thread */
 };
 
 extern HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data);
@@ -161,6 +162,7 @@ void apartment_release(struct apartment *apt);
 struct apartment * apartment_get_current_or_mta(void);
 HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie);
 void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie);
+HRESULT ensure_mta(void);
 struct apartment * apartment_get_mta(void);
 HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, DWORD class_context, void **ppv);

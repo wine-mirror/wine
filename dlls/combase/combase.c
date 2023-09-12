@@ -407,6 +407,9 @@ static void com_cleanup_tlsdata(void)
 
     if (tlsdata->apt)
         apartment_release(tlsdata->apt);
+    if (tlsdata->implicit_mta_cookie)
+        apartment_decrement_mta_usage(tlsdata->implicit_mta_cookie);
+
     if (tlsdata->errorinfo)
         IErrorInfo_Release(tlsdata->errorinfo);
     if (tlsdata->state)
