@@ -408,6 +408,20 @@ static void test_cross_process_notifications( HANDLE process, void *ptr )
     ok( !entry, "not at end of list\n" );
 
     addr = NULL;
+    size = 0x321;
+    status = NtAllocateVirtualMemory( process, &addr, 0, &size, 0, PAGE_EXECUTE_READ );
+    ok( status == STATUS_INVALID_PARAMETER, "NtAllocateVirtualMemory failed %lx\n", status );
+    entry = pop_from_work_list( &list->work_list );
+    if (current_machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualAlloc, addr, 0x321,
+                                         0, PAGE_EXECUTE_READ, 0, 0xcccccccc );
+        entry = expect_cross_work_entry( list, entry, CrossProcessPostVirtualAlloc, addr, 0x321,
+                                         0, PAGE_EXECUTE_READ, status, 0xcccccccc );
+    }
+    ok( !entry, "not at end of list\n" );
+
+    addr = NULL;
     size = 0x4321;
     status = NtAllocateVirtualMemory( process, &addr, 0, &size, MEM_RESERVE, PAGE_EXECUTE_READWRITE );
     ok( !status, "NtAllocateVirtualMemory failed %lx\n", status );

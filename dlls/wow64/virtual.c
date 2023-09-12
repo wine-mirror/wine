@@ -153,7 +153,7 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemory( UINT *args )
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
-    if (!addr) type |= MEM_RESERVE;
+    if (!addr && (type & MEM_COMMIT)) type |= MEM_RESERVE;
 
     if (!is_current)
         send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
