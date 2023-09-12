@@ -3599,7 +3599,7 @@ static NTSTATUS query_string_option( HANDLE hkey, LPCWSTR name, ULONG type,
 NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LPCWSTR value, ULONG type,
                                                    void *data, ULONG in_size, ULONG *out_size )
 {
-    static const WCHAR optionsW[] = L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
+    static const WCHAR optionsW[] = L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\";
     WCHAR path[MAX_PATH + ARRAY_SIZE( optionsW )];
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name_str;
@@ -3619,10 +3619,10 @@ NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LP
     while (p > key->Buffer && p[-1] != '\\') p--;
     len = key->Length - (p - key->Buffer) * sizeof(WCHAR);
     name_str.Buffer = path;
-    name_str.Length = sizeof(optionsW) + len;
+    name_str.Length = sizeof(optionsW) - sizeof(WCHAR) + len;
     name_str.MaximumLength = name_str.Length;
     memcpy( path, optionsW, sizeof(optionsW) );
-    memcpy( path + ARRAY_SIZE( optionsW ), p, len );
+    memcpy( path + ARRAY_SIZE( optionsW ) - 1, p, len );
     if ((status = NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))) return status;
 
     if (type == REG_DWORD)
