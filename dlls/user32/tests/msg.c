@@ -13380,7 +13380,7 @@ static void test_PeekMessage(void)
     DWORD tid, qstatus;
     UINT qs_all_input = QS_ALLINPUT;
     UINT qs_input = QS_INPUT;
-    BOOL ret;
+    BOOL ret, broken_flags = FALSE;
     struct peekmsg_info info;
 
     info.hwnd = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
@@ -13407,6 +13407,13 @@ static void test_PeekMessage(void)
         trace("QS_RAWINPUT not supported on this platform\n");
         qs_all_input &= ~QS_RAWINPUT;
         qs_input &= ~QS_RAWINPUT;
+
+        SetLastError(0xdeadbeef);
+        qstatus = GetQueueStatus(qs_all_input);
+        if (GetLastError() == ERROR_INVALID_FLAGS)
+            broken_flags = TRUE;
+        ok(GetLastError() == 0xdeadbeef || broken(GetLastError() == ERROR_INVALID_FLAGS) /* win7 */,
+            "wrong error %ld\n", GetLastError());
     }
     if (qstatus & QS_POSTMESSAGE)
     {
@@ -13426,10 +13433,14 @@ static void test_PeekMessage(void)
     if (!qstatus)
     {
         ok(GetLastError() == ERROR_INVALID_FLAGS, "wrong error %ld\n", GetLastError());
+        SetLastError(0xdeadbeef);
         qstatus = GetQueueStatus(qs_all_input);
+        ok(GetLastError() == 0xdeadbeef || broken(broken_flags && GetLastError() == ERROR_INVALID_FLAGS),
+            "wrong error %ld\n", GetLastError());
     }
     qstatus &= ~MAKELONG( 0x4000, 0x4000 );  /* sometimes set on Win95 */
-    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE),
+    ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE) ||
+        broken(broken_flags && qstatus == 0),
        "wrong qstatus %08lx\n", qstatus);
 
     msg.message = 0;
