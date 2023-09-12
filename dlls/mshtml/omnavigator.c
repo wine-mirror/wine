@@ -1582,22 +1582,12 @@ static HRESULT WINAPI HTMLPerformanceTiming_QueryInterface(IHTMLPerformanceTimin
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLPerformanceTiming_iface;
-    }else if(IsEqualGUID(&IID_IHTMLPerformanceTiming, riid)) {
-        *ppv = &This->IHTMLPerformanceTiming_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLPerformanceTiming_AddRef(IHTMLPerformanceTiming *iface)
@@ -1946,6 +1936,16 @@ static inline HTMLPerformanceTiming *HTMLPerformanceTiming_from_DispatchEx(Dispa
     return CONTAINING_RECORD(iface, HTMLPerformanceTiming, dispex);
 }
 
+static void *HTMLPerformanceTiming_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLPerformanceTiming, riid))
+        return &This->IHTMLPerformanceTiming_iface;
+
+    return NULL;
+}
+
 static void HTMLPerformanceTiming_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLPerformanceTiming *This = HTMLPerformanceTiming_from_DispatchEx(dispex);
@@ -1970,6 +1970,7 @@ static void HTMLPerformanceTiming_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPerformanceTiming_dispex_vtbl = {
+    .query_interface  = HTMLPerformanceTiming_query_interface,
     .destructor       = HTMLPerformanceTiming_destructor,
     .traverse         = HTMLPerformanceTiming_traverse,
     .unlink           = HTMLPerformanceTiming_unlink
