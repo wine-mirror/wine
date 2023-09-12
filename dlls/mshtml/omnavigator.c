@@ -619,22 +619,12 @@ static HRESULT WINAPI OmHistory_QueryInterface(IOmHistory *iface, REFIID riid, v
 {
     OmHistory *This = impl_from_IOmHistory(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IOmHistory_iface;
-    }else if(IsEqualGUID(&IID_IOmHistory, riid)) {
-        *ppv = &This->IOmHistory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI OmHistory_AddRef(IOmHistory *iface)
@@ -746,6 +736,16 @@ static inline OmHistory *OmHistory_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, OmHistory, dispex);
 }
 
+static void *OmHistory_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    OmHistory *This = OmHistory_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IOmHistory, riid))
+        return &This->IOmHistory_iface;
+
+    return NULL;
+}
+
 static void OmHistory_destructor(DispatchEx *dispex)
 {
     OmHistory *This = OmHistory_from_DispatchEx(dispex);
@@ -753,6 +753,7 @@ static void OmHistory_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t OmHistory_dispex_vtbl = {
+    .query_interface  = OmHistory_query_interface,
     .destructor       = OmHistory_destructor,
 };
 
