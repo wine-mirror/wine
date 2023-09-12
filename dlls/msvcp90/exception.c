@@ -637,7 +637,7 @@ DEFINE_CXX_DATA1(runtime_error, &exception_cxx_type_info, MSVCP_runtime_error_dt
 typedef struct {
     runtime_error base;
 #if _MSVCP_VER > 90
-    int err;
+    error_code code;
 #endif
 } system_error;
 typedef system_error _System_error;
@@ -648,8 +648,8 @@ static failure* MSVCP_failure_ctor( failure *this, exception_name name )
     TRACE("%p %s\n", this, EXCEPTION_STR(name));
     MSVCP_runtime_error_ctor(&this->base, name);
 #if _MSVCP_VER > 90
-    /* FIXME: set err correctly */
-    this->err = 0;
+    this->code.code = 1;
+    this->code.category = std_iostream_category();
 #endif
     this->base.e.vtable = &failure_vtable;
     return this;
@@ -662,7 +662,7 @@ failure* __thiscall failure_copy_ctor(
     TRACE("%p %p\n", this, rhs);
     runtime_error_copy_ctor(&this->base, &rhs->base);
 #if _MSVCP_VER > 90
-    this->err = rhs->err;
+    this->code = rhs->code;
 #endif
     this->base.e.vtable = &failure_vtable;
     return this;
@@ -948,12 +948,6 @@ bool __cdecl MSVCP__uncaught_exception(void)
 }
 
 #if _MSVCP_VER >= 110
-typedef struct
-{
-    int code;
-    void *category;
-} error_code;
-
 typedef struct
 {
     logic_error base;

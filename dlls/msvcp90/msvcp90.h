@@ -668,6 +668,20 @@ typedef struct {
     double imag;
 } complex_double;
 
+#if _MSVCP_VER >= 100
+typedef struct {
+    const vtable_ptr *vtable;
+} error_category;
+
+const error_category* __cdecl std_iostream_category(void);
+
+typedef struct
+{
+    int code;
+    const error_category *category;
+} error_code;
+#endif
+
 #if _MSVCP_VER < 80
 static inline int memcpy_wrapper( void *dst, size_t size, const void *src, size_t count )
 {
