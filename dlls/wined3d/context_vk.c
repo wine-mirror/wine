@@ -216,6 +216,36 @@ static VkPrimitiveTopology vk_topology_from_wined3d(enum wined3d_primitive_type 
     }
 }
 
+static VkPrimitiveTopology vk_topology_class_from_wined3d(enum wined3d_primitive_type t)
+{
+    switch (t)
+    {
+        case WINED3D_PT_POINTLIST:
+            return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+
+        case WINED3D_PT_LINELIST:
+        case WINED3D_PT_LINELIST_ADJ:
+        case WINED3D_PT_LINESTRIP:
+        case WINED3D_PT_LINESTRIP_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+
+        case WINED3D_PT_TRIANGLEFAN:
+        case WINED3D_PT_TRIANGLELIST:
+        case WINED3D_PT_TRIANGLELIST_ADJ:
+        case WINED3D_PT_TRIANGLESTRIP:
+        case WINED3D_PT_TRIANGLESTRIP_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+        case WINED3D_PT_PATCH:
+            return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+
+        default:
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(t));
+        case WINED3D_PT_UNDEFINED:
+            return ~0u;
+    }
+}
+
 static VkStencilOp vk_stencil_op_from_wined3d(enum wined3d_stencil_op op)
 {
     switch (op)
@@ -1875,6 +1905,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_compute_shader_resource_bindings = 1;
     context_vk->c.update_unordered_access_view_bindings = 1;
     context_vk->c.update_compute_unordered_access_view_bindings = 1;
+    context_vk->c.update_primitive_type = 1;
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
@@ -2104,6 +2135,12 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_STENCIL_OP_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_STENCIL_WRITE_MASK;
+    }
+    if (vk_info->dynamic_state2)
+    {
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT;
+        if (!(context_vk->c.d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART))
+            dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT;
     }
 
     key = &context_vk->graphics.pipeline_key_vk;
@@ -2449,14 +2486,26 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    vk_topology = vk_topology_from_wined3d(state->primitive_type);
-    if (key->ia_desc.topology != vk_topology)
+    if (vk_info->dynamic_state2)
     {
-        key->ia_desc.topology = vk_topology;
-        key->ia_desc.primitiveRestartEnable = !(d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART)
-                && !wined3d_primitive_type_is_list(state->primitive_type);
+        vk_topology = vk_topology_class_from_wined3d(state->primitive_type);
+        if (key->ia_desc.topology != vk_topology)
+        {
+            key->ia_desc.topology = vk_topology;
+            update = true;
+        }
+    }
+    else
+    {
+        vk_topology = vk_topology_from_wined3d(state->primitive_type);
+        if (key->ia_desc.topology != vk_topology)
+        {
+            key->ia_desc.topology = vk_topology;
+            key->ia_desc.primitiveRestartEnable = !(d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART)
+                    && !wined3d_primitive_type_is_list(state->primitive_type);
 
-        update = true;
+            update = true;
+        }
     }
 
     if (key->ts_desc.patchControlPoints != state->patch_vertex_count)
@@ -3539,6 +3588,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk, bool indexed)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_blend_state *b = state->blend_state;
     bool dual_source_blend = b && b->dual_source;
@@ -3807,6 +3857,15 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
         VK_CALL(vkCmdSetViewport(vk_command_buffer, 0, viewport_count, viewports));
         VK_CALL(vkCmdSetScissor(vk_command_buffer, 0, viewport_count, scissors));
+    }
+
+    if (vk_info->dynamic_state2 && context_vk->c.update_primitive_type)
+    {
+        VK_CALL(vkCmdSetPrimitiveTopologyEXT(vk_command_buffer, vk_topology_from_wined3d(state->primitive_type)));
+        if (!(d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART))
+            VK_CALL(vkCmdSetPrimitiveRestartEnableEXT(vk_command_buffer,
+                    !wined3d_primitive_type_is_list(state->primitive_type)));
+        context_vk->c.update_primitive_type = 0;
     }
 
     if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE]

@@ -113,6 +113,8 @@ void wined3d_context_init(struct wined3d_context *context, struct wined3d_swapch
             | (1u << WINED3D_SHADER_TYPE_HULL)
             | (1u << WINED3D_SHADER_TYPE_DOMAIN)
             | (1u << WINED3D_SHADER_TYPE_COMPUTE);
+
+    context->update_primitive_type = 1;
 }
 
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d, struct wined3d_swapchain *swapchain)

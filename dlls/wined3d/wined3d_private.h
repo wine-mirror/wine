@@ -1967,7 +1967,8 @@ struct wined3d_context
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
     DWORD namedArraysLoaded : 1;
-    DWORD padding : 5;
+    DWORD update_primitive_type : 1;
+    DWORD padding : 4;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 

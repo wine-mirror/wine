@@ -1044,6 +1044,8 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         if (state->primitive_type == WINED3D_PT_POINTLIST || op->primitive_type == WINED3D_PT_POINTLIST)
             device_invalidate_state(cs->c.device, STATE_POINT_ENABLE);
         state->primitive_type = op->primitive_type;
+        for (i = 0; i < device->context_count; ++i)
+            device->contexts[i]->update_primitive_type = 1;
     }
     state->patch_vertex_count = op->patch_vertex_count;
 
