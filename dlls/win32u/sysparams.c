@@ -450,7 +450,8 @@ static HANDLE get_display_device_init_mutex( void )
 
     snprintf( buffer, ARRAY_SIZE(buffer), "\\Sessions\\%u\\BaseNamedObjects\\display_device_init",
               (int)NtCurrentTeb()->Peb->SessionId );
-    name.Length = name.MaximumLength = asciiz_to_unicode( bufferW, buffer );
+    name.MaximumLength = asciiz_to_unicode( bufferW, buffer );
+    name.Length = name.MaximumLength - sizeof(WCHAR);
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if (NtCreateMutant( &mutex, MUTEX_ALL_ACCESS, &attr, FALSE ) < 0) return 0;

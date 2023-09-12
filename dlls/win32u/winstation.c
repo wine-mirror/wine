@@ -554,7 +554,8 @@ static HANDLE get_winstations_dir_handle(void)
 
     sprintf( bufferA, "\\Sessions\\%u\\Windows\\WindowStations", (int)NtCurrentTeb()->Peb->SessionId );
     str.Buffer = buffer;
-    str.Length = str.MaximumLength = asciiz_to_unicode( buffer, bufferA ) - sizeof(WCHAR);
+    str.MaximumLength = asciiz_to_unicode( buffer, bufferA );
+    str.Length = str.MaximumLength - sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     status = NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT | DIRECTORY_TRAVERSE, &attr );
     return status ? 0 : dir;
