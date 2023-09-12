@@ -2188,22 +2188,12 @@ static HRESULT WINAPI HTMLPerformance_QueryInterface(IHTMLPerformance *iface, RE
 {
     HTMLPerformance *This = impl_from_IHTMLPerformance(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLPerformance_iface;
-    }else if(IsEqualGUID(&IID_IHTMLPerformance, riid)) {
-        *ppv = &This->IHTMLPerformance_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLPerformance_AddRef(IHTMLPerformance *iface)
@@ -2351,6 +2341,16 @@ static inline HTMLPerformance *HTMLPerformance_from_DispatchEx(DispatchEx *iface
     return CONTAINING_RECORD(iface, HTMLPerformance, dispex);
 }
 
+static void *HTMLPerformance_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLPerformance, riid))
+        return &This->IHTMLPerformance_iface;
+
+    return NULL;
+}
+
 static void HTMLPerformance_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLPerformance *This = HTMLPerformance_from_DispatchEx(dispex);
@@ -2381,6 +2381,7 @@ static void HTMLPerformance_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPerformance_dispex_vtbl = {
+    .query_interface  = HTMLPerformance_query_interface,
     .destructor       = HTMLPerformance_destructor,
     .traverse         = HTMLPerformance_traverse,
     .unlink           = HTMLPerformance_unlink
