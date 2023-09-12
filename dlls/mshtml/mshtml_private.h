@@ -432,14 +432,7 @@ extern void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjC
 extern void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
 extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
 
-static inline LONG dispex_ref_incr(DispatchEx *dispex)
-{
-    return ccref_incr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface);
-}
-extern LONG dispex_ref_decr(DispatchEx*);
-
 void init_dispatch(DispatchEx*,dispex_static_data_t*,compat_mode_t);
-BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 void dispex_props_unlink(DispatchEx*);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);

@@ -1576,7 +1576,7 @@ ret:
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
-    LONG ref = dispex_ref_incr(This);
+    LONG ref = ccref_incr(&This->ccref, (nsISupports*)&This->IDispatchEx_iface);
 
     TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
 
@@ -1586,9 +1586,18 @@ static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
-    LONG ref = dispex_ref_decr(This);
+    LONG ref = ccref_decr(&This->ccref, (nsISupports*)&This->IDispatchEx_iface, &dispex_ccp);
 
     TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
+
+    /* Gecko ccref may not free the object immediately when ref count reaches 0, so we need
+     * an extra care for objects that need an immediate clean up. See Gecko's
+     * NS_IMPL_CYCLE_COLLECTING_NATIVE_RELEASE_WITH_LAST_RELEASE for details. */
+    if(!ref && This->info->desc->vtbl->last_release) {
+        ccref_incr(&This->ccref, (nsISupports*)&This->IDispatchEx_iface);
+        This->info->desc->vtbl->last_release(This);
+        ccref_decr(&This->ccref, (nsISupports*)&This->IDispatchEx_iface, &dispex_ccp);
+    }
 
     return ref;
 }
@@ -1950,27 +1959,6 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNextDispID,
     DispatchEx_GetNameSpaceParent
 };
-
-BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
-{
-    return IDispatchEx_QueryInterface(&This->IDispatchEx_iface, riid, ppv) == S_OK;
-}
-
-LONG dispex_ref_decr(DispatchEx *dispex)
-{
-    LONG ref = ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
-
-    /* Gecko ccref may not free the object immediatelly when ref count reaches 0, so we need
-     * an extra care for objects that need an immediate clean up. See
-     * NS_IMPL_CYCLE_COLLECTING_NATIVE_RELEASE_WITH_LAST_RELEASE for details. */
-    if(!ref && dispex->info->desc->vtbl->last_release) {
-        ccref_incr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface);
-        dispex->info->desc->vtbl->last_release(dispex);
-        ccref_decr(&dispex->ccref, (nsISupports*)&dispex->IDispatchEx_iface, &dispex_ccp);
-    }
-
-    return ref;
-}
 
 static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
 {

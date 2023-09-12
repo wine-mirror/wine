@@ -1092,33 +1092,19 @@ static inline struct mutation_observer *impl_from_IWineMSHTMLMutationObserver(IW
 static HRESULT WINAPI MutationObserver_QueryInterface(IWineMSHTMLMutationObserver *iface, REFIID riid, void **ppv)
 {
     struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-
-    if(dispex_query_interface(&This->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI MutationObserver_AddRef(IWineMSHTMLMutationObserver *iface)
 {
     struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI MutationObserver_Release(IWineMSHTMLMutationObserver *iface)
 {
     struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI MutationObserver_GetTypeInfoCount(IWineMSHTMLMutationObserver *iface, UINT *pctinfo)

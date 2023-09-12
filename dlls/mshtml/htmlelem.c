@@ -540,33 +540,19 @@ static inline HTMLRect *impl_from_IHTMLRect(IHTMLRect *iface)
 static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, void **ppv)
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
-
-    if(dispex_query_interface(&This->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLRect_AddRef(IHTMLRect *iface)
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
 {
     HTMLRect *This = impl_from_IHTMLRect(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI HTMLRect_GetTypeInfoCount(IHTMLRect *iface, UINT *pctinfo)
@@ -1047,33 +1033,19 @@ static inline HTMLRectCollection *impl_from_IHTMLRectCollection(IHTMLRectCollect
 static HRESULT WINAPI HTMLRectCollection_QueryInterface(IHTMLRectCollection *iface, REFIID riid, void **ppv)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-
-    if(dispex_query_interface(&This->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLRectCollection_AddRef(IHTMLRectCollection *iface)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI HTMLRectCollection_Release(IHTMLRectCollection *iface)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI HTMLRectCollection_GetTypeInfoCount(IHTMLRectCollection *iface, UINT *pctinfo)
@@ -7382,33 +7354,19 @@ static inline struct token_list *impl_from_IWineDOMTokenList(IWineDOMTokenList *
 static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID riid, void **ppv)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-
-    if(dispex_query_interface(&token_list->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&token_list->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI token_list_AddRef(IWineDOMTokenList *iface)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-    LONG ref = dispex_ref_incr(&token_list->dispex);
-
-    TRACE("(%p) ref=%ld\n", token_list, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&token_list->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI token_list_Release(IWineDOMTokenList *iface)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
-    LONG ref = dispex_ref_decr(&token_list->dispex);
-
-    TRACE("(%p) ref=%ld\n", token_list, ref);
-
-    return ref;
+    return IDispatchEx_Release(&token_list->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI token_list_GetTypeInfoCount(IWineDOMTokenList *iface, UINT *pctinfo)
@@ -8093,33 +8051,19 @@ HRESULT get_element(nsIDOMElement *nselem, HTMLElement **ret)
 static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollection *iface, REFIID riid, void **ppv)
 {
     HTMLFiltersCollection *This = impl_from_IHTMLFiltersCollection(iface);
-
-    if(dispex_query_interface(&This->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLFiltersCollection_AddRef(IHTMLFiltersCollection *iface)
 {
     HTMLFiltersCollection *This = impl_from_IHTMLFiltersCollection(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI HTMLFiltersCollection_Release(IHTMLFiltersCollection *iface)
 {
     HTMLFiltersCollection *This = impl_from_IHTMLFiltersCollection(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI HTMLFiltersCollection_GetTypeInfoCount(IHTMLFiltersCollection *iface, UINT *pctinfo)
@@ -8542,33 +8486,19 @@ static inline HTMLAttributeCollection *impl_from_IHTMLAttributeCollection(IHTMLA
 static HRESULT WINAPI HTMLAttributeCollection_QueryInterface(IHTMLAttributeCollection *iface, REFIID riid, void **ppv)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-
-    if(dispex_query_interface(&This->dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLAttributeCollection_AddRef(IHTMLAttributeCollection *iface)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    LONG ref = dispex_ref_incr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *iface)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    LONG ref = dispex_ref_decr(&This->dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI HTMLAttributeCollection_GetTypeInfoCount(IHTMLAttributeCollection *iface, UINT *pctinfo)

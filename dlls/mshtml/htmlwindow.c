@@ -208,33 +208,19 @@ static void *base_query_interface(HTMLWindow *This, REFIID riid)
 static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
 {
     HTMLInnerWindow *This = HTMLInnerWindow_from_IHTMLWindow2(iface);
-
-    if(dispex_query_interface(&This->event_target.dispex, riid, ppv))
-        return *ppv ? S_OK : E_NOINTERFACE;
-
-    *ppv = NULL;
-    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IDispatchEx_QueryInterface(&This->event_target.dispex.IDispatchEx_iface, riid, ppv);
 }
 
 static ULONG WINAPI HTMLWindow2_AddRef(IHTMLWindow2 *iface)
 {
     HTMLInnerWindow *This = HTMLInnerWindow_from_IHTMLWindow2(iface);
-    LONG ref = dispex_ref_incr(&This->event_target.dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_AddRef(&This->event_target.dispex.IDispatchEx_iface);
 }
 
 static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 {
     HTMLInnerWindow *This = HTMLInnerWindow_from_IHTMLWindow2(iface);
-    LONG ref = dispex_ref_decr(&This->event_target.dispex);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
+    return IDispatchEx_Release(&This->event_target.dispex.IDispatchEx_iface);
 }
 
 static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
