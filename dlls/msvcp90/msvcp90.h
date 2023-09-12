@@ -674,6 +674,7 @@ typedef struct {
 } error_category;
 
 const error_category* __cdecl std_iostream_category(void);
+const error_category* __cdecl std_generic_category(void);
 
 typedef struct
 {

@@ -1110,13 +1110,6 @@ const char* __thiscall custom_category_name(const custom_category *this)
     return this->type;
 }
 
-DEFINE_THISCALL_WRAPPER(custom_category_message, 12)
-basic_string_char* __thiscall custom_category_message(const custom_category *this,
-        basic_string_char *ret, int err)
-{
-    return MSVCP_basic_string_char_ctor_cstr(ret, strerror(err));
-}
-
 /* ?system_category@std@@YAABVerror_category@1@XZ */
 /* ?system_category@std@@YAAEBVerror_category@1@XZ */
 const error_category* __cdecl std_system_category(void)
@@ -1124,7 +1117,9 @@ const error_category* __cdecl std_system_category(void)
     TRACE("()\n");
     return &system_category.base;
 }
+#endif
 
+#if _MSVCP_VER >= 100
 static custom_category generic_category;
 
 extern const vtable_ptr generic_category_vtable;
@@ -1132,7 +1127,26 @@ extern const vtable_ptr generic_category_vtable;
 static void generic_category_ctor(custom_category *this)
 {
     this->base.vtable = &generic_category_vtable;
+#if _MSVCP_VER == 100
     this->type = "generic";
+#endif
+}
+
+DEFINE_THISCALL_WRAPPER(generic_category_name, 4)
+const char* __thiscall generic_category_name(const custom_category *this)
+{
+#if _MSVCP_VER == 100
+    return this->type;
+#else
+    return "generic";
+#endif
+}
+
+DEFINE_THISCALL_WRAPPER(custom_category_message, 12)
+basic_string_char* __thiscall custom_category_message(const custom_category *this,
+        basic_string_char *ret, int err)
+{
+    return MSVCP_basic_string_char_ctor_cstr(ret, strerror(err));
 }
 
 /* ?generic_category@std@@YAABVerror_category@1@XZ */
@@ -1716,14 +1730,14 @@ __ASM_BLOCK_BEGIN(misc_vtables)
             VTABLE_ADD_FUNC(custom_category_default_error_condition)
             VTABLE_ADD_FUNC(custom_category_equivalent)
             VTABLE_ADD_FUNC(custom_category_equivalent_code));
+#endif
     __ASM_VTABLE(generic_category,
             VTABLE_ADD_FUNC(custom_category_vector_dtor)
-            VTABLE_ADD_FUNC(custom_category_name)
+            VTABLE_ADD_FUNC(generic_category_name)
             VTABLE_ADD_FUNC(custom_category_message)
             VTABLE_ADD_FUNC(custom_category_default_error_condition)
             VTABLE_ADD_FUNC(custom_category_equivalent)
             VTABLE_ADD_FUNC(custom_category_equivalent_code));
-#endif
 #if _MSVCP_VER >= 110
     __ASM_VTABLE(_Pad,
             VTABLE_ADD_FUNC(_Pad__Go));
@@ -1748,11 +1762,11 @@ void init_misc(void *base)
 
 #if _MSVCP_VER >= 100
     iostream_category_ctor(&iostream_category);
+    generic_category_ctor(&generic_category);
 #endif
 
 #if _MSVCP_VER == 100
     system_category_ctor(&system_category);
-    generic_category_ctor(&generic_category);
 #endif
 }
 
