@@ -756,7 +756,7 @@ static void test_graph(void)
     ok(!msg.dwSize, "got %ld\n", msg.dwSize);
     ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
     ok(!msg.mtTime, "got %ld\n", msg.mtTime);
-    todo_wine ok(msg.dwFlags == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", msg.dwFlags);
+    ok(msg.dwFlags == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", msg.dwFlags);
     ok(!msg.dwPChannel, "got %ld\n", msg.dwPChannel);
     ok(!msg.dwVirtualTrackID, "got %ld\n", msg.dwVirtualTrackID);
     ok(!msg.dwType, "got %#lx\n", msg.dwType);
@@ -1555,7 +1555,7 @@ static void test_performance_graph(void)
     ok(!msg.dwSize, "got %ld\n", msg.dwSize);
     ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
     ok(!msg.mtTime, "got %ld\n", msg.mtTime);
-    todo_wine ok(msg.dwFlags == DMUS_PMSGF_TOOL_QUEUE, "got %#lx\n", msg.dwFlags);
+    ok(msg.dwFlags == DMUS_PMSGF_TOOL_QUEUE, "got %#lx\n", msg.dwFlags);
     ok(!msg.dwPChannel, "got %ld\n", msg.dwPChannel);
     ok(!msg.dwVirtualTrackID, "got %ld\n", msg.dwVirtualTrackID);
     ok(!msg.dwType, "got %#lx\n", msg.dwType);
@@ -1611,7 +1611,7 @@ static void test_performance_graph(void)
     ok(!msg.dwSize, "got %ld\n", msg.dwSize);
     ok(!msg.rtTime, "got %I64d\n", msg.rtTime);
     ok(!msg.mtTime, "got %ld\n", msg.mtTime);
-    todo_wine ok(msg.dwFlags == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", msg.dwFlags);
+    ok(msg.dwFlags == DMUS_PMSGF_TOOL_IMMEDIATE, "got %#lx\n", msg.dwFlags);
     ok(!msg.dwPChannel, "got %ld\n", msg.dwPChannel);
     ok(!msg.dwVirtualTrackID, "got %ld\n", msg.dwVirtualTrackID);
     ok(!msg.dwType, "got %#lx\n", msg.dwType);

@@ -1311,6 +1311,10 @@ static HRESULT WINAPI performance_graph_StampPMsg(IDirectMusicGraph *iface, DMUS
 
     if (hr == DMUS_S_LAST_TOOL)
     {
+        const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
+        msg->dwFlags &= ~delivery_flags;
+        msg->dwFlags |= DMUS_PMSGF_TOOL_QUEUE;
+
         if (msg->pTool) IDirectMusicTool_Release(msg->pTool);
         msg->pTool = &This->IDirectMusicTool_iface;
         IDirectMusicTool_AddRef(msg->pTool);

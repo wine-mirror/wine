@@ -26,6 +26,7 @@ struct tool_entry
 {
     struct list entry;
     IDirectMusicTool *tool;
+    DWORD delivery;
 };
 
 struct graph
@@ -111,6 +112,7 @@ static ULONG WINAPI graph_Release(IDirectMusicGraph *iface)
 
 static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
+    const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
     struct graph *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry, *next, *first;
 
@@ -140,6 +142,9 @@ static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
     msg->pTool = next->tool;
     IDirectMusicTool_AddRef(msg->pTool);
 
+    msg->dwFlags &= ~delivery_flags;
+    msg->dwFlags |= next->delivery;
+
     return S_OK;
 }
 
@@ -148,6 +153,7 @@ static HRESULT WINAPI graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicToo
 {
     struct graph *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry, *next;
+    HRESULT hr;
 
     TRACE("(%p, %p, %p, %ld, %li)\n", This, tool, channels, channel_count, index);
 
@@ -163,6 +169,11 @@ static HRESULT WINAPI graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicToo
     entry->tool = tool;
     IDirectMusicTool_AddRef(tool);
     IDirectMusicTool_Init(tool, iface);
+    if (FAILED(hr = IDirectMusicTool_GetMsgDeliveryType(tool, &entry->delivery)))
+    {
+        WARN("Failed to get delivery type from tool %p, hr %#lx\n", tool, hr);
+        entry->delivery = DMUS_PMSGF_TOOL_IMMEDIATE;
+    }
     list_add_before(&next->entry, &entry->entry);
 
     return S_OK;
