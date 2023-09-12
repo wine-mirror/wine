@@ -1906,6 +1906,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_unordered_access_view_bindings = 1;
     context_vk->c.update_compute_unordered_access_view_bindings = 1;
     context_vk->c.update_primitive_type = 1;
+    context_vk->c.update_patch_vertex_count = 1;
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
@@ -2142,6 +2143,8 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
         if (!(context_vk->c.d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART))
             dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT;
     }
+    if (vk_info->dynamic_patch_vertex_count)
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT;
 
     key = &context_vk->graphics.pipeline_key_vk;
     memset(key, 0, sizeof(*key));
@@ -2508,7 +2511,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         }
     }
 
-    if (key->ts_desc.patchControlPoints != state->patch_vertex_count)
+    if (!vk_info->dynamic_patch_vertex_count && key->ts_desc.patchControlPoints != state->patch_vertex_count)
     {
         key->ts_desc.patchControlPoints = state->patch_vertex_count;
 
@@ -3866,6 +3869,13 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             VK_CALL(vkCmdSetPrimitiveRestartEnableEXT(vk_command_buffer,
                     !wined3d_primitive_type_is_list(state->primitive_type)));
         context_vk->c.update_primitive_type = 0;
+    }
+
+    if (vk_info->dynamic_patch_vertex_count && context_vk->c.update_patch_vertex_count)
+    {
+        if (state->patch_vertex_count)
+            VK_CALL(vkCmdSetPatchControlPointsEXT(vk_command_buffer, state->patch_vertex_count));
+        context_vk->c.update_patch_vertex_count = 0;
     }
 
     if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE]

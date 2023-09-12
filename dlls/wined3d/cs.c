@@ -1047,6 +1047,11 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         for (i = 0; i < device->context_count; ++i)
             device->contexts[i]->update_primitive_type = 1;
     }
+    if (state->patch_vertex_count != op->patch_vertex_count)
+    {
+        for (i = 0; i < device->context_count; ++i)
+            device->contexts[i]->update_patch_vertex_count = 1;
+    }
     state->patch_vertex_count = op->patch_vertex_count;
 
     cs->c.device->adapter->adapter_ops->adapter_draw_primitive(cs->c.device, state, &op->parameters);
