@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 struct instrument_entry
 {
     struct list entry;
+    DMUS_OBJECTDESC desc;
     IDirectMusicInstrument *instrument;
 };
 
@@ -156,13 +157,7 @@ static HRESULT WINAPI collection_EnumInstrument(IDirectMusicCollection *iface,
     {
         if (index--) continue;
         if (FAILED(hr = IDirectMusicInstrument_GetPatch(entry->instrument, patch))) return hr;
-        if (name)
-        {
-            struct instrument *instrument = impl_from_IDirectMusicInstrument(entry->instrument);
-            DWORD length = min(lstrlenW(instrument->wszName), name_length - 1);
-            memcpy(name, instrument->wszName, length * sizeof(WCHAR));
-            name[length] = '\0';
-        }
+        if (name) lstrcpynW(name, entry->desc.wszName, name_length);
         return S_OK;
     }
 
@@ -190,7 +185,7 @@ static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct 
         {
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
             if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
-            hr = instrument_create_from_chunk(stream, &chunk, &entry->instrument);
+            hr = instrument_create_from_chunk(stream, &chunk, &entry->desc, &entry->instrument);
             if (SUCCEEDED(hr)) list_add_tail(&This->instruments, &entry->entry);
             else free(entry);
             break;
