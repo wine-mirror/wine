@@ -2002,22 +2002,12 @@ static HRESULT WINAPI HTMLPerformanceNavigation_QueryInterface(IHTMLPerformanceN
 {
     HTMLPerformanceNavigation *This = impl_from_IHTMLPerformanceNavigation(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid)) {
-        *ppv = &This->IHTMLPerformanceNavigation_iface;
-    }else if(IsEqualGUID(&IID_IHTMLPerformanceNavigation, riid)) {
-        *ppv = &This->IHTMLPerformanceNavigation_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+    if(dispex_query_interface(&This->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI HTMLPerformanceNavigation_AddRef(IHTMLPerformanceNavigation *iface)
@@ -2130,6 +2120,16 @@ static inline HTMLPerformanceNavigation *HTMLPerformanceNavigation_from_Dispatch
     return CONTAINING_RECORD(iface, HTMLPerformanceNavigation, dispex);
 }
 
+static void *HTMLPerformanceNavigation_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IHTMLPerformanceNavigation, riid))
+        return &This->IHTMLPerformanceNavigation_iface;
+
+    return NULL;
+}
+
 static void HTMLPerformanceNavigation_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLPerformanceNavigation *This = HTMLPerformanceNavigation_from_DispatchEx(dispex);
@@ -2154,6 +2154,7 @@ static void HTMLPerformanceNavigation_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t HTMLPerformanceNavigation_dispex_vtbl = {
+    .query_interface  = HTMLPerformanceNavigation_query_interface,
     .destructor       = HTMLPerformanceNavigation_destructor,
     .traverse         = HTMLPerformanceNavigation_traverse,
     .unlink           = HTMLPerformanceNavigation_unlink
