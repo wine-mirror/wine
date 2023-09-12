@@ -338,3 +338,20 @@ void wayland_window_flush(HWND hwnd)
 
     wayland_win_data_release(data);
 }
+
+/**********************************************************************
+ *           wayland_surface_lock_hwnd
+ */
+struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)
+{
+    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+    struct wayland_surface *surface;
+
+    if (!data) return NULL;
+
+    if ((surface = data->wayland_surface)) pthread_mutex_lock(&surface->mutex);
+
+    wayland_win_data_release(data);
+
+    return surface;
+}

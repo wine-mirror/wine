@@ -33,38 +33,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-/* Protects access to the user data of xdg_surface */
-static pthread_mutex_t xdg_data_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static struct wayland_surface *wayland_surface_lock_xdg(struct xdg_surface *xdg_surface)
-{
-    struct wayland_surface *surface;
-
-    pthread_mutex_lock(&xdg_data_mutex);
-    surface = xdg_surface_get_user_data(xdg_surface);
-    if (surface) pthread_mutex_lock(&surface->mutex);
-    pthread_mutex_unlock(&xdg_data_mutex);
-
-    return surface;
-}
-
 static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_surface,
                                          uint32_t serial)
 {
     struct wayland_surface *surface;
     BOOL initial_configure = FALSE;
-    HWND hwnd;
+    HWND hwnd = data;
 
     TRACE("serial=%u\n", serial);
 
-    if (!(surface = wayland_surface_lock_xdg(xdg_surface))) return;
+    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
 
     /* Handle this event only if wayland_surface is still associated with
      * the target xdg_surface. */
     if (surface->xdg_surface == xdg_surface)
     {
         initial_configure = surface->current_serial == 0;
-        hwnd = surface->hwnd;
         surface->current_serial = serial;
         xdg_surface_ack_configure(xdg_surface, serial);
     }
@@ -132,7 +116,6 @@ void wayland_surface_destroy(struct wayland_surface *surface)
     }
     pthread_mutex_unlock(&process_wayland.pointer.mutex);
 
-    pthread_mutex_lock(&xdg_data_mutex);
     pthread_mutex_lock(&surface->mutex);
 
     if (surface->xdg_toplevel)
@@ -143,7 +126,6 @@ void wayland_surface_destroy(struct wayland_surface *surface)
 
     if (surface->xdg_surface)
     {
-        xdg_surface_set_user_data(surface->xdg_surface, NULL);
         xdg_surface_destroy(surface->xdg_surface);
         surface->xdg_surface = NULL;
     }
@@ -155,7 +137,6 @@ void wayland_surface_destroy(struct wayland_surface *surface)
     }
 
     pthread_mutex_unlock(&surface->mutex);
-    pthread_mutex_unlock(&xdg_data_mutex);
 
     if (surface->latest_window_buffer)
         wayland_shm_buffer_unref(surface->latest_window_buffer);
@@ -179,7 +160,7 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
     surface->xdg_surface =
         xdg_wm_base_get_xdg_surface(process_wayland.xdg_wm_base, surface->wl_surface);
     if (!surface->xdg_surface) goto err;
-    xdg_surface_add_listener(surface->xdg_surface, &xdg_surface_listener, surface);
+    xdg_surface_add_listener(surface->xdg_surface, &xdg_surface_listener, surface->hwnd);
 
     surface->xdg_toplevel = xdg_surface_get_toplevel(surface->xdg_surface);
     if (!surface->xdg_toplevel) goto err;

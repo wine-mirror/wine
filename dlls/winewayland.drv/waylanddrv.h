@@ -166,6 +166,7 @@ void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,
                                 HRGN surface_damage_region) DECLSPEC_HIDDEN;
+struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer
