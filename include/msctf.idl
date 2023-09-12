@@ -166,6 +166,12 @@ typedef [uuid(77c12f95-b783-450d-879f-1cd2362c6521)] struct TF_PRESERVEDKEY
 
 typedef [uuid(5a886226-ae9a-489b-b991-2b1e25ee59a9)]  enum { TF_ANCHOR_START = 0, TF_ANCHOR_END = 1 } TfAnchor;
 
+typedef [uuid(d678c645-eb6a-45c9-b4ee-0f3e3a991348)] struct TF_PROPERTYVAL
+{
+    GUID guidId;
+    VARIANT varValue;
+} TF_PROPERTYVAL;
+
 [
     object,
     uuid(101d6610-0990-11d3-8df0-00105a2799b5),
@@ -367,6 +373,27 @@ interface IEnumTfProperties : IUnknown
     HRESULT Next(
         [in] ULONG count,
         [out, size_is(count), length_is(*fetched)] ITfProperty **props,
+        [out] ULONG *fetched);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG count);
+}
+
+[
+    object,
+    uuid(8ed8981b-7c10-4d7d-9fb3-ab72e9c75f72),
+    pointer_default(unique)
+]
+interface IEnumTfPropertyValue : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfPropertyValue **property_value);
+
+    HRESULT Next(
+        [in] ULONG count,
+        [out, size_is(count), length_is(*fetched)] TF_PROPERTYVAL *values,
         [out] ULONG *fetched);
 
     HRESULT Reset();
