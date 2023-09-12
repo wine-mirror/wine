@@ -2878,19 +2878,12 @@ static HRESULT WINAPI media_query_list_QueryInterface(IWineMSHTMLMediaQueryList 
 {
     struct media_query_list *media_query_list = impl_from_IWineMSHTMLMediaQueryList(iface);
 
-    TRACE("(%p)->(%s %p)\n", media_query_list, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWineMSHTMLMediaQueryList, riid)) {
-        *ppv = &media_query_list->IWineMSHTMLMediaQueryList_iface;
-    }else if(dispex_query_interface(&media_query_list->dispex, riid, ppv)) {
+    if(dispex_query_interface(&media_query_list->dispex, riid, ppv))
         return *ppv ? S_OK : E_NOINTERFACE;
-    }else {
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    *ppv = NULL;
+    WARN("(%p)->(%s %p)\n", media_query_list, debugstr_mshtml_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI media_query_list_AddRef(IWineMSHTMLMediaQueryList *iface)
@@ -3134,6 +3127,16 @@ static inline struct media_query_list *media_query_list_from_DispatchEx(Dispatch
     return CONTAINING_RECORD(iface, struct media_query_list, dispex);
 }
 
+static void *media_query_list_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IWineMSHTMLMediaQueryList, riid))
+        return &media_query_list->IWineMSHTMLMediaQueryList_iface;
+
+    return NULL;
+}
+
 static void media_query_list_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
@@ -3167,6 +3170,7 @@ static void media_query_list_destructor(DispatchEx *dispex)
 }
 
 static const dispex_static_data_vtbl_t media_query_list_dispex_vtbl = {
+    .query_interface  = media_query_list_query_interface,
     .destructor       = media_query_list_destructor,
     .traverse         = media_query_list_traverse,
     .unlink           = media_query_list_unlink
