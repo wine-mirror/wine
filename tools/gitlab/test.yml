@@ -57,7 +57,7 @@ test-linux-64:
 test-linux-32:
   extends: .wine-test
   variables:
-    EXCLUDE_TESTS: "d3d10core:d3d10core d3d11:d3d11 d3d8:device d3d8:visual d3d9:d3d9ex d3d9:device d3d9:visual"
+    EXCLUDE_TESTS: "d3d10core:d3d10core d3d11:d3d11 d3d8:visual d3d9:d3d9ex d3d9:visual"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
