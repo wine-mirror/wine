@@ -46,7 +46,7 @@ static inline IDirectMusicGraphImpl *impl_from_IPersistStream(IPersistStream *if
     return CONTAINING_RECORD(iface, IDirectMusicGraphImpl, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI DirectMusicGraph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
+static HRESULT WINAPI graph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
 
@@ -74,7 +74,7 @@ static HRESULT WINAPI DirectMusicGraph_QueryInterface(IDirectMusicGraph *iface, 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI DirectMusicGraph_AddRef(IDirectMusicGraph *iface)
+static ULONG WINAPI graph_AddRef(IDirectMusicGraph *iface)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -84,7 +84,7 @@ static ULONG WINAPI DirectMusicGraph_AddRef(IDirectMusicGraph *iface)
     return ref;
 }
 
-static ULONG WINAPI DirectMusicGraph_Release(IDirectMusicGraph *iface)
+static ULONG WINAPI graph_Release(IDirectMusicGraph *iface)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -108,14 +108,14 @@ static ULONG WINAPI DirectMusicGraph_Release(IDirectMusicGraph *iface)
     return ref;
 }
 
-static HRESULT WINAPI DirectMusicGraph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
+static HRESULT WINAPI graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     FIXME("(%p, %p): stub\n", This, msg);
     return S_OK;
 }
 
-static HRESULT WINAPI DirectMusicGraph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
+static HRESULT WINAPI graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
         DWORD *channels, DWORD channel_count, LONG index)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
@@ -140,7 +140,7 @@ static HRESULT WINAPI DirectMusicGraph_InsertTool(IDirectMusicGraph *iface, IDir
     return S_OK;
 }
 
-static HRESULT WINAPI DirectMusicGraph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **ret_tool)
+static HRESULT WINAPI graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **ret_tool)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry;
@@ -162,7 +162,7 @@ static HRESULT WINAPI DirectMusicGraph_GetTool(IDirectMusicGraph *iface, DWORD i
     return DMUS_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI DirectMusicGraph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
+static HRESULT WINAPI graph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
 {
     IDirectMusicGraphImpl *This = impl_from_IDirectMusicGraph(iface);
     struct tool_entry *entry;
@@ -185,15 +185,15 @@ static HRESULT WINAPI DirectMusicGraph_RemoveTool(IDirectMusicGraph *iface, IDir
     return DMUS_E_NOT_FOUND;
 }
 
-static const IDirectMusicGraphVtbl DirectMusicGraphVtbl =
+static const IDirectMusicGraphVtbl graph_vtbl =
 {
-    DirectMusicGraph_QueryInterface,
-    DirectMusicGraph_AddRef,
-    DirectMusicGraph_Release,
-    DirectMusicGraph_StampPMsg,
-    DirectMusicGraph_InsertTool,
-    DirectMusicGraph_GetTool,
-    DirectMusicGraph_RemoveTool
+    graph_QueryInterface,
+    graph_AddRef,
+    graph_Release,
+    graph_StampPMsg,
+    graph_InsertTool,
+    graph_GetTool,
+    graph_RemoveTool,
 };
 
 static HRESULT WINAPI graph_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
@@ -267,7 +267,7 @@ HRESULT create_dmgraph(REFIID riid, void **ret_iface)
 
     *ret_iface = NULL;
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-    obj->IDirectMusicGraph_iface.lpVtbl = &DirectMusicGraphVtbl;
+    obj->IDirectMusicGraph_iface.lpVtbl = &graph_vtbl;
     obj->ref = 1;
     dmobject_init(&obj->dmobj, &CLSID_DirectMusicGraph, (IUnknown *)&obj->IDirectMusicGraph_iface);
     obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
