@@ -396,17 +396,24 @@ static HRESULT HTMLLinkElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL
     return IHTMLLinkElement_get_disabled(&This->IHTMLLinkElement_iface, p);
 }
 
-static void HTMLLinkElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLLinkElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nslink)
-        note_cc_edge((nsISupports*)This->nslink, "This->nslink", cb);
+    return CONTAINING_RECORD(iface, HTMLLinkElement, element.node.event_target.dispex);
 }
 
-static void HTMLLinkElement_unlink(HTMLDOMNode *iface)
+static void HTMLLinkElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLLinkElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nslink)
+        note_cc_edge((nsISupports*)This->nslink, "nslink", cb);
+}
+
+static void HTMLLinkElement_unlink(DispatchEx *dispex)
+{
+    HTMLLinkElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nslink);
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
@@ -419,8 +426,15 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLLinkElementImpl_put_disabled,
     .get_disabled          = HTMLLinkElementImpl_get_disabled,
-    .traverse              = HTMLLinkElement_traverse,
-    .unlink                = HTMLLinkElement_unlink
+};
+
+static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLLinkElement_traverse,
+        .unlink         = HTMLLinkElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {
@@ -430,7 +444,7 @@ static const tid_t HTMLLinkElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLLinkElement_dispex = {
     "HTMLLinkElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLLinkElement_event_target_vtbl.dispex_vtbl,
     DispHTMLLinkElement_tid,
     HTMLLinkElement_iface_tids,
     HTMLElement_init_dispex_info
