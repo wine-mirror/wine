@@ -23,12 +23,12 @@
 
 #include "ntuser.h"
 
-extern LRESULT WINAPI ImeWndProcA(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI ImeWndProcW(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI DesktopWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI IconTitleWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI PopupMenuWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI MessageWndProc(HWND,UINT,WPARAM,LPARAM) DECLSPEC_HIDDEN;
+extern LRESULT WINAPI ImeWndProcA(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT WINAPI ImeWndProcW(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT WINAPI DesktopWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT WINAPI IconTitleWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT WINAPI PopupMenuWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT WINAPI MessageWndProc(HWND,UINT,WPARAM,LPARAM);
 
 /* Wow handlers */
 
@@ -63,32 +63,32 @@ struct wow_handlers32
     INT     (*dialog_box_loop)(HWND,HWND);
 };
 
-extern struct wow_handlers16 wow_handlers DECLSPEC_HIDDEN;
+extern struct wow_handlers16 wow_handlers;
 
-extern LRESULT ButtonWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT ComboWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT EditWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT ListBoxWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT MDIClientWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
-extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL) DECLSPEC_HIDDEN;
+extern LRESULT ButtonWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT ComboWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT EditWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT ListBoxWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT MDIClientWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT ScrollBarWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
+extern LRESULT StaticWndProc_common(HWND,UINT,WPARAM,LPARAM,BOOL);
 
 /* Class functions */
-extern ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
+extern ATOM get_int_atom_value( UNICODE_STRING *name );
 
 /* desktop */
-extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DECLSPEC_HIDDEN;
+extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern );
 
 /* nonclient area */
-extern LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
+extern LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam );
 
 /* scrollbar */
 
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test,
                                   const struct SCROLL_TRACKING_INFO *tracking_info, BOOL arrows,
-                                  BOOL interior ) DECLSPEC_HIDDEN;
-extern void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt ) DECLSPEC_HIDDEN;
-extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt ) DECLSPEC_HIDDEN;
+                                  BOOL interior );
+extern void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt );
+extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt );
 
 /* combo box */
 
@@ -131,7 +131,7 @@ typedef struct
    INT            item_height;
 } HEADCOMBO,*LPHEADCOMBO;
 
-extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL ) DECLSPEC_HIDDEN;
+extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
 
 /* Dialog info structure (note: shared with user.exe) */
 typedef struct tagDIALOGINFO
@@ -147,9 +147,9 @@ typedef struct tagDIALOGINFO
 
 #define DF_END  0x0001
 
-extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
-extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
+extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
+extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );
 
-HRGN set_control_clipping( HDC hdc, const RECT *rect ) DECLSPEC_HIDDEN;
+HRGN set_control_clipping( HDC hdc, const RECT *rect );
 
 #endif  /* __WINE_CONTROLS_H */
