@@ -946,17 +946,24 @@ static HRESULT HTMLFormElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDO
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
-static void HTMLFormElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLFormElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsform)
-        note_cc_edge((nsISupports*)This->nsform, "This->nsform", cb);
+    return CONTAINING_RECORD(iface, HTMLFormElement, element.node.event_target.dispex);
 }
 
-static void HTMLFormElement_unlink(HTMLDOMNode *iface)
+static void HTMLFormElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsform)
+        note_cc_edge((nsISupports*)This->nsform, "nsform", cb);
+}
+
+static void HTMLFormElement_unlink(DispatchEx *dispex)
+{
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsform);
 }
 
@@ -971,8 +978,15 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .get_dispid            = HTMLFormElement_get_dispid,
     .get_name              = HTMLFormElement_dispex_get_name,
     .invoke                = HTMLFormElement_invoke,
-    .traverse              = HTMLFormElement_traverse,
-    .unlink                = HTMLFormElement_unlink
+};
+
+static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLFormElement_traverse,
+        .unlink         = HTMLFormElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {
@@ -983,7 +997,7 @@ static const tid_t HTMLFormElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLFormElement_dispex = {
     "HTMLFormElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLFormElement_event_target_vtbl.dispex_vtbl,
     DispHTMLFormElement_tid,
     HTMLFormElement_iface_tids,
     HTMLElement_init_dispex_info
