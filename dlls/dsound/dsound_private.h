@@ -253,8 +253,6 @@ HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **
 #define STATE_STOPPING  3
 
 extern CRITICAL_SECTION DSOUND_renderers_lock;
-extern CRITICAL_SECTION DSOUND_capturers_lock;
-extern struct list DSOUND_capturers;
 extern struct list DSOUND_renderers;
 
 extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];

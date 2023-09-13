@@ -73,16 +73,6 @@ static CRITICAL_SECTION_DEBUG DSOUND_renderers_lock_debug =
 };
 CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 0, 0, 0 };
 
-struct list DSOUND_capturers = LIST_INIT(DSOUND_capturers);
-CRITICAL_SECTION DSOUND_capturers_lock;
-static CRITICAL_SECTION_DEBUG DSOUND_capturers_lock_debug =
-{
-    0, 0, &DSOUND_capturers_lock,
-    { &DSOUND_capturers_lock_debug.ProcessLocksList, &DSOUND_capturers_lock_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": DSOUND_capturers_lock") }
-};
-CRITICAL_SECTION DSOUND_capturers_lock = { &DSOUND_capturers_lock_debug, -1, 0, 0, 0, 0 };
-
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
@@ -779,7 +769,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_DETACH:
         if (lpvReserved) break;
         DeleteCriticalSection(&DSOUND_renderers_lock);
-        DeleteCriticalSection(&DSOUND_capturers_lock);
         break;
     }
     return TRUE;
