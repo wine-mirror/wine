@@ -444,7 +444,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     wayland_window_surface_copy_to_buffer(wws, shm_buffer, copy_from_window_region);
 
     pthread_mutex_lock(&wws->wayland_surface->mutex);
-    if (wws->wayland_surface->current_serial)
+    if (wayland_surface_reconfigure(wws->wayland_surface))
     {
         wayland_surface_attach_shm(wws->wayland_surface, shm_buffer,
                                    surface_damage_region);

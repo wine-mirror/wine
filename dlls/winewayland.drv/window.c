@@ -192,6 +192,20 @@ out:
     data->wayland_surface = surface;
 }
 
+static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
+{
+    struct wayland_surface *surface = data->wayland_surface;
+
+    pthread_mutex_lock(&surface->mutex);
+
+    if (!surface->xdg_toplevel) goto out;
+
+    if (surface->processing.serial) surface->processing.processed = TRUE;
+
+out:
+    pthread_mutex_unlock(&surface->mutex);
+}
+
 /***********************************************************************
  *           WAYLAND_DestroyWindow
  */
@@ -276,6 +290,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     data->window_surface = surface;
 
     wayland_win_data_update_wayland_surface(data);
+    if (data->wayland_surface) wayland_win_data_update_wayland_state(data);
 
     wayland_win_data_release(data);
 }
@@ -290,6 +305,42 @@ static void wayland_resize_desktop(void)
                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
 }
 
+static void wayland_configure_window(HWND hwnd)
+{
+    struct wayland_surface *surface;
+    INT width, height;
+    UINT flags;
+
+    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+
+    if (!surface->xdg_toplevel)
+    {
+        TRACE("missing xdg_toplevel, returning");
+        pthread_mutex_unlock(&surface->mutex);
+        return;
+    }
+
+    if (!surface->requested.serial)
+    {
+        TRACE("requested configure event already handled, returning\n");
+        pthread_mutex_unlock(&surface->mutex);
+        return;
+    }
+
+    surface->processing = surface->requested;
+    memset(&surface->requested, 0, sizeof(surface->requested));
+
+    width = surface->processing.width;
+    height = surface->processing.height;
+
+    pthread_mutex_unlock(&surface->mutex);
+
+    flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
+    if (width == 0 || height == 0) flags |= SWP_NOSIZE;
+
+    NtUserSetWindowPos(hwnd, 0, 0, 0, width, height, flags);
+}
+
 /**********************************************************************
  *           WAYLAND_WindowMessage
  */
@@ -300,6 +351,9 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_WAYLAND_INIT_DISPLAY_DEVICES:
         wayland_init_display_devices(TRUE);
         wayland_resize_desktop();
+        return 0;
+    case WM_WAYLAND_CONFIGURE:
+        wayland_configure_window(hwnd);
         return 0;
     default:
         FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (long)wp, lp);

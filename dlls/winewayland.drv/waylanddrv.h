@@ -53,7 +53,8 @@ extern struct wayland process_wayland DECLSPEC_HIDDEN;
 
 enum wayland_window_message
 {
-    WM_WAYLAND_INIT_DISPLAY_DEVICES = 0x80001000
+    WM_WAYLAND_INIT_DISPLAY_DEVICES = 0x80001000,
+    WM_WAYLAND_CONFIGURE = 0x80001001
 };
 
 struct wayland_cursor
@@ -117,6 +118,13 @@ struct wayland_output
     struct wayland_output_state current;
 };
 
+struct wayland_surface_config
+{
+    int32_t width, height;
+    uint32_t serial;
+    BOOL processed;
+};
+
 struct wayland_surface
 {
     HWND hwnd;
@@ -124,7 +132,7 @@ struct wayland_surface
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
     pthread_mutex_t mutex;
-    uint32_t current_serial;
+    struct wayland_surface_config pending, requested, processing, current;
     struct wayland_shm_buffer *latest_window_buffer;
 };
 
@@ -167,6 +175,7 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,
                                 HRGN surface_damage_region) DECLSPEC_HIDDEN;
 struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer

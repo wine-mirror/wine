@@ -48,9 +48,15 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
      * the target xdg_surface. */
     if (surface->xdg_surface == xdg_surface)
     {
-        initial_configure = surface->current_serial == 0;
-        surface->current_serial = serial;
-        xdg_surface_ack_configure(xdg_surface, serial);
+        /* If we have a previously requested config, we have already sent a
+         * WM_WAYLAND_CONFIGURE which hasn't been handled yet. In that case,
+         * avoid sending another message to reduce message queue traffic. */
+        BOOL should_post = surface->requested.serial == 0;
+        initial_configure = surface->current.serial == 0;
+        surface->pending.serial = serial;
+        surface->requested = surface->pending;
+        memset(&surface->pending, 0, sizeof(surface->pending));
+        if (should_post) NtUserPostMessage(hwnd, WM_WAYLAND_CONFIGURE, 0, 0);
     }
 
     pthread_mutex_unlock(&surface->mutex);
@@ -70,6 +76,20 @@ static void xdg_toplevel_handle_configure(void *data,
                                           int32_t width, int32_t height,
                                           struct wl_array *states)
 {
+    struct wayland_surface *surface;
+    HWND hwnd = data;
+
+    TRACE("hwnd=%p %dx%d\n", hwnd, width, height);
+
+    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+
+    if (surface->xdg_toplevel == xdg_toplevel)
+    {
+        surface->pending.width = width;
+        surface->pending.height = height;
+    }
+
+    pthread_mutex_unlock(&surface->mutex);
 }
 
 static void xdg_toplevel_handle_close(void *data, struct xdg_toplevel *xdg_toplevel)
@@ -217,7 +237,10 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
         surface->xdg_surface = NULL;
     }
 
-    surface->current_serial = 0;
+    memset(&surface->pending, 0, sizeof(surface->pending));
+    memset(&surface->requested, 0, sizeof(surface->requested));
+    memset(&surface->processing, 0, sizeof(surface->processing));
+    memset(&surface->current, 0, sizeof(surface->current));
 
     /* Ensure no buffer is attached, otherwise future role assignments may fail. */
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);
@@ -266,6 +289,42 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
         }
         free(surface_damage);
     }
+}
+
+/**********************************************************************
+ *          wayland_surface_reconfigure
+ *
+ * Reconfigures the wayland surface as needed to match the latest requested
+ * state.
+ */
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
+{
+    if (!surface->xdg_toplevel) return TRUE;
+
+    TRACE("hwnd=%p\n", surface->hwnd);
+
+    /* Acknowledge any processed config. */
+    if (surface->processing.serial && surface->processing.processed)
+    {
+        surface->current = surface->processing;
+        memset(&surface->processing, 0, sizeof(surface->processing));
+        xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
+    }
+    /* If this is the initial configure, and we have a requested config,
+     * use that, in order to draw windows that don't go through the message
+     * loop (e.g., some splash screens). */
+    else if (!surface->current.serial && surface->requested.serial)
+    {
+        surface->current = surface->requested;
+        memset(&surface->requested, 0, sizeof(surface->requested));
+        xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
+    }
+    else if (!surface->current.serial)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /**********************************************************************
