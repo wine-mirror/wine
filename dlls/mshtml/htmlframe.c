@@ -1572,17 +1572,24 @@ static HRESULT HTMLIFrame_bind_to_tree(HTMLDOMNode *iface)
     return hres;
 }
 
-static void HTMLIFrame_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLIFrame *iframe_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
-
-    if(This->framebase.nsiframe)
-        note_cc_edge((nsISupports*)This->framebase.nsiframe, "This->nsiframe", cb);
+    return CONTAINING_RECORD(iface, HTMLIFrame, framebase.element.node.event_target.dispex);
 }
 
-static void HTMLIFrame_unlink(HTMLDOMNode *iface)
+static void HTMLIFrame_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->framebase.nsiframe)
+        note_cc_edge((nsISupports*)This->framebase.nsiframe, "nsiframe", cb);
+}
+
+static void HTMLIFrame_unlink(DispatchEx *dispex)
+{
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->framebase.nsiframe);
 }
 
@@ -1600,8 +1607,15 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .get_name              = HTMLIFrame_get_name,
     .invoke                = HTMLIFrame_invoke,
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
-    .traverse              = HTMLIFrame_traverse,
-    .unlink                = HTMLIFrame_unlink
+};
+
+static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLIFrame_traverse,
+        .unlink         = HTMLIFrame_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {
@@ -1616,7 +1630,7 @@ static const tid_t HTMLIFrame_iface_tids[] = {
 
 static dispex_static_data_t HTMLIFrame_dispex = {
     "HTMLIFrameElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLIFrame_event_target_vtbl.dispex_vtbl,
     DispHTMLIFrame_tid,
     HTMLIFrame_iface_tids,
     HTMLElement_init_dispex_info
