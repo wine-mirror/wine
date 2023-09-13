@@ -107,6 +107,7 @@ enum font_backend_funcs
     unix_get_glyph_bbox,
     unix_get_glyph_bitmap,
     unix_get_design_glyph_metrics,
+    unix_funcs_count,
 };
 
 #define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
