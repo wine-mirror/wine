@@ -2521,7 +2521,6 @@ static void test_actctx(void)
     /* Empty <assembly/> element. */
     create_manifest_file("empty_assembly.manifest", empty_assembly_manifest, -1, NULL, NULL);
     handle = test_create("empty_assembly.manifest");
-    todo_wine
     ok(handle != INVALID_HANDLE_VALUE, "Failed to create activation context.\n");
     DeleteFileA("empty_assembly.manifest");
     if (handle != INVALID_HANDLE_VALUE)
