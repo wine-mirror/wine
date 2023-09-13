@@ -510,6 +510,7 @@ enum unix_funcs
     unix_import_store_cert,
     unix_close_cert_store,
     unix_enum_root_certs,
+    unix_funcs_count,
 };
 
 #define CRYPT32_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
