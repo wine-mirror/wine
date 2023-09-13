@@ -5832,8 +5832,17 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
 
             if (!(dst_resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
             {
-                TRACE("Can only blit to render targets.\n");
-                return false;
+                if (dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
+                {
+                    if (context->device->shader_backend == &none_shader_backend)
+                        WARN("Claiming !render_target support because of no shader backend.\n");
+                    return true;
+                }
+                else
+                {
+                    TRACE("Can only blit to render targets.\n");
+                    return false;
+                }
             }
             return true;
 
