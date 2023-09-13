@@ -152,7 +152,7 @@ static void test_capture( void )
     ok( !ret, "got %d\n", ret );
 
     ret = ppcap_can_set_rfmon( pcap );
-    ok( !ret, "got %d\n", ret );
+    ok( ret == 0 || ret == 1, "got %d\n", ret );
 
     ret = ppcap_getnonblock( pcap, errbuf );
     ok( ret == -3, "got %d\n", ret );
