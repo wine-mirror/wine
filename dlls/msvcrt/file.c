@@ -109,9 +109,9 @@ typedef struct {
     unsigned char       wxflag;
     char                textmode;
     char                lookahead[3];
-    char unicode          : 1;
-    char utf8translations : 1;
-    char dbcsBufferUsed   : 1;
+    unsigned int unicode          : 1;
+    unsigned int utf8translations : 1;
+    unsigned int dbcsBufferUsed   : 1;
     char dbcsBuffer[MB_LEN_MAX];
 } ioinfo;
 
