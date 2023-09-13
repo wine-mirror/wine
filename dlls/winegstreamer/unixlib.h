@@ -414,6 +414,8 @@ enum unix_funcs
 
     unix_wg_muxer_create,
     unix_wg_muxer_destroy,
+
+    unix_wg_funcs_count,
 };
 
 #endif /* __WINE_WINEGSTREAMER_UNIXLIB_H */

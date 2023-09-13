@@ -1950,6 +1950,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_muxer_destroy),
 };
 
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_wg_funcs_count);
+
 #ifdef _WIN64
 
 typedef ULONG PTR32;
@@ -2216,5 +2218,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X64(wg_muxer_create),
     X(wg_muxer_destroy),
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_wg_funcs_count);
 
 #endif  /* _WIN64 */
