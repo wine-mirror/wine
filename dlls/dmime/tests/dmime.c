@@ -1506,7 +1506,7 @@ static void test_performance_tool(void)
     hr = IDirectMusicTool_GetMediaTypes(tool, (DWORD **)&types, 64);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
     hr = IDirectMusicTool_ProcessPMsg(tool, performance, &msg);
-    todo_wine ok(hr == DMUS_S_FREE, "got %#lx\n", hr);
+    ok(hr == DMUS_S_FREE, "got %#lx\n", hr);
     hr = IDirectMusicTool_Flush(tool, performance, &msg, 0);
     todo_wine ok(hr == S_OK, "got %#lx\n", hr);
 
@@ -1859,19 +1859,18 @@ static void test_performance_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 50, &msg);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    todo_wine ok(msg != NULL, "got %p\n", msg);
-    if (!msg) goto skip_rtime;
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg != NULL, "got %p\n", msg);
 
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, msg->mtTime, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
-    todo_wine ok(msg->rtTime == time, "got %I64d\n", msg->rtTime);
+    ok(msg->rtTime == time, "got %I64d\n", msg->rtTime);
     ok(msg->mtTime == 500, "got %ld\n", msg->mtTime);
-    todo_wine ok(msg->dwFlags & DMUS_PMSGF_REFTIME, "got %#lx\n", msg->dwFlags);
-    todo_wine ok(msg->dwFlags & DMUS_PMSGF_MUSICTIME, "got %#lx\n", msg->dwFlags);
-    todo_wine ok(msg->dwFlags & (DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_IMMEDIATE), "got %#lx\n", msg->dwFlags);
+    ok(msg->dwFlags & DMUS_PMSGF_REFTIME, "got %#lx\n", msg->dwFlags);
+    ok(msg->dwFlags & DMUS_PMSGF_MUSICTIME, "got %#lx\n", msg->dwFlags);
+    ok(msg->dwFlags & (DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_IMMEDIATE), "got %#lx\n", msg->dwFlags);
     ok(!msg->dwPChannel, "got %ld\n", msg->dwPChannel);
     ok(!msg->dwVirtualTrackID, "got %ld\n", msg->dwVirtualTrackID);
     ok(msg->pTool == tool, "got %p\n", msg->pTool);
@@ -1885,7 +1884,6 @@ static void test_performance_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
 
-skip_rtime:
     /* SendPMsg converts reference time to music time if it is missing */
 
     hr = IDirectMusicPerformance_GetTime(performance, &time, &music_time);
@@ -1903,19 +1901,18 @@ skip_rtime:
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 50, &msg);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    todo_wine ok(msg != NULL, "got %p\n", msg);
-    if (!msg) goto skip_mtime;
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg != NULL, "got %p\n", msg);
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, msg->rtTime, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(msg->dwSize == sizeof(DMUS_PMSG), "got %ld\n", msg->dwSize);
-    todo_wine ok(msg->rtTime == time, "got %I64d\n", msg->rtTime);
-    todo_wine ok(msg->mtTime == music_time, "got %ld\n", msg->mtTime);
-    todo_wine ok(msg->dwFlags & DMUS_PMSGF_REFTIME, "got %#lx\n", msg->dwFlags);
-    todo_wine ok(msg->dwFlags & DMUS_PMSGF_MUSICTIME, "got %#lx\n", msg->dwFlags);
-    todo_wine ok(msg->dwFlags & (DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_IMMEDIATE), "got %#lx\n", msg->dwFlags);
+    ok(msg->rtTime == time, "got %I64d\n", msg->rtTime);
+    ok(msg->mtTime == music_time, "got %ld\n", msg->mtTime);
+    ok(msg->dwFlags & DMUS_PMSGF_REFTIME, "got %#lx\n", msg->dwFlags);
+    ok(msg->dwFlags & DMUS_PMSGF_MUSICTIME, "got %#lx\n", msg->dwFlags);
+    ok(msg->dwFlags & (DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_IMMEDIATE), "got %#lx\n", msg->dwFlags);
     ok(!msg->dwPChannel, "got %ld\n", msg->dwPChannel);
     ok(!msg->dwVirtualTrackID, "got %ld\n", msg->dwVirtualTrackID);
     ok(msg->pTool == tool, "got %p\n", msg->pTool);
@@ -1929,7 +1926,6 @@ skip_rtime:
     ok(hr == S_OK, "got %#lx\n", hr);
 
 
-skip_mtime:
     for (i = 0; i < ARRAY_SIZE(delivery_flags); i++)
     {
         DWORD duration = 0;
@@ -1953,8 +1949,8 @@ skip_mtime:
         ok(hr == S_OK, "got %#lx\n", hr);
         msg = NULL;
         ret = test_tool_wait_message(tool, 1000, &msg);
-        todo_wine ok(!ret, "got %#lx\n", ret);
-        todo_wine ok(msg != NULL, "got %p\n", msg);
+        ok(!ret, "got %#lx\n", ret);
+        ok(msg != NULL, "got %p\n", msg);
         duration += GetTickCount();
 
         if (msg) hr = IDirectMusicPerformance_FreePMsg(performance, msg);
@@ -1962,9 +1958,9 @@ skip_mtime:
 
         switch (delivery_flags[i])
         {
-        case DMUS_PMSGF_TOOL_IMMEDIATE: todo_wine ok(duration <= 50, "got %lu\n", duration); break;
-        case DMUS_PMSGF_TOOL_QUEUE: todo_wine ok(duration >= 50 && duration <= 125, "got %lu\n", duration); break;
-        case DMUS_PMSGF_TOOL_ATTIME: todo_wine ok(duration >= 125 && duration <= 500, "got %lu\n", duration); break;
+        case DMUS_PMSGF_TOOL_IMMEDIATE: ok(duration <= 50, "got %lu\n", duration); break;
+        case DMUS_PMSGF_TOOL_QUEUE: ok(duration >= 50 && duration <= 125, "got %lu\n", duration); break;
+        case DMUS_PMSGF_TOOL_ATTIME: ok(duration >= 125 && duration <= 500, "got %lu\n", duration); break;
         }
     }
 
