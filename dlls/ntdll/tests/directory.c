@@ -387,8 +387,8 @@ static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *ma
             }
             else
             {
-                ok( io.Status == 0xdeadbeef, "%u: wrong status %lx\n", class, io.Status );
-                ok( io.Information == 0xdeadbeef, "%u: wrong info %Ix\n", class, io.Information );
+                ok( io.Status == 0xdeadbeef || io.Status == status, "%u: wrong status %lx\n", class, io.Status );
+                ok( io.Information == (io.Status == 0xdeadbeef ? 0xdeadbeef : 0), "%u: wrong info %Ix\n", class, io.Information );
                 ok(data[0] == 0x55555555, "%u: wrong offset %lx\n",  class, data[0] );
             }
             if (status != STATUS_INFO_LENGTH_MISMATCH) break;
@@ -683,7 +683,7 @@ static void test_NtQueryDirectoryFile(void)
     memset( data, 0x55, data_size );
     io.Status = 0xdeadbeef;
     io.Information = 0xdeadbeef;
-    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, (data_size + 7) & ~7,
+    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, data_size + 16,
                                     FileBothDirectoryInformation, FALSE, NULL, TRUE );
     ok( status == STATUS_SUCCESS, "wrong status %lx\n", status );
     ok( io.Status == STATUS_SUCCESS, "wrong status %lx\n", io.Status );

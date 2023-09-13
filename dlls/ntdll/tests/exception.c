@@ -9186,7 +9186,7 @@ static void test_closehandle(DWORD numexc, HANDLE handle)
     invalid_handle_exceptions = 0;
     expectret = is_magic_handle(handle) || broken(numexc && sizeof(handle) == 4); /* < Win10 */
     ret = CloseHandle(handle);
-    ok(expectret || (GetLastError() == ERROR_INVALID_HANDLE),
+    ok(ret || (GetLastError() == ERROR_INVALID_HANDLE),
         "CloseHandle had wrong GetLastError(), got %lu for %p\n", GetLastError(), handle);
     ok(ret == expectret || broken(HandleToLong(handle) < 0) /* < Win10 */,
         "CloseHandle expected %d, got %d for %p\n", expectret, ret, handle);

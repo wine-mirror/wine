@@ -976,17 +976,21 @@ struct test_stack_size_thread_args
     DWORD expect_reserved;
 };
 
-static void force_stack_grow(void)
+static void DECLSPEC_NOINLINE force_stack_grow(void)
 {
     volatile int buffer[0x2000];
-    buffer[0] = 0xdeadbeef;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(buffer); i++) buffer[i] = 0xdeadbeef;
     (void)buffer[0];
 }
 
-static void force_stack_grow_small(void)
+static void DECLSPEC_NOINLINE force_stack_grow_small(void)
 {
     volatile int buffer[0x400];
-    buffer[0] = 0xdeadbeef;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(buffer); i++) buffer[i] = 0xdeadbeef;
     (void)buffer[0];
 }
 

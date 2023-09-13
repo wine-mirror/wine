@@ -2887,7 +2887,7 @@ static void test_queryvirtualmemory(void)
     char stackbuf[42];
     HMODULE module;
     void *user_shared_data = (void *)0x7ffe0000;
-    char buffer[1024];
+    void *buffer[256];
     MEMORY_SECTION_NAME *name = (MEMORY_SECTION_NAME *)buffer;
     SYSTEM_BASIC_INFORMATION sbi;
 

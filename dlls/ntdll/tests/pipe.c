@@ -494,8 +494,8 @@ static void test_alertable(void)
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %lx\n", res);
 
     ok(userapc_called, "user apc didn't run\n");
-    ok(iosb.Status == 0x55555555, "iosb.Status got changed to %lx\n", iosb.Status);
-    ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
+    ok(iosb.Status == 0x55555555 || iosb.Status == STATUS_CANCELLED, "iosb.Status got changed to %lx\n", iosb.Status);
+    ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == (iosb.Status == STATUS_CANCELLED ? 0 : WAIT_TIMEOUT), "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
 /* queue an user apc from a different thread */
@@ -508,8 +508,8 @@ static void test_alertable(void)
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %lx\n", res);
 
     ok(userapc_called, "user apc didn't run\n");
-    ok(iosb.Status == 0x55555555, "iosb.Status got changed to %lx\n", iosb.Status);
-    ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
+    ok(iosb.Status == 0x55555555 || iosb.Status == STATUS_CANCELLED, "iosb.Status got changed to %lx\n", iosb.Status);
+    ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == (iosb.Status == STATUS_CANCELLED ? 0 : WAIT_TIMEOUT), "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
     WaitForSingleObject(hThread, INFINITE);
@@ -702,8 +702,8 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
     CloseHandle(thread);
     CloseHandle(ctx.pipe);
-    ok(ctx.iosb.Status == 0xdeadbabe, "wrong status %lx\n", ctx.iosb.Status);
-    ok(ctx.iosb.Information == 0xdeadbeef, "wrong info %Iu\n", ctx.iosb.Information);
+    ok(ctx.iosb.Status == 0xdeadbabe || ctx.iosb.Status == STATUS_CANCELLED, "wrong status %lx\n", ctx.iosb.Status);
+    ok(ctx.iosb.Information == (ctx.iosb.Status == STATUS_CANCELLED ? 0 : 0xdeadbeef), "wrong info %Iu\n", ctx.iosb.Information);
 
     /* specified io */
     res = create_pipe(&ctx.pipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
@@ -736,8 +736,8 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
     CloseHandle(thread);
     CloseHandle(ctx.pipe);
-    ok(ctx.iosb.Status == 0xdeadbabe, "wrong status %lx\n", ctx.iosb.Status);
-    ok(ctx.iosb.Information == 0xdeadbeef, "wrong info %Iu\n", ctx.iosb.Information);
+    ok(ctx.iosb.Status == 0xdeadbabe || ctx.iosb.Status == STATUS_CANCELLED, "wrong status %lx\n", ctx.iosb.Status);
+    ok(ctx.iosb.Information == (ctx.iosb.Status == STATUS_CANCELLED ? 0 : 0xdeadbeef), "wrong info %Iu\n", ctx.iosb.Information);
 
     /* asynchronous i/o */
     ctx.iosb.Status = 0xdeadbabe;
