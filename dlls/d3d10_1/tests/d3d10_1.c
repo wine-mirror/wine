@@ -18,8 +18,6 @@
  */
 
 #define COBJMACROS
-#include "d3d10_1.h"
-#include "initguid.h"
 #include "d3d11_1.h"
 #include "wine/test.h"
 
@@ -752,6 +750,205 @@ static void test_getdc(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static inline HRESULT create_effect(DWORD *data, UINT flags, ID3D10Device1 *device,
+        ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
+{
+    /*
+     * Don't use sizeof(data), use data[6] as size,
+     * because the DWORD data[] has only complete DWORDs and
+     * so it could happen that there are padded bytes at the end.
+     *
+     * The fx size (data[6]) could be up to 3 BYTEs smaller
+     * than the sizeof(data).
+     */
+    return D3D10CreateEffectFromMemory(data, data[6], flags, (ID3D10Device *)device, effect_pool, effect);
+}
+
+#if 0
+BlendState blend_state
+{
+    blendenable[0] = true;
+    blendenable[1] = true;
+    blendenable[2] = true;
+    blendenable[3] = true;
+    blendenable[4] = true;
+    blendenable[5] = true;
+    blendenable[6] = true;
+    blendenable[7] = true;
+    srcblend = one;
+    srcblend[0] = zero;
+};
+
+BlendState default_blend_state {};
+#endif
+static DWORD fx_4_1_test_blend_state[] =
+{
+    0x43425844, 0x9e1570b0, 0x0ed82fb4, 0x16300839, 0x88b70426, 0x00000001, 0x000002b3, 0x00000001,
+    0x00000024, 0x30315846, 0x00000287, 0xfeff1011, 0x00000000, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x0000010b, 0x00000000, 0x00000000, 0x00000000, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6e656c42,
+    0x61745364, 0x04006574, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000,
+    0x62000000, 0x646e656c, 0x6174735f, 0x01006574, 0x04000000, 0x01000000, 0x01000000, 0x04000000,
+    0x01000000, 0x01000000, 0x04000000, 0x01000000, 0x01000000, 0x04000000, 0x01000000, 0x01000000,
+    0x04000000, 0x01000000, 0x01000000, 0x04000000, 0x01000000, 0x01000000, 0x04000000, 0x01000000,
+    0x01000000, 0x04000000, 0x01000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000,
+    0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000,
+    0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000,
+    0x01000000, 0x02000000, 0x01000000, 0x64000000, 0x75616665, 0x625f746c, 0x646e656c, 0x6174735f,
+    0x2b006574, 0x0f000000, 0x00000000, 0xff000000, 0x10ffffff, 0x25000000, 0x00000000, 0x01000000,
+    0x37000000, 0x25000000, 0x01000000, 0x01000000, 0x43000000, 0x25000000, 0x02000000, 0x01000000,
+    0x4f000000, 0x25000000, 0x03000000, 0x01000000, 0x5b000000, 0x25000000, 0x04000000, 0x01000000,
+    0x67000000, 0x25000000, 0x05000000, 0x01000000, 0x73000000, 0x25000000, 0x06000000, 0x01000000,
+    0x7f000000, 0x25000000, 0x07000000, 0x01000000, 0x8b000000, 0x26000000, 0x01000000, 0x01000000,
+    0x97000000, 0x26000000, 0x02000000, 0x01000000, 0xa3000000, 0x26000000, 0x03000000, 0x01000000,
+    0xaf000000, 0x26000000, 0x04000000, 0x01000000, 0xbb000000, 0x26000000, 0x05000000, 0x01000000,
+    0xc7000000, 0x26000000, 0x06000000, 0x01000000, 0xd3000000, 0x26000000, 0x07000000, 0x01000000,
+    0xdf000000, 0x26000000, 0x00000000, 0x01000000, 0xeb000000, 0x00000000, 0xf7000000, 0x0f000000,
+    0x00000000, 0xff000000, 0x00ffffff, 0x00000000, 0x00000000,
+};
+
+static void test_fx_4_1_blend_state(void)
+{
+    ID3D10EffectBlendVariable *blend;
+    ID3D10EffectVariable *v;
+    D3D10_BLEND_DESC1 desc1;
+    ID3D10BlendState1 *bs1;
+    ID3D10Device1 *device;
+    D3D10_BLEND_DESC desc;
+    ID3D10Effect *effect;
+    ID3D10BlendState *bs;
+    ULONG refcount;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_4_1_test_blend_state, 0, device, NULL, &effect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) goto done;
+
+    v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
+    ok(v->lpVtbl->IsValid(v), "Invalid variable.\n");
+    blend = v->lpVtbl->AsBlend(v);
+    ok(blend->lpVtbl->IsValid(blend), "Invalid variable.\n");
+
+    memset(&desc, 0, sizeof(desc));
+    hr = blend->lpVtbl->GetBackingStore(blend, 0, &desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!desc.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    for (i = 0; i < ARRAY_SIZE(desc.BlendEnable); ++i)
+        ok(desc.BlendEnable[i], "Unexpected value[%u] %#x.\n", i, desc.BlendEnable[i]);
+    ok(desc.SrcBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.SrcBlend);
+    ok(desc.DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlend);
+    ok(desc.BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOp);
+    ok(desc.SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlendAlpha);
+    ok(desc.DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlendAlpha);
+    ok(desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOpAlpha);
+    for (i = 0; i < ARRAY_SIZE(desc.RenderTargetWriteMask); ++i)
+        ok(desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value[%u] %#x.\n",
+                i, desc.RenderTargetWriteMask[i]);
+
+    hr = blend->lpVtbl->GetBlendState(blend, 0, &bs);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10BlendState_GetDesc(bs, &desc);
+    ok(!desc.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    for (i = 0; i < ARRAY_SIZE(desc.BlendEnable); ++i)
+        ok(desc.BlendEnable[i], "Unexpected value[%u] %#x.\n", i, desc.BlendEnable[i]);
+    ok(desc.SrcBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.SrcBlend);
+    ok(desc.DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlend);
+    ok(desc.BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOp);
+    ok(desc.SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlendAlpha);
+    ok(desc.DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlendAlpha);
+    ok(desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOpAlpha);
+    for (i = 0; i < ARRAY_SIZE(desc.RenderTargetWriteMask); ++i)
+        ok(desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value[%u] %#x.\n",
+                i, desc.RenderTargetWriteMask[i]);
+
+    hr = ID3D10BlendState_QueryInterface(bs, &IID_ID3D10BlendState1, (void **)&bs1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10BlendState1_GetDesc1(bs1, &desc1);
+    ok(!desc1.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    ok(desc1.IndependentBlendEnable, "Unexpected value %#x.\n", desc1.IndependentBlendEnable);
+    for (i = 0; i < ARRAY_SIZE(desc1.RenderTarget); ++i)
+    {
+        const D3D10_RENDER_TARGET_BLEND_DESC1 *p = &desc1.RenderTarget[i];
+
+        winetest_push_context("Test %u", i);
+
+        ok(p->BlendEnable, "Unexpected value %#x.\n", p->BlendEnable);
+        ok(p->SrcBlend == (i == 0 ? D3D10_BLEND_ZERO : D3D10_BLEND_ONE), "Unexpected value %u.\n", p->SrcBlend);
+        ok(p->DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", p->DestBlend);
+        ok(p->BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", p->BlendOp);
+        ok(p->SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", p->SrcBlendAlpha);
+        ok(p->DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", p->DestBlendAlpha);
+        ok(p->BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", p->BlendOpAlpha);
+        ok(p->RenderTargetWriteMask == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value %#x.\n", p->RenderTargetWriteMask);
+
+        winetest_pop_context();
+    }
+    ID3D10BlendState1_Release(bs1);
+    ID3D10BlendState_Release(bs);
+
+    /* Default state. */
+    v = effect->lpVtbl->GetVariableByName(effect, "default_blend_state");
+    ok(v->lpVtbl->IsValid(v), "Invalid variable.\n");
+    blend = v->lpVtbl->AsBlend(v);
+    ok(blend->lpVtbl->IsValid(blend), "Invalid variable.\n");
+
+    memset(&desc, 0, sizeof(desc));
+    hr = blend->lpVtbl->GetBackingStore(blend, 0, &desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!desc.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    for (i = 0; i < ARRAY_SIZE(desc.BlendEnable); ++i)
+        ok(!desc.BlendEnable[i], "Unexpected value[%u] %#x.\n", i, desc.BlendEnable[i]);
+    ok(desc.SrcBlend == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlend);
+    ok(desc.DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlend);
+    ok(desc.BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOp);
+    ok(desc.SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlendAlpha);
+    ok(desc.DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlendAlpha);
+    ok(desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOpAlpha);
+    for (i = 0; i < ARRAY_SIZE(desc.RenderTargetWriteMask); ++i)
+        ok(desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value[%u] %#x.\n",
+                i, desc.RenderTargetWriteMask[i]);
+
+    hr = blend->lpVtbl->GetBlendState(blend, 0, &bs);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D10BlendState_QueryInterface(bs, &IID_ID3D10BlendState1, (void **)&bs1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10BlendState1_GetDesc1(bs1, &desc1);
+    ok(!desc1.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    ok(desc1.IndependentBlendEnable, "Unexpected value %#x.\n", desc1.IndependentBlendEnable);
+    for (i = 0; i < ARRAY_SIZE(desc1.RenderTarget); ++i)
+    {
+        const D3D10_RENDER_TARGET_BLEND_DESC1 *p = &desc1.RenderTarget[i];
+
+        ok(!p->BlendEnable, "Unexpected value %#x.\n", p->BlendEnable);
+        ok(p->SrcBlend == D3D10_BLEND_ONE, "Unexpected value %u.\n", p->SrcBlend);
+        ok(p->DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", p->DestBlend);
+        ok(p->BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", p->BlendOp);
+        ok(p->SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", p->SrcBlendAlpha);
+        ok(p->DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", p->DestBlendAlpha);
+        ok(p->BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", p->BlendOpAlpha);
+        ok(p->RenderTargetWriteMask == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value %#x.\n", p->RenderTargetWriteMask);
+    }
+    ID3D10BlendState1_Release(bs1);
+    ID3D10BlendState_Release(bs);
+
+    effect->lpVtbl->Release(effect);
+
+done:
+    refcount = ID3D10Device1_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(d3d10_1)
 {
     test_create_device();
@@ -759,4 +956,5 @@ START_TEST(d3d10_1)
     test_create_shader_resource_view();
     test_create_blend_state();
     test_getdc();
+    test_fx_4_1_blend_state();
 }

@@ -9131,6 +9131,54 @@ static void test_effect_fx_4_1(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+#if 0
+BlendState blend_state
+{
+    srcblend = one;
+};
+#endif
+static DWORD fx_4_1_test_blend_state[] =
+{
+    0x43425844, 0xe4566da7, 0x2242fb47, 0xa5924d09, 0x8280296f, 0x00000001, 0x000001a7, 0x00000001,
+    0x00000024, 0x30315846, 0x0000017b, 0xfeff1011, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000097, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6e656c42,
+    0x61745364, 0x04006574, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000,
+    0x62000000, 0x646e656c, 0x6174735f, 0x01006574, 0x02000000, 0x02000000, 0x01000000, 0x02000000,
+    0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000,
+    0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000,
+    0x01000000, 0x02000000, 0x02000000, 0x2b000000, 0x0f000000, 0x00000000, 0xff000000, 0x08ffffff,
+    0x26000000, 0x00000000, 0x01000000, 0x37000000, 0x26000000, 0x01000000, 0x01000000, 0x43000000,
+    0x26000000, 0x02000000, 0x01000000, 0x4f000000, 0x26000000, 0x03000000, 0x01000000, 0x5b000000,
+    0x26000000, 0x04000000, 0x01000000, 0x67000000, 0x26000000, 0x05000000, 0x01000000, 0x73000000,
+    0x26000000, 0x06000000, 0x01000000, 0x7f000000, 0x26000000, 0x07000000, 0x01000000, 0x8b000000,
+    0x00000000, 0x00000000,
+};
+
+static void test_effect_fx_4_1_blend_state(void)
+{
+    ID3D10Effect *effect = NULL;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_4_1_test_blend_state, 0, device, NULL, &effect);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    if (effect)
+        effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -9158,4 +9206,5 @@ START_TEST(effect)
     test_effect_index_expression();
     test_effect_value_expression();
     test_effect_fx_4_1();
+    test_effect_fx_4_1_blend_state();
 }
