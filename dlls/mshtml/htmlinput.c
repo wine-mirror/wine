@@ -1923,17 +1923,24 @@ static BOOL HTMLButtonElement_is_text_edit(HTMLDOMNode *iface)
     return TRUE;
 }
 
-static void HTMLButtonElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLButtonElement *button_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
-
-    if(This->nsbutton)
-        note_cc_edge((nsISupports*)This->nsbutton, "This->nsbutton", cb);
+    return CONTAINING_RECORD(iface, HTMLButtonElement, element.node.event_target.dispex);
 }
 
-static void HTMLButtonElement_unlink(HTMLDOMNode *iface)
+static void HTMLButtonElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+    HTMLButtonElement *This = button_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsbutton)
+        note_cc_edge((nsISupports*)This->nsbutton, "nsbutton", cb);
+}
+
+static void HTMLButtonElement_unlink(DispatchEx *dispex)
+{
+    HTMLButtonElement *This = button_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsbutton);
 }
 
@@ -1947,9 +1954,16 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLButtonElementImpl_put_disabled,
     .get_disabled          = HTMLButtonElementImpl_get_disabled,
-    .traverse              = HTMLButtonElement_traverse,
-    .unlink                = HTMLButtonElement_unlink,
     .is_text_edit          = HTMLButtonElement_is_text_edit
+};
+
+static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLButtonElement_traverse,
+        .unlink         = HTMLButtonElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {
@@ -1960,7 +1974,7 @@ static const tid_t HTMLButtonElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLButtonElement_dispex = {
     "HTMLButtonElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLButtonElement_event_target_vtbl.dispex_vtbl,
     DispHTMLButtonElement_tid,
     HTMLButtonElement_iface_tids,
     HTMLElement_init_dispex_info
