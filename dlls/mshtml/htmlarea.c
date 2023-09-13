@@ -454,17 +454,24 @@ fallback:
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
 }
 
-static void HTMLAreaElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLAreaElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+    return CONTAINING_RECORD(iface, HTMLAreaElement, element.node.event_target.dispex);
+}
+
+static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
 
     if(This->nsarea)
         note_cc_edge((nsISupports*)This->nsarea, "nsarea", cb);
 }
 
-static void HTMLAreaElement_unlink(HTMLDOMNode *iface)
+static void HTMLAreaElement_unlink(DispatchEx *dispex)
 {
-    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsarea);
 }
 
@@ -476,8 +483,15 @@ static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLAreaElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLAreaElement_traverse,
-    .unlink                = HTMLAreaElement_unlink
+};
+
+static const event_target_vtbl_t HTMLAreaElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLAreaElement_traverse,
+        .unlink         = HTMLAreaElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLAreaElement_iface_tids[] = {
@@ -487,7 +501,7 @@ static const tid_t HTMLAreaElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLAreaElement_dispex = {
     "HTMLAreaElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLAreaElement_event_target_vtbl.dispex_vtbl,
     DispHTMLAreaElement_tid,
     HTMLAreaElement_iface_tids,
     HTMLElement_init_dispex_info
