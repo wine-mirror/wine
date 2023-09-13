@@ -64,6 +64,29 @@ static int win_event_to_uia_event_id(int win_event)
     return 0;
 }
 
+static BOOL CALLBACK uia_win_event_enum_top_level_hwnds(HWND hwnd, LPARAM lparam)
+{
+    struct rb_tree *hwnd_map = (struct rb_tree *)lparam;
+    HRESULT hr;
+
+    if (!uia_hwnd_is_visible(hwnd))
+        return TRUE;
+
+    hr = uia_hwnd_map_add_hwnd(hwnd_map, hwnd);
+    if (FAILED(hr))
+        WARN("Failed to add hwnd to map, hr %#lx\n", hr);
+
+    return TRUE;
+}
+
+HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd)
+{
+    if (hwnd == GetDesktopWindow())
+        EnumWindows(uia_win_event_enum_top_level_hwnds, (LPARAM)&event->u.clientside.win_event_hwnd_map);
+
+    return uia_hwnd_map_add_hwnd(&event->u.clientside.win_event_hwnd_map, hwnd);
+}
+
 /*
  * UI Automation event map.
  */
@@ -658,6 +681,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
             uia_cache_request_destroy(&event->u.clientside.cache_req);
             if (event->u.clientside.git_cookie)
                 uia_stop_event_thread();
+            uia_hwnd_map_destroy(&event->u.clientside.win_event_hwnd_map);
         }
         else
         {
@@ -834,6 +858,7 @@ static HRESULT create_clientside_uia_event(struct uia_event **out_event, int eve
     event->scope = scope;
     event->u.clientside.event_callback = cback;
     event->u.clientside.callback_data = cback_data;
+    uia_hwnd_map_init(&event->u.clientside.win_event_hwnd_map);
 
     *out_event = event;
     return S_OK;

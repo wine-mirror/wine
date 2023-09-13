@@ -1870,6 +1870,9 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
                         &IID_IProxyProviderWinEventHandler, (void **)&winevent_handler)))
         {
             FIXME("MSAA to UIA event bridge currently unimplemented\n");
+            hr = uia_event_add_win_event_hwnd(event, prov->hwnd);
+            if (FAILED(hr))
+                WARN("Failed to add hwnd for win_event, hr %#lx\n", hr);
             IProxyProviderWinEventHandler_Release(winevent_handler);
         }
         else if (SUCCEEDED(IRawElementProviderFragmentRoot_QueryInterface(elroot, &IID_IRawElementProviderAdviseEvents,
@@ -1954,6 +1957,7 @@ static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProvid
     prov->IWineUiaProvider_iface.lpVtbl = &uia_provider_vtbl;
     prov->elprov = elprov;
     prov->ref = 1;
+    prov->hwnd = node->hwnd;
     node->prov[prov_type] = &prov->IWineUiaProvider_iface;
     if (!node->prov_count)
         node->creator_prov_type = prov_type;

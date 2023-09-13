@@ -95,6 +95,7 @@ struct uia_provider {
     BOOL return_nested_node;
     BOOL parent_check_ran;
     BOOL has_parent;
+    HWND hwnd;
 };
 
 static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *iface)
@@ -140,6 +141,7 @@ struct uia_event
             HRESULT (*event_callback)(struct uia_event *, struct uia_event_args *, SAFEARRAY *, BSTR);
             void *callback_data;
 
+            struct rb_tree win_event_hwnd_map;
             DWORD git_cookie;
         } clientside;
         struct {
@@ -218,6 +220,7 @@ BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
 HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
 
 /* uia_event.c */
+HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd) DECLSPEC_HIDDEN;
 HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie) DECLSPEC_HIDDEN;
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
         struct uia_event *event) DECLSPEC_HIDDEN;
@@ -250,3 +253,7 @@ HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequ
 HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
+BOOL uia_hwnd_is_visible(HWND hwnd) DECLSPEC_HIDDEN;
+HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
+void uia_hwnd_map_init(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
+void uia_hwnd_map_destroy(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
