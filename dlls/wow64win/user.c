@@ -1303,8 +1303,20 @@ static NTSTATUS WINAPI wow64_NtUserImmProcessKey( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserImmTranslateMessage( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    struct imm_translate_message_params *params = arg;
+    struct
+    {
+        LONG hwnd;
+        UINT msg;
+        LONG wparam;
+        LONG key_data;
+    } params32;
+
+    params32.hwnd = HandleToLong( params->hwnd );
+    params32.msg = params->msg;
+    params32.wparam = params->wparam;
+    params32.key_data = params->key_data;
+    return dispatch_callback( NtUserImmTranslateMessage, &params32, sizeof(params32) );
 }
 
 static NTSTATUS WINAPI wow64_NtUserInitBuiltinClasses( void *arg, ULONG size )
