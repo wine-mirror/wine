@@ -1393,17 +1393,24 @@ static BOOL HTMLInputElement_is_text_edit(HTMLDOMNode *iface)
     return ret;
 }
 
-static void HTMLInputElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLInputElement *input_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsinput)
-        note_cc_edge((nsISupports*)This->nsinput, "This->nsinput", cb);
+    return CONTAINING_RECORD(iface, HTMLInputElement, element.node.event_target.dispex);
 }
 
-static void HTMLInputElement_unlink(HTMLDOMNode *iface)
+static void HTMLInputElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLInputElement *This = input_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsinput)
+        note_cc_edge((nsISupports*)This->nsinput, "nsinput", cb);
+}
+
+static void HTMLInputElement_unlink(DispatchEx *dispex)
+{
+    HTMLInputElement *This = input_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsinput);
 }
 
@@ -1417,9 +1424,16 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLInputElementImpl_put_disabled,
     .get_disabled          = HTMLInputElementImpl_get_disabled,
-    .traverse              = HTMLInputElement_traverse,
-    .unlink                = HTMLInputElement_unlink,
     .is_text_edit          = HTMLInputElement_is_text_edit
+};
+
+static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLInputElement_traverse,
+        .unlink         = HTMLInputElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1430,7 +1444,7 @@ static const tid_t HTMLInputElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLInputElement_dispex = {
     "HTMLInputElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLInputElement_event_target_vtbl.dispex_vtbl,
     DispHTMLInputElement_tid,
     HTMLInputElement_iface_tids,
     HTMLElement_init_dispex_info
