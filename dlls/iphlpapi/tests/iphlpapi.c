@@ -1769,6 +1769,13 @@ static void test_GetAdaptersAddresses(void)
     osize = size;
     ptr = malloc(osize);
     ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, ptr, &osize);
+    while (ret == ERROR_BUFFER_OVERFLOW)
+    {
+        size = osize * 2;
+        osize = size;
+        ptr = realloc(ptr, osize);
+        ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, ptr, &osize);
+    }
     ok(!ret, "expected ERROR_SUCCESS got %lu\n", ret);
     ok(osize == size, "expected %ld, got %ld\n", size, osize);
 
