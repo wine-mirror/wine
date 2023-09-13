@@ -37,7 +37,7 @@ typedef enum tid_t {
     LAST_tid
 } tid_t;
 
-HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
 
 struct provideclassinfo {
     IProvideClassInfo IProvideClassInfo_iface;
@@ -45,7 +45,7 @@ struct provideclassinfo {
     const GUID *guid;
 };
 
-extern void init_classinfo(const GUID *guid, IUnknown *outer, struct provideclassinfo *classinfo) DECLSPEC_HIDDEN;
+extern void init_classinfo(const GUID *guid, IUnknown *outer, struct provideclassinfo *classinfo);
 
-HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-HRESULT WINAPI WshNetworkFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
+HRESULT WINAPI WshNetworkFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
