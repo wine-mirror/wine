@@ -80,6 +80,11 @@ static void test_SCardEstablishContext(void)
     ok( ret == SCARD_S_SUCCESS, "got %lx\n", ret );
     ok( readers != NULL, "got NULL readers" );
     ok( len != SCARD_AUTOALLOCATE, "got %lu", len );
+    if (!*readers)
+    {
+        skip( "connect a smart card device to run more tests\n" );
+        return;
+    }
     ptr = readers;
     while (*ptr)
     {
