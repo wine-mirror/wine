@@ -3289,9 +3289,9 @@ static HRESULT set_folder_attributes(void)
     static const struct
     {
         const CLSID *clsid;
-        BOOL wfparsing : 1;
-        BOOL wfdisplay : 1;
-        BOOL hideasdel : 1;
+        unsigned int wfparsing : 1;
+        unsigned int wfdisplay : 1;
+        unsigned int hideasdel : 1;
         DWORD attr;
         DWORD call_for_attr;
     } folders[] =
