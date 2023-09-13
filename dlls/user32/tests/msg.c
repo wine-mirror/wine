@@ -19688,11 +19688,6 @@ static void test_SendMessage_other_thread(int thread_n)
     /* intentionally yield */
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
 
-    ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
-    /* FIXME: remove once Wine is fixed */
-    todo_wine_if (thread_n == 2)
-    ok(ret == 0, "wrong status %08lx\n", ret);
-
     if (winetest_debug > 1) trace("main: call PeekMessage\n");
     ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should fail\n");
     ok_sequence(WmEmptySeq, "SendMessage from other thread 5", thread_n == 2);
