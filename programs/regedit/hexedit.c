@@ -43,9 +43,9 @@ typedef struct tagHEXEDIT_INFO
 {
     HWND  hwndSelf;
     HFONT hFont;
-    BOOL  bFocus : 1;
-    BOOL  bFocusHex : 1; /* TRUE if focus is on hex, FALSE if focus on ASCII */
-    BOOL  bInsert : 1; /* insert mode if TRUE, overwrite mode if FALSE */
+    UINT  bFocus : 1;
+    UINT  bFocusHex : 1; /* TRUE if focus is on hex, FALSE if focus on ASCII */
+    UINT  bInsert : 1; /* insert mode if TRUE, overwrite mode if FALSE */
     INT   nHeight; /* height of text */
     INT   nCaretPos; /* caret pos in nibbles */
     BYTE *pData;
