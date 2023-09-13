@@ -72,4 +72,5 @@ enum cups_funcs
     unix_enum_printers,
     unix_get_default_page_size,
     unix_get_ppd,
+    unix_funcs_count,
 };
