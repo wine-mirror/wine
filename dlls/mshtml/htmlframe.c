@@ -981,17 +981,24 @@ static HRESULT HTMLFrameElement_bind_to_tree(HTMLDOMNode *iface)
     return hres;
 }
 
-static void HTMLFrameElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLFrameElement *frame_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
-
-    if(This->framebase.nsframe)
-        note_cc_edge((nsISupports*)This->framebase.nsframe, "This->nsframe", cb);
+    return CONTAINING_RECORD(iface, HTMLFrameElement, framebase.element.node.event_target.dispex);
 }
 
-static void HTMLFrameElement_unlink(HTMLDOMNode *iface)
+static void HTMLFrameElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->framebase.nsframe)
+        note_cc_edge((nsISupports*)This->framebase.nsframe, "nsframe", cb);
+}
+
+static void HTMLFrameElement_unlink(DispatchEx *dispex)
+{
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->framebase.nsframe);
 }
 
@@ -1009,8 +1016,15 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .get_name              = HTMLFrameElement_get_name,
     .invoke                = HTMLFrameElement_invoke,
     .bind_to_tree          = HTMLFrameElement_bind_to_tree,
-    .traverse              = HTMLFrameElement_traverse,
-    .unlink                = HTMLFrameElement_unlink
+};
+
+static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLFrameElement_traverse,
+        .unlink         = HTMLFrameElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLFrameElement_iface_tids[] = {
@@ -1023,7 +1037,7 @@ static const tid_t HTMLFrameElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLFrameElement_dispex = {
     "HTMLFrameElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLFrameElement_event_target_vtbl.dispex_vtbl,
     DispHTMLFrameElement_tid,
     HTMLFrameElement_iface_tids,
     HTMLElement_init_dispex_info
