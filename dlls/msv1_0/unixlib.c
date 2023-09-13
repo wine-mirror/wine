@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <spawn.h>
 #include <sys/wait.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -38,6 +39,8 @@
 
 #include "wine/debug.h"
 #include "unixlib.h"
+
+extern char **environ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -155,6 +158,7 @@ static NTSTATUS ntlm_fork( void *args )
 {
     const struct fork_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
+    posix_spawn_file_actions_t file_actions;
     int pipe_in[2], pipe_out[2];
 
 #ifdef HAVE_PIPE2
@@ -179,28 +183,28 @@ static NTSTATUS ntlm_fork( void *args )
         fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
     }
 
-    if (!(ctx->pid = fork())) /* child */
+    posix_spawn_file_actions_init( &file_actions );
+
+    posix_spawn_file_actions_adddup2( &file_actions, pipe_out[0], 0 );
+    posix_spawn_file_actions_addclose( &file_actions, pipe_out[0] );
+    posix_spawn_file_actions_addclose( &file_actions, pipe_out[1] );
+
+    posix_spawn_file_actions_adddup2( &file_actions, pipe_in[1], 1 );
+    posix_spawn_file_actions_addclose( &file_actions, pipe_in[0] );
+    posix_spawn_file_actions_addclose( &file_actions, pipe_in[1] );
+
+    if (posix_spawnp( &ctx->pid, params->argv[0], &file_actions, NULL, params->argv, environ ))
     {
-        dup2( pipe_out[0], 0 );
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-
-        dup2( pipe_in[1], 1 );
-        close( pipe_in[0] );
-        close( pipe_in[1] );
-
-        execvp( params->argv[0], params->argv );
-
-        write( 1, "BH\n", 3 );
-        _exit( 1 );
+        ctx->pid = -1;
+        write( pipe_in[1], "BH\n", 3 );
     }
-    else
-    {
-        ctx->pipe_in = pipe_in[0];
-        close( pipe_in[1] );
-        ctx->pipe_out = pipe_out[1];
-        close( pipe_out[0] );
-    }
+
+    ctx->pipe_in = pipe_in[0];
+    close( pipe_in[1] );
+    ctx->pipe_out = pipe_out[1];
+    close( pipe_out[0] );
+
+    posix_spawn_file_actions_destroy( &file_actions );
 
     return SEC_E_OK;
 }
