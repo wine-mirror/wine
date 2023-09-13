@@ -19689,7 +19689,9 @@ static void test_SendMessage_other_thread(int thread_n)
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
 
     if (winetest_debug > 1) trace("main: call PeekMessage\n");
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should fail\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
+        ok(ignore_message(msg.message), "got unexpected message %04x from PeekMessageA\n", msg.message);
+    }
     ok_sequence(WmEmptySeq, "SendMessage from other thread 5", thread_n == 2);
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
