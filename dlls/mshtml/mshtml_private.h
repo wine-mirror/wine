@@ -1214,6 +1214,10 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 void *HTMLElement_QI(HTMLDOMNode*,REFIID);
 void HTMLElement_destructor(HTMLDOMNode*);
+HRESULT HTMLElement_get_dispid(DispatchEx*,BSTR,DWORD,DISPID*);
+HRESULT HTMLElement_get_name(DispatchEx*,DISPID,BSTR*);
+HRESULT HTMLElement_invoke(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
+HRESULT HTMLElement_populate_props(DispatchEx*);
 HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode*,HTMLAttributeCollection**);
 HRESULT HTMLElement_handle_event(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*);

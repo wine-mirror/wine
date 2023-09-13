@@ -138,6 +138,29 @@ typedef struct {
 extern const event_target_vtbl_t HTMLElement_event_target_vtbl;
 IHTMLEventObj *default_set_current_event(HTMLInnerWindow*,IHTMLEventObj*);
 
+nsISupports *HTMLElement_get_gecko_target(DispatchEx*);
+void HTMLElement_bind_event(DispatchEx*,eventid_t);
+EventTarget *HTMLElement_get_parent_event_target(DispatchEx*);
+HRESULT HTMLElement_handle_event_default(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
+ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx*);
+IHTMLEventObj *HTMLElement_set_current_event(DispatchEx*,IHTMLEventObj*);
+
+#define HTMLELEMENT_DISPEX_VTBL_ENTRIES                 \
+    .query_interface     = HTMLDOMNode_query_interface, \
+    .destructor          = HTMLDOMNode_destructor,      \
+    .get_dispid          = HTMLElement_get_dispid,      \
+    .get_name            = HTMLElement_get_name,        \
+    .invoke              = HTMLElement_invoke,          \
+    .populate_props      = HTMLElement_populate_props
+
+#define HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES                       \
+    .get_gecko_target        = HTMLElement_get_gecko_target,        \
+    .bind_event              = HTMLElement_bind_event,              \
+    .get_parent_event_target = HTMLElement_get_parent_event_target, \
+    .handle_event_default    = HTMLElement_handle_event_default,    \
+    .get_cp_container        = HTMLElement_get_cp_container,        \
+    .set_current_event       = HTMLElement_set_current_event
+
 static inline EventTarget *get_node_event_prop_target(HTMLDOMNode *node, eventid_t eid)
 {
     return node->vtbl->get_event_prop_target ? node->vtbl->get_event_prop_target(node, eid) : &node->event_target;

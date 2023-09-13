@@ -6928,8 +6928,7 @@ static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLElement, node.event_target.dispex);
 }
 
-static HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name,
-        DWORD grfdex, DISPID *pid)
+HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *pid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
@@ -6939,7 +6938,7 @@ static HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name,
     return DISP_E_UNKNOWNNAME;
 }
 
-static HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
@@ -6950,9 +6949,8 @@ static HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
     return DISP_E_MEMBERNOTFOUND;
 }
 
-static HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
-        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
-        IServiceProvider *caller)
+HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
@@ -6964,7 +6962,7 @@ static HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return E_NOTIMPL;
 }
 
-static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
+HRESULT HTMLElement_populate_props(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     nsIDOMMozNamedAttrMap *attrs;
@@ -7049,19 +7047,19 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     return S_OK;
 }
 
-static nsISupports *HTMLElement_get_gecko_target(DispatchEx *dispex)
+nsISupports *HTMLElement_get_gecko_target(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     return (nsISupports*)This->node.nsnode;
 }
 
-static void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
+void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     ensure_doc_nsevent_handler(This->node.doc, This->node.nsnode, eid);
 }
 
-static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
+HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
@@ -7070,7 +7068,7 @@ static HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t ei
     return This->node.vtbl->handle_event(&This->node, eid, nsevent, prevent_default);
 }
 
-static EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
+EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode *node;
@@ -7091,14 +7089,14 @@ static EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
     return &node->event_target;
 }
 
-static ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx *dispex)
+ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     IConnectionPointContainer_AddRef(&This->cp_container.IConnectionPointContainer_iface);
     return &This->cp_container;
 }
 
-static IHTMLEventObj *HTMLElement_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
+IHTMLEventObj *HTMLElement_set_current_event(DispatchEx *dispex, IHTMLEventObj *event)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     return default_set_current_event(This->node.doc->window, event);
@@ -7323,21 +7321,11 @@ static const tid_t HTMLElement_iface_tids[] = {
 
 const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
-        .query_interface     = HTMLDOMNode_query_interface,
-        .destructor          = HTMLDOMNode_destructor,
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink,
-        .get_dispid          = HTMLElement_get_dispid,
-        .get_name            = HTMLElement_get_name,
-        .invoke              = HTMLElement_invoke,
-        .populate_props      = HTMLElement_populate_props
     },
-    .get_gecko_target        = HTMLElement_get_gecko_target,
-    .bind_event              = HTMLElement_bind_event,
-    .get_parent_event_target = HTMLElement_get_parent_event_target,
-    .handle_event_default    = HTMLElement_handle_event_default,
-    .get_cp_container        = HTMLElement_get_cp_container,
-    .set_current_event       = HTMLElement_set_current_event
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 struct token_list {
