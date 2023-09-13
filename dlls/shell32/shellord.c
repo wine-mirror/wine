@@ -306,12 +306,12 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask)
 	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 0;
 	  }
 	  else if (dwData == 1)
-	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = 1;
+	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = -1;
 	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 0;
 	  }
 	  else if (dwData == 2)
 	  { if (SSF_SHOWALLOBJECTS & dwMask)	lpsfs->fShowAllObjects  = 0;
-	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = 1;
+	    if (SSF_SHOWSYSFILES & dwMask)	lpsfs->fShowSysFiles  = -1;
 	  }
 	}
 	RegCloseKey (hKey);
@@ -1182,15 +1182,15 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 		memset(cs, 0, sizeof(*cs));
 		cs->cLength          = sizeof(*cs);
 		cs->nVersion         = 2;
-		cs->fFullPathTitle   = FALSE;
-		cs->fSaveLocalView   = TRUE;
-		cs->fNotShell        = FALSE;
-		cs->fSimpleDefault   = TRUE;
-		cs->fDontShowDescBar = FALSE;
-		cs->fNewWindowMode   = FALSE;
-		cs->fShowCompColor   = FALSE;
-		cs->fDontPrettyNames = FALSE;
-		cs->fAdminsCreateCommonGroups = TRUE;
+		cs->fFullPathTitle   = 0;
+		cs->fSaveLocalView   = -1;
+		cs->fNotShell        = 0;
+		cs->fSimpleDefault   = -1;
+		cs->fDontShowDescBar = 0;
+		cs->fNewWindowMode   = 0;
+		cs->fShowCompColor   = 0;
+		cs->fDontPrettyNames = 0;
+		cs->fAdminsCreateCommonGroups = -1;
 		cs->fMenuEnumFilter  = 96;
 	}
 	
