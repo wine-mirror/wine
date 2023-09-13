@@ -175,6 +175,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     }
 
     conf->state = window_state;
+    conf->scale = NtUserGetDpiForWindow(data->hwnd) / 96.0;
 }
 
 static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)

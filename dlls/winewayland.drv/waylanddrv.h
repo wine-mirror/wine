@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
+#include "viewporter-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
@@ -108,6 +109,7 @@ struct wayland
     struct wl_compositor *wl_compositor;
     struct xdg_wm_base *xdg_wm_base;
     struct wl_shm *wl_shm;
+    struct wp_viewporter *wp_viewporter;
     struct wayland_seat seat;
     struct wayland_keyboard keyboard;
     struct wayland_pointer pointer;
@@ -156,6 +158,8 @@ struct wayland_window_config
 {
     RECT rect;
     enum wayland_surface_config_state state;
+    /* The scale (i.e., normalized dpi) the window is rendering at. */
+    double scale;
 };
 
 struct wayland_surface
@@ -164,6 +168,7 @@ struct wayland_surface
     struct wl_surface *wl_surface;
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
+    struct wp_viewport *wp_viewport;
     pthread_mutex_t mutex;
     struct wayland_surface_config pending, requested, processing, current;
     struct wayland_shm_buffer *latest_window_buffer;

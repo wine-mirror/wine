@@ -159,6 +159,15 @@ struct wayland_surface *wayland_surface_create(HWND hwnd)
     }
     wl_surface_set_user_data(surface->wl_surface, hwnd);
 
+    if (process_wayland.wp_viewporter)
+    {
+        surface->wp_viewport =
+            wp_viewporter_get_viewport(process_wayland.wp_viewporter,
+                                       surface->wl_surface);
+    }
+
+    surface->window.scale = 1.0;
+
     return surface;
 
 err:
@@ -187,6 +196,12 @@ void wayland_surface_destroy(struct wayland_surface *surface)
     pthread_mutex_unlock(&process_wayland.keyboard.mutex);
 
     pthread_mutex_lock(&surface->mutex);
+
+    if (surface->wp_viewport)
+    {
+        wp_viewport_destroy(surface->wp_viewport);
+        surface->wp_viewport = NULL;
+    }
 
     if (surface->xdg_toplevel)
     {
@@ -435,6 +450,25 @@ static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface
 }
 
 /**********************************************************************
+ *          wayland_surface_reconfigure_size
+ *
+ * Sets the surface size with viewporter
+ */
+static void wayland_surface_reconfigure_size(struct wayland_surface *surface,
+                                             int width, int height)
+{
+    TRACE("hwnd=%p size=%dx%d\n", surface->hwnd, width, height);
+
+    if (surface->wp_viewport)
+    {
+        if (width != 0 && height != 0)
+            wp_viewport_set_destination(surface->wp_viewport, width, height);
+        else
+            wp_viewport_set_destination(surface->wp_viewport, -1, -1);
+    }
+}
+
+/**********************************************************************
  *          wayland_surface_reconfigure
  *
  * Reconfigures the wayland surface as needed to match the latest requested
@@ -490,6 +524,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     }
 
     wayland_surface_reconfigure_geometry(surface, width, height);
+    wayland_surface_reconfigure_size(surface, width, height);
 
     return TRUE;
 }
@@ -636,8 +671,8 @@ void wayland_surface_coords_from_window(struct wayland_surface *surface,
                                         int window_x, int window_y,
                                         int *surface_x, int *surface_y)
 {
-    *surface_x = window_x;
-    *surface_y = window_y;
+    *surface_x = round(window_x / surface->window.scale);
+    *surface_y = round(window_y / surface->window.scale);
 }
 
 /**********************************************************************
@@ -649,6 +684,6 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       double surface_x, double surface_y,
                                       int *window_x, int *window_y)
 {
-    *window_x = round(surface_x);
-    *window_y = round(surface_y);
+    *window_x = round(surface_x * surface->window.scale);
+    *window_y = round(surface_y * surface->window.scale);
 }

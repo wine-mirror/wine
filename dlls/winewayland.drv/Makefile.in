@@ -7,6 +7,7 @@ SOURCES = \
 	display.c \
 	dllmain.c \
 	version.rc \
+	viewporter.xml \
 	wayland.c \
 	wayland_keyboard.c \
 	wayland_output.c \

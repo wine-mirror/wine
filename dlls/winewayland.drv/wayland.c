@@ -144,6 +144,11 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         wl_seat_add_listener(seat->wl_seat, &seat_listener, NULL);
         pthread_mutex_unlock(&seat->mutex);
     }
+    else if (strcmp(interface, "wp_viewporter") == 0)
+    {
+        process_wayland.wp_viewporter =
+            wl_registry_bind(registry, id, &wp_viewporter_interface, 1);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
