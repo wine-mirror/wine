@@ -65,6 +65,24 @@ static const struct xdg_surface_listener xdg_surface_listener =
     xdg_surface_handle_configure
 };
 
+static void xdg_toplevel_handle_configure(void *data,
+                                          struct xdg_toplevel *xdg_toplevel,
+                                          int32_t width, int32_t height,
+                                          struct wl_array *states)
+{
+}
+
+static void xdg_toplevel_handle_close(void *data, struct xdg_toplevel *xdg_toplevel)
+{
+    NtUserPostMessage((HWND)data, WM_SYSCOMMAND, SC_CLOSE, 0);
+}
+
+static const struct xdg_toplevel_listener xdg_toplevel_listener =
+{
+    xdg_toplevel_handle_configure,
+    xdg_toplevel_handle_close
+};
+
 /**********************************************************************
  *          wayland_surface_create
  *
@@ -164,6 +182,7 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
 
     surface->xdg_toplevel = xdg_surface_get_toplevel(surface->xdg_surface);
     if (!surface->xdg_toplevel) goto err;
+    xdg_toplevel_add_listener(surface->xdg_toplevel, &xdg_toplevel_listener, surface->hwnd);
 
     wl_surface_commit(surface->wl_surface);
     wl_display_flush(process_wayland.wl_display);
