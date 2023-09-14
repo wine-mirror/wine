@@ -2388,6 +2388,9 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     vk_info->dynamic_multisample_state = dynamic_state3->extendedDynamicState3RasterizationSamples
             && dynamic_state3->extendedDynamicState3AlphaToCoverageEnable
             && dynamic_state3->extendedDynamicState3SampleMask;
+    vk_info->dynamic_blend_state = dynamic_state3->extendedDynamicState3ColorBlendEnable
+            && dynamic_state3->extendedDynamicState3ColorBlendEquation
+            && dynamic_state3->extendedDynamicState3ColorWriteMask;
 }
 
 static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk *adapter_vk)

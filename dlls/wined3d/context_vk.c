@@ -1910,6 +1910,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_multisample_state = 1;
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
+    context_invalidate_state(&context_vk->c, STATE_BLEND);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
     context_invalidate_state(&context_vk->c, STATE_DEPTH_STENCIL);
     context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
@@ -2152,6 +2153,12 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_SAMPLE_MASK_EXT;
     }
+    if (vk_info->dynamic_blend_state)
+    {
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT;
+    }
 
     key = &context_vk->graphics.pipeline_key_vk;
     memset(key, 0, sizeof(*key));
@@ -2284,6 +2291,40 @@ static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_c
     desc->depthBiasClamp = r->depth_bias_clamp;
 }
 
+static void blend_equation_from_wined3d(const struct wined3d_context_vk *context_vk, VkColorBlendEquationEXT *eq,
+        const struct wined3d_rendertarget_blend_state_desc *rt, const struct wined3d_rendertarget_view *rtv)
+{
+    enum wined3d_blend src_blend, dst_blend;
+    const struct wined3d_format *rt_format;
+
+    if (rtv)
+        rt_format = rtv->format;
+    else
+        rt_format = wined3d_get_format(context_vk->c.device->adapter, WINED3DFMT_NULL, 0);
+
+    src_blend = rt->src;
+    dst_blend = rt->dst;
+    if (src_blend == WINED3D_BLEND_BOTHSRCALPHA)
+    {
+        src_blend = WINED3D_BLEND_SRCALPHA;
+        dst_blend = WINED3D_BLEND_INVSRCALPHA;
+    }
+    else if (src_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
+    {
+        src_blend = WINED3D_BLEND_INVSRCALPHA;
+        dst_blend = WINED3D_BLEND_SRCALPHA;
+    }
+    eq->srcColorBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, false);
+    eq->dstColorBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, false);
+    eq->colorBlendOp = vk_blend_op_from_wined3d(rt->op);
+
+    src_blend = rt->src_alpha;
+    dst_blend = rt->dst_alpha;
+    eq->srcAlphaBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, true);
+    eq->dstAlphaBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, true);
+    eq->alphaBlendOp = vk_blend_op_from_wined3d(rt->op_alpha);
+}
+
 static void wined3d_context_vk_update_blend_state(const struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, struct wined3d_graphics_pipeline_key_vk *key)
 {
@@ -2311,43 +2352,57 @@ static void wined3d_context_vk_update_blend_state(const struct wined3d_context_v
     for (i = 0; i < context_vk->rt_count; ++i)
     {
         const struct wined3d_rendertarget_blend_state_desc *rt = &b->rt[b->independent ? i : 0];
-        const struct wined3d_rendertarget_view *rtv = state->fb.render_targets[i];
         VkPipelineColorBlendAttachmentState *a = &key->blend_attachments[i];
-        enum wined3d_blend src_blend, dst_blend;
-        const struct wined3d_format *rt_format;
 
         a->colorWriteMask = vk_colour_write_mask_from_wined3d(rt->writemask);
         if (!rt->enable)
             continue;
 
-        if (rtv)
-            rt_format = rtv->format;
-        else
-            rt_format = wined3d_get_format(context_vk->c.device->adapter, WINED3DFMT_NULL, 0);
         a->blendEnable = VK_TRUE;
 
-        src_blend = rt->src;
-        dst_blend = rt->dst;
-        if (src_blend == WINED3D_BLEND_BOTHSRCALPHA)
-        {
-            src_blend = WINED3D_BLEND_SRCALPHA;
-            dst_blend = WINED3D_BLEND_INVSRCALPHA;
-        }
-        else if (src_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
-        {
-            src_blend = WINED3D_BLEND_INVSRCALPHA;
-            dst_blend = WINED3D_BLEND_SRCALPHA;
-        }
-        a->srcColorBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, FALSE);
-        a->dstColorBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, FALSE);
-        a->colorBlendOp = vk_blend_op_from_wined3d(rt->op);
-
-        src_blend = rt->src_alpha;
-        dst_blend = rt->dst_alpha;
-        a->srcAlphaBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, TRUE);
-        a->dstAlphaBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, TRUE);
-        a->alphaBlendOp = vk_blend_op_from_wined3d(rt->op_alpha);
+        blend_equation_from_wined3d(context_vk,
+                (VkColorBlendEquationEXT *)&a->srcColorBlendFactor, rt, state->fb.render_targets[i]);
     }
+}
+
+static void wined3d_context_vk_set_dynamic_blend_state(const struct wined3d_context_vk *context_vk,
+        VkCommandBuffer vk_command_buffer, const struct wined3d_vk_info *vk_info, const struct wined3d_state *state)
+{
+    VkColorBlendEquationEXT equations[WINED3D_MAX_RENDER_TARGETS] = {{0}};
+    VkColorComponentFlags write_mask[WINED3D_MAX_RENDER_TARGETS];
+    unsigned int rt_count = context_vk->rt_count;
+    VkBool32 enable[WINED3D_MAX_RENDER_TARGETS];
+    const struct wined3d_blend_state_desc *b;
+
+    if (!state->blend_state)
+    {
+        static const VkBool32 default_enable[WINED3D_MAX_RENDER_TARGETS];
+#define X (VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
+        static const VkColorComponentFlags default_write_mask[WINED3D_MAX_RENDER_TARGETS] = {X, X, X, X, X, X, X, X};
+#undef X
+
+        VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, default_enable));
+        VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, default_write_mask));
+        return;
+    }
+
+    b = &state->blend_state->desc;
+    for (unsigned int i = 0; i < rt_count; ++i)
+    {
+        const struct wined3d_rendertarget_blend_state_desc *rt = &b->rt[b->independent ? i : 0];
+
+        write_mask[i] = vk_colour_write_mask_from_wined3d(rt->writemask);
+        enable[i] = rt->enable;
+
+        if (!rt->enable)
+            continue;
+
+        blend_equation_from_wined3d(context_vk, &equations[i], rt, state->fb.render_targets[i]);
+    }
+
+    VK_CALL(vkCmdSetColorBlendEnableEXT(vk_command_buffer, 0, rt_count, enable));
+    VK_CALL(vkCmdSetColorWriteMaskEXT(vk_command_buffer, 0, rt_count, write_mask));
+    VK_CALL(vkCmdSetColorBlendEquationEXT(vk_command_buffer, 0, rt_count, equations));
 }
 
 static VkFormat vk_format_from_component_type(enum wined3d_component_type component_type)
@@ -2591,8 +2646,9 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
-            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
+    if (!vk_info->dynamic_blend_state
+            && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER)))
     {
         wined3d_context_vk_update_blend_state(context_vk, state, key);
 
@@ -3898,6 +3954,10 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         VK_CALL(vkCmdSetSampleMaskEXT(vk_command_buffer, sample_count, &state->sample_mask));
         context_vk->c.update_multisample_state = 0;
     }
+
+    if (vk_info->dynamic_blend_state && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER)))
+        wined3d_context_vk_set_dynamic_blend_state(context_vk, vk_command_buffer, vk_info, state);
 
     if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE]
             && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_DEPTH_STENCIL)
