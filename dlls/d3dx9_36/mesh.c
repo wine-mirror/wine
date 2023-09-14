@@ -1624,6 +1624,13 @@ static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *in
     return D3D_OK;
 }
 
+static DWORD adjacency_remap(DWORD *face_remap, DWORD index)
+{
+    if (index == 0xffffffff)
+        return index;
+    return face_remap[index];
+}
+
 static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, const DWORD *adjacency_in,
         DWORD *adjacency_out, DWORD *face_remap_out, ID3DXBuffer **vertex_remap_out)
 {
@@ -1778,9 +1785,10 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
             for (i = 0; i < This->numfaces; i++) {
                 DWORD old_pos = i * 3;
                 DWORD new_pos = face_remap[i] * 3;
-                adjacency_out[new_pos++] = face_remap[adjacency_in[old_pos++]];
-                adjacency_out[new_pos++] = face_remap[adjacency_in[old_pos++]];
-                adjacency_out[new_pos++] = face_remap[adjacency_in[old_pos++]];
+
+                adjacency_out[new_pos++] = adjacency_remap(face_remap, adjacency_in[old_pos++]);
+                adjacency_out[new_pos++] = adjacency_remap(face_remap, adjacency_in[old_pos++]);
+                adjacency_out[new_pos] = adjacency_remap(face_remap, adjacency_in[old_pos]);
             }
         } else {
             memcpy(adjacency_out, adjacency_in, This->numfaces * 3 * sizeof(*adjacency_out));
