@@ -66,6 +66,7 @@ struct performance
     struct DMUS_PMSGItem *imm_head;
 
     IReferenceClock *master_clock;
+    REFERENCE_TIME init_time;
 };
 
 typedef struct DMUS_PMSGItem DMUS_PMSGItem;
@@ -451,21 +452,41 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
 }
 
 static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 *iface,
-        MUSIC_TIME mtTime, REFERENCE_TIME *prtTime)
+        MUSIC_TIME music_time, REFERENCE_TIME *time)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %ld, %p): stub\n", This, mtTime, prtTime);
-	return S_OK;
+    FIXME("(%p, %ld, %p): semi-stub\n", This, music_time, time);
+
+    if (!time) return E_POINTER;
+    *time = 0;
+
+    if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
+
+    /* FIXME: This should be (music_time * 60) / (DMUS_PPQ * tempo)
+     * but it gives innacurate results */
+    *time = This->init_time + (music_time * 6510);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_ReferenceToMusicTime(IDirectMusicPerformance8 *iface,
-        REFERENCE_TIME rtTime, MUSIC_TIME *pmtTime)
+        REFERENCE_TIME time, MUSIC_TIME *music_time)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, 0x%s, %p): stub\n", This, wine_dbgstr_longlong(rtTime), pmtTime);
-	return S_OK;
+    FIXME("(%p, %I64d, %p): semi-stub\n", This, time, music_time);
+
+    if (!music_time) return E_POINTER;
+    *music_time = 0;
+
+    if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
+
+    /* FIXME: This should be (time * DMUS_PPQ * tempo) / 60
+     * but it gives innacurate results */
+    *music_time = (time - This->init_time) / 6510;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_IsPlaying(IDirectMusicPerformance8 *iface,
@@ -1006,6 +1027,9 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
         *dmusic = (IDirectMusic *)This->dmusic;
         IDirectMusic_AddRef(*dmusic);
     }
+
+    if (FAILED(hr = IDirectMusicPerformance8_GetTime(iface, &This->init_time, NULL))) return hr;
+
     PostMessageToProcessMsgThread(This, PROCESSMSG_START);
 
     return S_OK;

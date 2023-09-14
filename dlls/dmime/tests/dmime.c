@@ -1650,18 +1650,18 @@ static void test_performance_time(void)
 
 
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 0, &time);
-    todo_wine ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
-    todo_wine ok(time == 0, "got %I64d\n", time);
+    ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
+    ok(time == 0, "got %I64d\n", time);
 
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, 0, &music_time);
-    todo_wine ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 0, "got %ld\n", music_time);
+    ok(hr == DMUS_E_NO_MASTER_CLOCK, "got %#lx\n", hr);
+    ok(music_time == 0, "got %ld\n", music_time);
 
 
     dmusic = NULL;
@@ -1684,38 +1684,38 @@ static void test_performance_time(void)
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time - init_time >= 6505, "got %I64d\n", time - init_time);
+    ok(time - init_time >= 6505, "got %I64d\n", time - init_time);
     ok(time - init_time <= 6515, "got %I64d\n", time - init_time);
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time - init_time >= 1000 * 6505, "got %I64d\n", time - init_time);
+    ok(time - init_time >= 1000 * 6505, "got %I64d\n", time - init_time);
     ok(time - init_time <= 1000 * 6515, "got %I64d\n", time - init_time);
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 2000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time - init_time >= 2000 * 6505, "got %I64d\n", time - init_time);
+    ok(time - init_time >= 2000 * 6505, "got %I64d\n", time - init_time);
     ok(time - init_time <= 2000 * 6515, "got %I64d\n", time - init_time);
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 0, "got %ld\n", music_time);
+    ok(music_time == 0, "got %ld\n", music_time);
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time + 1000 * 6510, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 1000, "got %ld\n", music_time);
+    ok(music_time == 1000, "got %ld\n", music_time);
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time + 2000 * 6510, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 2000, "got %ld\n", music_time);
+    ok(music_time == 2000, "got %ld\n", music_time);
 
     time = 0xdeadbeef;
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_GetTime(performance, &time, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time - init_time <= 200 * 10000, "got %I64d\n", time - init_time);
-    todo_wine ok(music_time == (time - init_time) / 6510, "got %ld\n", music_time);
+    ok(time - init_time <= 200 * 10000, "got %I64d\n", time - init_time);
+    ok(music_time == (time - init_time) / 6510, "got %ld\n", music_time);
 
 
     hr = IDirectMusicPerformance_CloseDown(performance);
