@@ -255,9 +255,6 @@ HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **
 extern CRITICAL_SECTION DSOUND_renderers_lock;
 extern struct list DSOUND_renderers;
 
-extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
-extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
-
 extern const WCHAR wine_vxd_drv[];
 
 void setup_dsound_options(void);
@@ -266,5 +263,4 @@ HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device);
 
 BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
         DWORD depth, WORD channels);
-HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
-        LPDSENUMCALLBACKW cb, void *user);
+HRESULT enumerate_mmdevices(EDataFlow flow, LPDSENUMCALLBACKW cb, void *user);

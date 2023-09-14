@@ -134,11 +134,9 @@ static HRESULT DSPROPERTY_WaveDeviceMappingW(
     search.found_guid = &ppd->DeviceId;
 
     if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER)
-        hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids,
-                search_callback, &search);
+        hr = enumerate_mmdevices(eRender, search_callback, &search);
     else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE)
-        hr = enumerate_mmdevices(eCapture, DSOUND_capture_guids,
-                search_callback, &search);
+        hr = enumerate_mmdevices(eCapture, search_callback, &search);
     else
         return DSERR_INVALIDPARAM;
 
@@ -316,12 +314,10 @@ static HRESULT DSPROPERTY_EnumerateW(
         return E_PROP_ID_UNSUPPORTED;
     }
 
-    hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids,
-            enum_callback, ppd);
+    hr = enumerate_mmdevices(eRender, enum_callback, ppd);
 
     if(hr == S_OK)
-        hr = enumerate_mmdevices(eCapture, DSOUND_capture_guids,
-                enum_callback, ppd);
+        hr = enumerate_mmdevices(eCapture, enum_callback, ppd);
 
     return SUCCEEDED(hr) ? DS_OK : hr;
 }
