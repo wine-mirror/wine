@@ -528,9 +528,57 @@ static BOOL uia_win_event_hwnd_map_contains_ancestors(struct rb_tree *hwnd_map, 
     return FALSE;
 }
 
+static HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawElementProviderSimple **ret_elprov)
+{
+    IRawElementProviderSimple *elprov;
+    IAccessible *acc;
+    int child_id;
+    HRESULT hr;
+
+    *ret_elprov = NULL;
+    hr = AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, &IID_IAccessible, (void **)&acc);
+    if (FAILED(hr))
+        return hr;
+
+    child_id = in_child_id;
+    if (in_child_id != CHILDID_SELF)
+    {
+        IDispatch *disp;
+        VARIANT cid;
+
+        disp = NULL;
+        variant_init_i4(&cid, in_child_id);
+        hr = IAccessible_get_accChild(acc, cid, &disp);
+        if (FAILED(hr))
+            TRACE("get_accChild failed with %#lx!\n", hr);
+
+        if (SUCCEEDED(hr) && disp)
+        {
+            IAccessible_Release(acc);
+            hr = IDispatch_QueryInterface(disp, &IID_IAccessible, (void **)&acc);
+            IDispatch_Release(disp);
+            if (FAILED(hr))
+                return hr;
+
+            child_id = CHILDID_SELF;
+        }
+    }
+
+    hr = create_msaa_provider(acc, child_id, hwnd, in_child_id == CHILDID_SELF, &elprov);
+    IAccessible_Release(acc);
+    if (FAILED(hr))
+        return hr;
+
+    *ret_elprov = elprov;
+    return S_OK;
+}
+
 static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *data)
 {
     struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)data;
+    IRawElementProviderSimple *elprov;
+    HUIANODE node;
+    HRESULT hr;
 
     /*
      * Check if this HWND, or any of it's ancestors (excluding the desktop)
@@ -544,8 +592,22 @@ static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *da
     if (UiaHasServerSideProvider(win_event->hwnd))
         return S_OK;
 
+    /*
+     * Regardless of the object ID of the WinEvent, OBJID_CLIENT is queried
+     * for the HWND with the same child ID as the WinEvent.
+     */
+    hr = create_msaa_provider_from_hwnd(win_event->hwnd, win_event->child_id, &elprov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_uia_node_from_elprov(elprov, &node, TRUE);
+    IRawElementProviderSimple_Release(elprov);
+    if (FAILED(hr))
+        return hr;
+
     FIXME("IProxyProviderWinEventHandler usage is currently unimplemented.\n");
 
+    UiaNodeRelease(node);
     return S_OK;
 }
 
