@@ -1913,6 +1913,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_invalidate_state(&context_vk->c, STATE_BLEND);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
     context_invalidate_state(&context_vk->c, STATE_DEPTH_STENCIL);
+    context_invalidate_state(&context_vk->c, STATE_RASTERIZER);
     context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
     context_invalidate_state(&context_vk->c, STATE_VIEWPORT);
     context_invalidate_state(&context_vk->c, STATE_SCISSORRECT);
@@ -2159,6 +2160,15 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT;
     }
+    if (vk_info->dynamic_rasterizer_state)
+    {
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_DEPTH_CLAMP_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_CULL_MODE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_FRONT_FACE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+    }
 
     key = &context_vk->graphics.pipeline_key_vk;
     memset(key, 0, sizeof(*key));
@@ -2222,11 +2232,9 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->pipeline_desc.basePipelineIndex = -1;
 }
 
-static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state, struct wined3d_graphics_pipeline_key_vk *key)
+static void rasterizer_state_from_wined3d(VkPipelineRasterizationStateCreateInfo *desc,
+        const struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
-    const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
-    VkPipelineRasterizationStateCreateInfo *desc = &key->rs_desc;
     const struct wined3d_rasterizer_state_desc *r;
     float scale_bias;
     union
@@ -2289,6 +2297,24 @@ static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_c
         desc->depthBiasSlopeFactor = scale_bias;
     }
     desc->depthBiasClamp = r->depth_bias_clamp;
+}
+
+static void wined3d_context_vk_set_dynamic_rasterizer_state(const struct wined3d_context_vk *context_vk,
+        VkCommandBuffer vk_command_buffer, const struct wined3d_vk_info *vk_info, const struct wined3d_state *state)
+{
+    VkPipelineRasterizationStateCreateInfo desc;
+
+    rasterizer_state_from_wined3d(&desc, state, context_vk->c.d3d_info);
+
+    VK_CALL(vkCmdSetRasterizerDiscardEnableEXT(vk_command_buffer, desc.rasterizerDiscardEnable));
+    VK_CALL(vkCmdSetDepthClampEnableEXT(vk_command_buffer, desc.depthClampEnable));
+    VK_CALL(vkCmdSetCullModeEXT(vk_command_buffer, desc.cullMode));
+    VK_CALL(vkCmdSetFrontFaceEXT(vk_command_buffer, desc.frontFace));
+    VK_CALL(vkCmdSetDepthBiasEnableEXT(vk_command_buffer, desc.depthBiasEnable));
+
+    if (desc.depthBiasEnable)
+        VK_CALL(vkCmdSetDepthBias(vk_command_buffer, desc.depthBiasConstantFactor,
+                desc.depthBiasClamp, desc.depthBiasSlopeFactor));
 }
 
 static void blend_equation_from_wined3d(const struct wined3d_context_vk *context_vk, VkColorBlendEquationEXT *eq,
@@ -2582,10 +2608,10 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER)
-            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY)))
+    if (!vk_info->dynamic_rasterizer_state && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY))))
     {
-        wined3d_context_vk_update_rasterisation_state(context_vk, state, key);
+        rasterizer_state_from_wined3d(&key->rs_desc, state, d3d_info);
 
         update = true;
     }
@@ -3954,6 +3980,10 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         VK_CALL(vkCmdSetSampleMaskEXT(vk_command_buffer, sample_count, &state->sample_mask));
         context_vk->c.update_multisample_state = 0;
     }
+
+    if (vk_info->dynamic_rasterizer_state && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY))))
+        wined3d_context_vk_set_dynamic_rasterizer_state(context_vk, vk_command_buffer, vk_info, state);
 
     if (vk_info->dynamic_blend_state && (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER)))

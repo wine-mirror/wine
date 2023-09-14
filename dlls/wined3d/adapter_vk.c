@@ -2391,6 +2391,10 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     vk_info->dynamic_blend_state = dynamic_state3->extendedDynamicState3ColorBlendEnable
             && dynamic_state3->extendedDynamicState3ColorBlendEquation
             && dynamic_state3->extendedDynamicState3ColorWriteMask;
+    /* Rasterizer state needs EDS2, for rasterizer discard, and EDS1, for cull mode and front face. */
+    vk_info->dynamic_rasterizer_state = dynamic_state3->extendedDynamicState3DepthClampEnable
+            && vk_info->dynamic_state2
+            && adapter_vk->vk_info.supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE];
 }
 
 static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk *adapter_vk)

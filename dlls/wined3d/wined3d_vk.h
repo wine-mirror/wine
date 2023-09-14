@@ -194,7 +194,12 @@ struct wined3d_device_vk;
     VK_DEVICE_EXT_PFN(vkCmdSetColorBlendEnableEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetColorBlendEquationEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetColorWriteMaskEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetCullModeEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetDepthBiasEnableEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetDepthClampEnableEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetFrontFaceEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetRasterizationSamplesEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetRasterizerDiscardEnableEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetSampleMaskEXT) \
     /* VK_EXT_transform_feedback */ \
     VK_DEVICE_EXT_PFN(vkCmdBeginQueryIndexedEXT) \
@@ -258,6 +263,7 @@ struct wined3d_vk_info
     bool dynamic_patch_vertex_count;
     bool dynamic_multisample_state;
     bool dynamic_blend_state;
+    bool dynamic_rasterizer_state;
 };
 
 #define VK_CALL(f) (vk_info->vk_ops.f)
@@ -580,7 +586,7 @@ struct wined3d_context_vk
 
     const struct wined3d_vk_info *vk_info;
 
-    VkDynamicState dynamic_states[20];
+    VkDynamicState dynamic_states[27];
 
     uint32_t update_compute_pipeline : 1;
     uint32_t update_stream_output : 1;
