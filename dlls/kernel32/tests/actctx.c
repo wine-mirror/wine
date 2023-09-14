@@ -2800,17 +2800,122 @@ static void test_CreateActCtx(void)
 {
     static const DWORD flags[] = {LOAD_LIBRARY_AS_DATAFILE, LOAD_LIBRARY_AS_IMAGE_RESOURCE,
                                   LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE};
-    CHAR path[MAX_PATH], dir[MAX_PATH], dll[MAX_PATH];
+    static const struct
+    {
+        DWORD size, flags, error;
+    } test[] =
+    {
+        { FIELD_OFFSET(ACTCTXW, lpSource), 0, ERROR_INVALID_PARAMETER },
+        { FIELD_OFFSET(ACTCTXW, wProcessorArchitecture), 0, 0 },
+        { FIELD_OFFSET(ACTCTXW, lpAssemblyDirectory), ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID, ERROR_INVALID_PARAMETER },
+        { FIELD_OFFSET(ACTCTXW, lpResourceName), ACTCTX_FLAG_RESOURCE_NAME_VALID, ERROR_INVALID_PARAMETER },
+        { FIELD_OFFSET(ACTCTXW, hModule), ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID, ERROR_INVALID_PARAMETER },
+    };
+    char path[MAX_PATH], dir[MAX_PATH], dll[MAX_PATH], source[MAX_PATH];
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], sourceW[MAX_PATH];
     ACTCTXA actctx;
+    ACTCTXW ctxW;
     HANDLE handle;
     int i;
 
     GetTempPathA(ARRAY_SIZE(path), path);
+    strcpy(dir, path);
     strcat(path, "main_wndcls.manifest");
 
     write_manifest("testdep1.manifest", manifest_wndcls1);
     write_manifest("testdep2.manifest", manifest_wndcls2);
     write_manifest("main_wndcls.manifest", manifest_wndcls_main);
+
+    GetModuleFileNameA(NULL, source, ARRAY_SIZE(source));
+    GetModuleFileNameW(NULL, sourceW, ARRAY_SIZE(sourceW));
+
+    GetTempPathW(ARRAY_SIZE(pathW), pathW);
+    wcscpy(dirW, pathW);
+    wcscat(pathW, L"main_wndcls.manifest");
+
+    memset(&ctxW, 0, sizeof(ctxW));
+    ctxW.cbSize = sizeof(ctxW);
+    ctxW.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+    ctxW.lpSource = pathW;
+    ctxW.lpAssemblyDirectory = dirW;
+    ctxW.lpResourceName = (LPWSTR)124;
+    ctxW.hModule = GetModuleHandleW(NULL);
+    handle = CreateActCtxW(&ctxW);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+    ReleaseActCtx(handle);
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        winetest_push_context("%i", i);
+        ctxW.cbSize = test[i].size;
+        ctxW.dwFlags = test[i].flags;
+        SetLastError(0xdeadbeef);
+        handle = CreateActCtxW(&ctxW);
+        if (!test[i].error)
+        {
+            todo_wine
+            ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+            ReleaseActCtx(handle);
+        }
+        else
+        {
+            ok(handle == INVALID_HANDLE_VALUE, "CreateActCtx should fail\n");
+            ok(test[i].error == GetLastError(), "expected %lu, got %lu\n", test[i].error, GetLastError());
+        }
+
+        ctxW.cbSize += sizeof(void *);
+        if ((ctxW.dwFlags & (ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID)) == ACTCTX_FLAG_RESOURCE_NAME_VALID)
+            ctxW.lpSource = sourceW; /* source without hModule must point to valid PE */
+        SetLastError(0xdeadbeef);
+        handle = CreateActCtxW(&ctxW);
+        todo_wine_if(i != 4)
+        ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+        ReleaseActCtx(handle);
+
+        winetest_pop_context();
+    }
+
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
+    actctx.lpSource = path;
+    actctx.lpAssemblyDirectory = dir;
+    actctx.lpResourceName = (LPSTR)124;
+    actctx.hModule = GetModuleHandleW(NULL);
+    handle = CreateActCtxA(&actctx);
+    ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+    ReleaseActCtx(handle);
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        winetest_push_context("%i", i);
+        actctx.cbSize = test[i].size;
+        actctx.dwFlags = test[i].flags;
+        SetLastError(0xdeadbeef);
+        handle = CreateActCtxA(&actctx);
+        if (!test[i].error)
+        {
+            todo_wine
+            ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+            ReleaseActCtx(handle);
+        }
+        else
+        {
+            ok(handle == INVALID_HANDLE_VALUE, "CreateActCtx should fail\n");
+            ok(test[i].error == GetLastError(), "expected %lu, got %lu\n", test[i].error, GetLastError());
+        }
+
+        actctx.cbSize += sizeof(void *);
+        if ((actctx.dwFlags & (ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID)) == ACTCTX_FLAG_RESOURCE_NAME_VALID)
+            actctx.lpSource = source; /* source without hModule must point to valid PE */
+        SetLastError(0xdeadbeef);
+        handle = CreateActCtxA(&actctx);
+        todo_wine_if(i != 4)
+        ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
+        ReleaseActCtx(handle);
+
+        winetest_pop_context();
+    }
 
     memset(&actctx, 0, sizeof(ACTCTXA));
     actctx.cbSize = sizeof(ACTCTXA);
