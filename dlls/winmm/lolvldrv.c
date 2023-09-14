@@ -334,6 +334,8 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
     DWORD			ret;
     UINT			count = 0;
     int				i, k;
+    WINE_MLD *mem;
+
     TRACE("(%p, %04x, %04x)\n", lpDrv, type, wMsg);
 
     part->nIDMin = part->nIDMax = 0;
@@ -370,14 +372,14 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId,
 	  lpDrv->drvname, llTypes[type].typestr);
     /* realloc translation table */
-    if (llTypes[type].lpMlds)
-        llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapReAlloc(GetProcessHeap(), 0, llTypes[type].lpMlds - 1,
-		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
-    else
-        llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapAlloc(GetProcessHeap(), 0,
-		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
+    if (llTypes[type].lpMlds) {
+        mem = llTypes[type].lpMlds - 1;
+        mem = HeapReAlloc(GetProcessHeap(), 0, mem, sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1));
+        llTypes[type].lpMlds = mem + 1;
+    } else {
+        mem = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1));
+        llTypes[type].lpMlds = mem + 1;
+    }
 
     /* re-build the translation table */
     if (lpDrv->bIsMapper) {
