@@ -2004,8 +2004,11 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
             ERR("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
         swapchain->front_buffer = new_texture;
 
-        wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
-        wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
+        if (!(swapchain->device->wined3d->flags & WINED3D_NO3D))
+        {
+            wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
+            wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
+        }
 
         for (i = 0; i < desc->backbuffer_count; ++i)
         {
