@@ -319,7 +319,7 @@ static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
     switch (dwFlags & (MMIO_INSTALLPROC|MMIO_REMOVEPROC|MMIO_FINDPROC)) {
     case MMIO_INSTALLPROC:
 	/* Create new entry for the IOProc list */
-	pListNode = HeapAlloc(GetProcessHeap(), 0, sizeof(*pListNode));
+	pListNode = malloc(sizeof(*pListNode));
 	if (pListNode) {
 	    /* Fill in this node */
 	    pListNode->fourCC = fccIOProc;
@@ -369,7 +369,7 @@ static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 		struct IOProcList*  ptmpNode = *ppListNode;
 		lpProc = (*ppListNode)->pIOProc;
 		*ppListNode = (*ppListNode)->pNext;
-		HeapFree(GetProcessHeap(), 0, ptmpNode);
+		free(ptmpNode);
 	    }
 	}
 	break;
@@ -498,7 +498,7 @@ static	LPWINE_MMIO		MMIO_Create(void)
     static	WORD	MMIO_counter = 0;
     LPWINE_MMIO		wm;
 
-    wm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MMIO));
+    wm = calloc(1, sizeof(WINE_MMIO));
     if (wm) {
 	EnterCriticalSection(&WINMM_cs);
         /* lookup next unallocated WORD handle, with a non NULL value */
@@ -527,7 +527,7 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
     /* ...and destroy */
     if (*m) {
 	*m = (*m)->lpNext;
-	HeapFree(GetProcessHeap(), 0, wm);
+	free(wm);
 	wm = NULL;
     }
     LeaveCriticalSection(&WINMM_cs);
@@ -600,7 +600,7 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 
     /* free previous buffer if allocated */
     if (wm->info.dwFlags & MMIO_ALLOCBUF) {
-        HeapFree(GetProcessHeap(), 0, wm->info.pchBuffer);
+        free(wm->info.pchBuffer);
         wm->info.pchBuffer = NULL;
 	wm->info.dwFlags &= ~MMIO_ALLOCBUF;
     }
@@ -608,7 +608,7 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     if (pchBuffer) {
         wm->info.pchBuffer = pchBuffer;
     } else if (cchBuffer) {
-	if (!(wm->info.pchBuffer = HeapAlloc(GetProcessHeap(), 0, cchBuffer)))
+	if (!(wm->info.pchBuffer = malloc(cchBuffer)))
 	    return MMIOERR_OUTOFMEMORY;
 	wm->info.dwFlags |= MMIO_ALLOCBUF;
     } else {
@@ -722,7 +722,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 	return wm->info.hmmio;
  error1:
     if (wm->info.dwFlags & MMIO_ALLOCBUF)
-        HeapFree(GetProcessHeap(), 0, wm->info.pchBuffer);
+        free(wm->info.pchBuffer);
     if (wm->ioProc) wm->ioProc->count--;
  error2:
     MMIO_Destroy(wm);
@@ -742,14 +742,14 @@ HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
     {
         INT     len = WideCharToMultiByte( CP_ACP, 0, szFileName, -1, NULL, 0, NULL, NULL );
         if (len < MAX_PATH) len = MAX_PATH;
-        szFn = HeapAlloc( GetProcessHeap(), 0, len );
+        szFn = malloc( len );
         if (!szFn) return NULL;
         WideCharToMultiByte( CP_ACP, 0, szFileName, -1, szFn, len, NULL, NULL );
     }
 
     ret = MMIO_Open(szFn, lpmmioinfo, dwOpenFlags, TRUE);
 
-    HeapFree(GetProcessHeap(), 0, szFn);
+    free(szFn);
     return ret;
 }
 
@@ -1401,14 +1401,14 @@ MMRESULT WINAPI mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
     if (szFileName)
     {
         len = WideCharToMultiByte( CP_ACP, 0, szFileName, -1, NULL, 0, NULL, NULL );
-        szFn = HeapAlloc( GetProcessHeap(), 0, len );
+        szFn = malloc( len );
         if (!szFn) goto done;
         WideCharToMultiByte( CP_ACP, 0, szFileName, -1, szFn, len, NULL, NULL );
     }
     if (szNewFileName)
     {
         len = WideCharToMultiByte( CP_ACP, 0, szNewFileName, -1, NULL, 0, NULL, NULL );
-        sznFn = HeapAlloc( GetProcessHeap(), 0, len );
+        sznFn = malloc( len );
         if (!sznFn) goto done;
         WideCharToMultiByte( CP_ACP, 0, szNewFileName, -1, sznFn, len, NULL, NULL );
     }
@@ -1416,7 +1416,7 @@ MMRESULT WINAPI mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
     ret = mmioRenameA(szFn, sznFn, lpmmioinfo, dwFlags);
 
 done:
-    HeapFree(GetProcessHeap(),0,szFn);
-    HeapFree(GetProcessHeap(),0,sznFn);
+    free(szFn);
+    free(sznFn);
     return ret;
 }
