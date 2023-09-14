@@ -61,6 +61,8 @@ static lpGroupData DP_FindAnyGroup( IDirectPlayImpl *This, DPID dpid );
 /* Helper methods for player/group interfaces */
 static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpSessDesc,
         DWORD dwFlags, BOOL bInitial, BOOL bAnsi );
+static void DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
+        LPVOID lpData, DWORD dwDataSize );
 static HRESULT DP_SP_SendEx( IDirectPlayImpl *This, DWORD dwFlags, void *lpData, DWORD dwDataSize,
         DWORD dwPriority, DWORD dwTimeout, void *lpContext, DWORD *lpdwMsgID );
 static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
@@ -1357,7 +1359,7 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
 }
 
 static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpName,
-        DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
+        void *data, DWORD dataSize, DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
 {
   lpPlayerData lpPData;
   lpPlayerList lpPList;
@@ -1410,6 +1412,8 @@ static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *
 
   /* Add the player to the system group */
   DPQ_INSERT( This->dp2->lpSysGroup->players, lpPList, players );
+
+  DP_SetPlayerData( lpPData, DPSET_REMOTE, data, dataSize );
 
   TRACE( "Created player id 0x%08lx\n", *lpid );
 
@@ -1646,13 +1650,10 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
 
   /* We pass creation flags, so we can distinguish sysplayers and not count them in the current
      player total */
-  lpPData = DP_CreatePlayer( This, lpidPlayer, lpPlayerName, dwCreateFlags,
+  lpPData = DP_CreatePlayer( This, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
                              hEvent, bAnsi );
   if( !lpPData )
     return DPERR_CANTADDPLAYER;
-
-  /* Update the information and send it to all players in the session */
-  DP_SetPlayerData( lpPData, DPSET_REMOTE, lpData, dwDataSize );
 
   /* Let the SP know that we've created this player */
   if( This->dp2->spData.lpCB->CreatePlayer )
