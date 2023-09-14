@@ -252,6 +252,51 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
     }
 }
 
+typedef HRESULT UiaWineEventForEachCallback(struct uia_event *, void *);
+static HRESULT uia_event_for_each(int event_id, UiaWineEventForEachCallback *callback, void *user_data,
+        BOOL clientside_only)
+{
+    struct uia_event_map_entry *event_entry;
+    HRESULT hr = S_OK;
+    int i;
+
+    EnterCriticalSection(&event_map_cs);
+    if ((event_entry = uia_get_event_map_entry_for_event(event_id)))
+        InterlockedIncrement(&event_entry->refs);
+    LeaveCriticalSection(&event_map_cs);
+
+    if (!event_entry)
+        return S_OK;
+
+    for (i = 0; i < 2; i++)
+    {
+        struct list *events = !i ? &event_entry->events_list : &event_entry->serverside_events_list;
+        struct list *cursor, *cursor2;
+
+        if (i && clientside_only)
+            break;
+
+        LIST_FOR_EACH_SAFE(cursor, cursor2, events)
+        {
+            struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
+
+            /* Event is no longer valid. */
+            if (InterlockedCompareExchange(&event->event_defunct, 0, 0) != 0)
+                continue;
+
+            hr = callback(event, user_data);
+            if (FAILED(hr))
+                goto exit;
+        }
+    }
+
+exit:
+    if (FAILED(hr))
+        WARN("Event callback failed with hr %#lx\n", hr);
+    uia_event_map_entry_release(event_entry);
+    return hr;
+}
+
 /*
  * Functions for struct uia_event_args, a reference counted structure
  * used to store event arguments. This is necessary for serverside events
@@ -1525,73 +1570,57 @@ static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAF
     return hr;
 }
 
-static HRESULT uia_raise_event(IRawElementProviderSimple *elprov, struct uia_event_args *args)
+struct uia_elprov_event_data
 {
-    struct uia_event_map_entry *event_entry;
-    enum ProviderOptions prov_opts = 0;
-    struct list *cursor, *cursor2;
+    IRawElementProviderSimple *elprov;
+    struct uia_event_args *args;
+    BOOL clientside_only;
+
+    SAFEARRAY *rt_id;
     HUIANODE node;
-    SAFEARRAY *sa;
+};
+
+static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *data)
+{
+    struct uia_elprov_event_data *event_data = (struct uia_elprov_event_data *)data;
+    HRESULT hr;
+
+    if (!event_data->node)
+    {
+        /*
+         * For events raised on server-side providers, we don't want to add any
+         * clientside HWND providers.
+         */
+        hr = create_uia_node_from_elprov(event_data->elprov, &event_data->node, event_data->clientside_only);
+        if (FAILED(hr))
+            return hr;
+
+        hr = UiaGetRuntimeId(event_data->node, &event_data->rt_id);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return uia_event_check_match(event_data->node, event_data->node, event_data->rt_id, event_data->args, event);
+}
+
+static HRESULT uia_raise_elprov_event(IRawElementProviderSimple *elprov, struct uia_event_args *args)
+{
+    struct uia_elprov_event_data event_data = { elprov, args };
+    enum ProviderOptions prov_opts = 0;
     HRESULT hr;
 
     hr = IRawElementProviderSimple_get_ProviderOptions(elprov, &prov_opts);
     if (FAILED(hr))
         return hr;
 
-    EnterCriticalSection(&event_map_cs);
-    if ((event_entry = uia_get_event_map_entry_for_event(args->simple_args.EventId)))
-        InterlockedIncrement(&event_entry->refs);
-    LeaveCriticalSection(&event_map_cs);
-
-    if (!event_entry)
-        return S_OK;
-
-    /*
-     * For events raised on server-side providers, we don't want to add any
-     * clientside HWND providers.
-     */
-    if (prov_opts & ProviderOptions_ServerSideProvider)
-        hr = create_uia_node_from_elprov(elprov, &node, FALSE);
-    else
-        hr = create_uia_node_from_elprov(elprov, &node, TRUE);
+    event_data.clientside_only = !(prov_opts & ProviderOptions_ServerSideProvider);
+    hr = uia_event_for_each(args->simple_args.EventId, uia_raise_elprov_event_callback, (void *)&event_data,
+            event_data.clientside_only);
     if (FAILED(hr))
-    {
-        uia_event_map_entry_release(event_entry);
-        return hr;
-    }
+        WARN("uia_event_for_each failed with hr %#lx\n", hr);
 
-    hr = UiaGetRuntimeId(node, &sa);
-    if (FAILED(hr))
-    {
-        uia_event_map_entry_release(event_entry);
-        UiaNodeRelease(node);
-        return hr;
-    }
-
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &event_entry->events_list)
-    {
-        struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
-
-        hr = uia_event_check_match(node, node, sa, args, event);
-        if (FAILED(hr))
-            break;
-    }
-
-    if (prov_opts & ProviderOptions_ServerSideProvider)
-    {
-        LIST_FOR_EACH_SAFE(cursor, cursor2, &event_entry->serverside_events_list)
-        {
-            struct uia_event *event = LIST_ENTRY(cursor, struct uia_event, event_list_entry);
-
-            hr = uia_event_check_match(node, node, sa, args, event);
-            if (FAILED(hr))
-                break;
-        }
-    }
-
-    uia_event_map_entry_release(event_entry);
-    SafeArrayDestroy(sa);
-    UiaNodeRelease(node);
+    UiaNodeRelease(event_data.node);
+    SafeArrayDestroy(event_data.rt_id);
 
     return hr;
 }
@@ -1624,7 +1653,7 @@ HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *elprov, EVENTI
     if (!args)
         return E_OUTOFMEMORY;
 
-    hr = uia_raise_event(elprov, args);
+    hr = uia_raise_elprov_event(elprov, args);
     uia_event_args_release(args);
     if (FAILED(hr))
         return hr;
