@@ -2296,6 +2296,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_p
 
 static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_vk, uint32_t wined3d_creation_flags)
 {
+    const struct VkPhysicalDeviceExtendedDynamicState3FeaturesEXT *dynamic_state3;
     struct wined3d_d3d_info *d3d_info = &adapter_vk->a.d3d_info;
     struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     struct wined3d_physical_device_info device_info;
@@ -2382,6 +2383,11 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     vk_info->multiple_viewports = device_info.features2.features.multiViewport;
     vk_info->dynamic_state2 = device_info.dynamic_state2_features.extendedDynamicState2;
     vk_info->dynamic_patch_vertex_count = device_info.dynamic_state2_features.extendedDynamicState2PatchControlPoints;
+
+    dynamic_state3 = &device_info.dynamic_state3_features;
+    vk_info->dynamic_multisample_state = dynamic_state3->extendedDynamicState3RasterizationSamples
+            && dynamic_state3->extendedDynamicState3AlphaToCoverageEnable
+            && dynamic_state3->extendedDynamicState3SampleMask;
 }
 
 static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk *adapter_vk)

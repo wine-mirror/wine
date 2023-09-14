@@ -1907,6 +1907,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_compute_unordered_access_view_bindings = 1;
     context_vk->c.update_primitive_type = 1;
     context_vk->c.update_patch_vertex_count = 1;
+    context_vk->c.update_multisample_state = 1;
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
@@ -2145,6 +2146,12 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     }
     if (vk_info->dynamic_patch_vertex_count)
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT;
+    if (vk_info->dynamic_multisample_state)
+    {
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_ALPHA_TO_COVERAGE_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_SAMPLE_MASK_EXT;
+    }
 
     key = &context_vk->graphics.pipeline_key_vk;
     memset(key, 0, sizeof(*key));
@@ -2176,6 +2183,8 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
 
     key->ms_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     key->ms_desc.pSampleMask = &key->sample_mask;
+    /* This has to be initialized to a nonzero value even if it's dynamic. */
+    key->ms_desc.rasterizationSamples = 1;
 
     key->ds_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     key->ds_desc.maxDepthBounds = 1.0f;
@@ -2526,8 +2535,9 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (key->ms_desc.rasterizationSamples != context_vk->sample_count
-            || isStateDirty(&context_vk->c, STATE_BLEND) || isStateDirty(&context_vk->c, STATE_SAMPLE_MASK))
+    if (!vk_info->dynamic_multisample_state
+            && (key->ms_desc.rasterizationSamples != context_vk->sample_count
+            || isStateDirty(&context_vk->c, STATE_BLEND) || isStateDirty(&context_vk->c, STATE_SAMPLE_MASK)))
     {
         key->ms_desc.rasterizationSamples = context_vk->sample_count;
         key->ms_desc.alphaToCoverageEnable = state->blend_state && state->blend_state->desc.alpha_to_coverage;
@@ -3876,6 +3886,17 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         if (state->patch_vertex_count)
             VK_CALL(vkCmdSetPatchControlPointsEXT(vk_command_buffer, state->patch_vertex_count));
         context_vk->c.update_patch_vertex_count = 0;
+    }
+
+    if (vk_info->dynamic_multisample_state && context_vk->c.update_multisample_state)
+    {
+        unsigned int sample_count = context_vk->sample_count;
+
+        VK_CALL(vkCmdSetAlphaToCoverageEnableEXT(vk_command_buffer,
+                state->blend_state && state->blend_state->desc.alpha_to_coverage));
+        VK_CALL(vkCmdSetRasterizationSamplesEXT(vk_command_buffer, sample_count));
+        VK_CALL(vkCmdSetSampleMaskEXT(vk_command_buffer, sample_count, &state->sample_mask));
+        context_vk->c.update_multisample_state = 0;
     }
 
     if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE]

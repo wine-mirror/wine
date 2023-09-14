@@ -189,6 +189,10 @@ struct wined3d_device_vk;
     /* VK_EXT_extended_dynamic_state2 */ \
     VK_DEVICE_EXT_PFN(vkCmdSetPatchControlPointsEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetPrimitiveRestartEnableEXT) \
+    /* VK_EXT_extended_dynamic_state3 */ \
+    VK_DEVICE_EXT_PFN(vkCmdSetAlphaToCoverageEnableEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetRasterizationSamplesEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetSampleMaskEXT) \
     /* VK_EXT_transform_feedback */ \
     VK_DEVICE_EXT_PFN(vkCmdBeginQueryIndexedEXT) \
     VK_DEVICE_EXT_PFN(vkCmdBeginTransformFeedbackEXT) \
@@ -249,6 +253,7 @@ struct wined3d_vk_info
     bool multiple_viewports;
     bool dynamic_state2;
     bool dynamic_patch_vertex_count;
+    bool dynamic_multisample_state;
 };
 
 #define VK_CALL(f) (vk_info->vk_ops.f)
@@ -571,7 +576,7 @@ struct wined3d_context_vk
 
     const struct wined3d_vk_info *vk_info;
 
-    VkDynamicState dynamic_states[14];
+    VkDynamicState dynamic_states[17];
 
     uint32_t update_compute_pipeline : 1;
     uint32_t update_stream_output : 1;

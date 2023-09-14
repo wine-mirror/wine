@@ -1967,7 +1967,8 @@ struct wined3d_context
     DWORD namedArraysLoaded : 1;
     DWORD update_primitive_type : 1;
     DWORD update_patch_vertex_count : 1;
-    DWORD padding : 3;
+    DWORD update_multisample_state : 1;
+    DWORD padding : 2;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
@@ -2912,7 +2913,7 @@ struct wined3d_state
     unsigned int render_states[WINEHIGHEST_RENDER_STATE + 1];
     struct wined3d_blend_state *blend_state;
     struct wined3d_color blend_factor;
-    unsigned int sample_mask;
+    uint32_t sample_mask;
     struct wined3d_depth_stencil_state *depth_stencil_state;
     unsigned int stencil_ref;
     bool depth_bounds_enable;
