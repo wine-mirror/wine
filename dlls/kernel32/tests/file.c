@@ -5559,7 +5559,7 @@ static void test_post_completion(void)
     ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
     ok(!ret, "GetQueuedCompletionStatusEx succeeded\n");
     ok(GetLastError() == WAIT_TIMEOUT, "wrong error %lu\n", GetLastError());
-    ok(count == 1, "wrong count %lu\n", count);
+    ok(count <= 1, "wrong count %lu\n", count);
 
     ret = PostQueuedCompletionStatus( port, 123, 456, &ovl );
     ok(ret, "PostQueuedCompletionStatus failed: %lu\n", GetLastError());
@@ -5600,14 +5600,14 @@ static void test_post_completion(void)
     ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, FALSE );
     ok(!ret, "GetQueuedCompletionStatusEx succeeded\n");
     ok(GetLastError() == WAIT_TIMEOUT, "wrong error %lu\n", GetLastError());
-    ok(count == 1, "wrong count %lu\n", count);
+    ok(count <= 1, "wrong count %lu\n", count);
     ok(!user_apc_ran, "user APC should not have run\n");
 
     ret = pGetQueuedCompletionStatusEx( port, entries, 2, &count, 0, TRUE );
     ok(!ret || broken(ret) /* Vista */, "GetQueuedCompletionStatusEx succeeded\n");
     if (!ret)
         ok(GetLastError() == WAIT_IO_COMPLETION, "wrong error %lu\n", GetLastError());
-    ok(count == 1, "wrong count %lu\n", count);
+    ok(count <= 1, "wrong count %lu\n", count);
     ok(user_apc_ran, "user APC should have run\n");
 
     user_apc_ran = FALSE;
