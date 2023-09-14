@@ -79,8 +79,12 @@ static BOOL CALLBACK uia_win_event_enum_top_level_hwnds(HWND hwnd, LPARAM lparam
     return TRUE;
 }
 
+static BOOL uia_clientside_event_start_event_thread(struct uia_event *event);
 HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd)
 {
+    if (!uia_clientside_event_start_event_thread(event))
+        return E_FAIL;
+
     if (hwnd == GetDesktopWindow())
         EnumWindows(uia_win_event_enum_top_level_hwnds, (LPARAM)&event->u.clientside.win_event_hwnd_map);
 
@@ -630,6 +634,14 @@ static void uia_stop_event_thread(void)
     LeaveCriticalSection(&event_thread_cs);
 }
 
+static BOOL uia_clientside_event_start_event_thread(struct uia_event *event)
+{
+    if (!event->u.clientside.event_thread_started)
+        event->u.clientside.event_thread_started = uia_start_event_thread();
+
+    return event->u.clientside.event_thread_started;
+}
+
 /*
  * IWineUiaEvent interface.
  */
@@ -679,7 +691,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
         if (event->event_type == EVENT_TYPE_CLIENTSIDE)
         {
             uia_cache_request_destroy(&event->u.clientside.cache_req);
-            if (event->u.clientside.git_cookie)
+            if (event->u.clientside.event_thread_started)
                 uia_stop_event_thread();
             uia_hwnd_map_destroy(&event->u.clientside.win_event_hwnd_map);
         }
@@ -1160,16 +1172,13 @@ HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, 
      */
     if (!event->u.clientside.git_cookie)
     {
-        if (!uia_start_event_thread())
+        if (!uia_clientside_event_start_event_thread(event))
             return E_FAIL;
 
         hr = register_interface_in_git((IUnknown *)&event->IWineUiaEvent_iface, &IID_IWineUiaEvent,
                 &event->u.clientside.git_cookie);
         if (FAILED(hr))
-        {
-            uia_stop_event_thread();
             return hr;
-        }
     }
 
     if (!(adv_events = calloc(1, sizeof(*adv_events))))

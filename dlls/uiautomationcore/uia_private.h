@@ -142,6 +142,7 @@ struct uia_event
             void *callback_data;
 
             struct rb_tree win_event_hwnd_map;
+            BOOL event_thread_started;
             DWORD git_cookie;
         } clientside;
         struct {
