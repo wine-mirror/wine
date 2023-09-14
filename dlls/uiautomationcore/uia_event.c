@@ -511,6 +511,44 @@ static HRESULT uia_raise_serverside_event(struct uia_queue_uia_event *event)
     return hr;
 }
 
+/* Check the parent chain of HWNDs, excluding the desktop. */
+static BOOL uia_win_event_hwnd_map_contains_ancestors(struct rb_tree *hwnd_map, HWND hwnd)
+{
+    HWND parent = GetAncestor(hwnd, GA_PARENT);
+    const HWND desktop = GetDesktopWindow();
+
+    while (parent && (parent != desktop))
+    {
+        if (uia_hwnd_map_check_hwnd(hwnd_map, parent))
+            return TRUE;
+
+        parent = GetAncestor(parent, GA_PARENT);
+    }
+
+    return FALSE;
+}
+
+static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *data)
+{
+    struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)data;
+
+    /*
+     * Check if this HWND, or any of it's ancestors (excluding the desktop)
+     * are in our scope.
+     */
+    if (!uia_hwnd_map_check_hwnd(&event->u.clientside.win_event_hwnd_map, win_event->hwnd) &&
+            !uia_win_event_hwnd_map_contains_ancestors(&event->u.clientside.win_event_hwnd_map, win_event->hwnd))
+        return S_OK;
+
+    /* Has a native serverside provider, no need to do WinEvent translation. */
+    if (UiaHasServerSideProvider(win_event->hwnd))
+        return S_OK;
+
+    FIXME("IProxyProviderWinEventHandler usage is currently unimplemented.\n");
+
+    return S_OK;
+}
+
 static void uia_event_thread_process_queue(struct list *event_queue)
 {
     while (1)
@@ -535,6 +573,15 @@ static void uia_event_thread_process_queue(struct list *event_queue)
 
             uia_event_args_release(uia_event->args);
             IWineUiaEvent_Release(&uia_event->event->IWineUiaEvent_iface);
+            break;
+        }
+
+        case QUEUE_EVENT_TYPE_WIN_EVENT:
+        {
+            struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)event;
+
+            hr = uia_event_for_each(win_event_to_uia_event_id(win_event->event_id), uia_win_event_for_each_callback,
+                    (void *)win_event, TRUE);
             break;
         }
 

@@ -1545,11 +1545,6 @@ static HRESULT uia_send_message_timeout(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return S_OK;
 }
 
-static BOOL is_top_level_hwnd(HWND hwnd)
-{
-    return GetAncestor(hwnd, GA_PARENT) == GetDesktopWindow();
-}
-
 static HRESULT get_uia_control_type_for_hwnd(HWND hwnd, int *control_type)
 {
     LONG_PTR style, ex_style;
@@ -1576,7 +1571,7 @@ static HRESULT get_uia_control_type_for_hwnd(HWND hwnd, int *control_type)
     }
 
     /* Non top-level HWNDs are considered panes as well. */
-    if (!is_top_level_hwnd(hwnd))
+    if (!uia_is_top_level_hwnd(hwnd))
         *control_type = UIA_PaneControlTypeId;
     else
         *control_type = UIA_WindowControlTypeId;
@@ -1816,7 +1811,7 @@ static HRESULT WINAPI base_hwnd_fragment_Navigate(IRawElementProviderFragment *i
          * Top level owned windows have their owner window as a parent instead
          * of the desktop window.
          */
-        if (is_top_level_hwnd(base_hwnd_prov->hwnd) && (owner = GetWindow(base_hwnd_prov->hwnd, GW_OWNER)))
+        if (uia_is_top_level_hwnd(base_hwnd_prov->hwnd) && (owner = GetWindow(base_hwnd_prov->hwnd, GW_OWNER)))
             parent = owner;
         else
             parent = GetAncestor(base_hwnd_prov->hwnd, GA_PARENT);
@@ -1866,7 +1861,7 @@ static HRESULT WINAPI base_hwnd_fragment_get_BoundingRectangle(IRawElementProvid
     memset(ret_val, 0, sizeof(*ret_val));
 
     /* Top level minimized window - Return empty rect. */
-    if (is_top_level_hwnd(base_hwnd_prov->hwnd) && IsIconic(base_hwnd_prov->hwnd))
+    if (uia_is_top_level_hwnd(base_hwnd_prov->hwnd) && IsIconic(base_hwnd_prov->hwnd))
         return S_OK;
 
     if (!GetWindowRect(base_hwnd_prov->hwnd, &rect))

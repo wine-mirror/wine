@@ -255,6 +255,8 @@ HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *el
 HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
 BOOL uia_hwnd_is_visible(HWND hwnd) DECLSPEC_HIDDEN;
+BOOL uia_is_top_level_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
+BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
 HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
 void uia_hwnd_map_init(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
 void uia_hwnd_map_destroy(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;

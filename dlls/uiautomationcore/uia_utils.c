@@ -404,6 +404,11 @@ BOOL uia_hwnd_is_visible(HWND hwnd)
     return TRUE;
 }
 
+BOOL uia_is_top_level_hwnd(HWND hwnd)
+{
+    return GetAncestor(hwnd, GA_PARENT) == GetDesktopWindow();
+}
+
 /*
  * rbtree to efficiently store a collection of HWNDs.
  */
@@ -429,7 +434,7 @@ static void uia_hwnd_map_free(struct rb_entry *entry, void *context)
     free(hwnd_entry);
 }
 
-static BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd)
+BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd)
 {
     return !!rb_get(hwnd_map, hwnd);
 }

@@ -16823,7 +16823,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     SET_EXPECT_MULTI(winproc_GETOBJECT_UiaRoot, 2); /* Only called twice on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[0], OBJID_WINDOW, CHILDID_SELF, event_handles,
             1, FALSE, FALSE, FALSE);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
 
     /*
      * Get rid of our serverside provider and raise EVENT_OBJECT_FOCUS
@@ -16848,7 +16848,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
             1, TRUE, FALSE, TRUE);
     if (CALLED_COUNT(winproc_GETOBJECT_CLIENT))
         ok_method_sequence(win_event_handler_seq, "win_event_handler_seq");
-    check_uia_hwnd_expects_at_least(1, TRUE, 1, TRUE, 1, TRUE, 1, TRUE, 1, TRUE);
+    check_uia_hwnd_expects_at_least(1, TRUE, 1, TRUE, 1, TRUE, 1, FALSE, 1, TRUE);
     method_sequences_enabled = FALSE;
 
     /*
@@ -16895,7 +16895,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
         1, TRUE, FALSE, TRUE);
     check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
 
     /*
      * Child HWND now has a serverside provider, WinEvent is ignored.
@@ -16906,7 +16906,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 2); /* Only sent 2 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
         1, FALSE, FALSE, FALSE);
-    todo_wine CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
     CHECK_CALLED_AT_MOST(winproc_GETOBJECT_UiaRoot, 1);
 
     /*
@@ -16940,7 +16940,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     set_uia_hwnd_expects(1, 1, 1, 4, 3);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[0], OBJID_WINDOW, CHILDID_SELF, event_handles,
             1, TRUE, FALSE, TRUE);
-    check_uia_hwnd_expects_at_least(1, TRUE, 1, TRUE, 1, TRUE, 1, TRUE, 1, TRUE);
+    check_uia_hwnd_expects_at_least(1, TRUE, 1, TRUE, 1, TRUE, 1, FALSE, 1, TRUE);
 
     /* Raise a WinEvent on our test child HWND, both event callbacks invoked. */
     child_win_prov_root = NULL;
@@ -16950,7 +16950,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 8); /* Only sent 8 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
         ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
-    todo_wine CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
+    CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
     check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 2, TRUE, 0, FALSE);
 
     /*
@@ -16970,7 +16970,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 12); /* Only sent 12 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, tmp_hwnd2, OBJID_WINDOW, CHILDID_SELF, event_handles,
         ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
-    todo_wine CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
+    CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
     check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 0, FALSE, 0, FALSE);
 
     DestroyWindow(tmp_hwnd);
