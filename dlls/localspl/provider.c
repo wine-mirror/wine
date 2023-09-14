@@ -1646,7 +1646,7 @@ static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *
 {
     static const WCHAR xcv_monitor[] = L"XcvMonitor ";
     static const WCHAR xcv_port[] = L"XcvPort ";
-    BOOL mon, port;
+    BOOL mon;
     xcv_t *xcv;
 
     *stop_search = FALSE;
@@ -1664,11 +1664,9 @@ static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *
     }
     else
     {
-        port = !wcsncmp(name, xcv_port, ARRAY_SIZE(xcv_port) - 1);
+        if (wcsncmp(name, xcv_port, ARRAY_SIZE(xcv_port) - 1)) return NULL;
         name += ARRAY_SIZE(xcv_port) - 1;
     }
-    if (!port && !mon)
-        return NULL;
 
     *stop_search = TRUE;
     xcv = calloc(1, sizeof(*xcv));
