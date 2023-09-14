@@ -11439,6 +11439,122 @@ static void test_load_skin_mesh_from_xof(void)
     DestroyWindow(hwnd);
 }
 
+static void test_mesh_optimize(void)
+{
+/*
+ *   . _ .
+ *  / \ / \
+ * . _ . _ .
+ *  \ / \ /
+ *   . _ .
+ */
+    static const struct
+    {
+        float c[3];
+        float n[3];
+        float t[2];
+    }
+    vertices[] =
+    {
+        { {-0.5f, -1.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, {-0.5f, -1.0f} },
+        { { 0.5f, -1.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, { 0.5f, -1.0f} },
+
+        { {-1.0f,  0.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, {-1.0f,  0.0f} },
+        { { 0.0f,  0.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, { 0.0f,  0.0f} },
+        { { 1.0f,  0.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, { 1.0f,  0.0f} },
+
+        { {-0.5f,  1.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, {-0.5f,  1.0f} },
+        { { 0.5f,  1.0f, 0.0f,}, {0.0f, 0.0f, 1.0f}, { 0.5f,  1.0f} },
+    };
+    static const unsigned short indices[] =
+    {
+        3, 0, 2,
+        3, 2, 5,
+        3, 5, 6,
+        3, 6, 4,
+        3, 4, 1,
+        3, 1, 0,
+    };
+    static const DWORD attrs[] = { 1, 2, 1, 2, 1, 2 };
+    static const DWORD expected_adjacency[] =
+    {
+        5, 0xffffffff, 1,
+        0, 0xffffffff, 2,
+        1, 0xffffffff, 3,
+        2, 0xffffffff, 4,
+        3, 0xffffffff, 5,
+        4, 0xffffffff, 0,
+    };
+    static const DWORD expected_adjacency_out[] =
+    {
+        5, 0xffffffff, 3,
+        3, 0xffffffff, 4,
+        4, 0xffffffff, 5,
+        0, 0xffffffff, 1,
+        1, 0xffffffff, 2,
+        2, 0xffffffff, 0,
+    };
+
+    DWORD adjacency[6 * 3], adjacency_out[6 * 3];
+    struct test_context *test_context;
+    IDirect3DDevice9 *device;
+    ID3DXBuffer *buffer;
+    ID3DXMesh *mesh;
+    unsigned int i;
+    DWORD size;
+    HRESULT hr;
+    void *data;
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create test context\n");
+        return;
+    }
+    device = test_context->device;
+
+    hr = D3DXCreateMeshFVF(ARRAY_SIZE(attrs), ARRAY_SIZE(vertices), D3DXMESH_VB_MANAGED | D3DXMESH_IB_MANAGED,
+            D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1, device, &mesh);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, &data);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    memcpy(data, vertices, sizeof(vertices));
+    hr = mesh->lpVtbl->UnlockVertexBuffer(mesh);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, 0, &data);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    memcpy(data, indices, sizeof(indices));
+    hr = mesh->lpVtbl->UnlockIndexBuffer(mesh);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = mesh->lpVtbl->LockAttributeBuffer(mesh, 0, (DWORD **)&data);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    memcpy(data, attrs, sizeof(attrs));
+    hr = mesh->lpVtbl->UnlockAttributeBuffer(mesh);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = mesh->lpVtbl->GenerateAdjacency(mesh, 0.0f, adjacency);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!memcmp(adjacency, expected_adjacency, sizeof(adjacency)), "data mismatch.\n");
+
+    hr = mesh->lpVtbl->OptimizeInplace(mesh, D3DXMESHOPT_IGNOREVERTS | D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_DONOTSPLIT,
+            adjacency, adjacency_out, NULL, &buffer);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    size = buffer->lpVtbl->GetBufferSize(buffer);
+    ok(size == sizeof(DWORD) * ARRAY_SIZE(vertices), "got %lu.\n", size);
+    data = buffer->lpVtbl->GetBufferPointer(buffer);
+    for (i = 0; i < ARRAY_SIZE(vertices); ++i)
+        ok(((DWORD *)data)[i] == i, "i %u, got %lu.\n", i, ((DWORD *)data)[i]);
+    ok(!memcmp(adjacency_out, expected_adjacency_out, sizeof(adjacency)), "data mismatch.\n");
+
+    buffer->lpVtbl->Release(buffer);
+    mesh->lpVtbl->Release(mesh);
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -11472,4 +11588,5 @@ START_TEST(mesh)
     test_compute_normals();
     test_D3DXFrameFind();
     test_load_skin_mesh_from_xof();
+    test_mesh_optimize();
 }
