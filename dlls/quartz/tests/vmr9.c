@@ -4335,10 +4335,10 @@ static void test_changed3ddevice(void)
     IDirect3DDevice9 *device, *device2;
     RECT rect = {0, 0, 640, 480};
     struct testfilter source;
+    IPin *pin = NULL;
     HWND window;
     HRESULT hr;
     ULONG ref;
-    IPin *pin;
 
     testfilter_init(&source);
 
@@ -4386,7 +4386,8 @@ static void test_changed3ddevice(void)
     IDirect3DDevice9_Release(device2);
 
 out:
-    IPin_Release(pin);
+    if (pin)
+        IPin_Release(pin);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
     IVMRSurfaceAllocatorNotify9_Release(notify);
