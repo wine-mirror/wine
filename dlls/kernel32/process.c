@@ -422,11 +422,19 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxA( const ACTCTXA *actctx )
 
     TRACE("%p %08lx\n", actctx, actctx ? actctx->dwFlags : 0);
 
-    if (!actctx || actctx->cbSize != sizeof(*actctx))
+#define CHECK_LIMIT( field ) (actctx->cbSize >= RTL_SIZEOF_THROUGH_FIELD( ACTCTXA, field ))
+    if (!actctx || !CHECK_LIMIT( lpSource ) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID) && !CHECK_LIMIT( wProcessorArchitecture )) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_LANGID_VALID) && !CHECK_LIMIT( wLangId )) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID) && !CHECK_LIMIT( lpAssemblyDirectory )) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID) && !CHECK_LIMIT( lpResourceName )) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID) && !CHECK_LIMIT( lpApplicationName )) ||
+        ((actctx->dwFlags & ACTCTX_FLAG_HMODULE_VALID) && !CHECK_LIMIT( hModule )))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
+#undef CHECK_LIMIT
 
     actw.cbSize = sizeof(actw);
     actw.dwFlags = actctx->dwFlags;

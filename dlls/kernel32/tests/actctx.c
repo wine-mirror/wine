@@ -2895,7 +2895,6 @@ static void test_CreateActCtx(void)
         handle = CreateActCtxA(&actctx);
         if (!test[i].error)
         {
-            todo_wine
             ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
             ReleaseActCtx(handle);
         }
@@ -2910,7 +2909,6 @@ static void test_CreateActCtx(void)
             actctx.lpSource = source; /* source without hModule must point to valid PE */
         SetLastError(0xdeadbeef);
         handle = CreateActCtxA(&actctx);
-        todo_wine_if(i != 4)
         ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
         ReleaseActCtx(handle);
 
