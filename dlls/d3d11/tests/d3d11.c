@@ -31734,7 +31734,7 @@ static void test_sample_shading(void)
         {&ps_sample_index, TRUE},
         {&ps_samplepos, FALSE},
         {&ps_samplepos_rasterizer, FALSE},
-        {&ps_samplepos_indexed, !damavand, TRUE},
+        {&ps_samplepos_indexed, TRUE, !damavand},
         {&ps_sampleinfo, FALSE},
         {&ps_sampleinfo_rasterizer, FALSE},
         {&ps_sample, TRUE, TRUE, TRUE /* broken on Intel */},
