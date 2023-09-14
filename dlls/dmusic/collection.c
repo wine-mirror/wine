@@ -21,7 +21,6 @@
 #include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 struct instrument_entry
 {
@@ -43,9 +42,7 @@ struct collection
     struct dmobject dmobj;
     LONG ref;
 
-    IStream *pStm; /* stream from which we load collection and later instruments */
-    DLSHEADER *pHeader;
-
+    DLSHEADER header;
     struct pool *pool;
     struct list instruments;
 };
@@ -232,6 +229,49 @@ static HRESULT parse_ptbl_chunk(struct collection *This, IStream *stream, struct
     return hr;
 }
 
+static HRESULT parse_dls_chunk(struct collection *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    if (FAILED(hr = dmobj_parsedescriptor(stream, parent, &This->dmobj.desc,
+            DMUS_OBJ_NAME_INFO|DMUS_OBJ_VERSION|DMUS_OBJ_OBJECT|DMUS_OBJ_GUID_DLID))
+            || FAILED(hr = stream_reset_chunk_data(stream, parent)))
+        return hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case FOURCC_DLID:
+        case FOURCC_VERS:
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_INFO_LIST):
+            /* already parsed by dmobj_parsedescriptor */
+            break;
+
+        case FOURCC_COLH:
+            hr = stream_chunk_get_data(stream, &chunk, &This->header, sizeof(This->header));
+            break;
+
+        case FOURCC_PTBL:
+            hr = parse_ptbl_chunk(This, stream, &chunk);
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LINS):
+            hr = parse_lins_list(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI collection_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
@@ -273,121 +313,30 @@ static const IDirectMusicObjectVtbl collection_object_vtbl =
     collection_object_ParseDescriptor,
 };
 
-static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
-        IStream *stream)
+static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *stream)
 {
-    struct chunk_entry dls_chunk = {0};
     struct collection *This = impl_from_IPersistStream(iface);
-    DMUS_PRIVATE_CHUNK chunk;
-    DWORD StreamSize, StreamCount;
-    LARGE_INTEGER liMove; /* used when skipping chunks */
+    struct chunk_entry chunk = {0};
+    HRESULT hr;
 
-    IStream_AddRef(stream); /* add count for later references */
-    This->pStm = stream;
+    TRACE("(%p, %p)\n", This, stream);
 
-    IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %#04lx)", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-
-    if (chunk.fccID != FOURCC_RIFF) {
-        TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-        liMove.QuadPart = chunk.dwSize;
-        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-        return E_FAIL;
-    }
-
-    IStream_Read(stream, &chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(chunk.fccID));
-    StreamSize = chunk.dwSize - sizeof(FOURCC);
-    StreamCount = 0;
-
-    if (chunk.fccID != FOURCC_DLS) {
-        TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-        liMove.QuadPart = StreamSize;
-        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-        return E_FAIL;
-    }
-
-    dls_chunk.id = FOURCC_RIFF;
-    dls_chunk.size = chunk.dwSize;
-    dls_chunk.type = chunk.fccID;
-    liMove.QuadPart = 0;
-    IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &dls_chunk.offset);
-    dls_chunk.offset.QuadPart -= 12;
-    if (FAILED(dmobj_parsedescriptor(stream, &dls_chunk, &This->dmobj.desc,
-            DMUS_OBJ_NAME_INFO|DMUS_OBJ_VERSION|DMUS_OBJ_OBJECT|DMUS_OBJ_GUID_DLID)))
+    if ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
     {
-        liMove.QuadPart = StreamSize;
-        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-        return E_FAIL;
-    }
-    stream_reset_chunk_data(stream, &dls_chunk);
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_RIFF, FOURCC_DLS):
+            hr = parse_dls_chunk(This, stream, &chunk);
+            break;
 
-    TRACE_(dmfile)(": collection form\n");
-    do {
-        IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
-        StreamCount += sizeof(FOURCC) + sizeof(DWORD) + chunk.dwSize;
-        TRACE_(dmfile)(": %s chunk (size = %#04lx)", debugstr_fourcc(chunk.fccID), chunk.dwSize);
-        switch (chunk.fccID) {
-            case FOURCC_COLH: {
-                TRACE_(dmfile)(": collection header chunk\n");
-                This->pHeader = calloc(1, chunk.dwSize);
-                IStream_Read(stream, This->pHeader, chunk.dwSize, NULL);
-                break;
-            }
-            case FOURCC_PTBL: {
-                struct chunk_entry ptbl_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
-                TRACE_(dmfile)(": pool table chunk\n");
-                liMove.QuadPart = 0;
-                IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &ptbl_chunk.offset);
-                ptbl_chunk.offset.QuadPart -= 12;
-                parse_ptbl_chunk(This, stream, &ptbl_chunk);
-                stream_skip_chunk(stream, &ptbl_chunk);
-                break;
-            }
-            case FOURCC_LIST: {
-                IStream_Read(stream, &chunk.fccID, sizeof(FOURCC), NULL);
-                TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(chunk.fccID));
-                switch (chunk.fccID) {
-                    case FOURCC_WVPL: {
-                        TRACE_(dmfile)(": wave pool list (mark & skip)\n");
-                        liMove.QuadPart = chunk.dwSize - sizeof(FOURCC);
-                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                        break;
-                    }
-                    case FOURCC_LINS: {
-                        struct chunk_entry lins_chunk = {.id = FOURCC_LIST, .size = chunk.dwSize, .type = chunk.fccID};
-                        TRACE_(dmfile)(": instruments list\n");
-                        liMove.QuadPart = 0;
-                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, &lins_chunk.offset);
-                        lins_chunk.offset.QuadPart -= 12;
-                        parse_lins_list(This, stream, &lins_chunk);
-                        stream_skip_chunk(stream, &lins_chunk);
-                        break;
-                    }
-                    default: {
-                        TRACE_(dmfile)(": unknown (skipping)\n");
-                        liMove.QuadPart = chunk.dwSize - sizeof(FOURCC);
-                        IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                        break;
-                    }
-                }
-                break;
-            }
-            default: {
-                TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-                liMove.QuadPart = chunk.dwSize;
-                IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL);
-                break;
-            }
+        default:
+            WARN("Invalid collection chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            hr = DMUS_E_UNSUPPORTED_STREAM;
+            break;
         }
-        TRACE_(dmfile)(": StreamCount = %ld < StreamSize = %ld\n", StreamCount, StreamSize);
-    } while (StreamCount < StreamSize);
+    }
 
-    TRACE_(dmfile)(": reading finished\n");
-
-
-    /* DEBUG: dumps whole collection object tree: */
-    if (TRACE_ON(dmusic))
+    if (SUCCEEDED(hr) && TRACE_ON(dmusic))
     {
         struct instrument_entry *entry;
         int i = 0;
@@ -396,13 +345,14 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface,
         dump_DMUS_OBJECTDESC(&This->dmobj.desc);
 
         TRACE(" - Collection header:\n");
-        TRACE("    - cInstruments: %ld\n", This->pHeader->cInstruments);
+        TRACE("    - cInstruments: %ld\n", This->header.cInstruments);
         TRACE(" - Instruments:\n");
 
         LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
             TRACE("    - Instrument[%i]: %p\n", i++, entry->instrument);
     }
 
+    stream_skip_chunk(stream, &chunk);
     return S_OK;
 }
 

@@ -192,12 +192,6 @@ static inline struct instrument *impl_from_IDirectMusicInstrument(IDirectMusicIn
  */
 void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port);
 
-/* for simpler reading */
-typedef struct _DMUS_PRIVATE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
-
 /* used for generic dumping (copied from ddraw) */
 typedef struct {
     DWORD val;
