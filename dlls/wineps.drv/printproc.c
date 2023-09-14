@@ -2738,8 +2738,8 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         if (!pts) return 0;
         for (i = 0; i < p->cpts; i++)
         {
-            pts[i].x = p->apts[i].x;
-            pts[i].y = p->apts[i].y;
+            pts[i].x = ((const POINTS *)p->apts)[i].x;
+            pts[i].y = ((const POINTS *)p->apts)[i].y;
         }
         i = poly_draw(data->ctx, pts, (BYTE *)(p->apts + p->cpts), p->cpts) &&
             MoveToEx(data->ctx->hdc, pts[p->cpts - 1].x, pts[p->cpts - 1].y, NULL);
