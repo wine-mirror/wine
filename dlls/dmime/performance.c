@@ -60,11 +60,12 @@ struct performance
     /** Message Processing */
     HANDLE procThread;
     DWORD procThreadId;
-    REFERENCE_TIME procThreadStartTime;
     BOOL procThreadTicStarted;
     CRITICAL_SECTION safe;
     struct DMUS_PMSGItem *head;
     struct DMUS_PMSGItem *imm_head;
+
+    IReferenceClock *master_clock;
 };
 
 typedef struct DMUS_PMSGItem DMUS_PMSGItem;
@@ -476,25 +477,21 @@ static HRESULT WINAPI performance_IsPlaying(IDirectMusicPerformance8 *iface,
 	return S_FALSE;
 }
 
-static HRESULT WINAPI performance_GetTime(IDirectMusicPerformance8 *iface, REFERENCE_TIME *prtNow, MUSIC_TIME *pmtNow)
+static HRESULT WINAPI performance_GetTime(IDirectMusicPerformance8 *iface, REFERENCE_TIME *time, MUSIC_TIME *music_time)
 {
-  struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-  HRESULT hr = S_OK;
-  REFERENCE_TIME rtCur = 0;
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    REFERENCE_TIME now;
+    HRESULT hr;
 
-  /*TRACE("(%p, %p, %p)\n", This, prtNow, pmtNow); */
-  if (This->procThreadTicStarted) {
-    rtCur = ((REFERENCE_TIME) GetTickCount() * 10000) - This->procThreadStartTime;
-  } else {
-    /*return DMUS_E_NO_MASTER_CLOCK;*/
-  }
-  if (NULL != prtNow) {
-    *prtNow = rtCur;
-  }
-  if (NULL != pmtNow) {
-    hr = IDirectMusicPerformance8_ReferenceToMusicTime(iface, rtCur, pmtNow);
-  }
-  return hr;
+    TRACE("(%p, %p, %p)\n", iface, time, music_time);
+
+    if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
+    if (FAILED(hr = IReferenceClock_GetTime(This->master_clock, &now))) return hr;
+
+    if (time) *time = now;
+    if (music_time) hr = IDirectMusicPerformance8_ReferenceToMusicTime(iface, now, music_time);
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_AllocPMsg(IDirectMusicPerformance8 *iface, ULONG cb, DMUS_PMSG **ppPMSG)
@@ -873,6 +870,11 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         This->procThreadTicStarted = FALSE;
         CloseHandle(This->procThread);
     }
+    if (This->master_clock)
+    {
+        IReferenceClock_Release(This->master_clock);
+        This->master_clock = NULL;
+    }
     if (This->dsound) {
         IDirectSound_Release(This->dsound);
         This->dsound = NULL;
@@ -955,6 +957,9 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
         IDirectMusic8_AddRef(This->dmusic);
     }
 
+    if (FAILED(hr = IDirectMusic_GetMasterClock(This->dmusic, NULL, &This->master_clock)))
+        goto error;
+
     if (!dsound || !*dsound) {
         hr = DirectSoundCreate8(NULL, (IDirectSound8 **)&This->dsound, NULL);
         if (FAILED(hr))
@@ -1006,6 +1011,11 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
     return S_OK;
 
 error:
+    if (This->master_clock)
+    {
+        IReferenceClock_Release(This->master_clock);
+        This->master_clock = NULL;
+    }
     if (This->dsound) {
         IDirectSound_Release(This->dsound);
         This->dsound = NULL;
