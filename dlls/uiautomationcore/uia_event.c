@@ -20,7 +20,6 @@
 
 #include "wine/debug.h"
 #include "wine/rbtree.h"
-#include "assert.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
@@ -324,6 +323,118 @@ static void uia_event_args_release(struct uia_event_args *args)
 }
 
 /*
+ * IProxyProviderWinEventSink interface implementation.
+ */
+struct uia_proxy_win_event_sink {
+    IProxyProviderWinEventSink IProxyProviderWinEventSink_iface;
+    LONG ref;
+
+    int event_id;
+    IUnknown *marshal;
+};
+
+static inline struct uia_proxy_win_event_sink *impl_from_IProxyProviderWinEventSink(IProxyProviderWinEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_proxy_win_event_sink, IProxyProviderWinEventSink_iface);
+}
+
+static HRESULT WINAPI uia_proxy_win_event_sink_QueryInterface(IProxyProviderWinEventSink *iface, REFIID riid, void **obj)
+{
+    struct uia_proxy_win_event_sink *sink = impl_from_IProxyProviderWinEventSink(iface);
+
+    *obj = NULL;
+    if (IsEqualIID(riid, &IID_IProxyProviderWinEventSink) || IsEqualIID(riid, &IID_IUnknown))
+        *obj = iface;
+    else if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(sink->marshal, riid, obj);
+    else
+        return E_NOINTERFACE;
+
+    IProxyProviderWinEventSink_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_proxy_win_event_sink_AddRef(IProxyProviderWinEventSink *iface)
+{
+    struct uia_proxy_win_event_sink *sink = impl_from_IProxyProviderWinEventSink(iface);
+    ULONG ref = InterlockedIncrement(&sink->ref);
+
+    TRACE("%p, refcount %ld\n", sink, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI uia_proxy_win_event_sink_Release(IProxyProviderWinEventSink *iface)
+{
+    struct uia_proxy_win_event_sink *sink = impl_from_IProxyProviderWinEventSink(iface);
+    ULONG ref = InterlockedDecrement(&sink->ref);
+
+    TRACE("%p, refcount %ld\n", sink, ref);
+
+    if (!ref)
+    {
+        IUnknown_Release(sink->marshal);
+        free(sink);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_proxy_win_event_sink_AddAutomationPropertyChangedEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, PROPERTYID prop_id, VARIANT new_value)
+{
+    FIXME("%p, %p, %d, %s: stub\n", iface, elprov, prop_id, debugstr_variant(&new_value));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_proxy_win_event_sink_AddAutomationEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, EVENTID event_id)
+{
+    FIXME("%p, %p, %d: stub\n", iface, elprov, event_id);
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_proxy_win_event_sink_AddStructureChangedEvent(IProxyProviderWinEventSink *iface,
+        IRawElementProviderSimple *elprov, enum StructureChangeType structure_change_type, SAFEARRAY *runtime_id)
+{
+    FIXME("%p, %p, %d, %p: stub\n", iface, elprov, structure_change_type, runtime_id);
+    return E_NOTIMPL;
+}
+
+static const IProxyProviderWinEventSinkVtbl uia_proxy_event_sink_vtbl = {
+    uia_proxy_win_event_sink_QueryInterface,
+    uia_proxy_win_event_sink_AddRef,
+    uia_proxy_win_event_sink_Release,
+    uia_proxy_win_event_sink_AddAutomationPropertyChangedEvent,
+    uia_proxy_win_event_sink_AddAutomationEvent,
+    uia_proxy_win_event_sink_AddStructureChangedEvent,
+};
+
+static HRESULT create_proxy_win_event_sink(struct uia_proxy_win_event_sink **out_sink, int event_id)
+{
+    struct uia_proxy_win_event_sink *sink = calloc(1, sizeof(*sink));
+    HRESULT hr;
+
+    *out_sink = NULL;
+    if (!sink)
+        return E_OUTOFMEMORY;
+
+    sink->IProxyProviderWinEventSink_iface.lpVtbl = &uia_proxy_event_sink_vtbl;
+    sink->ref = 1;
+    sink->event_id = event_id;
+
+    hr = CoCreateFreeThreadedMarshaler((IUnknown *)&sink->IProxyProviderWinEventSink_iface, &sink->marshal);
+    if (FAILED(hr))
+    {
+        free(sink);
+        return hr;
+    }
+
+    *out_sink = sink;
+    return S_OK;
+}
+
+/*
  * UI Automation event thread.
  */
 struct uia_event_thread
@@ -576,9 +687,12 @@ static HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawEl
 static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *data)
 {
     struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)data;
+    struct uia_proxy_win_event_sink *sink;
     IRawElementProviderSimple *elprov;
+    struct uia_node *node_data;
     HUIANODE node;
     HRESULT hr;
+    int i;
 
     /*
      * Check if this HWND, or any of it's ancestors (excluding the desktop)
@@ -605,10 +719,23 @@ static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *da
     if (FAILED(hr))
         return hr;
 
-    FIXME("IProxyProviderWinEventHandler usage is currently unimplemented.\n");
+    hr = create_proxy_win_event_sink(&sink, event->event_id);
+    if (SUCCEEDED(hr))
+    {
+        node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
+        for (i = 0; i < node_data->prov_count; i++)
+        {
+            hr = respond_to_win_event_on_node_provider((IWineUiaNode *)node, i, win_event->event_id, win_event->hwnd, win_event->obj_id,
+                    win_event->child_id, &sink->IProxyProviderWinEventSink_iface);
+            if (FAILED(hr))
+                break;
+        }
+
+        IProxyProviderWinEventSink_Release(&sink->IProxyProviderWinEventSink_iface);
+    }
 
     UiaNodeRelease(node);
-    return S_OK;
+    return hr;
 }
 
 static void uia_event_thread_process_queue(struct list *event_queue)

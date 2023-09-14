@@ -378,6 +378,22 @@ static HRESULT attach_event_to_node_provider(IWineUiaNode *node, int idx, HUIAEV
     return hr;
 }
 
+HRESULT respond_to_win_event_on_node_provider(IWineUiaNode *node, int idx, DWORD win_event, HWND hwnd, LONG obj_id,
+        LONG child_id, IProxyProviderWinEventSink *sink)
+{
+    IWineUiaProvider *prov;
+    HRESULT hr;
+
+    hr = IWineUiaNode_get_provider(node, idx, &prov);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWineUiaProvider_respond_to_win_event(prov, win_event, HandleToUlong(hwnd), obj_id, child_id, sink);
+    IWineUiaProvider_Release(prov);
+
+    return hr;
+}
+
 /*
  * IWineUiaNode interface.
  */
@@ -1939,6 +1955,23 @@ exit:
     return hr;
 }
 
+static HRESULT WINAPI uia_provider_respond_to_win_event(IWineUiaProvider *iface, DWORD win_event, ULONG hwnd, LONG obj_id,
+        LONG child_id, IProxyProviderWinEventSink *sink)
+{
+    struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
+    IProxyProviderWinEventHandler *handler;
+    HRESULT hr;
+
+    hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IProxyProviderWinEventHandler, (void **)&handler);
+    if (FAILED(hr))
+        return S_OK;
+
+    hr = IProxyProviderWinEventHandler_RespondToWinEvent(handler, win_event, UlongToHandle(hwnd), obj_id, child_id, sink);
+    IProxyProviderWinEventHandler_Release(handler);
+
+    return hr;
+}
+
 static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_QueryInterface,
     uia_provider_AddRef,
@@ -1949,6 +1982,7 @@ static const IWineUiaProviderVtbl uia_provider_vtbl = {
     uia_provider_navigate,
     uia_provider_get_focus,
     uia_provider_attach_event,
+    uia_provider_respond_to_win_event,
 };
 
 static HRESULT create_wine_uia_provider(struct uia_node *node, IRawElementProviderSimple *elprov,
@@ -2388,6 +2422,15 @@ static HRESULT WINAPI uia_nested_node_provider_attach_event(IWineUiaProvider *if
     return hr;
 }
 
+static HRESULT WINAPI uia_nested_node_provider_respond_to_win_event(IWineUiaProvider *iface, DWORD win_event, ULONG hwnd,
+        LONG obj_id, LONG child_id, IProxyProviderWinEventSink *sink)
+{
+    FIXME("%p, %#lx, #%lx, %#lx, %#lx, %p: stub\n", iface, win_event, hwnd, obj_id, child_id, sink);
+    /* This should not be called. */
+    assert(0);
+    return E_FAIL;
+}
+
 static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_QueryInterface,
     uia_nested_node_provider_AddRef,
@@ -2398,6 +2441,7 @@ static const IWineUiaProviderVtbl uia_nested_node_provider_vtbl = {
     uia_nested_node_provider_navigate,
     uia_nested_node_provider_get_focus,
     uia_nested_node_provider_attach_event,
+    uia_nested_node_provider_respond_to_win_event,
 };
 
 static BOOL is_nested_node_provider(IWineUiaProvider *iface)

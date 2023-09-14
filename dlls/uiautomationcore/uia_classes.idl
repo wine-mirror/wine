@@ -19,6 +19,7 @@
 #pragma makedep regtypelib
 
 import "oaidl.idl";
+import "uiautomationcore.idl";
 
 struct uia_prop_info {
     const GUID *guid;
@@ -92,6 +93,8 @@ library UIA_wine_private
         HRESULT navigate([in]int nav_dir, [out, retval]VARIANT *ret_val);
         HRESULT get_focus([out, retval]VARIANT *ret_val);
         HRESULT attach_event([in]LONG_PTR huiaevent);
+        HRESULT respond_to_win_event([in]DWORD win_event, [in]ULONG hwnd, [in]LONG obj_id, [in]LONG child_id,
+                                    [in]IProxyProviderWinEventSink *sink);
     }
 
     [

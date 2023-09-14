@@ -449,6 +449,11 @@ static void test_implements_interface_(IUnknown *unk, const GUID *iid, BOOL exp_
         IUnknown_Release(unk2);
 }
 
+#define check_interface_marshal_proxy_creation( iface, iid, expect_proxy ) \
+        check_interface_marshal_proxy_creation_( (iface), (iid), (expect_proxy), __FILE__, __LINE__)
+static void check_interface_marshal_proxy_creation_(IUnknown *iface, REFIID iid, BOOL expect_proxy, const char *file,
+        int line);
+
 #define DEFINE_ACC_METHOD_EXPECT(method) \
     int expect_ ## method , called_ ## method
 
@@ -2824,6 +2829,11 @@ static HRESULT WINAPI ProviderWinEventHandler_RespondToWinEvent(IProxyProviderWi
 
     if (data->responder_prov)
     {
+        /*
+         * The IProxyProviderWinEventSink interface uses the free threaded
+         * marshaler, so no proxy will be created in-process.
+         */
+        check_interface_marshal_proxy_creation((IUnknown *)event_sink, &IID_IProxyProviderWinEventSink, FALSE);
         hr = IProxyProviderWinEventSink_AddAutomationEvent(event_sink, data->responder_prov, data->responder_event);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     }
@@ -11976,8 +11986,6 @@ static DWORD WINAPI interface_marshal_proxy_thread(LPVOID param)
     return 0;
 }
 
-#define check_interface_marshal_proxy_creation( iface, iid, expect_proxy ) \
-        check_interface_marshal_proxy_creation_( (iface), (iid), (expect_proxy), __FILE__, __LINE__)
 static void check_interface_marshal_proxy_creation_(IUnknown *iface, REFIID iid, BOOL expect_proxy, const char *file,
         int line)
 {
@@ -16717,8 +16725,8 @@ static const struct prov_method_sequence win_event_handler_seq[] = {
     { &Provider_hwnd2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL }, /* Only done on Win10v1809+. */
     { &Provider_nc2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_hwnd2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
-    { &Provider_nc2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT, METHOD_TODO },
-    { &Provider_hwnd2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT, METHOD_TODO },
+    { &Provider_nc2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT },
+    { &Provider_hwnd2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT },
     NODE_CREATE_SEQ_TODO(&Provider_child),
     { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
     { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
