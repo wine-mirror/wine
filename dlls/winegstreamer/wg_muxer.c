@@ -61,14 +61,14 @@ NTSTATUS wg_muxer_create(void *args)
 {
     struct wg_muxer_create_params *params = args;
     GstElement *first = NULL, *last = NULL;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
     GstCaps *sink_caps = NULL;
-    NTSTATUS status = E_FAIL;
     struct wg_muxer *muxer;
 
     /* Create wg_muxer object. */
     if (!(muxer = calloc(1, sizeof(*muxer))))
-        return E_OUTOFMEMORY;
+        return STATUS_NO_MEMORY;
     if (!(muxer->container = gst_bin_new("wg_muxer")))
         goto out;
 
@@ -110,7 +110,7 @@ NTSTATUS wg_muxer_create(void *args)
     GST_INFO("Created winegstreamer muxer %p.", muxer);
     params->muxer = (wg_transform_t)(ULONG_PTR)muxer;
 
-    return S_OK;
+    return STATUS_SUCCESS;
 
 out:
     if (muxer->my_sink)

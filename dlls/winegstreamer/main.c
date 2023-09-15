@@ -466,13 +466,17 @@ HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer)
 
     TRACE("format %p, muxer %p.\n", format, muxer);
 
-    if (SUCCEEDED(status = WINE_UNIX_CALL(unix_wg_muxer_create, &params)))
+    if (!(status = WINE_UNIX_CALL(unix_wg_muxer_create, &params)))
     {
         *muxer = params.muxer;
         TRACE("Created wg_muxer %#I64x.\n", params.muxer);
     }
+    else
+    {
+        WARN("Failed to create muxer, status %#lx.\n", status);
+    }
 
-    return status;
+    return HRESULT_FROM_NT(status);
 }
 
 void wg_muxer_destroy(wg_muxer_t muxer)
