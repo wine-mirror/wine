@@ -331,7 +331,9 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
         }
     }
 
-    if (SUCCEEDED(hr) && TRACE_ON(dmusic))
+    if (FAILED(hr)) return hr;
+
+    if (TRACE_ON(dmusic))
     {
         struct instrument_entry *entry;
         int i = 0;
