@@ -1406,17 +1406,24 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
     return S_OK;
 }
 
-static void HTMLSelectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLSelectElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsselect)
-        note_cc_edge((nsISupports*)This->nsselect, "This->nsselect", cb);
+    return CONTAINING_RECORD(iface, HTMLSelectElement, element.node.event_target.dispex);
 }
 
-static void HTMLSelectElement_unlink(HTMLDOMNode *iface)
+static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsselect)
+        note_cc_edge((nsISupports*)This->nsselect, "nsselect", cb);
+}
+
+static void HTMLSelectElement_unlink(DispatchEx *dispex)
+{
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsselect);
 }
 
@@ -1433,8 +1440,15 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .get_dispid            = HTMLSelectElement_get_dispid,
     .get_name              = HTMLSelectElement_dispex_get_name,
     .invoke                = HTMLSelectElement_invoke,
-    .traverse              = HTMLSelectElement_traverse,
-    .unlink                = HTMLSelectElement_unlink
+};
+
+static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLSelectElement_traverse,
+        .unlink         = HTMLSelectElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLSelectElement_tids[] = {
@@ -1445,7 +1459,7 @@ static const tid_t HTMLSelectElement_tids[] = {
 
 static dispex_static_data_t HTMLSelectElement_dispex = {
     "HTMLSelectElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
     DispHTMLSelectElement_tid,
     HTMLSelectElement_tids,
     HTMLElement_init_dispex_info
