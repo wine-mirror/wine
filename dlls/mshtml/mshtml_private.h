@@ -828,8 +828,6 @@ typedef struct {
     HRESULT (*get_name)(HTMLDOMNode*,DISPID,BSTR*);
     HRESULT (*invoke)(HTMLDOMNode*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*bind_to_tree)(HTMLDOMNode*);
-    void (*traverse)(HTMLDOMNode*,nsCycleCollectionTraversalCallback*);
-    void (*unlink)(HTMLDOMNode*);
     BOOL (*is_text_edit)(HTMLDOMNode*);
     BOOL (*is_settable)(HTMLDOMNode*,DISPID);
 } NodeImplVtbl;

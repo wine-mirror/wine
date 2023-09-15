@@ -5843,26 +5843,12 @@ static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HT
     return E_NOTIMPL;
 }
 
-static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
-{
-    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->dom_document) {
-        release_document_mutation(This);
-        detach_document_node(This);
-        This->dom_document = NULL;
-        This->html_document = NULL;
-        This->window = NULL;
-    }
-}
-
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     .clsid                 = &CLSID_HTMLDocument,
     .qi                    = HTMLDocumentNode_QI,
     .destructor            = HTMLDocumentNode_destructor,
     .cpc_entries           = HTMLDocumentNode_cpc,
     .clone                 = HTMLDocumentNode_clone,
-    .unlink                = HTMLDocumentNode_unlink
 };
 
 static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -5879,22 +5865,29 @@ static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode
     return S_OK;
 }
 
-static void HTMLDocumentFragment_unlink(HTMLDOMNode *iface)
+static inline HTMLDocumentNode *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
+    return CONTAINING_RECORD(iface, HTMLDocumentNode, node.event_target.dispex);
+}
 
-    if(This->window) {
+static void HTMLDocumentNode_unlink(DispatchEx *dispex)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
+
+    if(This->dom_document) {
+        release_document_mutation(This);
+        detach_document_node(This);
+        This->dom_document = NULL;
+        This->html_document = NULL;
+        This->window = NULL;
+    }else if(This->window) {
         detach_document_node(This);
 
         /* document fragments own reference to inner window */
         IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
         This->window = NULL;
     }
-}
-
-static inline HTMLDocumentNode *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLDocumentNode, node.event_target.dispex);
 }
 
 static HRESULT HTMLDocumentNode_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
@@ -6071,7 +6064,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         .query_interface     = HTMLDOMNode_query_interface,
         .destructor          = HTMLDOMNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
-        .unlink              = HTMLDOMNode_unlink,
+        .unlink              = HTMLDocumentNode_unlink,
         .get_name            = HTMLDocumentNode_get_name,
         .invoke              = HTMLDocumentNode_invoke,
         .next_dispid         = HTMLDocumentNode_next_dispid,
@@ -6090,7 +6083,6 @@ static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     .destructor            = HTMLDocumentNode_destructor,
     .cpc_entries           = HTMLDocumentNode_cpc,
     .clone                 = HTMLDocumentFragment_clone,
-    .unlink                = HTMLDocumentFragment_unlink
 };
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {

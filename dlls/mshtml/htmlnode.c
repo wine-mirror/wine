@@ -1414,8 +1414,6 @@ void HTMLDOMNode_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
 
-    if(This->vtbl->traverse)
-        This->vtbl->traverse(This, cb);
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "nsnode", cb);
     if(This->doc && &This->doc->node != This)
@@ -1425,9 +1423,6 @@ void HTMLDOMNode_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback
 void HTMLDOMNode_unlink(DispatchEx *dispex)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
-
-    if(This->vtbl->unlink)
-        This->vtbl->unlink(This);
 
     release_event_target(&This->event_target);
     unlink_ref(&This->nsnode);
