@@ -67,4 +67,5 @@ enum samba_funcs
     unix_share_del,
     unix_wksta_getinfo,
     unix_change_password,
+    unix_funcs_count
 };
