@@ -10,7 +10,8 @@ C_SRCS = \
 	dmusic_main.c \
 	download.c \
 	instrument.c \
-	port.c
+	port.c \
+	wave.c
 
 IDL_SRCS = dmusic.idl
 

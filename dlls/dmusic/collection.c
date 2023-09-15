@@ -40,6 +40,7 @@ C_ASSERT(sizeof(struct pool) == offsetof(struct pool, cues[0]));
 struct wave_entry
 {
     struct list entry;
+    IUnknown *wave;
     DWORD offset;
 };
 
@@ -123,6 +124,7 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
         LIST_FOR_EACH_ENTRY_SAFE(wave_entry, next, &This->waves, struct wave_entry, entry)
         {
             list_remove(&wave_entry->entry);
+            IDirectMusicInstrument_Release(wave_entry->wave);
             free(wave_entry);
         }
 
@@ -227,8 +229,12 @@ static HRESULT parse_wvpl_list(struct collection *This, IStream *stream, struct 
         {
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_wave):
             if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
-            entry->offset = chunk.offset.QuadPart - parent->offset.QuadPart - 12;
-            list_add_tail(&This->waves, &entry->entry);
+            if (FAILED(hr = wave_create_from_chunk(stream, &chunk, &entry->wave))) free(entry);
+            else
+            {
+                entry->offset = chunk.offset.QuadPart - parent->offset.QuadPart - 12;
+                list_add_tail(&This->waves, &entry->entry);
+            }
             break;
 
         default:
@@ -397,13 +403,13 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
             i++;
         }
 
-        TRACE(" - cues: size %lu\n", This->pool->table.cbSize);
+        TRACE(" - cues:\n");
         for (i = 0; i < This->pool->table.cCues; i++)
             TRACE("    - index: %u, offset: %lu\n", i, This->pool->cues[i].ulOffset);
 
         TRACE(" - waves:\n");
         LIST_FOR_EACH_ENTRY(wave_entry, &This->waves, struct wave_entry, entry)
-            TRACE("    - offset: %lu\n", wave_entry->offset);
+            TRACE("    - offset: %lu, wave %p\n", wave_entry->offset, wave_entry->wave);
     }
 
     stream_skip_chunk(stream, &chunk);

@@ -92,6 +92,8 @@ extern HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirec
         IDirectMusicDownloadedInstrument **downloaded);
 extern HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port);
 
+extern HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnknown **out);
+
 /*****************************************************************************
  * IDirectMusic8Impl implementation structure
  */
