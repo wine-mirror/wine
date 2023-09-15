@@ -1796,7 +1796,7 @@ static NTSTATUS unix_set_event_handle(void *args)
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     unix_process_attach,
     unix_not_implemented,
@@ -1833,6 +1833,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unix_midi_notify_wait,
     unix_not_implemented,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 #ifdef _WIN64
 
@@ -2249,7 +2251,7 @@ static NTSTATUS unix_wow64_get_prop_value(void *args)
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     unix_process_attach,
     unix_not_implemented,
@@ -2286,5 +2288,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_wow64_midi_notify_wait,
     unix_not_implemented,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif /* _WIN64 */
