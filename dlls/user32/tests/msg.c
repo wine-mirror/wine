@@ -17847,14 +17847,13 @@ static void test_PostMessage(void)
 }
 
 static WPARAM g_broadcast_wparam;
+static UINT g_broadcast_msg;
 static LRESULT WINAPI broadcast_test_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
 
-    if (wParam == 0xbaadbeef)
+    if (message == g_broadcast_msg)
         g_broadcast_wparam = wParam;
-    else
-        g_broadcast_wparam = 0;
 
     return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
 }
@@ -17864,7 +17863,8 @@ static LRESULT WINAPI broadcast_test_sub_proc(HWND hwnd, UINT message, WPARAM wP
 {
     int sub_index = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
 
-    g_broadcast_sub_wparam[sub_index] = (wParam == 0xbaadbeef) ? wParam : 0;
+    if (message == g_broadcast_msg)
+        g_broadcast_sub_wparam[sub_index] = wParam;
 
     return CallWindowProcA(g_oldproc_sub[sub_index], hwnd, message, wParam, lParam);
 }
@@ -17966,6 +17966,7 @@ static void test_broadcast(void)
         g_broadcast_wparam = 0xdead;
         for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
             g_broadcast_sub_wparam[j] = 0xdead;
+        g_broadcast_msg = messages[i];
         ret = SendMessageTimeoutA(HWND_BROADCAST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
         if (!ret && GetLastError() == ERROR_TIMEOUT)
             win_skip("broadcasting test %d, timeout\n", i);
