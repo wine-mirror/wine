@@ -48,6 +48,7 @@ struct collection
 {
     IDirectMusicCollection IDirectMusicCollection_iface;
     struct dmobject dmobj;
+    LONG internal_ref;
     LONG ref;
 
     DLSHEADER header;
@@ -55,6 +56,21 @@ struct collection
     struct list instruments;
     struct list waves;
 };
+
+extern void collection_internal_addref(struct collection *collection)
+{
+    ULONG ref = InterlockedIncrement( &collection->internal_ref );
+    TRACE( "collection %p, internal ref %lu.\n", collection, ref );
+}
+
+extern void collection_internal_release(struct collection *collection)
+{
+    ULONG ref = InterlockedDecrement( &collection->internal_ref );
+    TRACE( "collection %p, internal ref %lu.\n", collection, ref );
+
+    if (!ref)
+        free(collection);
+}
 
 static inline struct collection *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
 {
@@ -128,7 +144,7 @@ static ULONG WINAPI collection_Release(IDirectMusicCollection *iface)
             free(wave_entry);
         }
 
-        free(This);
+        collection_internal_release(This);
     }
 
     return ref;
@@ -201,7 +217,7 @@ static HRESULT parse_lins_list(struct collection *This, IStream *stream, struct 
         {
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_INS):
             if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
-            hr = instrument_create_from_chunk(stream, &chunk, &entry->desc, &entry->instrument);
+            hr = instrument_create_from_chunk(stream, &chunk, This, &entry->desc, &entry->instrument);
             if (SUCCEEDED(hr)) list_add_tail(&This->instruments, &entry->entry);
             else free(entry);
             break;
@@ -435,6 +451,7 @@ HRESULT collection_create(IUnknown **ret_iface)
     *ret_iface = NULL;
     if (!(collection = calloc(1, sizeof(*collection)))) return E_OUTOFMEMORY;
     collection->IDirectMusicCollection_iface.lpVtbl = &collection_vtbl;
+    collection->internal_ref = 1;
     collection->ref = 1;
     dmobject_init(&collection->dmobj, &CLSID_DirectMusicCollection,
             (IUnknown *)&collection->IDirectMusicCollection_iface);

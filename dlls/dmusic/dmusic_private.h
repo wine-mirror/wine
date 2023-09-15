@@ -76,6 +76,10 @@ typedef struct port_info {
  * ClassFactory
  */
 
+struct collection;
+extern void collection_internal_addref(struct collection *collection);
+extern void collection_internal_release(struct collection *collection);
+
 /* CLSID */
 extern HRESULT music_create(IUnknown **ret_iface);
 extern HRESULT collection_create(IUnknown **ret_iface);
@@ -87,7 +91,7 @@ extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
 extern HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
-        DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
+        struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
 extern HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicPortDownload *port,
         IDirectMusicDownloadedInstrument **downloaded);
 extern HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port);

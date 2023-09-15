@@ -51,6 +51,7 @@ struct instrument
 
     INSTHEADER header;
     IDirectMusicDownload *download;
+    struct collection *collection;
     struct list articulations;
     struct list regions;
 };
@@ -124,6 +125,7 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
             free(region);
         }
 
+        collection_internal_release(This->collection);
         free(This);
     }
 
@@ -201,7 +203,7 @@ static const IDirectMusicDownloadedInstrumentVtbl downloaded_instrument_vtbl =
     downloaded_instrument_Release,
 };
 
-static HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
+static HRESULT instrument_create(struct collection *collection, IDirectMusicInstrument **ret_iface)
 {
     struct instrument *instrument;
 
@@ -210,6 +212,7 @@ static HRESULT instrument_create(IDirectMusicInstrument **ret_iface)
     instrument->IDirectMusicInstrument_iface.lpVtbl = &instrument_vtbl;
     instrument->IDirectMusicDownloadedInstrument_iface.lpVtbl = &downloaded_instrument_vtbl;
     instrument->ref = 1;
+    collection_internal_addref((instrument->collection = collection));
     list_init(&instrument->articulations);
     list_init(&instrument->regions);
 
@@ -377,15 +380,15 @@ static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct 
 }
 
 HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
-        DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface)
+        struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface)
 {
     IDirectMusicInstrument *iface;
     struct instrument *This;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", stream, ret_iface);
+    TRACE("(%p, %p, %p, %p, %p)\n", stream, parent, collection, desc, ret_iface);
 
-    if (FAILED(hr = instrument_create(&iface))) return hr;
+    if (FAILED(hr = instrument_create(collection, &iface))) return hr;
     This = impl_from_IDirectMusicInstrument(iface);
 
     if (FAILED(hr = parse_ins_chunk(This, stream, parent, desc)))
