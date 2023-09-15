@@ -36,6 +36,7 @@ C_ASSERT(sizeof(struct articulation) == offsetof(struct articulation, connection
 struct region
 {
     struct list entry;
+    struct list articulations;
     RGNHEADER header;
     WAVELINK wave_link;
     WSMPL wave_sample;
@@ -121,6 +122,13 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 
         LIST_FOR_EACH_ENTRY_SAFE(region, next_region, &This->regions, struct region, entry)
         {
+            LIST_FOR_EACH_ENTRY_SAFE(articulation, next_articulation, &region->articulations,
+                    struct articulation, entry)
+            {
+                list_remove(&articulation->entry);
+                free(articulation);
+            }
+
             list_remove(&region->entry);
             free(region);
         }
@@ -221,7 +229,8 @@ static HRESULT instrument_create(struct collection *collection, IDirectMusicInst
     return S_OK;
 }
 
-static HRESULT parse_art1_chunk(struct instrument *This, IStream *stream, struct chunk_entry *chunk)
+static HRESULT parse_art1_chunk(struct instrument *This, IStream *stream, struct chunk_entry *chunk,
+        struct list *articulations)
 {
     struct articulation *articulation;
     CONNECTIONLIST list;
@@ -239,12 +248,13 @@ static HRESULT parse_art1_chunk(struct instrument *This, IStream *stream, struct
 
     size = sizeof(CONNECTION) * list.cConnections;
     if (FAILED(hr = stream_read(stream, articulation->connections, size))) free(articulation);
-    else list_add_tail(&This->articulations, &articulation->entry);
+    else list_add_tail(articulations, &articulation->entry);
 
     return hr;
 }
 
-static HRESULT parse_lart_list(struct instrument *This, IStream *stream, struct chunk_entry *parent)
+static HRESULT parse_lart_list(struct instrument *This, IStream *stream, struct chunk_entry *parent,
+        struct list *articulations)
 {
     struct chunk_entry chunk = {.parent = parent};
     HRESULT hr;
@@ -254,7 +264,7 @@ static HRESULT parse_lart_list(struct instrument *This, IStream *stream, struct 
         switch (MAKE_IDTYPE(chunk.id, chunk.type))
         {
         case FOURCC_ART1:
-            hr = parse_art1_chunk(This, stream, &chunk);
+            hr = parse_art1_chunk(This, stream, &chunk, articulations);
             break;
 
         default:
@@ -275,6 +285,7 @@ static HRESULT parse_rgn_chunk(struct instrument *This, IStream *stream, struct 
     HRESULT hr;
 
     if (!(region = malloc(sizeof(*region)))) return E_OUTOFMEMORY;
+    list_init(&region->articulations);
 
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
     {
@@ -297,6 +308,10 @@ static HRESULT parse_rgn_chunk(struct instrument *This, IStream *stream, struct 
 
         case FOURCC_WLNK:
             hr = stream_chunk_get_data(stream, &chunk, &region->wave_link, sizeof(region->wave_link));
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LART):
+            hr = parse_lart_list(This, stream, &chunk, &region->articulations);
             break;
 
         default:
@@ -365,7 +380,7 @@ static HRESULT parse_ins_chunk(struct instrument *This, IStream *stream, struct 
             break;
 
         case MAKE_IDTYPE(FOURCC_LIST, FOURCC_LART):
-            hr = parse_lart_list(This, stream, &chunk);
+            hr = parse_lart_list(This, stream, &chunk, &This->articulations);
             break;
 
         default:
