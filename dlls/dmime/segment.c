@@ -252,38 +252,37 @@ static HRESULT WINAPI segment_GetTrackGroup(IDirectMusicSegment8 *iface, IDirect
   return DMUS_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI segment_InsertTrack(IDirectMusicSegment8 *iface, IDirectMusicTrack *pTrack, DWORD group)
+static HRESULT segment_append_track(struct segment *This, IDirectMusicTrack *track, DWORD group, DWORD flags)
 {
-  struct segment *This = impl_from_IDirectMusicSegment8(iface);
-  DWORD i = 0;
-  struct list* pEntry = NULL;
-  struct track_entry *pIt = NULL;
-  struct track_entry *pNewSegTrack = NULL;
+    struct track_entry *entry;
+    HRESULT hr;
 
-  TRACE("(%p, %p, %#lx)\n", This, pTrack, group);
+    if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
+    entry->dwGroupBits = group;
+    entry->flags = flags;
+    entry->pTrack = track;
+    IDirectMusicTrack_AddRef(track);
 
-  if (!group)
-    return E_INVALIDARG;
+    hr = IDirectMusicTrack_Init(track, (IDirectMusicSegment *)&This->IDirectMusicSegment8_iface);
+    if (FAILED(hr)) track_entry_destroy(entry);
+    else list_add_tail(&This->tracks, &entry->entry);
 
-  LIST_FOR_EACH (pEntry, &This->tracks) {
-    i++;
-    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
-    TRACE(" - #%lu: %p -> %#lx, %p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
-    if (NULL != pIt && pIt->pTrack == pTrack) {
-      ERR("(%p, %p): track is already in list\n", This, pTrack);
-      return E_FAIL;
-    }
-  }
+    return hr;
+}
 
-  if (!(pNewSegTrack = calloc(1, sizeof(*pNewSegTrack)))) return E_OUTOFMEMORY;
+static HRESULT WINAPI segment_InsertTrack(IDirectMusicSegment8 *iface, IDirectMusicTrack *track, DWORD group)
+{
+    struct segment *This = impl_from_IDirectMusicSegment8(iface);
+    struct track_entry *entry;
 
-  pNewSegTrack->dwGroupBits = group;
-  pNewSegTrack->pTrack = pTrack;
-  IDirectMusicTrack_Init(pTrack, (IDirectMusicSegment *)iface);
-  IDirectMusicTrack_AddRef(pTrack);
-  list_add_tail (&This->tracks, &pNewSegTrack->entry);
+    TRACE("(%p, %p, %#lx)\n", This, track, group);
 
-  return S_OK;
+    if (!group) return E_INVALIDARG;
+
+    LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+        if (entry->pTrack == track) return E_FAIL;
+
+    return segment_append_track(This, track, group, 0);
 }
 
 static HRESULT WINAPI segment_RemoveTrack(IDirectMusicSegment8 *iface, IDirectMusicTrack *pTrack)
