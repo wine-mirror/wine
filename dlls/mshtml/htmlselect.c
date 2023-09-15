@@ -360,17 +360,24 @@ static void *HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLOptionElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLOptionElement *HTMLOptionElement_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
-
-    if(This->nsoption)
-        note_cc_edge((nsISupports*)This->nsoption, "This->nsoption", cb);
+    return CONTAINING_RECORD(iface, HTMLOptionElement, element.node.event_target.dispex);
 }
 
-static void HTMLOptionElement_unlink(HTMLDOMNode *iface)
+static void HTMLOptionElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
+    HTMLOptionElement *This = HTMLOptionElement_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsoption)
+        note_cc_edge((nsISupports*)This->nsoption, "nsoption", cb);
+}
+
+static void HTMLOptionElement_unlink(DispatchEx *dispex)
+{
+    HTMLOptionElement *This = HTMLOptionElement_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsoption);
 }
 
@@ -382,8 +389,15 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLOptionElement_traverse,
-    .unlink                = HTMLOptionElement_unlink
+};
+
+static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLOptionElement_traverse,
+        .unlink         = HTMLOptionElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {
@@ -393,7 +407,7 @@ static const tid_t HTMLOptionElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLOptionElement_dispex = {
     "HTMLOptionElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLOptionElement_event_target_vtbl.dispex_vtbl,
     DispHTMLOptionElement_tid,
     HTMLOptionElement_iface_tids,
     HTMLElement_init_dispex_info
