@@ -467,17 +467,24 @@ static void HTMLTableCell_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(&This->element.node);
 }
 
-static void HTMLTableCell_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
-
-    if(This->nscell)
-        note_cc_edge((nsISupports*)This->nscell, "This->nstablecell", cb);
+    return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
 }
 
-static void HTMLTableCell_unlink(HTMLDOMNode *iface)
+static void HTMLTableCell_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
+    HTMLTableCell *This = HTMLTableCell_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nscell)
+        note_cc_edge((nsISupports*)This->nscell, "nstablecell", cb);
+}
+
+static void HTMLTableCell_unlink(DispatchEx *dispex)
+{
+    HTMLTableCell *This = HTMLTableCell_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nscell);
 }
 
@@ -489,8 +496,15 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLTableCell_traverse,
-    .unlink                = HTMLTableCell_unlink
+};
+
+static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLTableCell_traverse,
+        .unlink         = HTMLTableCell_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLTableCell_iface_tids[] = {
@@ -501,7 +515,7 @@ static const tid_t HTMLTableCell_iface_tids[] = {
 
 static dispex_static_data_t HTMLTableCell_dispex = {
     "HTMLTableDataCellElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLTableCell_event_target_vtbl.dispex_vtbl,
     DispHTMLTableCell_tid,
     HTMLTableCell_iface_tids,
     HTMLElement_init_dispex_info
@@ -887,17 +901,24 @@ static void *HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLTableRow_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLTableRow *HTMLTableRow_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLTableRow *This = HTMLTableRow_from_HTMLDOMNode(iface);
-
-    if(This->nsrow)
-        note_cc_edge((nsISupports*)This->nsrow, "This->nstablerow", cb);
+    return CONTAINING_RECORD(iface, HTMLTableRow, element.node.event_target.dispex);
 }
 
-static void HTMLTableRow_unlink(HTMLDOMNode *iface)
+static void HTMLTableRow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLTableRow *This = HTMLTableRow_from_HTMLDOMNode(iface);
+    HTMLTableRow *This = HTMLTableRow_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsrow)
+        note_cc_edge((nsISupports*)This->nsrow, "nstablerow", cb);
+}
+
+static void HTMLTableRow_unlink(DispatchEx *dispex)
+{
+    HTMLTableRow *This = HTMLTableRow_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsrow);
 }
 
@@ -909,8 +930,15 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLTableRow_traverse,
-    .unlink                = HTMLTableRow_unlink
+};
+
+static const event_target_vtbl_t HTMLTableRow_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLTableRow_traverse,
+        .unlink         = HTMLTableRow_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLTableRow_iface_tids[] = {
@@ -921,7 +949,7 @@ static const tid_t HTMLTableRow_iface_tids[] = {
 
 static dispex_static_data_t HTMLTableRow_dispex = {
     "HTMLTableRowElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLTableRow_event_target_vtbl.dispex_vtbl,
     DispHTMLTableRow_tid,
     HTMLTableRow_iface_tids,
     HTMLElement_init_dispex_info
@@ -1885,17 +1913,24 @@ static void *HTMLTable_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLTable_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLTable *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLTable *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nstable)
-        note_cc_edge((nsISupports*)This->nstable, "This->nstable", cb);
+    return CONTAINING_RECORD(iface, HTMLTable, element.node.event_target.dispex);
 }
 
-static void HTMLTable_unlink(HTMLDOMNode *iface)
+static void HTMLTable_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLTable *This = impl_from_HTMLDOMNode(iface);
+    HTMLTable *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nstable)
+        note_cc_edge((nsISupports*)This->nstable, "nstable", cb);
+}
+
+static void HTMLTable_unlink(DispatchEx *dispex)
+{
+    HTMLTable *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nstable);
 }
 
@@ -1913,8 +1948,15 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLTable_traverse,
-    .unlink                = HTMLTable_unlink
+};
+
+static const event_target_vtbl_t HTMLTable_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLTable_traverse,
+        .unlink         = HTMLTable_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLTable_iface_tids[] = {
@@ -1927,7 +1969,7 @@ static const tid_t HTMLTable_iface_tids[] = {
 
 static dispex_static_data_t HTMLTable_dispex = {
     "HTMLTableElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLTable_event_target_vtbl.dispex_vtbl,
     DispHTMLTable_tid,
     HTMLTable_iface_tids,
     HTMLElement_init_dispex_info
