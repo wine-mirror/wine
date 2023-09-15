@@ -70,6 +70,10 @@
 
 #include "unixlib.h"
 
+#if !defined(MAC_OS_VERSION_12_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_12_0
+#define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
 #define MAX_DEV_NAME_LEN 10 /* Max 32 bit digits */
@@ -239,7 +243,7 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
     params->default_idx = 0;
 
     addr.mScope = kAudioObjectPropertyScopeGlobal;
-    addr.mElement = kAudioObjectPropertyElementMaster;
+    addr.mElement = kAudioObjectPropertyElementMain;
     if(params->flow == eRender) addr.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
     else if(params->flow == eCapture) addr.mSelector = kAudioHardwarePropertyDefaultInputDevice;
     else{
@@ -1752,7 +1756,7 @@ static NTSTATUS unix_set_volumes(void *args)
     AudioObjectPropertyAddress prop_addr = {
         kAudioDevicePropertyVolumeScalar,
         kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMaster
+        kAudioObjectPropertyElementMain
     };
 
     sc = AudioObjectSetPropertyData(stream->dev_id, &prop_addr, 0, NULL, sizeof(float), &level);
