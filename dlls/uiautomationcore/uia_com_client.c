@@ -960,7 +960,77 @@ struct uia_com_event {
 
 HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id, DWORD event_time)
 {
-    FIXME("%ld, %p, %ld, %ld, %ld, %ld: stub\n", event_id, hwnd, obj_id, child_id, thread_id, event_time);
+    LONG handler_count;
+
+    TRACE("%ld, %p, %ld, %ld, %ld, %ld\n", event_id, hwnd, obj_id, child_id, thread_id, event_time);
+
+    EnterCriticalSection(&com_event_handlers_cs);
+    handler_count = com_event_handlers.handler_count;
+    LeaveCriticalSection(&com_event_handlers_cs);
+
+    if (!handler_count)
+        return S_OK;
+
+    switch (event_id)
+    {
+    case EVENT_OBJECT_SHOW:
+    {
+        struct uia_event_handler_map_entry *entry;
+        SAFEARRAY *rt_id = NULL;
+        HUIANODE node;
+        HRESULT hr;
+
+        if (obj_id != OBJID_WINDOW || !uia_hwnd_is_visible(hwnd))
+            break;
+
+        hr = UiaNodeFromHandle(hwnd, &node);
+        if (FAILED(hr))
+            return hr;
+
+        hr = UiaGetRuntimeId(node, &rt_id);
+        if (FAILED(hr))
+        {
+            UiaNodeRelease(node);
+            return hr;
+        }
+
+        EnterCriticalSection(&com_event_handlers_cs);
+
+        RB_FOR_EACH_ENTRY(entry, &com_event_handlers.handler_map, struct uia_event_handler_map_entry, entry)
+        {
+            struct uia_com_event *event;
+
+            /*
+             * Focus change event handlers only listen for EVENT_OBJECT_SHOW
+             * on the desktop HWND.
+             */
+            if ((entry->event_id == UIA_AutomationFocusChangedEventId) && (hwnd != GetDesktopWindow()))
+                continue;
+
+            LIST_FOR_EACH_ENTRY(event, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
+            {
+                hr = uia_event_check_node_within_event_scope((struct uia_event *)event->event, node, rt_id, NULL);
+                if (FAILED(hr))
+                    WARN("uia_event_check_node_within_scope failed with hr %#lx\n", hr);
+                else if (hr == S_OK)
+                {
+                    hr = uia_event_advise_node((struct uia_event *)event->event, node);
+                    if (FAILED(hr))
+                        WARN("uia_event_advise_node failed with hr %#lx\n", hr);
+                }
+            }
+        }
+
+        LeaveCriticalSection(&com_event_handlers_cs);
+
+        UiaNodeRelease(node);
+        break;
+    }
+
+    default:
+        break;
+    }
+
     return S_OK;
 }
 

@@ -14943,8 +14943,8 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
         set_provider_method_event_data(&Provider, NULL, -1);
         goto exit;
     }
-    todo_wine ok(wait_res != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
+    ok(wait_res != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
 
     /*
      * Manually fire off EVENT_OBJECT_SHOW, providers will be advised of
@@ -14952,8 +14952,8 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
      */
     set_uia_hwnd_expects(0, 2, 2, 6, 0); /* Only done more than one of each on Win11. */
     NotifyWinEvent(EVENT_OBJECT_SHOW, test_hwnd, OBJID_WINDOW, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
 
     /*
      * Providers are only advised of events being listened for if an event is
@@ -14977,17 +14977,17 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 6); /* Only done more than once on Win11. */
     set_uia_hwnd_expects(0, 2, 3, 5, 0); /* Only done more than one of each on Win11. */
     ShowWindow(test_child_hwnd, SW_SHOW);
-    todo_wine ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
+    CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
 
     /* Same deal as before, it will advise multiple times. */
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 6); /* Only done more than once on Win11. */
     set_uia_hwnd_expects(0, 2, 3, 5, 0); /* Only done more than one of each on Win11. */
     NotifyWinEvent(EVENT_OBJECT_SHOW, test_child_hwnd, OBJID_WINDOW, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 3000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 0, FALSE);
+    CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
 
     /* Break navigation chain, can't reach our test element so no advisement. */
     Provider_hwnd3.parent = NULL;
@@ -14995,8 +14995,8 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     set_uia_hwnd_expects(0, 1, 1, 1, 0);
     NotifyWinEvent(EVENT_OBJECT_SHOW, test_child_hwnd, OBJID_WINDOW, CHILDID_SELF);
     ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) == WAIT_TIMEOUT, "Wait for method_event(s) didn't timeout.\n");
-    check_uia_hwnd_expects(0, FALSE, 1, TRUE, 1, TRUE, 1, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
+    check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 1, TRUE, 0, FALSE);
+    CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
 
     set_provider_method_event_data(&Provider_hwnd3, NULL, -1);
     set_provider_method_event_data(&Provider_nc3, NULL, -1);
@@ -15044,10 +15044,10 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     SET_EXPECT(child_winproc_GETOBJECT_UiaRoot); /* Only done on Win11. */
     set_uia_hwnd_expects(0, 3, 3, 1, 0); /* Only done more than once on Win11. */
     NotifyWinEvent(EVENT_OBJECT_SHOW, GetDesktopWindow(), OBJID_WINDOW, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
     CHECK_CALLED_AT_MOST(winproc_GETOBJECT_UiaRoot, 1);
     CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 1);
-    check_uia_hwnd_expects_at_least(0, FALSE, 1, TRUE, 1, TRUE, 0, FALSE, 0, FALSE);
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 0, FALSE, 0, FALSE);
 
     set_provider_method_event_data(&Provider_hwnd, NULL, -1);
     set_provider_method_event_data(&Provider_nc, NULL, -1);
@@ -15063,7 +15063,7 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     SET_EXPECT(child_winproc_GETOBJECT_UiaRoot); /* Only done on Win11. */
     set_uia_hwnd_expects(0, 2, 2, 7, 0); /* Only done more than once on Win11. */
     NotifyWinEvent(EVENT_OBJECT_SHOW, test_hwnd, OBJID_WINDOW, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    ok(msg_wait_for_all_events(method_event, event_handle_count, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
     CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 1);
     check_uia_hwnd_expects_at_most(0, 2, 2, 7, 0);
 

@@ -55,6 +55,7 @@ static int win_event_to_uia_event_id(int win_event)
     {
     case EVENT_OBJECT_FOCUS: return UIA_AutomationFocusChangedEventId;
     case EVENT_SYSTEM_ALERT: return UIA_SystemAlertEventId;
+    case EVENT_OBJECT_SHOW:  return UIA_StructureChangedEventId;
 
     default:
         break;
@@ -1579,13 +1580,27 @@ static HRESULT uia_event_advise(struct uia_event *event, BOOL advise_added, LONG
     return hr;
 }
 
+HRESULT uia_event_advise_node(struct uia_event *event, HUIANODE node)
+{
+    int old_event_advisers_count = event->event_advisers_count;
+    HRESULT hr;
+
+    hr = attach_event_to_uia_node(node, event);
+    if (FAILED(hr))
+        return hr;
+
+    if (event->event_advisers_count != old_event_advisers_count)
+        hr = uia_event_advise(event, TRUE, old_event_advisers_count);
+
+    return hr;
+}
+
 /***********************************************************************
  *          UiaEventAddWindow (uiautomationcore.@)
  */
 HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd)
 {
     struct uia_event *event = unsafe_impl_from_IWineUiaEvent((IWineUiaEvent *)huiaevent);
-    int old_event_advisers_count;
     HUIANODE node;
     HRESULT hr;
 
@@ -1600,15 +1615,7 @@ HRESULT WINAPI UiaEventAddWindow(HUIAEVENT huiaevent, HWND hwnd)
     if (FAILED(hr))
         return hr;
 
-    old_event_advisers_count = event->event_advisers_count;
-    hr = attach_event_to_uia_node(node, event);
-    if (FAILED(hr))
-        goto exit;
-
-    if (event->event_advisers_count != old_event_advisers_count)
-        hr = uia_event_advise(event, TRUE, old_event_advisers_count);
-
-exit:
+    hr = uia_event_advise_node(event, node);
     UiaNodeRelease(node);
 
     return hr;
@@ -1734,8 +1741,6 @@ HRESULT WINAPI UiaRemoveEvent(HUIAEVENT huiaevent)
     return S_OK;
 }
 
-static HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
-        HUIANODE *clientside_nav_node_out);
 static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args, struct uia_event *event)
 {
     HRESULT hr = S_OK;
@@ -1812,7 +1817,7 @@ static void set_refuse_hwnd_providers(struct uia_node *node, BOOL refuse_hwnd_pr
  * If it isn't, return S_FALSE.
  * Upon failure, return a failure HR.
  */
-static HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
+HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
         HUIANODE *clientside_nav_node_out)
 {
     struct UiaPropertyCondition prop_cond = { ConditionType_Property, UIA_RuntimeIdPropertyId };
