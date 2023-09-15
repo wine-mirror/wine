@@ -1,14 +1,13 @@
-The Wine development release 8.15 is now available.
+The Wine development release 8.16 is now available.
 
 What's new in this release:
-  - Support for TEXT print processor.
-  - Cycle Collection support in MSHTML.
-  - Cross-process memory notifications in Wow64.
+  - Beginnings of a DirectMusic revival.
+  - Many fixes and improvements in the regression tests.
   - Various bug fixes.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.x/wine-8.15.tar.xz
+  https://dl.winehq.org/wine/source/8.x/wine-8.16.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -24,317 +23,553 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.15 (total 19):
+Bugs fixed in 8.16 (total 33):
 
- - #43822  TrackMania Nations Forever (Steam) car music doesn't play
- - #45273  Chessbase 11 cannot draw arrows
- - #54064  ntdll:threadpool - test_tp_io() sometimes fails & crashes in Wine (GitLab CI)
- - #54718  msvcr90:msvcr90 - test__get_current_locale() sometimes gets an unexpected refcount on w10pro64
- - #54756  Multiple games crash on unimplemented concrt140.dll.??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ (Forza Horizon 4, The Legend of Sisyphus (Andromeda Software Development))
- - #55259  TranscendPang has corrupted graphics in-game
- - #55286  msvcrt:file - The 64-bit test_invalid_stdin_child() sometimes gets a bad stdin handle on Windows 10
- - #55287  msvcrt:file - The 32-bit test_pipes() fails in the new WoW mode
- - #55333  ws2_32:sock - test_connect_events() sometimes fails in Wine
- - #55341  Colin McRae Rally 2.0 black screen
- - #55351  gdiplus:graphicspath - test_flatten2() fails on Windows 7 - 11
- - #55402  CMD '!var!' not working in 'if' statement
- - #55414  Ultimate Spider-Man: Widescreen Fix shifts HUD too much to the right
- - #55443  Wine crashes when an image is dragged onto notepad.exe and games
- - #55450  Softerra LDAP Browser needs LDAP_OPT_AUTO_RECONNECT
- - #55457  Robot Battle 1.4 crashes on startup after commit 08dc691d
- - #55471  nGlide wrapper produces black screen in games using the D3D backend
- - #55475  Respondus LockDown Browser crashes on unimplemented function KERNEL32.dll.DiscardVirtualMemory
- - #55500  Launching new processes in Virtual Desktops is slow and stutters the system
+ - #42809  GPS Track Editor: arrows not shown
+ - #51561  Wine's built-in gdiplus.dll lags in Paint.NET compared to native (Win 7) gdiplus.dll
+ - #51995  Roblox's bad performance on Wine
+ - #52196  BENNING PC-Win ST 750-760 Designer crashes on start, needs GdipSetPenCompoundArray implementation
+ - #53435  user32:msg - test_SendMessage_other_thread() sometimes gets a wrong status on Windows
+ - #54202  mscoree:mscoree breaks user32:msg - subtest_hvredraw() fails on most Windows 7 test configurations
+ - #54331  Game "Antecrypt": Black screen after launch
+ - #54368  ::DrawGeometry doesn't respect stroke style
+ - #54655  user32:msg - test_InSendMessage() sometimes gets unexpected flags on Windows
+ - #54683  shlwapi:ordinal - test_SHFormatDateTimeA() fails due to daylight saving time on Windows
+ - #54944  ntdll:exception - test_extended_context() crashes on Window 11
+ - #54945  ntdll:exception - test_virtual_unwind() fails on Windows 11
+ - #54998  DnsQuery(DNS_TYPE_SRV) fails to parse some of the server answers
+ - #55225  kernel32:thread - The 32-bit test_stack() gets an unexpected values for -2 & -3 indexes on Windows
+ - #55227  wtsapi32:wtsapi - The 32-bit check_wts_process_info() fails to get the user token on Windows 7 & 8
+ - #55237  oleaut32:usrmarshal - The 64-bit test_marshal_VARIANT() gets bad values for wv[5&6] on Windows 8+
+ - #55238  ntdll:exception - The 64-bit test_nested_exception() fails on Windows 11
+ - #55244  mshtml:misc - test_HTMLStorage() crashes in Wine
+ - #55246  ntdll:om - The 64-bit test_object_types() crashes on Windows 8+
+ - #55317  user32:msg - test_hotkey() finds no free WinKey+letter on Windows 11
+ - #55354  user32:msg - test_dialog_messages() sometimes gets a bad sequence on Windows 7
+ - #55366  The GitLab CI sometimes tries to link winscard with libpcsclite on macOS
+ - #55459  Softerra LDAP Browser fails to turn off LDAP_OPT_ENCRYPT, LDAP_OPT_ROOTDSE_CACHE, and LDAP_OPT_SIGN
+ - #55501  PS Core (pwsh.exe) fails to start:Call to unimplemented function wldp.dll.WldpGetLockdownPolicy
+ - #55505  Vitis 2020.1 needs support for `if exist ""` in batch file
+ - #55507  Softerra LDAP Browser needs LDAP_OPT_CLIENT_CERTIFICATE
+ - #55508  Wine 8.15: compiles successfully in Flatpak but fails during runtime with a SIGSEGV
+ - #55531  combase:roapi - test_ActivationFactories() fails on Windows and Wine
+ - #55532  kernel32:actctx - test_two_dlls_at_same_time() crashes on Windows 7+ and Wine
+ - #55533  setupapi:devinst & setupapi:install - test_class_installer() fails on Windows 7+ and Wine
+ - #55534  ucrtbase:thread - test_thread_library_reference() fails on Windows 7+ and Wine
+ - #55535  The dinput:hid test summary line fails to take skip messages into account on Windows 7
+ - #55539  user32:msg test_hvredraw fails in win1709 with unexpected region
 
 ----------------------------------------------------------------
 
-Changes since 8.14:
+Changes since 8.15:
 
-Akihiro Sagawa (2):
-      cmd: Use towlower()/towupper() for WCHARs.
-      cmd: DIR command outputs free space for the path.
+Alex Henrie (19):
+      wldap32: Rename cert_callback to server_cert_callback.
+      wldap32: Implement setting LDAP_OPT_CLIENT_CERTIFICATE.
+      msctf: Use CRT allocation functions.
+      shcore: Use CRT allocation functions.
+      shlwapi: Use CRT allocation functions.
+      snmpapi: Use CRT allocation functions.
+      uiautomationcore: Use CRT allocation functions.
+      mpr: Use CRT allocation functions.
+      cmd: Handle `if exist` with an empty string argument.
+      wintab32: Use CRT allocation functions.
+      wintrust: Use CRT allocation functions.
+      extrac32: Use CRT allocation functions.
+      oleview: Use CRT allocation functions.
+      wineboot: Use CRT allocation functions.
+      winemenubuilder: Use CRT allocation functions.
+      winmm: Avoid explicitly casting the pointer returned from Heap(Re)Alloc.
+      winmm: Use CRT allocation functions.
+      newdev: Use CRT allocation functions.
+      http: Use CRT allocation functions.
 
-Alex Henrie (12):
-      windowscodecs: Use CRT allocation functions.
-      shell32: Use CRT allocation functions.
-      xaudio2_7: Use CRT allocation functions.
-      activeds: Use CRT allocation functions.
-      mshtml: Define skip_prefix without using a magic number.
-      cryptui: Use CRT allocation functions.
-      mciavi32: Use CRT allocation functions.
-      mlang: Use CRT allocation functions.
-      mmdevapi: Use CRT allocation functions.
-      mpr: Fix double free in WNetGetResourceInformationA.
-      dmusic: Use CRT allocation functions.
-      wldap32: Report success when turning off LDAP_OPT_(ENCRYPT|ROOTDSE_CACHE|SIGN).
+Alexandre Julliard (21):
+      kernel32/tests: Also remove stack pointer checks on 64-bit.
+      oleaut32/tests: Mark the win9x behavior as todo on Wine.
+      makedep: Make the spec file optional for testdll resources.
+      makedep: Make the spec file optional for data-only dlls.
+      makedep: Make the spec file optional for native modules.
+      winegcc: Don't disable unwind tables for PE targets.
+      winebuild: Add SEH information to relay entry points on ARM64.
+      ntdll/tests: Use a valid buffer address for misalignment test.
+      ntdll: Always fetch the %fs register from the thread data.
+      ntdll: Ignore attempts to change segment registers on x86-64.
+      ntdll: Don't save segment registers in the syscall frame on x86-64.
+      ntdll: Add missing backslash to query image file execution options.
+      win32u: Use the correct length for kernel object names in object attributes.
+      wow64: Don't add MEM_RESERVE for invalid flags combinations.
+      include: Add DECLSPEC_NOINLINE macro.
+      ntdll/tests: Fix some test failures on ARM64 Windows.
+      localspl: Fix an uninitialized variable warning with clang.
+      ntdll: Fix the hardcoded selector values for ARM64.
+      ntdll: Fixup the pc address for breakpoint exceptions on ARM64.
+      ntdll: Fix the SystemProcessorFeaturesInformation value on ARM platforms.
+      ntdll/tests: Mark some tests as todo for ARM64.
 
-Alexandre Julliard (22):
-      winex11: Work around a false positive gcc warning.
-      ntdll: Also store syscall id and names following the syscall dispatcher pointer.
-      wow64: Reimplement syscall resolution using the syscall dispatcher name table.
-      ntdll: Implement the cross-process work list functions.
-      wow64: Create the cross-process work list.
-      ntdll: Implement RtlOpenCrossProcessEmulatorWorkConnection().
-      wow64: Send cross-process notifications.
-      wow64: Implement Wow64ProcessPendingCrossProcessItems().
-      ntdll/tests: Add tests for cross-process notifications.
-      winebuild: Ignore syscalls that point to an alias.
-      wow64: Also send notifications for failed memory management calls.
-      kernel32/tests: Remove some workarounds for old Windows versions.
-      kernel32/tests: Fix alignment issues on 64-bit.
-      kernel32/tests: Make the generated dlls relocatable.
-      kernel32/tests: Remove tests for the exact value of the stack pointer.
-      ntdll/tests: Fix alignment issues on 64-bit.
-      ntdll/tests: Allow more invalid length values on Windows.
-      ntdll/tests: Work around a Windows pointer truncation bug in CPU info.
-      oleaut32/tests: Fix a pointer truncation issue on 64-bit.
-      winmm/tests: Fix a pointer truncation issue on 64-bit.
-      scrrun: Fix pointer hashing on 64-bit.
-      gdi32: Fix buffer size parameter in GetFontFileData for 64-bit.
+Alexandros Frantzis (5):
+      winewayland.drv: Add initial stub for wl_pointer handling.
+      winewayland.drv: Handle pointer focus events.
+      winewayland.drv: Handle pointer motion events.
+      winewayland.drv: Handle pointer button and scroll events.
+      winewayland.drv: Implement SetCursor using cursor bitmap data.
 
-Alexis Murzeau (1):
-      wpcap: Handle negative count for pcap_dispatch and pcap_loop.
+Alfred Agrell (6):
+      quartz: Fill in VMR9SurfaceAllocatorNotify_NotifyEvent stub.
+      quartz: Recreate surfaces in VMR9SurfaceAllocatorNotify_ChangeD3DDevice.
+      quartz/tests: Add test for VMR9SurfaceAllocatorNotify_NotifyEvent.
+      quartz/tests: Add test for VMR9SurfaceAllocatorNotify_ChangeD3DDevice.
+      quartz: Delete some redundant members from struct quartz_vmr.
+      quartz/tests: Fix segfault in changed3ddevice test.
 
-Alistair Leslie-Hughes (9):
-      opcservices: Remove DECLSPEC_HIDDEN usage.
-      avifil32: Remove DECLSPEC_HIDDEN usage.
-      evr: Remove DECLSPEC_HIDDEN usage.
-      hhctrl.ocx: Remove DECLSPEC_HIDDEN usage.
-      dxdiagn: Remove DECLSPEC_HIDDEN usage.
-      netcfgx: Remove DECLSPEC_HIDDEN usage.
-      schedsvc: Remove DECLSPEC_HIDDEN usage.
-      comctl32: Remove DECLSPEC_HIDDEN usage.
-      msvcrt: Remove DECLSPEC_HIDDEN usage.
+Alistair Leslie-Hughes (6):
+      diasymreader: Remove DECLSPEC_HIDDEN usage.
+      qmgr: Remove DECLSPEC_HIDDEN usage.
+      kernel32: Remove DECLSPEC_HIDDEN usage.
+      user32: Remove DECLSPEC_HIDDEN usage.
+      wshom.ocx: Remove DECLSPEC_HIDDEN usage.
+      d3drm: Correct D3DRMIMAGE validation.
 
-Anton Baskanov (1):
-      winex11.drv: Mark drawable as dirty when setting pixel format.
+Arkadiusz Hiler (2):
+      dsound: Get rid of DSOUND_capturers and related lock.
+      dsound: Get rid of the global device GUID arrays.
 
-Bartosz Kosiorek (2):
-      gdiplus: Improve performance by switching loops and fix size.
-      gdiplus: Add support for GdipPathIterNextPathType.
+Bartosz Kosiorek (1):
+      gdiplus/tests: Extend DrawImage scaling tests.
 
-Biswapriyo Nath (8):
-      include: Add KnownFolders runtimeclass in windows.storage.idl.
-      include: Add ApplicationData runtimeclass in windows.storage.idl.
-      include: Add IRandomAccessStream generic types in windows.storage.streams.idl.
-      uiautomationcore: Fix typo with TreeScope_Subtree name.
-      include: Add AudioProcessing enum in windows.media.idl.
-      include: Add Windows.Media.Capture.MediaCategory enumeration.
-      include: Add Windows.Media.Render.AudioRenderCategory enumeration.
-      include: Add Windows.Media.Effects.AudioEffect runtimeclass.
+Billy Laws (1):
+      include: Add CHPEV2 CPU area definitions.
 
-Brendan Shanks (3):
-      kerberos: Ensure unixlib function tables and enum stay in sync.
-      mountmgr.sys: Ensure unixlib function tables and enum stay in sync.
-      winebus.sys: Ensure unixlib function tables and enum stay in sync.
+Biswapriyo Nath (6):
+      include: Add AudioCaptureEffectsManager runtimeclass in windows.media.effects.idl.
+      include: Add AudioRenderEffectsManager runtimeclass in windows.media.effects.idl.
+      include: Add AudioEffectsManager runtimeclass in windows.media.effects.idl.
+      include: Add IPackage2 definition in windows.applicationmodel.idl.
+      include: Add missing error codes in msctf.idl.
+      include: Add IEnumTfPropertyValue definition in msctf.idl.
 
-Daniel Lehman (1):
-      include: Add [_w]getenv_s.
+Brendan Shanks (15):
+      tools: Use posix_spawn() instead of fork()/execvp().
+      server: Remove the fallback epoll() syscalls.
+      crypt32: Ensure unixlib function tables and enum stay in sync.
+      msv1_0: Ensure unixlib function tables and enum stay in sync.
+      ws2_32: Ensure unixlib function tables and enum stay in sync.
+      bcrypt: Ensure unixlib function tables and enum stay in sync.
+      winegstreamer: Ensure unixlib function tables and enum stay in sync.
+      dwrite: Ensure unixlib function tables and enum stay in sync.
+      winspool.drv: Ensure unixlib function tables and enum stay in sync.
+      netapi32: Ensure unixlib function tables and enum stay in sync.
+      capi2032: Ensure unixlib function tables and enum stay in sync.
+      winealsa: Ensure unixlib function tables and enum stay in sync.
+      winecoreaudio: Ensure unixlib function tables and enum stay in sync.
+      wineoss: Ensure unixlib function tables and enum stay in sync.
+      winepulse: Ensure unixlib function tables and enum stay in sync.
 
-Davide Beatrici (14):
-      winepulse: Fix crash when requesting exclusive mode with an unsupported format.
-      wineoss: Update device cache in get_device_guid().
-      winepulse: Open/create driver registry key in get_device_guid().
-      winealsa: Export get_device_guid().
-      winecoreaudio: Export get_device_guid().
-      wineoss: Export get_device_guid().
-      winepulse: Export get_device_guid().
-      mmdevapi: Import get_device_guid() from driver.
-      winepulse: Move GetEndpointIDs into mmdevapi.
-      winealsa: Remove GetEndpointIDs.
-      winecoreaudio: Remove GetEndpointIDs.
-      wineoss: Remove GetEndpointIDs.
-      mmdevapi: Simplify load_driver_devices() by combining loops and removing unneeded allocation(s).
-      mmdevapi: Move name string duplication in MMDevice_Create() from caller.
+Daniel Lehman (2):
+      msxml3/tests: Fix failure messages.
+      msvcp110: Add std::_Throw_future_error.
 
-Dmitry Sokolov (1):
-      cmd: Fixed var substring in 'enableDelayedExpansion' mode.
+Dmitry Timoshkov (15):
+      wldap32: Add support for ldap_set_option(LDAP_OPT_HOST_NAME).
+      kerberos: Add ISC_REQ_DELEGATE to the list of supported flags.
+      dnsapi/tests: Add some tests for DNS_TYPE_SRV messages.
+      dnsapi: Accept name records of exact size at the end of the packet.
+      dnsapi: Set correct wDataLength for DNS_TYPE_SRV records.
+      gdiplus/tests: Fix compilation with PSDK compiler.
+      gdiplus/tests: Add a test for calling GdipImageSelectActiveFrame() with invalid frame on a memory bitmap.
+      gdiplus: In GdipImageSelectActiveFrame rely on codec->select_func() to fail.
+      comctl32: Use iswalnum() to filter alpha numeric characters from unicode messages.
+      schedsvc: Remove duplicate dwControlsAccepted initialization.
+      wevtsvc: Remove duplicate dwControlsAccepted initialization.
+      srvsvc: Add LanmanServer stub service.
+      user32: Listbox shouldn't send WM_COMMAND/LBN_DBLCLK notification if it has no items.
+      server: Write terminating '\0' in the strings.
+      d2d1: Scale stroke width for D2D1_STROKE_TRANSFORM_TYPE_FIXED in DrawGeometry::ID2D1DeviceContext1().
 
-Dmitry Timoshkov (1):
-      ntdll: Implement NtCreateToken().
-
-Eric Pouech (12):
-      dbghelp: Fix sign extension issues on 32bit compilation.
-      ntdll/tests: Add test for Win10 OutputDebugStringW evolution.
-      ntdll/tests: Introduce enumeration to handle stages in test_debugger().
-      ntdll/tests: Add tests for debuggee and new Win10 unicode debug strings.
-      kernelbase: Emit DBG_PRINTEXCEPTION_WIDE_C from OutputDebugStringW.
-      kernelbase: Implement WaitForDebugEventEx().
-      kernel32/tests: Fix spurious failures in console:test_wait() test.
-      kernel32/tests: Only access ProcessGroupId field when present.
-      kernel32/tests: Add tests for group and console flags in CreateProcess.
-      server: Separate console and new group flag (CreateProcess).
-      kernel32/tests: Extend to new process group tests for CreateProcess.
-      kernelbase: Correctly handle new process group flag in CreateProcess.
+Eric Pouech (3):
+      kernel32/console: Add tests for GenerateConsoleCtrlEvent().
+      cmd: Better handle ctrl-c events.
+      dbghelp: Don't insert dwz file map into module's file maps' chain.
 
 Esme Povirk (8):
-      user32/tests: Test cross-platform use of scroll functions.
-      user32/tests: Use winetest context in ok_sequence.
-      user32: Remove some todo's for working tests.
-      user32/tests: Share code between ok_sequence and dump_sequence.
-      user32/tests: Distinguish between extra and missing messages.
-      user32/tests: Always generate a description for WM_NCCALCSIZE.
-      mscoree/tests: Catch expected exception in loadpaths.exe.
-      user32/tests: Mark an occasional Windows behavior as broken.
+      user32/tests: Trace run number in test_SendMessage_other_thread.
+      user32/tests: Wait for GetMessage call to complete.
+      user32/tests: Check all letters in test_hotkey.
+      user32/tests: Register test_hvredraw class in temp desktop.
+      user32/tests: Detect win7's broken GetQueueStatus behavior.
+      user32/tests: Delete a faulty test.
+      user32/tests: Account for ignored messages in PeekMessage call.
+      user32/tests: Ignore other messages in test_broadcast.
 
-Etaash Mathamsetty (4):
-      ntdll: Allow NULL timeout in NtCreateNamedPipeFile.
-      ntdll: Add semi-stub for NtOpenKeyTransactedEx.
-      kernelbase: Add GetPackagePathByFullName stub.
-      wevtapi: Add stub for EvtCreateBookmark.
+Etaash Mathamsetty (2):
+      include: Update definition of KDPC.
+      ntoskrnl.exe/tests: Add KeInitializeDpc tests.
 
-Gabriel Ivăncescu (37):
-      mshtml: Traverse variants using a helper function.
-      mshtml: Use destructor in the vtbl for PerformanceTiming.
-      mshtml: Implement Cycle Collection for HTMLPerformance.
-      mshtml: Implement Cycle Collection for HTMLPerformanceNavigation.
-      mshtml: Implement Cycle Collection for objects that don't require traversal.
-      mshtml: Implement Cycle Collection for HTMLDOMAttribute.
-      mshtml: Implement Cycle Collection for HTMLAttributeCollection.
-      mshtml: Implement Cycle Collection for HTMLCSSStyleDeclaration.
-      mshtml: Implement Cycle Collection for HTMLStyleSheet.
-      mshtml: Implement Cycle Collection for HTMLStyleSheetsCollection.
-      mshtml: Implement Cycle Collection for HTMLStyleSheetRulesCollection.
-      mshtml: Implement Cycle Collection for HTMLStyleSheetRule.
-      mshtml: Use actual name when traversing variant.
-      mshtml: Implement Cycle Collection for HTMLDOMChildrenCollection.
-      mshtml: Implement Cycle Collection for HTMLElementCollection.
-      mshtml: Implement Cycle Collection for HTMLRectCollection.
-      mshtml: Implement Cycle Collection for HTMLRect.
-      mshtml: Implement Cycle Collection for DOMTokenList.
-      mshtml: Implement Cycle Collection for MutationObserver.
-      mshtml: Implement Cycle Collection for HTMLDOMImplementation.
-      mshtml: Implement Cycle Collection for MediaQueryList.
-      mshtml: Implement Cycle Collection for HTMLTextRange.
-      mshtml: Implement Cycle Collection for HTMLDOMRange.
-      mshtml: Implement Cycle Collection for HTMLSelectionObject.
-      mshtml: Implement Cycle Collection for HTMLEventObj.
-      mshtml: Implement Cycle Collection for DOM Events.
-      winex11: Avoid querying GPU properties in get_host_primary_monitor_rect.
-      mshtml: Actually traverse the object-specific edges.
-      mshtml: Separate the HTMLLocation from the outer window.
-      mshtml: Implement Cycle Collection for HTMLLocation.
-      mshtml: Implement Cycle Collection for outer windows.
-      mshtml: Get rid of NULL checks for the dispex vtbl.
-      mshtml: Implement Cycle Collection for inner windows.
-      mshtml: Move HTMLPerformanceNavigation related fields to the window.
-      mshtml: Move PerformanceTiming related fields to the window.
-      mshtml: Implement Cycle Collection for HTMLPerformanceTiming.
-      mshtml: Implement Cycle Collection for XMLHttpRequest.
+Evan Tang (2):
+      d3d11: Add tests for clearing RTs in the middle of a render.
+      wined3d: Restart vk render pass on RT clear.
 
-Jeff Smith (11):
-      gdiplus/tests: Simplify ICONINFO initialization.
-      gdiplus/tests: Create helper function for testing image properties.
-      gdiplus/tests: Add test for cursor with GdipCreateBitmapFromHICON.
-      gdiplus/tests: Add test for mask-only icon with GdipCreateBitmapFromHICON.
-      gdiplus: Fix GdipCreateBitmapFromICON return status with mask-only icon.
-      gdiplus/tests: Add test for 32 bpp icon with GdipCreateBitmapFromHICON.
-      gdiplus/tests: Add test for non-square icon with GdipCreateBitmapFromHICON.
-      gdiplus/tests: Add test for bitmap locked data from GdipCreateBitmapFromHICON.
-      gdiplus: Fix GdipCreateBitmapFromHICON bitmap data.
-      shlwapi/tests: Fix SHFormatDateTime test during DST.
-      shlwapi: Fix SHFormatDateTime implementation during DST.
+François Gouget (2):
+      dmsynth/tests: Add the trailing linefeed to a win_skip() message.
+      kernel32/tests: Allow a 0 removed entry count in the completion test.
 
-Lorenzo Ferrillo (1):
-      secur32: Increment iteration index after load_package error.
+Gabriel Ivăncescu (61):
+      mshtml: Implement querySelector for document fragments.
+      mshtml: Implement querySelectorAll for document fragments.
+      mshtml: Expose an EventTarget interface on the outer window for events' target dispatch.
+      mshtml: Return interface directly from node vtbl's QI instead of HRESULT, without AddRef.
+      mshtml: Introduce query_interface in dispex vtbl and use it for DOM Nodes.
+      mshtml: Use query_interface in the dispex vtbl for inner windows.
+      mshtml: Use query_interface in the dispex vtbl for XMLHttpRequest.
+      mshtml: Trace the object name in dispex methods.
+      mshtml: Unstub some implemented event handlers in IHTMLWindow7 interface.
+      mshtml: Use query_interface in the dispex vtbl for builtin constructors.
+      mshtml: Use query_interface in the dispex vtbl for HTMLLocation.
+      mshtml: Use query_interface in the dispex vtbl for HTMLStorage.
+      mshtml: Use query_interface in the dispex vtbl for CSS Styles.
+      mshtml: Use query_interface in the dispex vtbl for StyleSheetRules and collections.
+      mshtml: Use query_interface in the dispex vtbl for HTMLDOMChildrenCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLElementCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLRectCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLFiltersCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLAttributeCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLMimeTypesCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLNamespaceCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLPluginsCollection.
+      mshtml: Use query_interface in the dispex vtbl for HTMLDOMAttribute.
+      mshtml: Use query_interface in the dispex vtbl for HTMLEventObj.
+      mshtml: Use query_interface in the dispex vtbl for DOM Events.
+      mshtml: Get rid of the custom query_interface for DOM Events.
+      mshtml: Use query_interface in the dispex vtbl for MutationObserver.
+      mshtml: Use query_interface in the dispex vtbl for DOMTokenList.
+      mshtml: Use query_interface in the dispex vtbl for HTMLRect.
+      mshtml: Use query_interface in the dispex vtbl for DOM and Text Ranges.
+      mshtml: Use query_interface in the dispex vtbl for HTMLSelectionObject.
+      mshtml: Use query_interface in the dispex vtbl for HTMLDOMImplementation.
+      mshtml: Use query_interface in the dispex vtbl for HTMLScreen.
+      mshtml: Use query_interface in the dispex vtbl for History.
+      mshtml: Use query_interface in the dispex vtbl for Navigator.
+      mshtml: Use query_interface in the dispex vtbl for Console.
+      mshtml: Use query_interface in the dispex vtbl for MediaQueryList.
+      mshtml: Use query_interface in the dispex vtbl for Performance.
+      mshtml: Use query_interface in the dispex vtbl for PerformanceNavigation.
+      mshtml: Use query_interface in the dispex vtbl for PerformanceTiming.
+      mshtml: Get rid of `outer` in DispatchEx.
+      mshtml: Forward objects' IUnknown methods to the DispatchEx.
+      mshtml: Get rid of the custom qi for CSS Styles.
+      mshtml: Traverse and unlink AnchorElements using the dispex.
+      mshtml: Traverse and unlink AreaElements using the dispex.
+      mshtml: Traverse and unlink BodyElements using the dispex.
+      mshtml: Traverse and unlink FormElements using the dispex.
+      mshtml: Traverse and unlink FrameElements using the dispex.
+      mshtml: Traverse and unlink IFrames using the dispex.
+      mshtml: Traverse and unlink ImageElements using the dispex.
+      mshtml: Traverse and unlink InputElements using the dispex.
+      mshtml: Traverse and unlink ButtonElements using the dispex.
+      mshtml: Traverse and unlink LinkElements using the dispex.
+      mshtml: Traverse and unlink ObjectElements using the dispex.
+      mshtml: Traverse and unlink OptionElements using the dispex.
+      mshtml: Traverse and unlink ScriptElements using the dispex.
+      mshtml: Traverse and unlink SelectElements using the dispex.
+      mshtml: Traverse and unlink StyleElements using the dispex.
+      mshtml: Traverse and unlink TableElements using the dispex.
+      mshtml: Traverse and unlink TextAreaElements using the dispex.
+      mshtml: Unlink document nodes and fragments using the dispex.
 
-Louis Lenders (1):
-      wldp: Add WldpGetLockdownPolicy stub.
+Gerald Pfeifer (1):
+      ntdll: Fix leave_handler for FreeBSD and NetBSD.
 
-Marcus Meissner (1):
-      cryptui: LoadStringW gets characters as size, not bytes.
+Hans Leidekker (19):
+      wtsapi/tests: Use a heap buffer for the user SID.
+      webservices/tests: Fully initialize xmlstr.
+      wbemprox: Call GetAdaptersAddresses() in a loop.
+      netprofm: Call GetAdaptersAddresses() in a loop.
+      wpcap: Call GetAdaptersAddresses() in a loop.
+      ipconfig: Use CRT allocation functions.
+      ipconfig: Call GetAdaptersAddresses() in a loop.
+      wsdapi: Use CRT allocation functions.
+      wsdapi: Call GetAdaptersAddresses() in a loop.
+      wsdapi/tests: Use CRT allocation functions.
+      wsdapi/tests: Call GetAdaptersAddresses() in a loop.
+      ws2_32/tests: Use CRT allocation functions.
+      ws2_32/tests: Call GetAdaptersAddresses() in a loop.
+      iphlpapi/tests: Use CRT allocation functions.
+      iphlpapi/tests: Call GetAdaptersAddresses() in a loop.
+      wpcap/tests: Accept another return value from pcap_can_set_rfmon().
+      winscard/tests: Skip tests when SCardListReadersA() returns an empty list.
+      iphlpapi/tests: Call GetAdaptersAddresses() in a loop.
+      iphlpapi/tests: Call GetExtendedTcp/UdpTable() in a loop.
 
-Matteo Bruni (1):
-      d3dcompiler/tests: Avoid interpolation filters in test_samplers().
+Helix Graziani (1):
+      wldp: Add WldpQueryWindowsLockdownMode stub.
+
+Huw D. M. Davies (1):
+      ntdll: Store the codepage data addresses in both PEBs.
+
+Jacek Caban (10):
+      ntdll: Unconditionally forward console events to kernelbase.
+      mshtml: Use unsigned types for bitfields.
+      msvcrt: Use unsigned types for bitfields.
+      ole32/tests: Don't use bitfield for called_todo.
+      regedit: Use unsigned types for bitfields.
+      shell32: Use unsigned types for bit fields.
+      shell32: Use a signed value to assign single signed bitfields values.
+      server: Store both contexts in pending context object.
+      ntdll/tests: Add tests for setting context on unsuspended thread.
+      wow64win: Implement wow64_NtUserImmTranslateMessage.
+
+Jacob Czekalla (1):
+      comctl32/status: Invalidate entire status bar on WM_SIZE.
+
+Jeff Smith (3):
+      xaudio2/tests: Improve IID_IXAudio2 interface version checking.
+      dwrite: Treat null character as NO_VISUAL in script analyzer.
+      gdiplus: GdipIsVisiblePathPoint is not affected by world transform.
+
+Jinoh Kang (3):
+      loader: Fix calculation of thread_data address in Linux x86-64 preloader.
+      loader: Don't return from __stack_chk_fail() stub in preloader.
+      user32/tests: Isolate window update region tests in a temporary desktop.
+
+Joel Holdsworth (1):
+      ntdll/tests: Update link test to reflect Windows 11 behaviour.
+
+Julian Rüger (1):
+      po: Update German translation.
+
+Lorenzo Ferrillo (2):
+      ole32: Leave the RunningObjectTable Critical Section before umarshalling object.
+      ole32: Add debug info to RunningObjectTable critical section.
+
+Matteo Bruni (11):
+      wined3d: Don't call wined3d_context_gl_apply_blit_state() from texture2d_read_from_framebuffer().
+      wined3d: Prepare/load the destination resource location in ffp_blitter_blit().
+      wined3d: Prepare/load the destination resource location in arbfp_blitter_blit().
+      wined3d: Don't bind the FBO to GL_READ_FRAMEBUFFER in wined3d_context_gl_apply_blit_state().
+      wined3d: Don't call wined3d_texture_load() from wined3d_context_gl_apply_blit_state().
+      wined3d: Don't setup FBO and draw buffers in wined3d_context_gl_apply_blit_state().
+      wined3d: Rename wined3d_context_gl_apply_fbo_state_blit() function.
+      wined3d: Handle depth textures in texture2d_read_from_framebuffer().
+      wined3d: Don't force going through a texture when downloading from renderbuffers.
+      wined3d: Skip acquiring a context for an offscreen resource in texture2d_read_from_framebuffer().
+      wined3d: Don't skip ARB fragment program selection when fog state is dirty.
 
 Mohamad Al-Jaf (5):
-      include: Add dxcore_interface.h file.
-      include: Add dxcore.h file.
-      dxcore: Add stub DLL.
-      dxcore: Add DXCoreCreateAdapterFactory() stub.
-      apisetschema: Add ext-ms-win-dxcore-l1-1-0.
+      windows.applicationmodel: Add stub DLL.
+      appxdeploymentclient: Add stub DLL.
+      appxdeploymentclient: Implement IActivationFactory::ActivateInstance().
+      include: Add Windows.Management.Deployment.IPackageManager2 interface definition.
+      appxdeploymentclient: Add IPackageManager2 stub interface.
 
-Nikolay Sivov (1):
-      wldp: Add WldpIsDynamicCodePolicyEnabled() stub.
+Nikolay Sivov (2):
+      kernel32/tests: Add activation context test with empty assembly manifest.
+      ntdll/actctx: Accept empty assembly elements.
 
-Paul Gofman (3):
-      user32/tests: Test more flags for MessageBox.
-      user32/msgbox: Implement MB_TOPMOST.
-      dinput: Unregister raw input on foreground loss.
+Paul Gofman (18):
+      ntdll/tests: Add tests for RtlGetFullPathName_U and RtlDosPathNameToNtPathName_U with mask.
+      ntdll/tests: Test NtQueryDirectoryFile with wildcards.
+      kernel32/tests: Add more tests for FindFirstFile with wildcards.
+      kernelbase: Duplicate file name matching code for FindNextFileW().
+      kernelbase: Get unprocessed mask in FindFirstFileExW().
+      kernelbase: Support masks suggesting no extension in FindNextFile().
+      ntdll/tests: Adjust test_virtual_unwind() for Win11 results.
+      include: Define up to date exception flags.
+      ntdll/tests: Adjust test_nested_exception() for Win11 results.
+      ntdll/tests: Adjust test_extended_context() for Win11 results.
+      ntdll/tests: Adjust test_raiseexception_regs() for Win11 results.
+      wtsapi32: Improve WTSEnumerateSessionsW() stub.
+      wtsapi32: Implement WTSEnumerateSessionsA() on top of WTSEnumerateSessionsW().
+      wtsapi32: Handle WTSConnectState class in WTSQuerySessionInformationW().
+      server: Support FileStandardInformation for pipes.
+      server: Don't set SO_RCVBUF below Windows default value on Unix socket.
+      d3dx9: Handle special adjacency index value in d3dx9_mesh_OptimizeInplace().
+      d3dx9/tests: Add a basic test for d3dx9_mesh_OptimizeInplace().
 
-Piotr Caban (15):
-      msvcr70: Don't set SSE2 control register in _control87.
-      wmic: Use fwprintf to output error messages.
-      wmic: Fix output when redirected to pipe.
-      msvcr90/tests: Restore thread locale settings in _getptd tests to avoid side effects.
-      msvcr90/tests: Reorder locale refcount tests to workaround leak in _create_locale.
-      msvcrt/tests: Make registry handle inheritable in test_invalid_stdin tests.
-      ntdll: Don't overwrite last byte of RuntimeInfo if odd number of bytes is used.
-      localspl: Store fallback print processor in AddPrinterDriver.
-      localspl: Try fallback print processor if datatype is not supported.
-      winprint: Implement TEXT print processor.
-      msvcr110: Add Context::IsCurrentTaskCollectionCanceling implementation.
-      msvcr110: Add _Cancellation_beacon class implementation.
-      msvcr120/tests: Remove workaround for not implemented _StructuredTaskCollection::ctor().
-      msvcr120/tests: Add _Cancellation_beacon tests.
-      msvcr120/tests: Add Context::IsCurrentTaskCollectionCanceling tests.
+Piotr Caban (4):
+      msvcp100: Fix failure class layout.
+      msvcp110: Add _Throw_C_error implementation.
+      wineps: Remove dynamic glyph list.
+      wineps: Fix EMRPOLYDRAW16 printing.
 
-Rémi Bernon (35):
-      include: Add Windows.Management.Deployment.DeploymentResult runtimeclass definition.
-      include: Add Windows.Management.Deployment.PackageUserInformation runtimeclass definition.
-      include: Add Windows.Management.Deployment.PackageManager runtimeclass definition.
-      include: Add Windows.Storage.Streams.RandomAccessStreamReference runtimeclass definition.
-      include: Add Windows.ApplicationModel.AppDisplayInfo runtimeclass definition.
-      include: Add Windows.ApplicationModel.PackageStatus runtimeclass definition.
-      widl: Guard against re-import of the main input file.
-      include: Add Windows.ApplicationModel.Core.AppListEntry runtimeclass definition.
-      include: Add Windows.ApplicationModel.IPackage3 interface definition.
-      winegstreamer: Don't append videoconvert for video/x-wmv output.
-      include: Add MF_BYTESTREAM_EFFECTIVE_URL GUID declaration.
-      mf/tests: Add some network scheme resolver tests.
-      mf/scheme_handler: Split file scheme handler to scheme_handler.c.
-      mf/scheme_handler: Implement http(s):// scheme handler using urlmon.
-      mf/session: Use local variables to access transform node streams.
-      mf/session: Use a helper to deliver transform node requested samples.
-      mf/session: Drain transform node input streams individually.
-      mf/session: Drain remaining requests in transform_node_deliver_samples.
-      mf/session: Use helpers to push and pop samples for transform streams.
-      mf/session: Push transform input samples directly to ProcessInput.
-      mf/session: Request more samples from upstream when necessary.
-      mf/session: Increase the request count when requests are already queued.
-      include: Prefix winetest global counters with winetest_.
-      include: Rename winetest thread data struct and getter.
-      include: Prefix winetest color constants with winetest_.
-      include: Make general winetest helpers static inline.
-      include: Initialize winetest global counters to 0.
-      include: Rename winetest_printf to winetest_print_location.
-      include: Pass a temporary buffer to winetest_elapsed.
-      include: Introduce winetest wrappers for vprintf and GetTickCount.
-      include: Avoid using strcmp directly in wine/test.h.
-      dinput: Get rid of duplicated winetest helpers.
-      win32u: Init vsc2vk in NtUserGetKeyNameText only if necessary.
-      win32u: Init vsc2vk in NtUserMapVirtualKeyEx only if necessary.
-      win32u: Init vsc2char in NtUserMapVirtualKeyEx only if necessary.
+Ryan Hendrickson (1):
+      regedit: Export hex(4) instead of dword if size isn't 4 bytes.
 
-Torge Matthies (1):
-      crypt32: Fix CMS SignedData encoding.
+Rémi Bernon (122):
+      dmsynth: Remove unnecessary comments.
+      dmsynth: Always return S_FALSE from DllCanUnloadNow.
+      dmsynth: Move IDirectMusicSynthSinkImpl struct to where it is used.
+      dmsynth: Rename IDirectMusicSynthSinkImpl method prefix to synth_sink.
+      dmsynth: Get rid of the IDirectMusicSynthSinkImpl typedef.
+      dmsynth: Move IDirectMusicSynthImpl struct to where it is used.
+      dmsynth: Rename IDirectMusicSynth8Impl method prefix to synth.
+      dmsynth: Get rid of the IDirectMusicSynth8Impl typedef.
+      dmsynth: Use CRT allocation functions.
+      dmsynth/tests: Avoid dynamic format string.
+      dmsynth/tests: Import and use a check_interface helper.
+      dmsynth/tests: Test DirectMusicSynthSink class in isolation.
+      dmsynth/tests: Test DirectMusicSynth class in isolation.
+      windows.applicationmodel/tests: Add some IPackageManager tests.
+      makedep: Use #pragma makedep testdll for TESTDLL resources.
+      makedep: Support generating .exe TESTDLL resources.
+      windows.applicationmodel/tests: Test IPackageManager_RegisterPackageAsync.
+      windows.applicationmodel/tests: Test executing a WinRT package application.
+      include: Fix incorrect IDirectMusicPortDownload_Unload macro.
+      dmusic/tests: Test IDirectMusic(Port)Download interfaces.
+      dmusic/tests: Test IDirectMusicPort_(Download|Unload)Instrument.
+      dmusic: Always return S_FALSE from DllCanUnloadNow.
+      dmusic: Simplify and cleanup IDirectMusicDownload constructor.
+      dmusic: Move IDirectMusicDownloadImpl struct to where it is used.
+      dmusic: Rename IDirectMusicDownloadImpl method prefix to download.
+      dmusic: Implement synth port IDirectMusicPortDownload_GetDLId.
+      dmusic: Implement IDirectMusicPortDownload_AllocateBuffer.
+      dmusic: Implement IDirectMusicPortDownload_(Download|Unload).
+      dmusic: Implement IDirectMusicPortDownload_GetBuffer.
+      dmsynth: Implement IDirectMusicSynthSink_SetDirectSound semi-stub.
+      dmsynth: Avoid leaking master clock references.
+      dmsynth: Allow changing master clock while active.
+      dmsynth: Implement IDirectMusicSynthSink_Activate semi-stub.
+      dmsynth: Implement SampleToRefTime and RefTimeToSample.
+      makedep: Fix a string format specifier typo.
+      dmsynth: Move constructor parameter checks to class factory.
+      include: Use IReferenceClock interface from strmif.idl in dmusicc.h.
+      dmsynth: Implement latency IReferenceClock interface on the sink.
+      dmsynth: Forward IDirectMusicSynth_GetLatencyClock to the sink.
+      dmsynth: Return S_FALSE if IDirectMusicSynth_Activate is no-op.
+      dmsynth: Return DMUS_E_SYNTHNOTCONFIGURED when sink fails to activate.
+      dmusic: Move constructor parameter checks to class factory.
+      dmusic: Rename IDirectMusicCollectionImpl method prefix to collection.
+      dmusic: Get rid of the IDirectMusicCollectionImpl typedef.
+      dmusic: Get rid of struct collection liCollectionPosition member.
+      dmusic: Get rid of struct collection liWavePoolTablePosition member.
+      dmusic: Simplify and cleanup IDirectMusicInstrument constructor.
+      dmusic: Rename IDirectMusicInstrumentImpl method prefix to instrument.
+      dmusic: Get rid of the IDirectMusicInstrumentImpl typedef.
+      dinput/tests: Report the driver success and skipped tests counters.
+      windows.applicationmodel/tests: Report success and skipped tests counters.
+      ntoskrnl/tests: Use wine/test.h in the driver tests.
+      dmime/tests: Test IDirectMusicGraph interface with a dummy tool.
+      dmime/tests: Test performance IDirectMusicTool interface.
+      dmime/tests: Test performance IDirectMusicGraph interface.
+      dmime/tests: Test IDirectMusicPerformance time conversion.
+      dmime/tests: Test IDirectMusicPerformance_*PMsg methods.
+      dmime/tests: Test IDirectMusicTool message reception filter.
+      dmime/tests: Test IDirectMusicTool message reception delay.
+      dmsynth/tests: Test IDirectMusicSynth_Unload.
+      dmusic: Avoid passing invalid handle to IDirectMusicSynth_Unload.
+      dmsynth: Implement IDirectMusicSynth_(Download|Unload) for instruments.
+      dmsynth: Implement IDirectMusicSynth_(Download|Unload) for waves.
+      dmsynth: Implement IDirectMusicSynth_Download for instrument regions.
+      dmsynth: Implement IDirectMusicSynth_Download for instrument articulations.
+      dmusic: Use a struct list for instrument articulations.
+      dmusic: Use a struct list for instrument regions.
+      dmusic: Reset riff chunk type to 0 when it is invalid.
+      dmusic: Rewrite instrument lrgn list parsing.
+      dmusic: Rewrite instrument lart list parsing.
+      dmusic: Rewrite instrument ins chunk parsing.
+      dmusic: Allocate and parse instruments in a single pass.
+      dmusic: Cleanup collection instrument iteration loops.
+      dmusic: Stop leaking instruments on collection release.
+      dmime: Always return S_FALSE from DllCanUnloadNow.
+      dmime: Use CRT allocation functions.
+      dmime: Use the correct interface methods.
+      dmime: Fix indentation in DirectMusicPerformance class constructor.
+      dmime: Rename IDirectMusicPerformance8Impl method prefix to performance.
+      dmime: Get rid of IDirectMusicPerformance8Impl typedef.
+      dmime: Fix indentation in IDirectMusicPerformance_QueryInterface.
+      dmime: Add a IDirectMusicGraph interface to the performance.
+      dmime: Add a IDirectMusicTool interface to the performance.
+      dmband: Always return S_FALSE from DllCanUnloadNow.
+      dmband: Use CRT allocation functions.
+      dmband: Use PARENTSRC with dmusic.
+      dswave: Always return S_FALSE from DllCanUnloadNow.
+      dswave: Use CRT allocation functions.
+      dswave: Use PARENTSRC with dmusic.
+      dmstyle: Awlays return S_FALSE from DllCanUnloadNow.
+      dmstyle: Use CRT allocation functions.
+      dmstyle: Use PARENTSRC with dmusic.
+      dmime: Remove FIXME from performance IDirectMusicGraph methods.
+      dmime: Implement some performance IDirectMusicTool methods.
+      dmime: Rewrite IDirectMusicGraph tools iteration.
+      dmime: Rename DirectMusicGraph method prefix to graph.
+      dmime: Get rid of the IDirectMusicGraphImpl typedef.
+      dmime: Implement IDirectMusicGraph_StampPMsg.
+      dmime: Implement performance IDirectMusicGraph_StampPMsg.
+      dmime: Set the tool delivery type on the messages flags.
+      dmcompos: Always return S_FALSE from DllCanUnloadNow.
+      dmcompos: Use CRT allocation functions.
+      dmcompos: Use PARENTSRC with dmusic.
+      dmloader: Always return S_FALSE from DllCanUnloadNow.
+      dmloader: Use CRT allocation functions.
+      dmloader: Use PARENTSRC with dmusic.
+      dmscript: Always return S_FALSE from DllCanUnloadNow.
+      dmscript: Use CRT allocation functions.
+      dmscript: Use PARENTSRC with dmusic.
+      dmime: Use PARENTSRC with dmusic.
+      dmime: Rewrite IDirectMusicPerformance8_GetTime.
+      dmime: Implement MusicToReferenceTime and ReferenceToMusicTime.
+      dmime: Cleanup IDirectMusicPerformance_AllocPMsg.
+      dmime: Cleanup IDirectMusicPerformance_FreePMsg.
+      dmime: Cleanup IDirectMusicPerformance_SendPMsg.
+      dmime: Implement IDirectMusicPerformance8_ClonePMsg.
+      dmusic: Rewrite collection lins list parsing.
+      dmusic: Rewrite collection ptbl chunk parsing.
+      dmusic: Rewrite collection INFO list parsing.
+      dmusic: Rewrite collection DLS chunk parsing.
+      dmusic: Parse instrument name from INFO list.
+      dmusic: Add more parsed instruments traces.
 
-Wonjun Jung (3):
-      wbemprox: Add Win32_SoundDevice query test for Caption property.
-      wbemprox: Add Caption property in Win32_SoundDevice.
-      wbemprox: Add NetConnectionID, NetEnabled properties in Win32_NetworkAdapter.
+Stefan Dösinger (13):
+      d3d9/tests: Skip big test_query loops if the d3d implementation is too slow.
+      d3d9/tests: Don't fail d3d9ex if the window manager restores focus too soon.
+      d3d9/tests: Don't fail test_reset_fullscreen if the WM resizes us.
+      d3d9/tests: Don't check messages when doing the minimization workaround dance.
+      d3d8/tests: Don't check messages when doing the minimization workaround dance.
+      gitlab: Enable d3d8 and d3d9 device tests.
+      d3d9/tests: Zero stride tests crash on Windows XP, r200 GPU.
+      d3d8/tests: Zero stride tests crash on Windows XP, r200 GPU.
+      d3d9/tests: Request a 3 mip level cube texture in test_getdc().
+      d3d8/tests: Fix skipping ATI2N in test_resource_access.
+      d3d9/tests: Fix skipping ATI2N in test_resource_access.
+      d3d8/tests: Mark the hidden test WM_WINDOWPOSCHANGED test flaky.
+      d3d9/tests: Mark hidden window WM_WINDOWPOSCHANGED tests unconditionally flaky.
 
-Zebediah Figura (13):
-      wined3d: Move struct wined3d_texture_gl to wined3d_gl.h.
-      wined3d: Move struct fbo_entry to wined3d_gl.h.
-      wined3d: Move struct wined3d_sampler_gl to wined3d_gl.h.
-      wined3d: Move struct wined3d_buffer_gl to wined3d_gl.h.
-      wined3d: Move struct wined3d_rendertarget_view_gl to wined3d_gl.h.
-      wined3d: Move struct wined3d_shader_resource_view_gl to wined3d_gl.h.
-      wined3d: Move struct wined3d_unordered_access_view_gl to wined3d_gl.h.
-      wined3d: Move struct wined3d_swapchain_gl to wined3d_gl.h.
-      wined3d: Move the remaining wined3d_gl_info functions to wined3d_gl.h.
-      wined3d: Move struct wined3d_format_gl to wined3d_gl.h.
-      wined3d: Move the remaining GL-specific definitions to wined3d_gl.h.
-      wined3d: Move the wined3d_gl.h include to individual files.
-      server: Signal AFD_POLL_BIT_WRITE at the same time as AFD_POLL_BIT_CONNECT.
+Tim Clem (2):
+      win32u/tests: Add a test for cross-process WM_GETDLGCODE with a NULL lparam.
+      win32u: Correct the packed size of WM_GETDLGCODE when lparam is NULL.
+
+Yuxuan Shui (2):
+      urlmon: Test http protocol through CreateBinding.
+      urlmon: Fix NULL dereference in BindProtocol_UnlockRequest.
+
+Zebediah Figura (14):
+      d3dxof: Remove unnecessary includes.
+      wmvcore: Explicitly include strmif.h.
+      include: Do not import strmif.idl in mediaobj.idl.
+      dsound: Do not include strmif.h.
+      wined3d: Enable shaderDrawParameters on Vulkan 1.1 if supported.
+      wined3d: Allow creating a feature level < 10 device if KHR_shader_draw_parameters is missing.
+      wined3d: Do not use EXT_host_query_reset if hostQueryReset is not actually supported.
+      wined3d: Do not use EXT_transform_feedback if transformFeedback is not actually supported.
+      wined3d: Remove the unused "sampler" local variable from wined3d_context_vk_load_shader_resources().
+      wined3d: Remove WINED3D_TEXTURE_NORMALIZED_COORDS.
+      wined3d: Remove the unused "current_fprogram_id" field from struct shader_arb_priv.
+      wined3d: Remove the unused "current_vprogram_id" field from struct shader_arb_priv.
+      wined3d: Do not set last_was_pshader from the GLSL fragment pipe.
+      sensapi: Remove unnecessary includes.
+
+Zhiyi Zhang (4):
+      comctl32/edit: Don't use WM_TIMER to update caret position.
+      user32/edit: Don't use WM_TIMER to update caret position.
+      user32/tests: Test IsDialogMessageA() converting ASCII WM_CHAR messages.
+      user32: Map WM_CHAR wparam in ASCII to Unicode in IsDialogMessageA() for CJK locales.
+
+Ziqing Hui (9):
+      winegstreamer: Add push_event wrapper.
+      winegstreamer: Add codec data to h264 format.
+      mf/tests: Call check_attributes in check_mft_get_output_current_type_.
+      mf/tests: Add tests for h264 encoder.
+      mf/tests: Use h264 and aac in mp4 media sink tests.
+      winegstreamer: Add MFMPEG4SinkClassFactory.
+      winegstreamer: Introduce new wg_muxer struct.
+      winegstreamer: Implement seeking query for wg_muxer sink pad.
+      winegstreamer: Create wg_muxer for media sink.
