@@ -43,7 +43,6 @@
 #include <fenv.h>
 #include <unistd.h>
 
-#include <libkern/OSAtomic.h>
 #include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioFormat.h>
 #include <AudioToolbox/AudioConverter.h>
@@ -74,13 +73,22 @@
 #define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
 #endif
 
+#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
+#include <os/lock.h>
+#else
+#include <libkern/OSAtomic.h>
+typedef OSSpinLock                  os_unfair_lock;
+#define os_unfair_lock_lock(lock)   OSSpinLockLock(lock)
+#define os_unfair_lock_unlock(lock) OSSpinLockUnlock(lock)
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
 #define MAX_DEV_NAME_LEN 10 /* Max 32 bit digits */
 
 struct coreaudio_stream
 {
-    OSSpinLock lock;
+    os_unfair_lock lock;
     AudioComponentInstance unit;
     AudioConverterRef converter;
     AudioStreamBasicDescription dev_desc; /* audio unit format, not necessarily the same as fmt */
@@ -377,7 +385,7 @@ static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
     struct coreaudio_stream *stream = user;
     UINT32 to_copy_bytes, to_copy_frames, chunk_bytes, lcl_offs_bytes;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(stream->playing){
         lcl_offs_bytes = stream->lcl_offs_frames * stream->fmt->nBlockAlign;
@@ -401,7 +409,7 @@ static OSStatus ca_render_cb(void *user, AudioUnitRenderActionFlags *flags,
     if(nframes > to_copy_frames)
         silence_buffer(stream, ((BYTE *)data->mBuffers[0].mData) + to_copy_bytes, nframes - to_copy_frames);
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return noErr;
 }
@@ -434,7 +442,7 @@ static OSStatus ca_capture_cb(void *user, AudioUnitRenderActionFlags *flags,
     OSStatus sc;
     UINT32 cap_wri_offs_frames;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     cap_wri_offs_frames = (stream->cap_offs_frames + stream->cap_held_frames) % stream->cap_bufsize_frames;
 
@@ -455,7 +463,7 @@ static OSStatus ca_capture_cb(void *user, AudioUnitRenderActionFlags *flags,
 
     sc = AudioUnitRender(stream->unit, flags, ts, bus, nframes, &list);
     if(sc != noErr){
-        OSSpinLockUnlock(&stream->lock);
+        os_unfair_lock_unlock(&stream->lock);
         return sc;
     }
 
@@ -475,7 +483,7 @@ static OSStatus ca_capture_cb(void *user, AudioUnitRenderActionFlags *flags,
         }
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     return noErr;
 }
 
@@ -1262,9 +1270,9 @@ static NTSTATUS unix_get_buffer_size(void *args)
     struct get_buffer_size_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
     *params->frames = stream->bufsize_frames;
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
@@ -1329,7 +1337,7 @@ static NTSTATUS unix_get_latency(void *args)
     AudioObjectPropertyAddress addr;
     OSStatus sc;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     addr.mScope = get_scope(stream->flow);
     addr.mSelector = kAudioDevicePropertyLatency;
@@ -1339,14 +1347,14 @@ static NTSTATUS unix_get_latency(void *args)
     sc = AudioObjectGetPropertyData(stream->dev_id, &addr, 0, NULL, &size, &latency);
     if(sc != noErr){
         WARN("Couldn't get _Latency property: %x\n", (int)sc);
-        OSSpinLockUnlock(&stream->lock);
+        os_unfair_lock_unlock(&stream->lock);
         params->result = osstatus_to_hresult(sc);
         return STATUS_SUCCESS;
     }
 
     params->result = ca_get_max_stream_latency(stream, &stream_latency);
     if(FAILED(params->result)){
-        OSSpinLockUnlock(&stream->lock);
+        os_unfair_lock_unlock(&stream->lock);
         return STATUS_SUCCESS;
     }
 
@@ -1355,7 +1363,7 @@ static NTSTATUS unix_get_latency(void *args)
      * the period time */
     *params->latency = muldiv(latency, 10000000, stream->fmt->nSamplesPerSec) + stream->period;
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
@@ -1371,9 +1379,9 @@ static NTSTATUS unix_get_current_padding(void *args)
     struct get_current_padding_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
     *params->padding = get_current_padding_nolock(stream);
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
@@ -1383,7 +1391,7 @@ static NTSTATUS unix_start(void *args)
     struct start_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
         params->result = AUDCLNT_E_EVENTHANDLE_NOT_SET;
@@ -1394,7 +1402,7 @@ static NTSTATUS unix_start(void *args)
         params->result = S_OK;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return STATUS_SUCCESS;
 }
@@ -1404,7 +1412,7 @@ static NTSTATUS unix_stop(void *args)
     struct stop_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(!stream->playing)
         params->result = S_FALSE;
@@ -1413,7 +1421,7 @@ static NTSTATUS unix_stop(void *args)
         params->result = S_OK;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return STATUS_SUCCESS;
 }
@@ -1423,7 +1431,7 @@ static NTSTATUS unix_reset(void *args)
     struct reset_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(stream->playing)
         params->result = AUDCLNT_E_NOT_STOPPED;
@@ -1442,7 +1450,7 @@ static NTSTATUS unix_reset(void *args)
         params->result = S_OK;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     return STATUS_SUCCESS;
 }
 
@@ -1482,7 +1490,7 @@ static NTSTATUS unix_get_render_buffer(void *args)
     SIZE_T size;
     UINT32 pad;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     pad = get_current_padding_nolock(stream);
 
@@ -1527,7 +1535,7 @@ static NTSTATUS unix_get_render_buffer(void *args)
     params->result = S_OK;
 
 end:
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return STATUS_SUCCESS;
 }
@@ -1538,7 +1546,7 @@ static NTSTATUS unix_release_render_buffer(void *args)
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     BYTE *buffer;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(!params->written_frames){
         stream->getbuf_last = 0;
@@ -1571,7 +1579,7 @@ static NTSTATUS unix_release_render_buffer(void *args)
         params->result = S_OK;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return STATUS_SUCCESS;
 }
@@ -1584,7 +1592,7 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     LARGE_INTEGER stamp, freq;
     SIZE_T size;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(stream->getbuf_last){
         params->result = AUDCLNT_E_OUT_OF_ORDER;
@@ -1628,7 +1636,7 @@ static NTSTATUS unix_get_capture_buffer(void *args)
     params->result = S_OK;
 
 end:
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
     return STATUS_SUCCESS;
 }
 
@@ -1637,7 +1645,7 @@ static NTSTATUS unix_release_capture_buffer(void *args)
     struct release_capture_buffer_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     if(!params->done){
         stream->getbuf_last = 0;
@@ -1655,7 +1663,7 @@ static NTSTATUS unix_release_capture_buffer(void *args)
         params->result = S_OK;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     return STATUS_SUCCESS;
 }
@@ -1665,7 +1673,7 @@ static NTSTATUS unix_get_next_packet_size(void *args)
     struct get_next_packet_size_params *params = args;
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     capture_resample(stream);
 
@@ -1674,7 +1682,7 @@ static NTSTATUS unix_get_next_packet_size(void *args)
     else
         *params->frames = 0;
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     params->result = S_OK;
     return STATUS_SUCCESS;
@@ -1692,7 +1700,7 @@ static NTSTATUS unix_get_position(void *args)
         return STATUS_SUCCESS;
     }
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
 
     *params->pos = stream->written_frames - stream->held_frames;
 
@@ -1704,7 +1712,7 @@ static NTSTATUS unix_get_position(void *args)
         *params->qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
     }
 
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     params->result = S_OK;
     return STATUS_SUCCESS;
@@ -1785,7 +1793,7 @@ static NTSTATUS unix_set_event_handle(void *args)
     struct coreaudio_stream *stream = handle_get_stream(params->stream);
     HRESULT hr = S_OK;
 
-    OSSpinLockLock(&stream->lock);
+    os_unfair_lock_lock(&stream->lock);
     if(!stream->unit)
         hr = AUDCLNT_E_DEVICE_INVALIDATED;
     else if(!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
@@ -1794,7 +1802,7 @@ static NTSTATUS unix_set_event_handle(void *args)
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     else
         stream->event = params->event;
-    OSSpinLockUnlock(&stream->lock);
+    os_unfair_lock_unlock(&stream->lock);
 
     params->result = hr;
     return STATUS_SUCCESS;
