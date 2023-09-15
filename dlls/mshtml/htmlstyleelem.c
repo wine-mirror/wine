@@ -389,17 +389,24 @@ static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
     HTMLElement_destructor(iface);
 }
 
-static void HTMLStyleElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsstyle)
-        note_cc_edge((nsISupports*)This->nsstyle, "This->nsstyle", cb);
+    return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
 }
 
-static void HTMLStyleElement_unlink(HTMLDOMNode *iface)
+static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLStyleElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsstyle)
+        note_cc_edge((nsISupports*)This->nsstyle, "nsstyle", cb);
+}
+
+static void HTMLStyleElement_unlink(DispatchEx *dispex)
+{
+    HTMLStyleElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsstyle);
 }
 
@@ -428,8 +435,15 @@ static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .traverse              = HTMLStyleElement_traverse,
-    .unlink                = HTMLStyleElement_unlink
+};
+
+static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLStyleElement_traverse,
+        .unlink         = HTMLStyleElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLStyleElement_iface_tids[] = {
@@ -438,7 +452,7 @@ static const tid_t HTMLStyleElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLStyleElement_dispex = {
     "HTMLStyleElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLStyleElement_event_target_vtbl.dispex_vtbl,
     DispHTMLStyleElement_tid,
     HTMLStyleElement_iface_tids,
     HTMLStyleElement_init_dispex_info
