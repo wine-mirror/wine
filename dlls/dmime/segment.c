@@ -285,29 +285,24 @@ static HRESULT WINAPI segment_InsertTrack(IDirectMusicSegment8 *iface, IDirectMu
     return segment_append_track(This, track, group, 0);
 }
 
-static HRESULT WINAPI segment_RemoveTrack(IDirectMusicSegment8 *iface, IDirectMusicTrack *pTrack)
+static HRESULT WINAPI segment_RemoveTrack(IDirectMusicSegment8 *iface, IDirectMusicTrack *track)
 {
-  struct segment *This = impl_from_IDirectMusicSegment8(iface);
-  struct list* pEntry = NULL;
-  struct track_entry *pIt = NULL;
+    struct segment *This = impl_from_IDirectMusicSegment8(iface);
+    struct track_entry *entry;
 
-  TRACE("(%p, %p)\n", This, pTrack);
+    TRACE("(%p, %p)\n", This, track);
 
-  LIST_FOR_EACH (pEntry, &This->tracks) {
-    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
-    if (pIt->pTrack == pTrack) {
-      TRACE("(%p, %p): track in list\n", This, pTrack);
-      
-      list_remove(&pIt->entry);
-      IDirectMusicTrack_Init(pIt->pTrack, NULL);
-      IDirectMusicTrack_Release(pIt->pTrack);
-      free(pIt);
-
-      return S_OK;
+    LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+    {
+        if (entry->pTrack == track)
+        {
+            list_remove(&entry->entry);
+            track_entry_destroy(entry);
+            return S_OK;
+        }
     }
-  }
-  
-  return S_FALSE;
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI segment_InitPlay(IDirectMusicSegment8 *iface,
