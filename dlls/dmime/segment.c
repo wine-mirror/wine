@@ -190,52 +190,44 @@ static HRESULT WINAPI segment_SetDefaultResolution(IDirectMusicSegment8 *iface, 
     return S_OK;
 }
 
-static HRESULT WINAPI segment_GetTrack(IDirectMusicSegment8 *iface, REFGUID rguidType,
-        DWORD dwGroupBits, DWORD dwIndex, IDirectMusicTrack **ppTrack)
+static HRESULT WINAPI segment_GetTrack(IDirectMusicSegment8 *iface, REFGUID type, DWORD group,
+        DWORD index, IDirectMusicTrack **ret_track)
 {
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
-  CLSID pIt_clsid;
-  struct list* pEntry = NULL;
-  struct track_entry *pIt = NULL;
-  IPersistStream* pCLSIDStream = NULL;
+  struct track_entry *entry;
   HRESULT hr = S_OK;
 
-  TRACE("(%p, %s, %#lx, %#lx, %p)\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, ppTrack);
+  TRACE("(%p, %s, %#lx, %#lx, %p)\n", This, debugstr_dmguid(type), group, index, ret_track);
 
-  if (NULL == ppTrack) {
-    return E_POINTER;
+  if (!ret_track) return E_POINTER;
+
+  LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+  {
+      if (group != -1 && !(entry->dwGroupBits & group)) continue;
+
+      if (!IsEqualGUID(&GUID_NULL, type))
+      {
+          CLSID entry_type = GUID_NULL;
+          IPersistStream *persist;
+
+          if (SUCCEEDED(hr = IDirectMusicTrack_QueryInterface(entry->pTrack, &IID_IPersistStream, (void **)&persist)))
+          {
+              hr = IPersistStream_GetClassID(persist, &entry_type);
+              if (SUCCEEDED(hr)) TRACE(" - %p -> %s\n", entry, debugstr_dmguid(&entry_type));
+              IPersistStream_Release(persist);
+          }
+
+          if (!IsEqualGUID(&entry_type, type)) continue;
+      }
+
+      if (!index--)
+      {
+          *ret_track = entry->pTrack;
+          IDirectMusicTrack_AddRef(entry->pTrack);
+          return S_OK;
+      }
   }
 
-  LIST_FOR_EACH (pEntry, &This->tracks) {
-    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
-    TRACE(" - %p -> %#lx,%p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
-    if (0xFFFFFFFF != dwGroupBits && 0 == (pIt->dwGroupBits & dwGroupBits)) continue ;
-    if (FALSE == IsEqualGUID(&GUID_NULL, rguidType)) {
-      /**
-       * it rguidType is not null we must check if CLSIDs are equal
-       * and the unique way to get it is using IPersistStream Interface
-       */
-      hr = IDirectMusicTrack_QueryInterface(pIt->pTrack, &IID_IPersistStream, (void**) &pCLSIDStream);
-      if (FAILED(hr)) {
-	ERR("(%p): object %p don't implement IPersistStream Interface. Expect a crash (critical problem)\n", This, pIt->pTrack);
-	continue ;
-      }
-      hr = IPersistStream_GetClassID(pCLSIDStream, &pIt_clsid);
-      IPersistStream_Release(pCLSIDStream); pCLSIDStream = NULL;
-      if (FAILED(hr)) {
-	ERR("(%p): non-implemented GetClassID for object %p\n", This, pIt->pTrack);
-	continue ;
-      }
-      TRACE(" - %p -> %s\n", pIt, debugstr_dmguid(&pIt_clsid));
-      if (FALSE == IsEqualGUID(&pIt_clsid, rguidType)) continue ;
-    }
-    if (0 == dwIndex) {
-      *ppTrack = pIt->pTrack;
-      IDirectMusicTrack_AddRef(*ppTrack);
-      return S_OK;
-    } 
-    --dwIndex;
-  }  
   return DMUS_E_NOT_FOUND;
 }
 
