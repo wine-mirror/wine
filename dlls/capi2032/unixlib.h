@@ -93,4 +93,5 @@ enum capi20_funcs
     unix_get_serial_number,
     unix_get_profile,
     unix_isinstalled,
+    unix_funcs_count
 };
