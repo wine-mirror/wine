@@ -332,4 +332,5 @@ enum unix_funcs
     midi_in_message,
     midi_notify_wait,
     aux_message,
+    funcs_count
 };

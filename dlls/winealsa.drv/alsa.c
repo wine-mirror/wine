@@ -2504,7 +2504,7 @@ static NTSTATUS alsa_get_prop_value(void *args)
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     alsa_process_attach,
     alsa_not_implemented,
@@ -2541,6 +2541,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     alsa_midi_notify_wait,
     alsa_not_implemented,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 #ifdef _WIN64
 
@@ -2958,7 +2960,7 @@ static NTSTATUS alsa_wow64_get_prop_value(void *args)
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     alsa_process_attach,
     alsa_not_implemented,
@@ -2995,5 +2997,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     alsa_wow64_midi_notify_wait,
     alsa_not_implemented,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif /* _WIN64 */
