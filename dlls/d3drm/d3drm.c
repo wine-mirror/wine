@@ -1064,7 +1064,7 @@ static HRESULT WINAPI d3drm2_CreateTextureFromSurface(IDirect3DRM2 *iface,
         return hr;
     }
 
-    hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture, (void **)texture);
+    hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture2, (void **)texture);
     IDirect3DRMTexture3_Release(texture3);
 
     return hr;
