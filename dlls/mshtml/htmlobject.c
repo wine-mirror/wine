@@ -722,17 +722,24 @@ static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
     return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
 }
 
-static void HTMLObjectElement_traverse(HTMLDOMNode *iface, nsCycleCollectionTraversalCallback *cb)
+static inline HTMLObjectElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->nsobject)
-        note_cc_edge((nsISupports*)This->nsobject, "This->nsobject", cb);
+    return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node.event_target.dispex);
 }
 
-static void HTMLObjectElement_unlink(HTMLDOMNode *iface)
+static void HTMLObjectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsobject)
+        note_cc_edge((nsISupports*)This->nsobject, "nsobject", cb);
+}
+
+static void HTMLObjectElement_unlink(DispatchEx *dispex)
+{
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsobject);
 }
 
@@ -748,8 +755,15 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .get_dispid            = HTMLObjectElement_get_dispid,
     .get_name              = HTMLObjectElement_dispex_get_name,
     .invoke                = HTMLObjectElement_invoke,
-    .traverse              = HTMLObjectElement_traverse,
-    .unlink                = HTMLObjectElement_unlink
+};
+
+static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLObjectElement_traverse,
+        .unlink         = HTMLObjectElement_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
@@ -760,7 +774,7 @@ static const tid_t HTMLObjectElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLObjectElement_dispex = {
     "HTMLObjectElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLObjectElement_event_target_vtbl.dispex_vtbl,
     DispHTMLObjectElement_tid,
     HTMLObjectElement_iface_tids,
     HTMLElement_init_dispex_info
