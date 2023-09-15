@@ -407,14 +407,12 @@ static HRESULT WINAPI segment_Clone(IDirectMusicSegment8 *iface, MUSIC_TIME star
     struct segment *This = impl_from_IDirectMusicSegment8(iface);
     struct segment *clone;
     IDirectMusicTrack *track;
-    struct track_entry *track_item, *cloned_item;
-    HRESULT hr;
-    BOOL track_clone_fail = FALSE;
+    struct track_entry *entry;
+    HRESULT hr = S_OK;
 
     TRACE("(%p, %ld, %ld, %p)\n", This, start, end, segment);
 
-    if (!segment)
-        return E_POINTER;
+    if (!segment) return E_POINTER;
 
     if (!(clone = segment_create()))
     {
@@ -423,32 +421,16 @@ static HRESULT WINAPI segment_Clone(IDirectMusicSegment8 *iface, MUSIC_TIME star
     }
 
     clone->header = This->header;
-    clone->pGraph = This->pGraph;
-    if (clone->pGraph)
-        IDirectMusicGraph_AddRef(clone->pGraph);
+    if ((clone->pGraph = This->pGraph)) IDirectMusicGraph_AddRef(clone->pGraph);
 
-    LIST_FOR_EACH_ENTRY(track_item, &This->tracks, struct track_entry, entry) {
-        if (SUCCEEDED(hr = IDirectMusicTrack_Clone(track_item->pTrack, start, end, &track))) {
-            if ((cloned_item = malloc(sizeof(*cloned_item))))
-            {
-                cloned_item->dwGroupBits = track_item->dwGroupBits;
-                cloned_item->flags = track_item->flags;
-                cloned_item->pTrack = track;
-                list_add_tail(&clone->tracks, &cloned_item->entry);
-                continue;
-            }
-            else
-            {
-                IDirectMusicTrack_Release(track);
-            }
-        }
-        WARN("Failed to clone track %p: %#lx\n", track_item->pTrack, hr);
-        track_clone_fail = TRUE;
+    LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+    {
+        if (FAILED(hr = IDirectMusicTrack_Clone(entry->pTrack, start, end, &track))) break;
+        if (FAILED(hr = segment_append_track(clone, track, entry->dwGroupBits, entry->flags))) break;
     }
 
     *segment = (IDirectMusicSegment *)&clone->IDirectMusicSegment8_iface;
-
-    return track_clone_fail ? S_FALSE : S_OK;
+    return FAILED(hr) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI segment_SetStartPoint(IDirectMusicSegment8 *iface, MUSIC_TIME start)
@@ -635,7 +617,6 @@ static HRESULT parse_track_form(struct segment *This, IStream *stream, const str
     DMUS_IO_TRACK_HEADER thdr;
     DMUS_IO_TRACK_EXTRAS_HEADER txhdr = {0};
     HRESULT hr;
-    struct track_entry *item;
 
     TRACE("Parsing track form in %p: %s\n", stream, debugstr_chunk(riff));
 
@@ -691,12 +672,7 @@ static HRESULT parse_track_form(struct segment *This, IStream *stream, const str
     if (FAILED(hr))
         goto done;
 
-    hr = IDirectMusicSegment8_InsertTrack(&This->IDirectMusicSegment8_iface, track, thdr.dwGroup);
-    if (FAILED(hr))
-        goto done;
-
-    item = LIST_ENTRY(list_tail(&This->tracks), struct track_entry, entry);
-    item->flags = txhdr.dwFlags;
+    hr = segment_append_track(This, track, thdr.dwGroup, txhdr.dwFlags);
 
 done:
     if (ps)
