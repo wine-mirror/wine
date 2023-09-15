@@ -860,7 +860,7 @@ BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params,
  *
  *   ECMA-234, Win32
  */
-LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,  LPARAM lParam )
+LRESULT WINAPI DECLSPEC_HOTPATCH CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,  LPARAM lParam )
 {
     struct win_proc_params params;
 
