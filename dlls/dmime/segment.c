@@ -231,25 +231,22 @@ static HRESULT WINAPI segment_GetTrack(IDirectMusicSegment8 *iface, REFGUID type
   return DMUS_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI segment_GetTrackGroup(IDirectMusicSegment8 *iface, IDirectMusicTrack *pTrack, DWORD *pdwGroupBits)
+static HRESULT WINAPI segment_GetTrackGroup(IDirectMusicSegment8 *iface, IDirectMusicTrack *track, DWORD *ret_group)
 {
   struct segment *This = impl_from_IDirectMusicSegment8(iface);
-  struct list* pEntry = NULL;
-  struct track_entry *pIt = NULL;
+  struct track_entry *entry;
 
-  TRACE("(%p, %p, %p)\n", This, pTrack, pdwGroupBits);
+  TRACE("(%p, %p, %p)\n", This, track, ret_group);
 
-  if (NULL == pdwGroupBits) {
-    return E_POINTER;
-  }
+  if (!ret_group) return E_POINTER;
 
-  LIST_FOR_EACH (pEntry, &This->tracks) {
-    pIt = LIST_ENTRY(pEntry, struct track_entry, entry);
-    TRACE(" - %p -> %#lx, %p\n", pIt, pIt->dwGroupBits, pIt->pTrack);
-    if (NULL != pIt && pIt->pTrack == pTrack) {
-      *pdwGroupBits = pIt->dwGroupBits;
-      return S_OK;
-    }
+  LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+  {
+      if (entry->pTrack == track)
+      {
+          *ret_group = entry->dwGroupBits;
+          return S_OK;
+      }
   }
 
   return DMUS_E_NOT_FOUND;
