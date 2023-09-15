@@ -15436,12 +15436,12 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     set_uia_hwnd_expects(0, 1, 1, 2, 0); /* Only Win11 sends WM_GETOBJECT 2 times. */
 
     NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(method_event, 1, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    ok(msg_wait_for_all_events(method_event, 1, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
     if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
 
     check_uia_hwnd_expects_at_most(0, 1, 1, 2, 0);
     CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 3);
-    test_provider_event_advise_added(&Provider2, UIA_AutomationFocusChangedEventId, TRUE);
+    test_provider_event_advise_added(&Provider2, UIA_AutomationFocusChangedEventId, FALSE);
     test_provider_event_advise_added(&Provider_hwnd3, 0, FALSE);
     test_provider_event_advise_added(&Provider_nc3, 0, FALSE);
 

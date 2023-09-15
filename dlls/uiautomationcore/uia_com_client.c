@@ -974,9 +974,42 @@ struct uia_com_event {
     HUIAEVENT event;
     BOOL from_cui8;
 
+    struct rb_tree focus_hwnd_map;
     struct list event_handler_map_list_entry;
     struct uia_event_handler_map_entry *handler_map;
 };
+
+static void uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIANODE node, HWND hwnd)
+{
+    HRESULT hr;
+
+    hr = uia_event_advise_node((struct uia_event *)event->event, node);
+    if (FAILED(hr))
+    {
+        WARN("uia_event_advise_node failed with hr %#lx\n", hr);
+        return;
+    }
+
+    hr = uia_hwnd_map_add_hwnd(&event->focus_hwnd_map, hwnd);
+    if (FAILED(hr))
+        WARN("Failed to add hwnd for focus winevent, hr %#lx\n", hr);
+}
+
+static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia_event_handler_event_id_map_entry *event_id_map)
+{
+    struct uia_event_handler_map_entry *entry;
+
+    LIST_FOR_EACH_ENTRY(entry, &event_id_map->handlers_list, struct uia_event_handler_map_entry, handler_event_id_map_list_entry)
+    {
+        struct uia_com_event *event;
+
+        LIST_FOR_EACH_ENTRY(event, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
+        {
+            if (!uia_hwnd_map_check_hwnd(&event->focus_hwnd_map, hwnd))
+                uia_com_focus_handler_advise_node(event, node, hwnd);
+        }
+    }
+}
 
 HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id, DWORD event_time)
 {
@@ -1060,11 +1093,13 @@ HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG 
 
         if ((rb_entry = rb_get(&com_event_handlers.handler_event_id_map, &uia_event_id)))
         {
+            struct uia_event_handler_event_id_map_entry *event_id_map;
             HUIANODE node = NULL;
 
+            event_id_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_event_id_map_entry, entry);
             hr = create_uia_node_from_hwnd(hwnd, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
             if (SUCCEEDED(hr))
-                FIXME("EVENT_OBJECT_FOCUS event advisement currently unimplemented\n");
+                uia_com_focus_win_event_handler(node, hwnd, event_id_map);
 
             UiaNodeRelease(node);
         }
@@ -1155,6 +1190,20 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
     list_add_tail(&event_map->handlers_list, &event->event_handler_map_list_entry);
     event->handler_map = event_map;
     com_event_handlers.handler_count++;
+    if (event_id == UIA_AutomationFocusChangedEventId)
+    {
+        GUITHREADINFO info = { sizeof(info) };
+
+        if (GetGUIThreadInfo(0, &info) && info.hwndFocus)
+        {
+            HUIANODE node = NULL;
+
+            hr = create_uia_node_from_hwnd(info.hwndFocus, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
+            if (SUCCEEDED(hr))
+                uia_com_focus_handler_advise_node(event, node, info.hwndFocus);
+            UiaNodeRelease(node);
+        }
+    }
 
 exit:
     LeaveCriticalSection(&com_event_handlers_cs);
@@ -1165,6 +1214,7 @@ exit:
 static void uia_event_handler_destroy(struct uia_com_event *event)
 {
     list_remove(&event->event_handler_map_list_entry);
+    uia_hwnd_map_destroy(&event->focus_hwnd_map);
     if (event->event)
         UiaRemoveEvent(event->event);
     if (event->git_cookie)
@@ -3459,6 +3509,7 @@ static HRESULT uia_add_com_event_handler(IUIAutomation6 *iface, EVENTID event_id
 
     com_event->from_cui8 = element->from_cui8;
     list_init(&com_event->event_handler_map_list_entry);
+    uia_hwnd_map_init(&com_event->focus_hwnd_map);
 
     hr = IUnknown_QueryInterface(handler_unk, handler_riid, (void **)&handler_iface);
     if (FAILED(hr))
