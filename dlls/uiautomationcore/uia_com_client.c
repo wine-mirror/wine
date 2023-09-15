@@ -903,6 +903,7 @@ static HRESULT get_uia_cache_request_struct_from_iface(IUIAutomationCacheRequest
  */
 static struct uia_com_event_handlers
 {
+    struct rb_tree handler_event_id_map;
     struct rb_tree handler_map;
 
     LONG handler_count;
@@ -916,6 +917,22 @@ static CRITICAL_SECTION_DEBUG com_event_handlers_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": com_event_handlers_cs") }
 };
 static CRITICAL_SECTION com_event_handlers_cs = { &com_event_handlers_cs_debug, -1, 0, 0, 0, 0 };
+
+struct uia_event_handler_event_id_map_entry
+{
+    struct rb_entry entry;
+    int event_id;
+
+    struct list handlers_list;
+};
+
+static int uia_com_event_handler_event_id_compare(const void *key, const struct rb_entry *entry)
+{
+    struct uia_event_handler_event_id_map_entry *event_entry = RB_ENTRY_VALUE(entry, struct uia_event_handler_event_id_map_entry, entry);
+    int event_id = *((int *)key);
+
+    return (event_entry->event_id > event_id) - (event_entry->event_id < event_id);
+}
 
 struct uia_event_handler_identifier {
     IUnknown *handler_iface;
@@ -932,6 +949,9 @@ struct uia_event_handler_map_entry
     int event_id;
 
     struct list handlers_list;
+
+    struct uia_event_handler_event_id_map_entry *handler_event_id_map;
+    struct list handler_event_id_map_list_entry;
 };
 
 static int uia_com_event_handler_id_compare(const void *key, const struct rb_entry *entry)
@@ -1027,9 +1047,58 @@ HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG 
         break;
     }
 
+    case EVENT_OBJECT_FOCUS:
+    {
+        static const int uia_event_id = UIA_AutomationFocusChangedEventId;
+        struct rb_entry *rb_entry;
+        HRESULT hr;
+
+        if (obj_id != OBJID_CLIENT)
+            break;
+
+        EnterCriticalSection(&com_event_handlers_cs);
+
+        if ((rb_entry = rb_get(&com_event_handlers.handler_event_id_map, &uia_event_id)))
+        {
+            HUIANODE node = NULL;
+
+            hr = create_uia_node_from_hwnd(hwnd, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
+            if (SUCCEEDED(hr))
+                FIXME("EVENT_OBJECT_FOCUS event advisement currently unimplemented\n");
+
+            UiaNodeRelease(node);
+        }
+
+        LeaveCriticalSection(&com_event_handlers_cs);
+        break;
+    }
+
     default:
         break;
     }
+
+    return S_OK;
+}
+
+static HRESULT uia_event_handlers_add_handler_to_event_id_map(struct uia_event_handler_map_entry *event_map)
+{
+    struct uia_event_handler_event_id_map_entry *event_id_map;
+    struct rb_entry *rb_entry;
+
+    if ((rb_entry = rb_get(&com_event_handlers.handler_event_id_map, &event_map->event_id)))
+        event_id_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_event_id_map_entry, entry);
+    else
+    {
+        if (!(event_id_map = calloc(1, sizeof(*event_id_map))))
+            return E_OUTOFMEMORY;
+
+        event_id_map->event_id = event_map->event_id;
+        list_init(&event_id_map->handlers_list);
+        rb_put(&com_event_handlers.handler_event_id_map, &event_map->event_id, &event_id_map->entry);
+    }
+
+    list_add_tail(&event_id_map->handlers_list, &event_map->handler_event_id_map_list_entry);
+    event_map->handler_event_id_map = event_id_map;
 
     return S_OK;
 }
@@ -1045,7 +1114,10 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
     EnterCriticalSection(&com_event_handlers_cs);
 
     if (!com_event_handlers.handler_count)
+    {
         rb_init(&com_event_handlers.handler_map, uia_com_event_handler_id_compare);
+        rb_init(&com_event_handlers.handler_event_id_map, uia_com_event_handler_event_id_compare);
+    }
 
     if ((rb_entry = rb_get(&com_event_handlers.handler_map, &event_ident)))
         event_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_map_entry, entry);
@@ -1065,6 +1137,14 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
         }
 
         event_map->event_id = event_id;
+        hr = uia_event_handlers_add_handler_to_event_id_map(event_map);
+        if (FAILED(hr))
+        {
+            SafeArrayDestroy(event_map->runtime_id);
+            free(event_map);
+            goto exit;
+        }
+
         event_map->handler_iface = handler_iface;
         IUnknown_AddRef(event_map->handler_iface);
 
@@ -1100,6 +1180,13 @@ static void uia_event_handler_map_entry_destroy(struct uia_event_handler_map_ent
     {
         uia_event_handler_destroy(event);
         com_event_handlers.handler_count--;
+    }
+
+    list_remove(&entry->handler_event_id_map_list_entry);
+    if (list_empty(&entry->handler_event_id_map->handlers_list))
+    {
+        rb_remove(&com_event_handlers.handler_event_id_map, &entry->handler_event_id_map->entry);
+        free(entry->handler_event_id_map);
     }
 
     rb_remove(&com_event_handlers.handler_map, &entry->entry);

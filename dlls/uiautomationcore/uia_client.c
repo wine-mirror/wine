@@ -2631,7 +2631,7 @@ static HRESULT uia_get_provider_from_hwnd(struct uia_node *node)
     return SendMessageW(client_thread.hwnd, WM_UIA_CLIENT_GET_NODE_PROV, (WPARAM)&args, (LPARAM)node);
 }
 
-static HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags)
+HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags)
 {
     struct uia_node *node;
     HRESULT hr;
