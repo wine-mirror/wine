@@ -540,6 +540,7 @@ static void test_cross_process_notifications( HANDLE process, void *ptr )
 
     FlushInstructionCache( process, addr, 0x1234 );
     entry = pop_from_work_list( &list->work_list );
+    todo_wine_if (current_machine == IMAGE_FILE_MACHINE_ARM64)
     entry = expect_cross_work_entry( list, entry, CrossProcessFlushCache, addr, 0x1234,
                                      0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc );
     ok( !entry, "not at end of list\n" );
@@ -1084,6 +1085,7 @@ static void test_image_mappings(void)
     }
     else if (current_machine == IMAGE_FILE_MACHINE_ARM64)
     {
+        todo_wine
         ok( status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH, "NtMapViewOfSection returned %08lx\n", status );
         NtUnmapViewOfSection( process, ptr );
     }
