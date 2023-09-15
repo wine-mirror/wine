@@ -418,7 +418,7 @@ HGDIOBJ WINAPI GetCurrentObject( HDC hdc, UINT type )
 /***********************************************************************
  *           GetStockObject    (GDI32.@)
  */
-HGDIOBJ WINAPI GetStockObject( INT obj )
+HGDIOBJ WINAPI DECLSPEC_HOTPATCH GetStockObject( INT obj )
 {
     if (obj < 0 || obj > STOCK_LAST + 1 || obj == 9) return 0;
 
