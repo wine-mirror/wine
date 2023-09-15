@@ -1704,7 +1704,7 @@ static NTSTATUS oss_aux_message(void *args)
     return STATUS_SUCCESS;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     oss_process_attach,
     oss_not_implemented,
@@ -1741,6 +1741,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     oss_midi_notify_wait,
     oss_aux_message,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
 
 #ifdef _WIN64
 
@@ -2197,7 +2199,7 @@ static NTSTATUS oss_wow64_aux_message(void *args)
     return oss_aux_message(&params);
 }
 
-unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     oss_process_attach,
     oss_not_implemented,
@@ -2234,5 +2236,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     oss_wow64_midi_notify_wait,
     oss_wow64_aux_message,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif /* _WIN64 */
