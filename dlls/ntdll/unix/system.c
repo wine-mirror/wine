@@ -459,6 +459,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
 static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
+    ULONGLONG features = 0;
 #ifdef linux
     char line[512];
     char *s, *value;
@@ -489,8 +490,8 @@ static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             }
             if (!strcmp( line, "Features" ))
             {
-                if (strstr(value, "crc32")) info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))   info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (strstr(value, "crc32")) features |= CPU_FEATURE_ARM_V8_CRC32;
+                if (strstr(value, "aes"))   features |= CPU_FEATURE_ARM_V8_CRYPTO;
                 continue;
             }
         }
@@ -506,18 +507,19 @@ static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         info->ProcessorLevel = value;
 
     valsize = sizeof(value);
-    if (!sysctlbyname("hw.floatingpoint", &value, &valsize, NULL, 0))
-        info->ProcessorFeatureBits |= CPU_FEATURE_ARM_VFP_32;
+    if (!sysctlbyname("hw.floatingpoint", &value, &valsize, NULL, 0)) features |= CPU_FEATURE_ARM_VFP_32;
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
+    info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
 }
 
 #elif defined(__aarch64__)
 
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
+    ULONGLONG features = 0;
 #ifdef linux
     char line[512];
     char *s, *value;
@@ -548,8 +550,8 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             }
             if (!strcmp( line, "Features" ))
             {
-                if (strstr(value, "crc32")) info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))   info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (strstr(value, "crc32")) features |= CPU_FEATURE_ARM_V8_CRC32;
+                if (strstr(value, "aes"))   features |= CPU_FEATURE_ARM_V8_CRYPTO;
                 continue;
             }
         }
@@ -560,6 +562,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 #endif
     info->ProcessorLevel = max(info->ProcessorLevel, 8);
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
+    info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
 }
 
 #endif /* End architecture specific feature detection for CPUs */
