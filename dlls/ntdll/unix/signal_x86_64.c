@@ -812,7 +812,7 @@ static inline ucontext_t *init_handler( void *sigcontext )
 /***********************************************************************
  *           leave_handler
  */
-static inline void leave_handler( const ucontext_t *sigcontext )
+static inline void leave_handler( ucontext_t *sigcontext )
 {
 #ifdef __linux__
     if (fs32_sel && !is_inside_signal_stack( (void *)RSP_sig(sigcontext )) && !is_inside_syscall(sigcontext))
