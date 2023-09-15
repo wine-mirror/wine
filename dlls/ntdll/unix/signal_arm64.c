@@ -1018,6 +1018,9 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
         return;
     }
 
+    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc -= 4;
+
     stack = virtual_setup_exception( stack_ptr, (sizeof(*stack) + 15) & ~15, rec );
     stack->rec = *rec;
     stack->context = context;
@@ -1336,6 +1339,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             NtRaiseException( &rec, &ctx, FALSE );
             return;
         }
+        PC_sig( context ) += 4;  /* skip the brk instruction */
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         rec.NumberParameters = 1;
         break;
