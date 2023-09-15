@@ -2572,6 +2572,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_not_implemented,
 };
 
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
+
 #ifdef _WIN64
 
 typedef UINT PTR32;
@@ -3040,5 +3042,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_not_implemented,
     pulse_not_implemented,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif /* _WIN64 */
