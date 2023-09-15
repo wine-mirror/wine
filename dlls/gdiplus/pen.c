@@ -103,6 +103,7 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
     (*clonepen)->customend = NULL;
     (*clonepen)->brush = NULL;
     (*clonepen)->dashes = NULL;
+    (*clonepen)->compound_array = NULL;
 
     stat = GdipCloneBrush(pen->brush, &(*clonepen)->brush);
 
@@ -117,6 +118,15 @@ GpStatus WINGDIPAPI GdipClonePen(GpPen *pen, GpPen **clonepen)
         (*clonepen)->dashes = heap_alloc_zero(pen->numdashes * sizeof(REAL));
         if ((*clonepen)->dashes)
             memcpy((*clonepen)->dashes, pen->dashes, pen->numdashes * sizeof(REAL));
+        else
+            stat = OutOfMemory;
+    }
+
+    if (stat == Ok && pen->compound_array)
+    {
+        (*clonepen)->compound_array = heap_alloc_zero(pen->compound_array_size * sizeof(REAL));
+        if ((*clonepen)->compound_array)
+            memcpy((*clonepen)->compound_array, pen->compound_array, pen->compound_array_size * sizeof(REAL));
         else
             stat = OutOfMemory;
     }
