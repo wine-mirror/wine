@@ -207,6 +207,15 @@ struct preshader_instr
 
 typedef void (*pres_op_func)(float **args, unsigned int n, const struct preshader_instr *instr);
 
+static void pres_mov(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = args[0][i];
+}
+
 static void pres_neg(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[1];
@@ -487,6 +496,7 @@ struct preshader_op_info
 
 static const struct preshader_op_info preshader_ops[] =
 {
+    { 0x100, "mov",  pres_mov  },
     { 0x101, "neg",  pres_neg  },
     { 0x103, "rcp",  pres_rcp  },
     { 0x104, "frc",  pres_frc  },
