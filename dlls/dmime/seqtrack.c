@@ -26,6 +26,12 @@ struct sequence_track
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
+
+    DMUS_IO_SEQ_ITEM *items;
+    unsigned int count;
+
+    DMUS_IO_CURVE_ITEM *curve_items;
+    unsigned int curve_count;
 };
 
 static inline struct sequence_track *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
@@ -234,10 +240,132 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     sequence_track_Join
 };
 
+static HRESULT parse_curl_list(struct sequence_track *This, IStream *stream, struct chunk_entry *chunk)
+{
+    HRESULT hr;
+    UINT i;
+
+    if (FAILED(hr = stream_chunk_get_array(stream, chunk, (void **)&This->curve_items,
+            &This->curve_count, sizeof(*This->curve_items))))
+    {
+        /* try again with the older DMUS_IO_CURVE_ITEM size */
+        UINT size = offsetof(DMUS_IO_CURVE_ITEM, wParamType);
+        BYTE *buffer;
+
+        if (FAILED(hr = stream_reset_chunk_data(stream, chunk))) return hr;
+        if (FAILED(hr = stream_chunk_get_array(stream, chunk, (void **)&buffer,
+                &This->curve_count, size)))
+            return hr;
+
+        if (!(This->curve_items = calloc(This->curve_count, sizeof(*This->curve_items)))) return E_OUTOFMEMORY;
+        for (i = 0; i < This->curve_count; i++) memcpy(This->curve_items + i, buffer + size * i, size);
+        free(buffer);
+    }
+
+    return S_OK;
+}
+
+static HRESULT parse_seqt_chunk(struct sequence_track *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case DMUS_FOURCC_SEQ_LIST:
+            hr = stream_chunk_get_array(stream, &chunk, (void **)&This->items,
+                    &This->count, sizeof(*This->items));
+            break;
+
+        case DMUS_FOURCC_CURVE_LIST:
+            hr = parse_curl_list(This, stream, &chunk);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static inline struct sequence_track *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct sequence_track, dmobj.IPersistStream_iface);
+}
+
 static HRESULT WINAPI track_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-	FIXME(": Loading not implemented yet\n");
-	return S_OK;
+    struct sequence_track *This = impl_from_IPersistStream(iface);
+    struct chunk_entry chunk = {0};
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", This, stream);
+
+    if ((hr = stream_get_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case DMUS_FOURCC_SEQ_TRACK:
+            hr = parse_seqt_chunk(This, stream, &chunk);
+            break;
+
+        default:
+            WARN("Invalid seq track chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            hr = DMUS_E_UNSUPPORTED_STREAM;
+            break;
+        }
+    }
+
+    if (FAILED(hr)) return hr;
+
+    if (TRACE_ON(dmime))
+    {
+        UINT i;
+
+        TRACE("Loaded DirectMusicSeqTrack %p\n", This);
+
+        TRACE("- %u items:\n", This->count);
+        for (i = 0; i < This->count; i++)
+        {
+            TRACE("    - DMUS_IO_SEQ_ITEM[%u]\n", i);
+            TRACE("      - mtTime: %ld\n", This->items[i].mtTime);
+            TRACE("      - mtDuration: %ld\n", This->items[i].mtDuration);
+            TRACE("      - dwPChannel: %ld\n", This->items[i].dwPChannel);
+            TRACE("      - nOffset: %d\n", This->items[i].nOffset);
+            TRACE("      - bStatus: %d\n", This->items[i].bStatus);
+            TRACE("      - bByte1: %#x\n", This->items[i].bByte1);
+            TRACE("      - bByte2: %#x\n", This->items[i].bByte2);
+        }
+
+        TRACE("- %u curves:\n", This->curve_count);
+        for (i = 0; i < This->curve_count; i++)
+        {
+            TRACE("    - DMUS_IO_CURVE_ITEM[%u]\n", i);
+            TRACE("      - mtStart: %ld\n", This->curve_items[i].mtStart);
+            TRACE("      - mtDuration: %ld\n", This->curve_items[i].mtDuration);
+            TRACE("      - mtResetDuration: %ld\n", This->curve_items[i].mtResetDuration);
+            TRACE("      - dwPChannel: %ld\n", This->curve_items[i].dwPChannel);
+            TRACE("      - nOffset: %d\n", This->curve_items[i].nOffset);
+            TRACE("      - nStartValue: %d\n", This->curve_items[i].nStartValue);
+            TRACE("      - nEndValue: %d\n", This->curve_items[i].nEndValue);
+            TRACE("      - nResetValue: %d\n", This->curve_items[i].nResetValue);
+            TRACE("      - bType: %d\n", This->curve_items[i].bType);
+            TRACE("      - bCurveShape: %d\n", This->curve_items[i].bCurveShape);
+            TRACE("      - bCCData: %d\n", This->curve_items[i].bCCData);
+            TRACE("      - bFlags: %d\n", This->curve_items[i].bFlags);
+            TRACE("      - wParamType: %d\n", This->curve_items[i].wParamType);
+            TRACE("      - wMergeIndex: %d\n", This->curve_items[i].wMergeIndex);
+        }
+    }
+
+    stream_skip_chunk(stream, &chunk);
+    return S_OK;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {
