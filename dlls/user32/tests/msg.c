@@ -19560,6 +19560,13 @@ static const struct message send_message_3[] = {
     { WM_USER+1, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
+static const struct message send_message_5[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam|optional, 0, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
+    { WM_GETMINMAXINFO, sent|defwinproc|optional }, /* win7+ dual monitor */
+    { WM_WINDOWPOSCHANGING, sent|wparam|lparam|optional, 0, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
+    { WM_GETMINMAXINFO, sent|defwinproc|optional }, /* win7+ dual monitor */
+    { 0 }
+};
 
 static DWORD WINAPI SendMessage_thread_1(void *param)
 {
@@ -19693,7 +19700,7 @@ static void test_SendMessage_other_thread(int thread_n)
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
         ok(ignore_message(msg.message), "got unexpected message %04x from PeekMessageA\n", msg.message);
     }
-    ok_sequence(WmEmptySeq, "SendMessage from other thread 5", thread_n == 2);
+    ok_sequence(send_message_5, "SendMessage from other thread 5", thread_n == 2);
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     ok(ret == 0, "wrong status %08lx\n", ret);
