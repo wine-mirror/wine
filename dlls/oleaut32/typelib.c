@@ -68,7 +68,6 @@
 #include "wine/debug.h"
 #include "variant.h"
 #include "wine/asm.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -1638,7 +1637,7 @@ static inline void TLB_FreeCustData(struct list *custdata_list)
     {
         list_remove(&cd->entry);
         VariantClear(&cd->data);
-        heap_free(cd);
+        free(cd);
     }
 }
 
@@ -1737,7 +1736,7 @@ static TLBVarDesc *TLBVarDesc_Alloc(UINT n)
 {
     TLBVarDesc *ret;
 
-    ret = heap_alloc_zero(sizeof(TLBVarDesc) * n);
+    ret = calloc(n, sizeof(TLBVarDesc));
     if(!ret)
         return NULL;
 
@@ -1753,7 +1752,7 @@ static TLBParDesc *TLBParDesc_Constructor(UINT n)
 {
     TLBParDesc *ret;
 
-    ret = heap_alloc_zero(sizeof(TLBParDesc) * n);
+    ret = calloc(n, sizeof(TLBParDesc));
     if(!ret)
         return NULL;
 
@@ -1774,7 +1773,7 @@ static TLBFuncDesc *TLBFuncDesc_Alloc(UINT n)
 {
     TLBFuncDesc *ret;
 
-    ret = heap_alloc_zero(sizeof(TLBFuncDesc) * n);
+    ret = calloc(n, sizeof(TLBFuncDesc));
     if(!ret)
         return NULL;
 
@@ -1795,7 +1794,7 @@ static TLBImplType *TLBImplType_Alloc(UINT n)
 {
     TLBImplType *ret;
 
-    ret = heap_alloc_zero(sizeof(TLBImplType) * n);
+    ret = calloc(n, sizeof(TLBImplType));
     if(!ret)
         return NULL;
 
@@ -1817,7 +1816,7 @@ static TLBGuid *TLB_append_guid(struct list *guid_list,
             return guid;
     }
 
-    guid = heap_alloc(sizeof(TLBGuid));
+    guid = malloc(sizeof(TLBGuid));
     if (!guid)
         return NULL;
 
@@ -1849,7 +1848,7 @@ static HRESULT TLB_set_custdata(struct list *custdata_list, TLBGuid *tlbguid, VA
     cust_data = TLB_get_custdata_by_guid(custdata_list, TLB_get_guid_null(tlbguid));
 
     if (!cust_data) {
-        cust_data = heap_alloc(sizeof(TLBCustData));
+        cust_data = malloc(sizeof(TLBCustData));
         if (!cust_data)
             return E_OUTOFMEMORY;
 
@@ -1887,13 +1886,13 @@ static TLBString *TLB_append_str(struct list *string_list, BSTR new_str)
             return str;
     }
 
-    str = heap_alloc(sizeof(TLBString));
+    str = malloc(sizeof(TLBString));
     if (!str)
         return NULL;
 
     str->str = SysAllocString(new_str);
     if (!str->str) {
-        heap_free(str);
+        free(str);
         return NULL;
     }
 
@@ -2084,7 +2083,7 @@ static HRESULT MSFT_ReadAllGuids(TLBContext *pcx)
 
         MSFT_ReadLEWords(&entry, sizeof(MSFT_GuidEntry), pcx, DO_NOT_SEEK);
 
-        guid = heap_alloc(sizeof(TLBGuid));
+        guid = malloc(sizeof(TLBGuid));
 
         guid->offset = offs;
         guid->guid = entry.guid;
@@ -2148,24 +2147,24 @@ static HRESULT MSFT_ReadAllNames(TLBContext *pcx)
         if(len_piece < 8)
             len_piece = 8;
 
-        string = heap_alloc(len_piece + 1);
+        string = malloc(len_piece + 1);
         MSFT_Read(string, len_piece - sizeof(MSFT_NameIntro), pcx, DO_NOT_SEEK);
         string[intro.namelen] = '\0';
 
         lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
                                             string, -1, NULL, 0);
         if (!lengthInChars) {
-            heap_free(string);
+            free(string);
             return E_UNEXPECTED;
         }
 
-        tlbstr = heap_alloc(sizeof(TLBString));
+        tlbstr = malloc(sizeof(TLBString));
 
         tlbstr->offset = offs;
         tlbstr->str = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, tlbstr->str, lengthInChars);
 
-        heap_free(string);
+        free(string);
 
         list_add_tail(&pcx->pLibInfo->name_list, &tlbstr->entry);
 
@@ -2251,12 +2250,12 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
                 V_BSTR(pVar) = NULL;
             }else{
                 int len;
-                ptr = heap_alloc_zero(size);
+                ptr = calloc(1, size);
                 MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);
                 len = MultiByteToWideChar(CP_ACP, 0, ptr, size, NULL, 0 );
                 V_BSTR(pVar)=SysAllocStringLen(NULL,len);
                 MultiByteToWideChar(CP_ACP, 0, ptr, size, V_BSTR(pVar), len );
-                heap_free(ptr);
+                free(ptr);
             }
 	}
 	size=-4; break;
@@ -2303,7 +2302,7 @@ static int MSFT_CustData( TLBContext *pcx, int offset, struct list *custdata_lis
 
     while(offset >=0){
         count++;
-        pNew=heap_alloc_zero(sizeof(TLBCustData));
+        pNew = calloc(1, sizeof(TLBCustData));
         MSFT_ReadLEDWords(&entry, sizeof(entry), pcx, pcx->pTblDir->pCDGuids.offset+offset);
         pNew->guid = MSFT_ReadGuid(entry.GuidOffset, pcx);
         MSFT_ReadValue(&(pNew->data), entry.DataOffset, pcx);
@@ -2366,7 +2365,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
     int infolen, nameoffset, reclength, i;
     int recoffset = offset + sizeof(INT);
 
-    char *recbuf = heap_alloc(0xffff);
+    char *recbuf = malloc(0xffff);
     MSFT_FuncRecord *pFuncRec = (MSFT_FuncRecord*)recbuf;
     TLBFuncDesc *ptfd_prev = NULL, *ptfd;
 
@@ -2457,7 +2456,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
             MSFT_ParameterInfo paraminfo;
 
             ptfd->funcdesc.lprgelemdescParam =
-                heap_alloc_zero(pFuncRec->nrargs * (sizeof(ELEMDESC) + sizeof(PARAMDESCEX)));
+                calloc(pFuncRec->nrargs, sizeof(ELEMDESC) + sizeof(PARAMDESCEX));
 
             ptfd->pParamDesc = TLBParDesc_Constructor(pFuncRec->nrargs);
 
@@ -2528,7 +2527,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         ++ptfd;
         recoffset += reclength;
     }
-    heap_free(recbuf);
+    free(recbuf);
 }
 
 static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
@@ -2580,7 +2579,7 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
             &ptvd->vardesc.elemdescVar.tdesc);
 /*   ptvd->vardesc.lpstrSchema; is reserved (SDK) FIXME?? */
         if(pVarRec->VarKind == VAR_CONST ){
-            ptvd->vardesc.lpvarValue = heap_alloc_zero(sizeof(VARIANT));
+            ptvd->vardesc.lpvarValue = calloc(1, sizeof(VARIANT));
             MSFT_ReadValue(ptvd->vardesc.lpvarValue,
                 pVarRec->OffsValue, pcx);
         } else
@@ -2689,7 +2688,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
     if (ptiRet->typeattr.typekind == TKIND_ALIAS) {
         TYPEDESC tmp;
         MSFT_GetTdesc(pcx, tiBase.datatype1, &tmp);
-        ptiRet->tdescAlias = heap_alloc(TLB_SizeTypeDesc(&tmp, TRUE));
+        ptiRet->tdescAlias = malloc(TLB_SizeTypeDesc(&tmp, TRUE));
         TLB_CopyTypeDesc(NULL, &tmp, ptiRet->tdescAlias);
     }
 
@@ -2779,24 +2778,24 @@ static HRESULT MSFT_ReadAllStrings(TLBContext *pcx)
         if(len_piece < 8)
             len_piece = 8;
 
-        string = heap_alloc(len_piece + 1);
+        string = malloc(len_piece + 1);
         MSFT_Read(string, len_piece - sizeof(INT16), pcx, DO_NOT_SEEK);
         string[len_str] = '\0';
 
         lengthInChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS,
                                             string, -1, NULL, 0);
         if (!lengthInChars) {
-            heap_free(string);
+            free(string);
             return E_UNEXPECTED;
         }
 
-        tlbstr = heap_alloc(sizeof(TLBString));
+        tlbstr = malloc(sizeof(TLBString));
 
         tlbstr->offset = offs;
         tlbstr->str = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, tlbstr->str, lengthInChars);
 
-        heap_free(string);
+        free(string);
 
         list_add_tail(&pcx->pLibInfo->string_list, &tlbstr->entry);
 
@@ -2816,7 +2815,7 @@ static HRESULT MSFT_ReadAllRefs(TLBContext *pcx)
 
         MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx, DO_NOT_SEEK);
 
-        ref = heap_alloc_zero(sizeof(TLBRefType));
+        ref = calloc(1, sizeof(TLBRefType));
         list_add_tail(&pcx->pLibInfo->ref_list, &ref->entry);
 
         LIST_FOR_EACH_ENTRY(pImpLib, &pcx->pLibInfo->implib_list, TLBImpLib, entry)
@@ -2903,7 +2902,7 @@ static ULONG WINAPI TLB_PEFile_Release(IUnknown *iface)
             FreeResource(This->typelib_global);
         if (This->dll)
             FreeLibrary(This->dll);
-        heap_free(This);
+        free(This);
     }
     return refs;
 }
@@ -2920,7 +2919,7 @@ static HRESULT TLB_PEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
     TLB_PEFile *This;
     HRESULT hr = TYPE_E_CANTLOADLIBRARY;
 
-    This = heap_alloc(sizeof(TLB_PEFile));
+    This = malloc(sizeof(TLB_PEFile));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -2998,8 +2997,8 @@ static ULONG WINAPI TLB_NEFile_Release(IUnknown *iface)
     ULONG refs = InterlockedDecrement(&This->refs);
     if (!refs)
     {
-        heap_free(This->typelib_base);
-        heap_free(This);
+        free(This->typelib_base);
+        free(This);
     }
     return refs;
 }
@@ -3068,13 +3067,13 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Read in resource table */
-    resTab = heap_alloc( resTabSize );
+    resTab = malloc( resTabSize );
     if ( !resTab ) return FALSE;
 
     LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, SEEK_SET );
     if ( resTabSize != LZRead( lzfd, (char*)resTab, resTabSize ) )
     {
-        heap_free( resTab );
+        free( resTab );
         return FALSE;
     }
 
@@ -3106,7 +3105,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
         }
     }
     TRACE("No typeid entry found for %p\n", typeid );
-    heap_free( resTab );
+    free( resTab );
     return FALSE;
 
  found_type:
@@ -3129,7 +3128,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
             if (nameInfo->id == id) goto found_name;
     }
     TRACE("No resid entry found for %p\n", typeid );
-    heap_free( resTab );
+    free( resTab );
     return FALSE;
 
  found_name:
@@ -3137,7 +3136,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     if ( resLen ) *resLen = nameInfo->length << *(WORD *)resTab;
     if ( resOff ) *resOff = nameInfo->offset << *(WORD *)resTab;
 
-    heap_free( resTab );
+    free( resTab );
     return TRUE;
 }
 
@@ -3148,7 +3147,7 @@ static HRESULT TLB_NEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
     HRESULT hr = TYPE_E_CANTLOADLIBRARY;
     TLB_NEFile *This;
 
-    This = heap_alloc(sizeof(TLB_NEFile));
+    This = malloc(sizeof(TLB_NEFile));
     if (!This) return E_OUTOFMEMORY;
 
     This->IUnknown_iface.lpVtbl = &TLB_NEFile_Vtable;
@@ -3161,7 +3160,7 @@ static HRESULT TLB_NEFile_Open(LPCWSTR path, INT index, LPVOID *ppBase, DWORD *p
         DWORD reslen, offset;
         if( find_ne_resource( lzfd, "TYPELIB", MAKEINTRESOURCEA(index), &reslen, &offset ) )
         {
-            This->typelib_base = heap_alloc(reslen);
+            This->typelib_base = malloc(reslen);
             if( !This->typelib_base )
                 hr = E_OUTOFMEMORY;
             else
@@ -3226,7 +3225,7 @@ static ULONG WINAPI TLB_Mapping_Release(IUnknown *iface)
             CloseHandle(This->mapping);
         if (This->file != INVALID_HANDLE_VALUE)
             CloseHandle(This->file);
-        heap_free(This);
+        free(This);
     }
     return refs;
 }
@@ -3242,7 +3241,7 @@ static HRESULT TLB_Mapping_Open(LPCWSTR path, LPVOID *ppBase, DWORD *pdwTLBLengt
 {
     TLB_Mapping *This;
 
-    This = heap_alloc(sizeof(TLB_Mapping));
+    This = malloc(sizeof(TLB_Mapping));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -3304,7 +3303,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         {
             int str_len = index_str - pszFileName - 1;
             index = idx;
-            file = heap_alloc((str_len + 1) * sizeof(WCHAR));
+            file = malloc((str_len + 1) * sizeof(WCHAR));
             memcpy(file, pszFileName, str_len * sizeof(WCHAR));
             file[str_len] = 0;
         }
@@ -3324,7 +3323,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
         }
     }
 
-    if(file != pszFileName) heap_free(file);
+    if(file != pszFileName) free(file);
 
     h = CreateFileW(pszPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(h != INVALID_HANDLE_VALUE){
@@ -3380,8 +3379,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 	ITypeLibImpl *impl = impl_from_ITypeLib2(*ppTypeLib);
 
 	TRACE("adding to cache\n");
-	impl->path = heap_alloc((lstrlenW(pszPath)+1) * sizeof(WCHAR));
-	lstrcpyW(impl->path, pszPath);
+	impl->path = wcsdup(pszPath);
 	/* We should really canonicalise the path here. */
         impl->index = index;
 
@@ -3409,7 +3407,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
 {
     ITypeLibImpl* pTypeLibImpl;
 
-    pTypeLibImpl = heap_alloc_zero(sizeof(ITypeLibImpl));
+    pTypeLibImpl = calloc(1, sizeof(ITypeLibImpl));
     if (!pTypeLibImpl) return NULL;
 
     pTypeLibImpl->ITypeLib2_iface.lpVtbl = &tlbvt;
@@ -3478,7 +3476,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     if ( tlbSegDir.pTypeInfoTab.res0c != 0x0F || tlbSegDir.pImpInfo.res0c != 0x0F)
     {
         ERR("cannot find the table directory, ptr %#lx\n",lPSegDir);
-	heap_free(pTypeLibImpl);
+	free(pTypeLibImpl);
 	return NULL;
     }
 
@@ -3527,7 +3525,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
         int i, j, cTD = tlbSegDir.pTypdescTab.length / (2*sizeof(INT));
         INT16 td[4];
         pTypeLibImpl->ctTypeDesc = cTD;
-        pTypeLibImpl->pTypeDesc = heap_alloc_zero( cTD * sizeof(TYPEDESC));
+        pTypeLibImpl->pTypeDesc = calloc(cTD, sizeof(TYPEDESC));
         MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pTypdescTab.offset);
         for(i=0; i<cTD; )
 	{
@@ -3560,7 +3558,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             if(tlbSegDir.pArrayDescriptions.offset>0)
 	    {
                 MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pArrayDescriptions.offset + (INT_PTR)pTypeLibImpl->pTypeDesc[i].lpadesc);
-                pTypeLibImpl->pTypeDesc[i].lpadesc = heap_alloc_zero(sizeof(ARRAYDESC)+sizeof(SAFEARRAYBOUND)*(td[3]-1));
+                pTypeLibImpl->pTypeDesc[i].lpadesc = calloc(1, sizeof(ARRAYDESC) + sizeof(SAFEARRAYBOUND) * (td[3] - 1));
 
                 if(td[1]<0)
                     pTypeLibImpl->pTypeDesc[i].lpadesc->tdescElem.vt = td[0] & VT_TYPEMASK;
@@ -3596,7 +3594,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	{
             char *name;
 
-            pImpLib = heap_alloc_zero(sizeof(TLBImpLib));
+            pImpLib = calloc(1, sizeof(TLBImpLib));
             pImpLib->offset = offset - tlbSegDir.pImpFiles.offset;
             MSFT_ReadLEDWords(&oGuid, sizeof(INT), &cx, offset);
 
@@ -3606,10 +3604,10 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
             MSFT_ReadLEWords(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
 
             size >>= 2;
-            name = heap_alloc_zero(size+1);
+            name = calloc(1, size + 1);
             MSFT_Read(name, size, &cx, DO_NOT_SEEK);
             pImpLib->name = TLB_MultiByteToBSTR(name);
-            heap_free(name);
+            free(name);
 
             pImpLib->guid = MSFT_ReadGuid(oGuid, &cx);
             offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & ~3;
@@ -3627,7 +3625,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     {
         ITypeInfoImpl **ppTI;
 
-        ppTI = pTypeLibImpl->typeinfos = heap_alloc_zero(sizeof(ITypeInfoImpl*) * tlbHeader.nrtypeinfos);
+        ppTI = pTypeLibImpl->typeinfos = calloc(tlbHeader.nrtypeinfos, sizeof(ITypeInfoImpl*));
 
         for(i = 0; i < tlbHeader.nrtypeinfos; i++)
         {
@@ -3699,7 +3697,7 @@ static WORD SLTG_ReadStringA(const char *ptr, char **str)
     *str = NULL;
     bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
-    *str = heap_alloc(bytelen + 1);
+    *str = malloc(bytelen + 1);
     memcpy(*str, ptr + 2, bytelen);
     (*str)[bytelen] = '\0';
     return bytelen + 2;
@@ -3801,13 +3799,13 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
     while(!done) {
         if((*pType & 0xe00) == 0xe00) {
 	    pTD->vt = VT_PTR;
-	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD->lptdesc = calloc(1, sizeof(TYPEDESC));
 	    pTD = pTD->lptdesc;
 	}
 	switch(*pType & 0x3f) {
 	case VT_PTR:
 	    pTD->vt = VT_PTR;
-	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD->lptdesc = calloc(1, sizeof(TYPEDESC));
 	    pTD = pTD->lptdesc;
 	    break;
 
@@ -3825,7 +3823,7 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
 	    SAFEARRAY *pSA = (SAFEARRAY *)(pBlk + *(++pType));
 
 	    pTD->vt = VT_CARRAY;
-	    pTD->lpadesc = heap_alloc_zero(sizeof(ARRAYDESC) + (pSA->cDims - 1) * sizeof(SAFEARRAYBOUND));
+	    pTD->lpadesc = calloc(1, sizeof(ARRAYDESC) + (pSA->cDims - 1) * sizeof(SAFEARRAYBOUND));
 	    pTD->lpadesc->cDims = pSA->cDims;
 	    memcpy(pTD->lpadesc->rgbounds, pSA->rgsabound,
 		   pSA->cDims * sizeof(SAFEARRAYBOUND));
@@ -3841,7 +3839,7 @@ static WORD *SLTG_DoType(WORD *pType, char *pBlk, TYPEDESC *pTD, const sltg_ref_
 
 	    pType++;
 	    pTD->vt = VT_SAFEARRAY;
-	    pTD->lptdesc = heap_alloc_zero(sizeof(TYPEDESC));
+	    pTD->lptdesc = calloc(1, sizeof(TYPEDESC));
 	    pTD = pTD->lptdesc;
 	    break;
 	  }
@@ -3893,7 +3891,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
     }
     name = ( (char*)pRef->names + pRef->number);
 
-    table = heap_alloc(sizeof(*table) + ((pRef->number >> 3) - 1) * sizeof(table->refs[0]));
+    table = malloc(sizeof(*table) + ((pRef->number >> 3) - 1) * sizeof(table->refs[0]));
     table->num = pRef->number >> 3;
 
     /* FIXME should scan the existing list and reuse matching refs added by previous typeinfos */
@@ -3905,7 +3903,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
         char *refname;
 	unsigned int lib_offs, type_num;
 
-	ref_type = heap_alloc_zero(sizeof(TLBRefType));
+	ref_type = calloc(1, sizeof(TLBRefType));
 
 	name += SLTG_ReadStringA(name, &refname);
 	if(sscanf(refname, "*\\R%x*#%x", &lib_offs, &type_num) != 2)
@@ -3922,7 +3920,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 		int len;
                 GUID tmpguid;
 
-		import = heap_alloc_zero(sizeof(*import));
+		import = calloc(1, sizeof(*import));
 		import->offset = lib_offs;
 		TLB_GUIDFromString( pNameTable + lib_offs + 4, &tmpguid);
                 import->guid = TLB_append_guid(&pTL->guid_list, &tmpguid, 2);
@@ -3952,7 +3950,7 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 	ref_type->reference = typelib_ref;
 	ref_type->index = type_num;
 
-	heap_free(refname);
+        free(refname);
         list_add_tail(&pTL->ref_list, &ref_type->entry);
 
         table->refs[ref] = typelib_ref;
@@ -4057,7 +4055,7 @@ static void SLTG_DoVars(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI, unsign
       else if (pItem->flags & 0x10) {
         TRACE_(typelib)("VAR_CONST\n");
         pVarDesc->vardesc.varkind = VAR_CONST;
-        pVarDesc->vardesc.lpvarValue = heap_alloc(sizeof(VARIANT));
+        pVarDesc->vardesc.lpvarValue = malloc(sizeof(VARIANT));
         V_VT(pVarDesc->vardesc.lpvarValue) = VT_INT;
         if (pItem->flags & 0x08)
           V_INT(pVarDesc->vardesc.lpvarValue) = pItem->byte_offs;
@@ -4166,7 +4164,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	SLTG_DoElem(pType, pBlk, &pFuncDesc->funcdesc.elemdescFunc, ref_lookup);
 
 	pFuncDesc->funcdesc.lprgelemdescParam =
-	  heap_alloc_zero(pFuncDesc->funcdesc.cParams * sizeof(ELEMDESC));
+	  calloc(pFuncDesc->funcdesc.cParams, sizeof(ELEMDESC));
 	pFuncDesc->pParamDesc = TLBParDesc_Constructor(pFuncDesc->funcdesc.cParams);
 
 	pArg = (WORD*)(pBlk + pFunc->arg_off);
@@ -4240,7 +4238,7 @@ static void SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
         SLTG_DoImpls(pFirstItem, pTI, FALSE, ref_lookup);
     }
-    heap_free(ref_lookup);
+    free(ref_lookup);
 }
 
 
@@ -4265,7 +4263,7 @@ static void SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
     if (pTITail->funcs_off != 0xffff)
         SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
 
-    heap_free(ref_lookup);
+    free(ref_lookup);
 
     if (TRACE_ON(typelib))
         dump_TLBFuncDesc(pTI->funcdescs, pTI->typeattr.cFuncs);
@@ -4287,7 +4285,7 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
 
   if (pTITail->simple_alias) {
       /* if simple alias, no more processing required */
-      pTI->tdescAlias = heap_alloc_zero(sizeof(TYPEDESC));
+      pTI->tdescAlias = calloc(1, sizeof(TYPEDESC));
       pTI->tdescAlias->vt = pTITail->tdescalias_vt;
       return;
   }
@@ -4300,10 +4298,10 @@ static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
   /* otherwise it is an offset to a type */
   pType = (WORD *)(pBlk + pTITail->tdescalias_vt);
 
-  pTI->tdescAlias = heap_alloc(sizeof(TYPEDESC));
+  pTI->tdescAlias = malloc(sizeof(TYPEDESC));
   SLTG_DoType(pType, pBlk, pTI->tdescAlias, ref_lookup);
 
-  heap_free(ref_lookup);
+  free(ref_lookup);
 }
 
 static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
@@ -4329,7 +4327,7 @@ static void SLTG_ProcessDispatch(char *pBlk, ITypeInfoImpl *pTI,
    * ITypeInfo::GetFuncDesc takes the real value for cFuncs from cbSizeVft */
   pTI->typeattr.cbSizeVft = pTI->typeattr.cFuncs * pTI->pTypeLib->ptr_size;
 
-  heap_free(ref_lookup);
+  free(ref_lookup);
   if (TRACE_ON(typelib))
       dump_TLBFuncDesc(pTI->funcdescs, pTI->typeattr.cFuncs);
 }
@@ -4355,7 +4353,7 @@ static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
 
   if (pTITail->funcs_off != 0xffff)
     SLTG_DoFuncs(pBlk, pBlk + pTITail->funcs_off, pTI, pTITail->cFuncs, pNameTable, ref_lookup);
-  heap_free(ref_lookup);
+  free(ref_lookup);
   if (TRACE_ON(typelib))
     dump_TypeInfo(pTI);
 }
@@ -4460,7 +4458,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     /* And now TypeInfoCount of SLTG_OtherTypeInfo */
 
-    pOtherTypeInfoBlks = heap_alloc_zero(sizeof(*pOtherTypeInfoBlks) * pTypeLibImpl->TypeInfoCount);
+    pOtherTypeInfoBlks = calloc(pTypeLibImpl->TypeInfoCount, sizeof(*pOtherTypeInfoBlks));
 
 
     ptr = (char*)pLibBlk + len;
@@ -4474,7 +4472,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	w = *(WORD*)(ptr + 2);
 	if(w != 0xffff) {
 	    len += w;
-	    pOtherTypeInfoBlks[i].index_name = heap_alloc(w+1);
+	    pOtherTypeInfoBlks[i].index_name = malloc(w + 1);
 	    memcpy(pOtherTypeInfoBlks[i].index_name, ptr + 4, w);
 	    pOtherTypeInfoBlks[i].index_name[w] = '\0';
 	}
@@ -4482,7 +4480,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	if(w != 0xffff) {
 	    TRACE_(typelib)("\twith %s\n", debugstr_an(ptr + 6 + len, w));
 	    len += w;
-	    pOtherTypeInfoBlks[i].other_name = heap_alloc(w+1);
+	    pOtherTypeInfoBlks[i].other_name = malloc(w + 1);
 	    memcpy(pOtherTypeInfoBlks[i].other_name, ptr + 6 + len, w);
 	    pOtherTypeInfoBlks[i].other_name[w] = '\0';
 	}
@@ -4490,7 +4488,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	pOtherTypeInfoBlks[i].name_offs = *(WORD*)(ptr + len + 8);
 	extra = pOtherTypeInfoBlks[i].more_bytes = *(WORD*)(ptr + 10 + len);
 	if(extra) {
-	    pOtherTypeInfoBlks[i].extra = heap_alloc(extra);
+	    pOtherTypeInfoBlks[i].extra = malloc(extra);
 	    memcpy(pOtherTypeInfoBlks[i].extra, ptr + 12, extra);
 	    len += extra;
 	}
@@ -4539,7 +4537,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
        I'll just follow the links along the BlkEntry chain and read
        them in the order in which they are in the file */
 
-    pTypeLibImpl->typeinfos = heap_alloc_zero(pTypeLibImpl->TypeInfoCount * sizeof(ITypeInfoImpl*));
+    pTypeLibImpl->typeinfos = calloc(pTypeLibImpl->TypeInfoCount, sizeof(ITypeInfoImpl*));
     ppTypeInfoImpl = pTypeLibImpl->typeinfos;
 
     for(pBlk = pFirstBlk, order = pHeader->first_blk - 1, i = 0;
@@ -4552,14 +4550,14 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
       if(strcmp(pBlkEntry[order].index_string + (char*)pMagic, pOtherTypeInfoBlks[i].index_name)) {
         FIXME_(typelib)("Index strings don't match\n");
-        heap_free(pOtherTypeInfoBlks);
+        free(pOtherTypeInfoBlks);
         return NULL;
       }
 
       pTIHeader = pBlk;
       if(pTIHeader->magic != SLTG_TIHEADER_MAGIC) {
 	FIXME_(typelib)("TypeInfoHeader magic = %04x\n", pTIHeader->magic);
-       heap_free(pOtherTypeInfoBlks);
+       free(pOtherTypeInfoBlks);
 	return NULL;
       }
       TRACE_(typelib)("pTIHeader->res06 = %lx, pTIHeader->res0e = %lx, "
@@ -4665,11 +4663,11 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     if(i != pTypeLibImpl->TypeInfoCount) {
       FIXME("Somehow processed %d TypeInfos\n", i);
-      heap_free(pOtherTypeInfoBlks);
+      free(pOtherTypeInfoBlks);
       return NULL;
     }
 
-    heap_free(pOtherTypeInfoBlks);
+    free(pOtherTypeInfoBlks);
     return &pTypeLibImpl->ITypeLib2_iface;
 }
 
@@ -4734,34 +4732,34 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           if(This->entry.next)
               list_remove(&This->entry);
           LeaveCriticalSection(&cache_section);
-          heap_free(This->path);
+          free(This->path);
       }
       TRACE(" destroying ITypeLib(%p)\n",This);
 
       LIST_FOR_EACH_ENTRY_SAFE(tlbstr, tlbstr_next, &This->string_list, TLBString, entry) {
           list_remove(&tlbstr->entry);
           SysFreeString(tlbstr->str);
-          heap_free(tlbstr);
+          free(tlbstr);
       }
 
       LIST_FOR_EACH_ENTRY_SAFE(tlbstr, tlbstr_next, &This->name_list, TLBString, entry) {
           list_remove(&tlbstr->entry);
           SysFreeString(tlbstr->str);
-          heap_free(tlbstr);
+          free(tlbstr);
       }
 
       LIST_FOR_EACH_ENTRY_SAFE(tlbguid, tlbguid_next, &This->guid_list, TLBGuid, entry) {
           list_remove(&tlbguid->entry);
-          heap_free(tlbguid);
+          free(tlbguid);
       }
 
       TLB_FreeCustData(&This->custdata_list);
 
       for (i = 0; i < This->ctTypeDesc; i++)
           if (This->pTypeDesc[i].vt == VT_CARRAY)
-              heap_free(This->pTypeDesc[i].lpadesc);
+              free(This->pTypeDesc[i].lpadesc);
 
-      heap_free(This->pTypeDesc);
+      free(This->pTypeDesc);
 
       LIST_FOR_EACH_ENTRY_SAFE(pImpLib, pImpLibNext, &This->implib_list, TLBImpLib, entry)
       {
@@ -4770,21 +4768,21 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           SysFreeString(pImpLib->name);
 
           list_remove(&pImpLib->entry);
-          heap_free(pImpLib);
+          free(pImpLib);
       }
 
       LIST_FOR_EACH_ENTRY_SAFE(ref_type, ref_type_next, &This->ref_list, TLBRefType, entry)
       {
           list_remove(&ref_type->entry);
-          heap_free(ref_type);
+          free(ref_type);
       }
 
       for (i = 0; i < This->TypeInfoCount; ++i){
-          heap_free(This->typeinfos[i]->tdescAlias);
+          free(This->typeinfos[i]->tdescAlias);
           ITypeInfoImpl_Destroy(This->typeinfos[i]);
       }
-      heap_free(This->typeinfos);
-      heap_free(This);
+      free(This->typeinfos);
+      free(This);
       return 0;
     }
 
@@ -4893,7 +4891,7 @@ static HRESULT WINAPI ITypeLib2_fnGetLibAttr(
 
     if (!attr) return E_INVALIDARG;
 
-    *attr = heap_alloc(sizeof(**attr));
+    *attr = malloc(sizeof(**attr));
     if (!*attr) return E_OUTOFMEMORY;
 
     (*attr)->guid = *TLB_get_guid_null(This->guid);
@@ -5136,7 +5134,7 @@ static VOID WINAPI ITypeLib2_fnReleaseTLibAttr(
 {
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
     TRACE("(%p)->(%p)\n", This, pTLibAttr);
-    heap_free(pTLibAttr);
+    free(pTLibAttr);
 }
 
 /* ITypeLib2::GetCustData
@@ -5520,7 +5518,7 @@ static ITypeInfoImpl* ITypeInfoImpl_Constructor(void)
 {
     ITypeInfoImpl *pTypeInfoImpl;
 
-    pTypeInfoImpl = heap_alloc_zero(sizeof(ITypeInfoImpl));
+    pTypeInfoImpl = calloc(1, sizeof(ITypeInfoImpl));
     if (pTypeInfoImpl)
     {
       pTypeInfoImpl->ITypeInfo2_iface.lpVtbl = &tinfvt;
@@ -5592,8 +5590,8 @@ static void typeinfo_release_funcdesc(TLBFuncDesc *func)
             VariantClear(&elemdesc->paramdesc.pparamdescex->varDefaultValue);
         TLB_FreeCustData(&func->pParamDesc[i].custdata_list);
     }
-    heap_free(func->funcdesc.lprgelemdescParam);
-    heap_free(func->pParamDesc);
+    free(func->funcdesc.lprgelemdescParam);
+    free(func->pParamDesc);
     TLB_FreeCustData(&func->custdata_list);
 }
 
@@ -5607,7 +5605,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
     {
         typeinfo_release_funcdesc(&This->funcdescs[i]);
     }
-    heap_free(This->funcdescs);
+    free(This->funcdescs);
 
     for(i = 0; i < This->typeattr.cVars; ++i)
     {
@@ -5616,23 +5614,23 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
             TLB_FreeVarDesc(pVInfo->vardesc_create);
         } else if (pVInfo->vardesc.varkind == VAR_CONST) {
             VariantClear(pVInfo->vardesc.lpvarValue);
-            heap_free(pVInfo->vardesc.lpvarValue);
+            free(pVInfo->vardesc.lpvarValue);
         }
         TLB_FreeCustData(&pVInfo->custdata_list);
     }
-    heap_free(This->vardescs);
+    free(This->vardescs);
 
     if(This->impltypes){
         for (i = 0; i < This->typeattr.cImplTypes; ++i){
             TLBImplType *pImpl = &This->impltypes[i];
             TLB_FreeCustData(&pImpl->custdata_list);
         }
-        heap_free(This->impltypes);
+        free(This->impltypes);
     }
 
     TLB_FreeCustData(&This->custdata_list);
 
-    heap_free(This);
+    free(This);
 }
 
 static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
@@ -5647,7 +5645,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
         BOOL not_attached_to_typelib = This->not_attached_to_typelib;
         ITypeLib2_Release(&This->pTypeLib->ITypeLib2_iface);
         if (not_attached_to_typelib)
-            heap_free(This);
+            free(This);
         /* otherwise This will be freed when typelib is freed */
     }
 
@@ -5666,7 +5664,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeAttr( ITypeInfo2 *iface,
     if (This->typeattr.typekind == TKIND_ALIAS && This->tdescAlias)
         size += TLB_SizeTypeDesc(This->tdescAlias, FALSE);
 
-    *ppTypeAttr = heap_alloc(size);
+    *ppTypeAttr = malloc(size);
     if (!*ppTypeAttr)
         return E_OUTOFMEMORY;
 
@@ -6372,7 +6370,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     }
 
     /* maximum size for an argument is sizeof(VARIANT) */
-    args = heap_alloc(sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
+    args = malloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
 
     if (pvInstance)
     {
@@ -6390,7 +6388,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
         break;
     case VT_HRESULT:
         WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
+        free( args );
         return E_INVALIDARG;
     default:
         break;
@@ -6450,7 +6448,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
         V_UI4(pvargResult) = call_method( func, argspos, args, &stack_offset );
         break;
     }
-    heap_free( args );
+    free( args );
     if (stack_offset && cc == CC_STDCALL)
     {
         WARN( "stack pointer off by %d\n", stack_offset );
@@ -6531,7 +6529,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     }
 
     /* maximum size for an argument is sizeof(DWORD_PTR) */
-    args = heap_alloc( sizeof(DWORD_PTR) * (cActuals + 2) );
+    args = malloc( sizeof(DWORD_PTR) * (cActuals + 2) );
 
     if (pvInstance)
     {
@@ -6549,7 +6547,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
         break;
     case VT_HRESULT:
         WARN("invalid return type %u\n", vtReturn);
-        heap_free( args );
+        free( args );
         return E_INVALIDARG;
     default:
         break;
@@ -6592,7 +6590,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
         V_UI8(pvargResult) = call_method( func, argspos, args );
         break;
     }
-    heap_free( args );
+    free( args );
     if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
     TRACE("retval: %s\n", debugstr_variant(pvargResult));
     return S_OK;
@@ -6696,7 +6694,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     }
 
     /* maximum size for an argument is sizeof(VARIANT).  Also allow for return pointer and stack alignment. */
-    args = heap_alloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 4 );
+    args = malloc( sizeof(VARIANT) * cActuals + sizeof(DWORD) * 4 );
 
     for (i = 0; i < cActuals; i++)
     {
@@ -6811,7 +6809,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
         V_UI4(pvargResult) = call_method( func, argspos, args, (DWORD*)&regs );
         break;
     }
-    heap_free( args );
+    free( args );
     if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
     TRACE("retval: %s\n", debugstr_variant(pvargResult));
     return S_OK;
@@ -6891,7 +6889,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
     else func = (void *)offset;
 
     /* maximum size for an argument is 16 */
-    args = heap_alloc( 16 * count );
+    args = malloc( 16 * count );
 
     for (i = 0; i < count; i++)
     {
@@ -6941,7 +6939,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
     switch (ret_type)
     {
     case VT_HRESULT:
-        heap_free( args );
+        free( args );
         return E_INVALIDARG;
     case VT_DECIMAL:
     case VT_VARIANT:
@@ -6959,7 +6957,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
         V_UI8(result) = call_method( func, argspos, args, (DWORD_PTR *)&regs );
         break;
     }
-    heap_free( args );
+    free( args );
     if (ret_type != VT_VARIANT) V_VT(result) = ret_type;
     TRACE("retval: %s\n", debugstr_variant(result));
     return S_OK;
@@ -7238,7 +7236,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
 	case FUNC_VIRTUAL: {
-            void *buffer = heap_alloc_zero(INVBUF_ELEMENT_SIZE * func_desc->cParams);
+            void *buffer = calloc(func_desc->cParams, INVBUF_ELEMENT_SIZE);
             VARIANT varresult;
             VARIANT retval = {{{0}}}; /* pointer for storing byref retvals in */
             VARIANTARG **prgpvarg = INVBUF_GET_ARG_PTR_ARRAY(buffer, func_desc->cParams);
@@ -7641,7 +7639,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
 
 func_fail:
-            heap_free(buffer);
+            free(buffer);
             break;
         }
 	case FUNC_DISPATCH:  {
@@ -8045,14 +8043,14 @@ static HRESULT WINAPI ITypeInfo_fnAddressOfMember( ITypeInfo2 *iface,
     {
         LPSTR entryA;
         INT len = WideCharToMultiByte(CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL);
-        entryA = heap_alloc(len);
+        entryA = malloc(len);
         WideCharToMultiByte(CP_ACP, 0, entry, -1, entryA, len, NULL, NULL);
 
         *ppv = GetProcAddress(module, entryA);
         if (!*ppv)
             ERR("function not found %s\n", debugstr_a(entryA));
 
-        heap_free(entryA);
+        free(entryA);
     }
     else
     {
@@ -8171,7 +8169,7 @@ static void WINAPI ITypeInfo_fnReleaseTypeAttr( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
-    heap_free(pTypeAttr);
+    free(pTypeAttr);
 }
 
 /* ITypeInfo::ReleaseFuncDesc
@@ -8678,7 +8676,7 @@ HRESULT WINAPI CreateDispTypeInfo(
     if (!pTypeLibImpl) return E_FAIL;
 
     pTypeLibImpl->TypeInfoCount = 2;
-    pTypeLibImpl->typeinfos = heap_alloc_zero(pTypeLibImpl->TypeInfoCount * sizeof(ITypeInfoImpl*));
+    pTypeLibImpl->typeinfos = calloc(pTypeLibImpl->TypeInfoCount, sizeof(ITypeInfoImpl*));
 
     pTIIface = pTypeLibImpl->typeinfos[0] = ITypeInfoImpl_Constructor();
     pTIIface->pTypeLib = pTypeLibImpl;
@@ -8717,8 +8715,7 @@ HRESULT WINAPI CreateDispTypeInfo(
         pFuncDesc->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
         pFuncDesc->funcdesc.elemdescFunc.paramdesc.wParamFlags = PARAMFLAG_NONE;
         pFuncDesc->funcdesc.elemdescFunc.paramdesc.pparamdescex = NULL;
-        pFuncDesc->funcdesc.lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                              md->cArgs * sizeof(ELEMDESC));
+        pFuncDesc->funcdesc.lprgelemdescParam = calloc(md->cArgs, sizeof(ELEMDESC));
         pFuncDesc->pParamDesc = TLBParDesc_Constructor(md->cArgs);
         for(param = 0; param < md->cArgs; param++) {
             pFuncDesc->funcdesc.lprgelemdescParam[param].tdesc.vt = md->ppdata[param].vt;
@@ -8756,7 +8753,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 
     pTIClass->impltypes = TLBImplType_Alloc(1);
 
-    ref = heap_alloc_zero(sizeof(*ref));
+    ref = calloc(1, sizeof(*ref));
     ref->pImpTLInfo = TLB_REF_INTERNAL;
     list_add_head(&pTypeLibImpl->ref_list, &ref->entry);
 
@@ -8931,12 +8928,11 @@ HRESULT WINAPI CreateTypeLib2(SYSKIND syskind, LPCOLESTR szFile,
     This->syskind = syskind;
     This->ptr_size = get_ptr_size(syskind);
 
-    This->path = heap_alloc((lstrlenW(szFile) + 1) * sizeof(WCHAR));
+    This->path = wcsdup(szFile);
     if (!This->path) {
         ITypeLib2_Release(&This->ITypeLib2_iface);
         return E_OUTOFMEMORY;
     }
-    lstrcpyW(This->path, szFile);
 
     hres = ITypeLib2_QueryInterface(&This->ITypeLib2_iface, &IID_ICreateTypeLib2, (LPVOID*)ppctlib);
     ITypeLib2_Release(&This->ITypeLib2_iface);
@@ -8981,11 +8977,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnCreateTypeInfo(ICreateTypeLib2 *iface,
     if (info)
         return TYPE_E_NAMECONFLICT;
 
-    if (This->typeinfos)
-        This->typeinfos = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->typeinfos,
-                sizeof(ITypeInfoImpl*) * (This->TypeInfoCount + 1));
-    else
-        This->typeinfos = heap_alloc_zero(sizeof(ITypeInfoImpl*));
+    This->typeinfos = realloc(This->typeinfos, sizeof(ITypeInfoImpl*) * (This->TypeInfoCount + 1));
 
     info = This->typeinfos[This->TypeInfoCount] = ITypeInfoImpl_Constructor();
 
@@ -9190,7 +9182,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
         str->offset = size;
     }
 
-    file->string_seg.data = data = heap_alloc(file->string_seg.len);
+    file->string_seg.data = data = malloc(file->string_seg.len);
 
     last_offs = 0;
     LIST_FOR_EACH_ENTRY(str, &This->string_list, TLBString, entry) {
@@ -9199,7 +9191,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
         size = WideCharToMultiByte(CP_ACP, 0, str->str, lstrlenW(str->str),
                 data + sizeof(INT16), file->string_seg.len - last_offs - sizeof(INT16), NULL, NULL);
         if (size == 0) {
-            heap_free(file->string_seg.data);
+            free(file->string_seg.data);
             return E_UNEXPECTED;
         }
 
@@ -9253,7 +9245,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
     }
 
     /* Allocate bigger buffer so we can temporarily NULL terminate the name */
-    file->name_seg.data = data = heap_alloc(file->name_seg.len+1);
+    file->name_seg.data = data = malloc(file->name_seg.len + 1);
 
     last_offs = 0;
     LIST_FOR_EACH_ENTRY(str, &This->name_list, TLBString, entry) {
@@ -9264,7 +9256,7 @@ static HRESULT WMSFT_compile_names(ITypeLibImpl *This,
                 data + sizeof(MSFT_NameIntro),
                 file->name_seg.len - last_offs - sizeof(MSFT_NameIntro), NULL, NULL);
         if (size == 0) {
-            heap_free(file->name_seg.data);
+            free(file->name_seg.data);
             return E_UNEXPECTED;
         }
         data[sizeof(MSFT_NameIntro) + size] = '\0';
@@ -9314,7 +9306,7 @@ static HRESULT WMSFT_compile_guids(ITypeLibImpl *This, WMSFT_TLBFile *file)
     int hash_key, *guidhashtab;
 
     file->guid_seg.len = sizeof(MSFT_GuidEntry) * list_count(&This->guid_list);
-    file->guid_seg.data = heap_alloc(file->guid_seg.len);
+    file->guid_seg.data = malloc(file->guid_seg.len);
 
     entry = file->guid_seg.data;
     offs = 0;
@@ -9391,12 +9383,12 @@ static DWORD WMSFT_encode_variant(VARIANT *value, WMSFT_TLBFile *file)
         int *data;
 
         if(file->custdata_seg.data){
-            file->custdata_seg.data = heap_realloc(file->custdata_seg.data, file->custdata_seg.len + sizeof(int) * 2);
+            file->custdata_seg.data = realloc(file->custdata_seg.data, file->custdata_seg.len + sizeof(int) * 2);
             data = (int *)(((char *)file->custdata_seg.data) + file->custdata_seg.len);
             file->custdata_seg.len += sizeof(int) * 2;
         }else{
             file->custdata_seg.len = sizeof(int) * 2;
-            data = file->custdata_seg.data = heap_alloc(file->custdata_seg.len);
+            data = file->custdata_seg.data = malloc(file->custdata_seg.len);
         }
 
         data[0] = V_VT(value) + (V_UI4(&v) << 16);
@@ -9413,12 +9405,12 @@ static DWORD WMSFT_encode_variant(VARIANT *value, WMSFT_TLBFile *file)
         char *data;
 
         if(file->custdata_seg.data){
-            file->custdata_seg.data = heap_realloc(file->custdata_seg.data, file->custdata_seg.len + len);
+            file->custdata_seg.data = realloc(file->custdata_seg.data, file->custdata_seg.len + len);
             data = ((char *)file->custdata_seg.data) + file->custdata_seg.len;
             file->custdata_seg.len += len;
         }else{
             file->custdata_seg.len = len;
-            data = file->custdata_seg.data = heap_alloc(file->custdata_seg.len);
+            data = file->custdata_seg.data = malloc(file->custdata_seg.len);
         }
 
         *((unsigned short *)data) = V_VT(value);
@@ -9450,10 +9442,7 @@ static DWORD WMSFT_append_arraydesc(ARRAYDESC *desc, WMSFT_TLBFile *file)
      * at the library-level) */
 
     file->arraydesc_seg.len += (2 + desc->cDims * 2) * sizeof(DWORD);
-    if(!file->arraydesc_seg.data)
-        file->arraydesc_seg.data = heap_alloc(file->arraydesc_seg.len);
-    else
-        file->arraydesc_seg.data = heap_realloc(file->arraydesc_seg.data, file->arraydesc_seg.len);
+    file->arraydesc_seg.data = realloc(file->arraydesc_seg.data, file->arraydesc_seg.len);
     encoded = (DWORD*)((char *)file->arraydesc_seg.data + offs);
 
     encoded[0] = WMSFT_append_typedesc(&desc->tdescElem, file, NULL, NULL);
@@ -9529,10 +9518,7 @@ static DWORD WMSFT_append_typedesc(TYPEDESC *desc, WMSFT_TLBFile *file, DWORD *o
     }
 
     file->typdesc_seg.len += sizeof(encoded);
-    if(!file->typdesc_seg.data)
-        data = file->typdesc_seg.data = heap_alloc(file->typdesc_seg.len);
-    else
-        data = file->typdesc_seg.data = heap_realloc(file->typdesc_seg.data, file->typdesc_seg.len);
+    data = file->typdesc_seg.data = realloc(file->typdesc_seg.data, file->typdesc_seg.len);
 
     memcpy(&data[offs], encoded, sizeof(encoded));
 
@@ -9550,12 +9536,8 @@ static DWORD WMSFT_compile_custdata(struct list *custdata_list, WMSFT_TLBFile *f
         return -1;
 
     cdguids_seg->len += sizeof(MSFT_CDGuid) * list_count(custdata_list);
-    if(!cdguids_seg->data){
-        cdguid = cdguids_seg->data = heap_alloc(cdguids_seg->len);
-    }else {
-        cdguids_seg->data = heap_realloc(cdguids_seg->data, cdguids_seg->len);
-        cdguid = (MSFT_CDGuid*)((char*)cdguids_seg->data + ret);
-    }
+    cdguids_seg->data = realloc(cdguids_seg->data, cdguids_seg->len);
+    cdguid = (MSFT_CDGuid*)((char*)cdguids_seg->data + ret);
 
     offs = ret + sizeof(MSFT_CDGuid);
     LIST_FOR_EACH_ENTRY(cd, custdata_list, TLBCustData, entry){
@@ -9641,10 +9623,7 @@ static DWORD WMSFT_compile_typeinfo_aux(ITypeInfoImpl *info,
 
     aux_seg->len += sizeof(INT) * (info->typeattr.cVars + info->typeattr.cFuncs); /* offsets at the end */
 
-    if(aux_seg->data)
-        aux_seg->data = heap_realloc(aux_seg->data, aux_seg->len);
-    else
-        aux_seg->data = heap_alloc(aux_seg->len);
+    aux_seg->data = realloc(aux_seg->data, aux_seg->len);
 
     *((DWORD*)((char *)aux_seg->data + ret)) = recorded_size;
 
@@ -9884,10 +9863,7 @@ static DWORD WMSFT_compile_typeinfo_ref(ITypeInfoImpl *info, WMSFT_TLBFile *file
     WMSFT_RefChunk *chunk;
 
     file->ref_seg.len += info->typeattr.cImplTypes * sizeof(WMSFT_RefChunk);
-    if(!file->ref_seg.data)
-        file->ref_seg.data = heap_alloc(file->ref_seg.len);
-    else
-        file->ref_seg.data = heap_realloc(file->ref_seg.data, file->ref_seg.len);
+    file->ref_seg.data = realloc(file->ref_seg.data, file->ref_seg.len);
 
     chunk = (WMSFT_RefChunk*)((char*)file->ref_seg.data + offs);
 
@@ -9988,7 +9964,7 @@ static void WMSFT_compile_typeinfo_seg(ITypeLibImpl *This, WMSFT_TLBFile *file, 
         file->typeinfo_seg.len += WMSFT_compile_typeinfo(info, i, NULL, NULL);
     }
 
-    file->typeinfo_seg.data = heap_alloc(file->typeinfo_seg.len);
+    file->typeinfo_seg.data = malloc(file->typeinfo_seg.len);
     memset(file->typeinfo_seg.data, 0x96, file->typeinfo_seg.len);
 
     file->aux_seg.len = 0;
@@ -10039,7 +10015,7 @@ static void WMSFT_compile_impfile(ITypeLibImpl *This, WMSFT_TLBFile *file)
         file->impfile_seg.len += sizeof(WMSFT_ImpFile) + size;
     }
 
-    data = file->impfile_seg.data = heap_alloc(file->impfile_seg.len);
+    data = file->impfile_seg.data = malloc(file->impfile_seg.len);
 
     LIST_FOR_EACH_ENTRY(implib, &This->implib_list, TLBImpLib, entry){
         int strlen = 0, size;
@@ -10087,7 +10063,7 @@ static void WMSFT_compile_impinfo(ITypeLibImpl *This, WMSFT_TLBFile *file)
     WMSFT_compile_impfile(This, file);
 
     file->impinfo_seg.len = sizeof(MSFT_ImpInfo) * list_count(&This->ref_list);
-    info = file->impinfo_seg.data = heap_alloc(file->impinfo_seg.len);
+    info = file->impinfo_seg.data = malloc(file->impinfo_seg.len);
 
     LIST_FOR_EACH_ENTRY(ref_type, &This->ref_list, TLBRefType, entry){
         info->flags = i | ((ref_type->tkind & 0xFF) << 24);
@@ -10105,14 +10081,14 @@ static void WMSFT_compile_impinfo(ITypeLibImpl *This, WMSFT_TLBFile *file)
 static void WMSFT_compile_guidhash(ITypeLibImpl *This, WMSFT_TLBFile *file)
 {
     file->guidhash_seg.len = 0x80;
-    file->guidhash_seg.data = heap_alloc(file->guidhash_seg.len);
+    file->guidhash_seg.data = malloc(file->guidhash_seg.len);
     memset(file->guidhash_seg.data, 0xFF, file->guidhash_seg.len);
 }
 
 static void WMSFT_compile_namehash(ITypeLibImpl *This, WMSFT_TLBFile *file)
 {
     file->namehash_seg.len = 0x200;
-    file->namehash_seg.data = heap_alloc(file->namehash_seg.len);
+    file->namehash_seg.data = malloc(file->namehash_seg.len);
     memset(file->namehash_seg.data, 0xFF, file->namehash_seg.len);
 }
 
@@ -10155,20 +10131,20 @@ static HRESULT WMSFT_fixup_typeinfos(ITypeLibImpl *This, WMSFT_TLBFile *file,
 
 static void WMSFT_free_file(WMSFT_TLBFile *file)
 {
-    HeapFree(GetProcessHeap(), 0, file->typeinfo_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->guidhash_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->guid_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->ref_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->impinfo_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->impfile_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->namehash_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->name_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->string_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->typdesc_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->arraydesc_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->custdata_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->cdguids_seg.data);
-    HeapFree(GetProcessHeap(), 0, file->aux_seg.data);
+    free(file->typeinfo_seg.data);
+    free(file->guidhash_seg.data);
+    free(file->guid_seg.data);
+    free(file->ref_seg.data);
+    free(file->impinfo_seg.data);
+    free(file->impfile_seg.data);
+    free(file->namehash_seg.data);
+    free(file->name_seg.data);
+    free(file->string_seg.data);
+    free(file->typdesc_seg.data);
+    free(file->arraydesc_seg.data);
+    free(file->custdata_seg.data);
+    free(file->cdguids_seg.data);
+    free(file->aux_seg.data);
 }
 
 static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
@@ -10258,7 +10234,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     if(file.header.varflags & HELPDLLFLAG)
         junk_size += sizeof(DWORD);
     if(junk_size){
-        junk = heap_alloc_zero(junk_size);
+        junk = calloc(1, junk_size);
         if(file.header.varflags & HELPDLLFLAG){
             *junk = This->HelpStringDll->offset;
             junk_offs = 1;
@@ -10336,7 +10312,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
             FILE_ATTRIBUTE_NORMAL, 0);
     if (outfile == INVALID_HANDLE_VALUE){
         WMSFT_free_file(&file);
-        heap_free(junk);
+        free(junk);
         return TYPE_E_IOERROR;
     }
 
@@ -10344,12 +10320,12 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 *iface)
     if (!br) {
         WMSFT_free_file(&file);
         CloseHandle(outfile);
-        heap_free(junk);
+        free(junk);
         return TYPE_E_IOERROR;
     }
 
     br = WriteFile(outfile, junk, junk_size, &written, NULL);
-    heap_free(junk);
+    free(junk);
     if (!br) {
         WMSFT_free_file(&file);
         CloseHandle(outfile);
@@ -10612,7 +10588,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
     }
 
     if(&implib->entry == &This->pTypeLib->implib_list){
-        implib = heap_alloc_zero(sizeof(TLBImpLib));
+        implib = calloc(1, sizeof(TLBImpLib));
 
         if((ITypeLib2Vtbl*)container->lpVtbl == &tlbvt){
             const ITypeLibImpl *our_container = impl_from_ITypeLib2((ITypeLib2*)container);
@@ -10651,7 +10627,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(ICreateTypeInfo2 *iface,
     }
 
     if(&ref_type->entry == &This->pTypeLib->ref_list){
-        ref_type = heap_alloc_zero(sizeof(TLBRefType));
+        ref_type = calloc(1, sizeof(TLBRefType));
 
         ref_type->tkind = typeattr->typekind;
         ref_type->pImpTLInfo = implib;
@@ -10724,7 +10700,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
         tmp_func_desc.funcdesc.oVft |= 1;
 
     if (funcDesc->cScodes && funcDesc->lprgscode) {
-        tmp_func_desc.funcdesc.lprgscode = heap_alloc(sizeof(SCODE) * funcDesc->cScodes);
+        tmp_func_desc.funcdesc.lprgscode = malloc(sizeof(SCODE) * funcDesc->cScodes);
         memcpy(tmp_func_desc.funcdesc.lprgscode, funcDesc->lprgscode, sizeof(SCODE) * funcDesc->cScodes);
     } else {
         tmp_func_desc.funcdesc.lprgscode = NULL;
@@ -10736,13 +10712,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
         buf_size += sizeof(ELEMDESC);
         buf_size += TLB_SizeElemDesc(funcDesc->lprgelemdescParam + i);
     }
-    tmp_func_desc.funcdesc.lprgelemdescParam = heap_alloc(buf_size);
+    tmp_func_desc.funcdesc.lprgelemdescParam = malloc(buf_size);
     buffer = (char*)(tmp_func_desc.funcdesc.lprgelemdescParam + funcDesc->cParams);
 
     hres = TLB_CopyElemDesc(&funcDesc->elemdescFunc, &tmp_func_desc.funcdesc.elemdescFunc, &buffer);
     if (FAILED(hres)) {
-        heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
-        heap_free(tmp_func_desc.funcdesc.lprgscode);
+        free(tmp_func_desc.funcdesc.lprgelemdescParam);
+        free(tmp_func_desc.funcdesc.lprgscode);
         return hres;
     }
 
@@ -10750,8 +10726,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
         hres = TLB_CopyElemDesc(funcDesc->lprgelemdescParam + i,
                 tmp_func_desc.funcdesc.lprgelemdescParam + i, &buffer);
         if (FAILED(hres)) {
-            heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
-            heap_free(tmp_func_desc.funcdesc.lprgscode);
+            free(tmp_func_desc.funcdesc.lprgelemdescParam);
+            free(tmp_func_desc.funcdesc.lprgscode);
             return hres;
         }
         if (tmp_func_desc.funcdesc.lprgelemdescParam[i].paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT &&
@@ -10759,8 +10735,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
                 tmp_func_desc.funcdesc.lprgelemdescParam[i].tdesc.vt != VT_USERDEFINED){
             hres = TLB_SanitizeVariant(&tmp_func_desc.funcdesc.lprgelemdescParam[i].paramdesc.pparamdescex->varDefaultValue);
             if (FAILED(hres)) {
-                heap_free(tmp_func_desc.funcdesc.lprgelemdescParam);
-                heap_free(tmp_func_desc.funcdesc.lprgscode);
+                free(tmp_func_desc.funcdesc.lprgelemdescParam);
+                free(tmp_func_desc.funcdesc.lprgscode);
                 return hres;
             }
         }
@@ -10769,8 +10745,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
     tmp_func_desc.pParamDesc = TLBParDesc_Constructor(funcDesc->cParams);
 
     if (This->funcdescs) {
-        This->funcdescs = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->funcdescs,
-                sizeof(TLBFuncDesc) * (This->typeattr.cFuncs + 1));
+        This->funcdescs = realloc(This->funcdescs, sizeof(TLBFuncDesc) * (This->typeattr.cFuncs + 1));
 
         if (index < This->typeattr.cFuncs) {
             memmove(This->funcdescs + index + 1, This->funcdescs + index,
@@ -10785,7 +10760,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
                 TLB_relink_custdata(&This->funcdescs[i].custdata_list);
         }
     } else
-        func_desc = This->funcdescs = heap_alloc(sizeof(TLBFuncDesc));
+        func_desc = This->funcdescs = malloc(sizeof(TLBFuncDesc));
 
     memcpy(func_desc, &tmp_func_desc, sizeof(tmp_func_desc));
     list_init(&func_desc->custdata_list);
@@ -10831,8 +10806,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
     if (This->impltypes){
         UINT i;
 
-        This->impltypes = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->impltypes,
-                sizeof(TLBImplType) * (This->typeattr.cImplTypes + 1));
+        This->impltypes = realloc(This->impltypes, sizeof(TLBImplType) * (This->typeattr.cImplTypes + 1));
 
         if (index < This->typeattr.cImplTypes) {
             memmove(This->impltypes + index + 1, This->impltypes + index,
@@ -10847,7 +10821,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(ICreateTypeInfo2 *iface,
                 TLB_relink_custdata(&This->impltypes[i].custdata_list);
         }
     } else
-        impl_type = This->impltypes = heap_alloc(sizeof(TLBImplType));
+        impl_type = This->impltypes = malloc(sizeof(TLBImplType));
 
     memset(impl_type, 0, sizeof(TLBImplType));
     TLBImplType_Constructor(impl_type);
@@ -10925,15 +10899,16 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
     if (This->vardescs){
         UINT i;
 
-        This->vardescs = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->vardescs,
-                sizeof(TLBVarDesc) * (This->typeattr.cVars + 1));
+        This->vardescs = realloc(This->vardescs, sizeof(TLBVarDesc) * (This->typeattr.cVars + 1));
 
         if (index < This->typeattr.cVars) {
             memmove(This->vardescs + index + 1, This->vardescs + index,
                     (This->typeattr.cVars - index) * sizeof(TLBVarDesc));
             var_desc = This->vardescs + index;
-        } else
+        } else {
             var_desc = This->vardescs + This->typeattr.cVars;
+            memset(var_desc, 0, sizeof(TLBVarDesc));
+        }
 
         /* move custdata lists to the new memory location */
         for(i = 0; i < This->typeattr.cVars + 1; ++i){
@@ -10941,7 +10916,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(ICreateTypeInfo2 *iface,
                 TLB_relink_custdata(&This->vardescs[i].custdata_list);
         }
     } else
-        var_desc = This->vardescs = heap_alloc_zero(sizeof(TLBVarDesc));
+        var_desc = This->vardescs = calloc(1, sizeof(TLBVarDesc));
 
     TLBVarDesc_Constructor(var_desc);
     hr = TLB_AllocAndInitVarDesc(varDesc, &var_desc->vardesc_create);
@@ -11034,8 +11009,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeDescAlias(ICreateTypeInfo2 *ifac
     if(FAILED(hr))
         return hr;
 
-    heap_free(This->tdescAlias);
-    This->tdescAlias = heap_alloc(TLB_SizeTypeDesc(tdescAlias, TRUE));
+    free(This->tdescAlias);
+    This->tdescAlias = malloc(TLB_SizeTypeDesc(tdescAlias, TRUE));
     TLB_CopyTypeDesc(NULL, tdescAlias, This->tdescAlias);
 
     return S_OK;
