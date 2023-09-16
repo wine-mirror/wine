@@ -145,7 +145,7 @@ enum source_reader_flags
 
 struct source_reader
 {
-    IMFSourceReader IMFSourceReader_iface;
+    IMFSourceReaderEx IMFSourceReaderEx_iface;
     IMFAsyncCallback source_events_callback;
     IMFAsyncCallback stream_events_callback;
     IMFAsyncCallback async_commands_callback;
@@ -170,9 +170,9 @@ struct source_reader
     CONDITION_VARIABLE stop_event;
 };
 
-static inline struct source_reader *impl_from_IMFSourceReader(IMFSourceReader *iface)
+static inline struct source_reader *impl_from_IMFSourceReaderEx(IMFSourceReaderEx *iface)
 {
-    return CONTAINING_RECORD(iface, struct source_reader, IMFSourceReader_iface);
+    return CONTAINING_RECORD(iface, struct source_reader, IMFSourceReaderEx_iface);
 }
 
 static struct source_reader *impl_from_source_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1329,16 +1329,17 @@ static const IMFAsyncCallbackVtbl async_commands_callback_vtbl =
     source_reader_async_commands_callback_Invoke,
 };
 
-static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID riid, void **out)
+static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReaderEx *iface, REFIID riid, void **out)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
-    if(IsEqualGUID(riid, &IID_IUnknown) ||
-       IsEqualGUID(riid, &IID_IMFSourceReader))
+    if (IsEqualGUID(riid, &IID_IUnknown)
+            || IsEqualGUID(riid, &IID_IMFSourceReader)
+            || IsEqualGUID(riid, &IID_IMFSourceReaderEx))
     {
-        *out = &reader->IMFSourceReader_iface;
+        *out = &reader->IMFSourceReaderEx_iface;
     }
     else
     {
@@ -1351,9 +1352,9 @@ static HRESULT WINAPI src_reader_QueryInterface(IMFSourceReader *iface, REFIID r
     return S_OK;
 }
 
-static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
+static ULONG WINAPI src_reader_AddRef(IMFSourceReaderEx *iface)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     ULONG refcount = InterlockedIncrement(&reader->public_refcount);
 
     TRACE("%p, refcount %lu.\n", iface, refcount);
@@ -1377,9 +1378,9 @@ static BOOL source_reader_is_source_stopped(const struct source_reader *reader)
     return TRUE;
 }
 
-static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
+static ULONG WINAPI src_reader_Release(IMFSourceReaderEx *iface)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     ULONG refcount = InterlockedDecrement(&reader->public_refcount);
     unsigned int i;
 
@@ -1423,9 +1424,9 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     return refcount;
 }
 
-static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL *selected)
+static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReaderEx *iface, DWORD index, BOOL *selected)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
 
     TRACE("%p, %#lx, %p.\n", iface, index, selected);
 
@@ -1444,9 +1445,9 @@ static HRESULT WINAPI src_reader_GetStreamSelection(IMFSourceReader *iface, DWOR
     return source_reader_get_stream_selection(reader, index, selected);
 }
 
-static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWORD index, BOOL selection)
+static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReaderEx *iface, DWORD index, BOOL selection)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     HRESULT hr = S_OK;
     BOOL selection_changed = FALSE, selected;
     unsigned int i;
@@ -1554,19 +1555,19 @@ static HRESULT source_reader_get_native_media_type(struct source_reader *reader,
     return hr;
 }
 
-static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReader *iface, DWORD index, DWORD type_index,
+static HRESULT WINAPI src_reader_GetNativeMediaType(IMFSourceReaderEx *iface, DWORD index, DWORD type_index,
             IMFMediaType **type)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
 
     TRACE("%p, %#lx, %#lx, %p.\n", iface, index, type_index, type);
 
     return source_reader_get_native_media_type(reader, index, type_index, type);
 }
 
-static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReader *iface, DWORD index, IMFMediaType **type)
+static HRESULT WINAPI src_reader_GetCurrentMediaType(IMFSourceReaderEx *iface, DWORD index, IMFMediaType **type)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     HRESULT hr;
 
     TRACE("%p, %#lx, %p.\n", iface, index, type);
@@ -1846,10 +1847,10 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
     return MF_E_TOPO_CODEC_NOT_FOUND;
 }
 
-static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWORD index, DWORD *reserved,
+static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReaderEx *iface, DWORD index, DWORD *reserved,
         IMFMediaType *type)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     HRESULT hr;
 
     TRACE("%p, %#lx, %p, %p.\n", iface, index, reserved, type);
@@ -1884,9 +1885,9 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
     return hr;
 }
 
-static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFGUID format, REFPROPVARIANT position)
+static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReaderEx *iface, REFGUID format, REFPROPVARIANT position)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     struct source_reader_async_command *command;
     unsigned int i;
     DWORD flags;
@@ -2036,10 +2037,10 @@ static HRESULT source_reader_read_sample_async(struct source_reader *reader, uns
     return hr;
 }
 
-static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index, DWORD flags, DWORD *actual_index,
+static HRESULT WINAPI src_reader_ReadSample(IMFSourceReaderEx *iface, DWORD index, DWORD flags, DWORD *actual_index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     HRESULT hr;
 
     TRACE("%p, %#lx, %#lx, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
@@ -2098,9 +2099,9 @@ static HRESULT source_reader_flush_async(struct source_reader *reader, unsigned 
     return hr;
 }
 
-static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
+static HRESULT WINAPI src_reader_Flush(IMFSourceReaderEx *iface, DWORD index)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     HRESULT hr;
 
     TRACE("%p, %#lx.\n", iface, index);
@@ -2117,10 +2118,10 @@ static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
     return hr;
 }
 
-static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWORD index, REFGUID service,
+static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReaderEx *iface, DWORD index, REFGUID service,
         REFIID riid, void **object)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     IUnknown *obj = NULL;
     HRESULT hr = S_OK;
 
@@ -2179,10 +2180,10 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWO
     return hr;
 }
 
-static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface, DWORD index,
+static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReaderEx *iface, DWORD index,
         REFGUID guid, PROPVARIANT *value)
 {
-    struct source_reader *reader = impl_from_IMFSourceReader(iface);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
     IMFStreamDescriptor *sd;
     BOOL selected;
     HRESULT hr;
@@ -2227,7 +2228,38 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
     return hr;
 }
 
-static const IMFSourceReaderVtbl srcreader_vtbl =
+static HRESULT WINAPI src_reader_SetNativeMediaType(IMFSourceReaderEx *iface, DWORD stream_index,
+        IMFMediaType *media_type, DWORD *stream_flags)
+{
+    FIXME("%p, %#lx, %p, %p.\n", iface, stream_index, media_type, stream_flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI src_reader_AddTransformForStream(IMFSourceReaderEx *iface, DWORD stream_index,
+        IUnknown *transform)
+{
+    FIXME("%p, %#lx, %p.\n", iface, stream_index, transform);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI src_reader_RemoveAllTransformsForStream(IMFSourceReaderEx *iface, DWORD stream_index)
+{
+    FIXME("%p, %#lx.\n", iface, stream_index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI src_reader_GetTransformForStream(IMFSourceReaderEx *iface, DWORD stream_index,
+        DWORD transform_index, GUID *category, IMFTransform **transform)
+{
+    FIXME("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, category, transform);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSourceReaderExVtbl srcreader_vtbl =
 {
     src_reader_QueryInterface,
     src_reader_AddRef,
@@ -2241,7 +2273,11 @@ static const IMFSourceReaderVtbl srcreader_vtbl =
     src_reader_ReadSample,
     src_reader_Flush,
     src_reader_GetServiceForStream,
-    src_reader_GetPresentationAttribute
+    src_reader_GetPresentationAttribute,
+    src_reader_SetNativeMediaType,
+    src_reader_AddTransformForStream,
+    src_reader_RemoveAllTransformsForStream,
+    src_reader_GetTransformForStream,
 };
 
 static DWORD reader_get_first_stream_index(IMFPresentationDescriptor *descriptor, const GUID *major)
@@ -2295,7 +2331,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     if (!object)
         return E_OUTOFMEMORY;
 
-    object->IMFSourceReader_iface.lpVtbl = &srcreader_vtbl;
+    object->IMFSourceReaderEx_iface.lpVtbl = &srcreader_vtbl;
     object->source_events_callback.lpVtbl = &source_events_callback_vtbl;
     object->stream_events_callback.lpVtbl = &stream_events_callback_vtbl;
     object->async_commands_callback.lpVtbl = &async_commands_callback_vtbl;
@@ -2414,10 +2450,10 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         WARN("Failed to acquired shared queue, hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
-        hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
+        hr = IMFSourceReaderEx_QueryInterface(&object->IMFSourceReaderEx_iface, riid, out);
 
 failed:
-    IMFSourceReader_Release(&object->IMFSourceReader_iface);
+    IMFSourceReaderEx_Release(&object->IMFSourceReaderEx_iface);
     return hr;
 }
 

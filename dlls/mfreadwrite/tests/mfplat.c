@@ -1505,6 +1505,28 @@ static void test_sink_writer_mp4(void)
     IMFAttributes_Release(attr);
 }
 
+static void test_interfaces(void)
+{
+    IMFSourceReader *reader;
+    IMFMediaSource *source;
+    IUnknown *unk;
+    HRESULT hr;
+
+    source = create_test_source(1);
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Windows 7 and below.*/, "Unexpected hr %#lx.\n", hr);
+    if (unk)
+        IUnknown_Release(unk);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -1514,6 +1536,7 @@ START_TEST(mfplat)
 
     init_functions();
 
+    test_interfaces();
     test_factory();
     test_source_reader("test.wav", false);
     test_source_reader("test.mp4", true);
