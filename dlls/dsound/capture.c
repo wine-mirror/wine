@@ -178,7 +178,8 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSou
     if (howmuch > 0) {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
-        This->notifies = _recalloc(This->notifies, howmuch, sizeof(DSBPOSITIONNOTIFY));
+        free(This->notifies);
+        This->notifies = malloc(howmuch * sizeof(DSBPOSITIONNOTIFY));
         if (!This->notifies) {
 	    WARN("out of memory\n");
 	    return DSERR_OUTOFMEMORY;
