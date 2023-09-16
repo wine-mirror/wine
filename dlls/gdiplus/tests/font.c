@@ -204,13 +204,12 @@ static void test_createfont_charset(void)
     static const struct {
         LPCWSTR family_name;
         BYTE char_set;
-        BOOL todo;
     } td[] =
     {
         {L"Tahoma", ANSI_CHARSET},
         {L"Symbol", SYMBOL_CHARSET},
-        {L"Marlett", SYMBOL_CHARSET, TRUE},
-        {L"Wingdings", SYMBOL_CHARSET, TRUE},
+        {L"Marlett", SYMBOL_CHARSET},
+        {L"Wingdings", SYMBOL_CHARSET},
     };
 
     hdc = CreateCompatibleDC(0);
@@ -243,7 +242,6 @@ static void test_createfont_charset(void)
             expect(0, lf.lfItalic);
             expect(0, lf.lfUnderline);
             expect(0, lf.lfStrikeOut);
-            todo_wine_if(td[i].todo)
             ok(td[i].char_set == lf.lfCharSet ||
                 (td[i].char_set == ANSI_CHARSET && lf.lfCharSet == GetTextCharset(hdc)),
                 "got %#x\n", lf.lfCharSet);

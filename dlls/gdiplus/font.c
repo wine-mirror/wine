@@ -173,6 +173,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     lfw.lfItalic = style & FontStyleItalic;
     lfw.lfUnderline = style & FontStyleUnderline;
     lfw.lfStrikeOut = style & FontStyleStrikeout;
+    lfw.lfCharSet = DEFAULT_CHARSET;
 
     hfont = CreateFontIndirectW(&lfw);
     hdc = CreateCompatibleDC(0);
