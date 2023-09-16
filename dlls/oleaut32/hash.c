@@ -605,9 +605,9 @@ ULONG WINAPI LHashValOfNameSys(SYSKIND skind, LCID lcid, LPCOLESTR str)
 
     if (!str) return 0;
     len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-    strA = HeapAlloc( GetProcessHeap(), 0, len );
+    strA = malloc(len);
     WideCharToMultiByte( CP_ACP, 0, str, -1, strA, len, NULL, NULL );
     res = LHashValOfNameSysA(skind, lcid, strA);
-    HeapFree(GetProcessHeap(), 0, strA);
+    free(strA);
     return res;
 }
