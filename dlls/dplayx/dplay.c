@@ -1358,7 +1358,7 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
 
 }
 
-static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpName,
+static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpName,
         void *data, DWORD dataSize, DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
 {
   lpPlayerData lpPData;
@@ -1369,9 +1369,7 @@ static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *
   /* Allocate the storage for the player and associate it with list element */
   lpPData = calloc( 1, sizeof( *lpPData ) );
   if( lpPData == NULL )
-  {
-    return NULL;
-  }
+    return DPERR_OUTOFMEMORY;
 
   /* Set the desired player ID */
   lpPData->dpid = *lpid;
@@ -1404,7 +1402,7 @@ static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *
     CloseHandle( lpPData->hEvent );
     DP_DeleteDPNameStruct( &lpPData->name );
     free( lpPData );
-    return NULL;
+    return DPERR_OUTOFMEMORY;
   }
 
   lpPData->uRef = 1;
@@ -1420,7 +1418,7 @@ static lpPlayerData DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *
   if( ~dwFlags & DPLAYI_PLAYER_SYSPLAYER )
     This->dp2->lpSessionDesc->dwCurrentPlayers++;
 
-  return lpPData;
+  return DP_OK;
 }
 
 /* Delete the contents of the DPNAME struct */
@@ -1562,7 +1560,6 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
         BOOL bAnsi )
 {
   HRESULT hr = DP_OK;
-  lpPlayerData lpPData;
   DWORD dwCreateFlags = 0;
 
   TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
@@ -1650,10 +1647,10 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
 
   /* We pass creation flags, so we can distinguish sysplayers and not count them in the current
      player total */
-  lpPData = DP_CreatePlayer( This, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
-                             hEvent, bAnsi );
-  if( !lpPData )
-    return DPERR_CANTADDPLAYER;
+  hr = DP_CreatePlayer( This, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
+                        hEvent, bAnsi );
+  if( FAILED( hr ) )
+    return hr;
 
   /* Let the SP know that we've created this player */
   if( This->dp2->spData.lpCB->CreatePlayer )
