@@ -1358,11 +1358,67 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
 
 }
 
-static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpName,
+static HRESULT DP_CreateSPPlayer( IDirectPlayImpl *This, DPID dpid, DWORD flags, void *msgHeader )
+{
+  HRESULT hr;
+
+  /* Let the SP know that we've created this player */
+  if( This->dp2->spData.lpCB->CreatePlayer )
+  {
+    DPSP_CREATEPLAYERDATA data;
+
+    data.idPlayer = dpid;
+    data.dwFlags = flags;
+    data.lpSPMessageHeader = msgHeader;
+    data.lpISP = This->dp2->spData.lpISP;
+
+    TRACE( "Calling SP CreatePlayer 0x%08lx: dwFlags: 0x%08lx lpMsgHdr: %p\n", dpid, flags,
+           msgHeader );
+
+    hr = (*This->dp2->spData.lpCB->CreatePlayer)( &data );
+    if( FAILED( hr ) )
+    {
+      ERR( "Failed to create player with sp: %s\n", DPLAYX_HresultToString( hr ) );
+      return hr;
+    }
+  }
+
+  /* Now let the SP know that this player is a member of the system group */
+  if( This->dp2->spData.lpCB->AddPlayerToGroup )
+  {
+    DPSP_ADDPLAYERTOGROUPDATA data;
+
+    data.idPlayer = dpid;
+    data.idGroup = DPID_SYSTEM_GROUP;
+    data.lpISP = This->dp2->spData.lpISP;
+
+    TRACE( "Calling SP AddPlayerToGroup (sys group)\n" );
+
+    hr = (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
+    if( FAILED( hr ) )
+    {
+      ERR( "Failed to add player to sys group with sp: %s\n", DPLAYX_HresultToString( hr ) );
+      if ( This->dp2->spData.lpCB->DeletePlayer )
+      {
+        DPSP_DELETEPLAYERDATA data;
+        data.idPlayer = dpid;
+        data.dwFlags = 0;
+        data.lpISP = This->dp2->spData.lpISP;
+        This->dp2->spData.lpCB->DeletePlayer( &data );
+      }
+      return hr;
+    }
+  }
+
+  return DP_OK;
+}
+
+static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
         void *data, DWORD dataSize, DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
 {
   lpPlayerData lpPData;
   lpPlayerList lpPList;
+  HRESULT hr;
 
   TRACE( "(%p)->(%p,%p,%u)\n", This, lpid, lpName, bAnsi );
 
@@ -1412,6 +1468,19 @@ static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, DPID *lpid, DPNAME *lpNam
   DPQ_INSERT( This->dp2->lpSysGroup->players, lpPList, players );
 
   DP_SetPlayerData( lpPData, DPSET_REMOTE, data, dataSize );
+
+  hr = DP_CreateSPPlayer( This, *lpid, dwFlags, msgHeader );
+  if ( FAILED( hr ) )
+  {
+    free( lpPData->lpRemoteData );
+    DPQ_REMOVE( This->dp2->lpSysGroup->players, lpPList, players );
+    free( lpPList );
+    free( lpPData->lpSPPlayerData );
+    CloseHandle( lpPData->hEvent );
+    DP_DeleteDPNameStruct( &lpPData->name );
+    free( lpPData );
+    return hr;
+  }
 
   TRACE( "Created player id 0x%08lx\n", *lpid );
 
@@ -1647,53 +1716,10 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
 
   /* We pass creation flags, so we can distinguish sysplayers and not count them in the current
      player total */
-  hr = DP_CreatePlayer( This, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
+  hr = DP_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
                         hEvent, bAnsi );
   if( FAILED( hr ) )
     return hr;
-
-  /* Let the SP know that we've created this player */
-  if( This->dp2->spData.lpCB->CreatePlayer )
-  {
-    DPSP_CREATEPLAYERDATA data;
-
-    data.idPlayer          = *lpidPlayer;
-    data.dwFlags           = dwCreateFlags;
-    data.lpSPMessageHeader = lpMsgHdr;
-    data.lpISP             = This->dp2->spData.lpISP;
-
-    TRACE( "Calling SP CreatePlayer 0x%08lx: dwFlags: 0x%08lx lpMsgHdr: %p\n",
-           *lpidPlayer, data.dwFlags, data.lpSPMessageHeader );
-
-    hr = (*This->dp2->spData.lpCB->CreatePlayer)( &data );
-  }
-
-  if( FAILED(hr) )
-  {
-    ERR( "Failed to create player with sp: %s\n", DPLAYX_HresultToString(hr) );
-    return hr;
-  }
-
-  /* Now let the SP know that this player is a member of the system group */
-  if( This->dp2->spData.lpCB->AddPlayerToGroup )
-  {
-    DPSP_ADDPLAYERTOGROUPDATA data;
-
-    data.idPlayer = *lpidPlayer;
-    data.idGroup  = DPID_SYSTEM_GROUP;
-    data.lpISP    = This->dp2->spData.lpISP;
-
-    TRACE( "Calling SP AddPlayerToGroup (sys group)\n" );
-
-    hr = (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
-  }
-
-  if( FAILED(hr) )
-  {
-    ERR( "Failed to add player to sys group with sp: %s\n",
-         DPLAYX_HresultToString(hr) );
-    return hr;
-  }
 
 #if 1
   if( !This->dp2->bHostInterface )
