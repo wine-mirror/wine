@@ -4797,6 +4797,23 @@ static void test_image_format(void)
     }
 }
 
+INT compare_with_precision(const BYTE *ptr1, const BYTE *ptr2, size_t num, INT precision)
+{
+    if (ptr1 == NULL || ptr2 == NULL)
+        return ptr1 < ptr2 ? -1 : 1;
+
+    for (size_t i = 0; i < num; i++)
+    {
+        INT byte1 = ptr1[i];
+        INT byte2 = ptr2[i];
+
+        if ((byte1 < byte2 - precision) || (byte1 > byte2 + precision))
+            return byte1 < byte2 ? -1 : 1;
+    }
+
+    return 0;
+}
+
 static void test_DrawImage_scale(void)
 {
     static const BYTE back_8x1[24] =  { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40,
@@ -4825,45 +4842,71 @@ static void test_DrawImage_scale(void)
                                              0xcc,0xcc,0xcc, 0xcc,0xcc,0xcc, 0x40,0x40,0x40, 0x40,0x40,0x40 };
     static const BYTE image_250_half[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x80,0x80,0x80, 0x80,0x80,0x80,
                                              0x80,0x80,0x80, 0xcc,0xcc,0xcc, 0xcc,0xcc,0xcc, 0x40,0x40,0x40 };
+
+    static const BYTE image_bil_080[24] = { 0x40,0x40,0x40, 0x93,0x93,0x93, 0x86,0x86,0x86, 0x40,0x40,0x40,
+                                            0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40 };
+    static const BYTE image_bil_120[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0xb2,0xb2,0xb2, 0x87,0x87,0x87,
+                                            0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40 };
+    static const BYTE image_bil_150[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x99,0x99,0x99, 0xcc,0xcc,0xcc,
+                                            0x6f,0x6f,0x6f, 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40 };
+    static const BYTE image_bil_180[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x88,0x88,0x88, 0xb2,0xb2,0xb2,
+                                            0xad,0xad,0xad, 0x5f,0x5f,0x5f, 0x40,0x40,0x40, 0x40,0x40,0x40 };
+    static const BYTE image_bil_200[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x80,0x80,0x80, 0xa6,0xa6,0xa6,
+                                            0xcc,0xcc,0xcc, 0x86,0x86,0x86, 0x40,0x40,0x40, 0x40,0x40,0x40 };
+    static const BYTE image_bil_250[24] = { 0x40,0x40,0x40, 0x40,0x40,0x40, 0x40,0x40,0x40, 0x8f,0x8f,0x8f,
+                                            0xad,0xad,0xad, 0xcc,0xcc,0xcc, 0x95,0x95,0x95, 0x5c,0x5c,0x5c };
     static const struct test_data
     {
         REAL scale_x;
+        InterpolationMode interpolation_mode;
         PixelOffsetMode pixel_offset_mode;
         const BYTE *image;
+        INT precision;
         BOOL todo;
     } td[] =
     {
-        { 0.8, PixelOffsetModeNone, image_080 }, /* 0 */
-        { 1.0, PixelOffsetModeNone, image_100 },
-        { 1.2, PixelOffsetModeNone, image_120 },
-        { 1.5, PixelOffsetModeNone, image_150 },
-        { 1.8, PixelOffsetModeNone, image_180 },
-        { 2.0, PixelOffsetModeNone, image_200 },
-        { 2.5, PixelOffsetModeNone, image_250 },
+        { 0.8, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_080 }, /* 0 */
+        { 1.0, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_100 },
+        { 1.2, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_120 },
+        { 1.5, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_150 },
+        { 1.8, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_180 },
+        { 2.0, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_200 },
+        { 2.5, InterpolationModeNearestNeighbor, PixelOffsetModeNone, image_250 },
 
-        { 0.8, PixelOffsetModeHighSpeed, image_080 }, /* 7 */
-        { 1.0, PixelOffsetModeHighSpeed, image_100 },
-        { 1.2, PixelOffsetModeHighSpeed, image_120 },
-        { 1.5, PixelOffsetModeHighSpeed, image_150 },
-        { 1.8, PixelOffsetModeHighSpeed, image_180 },
-        { 2.0, PixelOffsetModeHighSpeed, image_200 },
-        { 2.5, PixelOffsetModeHighSpeed, image_250 },
+        { 0.8, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_080 }, /* 7 */
+        { 1.0, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_100 },
+        { 1.2, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_120 },
+        { 1.5, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_150 },
+        { 1.8, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_180 },
+        { 2.0, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_200 },
+        { 2.5, InterpolationModeNearestNeighbor, PixelOffsetModeHighSpeed, image_250 },
 
-        { 0.8, PixelOffsetModeHalf, image_080 }, /* 14 */
-        { 1.0, PixelOffsetModeHalf, image_100 },
-        { 1.2, PixelOffsetModeHalf, image_120_half, TRUE },
-        { 1.5, PixelOffsetModeHalf, image_150_half, TRUE },
-        { 1.8, PixelOffsetModeHalf, image_180_half, TRUE },
-        { 2.0, PixelOffsetModeHalf, image_200_half, TRUE },
-        { 2.5, PixelOffsetModeHalf, image_250_half, TRUE },
+        /* TODO There are missing left pixel column of image*/
+        { 0.8, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_080 }, /* 14 */
+        { 1.0, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_100 },
+        { 1.2, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_120_half, 0, TRUE },
+        { 1.5, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_150_half, 0, TRUE },
+        { 1.8, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_180_half, 0, TRUE },
+        { 2.0, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_200_half, 0, TRUE },
+        { 2.5, InterpolationModeNearestNeighbor, PixelOffsetModeHalf, image_250_half, 0, TRUE },
 
-        { 0.8, PixelOffsetModeHighQuality, image_080 }, /* 21 */
-        { 1.0, PixelOffsetModeHighQuality, image_100 },
-        { 1.2, PixelOffsetModeHighQuality, image_120_half, TRUE },
-        { 1.5, PixelOffsetModeHighQuality, image_150_half, TRUE },
-        { 1.8, PixelOffsetModeHighQuality, image_180_half, TRUE },
-        { 2.0, PixelOffsetModeHighQuality, image_200_half, TRUE },
-        { 2.5, PixelOffsetModeHighQuality, image_250_half, TRUE },
+        { 0.8, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_080 }, /* 21 */
+        { 1.0, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_100 },
+        { 1.2, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_120_half, 0, TRUE },
+        { 1.5, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_150_half, 0, TRUE },
+        { 1.8, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_180_half, 0, TRUE },
+        { 2.0, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_200_half, 0, TRUE },
+        { 2.5, InterpolationModeNearestNeighbor, PixelOffsetModeHighQuality, image_250_half, 0, TRUE },
+
+        /* The bilinear interpolation results are little bit different than on Windows */
+        /* TODO In two cases, there are missing right pixel column of image */
+        { 0.8, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_080, 1, TRUE }, /* 28 */
+        { 1.0, InterpolationModeBilinear, PixelOffsetModeNone, image_100 },
+        { 1.2, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_120, 2 },
+        { 1.5, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_150, 1 },
+        { 1.8, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_180, 1, TRUE },
+        { 2.0, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_200, 1 },
+        { 2.5, InterpolationModeBilinear, PixelOffsetModeNone, image_bil_250, 1 },
     };
     BYTE src_2x1[6] = { 0x80,0x80,0x80, 0xcc,0xcc,0xcc };
     BYTE dst_8x1[24];
@@ -4888,11 +4931,12 @@ static void test_DrawImage_scale(void)
     expect(Ok, status);
     status = GdipGetImageGraphicsContext(u2.image, &graphics);
     expect(Ok, status);
-    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
-    expect(Ok, status);
 
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
+        status = GdipSetInterpolationMode(graphics, td[i].interpolation_mode);
+        expect(Ok, status);
+
         status = GdipSetPixelOffsetMode(graphics, td[i].pixel_offset_mode);
         expect(Ok, status);
 
@@ -4906,7 +4950,7 @@ static void test_DrawImage_scale(void)
         status = GdipDrawImageI(graphics, u1.image, 1, 0);
         expect(Ok, status);
 
-        match = memcmp(dst_8x1, td[i].image, sizeof(dst_8x1)) == 0;
+        match = compare_with_precision(dst_8x1, td[i].image, sizeof(dst_8x1), td[i].precision) == 0;
         todo_wine_if (!match && td[i].todo)
             ok(match, "%d: data should match\n", i);
         if (!match)
