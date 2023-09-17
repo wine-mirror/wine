@@ -3301,7 +3301,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
         const DPSECURITYDESC *lpSecurity, const DPCREDENTIALS *lpCredentials, BOOL bAnsi )
 {
   void *spMessageHeader = NULL;
-  HRESULT hr = DP_OK;
+  HRESULT hr;
 
   FIXME( "(%p)->(%p,0x%08lx,%p,%p): partial stub\n",
          This, lpsd, dwFlags, lpSecurity, lpCredentials );
@@ -3398,6 +3398,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
 
   if( dwFlags & DPOPEN_JOIN )
   {
+    DWORD createFlags = DPLAYI_PLAYER_SYSPLAYER | DPLAYI_PLAYER_PLAYERLOCAL;
     DPID dpidServerId = DPID_UNKNOWN;
 
     /* Create the server player for this interface. This way we can receive
@@ -3408,26 +3409,34 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
      *        up. DPlay would then trigger the hEvent for the player the
      *        message is directed to.
      */
-    hr = DP_IF_CreatePlayer( This, NULL, &dpidServerId, NULL, 0, NULL,
-                             0,
-                             DPPLAYER_SERVERPLAYER | DPPLAYER_LOCAL , bAnsi );
+    hr = DP_MSG_SendRequestPlayerId( This, createFlags, &dpidServerId );
+    if( FAILED( hr ) )
+    {
+      ERR( "Request for ID failed: %s\n", DPLAYX_HresultToString( hr ) );
+      return hr;
+    }
 
+    hr = DP_CreatePlayer( This, NULL, &dpidServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
+                          bAnsi );
+    if( FAILED( hr ) )
+      return hr;
+
+    hr = DP_MSG_ForwardPlayerCreation( This, dpidServerId );
+    if( FAILED( hr ) )
+      return hr;
   }
   else if( dwFlags & DPOPEN_CREATE )
   {
-    DPID dpidNameServerId = DPID_NAME_SERVER;
+    DWORD createFlags = DPLAYI_PLAYER_APPSERVER | DPLAYI_PLAYER_PLAYERLOCAL;
+    DPID dpidNameServerId = DP_NextObjectId();
 
-    hr = DP_IF_CreatePlayer( This, NULL, &dpidNameServerId, NULL, 0, NULL,
-                             0, DPPLAYER_SERVERPLAYER, bAnsi );
+    hr = DP_CreatePlayer( This, NULL, &dpidNameServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
+                          bAnsi );
+    if( FAILED( hr ) )
+      return hr;
   }
 
-  if( FAILED(hr) )
-  {
-    ERR( "Couldn't create name server/system player: %s\n",
-         DPLAYX_HresultToString(hr) );
-  }
-
-  return hr;
+  return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlay2AImpl_Open( IDirectPlay2A *iface, DPSESSIONDESC2 *sdesc,
