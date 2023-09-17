@@ -411,6 +411,62 @@ static void pres_iadd(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_bilt(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    int *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] < arg2[i] ? ~0u : 0;
+        retval[i] = *(float *)&v;
+    }
+}
+
+static void pres_bige(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    int *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] >= arg2[i] ? ~0u : 0;
+        retval[i] = *(float *)&v;
+    }
+}
+
+static void pres_bieq(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    int *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] == arg2[i] ? ~0u : 0;
+        retval[i] = *(float *)&v;
+    }
+}
+
+static void pres_bine(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    int *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] != arg2[i] ? ~0u : 0;
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_udiv(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     unsigned int *arg1 = (unsigned int *)args[0];
@@ -544,6 +600,10 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x205, "mul",  pres_mul  },
     { 0x206, "atan2",pres_atan2},
     { 0x208, "div",  pres_div  },
+    { 0x210, "bilt", pres_bilt },
+    { 0x211, "bige", pres_bige },
+    { 0x212, "bieq", pres_bieq },
+    { 0x213, "bine", pres_bine },
     { 0x216, "iadd", pres_iadd },
     { 0x21a, "udiv", pres_udiv },
     { 0x21d, "imin", pres_imin },
