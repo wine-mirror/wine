@@ -193,7 +193,7 @@ typedef struct _StructuredTaskCollection
     volatile LONG count;
     volatile LONG finished;
     void *exception;
-    void *event;
+    Context *event;
 } _StructuredTaskCollection;
 
 bool __thiscall _StructuredTaskCollection__IsCanceling(_StructuredTaskCollection*);
@@ -2118,8 +2118,8 @@ void __thiscall _StructuredTaskCollection__Cancel(
     ThreadScheduler *scheduler;
     void *prev_exception, *new_exception;
     struct scheduled_chore *sc, *next;
+    LONG removed = 0, finished = 1;
     struct beacon *beacon;
-    LONG removed = 0;
 
     TRACE("(%p)\n", this);
 
@@ -2162,8 +2162,9 @@ void __thiscall _StructuredTaskCollection__Cancel(
         return;
 
     if (InterlockedCompareExchange(&this->finished, removed, FINISHED_INITIAL) != FINISHED_INITIAL)
-        InterlockedAdd(&this->finished, removed);
-    RtlWakeAddressAll((LONG*)&this->finished);
+        finished = InterlockedAdd(&this->finished, removed);
+    if (!finished)
+        call_Context_Unblock(this->event);
 }
 
 static LONG CALLBACK execute_chore_except(EXCEPTION_POINTERS *pexc, void *_data)
@@ -2240,21 +2241,20 @@ static void execute_chore(_UnrealizedChore *chore,
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
 {
     _UnrealizedChore *chore = data;
-    LONG count;
     volatile LONG *ptr;
+    LONG finished = 1;
 
     TRACE("(%u %p)\n", normal, data);
 
     if (!chore->task_collection)
         return;
     ptr = &chore->task_collection->finished;
-    count = chore->task_collection->count;
-    chore->task_collection = NULL;
 
     if (InterlockedCompareExchange(ptr, 1, FINISHED_INITIAL) != FINISHED_INITIAL)
-        InterlockedIncrement(ptr);
-    if (*ptr >= count)
-        RtlWakeAddressSingle((LONG*)ptr);
+        finished = InterlockedIncrement(ptr);
+    if (!finished)
+        call_Context_Unblock(chore->task_collection->event);
+    chore->task_collection = NULL;
 }
 
 static void __cdecl chore_wrapper(_UnrealizedChore *chore)
@@ -2393,9 +2393,9 @@ static void CALLBACK exception_ptr_rethrow_finally(BOOL normal, void *data)
 _TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
         _StructuredTaskCollection *this, _UnrealizedChore *chore)
 {
-    LONG expected, val;
     ULONG_PTR exception;
     exception_ptr *ep;
+    LONG count;
 
     TRACE("(%p %p)\n", this, chore);
 
@@ -2415,12 +2415,17 @@ _TaskCollectionStatus __stdcall _StructuredTaskCollection__RunAndWait(
         }
     }
 
-    expected = this->count ? this->count : FINISHED_INITIAL;
-    while ((val = this->finished) != expected)
-        RtlWaitOnAddress((LONG*)&this->finished, &val, sizeof(val), NULL);
+    this->event = get_current_context();
+    InterlockedCompareExchange(&this->finished, 0, FINISHED_INITIAL);
 
-    this->finished = 0;
-    this->count = 0;
+    while (this->count != 0) {
+        count = this->count;
+        InterlockedAdd(&this->count, -count);
+        count = InterlockedAdd(&this->finished, -count);
+
+        if (count < 0)
+            call_Context_Block(this->event);
+    }
 
     exception = (ULONG_PTR)this->exception;
     ep = (exception_ptr*)(exception & ~STRUCTURED_TASK_COLLECTION_STATUS_MASK);
