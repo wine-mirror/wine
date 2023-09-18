@@ -637,6 +637,18 @@ static inline HTMLObjectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node);
 }
 
+static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static inline HTMLObjectElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node.event_target.dispex);
+}
+
 static void *HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
@@ -676,57 +688,6 @@ static void *HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid)
     return elem_iface;
 }
 
-static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(This->plugin_container.plugin_host)
-        detach_plugin_host(This->plugin_container.plugin_host);
-
-    HTMLElement_destructor(&This->plugin_container.element.node);
-}
-
-static HRESULT HTMLObjectElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
-{
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
-}
-
-static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name,
-        DWORD grfdex, DISPID *pid)
-{
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(name), grfdex, pid);
-
-    return get_plugin_dispid(&This->plugin_container, name, pid);
-}
-
-static HRESULT HTMLObjectElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
-{
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    FIXME("(%p)->(%lx %p)\n", This, id, name);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
-        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
-{
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
-
-    TRACE("(%p)->(%ld)\n", This, id);
-
-    return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
-}
-
-static inline HTMLObjectElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node.event_target.dispex);
-}
-
 static void HTMLObjectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLObjectElement *This = impl_from_DispatchEx(dispex);
@@ -741,6 +702,44 @@ static void HTMLObjectElement_unlink(DispatchEx *dispex)
     HTMLObjectElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsobject);
+}
+
+static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->plugin_container.plugin_host)
+        detach_plugin_host(This->plugin_container.plugin_host);
+
+    HTMLElement_destructor(&This->plugin_container.element.node);
+}
+
+static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(name), grfdex, dispid);
+
+    return get_plugin_dispid(&This->plugin_container, name, dispid);
+}
+
+static HRESULT HTMLObjectElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    FIXME("(%p)->(%lx %p)\n", This, id, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+
+    TRACE("(%p)->(%ld)\n", This, id);
+
+    return invoke_plugin_prop(&This->plugin_container, id, lcid, flags, params, res, ei);
 }
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
