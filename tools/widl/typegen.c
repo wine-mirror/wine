@@ -789,7 +789,7 @@ static int type_has_full_pointer_recurse(const type_t *type, const attr_list_t *
         if (get_pointer_fc(type, attrs, toplevel_param) == FC_FP)
             return TRUE;
         else
-            return FALSE;
+            return type_has_full_pointer_recurse(type_pointer_get_ref_type(type), NULL, FALSE, visited_structs);
     case TGT_ARRAY:
         if (get_pointer_fc(type, attrs, toplevel_param) == FC_FP)
             return TRUE;
