@@ -1013,7 +1013,7 @@ static HRESULT uia_com_focus_win_event_callback(struct uia_event *event, void *u
     return hr;
 }
 
-static void uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIANODE node, HWND hwnd)
+static BOOL uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIANODE node, HWND hwnd)
 {
     HRESULT hr;
 
@@ -1021,12 +1021,15 @@ static void uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIAN
     if (FAILED(hr))
     {
         WARN("uia_event_advise_node failed with hr %#lx\n", hr);
-        return;
+        goto exit;
     }
 
     hr = uia_hwnd_map_add_hwnd(&event->focus_hwnd_map, hwnd);
     if (FAILED(hr))
         WARN("Failed to add hwnd for focus winevent, hr %#lx\n", hr);
+
+exit:
+    return SUCCEEDED(hr);
 }
 
 static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia_event_handler_event_id_map_entry *event_id_map)
@@ -1041,8 +1044,26 @@ static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia
 
         LIST_FOR_EACH_ENTRY(event, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
         {
-            if (!uia_hwnd_map_check_hwnd(&event->focus_hwnd_map, hwnd))
-                uia_com_focus_handler_advise_node(event, node, hwnd);
+            if (uia_hwnd_map_check_hwnd(&event->focus_hwnd_map, hwnd) ||
+                    !uia_com_focus_handler_advise_node(event, node, hwnd))
+                continue;
+
+            hr = get_focus_from_node_provider((IWineUiaNode *)node, 0, PROV_METHOD_FLAG_RETURN_NODE_LRES, &v);
+            if (V_VT(&v) == VT_I4)
+            {
+                HUIANODE focus_node = NULL;
+
+                hr = uia_node_from_lresult(V_I4(&v), &focus_node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
+                if (SUCCEEDED(hr))
+                {
+                    hr = uia_event_for_each(UIA_AutomationFocusChangedEventId, uia_com_focus_win_event_callback,
+                            (void *)focus_node, TRUE);
+                    if (FAILED(hr))
+                        WARN("uia_event_for_each on focus_node failed with hr %#lx\n", hr);
+                }
+                UiaNodeRelease(focus_node);
+            }
+            VariantClear(&v);
         }
     }
 

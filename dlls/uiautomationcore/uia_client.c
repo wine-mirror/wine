@@ -347,7 +347,7 @@ static HRESULT get_navigate_from_node_provider(IWineUiaNode *node, int idx, int 
     return hr;
 }
 
-static HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, VARIANT *ret_val)
+HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val)
 {
     IWineUiaProvider *prov;
     HRESULT hr;
@@ -357,7 +357,7 @@ static HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, VARIANT
     if (FAILED(hr))
         return hr;
 
-    hr = IWineUiaProvider_get_focus(prov, ret_val);
+    hr = IWineUiaProvider_get_focus(prov, flags, ret_val);
     IWineUiaProvider_Release(prov);
 
     return hr;
@@ -1836,7 +1836,7 @@ static HRESULT WINAPI uia_provider_navigate(IWineUiaProvider *iface, int nav_dir
     return S_OK;
 }
 
-static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, VARIANT *out_val)
+static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, LONG flags, VARIANT *out_val)
 {
     struct uia_provider *prov = impl_from_IWineUiaProvider(iface);
     IRawElementProviderFragmentRoot *elroot;
@@ -1844,7 +1844,10 @@ static HRESULT WINAPI uia_provider_get_focus(IWineUiaProvider *iface, VARIANT *o
     IRawElementProviderSimple *elprov;
     HRESULT hr;
 
-    TRACE("%p, %p\n", iface, out_val);
+    TRACE("%p, %#lx, %p\n", iface, flags, out_val);
+
+    if (flags & PROV_METHOD_FLAG_RETURN_NODE_LRES)
+        FIXME("PROV_METHOD_FLAG_RETURN_NODE_LRES ignored for normal providers.\n");
 
     VariantInit(out_val);
     hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
@@ -2357,7 +2360,7 @@ static HRESULT WINAPI uia_nested_node_provider_get_prop_val(IWineUiaProvider *if
     {
         HUIANODE node;
 
-        hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+        hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node, 0);
         if (FAILED(hr))
             return hr;
 
@@ -2406,7 +2409,7 @@ static HRESULT WINAPI uia_nested_node_provider_navigate(IWineUiaProvider *iface,
     if (FAILED(hr) || V_VT(&v) == VT_EMPTY)
         return hr;
 
-    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -2416,21 +2419,27 @@ static HRESULT WINAPI uia_nested_node_provider_navigate(IWineUiaProvider *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI uia_nested_node_provider_get_focus(IWineUiaProvider *iface, VARIANT *out_val)
+static HRESULT WINAPI uia_nested_node_provider_get_focus(IWineUiaProvider *iface, LONG flags, VARIANT *out_val)
 {
     struct uia_nested_node_provider *prov = impl_from_nested_node_IWineUiaProvider(iface);
     HUIANODE node;
     HRESULT hr;
     VARIANT v;
 
-    TRACE("%p, %p\n", iface, out_val);
+    TRACE("%p, %#lx, %p\n", iface, flags, out_val);
 
     VariantInit(out_val);
-    hr = get_focus_from_node_provider(prov->nested_node, 0, &v);
+    hr = get_focus_from_node_provider(prov->nested_node, 0, 0, &v);
     if (FAILED(hr) || V_VT(&v) == VT_EMPTY)
         return hr;
 
-    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+    if (flags & PROV_METHOD_FLAG_RETURN_NODE_LRES)
+    {
+        *out_val = v;
+        return S_OK;
+    }
+
+    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -2488,7 +2497,7 @@ static HRESULT WINAPI uia_nested_node_provider_create_node_from_prov(IWineUiaPro
         return S_OK;
     }
 
-    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node);
+    hr = uia_node_from_lresult((LRESULT)V_I4(&v), &node, 0);
     if (FAILED(hr))
         return hr;
 
@@ -2631,14 +2640,14 @@ static HRESULT create_wine_uia_nested_node_provider(struct uia_node *node, LRESU
     return S_OK;
 }
 
-HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
+HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode, int node_flags)
 {
     struct uia_node *node;
     HRESULT hr;
 
     *huianode = NULL;
 
-    hr = create_uia_node(&node, 0);
+    hr = create_uia_node(&node, node_flags);
     if (FAILED(hr))
     {
         uia_node_lresult_release(lr);
@@ -2804,7 +2813,7 @@ static HRESULT get_focused_uia_node(HUIANODE in_node, HUIANODE *out_node)
                     (get_node_provider_type_at_idx(node, i) == PROV_TYPE_HWND)))
             continue;
 
-        hr = get_focus_from_node_provider(&node->IWineUiaNode_iface, i, &v);
+        hr = get_focus_from_node_provider(&node->IWineUiaNode_iface, i, 0, &v);
         if (FAILED(hr))
             break;
 

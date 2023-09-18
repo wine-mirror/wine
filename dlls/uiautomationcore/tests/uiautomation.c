@@ -14681,6 +14681,12 @@ static void set_com_event_data(struct node_provider_desc *exp_node_desc)
     SET_EXPECT(uia_com_event_callback);
 }
 
+static void push_expected_com_event(struct node_provider_desc *exp_node_desc)
+{
+    push_event_queue_event(&ComEventData.exp_events, exp_node_desc);
+    SET_EXPECT_MULTI(uia_com_event_callback, ComEventData.exp_events.exp_event_count);
+}
+
 #define test_com_event_data( sender ) \
         test_com_event_data_( (sender), __FILE__, __LINE__)
 static void test_com_event_data_(IUIAutomationElement *sender, const char *file, int line)
@@ -15560,6 +15566,12 @@ static void set_multi_event_data(struct node_provider_desc *exp_node_desc)
     SET_EXPECT(uia_event_callback);
 }
 
+static void push_expected_event(struct node_provider_desc *exp_node_desc)
+{
+    push_event_queue_event(&MultiEventData.exp_events, exp_node_desc);
+    SET_EXPECT_MULTI(uia_event_callback, MultiEventData.exp_events.exp_event_count);
+}
+
 static void WINAPI multi_uia_event_callback(struct UiaEventArgs *args, SAFEARRAY *req_data, BSTR tree_struct)
 {
     struct node_provider_desc *exp_desc;
@@ -15695,6 +15707,72 @@ static void test_uia_com_focus_change_event_handler_win_event_handling(IUIAutoma
     if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
     CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
     set_provider_prop_override(&Provider, NULL, 0);
+
+    /*
+     * The first time EVENT_OBJECT_FOCUS is raised for an HWND with a
+     * serverside provider UIA will query for the currently focused provider
+     * and raise a focus change event for it, alongside advising the root
+     * provider of focus change events being listened for. All subsequent
+     * EVENT_OBJECT_FOCUS events on the same HWND only query the root
+     * provider.
+     */
+    initialize_provider(&Provider_child2, ProviderOptions_ServerSideProvider, NULL, TRUE);
+    Provider_child2.parent = &Provider2.IRawElementProviderFragment_iface;
+    Provider_child2.frag_root = &Provider2.IRawElementProviderFragmentRoot_iface;
+    Provider2.focus_prov = &Provider_child2.IRawElementProviderFragment_iface;
+    set_provider_runtime_id(&Provider_child2, UiaAppendRuntimeId, 2);
+    initialize_provider_advise_events_ids(&Provider2);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", L"Provider_child2", TRUE);
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+
+    /* Second event. */
+    init_node_provider_desc(&exp_nested_node_desc, GetCurrentProcessId(), test_child_hwnd);
+    add_provider_desc(&exp_nested_node_desc, L"Main", L"Provider2", TRUE);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), test_child_hwnd);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd3", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc3", FALSE);
+    add_nested_provider_desc(&exp_node_desc, L"Main", NULL, FALSE, &exp_nested_node_desc);
+
+    push_expected_event(&exp_node_desc);
+    push_expected_com_event(&exp_node_desc);
+    set_uia_hwnd_expects(0, 2, 2, 3, 0); /* Win11 sends 3 WM_GETOBJECT messages, normally only 2. */
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 4); /* Win11 sends 4 WM_GETOBJECT messages, normally only 3. */
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 2, TRUE, 0, FALSE);
+    CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 3);
+    CHECK_CALLED_MULTI(uia_com_event_callback, 2);
+    CHECK_CALLED_MULTI(uia_event_callback, 2);
+
+    /*
+     * Second time EVENT_OBJECT_FOCUS is raised for this HWND, only the root
+     * provider will have an event raised.
+     */
+    init_node_provider_desc(&exp_nested_node_desc, GetCurrentProcessId(), test_child_hwnd);
+    add_provider_desc(&exp_nested_node_desc, L"Main", L"Provider2", TRUE);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), test_child_hwnd);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd3", TRUE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc3", FALSE);
+    add_nested_provider_desc(&exp_node_desc, L"Main", NULL, FALSE, &exp_nested_node_desc);
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+    set_uia_hwnd_expects(0, 2, 2, 3, 0); /* Win11 sends 3 WM_GETOBJECT messages, normally only 2. */
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 4); /* Win11 sends 4 WM_GETOBJECT messages, normally only 3. */
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 2, TRUE, 0, FALSE);
+    CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 3);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
 
     set_uia_hwnd_expects(0, 1, 1, 0, 0);
     hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,

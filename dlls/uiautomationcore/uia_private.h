@@ -216,6 +216,7 @@ enum provider_method_flags {
 
 /* uia_client.c */
 int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
+HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val) DECLSPEC_HIDDEN;
 HRESULT respond_to_win_event_on_node_provider(IWineUiaNode *node, int idx, DWORD win_event, HWND hwnd, LONG obj_id,
         LONG child_id, IProxyProviderWinEventSink *sink) DECLSPEC_HIDDEN;
 HRESULT create_node_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val) DECLSPEC_HIDDEN;
@@ -224,7 +225,7 @@ HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers, int node_flags) DECLSPEC_HIDDEN;
-HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode) DECLSPEC_HIDDEN;
+HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode, int node_flags) DECLSPEC_HIDDEN;
 void uia_node_lresult_release(LRESULT lr) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags) DECLSPEC_HIDDEN;
 HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;

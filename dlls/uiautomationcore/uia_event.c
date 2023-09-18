@@ -595,7 +595,7 @@ static HRESULT uia_raise_clientside_event(struct uia_queue_uia_event *event)
     HRESULT hr;
 
     node = nav_start_node = NULL;
-    hr = uia_node_from_lresult(event->u.clientside.node, &node);
+    hr = uia_node_from_lresult(event->u.clientside.node, &node, 0);
     if (FAILED(hr))
     {
         WARN("Failed to create node from lresult, hr %#lx\n", hr);
@@ -605,7 +605,7 @@ static HRESULT uia_raise_clientside_event(struct uia_queue_uia_event *event)
 
     if (event->u.clientside.nav_start_node)
     {
-        hr = uia_node_from_lresult(event->u.clientside.nav_start_node, &nav_start_node);
+        hr = uia_node_from_lresult(event->u.clientside.nav_start_node, &nav_start_node, 0);
         if (FAILED(hr))
         {
             WARN("Failed to create nav_start_node from lresult, hr %#lx\n", hr);
