@@ -57,6 +57,11 @@ enum wayland_window_message
     WM_WAYLAND_CONFIGURE = 0x80001001
 };
 
+enum wayland_surface_config_state
+{
+    WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED = (1 << 0)
+};
+
 struct wayland_cursor
 {
     struct wayland_shm_buffer *shm_buffer;
@@ -121,6 +126,7 @@ struct wayland_output
 struct wayland_surface_config
 {
     int32_t width, height;
+    enum wayland_surface_config_state state;
     uint32_t serial;
     BOOL processed;
 };

@@ -78,8 +78,22 @@ static void xdg_toplevel_handle_configure(void *data,
 {
     struct wayland_surface *surface;
     HWND hwnd = data;
+    uint32_t *state;
+    enum wayland_surface_config_state config_state = 0;
 
-    TRACE("hwnd=%p %dx%d\n", hwnd, width, height);
+    wl_array_for_each(state, states)
+    {
+        switch(*state)
+        {
+        case XDG_TOPLEVEL_STATE_MAXIMIZED:
+            config_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
+            break;
+        default:
+            break;
+        }
+    }
+
+    TRACE("hwnd=%p %dx%d,%#x\n", hwnd, width, height, config_state);
 
     if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
 
@@ -87,6 +101,7 @@ static void xdg_toplevel_handle_configure(void *data,
     {
         surface->pending.width = width;
         surface->pending.height = height;
+        surface->pending.state = config_state;
     }
 
     pthread_mutex_unlock(&surface->mutex);
@@ -292,6 +307,32 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
 }
 
 /**********************************************************************
+ *          wayland_surface_configure_is_compatible
+ *
+ * Checks whether a wayland_surface_configure object is compatible with the
+ * the provided arguments.
+ */
+static BOOL wayland_surface_configure_is_compatible(struct wayland_surface_config *conf,
+                                                    int width, int height,
+                                                    enum wayland_surface_config_state state)
+{
+    static enum wayland_surface_config_state mask =
+        WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
+
+    /* We require the same state. */
+    if ((state & mask) != (conf->state & mask)) return FALSE;
+
+    /* The maximized state requires the configured size. */
+    if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+        (width != conf->width || height != conf->height))
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**********************************************************************
  *          wayland_surface_reconfigure
  *
  * Reconfigures the wayland surface as needed to match the latest requested
@@ -299,27 +340,52 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
  */
 BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 {
+    RECT window_rect;
+    int width, height;
+    enum wayland_surface_config_state window_state;
+
     if (!surface->xdg_toplevel) return TRUE;
+    if (!NtUserGetWindowRect(surface->hwnd, &window_rect)) return FALSE;
 
-    TRACE("hwnd=%p\n", surface->hwnd);
+    width = window_rect.right - window_rect.left;
+    height = window_rect.bottom - window_rect.top;
 
-    /* Acknowledge any processed config. */
-    if (surface->processing.serial && surface->processing.processed)
+    window_state =
+        (NtUserGetWindowLongW(surface->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
+        WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
+
+    TRACE("hwnd=%p window=%dx%d,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
+          surface->hwnd, width, height, window_state,
+          surface->processing.width, surface->processing.height,
+          surface->processing.state, surface->current.width,
+          surface->current.height, surface->current.state);
+
+    /* Acknowledge any compatible processed config. */
+    if (surface->processing.serial && surface->processing.processed &&
+        wayland_surface_configure_is_compatible(&surface->processing,
+                                                width, height,
+                                                window_state))
     {
         surface->current = surface->processing;
         memset(&surface->processing, 0, sizeof(surface->processing));
         xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
     }
-    /* If this is the initial configure, and we have a requested config,
-     * use that, in order to draw windows that don't go through the message
-     * loop (e.g., some splash screens). */
-    else if (!surface->current.serial && surface->requested.serial)
+    /* If this is the initial configure, and we have a compatible requested
+     * config, use that, in order to draw windows that don't go through the
+     * message loop (e.g., some splash screens). */
+    else if (!surface->current.serial && surface->requested.serial &&
+             wayland_surface_configure_is_compatible(&surface->requested,
+                                                     width, height,
+                                                     window_state))
     {
         surface->current = surface->requested;
         memset(&surface->requested, 0, sizeof(surface->requested));
         xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
     }
-    else if (!surface->current.serial)
+    else if (!surface->current.serial ||
+             !wayland_surface_configure_is_compatible(&surface->current,
+                                                      width, height,
+                                                      window_state))
     {
         return FALSE;
     }

@@ -195,15 +195,38 @@ out:
 static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
 {
     struct wayland_surface *surface = data->wayland_surface;
+    uint32_t window_state;
+    struct wayland_surface_config *conf;
 
     pthread_mutex_lock(&surface->mutex);
 
     if (!surface->xdg_toplevel) goto out;
 
-    if (surface->processing.serial) surface->processing.processed = TRUE;
+    window_state =
+        (NtUserGetWindowLongW(surface->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
+        WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
+
+    conf = surface->processing.serial ? &surface->processing : &surface->current;
+
+    TRACE("hwnd=%p window_state=%#x conf->state=%#x\n",
+          data->hwnd, window_state, conf->state);
+
+    if ((window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+       !(conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+    {
+        xdg_toplevel_set_maximized(surface->xdg_toplevel);
+    }
+    else if (!(window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+             (conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+    {
+        xdg_toplevel_unset_maximized(surface->xdg_toplevel);
+    }
+
+    conf->processed = TRUE;
 
 out:
     pthread_mutex_unlock(&surface->mutex);
+    wl_display_flush(process_wayland.wl_display);
 }
 
 /***********************************************************************
@@ -310,6 +333,8 @@ static void wayland_configure_window(HWND hwnd)
     struct wayland_surface *surface;
     INT width, height;
     UINT flags;
+    uint32_t state;
+    DWORD style;
 
     if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
 
@@ -332,11 +357,25 @@ static void wayland_configure_window(HWND hwnd)
 
     width = surface->processing.width;
     height = surface->processing.height;
+    state = surface->processing.state;
 
     pthread_mutex_unlock(&surface->mutex);
 
+    TRACE("processing=%dx%d,%#x\n", width, height, state);
+
     flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
     if (width == 0 || height == 0) flags |= SWP_NOSIZE;
+
+    style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+    if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE))
+    {
+        NtUserSetWindowLong(hwnd, GWL_STYLE, style ^ WS_MAXIMIZE, FALSE);
+        flags |= SWP_FRAMECHANGED;
+    }
+
+    /* The Wayland maximized state is very strict about surface size, so don't
+     * let the application override it. */
+    if (state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) flags |= SWP_NOSENDCHANGING;
 
     NtUserSetWindowPos(hwnd, 0, 0, 0, width, height, flags);
 }
