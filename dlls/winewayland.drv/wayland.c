@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 struct wayland process_wayland =
 {
+    .seat.mutex = PTHREAD_MUTEX_INITIALIZER,
     .pointer.mutex = PTHREAD_MUTEX_INITIALIZER,
     .output_list = {&process_wayland.output_list, &process_wayland.output_list},
     .output_mutex = PTHREAD_MUTEX_INITIALIZER
@@ -124,14 +125,17 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     }
     else if (strcmp(interface, "wl_seat") == 0)
     {
-        if (process_wayland.wl_seat)
+        struct wayland_seat *seat = &process_wayland.seat;
+        if (seat->wl_seat)
         {
             WARN("Only a single seat is currently supported, ignoring additional seats.\n");
             return;
         }
-        process_wayland.wl_seat = wl_registry_bind(registry, id, &wl_seat_interface,
-                                                   version < 5 ? version : 5);
-        wl_seat_add_listener(process_wayland.wl_seat, &seat_listener, NULL);
+        pthread_mutex_lock(&seat->mutex);
+        seat->wl_seat = wl_registry_bind(registry, id, &wl_seat_interface,
+                                         version < 5 ? version : 5);
+        wl_seat_add_listener(seat->wl_seat, &seat_listener, NULL);
+        pthread_mutex_unlock(&seat->mutex);
     }
 }
 
@@ -139,6 +143,7 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
                                           uint32_t id)
 {
     struct wayland_output *output, *tmp;
+    struct wayland_seat *seat;
 
     TRACE("id=%u\n", id);
 
@@ -152,13 +157,16 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
         }
     }
 
-    if (process_wayland.wl_seat &&
-        wl_proxy_get_id((struct wl_proxy *)process_wayland.wl_seat) == id)
+    seat = &process_wayland.seat;
+    if (seat->wl_seat &&
+        wl_proxy_get_id((struct wl_proxy *)seat->wl_seat) == id)
     {
         TRACE("removing seat\n");
         if (process_wayland.pointer.wl_pointer) wayland_pointer_deinit();
-        wl_seat_release(process_wayland.wl_seat);
-        process_wayland.wl_seat = NULL;
+        pthread_mutex_lock(&seat->mutex);
+        wl_seat_release(seat->wl_seat);
+        seat->wl_seat = NULL;
+        pthread_mutex_unlock(&seat->mutex);
     }
 }
 

@@ -74,7 +74,14 @@ struct wayland_pointer
     struct wl_pointer *wl_pointer;
     HWND focused_hwnd;
     uint32_t enter_serial;
+    uint32_t button_serial;
     struct wayland_cursor cursor;
+    pthread_mutex_t mutex;
+};
+
+struct wayland_seat
+{
+    struct wl_seat *wl_seat;
     pthread_mutex_t mutex;
 };
 
@@ -88,7 +95,7 @@ struct wayland
     struct wl_compositor *wl_compositor;
     struct xdg_wm_base *xdg_wm_base;
     struct wl_shm *wl_shm;
-    struct wl_seat *wl_seat;
+    struct wayland_seat seat;
     struct wayland_pointer pointer;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
@@ -230,6 +237,7 @@ RGNDATA *get_region_data(HRGN region) DECLSPEC_HIDDEN;
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
 void WAYLAND_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor) DECLSPEC_HIDDEN;
+LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param) DECLSPEC_HIDDEN;
 LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;

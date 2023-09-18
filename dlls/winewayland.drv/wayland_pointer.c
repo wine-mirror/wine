@@ -129,6 +129,7 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
                                   uint32_t serial, uint32_t time, uint32_t button,
                                   uint32_t state)
 {
+    struct wayland_pointer *pointer = &process_wayland.pointer;
     INPUT input = {0};
     HWND hwnd;
 
@@ -145,6 +146,11 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
     }
 
     if (state == WL_POINTER_BUTTON_STATE_RELEASED) input.mi.dwFlags <<= 1;
+
+    pthread_mutex_lock(&pointer->mutex);
+    pointer->button_serial = state == WL_POINTER_BUTTON_STATE_PRESSED ?
+                             serial : 0;
+    pthread_mutex_unlock(&pointer->mutex);
 
     TRACE("hwnd=%p button=%#x state=%u\n", hwnd, button, state);
 

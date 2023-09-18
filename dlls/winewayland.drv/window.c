@@ -415,6 +415,45 @@ LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
 
+/***********************************************************************
+ *          WAYLAND_SysCommand
+ */
+LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
+{
+    LRESULT ret = -1;
+    WPARAM command = wparam & 0xfff0;
+    uint32_t button_serial;
+    struct wl_seat *wl_seat;
+    struct wayland_surface *surface;
+
+    TRACE("cmd=%lx hwnd=%p, %lx, %lx\n",
+          (long)command, hwnd, (long)wparam, lparam);
+
+    pthread_mutex_lock(&process_wayland.pointer.mutex);
+    if (process_wayland.pointer.focused_hwnd == hwnd)
+        button_serial = process_wayland.pointer.button_serial;
+    else
+        button_serial = 0;
+    pthread_mutex_unlock(&process_wayland.pointer.mutex);
+
+    if (command == SC_MOVE)
+    {
+        if ((surface = wayland_surface_lock_hwnd(hwnd)))
+        {
+            pthread_mutex_lock(&process_wayland.seat.mutex);
+            wl_seat = process_wayland.seat.wl_seat;
+            if (wl_seat && surface->xdg_toplevel && button_serial)
+                xdg_toplevel_move(surface->xdg_toplevel, wl_seat, button_serial);
+            pthread_mutex_unlock(&process_wayland.seat.mutex);
+            pthread_mutex_unlock(&surface->mutex);
+            ret = 0;
+        }
+    }
+
+    wl_display_flush(process_wayland.wl_display);
+    return ret;
+}
+
 /**********************************************************************
  *           wayland_window_flush
  *
