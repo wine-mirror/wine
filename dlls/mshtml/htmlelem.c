@@ -6780,6 +6780,50 @@ static inline HTMLElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLElement, node);
 }
 
+HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLElement *new_elem;
+    HRESULT hres;
+
+    hres = HTMLElement_Create(This->node.doc, nsnode, FALSE, &new_elem);
+    if(FAILED(hres))
+        return hres;
+
+    if(This->filter) {
+        new_elem->filter = wcsdup(This->filter);
+        if(!new_elem->filter) {
+            IHTMLElement_Release(&This->IHTMLElement_iface);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    *ret = &new_elem->node;
+    return S_OK;
+}
+
+cp_static_data_t HTMLElementEvents2_data = { HTMLElementEvents2_tid, NULL /* FIXME */, TRUE };
+
+const cpc_entry_t HTMLElement_cpc[] = {
+    HTMLELEMENT_CPC,
+    {NULL}
+};
+
+static const NodeImplVtbl HTMLElementImplVtbl = {
+    .clsid                 = &CLSID_HTMLUnknownElement,
+    .qi                    = HTMLElement_QI,
+    .destructor            = HTMLElement_destructor,
+    .cpc_entries           = HTMLElement_cpc,
+    .clone                 = HTMLElement_clone,
+    .handle_event          = HTMLElement_handle_event,
+    .get_attr_col          = HTMLElement_get_attr_col
+};
+
+static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, node.event_target.dispex);
+}
+
 void *HTMLElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
@@ -6845,87 +6889,6 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
     }
 
     free(This->filter);
-}
-
-HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
-{
-    HTMLElement *This = impl_from_HTMLDOMNode(iface);
-    HTMLElement *new_elem;
-    HRESULT hres;
-
-    hres = HTMLElement_Create(This->node.doc, nsnode, FALSE, &new_elem);
-    if(FAILED(hres))
-        return hres;
-
-    if(This->filter) {
-        new_elem->filter = wcsdup(This->filter);
-        if(!new_elem->filter) {
-            IHTMLElement_Release(&This->IHTMLElement_iface);
-            return E_OUTOFMEMORY;
-        }
-    }
-
-    *ret = &new_elem->node;
-    return S_OK;
-}
-
-HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
-{
-    HTMLElement *This = impl_from_HTMLDOMNode(iface);
-
-    switch(eid) {
-    case EVENTID_KEYDOWN: {
-        nsIDOMKeyEvent *key_event;
-        nsresult nsres;
-
-        nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
-        if(NS_SUCCEEDED(nsres)) {
-            UINT32 code = 0;
-
-            nsIDOMKeyEvent_GetKeyCode(key_event, &code);
-
-            if(code == VK_F1 /* DOM_VK_F1 */) {
-                DOMEvent *help_event;
-                HRESULT hres;
-
-                TRACE("F1 pressed\n");
-
-                hres = create_document_event(This->node.doc, EVENTID_HELP, &help_event);
-                if(SUCCEEDED(hres)) {
-                    dispatch_event(&This->node.event_target, help_event);
-                    IDOMEvent_Release(&help_event->IDOMEvent_iface);
-                }
-                *prevent_default = TRUE;
-            }
-
-            nsIDOMKeyEvent_Release(key_event);
-        }
-    }
-    }
-
-    return S_OK;
-}
-
-cp_static_data_t HTMLElementEvents2_data = { HTMLElementEvents2_tid, NULL /* FIXME */, TRUE };
-
-const cpc_entry_t HTMLElement_cpc[] = {
-    HTMLELEMENT_CPC,
-    {NULL}
-};
-
-static const NodeImplVtbl HTMLElementImplVtbl = {
-    .clsid                 = &CLSID_HTMLUnknownElement,
-    .qi                    = HTMLElement_QI,
-    .destructor            = HTMLElement_destructor,
-    .cpc_entries           = HTMLElement_cpc,
-    .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
-    .get_attr_col          = HTMLElement_get_attr_col
-};
-
-static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLElement, node.event_target.dispex);
 }
 
 HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *pid)
@@ -7066,6 +7029,43 @@ HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsID
     if(!This->node.vtbl->handle_event)
         return S_OK;
     return This->node.vtbl->handle_event(&This->node, eid, nsevent, prevent_default);
+}
+
+HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
+{
+    HTMLElement *This = impl_from_HTMLDOMNode(iface);
+
+    switch(eid) {
+    case EVENTID_KEYDOWN: {
+        nsIDOMKeyEvent *key_event;
+        nsresult nsres;
+
+        nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        if(NS_SUCCEEDED(nsres)) {
+            UINT32 code = 0;
+
+            nsIDOMKeyEvent_GetKeyCode(key_event, &code);
+
+            if(code == VK_F1 /* DOM_VK_F1 */) {
+                DOMEvent *help_event;
+                HRESULT hres;
+
+                TRACE("F1 pressed\n");
+
+                hres = create_document_event(This->node.doc, EVENTID_HELP, &help_event);
+                if(SUCCEEDED(hres)) {
+                    dispatch_event(&This->node.event_target, help_event);
+                    IDOMEvent_Release(&help_event->IDOMEvent_iface);
+                }
+                *prevent_default = TRUE;
+            }
+
+            nsIDOMKeyEvent_Release(key_event);
+        }
+    }
+    }
+
+    return S_OK;
 }
 
 EventTarget *HTMLElement_get_parent_event_target(DispatchEx *dispex)
