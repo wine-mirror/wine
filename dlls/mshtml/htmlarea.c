@@ -413,6 +413,11 @@ static inline HTMLAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLAreaElement, element.node);
 }
 
+static inline HTMLAreaElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAreaElement, element.node.event_target.dispex);
+}
+
 static void *HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
@@ -421,6 +426,22 @@ static void *HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLAreaElement_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
+}
+
+static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsarea)
+        note_cc_edge((nsISupports*)This->nsarea, "nsarea", cb);
+}
+
+static void HTMLAreaElement_unlink(DispatchEx *dispex)
+{
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
+    unlink_ref(&This->nsarea);
 }
 
 static HRESULT HTMLAreaElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
@@ -452,27 +473,6 @@ fallback:
     }
 
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
-}
-
-static inline HTMLAreaElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLAreaElement, element.node.event_target.dispex);
-}
-
-static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
-{
-    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
-
-    if(This->nsarea)
-        note_cc_edge((nsISupports*)This->nsarea, "nsarea", cb);
-}
-
-static void HTMLAreaElement_unlink(DispatchEx *dispex)
-{
-    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
-    unlink_ref(&This->nsarea);
 }
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
