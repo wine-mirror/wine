@@ -191,9 +191,7 @@ static const struct {
     {ETXTBSY, str_ETXTBSY},
     {EWOULDBLOCK, str_EWOULDBLOCK},
 };
-#endif
 
-#if _MSVCP_VER >= 140
 static const struct {
     int winerr;
     int doserr;
@@ -1691,7 +1689,9 @@ ULONG __cdecl _Winerror_message(ULONG err, char *buf, ULONG size)
     return FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
             NULL, err, 0, buf, size, NULL);
 }
+#endif
 
+#if _MSVCP_VER >= 110
 /* ?_Winerror_map@std@@YAHH@Z */
 int __cdecl _Winerror_map(int err)
 {
@@ -1710,6 +1710,13 @@ int __cdecl _Winerror_map(int err)
     }
 
     return 0;
+}
+
+/* ?_Winerror_map@std@@YAPBDH@Z */
+/* ?_Winerror_map@std@@YAPEBDH@Z */
+const char *_Winerror_map_str(int err)
+{
+    return _Syserror_map(_Winerror_map(err));
 }
 #endif
 

@@ -1788,8 +1788,8 @@
 @ stub -arch=arm ?_W_Gettnames@_Locinfo@std@@QBA?AV_Timevec@2@XZ
 @ stub -arch=i386 ?_W_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ
 @ stub -arch=win64 ?_W_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ
-@ stub -arch=win32 ?_Winerror_map@std@@YAPBDH@Z
-@ stub -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z
+@ cdecl -arch=win32 ?_Winerror_map@std@@YAPBDH@Z(long) msvcp120.?_Winerror_map@std@@YAPBDH@Z
+@ cdecl -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z(long) msvcp120.?_Winerror_map@std@@YAPEBDH@Z
 @ cdecl ?_XLgamma@std@@YAMM@Z(float) msvcp120.?_XLgamma@std@@YAMM@Z
 @ cdecl ?_XLgamma@std@@YANN@Z(double) msvcp120.?_XLgamma@std@@YANN@Z
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) msvcp120.?_XLgamma@std@@YAOO@Z

@@ -1827,8 +1827,8 @@
 @ stub -arch=arm ?_W_Gettnames@_Locinfo@std@@QBA?AV_Timevec@2@XZ
 @ stub -arch=i386 ?_W_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ
 @ stub -arch=win64 ?_W_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ
-@ stub -arch=win32 ?_Winerror_map@std@@YAPBDH@Z
-@ stub -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z
+@ cdecl -arch=win32 ?_Winerror_map@std@@YAPBDH@Z(long) _Winerror_map_str
+@ cdecl -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z(long) _Winerror_map_str
 @ cdecl ?_XLgamma@std@@YAMM@Z(float) std__XLgamma_float
 @ cdecl ?_XLgamma@std@@YANN@Z(double) std__XLgamma_double
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) std__XLgamma_double
