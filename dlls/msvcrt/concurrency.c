@@ -2120,7 +2120,6 @@ void __thiscall _StructuredTaskCollection__Cancel(
     struct scheduled_chore *sc, *next;
     struct beacon *beacon;
     LONG removed = 0;
-    LONG prev_finished, new_finished;
 
     TRACE("(%p)\n", this);
 
@@ -2162,15 +2161,8 @@ void __thiscall _StructuredTaskCollection__Cancel(
     if (!removed)
         return;
 
-    new_finished = this->finished;
-    do {
-        prev_finished = new_finished;
-        if (prev_finished == FINISHED_INITIAL)
-            new_finished = removed;
-        else
-            new_finished = prev_finished + removed;
-    } while ((new_finished = InterlockedCompareExchange(&this->finished,
-                    new_finished, prev_finished)) != prev_finished);
+    if (InterlockedCompareExchange(&this->finished, removed, FINISHED_INITIAL) != FINISHED_INITIAL)
+        InterlockedAdd(&this->finished, removed);
     RtlWakeAddressAll((LONG*)&this->finished);
 }
 
@@ -2248,7 +2240,7 @@ static void execute_chore(_UnrealizedChore *chore,
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
 {
     _UnrealizedChore *chore = data;
-    LONG count, prev_finished, new_finished;
+    LONG count;
     volatile LONG *ptr;
 
     TRACE("(%u %p)\n", normal, data);
@@ -2259,15 +2251,9 @@ static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
     count = chore->task_collection->count;
     chore->task_collection = NULL;
 
-    do {
-        prev_finished = *ptr;
-        if (prev_finished == FINISHED_INITIAL)
-            new_finished = 1;
-        else
-            new_finished = prev_finished + 1;
-    } while (InterlockedCompareExchange(ptr, new_finished, prev_finished)
-             != prev_finished);
-    if (new_finished >= count)
+    if (InterlockedCompareExchange(ptr, 1, FINISHED_INITIAL) != FINISHED_INITIAL)
+        InterlockedIncrement(ptr);
+    if (*ptr >= count)
         RtlWakeAddressSingle((LONG*)ptr);
 }
 
