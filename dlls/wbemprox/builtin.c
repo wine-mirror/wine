@@ -232,7 +232,7 @@ static const struct column col_operatingsystem[] =
 {
     { L"BootDevice",              CIM_STRING },
     { L"BuildNumber",             CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"BuildType",               CIM_STRING },
+    { L"BuildType",               CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Caption",                 CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CodeSet",                 CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CountryCode",             CIM_STRING|COL_FLAG_DYNAMIC },
@@ -3643,6 +3643,11 @@ static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
     return ret;
 }
 
+static WCHAR *get_osbuildtype(void)
+{
+    return get_reg_str( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"CurrentType" );
+}
+
 static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
 {
     static const WCHAR windowsW[] = L"Microsoft Windows ";
@@ -3750,7 +3755,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec = (struct record_operatingsystem *)table->data;
     rec->bootdevice             = L"\\Device\\HarddiskVolume1";
     rec->buildnumber            = get_osbuildnumber( &ver );
-    rec->buildtype              = L"Wine build";
+    rec->buildtype              = get_osbuildtype();
     rec->caption                = get_oscaption( &ver );
     rec->codeset                = get_codeset();
     rec->countrycode            = get_countrycode();
