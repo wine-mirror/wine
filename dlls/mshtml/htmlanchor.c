@@ -797,6 +797,11 @@ static inline HTMLAnchorElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node);
 }
 
+static inline HTMLAnchorElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node.event_target.dispex);
+}
+
 static void *HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
@@ -809,6 +814,22 @@ static void *HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLAnchorElement_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
+}
+
+static void HTMLAnchorElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsanchor)
+        note_cc_edge((nsISupports*)This->nsanchor, "nsanchor", cb);
+}
+
+static void HTMLAnchorElement_unlink(DispatchEx *dispex)
+{
+    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
+    unlink_ref(&This->nsanchor);
 }
 
 static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
@@ -840,27 +861,6 @@ fallback:
     }
 
     return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
-}
-
-static inline HTMLAnchorElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node.event_target.dispex);
-}
-
-static void HTMLAnchorElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
-{
-    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
-
-    if(This->nsanchor)
-        note_cc_edge((nsISupports*)This->nsanchor, "nsanchor", cb);
-}
-
-static void HTMLAnchorElement_unlink(DispatchEx *dispex)
-{
-    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
-    unlink_ref(&This->nsanchor);
 }
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
