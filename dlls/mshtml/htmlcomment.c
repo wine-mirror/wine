@@ -146,16 +146,6 @@ static inline HTMLCommentElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLCommentElement, element.node);
 }
 
-static void *HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IHTMLCommentElement, riid))
-        return &This->IHTMLCommentElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static void HTMLCommentElement_destructor(HTMLDOMNode *iface)
 {
     HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
@@ -175,6 +165,16 @@ static HRESULT HTMLCommentElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, 
 
     *ret = &new_elem->node;
     return S_OK;
+}
+
+static void *HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IHTMLCommentElement, riid))
+        return &This->IHTMLCommentElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {

@@ -303,16 +303,6 @@ static inline HTMLHtmlElement *HTMLHtmlElement_from_HTMLDOMNode(HTMLDOMNode *ifa
     return CONTAINING_RECORD(iface, HTMLHtmlElement, element.node);
 }
 
-static void *HTMLHtmlElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLHtmlElement *This = HTMLHtmlElement_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IHTMLHtmlElement, riid))
-        return &This->IHTMLHtmlElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static void HTMLHtmlElement_destructor(HTMLDOMNode *iface)
 {
     HTMLHtmlElement *This = HTMLHtmlElement_from_HTMLDOMNode(iface);
@@ -328,6 +318,16 @@ static BOOL HTMLHtmlElement_is_settable(HTMLDOMNode *iface, DISPID dispid)
     default:
         return TRUE;
     }
+}
+
+static void *HTMLHtmlElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLHtmlElement *This = HTMLHtmlElement_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IHTMLHtmlElement, riid))
+        return &This->IHTMLHtmlElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static const NodeImplVtbl HTMLHtmlElementImplVtbl = {

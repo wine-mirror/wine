@@ -354,20 +354,6 @@ static inline HTMLScriptElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLScriptElement, element.node);
 }
 
-static void *HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLScriptElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLScriptElement_iface;
-    if(IsEqualGUID(&IID_IHTMLScriptElement, riid))
-        return &This->IHTMLScriptElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
 {
     HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
@@ -404,6 +390,20 @@ static HRESULT HTMLScriptElement_bind_to_tree(HTMLDOMNode *iface)
 static inline HTMLScriptElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLScriptElement, element.node.event_target.dispex);
+}
+
+static void *HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLScriptElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLScriptElement_iface;
+    if(IsEqualGUID(&IID_IHTMLScriptElement, riid))
+        return &This->IHTMLScriptElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLScriptElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

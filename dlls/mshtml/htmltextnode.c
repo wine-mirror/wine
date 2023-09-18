@@ -324,6 +324,13 @@ static inline HTMLDOMTextNode *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLDOMTextNode, node);
 }
 
+static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
+{
+    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
+
+    return HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
+}
+
 static void *HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
@@ -334,13 +341,6 @@ static void *HTMLDOMTextNode_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLDOMTextNode2_iface;
 
     return HTMLDOMNode_QI(&This->node, riid);
-}
-
-static HRESULT HTMLDOMTextNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
-{
-    HTMLDOMTextNode *This = impl_from_HTMLDOMNode(iface);
-
-    return HTMLDOMTextNode_Create(This->node.doc, nsnode, ret);
 }
 
 static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};

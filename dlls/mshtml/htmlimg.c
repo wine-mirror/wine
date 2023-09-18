@@ -658,16 +658,6 @@ static inline HTMLImg *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLImg, element.node);
 }
 
-static void *HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLImg *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IHTMLImgElement, riid))
-        return &This->IHTMLImgElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLImg *This = impl_from_HTMLDOMNode(iface);
@@ -678,6 +668,16 @@ static HRESULT HTMLImgElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 static inline HTMLImg *HTMLImg_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLImg, element.node.event_target.dispex);
+}
+
+static void *HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLImg *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IHTMLImgElement, riid))
+        return &This->IHTMLImgElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLImgElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

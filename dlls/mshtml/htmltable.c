@@ -446,6 +446,18 @@ static inline HTMLTableCell *HTMLTableCell_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLTableCell, element.node);
 }
 
+static void HTMLTableCell_destructor(HTMLDOMNode *iface)
+{
+    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
+
+    HTMLElement_destructor(&This->element.node);
+}
+
+static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
+}
+
 static void *HTMLTableCell_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
@@ -458,18 +470,6 @@ static void *HTMLTableCell_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLTableCell_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
-}
-
-static void HTMLTableCell_destructor(HTMLDOMNode *iface)
-{
-    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
-static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
 }
 
 static void HTMLTableCell_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -887,6 +887,11 @@ static inline HTMLTableRow *HTMLTableRow_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLTableRow, element.node);
 }
 
+static inline HTMLTableRow *HTMLTableRow_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTableRow, element.node.event_target.dispex);
+}
+
 static void *HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLTableRow *This = HTMLTableRow_from_HTMLDOMNode(iface);
@@ -899,11 +904,6 @@ static void *HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLTableRow_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
-}
-
-static inline HTMLTableRow *HTMLTableRow_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTableRow, element.node.event_target.dispex);
 }
 
 static void HTMLTableRow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1895,6 +1895,11 @@ static inline HTMLTable *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLTable, element.node);
 }
 
+static inline HTMLTable *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTable, element.node.event_target.dispex);
+}
+
 static void *HTMLTable_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLTable *This = impl_from_HTMLDOMNode(iface);
@@ -1911,11 +1916,6 @@ static void *HTMLTable_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLTable3_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
-}
-
-static inline HTMLTable *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTable, element.node.event_target.dispex);
 }
 
 static void HTMLTable_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

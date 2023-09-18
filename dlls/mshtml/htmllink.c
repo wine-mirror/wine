@@ -374,16 +374,6 @@ static inline HTMLLinkElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLLinkElement, element.node);
 }
 
-static void *HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IHTMLLinkElement, riid))
-        return &This->IHTMLLinkElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static HRESULT HTMLLinkElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
@@ -399,6 +389,16 @@ static HRESULT HTMLLinkElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL
 static inline HTMLLinkElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLLinkElement, element.node.event_target.dispex);
+}
+
+static void *HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IHTMLLinkElement, riid))
+        return &This->IHTMLLinkElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLLinkElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

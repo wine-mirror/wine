@@ -890,22 +890,6 @@ static inline HTMLBodyElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLBodyElement, element.node);
 }
 
-static void *HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLBodyElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLBodyElement_iface;
-    if(IsEqualGUID(&IID_IHTMLBodyElement, riid))
-        return &This->IHTMLBodyElement_iface;
-    if(IsEqualGUID(&IID_IHTMLTextContainer, riid))
-        return &This->IHTMLTextContainer_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static EventTarget *HTMLBodyElement_get_event_prop_target(HTMLDOMNode *iface, int event_id)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
@@ -942,6 +926,22 @@ static BOOL HTMLBodyElement_is_settable(HTMLDOMNode *iface, DISPID dispid)
 static inline HTMLBodyElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLBodyElement, element.node.event_target.dispex);
+}
+
+static void *HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IHTMLBodyElement, riid))
+        return &This->IHTMLBodyElement_iface;
+    if(IsEqualGUID(&IID_IHTMLTextContainer, riid))
+        return &This->IHTMLTextContainer_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLBodyElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

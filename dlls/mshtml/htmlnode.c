@@ -1410,6 +1410,22 @@ void *HTMLDOMNode_query_interface(DispatchEx *dispex, REFIID riid)
     return This->vtbl->qi(This, riid);
 }
 
+void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode, riid))
+        return &This->IHTMLDOMNode_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode2, riid))
+        return &This->IHTMLDOMNode2_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMNode3, riid))
+        return &This->IHTMLDOMNode3_iface;
+
+    return EventTarget_query_interface(&This->event_target, riid);
+}
+
 void HTMLDOMNode_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
@@ -1441,22 +1457,6 @@ void HTMLDOMNode_destructor(DispatchEx *dispex)
     if(This->vtbl->destructor)
         This->vtbl->destructor(This);
     free(This);
-}
-
-void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
-{
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLDOMNode_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLDOMNode_iface;
-    if(IsEqualGUID(&IID_IHTMLDOMNode, riid))
-        return &This->IHTMLDOMNode_iface;
-    if(IsEqualGUID(&IID_IHTMLDOMNode2, riid))
-        return &This->IHTMLDOMNode2_iface;
-    if(IsEqualGUID(&IID_IHTMLDOMNode3, riid))
-        return &This->IHTMLDOMNode3_iface;
-
-    return EventTarget_query_interface(&This->event_target, riid);
 }
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)

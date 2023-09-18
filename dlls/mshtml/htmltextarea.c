@@ -390,20 +390,6 @@ static inline HTMLTextAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLTextAreaElement, element.node);
 }
 
-static void *HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLTextAreaElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLTextAreaElement_iface;
-    if(IsEqualGUID(&IID_IHTMLTextAreaElement, riid))
-        return &This->IHTMLTextAreaElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static HRESULT HTMLTextAreaElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
@@ -424,6 +410,20 @@ static BOOL HTMLTextAreaElement_is_text_edit(HTMLDOMNode *iface)
 static inline HTMLTextAreaElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTextAreaElement, element.node.event_target.dispex);
+}
+
+static void *HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLTextAreaElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLTextAreaElement_iface;
+    if(IsEqualGUID(&IID_IHTMLTextAreaElement, riid))
+        return &This->IHTMLTextAreaElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLTextAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

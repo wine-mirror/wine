@@ -365,6 +365,19 @@ static inline HTMLStyleElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node);
 }
 
+static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+
+    unlink_ref(&This->style_sheet);
+    HTMLElement_destructor(iface);
+}
+
+static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
+}
+
 static void *HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
@@ -379,19 +392,6 @@ static void *HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLStyleElement2_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
-}
-
-static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
-
-    unlink_ref(&This->style_sheet);
-    HTMLElement_destructor(iface);
-}
-
-static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
 }
 
 static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

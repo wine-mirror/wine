@@ -346,6 +346,11 @@ static inline HTMLOptionElement *HTMLOptionElement_from_HTMLDOMNode(HTMLDOMNode 
     return CONTAINING_RECORD(iface, HTMLOptionElement, element.node);
 }
 
+static inline HTMLOptionElement *HTMLOptionElement_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLOptionElement, element.node.event_target.dispex);
+}
+
 static void *HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
@@ -358,11 +363,6 @@ static void *HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->IHTMLOptionElement_iface;
 
     return HTMLElement_QI(&This->element.node, riid);
-}
-
-static inline HTMLOptionElement *HTMLOptionElement_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLOptionElement, element.node.event_target.dispex);
 }
 
 static void HTMLOptionElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)

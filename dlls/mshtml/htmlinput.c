@@ -1344,24 +1344,6 @@ static inline HTMLInputElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLInputElement, element.node);
 }
 
-static void *HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLInputElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLInputElement_iface;
-    if(IsEqualGUID(&IID_IHTMLInputElement, riid))
-        return &This->IHTMLInputElement_iface;
-    if(IsEqualGUID(&IID_IHTMLInputTextElement, riid))
-        return &This->IHTMLInputTextElement_iface;
-    if(IsEqualGUID(&IID_IHTMLInputTextElement2, riid))
-        return &This->IHTMLInputTextElement2_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static HRESULT HTMLInputElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
@@ -1396,6 +1378,24 @@ static BOOL HTMLInputElement_is_text_edit(HTMLDOMNode *iface)
 static inline HTMLInputElement *input_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLInputElement, element.node.event_target.dispex);
+}
+
+static void *HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IDispatch, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputElement, riid))
+        return &This->IHTMLInputElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputTextElement, riid))
+        return &This->IHTMLInputTextElement_iface;
+    if(IsEqualGUID(&IID_IHTMLInputTextElement2, riid))
+        return &This->IHTMLInputTextElement2_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLInputElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1894,18 +1894,6 @@ static inline HTMLButtonElement *button_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLButtonElement, element.node);
 }
 
-static void *HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLButtonElement_iface;
-    if(IsEqualGUID(&IID_IHTMLButtonElement, riid))
-        return &This->IHTMLButtonElement_iface;
-
-    return HTMLElement_QI(&This->element.node, riid);
-}
-
 static HRESULT HTMLButtonElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
 {
     HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
@@ -1926,6 +1914,18 @@ static BOOL HTMLButtonElement_is_text_edit(HTMLDOMNode *iface)
 static inline HTMLButtonElement *button_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLButtonElement, element.node.event_target.dispex);
+}
+
+static void *HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid)
+{
+    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid))
+        return &This->IHTMLButtonElement_iface;
+    if(IsEqualGUID(&IID_IHTMLButtonElement, riid))
+        return &This->IHTMLButtonElement_iface;
+
+    return HTMLElement_QI(&This->element.node, riid);
 }
 
 static void HTMLButtonElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
