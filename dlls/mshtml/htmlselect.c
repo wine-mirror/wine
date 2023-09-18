@@ -1313,6 +1313,23 @@ static inline HTMLSelectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLSelectElement, element.node);
 }
 
+static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
+{
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+    return IHTMLSelectElement_put_disabled(&This->IHTMLSelectElement_iface, v);
+}
+
+static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+{
+    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+    return IHTMLSelectElement_get_disabled(&This->IHTMLSelectElement_iface, p);
+}
+
+static inline HTMLSelectElement *impl_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLSelectElement, element.node.event_target.dispex);
+}
+
 static void *HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid)
 {
     HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
@@ -1327,16 +1344,20 @@ static void *HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static HRESULT HTMLSelectElementImpl_put_disabled(HTMLDOMNode *iface, VARIANT_BOOL v)
+static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
-    return IHTMLSelectElement_put_disabled(&This->IHTMLSelectElement_iface, v);
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(dispex, cb);
+
+    if(This->nsselect)
+        note_cc_edge((nsISupports*)This->nsselect, "nsselect", cb);
 }
 
-static HRESULT HTMLSelectElementImpl_get_disabled(HTMLDOMNode *iface, VARIANT_BOOL *p)
+static void HTMLSelectElement_unlink(DispatchEx *dispex)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
-    return IHTMLSelectElement_get_disabled(&This->IHTMLSelectElement_iface, p);
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(dispex);
+    unlink_ref(&This->nsselect);
 }
 
 #define DISPID_OPTIONCOL_0 MSHTML_DISPID_CUSTOM_MIN
@@ -1404,27 +1425,6 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
     }
 
     return S_OK;
-}
-
-static inline HTMLSelectElement *impl_from_DispatchEx(DispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLSelectElement, element.node.event_target.dispex);
-}
-
-static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
-{
-    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
-
-    if(This->nsselect)
-        note_cc_edge((nsISupports*)This->nsselect, "nsselect", cb);
-}
-
-static void HTMLSelectElement_unlink(DispatchEx *dispex)
-{
-    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
-    unlink_ref(&This->nsselect);
 }
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
