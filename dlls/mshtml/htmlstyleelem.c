@@ -365,14 +365,6 @@ static inline HTMLStyleElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node);
 }
 
-static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
-
-    unlink_ref(&This->style_sheet);
-    HTMLElement_destructor(iface);
-}
-
 static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
@@ -408,6 +400,14 @@ static void HTMLStyleElement_unlink(DispatchEx *dispex)
     HTMLStyleElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsstyle);
+}
+
+static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+
+    unlink_ref(&This->style_sheet);
+    HTMLElement_destructor(iface);
 }
 
 static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)

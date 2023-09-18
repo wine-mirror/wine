@@ -354,13 +354,6 @@ static inline HTMLScriptElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLScriptElement, element.node);
 }
 
-static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
-    free(This->src_text);
-    HTMLElement_destructor(&This->element.node);
-}
-
 static HRESULT HTMLScriptElement_get_readystate(HTMLDOMNode *iface, BSTR *p)
 {
     HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
@@ -420,6 +413,13 @@ static void HTMLScriptElement_unlink(DispatchEx *dispex)
     HTMLScriptElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode_unlink(dispex);
     unlink_ref(&This->nsscript);
+}
+
+static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
+{
+    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+    free(This->src_text);
+    HTMLElement_destructor(&This->element.node);
 }
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
