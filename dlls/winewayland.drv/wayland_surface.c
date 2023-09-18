@@ -88,6 +88,9 @@ static void xdg_toplevel_handle_configure(void *data,
         case XDG_TOPLEVEL_STATE_MAXIMIZED:
             config_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
             break;
+        case XDG_TOPLEVEL_STATE_RESIZING:
+            config_state |= WAYLAND_SURFACE_CONFIG_STATE_RESIZING;
+            break;
         default:
             break;
         }

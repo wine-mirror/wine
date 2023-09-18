@@ -59,7 +59,8 @@ enum wayland_window_message
 
 enum wayland_surface_config_state
 {
-    WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED = (1 << 0)
+    WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED = (1 << 0),
+    WAYLAND_SURFACE_CONFIG_STATE_RESIZING = (1 << 1)
 };
 
 struct wayland_cursor
@@ -147,6 +148,7 @@ struct wayland_surface
     pthread_mutex_t mutex;
     struct wayland_surface_config pending, requested, processing, current;
     struct wayland_shm_buffer *latest_window_buffer;
+    BOOL resizing;
 };
 
 struct wayland_shm_buffer
@@ -226,6 +228,11 @@ static inline BOOL intersect_rect(RECT *dst, const RECT *src1, const RECT *src2)
     dst->right = min(src1->right, src2->right);
     dst->bottom = min(src1->bottom, src2->bottom);
     return !IsRectEmpty(dst);
+}
+
+static inline LRESULT send_message(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return NtUserMessageCall(hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE);
 }
 
 RGNDATA *get_region_data(HRGN region) DECLSPEC_HIDDEN;

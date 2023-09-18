@@ -335,6 +335,8 @@ static void wayland_configure_window(HWND hwnd)
     UINT flags;
     uint32_t state;
     DWORD style;
+    BOOL needs_enter_size_move = FALSE;
+    BOOL needs_exit_size_move = FALSE;
 
     if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
 
@@ -359,9 +361,24 @@ static void wayland_configure_window(HWND hwnd)
     height = surface->processing.height;
     state = surface->processing.state;
 
+    if ((state & WAYLAND_SURFACE_CONFIG_STATE_RESIZING) && !surface->resizing)
+    {
+        surface->resizing = TRUE;
+        needs_enter_size_move = TRUE;
+    }
+
+    if (!(state & WAYLAND_SURFACE_CONFIG_STATE_RESIZING) && surface->resizing)
+    {
+        surface->resizing = FALSE;
+        needs_exit_size_move = TRUE;
+    }
+
     pthread_mutex_unlock(&surface->mutex);
 
     TRACE("processing=%dx%d,%#x\n", width, height, state);
+
+    if (needs_enter_size_move) send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+    if (needs_exit_size_move) send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
     flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
     if (width == 0 || height == 0) flags |= SWP_NOSIZE;
@@ -415,6 +432,22 @@ LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
 
+static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
+{
+    switch (hittest)
+    {
+    case WMSZ_LEFT:        return XDG_TOPLEVEL_RESIZE_EDGE_LEFT;
+    case WMSZ_RIGHT:       return XDG_TOPLEVEL_RESIZE_EDGE_RIGHT;
+    case WMSZ_TOP:         return XDG_TOPLEVEL_RESIZE_EDGE_TOP;
+    case WMSZ_TOPLEFT:     return XDG_TOPLEVEL_RESIZE_EDGE_TOP_LEFT;
+    case WMSZ_TOPRIGHT:    return XDG_TOPLEVEL_RESIZE_EDGE_TOP_RIGHT;
+    case WMSZ_BOTTOM:      return XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM;
+    case WMSZ_BOTTOMLEFT:  return XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_LEFT;
+    case WMSZ_BOTTOMRIGHT: return XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_RIGHT;
+    default:               return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
+    }
+}
+
 /***********************************************************************
  *          WAYLAND_SysCommand
  */
@@ -436,14 +469,24 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
         button_serial = 0;
     pthread_mutex_unlock(&process_wayland.pointer.mutex);
 
-    if (command == SC_MOVE)
+    if (command == SC_MOVE || command == SC_SIZE)
     {
         if ((surface = wayland_surface_lock_hwnd(hwnd)))
         {
             pthread_mutex_lock(&process_wayland.seat.mutex);
             wl_seat = process_wayland.seat.wl_seat;
             if (wl_seat && surface->xdg_toplevel && button_serial)
-                xdg_toplevel_move(surface->xdg_toplevel, wl_seat, button_serial);
+            {
+                if (command == SC_MOVE)
+                {
+                    xdg_toplevel_move(surface->xdg_toplevel, wl_seat, button_serial);
+                }
+                else if (command == SC_SIZE)
+                {
+                    xdg_toplevel_resize(surface->xdg_toplevel, wl_seat, button_serial,
+                                        hittest_to_resize_edge(wparam & 0x0f));
+                }
+            }
             pthread_mutex_unlock(&process_wayland.seat.mutex);
             pthread_mutex_unlock(&surface->mutex);
             ret = 0;
