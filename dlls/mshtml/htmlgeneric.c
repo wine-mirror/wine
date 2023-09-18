@@ -138,17 +138,10 @@ static void *HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLGenericElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLGenericElement *This = impl_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     .clsid                 = &CLSID_HTMLGenericElement,
     .qi                    = HTMLGenericElement_QI,
-    .destructor            = HTMLGenericElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,

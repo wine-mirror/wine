@@ -156,17 +156,10 @@ static void *HTMLTitleElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLTitleElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLTitleElement *This = HTMLTitleElement_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTitleElement,
     .qi                    = HTMLTitleElement_QI,
-    .destructor            = HTMLTitleElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -303,13 +296,6 @@ static inline HTMLHtmlElement *HTMLHtmlElement_from_HTMLDOMNode(HTMLDOMNode *ifa
     return CONTAINING_RECORD(iface, HTMLHtmlElement, element.node);
 }
 
-static void HTMLHtmlElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLHtmlElement *This = HTMLHtmlElement_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static BOOL HTMLHtmlElement_is_settable(HTMLDOMNode *iface, DISPID dispid)
 {
     switch(dispid) {
@@ -333,7 +319,7 @@ static void *HTMLHtmlElement_QI(HTMLDOMNode *iface, REFIID riid)
 static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHtmlElement,
     .qi                    = HTMLHtmlElement_QI,
-    .destructor            = HTMLHtmlElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -553,17 +539,10 @@ static void *HTMLMetaElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLMetaElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLMetaElement *This = HTMLMetaElement_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLMetaElement,
     .qi                    = HTMLMetaElement_QI,
-    .destructor            = HTMLMetaElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -713,17 +692,10 @@ static void *HTMLHeadElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLHeadElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLHeadElement *This = impl_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHeadElement,
     .qi                    = HTMLHeadElement_QI,
-    .destructor            = HTMLHeadElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,

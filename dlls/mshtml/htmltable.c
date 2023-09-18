@@ -446,13 +446,6 @@ static inline HTMLTableCell *HTMLTableCell_from_HTMLDOMNode(HTMLDOMNode *iface)
     return CONTAINING_RECORD(iface, HTMLTableCell, element.node);
 }
 
-static void HTMLTableCell_destructor(HTMLDOMNode *iface)
-{
-    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
@@ -491,7 +484,7 @@ static void HTMLTableCell_unlink(DispatchEx *dispex)
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .clsid                 = &CLSID_HTMLTableCell,
     .qi                    = HTMLTableCell_QI,
-    .destructor            = HTMLTableCell_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,

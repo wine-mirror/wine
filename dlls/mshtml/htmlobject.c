@@ -1006,17 +1006,10 @@ static void *HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid)
     return HTMLElement_QI(&This->element.node, riid);
 }
 
-static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)
-{
-    HTMLEmbed *This = embed_from_HTMLDOMNode(iface);
-
-    HTMLElement_destructor(&This->element.node);
-}
-
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     .clsid                 = &CLSID_HTMLEmbed,
     .qi                    = HTMLEmbedElement_QI,
-    .destructor            = HTMLEmbedElement_destructor,
+    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
