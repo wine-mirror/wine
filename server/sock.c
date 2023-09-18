@@ -2533,6 +2533,12 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return;
         }
 
+        if (sock->type == WS_SOCK_DGRAM)
+        {
+            set_error( STATUS_NOT_SUPPORTED );
+            return;
+        }
+
         if (!sock->bound)
         {
             set_error( STATUS_INVALID_PARAMETER );

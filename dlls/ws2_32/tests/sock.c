@@ -3945,6 +3945,18 @@ static void test_listen(void)
     ret = WSAGetLastError();
     ok (ret == WSAENOTSOCK, "expected 10038, received %d\n", ret);
 
+    /* udp test */
+    SetLastError(0xdeadbeef);
+    fdA = socket(AF_INET, SOCK_DGRAM, 0);
+    ok ((fdA != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok ((listen(fdA, 1) == SOCKET_ERROR), "listen did not fail\n");
+    ret = WSAGetLastError();
+    ok (ret == WSAEOPNOTSUPP, "expected 10045, received %d\n", ret);
+
+    ret = closesocket(fdA);
+    ok (ret == 0, "closesocket failed unexpectedly: %d\n", ret);
+
     /* tcp tests */
     fdA = socket(AF_INET, SOCK_STREAM, 0);
     ok ((fdA != INVALID_SOCKET), "socket failed unexpectedly: %d\n", WSAGetLastError() );
