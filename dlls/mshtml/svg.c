@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -196,12 +197,27 @@ static const NodeImplVtbl SVGElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
-static void init_svg_element(SVGElement *svg_element, HTMLDocumentNode *doc, nsIDOMSVGElement *nselem)
+static const event_target_vtbl_t SVGElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
+static dispex_static_data_t SVGElement_dispex = {
+    "HTMLUnknownElement",
+    &SVGElement_event_target_vtbl.dispex_vtbl,
+    DispHTMLUnknownElement_tid,
+    HTMLElement_iface_tids,
+    HTMLElement_init_dispex_info
+};
+
+static void init_svg_element(SVGElement *svg_element, HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, dispex_static_data_t *dispex_data)
 {
-    if(!svg_element->element.node.vtbl)
-        svg_element->element.node.vtbl = &SVGElementImplVtbl;
     svg_element->ISVGElement_iface.lpVtbl = &SVGElementVtbl;
-    HTMLElement_Init(&svg_element->element, doc, (nsIDOMElement*)nselem, NULL);
+    HTMLElement_Init(&svg_element->element, doc, (nsIDOMElement*)nselem, dispex_data);
 }
 
 struct SVGSVGElement {
@@ -731,6 +747,23 @@ static const NodeImplVtbl SVGSVGElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
+static dispex_static_data_t SVGSVGElement_dispex = {
+    "HTMLUnknownElement",
+    &SVGSVGElement_event_target_vtbl.dispex_vtbl,
+    DispHTMLUnknownElement_tid,
+    HTMLElement_iface_tids,
+    HTMLElement_init_dispex_info
+};
+
 static HRESULT create_viewport_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
 {
     SVGSVGElement *ret;
@@ -742,7 +775,7 @@ static HRESULT create_viewport_element(HTMLDocumentNode *doc, nsIDOMSVGElement *
     ret->ISVGSVGElement_iface.lpVtbl = &SVGSVGElementVtbl;
     ret->svg_element.element.node.vtbl = &SVGSVGElementImplVtbl;
 
-    init_svg_element(&ret->svg_element, doc, nselem);
+    init_svg_element(&ret->svg_element, doc, nselem, &SVGSVGElement_dispex);
 
     *elem = &ret->svg_element.element;
     return S_OK;
@@ -894,6 +927,23 @@ static const NodeImplVtbl SVGCircleElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
+static dispex_static_data_t SVGCircleElement_dispex = {
+    "HTMLUnknownElement",
+    &SVGCircleElement_event_target_vtbl.dispex_vtbl,
+    DispHTMLUnknownElement_tid,
+    HTMLElement_iface_tids,
+    HTMLElement_init_dispex_info
+};
+
 static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
 {
     SVGCircleElement *ret;
@@ -905,7 +955,7 @@ static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *ns
     ret->ISVGCircleElement_iface.lpVtbl = &SVGCircleElementVtbl;
     ret->svg_element.element.node.vtbl = &SVGCircleElementImplVtbl;
 
-    init_svg_element(&ret->svg_element, doc, nselem);
+    init_svg_element(&ret->svg_element, doc, nselem, &SVGCircleElement_dispex);
 
     *elem = &ret->svg_element.element;
     return S_OK;
@@ -1132,6 +1182,23 @@ static const NodeImplVtbl SVGTSpanElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
+static dispex_static_data_t SVGTSpanElement_dispex = {
+    "HTMLUnknownElement",
+    &SVGTSpanElement_event_target_vtbl.dispex_vtbl,
+    DispHTMLUnknownElement_tid,
+    HTMLElement_iface_tids,
+    HTMLElement_init_dispex_info
+};
+
 static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)
 {
     SVGTSpanElement *ret;
@@ -1142,7 +1209,7 @@ static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nse
 
     ret->svg_element.element.node.vtbl = &SVGTSpanElementImplVtbl;
     init_text_content_element(&ret->text_content, &ret->svg_element);
-    init_svg_element(&ret->svg_element, doc, nselem);
+    init_svg_element(&ret->svg_element, doc, nselem, &SVGTSpanElement_dispex);
 
     *elem = &ret->svg_element.element;
     return S_OK;
@@ -1165,7 +1232,8 @@ HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element,
     if(!svg_element)
         return E_OUTOFMEMORY;
 
-    init_svg_element(svg_element, doc, dom_element);
+    svg_element->element.node.vtbl = &SVGElementImplVtbl;
+    init_svg_element(svg_element, doc, dom_element, &SVGElement_dispex);
     *elem = &svg_element->element;
     return S_OK;
 }

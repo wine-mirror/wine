@@ -7314,7 +7314,7 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     }
 }
 
-static const tid_t HTMLElement_iface_tids[] = {
+const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     0
 };
@@ -7933,7 +7933,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *n
         nsIDOMHTMLElement *html_element;
         nsresult nsres;
 
-        HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem, dispex_data ? dispex_data : &HTMLUnknownElement_dispex);
+        HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem, dispex_data);
 
         /* No AddRef, share reference with HTMLDOMNode */
         assert((nsIDOMNode*)nselem == This->node.nsnode);

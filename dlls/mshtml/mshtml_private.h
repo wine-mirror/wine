@@ -888,6 +888,7 @@ typedef struct {
     IHTMLElement4_tid,      \
     IHTMLUniqueName_tid
 
+extern const tid_t HTMLElement_iface_tids[];
 extern cp_static_data_t HTMLElementEvents2_data;
 #define HTMLELEMENT_CPC {&DIID_HTMLElementEvents2, &HTMLElementEvents2_data}
 extern const cpc_entry_t HTMLElement_cpc[];
