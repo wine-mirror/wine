@@ -2822,6 +2822,36 @@ static void test_window_style(void)
     expected_style = exstyle | WS_EX_TOPMOST;
     todo_wine ok(tmp == expected_style, "Expected window extended style %#lx, got %#lx.\n", expected_style, tmp);
 
+    /* Test that there is a ~1.5s timer that checks and restores WS_EX_TOPMOST if it's missing */
+    ret = ShowWindow(window, SW_RESTORE);
+    ok(ret, "ShowWindow failed, error %#lx.\n", GetLastError());
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#lx.\n", hr);
+    flush_events();
+
+    /* Remove WS_VISIBLE and WS_EX_TOPMOST */
+    tmp = GetWindowLongA(window, GWL_STYLE);
+    ok(tmp & WS_VISIBLE, "Expected WS_VISIBLE.\n");
+    tmp = GetWindowLongA(window, GWL_EXSTYLE);
+    ok(tmp & WS_EX_TOPMOST, "Expected WS_EX_TOPMOST.\n");
+    ret = ShowWindow(window, SW_HIDE);
+    ok(ret, "ShowWindow failed, error %#lx.\n", GetLastError());
+    ret = SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+    ok(ret, "SetWindowPos failed, error %#lx.\n", GetLastError());
+    tmp = GetWindowLongA(window, GWL_STYLE);
+    ok(!(tmp & WS_VISIBLE), "Got unexpected WS_VISIBLE.\n");
+    tmp = GetWindowLongA(window, GWL_EXSTYLE);
+    ok(!(tmp & WS_EX_TOPMOST), "Got unexpected WS_EX_TOPMOST.\n");
+
+    Sleep(2000);
+    flush_events();
+
+    /* WS_VISIBLE is not restored but WS_EX_TOPMOST is */
+    tmp = GetWindowLongA(window, GWL_STYLE);
+    ok(!(tmp & WS_VISIBLE), "Got unexpected WS_VISIBLE.\n");
+    tmp = GetWindowLongA(window, GWL_EXSTYLE);
+    todo_wine ok(tmp & WS_EX_TOPMOST, "Expected WS_EX_TOPMOST.\n");
+
     ref = IDirectDraw7_Release(ddraw);
     ok(!ref, "Unexpected refcount %lu.\n", ref);
 
