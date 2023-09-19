@@ -64,9 +64,29 @@ struct test_tool
     const DWORD *types;
     DWORD types_count;
 
+    SRWLOCK lock;
     HANDLE message_event;
-    DMUS_PMSG *message;
+    DMUS_PMSG *messages[32];
+    UINT message_count;
 };
+
+static DMUS_PMSG *test_tool_push_msg(struct test_tool *tool, DMUS_PMSG *msg)
+{
+    AcquireSRWLockExclusive(&tool->lock);
+    ok(tool->message_count < ARRAY_SIZE(tool->messages),
+            "got %u messages\n", tool->message_count + 1);
+    if (tool->message_count < ARRAY_SIZE(tool->messages))
+    {
+        memmove(tool->messages + 1, tool->messages,
+            tool->message_count * sizeof(*tool->messages));
+        tool->messages[0] = msg;
+        tool->message_count++;
+        msg = NULL;
+    }
+    ReleaseSRWLockExclusive(&tool->lock);
+
+    return msg;
+}
 
 static struct test_tool *impl_from_IDirectMusicTool(IDirectMusicTool *iface)
 {
@@ -103,7 +123,7 @@ static ULONG WINAPI test_tool_Release(IDirectMusicTool *iface)
     if (!ref)
     {
         if (tool->graph) IDirectMusicGraph_Release(tool->graph);
-        ok(!tool->message, "got %p\n", tool->message);
+        ok(!tool->message_count, "got %p\n", &tool->message_count);
         CloseHandle(tool->message_event);
         free(tool);
     }
@@ -147,8 +167,7 @@ static HRESULT WINAPI test_tool_ProcessPMsg(IDirectMusicTool *iface, IDirectMusi
 
     hr = IDirectMusicPerformance8_ClonePMsg((IDirectMusicPerformance8 *)performance, msg, &clone);
     ok(hr == S_OK, "got %#lx\n", hr);
-
-    clone = InterlockedExchangePointer((void **)&tool->message, clone);
+    clone = test_tool_push_msg(tool, clone);
     ok(!clone, "got %p\n", clone);
     SetEvent(tool->message_event);
 
@@ -207,10 +226,23 @@ static HRESULT test_tool_get_graph(IDirectMusicTool *iface, IDirectMusicGraph **
 static DWORD test_tool_wait_message(IDirectMusicTool *iface, DWORD timeout, DMUS_PMSG **msg)
 {
     struct test_tool *tool = impl_from_IDirectMusicTool(iface);
-    DWORD ret;
+    DWORD ret = WAIT_FAILED;
 
-    ret = WaitForSingleObject(tool->message_event, timeout);
-    *msg = InterlockedExchangePointer((void **)&tool->message, NULL);
+    do
+    {
+        AcquireSRWLockExclusive(&tool->lock);
+        if (!tool->message_count)
+            *msg = NULL;
+        else
+        {
+            UINT index = --tool->message_count;
+            *msg = tool->messages[index];
+            tool->messages[index] = NULL;
+        }
+        ReleaseSRWLockExclusive(&tool->lock);
+
+        if (*msg) return 0;
+    } while (!(ret = WaitForSingleObject(tool->message_event, timeout)));
 
     return ret;
 }
@@ -1975,6 +2007,243 @@ static void test_performance_pmsg(void)
     IDirectMusicTool_Release(tool);
 }
 
+#define check_dmus_notification_pmsg(a, b, c) check_dmus_notification_pmsg_(__LINE__, a, b, c)
+static void check_dmus_notification_pmsg_(int line, DMUS_NOTIFICATION_PMSG *msg,
+        const GUID *type, DWORD option)
+{
+    ok_(__FILE__, line)(msg->dwType == DMUS_PMSGT_NOTIFICATION,
+            "got dwType %#lx\n", msg->dwType);
+    ok_(__FILE__, line)(IsEqualGUID(&msg->guidNotificationType, type),
+            "got guidNotificationType %s\n", debugstr_guid(&msg->guidNotificationType));
+    ok_(__FILE__, line)(msg->dwNotificationOption == option,
+            "got dwNotificationOption %#lx\n", msg->dwNotificationOption);
+    ok_(__FILE__, line)(!msg->dwField1, "got dwField1 %lu\n", msg->dwField1);
+    ok_(__FILE__, line)(!msg->dwField2, "got dwField2 %lu\n", msg->dwField2);
+
+    if (!IsEqualGUID(&msg->guidNotificationType, &GUID_NOTIFICATION_SEGMENT))
+        ok_(__FILE__, line)(!msg->punkUser, "got punkUser %p\n", msg->punkUser);
+    else
+    {
+        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState, TRUE);
+        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState8, TRUE);
+    }
+}
+
+static void test_notification_pmsg(void)
+{
+    static const DWORD message_types[] =
+    {
+        DMUS_PMSGT_DIRTY,
+        DMUS_PMSGT_NOTIFICATION,
+        DMUS_PMSGT_WAVE,
+    };
+    IDirectMusicPerformance *performance;
+    DMUS_NOTIFICATION_PMSG *notif;
+    IDirectMusicSegment *segment;
+    IDirectMusicGraph *graph;
+    IDirectMusicTool *tool;
+    DMUS_PMSG *msg;
+    HRESULT hr;
+    DWORD ret;
+
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+    hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment8_Download((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 100, &msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
+    ok(!msg, "got %p\n", msg);
+
+
+    /* AddNotificationType is necessary to receive notification messages */
+
+    hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_PERFORMANCE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 100, &msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
+    ok(!msg, "got %p\n", msg);
+
+    IDirectMusicSegment_Release(segment);
+
+    hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_PERFORMANCE);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    /* notification messages are also queued for direct access */
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
+
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicPerformance_Release(performance);
+    IDirectMusicTool_Release(tool);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -2002,6 +2271,7 @@ START_TEST(dmime)
     test_performance_graph();
     test_performance_time();
     test_performance_pmsg();
+    test_notification_pmsg();
 
     CoUninitialize();
 }
