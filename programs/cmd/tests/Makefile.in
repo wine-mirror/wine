@@ -1,6 +1,7 @@
 TESTDLL   = cmd.exe
 
 C_SRCS = \
-	batch.c
+	batch.c \
+	directory.c
 
 RC_SRCS   = rsrc.rc
