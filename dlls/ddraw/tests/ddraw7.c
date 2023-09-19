@@ -2850,7 +2850,7 @@ static void test_window_style(void)
     tmp = GetWindowLongA(window, GWL_STYLE);
     ok(!(tmp & WS_VISIBLE), "Got unexpected WS_VISIBLE.\n");
     tmp = GetWindowLongA(window, GWL_EXSTYLE);
-    todo_wine ok(tmp & WS_EX_TOPMOST, "Expected WS_EX_TOPMOST.\n");
+    ok(tmp & WS_EX_TOPMOST, "Expected WS_EX_TOPMOST.\n");
 
     ref = IDirectDraw7_Release(ddraw);
     ok(!ref, "Unexpected refcount %lu.\n", ref);

@@ -2151,7 +2151,19 @@ struct wined3d_window_state
     int x, y, width, height;
     uint32_t flags;
     bool set_style;
+    bool register_topmost_timer;
+    bool set_topmost_timer;
 };
+
+#define WINED3D_WINDOW_TOPMOST_TIMER_ID 0x4242
+
+static void CALLBACK topmost_timer_proc(HWND hwnd, UINT msg, UINT_PTR id, DWORD time)
+{
+    if (!(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST))
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    KillTimer(hwnd, WINED3D_WINDOW_TOPMOST_TIMER_ID);
+}
 
 static DWORD WINAPI set_window_state_thread(void *ctx)
 {
@@ -2176,6 +2188,7 @@ static DWORD WINAPI set_window_state_thread(void *ctx)
 
 static void set_window_state(struct wined3d_window_state *s)
 {
+    static const UINT timeout = 1500;
     DWORD window_tid = GetWindowThreadProcessId(s->window, NULL);
     DWORD tid = GetCurrentThreadId();
     HANDLE thread;
@@ -2187,6 +2200,17 @@ static void set_window_state(struct wined3d_window_state *s)
     if (window_tid == tid)
     {
         set_window_state_thread(s);
+
+        /* Deus Ex: Game of the Year Edition removes WS_EX_TOPMOST after changing resolutions in
+         * exclusive fullscreen mode. Tests show that WS_EX_TOPMOST will be restored when a ~1.5s
+         * timer times out */
+        if (s->register_topmost_timer)
+        {
+            if (s->set_topmost_timer)
+                SetTimer(s->window, WINED3D_WINDOW_TOPMOST_TIMER_ID, timeout, topmost_timer_proc);
+            else
+                KillTimer(s->window, WINED3D_WINDOW_TOPMOST_TIMER_ID);
+        }
     }
     else if ((thread = CreateThread(NULL, 0, set_window_state_thread, s, 0, NULL)))
     {
@@ -2239,6 +2263,8 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
     s->style = fullscreen_style(state->style);
     s->exstyle = fullscreen_exstyle(state->exstyle);
     s->set_style = true;
+    s->register_topmost_timer = !!(state->desc.flags & WINED3D_SWAPCHAIN_REGISTER_TOPMOST_TIMER);
+    s->set_topmost_timer = true;
 
     TRACE("Old style was %08lx, %08lx, setting to %08lx, %08lx.\n",
             state->style, state->exstyle, s->style, s->exstyle);
@@ -2293,6 +2319,8 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
      * when switching between windowed and fullscreen modes (HL2), some
      * depend on the original style (Eve Online). */
     s->set_style = style == fullscreen_style(state->style) && exstyle == fullscreen_exstyle(state->exstyle);
+    s->register_topmost_timer = !!(state->desc.flags & WINED3D_SWAPCHAIN_REGISTER_TOPMOST_TIMER);
+    s->set_topmost_timer = false;
 
     if (window_rect)
     {

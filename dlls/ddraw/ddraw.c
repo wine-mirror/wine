@@ -587,7 +587,7 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = !(cooplevel & DDSCL_FULLSCREEN);
-    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH | WINED3D_SWAPCHAIN_IMPLICIT;
+    swapchain_desc.flags = DDRAW_WINED3D_SWAPCHAIN_FLAGS;
 
     if ((cooplevel & DDSCL_NOWINDOWCHANGES) || window != GetForegroundWindow())
         swapchain_desc.flags |= WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
