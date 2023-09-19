@@ -511,6 +511,23 @@ static const char settings_manifest3[] =
 "   </asmv3:application>"
 "</assembly>";
 
+static const char settings_manifest4[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"   <assemblyIdentity version=\"1.0.0.0\"  name=\"Wine.Test\" type=\"win32\"></assemblyIdentity>"
+"   <application/>"
+"   <application xmlns=\"urn:schemas-microsoft-com:asm.v3\">"
+"       <windowsSettings>"
+"           <dpiAware xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">true</dpiAware>"
+"       </windowsSettings>"
+"   </application>"
+"   <application/>"
+"   <application xmlns=\"urn:schemas-microsoft-com:asm.v3\">"
+"       <windowsSettings>"
+"           <dpiAwareness xmlns=\"http://schemas.microsoft.com/SMI/2016/WindowsSettings\">true</dpiAwareness>"
+"       </windowsSettings>"
+"   </application>"
+"</assembly>";
+
 static const char two_dll_manifest_dll[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v3\" manifestVersion=\"1.0\">"
 "  <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\"/>"
@@ -3404,6 +3421,23 @@ static void test_settings(void)
     ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, 80, &size );
     ok( !ret, "QueryActCtxSettingsW succeeded\n" );
     ok( GetLastError() == ERROR_SXS_KEY_NOT_FOUND, "wrong error %lu\n", GetLastError() );
+    ReleaseActCtx(handle);
+
+    /* lookup occurs in first non empty node */
+    create_manifest_file( "manifest_settings4.manifest", settings_manifest4, -1, NULL, NULL );
+    handle = test_create("manifest_settings4.manifest");
+    ok( handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError() );
+    DeleteFileA( "manifest_settings3.manifest" );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwareW, buffer, 80, &size );
+    ok( ret, "QueryActCtxSettingsW failed\n" );
+    SetLastError( 0xdeadbeef );
+    size = 0xdead;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pQueryActCtxSettingsW( 0, handle, NULL, dpiAwarenessW, buffer, 80, &size );
+    ok( !ret, "QueryActCtxSettingsW succeeded\n" );
     ReleaseActCtx(handle);
 }
 
