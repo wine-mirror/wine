@@ -25,6 +25,8 @@ static char stdout_buffer[MAX_BUFFER], stderr_buffer[MAX_BUFFER];
 static DWORD stdout_size, stderr_size;
 static char work_dir[MAX_PATH];
 
+typedef BOOL (*find_line_callback)(const char* line, void *data);
+
 static void read_all_from_handle(HANDLE handle, char *buffer, DWORD *size)
 {
     char bytes[4096];
@@ -88,6 +90,36 @@ static void _run_dir(const char *file, int line, const char *commandline, int ex
                     exitcode_expected, exitcode);
 }
 
+static BOOL find_line(const char* buf, find_line_callback callback, void *data)
+{
+    BOOL found = FALSE;
+    const char* p = buf;
+    char *line = NULL;
+    size_t size = 0;
+
+    while (*p)
+    {
+        size_t len;
+        const char* eol = strpbrk(p, "\r\n");
+        len = eol ? (eol - p) : strlen(p);
+        if (len + 1 > size)
+        {
+            char *ptr = realloc(line, len + 1);
+            if (!ptr) break;
+            line = ptr;
+            size = len + 1;
+        }
+        memcpy(line, p, len);
+        line[len] = '\0';
+        found = callback(line, data);
+        if (found) break;
+        if (*eol == '\r' && *(eol+1) == '\n') eol++;
+        p = eol + 1;
+    }
+    free(line);
+    return found;
+}
+
 static void test_basic(void)
 {
     /* no options */
@@ -111,6 +143,100 @@ static void test_basic(void)
     ok(stderr_size == 0, "unexpected stderr buffer size %ld.\n", stderr_size);
 }
 
+struct timestamp_param {
+    SYSTEMTIME st;
+    const char* filename;
+};
+
+static BOOL match_timestamp(const char* line, void *data)
+{
+    const struct timestamp_param *param = (const struct timestamp_param *)data;
+    char pattern[MAX_BUFFER], *ptr;
+
+    if ((ptr = strstr(line, "      0 ")) && strstr(ptr, param->filename)) {
+        char format[60];
+
+        while (*ptr == ' ') *ptr-- = '\0';
+
+        GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SSHORTDATE, format, sizeof(format));
+        if ((ptr = strstr(format, "d")) && strncmp(ptr, "ddd", 3) &&
+                (!strncmp(ptr, "dd", 2) || !strncmp(ptr, "d", 1)))
+        {
+            sprintf(pattern, "%02hd", param->st.wDay);
+            todo_wine_if(strncmp(ptr, "dd", 2))
+            ok(!!strstr(line, pattern), "expected day %s, got %s\n", pattern, wine_dbgstr_a(line));
+        }
+        else
+            skip("date format %s doesn't represent day of the month as digits\n", wine_dbgstr_a(format));
+
+        if ((ptr = strstr(format, "M")) && strncmp(ptr, "MMM", 3) &&
+                (!strncmp(ptr, "MM", 2) || !strncmp(ptr, "M", 1)))
+        {
+            sprintf(pattern, "%02hd", param->st.wMonth);
+            todo_wine_if(strncmp(ptr, "MM", 2))
+            ok(!!strstr(line, pattern), "expected month %s, got %s\n", pattern, wine_dbgstr_a(line));
+        }
+        else
+            skip("date format %s doesn't represent month as digits\n", wine_dbgstr_a(format));
+
+        GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, format, sizeof(format));
+        if (strstr(format, "h") || strstr(format, "H"))
+        {
+            sprintf(pattern, "%02hd", param->st.wHour);
+            todo_wine_if(!strstr(format, "hh") && !strstr(format, "HH"))
+            ok(!!strstr(line, pattern), "expected hour %s, got %s\n", pattern, wine_dbgstr_a(line));
+        }
+        else
+            skip("time format %s doesn't represent hour as digits\n", wine_dbgstr_a(format));
+
+        if (strstr(format, "m"))
+        {
+            sprintf(pattern, "%02hd", param->st.wMinute);
+            todo_wine_if(!strstr(format, "mm"))
+            ok(!!strstr(line, pattern), "expected minute %s, got %s\n", pattern, wine_dbgstr_a(line));
+        }
+        else
+            skip("time format %s doesn't represent minute as digits\n", wine_dbgstr_a(format));
+
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void test_timestamp(void)
+{
+    static const char* filename = "test.dir";
+    FILETIME local, ft;
+    SYSTEMTIME st = {
+        /* Use single digits for leading zeros except the year */
+        .wYear = 2009, .wMonth = 1, .wDay = 3, .wHour = 5, .wMinute = 7,
+    };
+    struct timestamp_param param = {
+        .filename = filename,
+    };
+    HANDLE file;
+    BOOL ret;
+
+    file = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Can't create file, err %lu\n", GetLastError());
+
+    SystemTimeToFileTime(&st, &local);
+    LocalFileTimeToFileTime(&local, &ft);
+    SetFileTime(file, NULL, NULL, &ft);
+    FileTimeToLocalFileTime(&ft, &local);
+    FileTimeToSystemTime(&local, &param.st);
+
+    CloseHandle(file);
+
+    run_dir(filename, 0);
+    stdout_buffer[stdout_size] = '\0';
+    ret = find_line(stdout_buffer, match_timestamp, &param);
+    ok(ret, "file name is not found in the output\n");
+
+    ret = DeleteFileA(filename);
+    ok(ret, "Can't delete file, err %lu\n", GetLastError());
+}
+
 START_TEST(directory)
 {
     WCHAR curdir[MAX_PATH];
@@ -125,6 +251,7 @@ START_TEST(directory)
     ok(ret, "Failed to set the working directory\n");
 
     test_basic();
+    test_timestamp();
 
     ret = SetCurrentDirectoryW(curdir);
     ok(ret, "Failed to restore the current directory\n");
