@@ -2586,7 +2586,7 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
             ok(hr == S_OK, "got %#lx.\n", hr);
         else
         {
-            todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx.\n", hr);
+            ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx.\n", hr);
             winetest_pop_context();
             continue;
         }

@@ -374,6 +374,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 {
     struct aac_decoder *decoder = impl_from_IMFTransform(iface);
     MF_ATTRIBUTE_TYPE item_type;
+    UINT32 channel_count;
     GUID major, subtype;
     HRESULT hr;
     ULONG i;
@@ -394,6 +395,10 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
         if (IsEqualGUID(&subtype, aac_decoder_input_types[i].guid))
             break;
     if (i == ARRAY_SIZE(aac_decoder_input_types))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channel_count))
+            && channel_count >= ARRAY_SIZE(default_channel_mask))
         return MF_E_INVALIDMEDIATYPE;
 
     if (FAILED(IMFMediaType_GetItemType(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &item_type))
