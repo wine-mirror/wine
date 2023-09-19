@@ -2555,6 +2555,22 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
         goto failed;
     }
 
+    hr = MFCreateMediaType(&type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    input_desc[num_channels_index].value.vt = VT_UI8;
+    input_desc[num_channels_index].value.ulVal = 1;
+    init_media_type(type, input_desc, -1);
+    hr = IMFTransform_SetInputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IMFMediaType_Release(type);
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMFAttributes_GetUINT32((IMFAttributes *)type, &MF_MT_AUDIO_NUM_CHANNELS, &value);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(value == 2, "got %u.\n", value);
+    IMFMediaType_Release(type);
+    input_desc[num_channels_index].value.vt = VT_UI4;
+
     for (num_channels = 0; num_channels < 16; ++num_channels)
     {
         many_channels = num_channels > 2;
@@ -2592,18 +2608,15 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
                 expected_chans = 2;
             else
                 expected_chans = num_channels;
-            todo_wine_if(!num_channels)
             ok(value == expected_chans, "got %u, expected %u.\n", value, expected_chans);
 
             hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value);
             ok(hr == S_OK, "got %#lx.\n", hr);
-            todo_wine_if(!num_channels)
             ok(value == sample_size * 44100 * expected_chans, "got %u, expected %u.\n",
                     value, sample_size * 44100 * expected_chans);
 
             hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value);
             ok(hr == S_OK, "got %#lx.\n", hr);
-            todo_wine_if(!num_channels)
             ok(value == sample_size * expected_chans, "got %u, expected %u.\n", value, sample_size * expected_chans);
 
             hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, &value);
