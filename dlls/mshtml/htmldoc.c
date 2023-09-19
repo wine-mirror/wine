@@ -316,7 +316,7 @@ static void *DocumentType_query_interface(DispatchEx *dispex, REFIID riid)
     if(IsEqualGUID(&IID_IDOMDocumentType, riid))
         return &This->IDOMDocumentType_iface;
 
-    return HTMLDOMNode_QI(&This->node, riid);
+    return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
 static nsISupports *DocumentType_get_gecko_target(DispatchEx *dispex)
@@ -5863,7 +5863,7 @@ static void *HTMLDocumentNode_query_interface(DispatchEx *dispex, REFIID riid)
         return NULL;
     }
 
-    return HTMLDOMNode_QI(&This->node, riid);
+    return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
 static void HTMLDocumentNode_unlink(DispatchEx *dispex)

@@ -802,18 +802,14 @@ static inline HTMLAnchorElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node.event_target.dispex);
 }
 
-static void *HTMLAnchorElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLAnchorElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLAnchorElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLAnchorElement_iface;
     if(IsEqualGUID(&IID_IHTMLAnchorElement, riid))
         return &This->IHTMLAnchorElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLAnchorElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -865,7 +861,6 @@ fallback:
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAnchorElement,
-    .qi                    = HTMLAnchorElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -876,6 +871,7 @@ static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
 static const event_target_vtbl_t HTMLAnchorElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLAnchorElement_query_interface,
         .traverse       = HTMLAnchorElement_traverse,
         .unlink         = HTMLAnchorElement_unlink
     },

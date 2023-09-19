@@ -418,14 +418,14 @@ static inline HTMLAreaElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLAreaElement, element.node.event_target.dispex);
 }
 
-static void *HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLAreaElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLAreaElement, riid))
         return &This->IHTMLAreaElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -477,7 +477,6 @@ fallback:
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAreaElement,
-    .qi                    = HTMLAreaElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -488,6 +487,7 @@ static const NodeImplVtbl HTMLAreaElementImplVtbl = {
 static const event_target_vtbl_t HTMLAreaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLAreaElement_query_interface,
         .traverse       = HTMLAreaElement_traverse,
         .unlink         = HTMLAreaElement_unlink
     },

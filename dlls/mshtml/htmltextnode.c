@@ -345,7 +345,7 @@ static void *HTMLDOMTextNode_query_interface(DispatchEx *dispex, REFIID riid)
     if(IsEqualGUID(&IID_IHTMLDOMTextNode2, riid))
         return &This->IHTMLDOMTextNode2_iface;
 
-    return HTMLDOMNode_QI(&This->node, riid);
+    return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
 static const cpc_entry_t HTMLDOMTextNode_cpc[] = {{NULL}};

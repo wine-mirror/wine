@@ -123,24 +123,23 @@ static const IHTMLGenericElementVtbl HTMLGenericElementVtbl = {
     HTMLGenericElement_namedRecordset
 };
 
-static inline HTMLGenericElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline HTMLGenericElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLGenericElement, element.node);
+    return CONTAINING_RECORD(iface, HTMLGenericElement, element.node.event_target.dispex);
 }
 
-static void *HTMLGenericElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLGenericElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLGenericElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLGenericElement *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLGenericElement, riid))
         return &This->IHTMLGenericElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     .clsid                 = &CLSID_HTMLGenericElement,
-    .qi                    = HTMLGenericElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -151,6 +150,7 @@ static const NodeImplVtbl HTMLGenericElementImplVtbl = {
 static const event_target_vtbl_t HTMLGenericElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLGenericElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

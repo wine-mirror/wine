@@ -351,18 +351,14 @@ static inline HTMLOptionElement *HTMLOptionElement_from_DispatchEx(DispatchEx *i
     return CONTAINING_RECORD(iface, HTMLOptionElement, element.node.event_target.dispex);
 }
 
-static void *HTMLOptionElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLOptionElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLOptionElement *This = HTMLOptionElement_from_HTMLDOMNode(iface);
+    HTMLOptionElement *This = HTMLOptionElement_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLOptionElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLOptionElement_iface;
     if(IsEqualGUID(&IID_IHTMLOptionElement, riid))
         return &This->IHTMLOptionElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLOptionElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -383,7 +379,6 @@ static void HTMLOptionElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     .clsid                 = &CLSID_HTMLOptionElement,
-    .qi                    = HTMLOptionElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -394,6 +389,7 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
 static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLOptionElement_query_interface,
         .traverse       = HTMLOptionElement_traverse,
         .unlink         = HTMLOptionElement_unlink
     },
@@ -1330,18 +1326,14 @@ static inline HTMLSelectElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLSelectElement, element.node.event_target.dispex);
 }
 
-static void *HTMLSelectElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLSelectElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLSelectElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLSelectElement_iface;
     if(IsEqualGUID(&IID_IHTMLSelectElement, riid))
         return &This->IHTMLSelectElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1429,7 +1421,6 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLSelectElement,
-    .qi                    = HTMLSelectElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1445,6 +1436,7 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
 static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLSelectElement_query_interface,
         .traverse       = HTMLSelectElement_traverse,
         .unlink         = HTMLSelectElement_unlink
     },

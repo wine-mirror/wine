@@ -670,14 +670,14 @@ static inline HTMLImg *HTMLImg_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLImg, element.node.event_target.dispex);
 }
 
-static void *HTMLImgElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLImgElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLImg *This = impl_from_HTMLDOMNode(iface);
+    HTMLImg *This = HTMLImg_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLImgElement, riid))
         return &This->IHTMLImgElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLImgElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -698,7 +698,6 @@ static void HTMLImgElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
     .clsid                 = &CLSID_HTMLImg,
-    .qi                    = HTMLImgElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -710,6 +709,7 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
 static const event_target_vtbl_t HTMLImgElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLImgElement_query_interface,
         .traverse       = HTMLImgElement_traverse,
         .unlink         = HTMLImgElement_unlink
     },

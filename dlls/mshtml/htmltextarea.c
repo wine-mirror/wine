@@ -412,18 +412,14 @@ static inline HTMLTextAreaElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLTextAreaElement, element.node.event_target.dispex);
 }
 
-static void *HTMLTextAreaElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLTextAreaElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLTextAreaElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLTextAreaElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLTextAreaElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLTextAreaElement_iface;
     if(IsEqualGUID(&IID_IHTMLTextAreaElement, riid))
         return &This->IHTMLTextAreaElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLTextAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -444,7 +440,6 @@ static void HTMLTextAreaElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTextAreaElement,
-    .qi                    = HTMLTextAreaElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -458,6 +453,7 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
 static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLTextAreaElement_query_interface,
         .traverse       = HTMLTextAreaElement_traverse,
         .unlink         = HTMLTextAreaElement_unlink
     },

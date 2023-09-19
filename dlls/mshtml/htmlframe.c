@@ -707,7 +707,7 @@ static void *HTMLFrameBase_QI(HTMLFrameBase *This, REFIID riid)
     if(IsEqualGUID(&IID_IHTMLFrameBase2, riid))
         return &This->IHTMLFrameBase2_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLFrameBase_destructor(HTMLFrameBase *This)
@@ -931,9 +931,9 @@ static inline HTMLFrameElement *frame_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLFrameElement, framebase.element.node.event_target.dispex);
 }
 
-static void *HTMLFrameElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLFrameElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLFrameElement3, riid))
         return &This->IHTMLFrameElement3_iface;
@@ -1003,7 +1003,6 @@ static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .clsid                 = &CLSID_HTMLFrameElement,
-    .qi                    = HTMLFrameElement_QI,
     .destructor            = HTMLFrameElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1020,6 +1019,7 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
 static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLFrameElement_query_interface,
         .traverse       = HTMLFrameElement_traverse,
         .unlink         = HTMLFrameElement_unlink
     },
@@ -1517,9 +1517,9 @@ static inline HTMLIFrame *iframe_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLIFrame, framebase.element.node.event_target.dispex);
 }
 
-static void *HTMLIFrame_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLIFrame_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLIFrameElement, riid))
         return &This->IHTMLIFrameElement_iface;
@@ -1593,7 +1593,6 @@ static HRESULT HTMLIFrame_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD 
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .clsid                 = &CLSID_HTMLIFrame,
-    .qi                    = HTMLIFrame_QI,
     .destructor            = HTMLIFrame_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1610,6 +1609,7 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
 static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLIFrame_query_interface,
         .traverse       = HTMLIFrame_traverse,
         .unlink         = HTMLIFrame_unlink
     },

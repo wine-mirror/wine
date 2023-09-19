@@ -6811,7 +6811,6 @@ const cpc_entry_t HTMLElement_cpc[] = {
 
 static const NodeImplVtbl HTMLElementImplVtbl = {
     .clsid                 = &CLSID_HTMLUnknownElement,
-    .qi                    = HTMLElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -6824,14 +6823,10 @@ static inline HTMLElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLElement, node.event_target.dispex);
 }
 
-void *HTMLElement_QI(HTMLDOMNode *iface, REFIID riid)
+void *HTMLElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLElement_iface;
     if(IsEqualGUID(&IID_IHTMLElement, riid))
         return &This->IHTMLElement_iface;
     if(IsEqualGUID(&IID_IHTMLElement2, riid))
@@ -6861,7 +6856,7 @@ void *HTMLElement_QI(HTMLDOMNode *iface, REFIID riid)
     if(IsEqualGUID(&IID_IWineHTMLElementPrivate, riid))
         return &This->IWineHTMLElementPrivate_iface;
 
-    return HTMLDOMNode_QI(&This->node, riid);
+    return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
 void HTMLElement_destructor(HTMLDOMNode *iface)
@@ -7322,6 +7317,7 @@ const tid_t HTMLElement_iface_tids[] = {
 static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface     = HTMLElement_query_interface,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink,
     },

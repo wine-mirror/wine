@@ -160,19 +160,23 @@ static HRESULT HTMLCommentElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, 
     return S_OK;
 }
 
-static void *HTMLCommentElement_QI(HTMLDOMNode *iface, REFIID riid)
+static inline HTMLCommentElement *impl_from_DispatchEx(DispatchEx *iface)
 {
-    HTMLCommentElement *This = impl_from_HTMLDOMNode(iface);
+    return CONTAINING_RECORD(iface, HTMLCommentElement, element.node.event_target.dispex);
+}
+
+static void *HTMLCommentElement_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    HTMLCommentElement *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLCommentElement, riid))
         return &This->IHTMLCommentElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     .clsid                 = &CLSID_HTMLCommentElement,
-    .qi                    = HTMLCommentElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLCommentElement_clone,
@@ -183,6 +187,7 @@ static const NodeImplVtbl HTMLCommentElementImplVtbl = {
 static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLCommentElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

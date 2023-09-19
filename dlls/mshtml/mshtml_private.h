@@ -813,7 +813,6 @@ struct GeckoBrowser {
 
 typedef struct {
     const CLSID *clsid;
-    void *(*qi)(HTMLDOMNode*,REFIID);
     void (*destructor)(HTMLDOMNode*);
     const cpc_entry_t *cpc_entries;
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
@@ -1204,14 +1203,13 @@ void EventTarget_Init(EventTarget*,dispex_static_data_t*,compat_mode_t);
 void *EventTarget_query_interface(EventTarget*,REFIID);
 void EventTarget_init_dispex_info(dispex_data_t*,compat_mode_t);
 
-void *HTMLDOMNode_QI(HTMLDOMNode*,REFIID);
 void *HTMLDOMNode_query_interface(DispatchEx*,REFIID);
 void HTMLDOMNode_destructor(DispatchEx*);
 void HTMLDOMNode_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
 void HTMLDOMNode_unlink(DispatchEx*);
 void HTMLDOMNode_init_dispex_info(dispex_data_t*,compat_mode_t);
 
-void *HTMLElement_QI(HTMLDOMNode*,REFIID);
+void *HTMLElement_query_interface(DispatchEx*,REFIID);
 void HTMLElement_destructor(HTMLDOMNode*);
 HRESULT HTMLElement_get_dispid(DispatchEx*,BSTR,DWORD,DISPID*);
 HRESULT HTMLElement_get_name(DispatchEx*,DISPID,BSTR*);

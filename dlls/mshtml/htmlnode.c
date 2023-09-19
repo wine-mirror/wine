@@ -1407,11 +1407,6 @@ void *HTMLDOMNode_query_interface(DispatchEx *dispex, REFIID riid)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
 
-    return This->vtbl->qi(This, riid);
-}
-
-void *HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid)
-{
     if(IsEqualGUID(&IID_IUnknown, riid))
         return &This->IHTMLDOMNode_iface;
     if(IsEqualGUID(&IID_IDispatch, riid))
@@ -1475,7 +1470,6 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
-    .qi                    = HTMLDOMNode_QI,
     .cpc_entries           = HTMLDOMNode_cpc,
     .clone                 = HTMLDOMNode_clone
 };

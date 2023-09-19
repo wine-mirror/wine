@@ -385,18 +385,14 @@ static inline HTMLScriptElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLScriptElement, element.node.event_target.dispex);
 }
 
-static void *HTMLScriptElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLScriptElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLScriptElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLScriptElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLScriptElement_iface;
     if(IsEqualGUID(&IID_IHTMLScriptElement, riid))
         return &This->IHTMLScriptElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLScriptElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -424,7 +420,6 @@ static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     .clsid                 = &CLSID_HTMLScriptElement,
-    .qi                    = HTMLScriptElement_QI,
     .destructor            = HTMLScriptElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -437,6 +432,7 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
 static const event_target_vtbl_t HTMLScriptElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLScriptElement_query_interface,
         .traverse       = HTMLScriptElement_traverse,
         .unlink         = HTMLScriptElement_unlink
     },

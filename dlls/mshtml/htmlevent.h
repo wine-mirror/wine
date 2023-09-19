@@ -145,7 +145,6 @@ ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx*);
 IHTMLEventObj *HTMLElement_set_current_event(DispatchEx*,IHTMLEventObj*);
 
 #define HTMLELEMENT_DISPEX_VTBL_ENTRIES                 \
-    .query_interface     = HTMLDOMNode_query_interface, \
     .destructor          = HTMLDOMNode_destructor,      \
     .get_dispid          = HTMLElement_get_dispid,      \
     .get_name            = HTMLElement_get_name,        \

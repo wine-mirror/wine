@@ -370,20 +370,16 @@ static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
 }
 
-static void *HTMLStyleElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLStyleElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLStyleElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLStyleElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLStyleElement_iface;
     if(IsEqualGUID(&IID_IHTMLStyleElement, riid))
         return &This->IHTMLStyleElement_iface;
     if(IsEqualGUID(&IID_IHTMLStyleElement2, riid))
         return &This->IHTMLStyleElement2_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -429,7 +425,6 @@ static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLStyleElement,
-    .qi                    = HTMLStyleElement_QI,
     .destructor            = HTMLStyleElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -440,6 +435,7 @@ static const NodeImplVtbl HTMLStyleElementImplVtbl = {
 static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLStyleElement_query_interface,
         .traverse       = HTMLStyleElement_traverse,
         .unlink         = HTMLStyleElement_unlink
     },

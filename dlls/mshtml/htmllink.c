@@ -391,14 +391,14 @@ static inline HTMLLinkElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLLinkElement, element.node.event_target.dispex);
 }
 
-static void *HTMLLinkElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLLinkElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLLinkElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLLinkElement *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLLinkElement, riid))
         return &This->IHTMLLinkElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLLinkElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -418,7 +418,6 @@ static void HTMLLinkElement_unlink(DispatchEx *dispex)
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLinkElement,
-    .qi                    = HTMLLinkElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -431,6 +430,7 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
 static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLLinkElement_query_interface,
         .traverse       = HTMLLinkElement_traverse,
         .unlink         = HTMLLinkElement_unlink
     },

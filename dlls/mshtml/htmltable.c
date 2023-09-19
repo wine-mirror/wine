@@ -451,18 +451,14 @@ static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
 }
 
-static void *HTMLTableCell_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLTableCell_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLTableCell *This = HTMLTableCell_from_HTMLDOMNode(iface);
+    HTMLTableCell *This = HTMLTableCell_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLTableCell_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLTableCell_iface;
     if(IsEqualGUID(&IID_IHTMLTableCell, riid))
         return &This->IHTMLTableCell_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLTableCell_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -483,7 +479,6 @@ static void HTMLTableCell_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .clsid                 = &CLSID_HTMLTableCell,
-    .qi                    = HTMLTableCell_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -494,6 +489,7 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
 static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLTableCell_query_interface,
         .traverse       = HTMLTableCell_traverse,
         .unlink         = HTMLTableCell_unlink
     },
@@ -885,18 +881,14 @@ static inline HTMLTableRow *HTMLTableRow_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLTableRow, element.node.event_target.dispex);
 }
 
-static void *HTMLTableRow_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLTableRow_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLTableRow *This = HTMLTableRow_from_HTMLDOMNode(iface);
+    HTMLTableRow *This = HTMLTableRow_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLTableRow_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLTableRow_iface;
     if(IsEqualGUID(&IID_IHTMLTableRow, riid))
         return &This->IHTMLTableRow_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLTableRow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -917,7 +909,6 @@ static void HTMLTableRow_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
     .clsid                 = &CLSID_HTMLTableRow,
-    .qi                    = HTMLTableRow_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -928,6 +919,7 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
 static const event_target_vtbl_t HTMLTableRow_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLTableRow_query_interface,
         .traverse       = HTMLTableRow_traverse,
         .unlink         = HTMLTableRow_unlink
     },
@@ -1893,14 +1885,10 @@ static inline HTMLTable *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLTable, element.node.event_target.dispex);
 }
 
-static void *HTMLTable_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLTable_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLTable *This = impl_from_HTMLDOMNode(iface);
+    HTMLTable *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLTable_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLTable_iface;
     if(IsEqualGUID(&IID_IHTMLTable, riid))
         return &This->IHTMLTable_iface;
     if(IsEqualGUID(&IID_IHTMLTable2, riid))
@@ -1908,7 +1896,7 @@ static void *HTMLTable_QI(HTMLDOMNode *iface, REFIID riid)
     if(IsEqualGUID(&IID_IHTMLTable3, riid))
         return &This->IHTMLTable3_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLTable_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1935,7 +1923,6 @@ static const cpc_entry_t HTMLTable_cpc[] = {
 
 static const NodeImplVtbl HTMLTableImplVtbl = {
     .clsid                 = &CLSID_HTMLTable,
-    .qi                    = HTMLTable_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLTable_cpc,
     .clone                 = HTMLElement_clone,
@@ -1946,6 +1933,7 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
 static const event_target_vtbl_t HTMLTable_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLTable_query_interface,
         .traverse       = HTMLTable_traverse,
         .unlink         = HTMLTable_unlink
     },

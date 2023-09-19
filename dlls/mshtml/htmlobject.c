@@ -649,15 +649,11 @@ static inline HTMLObjectElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLObjectElement, plugin_container.element.node.event_target.dispex);
 }
 
-static void *HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLObjectElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
     void *elem_iface;
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLObjectElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLObjectElement_iface;
     if(IsEqualGUID(&IID_IHTMLObjectElement, riid))
         return &This->IHTMLObjectElement_iface;
     if(IsEqualGUID(&IID_IHTMLObjectElement2, riid))
@@ -667,7 +663,7 @@ static void *HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid)
         return &This->plugin_container;
     }
 
-    elem_iface = HTMLElement_QI(&This->plugin_container.element.node, riid);
+    elem_iface = HTMLElement_query_interface(&This->plugin_container.element.node.event_target.dispex, riid);
     if(!elem_iface && This->plugin_container.plugin_host && This->plugin_container.plugin_host->plugin_unk) {
         IUnknown *plugin_iface, *ret;
         HRESULT hres = IUnknown_QueryInterface(This->plugin_container.plugin_host->plugin_unk, riid, (void**)&plugin_iface);
@@ -744,7 +740,6 @@ static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLObjectElement,
-    .qi                    = HTMLObjectElement_QI,
     .destructor            = HTMLObjectElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -759,6 +754,7 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
 static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLObjectElement_query_interface,
         .traverse       = HTMLObjectElement_traverse,
         .unlink         = HTMLObjectElement_unlink
     },
@@ -987,28 +983,23 @@ static const IHTMLEmbedElementVtbl HTMLEmbedElementVtbl = {
     HTMLEmbedElement_get_height
 };
 
-static inline HTMLEmbed *embed_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline HTMLEmbed *embed_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLEmbed, element.node);
+    return CONTAINING_RECORD(iface, HTMLEmbed, element.node.event_target.dispex);
 }
 
-static void *HTMLEmbedElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLEmbedElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLEmbed *This = embed_from_HTMLDOMNode(iface);
+    HTMLEmbed *This = embed_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLEmbedElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLEmbedElement_iface;
     if(IsEqualGUID(&IID_IHTMLEmbedElement, riid))
         return &This->IHTMLEmbedElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     .clsid                 = &CLSID_HTMLEmbed,
-    .qi                    = HTMLEmbedElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1019,6 +1010,7 @@ static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
 static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLEmbedElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

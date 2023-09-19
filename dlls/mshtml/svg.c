@@ -173,24 +173,23 @@ static const ISVGElementVtbl SVGElementVtbl = {
     SVGElement_get_focusable
 };
 
-static inline SVGElement *SVGElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline SVGElement *SVGElement_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, SVGElement, element.node);
+    return CONTAINING_RECORD(iface, SVGElement, element.node.event_target.dispex);
 }
 
-static void *SVGElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *SVGElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    SVGElement *This = SVGElement_from_HTMLDOMNode(iface);
+    SVGElement *This = SVGElement_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_ISVGElement, riid))
         return &This->ISVGElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl SVGElementImplVtbl = {
     .clsid                 = &CLSID_SVGElement,
-    .qi                    = SVGElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -200,6 +199,7 @@ static const NodeImplVtbl SVGElementImplVtbl = {
 static const event_target_vtbl_t SVGElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= SVGElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -723,24 +723,23 @@ static const ISVGSVGElementVtbl SVGSVGElementVtbl = {
     SVGSVGElement_getElementById
 };
 
-static inline SVGSVGElement *SVGSVGElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline SVGSVGElement *SVGSVGElement_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, SVGSVGElement, svg_element.element.node);
+    return CONTAINING_RECORD(iface, SVGSVGElement, svg_element.element.node.event_target.dispex);
 }
 
-static void *SVGSVGElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *SVGSVGElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    SVGSVGElement *This = SVGSVGElement_from_HTMLDOMNode(iface);
+    SVGSVGElement *This = SVGSVGElement_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_ISVGSVGElement, riid))
         return &This->ISVGSVGElement_iface;
 
-    return SVGElement_QI(&This->svg_element.element.node, riid);
+    return SVGElement_query_interface(&This->svg_element.element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl SVGSVGElementImplVtbl = {
     .clsid                 = &CLSID_SVGSVGElement,
-    .qi                    = SVGSVGElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -750,6 +749,7 @@ static const NodeImplVtbl SVGSVGElementImplVtbl = {
 static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= SVGSVGElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -903,24 +903,23 @@ static const ISVGCircleElementVtbl SVGCircleElementVtbl = {
     SVGCircleElement_get_r
 };
 
-static inline SVGCircleElement *SVGCircleElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline SVGCircleElement *SVGCircleElement_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, SVGCircleElement, svg_element.element.node);
+    return CONTAINING_RECORD(iface, SVGCircleElement, svg_element.element.node.event_target.dispex);
 }
 
-static void *SVGCircleElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *SVGCircleElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    SVGCircleElement *This = SVGCircleElement_from_HTMLDOMNode(iface);
+    SVGCircleElement *This = SVGCircleElement_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_ISVGCircleElement, riid))
         return &This->ISVGCircleElement_iface;
 
-    return SVGElement_QI(&This->svg_element.element.node, riid);
+    return SVGElement_query_interface(&This->svg_element.element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl SVGCircleElementImplVtbl = {
     .clsid                 = &CLSID_SVGCircleElement,
-    .qi                    = SVGCircleElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -930,6 +929,7 @@ static const NodeImplVtbl SVGCircleElementImplVtbl = {
 static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= SVGCircleElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -1156,26 +1156,25 @@ struct SVGTSpanElement {
     SVGTextContentElement text_content;
 };
 
-static inline SVGTSpanElement *SVGTSpanElement_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline SVGTSpanElement *SVGTSpanElement_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, SVGTSpanElement, svg_element.element.node);
+    return CONTAINING_RECORD(iface, SVGTSpanElement, svg_element.element.node.event_target.dispex);
 }
 
-static void *SVGTSpanElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *SVGTSpanElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    SVGTSpanElement *This = SVGTSpanElement_from_HTMLDOMNode(iface);
+    SVGTSpanElement *This = SVGTSpanElement_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_ISVGTSpanElement, riid))
         return &This->svg_element.ISVGElement_iface; /* no additional methods */
     if(IsEqualGUID(&IID_ISVGTextContentElement, riid))
         return &This->text_content.ISVGTextContentElement_iface;
 
-    return SVGElement_QI(&This->svg_element.element.node, riid);
+    return SVGElement_query_interface(&This->svg_element.element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl SVGTSpanElementImplVtbl = {
     .clsid                 = &CLSID_SVGTSpanElement,
-    .qi                    = SVGTSpanElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1185,6 +1184,7 @@ static const NodeImplVtbl SVGTSpanElementImplVtbl = {
 static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= SVGTSpanElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

@@ -928,20 +928,16 @@ static inline HTMLBodyElement *impl_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLBodyElement, element.node.event_target.dispex);
 }
 
-static void *HTMLBodyElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLBodyElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLBodyElement *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLBodyElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLBodyElement_iface;
     if(IsEqualGUID(&IID_IHTMLBodyElement, riid))
         return &This->IHTMLBodyElement_iface;
     if(IsEqualGUID(&IID_IHTMLTextContainer, riid))
         return &This->IHTMLTextContainer_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLBodyElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -969,7 +965,6 @@ static const cpc_entry_t HTMLBodyElement_cpc[] = {
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     .clsid                 = &CLSID_HTMLBody,
-    .qi                    = HTMLBodyElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLBodyElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -983,6 +978,7 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
 static const event_target_vtbl_t HTMLBodyElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLBodyElement_query_interface,
         .traverse       = HTMLBodyElement_traverse,
         .unlink         = HTMLBodyElement_unlink
     },

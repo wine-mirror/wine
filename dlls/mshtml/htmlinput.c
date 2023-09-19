@@ -1380,14 +1380,10 @@ static inline HTMLInputElement *input_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLInputElement, element.node.event_target.dispex);
 }
 
-static void *HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLInputElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLInputElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLInputElement *This = input_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLInputElement_iface;
-    if(IsEqualGUID(&IID_IDispatch, riid))
-        return &This->IHTMLInputElement_iface;
     if(IsEqualGUID(&IID_IHTMLInputElement, riid))
         return &This->IHTMLInputElement_iface;
     if(IsEqualGUID(&IID_IHTMLInputTextElement, riid))
@@ -1395,7 +1391,7 @@ static void *HTMLInputElement_QI(HTMLDOMNode *iface, REFIID riid)
     if(IsEqualGUID(&IID_IHTMLInputTextElement2, riid))
         return &This->IHTMLInputTextElement2_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLInputElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1416,7 +1412,6 @@ static void HTMLInputElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     .clsid                 = &CLSID_HTMLInputElement,
-    .qi                    = HTMLInputElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1430,6 +1425,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
 static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLInputElement_query_interface,
         .traverse       = HTMLInputElement_traverse,
         .unlink         = HTMLInputElement_unlink
     },
@@ -1598,26 +1594,23 @@ static const IHTMLLabelElementVtbl HTMLLabelElementVtbl = {
     HTMLLabelElement_get_accessKey
 };
 
-static inline HTMLLabelElement *label_from_HTMLDOMNode(HTMLDOMNode *iface)
+static inline HTMLLabelElement *label_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLLabelElement, element.node);
+    return CONTAINING_RECORD(iface, HTMLLabelElement, element.node.event_target.dispex);
 }
 
-static void *HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLLabelElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLLabelElement *This = label_from_HTMLDOMNode(iface);
+    HTMLLabelElement *This = label_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLLabelElement_iface;
     if(IsEqualGUID(&IID_IHTMLLabelElement, riid))
         return &This->IHTMLLabelElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLabelElement,
-    .qi                    = HTMLLabelElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1628,6 +1621,7 @@ static const NodeImplVtbl HTMLLabelElementImplVtbl = {
 static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLLabelElement_query_interface,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -1925,16 +1919,14 @@ static inline HTMLButtonElement *button_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, HTMLButtonElement, element.node.event_target.dispex);
 }
 
-static void *HTMLButtonElement_QI(HTMLDOMNode *iface, REFIID riid)
+static void *HTMLButtonElement_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLButtonElement *This = button_from_HTMLDOMNode(iface);
+    HTMLButtonElement *This = button_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IUnknown, riid))
-        return &This->IHTMLButtonElement_iface;
     if(IsEqualGUID(&IID_IHTMLButtonElement, riid))
         return &This->IHTMLButtonElement_iface;
 
-    return HTMLElement_QI(&This->element.node, riid);
+    return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
 
 static void HTMLButtonElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
@@ -1955,7 +1947,6 @@ static void HTMLButtonElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     .clsid                 = &CLSID_HTMLButtonElement,
-    .qi                    = HTMLButtonElement_QI,
     .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
@@ -1969,6 +1960,7 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
 static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .query_interface= HTMLButtonElement_query_interface,
         .traverse       = HTMLButtonElement_traverse,
         .unlink         = HTMLButtonElement_unlink
     },
