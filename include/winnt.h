@@ -1911,6 +1911,10 @@ NTSYSAPI void WINAPI RtlCaptureContext(CONTEXT*);
 #define WOW64_SIZE_OF_80387_REGISTERS 80
 #define WOW64_MAXIMUM_SUPPORTED_EXTENSION 512
 
+#ifdef __x86_64__
+NTSYSAPI BOOLEAN NTAPI RtlIsEcCode(const void*);
+#endif
+
 /* Exception definitions */
 
 #define EXCEPTION_READ_FAULT    0
@@ -2061,6 +2065,9 @@ typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
 #define UNW_FLAG_UHANDLER  2
 
 #endif /* __aarch64__ */
+
+NTSYSAPI void    NTAPI RtlRaiseException(struct _EXCEPTION_RECORD*);
+NTSYSAPI void    NTAPI RtlUnwind(void*,void*,struct _EXCEPTION_RECORD*,void*);
 
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
@@ -6710,6 +6717,7 @@ typedef VOID (CALLBACK *PTP_WAIT_CALLBACK)(PTP_CALLBACK_INSTANCE,PVOID,PTP_WAIT,
 
 
 NTSYSAPI BOOLEAN NTAPI RtlGetProductInfo(DWORD,DWORD,DWORD,DWORD,PDWORD);
+NTSYSAPI void*   NTAPI RtlPcToFileHeader(void*,void**);
 
 typedef enum _RTL_UMS_THREAD_INFO_CLASS
 {
