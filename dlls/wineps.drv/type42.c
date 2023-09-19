@@ -69,7 +69,7 @@ static const OTTable tables_templ[] = {
 struct tagTYPE42 {
     OTTable tables[ARRAY_SIZE(tables_templ)];
     int glyf_tab, loca_tab, head_tab; /* indices of glyf, loca and head tables */
-    int hmtx_tab, maxp_tab;
+    int maxp_tab;
     int num_of_written_tables;
     DWORD glyph_sent_size;
     BOOL *glyph_sent;
@@ -170,7 +170,7 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
 
     t42 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*t42));
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
-    t42->loca_tab = t42->glyf_tab = t42->head_tab = t42->hmtx_tab = -1;
+    t42->loca_tab = t42->glyf_tab = t42->head_tab = -1;
     t42->emsize = emsize;
     t42->num_of_written_tables = 0;
 
@@ -184,8 +184,6 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
 	    t42->glyf_tab = i;
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('h','e','a','d'))
 	    t42->head_tab = i;
-	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('h','m','t','x'))
-	    t42->hmtx_tab = i;
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('m','a','x','p'))
 	    t42->maxp_tab = i;
     }
