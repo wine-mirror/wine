@@ -85,17 +85,21 @@ static void stream_end_chunk(IStream *stream, ULARGE_INTEGER *offset)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Seek(stream, *(LARGE_INTEGER *)&position, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Write(stream, &zero, (position.QuadPart & 1), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
 }
 
 #define CHUNK_BEGIN(stream, type)                                \
     do {                                                         \
         ULARGE_INTEGER __off;                                    \
+        IStream *__stream = (stream);                            \
         stream_begin_chunk(stream, type, &__off);                \
         do
 
 #define CHUNK_RIFF(stream, form)                                 \
     do {                                                         \
         ULARGE_INTEGER __off;                                    \
+        IStream *__stream = (stream);                            \
         stream_begin_chunk(stream, "RIFF", &__off);              \
         IStream_Write(stream, form, 4, NULL);                    \
         do
@@ -103,13 +107,14 @@ static void stream_end_chunk(IStream *stream, ULARGE_INTEGER *offset)
 #define CHUNK_LIST(stream, form)                                 \
     do {                                                         \
         ULARGE_INTEGER __off;                                    \
+        IStream *__stream = (stream);                            \
         stream_begin_chunk(stream, "LIST", &__off);              \
         IStream_Write(stream, form, 4, NULL);                    \
         do
 
 #define CHUNK_END                                                \
         while (0);                                               \
-        stream_end_chunk(stream, &__off);                        \
+        stream_end_chunk(__stream, &__off);                      \
     } while (0)
 
 #define CHUNK_DATA(stream, type, data)                           \
