@@ -1484,8 +1484,11 @@ void output_syscalls( DLLSPEC *spec )
             output_seh( ".seh_endprologue" );
             output( "\tmov x8, #%u\n", id );
             output( "\tmov x9, x30\n" );
-            output( "\tbl %s\n", asm_name("__wine_syscall" ));
+            output( "\tldr x16, 1f\n" );
+            output( "\tldr x16, [x16]\n" );
+            output( "\tblr x16\n" );
             output( "\tret\n" );
+            output( "1:\t.quad %s\n", asm_name("__wine_syscall_dispatcher") );
             output_seh( ".seh_endproc" );
             break;
         default:
@@ -1523,14 +1526,6 @@ void output_syscalls( DLLSPEC *spec )
         if (UsePIC) output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
         output_function_size( "__wine_syscall" );
         break;
-    case CPU_ARM64:
-        output( "\t.align %d\n", get_alignment(16) );
-        output( "\t%s\n", func_declaration("__wine_syscall") );
-        output( "%s:\n", asm_name("__wine_syscall") );
-        output( "\tadrp x16, %s\n", arm64_page( asm_name("__wine_syscall_dispatcher") ) );
-        output( "\tldr x16, [x16, #%s]\n", arm64_pageoff( asm_name("__wine_syscall_dispatcher") ) );
-        output( "\tbr x16\n");
-        output_function_size( "__wine_syscall" );
     default:
         break;
     }
