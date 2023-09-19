@@ -2649,7 +2649,7 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
         }
         ok(hr == MF_E_NO_MORE_TYPES, "got %#lx.\n", hr);
         if (many_channels)
-            todo_wine ok(i == ARRAY_SIZE(expect_available_outputs) * 2, "got %lu media types.\n", i);
+            ok(i == ARRAY_SIZE(expect_available_outputs) * 2, "got %lu media types.\n", i);
         else
             ok(i == ARRAY_SIZE(expect_available_outputs), "got %lu media types.\n", i);
         winetest_pop_context();

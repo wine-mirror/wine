@@ -311,6 +311,14 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
     if (channel_count >= ARRAY_SIZE(default_channel_mask))
         return MF_E_INVALIDMEDIATYPE;
 
+    if (channel_count > 2 && index >= ARRAY_SIZE(aac_decoder_output_types))
+    {
+        /* If there are more than two channels in the input type GetOutputAvailableType additionally lists
+         * types with 2 channels. */
+        index -= ARRAY_SIZE(aac_decoder_output_types);
+        channel_count = 2;
+    }
+
     if (index >= ARRAY_SIZE(aac_decoder_output_types))
         return MF_E_NO_MORE_TYPES;
     index = ARRAY_SIZE(aac_decoder_output_types) - index - 1;
