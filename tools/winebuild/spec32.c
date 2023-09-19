@@ -300,7 +300,6 @@ static void output_relay_debug( DLLSPEC *spec )
 
             output( "\t.align %d\n", get_alignment(4) );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
-            output_cfi( ".cfi_startproc" );
             output( "\tpush {r0-r3}\n" );
             output( "\tmov r2, SP\n");
             if (has_float) output( "\tvpush {s0-s15}\n" );
@@ -324,7 +323,6 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
             if (UsePIC) output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
-            output_cfi( ".cfi_endproc" );
             break;
         }
 
@@ -371,7 +369,6 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\t.align %d\n", get_alignment(4) );
             output( "\t.long 0x90909090,0x90909090\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
-            output_cfi( ".cfi_startproc" );
             switch (odp->u.func.nb_args)
             {
             default: output( "\tmovq %%%s,32(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
@@ -388,7 +385,6 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
             output( "\tcallq *8(%%rcx)\n" );
             output( "\tret\n" );
-            output_cfi( ".cfi_endproc" );
             break;
 
         default:
@@ -583,7 +579,6 @@ void output_exports( DLLSPEC *spec )
         output( "\t.long 0x90909090,0x90909090\n" );
         if (name) output( "%s_%s:\n", asm_name("__wine_spec_imp"), name );
         else output( "%s_%u:\n", asm_name("__wine_spec_imp"), i );
-        output_cfi( ".cfi_startproc" );
 
         switch (target.cpu)
         {
@@ -604,7 +599,6 @@ void output_exports( DLLSPEC *spec )
         default:
             assert(0);
         }
-        output_cfi( ".cfi_endproc" );
     }
 }
 
