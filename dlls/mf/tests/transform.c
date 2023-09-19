@@ -2622,7 +2622,7 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
             hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, &value);
             if (many_channels && i < ARRAY_SIZE(expect_available_outputs))
             {
-                todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+                ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
             }
             else
             {
@@ -2638,11 +2638,9 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
             }
             else
             {
-                todo_wine {
                 ok(hr == S_OK, "got %#lx.\n", hr);
                 ok(value == expected_mask[expected_chans], "got %#x, expected %#x.\n",
                         value, expected_mask[expected_chans]);
-                }
             }
 
             ret = IMFMediaType_Release(type);
