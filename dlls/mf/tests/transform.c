@@ -36,6 +36,8 @@
 #include "mediaerr.h"
 #include "amvideo.h"
 #include "vfw.h"
+#include "ks.h"
+#include "ksmedia.h"
 
 #include "mf_test.h"
 
@@ -2487,6 +2489,169 @@ failed:
     CoUninitialize();
 }
 
+static void test_aac_decoder_channels(const struct attribute_desc *input_type_desc)
+{
+    static const struct attribute_desc expect_output_attributes[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        {0},
+    };
+    static const media_type_desc expect_available_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        },
+    };
+    static const UINT32 expected_mask[7] =
+    {
+        0,
+        0,
+        0,
+        SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_CENTER,
+        KSAUDIO_SPEAKER_QUAD,
+        KSAUDIO_SPEAKER_QUAD | SPEAKER_FRONT_CENTER,
+        KSAUDIO_SPEAKER_5POINT1,
+    };
+
+    UINT32 value, num_channels, expected_chans, format_index, sample_size;
+    unsigned int num_channels_index = ~0u;
+    struct attribute_desc input_desc[64];
+    IMFTransform *transform;
+    IMFAttributes *attrs;
+    IMFMediaType *type;
+    BOOL many_channels;
+    ULONG i, ret;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(input_desc); i++)
+    {
+        input_desc[i] = input_type_desc[i];
+        if (!input_desc[i].key)
+            break;
+        if (IsEqualGUID(input_desc[i].key, &MF_MT_AUDIO_NUM_CHANNELS))
+            num_channels_index = i;
+    }
+
+    ok(num_channels_index != ~0u, "Could not find MF_MT_AUDIO_NUM_CHANNELS.\n");
+    ok(i < ARRAY_SIZE(input_desc), "Too many attributes.\n");
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    winetest_push_context("aacdec channels");
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSAACDecMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+    {
+        win_skip("AAC decoder transform is not available.\n");
+        goto failed;
+    }
+
+    for (num_channels = 0; num_channels < 16; ++num_channels)
+    {
+        many_channels = num_channels > 2;
+        winetest_push_context("chans %u", num_channels);
+        input_desc[num_channels_index].value.ulVal = num_channels;
+
+        hr = MFCreateMediaType(&type);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        init_media_type(type, input_desc, -1);
+        hr = IMFTransform_SetInputType(transform, 0, type, 0);
+        IMFMediaType_Release(type);
+        if (num_channels <= 6)
+            ok(hr == S_OK, "got %#lx.\n", hr);
+        else
+        {
+            todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+
+        i = -1;
+        while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &type)))
+        {
+            winetest_push_context("out %lu", i);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            check_media_type(type, expect_output_attributes, -1);
+            format_index = i % 2;
+            sample_size = format_index ? 2 : 4;
+            check_media_type(type, expect_available_outputs[format_index], -1);
+            attrs = (IMFAttributes *)type;
+
+            hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_NUM_CHANNELS, &value);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            if (!num_channels || i >= ARRAY_SIZE(expect_available_outputs))
+                expected_chans = 2;
+            else
+                expected_chans = num_channels;
+            todo_wine_if(!num_channels)
+            ok(value == expected_chans, "got %u, expected %u.\n", value, expected_chans);
+
+            hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            todo_wine_if(!num_channels)
+            ok(value == sample_size * 44100 * expected_chans, "got %u, expected %u.\n",
+                    value, sample_size * 44100 * expected_chans);
+
+            hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value);
+            ok(hr == S_OK, "got %#lx.\n", hr);
+            todo_wine_if(!num_channels)
+            ok(value == sample_size * expected_chans, "got %u, expected %u.\n", value, sample_size * expected_chans);
+
+            hr = IMFAttributes_GetUINT32(attrs, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, &value);
+            if (many_channels && i < ARRAY_SIZE(expect_available_outputs))
+            {
+                todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+            }
+            else
+            {
+                ok(hr == S_OK, "got %#lx.\n", hr);
+                ok(value == 1, "got %u.\n", value);
+            }
+
+            value = 0xdeadbeef;
+            hr = IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &value);
+            if (expected_chans <= 2)
+            {
+                ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+            }
+            else
+            {
+                todo_wine {
+                ok(hr == S_OK, "got %#lx.\n", hr);
+                ok(value == expected_mask[expected_chans], "got %#x, expected %#x.\n",
+                        value, expected_mask[expected_chans]);
+                }
+            }
+
+            ret = IMFMediaType_Release(type);
+            ok(ret <= 1, "got %lu.\n", ret);
+            winetest_pop_context();
+        }
+        ok(hr == MF_E_NO_MORE_TYPES, "got %#lx.\n", hr);
+        if (many_channels)
+            todo_wine ok(i == ARRAY_SIZE(expect_available_outputs) * 2, "got %lu media types.\n", i);
+        else
+            ok(i == ARRAY_SIZE(expect_available_outputs), "got %lu media types.\n", i);
+        winetest_pop_context();
+    }
+
+    ret = IMFTransform_Release(transform);
+    ok(!ret, "got %lu.\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
 static void test_aac_decoder(void)
 {
     static const BYTE aac_raw_codec_data[] = {0x12, 0x08};
@@ -2515,6 +2680,9 @@ static void test_aac_decoder(void)
 
     test_aac_decoder_subtype(aac_input_type_desc);
     test_aac_decoder_subtype(raw_aac_input_type_desc);
+
+    test_aac_decoder_channels(aac_input_type_desc);
+    test_aac_decoder_channels(raw_aac_input_type_desc);
 }
 
 static const BYTE wma_codec_data[10] = {0, 0x44, 0, 0, 0x17, 0, 0, 0, 0, 0};
