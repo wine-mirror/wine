@@ -1016,6 +1016,15 @@ static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLEmbedElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLEmbedElement_tid,
@@ -1023,7 +1032,7 @@ static const tid_t HTMLEmbedElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLEmbedElement_dispex = {
     "HTMLEmbedElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLEmbedElement_event_target_vtbl.dispex_vtbl,
     DispHTMLEmbed_tid,
     HTMLEmbedElement_iface_tids,
     HTMLElement_init_dispex_info

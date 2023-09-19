@@ -166,6 +166,15 @@ static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLTitleElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLTitleElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLTitleElement_tid,
@@ -173,7 +182,7 @@ static const tid_t HTMLTitleElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLTitleElement_dispex = {
     "HTMLTitleElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLTitleElement_event_target_vtbl.dispex_vtbl,
     DispHTMLTitleElement_tid,
     HTMLTitleElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -327,6 +336,15 @@ static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
     .is_settable           = HTMLHtmlElement_is_settable
 };
 
+static const event_target_vtbl_t HTMLHtmlElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLHtmlElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLHtmlElement_tid,
@@ -334,7 +352,7 @@ static const tid_t HTMLHtmlElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLHtmlElement_dispex = {
     "HTMLHtmlElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLHtmlElement_event_target_vtbl.dispex_vtbl,
     DispHTMLHtmlElement_tid,
     HTMLHtmlElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -549,6 +567,15 @@ static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLMetaElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLMetaElement_tid,
@@ -557,7 +584,7 @@ static const tid_t HTMLMetaElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLMetaElement_dispex = {
     "HTMLMetaElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLMetaElement_event_target_vtbl.dispex_vtbl,
     DispHTMLMetaElement_tid,
     HTMLMetaElement_iface_tids,
     HTMLElement_init_dispex_info
@@ -702,6 +729,15 @@ static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLHeadElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLHeadElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLHeadElement_tid,
@@ -709,7 +745,7 @@ static const tid_t HTMLHeadElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLHeadElement_dispex = {
     "HTMLHeadElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLHeadElement_event_target_vtbl.dispex_vtbl,
     DispHTMLHeadElement_tid,
     HTMLHeadElement_iface_tids,
     HTMLElement_init_dispex_info

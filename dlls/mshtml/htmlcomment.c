@@ -180,6 +180,15 @@ static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLCommentElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLCommentElement_tid,
@@ -187,7 +196,7 @@ static const tid_t HTMLCommentElement_iface_tids[] = {
 };
 static dispex_static_data_t HTMLCommentElement_dispex = {
     "Comment",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
     DispHTMLCommentElement_tid,
     HTMLCommentElement_iface_tids,
     HTMLElement_init_dispex_info

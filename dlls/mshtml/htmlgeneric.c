@@ -148,6 +148,15 @@ static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
+static const event_target_vtbl_t HTMLGenericElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLGenericElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLGenericElement_tid,
@@ -156,7 +165,7 @@ static const tid_t HTMLGenericElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLGenericElement_dispex = {
     "HTMLUnknownElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLGenericElement_event_target_vtbl.dispex_vtbl,
     DispHTMLGenericElement_tid,
     HTMLGenericElement_iface_tids,
     HTMLElement_init_dispex_info

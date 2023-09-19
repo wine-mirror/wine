@@ -7319,7 +7319,7 @@ static const tid_t HTMLElement_iface_tids[] = {
     0
 };
 
-const event_target_vtbl_t HTMLElement_event_target_vtbl = {
+static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .traverse            = HTMLDOMNode_traverse,

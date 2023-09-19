@@ -135,7 +135,6 @@ typedef struct {
     IHTMLEventObj *(*set_current_event)(DispatchEx*,IHTMLEventObj*);
 } event_target_vtbl_t;
 
-extern const event_target_vtbl_t HTMLElement_event_target_vtbl;
 IHTMLEventObj *default_set_current_event(HTMLInnerWindow*,IHTMLEventObj*);
 
 nsISupports *HTMLElement_get_gecko_target(DispatchEx*);

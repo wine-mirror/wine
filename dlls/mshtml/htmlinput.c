@@ -1625,6 +1625,15 @@ static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
+static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
+    {
+        HTMLELEMENT_DISPEX_VTBL_ENTRIES,
+        .traverse       = HTMLDOMNode_traverse,
+        .unlink         = HTMLDOMNode_unlink
+    },
+    HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+};
+
 static const tid_t HTMLLabelElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLLabelElement_tid,
@@ -1633,7 +1642,7 @@ static const tid_t HTMLLabelElement_iface_tids[] = {
 
 static dispex_static_data_t HTMLLabelElement_dispex = {
     "HTMLLabelElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
+    &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
     DispHTMLLabelElement_tid,
     HTMLLabelElement_iface_tids,
     HTMLElement_init_dispex_info
