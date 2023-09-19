@@ -4,3 +4,5 @@ IMPORTS   = user32 ole32 dsound
 C_SRCS = \
 	dmime.c \
 	performance.c
+
+RC_SRCS = resource.rc
