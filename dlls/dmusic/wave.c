@@ -159,6 +159,11 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
             hr = parse_wsmp_chunk(This, stream, &chunk);
             break;
 
+        case mmioFOURCC('w','a','v','u'):
+        case mmioFOURCC('s','m','p','l'):
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_INFO_LIST):
+            break;
+
         default:
             FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
             break;
