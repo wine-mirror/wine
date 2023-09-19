@@ -1,4 +1,4 @@
-@ stub __std_acquire_shared_mutex_for_instance
+@ stdcall __std_acquire_shared_mutex_for_instance(ptr)
 @ stub __std_atomic_compare_exchange_128
 @ stub __std_atomic_get_mutex
 @ stub __std_atomic_has_cmpxchg16b
@@ -19,7 +19,7 @@
 @ stub __std_execution_wake_by_address_all
 @ stub __std_free_crt
 @ stdcall __std_parallel_algorithms_hw_threads()
-@ stub __std_release_shared_mutex_for_instance
+@ stdcall __std_release_shared_mutex_for_instance(ptr)
 @ stdcall __std_submit_threadpool_work(ptr)
 @ stub __std_tzdb_delete_current_zone
 @ stub __std_tzdb_delete_leap_seconds
