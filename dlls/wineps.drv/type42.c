@@ -170,7 +170,6 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
 
     t42 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*t42));
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
-    t42->loca_tab = t42->glyf_tab = t42->head_tab = -1;
     t42->emsize = emsize;
     t42->num_of_written_tables = 0;
 
@@ -186,6 +185,9 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
 	    t42->head_tab = i;
 	else if(t42->tables[i].MS_tag == MS_MAKE_TAG('m','a','x','p'))
 	    t42->maxp_tab = i;
+        else
+            continue;
+        if(!t42->tables[i].len) break;
     }
     if(i < num_of_tables) {
         TRACE("Table %ld has length %ld.  Will use Type 1 font instead.\n", i, t42->tables[i].len);
