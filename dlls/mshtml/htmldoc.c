@@ -295,16 +295,6 @@ static inline DocumentType *DocumentType_from_DispatchEx(DispatchEx *iface)
     return CONTAINING_RECORD(iface, DocumentType, node.event_target.dispex);
 }
 
-static void *DocumentType_QI(HTMLDOMNode *iface, REFIID riid)
-{
-    DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
-
-    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDOMDocumentType, riid))
-        return &This->IDOMDocumentType_iface;
-
-    return HTMLDOMNode_QI(&This->node, riid);
-}
-
 static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     DocumentType *This = DocumentType_from_HTMLDOMNode(iface);
@@ -315,10 +305,19 @@ static HRESULT DocumentType_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDO
 static const cpc_entry_t DocumentType_cpc[] = {{NULL}};
 
 static const NodeImplVtbl DocumentTypeImplVtbl = {
-    .qi                    = DocumentType_QI,
     .cpc_entries           = DocumentType_cpc,
     .clone                 = DocumentType_clone
 };
+
+static void *DocumentType_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    DocumentType *This = DocumentType_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IDOMDocumentType, riid))
+        return &This->IDOMDocumentType_iface;
+
+    return HTMLDOMNode_QI(&This->node, riid);
+}
 
 static nsISupports *DocumentType_get_gecko_target(DispatchEx *dispex)
 {
@@ -355,7 +354,7 @@ static IHTMLEventObj *DocumentType_set_current_event(DispatchEx *dispex, IHTMLEv
 
 static const event_target_vtbl_t DocumentType_event_target_vtbl = {
     {
-        .query_interface     = HTMLDOMNode_query_interface,
+        .query_interface     = DocumentType_query_interface,
         .destructor          = HTMLDOMNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink
