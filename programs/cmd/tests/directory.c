@@ -163,7 +163,6 @@ static BOOL match_timestamp(const char* line, void *data)
                 (!strncmp(ptr, "dd", 2) || !strncmp(ptr, "d", 1)))
         {
             sprintf(pattern, "%02hd", param->st.wDay);
-            todo_wine_if(strncmp(ptr, "dd", 2))
             ok(!!strstr(line, pattern), "expected day %s, got %s\n", pattern, wine_dbgstr_a(line));
         }
         else
@@ -173,7 +172,6 @@ static BOOL match_timestamp(const char* line, void *data)
                 (!strncmp(ptr, "MM", 2) || !strncmp(ptr, "M", 1)))
         {
             sprintf(pattern, "%02hd", param->st.wMonth);
-            todo_wine_if(strncmp(ptr, "MM", 2))
             ok(!!strstr(line, pattern), "expected month %s, got %s\n", pattern, wine_dbgstr_a(line));
         }
         else
@@ -183,7 +181,6 @@ static BOOL match_timestamp(const char* line, void *data)
         if (strstr(format, "h") || strstr(format, "H"))
         {
             sprintf(pattern, "%02hd", param->st.wHour);
-            todo_wine_if(!strstr(format, "hh") && !strstr(format, "HH"))
             ok(!!strstr(line, pattern), "expected hour %s, got %s\n", pattern, wine_dbgstr_a(line));
         }
         else
@@ -192,7 +189,6 @@ static BOOL match_timestamp(const char* line, void *data)
         if (strstr(format, "m"))
         {
             sprintf(pattern, "%02hd", param->st.wMinute);
-            todo_wine_if(!strstr(format, "mm"))
             ok(!!strstr(line, pattern), "expected minute %s, got %s\n", pattern, wine_dbgstr_a(line));
         }
         else

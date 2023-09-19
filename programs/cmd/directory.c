@@ -41,6 +41,10 @@ typedef enum _DISPLAYORDER
     Date
 } DISPLAYORDER;
 
+#define MAX_DATETIME_FORMAT 80
+
+static WCHAR date_format[MAX_DATETIME_FORMAT * 2];
+static WCHAR time_format[MAX_DATETIME_FORMAT * 2];
 static int file_total, dir_total, max_width;
 static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
@@ -345,8 +349,10 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         FileTimeToLocalFileTime (&fd[i].ftCreationTime, &ft);
       }
       FileTimeToSystemTime (&ft, &st);
-      GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring, ARRAY_SIZE(datestring));
-      GetTimeFormatW(0, TIME_NOSECONDS, &st, NULL, timestring, ARRAY_SIZE(timestring));
+      GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, date_format,
+                     datestring, ARRAY_SIZE(datestring));
+      GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, time_format,
+                     timestring, ARRAY_SIZE(timestring));
 
       if (wide) {
 
@@ -375,7 +381,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         dir_count++;
 
         if (!bare) {
-           WCMD_output (L"%1!10s!  %2!8s!  <DIR>         ", datestring, timestring);
+           WCMD_output (L"%1  %2    <DIR>          ", datestring, timestring);
            if (shortname) WCMD_output(L"%1!-13s!", fd[i].cAlternateFileName);
            if (usernames) WCMD_output(L"%1!-23s!", username);
            WCMD_output(L"%1",fd[i].cFileName);
@@ -394,7 +400,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         file_size.u.HighPart = fd[i].nFileSizeHigh;
         byte_count.QuadPart += file_size.QuadPart;
         if (!bare) {
-           WCMD_output (L"%1!10s!  %2!8s!    %3!10s!  ", datestring, timestring,
+           WCMD_output (L"%1  %2    %3!14s! ", datestring, timestring,
                         WCMD_filesize64(file_size.QuadPart));
            if (shortname) WCMD_output(L"%1!-13s!", fd[i].cAlternateFileName);
            if (usernames) WCMD_output(L"%1!-23s!", username);
@@ -521,6 +527,107 @@ static void WCMD_dir_trailer(const WCHAR *path) {
         WCMD_output (L" %1!18s! bytes free\n\n", WCMD_filesize64 (freebytes.QuadPart));
       }
     }
+}
+
+/* Get the length of a date/time formatting pattern */
+/* copied from dlls/kernelbase/locale.c */
+static int get_pattern_len( const WCHAR *pattern, const WCHAR *accept )
+{
+    int i;
+
+    if (*pattern == '\'')
+    {
+        for (i = 1; pattern[i]; i++)
+        {
+            if (pattern[i] != '\'') continue;
+            if (pattern[++i] != '\'') return i;
+        }
+        return i;
+    }
+    if (!wcschr( accept, *pattern )) return 1;
+    for (i = 1; pattern[i]; i++) if (pattern[i] != pattern[0]) break;
+    return i;
+}
+
+/* Initialize date format to use abbreviated one with leading zeros */
+static void init_date_format(void)
+{
+    WCHAR sys_format[MAX_DATETIME_FORMAT];
+    int src_pat_len, dst_pat_len;
+    const WCHAR *src;
+    WCHAR *dst = date_format;
+
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SSHORTDATE, sys_format, ARRAY_SIZE(sys_format));
+
+    for (src = sys_format; *src; src += src_pat_len, dst += dst_pat_len) {
+        src_pat_len = dst_pat_len = get_pattern_len(src, L"yMd");
+
+        switch (*src)
+        {
+        case '\'':
+            wmemcpy(dst, src, src_pat_len);
+            break;
+
+        case 'd':
+        case 'M':
+            if (src_pat_len == 4) /* full name */
+                dst_pat_len--; /* -> use abbreviated one */
+            /* fallthrough */
+        case 'y':
+            if (src_pat_len == 1) /* without leading zeros */
+                dst_pat_len++; /* -> with leading zeros */
+            wmemset(dst, *src, dst_pat_len);
+            break;
+
+        default:
+            *dst = *src;
+            break;
+        }
+    }
+    *dst = '\0';
+
+    TRACE("date format: %s\n", wine_dbgstr_w(date_format));
+}
+
+/* Initialize time format to use leading zeros */
+static void init_time_format(void)
+{
+    WCHAR sys_format[MAX_DATETIME_FORMAT];
+    int src_pat_len, dst_pat_len;
+    const WCHAR *src;
+    WCHAR *dst = time_format;
+
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, sys_format, ARRAY_SIZE(sys_format));
+
+    for (src = sys_format; *src; src += src_pat_len, dst += dst_pat_len) {
+        src_pat_len = dst_pat_len = get_pattern_len(src, L"Hhmst");
+
+        switch (*src)
+        {
+        case '\'':
+            wmemcpy(dst, src, src_pat_len);
+            break;
+
+        case 'H':
+        case 'h':
+        case 'm':
+        case 's':
+            if (src_pat_len == 1) /* without leading zeros */
+                dst_pat_len++; /* -> with leading zeros */
+            /* fallthrough */
+        case 't':
+            wmemset(dst, *src, dst_pat_len);
+            break;
+
+        default:
+            *dst = *src;
+            break;
+        }
+    }
+    *dst = '\0';
+
+    /* seconds portion will be dropped by TIME_NOSECONDS */
+    TRACE("time format: %s\n", wine_dbgstr_w(time_format));
 }
 
 /*****************************************************************************
@@ -726,6 +833,9 @@ void WCMD_directory (WCHAR *args)
   if (paged_mode) {
      WCMD_enter_paged_mode(NULL);
   }
+
+  init_date_format();
+  init_time_format();
 
   argno         = 0;
   argN          = args;
