@@ -6102,7 +6102,7 @@ static void STDMETHODCALLTYPE d3d12_command_queue_UpdateTileMappings(ID3D12Comma
         ID3D12Resource *resource, UINT region_count,
         const D3D12_TILED_RESOURCE_COORDINATE *region_start_coordinates, const D3D12_TILE_REGION_SIZE *region_sizes,
         ID3D12Heap *heap, UINT range_count, const D3D12_TILE_RANGE_FLAGS *range_flags,
-        UINT *heap_range_offsets, UINT *range_tile_counts, D3D12_TILE_MAPPING_FLAGS flags)
+        const UINT *heap_range_offsets, const UINT *range_tile_counts, D3D12_TILE_MAPPING_FLAGS flags)
 {
     FIXME("iface %p, resource %p, region_count %u, region_start_coordinates %p, "
             "region_sizes %p, heap %p, range_count %u, range_flags %p, heap_range_offsets %p, "
