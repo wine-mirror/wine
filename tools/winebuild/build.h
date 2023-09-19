@@ -246,6 +246,8 @@ extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_cfi( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void output_seh( const char *format, ... )
+   __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_rva( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_thunk_rva( int ordinal, const char *format, ... )

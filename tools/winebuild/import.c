@@ -1698,11 +1698,11 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\tjmp *%%eax\n" );
             break;
         case CPU_x86_64:
-            output_cfi( ".seh_proc %s", asm_name( delay_load ) );
+            output_seh( ".seh_proc %s", asm_name( delay_load ) );
             output( "\tsubq $0x48, %%rsp\n" );
             output_cfi( ".cfi_adjust_cfa_offset 0x48" );
-            output_cfi( ".seh_stackalloc 0x48" );
-            output_cfi( ".seh_endprologue" );
+            output_seh( ".seh_stackalloc 0x48" );
+            output_seh( ".seh_endprologue" );
             output( "\tmovq %%rcx, 0x40(%%rsp)\n" );
             output( "\tmovq %%rdx, 0x38(%%rsp)\n" );
             output( "\tmovq %%r8, 0x30(%%rsp)\n" );
@@ -1717,7 +1717,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\taddq $0x48, %%rsp\n" );
             output_cfi( ".cfi_adjust_cfa_offset -0x48" );
             output( "\tjmp *%%rax\n" );
-            output_cfi( ".seh_endproc" );
+            output_seh( ".seh_endproc" );
             break;
         case CPU_ARM:
             output( "\tpush {r0-r3, FP, LR}\n" );

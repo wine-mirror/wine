@@ -938,6 +938,19 @@ void output_cfi( const char *format, ... )
     va_end( valist );
 }
 
+/* output a .seh directive */
+void output_seh( const char *format, ... )
+{
+    va_list valist;
+
+    if (!is_pe()) return;
+    va_start( valist, format );
+    fputc( '\t', output_file );
+    vfprintf( output_file, format, valist );
+    fputc( '\n', output_file );
+    va_end( valist );
+}
+
 /* output an RVA pointer */
 void output_rva( const char *format, ... )
 {

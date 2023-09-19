@@ -334,12 +334,12 @@ static void output_relay_debug( DLLSPEC *spec )
 
             output( "\t.align %d\n", get_alignment(4) );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
-            output_cfi( ".seh_proc __wine_spec_relay_entry_point_%d", i );
+            output_seh( ".seh_proc __wine_spec_relay_entry_point_%d", i );
             output( "\tstp x29, x30, [sp, #-%u]!\n", stack_size + 16 );
-            output_cfi( ".seh_save_fplr_x %u", stack_size + 16 );
+            output_seh( ".seh_save_fplr_x %u", stack_size + 16 );
             output( "\tmov x29, sp\n" );
-            output_cfi( ".seh_set_fp" );
-            output_cfi( ".seh_endprologue" );
+            output_seh( ".seh_set_fp" );
+            output_seh( ".seh_endprologue" );
             switch (stack_size)
             {
             case 64: output( "\tstp x6, x7, [sp, #64]\n" );
@@ -363,7 +363,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tmov sp, x29\n" );
             output( "\tldp x29, x30, [sp], #%u\n", stack_size + 16 );
             output( "\tret\n");
-            output_cfi( ".seh_endproc" );
+            output_seh( ".seh_endproc" );
             break;
         }
 
