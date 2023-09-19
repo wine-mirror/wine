@@ -1715,6 +1715,25 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         break;
     }
 
+    case DMUS_PMSGT_PATCH:
+    {
+        DMUS_PATCH_PMSG *patch = (DMUS_PATCH_PMSG *)msg;
+
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                0xb0 /* Control Change */, 0x00 /* CC: Bank MSB */, patch->byMSB)))
+            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                0xb0 /* Control Change */, 0x20 /* CC: Bank LSB */, patch->byLSB)))
+            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                0xc0 /* Program Change */, patch->byInstrument, 0)))
+            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
+        break;
+    }
+
     case DMUS_PMSGT_NOTIFICATION:
     {
         DMUS_NOTIFICATION_PMSG *notif = (DMUS_NOTIFICATION_PMSG *)msg;
