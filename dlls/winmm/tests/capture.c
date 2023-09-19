@@ -176,7 +176,7 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
        pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
 
     /* waveInGetDevCaps allows an open handle instead of a device id */
-    rc=waveInGetDevCapsW(HandleToUlong(win),&capsW,sizeof(capsW));
+    rc=waveInGetDevCapsW((UINT_PTR)win,&capsW,sizeof(capsW));
     ok(rc==MMSYSERR_NOERROR,
        "waveInGetDevCapsW(%s): MMSYSERR_NOERROR "
        "expected, got %s\n",dev_name(device),wave_in_error(rc));
