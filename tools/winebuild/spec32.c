@@ -369,6 +369,8 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\t.align %d\n", get_alignment(4) );
             output( "\t.long 0x90909090,0x90909090\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
+            output_seh( ".seh_proc __wine_spec_relay_entry_point_%d", i );
+            output_seh( ".seh_endprologue" );
             switch (odp->u.func.nb_args)
             {
             default: output( "\tmovq %%%s,32(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
@@ -385,6 +387,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
             output( "\tcallq *8(%%rcx)\n" );
             output( "\tret\n" );
+            output_seh( ".seh_endproc" );
             break;
 
         default:

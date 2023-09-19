@@ -1307,8 +1307,11 @@ void output_stubs( DLLSPEC *spec )
             break;
         case CPU_x86_64:
             output_cfi( ".cfi_startproc" );
+            output_seh( ".seh_proc %s", asm_name(name) );
             output( "\tsubq $0x28,%%rsp\n" );
-            output_cfi( ".cfi_adjust_cfa_offset 8" );
+            output_cfi( ".cfi_adjust_cfa_offset 0x28" );
+            output_seh( ".seh_stackalloc 0x28" );
+            output_seh( ".seh_endprologue" );
             output( "\tleaq .L__wine_spec_file_name(%%rip),%%rcx\n" );
             if (exp_name)
                 output( "leaq .L%s_string(%%rip),%%rdx\n", name );
@@ -1316,6 +1319,7 @@ void output_stubs( DLLSPEC *spec )
                 output( "\tmovq $%d,%%rdx\n", odp->ordinal );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             output_cfi( ".cfi_endproc" );
+            output_seh( ".seh_endproc" );
             break;
         case CPU_ARM:
             if (UsePIC)
@@ -1343,6 +1347,8 @@ void output_stubs( DLLSPEC *spec )
             }
             break;
         case CPU_ARM64:
+            output_seh( ".seh_proc %s", asm_name(name) );
+            output_seh( ".seh_endprologue" );
             output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_file_name") );
             output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_file_name") );
             if (exp_name)
@@ -1354,7 +1360,8 @@ void output_stubs( DLLSPEC *spec )
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
-            output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tb %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output_seh( ".seh_endproc" );
             break;
         default:
             assert(0);
@@ -1436,6 +1443,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tret $%u\n", get_args_size( odp ));
             break;
         case CPU_x86_64:
+            output_seh( ".seh_proc %s", asm_name(name) );
+            output_seh( ".seh_endprologue" );
             /* Chromium depends on syscall thunks having the same form as on
              * Windows. For 64-bit systems the only viable form we can emulate is
              * having an int $0x2e fallback. Since actually using an interrupt is
@@ -1461,6 +1470,7 @@ void output_syscalls( DLLSPEC *spec )
                 output( "1:\tcallq *%s(%%rip)\n", asm_name("__wine_syscall_dispatcher") );
             }
             output( "\tret\n" );
+            output_seh( ".seh_endproc" );
             break;
         case CPU_ARM:
             output( "\tpush {r0-r3}\n" );
@@ -1470,10 +1480,13 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tbx lr\n" );
             break;
         case CPU_ARM64:
+            output_seh( ".seh_proc %s", asm_name(name) );
+            output_seh( ".seh_endprologue" );
             output( "\tmov x8, #%u\n", id );
             output( "\tmov x9, x30\n" );
             output( "\tbl %s\n", asm_name("__wine_syscall" ));
             output( "\tret\n" );
+            output_seh( ".seh_endproc" );
             break;
         default:
             assert(0);
@@ -1724,8 +1737,12 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "1:\t.long %s\n", asm_name( import_desc ) );
             break;
         case CPU_ARM64:
+            output_seh( ".seh_proc %s", asm_name( delay_load ) );
             output( "\tstp x29, x30, [sp, #-80]!\n" );
+            output_seh( ".seh_save_fplr_x 80" );
             output( "\tmov x29, sp\n" );
+            output_seh( ".seh_set_fp" );
+            output_seh( ".seh_endprologue" );
             output( "\tstp x0, x1, [sp, #16]\n" );
             output( "\tstp x2, x3, [sp, #32]\n" );
             output( "\tstp x4, x5, [sp, #48]\n" );
@@ -1741,6 +1758,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\tldp x6, x7, [sp, #64]\n" );
             output( "\tldp x29, x30, [sp], #80\n" );
             output( "\tbr x16\n" );
+            output_seh( ".seh_endproc" );
             break;
         }
         output_function_size( delay_load );
