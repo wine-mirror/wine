@@ -344,6 +344,213 @@ static DWORD test_tool_wait_message(IDirectMusicTool *iface, DWORD timeout, DMUS
     return ret;
 }
 
+struct test_loader_stream
+{
+    IStream IStream_iface;
+    IDirectMusicGetLoader IDirectMusicGetLoader_iface;
+    LONG ref;
+
+    IStream *stream;
+    IDirectMusicLoader *loader;
+};
+
+static struct test_loader_stream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_loader_stream, IStream_iface);
+}
+
+static HRESULT WINAPI test_loader_stream_QueryInterface(IStream *iface, REFIID iid, void **out)
+{
+    struct test_loader_stream *impl = impl_from_IStream(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IStream))
+    {
+        IStream_AddRef(&impl->IStream_iface);
+        *out = &impl->IStream_iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IDirectMusicGetLoader))
+    {
+        IDirectMusicGetLoader_AddRef(&impl->IDirectMusicGetLoader_iface);
+        *out = &impl->IDirectMusicGetLoader_iface;
+        return S_OK;
+    }
+
+    ok(IsEqualGUID(iid, &IID_IStream),
+            "got iid %s\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_loader_stream_AddRef(IStream *iface)
+{
+    struct test_loader_stream *impl = impl_from_IStream(iface);
+    return InterlockedIncrement(&impl->ref);
+}
+
+static ULONG WINAPI test_loader_stream_Release(IStream *iface)
+{
+    struct test_loader_stream *impl = impl_from_IStream(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    if (!ref)
+    {
+        IDirectMusicLoader_Release(impl->loader);
+        IStream_Release(impl->stream);
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI test_loader_stream_Read(IStream *iface, void *data, ULONG size, ULONG *ret_size)
+{
+    struct test_loader_stream *impl = impl_from_IStream(iface);
+    return IStream_Read(impl->stream, data, size, ret_size);
+}
+
+static HRESULT WINAPI test_loader_stream_Write(IStream *iface, const void *data, ULONG size, ULONG *ret_size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_Seek(IStream *iface, LARGE_INTEGER offset, DWORD method, ULARGE_INTEGER *ret_offset)
+{
+    struct test_loader_stream *impl = impl_from_IStream(iface);
+    return IStream_Seek(impl->stream, offset, method, ret_offset);
+}
+
+static HRESULT WINAPI test_loader_stream_SetSize(IStream *iface, ULARGE_INTEGER size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *read_size, ULARGE_INTEGER *write_size)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_Commit(IStream *iface, DWORD flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_Revert(IStream *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_LockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_UnlockRegion(IStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER size, DWORD type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_Stat(IStream *iface, STATSTG *stat, DWORD flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_loader_stream_Clone(IStream *iface, IStream **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl test_loader_stream_vtbl =
+{
+    test_loader_stream_QueryInterface,
+    test_loader_stream_AddRef,
+    test_loader_stream_Release,
+    test_loader_stream_Read,
+    test_loader_stream_Write,
+    test_loader_stream_Seek,
+    test_loader_stream_SetSize,
+    test_loader_stream_CopyTo,
+    test_loader_stream_Commit,
+    test_loader_stream_Revert,
+    test_loader_stream_LockRegion,
+    test_loader_stream_UnlockRegion,
+    test_loader_stream_Stat,
+    test_loader_stream_Clone,
+};
+
+static struct test_loader_stream *impl_from_IDirectMusicGetLoader(IDirectMusicGetLoader *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_loader_stream, IDirectMusicGetLoader_iface);
+}
+
+static HRESULT WINAPI test_loader_stream_getter_QueryInterface(IDirectMusicGetLoader *iface, REFIID iid, void **out)
+{
+    struct test_loader_stream *impl = impl_from_IDirectMusicGetLoader(iface);
+    return IStream_QueryInterface(&impl->IStream_iface, iid, out);
+}
+
+static ULONG WINAPI test_loader_stream_getter_AddRef(IDirectMusicGetLoader *iface)
+{
+    struct test_loader_stream *impl = impl_from_IDirectMusicGetLoader(iface);
+    return IStream_AddRef(&impl->IStream_iface);
+}
+
+static ULONG WINAPI test_loader_stream_getter_Release(IDirectMusicGetLoader *iface)
+{
+    struct test_loader_stream *impl = impl_from_IDirectMusicGetLoader(iface);
+    return IStream_Release(&impl->IStream_iface);
+}
+
+static HRESULT WINAPI test_loader_stream_getter_GetLoader(IDirectMusicGetLoader *iface, IDirectMusicLoader **ret_loader)
+{
+    struct test_loader_stream *impl = impl_from_IDirectMusicGetLoader(iface);
+
+    *ret_loader = impl->loader;
+    IDirectMusicLoader_AddRef(impl->loader);
+
+    return S_OK;
+}
+
+static const IDirectMusicGetLoaderVtbl test_loader_stream_getter_vtbl =
+{
+    test_loader_stream_getter_QueryInterface,
+    test_loader_stream_getter_AddRef,
+    test_loader_stream_getter_Release,
+    test_loader_stream_getter_GetLoader,
+};
+
+static HRESULT test_loader_stream_create(IStream *stream, IDirectMusicLoader *loader,
+        IStream **ret_iface)
+{
+    struct test_loader_stream *obj;
+
+    *ret_iface = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IStream_iface.lpVtbl = &test_loader_stream_vtbl;
+    obj->IDirectMusicGetLoader_iface.lpVtbl = &test_loader_stream_getter_vtbl;
+    obj->ref = 1;
+
+    obj->stream = stream;
+    IStream_AddRef(stream);
+    obj->loader = loader;
+    IDirectMusicLoader_AddRef(loader);
+
+    *ret_iface = &obj->IStream_iface;
+    return S_OK;
+}
+
 static BOOL missing_dmime(void)
 {
     IDirectMusicSegment8 *dms;
@@ -2671,6 +2878,281 @@ static void test_sequence_track(void)
     IDirectMusicTool_Release(tool);
 }
 
+#define check_dmus_patch_pmsg(a, b, c, d, e) check_dmus_patch_pmsg_(__LINE__, a, b, c, d, e)
+static void check_dmus_patch_pmsg_(int line, DMUS_PATCH_PMSG *msg, MUSIC_TIME time, UINT chan,
+        UINT bank, UINT patch)
+{
+    ok_(__FILE__, line)(msg->dwSize == sizeof(*msg), "got dwSize %lu\n", msg->dwSize);
+    ok_(__FILE__, line)(msg->rtTime != 0, "got rtTime %I64u\n", msg->rtTime);
+    ok_(__FILE__, line)(abs(msg->mtTime - time) < 10, "got mtTime %lu\n", msg->mtTime);
+    ok_(__FILE__, line)(msg->dwPChannel == chan, "got dwPChannel %lu\n", msg->dwPChannel);
+    ok_(__FILE__, line)(!!msg->dwVirtualTrackID, "got dwVirtualTrackID %lu\n", msg->dwVirtualTrackID);
+    ok_(__FILE__, line)(msg->dwType == DMUS_PMSGT_PATCH, "got %#lx\n", msg->dwType);
+    ok_(__FILE__, line)(!msg->dwVoiceID, "got dwVoiceID %lu\n", msg->dwVoiceID);
+    ok_(__FILE__, line)(msg->dwGroupID == 1, "got dwGroupID %lu\n", msg->dwGroupID);
+    ok_(__FILE__, line)(!msg->punkUser, "got punkUser %p\n", msg->punkUser);
+    ok_(__FILE__, line)(msg->byInstrument == patch, "got byInstrument %u\n", msg->byInstrument);
+    ok_(__FILE__, line)(msg->byMSB == bank >> 8, "got byMSB %u\n", msg->byMSB);
+    ok_(__FILE__, line)(msg->byLSB == (bank & 0xff), "got byLSB %u\n", msg->byLSB);
+}
+
+static void test_band_track_play(void)
+{
+    static const DWORD message_types[] =
+    {
+        DMUS_PMSGT_MIDI,
+        DMUS_PMSGT_NOTE,
+        DMUS_PMSGT_SYSEX,
+        DMUS_PMSGT_NOTIFICATION,
+        DMUS_PMSGT_TEMPO,
+        DMUS_PMSGT_CURVE,
+        DMUS_PMSGT_TIMESIG,
+        DMUS_PMSGT_PATCH,
+        DMUS_PMSGT_TRANSPOSE,
+        DMUS_PMSGT_CHANNEL_PRIORITY,
+        DMUS_PMSGT_STOP,
+        DMUS_PMSGT_DIRTY,
+        DMUS_PMSGT_WAVE,
+        DMUS_PMSGT_LYRIC,
+        DMUS_PMSGT_SCRIPTLYRIC,
+        DMUS_PMSGT_USER,
+    };
+    DMUS_OBJECTDESC desc =
+    {
+        .dwSize = sizeof(DMUS_OBJECTDESC),
+        .dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH,
+        .guidClass = CLSID_DirectMusicCollection,
+        .guidObject = GUID_DefaultGMCollection,
+        .wszFileName = L"C:\\windows\\system32\\drivers\\gm.dls",
+    };
+    static const LARGE_INTEGER zero = {0};
+    IDirectMusicPerformance *performance;
+    IStream *stream, *loader_stream;
+    IDirectMusicSegment *segment;
+    IDirectMusicLoader *loader;
+    IDirectMusicGraph *graph;
+    IDirectMusicTrack *track;
+    IPersistStream *persist;
+    IDirectMusicTool *tool;
+    DMUS_PATCH_PMSG *patch;
+    DMUS_PMSG *msg;
+    HRESULT hr;
+    DWORD ret;
+
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+
+    /* create a segment and load a simple RIFF stream */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_RIFF(stream, "DMSG")
+    {
+        /* set a non-zero segment length, or nothing will be played */
+        DMUS_IO_SEGMENT_HEADER head = {.mtLength = 2000};
+        CHUNK_DATA(stream, "segh", head);
+        CHUNK_DATA(stream, "guid", CLSID_DirectMusicSegment);
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+
+    /* add a sequence track to our segment */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack, (void **)&track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    CHUNK_RIFF(stream, "DMBT")
+    {
+        DMUS_IO_BAND_TRACK_HEADER head = {.bAutoDownload = TRUE};
+
+        CHUNK_DATA(stream, "bdth", head);
+        CHUNK_LIST(stream, "lbdl")
+        {
+            CHUNK_LIST(stream, "lbnd")
+            {
+                DMUS_IO_BAND_ITEM_HEADER head = {.lBandTime = 0};
+                CHUNK_DATA(stream, "bdih", head);
+
+                CHUNK_RIFF(stream, "DMBD")
+                {
+                    GUID guid = CLSID_DirectMusicBand;
+                    CHUNK_DATA(stream, "guid", guid);
+
+                    CHUNK_LIST(stream, "lbil")
+                    {
+                        CHUNK_LIST(stream, "lbin")
+                        {
+                            DMUS_IO_INSTRUMENT head = {.dwPatch = 1, .dwPChannel = 1, .dwFlags = DMUS_IO_INST_PATCH};
+                            CHUNK_DATA(stream, "bins", head);
+                        }
+                        CHUNK_END;
+                    }
+                    CHUNK_END;
+                }
+                CHUNK_END;
+            }
+            CHUNK_END;
+
+            CHUNK_LIST(stream, "lbnd")
+            {
+                DMUS_IO_BAND_ITEM_HEADER head = {.lBandTime = 1000};
+                CHUNK_DATA(stream, "bdih", head);
+
+                CHUNK_RIFF(stream, "DMBD")
+                {
+                    GUID guid = CLSID_DirectMusicBand;
+                    CHUNK_DATA(stream, "guid", guid);
+
+                    CHUNK_LIST(stream, "lbil")
+                    {
+                        CHUNK_LIST(stream, "lbin")
+                        {
+                            DMUS_IO_INSTRUMENT head = {.dwPatch = 2, .dwPChannel = 1, .dwFlags = DMUS_IO_INST_PATCH};
+                            CHUNK_DATA(stream, "bins", head);
+                        }
+                        CHUNK_END;
+
+                        CHUNK_LIST(stream, "lbin")
+                        {
+                            DMUS_IO_INSTRUMENT head = {.dwPatch = 3, .dwPChannel = 2, .dwFlags = DMUS_IO_INST_PATCH};
+                            CHUNK_DATA(stream, "bins", head);
+                        }
+                        CHUNK_END;
+                    }
+                    CHUNK_END;
+                }
+                CHUNK_END;
+            }
+            CHUNK_END;
+        }
+        CHUNK_END;
+    }
+    CHUNK_END;
+
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* band track requires the stream to implement IDirectMusicGetLoader */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicLoader8, (void **)&loader);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicLoader_SetObject(loader, &desc);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = test_loader_stream_create(stream, loader, &loader_stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicLoader8_Release(loader);
+
+    hr = IPersistStream_Load(persist, loader_stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IStream_Release(loader_stream);
+
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+
+    hr = IDirectMusicSegment_InsertTrack(segment, (IDirectMusicTrack *)track, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicTrack_Release(track);
+
+
+    /* now play the segment, and check produced messages */
+
+    hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0x800, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_patch_pmsg(patch, 0, 1, 0, 1);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_patch_pmsg(patch, 1000, 2, 0, 3);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_patch_pmsg(patch, 1000, 1, 0, 2);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    IDirectMusicSegment_Release(segment);
+
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicPerformance_Release(performance);
+    IDirectMusicTool_Release(tool);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -2701,6 +3183,7 @@ START_TEST(dmime)
     test_notification_pmsg();
     test_wave_pmsg();
     test_sequence_track();
+    test_band_track_play();
 
     CoUninitialize();
 }
