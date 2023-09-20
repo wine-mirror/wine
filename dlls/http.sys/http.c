@@ -731,9 +731,8 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     if (strchr(params->url, '?'))
         return STATUS_INVALID_PARAMETER;
 
-    if (!(url = malloc(strlen(params->url)+1)))
+    if (!(url = strdup(params->url)))
         return STATUS_NO_MEMORY;
-    strcpy(url, params->url);
 
     if (!(new_entry = malloc(sizeof(struct url))))
     {
