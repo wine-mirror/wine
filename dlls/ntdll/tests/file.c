@@ -3031,6 +3031,98 @@ static void test_file_link_information(FILE_INFORMATION_CLASS class)
     delete_object( oldpath );
 }
 
+static void test_file_link_information_ex(void)
+{
+    static const WCHAR fooW[] = {'f','o','o',0};
+    WCHAR tmp_path[MAX_PATH], oldpath[MAX_PATH + 16], newpath[MAX_PATH + 16];
+    FILE_LINK_INFORMATION *fli;
+    BOOL fileDeleted;
+    UNICODE_STRING name_str;
+    HANDLE handle, handle2;
+    IO_STATUS_BLOCK io;
+    NTSTATUS res;
+
+    GetTempPathW( MAX_PATH, tmp_path );
+
+    /* oldpath is a file, newpath is a read-only file, with FILE_LINK_REPLACE_IF_EXISTS */
+    res = GetTempFileNameW( tmp_path, fooW, 0, oldpath );
+    ok( res != 0, "failed to create temp file\n" );
+    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+
+    res = GetTempFileNameW( tmp_path, fooW, 0, newpath );
+    ok( res != 0, "failed to create temp file\n" );
+    DeleteFileW( newpath );
+    handle2 = CreateFileW( newpath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+    CloseHandle( handle2 );
+    pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
+    fli = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_LINK_INFORMATION) + name_str.Length );
+    fli->Flags = FILE_LINK_REPLACE_IF_EXISTS;
+    fli->RootDirectory = NULL;
+    fli->FileNameLength = name_str.Length;
+    memcpy( fli->FileName, name_str.Buffer, name_str.Length );
+    pRtlFreeUnicodeString( &name_str );
+
+    io.Status = 0xdeadbeef;
+    res = pNtSetInformationFile( handle, &io, fli, sizeof(FILE_LINK_INFORMATION) + fli->FileNameLength, FileLinkInformationEx );
+
+    if (res == STATUS_NOT_IMPLEMENTED || res == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip( "FileLinkInformationEx not supported\n" );
+        CloseHandle( handle );
+        HeapFree( GetProcessHeap(), 0, fli );
+        delete_object( oldpath );
+        return;
+    }
+
+    todo_wine ok( io.Status == 0xdeadbeef, "io.Status expected 0xdeadbeef, got %lx\n", io.Status );
+    todo_wine ok( res == STATUS_ACCESS_DENIED, "res expected STATUS_ACCESS_DENIED, got %lx\n", res );
+    fileDeleted = GetFileAttributesW( oldpath ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "file should exist\n" );
+    fileDeleted = GetFileAttributesW( newpath ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "file should exist\n" );
+
+    CloseHandle( handle );
+    HeapFree( GetProcessHeap(), 0, fli );
+    delete_object( oldpath );
+    delete_object( newpath );
+
+    /* oldpath is a file, newpath is a read-only file, with FILE_LINK_REPLACE_IF_EXISTS and FILE_LINK_IGNORE_READONLY_ATTRIBUTE */
+    res = GetTempFileNameW( tmp_path, fooW, 0, oldpath );
+    ok( res != 0, "failed to create temp file\n" );
+    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+
+    res = GetTempFileNameW( tmp_path, fooW, 0, newpath );
+    ok( res != 0, "failed to create temp file\n" );
+    DeleteFileW( newpath );
+    handle2 = CreateFileW( newpath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0 );
+    ok( handle2 != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+    CloseHandle( handle2 );
+    pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
+    fli = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_LINK_INFORMATION) + name_str.Length );
+    fli->Flags = FILE_LINK_REPLACE_IF_EXISTS | FILE_LINK_IGNORE_READONLY_ATTRIBUTE;
+    fli->RootDirectory = NULL;
+    fli->FileNameLength = name_str.Length;
+    memcpy( fli->FileName, name_str.Buffer, name_str.Length );
+    pRtlFreeUnicodeString( &name_str );
+
+    io.Status = 0xdeadbeef;
+    res = pNtSetInformationFile( handle, &io, fli, sizeof(FILE_LINK_INFORMATION) + fli->FileNameLength, FileLinkInformationEx );
+    ok( io.Status == STATUS_SUCCESS, "io.Status expected STATUS_SUCCESS, got %lx\n", io.Status );
+    ok( res == STATUS_SUCCESS, "res expected STATUS_SUCCESS, got %lx\n", res );
+    fileDeleted = GetFileAttributesW( oldpath ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "file should exist\n" );
+    fileDeleted = GetFileAttributesW( newpath ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
+    ok( !fileDeleted, "file should exist\n" );
+
+    CloseHandle( handle );
+    HeapFree( GetProcessHeap(), 0, fli );
+    delete_object( oldpath );
+    delete_object( newpath );
+}
+
 static void test_file_both_information(void)
 {
     IO_STATUS_BLOCK io;
@@ -5796,6 +5888,7 @@ START_TEST(file)
     test_file_rename_information_ex();
     test_file_link_information(FileLinkInformation);
     test_file_link_information(FileLinkInformationEx);
+    test_file_link_information_ex();
     test_file_disposition_information();
     test_file_completion_information();
     test_file_id_information();
