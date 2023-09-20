@@ -237,7 +237,7 @@ static BOOL init(void)
 
     myARGC = winetest_get_mainargs( &myARGV );
     if (!GetCurrentDirectoryA(sizeof(base), base)) return FALSE;
-    strcpy(selfname, myARGV[0]);
+    GetModuleFileNameA( 0, selfname, sizeof(selfname) );
 
     /* Strip the path of selfname */
     if ((p = strrchr(selfname, '\\')) != NULL) exename = p + 1;
