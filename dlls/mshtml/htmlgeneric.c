@@ -142,7 +142,6 @@ static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     .clsid                 = &CLSID_HTMLGenericElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -155,6 +154,7 @@ static const event_target_vtbl_t HTMLGenericElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLGenericElement_iface_tids[] = {

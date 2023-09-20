@@ -1414,7 +1414,6 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
     .clsid                 = &CLSID_HTMLInputElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLInputElementImpl_put_disabled,
     .get_disabled          = HTMLInputElementImpl_get_disabled,
@@ -1430,6 +1429,7 @@ static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
         .unlink         = HTMLInputElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
@@ -1613,7 +1613,6 @@ static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLabelElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -1626,6 +1625,7 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLLabelElement_iface_tids[] = {
@@ -1949,7 +1949,6 @@ static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     .clsid                 = &CLSID_HTMLButtonElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLButtonElementImpl_put_disabled,
     .get_disabled          = HTMLButtonElementImpl_get_disabled,
@@ -1965,6 +1964,7 @@ static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
         .unlink         = HTMLButtonElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {

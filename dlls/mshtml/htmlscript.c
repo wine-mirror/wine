@@ -422,7 +422,6 @@ static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     .clsid                 = &CLSID_HTMLScriptElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLScriptElement_get_readystate,
     .bind_to_tree          = HTMLScriptElement_bind_to_tree,
@@ -437,6 +436,7 @@ static const event_target_vtbl_t HTMLScriptElement_event_target_vtbl = {
         .unlink         = HTMLScriptElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement *nsscript, HTMLScriptElement **ret)

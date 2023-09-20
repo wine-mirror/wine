@@ -442,7 +442,6 @@ static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTextAreaElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLTextAreaElementImpl_put_disabled,
     .get_disabled          = HTMLTextAreaElementImpl_get_disabled,
@@ -458,6 +457,7 @@ static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
         .unlink         = HTMLTextAreaElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLTextAreaElement_iface_tids[] = {

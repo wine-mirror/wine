@@ -420,7 +420,6 @@ static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLinkElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLLinkElementImpl_put_disabled,
     .get_disabled          = HTMLLinkElementImpl_get_disabled,
@@ -435,6 +434,7 @@ static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
         .unlink         = HTMLLinkElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {

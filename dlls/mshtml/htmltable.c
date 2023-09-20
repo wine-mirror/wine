@@ -481,7 +481,6 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .clsid                 = &CLSID_HTMLTableCell,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -494,6 +493,7 @@ static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
         .unlink         = HTMLTableCell_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLTableCell_iface_tids[] = {
@@ -911,7 +911,6 @@ static const NodeImplVtbl HTMLTableRowImplVtbl = {
     .clsid                 = &CLSID_HTMLTableRow,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -924,6 +923,7 @@ static const event_target_vtbl_t HTMLTableRow_event_target_vtbl = {
         .unlink         = HTMLTableRow_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLTableRow_iface_tids[] = {
@@ -1925,7 +1925,6 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
     .clsid                 = &CLSID_HTMLTable,
     .cpc_entries           = HTMLTable_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -1938,6 +1937,7 @@ static const event_target_vtbl_t HTMLTable_event_target_vtbl = {
         .unlink         = HTMLTable_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLTable_iface_tids[] = {

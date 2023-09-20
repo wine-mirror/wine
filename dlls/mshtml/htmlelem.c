@@ -6813,7 +6813,6 @@ static const NodeImplVtbl HTMLElementImplVtbl = {
     .clsid                 = &CLSID_HTMLUnknownElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -6983,18 +6982,9 @@ void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
     ensure_doc_nsevent_handler(This->node.doc, This->node.nsnode, eid);
 }
 
-HRESULT HTMLElement_handle_event_default(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *nsevent, BOOL *prevent_default)
+HRESULT HTMLElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
-
-    if(!This->node.vtbl->handle_event)
-        return S_OK;
-    return This->node.vtbl->handle_event(&This->node, eid, nsevent, prevent_default);
-}
-
-HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
-{
-    HTMLElement *This = impl_from_HTMLDOMNode(iface);
 
     switch(eid) {
     case EVENTID_KEYDOWN: {
@@ -7023,7 +7013,10 @@ HRESULT HTMLElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *eve
 
             nsIDOMKeyEvent_Release(key_event);
         }
+        break;
     }
+    default:
+        break;
     }
 
     return S_OK;
@@ -7289,6 +7282,7 @@ static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
         .unlink              = HTMLDOMNode_unlink,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event            = HTMLElement_handle_event
 };
 
 struct token_list {

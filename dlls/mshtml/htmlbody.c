@@ -967,7 +967,6 @@ static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     .clsid                 = &CLSID_HTMLBody,
     .cpc_entries           = HTMLBodyElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_event_prop_target = HTMLBodyElement_get_event_prop_target,
     .is_text_edit          = HTMLBodyElement_is_text_edit,
@@ -983,6 +982,7 @@ static const event_target_vtbl_t HTMLBodyElement_event_target_vtbl = {
         .unlink         = HTMLBodyElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLBodyElement_iface_tids[] = {

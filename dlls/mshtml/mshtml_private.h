@@ -815,7 +815,6 @@ typedef struct {
     const CLSID *clsid;
     const cpc_entry_t *cpc_entries;
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
-    HRESULT (*handle_event)(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*);
     HRESULT (*get_attr_col)(HTMLDOMNode*,HTMLAttributeCollection**);
     EventTarget *(*get_event_prop_target)(HTMLDOMNode*,int);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
@@ -1210,7 +1209,6 @@ void HTMLElement_destructor(DispatchEx*);
 HRESULT HTMLElement_populate_props(DispatchEx*);
 HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode*,HTMLAttributeCollection**);
-HRESULT HTMLElement_handle_event(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*);
 void HTMLElement_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 HRESULT get_node(nsIDOMNode*,BOOL,HTMLDOMNode**);

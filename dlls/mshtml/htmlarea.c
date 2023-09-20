@@ -408,11 +408,6 @@ static const IHTMLAreaElementVtbl HTMLAreaElementVtbl = {
     HTMLAreaElement_blur
 };
 
-static inline HTMLAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLAreaElement, element.node);
-}
-
 static inline HTMLAreaElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLAreaElement, element.node.event_target.dispex);
@@ -444,9 +439,9 @@ static void HTMLAreaElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsarea);
 }
 
-static HRESULT HTMLAreaElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
+static HRESULT HTMLAreaElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
-    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLAreaElement *This = impl_from_DispatchEx(dispex);
     nsAString href_str, target_str;
     nsresult nsres;
 
@@ -472,14 +467,13 @@ fallback:
         nsAString_Finish(&target_str);
     }
 
-    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
+    return HTMLElement_handle_event(&This->element.node.event_target.dispex, eid, event, prevent_default);
 }
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAreaElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLAreaElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -492,6 +486,7 @@ static const event_target_vtbl_t HTMLAreaElement_event_target_vtbl = {
         .unlink         = HTMLAreaElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLAreaElement_handle_event
 };
 
 static const tid_t HTMLAreaElement_iface_tids[] = {

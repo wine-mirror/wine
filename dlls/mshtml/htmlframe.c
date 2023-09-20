@@ -1005,7 +1005,6 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .clsid                 = &CLSID_HTMLFrameElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLFrameElement_get_document,
     .get_readystate        = HTMLFrameElement_get_readystate,
@@ -1024,6 +1023,7 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
         .invoke         = HTMLFrameElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLFrameElement_iface_tids[] = {
@@ -1595,7 +1595,6 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .clsid                 = &CLSID_HTMLIFrame,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLIFrame_get_document,
     .get_readystate        = HTMLIFrame_get_readystate,
@@ -1614,6 +1613,7 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
         .invoke         = HTMLIFrame_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLIFrame_iface_tids[] = {

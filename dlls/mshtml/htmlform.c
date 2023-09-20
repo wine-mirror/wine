@@ -768,11 +768,6 @@ static const IHTMLFormElementVtbl HTMLFormElementVtbl = {
     HTMLFormElement_tags
 };
 
-static inline HTMLFormElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLFormElement, element.node);
-}
-
 static inline HTMLFormElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLFormElement, element.node.event_target.dispex);
@@ -949,23 +944,22 @@ static HRESULT HTMLFormElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, 
     return S_OK;
 }
 
-static HRESULT HTMLFormElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
+static HRESULT HTMLFormElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
 
     if(eid == EVENTID_SUBMIT) {
         *prevent_default = TRUE;
         return IHTMLFormElement_submit(&This->IHTMLFormElement_iface);
     }
 
-    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
+    return HTMLElement_handle_event(&This->element.node.event_target.dispex, eid, event, prevent_default);
 }
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .clsid                 = &CLSID_HTMLFormElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLFormElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -981,6 +975,7 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
         .invoke         = HTMLFormElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLFormElement_handle_event
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {

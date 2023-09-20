@@ -204,6 +204,7 @@ static const event_target_vtbl_t SVGElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static dispex_static_data_t SVGElement_dispex = {
@@ -754,6 +755,7 @@ static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static dispex_static_data_t SVGSVGElement_dispex = {
@@ -934,6 +936,7 @@ static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static dispex_static_data_t SVGCircleElement_dispex = {
@@ -1189,6 +1192,7 @@ static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static dispex_static_data_t SVGTSpanElement_dispex = {

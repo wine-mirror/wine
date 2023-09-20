@@ -700,7 +700,6 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
     .clsid                 = &CLSID_HTMLImg,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLImgElement_get_readystate,
 };
@@ -714,6 +713,7 @@ static const event_target_vtbl_t HTMLImgElement_event_target_vtbl = {
         .unlink         = HTMLImgElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLImgElement_iface_tids[] = {

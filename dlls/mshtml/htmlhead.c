@@ -160,7 +160,6 @@ static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTitleElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -173,6 +172,7 @@ static const event_target_vtbl_t HTMLTitleElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLTitleElement_iface_tids[] = {
@@ -329,7 +329,6 @@ static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHtmlElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .is_settable           = HTMLHtmlElement_is_settable
 };
@@ -343,6 +342,7 @@ static const event_target_vtbl_t HTMLHtmlElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLHtmlElement_iface_tids[] = {
@@ -557,7 +557,6 @@ static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLMetaElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -570,6 +569,7 @@ static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLMetaElement_iface_tids[] = {
@@ -719,7 +719,6 @@ static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHeadElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -732,6 +731,7 @@ static const event_target_vtbl_t HTMLHeadElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLHeadElement_iface_tids[] = {

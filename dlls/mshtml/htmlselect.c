@@ -376,7 +376,6 @@ static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     .clsid                 = &CLSID_HTMLOptionElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -389,6 +388,7 @@ static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
         .unlink         = HTMLOptionElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {
@@ -1418,7 +1418,6 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLSelectElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLSelectElementImpl_put_disabled,
     .get_disabled          = HTMLSelectElementImpl_get_disabled,
@@ -1436,6 +1435,7 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
         .invoke         = HTMLSelectElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLSelectElement_tids[] = {

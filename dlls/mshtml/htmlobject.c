@@ -742,7 +742,6 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLObjectElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLObjectElement_get_readystate,
 };
@@ -759,6 +758,7 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
         .invoke         = HTMLObjectElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLObjectElement_iface_tids[] = {
@@ -1002,7 +1002,6 @@ static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     .clsid                 = &CLSID_HTMLEmbed,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col
 };
 
@@ -1015,6 +1014,7 @@ static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
         .unlink         = HTMLDOMNode_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLEmbedElement_iface_tids[] = {

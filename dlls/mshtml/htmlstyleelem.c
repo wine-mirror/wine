@@ -422,7 +422,6 @@ static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLStyleElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -435,6 +434,7 @@ static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
         .unlink         = HTMLStyleElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLElement_handle_event
 };
 
 static const tid_t HTMLStyleElement_iface_tids[] = {

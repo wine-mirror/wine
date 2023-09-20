@@ -792,11 +792,6 @@ static const IHTMLAnchorElementVtbl HTMLAnchorElementVtbl = {
     HTMLAnchorElement_blur
 };
 
-static inline HTMLAnchorElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node);
-}
-
 static inline HTMLAnchorElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLAnchorElement, element.node.event_target.dispex);
@@ -828,9 +823,9 @@ static void HTMLAnchorElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsanchor);
 }
 
-static HRESULT HTMLAnchorElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDOMEvent *event, BOOL *prevent_default)
+static HRESULT HTMLAnchorElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
 {
-    HTMLAnchorElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
     nsAString href_str, target_str;
     nsresult nsres;
 
@@ -856,14 +851,13 @@ fallback:
         nsAString_Finish(&target_str);
     }
 
-    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
+    return HTMLElement_handle_event(&This->element.node.event_target.dispex, eid, event, prevent_default);
 }
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAnchorElement,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
-    .handle_event          = HTMLAnchorElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
@@ -876,6 +870,7 @@ static const event_target_vtbl_t HTMLAnchorElement_event_target_vtbl = {
         .unlink         = HTMLAnchorElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
+    .handle_event       = HTMLAnchorElement_handle_event
 };
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {
