@@ -2006,6 +2006,7 @@ static struct
     LONG trylock_shared;
 } srwlock_base_errors;
 
+#if defined(__i386__) || defined(__x86_64__)
 #include "pshpack1.h"
 struct
 {
@@ -2013,6 +2014,7 @@ struct
     SRWLOCK lock;
 } unaligned_srwlock;
 #include "poppack.h"
+#endif
 
 /* Sequence of acquire/release to check boundary conditions:
  *  0: init
@@ -2885,7 +2887,10 @@ START_TEST(sync)
     test_condvars_base(&unaligned_cv.cv);
     test_condvars_consumer_producer();
     test_srwlock_base(&aligned_srwlock);
+#if defined(__i386__) || defined(__x86_64__)
+    /* unaligned locks only work on x86 platforms */
     test_srwlock_base(&unaligned_srwlock.lock);
+#endif
     test_srwlock_example();
     test_alertable_wait();
     test_apc_deadlock();
