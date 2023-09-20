@@ -1181,7 +1181,10 @@ __ASM_GLOBAL_FUNC( call_server_func,
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "stp x29, x30, [sp, #-16]!\n\t"
+                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
                    "mov x29, sp\n\t"
+                   __ASM_SEH(".seh_set_fp\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "add x9, x2, #15\n\t"
                    "lsr x9, x9, #4\n\t"
                    "sub sp, sp, x9, lsl #4\n\t"

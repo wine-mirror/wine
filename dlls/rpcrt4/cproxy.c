@@ -201,7 +201,10 @@ static inline void init_thunk( struct thunk *thunk, unsigned int index )
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC( call_stubless_func,
                    "stp x29, x30, [sp, #-0x90]!\n\t"
+                   __ASM_SEH(".seh_save_fplr_x 0x90\n\t")
                    "mov x29, sp\n\t"
+                   __ASM_SEH(".seh_set_fp\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "stp d0, d1, [sp, #0x10]\n\t"
                    "stp d2, d3, [sp, #0x20]\n\t"
                    "stp d4, d5, [sp, #0x30]\n\t"
