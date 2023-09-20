@@ -61,7 +61,6 @@ extern HRESULT create_dmloader(REFIID riid, void **ret_iface);
 extern HRESULT create_dmcontainer(REFIID riid, void **ret_iface);
 extern HRESULT DMUSIC_CreateDirectMusicLoaderFileStream(void **ppobj);
 extern HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream(void **ppobj);
-extern HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream(void **ppobj);
 
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure
@@ -97,21 +96,6 @@ struct IDirectMusicLoaderResourceStream {
 /* Custom: */
 extern HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach(LPSTREAM iface, LPBYTE pbMemData,
         LONGLONG llMemLength, LONGLONG llPos);
-
-/*****************************************************************************
- * IDirectMusicLoaderGenericStream implementation structure
- */
-struct IDirectMusicLoaderGenericStream {
-	/* IUnknown fields */
-	const IStreamVtbl *StreamVtbl;
-	/* reference counter */
-	LONG dwRef;
-	/* stream */
-	LPSTREAM pStream;
-};
-
-/* Custom: */
-extern HRESULT WINAPI IDirectMusicLoaderGenericStream_Attach(LPSTREAM iface, LPSTREAM pStream);
 
 extern HRESULT loader_stream_create(IDirectMusicLoader *loader, IStream *stream, IStream **ret_iface);
 

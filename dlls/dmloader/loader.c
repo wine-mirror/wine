@@ -356,27 +356,17 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			return result;
 		}
 	}
-	else if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
-		/* load object from stream */
-		TRACE(": loading from stream\n");
-		/* create universal stream and associate it with given one */			
-		result = DMUSIC_CreateDirectMusicLoaderGenericStream ((LPVOID*)&pStream);
-		if (FAILED(result)) {
-			ERR(": could not create generic stream\n");
-			return result;
-		}
-                result = IDirectMusicLoaderGenericStream_Attach(pStream, pDesc->pStream);
-                if (FAILED(result))
-                {
-			ERR(": failed to attach stream\n");
-			IStream_Release (pStream);
-			return result;
-		}
-	} else {
-		/* nowhere to load from */
-		FIXME(": unknown/unsupported way of loading\n");
-		return DMUS_E_LOADER_NOFILENAME; /* test shows this is returned */
-	}
+    else if (pDesc->dwValidData & DMUS_OBJ_STREAM)
+    {
+        pStream = pDesc->pStream;
+        IStream_AddRef(pStream);
+    }
+    else
+    {
+        /* nowhere to load from */
+        FIXME(": unknown/unsupported way of loading\n");
+        return DMUS_E_LOADER_NOFILENAME; /* test shows this is returned */
+    }
 
     if (FAILED(hr = loader_stream_create((IDirectMusicLoader *)iface, pStream, &loader_stream)))
         return hr;
@@ -499,22 +489,11 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			return DMUS_E_LOADER_FAILEDOPEN;
 		}
 	}
-	else if (pDesc->dwValidData & DMUS_OBJ_STREAM) {	
-		/* create stream */
-		hr = DMUSIC_CreateDirectMusicLoaderGenericStream ((LPVOID*)&pStream);
-		if (FAILED(hr)) {
-			ERR(": could not create generic stream\n");
-			return DMUS_E_LOADER_FAILEDOPEN;
-		}
-		/* attach stream */
-                hr = IDirectMusicLoaderGenericStream_Attach(pStream, pDesc->pStream);
-                if (FAILED(hr))
-                {
-			ERR(": could not attach stream\n");
-			IStream_Release (pStream);
-			return DMUS_E_LOADER_FAILEDOPEN;
-		}
-	}
+    else if (pDesc->dwValidData & DMUS_OBJ_STREAM)
+    {
+        pStream = pDesc->pStream;
+        IStream_AddRef(pStream);
+    }
 	else if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
 		/* create stream */
 		hr = DMUSIC_CreateDirectMusicLoaderResourceStream ((LPVOID*)&pStream);
