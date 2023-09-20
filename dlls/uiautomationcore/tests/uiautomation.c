@@ -13310,13 +13310,19 @@ static const struct prov_method_sequence get_cached_prop_val_seq3[] = {
 
 static void test_Element_cache_methods(IUIAutomation *uia_iface)
 {
+    static const int cache_test_props[] = { UIA_IsKeyboardFocusablePropertyId, UIA_NamePropertyId, UIA_ControlTypePropertyId,
+                                            UIA_BoundingRectanglePropertyId, UIA_HasKeyboardFocusPropertyId, };
     HWND hwnd = create_test_hwnd("test_Element_cache_methods class");
     IUIAutomationElement *element, *element2, *element3;
+    struct Provider_prop_override prop_override;
     IUIAutomationCacheRequest *cache_req;
     IUIAutomationElementArray *elem_arr;
-    int tmp_rt_id[2], i, len;
+    int tmp_rt_id[2], i, len, tmp_int;
     IUnknown *unk_ns;
+    BSTR tmp_bstr;
+    BOOL tmp_bool;
     HRESULT hr;
+    RECT rect;
     VARIANT v;
 
     element = create_test_element_from_hwnd(uia_iface, hwnd, TRUE);
@@ -13534,6 +13540,175 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     IUnknown_Release(unk_ns);
 
+    /*
+     * Windows 7 will call get_FragmentRoot in an endless loop until the fragment root returns an HWND.
+     * It's the only version with this behavior.
+     */
+    if (!UiaLookupId(AutomationIdentifierType_Property, &OptimizeForVisualContent_Property_GUID))
+    {
+        win_skip("Skipping cached UIA_BoundingRectanglePropertyId tests for Win7\n");
+        goto exit;
+    }
+
+    /*
+     * Cached property value helper function tests.
+     */
+    element = create_test_element_from_hwnd(uia_iface, hwnd, TRUE);
+    method_sequences_enabled = FALSE;
+
+    /*
+     * element has no cached values, element2 has cached values but they're
+     * all the equivalent of VT_EMPTY, element3 has valid cached values.
+     */
+    cache_req = NULL;
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, &cache_req);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cache_req, "cache_req == NULL\n");
+
+    for (i = 0; i < ARRAY_SIZE(cache_test_props); i++)
+    {
+        hr = IUIAutomationCacheRequest_AddProperty(cache_req, cache_test_props[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+
+    /* element2, invalid values for all cached properties. */
+    element2 = NULL;
+    Provider.ret_invalid_prop_type = TRUE;
+    set_uia_rect(&Provider.bounds_rect, 0, 0, 0, 0);
+    hr = IUIAutomationElement_BuildUpdatedCache(element, cache_req, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element2, "element2 == NULL\n");
+    Provider.ret_invalid_prop_type = FALSE;
+
+    /* element3, valid values for all cached properties. */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = UIA_HyperlinkControlTypeId;
+    set_property_override(&prop_override, UIA_ControlTypePropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+    set_uia_rect(&Provider.bounds_rect, 0, 0, 50, 50);
+
+    element3 = NULL;
+    hr = IUIAutomationElement_BuildUpdatedCache(element, cache_req, &element3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element3, "element3 == NULL\n");
+    set_provider_prop_override(&Provider, NULL, 0);
+
+    IUIAutomationCacheRequest_Release(cache_req);
+
+    /* Cached UIA_HasKeyboardFocusPropertyId helper. */
+    hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element, NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_bool = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element, &tmp_bool);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_bool == 0xdeadbeef, "Unexpected tmp_bool %d\n", tmp_bool);
+
+    tmp_bool = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element2, &tmp_bool);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!tmp_bool, "tmp_bool != FALSE\n");
+
+    tmp_bool = FALSE;
+    hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element3, &tmp_bool);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!tmp_bool, "tmp_bool == FALSE\n");
+
+    /* Cached UIA_IsKeyboardFocusablePropertyId helper. */
+    hr = IUIAutomationElement_get_CachedIsKeyboardFocusable(element, NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_bool = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedIsKeyboardFocusable(element, &tmp_bool);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_bool == 0xdeadbeef, "Unexpected tmp_bool %d\n", tmp_bool);
+
+    tmp_bool = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedIsKeyboardFocusable(element2, &tmp_bool);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!tmp_bool, "tmp_bool != FALSE\n");
+
+    tmp_bool = FALSE;
+    hr = IUIAutomationElement_get_CachedIsKeyboardFocusable(element3, &tmp_bool);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!tmp_bool, "tmp_bool == FALSE\n");
+
+    /* Cached UIA_NamePropertyId helper. */
+    hr = IUIAutomationElement_get_CachedName(element, NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_bstr = (void *)0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedName(element, &tmp_bstr);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_bstr == (void *)0xdeadbeef, "Unexpected BSTR ptr %p\n", tmp_bstr);
+
+    tmp_bstr = NULL;
+    hr = IUIAutomationElement_get_CachedName(element2, &tmp_bstr);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!lstrcmpW(tmp_bstr, L""), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    SysFreeString(tmp_bstr);
+
+    tmp_bstr = NULL;
+    hr = IUIAutomationElement_get_CachedName(element3, &tmp_bstr);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!lstrcmpW(tmp_bstr, uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    SysFreeString(tmp_bstr);
+
+    /* Cached UIA_ControlTypePropertyId. */
+    hr = IUIAutomationElement_get_CachedControlType(element, NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    tmp_int = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CachedControlType(element, &tmp_int);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_int == 0xdeadbeef, "Unexpected control type %#x\n", tmp_int);
+
+    tmp_int = 0;
+    hr = IUIAutomationElement_get_CachedControlType(element2, &tmp_int);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(tmp_int == UIA_CustomControlTypeId, "Unexpected control type %#x\n", tmp_int);
+
+    tmp_int = 0;
+    hr = IUIAutomationElement_get_CachedControlType(element3, &tmp_int);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(tmp_int == UIA_HyperlinkControlTypeId, "Unexpected control type %#x\n", tmp_int);
+
+    /* Cached UIA_BoundingRectanglePropertyId helper. */
+    hr = IUIAutomationElement_get_CachedBoundingRectangle(element, NULL);
+    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    rect.left = rect.top = rect.bottom = rect.right = 1;
+    hr = IUIAutomationElement_get_CachedBoundingRectangle(element, &rect);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(rect.left == 1, "Unexpected rect left %ld\n", rect.left);
+    ok(rect.top == 1, "Unexpected rect top %ld\n", rect.top);
+    ok(rect.right == 1, "Unexpected rect right %ld\n", rect.right);
+    ok(rect.bottom == 1, "Unexpected rect bottom %ld\n", rect.bottom);
+
+    rect.left = rect.top = rect.bottom = rect.right = 1;
+    hr = IUIAutomationElement_get_CachedBoundingRectangle(element2, &rect);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!rect.left, "Unexpected rect left %ld\n", rect.left);
+    todo_wine ok(!rect.top, "Unexpected rect top %ld\n", rect.top);
+    todo_wine ok(!rect.right, "Unexpected rect right %ld\n", rect.right);
+    todo_wine ok(!rect.bottom, "Unexpected rect bottom %ld\n", rect.bottom);
+
+    memset(&rect, 0, sizeof(rect));
+    hr = IUIAutomationElement_get_CachedBoundingRectangle(element3, &rect);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        check_uia_rect_rect_val(&rect, &Provider.bounds_rect);
+
+    IUIAutomationElement_Release(element3);
+    IUIAutomationElement_Release(element2);
+    IUIAutomationElement_Release(element);
+
+    set_uia_rect(&Provider.bounds_rect, 0, 0, 0, 0);
+    method_sequences_enabled = TRUE;
+
+exit:
     DestroyWindow(hwnd);
     UnregisterClassA("test_Element_cache_methods class", NULL);
 }
