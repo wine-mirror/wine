@@ -3692,7 +3692,7 @@ struct handle_info
     obj_handle_t rootdir;         /* root directory */
     data_size_t  namelen;         /* length of NT name in bytes */
     int          link;            /* link instead of renaming */
-    int          replace;         /* replace an existing file? */
+    unsigned int flags;           /* FILE_RENAME_* flags */
     VARARG(name,unicode_str,namelen); /* NT name */
     VARARG(filename,string);      /* new file name */
 @END

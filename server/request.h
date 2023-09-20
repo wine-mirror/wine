@@ -2241,7 +2241,7 @@ C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, rootdir) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, namelen) == 20 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, link) == 24 );
-C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, replace) == 28 );
+C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, flags) == 28 );
 C_ASSERT( sizeof(struct set_fd_name_info_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_eof_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_eof_info_request, eof) == 16 );

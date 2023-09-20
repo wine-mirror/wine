@@ -94,7 +94,11 @@ typedef struct
 
 typedef struct
 {
-    BOOLEAN ReplaceIfExists;
+    union
+    {
+        BOOLEAN ReplaceIfExists;
+        ULONG Flags;
+    };
     ULONG   RootDirectory;
     ULONG   FileNameLength;
     WCHAR   FileName[1];

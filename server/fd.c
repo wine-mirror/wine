@@ -2511,11 +2511,12 @@ static void set_fd_disposition( struct fd *fd, unsigned int flags )
 
 /* set new name for the fd */
 static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, data_size_t len,
-                         struct unicode_str nt_name, int create_link, int replace )
+                         struct unicode_str nt_name, int create_link, unsigned int flags )
 {
     struct inode *inode;
     struct stat st, st2;
     char *name;
+    const unsigned int replace = flags & FILE_RENAME_REPLACE_IF_EXISTS;
 
     if (!fd->inode || !fd->unix_name)
     {
@@ -2967,7 +2968,7 @@ DECL_HANDLER(set_fd_name_info)
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
         set_fd_name( fd, root_fd, (const char *)get_req_data() + req->namelen,
-                     get_req_data_size() - req->namelen, nt_name, req->link, req->replace );
+                     get_req_data_size() - req->namelen, nt_name, req->link, req->flags );
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );

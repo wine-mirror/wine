@@ -5307,7 +5307,7 @@ struct set_fd_name_info_request
     obj_handle_t rootdir;
     data_size_t  namelen;
     int          link;
-    int          replace;
+    unsigned int flags;
     /* VARARG(name,unicode_str,namelen); */
     /* VARARG(filename,string); */
 };
@@ -6487,7 +6487,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 782
+#define SERVER_PROTOCOL_VERSION 783
 
 /* ### protocol_version end ### */
 

@@ -792,6 +792,7 @@ NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
         break;
 
     case FileRenameInformation:   /* FILE_RENAME_INFORMATION */
+    case FileRenameInformationEx:   /* FILE_RENAME_INFORMATION */
     case FileLinkInformation:   /* FILE_LINK_INFORMATION */
         if (len >= sizeof(FILE_RENAME_INFORMATION32))
         {
@@ -807,7 +808,7 @@ NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
             get_file_redirect( &attr );
             size = offsetof( FILE_RENAME_INFORMATION, FileName[name.Length/sizeof(WCHAR)] );
             info = Wow64AllocateTemp( size );
-            info->ReplaceIfExists = info32->ReplaceIfExists;
+            info->Flags           = info32->Flags;
             info->RootDirectory   = attr.RootDirectory;
             info->FileNameLength  = name.Length;
             memcpy( info->FileName, name.Buffer, info->FileNameLength );
