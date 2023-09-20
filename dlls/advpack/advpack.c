@@ -127,7 +127,7 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
         if (!(value = wcschr(line, '=')))
         {
             SetupGetStringFieldW(&context, 0, NULL, 0, &size);
-            key = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            key = malloc(size * sizeof(WCHAR));
             key_copy = key;
             SetupGetStringFieldW(&context, 0, key, size, &size);
             value = line;
@@ -165,7 +165,7 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
             ldid = wcstol(ptr, NULL, 10);
             SetupSetDirectoryIdW(hInf, ldid, dest);
         }
-        HeapFree(GetProcessHeap(), 0, key_copy);
+        free(key_copy);
     } while (SetupFindNextLine(&context, &context));
 }
 
@@ -227,7 +227,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
         }
     }
 
-    pTokenGroups = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    pTokenGroups = malloc(dwSize);
     if (!pTokenGroups)
     {
         CloseHandle(hToken);
@@ -236,7 +236,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
 
     if (!GetTokenInformation(hToken, TokenGroups, pTokenGroups, dwSize, &dwSize))
     {
-        HeapFree(GetProcessHeap(), 0, pTokenGroups);
+        free(pTokenGroups);
         CloseHandle(hToken);
         return FALSE;
     }
@@ -246,7 +246,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
     if (!AllocateAndInitializeSid(&SidAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
                                   DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
     {
-        HeapFree(GetProcessHeap(), 0, pTokenGroups);
+        free(pTokenGroups);
         return FALSE;
     }
 
@@ -259,7 +259,7 @@ BOOL WINAPI IsNTAdmin(DWORD reserved, LPDWORD pReserved)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, pTokenGroups);
+    free(pTokenGroups);
     FreeSid(pSid);
 
     return bSidFound;
@@ -469,16 +469,13 @@ HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
     UNICODE_STRING cmdlineW;
     HRESULT hr = E_FAIL;
     HMODULE hm = NULL;
-    DWORD size;
 
     TRACE("(%s)\n", debugstr_a(cmdline));
 
     RtlCreateUnicodeStringFromAsciiz(&cmdlineW, cmdline);
 
-    size = (lstrlenW(cmdlineW.Buffer) + 1) * sizeof(WCHAR);
-    cmdline_copy = HeapAlloc(GetProcessHeap(), 0, size);
+    cmdline_copy = wcsdup(cmdlineW.Buffer);
     cmdline_ptr = cmdline_copy;
-    lstrcpyW(cmdline_copy, cmdlineW.Buffer);
 
     ocx_filename = get_parameter(&cmdline_ptr, ',', TRUE);
     if (!ocx_filename || !*ocx_filename)
@@ -495,7 +492,7 @@ HRESULT WINAPI RegisterOCX(HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show)
 
 done:
     FreeLibrary(hm);
-    HeapFree(GetProcessHeap(), 0, cmdline_copy);
+    free(cmdline_copy);
     RtlFreeUnicodeString(&cmdlineW);
 
     return hr;
@@ -636,7 +633,7 @@ HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSecti
 
     if (res == S_OK)
     {
-        bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        bufferW = malloc(len * sizeof(WCHAR));
 
         res = TranslateInfStringW(filenameW.Buffer, installW.Buffer,
                                   translateW.Buffer, keyW.Buffer, bufferW,
@@ -654,8 +651,8 @@ HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSecti
             else
                 res = E_NOT_SUFFICIENT_BUFFER;
         }
-        
-        HeapFree(GetProcessHeap(), 0, bufferW);
+
+        free(bufferW);
     }
 
     RtlFreeUnicodeString(&filenameW);
@@ -753,7 +750,7 @@ HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
 
     if (res == S_OK)
     {
-        bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        bufferW = malloc(len * sizeof(WCHAR));
 
         res = TranslateInfStringExW(hInf, filenameW.Buffer, sectionW.Buffer,
                                 keyW.Buffer, bufferW, len, &len, NULL);
@@ -771,8 +768,8 @@ HRESULT WINAPI TranslateInfStringExA(HINF hInf, LPCSTR pszInfFilename,
             else
                 res = E_NOT_SUFFICIENT_BUFFER;
         }
-        
-        HeapFree(GetProcessHeap(), 0, bufferW);
+
+        free(bufferW);
     }
 
     RtlFreeUnicodeString(&filenameW);
