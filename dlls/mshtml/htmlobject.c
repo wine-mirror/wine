@@ -728,10 +728,10 @@ static HRESULT HTMLObjectElement_dispex_get_name(DispatchEx *dispex, DISPID id, 
     return E_NOTIMPL;
 }
 
-static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLObjectElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
 
     TRACE("(%p)->(%ld)\n", This, id);
 
@@ -745,7 +745,6 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLObjectElement_get_readystate,
-    .invoke                = HTMLObjectElement_invoke,
 };
 
 static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
@@ -757,6 +756,7 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
         .unlink         = HTMLObjectElement_unlink,
         .get_dispid     = HTMLObjectElement_get_dispid,
         .get_name       = HTMLObjectElement_dispex_get_name,
+        .invoke         = HTMLObjectElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

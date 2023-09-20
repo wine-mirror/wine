@@ -927,10 +927,10 @@ static HRESULT HTMLFormElement_dispex_get_name(DispatchEx *dispex, DISPID id, BS
     return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT HTMLFormElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLFormElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
     IDispatch *ret;
     HRESULT hres;
 
@@ -967,7 +967,6 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLFormElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .invoke                = HTMLFormElement_invoke,
 };
 
 static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
@@ -979,6 +978,7 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
         .unlink         = HTMLFormElement_unlink,
         .get_dispid     = HTMLFormElement_get_dispid,
         .get_name       = HTMLFormElement_dispex_get_name,
+        .invoke         = HTMLFormElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

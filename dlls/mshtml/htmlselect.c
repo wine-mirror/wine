@@ -341,11 +341,6 @@ static const IHTMLOptionElementVtbl HTMLOptionElementVtbl = {
     HTMLOptionElement_get_form
 };
 
-static inline HTMLOptionElement *HTMLOptionElement_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLOptionElement, element.node);
-}
-
 static inline HTMLOptionElement *HTMLOptionElement_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLOptionElement, element.node.event_target.dispex);
@@ -1386,10 +1381,10 @@ static HRESULT HTMLSelectElement_dispex_get_name(DispatchEx *dispex, DISPID id, 
     return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT HTMLSelectElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
-    HTMLSelectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLSelectElement *This = impl_from_DispatchEx(dispex);
 
     TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
@@ -1427,7 +1422,6 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLSelectElementImpl_put_disabled,
     .get_disabled          = HTMLSelectElementImpl_get_disabled,
-    .invoke                = HTMLSelectElement_invoke,
 };
 
 static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
@@ -1439,6 +1433,7 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
         .unlink         = HTMLSelectElement_unlink,
         .get_dispid     = HTMLSelectElement_get_dispid,
         .get_name       = HTMLSelectElement_dispex_get_name,
+        .invoke         = HTMLSelectElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

@@ -145,7 +145,6 @@ ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx*);
 IHTMLEventObj *HTMLElement_set_current_event(DispatchEx*,IHTMLEventObj*);
 
 #define HTMLELEMENT_DISPEX_VTBL_ENTRIES                 \
-    .invoke              = HTMLElement_invoke,          \
     .populate_props      = HTMLElement_populate_props
 
 #define HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES                       \

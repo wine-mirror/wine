@@ -6886,19 +6886,6 @@ void HTMLElement_destructor(DispatchEx *dispex)
     HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }
 
-HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
-        EXCEPINFO *ei, IServiceProvider *caller)
-{
-    HTMLElement *This = impl_from_DispatchEx(dispex);
-
-    if(This->node.vtbl->invoke)
-        return This->node.vtbl->invoke(&This->node, id, lcid, flags,
-                params, res, ei, caller);
-
-    ERR("(%p): element has no invoke method\n", This);
-    return E_NOTIMPL;
-}
-
 HRESULT HTMLElement_populate_props(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
