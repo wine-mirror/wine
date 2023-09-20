@@ -719,9 +719,9 @@ static HRESULT HTMLObjectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD
     return get_plugin_dispid(&This->plugin_container, name, dispid);
 }
 
-static HRESULT HTMLObjectElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+static HRESULT HTMLObjectElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
 
     FIXME("(%p)->(%lx %p)\n", This, id, name);
 
@@ -745,7 +745,6 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLObjectElement_get_readystate,
-    .get_name              = HTMLObjectElement_dispex_get_name,
     .invoke                = HTMLObjectElement_invoke,
 };
 
@@ -757,6 +756,7 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
         .traverse       = HTMLObjectElement_traverse,
         .unlink         = HTMLObjectElement_unlink,
         .get_dispid     = HTMLObjectElement_get_dispid,
+        .get_name       = HTMLObjectElement_dispex_get_name,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

@@ -822,7 +822,6 @@ typedef struct {
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);
     HRESULT (*get_document)(HTMLDOMNode*,IDispatch**);
     HRESULT (*get_readystate)(HTMLDOMNode*,BSTR*);
-    HRESULT (*get_name)(HTMLDOMNode*,DISPID,BSTR*);
     HRESULT (*invoke)(HTMLDOMNode*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*bind_to_tree)(HTMLDOMNode*);
     BOOL (*is_text_edit)(HTMLDOMNode*);
@@ -1209,7 +1208,6 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 void *HTMLElement_query_interface(DispatchEx*,REFIID);
 void HTMLElement_destructor(DispatchEx*);
-HRESULT HTMLElement_get_name(DispatchEx*,DISPID,BSTR*);
 HRESULT HTMLElement_invoke(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 HRESULT HTMLElement_populate_props(DispatchEx*);
 HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);

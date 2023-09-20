@@ -1373,7 +1373,7 @@ static HRESULT HTMLSelectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD
     return S_OK;
 }
 
-static HRESULT HTMLSelectElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+static HRESULT HTMLSelectElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
     DWORD idx = id - DISPID_OPTIONCOL_0;
     WCHAR buf[11];
@@ -1427,7 +1427,6 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLSelectElementImpl_put_disabled,
     .get_disabled          = HTMLSelectElementImpl_get_disabled,
-    .get_name              = HTMLSelectElement_dispex_get_name,
     .invoke                = HTMLSelectElement_invoke,
 };
 
@@ -1439,6 +1438,7 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
         .traverse       = HTMLSelectElement_traverse,
         .unlink         = HTMLSelectElement_unlink,
         .get_dispid     = HTMLSelectElement_get_dispid,
+        .get_name       = HTMLSelectElement_dispex_get_name,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

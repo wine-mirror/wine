@@ -902,9 +902,9 @@ static HRESULT HTMLFormElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD g
     return hres;
 }
 
-static HRESULT HTMLFormElement_dispex_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+static HRESULT HTMLFormElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
     DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
     nsIDOMHTMLCollection *elements;
     nsresult nsres;
@@ -967,7 +967,6 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLFormElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .get_name              = HTMLFormElement_dispex_get_name,
     .invoke                = HTMLFormElement_invoke,
 };
 
@@ -979,6 +978,7 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
         .traverse       = HTMLFormElement_traverse,
         .unlink         = HTMLFormElement_unlink,
         .get_dispid     = HTMLFormElement_get_dispid,
+        .get_name       = HTMLFormElement_dispex_get_name,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

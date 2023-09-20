@@ -974,9 +974,9 @@ static HRESULT HTMLFrameElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD 
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, dispid);
 }
 
-static HRESULT HTMLFrameElement_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+static HRESULT HTMLFrameElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
     DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
 
     if(!This->framebase.content_window ||
@@ -1009,7 +1009,6 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLFrameElement_get_document,
     .get_readystate        = HTMLFrameElement_get_readystate,
-    .get_name              = HTMLFrameElement_get_name,
     .invoke                = HTMLFrameElement_invoke,
     .bind_to_tree          = HTMLFrameElement_bind_to_tree,
 };
@@ -1022,6 +1021,7 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
         .traverse       = HTMLFrameElement_traverse,
         .unlink         = HTMLFrameElement_unlink,
         .get_dispid     = HTMLFrameElement_get_dispid,
+        .get_name       = HTMLFrameElement_get_name,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
@@ -1564,9 +1564,9 @@ static HRESULT HTMLIFrame_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, dispid);
 }
 
-static HRESULT HTMLIFrame_get_name(HTMLDOMNode *iface, DISPID id, BSTR *name)
+static HRESULT HTMLIFrame_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
     DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
 
     if(!This->framebase.content_window ||
@@ -1599,7 +1599,6 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLIFrame_get_document,
     .get_readystate        = HTMLIFrame_get_readystate,
-    .get_name              = HTMLIFrame_get_name,
     .invoke                = HTMLIFrame_invoke,
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
 };
@@ -1612,6 +1611,7 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
         .traverse       = HTMLIFrame_traverse,
         .unlink         = HTMLIFrame_unlink,
         .get_dispid     = HTMLIFrame_get_dispid,
+        .get_name       = HTMLIFrame_get_name,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

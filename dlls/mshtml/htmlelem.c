@@ -6886,17 +6886,6 @@ void HTMLElement_destructor(DispatchEx *dispex)
     HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }
 
-HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLElement *This = impl_from_DispatchEx(dispex);
-
-    if(This->node.vtbl->get_name)
-        return This->node.vtbl->get_name(&This->node, id, name);
-
-    ERR("(%p): element has no get_name method\n", This);
-    return DISP_E_MEMBERNOTFOUND;
-}
-
 HRESULT HTMLElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res,
         EXCEPINFO *ei, IServiceProvider *caller)
 {
