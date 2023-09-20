@@ -19561,9 +19561,9 @@ static const struct message send_message_3[] = {
     { 0 }
 };
 static const struct message send_message_5[] = {
-    { WM_WINDOWPOSCHANGING, sent|wparam|lparam|optional, 0, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
     { WM_GETMINMAXINFO, sent|defwinproc|optional }, /* win7+ dual monitor */
-    { WM_WINDOWPOSCHANGING, sent|wparam|lparam|optional, 0, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOACTIVATE|SWP_NOZORDER }, /* win7+ dual monitor */
     { WM_GETMINMAXINFO, sent|defwinproc|optional }, /* win7+ dual monitor */
     { 0 }
 };
