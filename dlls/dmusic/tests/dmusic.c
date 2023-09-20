@@ -1338,6 +1338,305 @@ static void test_download_instrument(void)
     IDirectMusic_Release(dmusic);
 }
 
+struct result
+{
+    DWORD patch;
+    WCHAR name[DMUS_MAX_NAME];
+};
+
+static int __cdecl result_cmp(const void *a, const void *b)
+{
+    const struct result *ra = a, *rb = b;
+    if (ra->patch != rb->patch) return ra->patch < rb->patch ? -1 : 1;
+    return wcscmp(ra->name, rb->name);
+}
+
+static void test_default_gm_collection(void)
+{
+    DMUS_OBJECTDESC desc =
+    {
+        .dwSize = sizeof(DMUS_OBJECTDESC),
+        .dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS,
+        .guidClass = CLSID_DirectMusicCollection,
+        .guidObject = GUID_DefaultGMCollection,
+    };
+    struct result expected[] =
+    {
+        {         0, L"Piano 1     "},
+        {       0x1, L"Piano 2     "},
+        {       0x2, L"Piano 3     "},
+        {       0x3, L"Honky-tonk  "},
+        {       0x4, L"E.Piano 1   "},
+        {       0x5, L"E.Piano 2   "},
+        {       0x6, L"Harpsichord "},
+        {       0x7, L"Clav.       "},
+        {       0x8, L"Celesta     "},
+        {       0x9, L"Glockenspiel"},
+        {       0xa, L"Music Box   "},
+        {       0xb, L"Vibraphone  "},
+        {       0xc, L"Marimba     "},
+        {       0xd, L"Xylophone   "},
+        {       0xe, L"Tubular-bell"},
+        {       0xf, L"Santur      "},
+        {      0x10, L"Organ 1     "},
+        {      0x11, L"Organ 2     "},
+        {      0x12, L"Organ 3     "},
+        {      0x13, L"Church Org.1"},
+        {      0x14, L"Reed Organ  "},
+        {      0x15, L"Accordion Fr"},
+        {      0x16, L"Harmonica   "},
+        {      0x17, L"Bandoneon   "},
+        {      0x18, L"Nylon-str.Gt"},
+        {      0x19, L"Steel-str.Gt"},
+        {      0x1a, L"Jazz Gt.    "},
+        {      0x1b, L"Clean Gt.   "},
+        {      0x1c, L"Muted Gt.   "},
+        {      0x1d, L"Overdrive Gt"},
+        {      0x1e, L"DistortionGt"},
+        {      0x1f, L"Gt.Harmonics"},
+        {      0x20, L"Acoustic Bs."},
+        {      0x21, L"Fingered Bs."},
+        {      0x22, L"Picked Bs.  "},
+        {      0x23, L"Fretless Bs."},
+        {      0x24, L"Slap Bass 1 "},
+        {      0x25, L"Slap Bass 2 "},
+        {      0x26, L"Synth Bass 1"},
+        {      0x27, L"Synth Bass 2"},
+        {      0x28, L"Violin      "},
+        {      0x29, L"Viola       "},
+        {      0x2a, L"Cello       "},
+        {      0x2b, L"Contrabass  "},
+        {      0x2c, L"Tremolo Str "},
+        {      0x2d, L"PizzicatoStr"},
+        {      0x2e, L"Harp        "},
+        {      0x2f, L"Timpani     "},
+        {      0x30, L"Strings     "},
+        {      0x31, L"Slow Strings"},
+        {      0x32, L"Syn.Strings1"},
+        {      0x33, L"Syn.Strings2"},
+        {      0x34, L"Choir Aahs  "},
+        {      0x35, L"Voice Oohs  "},
+        {      0x36, L"SynVox      "},
+        {      0x37, L"OrchestraHit"},
+        {      0x38, L"Trumpet     "},
+        {      0x39, L"Trombone    "},
+        {      0x3a, L"Tuba        "},
+        {      0x3b, L"MutedTrumpet"},
+        {      0x3c, L"French Horns"},
+        {      0x3d, L"Brass 1     "},
+        {      0x3e, L"Synth Brass1"},
+        {      0x3f, L"Synth Brass2"},
+        {      0x40, L"Soprano Sax "},
+        {      0x41, L"Alto Sax    "},
+        {      0x42, L"Tenor Sax   "},
+        {      0x43, L"Baritone Sax"},
+        {      0x44, L"Oboe        "},
+        {      0x45, L"English Horn"},
+        {      0x46, L"Bassoon     "},
+        {      0x47, L"Clarinet    "},
+        {      0x48, L"Piccolo     "},
+        {      0x49, L"Flute       "},
+        {      0x4a, L"Recorder    "},
+        {      0x4b, L"Pan Flute   "},
+        {      0x4c, L"Bottle Blow "},
+        {      0x4d, L"Shakuhachi  "},
+        {      0x4e, L"Whistle     "},
+        {      0x4f, L"Ocarina     "},
+        {      0x50, L"Square Wave "},
+        {      0x51, L"Saw Wave    "},
+        {      0x52, L"Syn.Calliope"},
+        {      0x53, L"Chiffer Lead"},
+        {      0x54, L"Charang     "},
+        {      0x55, L"Solo Vox    "},
+        {      0x56, L"5th Saw Wave"},
+        {      0x57, L"Bass & Lead "},
+        {      0x58, L"Fantasia    "},
+        {      0x59, L"Warm Pad    "},
+        {      0x5a, L"Polysynth   "},
+        {      0x5b, L"Space Voice "},
+        {      0x5c, L"Bowed Glass "},
+        {      0x5d, L"Metal Pad   "},
+        {      0x5e, L"Halo Pad    "},
+        {      0x5f, L"Sweep Pad   "},
+        {      0x60, L"Ice Rain    "},
+        {      0x61, L"Soundtrack  "},
+        {      0x62, L"Crystal     "},
+        {      0x63, L"Atmosphere  "},
+        {      0x64, L"Brightness  "},
+        {      0x65, L"Goblin      "},
+        {      0x66, L"Echo Drops  "},
+        {      0x67, L"Star Theme  "},
+        {      0x68, L"Sitar       "},
+        {      0x69, L"Banjo       "},
+        {      0x6a, L"Shamisen    "},
+        {      0x6b, L"Koto        "},
+        {      0x6c, L"Kalimba     "},
+        {      0x6d, L"Bagpipe     "},
+        {      0x6e, L"Fiddle      "},
+        {      0x6f, L"Shanai      "},
+        {      0x70, L"Tinkle Bell "},
+        {      0x71, L"Agogo       "},
+        {      0x72, L"Steel Drums "},
+        {      0x73, L"Woodblock   "},
+        {      0x74, L"Taiko       "},
+        {      0x75, L"Melo. Tom 1 "},
+        {      0x76, L"Synth Drum  "},
+        {      0x77, L"Reverse Cym."},
+        {      0x78, L"Gt.FretNoise"},
+        {      0x79, L"Breath Noise"},
+        {      0x7a, L"Seashore    "},
+        {      0x7b, L"Bird        "},
+        {      0x7c, L"Telephone 1 "},
+        {      0x7d, L"Helicopter  "},
+        {      0x7e, L"Applause    "},
+        {      0x7f, L"Gun Shot    "},
+        {   0x10026, L"SynthBass101"},
+        {   0x10039, L"Trombone 2  "},
+        {   0x1003c, L"Fr.Horn 2   "},
+        {   0x10050, L"Square      "},
+        {   0x10051, L"Saw         "},
+        {   0x10062, L"Syn Mallet  "},
+        {   0x10066, L"Echo Bell   "},
+        {   0x10068, L"Sitar 2     "},
+        {   0x10078, L"Gt.Cut Noise"},
+        {   0x10079, L"Fl.Key Click"},
+        {   0x1007a, L"Rain        "},
+        {   0x1007b, L"Dog         "},
+        {   0x1007c, L"Telephone 2 "},
+        {   0x1007d, L"Car-Engine  "},
+        {   0x1007e, L"Laughing    "},
+        {   0x1007f, L"Machine Gun "},
+        {   0x20066, L"Echo Pan    "},
+        {   0x20078, L"String Slap "},
+        {   0x2007a, L"Thunder     "},
+        {   0x2007b, L"Horse-Gallop"},
+        {   0x2007c, L"DoorCreaking"},
+        {   0x2007d, L"Car-Stop    "},
+        {   0x2007e, L"Screaming   "},
+        {   0x2007f, L"Lasergun    "},
+        {   0x3007a, L"Wind        "},
+        {   0x3007b, L"Bird 2      "},
+        {   0x3007c, L"Door        "},
+        {   0x3007d, L"Car-Pass    "},
+        {   0x3007e, L"Punch       "},
+        {   0x3007f, L"Explosion   "},
+        {   0x4007a, L"Stream      "},
+        {   0x4007c, L"Scratch     "},
+        {   0x4007d, L"Car-Crash   "},
+        {   0x4007e, L"Heart Beat  "},
+        {   0x5007a, L"Bubble      "},
+        {   0x5007c, L"Wind Chimes "},
+        {   0x5007d, L"Siren       "},
+        {   0x5007e, L"Footsteps   "},
+        {   0x6007d, L"Train       "},
+        {   0x7007d, L"Jetplane    "},
+        {   0x80000, L"Piano 1     "},
+        {   0x80001, L"Piano 2     "},
+        {   0x80002, L"Piano 3     "},
+        {   0x80003, L"Honky-tonk  "},
+        {   0x80004, L"Detuned EP 1"},
+        {   0x80005, L"Detuned EP 2"},
+        {   0x80006, L"Coupled Hps."},
+        {   0x8000b, L"Vibraphone  "},
+        {   0x8000c, L"Marimba     "},
+        {   0x8000e, L"Church Bell "},
+        {   0x80010, L"Detuned Or.1"},
+        {   0x80011, L"Detuned Or.2"},
+        {   0x80013, L"Church Org.2"},
+        {   0x80015, L"Accordion It"},
+        {   0x80018, L"Ukulele     "},
+        {   0x80019, L"12-str.Gt   "},
+        {   0x8001a, L"Hawaiian Gt."},
+        {   0x8001b, L"Chorus Gt.  "},
+        {   0x8001c, L"Funk Gt.    "},
+        {   0x8001e, L"Feedback Gt."},
+        {   0x8001f, L"Gt. Feedback"},
+        {   0x80026, L"Synth Bass 3"},
+        {   0x80027, L"Synth Bass 4"},
+        {   0x80028, L"Slow Violin "},
+        {   0x80030, L"Orchestra   "},
+        {   0x80032, L"Syn.Strings3"},
+        {   0x8003d, L"Brass 2     "},
+        {   0x8003e, L"Synth Brass3"},
+        {   0x8003f, L"Synth Brass4"},
+        {   0x80050, L"Sine Wave   "},
+        {   0x80051, L"Doctor Solo "},
+        {   0x8006b, L"Taisho Koto "},
+        {   0x80073, L"Castanets   "},
+        {   0x80074, L"Concert BD  "},
+        {   0x80075, L"Melo. Tom 2 "},
+        {   0x80076, L"808 Tom     "},
+        {   0x8007d, L"Starship    "},
+        {   0x9000e, L"Carillon    "},
+        {   0x90076, L"Elec Perc.  "},
+        {   0x9007d, L"Burst Noise "},
+        {  0x100000, L"Piano 1d    "},
+        {  0x100004, L"E.Piano 1v  "},
+        {  0x100005, L"E.Piano 2v  "},
+        {  0x100006, L"Harpsichord "},
+        {  0x100010, L"60's Organ 1"},
+        {  0x100013, L"Church Org.3"},
+        {  0x100018, L"Nylon Gt.o  "},
+        {  0x100019, L"Mandolin    "},
+        {  0x10001c, L"Funk Gt.2   "},
+        {  0x100027, L"Rubber Bass "},
+        {  0x10003e, L"AnalogBrass1"},
+        {  0x10003f, L"AnalogBrass2"},
+        {  0x180004, L"60's E.Piano"},
+        {  0x180006, L"Harpsi.o    "},
+        {  0x200010, L"Organ 4     "},
+        {  0x200011, L"Organ 5     "},
+        {  0x200018, L"Nylon Gt.2  "},
+        {  0x200034, L"Choir Aahs 2"},
+        {0x80000000, L"Standard    "},
+        {0x80000008, L"Room        "},
+        {0x80000010, L"Power       "},
+        {0x80000018, L"Electronic  "},
+        {0x80000019, L"TR-808      "},
+        {0x80000020, L"Jazz        "},
+        {0x80000028, L"Brush       "},
+        {0x80000030, L"Orchestra   "},
+        {0x80000038, L"SFX         "},
+    }, results[ARRAY_SIZE(expected) + 1];
+    IDirectMusicCollection *collection;
+    IDirectMusicLoader *loader;
+    HRESULT hr;
+    DWORD i;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicLoader, (void**)&loader);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicCollection, (void **)&collection);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    for (i = 0; hr == S_OK && i < ARRAY_SIZE(results); i++)
+    {
+        results[i].patch = 0xdeadbeef;
+        wcscpy(results[i].name, L"DeadBeef");
+        hr = IDirectMusicCollection_EnumInstrument(collection, i, &results[i].patch,
+                results[i].name, ARRAY_SIZE(results[i].name));
+    }
+    if (hr == S_FALSE) i--;
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    todo_wine ok(i > 0, "got %lu\n", i);
+    todo_wine ok(i == ARRAY_SIZE(expected), "got %lu\n", i);
+
+    qsort(results, i, sizeof(*results), result_cmp);
+
+    while (i--)
+    {
+        winetest_push_context("%lu", i);
+        trace("got %#lx %s\n", results[i].patch, debugstr_w(results[i].name));
+        ok(results[i].patch == expected[i].patch, "got %#lx\n", results[i].patch);
+        /* system soundfont names are not very predictable, let's not check them */
+        winetest_pop_context();
+    }
+
+    if (hr == S_FALSE) IDirectMusicCollection_Release(collection);
+    IDirectMusicLoader_Release(loader);
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -1360,6 +1659,7 @@ START_TEST(dmusic)
     test_synthport();
     test_port_download();
     test_download_instrument();
+    test_default_gm_collection();
 
     CoUninitialize();
 }
