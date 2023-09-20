@@ -66,8 +66,8 @@ static void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
  */
 static void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
 {
-    HeapFree(GetProcessHeap(), 0, GameData->sGDFBinaryPath);
-    HeapFree(GetProcessHeap(), 0, GameData->sGameInstallDirectory);
+    free(GameData->sGDFBinaryPath);
+    free(GameData->sGameInstallDirectory);
     SysFreeString(GameData->bstrName);
     SysFreeString(GameData->bstrDescription);
 }
@@ -109,7 +109,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
 
             if(SUCCEEDED(hr))
             {
-                pTokenUser = HeapAlloc(GetProcessHeap(), 0, dwLength);
+                pTokenUser = malloc(dwLength);
                 if(!pTokenUser)
                     hr = E_OUTOFMEMORY;
             }
@@ -128,7 +128,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
                 LocalFree(lpSID);
             }
 
-            HeapFree(GetProcessHeap(), 0, pTokenUser);
+            free(pTokenUser);
             CloseHandle(hToken);
         }
     }
@@ -153,13 +153,10 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
 
     if(SUCCEEDED(hr))
     {
-        *lpRegistryPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sRegistryPath)+1)*sizeof(WCHAR));
+        *lpRegistryPath = wcsdup(sRegistryPath);
         if(!*lpRegistryPath)
             hr = E_OUTOFMEMORY;
     }
-
-    if(SUCCEEDED(hr))
-        lstrcpyW(*lpRegistryPath, sRegistryPath);
 
     TRACE("result: 0x%lx, path: %s\n", hr, debugstr_w(*lpRegistryPath));
     return hr;
@@ -246,7 +243,7 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryKey);
+    free(lpRegistryKey);
     TRACE("returning 0x%lx\n", hr);
     return hr;
 }
@@ -464,7 +461,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, KEY_WOW64_64KEY, 0));
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    free(lpRegistryPath);
 
     /* if not, check current user */
     if(FAILED(hr))
@@ -473,7 +470,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
         if(SUCCEEDED(hr))
             hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, KEY_WOW64_64KEY, 0));
 
-        HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+        free(lpRegistryPath);
     }
 
     return hr;
@@ -506,10 +503,8 @@ static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
     TRACE("(%s, %s, 0x%x, %s)\n", debugstr_w(sGDFBinaryPath), debugstr_w(sGameInstallDirectory), installScope, debugstr_guid(pInstanceID));
 
     GAMEUX_initGameData(&GameData);
-    GameData.sGDFBinaryPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sGDFBinaryPath)+1)*sizeof(WCHAR));
-    lstrcpyW(GameData.sGDFBinaryPath, sGDFBinaryPath);
-    GameData.sGameInstallDirectory = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sGameInstallDirectory)+1)*sizeof(WCHAR));
-    lstrcpyW(GameData.sGameInstallDirectory, sGameInstallDirectory);
+    GameData.sGDFBinaryPath = wcsdup(sGDFBinaryPath);
+    GameData.sGameInstallDirectory = wcsdup(sGameInstallDirectory);
     GameData.installScope = installScope;
 
     /* generate GUID if it was not provided by user */
@@ -562,7 +557,7 @@ done:
  *  InstanceID              [I]     game instance identifier
  *  lpRegistryPath          [O]     place to store address of registry path to
  *                                  the game. It is filled only if key exists.
- *                                  It must be freed by HeapFree(GetProcessHeap(), 0, ...)
+ *                                  It must be freed by free(...)
  *
  * Returns:
  *  S_OK                key was found properly
@@ -590,7 +585,7 @@ static HRESULT GAMEUX_IsGameKeyExist(GAME_INSTALL_SCOPE installScope,
     else
     {
         /* if the key does not exist or another error occurred, do not return the path */
-        HeapFree(GetProcessHeap(), 0, *lpRegistryPath);
+        free(*lpRegistryPath);
         *lpRegistryPath = NULL;
     }
 
@@ -616,7 +611,7 @@ static HRESULT GAMEUX_LoadRegistryString(HKEY hRootKey,
 
     if(SUCCEEDED(hr))
     {
-        *lpValue = HeapAlloc(GetProcessHeap(), 0, dwSize);
+        *lpValue = malloc(dwSize);
         if(!*lpValue)
             hr = E_OUTOFMEMORY;
     }
@@ -680,11 +675,11 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
             hr = GAMEUX_RegisterGame(lpGDFBinaryPath, lpGameInstallDirectory,
                                      installScope, InstanceID);
 
-        HeapFree(GetProcessHeap(), 0, lpGDFBinaryPath);
-        HeapFree(GetProcessHeap(), 0, lpGameInstallDirectory);
+        free(lpGDFBinaryPath);
+        free(lpGameInstallDirectory);
     }
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    free(lpRegistryPath);
     TRACE("returning 0x%lx\n", hr);
     return hr;
 }
@@ -720,7 +715,7 @@ HRESULT GAMEUX_FindGameInstanceId(
         if(SUCCEEDED(hr))
         {
             ++dwMaxSubKeyLen; /* for string terminator */
-            lpName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubKeyLen*sizeof(WCHAR));
+            lpName = malloc(dwMaxSubKeyLen * sizeof(WCHAR));
             if(!lpName) hr = E_OUTOFMEMORY;
         }
 
@@ -744,16 +739,16 @@ HRESULT GAMEUX_FindGameInstanceId(
                         hr = CLSIDFromString(lpName, pInstanceId);
                         found = TRUE;
                     }
-                    HeapFree(GetProcessHeap(), 0, lpValue);
+                    free(lpValue);
                 }
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, lpName);
+        free(lpName);
         RegCloseKey(hRootKey);
     }
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    free(lpRegistryPath);
 
     if((SUCCEEDED(hr) && !found) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
         hr = S_FALSE;
@@ -833,7 +828,7 @@ static ULONG WINAPI GameExplorerImpl_Release(IGameExplorer *iface)
     if(ref == 0)
     {
         TRACE("freeing GameExplorer object\n");
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -1003,7 +998,7 @@ HRESULT GameExplorer_create(
 
     TRACE("(%p, %p)\n", pUnkOuter, ppObj);
 
-    pGameExplorer = HeapAlloc(GetProcessHeap(), 0, sizeof(*pGameExplorer));
+    pGameExplorer = malloc(sizeof(*pGameExplorer));
 
     if(!pGameExplorer)
         return E_OUTOFMEMORY;

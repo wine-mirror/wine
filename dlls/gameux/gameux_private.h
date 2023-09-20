@@ -78,7 +78,7 @@ HRESULT GAMEUX_FindGameInstanceId(
  *  lpRegistryPath              [O]     pointer which will receive address to string
  *                                      containing expected registry path. Path
  *                                      is relative to HKLM registry key. It
- *                                      must be freed by calling HeapFree(GetProcessHeap(), 0, ...)
+ *                                      must be freed by calling free(...)
  *
  * Name of game's registry key always follows patterns below:
  *  When game is installed for current user only (installScope is GIS_CURRENT_USER):
