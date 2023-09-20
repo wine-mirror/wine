@@ -256,8 +256,10 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 	LPDIRECTMUSICOBJECT pObject;
 	DMUS_OBJECTDESC GotDesc;
 	BOOL bCache;
+        IStream *loader_stream;
+        HRESULT hr;
 
-	TRACE("(%p)->(%p, %s, %p)\n", This, pDesc, debugstr_dmguid(riid), ppv);
+        TRACE("(%p)->(%p, %s, %p)\n", This, pDesc, debugstr_dmguid(riid), ppv);
 
 	if (TRACE_ON(dmloader))
 	  dump_DMUS_OBJECTDESC(pDesc);
@@ -329,8 +331,9 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			ERR(": could not create file stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, iface);
-		if (FAILED(result)) {
+                result = IDirectMusicLoaderFileStream_Attach(pStream, wszFileName);
+                if (FAILED(result))
+                {
 			ERR(": could not attach stream to file\n");
 			IStream_Release (pStream);
 			return result;
@@ -345,8 +348,9 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			ERR(": could not create resource stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, iface);
-		if (FAILED(result)) {
+                result = IDirectMusicLoaderResourceStream_Attach(pStream, pDesc->pbMemData, pDesc->llMemLength, 0);
+                if (FAILED(result))
+                {
 			ERR(": could not attach stream to resource\n");
 			IStream_Release (pStream);
 			return result;
@@ -361,8 +365,9 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			ERR(": could not create generic stream\n");
 			return result;
 		}
-		result = IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, iface);
-		if (FAILED(result)) {
+                result = IDirectMusicLoaderGenericStream_Attach(pStream, pDesc->pStream);
+                if (FAILED(result))
+                {
 			ERR(": failed to attach stream\n");
 			IStream_Release (pStream);
 			return result;
@@ -373,7 +378,12 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 		return DMUS_E_LOADER_NOFILENAME; /* test shows this is returned */
 	}
 
-	/* create object */
+    if (FAILED(hr = loader_stream_create((IDirectMusicLoader *)iface, pStream, &loader_stream)))
+        return hr;
+    IStream_Release(pStream);
+    pStream = loader_stream;
+
+        /* create object */
 	result = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
 	if (FAILED(result)) {
 		IStream_Release(pStream);
@@ -451,7 +461,8 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 	LPDIRECTMUSICOBJECT pObject;
 	DMUS_OBJECTDESC Desc;
         struct cache_entry *pObjectEntry, *pNewEntry;
-	HRESULT hr;
+        IStream *loader_stream;
+        HRESULT hr;
 
 	TRACE("(%p)->(%p)\n", This, pDesc);
 
@@ -480,8 +491,9 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			return DMUS_E_LOADER_FAILEDOPEN;
 		}
 		/* attach stream */
-		hr = IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, iface);
-		if (FAILED(hr)) {
+                hr = IDirectMusicLoaderFileStream_Attach(pStream, wszFileName);
+                if (FAILED(hr))
+                {
 			ERR(": could not attach stream to file %s, make sure it exists\n", debugstr_w(wszFileName));
 			IStream_Release (pStream);
 			return DMUS_E_LOADER_FAILEDOPEN;
@@ -495,8 +507,9 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			return DMUS_E_LOADER_FAILEDOPEN;
 		}
 		/* attach stream */
-		hr = IDirectMusicLoaderGenericStream_Attach (pStream, pDesc->pStream, iface);
-		if (FAILED(hr)) {
+                hr = IDirectMusicLoaderGenericStream_Attach(pStream, pDesc->pStream);
+                if (FAILED(hr))
+                {
 			ERR(": could not attach stream\n");
 			IStream_Release (pStream);
 			return DMUS_E_LOADER_FAILEDOPEN;
@@ -510,8 +523,9 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 			return DMUS_E_LOADER_FAILEDOPEN;
 		}
 		/* attach stream */
-		hr = IDirectMusicLoaderResourceStream_Attach (pStream, pDesc->pbMemData, pDesc->llMemLength, 0, iface);
-		if (FAILED(hr)) {
+                hr = IDirectMusicLoaderResourceStream_Attach(pStream, pDesc->pbMemData, pDesc->llMemLength, 0);
+                if (FAILED(hr))
+                {
 			ERR(": could not attach stream to resource\n");
 			IStream_Release (pStream);
 			return DMUS_E_LOADER_FAILEDOPEN;
@@ -522,7 +536,12 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 		return DMUS_E_LOADER_FAILEDOPEN;
 	}
 
-	/* create object */
+    if (FAILED(hr = loader_stream_create((IDirectMusicLoader *)iface, pStream, &loader_stream)))
+        return hr;
+    IStream_Release(pStream);
+    pStream = loader_stream;
+
+        /* create object */
 	hr = CoCreateInstance (&pDesc->guidClass, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*)&pObject);
         if (FAILED(hr)) {
 		IStream_Release(pStream);
