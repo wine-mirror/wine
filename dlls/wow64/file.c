@@ -794,6 +794,7 @@ NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
     case FileRenameInformation:   /* FILE_RENAME_INFORMATION */
     case FileRenameInformationEx:   /* FILE_RENAME_INFORMATION */
     case FileLinkInformation:   /* FILE_LINK_INFORMATION */
+    case FileLinkInformationEx:   /* FILE_LINK_INFORMATION */
         if (len >= sizeof(FILE_RENAME_INFORMATION32))
         {
             OBJECT_ATTRIBUTES attr;

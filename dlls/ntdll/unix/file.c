@@ -4830,12 +4830,22 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         break;
 
     case FileLinkInformation:
+    case FileLinkInformationEx:
         if (len >= sizeof(FILE_LINK_INFORMATION))
         {
             FILE_LINK_INFORMATION *info = ptr;
+            unsigned int flags;
             UNICODE_STRING name_str, redir;
             OBJECT_ATTRIBUTES attr;
             char *unix_name;
+
+            if (class == FileLinkInformation)
+                flags = info->ReplaceIfExists ? FILE_LINK_REPLACE_IF_EXISTS : 0;
+            else
+                flags = info->Flags;
+
+            if (flags & ~FILE_LINK_REPLACE_IF_EXISTS)
+                FIXME( "unsupported flags: %#x\n", flags );
 
             name_str.Buffer = info->FileName;
             name_str.Length = info->FileNameLength;
@@ -4852,7 +4862,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                     req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
                     req->namelen  = attr.ObjectName->Length;
                     req->link     = TRUE;
-                    req->flags    = info->ReplaceIfExists ? FILE_LINK_REPLACE_IF_EXISTS : 0;
+                    req->flags    = flags;
                     wine_server_add_data( req, attr.ObjectName->Buffer, attr.ObjectName->Length );
                     wine_server_add_data( req, unix_name, strlen(unix_name) );
                     status  = wine_server_call( req );
