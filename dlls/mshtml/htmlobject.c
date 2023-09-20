@@ -710,9 +710,9 @@ static void HTMLObjectElement_destructor(DispatchEx *dispex)
     HTMLElement_destructor(&This->plugin_container.element.node.event_target.dispex);
 }
 
-static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLObjectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
 
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(name), grfdex, dispid);
 
@@ -745,7 +745,6 @@ static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .handle_event          = HTMLElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_readystate        = HTMLObjectElement_get_readystate,
-    .get_dispid            = HTMLObjectElement_get_dispid,
     .get_name              = HTMLObjectElement_dispex_get_name,
     .invoke                = HTMLObjectElement_invoke,
 };
@@ -756,7 +755,8 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
         .query_interface= HTMLObjectElement_query_interface,
         .destructor     = HTMLObjectElement_destructor,
         .traverse       = HTMLObjectElement_traverse,
-        .unlink         = HTMLObjectElement_unlink
+        .unlink         = HTMLObjectElement_unlink,
+        .get_dispid     = HTMLObjectElement_get_dispid,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

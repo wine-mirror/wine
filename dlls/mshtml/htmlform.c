@@ -806,9 +806,9 @@ static void HTMLFormElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsform);
 }
 
-static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLFormElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
 {
-    HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLFormElement *This = impl_from_DispatchEx(dispex);
     nsIDOMHTMLCollection *elements;
     nsAString nsstr, name_str;
     UINT32 len, i;
@@ -967,7 +967,6 @@ static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLFormElement_handle_event,
     .get_attr_col          = HTMLElement_get_attr_col,
-    .get_dispid            = HTMLFormElement_get_dispid,
     .get_name              = HTMLFormElement_dispex_get_name,
     .invoke                = HTMLFormElement_invoke,
 };
@@ -978,7 +977,8 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
         .query_interface= HTMLFormElement_query_interface,
         .destructor     = HTMLElement_destructor,
         .traverse       = HTMLFormElement_traverse,
-        .unlink         = HTMLFormElement_unlink
+        .unlink         = HTMLFormElement_unlink,
+        .get_dispid     = HTMLFormElement_get_dispid,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

@@ -1354,7 +1354,7 @@ static void HTMLSelectElement_unlink(DispatchEx *dispex)
 
 #define DISPID_OPTIONCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLSelectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLSelectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
     const WCHAR *ptr;
     DWORD idx = 0;
@@ -1427,7 +1427,6 @@ static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .put_disabled          = HTMLSelectElementImpl_put_disabled,
     .get_disabled          = HTMLSelectElementImpl_get_disabled,
-    .get_dispid            = HTMLSelectElement_get_dispid,
     .get_name              = HTMLSelectElement_dispex_get_name,
     .invoke                = HTMLSelectElement_invoke,
 };
@@ -1438,7 +1437,8 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
         .query_interface= HTMLSelectElement_query_interface,
         .destructor     = HTMLElement_destructor,
         .traverse       = HTMLSelectElement_traverse,
-        .unlink         = HTMLSelectElement_unlink
+        .unlink         = HTMLSelectElement_unlink,
+        .get_dispid     = HTMLSelectElement_get_dispid,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

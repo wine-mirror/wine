@@ -964,9 +964,9 @@ static void HTMLFrameElement_destructor(DispatchEx *dispex)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
-static HRESULT HTMLFrameElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLFrameElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
 
     if(!This->framebase.content_window)
         return DISP_E_UNKNOWNNAME;
@@ -1009,7 +1009,6 @@ static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLFrameElement_get_document,
     .get_readystate        = HTMLFrameElement_get_readystate,
-    .get_dispid            = HTMLFrameElement_get_dispid,
     .get_name              = HTMLFrameElement_get_name,
     .invoke                = HTMLFrameElement_invoke,
     .bind_to_tree          = HTMLFrameElement_bind_to_tree,
@@ -1021,7 +1020,8 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
         .query_interface= HTMLFrameElement_query_interface,
         .destructor     = HTMLFrameElement_destructor,
         .traverse       = HTMLFrameElement_traverse,
-        .unlink         = HTMLFrameElement_unlink
+        .unlink         = HTMLFrameElement_unlink,
+        .get_dispid     = HTMLFrameElement_get_dispid,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };
@@ -1554,9 +1554,9 @@ static void HTMLIFrame_destructor(DispatchEx *dispex)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
-static HRESULT HTMLIFrame_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLIFrame_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
 
     if(!This->framebase.content_window)
         return DISP_E_UNKNOWNNAME;
@@ -1599,7 +1599,6 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
     .get_document          = HTMLIFrame_get_document,
     .get_readystate        = HTMLIFrame_get_readystate,
-    .get_dispid            = HTMLIFrame_get_dispid,
     .get_name              = HTMLIFrame_get_name,
     .invoke                = HTMLIFrame_invoke,
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
@@ -1611,7 +1610,8 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
         .query_interface= HTMLIFrame_query_interface,
         .destructor     = HTMLIFrame_destructor,
         .traverse       = HTMLIFrame_traverse,
-        .unlink         = HTMLIFrame_unlink
+        .unlink         = HTMLIFrame_unlink,
+        .get_dispid     = HTMLIFrame_get_dispid,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
 };

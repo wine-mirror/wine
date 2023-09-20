@@ -6886,16 +6886,6 @@ void HTMLElement_destructor(DispatchEx *dispex)
     HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }
 
-HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *pid)
-{
-    HTMLElement *This = impl_from_DispatchEx(dispex);
-
-    if(This->node.vtbl->get_dispid)
-        return This->node.vtbl->get_dispid(&This->node, name, grfdex, pid);
-
-    return DISP_E_UNKNOWNNAME;
-}
-
 HRESULT HTMLElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
