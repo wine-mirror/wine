@@ -858,7 +858,7 @@ static void process_poll_event( struct fd *fd, int event )
     struct process *process = get_fd_user( fd );
     assert( process->obj.ops == &process_ops );
 
-    if (event & (POLLERR | POLLHUP)) kill_process( process, 0 );
+    if (event & (POLLERR | POLLHUP)) kill_process( process, !process->is_terminating );
     else if (event & POLLIN) receive_fd( process );
 }
 
