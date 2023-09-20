@@ -95,13 +95,12 @@ struct object_property *add_object_property(struct object *object, const WCHAR *
     }
 
     memset(property, 0, sizeof(*property));
-    if (!(property->key = malloc((lstrlenW(name) + 1) * sizeof(WCHAR))))
+    if (!(property->key = wcsdup(name)))
     {
         ERR("Error allocating memory.\n");
         return NULL;
     }
 
-    lstrcpyW(property->key, name);
     return property;
 }
 
