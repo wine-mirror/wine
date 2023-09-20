@@ -516,8 +516,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
 {
     const char *locale = NULL;
 
-    /* This function is probably modifying more global objects */
-    FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
+    TRACE("(%p %d %s)\n", locinfo, category, locstr);
 
     if(!locstr)
         _Xruntime_error("bad locale name");
@@ -622,8 +621,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
 {
     const char *locale = NULL;
 
-    /* This function is probably modifying more global objects */
-    FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
+    TRACE("(%p %d %s)\n", locinfo, category, locstr);
     if(!locstr)
         _Xruntime_error("bad locale name");
 
