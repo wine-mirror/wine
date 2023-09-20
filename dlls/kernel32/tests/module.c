@@ -115,7 +115,7 @@ static const struct
           sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS), /* SizeOfHeaders */
           0, /* CheckSum */
           IMAGE_SUBSYSTEM_WINDOWS_CUI, /* Subsystem */
-          0, /* DllCharacteristics */
+          IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE | IMAGE_DLLCHARACTERISTICS_NX_COMPAT, /* DllCharacteristics */
           0, /* SizeOfStackReserve */
           0, /* SizeOfStackCommit */
           0, /* SizeOfHeapReserve */
