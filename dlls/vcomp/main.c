@@ -253,7 +253,10 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "stp x29, x30, [SP,#-16]!\n\t"
+                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
                    "mov x29, SP\n\t"
+                   __ASM_SEH(".seh_set_fp\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "mov x9, x0\n\t"
                    "cbz w1, 4f\n\t"
                    "lsl w8, w1, #3\n\t"
