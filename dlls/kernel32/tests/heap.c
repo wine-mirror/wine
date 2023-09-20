@@ -264,6 +264,9 @@ static void test_HeapCreate(void)
         ptr1 = HeapReAlloc( heap, 0, (void *)0xdeadbe00, 1 );
         ok( !ptr1, "HeapReAlloc succeeded\n" );
         ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+        ret = HeapValidate( heap, 0, (void *)0xdeadbe00 );
+        ok( !ret, "HeapValidate succeeded\n" );
+        ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
         ptr1 = HeapReAlloc( heap, 0, ptr, 1 );
@@ -275,12 +278,6 @@ static void test_HeapCreate(void)
     ret = HeapValidate( heap, 0, NULL );
     ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
     ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
-    ret = HeapValidate( heap, 0, (void *)0xdeadbe00 );
-    ok( !ret, "HeapValidate succeeded\n" );
-    todo_wine
-    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
     ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
     ret = HeapValidate( heap, 0, ptr );
     ok( !ret, "HeapValidate succeeded\n" );
