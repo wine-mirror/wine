@@ -190,7 +190,6 @@ static void *SVGElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl SVGElementImplVtbl = {
     .clsid                 = &CLSID_SVGElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .get_attr_col          = HTMLElement_get_attr_col,
@@ -200,6 +199,7 @@ static const event_target_vtbl_t SVGElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= SVGElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -740,7 +740,6 @@ static void *SVGSVGElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl SVGSVGElementImplVtbl = {
     .clsid                 = &CLSID_SVGSVGElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .get_attr_col          = HTMLElement_get_attr_col,
@@ -750,6 +749,7 @@ static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= SVGSVGElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -920,7 +920,6 @@ static void *SVGCircleElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl SVGCircleElementImplVtbl = {
     .clsid                 = &CLSID_SVGCircleElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .get_attr_col          = HTMLElement_get_attr_col,
@@ -930,6 +929,7 @@ static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= SVGCircleElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -1175,7 +1175,6 @@ static void *SVGTSpanElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl SVGTSpanElementImplVtbl = {
     .clsid                 = &CLSID_SVGTSpanElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .get_attr_col          = HTMLElement_get_attr_col,
@@ -1185,6 +1184,7 @@ static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= SVGTSpanElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

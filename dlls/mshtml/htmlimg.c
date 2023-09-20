@@ -698,7 +698,6 @@ static void HTMLImgElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
     .clsid                 = &CLSID_HTMLImg,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -710,6 +709,7 @@ static const event_target_vtbl_t HTMLImgElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLImgElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLImgElement_traverse,
         .unlink         = HTMLImgElement_unlink
     },

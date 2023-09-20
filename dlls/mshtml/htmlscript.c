@@ -411,16 +411,15 @@ static void HTMLScriptElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsscript);
 }
 
-static void HTMLScriptElement_destructor(HTMLDOMNode *iface)
+static void HTMLScriptElement_destructor(DispatchEx *dispex)
 {
-    HTMLScriptElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLScriptElement *This = impl_from_DispatchEx(dispex);
     free(This->src_text);
-    HTMLElement_destructor(&This->element.node);
+    HTMLElement_destructor(&This->element.node.event_target.dispex);
 }
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
     .clsid                 = &CLSID_HTMLScriptElement,
-    .destructor            = HTMLScriptElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -433,6 +432,7 @@ static const event_target_vtbl_t HTMLScriptElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLScriptElement_query_interface,
+        .destructor     = HTMLScriptElement_destructor,
         .traverse       = HTMLScriptElement_traverse,
         .unlink         = HTMLScriptElement_unlink
     },

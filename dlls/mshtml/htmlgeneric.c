@@ -140,7 +140,6 @@ static void *HTMLGenericElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     .clsid                 = &CLSID_HTMLGenericElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -151,6 +150,7 @@ static const event_target_vtbl_t HTMLGenericElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLGenericElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

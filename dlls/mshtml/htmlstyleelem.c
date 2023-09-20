@@ -360,11 +360,6 @@ static const IHTMLStyleElement2Vtbl HTMLStyleElement2Vtbl = {
     HTMLStyleElement2_get_sheet
 };
 
-static inline HTMLStyleElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLStyleElement, element.node);
-}
-
 static inline HTMLStyleElement *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLStyleElement, element.node.event_target.dispex);
@@ -398,12 +393,12 @@ static void HTMLStyleElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsstyle);
 }
 
-static void HTMLStyleElement_destructor(HTMLDOMNode *iface)
+static void HTMLStyleElement_destructor(DispatchEx *dispex)
 {
-    HTMLStyleElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLStyleElement *This = impl_from_DispatchEx(dispex);
 
     unlink_ref(&This->style_sheet);
-    HTMLElement_destructor(iface);
+    HTMLElement_destructor(dispex);
 }
 
 static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
@@ -425,7 +420,6 @@ static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLStyleElement,
-    .destructor            = HTMLStyleElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -436,6 +430,7 @@ static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLStyleElement_query_interface,
+        .destructor     = HTMLStyleElement_destructor,
         .traverse       = HTMLStyleElement_traverse,
         .unlink         = HTMLStyleElement_unlink
     },

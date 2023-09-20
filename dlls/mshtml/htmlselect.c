@@ -379,7 +379,6 @@ static void HTMLOptionElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
     .clsid                 = &CLSID_HTMLOptionElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -390,6 +389,7 @@ static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLOptionElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLOptionElement_traverse,
         .unlink         = HTMLOptionElement_unlink
     },
@@ -1421,7 +1421,6 @@ static HRESULT HTMLSelectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLSelectElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1437,6 +1436,7 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLSelectElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLSelectElement_traverse,
         .unlink         = HTMLSelectElement_unlink
     },

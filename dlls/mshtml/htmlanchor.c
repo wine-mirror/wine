@@ -861,7 +861,6 @@ fallback:
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAnchorElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLAnchorElement_handle_event,
@@ -872,6 +871,7 @@ static const event_target_vtbl_t HTMLAnchorElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLAnchorElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLAnchorElement_traverse,
         .unlink         = HTMLAnchorElement_unlink
     },

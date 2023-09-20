@@ -418,7 +418,6 @@ static void HTMLLinkElement_unlink(DispatchEx *dispex)
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLinkElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -431,6 +430,7 @@ static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLLinkElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLLinkElement_traverse,
         .unlink         = HTMLLinkElement_unlink
     },

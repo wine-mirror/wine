@@ -5725,16 +5725,6 @@ void detach_document_node(HTMLDocumentNode *doc)
     }
 }
 
-static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
-{
-    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
-
-    TRACE("(%p)\n", This);
-
-    free(This->event_vector);
-    ConnectionPointContainer_Destroy(&This->cp_container);
-}
-
 static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **ret)
 {
     HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
@@ -5744,7 +5734,6 @@ static HRESULT HTMLDocumentNode_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HT
 
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
     .clsid                 = &CLSID_HTMLDocument,
-    .destructor            = HTMLDocumentNode_destructor,
     .cpc_entries           = HTMLDocumentNode_cpc,
     .clone                 = HTMLDocumentNode_clone,
 };
@@ -5884,6 +5873,15 @@ static void HTMLDocumentNode_unlink(DispatchEx *dispex)
         IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
         This->window = NULL;
     }
+}
+
+static void HTMLDocumentNode_destructor(DispatchEx *dispex)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+
+    free(This->event_vector);
+    ConnectionPointContainer_Destroy(&This->cp_container);
+    HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }
 
 static HRESULT HTMLDocumentNode_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
@@ -6058,7 +6056,7 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
 static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
     {
         .query_interface     = HTMLDocumentNode_query_interface,
-        .destructor          = HTMLDOMNode_destructor,
+        .destructor          = HTMLDocumentNode_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDocumentNode_unlink,
         .get_name            = HTMLDocumentNode_get_name,
@@ -6075,7 +6073,6 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     .clsid                 = &CLSID_HTMLDocument,
-    .destructor            = HTMLDocumentNode_destructor,
     .cpc_entries           = HTMLDocumentNode_cpc,
     .clone                 = HTMLDocumentFragment_clone,
 };

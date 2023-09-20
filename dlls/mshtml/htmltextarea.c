@@ -440,7 +440,6 @@ static void HTMLTextAreaElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTextAreaElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -454,6 +453,7 @@ static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTextAreaElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLTextAreaElement_traverse,
         .unlink         = HTMLTextAreaElement_unlink
     },

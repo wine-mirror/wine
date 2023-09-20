@@ -965,7 +965,6 @@ static const cpc_entry_t HTMLBodyElement_cpc[] = {
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
     .clsid                 = &CLSID_HTMLBody,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLBodyElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -979,6 +978,7 @@ static const event_target_vtbl_t HTMLBodyElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLBodyElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLBodyElement_traverse,
         .unlink         = HTMLBodyElement_unlink
     },

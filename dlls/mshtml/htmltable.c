@@ -479,7 +479,6 @@ static void HTMLTableCell_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .clsid                 = &CLSID_HTMLTableCell,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -490,6 +489,7 @@ static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTableCell_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLTableCell_traverse,
         .unlink         = HTMLTableCell_unlink
     },
@@ -909,7 +909,6 @@ static void HTMLTableRow_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
     .clsid                 = &CLSID_HTMLTableRow,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -920,6 +919,7 @@ static const event_target_vtbl_t HTMLTableRow_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTableRow_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLTableRow_traverse,
         .unlink         = HTMLTableRow_unlink
     },
@@ -1923,7 +1923,6 @@ static const cpc_entry_t HTMLTable_cpc[] = {
 
 static const NodeImplVtbl HTMLTableImplVtbl = {
     .clsid                 = &CLSID_HTMLTable,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLTable_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1934,6 +1933,7 @@ static const event_target_vtbl_t HTMLTable_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTable_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLTable_traverse,
         .unlink         = HTMLTable_unlink
     },

@@ -177,7 +177,6 @@ static void *HTMLCommentElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
     .clsid                 = &CLSID_HTMLCommentElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLCommentElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -188,6 +187,7 @@ static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLCommentElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

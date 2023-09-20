@@ -1449,8 +1449,6 @@ void HTMLDOMNode_unlink(DispatchEx *dispex)
 void HTMLDOMNode_destructor(DispatchEx *dispex)
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
-    if(This->vtbl->destructor)
-        This->vtbl->destructor(This);
     free(This);
 }
 

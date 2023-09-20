@@ -477,7 +477,6 @@ fallback:
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLAreaElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLAreaElement_handle_event,
@@ -488,6 +487,7 @@ static const event_target_vtbl_t HTMLAreaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLAreaElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLAreaElement_traverse,
         .unlink         = HTMLAreaElement_unlink
     },

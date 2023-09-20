@@ -6811,7 +6811,6 @@ const cpc_entry_t HTMLElement_cpc[] = {
 
 static const NodeImplVtbl HTMLElementImplVtbl = {
     .clsid                 = &CLSID_HTMLUnknownElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -6859,9 +6858,9 @@ void *HTMLElement_query_interface(DispatchEx *dispex, REFIID riid)
     return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
-void HTMLElement_destructor(HTMLDOMNode *iface)
+void HTMLElement_destructor(DispatchEx *dispex)
 {
-    HTMLElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLElement *This = impl_from_DispatchEx(dispex);
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
@@ -6884,6 +6883,7 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
     }
 
     free(This->filter);
+    HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }
 
 HRESULT HTMLElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *pid)
@@ -7318,6 +7318,7 @@ static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface     = HTMLElement_query_interface,
+        .destructor          = HTMLElement_destructor,
         .traverse            = HTMLDOMNode_traverse,
         .unlink              = HTMLDOMNode_unlink,
     },

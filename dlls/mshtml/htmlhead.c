@@ -158,7 +158,6 @@ static void *HTMLTitleElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLTitleElementImplVtbl = {
     .clsid                 = &CLSID_HTMLTitleElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -169,6 +168,7 @@ static const event_target_vtbl_t HTMLTitleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTitleElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -327,7 +327,6 @@ static void *HTMLHtmlElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHtmlElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -339,6 +338,7 @@ static const event_target_vtbl_t HTMLHtmlElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLHtmlElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -555,7 +555,6 @@ static void *HTMLMetaElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLMetaElementImplVtbl = {
     .clsid                 = &CLSID_HTMLMetaElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -566,6 +565,7 @@ static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLMetaElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -717,7 +717,6 @@ static void *HTMLHeadElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLHeadElementImplVtbl = {
     .clsid                 = &CLSID_HTMLHeadElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -728,6 +727,7 @@ static const event_target_vtbl_t HTMLHeadElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLHeadElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

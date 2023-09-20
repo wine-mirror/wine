@@ -700,14 +700,14 @@ static void HTMLObjectElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsobject);
 }
 
-static void HTMLObjectElement_destructor(HTMLDOMNode *iface)
+static void HTMLObjectElement_destructor(DispatchEx *dispex)
 {
-    HTMLObjectElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
 
     if(This->plugin_container.plugin_host)
         detach_plugin_host(This->plugin_container.plugin_host);
 
-    HTMLElement_destructor(&This->plugin_container.element.node);
+    HTMLElement_destructor(&This->plugin_container.element.node.event_target.dispex);
 }
 
 static HRESULT HTMLObjectElement_get_dispid(HTMLDOMNode *iface, BSTR name, DWORD grfdex, DISPID *dispid)
@@ -740,7 +740,6 @@ static HRESULT HTMLObjectElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid
 
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLObjectElement,
-    .destructor            = HTMLObjectElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -755,6 +754,7 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLObjectElement_query_interface,
+        .destructor     = HTMLObjectElement_destructor,
         .traverse       = HTMLObjectElement_traverse,
         .unlink         = HTMLObjectElement_unlink
     },
@@ -1000,7 +1000,6 @@ static void *HTMLEmbedElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
     .clsid                 = &CLSID_HTMLEmbed,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1011,6 +1010,7 @@ static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLEmbedElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },

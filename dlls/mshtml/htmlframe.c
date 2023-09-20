@@ -715,7 +715,7 @@ static void HTMLFrameBase_destructor(HTMLFrameBase *This)
     if(This->content_window)
         This->content_window->frame_element = NULL;
 
-    HTMLElement_destructor(&This->element.node);
+    HTMLElement_destructor(&This->element.node.event_target.dispex);
 }
 
 static void HTMLFrameBase_Init(HTMLFrameBase *This, HTMLDocumentNode *doc, nsIDOMElement *nselem,
@@ -957,9 +957,9 @@ static void HTMLFrameElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->framebase.nsframe);
 }
 
-static void HTMLFrameElement_destructor(HTMLDOMNode *iface)
+static void HTMLFrameElement_destructor(DispatchEx *dispex)
 {
-    HTMLFrameElement *This = frame_from_HTMLDOMNode(iface);
+    HTMLFrameElement *This = frame_from_DispatchEx(dispex);
 
     HTMLFrameBase_destructor(&This->framebase);
 }
@@ -1003,7 +1003,6 @@ static HRESULT HTMLFrameElement_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid,
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
     .clsid                 = &CLSID_HTMLFrameElement,
-    .destructor            = HTMLFrameElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1020,6 +1019,7 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLFrameElement_query_interface,
+        .destructor     = HTMLFrameElement_destructor,
         .traverse       = HTMLFrameElement_traverse,
         .unlink         = HTMLFrameElement_unlink
     },
@@ -1547,9 +1547,9 @@ static void HTMLIFrame_unlink(DispatchEx *dispex)
     unlink_ref(&This->framebase.nsiframe);
 }
 
-static void HTMLIFrame_destructor(HTMLDOMNode *iface)
+static void HTMLIFrame_destructor(DispatchEx *dispex)
 {
-    HTMLIFrame *This = iframe_from_HTMLDOMNode(iface);
+    HTMLIFrame *This = iframe_from_DispatchEx(dispex);
 
     HTMLFrameBase_destructor(&This->framebase);
 }
@@ -1593,7 +1593,6 @@ static HRESULT HTMLIFrame_invoke(HTMLDOMNode *iface, DISPID id, LCID lcid, WORD 
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .clsid                 = &CLSID_HTMLIFrame,
-    .destructor            = HTMLIFrame_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1610,6 +1609,7 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLIFrame_query_interface,
+        .destructor     = HTMLIFrame_destructor,
         .traverse       = HTMLIFrame_traverse,
         .unlink         = HTMLIFrame_unlink
     },

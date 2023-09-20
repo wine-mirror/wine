@@ -1412,7 +1412,6 @@ static void HTMLInputElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
     .clsid                 = &CLSID_HTMLInputElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1426,6 +1425,7 @@ static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLInputElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLInputElement_traverse,
         .unlink         = HTMLInputElement_unlink
     },
@@ -1611,7 +1611,6 @@ static void *HTMLLabelElement_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const NodeImplVtbl HTMLLabelElementImplVtbl = {
     .clsid                 = &CLSID_HTMLLabelElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1622,6 +1621,7 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLLabelElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLDOMNode_traverse,
         .unlink         = HTMLDOMNode_unlink
     },
@@ -1947,7 +1947,6 @@ static void HTMLButtonElement_unlink(DispatchEx *dispex)
 
 static const NodeImplVtbl HTMLButtonElementImplVtbl = {
     .clsid                 = &CLSID_HTMLButtonElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLElement_handle_event,
@@ -1961,6 +1960,7 @@ static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLButtonElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLButtonElement_traverse,
         .unlink         = HTMLButtonElement_unlink
     },

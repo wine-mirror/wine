@@ -963,7 +963,6 @@ static HRESULT HTMLFormElement_handle_event(HTMLDOMNode *iface, DWORD eid, nsIDO
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {
     .clsid                 = &CLSID_HTMLFormElement,
-    .destructor            = HTMLElement_destructor,
     .cpc_entries           = HTMLElement_cpc,
     .clone                 = HTMLElement_clone,
     .handle_event          = HTMLFormElement_handle_event,
@@ -977,6 +976,7 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLFormElement_query_interface,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLFormElement_traverse,
         .unlink         = HTMLFormElement_unlink
     },
