@@ -6822,7 +6822,10 @@ extern float CDECL call_float_method( void *func, int nb_stk_args, const DWORD_P
 extern double CDECL call_double_method( void *func, int nb_stk_args, const DWORD_PTR *stk_args, const DWORD_PTR *reg_args );
 __ASM_GLOBAL_FUNC( call_method,
                    "stp x29, x30, [sp, #-16]!\n\t"
+                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
                    "mov x29, sp\n\t"
+                   __ASM_SEH(".seh_set_fp\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    "sub sp, sp, x1, lsl #3\n\t"
                    "cbz x1, 2f\n"
                    "1:\tsub x1, x1, #1\n\t"
