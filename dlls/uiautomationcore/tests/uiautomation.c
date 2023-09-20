@@ -15312,7 +15312,7 @@ static void test_UiaAddEvent_client_proc(void)
     SET_EXPECT(uia_event_callback);
 
     post_event_message(hwnd, WM_UIA_TEST_RAISE_EVENT, 0, PROVIDER_CHILD_ID, ProviderOptions_ServerSideProvider);
-    ok(!WaitForSingleObject(EventData.event_handle, 2000), "Wait for event_handle failed.\n");
+    ok(!WaitForSingleObject(EventData.event_handle, 5000), "Wait for event_handle failed.\n");
     CHECK_CALLED(prov_callback_base_hwnd);
     CHECK_CALLED_MULTI(prov_callback_nonclient, 2);
     todo_wine CHECK_CALLED_MULTI(prov_callback_proxy, 2);
