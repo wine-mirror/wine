@@ -59,6 +59,7 @@ struct band
     struct dmobject dmobj;
     LONG ref;
     struct list instruments;
+    IDirectMusicCollection *collection;
 };
 
 static inline struct band *impl_from_IDirectMusicBand(IDirectMusicBand *iface)
@@ -117,6 +118,7 @@ static ULONG WINAPI band_Release(IDirectMusicBand *iface)
             instrument_entry_destroy(entry);
         }
 
+        if (This->collection) IDirectMusicCollection_Release(This->collection);
         free(This);
     }
 
@@ -336,10 +338,22 @@ static inline struct band *impl_from_IPersistStream(IPersistStream *iface)
 static HRESULT WINAPI band_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
     struct band *This = impl_from_IPersistStream(iface);
+    DMUS_OBJECTDESC default_desc =
+    {
+        .dwSize = sizeof(DMUS_OBJECTDESC),
+        .dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS,
+        .guidClass = CLSID_DirectMusicCollection,
+        .guidObject = GUID_DefaultGMCollection,
+    };
     struct chunk_entry chunk = {0};
     HRESULT hr;
 
     TRACE("%p, %p\n", iface, stream);
+
+    if (This->collection) IDirectMusicCollection_Release(This->collection);
+    if (FAILED(hr = stream_get_object(stream, &default_desc, &IID_IDirectMusicCollection,
+            (void **)&This->collection)))
+        WARN("Failed to load default collection from loader, hr %#lx\n", hr);
 
     if ((hr = stream_get_chunk(stream, &chunk)) == S_OK)
     {
@@ -407,4 +421,16 @@ HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
   IDirectMusicBand_Release(&obj->IDirectMusicBand_iface);
 
   return hr;
+}
+
+HRESULT band_connect_to_collection(IDirectMusicBand *iface, IDirectMusicCollection *collection)
+{
+    struct band *This = impl_from_IDirectMusicBand(iface);
+
+    TRACE("%p, %p\n", iface, collection);
+
+    if (This->collection) IDirectMusicCollection_Release(This->collection);
+    if ((This->collection = collection)) IDirectMusicCollection_AddRef(This->collection);
+
+    return S_OK;
 }

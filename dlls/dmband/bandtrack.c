@@ -182,7 +182,12 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
     else if (IsEqualGUID(type, &GUID_Clear_All_Bands))
         FIXME("GUID_Clear_All_Bands not handled yet\n");
     else if (IsEqualGUID(type, &GUID_ConnectToDLSCollection))
-        FIXME("GUID_ConnectToDLSCollection not handled yet\n");
+    {
+        struct band_entry *entry;
+
+        LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+            band_connect_to_collection(entry->band, param);
+    }
     else if (IsEqualGUID(type, &GUID_Disable_Auto_Download))
         FIXME("GUID_Disable_Auto_Download not handled yet\n");
     else if (IsEqualGUID(type, &GUID_Download))

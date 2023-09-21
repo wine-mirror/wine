@@ -44,6 +44,9 @@ HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, 
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
         ULONG size);
 
+HRESULT stream_get_loader(IStream *stream, IDirectMusicLoader **ret_loader);
+HRESULT stream_get_object(IStream *stream, DMUS_OBJECTDESC *desc, REFIID riid, void **ret_iface);
+
 static inline HRESULT stream_reset_chunk_data(IStream *stream, const struct chunk_entry *chunk)
 {
     LARGE_INTEGER offset;

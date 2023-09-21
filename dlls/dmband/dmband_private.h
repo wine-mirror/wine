@@ -47,4 +47,6 @@
 extern HRESULT create_dmband(REFIID riid, void **ret_iface);
 extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
 
+extern HRESULT band_connect_to_collection(IDirectMusicBand *iface, IDirectMusicCollection *collection);
+
 #endif	/* __WINE_DMBAND_PRIVATE_H */

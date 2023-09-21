@@ -444,6 +444,35 @@ HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, 
     return S_OK;
 }
 
+HRESULT stream_get_loader(IStream *stream, IDirectMusicLoader **ret_loader)
+{
+    IDirectMusicGetLoader *getter;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IStream_QueryInterface(stream, &IID_IDirectMusicGetLoader, (void**)&getter)))
+    {
+        hr = IDirectMusicGetLoader_GetLoader(getter, ret_loader);
+        IDirectMusicGetLoader_Release(getter);
+    }
+
+    if (FAILED(hr)) *ret_loader = NULL;
+    return hr;
+}
+
+HRESULT stream_get_object(IStream *stream, DMUS_OBJECTDESC *desc, REFIID iid, void **ret_iface)
+{
+    IDirectMusicLoader *loader;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = stream_get_loader(stream, &loader)))
+    {
+        hr = IDirectMusicLoader_GetObject(loader, desc, iid, (void **)ret_iface);
+        IDirectMusicLoader_Release(loader);
+    }
+
+    if (FAILED(hr)) *ret_iface = NULL;
+    return hr;
+}
 
 
 /* Generic IDirectMusicObject methods */
@@ -626,8 +655,6 @@ HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
         IDirectMusicObject **dmobj)
 {
     struct chunk_entry chunk = {.parent = list};
-    IDirectMusicGetLoader *getloader;
-    IDirectMusicLoader *loader;
     DMUS_OBJECTDESC desc;
     DMUS_IO_REFERENCE reference;
     HRESULT hr;
@@ -650,17 +677,7 @@ HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
     desc.dwValidData |= DMUS_OBJ_CLASS;
     dump_DMUS_OBJECTDESC(&desc);
 
-    if (FAILED(hr = IStream_QueryInterface(stream, &IID_IDirectMusicGetLoader, (void**)&getloader)))
-        return hr;
-    hr = IDirectMusicGetLoader_GetLoader(getloader, &loader);
-    IDirectMusicGetLoader_Release(getloader);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicObject, (void**)dmobj);
-    IDirectMusicLoader_Release(loader);
-
-    return hr;
+    return stream_get_object(stream, &desc, &IID_IDirectMusicObject, (void **)dmobj);
 }
 
 /* Generic IPersistStream methods */
