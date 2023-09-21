@@ -2312,6 +2312,32 @@ static HRESULT WINAPI uia_element_get_CurrentItemStatus(IUIAutomationElement9 *i
     return E_NOTIMPL;
 }
 
+static void uia_variant_rect_to_rect(VARIANT *v, RECT *ret_val)
+{
+    double *vals;
+    HRESULT hr;
+
+    memset(ret_val, 0, sizeof(*ret_val));
+    if (V_VT(v) != (VT_R8 | VT_ARRAY))
+        return;
+
+    hr = SafeArrayAccessData(V_ARRAY(v), (void **)&vals);
+    if (FAILED(hr))
+    {
+        WARN("SafeArrayAccessData failed with hr %#lx\n", hr);
+        return;
+    }
+
+    ret_val->left = vals[0];
+    ret_val->top = vals[1];
+    ret_val->right = ret_val->left + vals[2];
+    ret_val->bottom = ret_val->top + vals[3];
+
+    hr = SafeArrayUnaccessData(V_ARRAY(v));
+    if (FAILED(hr))
+        WARN("SafeArrayUnaccessData failed with hr %#lx\n", hr);
+}
+
 static HRESULT WINAPI uia_element_get_CurrentBoundingRectangle(IUIAutomationElement9 *iface, RECT *ret_val)
 {
     struct uia_element *element = impl_from_IUIAutomationElement9(iface);
@@ -2320,22 +2346,9 @@ static HRESULT WINAPI uia_element_get_CurrentBoundingRectangle(IUIAutomationElem
 
     TRACE("%p, %p\n", element, ret_val);
 
-    memset(ret_val, 0, sizeof(*ret_val));
     VariantInit(&v);
     hr = UiaGetPropertyValue(element->node, UIA_BoundingRectanglePropertyId, &v);
-    if (SUCCEEDED(hr) && V_VT(&v) == (VT_R8 | VT_ARRAY))
-    {
-        double vals[4];
-        LONG idx;
-
-        for (idx = 0; idx < ARRAY_SIZE(vals); idx++)
-            SafeArrayGetElement(V_ARRAY(&v), &idx, &vals[idx]);
-
-        ret_val->left = vals[0];
-        ret_val->top = vals[1];
-        ret_val->right = ret_val->left + vals[2];
-        ret_val->bottom = ret_val->top + vals[3];
-    }
+    uia_variant_rect_to_rect(&v, ret_val);
 
     VariantClear(&v);
     return hr;
@@ -2588,8 +2601,21 @@ static HRESULT WINAPI uia_element_get_CachedItemStatus(IUIAutomationElement9 *if
 
 static HRESULT WINAPI uia_element_get_CachedBoundingRectangle(IUIAutomationElement9 *iface, RECT *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    const int prop_id = UIA_BoundingRectanglePropertyId;
+    struct uia_cache_property *cache_prop = NULL;
+
+    TRACE("%p, %p\n", iface, ret_val);
+
+    if (!ret_val)
+        return E_POINTER;
+
+    if (!(cache_prop = bsearch(&prop_id, element->cached_props, element->cached_props_count, sizeof(*cache_prop),
+            uia_cached_property_id_compare)))
+        return E_INVALIDARG;
+
+    uia_variant_rect_to_rect(&cache_prop->prop_val, ret_val);
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_element_get_CachedLabeledBy(IUIAutomationElement9 *iface, IUIAutomationElement **ret_val)

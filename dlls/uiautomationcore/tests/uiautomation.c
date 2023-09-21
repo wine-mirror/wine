@@ -13675,11 +13675,11 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     /* Cached UIA_BoundingRectanglePropertyId helper. */
     hr = IUIAutomationElement_get_CachedBoundingRectangle(element, NULL);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     rect.left = rect.top = rect.bottom = rect.right = 1;
     hr = IUIAutomationElement_get_CachedBoundingRectangle(element, &rect);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(rect.left == 1, "Unexpected rect left %ld\n", rect.left);
     ok(rect.top == 1, "Unexpected rect top %ld\n", rect.top);
     ok(rect.right == 1, "Unexpected rect right %ld\n", rect.right);
@@ -13687,17 +13687,16 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     rect.left = rect.top = rect.bottom = rect.right = 1;
     hr = IUIAutomationElement_get_CachedBoundingRectangle(element2, &rect);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!rect.left, "Unexpected rect left %ld\n", rect.left);
-    todo_wine ok(!rect.top, "Unexpected rect top %ld\n", rect.top);
-    todo_wine ok(!rect.right, "Unexpected rect right %ld\n", rect.right);
-    todo_wine ok(!rect.bottom, "Unexpected rect bottom %ld\n", rect.bottom);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!rect.left, "Unexpected rect left %ld\n", rect.left);
+    ok(!rect.top, "Unexpected rect top %ld\n", rect.top);
+    ok(!rect.right, "Unexpected rect right %ld\n", rect.right);
+    ok(!rect.bottom, "Unexpected rect bottom %ld\n", rect.bottom);
 
     memset(&rect, 0, sizeof(rect));
     hr = IUIAutomationElement_get_CachedBoundingRectangle(element3, &rect);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        check_uia_rect_rect_val(&rect, &Provider.bounds_rect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_rect_rect_val(&rect, &Provider.bounds_rect);
 
     IUIAutomationElement_Release(element3);
     IUIAutomationElement_Release(element2);
