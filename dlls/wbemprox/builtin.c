@@ -241,7 +241,7 @@ static const struct column col_operatingsystem[] =
     { L"CurrentTimeZone",         CIM_SINT16 },
     { L"FreePhysicalMemory",      CIM_UINT64 },
     { L"FreeVirtualMemory",       CIM_UINT64 },
-    { L"InstallDate",             CIM_DATETIME },
+    { L"InstallDate",             CIM_DATETIME|COL_FLAG_DYNAMIC },
     { L"LastBootUpTime",          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { L"LocalDateTime",           CIM_DATETIME|COL_FLAG_DYNAMIC },
     { L"Locale",                  CIM_STRING|COL_FLAG_DYNAMIC },
@@ -3749,6 +3749,29 @@ static WCHAR *get_windowsdirectory(void)
     return wcsdup( dir );
 }
 
+static WCHAR *get_osinstalldate(void)
+{
+    HANDLE handle = CreateFileW( L"c:\\", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                                 FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        FILETIME ft = { 0 };
+        WCHAR *ret;
+
+        GetFileTime( handle, &ft, NULL, NULL );
+        CloseHandle( handle );
+        if ((ret = malloc( 26 * sizeof(WCHAR) )))
+        {
+            SYSTEMTIME st = { 0 };
+            FileTimeToSystemTime( &ft, &st );
+            swprintf( ret, 26, L"%04u%02u%02u%02u%02u%02u.%06u+000", st.wYear, st.wMonth, st.wDay, st.wHour,
+                      st.wMinute, st.wSecond, st.wMilliseconds * 1000 );
+            return ret;
+        }
+    }
+    return wcsdup( L"20230101000000.000000+000" );
+}
+
 static enum fill_status fill_operatingsystem( struct table *table, const struct expr *cond )
 {
     struct record_operatingsystem *rec;
@@ -3773,7 +3796,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->currenttimezone        = get_currenttimezone();
     rec->freephysicalmemory     = get_available_physical_memory() / 1024;
     rec->freevirtualmemory      = get_available_virtual_memory() / 1024;
-    rec->installdate            = L"20140101000000.000000+000";
+    rec->installdate            = get_osinstalldate();
     rec->lastbootuptime         = get_lastbootuptime();
     rec->localdatetime          = get_localdatetime();
     rec->locale                 = get_locale();
