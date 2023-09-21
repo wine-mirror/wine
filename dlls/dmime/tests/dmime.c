@@ -3627,6 +3627,51 @@ static void test_band_track_play(void)
     IDirectMusicTool_Release(tool);
 }
 
+static void test_connect_to_collection(void)
+{
+    IDirectMusicCollection *collection;
+    IDirectMusicSegment *segment;
+    IDirectMusicTrack *track;
+    void *param;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicCollection, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicCollection, (void **)&collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack, (void **)&track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_InsertTrack(segment, track, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* it is possible to connect the band track to another collection, but not to disconnect it */
+    hr = IDirectMusicTrack_IsParamSupported(track, &GUID_ConnectToDLSCollection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_SetParam(track, &GUID_ConnectToDLSCollection, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicTrack_SetParam(track, &GUID_ConnectToDLSCollection, 0, collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_ConnectToDLSCollection, 0, NULL, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicTrack_GetParam(track, &GUID_ConnectToDLSCollection, 0, NULL, &param);
+    ok(hr == DMUS_E_GET_UNSUPPORTED, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, NULL);
+    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetParam(segment, &GUID_ConnectToDLSCollection, -1, DMUS_SEG_ALLTRACKS, 0, collection);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    IDirectMusicTrack_Release(track);
+    IDirectMusicSegment_Release(segment);
+    IDirectMusicCollection_Release(collection);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -3662,6 +3707,7 @@ START_TEST(dmime)
     test_wave_pmsg();
     test_sequence_track();
     test_band_track_play();
+    test_connect_to_collection();
 
     CoUninitialize();
 }
