@@ -305,40 +305,29 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 		TRACE(": no cache/alias entry found for requested object\n");
 	}
 	
-	if (pDesc->dwValidData & DMUS_OBJ_URL) {
-		TRACE(": loading from URLs not supported yet\n");
-		return DMUS_E_LOADER_FORMATNOTSUPPORTED;
-	}
-	else if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
-		/* load object from file */
-		/* generate filename; if it's full path, don't add search 
-		   directory path, otherwise do */
-		WCHAR wszFileName[MAX_PATH];
+    if (pDesc->dwValidData & DMUS_OBJ_URL)
+    {
+        TRACE(": loading from URLs not supported yet\n");
+        return DMUS_E_LOADER_FORMATNOTSUPPORTED;
+    }
+    else if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
+    {
+        WCHAR file_name[MAX_PATH];
 
-		if (pDesc->dwValidData & DMUS_OBJ_FULLPATH) {
-			lstrcpyW(wszFileName, pDesc->wszFileName);
-		} else {
-                        WCHAR *p;
-                        get_search_path(This, &pDesc->guidClass, wszFileName);
-			p = wszFileName + lstrlenW(wszFileName);
-			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
-			lstrcpyW(p, pDesc->wszFileName);
-		}
-		TRACE(": loading from file (%s)\n", debugstr_w(wszFileName));
-		/* create stream and associate it with file */			
-		result = DMUSIC_CreateDirectMusicLoaderFileStream ((LPVOID*)&pStream);
-		if (FAILED(result)) {
-			ERR(": could not create file stream\n");
-			return result;
-		}
-                result = IDirectMusicLoaderFileStream_Attach(pStream, wszFileName);
-                if (FAILED(result))
-                {
-			ERR(": could not attach stream to file\n");
-			IStream_Release (pStream);
-			return result;
-		}
-	}
+        if (pDesc->dwValidData & DMUS_OBJ_FULLPATH)
+            lstrcpyW(file_name, pDesc->wszFileName);
+        else
+        {
+            WCHAR *p;
+            get_search_path(This, &pDesc->guidClass, file_name);
+            p = file_name + lstrlenW(file_name);
+            if (p > file_name && p[-1] != '\\') *p++ = '\\';
+            lstrcpyW(p, pDesc->wszFileName);
+        }
+
+        TRACE(": loading from file (%s)\n", debugstr_w(file_name));
+        if (FAILED(hr = file_stream_create(file_name, &pStream))) return hr;
+    }
 	else if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
 		/* load object from resource */
 		TRACE(": loading from resource\n");
@@ -363,9 +352,8 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
     }
     else
     {
-        /* nowhere to load from */
         FIXME(": unknown/unsupported way of loading\n");
-        return DMUS_E_LOADER_NOFILENAME; /* test shows this is returned */
+        return DMUS_E_LOADER_NOFILENAME;
     }
 
     if (FAILED(hr = loader_stream_create((IDirectMusicLoader *)iface, pStream, &loader_stream)))
@@ -459,36 +447,23 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 	if (TRACE_ON(dmloader))
 		dump_DMUS_OBJECTDESC(pDesc);
 
-	/* create stream and load additional info from it */
-	if (pDesc->dwValidData & DMUS_OBJ_FILENAME) {
-		/* generate filename; if it's full path, don't add search 
-		   directory path, otherwise do */
-		WCHAR wszFileName[MAX_PATH];
+    if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
+    {
+        WCHAR file_name[MAX_PATH];
 
-		if (pDesc->dwValidData & DMUS_OBJ_FULLPATH) {
-			lstrcpyW(wszFileName, pDesc->wszFileName);
-		} else {
-			WCHAR *p;
-                        get_search_path(This, &pDesc->guidClass, wszFileName);
-			p = wszFileName + lstrlenW(wszFileName);
-			if (p > wszFileName && p[-1] != '\\') *p++ = '\\';
-			lstrcpyW(p, pDesc->wszFileName);
-		}
-		/* create stream */
-		hr = DMUSIC_CreateDirectMusicLoaderFileStream ((LPVOID*)&pStream);
-		if (FAILED(hr)) {
-			ERR(": could not create file stream\n");
-			return DMUS_E_LOADER_FAILEDOPEN;
-		}
-		/* attach stream */
-                hr = IDirectMusicLoaderFileStream_Attach(pStream, wszFileName);
-                if (FAILED(hr))
-                {
-			ERR(": could not attach stream to file %s, make sure it exists\n", debugstr_w(wszFileName));
-			IStream_Release (pStream);
-			return DMUS_E_LOADER_FAILEDOPEN;
-		}
-	}
+        if (pDesc->dwValidData & DMUS_OBJ_FULLPATH)
+            lstrcpyW(file_name, pDesc->wszFileName);
+        else
+        {
+            WCHAR *p;
+            get_search_path(This, &pDesc->guidClass, file_name);
+            p = file_name + lstrlenW(file_name);
+            if (p > file_name && p[-1] != '\\') *p++ = '\\';
+            lstrcpyW(p, pDesc->wszFileName);
+        }
+
+        if (FAILED(hr = file_stream_create(file_name, &pStream))) return hr;
+    }
     else if (pDesc->dwValidData & DMUS_OBJ_STREAM)
     {
         pStream = pDesc->pStream;

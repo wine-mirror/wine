@@ -59,24 +59,7 @@ typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
  */
 extern HRESULT create_dmloader(REFIID riid, void **ret_iface);
 extern HRESULT create_dmcontainer(REFIID riid, void **ret_iface);
-extern HRESULT DMUSIC_CreateDirectMusicLoaderFileStream(void **ppobj);
 extern HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream(void **ppobj);
-
-/*****************************************************************************
- * IDirectMusicLoaderFileStream implementation structure
- */
-struct IDirectMusicLoaderFileStream {
-	/* VTABLEs */
-	const IStreamVtbl *StreamVtbl;
-	/* reference counter */
-	LONG dwRef;
-	/* file */
-	WCHAR wzFileName[MAX_PATH]; /* for clone */
-	HANDLE hFile;
-};
-
-/* Custom: */
-extern HRESULT WINAPI IDirectMusicLoaderFileStream_Attach(LPSTREAM iface, LPCWSTR wzFile);
 
 /*****************************************************************************
  * IDirectMusicLoaderResourceStream implementation structure
@@ -98,6 +81,7 @@ extern HRESULT WINAPI IDirectMusicLoaderResourceStream_Attach(LPSTREAM iface, LP
         LONGLONG llMemLength, LONGLONG llPos);
 
 extern HRESULT loader_stream_create(IDirectMusicLoader *loader, IStream *stream, IStream **ret_iface);
+extern HRESULT file_stream_create(const WCHAR *path, IStream **ret_iface);
 
 #include "debug.h"
 
