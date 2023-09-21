@@ -201,7 +201,13 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
     else if (IsEqualGUID(type, &GUID_StandardMIDIFile))
         FIXME("GUID_StandardMIDIFile not handled yet\n");
     else if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
-        FIXME("GUID_UnloadFromAudioPath not handled yet\n");
+    {
+        struct band_entry *entry;
+        HRESULT hr;
+
+        LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+            if (FAILED(hr = IDirectMusicBand_Unload(entry->band, NULL))) break;
+    }
 
     return S_OK;
 }
