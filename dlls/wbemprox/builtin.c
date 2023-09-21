@@ -1615,6 +1615,15 @@ static UINT64 get_available_physical_memory(void)
     return status.ullAvailPhys;
 }
 
+static UINT64 get_total_virtual_memory(void)
+{
+    MEMORYSTATUSEX status;
+
+    status.dwLength = sizeof(status);
+    if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
+    return status.ullTotalVirtual;
+}
+
 static UINT64 get_available_virtual_memory(void)
 {
     MEMORYSTATUSEX status;
@@ -3786,8 +3795,8 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->suitemask              = 272;     /* Single User + Terminal */
     rec->systemdirectory        = get_systemdirectory();
     rec->systemdrive            = get_systemdrive();
-    rec->totalvirtualmemorysize = get_total_physical_memory() / 1024;
-    rec->totalvisiblememorysize = rec->totalvirtualmemorysize;
+    rec->totalvirtualmemorysize = get_total_virtual_memory() / 1024;
+    rec->totalvisiblememorysize = get_total_physical_memory() / 1024;
     rec->version                = get_osversion( &ver );
     rec->windowsdirectory       = get_windowsdirectory();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
