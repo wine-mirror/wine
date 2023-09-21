@@ -3546,7 +3546,7 @@ static void test_band_track_play(void)
             &IID_IDirectMusicLoader8, (void **)&loader);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicLoader_SetObject(loader, &desc);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = test_loader_stream_create(stream, loader, &loader_stream);
     ok(hr == S_OK, "got %#lx\n", hr);

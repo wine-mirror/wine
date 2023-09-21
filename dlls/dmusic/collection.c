@@ -19,6 +19,7 @@
  */
 
 #include "dmusic_private.h"
+#include "soundfont.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -353,6 +354,246 @@ static HRESULT parse_dls_chunk(struct collection *This, IStream *stream, struct 
     return hr;
 }
 
+static HRESULT parse_sdta_list(struct collection *This, IStream *stream, struct chunk_entry *parent,
+        struct soundfont *soundfont)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case mmioFOURCC('s','m','p','l'):
+            if (soundfont->sdta) return E_INVALIDARG;
+            if (!(soundfont->sdta = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->sdta, chunk.size);
+            break;
+
+        default:
+            FIXME("Skipping unknown chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_pdta_list(struct collection *This, IStream *stream, struct chunk_entry *parent,
+        struct soundfont *soundfont)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    HRESULT hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case mmioFOURCC('p','h','d','r'):
+            if (soundfont->phdr) return E_INVALIDARG;
+            if (!(soundfont->phdr = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->phdr, chunk.size);
+            soundfont->preset_count = chunk.size / sizeof(*soundfont->phdr) - 1;
+            break;
+
+        case mmioFOURCC('p','b','a','g'):
+            if (soundfont->pbag) return E_INVALIDARG;
+            if (!(soundfont->pbag = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->pbag, chunk.size);
+            break;
+
+        case mmioFOURCC('p','m','o','d'):
+            if (soundfont->pmod) return E_INVALIDARG;
+            if (!(soundfont->pmod = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->pmod, chunk.size);
+            break;
+
+        case mmioFOURCC('p','g','e','n'):
+            if (soundfont->pgen) return E_INVALIDARG;
+            if (!(soundfont->pgen = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->pgen, chunk.size);
+            break;
+
+        case mmioFOURCC('i','n','s','t'):
+            if (soundfont->inst) return E_INVALIDARG;
+            if (!(soundfont->inst = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->inst, chunk.size);
+            soundfont->instrument_count = chunk.size / sizeof(*soundfont->inst) - 1;
+            break;
+
+        case mmioFOURCC('i','b','a','g'):
+            if (soundfont->ibag) return E_INVALIDARG;
+            if (!(soundfont->ibag = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->ibag, chunk.size);
+            break;
+
+        case mmioFOURCC('i','m','o','d'):
+            if (soundfont->imod) return E_INVALIDARG;
+            if (!(soundfont->imod = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->imod, chunk.size);
+            break;
+
+        case mmioFOURCC('i','g','e','n'):
+            if (soundfont->igen) return E_INVALIDARG;
+            if (!(soundfont->igen = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->igen, chunk.size);
+            break;
+
+        case mmioFOURCC('s','h','d','r'):
+            if (soundfont->shdr) return E_INVALIDARG;
+            if (!(soundfont->shdr = malloc(chunk.size))) return E_OUTOFMEMORY;
+            hr = stream_chunk_get_data(stream, &chunk, soundfont->shdr, chunk.size);
+            soundfont->sample_count = chunk.size / sizeof(*soundfont->shdr) - 1;
+            break;
+
+        default:
+            FIXME("Skipping unknown chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_sfbk_chunk(struct collection *This, IStream *stream, struct chunk_entry *parent)
+{
+    struct chunk_entry chunk = {.parent = parent};
+    struct soundfont soundfont = {0};
+    UINT i, j, k;
+    HRESULT hr;
+
+    if (FAILED(hr = dmobj_parsedescriptor(stream, parent, &This->dmobj.desc,
+            DMUS_OBJ_NAME_INFO|DMUS_OBJ_VERSION|DMUS_OBJ_OBJECT|DMUS_OBJ_GUID_DLID))
+            || FAILED(hr = stream_reset_chunk_data(stream, parent)))
+        return hr;
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_LIST, DMUS_FOURCC_INFO_LIST):
+            /* already parsed by dmobj_parsedescriptor */
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, mmioFOURCC('s','d','t','a')):
+            hr = parse_sdta_list(This, stream, &chunk, &soundfont);
+            break;
+
+        case MAKE_IDTYPE(FOURCC_LIST, mmioFOURCC('p','d','t','a')):
+            hr = parse_pdta_list(This, stream, &chunk, &soundfont);
+            break;
+
+        default:
+            FIXME("Ignoring chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            break;
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        TRACE("presets:\n");
+        for (i = 0; i < soundfont.preset_count; i++)
+        {
+            struct sf_preset *preset = soundfont.phdr + i;
+
+            TRACE("preset[%u]:\n", i);
+            TRACE("    - name: %s\n", debugstr_a(preset->name));
+            TRACE("    - preset: %u\n", preset->preset);
+            TRACE("    - bank: %u\n", preset->bank);
+            TRACE("    - preset_bag_ndx: %u\n", preset->bag_ndx);
+            TRACE("    - library: %lu\n", preset->library);
+            TRACE("    - genre: %lu\n", preset->genre);
+            TRACE("    - morphology: %#lx\n", preset->morphology);
+
+            for (j = preset->bag_ndx; j < (preset + 1)->bag_ndx; j++)
+            {
+                struct sf_bag *bag = soundfont.pbag + j;
+                TRACE("    - bag[%u]:\n", j);
+                TRACE("        - gen_ndx: %u\n", bag->gen_ndx);
+                TRACE("        - mod_ndx: %u\n", bag->mod_ndx);
+
+                for (k = bag->gen_ndx; k < (bag + 1)->gen_ndx; k++)
+                {
+                    struct sf_gen *gen = soundfont.pgen + k;
+                    TRACE("        - gen[%u]: %s\n", k, debugstr_sf_gen(gen));
+                }
+
+                for (k = bag->mod_ndx; k < (bag + 1)->mod_ndx; k++)
+                {
+                    struct sf_mod *mod = soundfont.pmod + k;
+                    TRACE("        - mod[%u]: %s\n", k, debugstr_sf_mod(mod));
+                }
+            }
+        }
+
+        TRACE("instruments:\n");
+        for (i = 0; i < soundfont.instrument_count; i++)
+        {
+            struct sf_instrument *instrument = soundfont.inst + i;
+            TRACE("instrument[%u]:\n", i);
+            TRACE("    - name: %s\n", debugstr_a(instrument->name));
+            TRACE("    - bag_ndx: %u\n", instrument->bag_ndx);
+
+            for (j = instrument->bag_ndx; j < (instrument + 1)->bag_ndx; j++)
+            {
+                struct sf_bag *bag = soundfont.ibag + j;
+                TRACE("    - bag[%u]:\n", j);
+                TRACE("        - wGenNdx: %u\n", bag->gen_ndx);
+                TRACE("        - wModNdx: %u\n", bag->mod_ndx);
+
+                for (k = bag->gen_ndx; k < (bag + 1)->gen_ndx; k++)
+                {
+                    struct sf_gen *gen = soundfont.igen + k;
+                    TRACE("        - gen[%u]: %s\n", k, debugstr_sf_gen(gen));
+                }
+
+                for (k = bag->mod_ndx; k < (bag + 1)->mod_ndx; k++)
+                {
+                    struct sf_mod *mod = soundfont.imod + k;
+                    TRACE("        - mod[%u]: %s\n", k, debugstr_sf_mod(mod));
+                }
+            }
+        }
+
+        TRACE("samples:\n");
+        for (i = 0; i < soundfont.sample_count; i++)
+        {
+            struct sf_sample *sample = soundfont.shdr + i;
+
+            TRACE("sample[%u]:\n", i);
+            TRACE("    - name: %s\n", debugstr_a(sample->name));
+            TRACE("    - start: %lu\n", sample->start);
+            TRACE("    - end: %lu\n", sample->end);
+            TRACE("    - start_loop: %lu\n", sample->start_loop);
+            TRACE("    - end_loop: %lu\n", sample->end_loop);
+            TRACE("    - sample_rate: %lu\n", sample->sample_rate);
+            TRACE("    - original_key: %u\n", sample->original_key);
+            TRACE("    - correction: %d\n", sample->correction);
+            TRACE("    - sample_link: %#x\n", sample->sample_link);
+            TRACE("    - sample_type: %#x\n", sample->sample_type);
+        }
+    }
+
+    free(soundfont.phdr);
+    free(soundfont.pbag);
+    free(soundfont.pmod);
+    free(soundfont.pgen);
+    free(soundfont.inst);
+    free(soundfont.ibag);
+    free(soundfont.imod);
+    free(soundfont.igen);
+    free(soundfont.shdr);
+    free(soundfont.sdta);
+
+    return hr;
+}
+
 static HRESULT WINAPI collection_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
@@ -366,7 +607,7 @@ static HRESULT WINAPI collection_object_ParseDescriptor(IDirectMusicObject *ifac
 
     if ((hr = stream_get_chunk(stream, &riff)) != S_OK)
         return hr;
-    if (riff.id != FOURCC_RIFF || riff.type != FOURCC_DLS) {
+    if (riff.id != FOURCC_RIFF || (riff.type != FOURCC_DLS && riff.type != mmioFOURCC('s','f','b','k'))) {
         TRACE("loading failed: unexpected %s\n", debugstr_chunk(&riff));
         stream_skip_chunk(stream, &riff);
         return DMUS_E_NOTADLSCOL;
@@ -410,6 +651,10 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
             hr = parse_dls_chunk(This, stream, &chunk);
             break;
 
+        case MAKE_IDTYPE(FOURCC_RIFF, mmioFOURCC('s','f','b','k')):
+            hr = parse_sfbk_chunk(This, stream, &chunk);
+            break;
+
         default:
             WARN("Invalid collection chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
             hr = DMUS_E_UNSUPPORTED_STREAM;
@@ -439,7 +684,7 @@ static HRESULT WINAPI collection_stream_Load(IPersistStream *iface, IStream *str
         }
 
         TRACE(" - cues:\n");
-        for (i = 0; i < This->pool->table.cCues; i++)
+        for (i = 0; This->pool && i < This->pool->table.cCues; i++)
             TRACE("    - index: %u, offset: %lu\n", i, This->pool->cues[i].ulOffset);
 
         TRACE(" - waves:\n");

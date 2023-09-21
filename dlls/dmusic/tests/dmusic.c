@@ -1608,7 +1608,7 @@ static void test_default_gm_collection(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicCollection, (void **)&collection);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
     for (i = 0; hr == S_OK && i < ARRAY_SIZE(results); i++)
     {
@@ -1618,7 +1618,7 @@ static void test_default_gm_collection(void)
                 results[i].name, ARRAY_SIZE(results[i].name));
     }
     if (hr == S_FALSE) i--;
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
     todo_wine ok(i > 0, "got %lu\n", i);
     todo_wine ok(i == ARRAY_SIZE(expected), "got %lu\n", i);
 
@@ -1633,7 +1633,7 @@ static void test_default_gm_collection(void)
         winetest_pop_context();
     }
 
-    if (hr == S_FALSE) IDirectMusicCollection_Release(collection);
+    IDirectMusicCollection_Release(collection);
     IDirectMusicLoader_Release(loader);
 }
 
