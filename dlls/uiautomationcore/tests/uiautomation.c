@@ -13658,22 +13658,22 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     /* Cached UIA_ControlTypePropertyId. */
     hr = IUIAutomationElement_get_CachedControlType(element, NULL);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     tmp_int = 0xdeadbeef;
     hr = IUIAutomationElement_get_CachedControlType(element, &tmp_int);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(tmp_int == 0xdeadbeef, "Unexpected control type %#x\n", tmp_int);
 
     tmp_int = 0;
     hr = IUIAutomationElement_get_CachedControlType(element2, &tmp_int);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(tmp_int == UIA_CustomControlTypeId, "Unexpected control type %#x\n", tmp_int);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_int == UIA_CustomControlTypeId, "Unexpected control type %#x\n", tmp_int);
 
     tmp_int = 0;
     hr = IUIAutomationElement_get_CachedControlType(element3, &tmp_int);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(tmp_int == UIA_HyperlinkControlTypeId, "Unexpected control type %#x\n", tmp_int);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_int == UIA_HyperlinkControlTypeId, "Unexpected control type %#x\n", tmp_int);
 
     /* Cached UIA_BoundingRectanglePropertyId helper. */
     hr = IUIAutomationElement_get_CachedBoundingRectangle(element, NULL);
