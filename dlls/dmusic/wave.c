@@ -17,6 +17,7 @@
  */
 
 #include "dmusic_private.h"
+#include "soundfont.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
@@ -214,6 +215,85 @@ HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnk
 
     *ret_iface = iface;
     return S_OK;
+}
+
+HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnknown **ret_iface)
+{
+    struct sf_sample *sf_sample = soundfont->shdr + index;
+    struct sample *sample = NULL;
+    WAVEFORMATEX *format = NULL;
+    HRESULT hr = E_OUTOFMEMORY;
+    UINT data_size, offset;
+    struct wave *This;
+    void *data = NULL;
+    IUnknown *iface;
+
+    TRACE("(%p, %u, %p)\n", soundfont, index, ret_iface);
+
+    if (sf_sample->sample_link) FIXME("Stereo sample not supported\n");
+
+    if (!(format = calloc(1, sizeof(*format)))) goto failed;
+    format->wFormatTag = WAVE_FORMAT_PCM;
+    format->nChannels = 1;
+    format->wBitsPerSample = 16;
+    format->nSamplesPerSec = sf_sample->sample_rate;
+    format->nBlockAlign = format->wBitsPerSample * format->nChannels / 8;
+    format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
+
+    if (!(sample = calloc(1, offsetof(struct sample, loops[1])))) goto failed;
+    sample->head.cbSize = sizeof(sample->head);
+    sample->head.cSampleLoops = 1;
+    sample->loops[0].ulStart = sf_sample->start_loop - sf_sample->start;
+    sample->loops[0].ulLength = sf_sample->end_loop - sf_sample->start_loop;
+
+    data_size = sf_sample->end - sf_sample->start;
+    if (!(data = malloc(data_size * format->nBlockAlign))) goto failed;
+    offset = sf_sample->start * format->nBlockAlign / format->nChannels;
+    memcpy(data, soundfont->sdta + offset, data_size);
+
+    if (FAILED(hr = wave_create(&iface))) goto failed;
+
+    This = impl_from_IUnknown(iface);
+    This->format = format;
+    This->sample = sample;
+    This->data_size = data_size;
+    This->data = data;
+
+    if (TRACE_ON(dmusic))
+    {
+        UINT i;
+
+        TRACE("*** Created DirectMusicWave %p\n", This);
+        TRACE(" - format: %p\n", This->format);
+        if (This->format)
+        {
+            TRACE("    - wFormatTag: %u\n", This->format->wFormatTag);
+            TRACE("    - nChannels: %u\n", This->format->nChannels);
+            TRACE("    - nSamplesPerSec: %lu\n", This->format->nSamplesPerSec);
+            TRACE("    - nAvgBytesPerSec: %lu\n", This->format->nAvgBytesPerSec);
+            TRACE("    - nBlockAlign: %u\n", This->format->nBlockAlign);
+            TRACE("    - wBitsPerSample: %u\n", This->format->wBitsPerSample);
+            TRACE("    - cbSize: %u\n", This->format->cbSize);
+        }
+
+        TRACE(" - sample: {size: %lu, unity_note: %u, fine_tune: %d, attenuation: %ld, options: %#lx, loops: %lu}\n",
+                This->sample->head.cbSize, This->sample->head.usUnityNote,
+                This->sample->head.sFineTune, This->sample->head.lAttenuation,
+                This->sample->head.fulOptions, This->sample->head.cSampleLoops);
+        for (i = 0; i < This->sample->head.cSampleLoops; i++)
+            TRACE(" - loops[%u]: {size: %lu, type: %lu, start: %lu, length: %lu}\n", i,
+                    This->sample->loops[i].cbSize, This->sample->loops[i].ulType,
+                    This->sample->loops[i].ulStart, This->sample->loops[i].ulLength);
+    }
+
+    *ret_iface = iface;
+    return S_OK;
+
+failed:
+    free(data);
+    free(sample);
+    free(format);
+    return hr;
 }
 
 HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, DWORD *id)

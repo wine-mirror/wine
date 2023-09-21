@@ -91,12 +91,14 @@ extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 
 extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
+struct soundfont;
 extern HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
 extern HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicPortDownload *port,
         IDirectMusicDownloadedInstrument **downloaded);
 extern HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port);
 
+extern HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnknown **out);
 extern HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnknown **out);
 extern HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, DWORD *id);
 

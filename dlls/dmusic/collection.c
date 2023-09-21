@@ -580,6 +580,29 @@ static HRESULT parse_sfbk_chunk(struct collection *This, IStream *stream, struct
         }
     }
 
+    if (SUCCEEDED(hr))
+    {
+        UINT size = offsetof(struct pool, cues[soundfont.sample_count]);
+        if (!(This->pool = calloc(1, size))) return E_OUTOFMEMORY;
+        This->pool->table.cbSize = sizeof(This->pool->table);
+    }
+
+    for (i = 0; SUCCEEDED(hr) && i < soundfont.sample_count; i++)
+    {
+        struct wave_entry *entry;
+
+        if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
+        hr = wave_create_from_soundfont(&soundfont, i, &entry->wave);
+        if (FAILED(hr)) free(entry);
+        else
+        {
+            entry->offset = i;
+            This->pool->table.cCues++;
+            This->pool->cues[i].ulOffset = i;
+            list_add_tail(&This->waves, &entry->entry);
+        }
+    }
+
     free(soundfont.phdr);
     free(soundfont.pbag);
     free(soundfont.pmod);
