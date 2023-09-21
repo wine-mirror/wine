@@ -2104,8 +2104,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         return hr;
     }
 
-    recordset->count = affected;
-    recordset->index = affected ? 0 : -1;
+    recordset->count = affected > 0 ? affected : 0;
+    recordset->index = affected > 0 ? 0 : -1;
 
     /*
      * We can safely just return with an empty recordset here
