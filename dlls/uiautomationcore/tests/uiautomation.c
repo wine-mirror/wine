@@ -13635,25 +13635,23 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     /* Cached UIA_NamePropertyId helper. */
     hr = IUIAutomationElement_get_CachedName(element, NULL);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     tmp_bstr = (void *)0xdeadbeef;
     hr = IUIAutomationElement_get_CachedName(element, &tmp_bstr);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(tmp_bstr == (void *)0xdeadbeef, "Unexpected BSTR ptr %p\n", tmp_bstr);
 
     tmp_bstr = NULL;
     hr = IUIAutomationElement_get_CachedName(element2, &tmp_bstr);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!lstrcmpW(tmp_bstr, L""), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(tmp_bstr, L""), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
     SysFreeString(tmp_bstr);
 
     tmp_bstr = NULL;
     hr = IUIAutomationElement_get_CachedName(element3, &tmp_bstr);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!lstrcmpW(tmp_bstr, uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(tmp_bstr, uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
     SysFreeString(tmp_bstr);
 
     /* Cached UIA_ControlTypePropertyId. */
