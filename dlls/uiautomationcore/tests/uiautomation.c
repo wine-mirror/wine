@@ -13597,22 +13597,22 @@ static void test_Element_cache_methods(IUIAutomation *uia_iface)
 
     /* Cached UIA_HasKeyboardFocusPropertyId helper. */
     hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element, NULL);
-    todo_wine ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     tmp_bool = 0xdeadbeef;
     hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element, &tmp_bool);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(tmp_bool == 0xdeadbeef, "Unexpected tmp_bool %d\n", tmp_bool);
 
     tmp_bool = 0xdeadbeef;
     hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element2, &tmp_bool);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!tmp_bool, "tmp_bool != FALSE\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!tmp_bool, "tmp_bool != FALSE\n");
 
     tmp_bool = FALSE;
     hr = IUIAutomationElement_get_CachedHasKeyboardFocus(element3, &tmp_bool);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!tmp_bool, "tmp_bool == FALSE\n");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!tmp_bool, "tmp_bool == FALSE\n");
 
     /* Cached UIA_IsKeyboardFocusablePropertyId helper. */
     hr = IUIAutomationElement_get_CachedIsKeyboardFocusable(element, NULL);
