@@ -1626,6 +1626,35 @@ static HRESULT WINAPI performance_tool_GetMediaTypes(IDirectMusicTool *iface, DW
     return E_NOTIMPL;
 }
 
+static HRESULT performance_send_midi_pmsg(struct performance *This, DMUS_PMSG *msg, UINT flags,
+        BYTE status, BYTE byte1, BYTE byte2)
+{
+    IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
+    DMUS_MIDI_PMSG *midi;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(performance, sizeof(*midi),
+            (DMUS_PMSG **)&midi)))
+        return hr;
+
+    if (flags & DMUS_PMSGF_REFTIME) midi->rtTime = msg->rtTime;
+    if (flags & DMUS_PMSGF_MUSICTIME) midi->mtTime = msg->mtTime;
+    midi->dwFlags = flags;
+    midi->dwPChannel = msg->dwPChannel;
+    midi->dwVirtualTrackID = msg->dwVirtualTrackID;
+    midi->dwVoiceID = msg->dwVoiceID;
+    midi->dwGroupID = msg->dwGroupID;
+    midi->dwType = DMUS_PMSGT_MIDI;
+    midi->bStatus = status;
+    midi->bByte1 = byte1;
+    midi->bByte2 = byte2;
+
+    if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)midi)))
+        IDirectMusicPerformance8_FreePMsg(performance, (DMUS_PMSG *)midi);
+
+    return hr;
+}
+
 static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         IDirectMusicPerformance *performance, DMUS_PMSG *msg)
 {
@@ -1667,6 +1696,22 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         }
 
         IDirectMusicPort_Release(port);
+        break;
+    }
+
+    case DMUS_PMSGT_NOTE:
+    {
+        DMUS_NOTE_PMSG *note = (DMUS_NOTE_PMSG *)msg;
+
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                0x90 /* NOTE_ON */, note->bMidiValue, note->bVelocity)))
+            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
+        msg->mtTime += note->mtDuration;
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE,
+                0x80 /* NOTE_OFF */, note->bMidiValue, 0)))
+            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
         break;
     }
 
