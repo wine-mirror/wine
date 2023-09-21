@@ -898,37 +898,41 @@ static HRESULT DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
 /* for ClassFactory */
 HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
 {
-	struct loader *obj;
-	DMUS_OBJECTDESC Desc;
-        struct cache_entry *dls;
-	struct list *pEntry;
+    struct loader *obj;
+    DMUS_OBJECTDESC Desc;
+    struct cache_entry *dls;
+    struct list *pEntry;
+    HRESULT hr;
 
-        TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
-	*ppobj = NULL;
-	if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
-	obj->IDirectMusicLoader8_iface.lpVtbl = &loader_vtbl;
-	obj->ref = 0; /* Will be inited with QueryInterface */
-        list_init(&obj->cache);
-        /* Caching is enabled by default for all classes */
-        obj->cache_class = ~0;
+    TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
 
-	/* set default DLS collection (via SetObject... so that loading via DMUS_OBJ_OBJECT is possible) */
-	DM_STRUCT_INIT(&Desc);
-	Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_OBJECT;
-	Desc.guidClass = CLSID_DirectMusicCollection;
-	Desc.guidObject = GUID_DefaultGMCollection;
-	DMUSIC_GetDefaultGMPath (Desc.wszFileName);
-	IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
-	/* and now the workaroundTM for "invalid" default DLS; basically, 
-	   my tests showed that if GUID chunk is present in default DLS 
-	   collection, loader treats it as "invalid" and returns 
-	   DMUS_E_LOADER_NOFILENAME for all requests for it; basically, we check 
-	   if out input guidObject was overwritten */
-        pEntry = list_head(&obj->cache);
-        dls = LIST_ENTRY(pEntry, struct cache_entry, entry);
-	if (!IsEqualGUID(&Desc.guidObject, &GUID_DefaultGMCollection)) {
-                dls->bInvalidDefaultDLS = TRUE;
-	}
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    obj->IDirectMusicLoader8_iface.lpVtbl = &loader_vtbl;
+    obj->ref = 1;
+    list_init(&obj->cache);
+    /* Caching is enabled by default for all classes */
+    obj->cache_class = ~0;
 
-	return IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
+    /* set default DLS collection (via SetObject... so that loading via DMUS_OBJ_OBJECT is possible) */
+    DM_STRUCT_INIT(&Desc);
+    Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_OBJECT;
+    Desc.guidClass = CLSID_DirectMusicCollection;
+    Desc.guidObject = GUID_DefaultGMCollection;
+    DMUSIC_GetDefaultGMPath(Desc.wszFileName);
+    IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
+
+    /* and now the workaroundTM for "invalid" default DLS; basically,
+       my tests showed that if GUID chunk is present in default DLS
+       collection, loader treats it as "invalid" and returns
+       DMUS_E_LOADER_NOFILENAME for all requests for it; basically, we check
+       if out input guidObject was overwritten */
+    pEntry = list_head(&obj->cache);
+    dls = LIST_ENTRY(pEntry, struct cache_entry, entry);
+    if (!IsEqualGUID(&Desc.guidObject, &GUID_DefaultGMCollection))
+        dls->bInvalidDefaultDLS = TRUE;
+
+    hr = IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
+    IDirectMusicLoader_Release(&obj->IDirectMusicLoader8_iface);
+    return hr;
 }
