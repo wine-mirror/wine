@@ -45,10 +45,30 @@ struct instrument_entry
     struct list entry;
     DMUS_IO_INSTRUMENT instrument;
     IDirectMusicCollection *collection;
+
+    IDirectMusicDownloadedInstrument *download;
+    IDirectMusicPort *download_port;
 };
+
+static HRESULT instrument_entry_unload(struct instrument_entry *entry)
+{
+    HRESULT hr;
+
+    if (!entry->download) return S_OK;
+
+    if (FAILED(hr = IDirectMusicPort_UnloadInstrument(entry->download_port, entry->download)))
+        WARN("Failed to unload entry instrument, hr %#lx\n", hr);
+    IDirectMusicDownloadedInstrument_Release(entry->download);
+    entry->download = NULL;
+    IDirectMusicPort_Release(entry->download_port);
+    entry->download_port = NULL;
+
+    return hr;
+}
 
 static void instrument_entry_destroy(struct instrument_entry *entry)
 {
+    instrument_entry_unload(entry);
     if (entry->collection) IDirectMusicCollection_Release(entry->collection);
     free(entry);
 }
@@ -150,19 +170,51 @@ static HRESULT WINAPI band_CreateSegment(IDirectMusicBand *iface,
 }
 
 static HRESULT WINAPI band_Download(IDirectMusicBand *iface,
-        IDirectMusicPerformance *pPerformance)
+        IDirectMusicPerformance *performance)
 {
-        struct band *This = impl_from_IDirectMusicBand(iface);
-	FIXME("(%p, %p): stub\n", This, pPerformance);
-	return S_OK;
+    struct band *This = impl_from_IDirectMusicBand(iface);
+    struct instrument_entry *entry;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %p)\n", This, performance);
+
+    LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
+    {
+        IDirectMusicCollection *collection;
+        IDirectMusicInstrument *instrument;
+
+        if (FAILED(hr = instrument_entry_unload(entry))) break;
+        if (!(collection = entry->collection) && !(collection = This->collection)) continue;
+
+        if (SUCCEEDED(hr = IDirectMusicCollection_GetInstrument(collection, entry->instrument.dwPatch, &instrument)))
+        {
+            hr = IDirectMusicPerformance_DownloadInstrument(performance, instrument, entry->instrument.dwPChannel,
+                        &entry->download, NULL, 0, &entry->download_port, NULL, NULL);
+            IDirectMusicInstrument_Release(instrument);
+        }
+
+        if (FAILED(hr)) break;
+    }
+
+    if (FAILED(hr)) WARN("Failed to download instruments, hr %#lx\n", hr);
+    return hr;
 }
 
-static HRESULT WINAPI band_Unload(IDirectMusicBand *iface,
-        IDirectMusicPerformance *pPerformance)
+static HRESULT WINAPI band_Unload(IDirectMusicBand *iface, IDirectMusicPerformance *performance)
 {
-        struct band *This = impl_from_IDirectMusicBand(iface);
-	FIXME("(%p, %p): stub\n", This, pPerformance);
-	return S_OK;
+    struct band *This = impl_from_IDirectMusicBand(iface);
+    struct instrument_entry *entry;
+    HRESULT hr = S_OK;
+
+	TRACE("(%p, %p)\n", This, performance);
+
+    if (performance) FIXME("performance parameter not implemented\n");
+
+    LIST_FOR_EACH_ENTRY(entry, &This->instruments, struct instrument_entry, entry)
+        if (FAILED(hr = instrument_entry_unload(entry))) break;
+
+    if (FAILED(hr)) WARN("Failed to unload instruments, hr %#lx\n", hr);
+    return hr;
 }
 
 static const IDirectMusicBandVtbl band_vtbl =
