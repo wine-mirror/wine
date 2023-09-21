@@ -2461,8 +2461,21 @@ static HRESULT WINAPI uia_element_get_CachedHasKeyboardFocus(IUIAutomationElemen
 
 static HRESULT WINAPI uia_element_get_CachedIsKeyboardFocusable(IUIAutomationElement9 *iface, BOOL *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    const int prop_id = UIA_IsKeyboardFocusablePropertyId;
+    struct uia_cache_property *cache_prop = NULL;
+
+    TRACE("%p, %p\n", iface, ret_val);
+
+    if (!ret_val)
+        return E_POINTER;
+
+    if (!(cache_prop = bsearch(&prop_id, element->cached_props, element->cached_props_count, sizeof(*cache_prop),
+            uia_cached_property_id_compare)))
+        return E_INVALIDARG;
+
+    *ret_val = ((V_VT(&cache_prop->prop_val) == VT_BOOL) && (V_BOOL(&cache_prop->prop_val) == VARIANT_TRUE));
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_element_get_CachedIsEnabled(IUIAutomationElement9 *iface, BOOL *ret_val)
