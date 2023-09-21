@@ -898,11 +898,14 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 
     ret = NtWaitForAlertByThreadId( NULL, timeout );
 
-    spin_lock( &queue->lock );
-    /* We may have already been removed by a call to RtlWakeAddressSingle(). */
+    /* We may have already been removed by a call to RtlWakeAddressSingle() or RtlWakeAddressAll(). */
     if (entry.addr)
-        list_remove( &entry.entry );
-    spin_unlock( &queue->lock );
+    {
+        spin_lock( &queue->lock );
+        if (entry.addr)
+            list_remove( &entry.entry );
+        spin_unlock( &queue->lock );
+    }
 
     TRACE("returning %#lx\n", ret);
 
