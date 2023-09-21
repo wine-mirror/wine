@@ -1619,7 +1619,7 @@ static void test_default_gm_collection(void)
     }
     if (hr == S_FALSE) i--;
     ok(hr == S_FALSE, "got %#lx\n", hr);
-    todo_wine ok(i > 0, "got %lu\n", i);
+    ok(i > 0, "got %lu\n", i);
     todo_wine ok(i == ARRAY_SIZE(expected), "got %lu\n", i);
 
     qsort(results, i, sizeof(*results), result_cmp);
@@ -1628,6 +1628,7 @@ static void test_default_gm_collection(void)
     {
         winetest_push_context("%lu", i);
         trace("got %#lx %s\n", results[i].patch, debugstr_w(results[i].name));
+        todo_wine_if(expected[i].patch >= 128)
         ok(results[i].patch == expected[i].patch, "got %#lx\n", results[i].patch);
         /* system soundfont names are not very predictable, let's not check them */
         winetest_pop_context();

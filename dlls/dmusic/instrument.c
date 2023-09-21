@@ -19,10 +19,20 @@
  */
 
 #include "dmusic_private.h"
+#include "soundfont.h"
+#include "dls2.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 static const GUID IID_IDirectMusicInstrumentPRIVATE = { 0xbcb20080, 0xa40c, 0x11d1, { 0x86, 0xbc, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef } };
+
+#define CONN_SRC_CC2  0x0082
+#define CONN_SRC_RPN0 0x0100
+
+#define CONN_TRN_BIPOLAR (1<<4)
+#define CONN_TRN_INVERT  (1<<5)
+
+#define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
 
 struct articulation
 {
@@ -416,6 +426,235 @@ HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent
     {
         IDirectMusicInstrument_Release(iface);
         return DMUS_E_UNSUPPORTED_STREAM;
+    }
+
+    if (TRACE_ON(dmusic))
+    {
+        struct region *region;
+        UINT i;
+
+        TRACE("Created DirectMusicInstrument %p\n", This);
+        TRACE(" - header:\n");
+        TRACE("    - regions: %ld\n", This->header.cRegions);
+        TRACE("    - locale: {bank: %#lx, instrument: %#lx} (patch %#lx)\n",
+                This->header.Locale.ulBank, This->header.Locale.ulInstrument,
+                MIDILOCALE2Patch(&This->header.Locale));
+        if (desc->dwValidData & DMUS_OBJ_OBJECT) TRACE(" - guid: %s\n", debugstr_dmguid(&desc->guidObject));
+        if (desc->dwValidData & DMUS_OBJ_NAME) TRACE(" - name: %s\n", debugstr_w(desc->wszName));
+
+        TRACE(" - regions:\n");
+        LIST_FOR_EACH_ENTRY(region, &This->regions, struct region, entry)
+        {
+            TRACE("   - region:\n");
+            TRACE("     - header: {key: %u - %u, vel: %u - %u, options: %#x, group: %#x}\n",
+                    region->header.RangeKey.usLow, region->header.RangeKey.usHigh,
+                    region->header.RangeVelocity.usLow, region->header.RangeVelocity.usHigh,
+                    region->header.fusOptions, region->header.usKeyGroup);
+            TRACE("     - wave_link: {options: %#x, group: %u, channel: %lu, index: %lu}\n",
+                    region->wave_link.fusOptions, region->wave_link.usPhaseGroup,
+                    region->wave_link.ulChannel, region->wave_link.ulTableIndex);
+            TRACE("     - wave_sample: {size: %lu, unity_note: %u, fine_tune: %d, attenuation: %ld, options: %#lx, loops: %lu}\n",
+                    region->wave_sample.cbSize, region->wave_sample.usUnityNote,
+                    region->wave_sample.sFineTune, region->wave_sample.lAttenuation,
+                    region->wave_sample.fulOptions, region->wave_sample.cSampleLoops);
+            for (i = 0; i < region->wave_sample.cSampleLoops; i++)
+                TRACE("     - wave_loop[%u]: {size: %lu, type: %lu, start: %lu, length: %lu}\n", i,
+                        region->wave_loop.cbSize, region->wave_loop.ulType,
+                        region->wave_loop.ulStart, region->wave_loop.ulLength);
+        }
+    }
+
+    *ret_iface = iface;
+    return S_OK;
+}
+
+struct sf_generators
+{
+    union sf_amount amount[SF_GEN_END_OPER];
+};
+
+static const struct sf_generators SF_DEFAULT_GENERATORS =
+{
+    .amount =
+    {
+        [SF_GEN_INITIAL_FILTER_FC] = {.value = 13500},
+        [SF_GEN_DELAY_MOD_LFO] = {.value = -12000},
+        [SF_GEN_DELAY_VIB_LFO] = {.value = -12000},
+        [SF_GEN_DELAY_MOD_ENV] = {.value = -12000},
+        [SF_GEN_ATTACK_MOD_ENV] = {.value = -12000},
+        [SF_GEN_HOLD_MOD_ENV] = {.value = -12000},
+        [SF_GEN_DECAY_MOD_ENV] = {.value = -12000},
+        [SF_GEN_RELEASE_MOD_ENV] = {.value = -12000},
+        [SF_GEN_DELAY_VOL_ENV] = {.value = -12000},
+        [SF_GEN_ATTACK_VOL_ENV] = {.value = -12000},
+        [SF_GEN_HOLD_VOL_ENV] = {.value = -12000},
+        [SF_GEN_DECAY_VOL_ENV] = {.value = -12000},
+        [SF_GEN_RELEASE_VOL_ENV] = {.value = -12000},
+        [SF_GEN_KEY_RANGE] = {.range = {.low = 0, .high = 127}},
+        [SF_GEN_VEL_RANGE] = {.range = {.low = 0, .high = 127}},
+        [SF_GEN_KEYNUM] = {.value = -1},
+        [SF_GEN_VELOCITY] = {.value = -1},
+        [SF_GEN_SCALE_TUNING] = {.value = 100},
+        [SF_GEN_OVERRIDING_ROOT_KEY] = {.value = -1},
+    }
+};
+
+static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index,
+        struct sf_generators *preset_generators, struct sf_generators *generators)
+{
+    struct sf_bag *bag = (preset_generators ? soundfont->ibag : soundfont->pbag) + index;
+    struct sf_gen *gen, *gens = preset_generators ? soundfont->igen : soundfont->pgen;
+
+    for (gen = gens + bag->gen_ndx; gen < gens + (bag + 1)->gen_ndx; gen++)
+    {
+        switch (gen->oper)
+        {
+        case SF_GEN_START_ADDRS_OFFSET:
+        case SF_GEN_END_ADDRS_OFFSET:
+        case SF_GEN_STARTLOOP_ADDRS_OFFSET:
+        case SF_GEN_ENDLOOP_ADDRS_OFFSET:
+        case SF_GEN_START_ADDRS_COARSE_OFFSET:
+        case SF_GEN_END_ADDRS_COARSE_OFFSET:
+        case SF_GEN_STARTLOOP_ADDRS_COARSE_OFFSET:
+        case SF_GEN_KEYNUM:
+        case SF_GEN_VELOCITY:
+        case SF_GEN_ENDLOOP_ADDRS_COARSE_OFFSET:
+        case SF_GEN_SAMPLE_MODES:
+        case SF_GEN_EXCLUSIVE_CLASS:
+        case SF_GEN_OVERRIDING_ROOT_KEY:
+            if (preset_generators) generators->amount[gen->oper] = gen->amount;
+            else WARN("Ignoring invalid preset generator %s\n", debugstr_sf_gen(gen));
+            break;
+
+        case SF_GEN_INSTRUMENT:
+            if (!preset_generators) generators->amount[gen->oper] = gen->amount;
+            else WARN("Ignoring invalid instrument generator %s\n", debugstr_sf_gen(gen));
+            /* should always be the last generator */
+            return FALSE;
+
+        case SF_GEN_SAMPLE_ID:
+            if (preset_generators) generators->amount[gen->oper] = gen->amount;
+            else WARN("Ignoring invalid preset generator %s\n", debugstr_sf_gen(gen));
+            /* should always be the last generator */
+            return FALSE;
+
+        default:
+            generators->amount[gen->oper] = gen->amount;
+            if (preset_generators) generators->amount[gen->oper].value += preset_generators->amount[gen->oper].value;
+            break;
+        }
+    }
+
+    return TRUE;
+}
+
+static HRESULT instrument_add_soundfont_region(struct instrument *This, struct soundfont *soundfont,
+        struct sf_generators *generators)
+{
+    UINT start_loop, end_loop, unity_note, sample_index = generators->amount[SF_GEN_SAMPLE_ID].value;
+    struct sf_sample *sample = soundfont->shdr + sample_index;
+    struct region *region;
+
+    if (!(region = calloc(1, sizeof(*region)))) return E_OUTOFMEMORY;
+    list_init(&region->articulations);
+
+    region->header.RangeKey.usLow = generators->amount[SF_GEN_KEY_RANGE].range.low;
+    region->header.RangeKey.usHigh = generators->amount[SF_GEN_KEY_RANGE].range.high;
+    region->header.RangeVelocity.usLow = generators->amount[SF_GEN_VEL_RANGE].range.low;
+    region->header.RangeVelocity.usHigh = generators->amount[SF_GEN_VEL_RANGE].range.high;
+
+    region->wave_link.ulTableIndex = sample_index;
+
+    unity_note = generators->amount[SF_GEN_OVERRIDING_ROOT_KEY].value;
+    if (unity_note == -1) unity_note = sample->original_key;
+    region->wave_sample.usUnityNote = unity_note;
+    region->wave_sample.sFineTune = generators->amount[SF_GEN_FINE_TUNE].value;
+    region->wave_sample.lAttenuation = sample->correction;
+
+    start_loop = generators->amount[SF_GEN_STARTLOOP_ADDRS_OFFSET].value;
+    end_loop = generators->amount[SF_GEN_ENDLOOP_ADDRS_OFFSET].value;
+    if (start_loop || end_loop)
+    {
+        region->loop_present = TRUE;
+        region->wave_sample.cSampleLoops = 1;
+        region->wave_loop.ulStart = start_loop;
+        region->wave_loop.ulLength = end_loop - start_loop;
+    }
+
+    list_add_tail(&This->regions, &region->entry);
+    This->header.cRegions++;
+    return S_OK;
+}
+
+static HRESULT instrument_add_soundfont_instrument(struct instrument *This, struct soundfont *soundfont,
+        UINT index, struct sf_generators *preset_generators)
+{
+    struct sf_generators global_generators = SF_DEFAULT_GENERATORS;
+    struct sf_instrument *instrument = soundfont->inst + index;
+    UINT i = instrument->bag_ndx;
+    HRESULT hr = S_OK;
+
+    for (i = instrument->bag_ndx; SUCCEEDED(hr) && i < (instrument + 1)->bag_ndx; i++)
+    {
+        struct sf_generators generators = global_generators;
+
+        if (parse_soundfont_generators(soundfont, i, preset_generators, &generators))
+        {
+            if (i > instrument->bag_ndx)
+                WARN("Ignoring instrument zone without a sample id\n");
+            else
+                global_generators = generators;
+            continue;
+        }
+
+        hr = instrument_add_soundfont_region(This, soundfont, &generators);
+    }
+
+    return hr;
+}
+
+HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index,
+        struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface)
+{
+    struct sf_preset *preset = soundfont->phdr + index;
+    struct sf_generators global_generators = {0};
+    IDirectMusicInstrument *iface;
+    struct instrument *This;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("(%p, %u, %p, %p, %p)\n", soundfont, index, collection, desc, ret_iface);
+
+    if (FAILED(hr = instrument_create(collection, &iface))) return hr;
+    This = impl_from_IDirectMusicInstrument(iface);
+
+    This->header.Locale.ulBank = (preset->bank & 0x7f) | ((preset->bank << 1) & 0x7f00);
+    This->header.Locale.ulInstrument = preset->preset;
+    MultiByteToWideChar(CP_ACP, 0, preset->name, strlen(preset->name) + 1,
+            desc->wszName, sizeof(desc->wszName));
+
+    for (i = preset->bag_ndx; SUCCEEDED(hr) && i < (preset + 1)->bag_ndx; i++)
+    {
+        struct sf_generators generators = global_generators;
+        UINT instrument;
+
+        if (parse_soundfont_generators(soundfont, i, NULL, &generators))
+        {
+            if (i > preset->bag_ndx)
+                WARN("Ignoring preset zone without an instrument\n");
+            else
+                global_generators = generators;
+            continue;
+        }
+
+        instrument = generators.amount[SF_GEN_INSTRUMENT].value;
+        hr = instrument_add_soundfont_instrument(This, soundfont, instrument, &generators);
+    }
+
+    if (FAILED(hr))
+    {
+        IDirectMusicInstrument_Release(iface);
+        return hr;
     }
 
     if (TRACE_ON(dmusic))

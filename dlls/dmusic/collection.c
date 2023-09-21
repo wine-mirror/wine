@@ -580,6 +580,17 @@ static HRESULT parse_sfbk_chunk(struct collection *This, IStream *stream, struct
         }
     }
 
+    for (i = 0; SUCCEEDED(hr) && i < soundfont.preset_count; i++)
+    {
+        struct instrument_entry *entry;
+
+        if (!(entry = malloc(sizeof(*entry)))) return E_OUTOFMEMORY;
+        hr = instrument_create_from_soundfont(&soundfont, i, This, &entry->desc, &entry->instrument);
+        if (SUCCEEDED(hr)) hr = IDirectMusicInstrument_GetPatch(entry->instrument, &entry->patch);
+        if (SUCCEEDED(hr)) list_add_tail(&This->instruments, &entry->entry);
+        else free(entry);
+    }
+
     if (SUCCEEDED(hr))
     {
         UINT size = offsetof(struct pool, cues[soundfont.sample_count]);

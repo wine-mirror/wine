@@ -92,6 +92,8 @@ extern HRESULT DMUSIC_CreateReferenceClockImpl (LPCGUID lpcGUID, LPVOID* ppobj, 
 extern HRESULT download_create(DWORD size, IDirectMusicDownload **ret_iface);
 
 struct soundfont;
+extern HRESULT instrument_create_from_soundfont(struct soundfont *soundfont, UINT index,
+        struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
 extern HRESULT instrument_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         struct collection *collection, DMUS_OBJECTDESC *desc, IDirectMusicInstrument **ret_iface);
 extern HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicPortDownload *port,
