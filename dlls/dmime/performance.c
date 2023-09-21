@@ -497,7 +497,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
         }
 
         LIST_FOR_EACH_ENTRY(next, &This->messages, struct message, entry)
-            if (next->msg.rtTime >= message->msg.rtTime) break;
+            if (next->msg.rtTime > message->msg.rtTime) break;
         list_add_before(&next->entry, &message->entry);
         PostThreadMessageW(This->procThreadId, PROCESSMSG_ADD, 0, 0);
 
