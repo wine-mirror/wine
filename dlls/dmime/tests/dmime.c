@@ -662,7 +662,7 @@ static HRESULT WINAPI test_track_Play(IDirectMusicTrack *iface, void *state_data
     ok(state_data == &This->data, "got %p\n", state_data);
     ok(start_time == 50, "got %lu\n", start_time);
     ok(end_time == 100, "got %lu\n", end_time);
-    ok(time_offset < 0, "got %lu\n", time_offset);
+    todo_wine ok(time_offset < 0, "got %lu\n", time_offset);
     ok(segment_flags == (DMUS_TRACKF_DIRTY|DMUS_TRACKF_START|DMUS_TRACKF_SEEK),
             "got %#lx\n", segment_flags);
     ok(!!performance, "got %p\n", performance);
@@ -3990,7 +3990,7 @@ static void test_segment_state(void)
     IDirectMusicSegmentState_Release(tmp_state);
 
     check_track_state(track, downloaded, FALSE);
-    todo_wine check_track_state(track, initialized, TRUE);
+    check_track_state(track, initialized, TRUE);
 
 
     /* The track can be removed from the segment */
@@ -4001,10 +4001,10 @@ static void test_segment_state(void)
     /* This might be timing dependent and if PlaySegment is already
      * late, the tracks are played synchronously and right away.
      */
-    check_track_state(track, playing, FALSE);
+    todo_wine check_track_state(track, playing, FALSE);
 
     ret = test_track_wait_playing(track, 50);
-    todo_wine ok(ret == 0, "got %#lx\n", ret);
+    ok(ret == 0, "got %#lx\n", ret);
 
 
     tmp_segment = (void *)0xdeadbeef;
@@ -4064,14 +4064,14 @@ static void test_segment_state(void)
 
 
     check_track_state(track, downloaded, FALSE);
-    todo_wine check_track_state(track, initialized, TRUE);
-    todo_wine check_track_state(track, playing, TRUE);
+    check_track_state(track, initialized, TRUE);
+    check_track_state(track, playing, TRUE);
 
     hr = IDirectMusicPerformance_CloseDown(performance);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     check_track_state(track, downloaded, FALSE);
-    todo_wine check_track_state(track, initialized, TRUE);
+    check_track_state(track, initialized, TRUE);
     check_track_state(track, playing, FALSE);
 
 

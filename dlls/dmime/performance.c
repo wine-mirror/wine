@@ -1052,7 +1052,14 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         list_remove(&message->entry);
         list_init(&message->entry);
 
-        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
+        /* process notifications to end any pending segment states */
+        if (message->msg.dwType == DMUS_PMSGT_NOTIFICATION)
+            hr = IDirectMusicTool_ProcessPMsg(&This->IDirectMusicTool_iface,
+                    (IDirectMusicPerformance *)iface, &message->msg);
+        else
+            hr = DMUS_S_FREE;
+
+        if (hr == DMUS_S_FREE && FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
             WARN("Failed to free message %p, hr %#lx\n", message, hr);
     }
 
@@ -1191,7 +1198,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
         return hr;
-    if (FAILED(hr = segment_state_create(segment, start_time, &state)))
+    if (FAILED(hr = segment_state_create(segment, start_time, (IDirectMusicPerformance *)iface, &state)))
     {
         IDirectMusicSegment_Release(segment);
         return hr;
@@ -1206,6 +1213,9 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
     if (SUCCEEDED(hr))
         hr = performance_send_dirty_pmsg(This, start_time);
+
+    if (SUCCEEDED(hr))
+        hr = segment_state_play(state, (IDirectMusicPerformance *)iface);
 
     if (SUCCEEDED(hr))
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
@@ -1633,6 +1643,13 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         struct message *previous;
         BOOL enabled = FALSE;
         HRESULT hr;
+
+        if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)
+                && notif->dwNotificationOption == DMUS_NOTIFICATION_SEGEND)
+        {
+            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser)))
+                WARN("Failed to end segment state %p, hr %#lx\n", notif->punkUser, hr);
+        }
 
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_PERFORMANCE))
             enabled = This->notification_performance;
