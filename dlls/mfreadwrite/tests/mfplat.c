@@ -1536,8 +1536,8 @@ START_TEST(mfplat)
 
     init_functions();
 
-    test_interfaces();
     test_factory();
+    test_interfaces();
     test_source_reader("test.wav", false);
     test_source_reader("test.mp4", true);
     test_source_reader_from_media_source();
