@@ -441,11 +441,6 @@ static const IHTMLTableCellVtbl HTMLTableCellVtbl = {
     HTMLTableCell_get_cellIndex
 };
 
-static inline HTMLTableCell *HTMLTableCell_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTableCell, element.node);
-}
-
 static inline HTMLTableCell *HTMLTableCell_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTableCell, element.node.event_target.dispex);
@@ -870,11 +865,6 @@ static const IHTMLTableRowVtbl HTMLTableRowVtbl = {
     HTMLTableRow_insertCell,
     HTMLTableRow_deleteCell
 };
-
-static inline HTMLTableRow *HTMLTableRow_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTableRow, element.node);
-}
 
 static inline HTMLTableRow *HTMLTableRow_from_DispatchEx(DispatchEx *iface)
 {
@@ -1874,11 +1864,6 @@ static const IHTMLTable3Vtbl HTMLTable3Vtbl = {
     HTMLTable3_put_summary,
     HTMLTable3_get_summary
 };
-
-static inline HTMLTable *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLTable, element.node);
-}
 
 static inline HTMLTable *impl_from_DispatchEx(DispatchEx *iface)
 {
