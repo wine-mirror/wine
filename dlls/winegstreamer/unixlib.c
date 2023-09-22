@@ -162,6 +162,20 @@ bool append_element(GstElement *container, GstElement *element, GstElement **fir
     return success;
 }
 
+bool link_src_to_sink(GstPad *src_pad, GstPad *sink_pad)
+{
+    GstPadLinkReturn ret;
+
+    if ((ret = gst_pad_link(src_pad, sink_pad)) != GST_PAD_LINK_OK)
+    {
+        GST_ERROR("Failed to link src pad %"GST_PTR_FORMAT" to sink pad %"GST_PTR_FORMAT", reason: %s",
+                src_pad, sink_pad, gst_pad_link_get_name(ret));
+        return false;
+    }
+
+    return true;
+}
+
 bool link_src_to_element(GstPad *src_pad, GstElement *element)
 {
     GstPadLinkReturn ret;
@@ -174,15 +188,9 @@ bool link_src_to_element(GstPad *src_pad, GstElement *element)
         g_free(name);
         return false;
     }
-    if ((ret = gst_pad_link(src_pad, sink_pad)))
-    {
-        gchar *src_name = gst_pad_get_name(src_pad), *sink_name = gst_pad_get_name(sink_pad);
-        GST_ERROR("Failed to link element pad %s with pad %s", src_name, sink_name);
-        g_free(sink_name);
-        g_free(src_name);
-    }
+    ret = link_src_to_sink(src_pad, sink_pad);
     gst_object_unref(sink_pad);
-    return !ret;
+    return ret;
 }
 
 bool link_element_to_sink(GstElement *element, GstPad *sink_pad)
@@ -197,15 +205,9 @@ bool link_element_to_sink(GstElement *element, GstPad *sink_pad)
         g_free(name);
         return false;
     }
-    if ((ret = gst_pad_link(src_pad, sink_pad)))
-    {
-        gchar *src_name = gst_pad_get_name(src_pad), *sink_name = gst_pad_get_name(sink_pad);
-        GST_ERROR("Failed to link pad %s with element pad %s", src_name, sink_name);
-        g_free(sink_name);
-        g_free(src_name);
-    }
+    ret = link_src_to_sink(src_pad, sink_pad);
     gst_object_unref(src_pad);
-    return !ret;
+    return ret;
 }
 
 bool push_event(GstPad *pad, GstEvent *event)

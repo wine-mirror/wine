@@ -849,7 +849,6 @@ static bool stream_create_post_processing_elements(GstPad *pad, struct wg_parser
     struct wg_parser *parser = stream->parser;
     const char *name;
     GstCaps *caps;
-    int ret;
 
     caps = gst_pad_query_caps(pad, NULL);
     name = gst_structure_get_name(gst_caps_get_structure(caps, 0));
@@ -898,11 +897,9 @@ static bool stream_create_post_processing_elements(GstPad *pad, struct wg_parser
         if (!link_src_to_element(pad, first) || !link_element_to_sink(last, stream->my_sink))
             return false;
     }
-    else if ((ret = gst_pad_link(pad, stream->my_sink)) < 0)
+    else
     {
-        GST_ERROR("Failed to link decodebin source pad to our sink pad, error %s.",
-                gst_pad_link_get_name(ret));
-        return false;
+        return link_src_to_sink(pad, stream->my_sink);
     }
 
     return true;
