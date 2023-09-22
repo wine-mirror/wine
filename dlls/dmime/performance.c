@@ -204,6 +204,27 @@ static BOOL PostMessageToProcessMsgThread(struct performance *This, UINT iMsg) {
   return PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
 }
 
+static HRESULT performance_send_dirty_pmsg(struct performance *This, MUSIC_TIME music_time)
+{
+    IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
+    IDirectMusicGraph *graph = &This->IDirectMusicGraph_iface;
+    DMUS_PMSG *msg;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(performance, sizeof(*msg), &msg)))
+        return hr;
+
+    msg->mtTime = music_time;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE;
+    msg->dwType = DMUS_PMSGT_DIRTY;
+
+    if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, msg))
+            || FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, msg)))
+        IDirectMusicPerformance8_FreePMsg(performance, msg);
+
+    return hr;
+}
+
 static int pchannel_block_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct pchannel_block *b = WINE_RB_ENTRY_VALUE(entry, const struct pchannel_block, entry);
@@ -1082,20 +1103,32 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     IDirectMusicSegmentState *state;
     IDirectMusicSegment *segment;
+    MUSIC_TIME length;
     HRESULT hr;
 
     FIXME("(%p, %p, %s, %p, %#lx, %I64d, %p, %p, %p): stub\n", This, source, debugstr_w(segment_name),
             transition, segment_flags, start_time, segment_state, from, audio_path);
 
+    /* NOTE: The time is in music time unless the DMUS_SEGF_REFTIME flag is set. */
+    if (segment_flags) FIXME("flags %#lx not implemented\n", segment_flags);
+    if (start_time) FIXME("start_time %I64d not implemented\n", start_time);
+
     if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
         return hr;
-    if (FAILED(hr = segment_state_create((IDirectMusicSegment *)segment, start_time, &state)))
+    if (FAILED(hr = segment_state_create(segment, start_time, &state)))
     {
         IDirectMusicSegment_Release(segment);
         return hr;
     }
 
-    if (segment_state)
+    hr = IDirectMusicSegment_GetLength(segment, &length);
+    if (SUCCEEDED(hr))
+        hr = performance_send_dirty_pmsg(This, start_time);
+
+    if (SUCCEEDED(hr))
+        hr = performance_send_dirty_pmsg(This, start_time + length);
+
+    if (SUCCEEDED(hr) && segment_state)
     {
         *segment_state = state;
         IDirectMusicSegmentState_AddRef(state);
