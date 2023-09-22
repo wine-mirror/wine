@@ -75,12 +75,105 @@ static DWORD set_app_theme( DWORD mode )
     return ret;
 }
 
+static BOOL get_accent_palette( DWORD *colors, DWORD *len )
+{
+    BOOL ret = TRUE;
+    DWORD type;
+    HKEY hkey;
+
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent", 0, KEY_QUERY_VALUE, &hkey )) return FALSE;
+    if (RegQueryValueExW( hkey, L"AccentPalette", NULL, &type, (BYTE *)colors, len ) || type != REG_BINARY) ret = FALSE;
+    RegCloseKey( hkey );
+    return ret;
+}
+
+static BOOL delete_accent_palette(void)
+{
+    BOOL ret = TRUE;
+    HRESULT res;
+    HKEY hkey;
+
+    res = RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent", 0, KEY_SET_VALUE, &hkey );
+    if (res != 0) return res == ERROR_FILE_NOT_FOUND;
+
+    res = RegDeleteValueW( hkey, L"AccentPalette" );
+    if (res != 0 && res != ERROR_FILE_NOT_FOUND) ret = FALSE;
+
+    RegCloseKey( hkey );
+    return ret;
+}
+
+static DWORD set_accent_palette( DWORD *colors, DWORD len )
+{
+    DWORD ret = 1;
+    HKEY hkey;
+
+    if (RegOpenKeyExW( HKEY_CURRENT_USER,  L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent", 0, KEY_SET_VALUE, &hkey )) return 0;
+    if (RegSetValueExW( hkey, L"AccentPalette", 0, REG_BINARY, (const BYTE *)&colors, len )) ret = 0;
+    RegCloseKey( hkey );
+    return ret;
+}
+
 static void reset_color( Color *value )
 {
     value->A = 1;
     value->R = 1;
     value->G = 1;
     value->B = 1;
+}
+
+static BOOL compare_dword_color( Color color, DWORD dword )
+{
+    return (color.R == (dword & 0xFF) && color.G == ((dword >> 8) & 0xFF) && color.B == ((dword >> 16) & 0xFF));
+}
+
+static void test_single_accent( IUISettings3 *uisettings3, UIColorType type, DWORD expected )
+{
+    Color value;
+    HRESULT hr;
+    BOOL result;
+
+    reset_color( &value );
+    hr = IUISettings3_GetColorValue( uisettings3, type, &value );
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+
+    result = compare_dword_color( value, expected );
+    ok( result, "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d (type = %d)\n", value.A, value.R, value.G, value.B, type );
+}
+
+static void test_AccentColor( IUISettings3 *uisettings3 )
+{
+    DWORD default_palette[8];
+    DWORD default_palette_len = sizeof(default_palette);
+    DWORD accent_palette[8];
+    DWORD accent_palette_len = sizeof(accent_palette);
+
+    if (!get_accent_palette( default_palette, &default_palette_len )) default_palette_len = 0;
+
+    /* deleting AccentPalette fills a default value */
+    ok( delete_accent_palette(), "failed to delete AccentPalette key.\n");
+    ok( !get_accent_palette( accent_palette, &accent_palette_len ), "AccentPalette should not be available.\n" );
+
+    test_single_accent( uisettings3, UIColorType_Accent, 0x00d77800 );
+    ok( get_accent_palette( accent_palette, &accent_palette_len ), "failed to retrieve AccentPalette key.\n" );
+
+    /* default values */
+    test_single_accent( uisettings3, UIColorType_AccentDark1, 0x009e5a00 );
+    test_single_accent( uisettings3, UIColorType_AccentDark2, 0x00754200 );
+    test_single_accent( uisettings3, UIColorType_AccentDark3, 0x00422600 );
+    test_single_accent( uisettings3, UIColorType_AccentLight1, 0x00e39c42 );
+    test_single_accent( uisettings3, UIColorType_AccentLight2, 0x00edb976 );
+    test_single_accent( uisettings3, UIColorType_AccentLight3, 0x00ffd8a6 );
+
+    test_single_accent( uisettings3, UIColorType_Accent, accent_palette[3] );
+    test_single_accent( uisettings3, UIColorType_AccentDark1, accent_palette[4] );
+    test_single_accent( uisettings3, UIColorType_AccentDark2, accent_palette[5] );
+    test_single_accent( uisettings3, UIColorType_AccentDark3, accent_palette[6] );
+    test_single_accent( uisettings3, UIColorType_AccentLight1, accent_palette[2] );
+    test_single_accent( uisettings3, UIColorType_AccentLight2, accent_palette[1] );
+    test_single_accent( uisettings3, UIColorType_AccentLight3, accent_palette[0] );
+
+    if (default_palette_len) set_accent_palette( default_palette, default_palette_len );
 }
 
 static void test_UISettings(void)
@@ -125,6 +218,8 @@ static void test_UISettings(void)
     }
 
     check_interface( inspectable, &IID_IAgileObject, TRUE );
+
+    test_AccentColor( uisettings3 );
 
     default_theme = get_app_theme();
 

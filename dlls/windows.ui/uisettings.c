@@ -266,6 +266,40 @@ static DWORD get_app_theme(void)
     return ret;
 }
 
+static DWORD initialize_accent_palette( HKEY hkey, DWORD offset )
+{
+    DWORD palette[7] = { 0x00ffd8a6, 0x00edb976, 0x00e39c42, 0x00d77800, 0x009e5a00, 0x00754200, 0x00422600 };
+    DWORD len = sizeof(palette);
+
+    RegSetValueExW( hkey, L"AccentPalette", 0, REG_BINARY, (const BYTE *)&palette, len );
+    return palette[offset];
+}
+
+static void dword_to_color( DWORD color, Color *out )
+{
+    out->R = color & 0xFF;
+    out->G = (color >> 8) & 0xFF;
+    out->B = (color >> 16) & 0xFF;
+    out->A = 0xFF;
+}
+
+static void get_accent_palette_color( DWORD offset, Color *out )
+{
+    DWORD palette[7];
+    DWORD ret = 0, len = sizeof(palette), type;
+    HKEY hkey;
+
+    if (!RegCreateKeyW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent", &hkey ))
+    {
+        if (RegQueryValueExW( hkey, L"AccentPalette", NULL, &type, (BYTE *)&palette, &len ) || type != REG_BINARY)
+            ret = initialize_accent_palette( hkey, offset );
+        else
+            ret = palette[offset];
+        RegCloseKey( hkey );
+    }
+    dword_to_color( ret, out );
+}
+
 static void set_color_value( BYTE a, BYTE r, BYTE g, BYTE b, Color *out )
 {
     out->A = a;
@@ -283,18 +317,38 @@ static HRESULT WINAPI uisettings3_GetColorValue( IUISettings3 *iface, UIColorTyp
     switch (type)
     {
     case UIColorType_Foreground:
+        theme = get_app_theme();
+        set_color_value( 255, theme ? 0 : 255, theme ? 0 : 255, theme ? 0 : 255, value );
+        break;
     case UIColorType_Background:
         theme = get_app_theme();
+        set_color_value( 255, theme ? 255 : 0, theme ? 255 : 0, theme ? 255 : 0, value );
+        break;
+    case UIColorType_Accent:
+        get_accent_palette_color( 3, value );
+        break;
+    case UIColorType_AccentDark1:
+        get_accent_palette_color( 4, value );
+        break;
+    case UIColorType_AccentDark2:
+        get_accent_palette_color( 5, value );
+        break;
+    case UIColorType_AccentDark3:
+        get_accent_palette_color( 6, value );
+        break;
+    case UIColorType_AccentLight1:
+        get_accent_palette_color( 2, value );
+        break;
+    case UIColorType_AccentLight2:
+        get_accent_palette_color( 1, value );
+        break;
+    case UIColorType_AccentLight3:
+        get_accent_palette_color( 0, value );
         break;
     default:
         FIXME( "type %d not implemented.\n", type );
         return E_NOTIMPL;
     }
-
-    if (type == UIColorType_Foreground)
-        set_color_value( 255, theme ? 0 : 255, theme ? 0 : 255, theme ? 0 : 255, value );
-    else
-        set_color_value( 255, theme ? 255 : 0, theme ? 255 : 0, theme ? 255 : 0, value );
 
     TRACE( "Returning value.A = %d, value.R = %d, value.G = %d, value.B = %d\n", value->A, value->R, value->G, value->B );
     return S_OK;
