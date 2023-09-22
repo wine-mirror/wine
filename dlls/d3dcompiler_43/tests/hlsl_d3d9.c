@@ -968,7 +968,6 @@ static void test_majority(void)
             draw_quad(test_context.device, ps_code);
 
             v = get_color_vec4(test_context.device, 0, 0);
-            todo_wine_if(i == 4 || i == 6)
             ok(compare_vec4(&v, c->x, c->y, c->z, c->w, 1),
                 "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
