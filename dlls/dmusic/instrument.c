@@ -44,6 +44,19 @@ struct region
     BOOL loop_present;
 };
 
+static void region_destroy(struct region *region)
+{
+    struct articulation *articulation, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(articulation, next, &region->articulations, struct articulation, entry)
+    {
+        list_remove(&articulation->entry);
+        free(articulation);
+    }
+
+    free(region);
+}
+
 struct instrument
 {
     IDirectMusicInstrument IDirectMusicInstrument_iface;
@@ -122,15 +135,8 @@ static ULONG WINAPI instrument_Release(LPDIRECTMUSICINSTRUMENT iface)
 
         LIST_FOR_EACH_ENTRY_SAFE(region, next_region, &This->regions, struct region, entry)
         {
-            LIST_FOR_EACH_ENTRY_SAFE(articulation, next_articulation, &region->articulations,
-                    struct articulation, entry)
-            {
-                list_remove(&articulation->entry);
-                free(articulation);
-            }
-
             list_remove(&region->entry);
-            free(region);
+            region_destroy(region);
         }
 
         collection_internal_release(This->collection);
@@ -322,7 +328,7 @@ static HRESULT parse_rgn_chunk(struct instrument *This, IStream *stream, struct 
         if (FAILED(hr)) break;
     }
 
-    if (FAILED(hr)) free(region);
+    if (FAILED(hr)) region_destroy(region);
     else list_add_tail(&This->regions, &region->entry);
 
     return hr;
