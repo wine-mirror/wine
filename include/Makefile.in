@@ -132,6 +132,7 @@ SOURCES = \
 	d3d12.idl \
 	d3d12sdklayers.idl \
 	d3d12shader.idl \
+	d3d12video.idl \
 	d3d8.h \
 	d3d8caps.h \
 	d3d8types.h \

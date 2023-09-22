@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2023 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "dxgicommon.idl";
+import "d3d12.idl";
+
+typedef enum D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE
+{
+    D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_NONE = 0,
+    D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE_FIELD_BASED = 1,
+} D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE;
+
+typedef enum D3D12_BITSTREAM_ENCRYPTION_TYPE
+{
+    D3D12_BITSTREAM_ENCRYPTION_TYPE_NONE = 0,
+} D3D12_BITSTREAM_ENCRYPTION_TYPE;
+
+typedef struct D3D12_VIDEO_DECODE_CONFIGURATION
+{
+    GUID DecodeProfile;
+    D3D12_BITSTREAM_ENCRYPTION_TYPE BitstreamEncryption;
+    D3D12_VIDEO_FRAME_CODED_INTERLACE_TYPE InterlaceType;
+} D3D12_VIDEO_DECODE_CONFIGURATION;
+
+typedef struct D3D12_VIDEO_DECODER_DESC
+{
+    UINT NodeMask;
+    D3D12_VIDEO_DECODE_CONFIGURATION Configuration;
+} D3D12_VIDEO_DECODER_DESC;
+
+[
+    uuid(c59b6bdc-7720-4074-a136-17a156037470),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDecoder : ID3D12Pageable
+{
+    D3D12_VIDEO_DECODER_DESC GetDesc();
+}
