@@ -2206,7 +2206,7 @@ static void test_reuseaddr(void)
 
     unsigned int rc, reuse, value;
     struct sockaddr_storage saddr;
-    SOCKET s1, s2, s3, s4;
+    SOCKET s1, s2, s3, s4, s5, s6;
     unsigned int i, j;
     int size;
 
@@ -2396,6 +2396,106 @@ static void test_reuseaddr(void)
 
         closesocket(s1);
         closesocket(s2);
+
+        /* Test successive binds and bind-after-listen */
+        reuse = 1;
+        s1 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s1 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = setsockopt(s1, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s2 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s2 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = setsockopt(s2, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s3 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s3 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = setsockopt(s3, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s4 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = setsockopt(s4, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        rc = bind(s1, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        rc = bind(s2, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s5 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s5 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        rc = listen(s1, 1);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+        rc = listen(s2, 1);
+        todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+        rc = connect(s5, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        /* The connection is delivered to the first socket. */
+        size = tests[i].addrlen;
+        s6 = accept(s1, (struct sockaddr *)&saddr, &size);
+        ok(s6 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        closesocket(s1);
+        closesocket(s5);
+        closesocket(s6);
+
+        rc = bind(s3, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s5 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s5 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = connect(s5, tests[i].addr_loopback, tests[i].addrlen);
+        todo_wine ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        /* The connection is delivered to the second socket. */
+        size = tests[i].addrlen;
+        s6 = accept(s2, (struct sockaddr *)&saddr, &size);
+        todo_wine ok(s6 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        closesocket(s2);
+        closesocket(s5);
+        closesocket(s6);
+
+        rc = bind(s4, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+        rc = listen(s3, 1);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s5 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s5 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = connect(s5, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        /* The connection is delivered to the third socket. */
+        size = tests[i].addrlen;
+        s6 = accept(s3, (struct sockaddr *)&saddr, &size);
+        ok(s6 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        closesocket(s3);
+        closesocket(s5);
+        closesocket(s6);
+
+        rc = listen(s4, 1);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        s5 = socket(tests[i].domain, SOCK_STREAM, 0);
+        ok(s5 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+        rc = connect(s5, tests[i].addr_loopback, tests[i].addrlen);
+        ok(!rc, "got error %d.\n", WSAGetLastError());
+
+        /* The connection is delivered to the fourth socket. */
+        size = tests[i].addrlen;
+        s6 = accept(s4, (struct sockaddr *)&saddr, &size);
+        ok(s6 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
+
+        closesocket(s4);
+        closesocket(s5);
+        closesocket(s6);
 
         winetest_pop_context();
     }
