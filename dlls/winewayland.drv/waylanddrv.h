@@ -83,6 +83,7 @@ struct wayland_pointer
 struct wayland_seat
 {
     struct wl_seat *wl_seat;
+    uint32_t global_id;
     pthread_mutex_t mutex;
 };
 

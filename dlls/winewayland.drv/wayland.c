@@ -134,6 +134,7 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         pthread_mutex_lock(&seat->mutex);
         seat->wl_seat = wl_registry_bind(registry, id, &wl_seat_interface,
                                          version < 5 ? version : 5);
+        seat->global_id = id;
         wl_seat_add_listener(seat->wl_seat, &seat_listener, NULL);
         pthread_mutex_unlock(&seat->mutex);
     }
@@ -158,14 +159,14 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
     }
 
     seat = &process_wayland.seat;
-    if (seat->wl_seat &&
-        wl_proxy_get_id((struct wl_proxy *)seat->wl_seat) == id)
+    if (seat->wl_seat && seat->global_id == id)
     {
         TRACE("removing seat\n");
         if (process_wayland.pointer.wl_pointer) wayland_pointer_deinit();
         pthread_mutex_lock(&seat->mutex);
         wl_seat_release(seat->wl_seat);
         seat->wl_seat = NULL;
+        seat->global_id = 0;
         pthread_mutex_unlock(&seat->mutex);
     }
 }
