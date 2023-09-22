@@ -78,38 +78,46 @@ static ULONG WINAPI segment_state_Release(IDirectMusicSegmentState8 *iface)
     return ref;
 }
 
-static HRESULT WINAPI segment_state_GetRepeats(IDirectMusicSegmentState8 *iface, DWORD *pdwRepeats)
+static HRESULT WINAPI segment_state_GetRepeats(IDirectMusicSegmentState8 *iface, DWORD *repeats)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): stub\n", This, pdwRepeats);
+    FIXME("(%p, %p): semi-stub\n", This, repeats);
     return S_OK;
 }
 
-static HRESULT WINAPI segment_state_GetSegment(IDirectMusicSegmentState8 *iface, IDirectMusicSegment **ppSegment)
+static HRESULT WINAPI segment_state_GetSegment(IDirectMusicSegmentState8 *iface, IDirectMusicSegment **segment)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): stub\n", This, ppSegment);
+
+    FIXME("(%p, %p): semi-stub\n", This, segment);
+
+    *segment = NULL;
+    return DMUS_E_NOT_FOUND;
+}
+
+static HRESULT WINAPI segment_state_GetStartTime(IDirectMusicSegmentState8 *iface, MUSIC_TIME *start_time)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
+    FIXME("(%p, %p): semi-stub\n", This, start_time);
+    *start_time = -1;
     return S_OK;
 }
 
-static HRESULT WINAPI segment_state_GetStartTime(IDirectMusicSegmentState8 *iface, MUSIC_TIME *pmtStart)
+static HRESULT WINAPI segment_state_GetSeek(IDirectMusicSegmentState8 *iface, MUSIC_TIME *seek_time)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): stub\n", This, pmtStart);
+    FIXME("(%p, %p): semi-stub\n", This, seek_time);
+    *seek_time = 0;
     return S_OK;
 }
 
-static HRESULT WINAPI segment_state_GetSeek(IDirectMusicSegmentState8 *iface, MUSIC_TIME *pmtSeek)
+static HRESULT WINAPI segment_state_GetStartPoint(IDirectMusicSegmentState8 *iface, MUSIC_TIME *start_time)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): stub\n", This, pmtSeek);
-    return S_OK;
-}
 
-static HRESULT WINAPI segment_state_GetStartPoint(IDirectMusicSegmentState8 *iface, MUSIC_TIME *pmtStart)
-{
-    struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): stub\n", This, pmtStart);
+    FIXME("(%p, %p): semi-stub\n", This, start_time);
+
+    *start_time = 0;
     return S_OK;
 }
 
