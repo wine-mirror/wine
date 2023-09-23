@@ -263,3 +263,138 @@ interface ID3D12VideoDecoder : ID3D12Pageable
 {
     D3D12_VIDEO_DECODER_DESC GetDesc();
 }
+
+typedef enum D3D12_VIDEO_DECODE_ARGUMENT_TYPE
+{
+    D3D12_VIDEO_DECODE_ARGUMENT_TYPE_PICTURE_PARAMETERS = 0,
+    D3D12_VIDEO_DECODE_ARGUMENT_TYPE_INVERSE_QUANTIZATION_MATRIX = 1,
+    D3D12_VIDEO_DECODE_ARGUMENT_TYPE_SLICE_CONTROL = 2,
+    D3D12_VIDEO_DECODE_ARGUMENT_TYPE_MAX_VALID = 3,
+} D3D12_VIDEO_DECODE_ARGUMENT_TYPE;
+
+typedef struct D3D12_VIDEO_DECODE_FRAME_ARGUMENT
+{
+    D3D12_VIDEO_DECODE_ARGUMENT_TYPE Type;
+    UINT Size;
+    void *pData;
+} D3D12_VIDEO_DECODE_FRAME_ARGUMENT;
+
+typedef struct D3D12_VIDEO_DECODE_REFERENCE_FRAMES
+{
+    UINT NumTexture2Ds;
+    ID3D12Resource **ppTexture2Ds;
+    UINT *pSubresources;
+    ID3D12VideoDecoderHeap **ppHeaps;
+} D3D12_VIDEO_DECODE_REFERENCE_FRAMES;
+
+typedef struct D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM
+{
+    ID3D12Resource *pBuffer;
+    UINT64 Offset;
+    UINT64 Size;
+} D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM;
+
+typedef struct D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS
+{
+    BOOL Enable;
+    ID3D12Resource *pReferenceTexture2D;
+    UINT ReferenceSubresource;
+    DXGI_COLOR_SPACE_TYPE OutputColorSpace;
+    DXGI_COLOR_SPACE_TYPE DecodeColorSpace;
+} D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS;
+
+typedef struct D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS
+{
+    UINT NumFrameArguments;
+    D3D12_VIDEO_DECODE_FRAME_ARGUMENT FrameArguments[D3D12_VIDEO_DECODE_MAX_ARGUMENTS];
+    D3D12_VIDEO_DECODE_REFERENCE_FRAMES ReferenceFrames;
+    D3D12_VIDEO_DECODE_COMPRESSED_BITSTREAM CompressedBitstream;
+    ID3D12VideoDecoderHeap *pHeap;
+} D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS;
+
+typedef struct D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS
+{
+    ID3D12Resource *pOutputTexture2D;
+    UINT OutputSubresource;
+    D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS ConversionArguments;
+} D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS;
+
+[
+    uuid(3b60536e-ad29-4e64-a269-f853837e5e53),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDecodeCommandList : ID3D12CommandList
+{
+    HRESULT Close();
+
+    HRESULT Reset(
+        [in] ID3D12CommandAllocator *allocator
+    );
+
+    void ClearState();
+
+    void ResourceBarrier(
+        [in] UINT barriers_count,
+        [in] const D3D12_RESOURCE_BARRIER *barriers
+    );
+
+    void DiscardResource(
+        [in] ID3D12Resource *resource,
+        [in, optional] const D3D12_DISCARD_REGION *region
+    );
+
+    void BeginQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void EndQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void ResolveQueryData(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT start_index,
+        [in] UINT queries_count,
+        [in] ID3D12Resource *destination_buffer,
+        [in] UINT64 aligned_destination_buffer_offset
+    );
+
+    void SetPredication(
+        [in, optional] ID3D12Resource *buffer,
+        [in] UINT64 aligned_buffer_offset,
+        [in] D3D12_PREDICATION_OP operation
+    );
+
+    void SetMarker(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void BeginEvent(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void EndEvent();
+
+    void DecodeFrame(
+        [in] ID3D12VideoDecoder *decoder,
+        [in] const D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS *output_arguments,
+        [in] const D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS *input_arguments
+    );
+
+    void WriteBufferImmediate(
+        [in] UINT count,
+        [in] const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *params,
+        [in, optional] const D3D12_WRITEBUFFERIMMEDIATE_MODE *modes
+    );
+}
