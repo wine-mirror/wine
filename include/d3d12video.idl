@@ -438,6 +438,58 @@ interface ID3D12VideoDecodeCommandList : ID3D12CommandList
     );
 }
 
+typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE
+{
+    D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_8X8 = 0,
+    D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_16X16 = 1,
+} D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE;
+
+typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION
+{
+    D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION_QUARTER_PEL = 0,
+} D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION;
+
+typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_DESC
+{
+    UINT NodeMask;
+    DXGI_FORMAT InputFormat;
+    D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE BlockSize;
+    D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION Precision;
+    D3D12_VIDEO_SIZE_RANGE SizeRange;
+} D3D12_VIDEO_MOTION_ESTIMATOR_DESC;
+
+typedef struct D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC
+{
+    UINT NodeMask;
+    DXGI_FORMAT InputFormat;
+    D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE BlockSize;
+    D3D12_VIDEO_MOTION_ESTIMATOR_VECTOR_PRECISION Precision;
+    D3D12_VIDEO_SIZE_RANGE SizeRange;
+} D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC;
+
+[
+    uuid(981611ad-a144-4c83-9890-f30e26d658ab),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDevice1 : ID3D12VideoDevice
+{
+    HRESULT CreateVideoMotionEstimator(
+        [in] const D3D12_VIDEO_MOTION_ESTIMATOR_DESC *desc,
+        [in, optional] ID3D12ProtectedResourceSession *protected_resource_session,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **video_motion_estimator
+    );
+
+    HRESULT CreateVideoMotionVectorHeap(
+        [in] const D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC *desc,
+        [in, optional] ID3D12ProtectedResourceSession *protected_resource_session,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **video_motion_vector_heap
+    );
+}
+
 cpp_quote("DEFINE_GUID(D3D12_VIDEO_DECODE_PROFILE_MPEG2, 0xee27417f, 0x5e28, 0x4e65, 0xbe, 0xea, 0x1d, 0x26, 0xb5, 0x08, 0xad, 0xc9);")
 cpp_quote("DEFINE_GUID(D3D12_VIDEO_DECODE_PROFILE_MPEG1_AND_MPEG2, 0x86695f12, 0x340e, 0x4f04, 0x9f, 0xd3, 0x92, 0x53, 0xdd, 0x32, 0x74, 0x60);")
 cpp_quote("DEFINE_GUID(D3D12_VIDEO_DECODE_PROFILE_H264, 0x1b81be68, 0xa0c7, 0x11d3, 0xb9, 0x84, 0x00, 0xc0, 0x4f, 0x2e, 0x73, 0xc5);")
