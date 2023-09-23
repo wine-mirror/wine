@@ -442,7 +442,7 @@ static HRESULT synth_download_articulation2(struct synth *This, ULONG *offsets, 
     {
         articulation_info = (DMUS_ARTICULATION2 *)(data + offsets[index]);
         list = (CONNECTIONLIST *)(data + offsets[articulation_info->ulArtIdx]);
-        connections = (CONNECTION *)list + 1;
+        connections = (CONNECTION *)(list + 1);
 
         if (TRACE_ON(dmsynth)) dump_connectionlist(list);
         if (articulation_info->ulFirstExtCkIdx) FIXME("Articulation extensions not implemented\n");
