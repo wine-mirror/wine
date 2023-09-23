@@ -13988,119 +13988,124 @@ done:
 
 static void test_PeekMessage3(void)
 {
-    HWND hwnd;
+    HWND parent_hwnd, hwnd;
     BOOL ret;
     MSG msg;
 
-    hwnd = CreateWindowA("TestWindowClass", "PeekMessage3", WS_OVERLAPPEDWINDOW,
+    parent_hwnd = CreateWindowA("SimpleWindowClass", "PeekMessage3", WS_OVERLAPPEDWINDOW,
                          10, 10, 800, 800, NULL, NULL, NULL, NULL);
+    ok(parent_hwnd != NULL, "expected parent_hwnd != NULL\n");
+
+    hwnd = CreateWindowA("TestWindowClass", "PeekMessage3", WS_CHILD, 0, 0, 1, 1,
+        parent_hwnd, NULL, NULL, NULL);
     ok(hwnd != NULL, "expected hwnd != NULL\n");
+
     flush_events();
 
     /* GetMessage() and PeekMessage(..., PM_REMOVE) should prefer messages which
      * were already seen. */
 
     SetTimer(hwnd, 1, 100, NULL);
-    while (!PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, 0, 0, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
-    ret = PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, PM_NOREMOVE);
     todo_wine
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     SetTimer(hwnd, 1, 100, NULL);
-    while (!PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, 0, 0, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
-    ret = PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE);
     todo_wine
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE);
     todo_wine
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     /* It doesn't matter if a message range is specified or not. */
 
     SetTimer(hwnd, 1, 100, NULL);
-    while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     /* But not if the post messages were added before the PeekMessage() call. */
 
     PostMessageA(hwnd, WM_USER, 0, 0);
     SetTimer(hwnd, 1, 100, NULL);
-    while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     /* More complicated test with multiple messages. */
 
     PostMessageA(hwnd, WM_USER, 0, 0);
     SetTimer(hwnd, 1, 100, NULL);
-    while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER + 1, 0, 0);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     todo_wine
     ok(ret && msg.message == WM_USER + 1, "msg.message = %u instead of WM_USER + 1\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     /* Also works for posted messages, but the situation is a bit different,
      * because both messages are in the same queue. */
 
     PostMessageA(hwnd, WM_TIMER, 0, 0);
-    while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
     PostMessageA(hwnd, WM_USER, 0, 0);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
     PostMessageA(hwnd, WM_USER, 0, 0);
     PostMessageA(hwnd, WM_TIMER, 0, 0);
-    while (!PeekMessageA(&msg, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
+    while (!PeekMessageA(&msg, hwnd, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     ok(msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_USER, "msg.message = %u instead of WM_USER\n", msg.message);
-    ret = GetMessageA(&msg, NULL, 0, 0);
+    ret = GetMessageA(&msg, hwnd, 0, 0);
     ok(ret && msg.message == WM_TIMER, "msg.message = %u instead of WM_TIMER\n", msg.message);
-    ret = PeekMessageA(&msg, NULL, 0, 0, 0);
+    ret = PeekMessageA(&msg, hwnd, 0, 0, 0);
     ok(!ret, "expected PeekMessage to return FALSE, got %u\n", ret);
 
-    DestroyWindow(hwnd);
+    DestroyWindow(parent_hwnd);
     flush_events();
 }
 
