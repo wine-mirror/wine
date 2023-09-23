@@ -207,6 +207,17 @@ typedef struct D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC
 } D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC;
 
 [
+    uuid(0946b7c9-ebf6-4047-bb73-8683e27dbb1f),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDecoderHeap : ID3D12Pageable
+{
+    D3D12_VIDEO_DECODER_HEAP_DESC GetDesc();
+}
+
+[
     uuid(1f052807-0b46-4acc-8a89-364f793718a4),
     object,
     local,
