@@ -73,8 +73,7 @@ BOOL update_listview_path(const WCHAR *path)
 {
     free(g_currentPath);
 
-    g_currentPath = malloc((lstrlenW(path) + 1) * sizeof(WCHAR));
-    lstrcpyW(g_currentPath, path);
+    g_currentPath = wcsdup(path);
 
     return TRUE;
 }
@@ -154,13 +153,7 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     linfo = malloc(sizeof(LINE_INFO));
     linfo->dwValType = dwValType;
     linfo->val_len = dwCount;
-
-    if (Name)
-    {
-        linfo->name = malloc((lstrlenW(Name) + 1) * sizeof(WCHAR));
-        lstrcpyW(linfo->name, Name);
-    }
-    else linfo->name = NULL;
+    linfo->name = wcsdup(Name);
 
     if (ValBuf && dwCount)
     {
