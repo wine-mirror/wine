@@ -48,12 +48,8 @@ static BOOL property_to_string(IDxDiagContainer *container, const WCHAR *propert
         {
             WCHAR *bstr = V_BSTR(&var);
 
-            *output = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(bstr) + 1) * sizeof(WCHAR));
-            if (*output)
-            {
-                lstrcpyW(*output, bstr);
-                ret = TRUE;
-            }
+            *output = wcsdup(bstr);
+            ret = !!*output;
         }
     }
 
@@ -65,24 +61,24 @@ static void free_system_information(struct dxdiag_information *dxdiag_info)
 {
     struct system_information *system_info = &dxdiag_info->system_info;
 
-    HeapFree(GetProcessHeap(), 0, system_info->szTimeEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szTimeLocalized);
-    HeapFree(GetProcessHeap(), 0, system_info->szMachineNameEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szOSExLongEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szOSExLocalized);
-    HeapFree(GetProcessHeap(), 0, system_info->szLanguagesEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szLanguagesLocalized);
-    HeapFree(GetProcessHeap(), 0, system_info->szSystemManufacturerEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szSystemModelEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szBIOSEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szProcessorEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szPhysicalMemoryEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szPageFileEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szPageFileLocalized);
-    HeapFree(GetProcessHeap(), 0, system_info->szWindowsDir);
-    HeapFree(GetProcessHeap(), 0, system_info->szDirectXVersionLongEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szSetupParamEnglish);
-    HeapFree(GetProcessHeap(), 0, system_info->szDxDiagVersion);
+    free(system_info->szTimeEnglish);
+    free(system_info->szTimeLocalized);
+    free(system_info->szMachineNameEnglish);
+    free(system_info->szOSExLongEnglish);
+    free(system_info->szOSExLocalized);
+    free(system_info->szLanguagesEnglish);
+    free(system_info->szLanguagesLocalized);
+    free(system_info->szSystemManufacturerEnglish);
+    free(system_info->szSystemModelEnglish);
+    free(system_info->szBIOSEnglish);
+    free(system_info->szProcessorEnglish);
+    free(system_info->szPhysicalMemoryEnglish);
+    free(system_info->szPageFileEnglish);
+    free(system_info->szPageFileLocalized);
+    free(system_info->szWindowsDir);
+    free(system_info->szDirectXVersionLongEnglish);
+    free(system_info->szSetupParamEnglish);
+    free(system_info->szDxDiagVersion);
 }
 
 static inline void fill_system_property_list(struct dxdiag_information *dxdiag_info, struct property_list *list)
@@ -173,7 +169,7 @@ void free_dxdiag_information(struct dxdiag_information *system_info)
     for (i = 0; i < ARRAY_SIZE(filler_list); i++)
         filler_list[i].free_function(system_info);
 
-    HeapFree(GetProcessHeap(), 0, system_info);
+    free(system_info);
 }
 
 struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
@@ -203,7 +199,7 @@ struct dxdiag_information *collect_dxdiag_information(BOOL whql_check)
     if (FAILED(hr))
         goto error;
 
-    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if (!ret)
         goto error;
 
