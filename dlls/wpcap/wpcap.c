@@ -859,7 +859,7 @@ char * CDECL pcap_lookupdev( char *errbuf )
     if (!ret)
     {
         if (pcap_findalldevs( &devs, errbuf ) == PCAP_ERROR || !devs) return NULL;
-        if ((ret = malloc( strlen(devs->name) + 1 ))) strcpy( ret, devs->name );
+        ret = strdup( devs->name );
         pcap_freealldevs( devs );
     }
     return ret;
