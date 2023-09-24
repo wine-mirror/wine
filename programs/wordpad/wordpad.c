@@ -627,8 +627,7 @@ static void add_font(struct font_array *fonts, LPCWSTR fontName, DWORD fontType,
         fontHeight = ntmc->ntmTm.tmHeight - ntmc->ntmTm.tmInternalLeading;
 
     idx = fonts->count;
-    fonts->fonts[idx].name = malloc((lstrlenW(fontName) + 1)*sizeof(WCHAR) );
-    lstrcpyW( fonts->fonts[idx].name, fontName );
+    fonts->fonts[idx].name = wcsdup(fontName);
     fonts->fonts[idx].lParam = MAKELONG(fontType, fontHeight);
 
     fonts->count++;
