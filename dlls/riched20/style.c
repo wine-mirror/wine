@@ -120,7 +120,7 @@ BOOL cf2w_to_cfany(CHARFORMAT2W *to, const CHARFORMAT2W *from)
 
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style)
 {
-  ME_Style *s = heap_alloc(sizeof(*s));
+  ME_Style *s = malloc(sizeof(*s));
 
   assert(style->cbSize == sizeof(CHARFORMAT2W));
   s->fmt = *style;
@@ -448,7 +448,7 @@ void ME_DestroyStyle(ME_Style *s)
     s->font_cache = NULL;
   }
   ScriptFreeCache( &s->script_cache );
-  heap_free(s);
+  free(s);
 }
 
 void ME_AddRefStyle(ME_Style *s)

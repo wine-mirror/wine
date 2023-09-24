@@ -444,7 +444,7 @@ BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars)
 
 static struct re_object* create_re_object(const REOBJECT *reo, ME_Run *run)
 {
-  struct re_object *reobj = heap_alloc(sizeof(*reobj));
+  struct re_object *reobj = malloc(sizeof(*reobj));
 
   if (!reobj)
   {

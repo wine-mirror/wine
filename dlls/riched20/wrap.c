@@ -50,8 +50,8 @@ typedef struct tagME_WrapContext
 
 static BOOL get_run_glyph_buffers( ME_Run *run )
 {
-    heap_free( run->glyphs );
-    run->glyphs = heap_alloc( run->max_glyphs * (sizeof(WORD) + sizeof(SCRIPT_VISATTR) + sizeof(int) + sizeof(GOFFSET)) );
+    free( run->glyphs );
+    run->glyphs = malloc( run->max_glyphs * (sizeof(WORD) + sizeof(SCRIPT_VISATTR) + sizeof(int) + sizeof(GOFFSET)) );
     if (!run->glyphs) return FALSE;
 
     run->vis_attrs = (SCRIPT_VISATTR*)((char*)run->glyphs + run->max_glyphs * sizeof(WORD));
@@ -75,9 +75,9 @@ static HRESULT shape_run( ME_Context *c, ME_Run *run )
 
     if (run->max_clusters < run->len)
     {
-        heap_free( run->clusters );
+        free( run->clusters );
         run->max_clusters = run->len * 2;
-        run->clusters = heap_alloc( run->max_clusters * sizeof(WORD) );
+        run->clusters = malloc( run->max_clusters * sizeof(WORD) );
     }
 
     select_style( c, run->style );
@@ -250,7 +250,7 @@ static void layout_row( ME_Run *start, ME_Run *last )
     if (!num_runs) return;
 
     if (num_runs > ARRAY_SIZE( buf ) / 5)
-        vis_to_log = heap_alloc( num_runs * sizeof(int) * 5 );
+        vis_to_log = malloc( num_runs * sizeof(int) * 5 );
 
     log_to_vis = vis_to_log + num_runs;
     widths = vis_to_log + 2 * num_runs;
@@ -278,7 +278,7 @@ static void layout_row( ME_Run *start, ME_Run *last )
         i++;
     }
 
-    if (vis_to_log != buf) heap_free( vis_to_log );
+    if (vis_to_log != buf) free( vis_to_log );
 }
 
 static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
@@ -744,9 +744,9 @@ static HRESULT itemize_para( ME_Context *c, ME_Paragraph *para )
         if (items_passed > para->text->nLen + 1) break; /* something else has gone wrong */
         items_passed *= 2;
         if (items == buf)
-            items = heap_alloc( items_passed * sizeof( *items ) );
+            items = malloc( items_passed * sizeof( *items ) );
         else
-            items = heap_realloc( items, items_passed * sizeof( *items ) );
+            items = realloc( items, items_passed * sizeof( *items ) );
         if (!items) break;
     }
     if (FAILED( hr )) goto end;
@@ -792,7 +792,7 @@ static HRESULT itemize_para( ME_Context *c, ME_Paragraph *para )
     para->nFlags |= MEPF_COMPLEX;
 
 end:
-    if (items != buf) heap_free( items );
+    if (items != buf) free( items );
     return hr;
 }
 

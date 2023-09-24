@@ -27,7 +27,7 @@ static void destroy_undo_item( struct undo_item *undo )
     switch( undo->type )
     {
     case undo_insert_run:
-        heap_free( undo->u.insert_run.str );
+        free( undo->u.insert_run.str );
         ME_ReleaseStyle( undo->u.insert_run.style );
         break;
     case undo_split_para:
@@ -37,7 +37,7 @@ static void destroy_undo_item( struct undo_item *undo )
         break;
     }
 
-    heap_free( undo );
+    free( undo );
 }
 
 static void empty_redo_stack(ME_TextEditor *editor)
@@ -77,7 +77,7 @@ static struct undo_item *add_undo( ME_TextEditor *editor, enum undo_type type )
     if (editor_undo_ignored(editor)) return NULL;
     if (editor->nUndoLimit == 0) return NULL;
 
-    undo = heap_alloc( sizeof(*undo) );
+    undo = malloc( sizeof(*undo) );
     if (!undo) return NULL;
     undo->type = type;
 
@@ -133,7 +133,7 @@ BOOL add_undo_insert_run( ME_TextEditor *editor, int pos, const WCHAR *str, int 
     struct undo_item *undo = add_undo( editor, undo_insert_run );
     if (!undo) return FALSE;
 
-    undo->u.insert_run.str = heap_alloc( (len + 1) * sizeof(WCHAR) );
+    undo->u.insert_run.str = malloc( (len + 1) * sizeof(WCHAR) );
     if (!undo->u.insert_run.str)
     {
         ME_EmptyUndoStack( editor );

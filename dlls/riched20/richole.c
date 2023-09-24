@@ -1005,7 +1005,7 @@ static ULONG WINAPI IOleClientSite_fnRelease(IOleClientSite *iface)
             list_remove(&This->child.entry);
             This->child.reole = NULL;
         }
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1218,7 +1218,7 @@ static const IOleInPlaceSiteVtbl olestvt =
 
 static HRESULT CreateOleClientSite( struct text_services *services, IOleClientSite **ret )
 {
-    IOleClientSiteImpl *clientSite = heap_alloc(sizeof *clientSite);
+    IOleClientSiteImpl *clientSite = malloc(sizeof *clientSite);
 
     if (!clientSite)
         return E_OUTOFMEMORY;
@@ -1481,7 +1481,7 @@ static ULONG WINAPI ITextRange_fnRelease(ITextRange *me)
             list_remove(&This->child.entry);
             This->child.reole = NULL;
         }
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -2775,7 +2775,7 @@ static ULONG WINAPI TextFont_Release(ITextFont *iface)
         if (This->range)
             ITextRange_Release(This->range);
         SysFreeString(This->props[FONT_NAME].str);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -3489,7 +3489,7 @@ static HRESULT create_textfont(ITextRange *range, const ITextFontImpl *src, ITex
     ITextFontImpl *font;
 
     *ret = NULL;
-    font = heap_alloc(sizeof(*font));
+    font = malloc(sizeof(*font));
     if (!font)
         return E_OUTOFMEMORY;
 
@@ -3556,7 +3556,7 @@ static ULONG WINAPI TextPara_Release(ITextPara *iface)
     if (!ref)
     {
         ITextRange_Release(This->range);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -4024,7 +4024,7 @@ static HRESULT create_textpara(ITextRange *range, ITextPara **ret)
     ITextParaImpl *para;
 
     *ret = NULL;
-    para = heap_alloc(sizeof(*para));
+    para = malloc(sizeof(*para));
     if (!para)
         return E_OUTOFMEMORY;
 
@@ -4304,7 +4304,7 @@ static HRESULT WINAPI ITextDocument2Old_fnRedo(ITextDocument2Old *iface, LONG Co
 
 static HRESULT CreateITextRange(struct text_services *services, LONG start, LONG end, ITextRange** ppRange)
 {
-    ITextRangeImpl *txtRge = heap_alloc(sizeof(ITextRangeImpl));
+    ITextRangeImpl *txtRge = malloc(sizeof(ITextRangeImpl));
 
     if (!txtRge)
         return E_OUTOFMEMORY;
@@ -4613,7 +4613,7 @@ static ULONG WINAPI ITextSelection_fnRelease(ITextSelection *me)
     struct text_selection *This = impl_from_ITextSelection(me);
     ULONG ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
-        heap_free(This);
+        free(This);
     return ref;
 }
 
@@ -5683,7 +5683,7 @@ static const ITextSelectionVtbl tsvt = {
 
 static struct text_selection *text_selection_create(struct text_services *services)
 {
-    struct text_selection *txtSel = heap_alloc(sizeof *txtSel);
+    struct text_selection *txtSel = malloc(sizeof *txtSel);
     if (!txtSel)
         return NULL;
 
@@ -5911,7 +5911,7 @@ void ME_DeleteReObject(struct re_object *reobj)
     if (reobj->obj.poleobj)   IOleObject_Release(reobj->obj.poleobj);
     if (reobj->obj.pstg)      IStorage_Release(reobj->obj.pstg);
     if (reobj->obj.polesite)  IOleClientSite_Release(reobj->obj.polesite);
-    heap_free(reobj);
+    free(reobj);
 }
 
 void ME_CopyReObject(REOBJECT *dst, const REOBJECT *src, DWORD flags)
