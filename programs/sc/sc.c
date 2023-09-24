@@ -135,10 +135,9 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
     unsigned int i, count;
     WCHAR *actions, *p;
 
-    actions = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( arg ) + 1) * sizeof(WCHAR) );
+    actions = wcsdup( arg );
     if (!actions) return FALSE;
 
-    lstrcpyW( actions, arg );
     for (p = actions, count = 0; *p; p++)
     {
         if (*p == '/')
@@ -150,10 +149,10 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
     count = count / 2 + 1;
 
     fa->cActions = count;
-    fa->lpsaActions = HeapAlloc( GetProcessHeap(), 0, fa->cActions * sizeof(SC_ACTION) );
+    fa->lpsaActions = malloc( fa->cActions * sizeof(SC_ACTION) );
     if (!fa->lpsaActions)
     {
-        HeapFree( GetProcessHeap(), 0, actions );
+        free( actions );
         return FALSE;
     }
 
@@ -170,7 +169,7 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
         p += lstrlenW( p ) + 1;
     }
 
-    HeapFree( GetProcessHeap(), 0, actions );
+    free( actions );
     return TRUE;
 }
 
@@ -333,7 +332,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             {
                 ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_FAILURE_ACTIONS, &sfa );
                 if (!ret) WINE_ERR("failed to set service failure actions %lu\n", GetLastError());
-                HeapFree( GetProcessHeap(), 0, sfa.lpsaActions );
+                free( sfa.lpsaActions );
             }
             else
                 WINE_ERR("failed to parse failure parameters\n");
