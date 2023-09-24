@@ -6464,7 +6464,7 @@ error:
 
 HRESULT WINAPI D3DXValidMesh(ID3DXMesh *mesh, const DWORD *adjacency, ID3DXBuffer **errors_and_warnings)
 {
-    FIXME("(%p, %p, %p): stub\n", mesh, adjacency, *errors_and_warnings);
+    FIXME("mesh %p, adjacency %p, errors_and_warnings %p stub.\n", mesh, adjacency, errors_and_warnings);
 
     return E_NOTIMPL;
 }
