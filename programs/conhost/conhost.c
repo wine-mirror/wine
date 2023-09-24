@@ -692,8 +692,7 @@ static WCHAR *edit_line_history( struct console *console, unsigned int index )
     }
     else if(console->edit_line.current_history)
     {
-        if ((ptr = malloc( (lstrlenW(console->edit_line.current_history) + 1) * sizeof(WCHAR) )))
-            lstrcpyW( ptr, console->edit_line.current_history );
+        ptr = wcsdup( console->edit_line.current_history );
     }
     return ptr;
 }
