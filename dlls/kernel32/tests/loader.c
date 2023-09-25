@@ -129,8 +129,10 @@ static const IMAGE_NT_HEADERS nt_header_template =
       0x10, /* BaseOfCode, also serves as e_lfanew in the truncated MZ header */
 #ifndef _WIN64
       0, /* BaseOfData */
-#endif
       0x10000000, /* ImageBase */
+#else
+      0x123450000, /* ImageBase */
+#endif
       0, /* SectionAlignment */
       0, /* FileAlignment */
       4, /* MajorOperatingSystemVersion */
@@ -651,6 +653,11 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
             {
                 ok_(__FILE__, line)( !mod, "loading succeeded\n" );
                 ok_(__FILE__, line)( GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %lu\n", GetLastError() );
+                if (nt_header_template.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64)
+                {
+                    wrong_machine = TRUE;
+                    expect_status = STATUS_INVALID_IMAGE_FORMAT;
+                }
             }
         }
         else
@@ -660,7 +667,6 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
             ok( mod != NULL || broken(il_only) || /* <= win7 */
                 broken( wrong_machine ), /* win8 */
                 "%u: loading failed err %lu\n", line, GetLastError() );
-            if (!mod && wrong_machine) expect_status = STATUS_INVALID_IMAGE_FORMAT;
         }
         if (mod) FreeLibrary( mod );
         expect_fallback = !mod;
@@ -705,10 +711,11 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header, const IMAG
     else
     {
         ok( ldr_status == expect_status ||
+            (wrong_machine && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT) ||
             broken(il_only && !expect_status && ldr_status == STATUS_INVALID_IMAGE_FORMAT) ||
             broken(nt_header->Signature == IMAGE_OS2_SIGNATURE && ldr_status == STATUS_INVALID_IMAGE_NE_FORMAT),
             "%u: wrong status %lx/%lx\n", line, ldr_status, expect_status );
-        ok( !expect_fallback || broken(il_only) || broken(wrong_machine),
+        ok( !expect_fallback || wrong_machine || broken(il_only),
             "%u: failed with %lx expected fallback\n", line, ldr_status );
     }
 
@@ -757,7 +764,7 @@ static void test_Loader(void)
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x200,
           sizeof(dos_header) + sizeof(nt_header_template) + sizeof(IMAGE_SECTION_HEADER) + 0x200,
           sizeof(dos_header) + sizeof(nt_header_template) + sizeof(IMAGE_SECTION_HEADER),
-          { ERROR_SUCCESS, ERROR_INVALID_ADDRESS } /* vista is more strict */
+          { ERROR_SUCCESS, ERROR_INVALID_ADDRESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
         { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x1000,
@@ -867,7 +874,7 @@ static void test_Loader(void)
           0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
           0x2000,
           0x40,
-          { ERROR_SUCCESS }
+          { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT }
         }
     };
     int i;
@@ -1140,17 +1147,21 @@ static void test_Loader(void)
 
     nt_header.OptionalHeader.AddressOfEntryPoint = 0x1234;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_SUCCESS, "NtCreateSection error %08lx\n", status );
+    ok( status == (nt_header.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_SUCCESS),
+        "NtCreateSection error %08lx\n", status );
 
     nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_SUCCESS, "NtCreateSection error %08lx\n", status );
+    ok( status == (nt_header.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_SUCCESS),
+        "NtCreateSection error %08lx\n", status );
 
     nt_header.OptionalHeader.SizeOfCode = 0x1000;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
-    ok( status == STATUS_SUCCESS, "NtCreateSection error %08lx\n", status );
+    ok( status == (nt_header.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ? STATUS_INVALID_IMAGE_FORMAT : STATUS_SUCCESS),
+        "NtCreateSection error %08lx\n", status );
+
     nt_header.OptionalHeader.SizeOfCode = 0;
-    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
 
     dos_header.e_magic = 0;
     status = map_image_section( &nt_header, &section, section_data, __LINE__ );
@@ -1392,16 +1403,15 @@ static void test_Loader(void)
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08lx\n", status );
 
-        switch (orig_machine)
+        if (orig_machine == IMAGE_FILE_MACHINE_AMD64)
         {
-        case IMAGE_FILE_MACHINE_AMD64: nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
-        case IMAGE_FILE_MACHINE_ARM64: nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
+            nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
+            status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
+            ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(!status) /* win8 */,
+                "NtCreateSection error %08lx\n", status );
         }
-        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
-        ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(!status) /* win8 */,
-            "NtCreateSection error %08lx\n", status );
 
-        nt32.FileHeader.Machine = get_alt_bitness_machine( orig_machine );
+        nt32.FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32, &section, section_data, __LINE__ );
         ok( status == STATUS_SUCCESS, "NtCreateSection error %08lx\n", status );
 
@@ -1480,7 +1490,7 @@ static void test_filenames(void)
     nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
 
     nt_header.OptionalHeader.SectionAlignment = page_size;
-    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
     nt_header.OptionalHeader.FileAlignment = page_size;
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
     nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + page_size;
@@ -1629,7 +1639,7 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     size = 0;
     status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr1, 0, 0, &offset,
                                  &size, 1 /* ViewShare */, 0, PAGE_READONLY);
-    ok(status == STATUS_SUCCESS, "NtMapViewOfSection error %lx\n", status);
+    ok(NT_SUCCESS(status), "NtMapViewOfSection error %lx\n", status);
     ok(addr1 != 0, "mapped address should be valid\n");
 
     SetLastError(0xdeadbeef);
@@ -1684,9 +1694,9 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
 
     SetLastError(0xdeadbeef);
     addr2 = LoadLibraryA(dll_name);
-    if (is_dll)
+    if (!addr2)
     {
-        ok(!addr2, "LoadLibrary should fail, is_dll %d\n", is_dll);
+        ok(is_dll, "LoadLibrary should fail, is_dll %d\n", is_dll);
         ok(GetLastError() == ERROR_INVALID_ADDRESS, "expected ERROR_INVALID_ADDRESS, got %ld\n", GetLastError());
     }
     else
@@ -1886,12 +1896,14 @@ static void test_section_access(void)
     };
     char buf[256];
     int i;
-    DWORD dummy, file_align;
+    DWORD dummy;
     HANDLE hfile;
     HMODULE hlib;
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     SIZE_T size;
+    PEB child_peb;
+    PROCESS_BASIC_INFORMATION pbi;
     SECTION_IMAGE_INFORMATION image_info;
     MEMORY_BASIC_INFORMATION info;
     STARTUPINFOA sti;
@@ -1923,10 +1935,6 @@ static void test_section_access(void)
         ok(ret, "WriteFile error %ld\n", GetLastError());
 
         nt_header = nt_header_template;
-        nt_header.FileHeader.NumberOfSections = 1;
-        nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL | IMAGE_FILE_RELOCS_STRIPPED;
-
         nt_header.OptionalHeader.SectionAlignment = page_size;
         nt_header.OptionalHeader.FileAlignment = 0x200;
         nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + page_size;
@@ -1939,31 +1947,20 @@ static void test_section_access(void)
         section.Characteristics = td[i].scn_file_access;
         SetLastError(0xdeadbeef);
 
-        nt_header.OptionalHeader.AddressOfEntryPoint = section.VirtualAddress;
-
         SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
-        ok(ret, "WriteFile error %ld\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, &nt_header.OptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER), &dummy, NULL);
+        ret = WriteFile(hfile, &nt_header, sizeof(nt_header), &dummy, NULL);
         ok(ret, "WriteFile error %ld\n", GetLastError());
 
         ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
         ok(ret, "WriteFile error %ld\n", GetLastError());
 
-        file_align = nt_header.OptionalHeader.FileAlignment - nt_header.OptionalHeader.SizeOfHeaders;
-        assert(file_align < sizeof(filler));
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, filler, file_align, &dummy, NULL);
-        ok(ret, "WriteFile error %ld\n", GetLastError());
-
         /* section data */
+        SetFilePointer( hfile, nt_header.OptionalHeader.FileAlignment, NULL, FILE_BEGIN );
         SetLastError(0xdeadbeef);
         ret = WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL);
         ok(ret, "WriteFile error %ld\n", GetLastError());
 
         CloseHandle(hfile);
-
         SetLastError(0xdeadbeef);
         hlib = LoadLibraryExA(dll_name, NULL, DONT_RESOLVE_DLL_REFERENCES);
         ok(hlib != 0, "LoadLibrary error %ld\n", GetLastError());
@@ -2004,7 +2001,7 @@ static void test_section_access(void)
         test_image_mapping(dll_name, td[i].scn_page_access, TRUE);
 
         /* reset IMAGE_FILE_DLL otherwise CreateProcess fails */
-        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED;
+        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
         SetLastError(0xdeadbeef);
         hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         /* LoadLibrary called on an already memory-mapped file in
@@ -2025,6 +2022,12 @@ static void test_section_access(void)
         SetLastError(0xdeadbeef);
         ret = CreateProcessA(dll_name, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &sti, &pi);
         ok(ret, "CreateProcess() error %ld\n", GetLastError());
+
+        status = pNtQueryInformationProcess( pi.hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+        ok( !status, "ProcessBasicInformation got %lx\n", status );
+        ret = ReadProcessMemory( pi.hProcess, pbi.PebBaseAddress, &child_peb, sizeof(child_peb), NULL );
+        ok( ret, "ReadProcessMemory failed err %lu\n", GetLastError() );
+        hlib = child_peb.ImageBaseAddress;
 
         SetLastError(0xdeadbeef);
         size = VirtualQueryEx(pi.hProcess, (char *)hlib + section.VirtualAddress, &info, sizeof(info));
@@ -2181,25 +2184,27 @@ static void test_import_resolution(void)
     for (test = 0; test < 4; test++)
     {
 #define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
+#ifdef _WIN64
+#define ADD_RELOC(field) data.rel.type_off[nb_rel++] = (IMAGE_REL_BASED_DIR64 << 12) + offsetof( struct imports, field )
+#else
 #define ADD_RELOC(field) data.rel.type_off[nb_rel++] = (IMAGE_REL_BASED_HIGHLOW << 12) + offsetof( struct imports, field )
+#endif
         nt = nt_header_template;
         nt.FileHeader.NumberOfSections = 1;
         nt.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-        nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE;
+        nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
         if (test != 2) nt.FileHeader.Characteristics |= IMAGE_FILE_DLL;
         nt.OptionalHeader.SectionAlignment = page_size;
         nt.OptionalHeader.FileAlignment = 0x200;
-        nt.OptionalHeader.ImageBase = 0x12340000;
         nt.OptionalHeader.SizeOfImage = 2 * page_size;
         nt.OptionalHeader.SizeOfHeaders = nt.OptionalHeader.FileAlignment;
+        nt.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
         nt.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
         memset( nt.OptionalHeader.DataDirectory, 0, sizeof(nt.OptionalHeader.DataDirectory) );
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size = sizeof(data.descr);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress = DATA_RVA(data.descr);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size = sizeof(data.tls);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress = DATA_RVA(&data.tls);
-        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = sizeof(data.rel);
-        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = DATA_RVA(&data.rel);
 
         memset( &data, 0, sizeof(data) );
         data.descr[0].OriginalFirstThunk = DATA_RVA( data.original_thunks );
@@ -2237,8 +2242,11 @@ static void test_import_resolution(void)
             nt.OptionalHeader.AddressOfEntryPoint = DATA_RVA(&data.entry_point_fn);
         }
 
+        if (nb_rel % 2) nb_rel++;
         data.rel.reloc.VirtualAddress = nt.OptionalHeader.SectionAlignment;
         data.rel.reloc.SizeOfBlock = (char *)&data.rel.type_off[nb_rel] - (char *)&data.rel.reloc;
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = data.rel.reloc.SizeOfBlock;
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = DATA_RVA(&data.rel);
 
         GetTempPathA(MAX_PATH, temp_path);
         GetTempFileNameA(temp_path, "ldr", 0, dll_name);
@@ -3196,10 +3204,6 @@ static void test_ExitProcess(void)
     ok(ret, "WriteFile error %ld\n", GetLastError());
 
     nt_header = nt_header_template;
-    nt_header.FileHeader.NumberOfSections = 1;
-    nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-    nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL | IMAGE_FILE_RELOCS_STRIPPED;
-
     nt_header.OptionalHeader.AddressOfEntryPoint = 0x1000;
     nt_header.OptionalHeader.SectionAlignment = 0x1000;
     nt_header.OptionalHeader.FileAlignment = 0x200;
@@ -3522,6 +3526,8 @@ static void test_ExitProcess(void)
     ok(ret, "SetThreadPriority error %ld\n", GetLastError());
     CloseHandle(thread);
 
+    ret = WaitForSingleObject(pi.hThread, 1000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed: %lx\n", ret);
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
     ret = GetThreadContext(pi.hThread, &ctx);
@@ -4087,8 +4093,8 @@ static void test_dll_file( const char *name )
         OK_FIELD( OptionalHeader.DataDirectory[i].VirtualAddress, "%lx" );
         OK_FIELD( OptionalHeader.DataDirectory[i].Size, "%lx" );
     }
-    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
-    sec_file = (IMAGE_SECTION_HEADER *)((char *)&nt_file->OptionalHeader + nt_file->FileHeader.SizeOfOptionalHeader);
+    sec = IMAGE_FIRST_SECTION( nt );
+    sec_file = IMAGE_FIRST_SECTION( nt_file );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
         ok( !memcmp( sec + i, sec_file + i, sizeof(*sec) ), "%s: wrong section %d\n", name, i );
     UnmapViewOfFile( ptr );

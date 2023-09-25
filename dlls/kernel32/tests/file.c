@@ -2418,6 +2418,7 @@ static BOOL create_fake_dll( LPCSTR filename )
     nt->OptionalHeader.SizeOfImage = 0x2000;
     nt->OptionalHeader.SizeOfHeaders = size;
     nt->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+    nt->OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE | IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
 
     sec = (IMAGE_SECTION_HEADER *)(nt + 1);
@@ -3126,17 +3127,11 @@ static void test_MapFile(void)
     ok( hmap == NULL, "mapped zero size file\n");
     ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
 
-    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000000, 0, NULL );
-    ok( hmap == NULL || broken(hmap != NULL) /* NT4 */, "mapping should fail\n");
-    /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
-    if ( hmap )
-        CloseHandle( hmap );
+    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000, 0, NULL );
+    ok( hmap == NULL, "mapping should fail\n");
 
-    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000000, 0x10000, NULL );
-    ok( hmap == NULL || broken(hmap != NULL) /* NT4 */, "mapping should fail\n");
-    /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
-    if ( hmap )
-        CloseHandle( hmap );
+    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000, 0x10000, NULL );
+    ok( hmap == NULL, "mapping should fail\n");
 
     /* On XP you can now map again, on Win 95 you cannot. */
 
@@ -6047,7 +6042,8 @@ static void test_eof(void)
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_HANDLE_EOF, "got error %lu\n", GetLastError());
     ok(!size, "got size %lu\n", size);
-    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING || (NTSTATUS)overlapped.Internal == STATUS_END_OF_FILE,
+       "got status %#lx\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     SetFilePointer(file, 2, NULL, SEEK_SET);
