@@ -68,6 +68,7 @@ static const WCHAR PropertyResolveExternalsW[] = {'R','e','s','o','l','v','e','E
 static const WCHAR PropertyAllowXsltScriptW[] = {'A','l','l','o','w','X','s','l','t','S','c','r','i','p','t',0};
 static const WCHAR PropertyAllowDocumentFunctionW[] = {'A','l','l','o','w','D','o','c','u','m','e','n','t','F','u','n','c','t','i','o','n',0};
 static const WCHAR PropertyNormalizeAttributeValuesW[] = {'N','o','r','m','a','l','i','z','e','A','t','t','r','i','b','u','t','e','V','a','l','u','e','s',0};
+static const WCHAR PropertyValidateOnParse[] = L"ValidateOnParse";
 
 /* Anything that passes the test_get_ownerDocument()
  * tests can go here (data shared between all instances).
@@ -3189,6 +3190,16 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
+    else if (lstrcmpiW(p, PropertyValidateOnParse) == 0)
+    {
+        if (This->properties->version < MSXML4)
+            return E_FAIL;
+        else
+        {
+            This->properties->validating = V_BOOL(&value);
+            return S_OK;
+        }
+    }
     else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0 ||
              lstrcmpiW(p, PropertyNewParserW) == 0 ||
              lstrcmpiW(p, PropertyResolveExternalsW) == 0 ||
@@ -3259,6 +3270,17 @@ static HRESULT WINAPI domdoc_getProperty(
         V_BSTR(var) = SysAllocString(rebuiltStr);
         heap_free(rebuiltStr);
         return S_OK;
+    }
+    else if (lstrcmpiW(p, PropertyValidateOnParse) == 0)
+    {
+        if (This->properties->version < MSXML4)
+            return E_FAIL;
+        else
+        {
+            V_VT(var) = VT_BOOL;
+            V_BOOL(var) = This->properties->validating;
+            return S_OK;
+        }
     }
 
     FIXME("Unknown property %s\n", debugstr_w(p));
