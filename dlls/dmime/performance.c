@@ -1096,45 +1096,41 @@ static HRESULT WINAPI performance_ClonePMsg(IDirectMusicPerformance8 *iface, DMU
 }
 
 static HRESULT WINAPI performance_CreateAudioPath(IDirectMusicPerformance8 *iface,
-        IUnknown *pSourceConfig, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
+        IUnknown *pSourceConfig, BOOL fActivate, IDirectMusicAudioPath **ret_iface)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-	IDirectMusicAudioPath *pPath;
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicAudioPath *pPath;
 
-	FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ppNewPath);
+    FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ret_iface);
 
-	if (NULL == ppNewPath) {
-	  return E_POINTER;
-	}
+    if (!ret_iface) return E_POINTER;
+    if (!This->audio_paths_enabled) return DMUS_E_AUDIOPATH_INACTIVE;
 
-        create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
-        set_audiopath_perf_pointer(pPath, iface);
+    create_dmaudiopath(&IID_IDirectMusicAudioPath, (void **)&pPath);
+    set_audiopath_perf_pointer(pPath, iface);
 
-	/** TODO */
-	
-	*ppNewPath = pPath;
-
-	return IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
+    /** TODO */
+    *ret_iface = pPath;
+    return IDirectMusicAudioPath_Activate(*ret_iface, fActivate);
 }
 
 static HRESULT WINAPI performance_CreateStandardAudioPath(IDirectMusicPerformance8 *iface,
-        DWORD dwType, DWORD pchannel_count, BOOL fActivate, IDirectMusicAudioPath **ppNewPath)
+        DWORD dwType, DWORD pchannel_count, BOOL fActivate, IDirectMusicAudioPath **ret_iface)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-	IDirectMusicAudioPath *pPath;
-	DSBUFFERDESC desc;
-	WAVEFORMATEX format;
-        DMUS_PORTPARAMS params = {0};
-	IDirectSoundBuffer *buffer, *primary_buffer;
-	HRESULT hr = S_OK;
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicAudioPath *pPath;
+    DSBUFFERDESC desc;
+    WAVEFORMATEX format;
+    DMUS_PORTPARAMS params = {0};
+    IDirectSoundBuffer *buffer, *primary_buffer;
+    HRESULT hr = S_OK;
 
-        FIXME("(%p)->(%ld, %ld, %d, %p): semi-stub\n", This, dwType, pchannel_count, fActivate, ppNewPath);
+    FIXME("(%p)->(%ld, %ld, %d, %p): semi-stub\n", This, dwType, pchannel_count, fActivate, ret_iface);
 
-	if (NULL == ppNewPath) {
-	  return E_POINTER;
-	}
+    if (!ret_iface) return E_POINTER;
+    if (!This->audio_paths_enabled) return DMUS_E_AUDIOPATH_INACTIVE;
 
-        *ppNewPath = NULL;
+    *ret_iface = NULL;
 
 	/* Secondary buffer description */
 	memset(&format, 0, sizeof(format));
@@ -1204,46 +1200,42 @@ static HRESULT WINAPI performance_CreateStandardAudioPath(IDirectMusicPerformanc
 	set_audiopath_dsound_buffer(pPath, buffer);
 	set_audiopath_primary_dsound_buffer(pPath, primary_buffer);
 
-	*ppNewPath = pPath;
-	
-	TRACE(" returning IDirectMusicAudioPath interface at %p.\n", *ppNewPath);
-
-	return IDirectMusicAudioPath_Activate(*ppNewPath, fActivate);
+    *ret_iface = pPath;
+    TRACE(" returning IDirectMusicAudioPath interface at %p.\n", *ret_iface);
+    return IDirectMusicAudioPath_Activate(*ret_iface, fActivate);
 }
 
-static HRESULT WINAPI performance_SetDefaultAudioPath(IDirectMusicPerformance8 *iface, IDirectMusicAudioPath *pAudioPath)
+static HRESULT WINAPI performance_SetDefaultAudioPath(IDirectMusicPerformance8 *iface, IDirectMusicAudioPath *audio_path)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %p): semi-stub\n", This, pAudioPath);
+    FIXME("(%p, %p): semi-stub\n", This, audio_path);
 
-	if (This->pDefaultPath) {
-		IDirectMusicAudioPath_Release(This->pDefaultPath);
-		This->pDefaultPath = NULL;
-	}
-	This->pDefaultPath = pAudioPath;
-	if (This->pDefaultPath) {
-		IDirectMusicAudioPath_AddRef(This->pDefaultPath);
-		set_audiopath_perf_pointer(This->pDefaultPath, iface);
-	}
+    if (!This->audio_paths_enabled) return DMUS_E_AUDIOPATH_INACTIVE;
 
-	return S_OK;
+    if (This->pDefaultPath) IDirectMusicAudioPath_Release(This->pDefaultPath);
+    if ((This->pDefaultPath = audio_path))
+    {
+        IDirectMusicAudioPath_AddRef(This->pDefaultPath);
+        set_audiopath_perf_pointer(This->pDefaultPath, iface);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_GetDefaultAudioPath(IDirectMusicPerformance8 *iface,
-        IDirectMusicAudioPath **ppAudioPath)
+        IDirectMusicAudioPath **ret_iface)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %p): semi-stub (%p)\n", This, ppAudioPath, This->pDefaultPath);
+    FIXME("(%p, %p): semi-stub (%p)\n", This, ret_iface, This->pDefaultPath);
 
-	if (NULL != This->pDefaultPath) {
-	  *ppAudioPath = This->pDefaultPath;
-          IDirectMusicAudioPath_AddRef(*ppAudioPath);
-        } else {
-	  *ppAudioPath = NULL;
-        }
-	return S_OK;
+    if (!ret_iface) return E_POINTER;
+    if (!This->audio_paths_enabled) return DMUS_E_AUDIOPATH_INACTIVE;
+
+    if ((*ret_iface = This->pDefaultPath)) IDirectMusicAudioPath_AddRef(*ret_iface);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_GetParamEx(IDirectMusicPerformance8 *iface, REFGUID rguidType, DWORD dwTrackID,
