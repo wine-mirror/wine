@@ -144,13 +144,13 @@ static const IMAGE_NT_HEADERS nt_header_template =
       sizeof(dos_header) + sizeof(nt_header_template), /* SizeOfHeaders */
       0, /* CheckSum */
       IMAGE_SUBSYSTEM_WINDOWS_CUI, /* Subsystem */
-      0, /* DllCharacteristics */
-      0, /* SizeOfStackReserve */
-      0, /* SizeOfStackCommit */
-      0, /* SizeOfHeapReserve */
-      0, /* SizeOfHeapCommit */
+      IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE | IMAGE_DLLCHARACTERISTICS_NX_COMPAT, /* DllCharacteristics */
+      0x100000, /* SizeOfStackReserve */
+      0x1000, /* SizeOfStackCommit */
+      0x100000, /* SizeOfHeapReserve */
+      0x1000, /* SizeOfHeapCommit */
       0, /* LoaderFlags */
-      0, /* NumberOfRvaAndSizes */
+      IMAGE_NUMBEROF_DIRECTORY_ENTRIES, /* NumberOfRvaAndSizes */
       { { 0 } } /* DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] */
     }
 };
@@ -401,7 +401,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         "%u: MaximumStackSize wrong %Ix / %Ix\n", id, image.MaximumStackSize, max_stack );
     ok( image.CommittedStackSize == commit_stack,
         "%u: CommittedStackSize wrong %Ix / %Ix\n", id, image.CommittedStackSize, commit_stack );
-    todo_wine_if( truncated )
     ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
         "%u: SubSystemType wrong %08lx / %08x\n", id,
         image.SubSystemType, nt_header->OptionalHeader.Subsystem );
@@ -481,7 +480,7 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     if (!(nt_header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE))
         ok( !image.ImageDynamicallyRelocated || broken( image.ComPlusILOnly ), /* <= win7 */
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
-    else if (image.ImageContainsCode && !cor_header)
+    else if (image.ImageContainsCode && !image.ImageMappedFlat && !cor_header)
         ok( image.ImageDynamicallyRelocated,
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, image.ImageFlags );
     else
@@ -866,7 +865,7 @@ static void test_Loader(void)
         { 0x04,
           0, 0x08,
           0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
-          0x200000,
+          0x2000,
           0x40,
           { ERROR_SUCCESS }
         }
