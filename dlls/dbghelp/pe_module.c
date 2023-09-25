@@ -282,8 +282,7 @@ BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_type mt)
             }
 
             fmap->u.pe.builtin = !memcmp((const IMAGE_DOS_HEADER*)mapping + 1, builtin_signature, sizeof(builtin_signature));
-            section = (IMAGE_SECTION_HEADER*)
-                ((char*)&nthdr->OptionalHeader + nthdr->FileHeader.SizeOfOptionalHeader);
+            section = IMAGE_FIRST_SECTION( nthdr );
             fmap->u.pe.sect = HeapAlloc(GetProcessHeap(), 0,
                                         nthdr->FileHeader.NumberOfSections * sizeof(fmap->u.pe.sect[0]));
             if (!fmap->u.pe.sect) goto error;
@@ -630,9 +629,8 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
     }
     else
     {
-        const IMAGE_SECTION_HEADER *sectp = (const IMAGE_SECTION_HEADER*)((const char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
         /* Debug info is embedded into PE module */
-        ret = pe_load_debug_directory(pcs, module, mapping, sectp,
+        ret = pe_load_debug_directory(pcs, module, mapping, IMAGE_FIRST_SECTION( nth ),
                                       nth->FileHeader.NumberOfSections, dbg, nDbg);
     }
 done:
@@ -668,10 +666,8 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
 #if 0
     /* FIXME: we'd better store addresses linked to sections rather than 
        absolute values */
-    IMAGE_SECTION_HEADER*       section;
+    IMAGE_SECTION_HEADER *section = IMAGE_FIRST_SECTION( nth );
     /* Add start of sections */
-    section = (IMAGE_SECTION_HEADER*)
-        ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++) 
     {
 	symt_new_public(module, NULL, section->Name, FALSE,
