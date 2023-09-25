@@ -143,14 +143,70 @@ static HRESULT WINAPI wave_track_EndPlay(IDirectMusicTrack8 *iface, void *pState
     return S_OK;
 }
 
-static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *pStateData,
-        MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags,
-        IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
+static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_data,
+        MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD segment_flags,
+        IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state, DWORD track_id)
 {
     struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
-    FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd,
-            mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
-    return S_OK;
+    LONG volume = This->header.lVolume;
+    IDirectMusicGraph *graph;
+    struct wave_part *part;
+    struct wave_item *item;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %ld, %ld, %ld, %#lx, %p, %p, %ld)\n", This, state_data, start_time, end_time,
+            time_offset, segment_flags, performance, segment_state, track_id);
+
+    if (start_time != 0) FIXME("start_time %ld not implemented\n", start_time);
+    if (end_time != -1) FIXME("end_time %ld not implemented\n", end_time);
+    if (time_offset != 0) FIXME("time_offset %ld not implemented\n", time_offset);
+    if (segment_flags) FIXME("segment_flags %#lx not implemented\n", segment_flags);
+    if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
+
+    if (FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
+            &IID_IDirectMusicGraph, (void **)&graph)))
+        return hr;
+
+    LIST_FOR_EACH_ENTRY(part, &This->parts, struct wave_part, entry)
+    {
+        volume += part->header.lVolume;
+
+        LIST_FOR_EACH_ENTRY(item, &part->items, struct wave_item, entry)
+        {
+            DMUS_WAVE_PMSG *msg;
+
+            if (!item->buffer) continue;
+
+            if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
+                    (DMUS_PMSG **)&msg)))
+                break;
+
+            msg->mtTime = item->header.rtTime;
+            msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+            msg->dwPChannel = part->header.dwPChannel;
+            msg->dwVirtualTrackID = track_id;
+            msg->dwType = DMUS_PMSGT_WAVE;
+            msg->punkUser = (IUnknown *)item->buffer;
+            IDirectSoundBuffer_AddRef(item->buffer);
+
+            msg->rtStartOffset = item->header.rtStartOffset;
+            msg->rtDuration = item->header.rtDuration;
+            msg->lVolume = volume + item->header.lVolume;
+            msg->lPitch = item->header.lPitch;
+
+            if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
+                    || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))
+            {
+                IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)msg);
+                break;
+            }
+        }
+
+        volume -= part->header.lVolume;
+    }
+
+    IDirectMusicGraph_Release(graph);
+    return hr;
 }
 
 static HRESULT WINAPI wave_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,

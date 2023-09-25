@@ -3320,8 +3320,6 @@ static void test_wave_pmsg(void)
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&wave);
     ok(!ret, "got %#lx\n", ret);
-    if (wave->dwType == DMUS_PMSGT_WAVE)
-    {
     ok(wave->dwType == DMUS_PMSGT_WAVE, "got %p\n", wave);
     ok(!!wave->punkUser, "got %p\n", wave->punkUser);
     ok(wave->rtStartOffset == 0, "got %I64d\n", wave->rtStartOffset);
@@ -3330,18 +3328,14 @@ static void test_wave_pmsg(void)
     ok(wave->lVolume == 0, "got %lu\n", wave->lVolume);
     ok(wave->lPitch == 0, "got %lu\n", wave->lPitch);
     ok(wave->bFlags == 0, "got %#x\n", wave->bFlags);
-    }
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)wave);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 500, &msg);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %p\n", msg);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
     ok(hr == S_OK, "got %#lx\n", hr);
