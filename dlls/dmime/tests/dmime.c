@@ -1937,9 +1937,9 @@ static void test_performance_InitAudio(void)
     ok(hr == S_OK, "PChannelInfo failed, got %#lx\n", hr);
     ok(port != NULL, "IDirectMusicPort not set\n");
     hr = IDirectMusicPerformance8_AssignPChannel(performance, 0, port, 0, 0);
-    todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannel failed (%#lx)\n", hr);
+    ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannel failed (%#lx)\n", hr);
     hr = IDirectMusicPerformance8_AssignPChannelBlock(performance, 0, port, 0);
-    todo_wine ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannelBlock failed (%#lx)\n", hr);
+    ok(hr == DMUS_E_AUDIOPATHS_IN_USE, "AssignPChannelBlock failed (%#lx)\n", hr);
     IDirectMusicPort_Release(port);
 
     hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &path);

@@ -50,6 +50,7 @@ struct performance
     /* performance channels */
     struct wine_rb_tree pchannels;
 
+    BOOL audio_paths_enabled;
     IDirectMusicAudioPath *pDefaultPath;
     HANDLE hNotification;
     REFERENCE_TIME rtMinimum;
@@ -730,8 +731,8 @@ static HRESULT WINAPI performance_AddPort(IDirectMusicPerformance8 *iface, IDire
 
     FIXME("(%p, %p): semi-stub\n", This, port);
 
-    if (!This->dmusic)
-        return DMUS_E_NOT_INIT;
+    if (!This->dmusic) return DMUS_E_NOT_INIT;
+    if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
     if (!port) {
         DMUS_PORTPARAMS params = {
@@ -753,11 +754,13 @@ static HRESULT WINAPI performance_AddPort(IDirectMusicPerformance8 *iface, IDire
 
 static HRESULT WINAPI performance_RemovePort(IDirectMusicPerformance8 *iface, IDirectMusicPort *pPort)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %p): stub\n", This, pPort);
-	IDirectMusicPort_Release (pPort);
-	return S_OK;
+    if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
+
+    FIXME("(%p, %p): stub\n", This, pPort);
+    IDirectMusicPort_Release(pPort);
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_AssignPChannelBlock(IDirectMusicPerformance8 *iface,
@@ -767,10 +770,9 @@ static HRESULT WINAPI performance_AssignPChannelBlock(IDirectMusicPerformance8 *
 
     FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, block_num, port, group);
 
-    if (!port)
-        return E_POINTER;
-    if (block_num > MAXDWORD / 16)
-        return E_INVALIDARG;
+    if (!port) return E_POINTER;
+    if (block_num > MAXDWORD / 16) return E_INVALIDARG;
+    if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
     pchannel_block_set(&This->pchannels, block_num, port, group, FALSE);
 
@@ -785,8 +787,8 @@ static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface
 
     FIXME("(%p)->(%ld, %p, %ld, %ld) semi-stub\n", This, pchannel, port, group, channel);
 
-    if (!port)
-        return E_POINTER;
+    if (!port) return E_POINTER;
+    if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
     block = pchannel_block_set(&This->pchannels, pchannel / 16, port, 0, TRUE);
     if (block) {
@@ -959,6 +961,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         IDirectMusic8_Release(This->dmusic);
         This->dmusic = NULL;
     }
+    This->audio_paths_enabled = FALSE;
 
     return S_OK;
 }
@@ -1027,6 +1030,7 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
             dsound ? *dsound : NULL, hwnd)))
         return hr;
 
+    This->audio_paths_enabled = TRUE;
     if (default_path_type)
     {
         hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, default_path_type,
