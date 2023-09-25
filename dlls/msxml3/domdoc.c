@@ -77,6 +77,7 @@ typedef struct {
     LONG refs;
     MSXML_VERSION version;
     VARIANT_BOOL preserving;
+    VARIANT_BOOL validating;
     IXMLDOMSchemaCollection2* schemaCache;
     struct list selectNsList;
     xmlChar const* selectNsStr;
@@ -123,7 +124,6 @@ struct domdoc
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     VARIANT_BOOL async;
-    VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     domdoc_properties* properties;
     HRESULT error;
@@ -288,6 +288,7 @@ static domdoc_properties *create_properties(MSXML_VERSION version)
     properties->refs = 1;
     list_init(&properties->selectNsList);
     properties->preserving = VARIANT_FALSE;
+    properties->validating = VARIANT_TRUE;
     properties->schemaCache = NULL;
     properties->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
     properties->selectNsStr_len = 0;
@@ -315,6 +316,7 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
         pcopy->refs = 1;
         pcopy->version = properties->version;
         pcopy->preserving = properties->preserving;
+        pcopy->validating = properties->validating;
         pcopy->schemaCache = properties->schemaCache;
         if (pcopy->schemaCache)
             IXMLDOMSchemaCollection2_AddRef(pcopy->schemaCache);
@@ -2709,8 +2711,8 @@ static HRESULT WINAPI domdoc_get_validateOnParse(
     VARIANT_BOOL* isValidating )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    TRACE("(%p)->(%p: %d)\n", This, isValidating, This->validating);
-    *isValidating = This->validating;
+    TRACE("(%p)->(%p: %d)\n", This, isValidating, This->properties->validating);
+    *isValidating = This->properties->validating;
     return S_OK;
 }
 
@@ -2721,7 +2723,7 @@ static HRESULT WINAPI domdoc_put_validateOnParse(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     TRACE("(%p)->(%d)\n", This, isValidating);
-    This->validating = isValidating;
+    This->properties->validating = isValidating;
     return S_OK;
 }
 
@@ -3740,7 +3742,6 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     doc->ref = 1;
     doc->async = VARIANT_TRUE;
-    doc->validating = 0;
     doc->resolving = 0;
     doc->properties = properties_add_ref(properties_from_xmlDocPtr(xmldoc));
     doc->error = S_OK;
