@@ -264,7 +264,7 @@ void lib_dump(void)
                 if (fh->SizeOfOptionalHeader)
                 {
                     const IMAGE_OPTIONAL_HEADER32 *oh = (const IMAGE_OPTIONAL_HEADER32 *)((const char *)fh + sizeof(*fh));
-                    dump_optional_header(oh, fh->SizeOfOptionalHeader);
+                    dump_optional_header(oh);
                 }
             }
             /* Sanity check */

@@ -275,14 +275,14 @@ static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *dire
     }
 }
 
-static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *image_oh, UINT header_size)
+static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *image_oh)
 {
     IMAGE_OPTIONAL_HEADER32 oh;
     const IMAGE_OPTIONAL_HEADER32 *optionalHeader;
 
     /* in case optional header is missing or partial */
     memset(&oh, 0, sizeof(oh));
-    memcpy(&oh, image_oh, min(header_size, sizeof(oh)));
+    memcpy(&oh, image_oh, min(dump_total_len - ((char *)image_oh - (char *)dump_base), sizeof(oh)));
     optionalHeader = &oh;
 
     print_word("Magic", optionalHeader->Magic);
@@ -320,14 +320,14 @@ static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *image_oh, UINT
     printf("\n");
 }
 
-static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *image_oh, UINT header_size)
+static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *image_oh)
 {
     IMAGE_OPTIONAL_HEADER64 oh;
     const IMAGE_OPTIONAL_HEADER64 *optionalHeader;
 
     /* in case optional header is missing or partial */
     memset(&oh, 0, sizeof(oh));
-    memcpy(&oh, image_oh, min(header_size, sizeof(oh)));
+    memcpy(&oh, image_oh, min(dump_total_len - ((char *)image_oh - (char *)dump_base), sizeof(oh)));
     optionalHeader = &oh;
 
     print_word("Magic", optionalHeader->Magic);
@@ -364,16 +364,16 @@ static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *image_oh, UINT
     printf("\n");
 }
 
-void dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *optionalHeader, UINT header_size)
+void dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *optionalHeader)
 {
     printf("Optional Header (%s)\n", get_magic_type(optionalHeader->Magic));
 
     switch(optionalHeader->Magic) {
         case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            dump_optional_header32(optionalHeader, header_size);
+            dump_optional_header32(optionalHeader);
             break;
         case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            dump_optional_header64((const IMAGE_OPTIONAL_HEADER64 *)optionalHeader, header_size);
+            dump_optional_header64((const IMAGE_OPTIONAL_HEADER64 *)optionalHeader);
             break;
         default:
             printf("  Unknown optional header magic: 0x%-4X\n", optionalHeader->Magic);
@@ -428,8 +428,7 @@ void dump_file_header(const IMAGE_FILE_HEADER *fileHeader, BOOL is_hybrid)
 static	void	dump_pe_header(void)
 {
     dump_file_header(&PE_nt_headers->FileHeader, get_hybrid_metadata() != NULL);
-    dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader,
-                         PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+    dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader);
 }
 
 void dump_section_characteristics(DWORD characteristics, const char* sep)
