@@ -641,9 +641,14 @@ int main(int argc, char **argv)
         /* fall through */
     case MODE_EXE:
         if (get_ptr_size() == 4)
+        {
             spec->characteristics |= IMAGE_FILE_32BIT_MACHINE;
+        }
         else
+        {
             spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+            spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
+        }
 
         files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
