@@ -983,10 +983,7 @@ void WINAPI __wine_vxd_win32s( CONTEXT *context )
         struct Win32sModule *module = moduleTable + context->Ecx;
 
         IMAGE_NT_HEADERS *nt_header = RtlImageNtHeader( (HMODULE)module->baseAddr );
-        IMAGE_SECTION_HEADER *pe_seg = (IMAGE_SECTION_HEADER*)((char *)&nt_header->OptionalHeader +
-                                                         nt_header->FileHeader.SizeOfOptionalHeader);
-
-
+        IMAGE_SECTION_HEADER *pe_seg = IMAGE_FIRST_SECTION( nt_header );
         HFILE image = _lopen(module->pathName, OF_READ);
         BOOL error = (image == HFILE_ERROR);
         UINT i;
