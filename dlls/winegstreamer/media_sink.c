@@ -498,7 +498,13 @@ static HRESULT media_sink_queue_stream_event(struct media_sink *media_sink, Medi
 
 static HRESULT media_sink_start(struct media_sink *media_sink)
 {
+    HRESULT hr;
+
+    if (FAILED(hr = wg_muxer_start(media_sink->muxer)))
+        return hr;
+
     media_sink->state = STATE_STARTED;
+
     return media_sink_queue_stream_event(media_sink, MEStreamSinkStarted);
 }
 
@@ -1007,7 +1013,8 @@ static HRESULT WINAPI media_sink_callback_Invoke(IMFAsyncCallback *iface, IMFAsy
     switch (command->op)
     {
         case ASYNC_START:
-            hr = media_sink_start(media_sink);
+            if (FAILED(hr = media_sink_start(media_sink)))
+                WARN("Failed to start media sink.\n");
             break;
         case ASYNC_STOP:
             hr = media_sink_stop(media_sink);

@@ -508,6 +508,21 @@ HRESULT wg_muxer_add_stream(wg_muxer_t muxer, UINT32 stream_id, const struct wg_
     return S_OK;
 }
 
+HRESULT wg_muxer_start(wg_muxer_t muxer)
+{
+    NTSTATUS status;
+
+    TRACE("muxer %#I64x.\n",  muxer);
+
+    if ((status = WINE_UNIX_CALL(unix_wg_muxer_start, &muxer)))
+    {
+        WARN("Failed to start muxer, status %#lx.\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    return S_OK;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

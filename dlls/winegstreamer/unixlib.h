@@ -428,6 +428,7 @@ enum unix_funcs
     unix_wg_muxer_create,
     unix_wg_muxer_destroy,
     unix_wg_muxer_add_stream,
+    unix_wg_muxer_start,
 
     unix_wg_funcs_count,
 };

@@ -1922,6 +1922,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_muxer_create),
     X(wg_muxer_destroy),
     X(wg_muxer_add_stream),
+    X(wg_muxer_start),
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_wg_funcs_count);
@@ -2209,6 +2210,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X64(wg_muxer_create),
     X(wg_muxer_destroy),
     X64(wg_muxer_add_stream),
+    X(wg_muxer_start),
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_wg_funcs_count);

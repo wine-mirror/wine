@@ -18,6 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*
+ * wg_muxer will autoplug gstreamer muxer and parser elements.
+ * It creates a pipeline like this:
+ *
+ *                     -------------------       -------
+ *     [my_src 1] ==> |parser 1 (optional)| ==> |       |
+ *                     -------------------      |       |
+ *                                              |       |
+ *                     -------------------      |       |
+ *     [my_src 2] ==> |parser 2 (optional)| ==> |       |
+ *                     -------------------      |       |
+ *                                              | muxer | ==> [my_sink]
+ *                                              |       |
+ *     [ ...... ]                               |       |
+ *                                              |       |
+ *                                              |       |
+ *                     -------------------      |       |
+ *     [my_src n] ==> |parser n (optional)| ==> |       |
+ *                     -------------------       -------
+ */
+
 #if 0
 #pragma makedep unix
 #endif
@@ -36,6 +57,8 @@ struct wg_muxer
 {
     GstElement *container, *muxer;
     GstPad *my_sink;
+    GstCaps *my_sink_caps;
+
     struct list streams;
 };
 
@@ -48,6 +71,7 @@ struct wg_muxer_stream
     GstPad *my_src;
     GstCaps *my_src_caps, *parser_src_caps;
     GstElement *parser;
+    GstSegment segment;
 
     struct list entry;
 };
@@ -55,6 +79,53 @@ struct wg_muxer_stream
 static struct wg_muxer *get_muxer(wg_muxer_t muxer)
 {
     return (struct wg_muxer *)(ULONG_PTR)muxer;
+}
+
+static bool muxer_try_muxer_factory(struct wg_muxer *muxer, GstElementFactory *muxer_factory)
+{
+    struct wg_muxer_stream *stream;
+
+    GST_INFO("Trying %"GST_PTR_FORMAT".", muxer_factory);
+
+    LIST_FOR_EACH_ENTRY(stream, &muxer->streams, struct wg_muxer_stream, entry)
+    {
+        GstCaps *caps = stream->parser ? stream->parser_src_caps : stream->my_src_caps;
+
+        if (!gst_element_factory_can_sink_any_caps(muxer_factory, caps))
+        {
+            GST_INFO("%"GST_PTR_FORMAT" cannot sink stream %u %p, caps %"GST_PTR_FORMAT,
+                    muxer_factory, stream->id, stream, caps);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static GstElement *muxer_find_muxer(struct wg_muxer *muxer)
+{
+    /* Some muxers are formatter, eg. id3mux. */
+    GstElementFactoryListType muxer_type = GST_ELEMENT_FACTORY_TYPE_MUXER | GST_ELEMENT_FACTORY_TYPE_FORMATTER;
+    GstElement *element = NULL;
+    GList *muxers, *tmp;
+
+    GST_DEBUG("muxer %p.", muxer);
+
+    muxers = find_element_factories(muxer_type, GST_RANK_NONE, NULL, muxer->my_sink_caps);
+
+    for (tmp = muxers; tmp && !element; tmp = tmp->next)
+    {
+        GstElementFactory *factory = GST_ELEMENT_FACTORY(tmp->data);
+        if (muxer_try_muxer_factory(muxer, factory))
+            element = factory_create_element(factory);
+    }
+
+    gst_plugin_feature_list_free(muxers);
+
+    if (!element)
+        GST_WARNING("Failed to find any compatible muxer element.");
+
+    return element;
 }
 
 static gboolean muxer_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
@@ -87,10 +158,8 @@ static void stream_free(struct wg_muxer_stream *stream)
 NTSTATUS wg_muxer_create(void *args)
 {
     struct wg_muxer_create_params *params = args;
-    GstElement *first = NULL, *last = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
-    GstCaps *sink_caps = NULL;
     struct wg_muxer *muxer;
 
     /* Create wg_muxer object. */
@@ -101,12 +170,12 @@ NTSTATUS wg_muxer_create(void *args)
         goto out;
 
     /* Create sink pad. */
-    if (!(sink_caps = gst_caps_from_string(params->format)))
+    if (!(muxer->my_sink_caps = gst_caps_from_string(params->format)))
     {
         GST_ERROR("Failed to get caps from format string: \"%s\".", params->format);
         goto out;
     }
-    if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, sink_caps)))
+    if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, muxer->my_sink_caps)))
         goto out;
     muxer->my_sink = gst_pad_new_from_template(template, "wg_muxer_sink");
     if (!muxer->my_sink)
@@ -114,26 +183,7 @@ NTSTATUS wg_muxer_create(void *args)
     gst_pad_set_element_private(muxer->my_sink, muxer);
     gst_pad_set_query_function(muxer->my_sink, muxer_sink_query_cb);
 
-    /* Create gstreamer muxer element. */
-    if (!(muxer->muxer = find_element(GST_ELEMENT_FACTORY_TYPE_MUXER | GST_ELEMENT_FACTORY_TYPE_FORMATTER,
-            NULL, sink_caps)))
-        goto out;
-    if (!append_element(muxer->container, muxer->muxer, &first, &last))
-        goto out;
-
-    /* Link muxer to sink pad. */
-    if (!link_element_to_sink(muxer->muxer, muxer->my_sink))
-        goto out;
-    if (!gst_pad_set_active(muxer->my_sink, 1))
-        goto out;
-
-    /* Set to pause state. */
-    gst_element_set_state(muxer->container, GST_STATE_PAUSED);
-    if (!gst_element_get_state(muxer->container, NULL, NULL, -1))
-        goto out;
-
     gst_object_unref(template);
-    gst_caps_unref(sink_caps);
 
     GST_INFO("Created winegstreamer muxer %p.", muxer);
     params->muxer = (wg_transform_t)(ULONG_PTR)muxer;
@@ -145,13 +195,10 @@ out:
         gst_object_unref(muxer->my_sink);
     if (template)
         gst_object_unref(template);
-    if (sink_caps)
-        gst_caps_unref(sink_caps);
+    if (muxer->my_sink_caps)
+        gst_caps_unref(muxer->my_sink_caps);
     if (muxer->container)
-    {
-        gst_element_set_state(muxer->container, GST_STATE_NULL);
         gst_object_unref(muxer->container);
-    }
     free(muxer);
 
     return status;
@@ -168,6 +215,7 @@ NTSTATUS wg_muxer_destroy(void *args)
         stream_free(stream);
     }
     gst_object_unref(muxer->my_sink);
+    gst_caps_unref(muxer->my_sink_caps);
     gst_element_set_state(muxer->container, GST_STATE_NULL);
     gst_object_unref(muxer->container);
     free(muxer);
@@ -184,7 +232,7 @@ NTSTATUS wg_muxer_add_stream(void *args)
     struct wg_muxer_stream *stream;
     char src_pad_name[64];
 
-    GST_DEBUG("muxer %p, stream_id %u, format %p.", muxer, params->stream_id, params->format);
+    GST_DEBUG("muxer %p, stream %u, format %p.", muxer, params->stream_id, params->format);
 
     /* Create stream object. */
     if (!(stream = calloc(1, sizeof(*stream))))
@@ -240,4 +288,58 @@ out:
     free(stream);
 
     return status;
+}
+
+NTSTATUS wg_muxer_start(void *args)
+{
+    struct wg_muxer *muxer = get_muxer(*(wg_muxer_t *)args);
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    struct wg_muxer_stream *stream;
+
+    GST_DEBUG("muxer %p.", muxer);
+
+    /* Create muxer element. */
+    if (!(muxer->muxer = muxer_find_muxer(muxer))
+            || !gst_bin_add(GST_BIN(muxer->container), muxer->muxer))
+        return status;
+
+    /* Link muxer element to my_sink */
+    if (!link_element_to_sink(muxer->muxer, muxer->my_sink)
+            || !gst_pad_set_active(muxer->my_sink, 1))
+        return status;
+
+    /* Link each stream to muxer element. */
+    LIST_FOR_EACH_ENTRY(stream, &muxer->streams, struct wg_muxer_stream, entry)
+    {
+        bool link_ok = stream->parser ?
+                gst_element_link(stream->parser, muxer->muxer) :
+                link_src_to_element(stream->my_src, muxer->muxer);
+
+        if (!link_ok)
+            return status;
+    }
+
+    /* Set to pause state. */
+    if (gst_element_set_state(muxer->container, GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE
+            || gst_element_get_state(muxer->container, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE)
+        return status;
+
+    /* Active stream my_src pad and push events to prepare for streaming. */
+    LIST_FOR_EACH_ENTRY(stream, &muxer->streams, struct wg_muxer_stream, entry)
+    {
+        char buffer[64];
+
+        sprintf(buffer, "wg_muxer_stream_src_%u", stream->id);
+        gst_segment_init(&stream->segment, GST_FORMAT_BYTES);
+        if (!gst_pad_set_active(stream->my_src, 1))
+            return status;
+        if (!push_event(stream->my_src, gst_event_new_stream_start(buffer))
+                || !push_event(stream->my_src, gst_event_new_caps(stream->my_src_caps))
+                || !push_event(stream->my_src, gst_event_new_segment(&stream->segment)))
+            return status;
+    }
+
+    GST_DEBUG("Started muxer %p.", muxer);
+
+    return STATUS_SUCCESS;
 }
