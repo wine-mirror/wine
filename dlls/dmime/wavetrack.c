@@ -25,6 +25,7 @@ struct wave_item {
     struct list entry;
     DMUS_IO_WAVE_ITEM_HEADER header;
     IUnknown *object;
+    IDirectSoundBuffer *buffer;
 };
 
 struct wave_part {
@@ -97,13 +98,18 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
         struct wave_item *item, *item2;
         struct wave_part *part, *part2;
 
-        LIST_FOR_EACH_ENTRY_SAFE(part, part2, &This->parts, struct wave_part, entry) {
+        LIST_FOR_EACH_ENTRY_SAFE(part, part2, &This->parts, struct wave_part, entry)
+        {
             list_remove(&part->entry);
-            LIST_FOR_EACH_ENTRY_SAFE(item, item2, &part->items, struct wave_item, entry) {
+
+            LIST_FOR_EACH_ENTRY_SAFE(item, item2, &part->items, struct wave_item, entry)
+            {
                 list_remove(&item->entry);
+                if (item->buffer) IDirectSoundBuffer_Release(item->buffer);
                 if (item->object) IUnknown_Release(item->object);
                 free(item);
             }
+
             free(part);
         }
 
@@ -171,9 +177,46 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         FIXME("GUID_Download not handled yet\n");
         return S_OK;
     }
-    if (IsEqualGUID(type, &GUID_DownloadToAudioPath)) {
-        FIXME("GUID_DownloadToAudioPath not handled yet\n");
-        return S_OK;
+    if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
+    {
+        IDirectMusicPerformance8 *performance;
+        IDirectMusicAudioPath *audio_path;
+        IUnknown *object = param;
+        struct wave_part *part;
+        struct wave_item *item;
+        IDirectSound *dsound;
+        HRESULT hr;
+
+        if (FAILED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicPerformance8, (void **)&performance))
+                && SUCCEEDED(hr = IDirectMusicAudioPath_QueryInterface(object, &IID_IDirectMusicAudioPath, (void **)&audio_path)))
+        {
+            hr = IDirectMusicAudioPath_GetObjectInPath(audio_path, DMUS_PCHANNEL_ALL, DMUS_PATH_PERFORMANCE, 0,
+                    &GUID_All_Objects, 0, &IID_IDirectMusicPerformance8, (void **)&performance);
+            IDirectMusicAudioPath_Release(audio_path);
+        }
+
+        if (SUCCEEDED(hr))
+            hr = performance_get_dsound(performance, &dsound);
+        IDirectMusicPerformance_Release(performance);
+
+        if (FAILED(hr))
+        {
+            WARN("Failed to get direct sound from param %p, hr %#lx\n", param, hr);
+            return hr;
+        }
+
+        LIST_FOR_EACH_ENTRY(part, &This->parts, struct wave_part, entry)
+        {
+            LIST_FOR_EACH_ENTRY(item, &part->items, struct wave_item, entry)
+            {
+                if (item->buffer) continue;
+                if (FAILED(hr = wave_download_to_dsound(item->object, dsound, &item->buffer)))
+                {
+                    WARN("Failed to download wave %p to direct sound, hr %#lx\n", item->object, hr);
+                    return hr;
+                }
+            }
+        }
     }
     if (IsEqualGUID(type, &GUID_Enable_Auto_Download)) {
         FIXME("GUID_Enable_Auto_Download not handled yet\n");
@@ -183,9 +226,20 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         FIXME("GUID_Unload not handled yet\n");
         return S_OK;
     }
-    if (IsEqualGUID(type, &GUID_UnloadFromAudioPath)) {
-        FIXME("GUID_UnloadFromAudioPath not handled yet\n");
-        return S_OK;
+    if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
+    {
+        struct wave_part *part;
+        struct wave_item *item;
+
+        LIST_FOR_EACH_ENTRY(part, &This->parts, struct wave_part, entry)
+        {
+            LIST_FOR_EACH_ENTRY(item, &part->items, struct wave_item, entry)
+            {
+                if (!item->buffer) continue;
+                IDirectSoundBuffer_Release(item->buffer);
+                item->buffer = NULL;
+            }
+        }
     }
 
     return DMUS_E_TYPE_UNSUPPORTED;

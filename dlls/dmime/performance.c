@@ -1731,3 +1731,17 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     IDirectMusicPerformance_Release(&obj->IDirectMusicPerformance8_iface);
     return hr;
 }
+
+static inline struct performance *unsafe_impl_from_IDirectMusicPerformance8(IDirectMusicPerformance8 *iface)
+{
+    if (iface->lpVtbl != &performance_vtbl) return NULL;
+    return CONTAINING_RECORD(iface, struct performance, IDirectMusicPerformance8_iface);
+}
+
+HRESULT performance_get_dsound(IDirectMusicPerformance8 *iface, IDirectSound **dsound)
+{
+    struct performance *This = unsafe_impl_from_IDirectMusicPerformance8(iface);
+    if (!This || !(*dsound = This->dsound)) return E_FAIL;
+    IDirectSound_AddRef(*dsound);
+    return S_OK;
+}

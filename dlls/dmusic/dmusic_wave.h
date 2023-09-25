@@ -32,4 +32,5 @@ struct chunk_entry;
 extern HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnknown **out);
 extern HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnknown **out);
 extern HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, DWORD *id);
+extern HRESULT wave_download_to_dsound(IUnknown *iface, IDirectSound *dsound, IDirectSoundBuffer **ret_iface);
 extern HRESULT wave_get_duration(IUnknown *iface, REFERENCE_TIME *duration);

@@ -339,6 +339,45 @@ HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, D
     return hr;
 }
 
+HRESULT wave_download_to_dsound(IUnknown *iface, IDirectSound *dsound, IDirectSoundBuffer **ret_iface)
+{
+    struct wave *This = impl_from_IUnknown(iface);
+    DSBUFFERDESC desc =
+    {
+        .dwSize = sizeof(desc),
+        .dwBufferBytes = This->data_size,
+        .lpwfxFormat = This->format,
+    };
+    IDirectSoundBuffer *buffer;
+    HRESULT hr;
+    void *data;
+    DWORD size;
+
+    TRACE("%p, %p, %p\n", This, dsound, ret_iface);
+
+    if (FAILED(hr = IDirectSound_CreateSoundBuffer(dsound, &desc, &buffer, NULL)))
+    {
+        WARN("Failed to create direct sound buffer, hr %#lx\n", hr);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = IDirectSoundBuffer_Lock(buffer, 0, This->data_size, &data, &size, NULL, 0, 0)))
+    {
+        memcpy(data, This->data, This->data_size);
+        hr = IDirectSoundBuffer_Unlock(buffer, data, This->data_size, NULL, 0);
+    }
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to download wave to dsound, hr %#lx\n", hr);
+        IDirectSoundBuffer_Release(buffer);
+        return hr;
+    }
+
+    *ret_iface = buffer;
+    return S_OK;
+}
+
 HRESULT wave_get_duration(IUnknown *iface, REFERENCE_TIME *duration)
 {
     struct wave *This = impl_from_IUnknown(iface);

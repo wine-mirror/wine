@@ -80,6 +80,8 @@ extern HRESULT segment_state_end_play(IDirectMusicSegmentState *iface);
 extern HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         IDirectMusicTrack8 **ret_iface);
 
+extern HRESULT performance_get_dsound(IDirectMusicPerformance8 *iface, IDirectSound **dsound);
+
 /*****************************************************************************
  * Auxiliary definitions
  */
