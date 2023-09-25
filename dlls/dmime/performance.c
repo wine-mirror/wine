@@ -40,10 +40,9 @@ struct performance
     IDirectMusicGraph IDirectMusicGraph_iface;
     IDirectMusicTool IDirectMusicTool_iface;
     LONG ref;
-    IDirectMusic8 *dmusic;
+    IDirectMusic *dmusic;
     IDirectSound *dsound;
     IDirectMusicGraph *pToolGraph;
-    DMUS_AUDIOPARAMS params;
     BOOL fAutoDownload;
     char cMasterGrooveLevel;
     float fMasterTempo;
@@ -314,14 +313,74 @@ static ULONG WINAPI performance_Release(IDirectMusicPerformance8 *iface)
   return ref;
 }
 
-/* IDirectMusicPerformanceImpl IDirectMusicPerformance Interface part: */
+static HRESULT performance_init_dsound(struct performance *This, HWND hwnd)
+{
+    IDirectSound *dsound;
+    HRESULT hr;
+
+    if (FAILED(hr = DirectSoundCreate(NULL, &dsound, NULL))) return hr;
+
+    if (!hwnd) hwnd = GetForegroundWindow();
+    hr = IDirectSound_SetCooperativeLevel(dsound, hwnd, DSSCL_PRIORITY);
+
+    if (SUCCEEDED(hr)) This->dsound = dsound;
+    else IDirectSound_Release(dsound);
+
+    return hr;
+}
+
+static HRESULT performance_init_dmusic(struct performance *This, IDirectSound *dsound)
+{
+    IDirectMusic *dmusic;
+    HRESULT hr;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusic8, (void **)&dmusic)))
+        return hr;
+
+    hr = IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+
+    if (SUCCEEDED(hr)) This->dmusic = dmusic;
+    else IDirectSound_Release(dmusic);
+
+    return hr;
+}
+
 static HRESULT WINAPI performance_Init(IDirectMusicPerformance8 *iface, IDirectMusic **dmusic,
         IDirectSound *dsound, HWND hwnd)
 {
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr;
+
     TRACE("(%p, %p, %p, %p)\n", iface, dmusic, dsound, hwnd);
 
-    return IDirectMusicPerformance8_InitAudio(iface, dmusic, dsound ? &dsound : NULL, hwnd, 0, 0,
-            0, NULL);
+    if (This->dmusic) return DMUS_E_ALREADY_INITED;
+
+    if ((This->dsound = dsound)) IDirectMusic8_AddRef(This->dsound);
+    else if (FAILED(hr = performance_init_dsound(This, hwnd))) return hr;
+
+    if (dmusic && (This->dmusic = *dmusic)) IDirectMusic_AddRef(This->dmusic);
+    else if (FAILED(hr = performance_init_dmusic(This, This->dsound)))
+    {
+        IDirectMusicPerformance_CloseDown(iface);
+        return hr;
+    }
+
+    if (FAILED(hr = IDirectMusic_GetMasterClock(This->dmusic, NULL, &This->master_clock))
+            || FAILED(hr = IDirectMusicPerformance8_GetTime(iface, &This->init_time, NULL)))
+    {
+        IDirectMusicPerformance_CloseDown(iface);
+        return hr;
+    }
+
+    PostMessageToProcessMsgThread(This, PROCESSMSG_START);
+
+    if (dmusic && !*dmusic)
+    {
+        *dmusic = This->dmusic;
+        IDirectMusic_AddRef(*dmusic);
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_PlaySegment(IDirectMusicPerformance8 *iface, IDirectMusicSegment *pSegment,
@@ -900,6 +959,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         IDirectMusic8_Release(This->dmusic);
         This->dmusic = NULL;
     }
+
     return S_OK;
 }
 
@@ -960,57 +1020,21 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
     TRACE("(%p, %p, %p, %p, %lx, %lu, %lx, %p)\n", This, dmusic, dsound, hwnd, default_path_type,
             num_channels, flags, params);
 
-    if (This->dmusic)
-        return DMUS_E_ALREADY_INITED;
+    if (flags) FIXME("flags parameter not used\n");
+    if (params) FIXME("params parameter not used\n");
 
-    if (!dmusic || !*dmusic) {
-        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8,
-                (void **)&This->dmusic);
-        if (FAILED(hr))
-            return hr;
-    } else {
-        This->dmusic = (IDirectMusic8 *)*dmusic;
-        IDirectMusic8_AddRef(This->dmusic);
-    }
+    if (FAILED(hr = IDirectMusicPerformance8_Init(iface, dmusic && *dmusic ? dmusic : NULL,
+            dsound ? *dsound : NULL, hwnd)))
+        return hr;
 
-    if (FAILED(hr = IDirectMusic_GetMasterClock(This->dmusic, NULL, &This->master_clock)))
-        goto error;
-
-    if (!dsound || !*dsound) {
-        hr = DirectSoundCreate8(NULL, (IDirectSound8 **)&This->dsound, NULL);
-        if (FAILED(hr))
-            goto error;
-        hr = IDirectSound_SetCooperativeLevel(This->dsound, hwnd ? hwnd : GetForegroundWindow(),
-                DSSCL_PRIORITY);
-        if (FAILED(hr))
-            goto error;
-    } else {
-        This->dsound = *dsound;
-        IDirectSound_AddRef(This->dsound);
-    }
-
-    hr = IDirectMusic8_SetDirectSound(This->dmusic, This->dsound, NULL);
-    if (FAILED(hr))
-        goto error;
-
-    if (!params) {
-        This->params.dwSize = sizeof(DMUS_AUDIOPARAMS);
-        This->params.fInitNow = FALSE;
-        This->params.dwValidData = DMUS_AUDIOPARAMS_FEATURES | DMUS_AUDIOPARAMS_VOICES |
-                DMUS_AUDIOPARAMS_SAMPLERATE | DMUS_AUDIOPARAMS_DEFAULTSYNTH;
-        This->params.dwVoices = 64;
-        This->params.dwSampleRate = 22050;
-        This->params.dwFeatures = flags;
-        This->params.clsidDefaultSynth = CLSID_DirectMusicSynthSink;
-    } else
-        This->params = *params;
-
-    if (default_path_type) {
+    if (default_path_type)
+    {
         hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, default_path_type,
                 num_channels, FALSE, &This->pDefaultPath);
-        if (FAILED(hr)) {
-            IDirectMusic8_SetDirectSound(This->dmusic, NULL, NULL);
-            goto error;
+        if (FAILED(hr))
+        {
+            IDirectMusicPerformance_CloseDown(iface);
+            return hr;
         }
     }
 
@@ -1023,27 +1047,7 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
         IDirectMusic_AddRef(*dmusic);
     }
 
-    if (FAILED(hr = IDirectMusicPerformance8_GetTime(iface, &This->init_time, NULL))) return hr;
-
-    PostMessageToProcessMsgThread(This, PROCESSMSG_START);
-
     return S_OK;
-
-error:
-    if (This->master_clock)
-    {
-        IReferenceClock_Release(This->master_clock);
-        This->master_clock = NULL;
-    }
-    if (This->dsound) {
-        IDirectSound_Release(This->dsound);
-        This->dsound = NULL;
-    }
-    if (This->dmusic) {
-        IDirectMusic8_Release(This->dmusic);
-        This->dmusic = NULL;
-    }
-    return hr;
 }
 
 static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface, IUnknown *pSource,

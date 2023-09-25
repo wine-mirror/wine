@@ -2009,7 +2009,7 @@ static void test_performance_InitAudio(void)
     hr = IDirectMusicPerformance8_InitAudio(performance, &dmusic, &dsound, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %#lx\n", hr);
     ref = get_refcount(dsound);
-    todo_wine ok(ref == 2, "dsound ref count got %ld expected 2\n", ref);
+    ok(ref == 2, "dsound ref count got %ld expected 2\n", ref);
     ref = get_refcount(dmusic);
     ok(ref == 2, "dmusic ref count got %ld expected 2\n", ref);
     destroy_performance(performance, dmusic, dsound);
@@ -2023,7 +2023,7 @@ static void test_performance_InitAudio(void)
     hr = IDirectMusicPerformance8_InitAudio(performance, &dmusic, NULL, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %#lx\n", hr);
     ref = get_refcount(dsound);
-    todo_wine ok(ref == 2, "dsound ref count got %ld expected 2\n", ref);
+    ok(ref == 2, "dsound ref count got %ld expected 2\n", ref);
     ref = get_refcount(dmusic);
     ok(ref == 2, "dmusic ref count got %ld expected 2\n", ref);
     destroy_performance(performance, dmusic, dsound);
@@ -2053,7 +2053,7 @@ static void test_performance_InitAudio(void)
     hr = IDirectMusicPort_SetNumChannelGroups(port, 1);
     ok(hr == S_OK, "SetNumChannelGroups failed: %#lx\n", hr);
     hr = IDirectMusicPerformance8_Init(performance, &dmusic, dsound, 0);
-    todo_wine ok(hr == S_OK, "Init failed: %#lx\n", hr);
+    ok(hr == S_OK, "Init failed: %#lx\n", hr);
     destroy_performance(performance, dmusic, dsound);
 
     /* InitAudio with perf channel count not a multiple of 16 rounds up */
