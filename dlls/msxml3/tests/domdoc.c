@@ -13947,6 +13947,156 @@ static void test_load_with_site(void)
     free_bstrs();
 }
 
+typedef struct _validate_on_parse_test_t
+{
+    const GUID *guid;
+    const char *clsid;
+    HRESULT hr;
+} validate_on_parse_test_t;
+
+static const validate_on_parse_test_t validate_on_parse_tests[] =
+{
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument" ,  E_FAIL },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  E_FAIL },
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", E_FAIL },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", E_FAIL },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", S_OK },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", S_OK },
+    { 0 }
+};
+
+static void test_validate_on_parse_values(void)
+{
+    const validate_on_parse_test_t *entry = validate_on_parse_tests;
+    int i = 0;
+
+    while (entry->guid)
+    {
+        IXMLDOMDocument2 *doc, *doc_clone;
+        IXMLDOMNode *node_clone;
+        VARIANT var, var_clone;
+        VARIANT_BOOL b;
+        HRESULT hr;
+
+        i++;
+        if (!is_clsid_supported(entry->guid, &IID_IXMLDOMDocument2))
+        {
+            entry++;
+            continue;
+        }
+
+        hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+        ok(hr == S_OK, "%d: got %#lx.\n", i, hr);
+
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 0;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ValidateOnParse"), &var);
+        ok(hr == entry->hr || broken(hr == E_FAIL) /* win8 */, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var) == VT_BOOL, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_BOOL(&var) == VARIANT_TRUE, "%d: got property value %d.\n", i, V_BOOL(&var));
+        }
+        else
+        {
+            ok(V_VT(&var) == VT_I2, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_I2(&var) == 0, "%d: got property value %d.\n", i, V_I2(&var));
+            if (IsEqualCLSID(entry->guid, &CLSID_DOMDocument40))
+            {
+                win_skip("Skip tests for CLSID_DOMDocument40 on Windows 8.\n");
+                IXMLDOMDocument2_Release(doc);
+                entry++;
+                continue;
+            }
+        }
+
+        b = VARIANT_FALSE;
+        hr = IXMLDOMDocument2_get_validateOnParse(doc, &b);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        ok(b == VARIANT_TRUE, "%d: got property value %d.\n", i, b);
+
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 0;
+        hr = IXMLDOMDocument2_setProperty(doc, _bstr_("ValidateOnParse"), var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 10;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ValidateOnParse"), &var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var) == VT_BOOL, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_BOOL(&var) == VARIANT_FALSE, "%d: got property value %d.\n", i, V_BOOL(&var));
+        }
+
+        V_VT(&var) = VT_BOOL;
+        V_BOOL(&var) = VARIANT_TRUE;
+        hr = IXMLDOMDocument2_setProperty(doc, _bstr_("ValidateOnParse"), var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        b = VARIANT_FALSE;
+        hr = IXMLDOMDocument2_get_validateOnParse(doc, &b);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        ok(b == VARIANT_TRUE, "%d: got property value %d.\n", i, b);
+
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 0;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ValidateOnParse"), &var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var) == VT_BOOL, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_BOOL(&var) == VARIANT_TRUE, "%d: got property value %d.\n", i, V_BOOL(&var));
+        }
+
+        b = VARIANT_FALSE;
+        hr = IXMLDOMDocument2_put_validateOnParse(doc, b);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 10;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ValidateOnParse"), &var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var) == VT_BOOL, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_BOOL(&var) == VARIANT_FALSE, "%d: got property value %d.\n", i, V_BOOL(&var));
+        }
+
+        /* Cloned document inherits the property. */
+        hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_TRUE, &node_clone);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        ok(node_clone != NULL, "%d: got node %p.\n", i, node_clone);
+        hr = IXMLDOMNode_QueryInterface(node_clone, &IID_IXMLDOMDocument2, (void **)&doc_clone);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        V_VT(&var) = VT_I2;
+        V_I2(&var) = 10;
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ValidateOnParse"), &var);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var) == VT_BOOL, "%d: got property value type %d.\n", i, V_VT(&var));
+            ok(V_BOOL(&var) == VARIANT_FALSE, "%d: got property value %d.\n", i, V_BOOL(&var));
+        }
+        V_VT(&var_clone) = VT_I2;
+        V_I2(&var_clone) = 10;
+        hr = IXMLDOMDocument2_getProperty(doc_clone, _bstr_("ValidateOnParse"), &var_clone);
+        ok(hr == entry->hr, "%d: got hr %#lx.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(V_VT(&var_clone) == V_VT(&var), "%d: got property value type %d.\n", i, V_VT(&var_clone));
+            ok(V_BOOL(&var_clone) == V_BOOL(&var), "%d: got property value %d.\n", i, V_BOOL(&var_clone));
+        }
+        b = VARIANT_TRUE;
+        hr = IXMLDOMDocument2_get_validateOnParse(doc_clone, &b);
+        ok(hr == S_OK, "%d: got hr %#lx.\n", i, hr);
+        ok(b == VARIANT_FALSE, "%d: got property value %d.\n", i, b);
+        IXMLDOMNode_Release(node_clone);
+        IXMLDOMDocument2_Release(doc_clone);
+
+        IXMLDOMDocument2_Release(doc);
+        entry++;
+    }
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -14033,7 +14183,7 @@ START_TEST(domdoc)
     test_transformNodeToObject();
     test_normalize_attribute_values();
     test_namespaces_as_attributes();
-
+    test_validate_on_parse_values();
     test_xsltemplate();
     test_xsltext();
 
