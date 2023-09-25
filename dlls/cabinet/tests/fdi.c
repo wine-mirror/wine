@@ -409,13 +409,6 @@ static void createTestFile(const CHAR *name)
 
 static void create_test_files(void)
 {
-    DWORD len;
-
-    len = GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
-
-    if(len && (CURR_DIR[len-1] == '\\'))
-        CURR_DIR[len-1] = 0;
-
     createTestFile("a.txt");
     createTestFile("b.txt");
     CreateDirectoryA("testdir", NULL);
@@ -944,6 +937,12 @@ static void test_FDICopy(void)
 
 START_TEST(fdi)
 {
+    int len;
+
+    len = GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    if (len && (CURR_DIR[len - 1] == '\\'))
+        CURR_DIR[len - 1] = 0;
+
     test_FDICreate();
     test_FDIDestroy();
     test_FDIIsCabinet();
