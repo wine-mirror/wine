@@ -651,10 +651,14 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
 
     if (FAILED(hr = IDirectMusic8_CreatePort(perf->dmusic, &guid, params, &port, NULL)))
         return hr;
-    if (FAILED(hr = IDirectMusicPort_Activate(port, TRUE))) {
+
+    if (FAILED(hr = IDirectMusicPort_SetDirectSound(port, perf->dsound, NULL))
+            || FAILED(hr = IDirectMusicPort_Activate(port, TRUE)))
+    {
         IDirectMusicPort_Release(port);
         return hr;
     }
+
     for (i = 0; i < params->dwChannelGroups; i++)
         pchannel_block_set(&perf->pchannels, i, port, i + 1, FALSE);
 
