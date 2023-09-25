@@ -2053,8 +2053,7 @@ static void perform_relocations( void *module, INT_PTR delta )
     nt = RtlImageNtHeader( module );
     relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
     if (!relocs->VirtualAddress || !relocs->Size) return;
-    sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
-                                         nt->FileHeader.SizeOfOptionalHeader);
+    sec = IMAGE_FIRST_SECTION( nt );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
         void *addr = (char *)module + sec[i].VirtualAddress;

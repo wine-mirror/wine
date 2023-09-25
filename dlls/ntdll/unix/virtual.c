@@ -2608,7 +2608,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     int i;
     off_t pos;
     struct stat st;
-    char *header_end, *header_start;
+    char *header_end;
     char *ptr = view->base;
     SIZE_T header_size, total_size = view->size;
 
@@ -2626,12 +2626,12 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     header_end = ptr + ROUND_SIZE( 0, header_size );
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) return status;
-    header_start = (char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader;
     if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( sections )) return status;
-    if (header_start + sizeof(*sections) * nt->FileHeader.NumberOfSections > header_end) return status;
+    sec = IMAGE_FIRST_SECTION( nt );
+    if ((char *)(sec + nt->FileHeader.NumberOfSections) > header_end) return status;
     /* Some applications (e.g. the Steam version of Borderlands) map over the top of the section headers,
      * copying the headers into local memory is necessary to properly load such applications. */
-    memcpy(sections, header_start, sizeof(*sections) * nt->FileHeader.NumberOfSections);
+    memcpy(sections, sec, sizeof(*sections) * nt->FileHeader.NumberOfSections);
     sec = sections;
 
     imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
@@ -3297,7 +3297,7 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
         /* The PE header is always read-only, no write, no execute. */
         set_page_vprot( base, page_size, VPROT_COMMITTED | VPROT_READ );
 
-        sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+        sec = IMAGE_FIRST_SECTION( nt );
         for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
         {
             BYTE flags = VPROT_COMMITTED;

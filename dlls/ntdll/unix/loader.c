@@ -1125,7 +1125,7 @@ static void relocate_ntdll( void *module )
 
     if (!(rel = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size ))) return;
 
-    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    sec = IMAGE_FIRST_SECTION( nt );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
         void *addr = get_rva( module, sec[i].VirtualAddress );
@@ -1991,7 +1991,7 @@ static void load_apiset_dll(void)
     if (!status)
     {
         nt = get_rva( ptr, ((IMAGE_DOS_HEADER *)ptr)->e_lfanew );
-        sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+        sec = IMAGE_FIRST_SECTION( nt );
 
         for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
         {
