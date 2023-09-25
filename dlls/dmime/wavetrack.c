@@ -1,5 +1,4 @@
-/* IDirectMusicWaveTrack Implementation
- *
+/*
  * Copyright (C) 2003-2004 Rok Mandeljc
  *
  * This program is free software; you can redistribute it and/or
@@ -22,9 +21,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
-/*****************************************************************************
- * IDirectMusicWaveTrack implementation
- */
 struct wave_item {
     struct list entry;
     DMUS_IO_WAVE_ITEM_HEADER header;
@@ -37,29 +33,30 @@ struct wave_part {
     struct list items;
 };
 
-typedef struct IDirectMusicWaveTrack {
+struct wave_track
+{
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
     DMUS_IO_WAVE_TRACK_HEADER header;
     struct list parts;
-} IDirectMusicWaveTrack;
+};
 
-/* IDirectMusicWaveTrack IDirectMusicTrack8 part: */
-static inline IDirectMusicWaveTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+/* struct wave_track IDirectMusicTrack8 part: */
+static inline struct wave_track *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicWaveTrack, IDirectMusicTrack8_iface);
+    return CONTAINING_RECORD(iface, struct wave_track, IDirectMusicTrack8_iface);
 }
 
-static inline IDirectMusicWaveTrack *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct wave_track *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectMusicWaveTrack, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct wave_track, dmobj.IPersistStream_iface);
 }
 
 static HRESULT WINAPI wave_track_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
         void **ret_iface)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
 
@@ -81,7 +78,7 @@ static HRESULT WINAPI wave_track_QueryInterface(IDirectMusicTrack8 *iface, REFII
 
 static ULONG WINAPI wave_track_AddRef(IDirectMusicTrack8 *iface)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -91,7 +88,7 @@ static ULONG WINAPI wave_track_AddRef(IDirectMusicTrack8 *iface)
 
 static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%ld\n", This, ref);
@@ -119,40 +116,42 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
 
 static HRESULT WINAPI wave_track_Init(IDirectMusicTrack8 *iface, IDirectMusicSegment *pSegment)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p): stub\n", This, pSegment);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %p): stub\n", This, pSegment);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_InitPlay(IDirectMusicTrack8 *iface,
         IDirectMusicSegmentState *pSegmentState, IDirectMusicPerformance *pPerformance,
         void **ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData,
+            dwVirtualTrack8ID, dwFlags);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_EndPlay(IDirectMusicTrack8 *iface, void *pStateData)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p): stub\n", This, pStateData);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %p): stub\n", This, pStateData);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *pStateData,
         MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags,
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd,
+            mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
         MUSIC_TIME *next, void *param)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %s, %ld, %p, %p): not supported\n", This, debugstr_dmguid(type), time, next, param);
     return DMUS_E_GET_UNSUPPORTED;
@@ -161,7 +160,7 @@ static HRESULT WINAPI wave_track_GetParam(IDirectMusicTrack8 *iface, REFGUID typ
 static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
         void *param)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %s, %ld, %p)\n", This, debugstr_dmguid(type), time, param);
 
@@ -195,7 +194,7 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
 
 static HRESULT WINAPI wave_track_IsParamSupported(IDirectMusicTrack8 *iface, REFGUID type)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
     static const GUID *valid[] = {
         &GUID_Disable_Auto_Download,
         &GUID_Download,
@@ -218,7 +217,7 @@ static HRESULT WINAPI wave_track_IsParamSupported(IDirectMusicTrack8 *iface, REF
 
 static HRESULT WINAPI wave_track_AddNotificationType(IDirectMusicTrack8 *iface, REFGUID notiftype)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
     return E_NOTIMPL;
@@ -227,7 +226,7 @@ static HRESULT WINAPI wave_track_AddNotificationType(IDirectMusicTrack8 *iface, 
 static HRESULT WINAPI wave_track_RemoveNotificationType(IDirectMusicTrack8 *iface,
         REFGUID notiftype)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
     return E_NOTIMPL;
@@ -236,44 +235,45 @@ static HRESULT WINAPI wave_track_RemoveNotificationType(IDirectMusicTrack8 *ifac
 static HRESULT WINAPI wave_track_Clone(IDirectMusicTrack8 *iface, MUSIC_TIME mtStart,
         MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %ld, %ld, %p): stub\n", This, mtStart, mtEnd, ppTrack);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_PlayEx(IDirectMusicTrack8 *iface, void *pStateData,
         REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags,
         IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData, wine_dbgstr_longlong(rtStart),
-	    wine_dbgstr_longlong(rtEnd), wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %p, 0x%s, 0x%s, 0x%s, %ld, %p, %p, %ld): stub\n", This, pStateData,
+            wine_dbgstr_longlong(rtStart), wine_dbgstr_longlong(rtEnd),
+            wine_dbgstr_longlong(rtOffset), dwFlags, pPerf, pSegSt, dwVirtualID);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_GetParamEx(IDirectMusicTrack8 *iface, REFGUID rguidType,
         REFERENCE_TIME rtTime, REFERENCE_TIME *prtNext, void *pParam, void *pStateData,
         DWORD dwFlags)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
-	    wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %s, 0x%s, %p, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+            wine_dbgstr_longlong(rtTime), prtNext, pParam, pStateData, dwFlags);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_SetParamEx(IDirectMusicTrack8 *iface, REFGUID rguidType,
         REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags)
 {
-        IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
-	FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
-	    wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
-	return S_OK;
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
+    FIXME("(%p, %s, 0x%s, %p, %p, %ld): stub\n", This, debugstr_dmguid(rguidType),
+            wine_dbgstr_longlong(rtTime), pParam, pStateData, dwFlags);
+    return S_OK;
 }
 
 static HRESULT WINAPI wave_track_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
         DWORD trackgroup, IDirectMusicTrack **track)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
 
     TRACE("(%p, %p, %ld, %p): method not implemented\n", This, context, trackgroup, track);
     return E_NOTIMPL;
@@ -282,7 +282,7 @@ static HRESULT WINAPI wave_track_Compose(IDirectMusicTrack8 *iface, IUnknown *co
 static HRESULT WINAPI wave_track_Join(IDirectMusicTrack8 *iface, IDirectMusicTrack *newtrack,
         MUSIC_TIME join, IUnknown *context, DWORD trackgroup, IDirectMusicTrack **resulttrack)
 {
-    IDirectMusicWaveTrack *This = impl_from_IDirectMusicTrack8(iface);
+    struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
     TRACE("(%p, %p, %ld, %p, %ld, %p): method not implemented\n", This, newtrack, join, context,
             trackgroup, resulttrack);
     return E_NOTIMPL;
@@ -368,8 +368,7 @@ error:
     return hr;
 }
 
-static HRESULT parse_wave_part(IDirectMusicWaveTrack *This, IStream *stream,
-        struct chunk_entry *wavp)
+static HRESULT parse_wave_part(struct wave_track *This, IStream *stream, struct chunk_entry *wavp)
 {
     struct chunk_entry chunk = {.parent = wavp};
     struct wave_part *part;
@@ -417,7 +416,7 @@ error:
 
 static HRESULT WINAPI wave_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-    IDirectMusicWaveTrack *This = impl_from_IPersistStream(iface);
+    struct wave_track *This = impl_from_IPersistStream(iface);
     struct chunk_entry wavt = {0};
     struct chunk_entry chunk = {.parent = &wavt};
     HRESULT hr;
@@ -469,7 +468,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 /* for ClassFactory */
 HRESULT create_dmwavetrack(REFIID lpcGUID, void **ppobj)
 {
-    IDirectMusicWaveTrack *track;
+    struct wave_track *track;
     HRESULT hr;
 
     *ppobj = NULL;
