@@ -1631,6 +1631,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
     struct message *message = message_from_DMUS_PMSG(msg);
+    HRESULT hr;
 
     FIXME("(%p, %p, %p): semi-stub\n", This, performance, msg);
 
@@ -1641,7 +1642,6 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         DMUS_NOTIFICATION_PMSG *notif = (DMUS_NOTIFICATION_PMSG *)msg;
         struct message *previous;
         BOOL enabled = FALSE;
-        HRESULT hr;
 
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)
                 && notif->dwNotificationOption == DMUS_NOTIFICATION_SEGEND)
@@ -1670,6 +1670,11 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         SetEvent(This->notification_event);
         return S_OK;
     }
+
+    case DMUS_PMSGT_WAVE:
+        if (FAILED(hr = IDirectSoundBuffer_Play((IDirectSoundBuffer *)msg->punkUser, 0, 0, 0)))
+            WARN("Failed to play wave buffer, hr %#lx\n", hr);
+        break;
 
     default:
         FIXME("Unhandled message type %#lx\n", msg->dwType);
