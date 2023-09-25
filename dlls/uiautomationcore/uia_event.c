@@ -564,7 +564,7 @@ static HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawEl
         }
     }
 
-    hr = create_msaa_provider(acc, child_id, hwnd, in_child_id == CHILDID_SELF, &elprov);
+    hr = create_msaa_provider(acc, child_id, hwnd, TRUE, in_child_id == CHILDID_SELF, &elprov);
     IAccessible_Release(acc);
     if (FAILED(hr))
         return hr;

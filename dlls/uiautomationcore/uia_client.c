@@ -3013,7 +3013,7 @@ static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderT
         if (FAILED(hr) || !acc)
             break;
 
-        hr = create_msaa_provider(acc, CHILDID_SELF, hwnd, TRUE, &elprov);
+        hr = create_msaa_provider(acc, CHILDID_SELF, hwnd, TRUE, TRUE, &elprov);
         if (FAILED(hr))
             WARN("Failed to create MSAA proxy provider with hr %#lx\n", hr);
 
