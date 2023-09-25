@@ -289,7 +289,7 @@ static void read_msft_importlib(importlib_t *importlib, void *data, unsigned int
 
 static unsigned int rva_to_va( const IMAGE_NT_HEADERS32 *nt, unsigned int rva )
 {
-    IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    IMAGE_SECTION_HEADER *sec = IMAGE_FIRST_SECTION( nt );
     unsigned int i;
 
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
@@ -312,7 +312,7 @@ static void read_pe_importlib(importlib_t *importlib, void *data, unsigned int s
     if (dos->e_lfanew < sizeof(*dos) || dos->e_lfanew >= size) error( "not a PE file\n" );
     nt = (IMAGE_NT_HEADERS32 *)((char *)data + dos->e_lfanew);
     if (nt->Signature != IMAGE_NT_SIGNATURE) error( "not a PE file\n" );
-    if ((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader > (char *)data + size)
+    if ((char *)(IMAGE_FIRST_SECTION(nt) + nt->FileHeader.NumberOfSections) > (char *)data + size)
         error( "invalid PE file\n" );
     switch (nt->OptionalHeader.Magic)
     {
