@@ -2169,17 +2169,58 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
 	dump_frame_pointer_omission(idd->PointerToRawData, idd->SizeOfData);
 	break;
     case IMAGE_DEBUG_TYPE_MISC:
-    {
-	const IMAGE_DEBUG_MISC* misc = PRD(idd->PointerToRawData, idd->SizeOfData);
-	if (!misc) {printf("Can't get misc debug information\n"); break;}
-	printf("    DataType:          %u (%s)\n",
-	       (UINT)misc->DataType, (misc->DataType == IMAGE_DEBUG_MISC_EXENAME) ? "Exe name" : "Unknown");
-	printf("    Length:            %u\n", (UINT)misc->Length);
-	printf("    Unicode:           %s\n", misc->Unicode ? "Yes" : "No");
-	printf("    Data:              %s\n", misc->Data);
-    }
-    break;
-    default: break;
+        {
+            const IMAGE_DEBUG_MISC* misc = PRD(idd->PointerToRawData, idd->SizeOfData);
+            if (!misc || idd->SizeOfData < sizeof(*misc)) {printf("Can't get MISC debug information\n"); break;}
+            printf("    DataType:          %u (%s)\n",
+                   (UINT)misc->DataType, (misc->DataType == IMAGE_DEBUG_MISC_EXENAME) ? "Exe name" : "Unknown");
+            printf("    Length:            %u\n", (UINT)misc->Length);
+            printf("    Unicode:           %s\n", misc->Unicode ? "Yes" : "No");
+            printf("    Data:              %s\n", misc->Data);
+        }
+        break;
+    case IMAGE_DEBUG_TYPE_POGO:
+        {
+            const unsigned* data = PRD(idd->PointerToRawData, idd->SizeOfData);
+            const unsigned* end = (const unsigned*)((const unsigned char*)data + idd->SizeOfData);
+            unsigned idx = 0;
+
+            if (!data || idd->SizeOfData < sizeof(unsigned)) {printf("Can't get PODO debug information\n"); break;}
+            printf("    Header:            %08x\n", *(const unsigned*)data);
+            data++;
+            printf("      Index            Name            Offset   Size\n");
+            while (data + 2 < end)
+            {
+                const char* ptr;
+                ptrdiff_t s;
+
+                if (!(ptr = memchr(&data[2], '\0', (const char*)end - (const char*)&data[2]))) break;
+                printf("      %-5u            %-16s %08x %08x\n", idx, (const char*)&data[2], data[0], data[1]);
+                s = ptr - (const char*)&data[2] + 1;
+                data += 2 + ((s + sizeof(unsigned) - 1) / sizeof(unsigned));
+                idx++;
+            }
+        }
+        break;
+    case IMAGE_DEBUG_TYPE_REPRO:
+        {
+            const IMAGE_DEBUG_REPRO* repro = PRD(idd->PointerToRawData, idd->SizeOfData);
+            if (!repro || idd->SizeOfData < sizeof(*repro)) {printf("Can't get REPRO debug information\n"); break;}
+            printf("    Flags:             %08X\n", repro->flags);
+            printf("    Guid:              %s\n", get_guid_str(&repro->guid));
+            printf("    _unk0:             %08X %u\n", repro->unk[0], repro->unk[0]);
+            printf("    _unk1:             %08X %u\n", repro->unk[1], repro->unk[1]);
+            printf("    _unk2:             %08X %u\n", repro->unk[2], repro->unk[2]);
+            printf("    Timestamp:         %08X\n", repro->debug_timestamp);
+        }
+        break;
+    default:
+        {
+            const unsigned char* data = PRD(idd->PointerToRawData, idd->SizeOfData);
+            if (!data) {printf("Can't get debug information for %s\n", str); break;}
+            dump_data(data, idd->SizeOfData, "    ");
+        }
+        break;
     }
     printf("\n");
 }

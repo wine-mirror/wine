@@ -2820,3 +2820,13 @@ typedef struct OMFSourceModule
     unsigned short  cSeg;
     unsigned int    baseSrcFile[1];
 } OMFSourceModule;
+
+
+/* undocumented. IMAGE_DEBUG_TYPE_REPRO directory entry */
+typedef struct
+{
+    unsigned        flags;           /* only seen 0x20 */
+    GUID            guid;            /* guid used in CODEVIEW debug entry */
+    unsigned        unk[3];          /* unknown, potentially hash of some internal parts of image */
+    unsigned        debug_timestamp; /* used in all DEBUG entries as timestamp (including this one) */
+} IMAGE_DEBUG_REPRO;
