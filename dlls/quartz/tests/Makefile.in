@@ -13,6 +13,7 @@ SOURCES = \
 	mpegaudio.c \
 	mpeglayer3.c \
 	mpegsplit.c \
+	mpegvideo.c \
 	passthrough.c \
 	rsrc.rc \
 	systemclock.c \
