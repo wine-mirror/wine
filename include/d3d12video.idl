@@ -438,6 +438,46 @@ interface ID3D12VideoDecodeCommandList : ID3D12CommandList
     );
 }
 
+typedef struct D3D12_VIDEO_DECODE_OUTPUT_HISTOGRAM
+{
+    UINT64 Offset;
+    ID3D12Resource *pBuffer;
+} D3D12_VIDEO_DECODE_OUTPUT_HISTOGRAM;
+
+typedef struct D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS1
+{
+    BOOL Enable;
+    ID3D12Resource *pReferenceTexture2D;
+    UINT ReferenceSubresource;
+    DXGI_COLOR_SPACE_TYPE OutputColorSpace;
+    DXGI_COLOR_SPACE_TYPE DecodeColorSpace;
+    UINT OutputWidth;
+    UINT OutputHeight;
+} D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS1;
+
+typedef struct D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS1
+{
+    ID3D12Resource *pOutputTexture2D;
+    UINT OutputSubresource;
+    D3D12_VIDEO_DECODE_CONVERSION_ARGUMENTS1 ConversionArguments;
+    D3D12_VIDEO_DECODE_OUTPUT_HISTOGRAM Histograms[D3D12_VIDEO_DECODE_MAX_HISTOGRAM_COMPONENTS];
+} D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS1;
+
+[
+    uuid(d52f011b-b56e-453c-a05a-a7f311c8f472),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDecodeCommandList1 : ID3D12VideoDecodeCommandList
+{
+    void DecodeFrame1(
+        [in] ID3D12VideoDecoder *decoder,
+        [in] const D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS1 *output_arguments,
+        [in] const D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS *input_arguments
+    );
+}
+
 typedef enum D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE
 {
     D3D12_VIDEO_MOTION_ESTIMATOR_SEARCH_BLOCK_SIZE_8X8 = 0,
