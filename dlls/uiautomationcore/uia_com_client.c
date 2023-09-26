@@ -1079,6 +1079,78 @@ static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia
     VariantClear(&v);
 }
 
+static HRESULT uia_com_focus_win_event_msaa_callback(struct uia_event *event, void *user_data)
+{
+    struct uia_event_args args = { { EventArgsType_Simple, UIA_AutomationFocusChangedEventId }, 0 };
+    HUIANODE node = (HUIANODE)user_data;
+
+    /* Only match desktop events. */
+    if (!event->desktop_subtree_event)
+        return S_OK;
+
+    return uia_event_invoke(node, NULL, &args, event);
+}
+
+static void uia_com_focus_win_event_msaa_handler(HWND hwnd, LONG child_id)
+{
+    IRawElementProviderFragmentRoot *elroot;
+    IRawElementProviderFragment *elfrag;
+    IRawElementProviderSimple *elprov;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = create_msaa_provider_from_hwnd(hwnd, child_id, &elprov);
+    if (FAILED(hr))
+    {
+        WARN("create_msaa_provider_from_hwnd failed with hr %#lx\n", hr);
+        return;
+    }
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragmentRoot, (void **)&elroot);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IRawElementProviderFragmentRoot_GetFocus(elroot, &elfrag);
+    IRawElementProviderFragmentRoot_Release(elroot);
+    if (FAILED(hr))
+        goto exit;
+
+    if (elfrag)
+    {
+        IRawElementProviderSimple *elprov2;
+
+        hr = IRawElementProviderFragment_QueryInterface(elfrag, &IID_IRawElementProviderSimple, (void **)&elprov2);
+        IRawElementProviderFragment_Release(elfrag);
+        if (FAILED(hr))
+            goto exit;
+
+        IRawElementProviderSimple_Release(elprov);
+        elprov = elprov2;
+    }
+
+    VariantInit(&v);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_HasKeyboardFocusPropertyId, &v);
+    if (FAILED(hr))
+        goto exit;
+
+    if (V_VT(&v) == VT_BOOL && V_BOOL(&v) == VARIANT_TRUE)
+    {
+        HUIANODE node;
+
+        hr = create_uia_node_from_elprov(elprov, &node, TRUE, 0);
+        if (SUCCEEDED(hr))
+        {
+            hr = uia_event_for_each(UIA_AutomationFocusChangedEventId, uia_com_focus_win_event_msaa_callback, (void *)node, TRUE);
+            if (FAILED(hr))
+                WARN("uia_event_for_each failed with hr %#lx\n", hr);
+            UiaNodeRelease(node);
+        }
+    }
+
+exit:
+    IRawElementProviderSimple_Release(elprov);
+}
+
 HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id, DWORD event_time)
 {
     LONG handler_count;
@@ -1168,6 +1240,8 @@ HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG 
             hr = create_uia_node_from_hwnd(hwnd, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
             if (SUCCEEDED(hr))
                 uia_com_focus_win_event_handler(node, hwnd, event_id_map);
+            else
+                uia_com_focus_win_event_msaa_handler(hwnd, child_id);
 
             UiaNodeRelease(node);
         }

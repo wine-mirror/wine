@@ -241,6 +241,7 @@ HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd) DECLSPE
 HRESULT uia_event_for_each(int event_id, UiaWineEventForEachCallback *callback, void *user_data,
         BOOL clientside_only) DECLSPEC_HIDDEN;
 BOOL uia_clientside_event_start_event_thread(struct uia_event *event) DECLSPEC_HIDDEN;
+HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawElementProviderSimple **ret_elprov) DECLSPEC_HIDDEN;
 HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie) DECLSPEC_HIDDEN;
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
         struct uia_event *event) DECLSPEC_HIDDEN;
@@ -249,6 +250,8 @@ HRESULT uia_event_advise_node(struct uia_event *event, HUIANODE node) DECLSPEC_H
 HRESULT uia_add_clientside_event(HUIANODE huianode, EVENTID event_id, enum TreeScope scope, PROPERTYID *prop_ids,
         int prop_ids_count, struct UiaCacheRequest *cache_req, SAFEARRAY *rt_id, UiaWineEventCallback *cback,
         void *cback_data, HUIAEVENT *huiaevent) DECLSPEC_HIDDEN;
+HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args,
+        struct uia_event *event) DECLSPEC_HIDDEN;
 HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
         HUIANODE *clientside_nav_node_out) DECLSPEC_HIDDEN;
 

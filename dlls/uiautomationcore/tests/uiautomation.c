@@ -582,6 +582,18 @@ static struct Accessible
         (acc)->expect_ ## method = (acc)->called_ ## method = 0; \
     }while(0)
 
+#define CHECK_ACC_METHOD_CALLED_AT_LEAST(acc, method, num) \
+    do { \
+        ok((acc)->called_ ## method >= num, "expected %s_" #method " at least %d time(s) (got %d)\n", (acc)->interface_name, num, (acc)->called_ ## method); \
+        (acc)->expect_ ## method = (acc)->called_ ## method = 0; \
+    }while(0)
+
+#define CHECK_ACC_METHOD_CALLED_AT_MOST(acc, method, num) \
+    do { \
+        ok((acc)->called_ ## method <= num, "expected %s_" #method " at most %d time(s) (got %d)\n", (acc)->interface_name, num, (acc)->called_ ## method); \
+        (acc)->expect_ ## method = (acc)->called_ ## method = 0; \
+    }while(0)
+
 static inline struct Accessible* impl_from_Accessible(IAccessible *iface)
 {
     return CONTAINING_RECORD(iface, struct Accessible, IAccessible_iface);
@@ -15774,6 +15786,163 @@ static void test_uia_com_focus_change_event_handler_win_event_handling(IUIAutoma
     CHECK_CALLED(uia_com_event_callback);
     CHECK_CALLED(uia_event_callback);
 
+    /*
+     * Windows 7 has quirky behavior around MSAA proxy creation, skip tests.
+     */
+    if (!UiaLookupId(AutomationIdentifierType_Property, &OptimizeForVisualContent_Property_GUID))
+    {
+        win_skip("Skipping focus MSAA proxy tests for Win7\n");
+        goto exit;
+    }
+
+    /*
+     * Creates an MSAA proxy, raises event on that.
+     */
+    prov_root = NULL;
+    set_accessible_props(&Accessible, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSED, 0, L"acc_name", 0, 0, 0, 0);
+    Accessible.ow_hwnd = test_hwnd;
+    Accessible.focus_child_id = CHILDID_SELF;
+    acc_client = &Accessible.IAccessible_iface;
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), test_hwnd);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Main", NULL, TRUE); /* MSAA Proxy provider. */
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+
+    set_uia_hwnd_expects(0, 1, 1, 4, 4); /* Win11 sends 4 WM_GETOBJECT messages, normally only 2. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, QI_IAccIdentity, 3);
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, get_accParent, 3);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 1, FALSE);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible, QI_IAccIdentity);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
+
+    /*
+     * Return Accessible_child2 from get_accFocus.
+     */
+    set_accessible_props(&Accessible, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSED, 0, L"acc_name", 0, 0, 0, 0);
+    Accessible.focus_child_id = 4; /* 4 gets us Accessible_child2. */
+    set_accessible_props(&Accessible_child2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSED, 0, L"acc_child2", 0, 0, 0, 0);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", NULL, TRUE); /* MSAA Proxy provider. */
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+    set_uia_hwnd_expects(0, 0, 0, 2, 3); /* Win11 sends 2/3 WM_GETOBJECT messages, normally only 1/2. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, QI_IAccIdentity, 4); /* Only done 4 times on Win11, normally 3. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, get_accParent, 3); /* Only done 3 times on Win11, normally 2. */
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accRole);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, QI_IAccIdentity);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accRole);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, accNavigate); /* Wine only, Windows doesn't pass this through the DA wrapper. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible_child2, get_accParent, 2);
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible_child2, get_accState, 2);
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 0, FALSE, 0, FALSE, 1, FALSE, 2, FALSE);
+    todo_wine CHECK_ACC_METHOD_CALLED_AT_LEAST(&Accessible, QI_IAccIdentity, 3);
+    todo_wine CHECK_ACC_METHOD_CALLED_AT_LEAST(&Accessible, get_accParent, 2);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accRole);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible_child2, QI_IAccIdentity);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accRole);
+    CHECK_ACC_METHOD_CALLED_MULTI(&Accessible_child2, get_accParent, 2);
+    CHECK_ACC_METHOD_CALLED_MULTI(&Accessible_child2, get_accState, 2);
+    CHECK_ACC_METHOD_CALLED_AT_MOST(&Accessible_child2, accNavigate, 1);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
+
+    /*
+     * accFocus returns Accessible_child2, however it has
+     * STATE_SYSTEM_INVISIBLE set. Falls back to Accessible.
+     */
+    set_accessible_props(&Accessible_child2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_INVISIBLE | STATE_SYSTEM_FOCUSED, 0, L"acc_child2", 0, 0, 0, 0);
+    set_accessible_props(&Accessible, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSED, 0, L"acc_name", 0, 0, 0, 0);
+
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), test_hwnd);
+    add_provider_desc(&exp_node_desc, L"Hwnd", L"Provider_hwnd2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Nonclient", L"Provider_nc2", FALSE);
+    add_provider_desc(&exp_node_desc, L"Main", NULL, TRUE); /* MSAA Proxy provider. */
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+    set_uia_hwnd_expects(0, 1, 1, 4, 4); /* Win11 sends 4 WM_GETOBJECT messages, normally only 2. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, QI_IAccIdentity, 4); /* Only done 4 times on Win11, normally 2. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, get_accParent, 3); /* Only done 3 times on Win11, normally 1. */
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accState);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, accNavigate); /* Wine only, Windows doesn't pass this through the DA wrapper. */
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, QI_IAccIdentity);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accParent);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accState);
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, FALSE, 1, FALSE);
+    todo_wine CHECK_ACC_METHOD_CALLED_AT_LEAST(&Accessible, QI_IAccIdentity, 2);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accState);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible_child2, QI_IAccIdentity);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accParent);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accState);
+    CHECK_ACC_METHOD_CALLED_AT_MOST(&Accessible_child2, accNavigate, 1);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
+
+    /*
+     * Get Accessible_child2 by raising an event with its child ID directly.
+     * It will have its get_accFocus method called.
+     */
+    init_node_provider_desc(&exp_node_desc, GetCurrentProcessId(), NULL);
+    add_provider_desc(&exp_node_desc, L"Main", NULL, TRUE); /* MSAA Proxy provider. */
+
+    set_multi_event_data(&exp_node_desc);
+    set_com_event_data(&exp_node_desc);
+    set_uia_hwnd_expects(0, 0, 0, 2, 2); /* Win11 sends 2/2 WM_GETOBJECT messages, normally only 1/1. */
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible, QI_IAccIdentity, 2); /* Only done 2 times on Win11, normally 1. */
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accParent); /* Only done on Win11. */
+    SET_ACC_METHOD_EXPECT(&Accessible, get_accChild);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, QI_IAccIdentity);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accFocus);
+    SET_ACC_METHOD_EXPECT(&Accessible_child2, get_accState);
+    SET_ACC_METHOD_EXPECT_MULTI(&Accessible_child2, get_accParent, 2);
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, 4);
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+    check_uia_hwnd_expects_at_least(0, FALSE, 0, FALSE, 0, FALSE, 1, FALSE, 1, FALSE);
+    CHECK_ACC_METHOD_CALLED_AT_MOST(&Accessible, get_accParent, 1); /* Only done on Win11. */
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible, QI_IAccIdentity);
+    CHECK_ACC_METHOD_CALLED(&Accessible, get_accChild);
+    todo_wine CHECK_ACC_METHOD_CALLED(&Accessible_child2, QI_IAccIdentity);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accFocus);
+    CHECK_ACC_METHOD_CALLED(&Accessible_child2, get_accState);
+    CHECK_ACC_METHOD_CALLED_AT_MOST(&Accessible_child2, get_accParent, 2);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
+    acc_client = NULL;
+
+exit:
     set_uia_hwnd_expects(0, 1, 1, 0, 0);
     hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,
             &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
