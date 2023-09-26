@@ -522,6 +522,130 @@ interface ID3D12VideoDevice1 : ID3D12VideoDevice
     );
 }
 
+typedef struct D3D12_RESOURCE_COORDINATE
+{
+    UINT64 X;
+    UINT Y;
+    UINT Z;
+    UINT SubresourceIndex;
+} D3D12_RESOURCE_COORDINATE;
+
+typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT
+{
+    ID3D12VideoMotionVectorHeap *pMotionVectorHeap;
+} D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT;
+
+typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_INPUT
+{
+    ID3D12Resource *pInputTexture2D;
+    UINT InputSubresourceIndex;
+    ID3D12Resource *pReferenceTexture2D;
+    UINT ReferenceSubresourceIndex;
+    ID3D12VideoMotionVectorHeap *pHintMotionVectorHeap;
+} D3D12_VIDEO_MOTION_ESTIMATOR_INPUT;
+
+typedef struct D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_OUTPUT
+{
+    ID3D12Resource *pMotionVectorTexture2D;
+    D3D12_RESOURCE_COORDINATE MotionVectorCoordinate;
+} D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_OUTPUT;
+
+typedef struct D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT
+{
+    ID3D12VideoMotionVectorHeap *pMotionVectorHeap;
+    UINT PixelWidth;
+    UINT PixelHeight;
+} D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT;
+
+[
+    uuid(8455293a-0cbd-4831-9b39-fbdbab724723),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoEncodeCommandList : ID3D12CommandList
+{
+    HRESULT Close();
+
+    HRESULT Reset(
+        [in] ID3D12CommandAllocator *allocator
+    );
+
+    void ClearState();
+
+    void ResourceBarrier(
+        [in] UINT barriers_count,
+        [in] const D3D12_RESOURCE_BARRIER *barriers
+    );
+
+    void DiscardResource(
+        [in] ID3D12Resource *resource,
+        [in, optional] const D3D12_DISCARD_REGION *region
+    );
+
+    void BeginQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void EndQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void ResolveQueryData(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT start_index,
+        [in] UINT queries_count,
+        [in] ID3D12Resource *destination_buffer,
+        [in] UINT64 aligned_destination_buffer_offset
+    );
+
+    void SetPredication(
+        [in, optional] ID3D12Resource *buffer,
+        [in] UINT64 aligned_buffer_offset,
+        [in] D3D12_PREDICATION_OP operation
+    );
+
+    void SetMarker(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void BeginEvent(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void EndEvent();
+
+    void EstimateMotion(
+        [in] ID3D12VideoMotionEstimator *motion_estimator,
+        [in] const D3D12_VIDEO_MOTION_ESTIMATOR_OUTPUT *output_arguments,
+        [in] const D3D12_VIDEO_MOTION_ESTIMATOR_INPUT *input_arguments
+    );
+
+    void ResolveMotionVectorHeap(
+        [in] const D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_OUTPUT *output_arguments,
+        [in] const D3D12_RESOLVE_VIDEO_MOTION_VECTOR_HEAP_INPUT *input_arguments
+    );
+
+    void WriteBufferImmediate(
+        [in] UINT count,
+        [in] const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *params,
+        [in] const D3D12_WRITEBUFFERIMMEDIATE_MODE *modes
+    );
+
+    void SetProtectedResourceSession(
+        [in, optional]ID3D12ProtectedResourceSession *protected_resource_session
+    );
+}
+
 typedef struct D3D12_VIDEO_EXTENSION_COMMAND_DESC
 {
     UINT NodeMask;
