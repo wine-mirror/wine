@@ -687,6 +687,17 @@ typedef enum D3D12_VIDEO_ENCODER_HEAP_FLAGS
 } D3D12_VIDEO_ENCODER_HEAP_FLAGS;
 cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_HEAP_FLAGS);")
 
+typedef struct D3D12_VIDEO_ENCODER_HEAP_DESC
+{
+    UINT NodeMask;
+    D3D12_VIDEO_ENCODER_HEAP_FLAGS Flags;
+    D3D12_VIDEO_ENCODER_CODEC EncodeCodec;
+    D3D12_VIDEO_ENCODER_PROFILE_DESC EncodeProfile;
+    D3D12_VIDEO_ENCODER_LEVEL_SETTING EncodeLevel;
+    UINT ResolutionsListCount;
+    const D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC *pResolutionList;
+} D3D12_VIDEO_ENCODER_HEAP_DESC;
+
 typedef enum D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_SLICES_DEBLOCKING_MODES
 {
     D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_H264_SLICES_DEBLOCKING_MODE_0_ALL_LUMA_CHROMA_SLICE_BLOCK_EDGES_ALWAYS_FILTERED = 0,
@@ -782,6 +793,17 @@ typedef enum D3D12_VIDEO_ENCODER_FLAGS
 } D3D12_VIDEO_ENCODER_FLAGS;
 cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_ENCODER_FLAGS);")
 
+typedef struct D3D12_VIDEO_ENCODER_DESC
+{
+    UINT NodeMask;
+    D3D12_VIDEO_ENCODER_FLAGS Flags;
+    D3D12_VIDEO_ENCODER_CODEC EncodeCodec;
+    D3D12_VIDEO_ENCODER_PROFILE_DESC EncodeProfile;
+    DXGI_FORMAT InputFormat;
+    D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION CodecConfiguration;
+    D3D12_VIDEO_ENCODER_MOTION_ESTIMATION_PRECISION_MODE MaxMotionEstimationPrecision;
+} D3D12_VIDEO_ENCODER_DESC;
+
 [
     uuid(2e0d212d-8df9-44a6-a770-bb289b182737),
     object,
@@ -836,5 +858,26 @@ interface ID3D12VideoEncoderHeap : ID3D12Pageable
     HRESULT GetResolutionList(
         [in] const UINT resolutions_list_count,
         [out] D3D12_VIDEO_ENCODER_PICTURE_RESOLUTION_DESC *resolution_list
+    );
+}
+
+[
+    uuid(4243adb4-3a32-4666-973c-0ccc5625dc44),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoDevice3 : ID3D12VideoDevice2
+{
+    HRESULT CreateVideoEncoder(
+        [in] const D3D12_VIDEO_ENCODER_DESC *desc,
+        [in] REFIID riid,
+        [out] void **video_encoder
+    );
+
+    HRESULT CreateVideoEncoderHeap(
+        [in] const D3D12_VIDEO_ENCODER_HEAP_DESC *desc,
+        [in] REFIID riid,
+        [out] void **video_encoder_heap
     );
 }
