@@ -40,7 +40,6 @@ struct cache_entry {
     struct list entry;
     DMUS_OBJECTDESC Desc;
     IDirectMusicObject *pObject;
-    BOOL bInvalidDefaultDLS; /* workaround for enabling caching of "faulty" default dls collection */
 };
 
 struct loader
@@ -276,12 +275,6 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
     TRACE(": looking if we have object in the cache or if it can be found via alias\n");
     pExistingEntry = find_cache_object(This, pDesc);
     if (pExistingEntry) {
-
-        if (pExistingEntry->bInvalidDefaultDLS) {
-            TRACE(": found faulty default DLS collection... enabling M$ compliant behaviour\n");
-            return DMUS_E_LOADER_NOFILENAME;
-        }
-
         if (pExistingEntry->Desc.dwValidData & DMUS_OBJ_LOADED) {
             TRACE(": already loaded\n");
             return IDirectMusicObject_QueryInterface(pExistingEntry->pObject, riid, ppv);
@@ -404,23 +397,26 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
 	IStream_Release (pStream);
 	IPersistStream_Release (pPersistStream);	
 		
-	/* add object to cache/overwrite existing info (if cache is enabled) */
-        bCache = is_cache_enabled(This, &pDesc->guidClass);
-	if (bCache) {
-		if (!pObjectEntry) {
+    /* add object to cache/overwrite existing info (if cache is enabled) */
+    bCache = is_cache_enabled(This, &pDesc->guidClass);
+    if (!bCache) TRACE(": caching disabled\n");
+    else
+    {
+        if (!pObjectEntry)
+        {
             pObjectEntry = calloc(1, sizeof(*pObjectEntry));
-			DM_STRUCT_INIT(&pObjectEntry->Desc);
-			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
-			pObjectEntry->pObject = pObject;
-			pObjectEntry->bInvalidDefaultDLS = FALSE;
-                        list_add_head(&This->cache, &pObjectEntry->entry);
-		} else {
-			DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
-			pObjectEntry->pObject = pObject;
-			pObjectEntry->bInvalidDefaultDLS = FALSE;
-		}
-		TRACE(": filled in cache entry\n");
-	} else TRACE(": caching disabled\n");
+            DM_STRUCT_INIT(&pObjectEntry->Desc);
+            DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->pObject = pObject;
+            list_add_head(&This->cache, &pObjectEntry->entry);
+        }
+        else
+        {
+            DMUSIC_CopyDescriptor (&pObjectEntry->Desc, &GotDesc);
+            pObjectEntry->pObject = pObject;
+        }
+        TRACE(": filled in cache entry\n");
+    }
 
 	result = IDirectMusicObject_QueryInterface (pObject, riid, ppv);
 	if (!bCache) IDirectMusicObject_Release (pObject); /* since loader's reference is not needed */
@@ -873,8 +869,6 @@ HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
 {
     struct loader *obj;
     DMUS_OBJECTDESC Desc;
-    struct cache_entry *dls;
-    struct list *pEntry;
     HRESULT hr;
 
     TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
@@ -894,16 +888,6 @@ HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
     Desc.guidObject = GUID_DefaultGMCollection;
     DMUSIC_GetDefaultGMPath(Desc.wszFileName);
     IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
-
-    /* and now the workaroundTM for "invalid" default DLS; basically,
-       my tests showed that if GUID chunk is present in default DLS
-       collection, loader treats it as "invalid" and returns
-       DMUS_E_LOADER_NOFILENAME for all requests for it; basically, we check
-       if out input guidObject was overwritten */
-    pEntry = list_head(&obj->cache);
-    dls = LIST_ENTRY(pEntry, struct cache_entry, entry);
-    if (!IsEqualGUID(&Desc.guidObject, &GUID_DefaultGMCollection))
-        dls->bInvalidDefaultDLS = TRUE;
 
     hr = IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
     IDirectMusicLoader_Release(&obj->IDirectMusicLoader8_iface);
