@@ -484,6 +484,22 @@ typedef struct D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC
 } D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC;
 
 [
+    uuid(5be17987-743a-4061-834b-23d22daea505),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoMotionVectorHeap : ID3D12Pageable
+{
+    D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC GetDesc();
+
+    HRESULT GetProtectedResourceSession(
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **protected_session
+    );
+}
+
+[
     uuid(981611ad-a144-4c83-9890-f30e26d658ab),
     object,
     local,
