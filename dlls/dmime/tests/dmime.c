@@ -3943,7 +3943,7 @@ static void test_segment_state(void)
     check_track_state(track, downloaded, FALSE);
     hr = IDirectMusicSegment8_Download((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_track_state(track, downloaded, TRUE);
+    check_track_state(track, downloaded, TRUE);
     hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
     ok(hr == S_OK, "got %#lx\n", hr);
     check_track_state(track, downloaded, FALSE);

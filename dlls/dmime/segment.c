@@ -530,18 +530,18 @@ static HRESULT WINAPI segment_Compose(IDirectMusicSegment8 *iface, MUSIC_TIME mt
     return S_OK;
 }
 
-static HRESULT WINAPI segment_Download(IDirectMusicSegment8 *iface, IUnknown *pAudioPath)
+static HRESULT WINAPI segment_Download(IDirectMusicSegment8 *iface, IUnknown *audio_path)
 {
     struct segment *This = impl_from_IDirectMusicSegment8(iface);
-    FIXME("(%p, %p): stub\n", This, pAudioPath);
-    return S_OK;
+    TRACE("(%p, %p)\n", This, audio_path);
+    return IDirectMusicSegment8_SetParam(iface, &GUID_DownloadToAudioPath, -1, DMUS_SEG_ALLTRACKS, 0, audio_path);
 }
 
-static HRESULT WINAPI segment_Unload(IDirectMusicSegment8 *iface, IUnknown *pAudioPath)
+static HRESULT WINAPI segment_Unload(IDirectMusicSegment8 *iface, IUnknown *audio_path)
 {
     struct segment *This = impl_from_IDirectMusicSegment8(iface);
-    FIXME("(%p, %p): stub\n", This, pAudioPath);
-    return S_OK;
+    TRACE("(%p, %p)\n", This, audio_path);
+    return IDirectMusicSegment8_SetParam(iface, &GUID_UnloadFromAudioPath, -1, DMUS_SEG_ALLTRACKS, 0, audio_path);
 }
 
 static const IDirectMusicSegment8Vtbl segment_vtbl =
