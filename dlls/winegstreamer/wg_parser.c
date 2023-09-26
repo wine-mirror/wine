@@ -456,7 +456,7 @@ static NTSTATUS wg_parser_stream_seek(void *args)
     if (!push_event(stream->my_sink, gst_event_new_seek(params->rate, GST_FORMAT_TIME,
             flags, start_type, params->start_pos * 100, stop_type,
             params->stop_pos == stream->duration ? -1 : params->stop_pos * 100)))
-        GST_ERROR("Failed to seek.\n");
+        GST_ERROR("Failed to seek.");
 
     return S_OK;
 }
@@ -480,13 +480,12 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
         /* This can happen legitimately if the sample falls outside of the
          * segment bounds. GStreamer elements shouldn't present the sample in
          * that case, but DirectShow doesn't care. */
-        GST_LOG("Ignoring QoS event.\n");
+        GST_LOG("Ignoring QoS event.");
         return S_OK;
     }
-
     if (!(event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
             params->proportion, diff, stream_time)))
-        GST_ERROR("Failed to create QOS event.\n");
+        GST_ERROR("Failed to create QOS event.");
     push_event(stream->my_sink, event);
 
     return S_OK;
@@ -679,6 +678,7 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     if (!stream->enabled)
     {
+        GST_LOG("Stream is disabled; discarding buffer.");
         pthread_mutex_unlock(&parser->mutex);
         gst_buffer_unref(buffer);
         return GST_FLOW_OK;
@@ -695,7 +695,7 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
     if (!gst_buffer_map(buffer, &stream->map_info, GST_MAP_READ))
     {
         pthread_mutex_unlock(&parser->mutex);
-        GST_ERROR("Failed to map buffer.\n");
+        GST_ERROR("Failed to map buffer.");
         gst_buffer_unref(buffer);
         return GST_FLOW_ERROR;
     }
@@ -725,7 +725,6 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
         case GST_QUERY_CAPS:
         {
             GstCaps *caps, *filter, *temp;
-            gchar *str;
             gsize i;
 
             gst_query_parse_caps(query, &filter);
@@ -742,9 +741,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
                 gst_structure_remove_fields(gst_caps_get_structure(caps, i),
                         "framerate", "pixel-aspect-ratio", NULL);
 
-            str = gst_caps_to_string(caps);
-            GST_LOG("Stream caps are \"%s\".", str);
-            g_free(str);
+            GST_LOG("Stream caps are \"%" GST_PTR_FORMAT "\".", caps);
 
             if (filter)
             {
@@ -779,12 +776,8 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 
             pthread_mutex_unlock(&parser->mutex);
 
-            if (!ret && gst_debug_category_get_threshold(GST_CAT_DEFAULT) >= GST_LEVEL_WARNING)
-            {
-                gchar *str = gst_caps_to_string(caps);
-                GST_WARNING("Rejecting caps \"%s\".", str);
-                g_free(str);
-            }
+            if (!ret)
+                GST_WARNING("Rejecting caps \"%" GST_PTR_FORMAT "\".", caps);
             gst_query_set_accept_caps_result(query, ret);
             return TRUE;
         }
@@ -1585,7 +1578,7 @@ static NTSTATUS wg_parser_connect(void *args)
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        GST_ERROR("Failed to play stream.\n");
+        GST_ERROR("Failed to play stream.");
         goto out;
     }
 
@@ -1648,7 +1641,7 @@ static NTSTATUS wg_parser_connect(void *args)
             if (stream->eos)
             {
                 stream->duration = 0;
-                GST_WARNING("Failed to query duration.\n");
+                GST_WARNING("Failed to query duration.");
                 break;
             }
 

@@ -181,17 +181,17 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
 
     if (!gst_structure_get_int(structure, "layer", &layer))
     {
-        GST_WARNING("Missing \"layer\" value.");
+        GST_WARNING("Missing \"layer\" value in %" GST_PTR_FORMAT ".", caps);
         return;
     }
     if (!gst_structure_get_int(structure, "channels", &channels))
     {
-        GST_WARNING("Missing \"channels\" value.");
+        GST_WARNING("Missing \"channels\" value in %" GST_PTR_FORMAT ".", caps);
         return;
     }
     if (!gst_structure_get_int(structure, "rate", &rate))
     {
-        GST_WARNING("Missing \"rate\" value.");
+        GST_WARNING("Missing \"rate\" value in %" GST_PTR_FORMAT ".", caps);
         return;
     }
 
@@ -318,10 +318,7 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     }
     else
     {
-        gchar *str = gst_caps_to_string(caps);
-
-        GST_FIXME("Unhandled caps %s.", str);
-        g_free(str);
+        GST_FIXME("Unhandled caps %" GST_PTR_FORMAT ".", caps);
     }
 }
 
