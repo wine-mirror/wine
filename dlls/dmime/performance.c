@@ -384,16 +384,15 @@ static HRESULT WINAPI performance_Init(IDirectMusicPerformance8 *iface, IDirectM
     return S_OK;
 }
 
-static HRESULT WINAPI performance_PlaySegment(IDirectMusicPerformance8 *iface, IDirectMusicSegment *pSegment,
-        DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState **ppSegmentState)
+static HRESULT WINAPI performance_PlaySegment(IDirectMusicPerformance8 *iface, IDirectMusicSegment *segment,
+        DWORD segment_flags, INT64 start_time, IDirectMusicSegmentState **ret_state)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %p, %ld, 0x%s, %p): stub\n", This, pSegment, dwFlags,
-	    wine_dbgstr_longlong(i64StartTime), ppSegmentState);
-	if (ppSegmentState)
-          return create_dmsegmentstate(&IID_IDirectMusicSegmentState,(void**)ppSegmentState);
-	return S_OK;
+    TRACE("(%p, %p, %ld, %I64d, %p)\n", This, segment, segment_flags, start_time, ret_state);
+
+    return IDirectMusicPerformance8_PlaySegmentEx(iface, (IUnknown *)segment, NULL, NULL,
+            segment_flags, start_time, ret_state, NULL, NULL);
 }
 
 static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectMusicSegment *pSegment,
