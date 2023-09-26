@@ -2196,7 +2196,14 @@ static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria 
 
     if (V_VT(&criteria) == VT_BSTR && recordset->state == adStateOpen)
     {
-        FIXME("Validating fields not performed\n");
+        FIXME("No filter performed.  Reporting no records found.\n");
+
+        /* Set the index to signal we didn't find a record. */
+        recordset->index = -1;
+    }
+    else
+    {
+        recordset->index = recordset->count ? 0 : -1; /* Reset */
     }
 
     VariantCopy(&recordset->filter, &criteria);
