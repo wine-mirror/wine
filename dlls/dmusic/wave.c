@@ -199,14 +199,17 @@ HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnk
             TRACE("    - wBitsPerSample: %u\n", This->format->wBitsPerSample);
             TRACE("    - cbSize: %u\n", This->format->cbSize);
         }
-        TRACE(" - sample: {size: %lu, unity_note: %u, fine_tune: %d, attenuation: %ld, options: %#lx, loops: %lu}\n",
-                This->sample->head.cbSize, This->sample->head.usUnityNote,
-                This->sample->head.sFineTune, This->sample->head.lAttenuation,
-                This->sample->head.fulOptions, This->sample->head.cSampleLoops);
-        for (i = 0; i < This->sample->head.cSampleLoops; i++)
-            TRACE(" - loops[%u]: {size: %lu, type: %lu, start: %lu, length: %lu}\n", i,
-                    This->sample->loops[i].cbSize, This->sample->loops[i].ulType,
-                    This->sample->loops[i].ulStart, This->sample->loops[i].ulLength);
+        if (This->sample)
+        {
+            TRACE(" - sample: {size: %lu, unity_note: %u, fine_tune: %d, attenuation: %ld, options: %#lx, loops: %lu}\n",
+                    This->sample->head.cbSize, This->sample->head.usUnityNote,
+                    This->sample->head.sFineTune, This->sample->head.lAttenuation,
+                    This->sample->head.fulOptions, This->sample->head.cSampleLoops);
+            for (i = 0; i < This->sample->head.cSampleLoops; i++)
+                TRACE(" - loops[%u]: {size: %lu, type: %lu, start: %lu, length: %lu}\n", i,
+                        This->sample->loops[i].cbSize, This->sample->loops[i].ulType,
+                        This->sample->loops[i].ulStart, This->sample->loops[i].ulLength);
+        }
     }
 
     *ret_iface = iface;
