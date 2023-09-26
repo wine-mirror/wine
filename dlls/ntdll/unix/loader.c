@@ -1113,17 +1113,35 @@ static const IMAGE_BASE_RELOCATION *process_relocation_block( void *module, cons
     return (IMAGE_BASE_RELOCATION *)relocs;  /* return address of next block */
 }
 
-static void relocate_ntdll( void *module )
+
+/***********************************************************************
+ *           relocate_module
+ */
+static NTSTATUS relocate_module( void *module )
 {
     const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
     const IMAGE_BASE_RELOCATION *rel, *end;
     const IMAGE_SECTION_HEADER *sec;
     ULONG protect_old[96], i, size;
+    ULONG_PTR image_base;
     INT_PTR delta;
 
-    ERR( "ntdll could not be mapped at preferred address (%p), expect trouble\n", module );
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        image_base = ((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.ImageBase;
+    else
+        image_base = ((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.ImageBase;
 
-    if (!(rel = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size ))) return;
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
+    {
+        ERR( "Need to relocate module from %p to %p, but relocation records are stripped\n",
+             (void *)image_base, module );
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+
+    TRACE( "%p -> %p\n", (void *)image_base, module );
+
+    if (!(rel = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size )))
+        return STATUS_SUCCESS;
 
     sec = IMAGE_FIRST_SECTION( nt );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -1134,7 +1152,7 @@ static void relocate_ntdll( void *module )
     }
 
     end = (IMAGE_BASE_RELOCATION *)((const char *)rel + size);
-    delta = (char *)module - (char *)nt->OptionalHeader.ImageBase;
+    delta = (ULONG_PTR)module - image_base;
     while (rel && rel < end - 1 && rel->SizeOfBlock) rel = process_relocation_block( module, rel, delta );
 
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -1143,6 +1161,7 @@ static void relocate_ntdll( void *module )
         SIZE_T size = sec[i].SizeOfRawData;
         NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, protect_old[i], &protect_old[i] );
     }
+    return STATUS_SUCCESS;
 }
 
 
@@ -1938,8 +1957,8 @@ static void load_ntdll(void)
         sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
         status = open_builtin_so_file( name, &attr, &module, &info, FALSE );
     }
-    if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
-    else if (status) fatal_error( "failed to load %s error %x\n", name, status );
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = relocate_module( module );
+    if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
 }
@@ -2033,19 +2052,10 @@ static void load_wow64_ntdll( USHORT machine )
     wcscat( path, ntdllW );
     init_unicode_string( &nt_name, path );
     status = find_builtin_dll( &nt_name, &module, &size, &info, 0, 0, machine, 0, FALSE );
-    switch (status)
-    {
-    case STATUS_IMAGE_NOT_AT_BASE:
-        relocate_ntdll( module );
-        /* fall through */
-    case STATUS_SUCCESS:
-        load_ntdll_wow64_functions( module );
-        TRACE("loaded %s at %p\n", debugstr_w(path), module );
-        break;
-    default:
-        ERR( "failed to load %s error %x\n", debugstr_w(path), status );
-        break;
-    }
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = relocate_module( module );
+    if (status) fatal_error( "failed to load %s error %x\n", debugstr_w(path), status );
+    load_ntdll_wow64_functions( module );
+    TRACE("loaded %s at %p\n", debugstr_w(path), module );
     free( path );
 }
 
