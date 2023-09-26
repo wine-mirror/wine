@@ -1511,8 +1511,15 @@ static ULONG WINAPI stream_select_Release(IAMStreamSelect *iface)
 
 static HRESULT WINAPI stream_select_Count(IAMStreamSelect *iface, DWORD *count)
 {
-    FIXME("iface %p, count %p, stub!\n", iface, count);
-    return E_NOTIMPL;
+    struct parser *filter = impl_from_IAMStreamSelect(iface);
+    TRACE("filter %p, count %p\n", filter, count);
+    EnterCriticalSection(&filter->filter.filter_cs);
+    if (filter->sink.pin.peer)
+        *count = wg_parser_get_stream_count(filter->wg_parser);
+    else
+        *count = 0;
+    LeaveCriticalSection(&filter->filter.filter_cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_select_Info(IAMStreamSelect *iface, LONG index,
