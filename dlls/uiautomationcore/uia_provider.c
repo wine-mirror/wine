@@ -1897,7 +1897,7 @@ static HRESULT WINAPI base_hwnd_fragment_get_FragmentRoot(IRawElementProviderFra
 {
     FIXME("%p, %p: stub!\n", iface, ret_val);
     *ret_val = NULL;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IRawElementProviderFragmentVtbl base_hwnd_fragment_vtbl = {
