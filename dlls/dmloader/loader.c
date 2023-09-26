@@ -20,6 +20,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
+static const WCHAR *system_default_gm_paths[] =
+{
+    L"/usr/share/sounds/sf2/default-GM.sf2",
+    L"/usr/share/soundfonts/default.sf2",
+};
+
+static HRESULT get_system_default_gm_path(WCHAR *path, UINT max_len)
+{
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(system_default_gm_paths); i++)
+    {
+        swprintf(path, max_len, L"\\??\\unix%s", system_default_gm_paths[i]);
+        if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES) break;
+    }
+
+    if (i < ARRAY_SIZE(system_default_gm_paths))
+    {
+        WARN("Using system %s for the default collection\n", debugstr_w(path));
+        return S_OK;
+    }
+
+    ERR("Unable to find system path, default collection will not be available\n");
+    return DMUS_E_LOADER_FAILEDOPEN;
+}
+
 static const GUID *classes[] = {
     &GUID_DirectMusicAllTypes,  /* Keep as first */
     &CLSID_DirectMusicAudioPathConfig,
@@ -458,6 +484,13 @@ static HRESULT WINAPI loader_SetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
             lstrcpyW(p, pDesc->wszFileName);
         }
 
+        if (!wcsicmp(file_name, L"C:\\windows\\system32\\drivers\\gm.dls")
+                && GetFileAttributesW(file_name) == INVALID_FILE_ATTRIBUTES)
+        {
+            hr = get_system_default_gm_path(file_name, ARRAY_SIZE(file_name));
+            if (FAILED(hr)) return hr;
+        }
+
         if (FAILED(hr = file_stream_create(file_name, &pStream))) return hr;
     }
     else if (pDesc->dwValidData & DMUS_OBJ_STREAM)
@@ -847,21 +880,24 @@ static const IDirectMusicLoader8Vtbl loader_vtbl =
     loader_LoadObjectFromFile,
 };
 
-/* help function for DMUSIC_SetDefaultDLS */
-static HRESULT DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
-	HKEY hkDM;
-	DWORD returnType, sizeOfReturnBuffer = MAX_PATH;
-	char szPath[MAX_PATH];
+static HRESULT get_default_gm_path(WCHAR *path, DWORD max_len)
+{
+	DWORD ret;
+	HKEY hkey;
 
-	if ((RegOpenKeyExA (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic" , 0, KEY_READ, &hkDM) != ERROR_SUCCESS) ||
-	    (RegQueryValueExA (hkDM, "GMFilePath", NULL, &returnType, (LPBYTE) szPath, &sizeOfReturnBuffer) != ERROR_SUCCESS)) {
-		WARN(": registry entry missing\n" );
-		return E_FAIL;
-	}
-	/* FIXME: Check return types to ensure we're interpreting data right */
-	MultiByteToWideChar (CP_ACP, 0, szPath, -1, wszPath, MAX_PATH);
+	if (!(ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\DirectMusic" , 0, KEY_READ, &hkey)))
+    {
+        DWORD type, size = max_len * sizeof(WCHAR);
+        ret = RegQueryValueExW(hkey, L"GMFilePath", NULL, &type, (BYTE *)path, &size);
+        RegCloseKey(hkey);
 
-	return S_OK;
+        if (!ret && GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES) return S_OK;
+    }
+
+    if (!ret) WARN("Failed to find %s, using system fallbacks\n", debugstr_w(path));
+    else WARN("Failed to open GMFilePath registry key, using system fallbacks\n");
+
+    return get_system_default_gm_path(path, max_len);
 }
 
 /* for ClassFactory */
@@ -886,8 +922,9 @@ HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
     Desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH | DMUS_OBJ_OBJECT;
     Desc.guidClass = CLSID_DirectMusicCollection;
     Desc.guidObject = GUID_DefaultGMCollection;
-    DMUSIC_GetDefaultGMPath(Desc.wszFileName);
-    IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
+    if (SUCCEEDED(hr = get_default_gm_path(Desc.wszFileName, ARRAY_SIZE(Desc.wszFileName))))
+        hr = IDirectMusicLoader_SetObject(&obj->IDirectMusicLoader8_iface, &Desc);
+    if (FAILED(hr)) WARN("Failed to load the default collection, hr %#lx\n", hr);
 
     hr = IDirectMusicLoader_QueryInterface(&obj->IDirectMusicLoader8_iface, lpcGUID, ppobj);
     IDirectMusicLoader_Release(&obj->IDirectMusicLoader8_iface);
