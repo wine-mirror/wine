@@ -458,6 +458,22 @@ typedef struct D3D12_VIDEO_MOTION_ESTIMATOR_DESC
     D3D12_VIDEO_SIZE_RANGE SizeRange;
 } D3D12_VIDEO_MOTION_ESTIMATOR_DESC;
 
+[
+    uuid(33fdae0e-098b-428f-87bb-34b695de08f8),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoMotionEstimator : ID3D12Pageable
+{
+    D3D12_VIDEO_MOTION_ESTIMATOR_DESC GetDesc();
+
+    HRESULT GetProtectedResourceSession(
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **protected_session
+    );
+}
+
 typedef struct D3D12_VIDEO_MOTION_VECTOR_HEAP_DESC
 {
     UINT NodeMask;
