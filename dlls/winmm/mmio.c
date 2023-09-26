@@ -35,10 +35,13 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "mmsystem.h"
 #include "winemm.h"
 

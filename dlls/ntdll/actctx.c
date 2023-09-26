@@ -29,6 +29,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "ddk/wdm.h"
 #include "ntdll_misc.h"
 #include "wine/exception.h"

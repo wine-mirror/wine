@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "kernelbase.h"
 #include "wine/list.h"
 #include "wine/asm.h"

@@ -32,6 +32,7 @@
 #include "ntsecapi.h"
 #include "ntsecpkg.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "rpc.h"
 
 #include "wine/debug.h"

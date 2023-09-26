@@ -20,6 +20,7 @@
 
 #include "ntdll_test.h"
 #include "winnls.h"
+#include "ddk/ntddk.h"
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );

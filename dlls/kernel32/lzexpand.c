@@ -39,10 +39,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "lzexpand.h"
 
 #include "wine/debug.h"
