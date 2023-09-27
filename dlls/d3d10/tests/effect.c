@@ -9169,11 +9169,7 @@ static void test_effect_fx_4_1_blend_state(void)
     }
 
     hr = create_effect(fx_4_1_test_blend_state, 0, device, NULL, &effect);
-    todo_wine
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-
-    if (effect)
-        effect->lpVtbl->Release(effect);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
