@@ -38,6 +38,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #define MAXHWNDS 1024
 static HWND hwnd [MAXHWNDS];
@@ -569,13 +570,24 @@ static LRESULT CALLBACK test_control_procA(HWND hwnd, UINT msg, WPARAM wparam, L
 
 static int wm_char_count;
 
+static BOOL is_cjk(void)
+{
+    int lang_id = PRIMARYLANGID(GetUserDefaultLangID());
+
+    if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
+        return TRUE;
+    return FALSE;
+}
+
 static LRESULT CALLBACK test_IsDialogMessageA_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
     case WM_CHAR:
-        if (GetSystemMetrics(SM_DBCSENABLED))
+        if (is_cjk())
             ok(wparam == 0x5b57, "Got unexpected wparam %#Ix.\n", wparam);
+        else if (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_HINDI && GetACP() == CP_UTF8)
+            ok(wparam == 0xfffd, "Got unexpected wparam %#Ix.\n", wparam);
         else
             ok(wparam == 0x3f, "Got unexpected wparam %#Ix.\n", wparam);
         wm_char_count++;
@@ -863,8 +875,10 @@ static void test_IsDialogMessage(void)
     {
         if (msg.message == WM_CHAR)
         {
-            if (GetSystemMetrics(SM_DBCSENABLED))
+            if (is_cjk())
                 ok(msg.wParam != 0x3f && msg.wParam != 0x5b57, "Got unexpected wparam %#Ix.\n", msg.wParam);
+            else if (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_HINDI && GetACP() == CP_UTF8)
+                ok(msg.wParam == 0x97ade5, "Got unexpected wparam %#Ix.\n", msg.wParam);
             else
                 ok(msg.wParam == 0x3f, "Got unexpected wparam %#Ix.\n", msg.wParam);
             ret = IsDialogMessageA(g_hwndMain, &msg);
