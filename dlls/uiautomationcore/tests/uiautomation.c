@@ -16757,9 +16757,9 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
                                          AutomationElementMode_Full };
     HWND hwnd[2] = { ((HWND *)param)[0], ((HWND *)param)[1] };
     struct node_provider_desc exp_node_desc;
+    HWND tmp_hwnd, tmp_hwnd2;
     HUIAEVENT event, event2;
     HANDLE event_handles[2];
-    HWND tmp_hwnd;
     HUIANODE node;
     HRESULT hr;
     int i;
@@ -16952,6 +16952,31 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
         ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
     todo_wine CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
     check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 2, TRUE, 0, FALSE);
+
+    /*
+     * Raise a WinEvent on a descendant HWND of our test HWND. If any ancestor
+     * in the parent chain of HWNDs up to the root HWND is within scope, this
+     * WinEvent is within scope.
+     */
+    tmp_hwnd = CreateWindowA("ProxyProviderWinEventHandler test child class", "Test child window 2", WS_CHILD,
+            0, 0, 50, 50, hwnd[1], NULL, NULL, NULL);
+    tmp_hwnd2 = CreateWindowA("ProxyProviderWinEventHandler test child class", "Test child window 3", WS_CHILD,
+            0, 0, 50, 50, tmp_hwnd, NULL, NULL, NULL);
+    set_provider_win_event_handler_win_event_expects(&Provider_nc3, EVENT_OBJECT_FOCUS, tmp_hwnd2, OBJID_WINDOW, CHILDID_SELF);
+    set_provider_win_event_handler_win_event_expects(&Provider_hwnd3, EVENT_OBJECT_FOCUS, tmp_hwnd2, OBJID_WINDOW, CHILDID_SELF);
+    Provider_nc3.hwnd = Provider_hwnd3.hwnd = tmp_hwnd2;
+
+    set_uia_hwnd_expects(0, 2, 2, 0, 0);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 12); /* Only sent 12 times on Win11. */
+    test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, tmp_hwnd2, OBJID_WINDOW, CHILDID_SELF, event_handles,
+        ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
+    todo_wine CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
+    check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 0, FALSE, 0, FALSE);
+
+    DestroyWindow(tmp_hwnd);
+    Provider_nc3.hwnd = Provider_hwnd3.hwnd = hwnd[1];
+    set_provider_win_event_handler_win_event_expects(&Provider_nc3, EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF);
+    set_provider_win_event_handler_win_event_expects(&Provider_hwnd3, EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF);
 
     hr = UiaRemoveEvent(event);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
