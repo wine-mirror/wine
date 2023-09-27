@@ -2019,7 +2019,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllo
     This->allocator_d3d9_dev = device;
     IDirect3DDevice9_AddRef(This->allocator_d3d9_dev);
 
-    if (This->mode && This->allocator && This->presenter)
+    if (This->surfaces)
     {
         deallocate_surfaces(This);
         allocate_surfaces(This, &This->renderer.sink.pin.mt);

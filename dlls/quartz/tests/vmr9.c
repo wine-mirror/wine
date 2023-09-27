@@ -1586,7 +1586,7 @@ static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *con
     ok(ret == 1, "Expected EC_USERABORT.\n");
 
     ok(IsWindow(hwnd), "Window should exist.\n");
-    ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
+    ok(!IsWindowVisible(hwnd), "Window should be invisible.\n");
 
     thread = send_frame(input);
     ret = WaitForSingleObject(thread, 1000);
@@ -2934,6 +2934,7 @@ struct presenter
 
     D3DFORMAT format;
     DWORD accept_flags;
+    IDirect3DDevice9 *device;
     IDirect3DSurface9 *surfaces[5];
     IVMRSurfaceAllocatorNotify9 *notify;
     unsigned int got_PresentImage, got_TerminateDevice;
@@ -2979,9 +2980,13 @@ static HRESULT WINAPI presenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD
 static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR cookie, VMR9PresentationInfo *info)
 {
     struct presenter *presenter = impl_from_IVMRImagePresenter9(iface);
+    IDirect3DDevice9 *device;
     static const RECT rect;
 
     if (winetest_debug > 1) trace("PresentImage()\n");
+    IDirect3DSurface9_GetDevice(info->lpSurf, &device);
+    ok(device == presenter->device, "got %p, expected %p\n", device, presenter->device);
+    IDirect3DDevice9_Release(device);
     ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
     todo_wine ok(info->dwFlags == VMR9Sample_TimeValid, "Got flags %#lx.\n", info->dwFlags);
     ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
@@ -3224,6 +3229,7 @@ static void test_renderless_formats(void)
     IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
 
     hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    presenter.device = device;
     if (hr == E_NOINTERFACE)
     {
         win_skip("Direct3D does not support video rendering.\n");
@@ -4307,12 +4313,11 @@ static void test_changed3ddevice(void)
 {
     VIDEOINFOHEADER vih =
     {
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 160, 120},
         .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-        .bmiHeader.biBitCount = 32,
         .bmiHeader.biWidth = 32,
         .bmiHeader.biHeight = 16,
-        .bmiHeader.biPlanes = 1,
-        .bmiHeader.biCompression = BI_RGB,
     };
     AM_MEDIA_TYPE req_mt =
     {
@@ -4329,12 +4334,17 @@ static void test_changed3ddevice(void)
         .refcount = 1,
         .accept_flags = VMR9AllocFlag_TextureSurface,
     };
+    ALLOCATOR_PROPERTIES req_props = {5, 32 * 16 * 4, 1, 0}, ret_props;
     IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
     IFilterGraph2 *graph = create_graph();
     IVMRSurfaceAllocatorNotify9 *notify;
-    IDirect3DDevice9 *device, *device2;
     RECT rect = {0, 0, 640, 480};
+    IDirect3DDevice9 *device;
     struct testfilter source;
+    IMemAllocator *allocator;
+    IMediaControl *control;
+    IMemInputPin *input;
+    OAFilterState state;
     IPin *pin = NULL;
     HWND window;
     HRESULT hr;
@@ -4367,6 +4377,16 @@ static void test_changed3ddevice(void)
     }
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    IDirect3DDevice9_Release(device);
+
+    device = create_device(window);
+    ok(device != NULL, "Couldn't create device\n");
+
+    hr = IVMRSurfaceAllocatorNotify9_ChangeD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    presenter.device = device;
+    presenter.got_PresentImage = 0;
+
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
 
@@ -4374,20 +4394,43 @@ static void test_changed3ddevice(void)
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    device2 = create_device(window);
-    ok(device2 != NULL, "Couldn't create device\n");
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
 
-    ok(presenter.got_TerminateDevice == 0, "got %d\n", presenter.got_TerminateDevice);
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == VFW_E_NO_ALLOCATOR)
+    {
+        CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IMemAllocator, (void **)&allocator);
 
-    hr = IVMRSurfaceAllocatorNotify9_ChangeD3DDevice(notify, device2, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+        hr = IMemInputPin_NotifyAllocator(input, allocator, TRUE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+    hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(presenter.got_TerminateDevice == 1, "got %d\n", presenter.got_TerminateDevice);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    IDirect3DDevice9_Release(device2);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    join_thread(send_frame(input));
+
+    hr = IMediaControl_GetState(control, 100, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ok(presenter.got_PresentImage >= 1, "Got %u calls to PresentImage().\n", presenter.got_PresentImage);
+    IMediaControl_Release(control);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IMemAllocator_Release(allocator);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
 
 out:
-    if (pin)
-        IPin_Release(pin);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
     IVMRSurfaceAllocatorNotify9_Release(notify);
