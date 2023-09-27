@@ -1256,3 +1256,20 @@ BOOL WINAPI ThemeHooksRemove(void)
     UnregisterUserApiHook();
     return TRUE;
 }
+
+/**********************************************************************
+ *      ShouldSystemUseDarkMode                           (UXTHEME.138)
+ *
+ * RETURNS
+ *     Whether or not the system should use dark mode.
+ */
+BOOL WINAPI ShouldSystemUseDarkMode(void)
+{
+    DWORD light_theme = TRUE, light_theme_size = sizeof(light_theme);
+
+    RegGetValueW(HKEY_CURRENT_USER,
+                 L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                 L"SystemUsesLightTheme", RRF_RT_REG_DWORD, NULL, &light_theme, &light_theme_size);
+
+    return !light_theme;
+}
