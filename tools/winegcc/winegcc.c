@@ -409,6 +409,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
 
         strarray_add( &flags, "-Wl,--exclude-all-symbols" );
         strarray_add( &flags, "-Wl,--nxcompat" );
+        strarray_add( &flags, "-Wl,--dynamicbase" );
+        strarray_add( &flags, "-Wl,--disable-auto-image-base" );
 
         if (opts->image_base) strarray_add( &flags, strmake("-Wl,--image-base,%s", opts->image_base ));
 
