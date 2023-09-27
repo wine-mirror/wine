@@ -2071,6 +2071,10 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr))
         return E_FAIL;
 
+    hr = VariantCopy(&recordset->active_connection, &active_connection);
+    if (FAILED(hr))
+        return E_FAIL;
+
     if (V_VT(&source) != VT_BSTR)
     {
         FIXME("Unsupported source type!\n");
