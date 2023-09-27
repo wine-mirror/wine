@@ -26,9 +26,24 @@ import "windows.foundation.idl";
 namespace Windows.Media
 {
     typedef enum AudioProcessing AudioProcessing;
+    typedef enum MediaPlaybackStatus MediaPlaybackStatus;
+    typedef enum SoundLevel SoundLevel;
+    typedef enum SystemMediaTransportControlsButton SystemMediaTransportControlsButton;
+    typedef enum SystemMediaTransportControlsProperty SystemMediaTransportControlsProperty;
 
     interface IMediaControl;
     interface IMediaMarker;
+    interface ISystemMediaTransportControls;
+    interface ISystemMediaTransportControls2;
+    interface ISystemMediaTransportControlsButtonPressedEventArgs;
+    interface ISystemMediaTransportControlsDisplayUpdater;
+    interface ISystemMediaTransportControlsPropertyChangedEventArgs;
+    interface ISystemMediaTransportControlsStatics;
+
+    runtimeclass SystemMediaTransportControls;
+    runtimeclass SystemMediaTransportControlsButtonPressedEventArgs;
+    runtimeclass SystemMediaTransportControlsDisplayUpdater;
+    runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs;
 
     declare
     {
@@ -36,6 +51,8 @@ namespace Windows.Media
         interface Windows.Foundation.Collections.IIterator<Windows.Media.IMediaMarker*>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Media.IMediaMarker*>;
         interface Windows.Foundation.Collections.IVector<Windows.Media.IMediaMarker*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.SystemMediaTransportControlsButtonPressedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.SystemMediaTransportControlsPropertyChangedEventArgs*>;
     }
 
     [
@@ -45,6 +62,53 @@ namespace Windows.Media
     {
         Default = 0,
         Raw     = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlaybackStatus
+    {
+        Closed   = 0,
+        Changing = 1,
+        Stopped  = 2,
+        Playing  = 3,
+        Paused   = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum SoundLevel
+    {
+        Muted = 0,
+        Low   = 1,
+        Full  = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum SystemMediaTransportControlsButton
+    {
+        Play        = 0,
+        Pause       = 1,
+        Stop        = 2,
+        Record      = 3,
+        FastForward = 4,
+        Rewind      = 5,
+        Next        = 6,
+        Previous    = 7,
+        ChannelUp   = 8,
+        ChannelDown = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum SystemMediaTransportControlsProperty
+    {
+        SoundLevel = 0,
     };
 
     [
@@ -58,4 +122,108 @@ namespace Windows.Media
         [propget] HRESULT Text([out, retval] HSTRING *value);
     }
 
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControls),
+        uuid(99fa3ff4-1742-42a6-902e-087d41f965ec)
+    ]
+    interface ISystemMediaTransportControls : IInspectable
+    {
+        [propget] HRESULT PlaybackStatus([out, retval] Windows.Media.MediaPlaybackStatus *value);
+        [propput] HRESULT PlaybackStatus([in] Windows.Media.MediaPlaybackStatus value);
+        [propget] HRESULT DisplayUpdater([out, retval] Windows.Media.SystemMediaTransportControlsDisplayUpdater **value);
+        [propget] HRESULT SoundLevel([out, retval] Windows.Media.SoundLevel *value);
+        [propget] HRESULT IsEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsEnabled([in] boolean value);
+        [propget] HRESULT IsPlayEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsPlayEnabled([in] boolean value);
+        [propget] HRESULT IsStopEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsStopEnabled([in] boolean value);
+        [propget] HRESULT IsPauseEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsPauseEnabled([in] boolean value);
+        [propget] HRESULT IsRecordEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsRecordEnabled([in] boolean value);
+        [propget] HRESULT IsFastForwardEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsFastForwardEnabled([in] boolean value);
+        [propget] HRESULT IsRewindEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsRewindEnabled([in] boolean value);
+        [propget] HRESULT IsPreviousEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsPreviousEnabled([in] boolean value);
+        [propget] HRESULT IsNextEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsNextEnabled([in] boolean value);
+        [propget] HRESULT IsChannelUpEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsChannelUpEnabled([in] boolean value);
+        [propget] HRESULT IsChannelDownEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsChannelDownEnabled([in] boolean value);
+        [eventadd] HRESULT ButtonPressed(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.SystemMediaTransportControlsButtonPressedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT ButtonPressed([in] EventRegistrationToken token);
+        [eventadd] HRESULT PropertyChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.SystemMediaTransportControlsPropertyChangedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token
+        );
+        [eventremove] HRESULT PropertyChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControlsButtonPressedEventArgs),
+        uuid(b7f47116-a56f-4dc8-9e11-92031f4a87c2)
+    ]
+    interface ISystemMediaTransportControlsButtonPressedEventArgs : IInspectable
+    {
+        [propget] HRESULT Button([out, retval] Windows.Media.SystemMediaTransportControlsButton *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControlsPropertyChangedEventArgs),
+        uuid(d0ca0936-339b-4cb3-8eeb-737607f56e08)
+    ]
+    interface ISystemMediaTransportControlsPropertyChangedEventArgs : IInspectable
+    {
+        [propget] HRESULT Property([out, retval] Windows.Media.SystemMediaTransportControlsProperty *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Media.ISystemMediaTransportControlsStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(mta)
+    ]
+    runtimeclass SystemMediaTransportControls
+    {
+        [default] interface Windows.Media.ISystemMediaTransportControls;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.ISystemMediaTransportControls2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SystemMediaTransportControlsButtonPressedEventArgs
+    {
+        [default] interface Windows.Media.ISystemMediaTransportControlsButtonPressedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass SystemMediaTransportControlsDisplayUpdater
+    {
+        [default] interface Windows.Media.ISystemMediaTransportControlsDisplayUpdater;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs
+    {
+        [default] interface Windows.Media.ISystemMediaTransportControlsPropertyChangedEventArgs;
+    }
 }
