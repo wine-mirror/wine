@@ -39,6 +39,7 @@ struct recordset
     ADORecordsetConstruction ADORecordsetConstruction_iface;
     ISupportErrorInfo  ISupportErrorInfo_iface;
     LONG               refs;
+    VARIANT            active_connection;
     LONG               state;
     struct fields     *fields;
     LONG               count;
@@ -1401,8 +1402,9 @@ static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT
 
 static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT *connection )
 {
-    FIXME( "%p, %p\n", iface, connection );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %p\n", iface, connection );
+    return VariantCopy(connection, &recordset->active_connection);
 }
 
 static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
@@ -2737,6 +2739,8 @@ HRESULT Recordset_create( void **obj )
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
     recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
     recordset->ADORecordsetConstruction_iface.lpVtbl = &rsconstruction_vtbl;
+    V_VT(&recordset->active_connection) = VT_DISPATCH;
+    V_DISPATCH(&recordset->active_connection) = NULL;
     recordset->refs = 1;
     recordset->index = -1;
     recordset->cursor_location = adUseServer;
