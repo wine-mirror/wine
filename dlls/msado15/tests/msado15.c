@@ -267,7 +267,7 @@ if (0)
     editmode = -1;
     hr = _Recordset_get_EditMode( recordset, &editmode );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( editmode == adEditAdd, "got %d\n", editmode );
+    ok( editmode == adEditAdd, "got %d\n", editmode );
 
     rec_count = -1;
     hr = _Recordset_get_RecordCount( recordset, &rec_count );
@@ -316,6 +316,23 @@ if (0)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
     ok( V_I4( &val ) == -1, "got %ld\n", V_I4( &val ) );
+
+    /* Update/Cancel doesn't update EditMode when no active connection. */
+    hr = _Recordset_Update( recordset, missing, missing );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    editmode = -1;
+    hr = _Recordset_get_EditMode( recordset, &editmode );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( editmode == adEditAdd, "got %d\n", editmode );
+
+    hr = _Recordset_Cancel( recordset );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    editmode = -1;
+    hr = _Recordset_get_EditMode( recordset, &editmode );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( editmode == adEditAdd, "got %d\n", editmode );
 
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );

@@ -1588,12 +1588,20 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
 
     if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
     recordset->index++;
+    recordset->editmode = adEditAdd;
     return S_OK;
 }
 
 static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
+
     FIXME( "%p\n", iface );
+
+    if (V_DISPATCH(&recordset->active_connection) == NULL)
+        return S_OK;
+
+    recordset->editmode = adEditNone;
     return E_NOTIMPL;
 }
 
@@ -2153,7 +2161,14 @@ static HRESULT WINAPI recordset__xResync( _Recordset *iface, AffectEnum affect_r
 
 static HRESULT WINAPI recordset_Update( _Recordset *iface, VARIANT fields, VARIANT values )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
+
     FIXME( "%p, %s, %s\n", iface, debugstr_variant(&fields), debugstr_variant(&values) );
+
+    if (V_DISPATCH(&recordset->active_connection) == NULL)
+        return S_OK;
+
+    recordset->editmode = adEditNone;
     return E_NOTIMPL;
 }
 
@@ -2270,13 +2285,27 @@ static HRESULT WINAPI recordset__xClone( _Recordset *iface, _Recordset **obj )
 
 static HRESULT WINAPI recordset_UpdateBatch( _Recordset *iface, AffectEnum affect_records )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
+
     FIXME( "%p, %u\n", iface, affect_records );
+
+    if (V_DISPATCH(&recordset->active_connection) == NULL)
+        return S_OK;
+
+    recordset->editmode = adEditNone;
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_CancelBatch( _Recordset *iface, AffectEnum affect_records )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
+
     FIXME( "%p, %u\n", iface, affect_records );
+
+    if (V_DISPATCH(&recordset->active_connection) == NULL)
+        return S_OK;
+
+    recordset->editmode = adEditNone;
     return E_NOTIMPL;
 }
 
@@ -2350,7 +2379,14 @@ static HRESULT WINAPI recordset_Find( _Recordset *iface, BSTR criteria, LONG ski
 
 static HRESULT WINAPI recordset_Cancel( _Recordset *iface )
 {
+    struct recordset *recordset = impl_from_Recordset( iface );
+
     FIXME( "%p\n", iface );
+
+    if (V_DISPATCH(&recordset->active_connection) == NULL)
+        return S_OK;
+
+    recordset->editmode = adEditNone;
     return E_NOTIMPL;
 }
 
