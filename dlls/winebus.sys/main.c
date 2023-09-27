@@ -189,7 +189,10 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, len * sizeof(WCHAR))))
-        swprintf(dst, len, L"%i&%s&%x&%i", ext->desc.version, ext->desc.serialnumber, ext->desc.uid, ext->index);
+    {
+        swprintf(dst, len, L"%u&%s&%x&%u&%u", ext->desc.version, ext->desc.serialnumber,
+                 ext->desc.uid, ext->index, ext->desc.is_gamepad);
+    }
 
     return dst;
 }
