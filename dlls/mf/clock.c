@@ -1108,13 +1108,19 @@ static HRESULT WINAPI present_clock_timer_callback_Invoke(IMFAsyncCallback *ifac
     if (FAILED(hr = IMFAsyncResult_GetObject(result, &object)))
         return hr;
 
-    timer = impl_clock_timer_from_IUnknown(object);
-
     EnterCriticalSection(&clock->cs);
-    list_remove(&timer->entry);
-    IUnknown_Release(&timer->IUnknown_iface);
+    LIST_FOR_EACH_ENTRY(timer, &clock->timers, struct clock_timer, entry)
+    {
+        if (&timer->IUnknown_iface == object)
+        {
+            list_remove(&timer->entry);
+            IUnknown_Release(&timer->IUnknown_iface);
+            break;
+        }
+    }
     LeaveCriticalSection(&clock->cs);
 
+    timer = impl_clock_timer_from_IUnknown(object);
     IMFAsyncCallback_Invoke(timer->callback, timer->result);
 
     IUnknown_Release(object);
