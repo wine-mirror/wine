@@ -17623,11 +17623,41 @@ out_unregister:
     UnregisterClassA("TestDesktopClass", instance);
 }
 
+#define open_clipboard(hwnd) open_clipboard_(__LINE__, hwnd)
+static BOOL open_clipboard_(int line, HWND hwnd)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        BOOL ret = OpenClipboard(hwnd);
+        if (ret || GetLastError() != ERROR_ACCESS_DENIED)
+            return ret;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            HWND clipwnd = GetOpenClipboardWindow();
+            /* Provide a hint as to the source of interference:
+             * - The class name would typically be CLIPBRDWNDCLASS if the
+             *   clipboard was opened by a Windows application using the
+             *   ole32 API.
+             * - And it would be __wine_clipboard_manager if it was opened in
+             *   response to a native application.
+             */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace_(__FILE__, line)("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return ret;
+        }
+        Sleep(15);
+    }
+}
+
 #define clear_clipboard(hwnd)  clear_clipboard_(__LINE__, (hwnd))
 static void clear_clipboard_(int line, HWND hWnd)
 {
     BOOL succ;
-    succ = OpenClipboard(hWnd);
+    succ = open_clipboard_(line, hWnd);
     ok_(__FILE__, line)(succ, "OpenClipboard failed, err=%lu\n", GetLastError());
     succ = EmptyClipboard();
     ok_(__FILE__, line)(succ, "EmptyClipboard failed, err=%lu\n", GetLastError());
