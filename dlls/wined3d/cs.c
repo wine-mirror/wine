@@ -1056,6 +1056,11 @@ static void reference_graphics_pipeline_resources(struct wined3d_device_context 
         if (state->fb.render_targets[i])
             wined3d_device_context_reference_resource(context, state->fb.render_targets[i]->resource);
     }
+    for (i = 0; i < WINED3D_PUSH_CONSTANTS_COUNT; ++i)
+    {
+        if (context->device->push_constants[i])
+            wined3d_device_context_reference_resource(context, &context->device->push_constants[i]->resource);
+    }
     if (state->fb.depth_stencil)
         wined3d_device_context_reference_resource(context, state->fb.depth_stencil->resource);
     reference_shader_resources(context, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
