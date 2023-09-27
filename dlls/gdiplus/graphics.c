@@ -268,15 +268,13 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         width = pen->width;
     }
     else{
+        REAL scale_x, scale_y;
         /* Get an estimate for the amount the pen width is affected by the world
          * transform. (This is similar to what some of the wine drivers do.) */
-        pt[0].X = 0.0;
-        pt[0].Y = 0.0;
-        pt[1].X = 1.0;
-        pt[1].Y = 1.0;
-        GdipTransformMatrixPoints(&graphics->worldtrans, pt, 2);
-        width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
-                     (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
+        scale_x = graphics->worldtrans.matrix[0] + graphics->worldtrans.matrix[2];
+        scale_y = graphics->worldtrans.matrix[1] + graphics->worldtrans.matrix[3];
+
+        width = sqrt(scale_x * scale_x + scale_y * scale_y) / sqrt(2.0);
 
         width *= units_to_pixels(pen->width, pen->unit == UnitWorld ? graphics->unit : pen->unit,
                                  graphics->xres, graphics->printer_display);
