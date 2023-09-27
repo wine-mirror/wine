@@ -807,6 +807,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT
     return (msg->message != WM_QUIT);
 }
 
+static BOOL is_cjk(void)
+{
+    int lang_id = PRIMARYLANGID(GetUserDefaultLangID());
+
+    if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
+        return TRUE;
+    return FALSE;
+}
 
 /***********************************************************************
  *		IsDialogMessageA (USER32.@)
@@ -817,7 +825,7 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
     enum wm_char_mapping mapping;
     MSG msg = *pmsg;
 
-    mapping = GetSystemMetrics( SM_DBCSENABLED ) ? WMCHAR_MAP_ISDIALOGMESSAGE : WMCHAR_MAP_NOMAPPING;
+    mapping = is_cjk() ? WMCHAR_MAP_ISDIALOGMESSAGE : WMCHAR_MAP_NOMAPPING;
     if (!map_wparam_AtoW( msg.message, &msg.wParam, mapping ))
         return TRUE;
     return IsDialogMessageW( hwndDlg, &msg );
