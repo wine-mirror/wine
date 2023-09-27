@@ -1766,15 +1766,6 @@ static struct prov_method_sequence *sequence;
     { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
-#define NODE_CREATE_SEQ_TODO(prov) \
-    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_TODO }, \
-    /* Win10v1507 and below call this. */ \
-    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
-    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO }, \
-    { prov , PROV_GET_PROPERTY_VALUE, METHOD_TODO }, \
-    { prov , FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */ \
-    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
-
 #define NODE_CREATE_SEQ_OPTIONAL(prov) \
     { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL }, \
     /* Win10v1507 and below call this. */ \
@@ -16727,9 +16718,9 @@ static const struct prov_method_sequence win_event_handler_seq[] = {
     { &Provider_hwnd2, FRAG_NAVIGATE }, /* NavigateDirection_Parent */
     { &Provider_nc2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT },
     { &Provider_hwnd2, WINEVENT_HANDLER_RESPOND_TO_WINEVENT },
-    NODE_CREATE_SEQ_TODO(&Provider_child),
-    { &Provider_child, FRAG_GET_RUNTIME_ID, METHOD_TODO },
-    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId */
+    NODE_CREATE_SEQ(&Provider_child),
+    { &Provider_child, FRAG_GET_RUNTIME_ID },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE }, /* UIA_ProviderDescriptionPropertyId */
     { 0 }
 };
 
@@ -16862,7 +16853,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     method_sequences_enabled = TRUE;
     set_uia_hwnd_expects(1, 1, 1, 4, 3);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[0], OBJID_WINDOW, CHILDID_SELF, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     ok_method_sequence(win_event_handler_seq, "win_event_handler_seq");
     check_uia_hwnd_expects_at_least(1, TRUE, 1, FALSE, 1, FALSE, 1, FALSE, 1, FALSE);
     method_sequences_enabled = FALSE;
@@ -16909,7 +16900,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     set_uia_hwnd_expects(0, 1, 1, 2, 0);
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 4); /* Only sent 4 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
-        1, TRUE, FALSE, TRUE);
+        1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects_at_least(0, FALSE, 1, FALSE, 1, FALSE, 1, TRUE, 0, FALSE);
     CHECK_CALLED(child_winproc_GETOBJECT_UiaRoot);
 
@@ -16955,7 +16946,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
      */
     set_uia_hwnd_expects(1, 1, 1, 4, 3);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[0], OBJID_WINDOW, CHILDID_SELF, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects_at_least(1, TRUE, 1, FALSE, 1, FALSE, 1, FALSE, 1, FALSE);
 
     /* Raise a WinEvent on our test child HWND, both event callbacks invoked. */
@@ -16965,7 +16956,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     set_uia_hwnd_expects(0, 2, 2, 4, 0);
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 8); /* Only sent 8 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
-        ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
+        ARRAY_SIZE(event_handles), TRUE, TRUE, FALSE);
     CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
     check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 2, TRUE, 0, FALSE);
 
@@ -16985,7 +16976,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     set_uia_hwnd_expects(0, 2, 2, 0, 0);
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 12); /* Only sent 12 times on Win11. */
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, tmp_hwnd2, OBJID_WINDOW, CHILDID_SELF, event_handles,
-        ARRAY_SIZE(event_handles), TRUE, TRUE, TRUE);
+        ARRAY_SIZE(event_handles), TRUE, TRUE, FALSE);
     CHECK_CALLED_AT_LEAST(child_winproc_GETOBJECT_UiaRoot, 2);
     check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 0, FALSE, 0, FALSE);
 
@@ -17033,7 +17024,7 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
             UIA_AutomationFocusChangedEventId);
     set_uia_hwnd_expects(0, 1, 1, 0, 0);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, GetDesktopWindow(), OBJID_WINDOW, CHILDID_SELF, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 0, FALSE, 0, FALSE);
 
     /*
@@ -17074,14 +17065,14 @@ static DWORD WINAPI uia_proxy_provider_win_event_handler_test_thread(LPVOID para
     /* WinEvent handled. */
     set_uia_hwnd_expects(1, 1, 1, 2, 1);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[0], OBJID_WINDOW, CHILDID_SELF, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects(1, TRUE, 1, FALSE, 1, FALSE, 2, FALSE, 1, FALSE);
 
     /* Child HWNDs of our test window are handled as well. */
     SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 2);
     set_uia_hwnd_expects(0, 1, 1, 1, 0);
     test_uia_event_win_event_mapping(EVENT_OBJECT_FOCUS, hwnd[1], OBJID_WINDOW, CHILDID_SELF, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects(0, FALSE, 1, FALSE, 1, FALSE, 1, TRUE, 0, FALSE);
 
     hr = UiaRemoveEvent(event);
@@ -17119,7 +17110,7 @@ skip_win_event_hwnd_filter_test:
     /* WinEvent handled by default MSAA proxy provider. */
     set_uia_hwnd_expects(1, 1, 1, 4, 5);
     test_uia_event_win_event_mapping(EVENT_SYSTEM_ALERT, hwnd[0], OBJID_CLIENT, 2, event_handles,
-            1, TRUE, FALSE, TRUE);
+            1, TRUE, FALSE, FALSE);
     check_uia_hwnd_expects_at_most(1, 1, 1, 4, 5);
 
     hr = UiaRemoveEvent(event);

@@ -322,6 +322,32 @@ static void uia_event_args_release(struct uia_event_args *args)
         free(args);
 }
 
+struct event_sink_event
+{
+    struct list event_sink_list_entry;
+
+    IRawElementProviderSimple *elprov;
+    struct uia_event_args *args;
+};
+
+static HRESULT uia_event_sink_list_add_event(struct list *sink_events, IRawElementProviderSimple *elprov,
+        struct uia_event_args *args)
+{
+    struct event_sink_event *sink_event = calloc(1, sizeof(*sink_event));
+
+    if (!sink_event)
+        return E_OUTOFMEMORY;
+
+    IRawElementProviderSimple_AddRef(elprov);
+    InterlockedIncrement(&args->ref);
+
+    sink_event->elprov = elprov;
+    sink_event->args = args;
+    list_add_tail(sink_events, &sink_event->event_sink_list_entry);
+
+    return S_OK;
+}
+
 /*
  * IProxyProviderWinEventSink interface implementation.
  */
@@ -331,6 +357,8 @@ struct uia_proxy_win_event_sink {
 
     int event_id;
     IUnknown *marshal;
+    LONG sink_defunct;
+    struct list sink_events;
 };
 
 static inline struct uia_proxy_win_event_sink *impl_from_IProxyProviderWinEventSink(IProxyProviderWinEventSink *iface)
@@ -373,6 +401,7 @@ static ULONG WINAPI uia_proxy_win_event_sink_Release(IProxyProviderWinEventSink 
 
     if (!ref)
     {
+        assert(list_empty(&sink->sink_events));
         IUnknown_Release(sink->marshal);
         free(sink);
     }
@@ -390,8 +419,23 @@ static HRESULT WINAPI uia_proxy_win_event_sink_AddAutomationPropertyChangedEvent
 static HRESULT WINAPI uia_proxy_win_event_sink_AddAutomationEvent(IProxyProviderWinEventSink *iface,
         IRawElementProviderSimple *elprov, EVENTID event_id)
 {
-    FIXME("%p, %p, %d: stub\n", iface, elprov, event_id);
-    return S_OK;
+    struct uia_proxy_win_event_sink *sink = impl_from_IProxyProviderWinEventSink(iface);
+    struct uia_event_args *args;
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p, %d\n", iface, elprov, event_id);
+
+    if (event_id != sink->event_id)
+        return S_OK;
+
+    args = create_uia_event_args(uia_event_info_from_id(event_id));
+    if (!args)
+        return E_OUTOFMEMORY;
+
+    if (InterlockedCompareExchange(&sink->sink_defunct, 0, 0) == 0)
+        hr = uia_event_sink_list_add_event(&sink->sink_events, elprov, args);
+    uia_event_args_release(args);
+    return hr;
 }
 
 static HRESULT WINAPI uia_proxy_win_event_sink_AddStructureChangedEvent(IProxyProviderWinEventSink *iface,
@@ -422,6 +466,7 @@ static HRESULT create_proxy_win_event_sink(struct uia_proxy_win_event_sink **out
     sink->IProxyProviderWinEventSink_iface.lpVtbl = &uia_proxy_event_sink_vtbl;
     sink->ref = 1;
     sink->event_id = event_id;
+    list_init(&sink->sink_events);
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&sink->IProxyProviderWinEventSink_iface, &sink->marshal);
     if (FAILED(hr))
@@ -684,9 +729,21 @@ static HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawEl
     return S_OK;
 }
 
+struct uia_elprov_event_data
+{
+    IRawElementProviderSimple *elprov;
+    struct uia_event_args *args;
+    BOOL clientside_only;
+
+    SAFEARRAY *rt_id;
+    HUIANODE node;
+};
+
+static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *data);
 static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *data)
 {
     struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)data;
+    struct event_sink_event *sink_event, *sink_event2;
     struct uia_proxy_win_event_sink *sink;
     IRawElementProviderSimple *elprov;
     struct uia_node *node_data;
@@ -727,8 +784,26 @@ static HRESULT uia_win_event_for_each_callback(struct uia_event *event, void *da
         {
             hr = respond_to_win_event_on_node_provider((IWineUiaNode *)node, i, win_event->event_id, win_event->hwnd, win_event->obj_id,
                     win_event->child_id, &sink->IProxyProviderWinEventSink_iface);
-            if (FAILED(hr))
+            if (FAILED(hr) || !list_empty(&sink->sink_events))
                 break;
+        }
+
+        InterlockedIncrement(&sink->sink_defunct);
+        LIST_FOR_EACH_ENTRY_SAFE(sink_event, sink_event2, &sink->sink_events, struct event_sink_event, event_sink_list_entry)
+        {
+            struct uia_elprov_event_data event_data = { sink_event->elprov, sink_event->args, TRUE };
+            list_remove(&sink_event->event_sink_list_entry);
+
+            hr = uia_raise_elprov_event_callback(event, (void *)&event_data);
+            if (FAILED(hr))
+                WARN("uia_raise_elprov_event_callback failed with hr %#lx\n", hr);
+
+            UiaNodeRelease(event_data.node);
+            SafeArrayDestroy(event_data.rt_id);
+
+            IRawElementProviderSimple_Release(sink_event->elprov);
+            uia_event_args_release(sink_event->args);
+            free(sink_event);
         }
 
         IProxyProviderWinEventSink_Release(&sink->IProxyProviderWinEventSink_iface);
@@ -1805,16 +1880,6 @@ static HRESULT uia_event_check_match(HUIANODE node, HUIANODE nav_start_node, SAF
 
     return hr;
 }
-
-struct uia_elprov_event_data
-{
-    IRawElementProviderSimple *elprov;
-    struct uia_event_args *args;
-    BOOL clientside_only;
-
-    SAFEARRAY *rt_id;
-    HUIANODE node;
-};
 
 static HRESULT uia_raise_elprov_event_callback(struct uia_event *event, void *data)
 {
