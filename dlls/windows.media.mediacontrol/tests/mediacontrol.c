@@ -104,47 +104,47 @@ static void test_MediaControlStatics(void)
     if (!media_control_statics) goto done;
 
     hr = ISystemMediaTransportControls_put_PlaybackStatus( media_control_statics, -1 );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_PlaybackStatus( media_control_statics, 5 );
-    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_PlaybackStatus( media_control_statics, MediaPlaybackStatus_Closed );
-    todo_wine ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
 
     hr = ISystemMediaTransportControls_put_IsPlayEnabled( media_control_statics, FALSE );
-    todo_wine ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPauseEnabled( media_control_statics, FALSE );
-    todo_wine ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsPreviousEnabled( media_control_statics, FALSE );
-    todo_wine ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsNextEnabled( media_control_statics, FALSE );
-    todo_wine ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken(hr == S_FALSE) /* Win10 1507,1607 */, "got hr %#lx.\n", hr );
     hr = ISystemMediaTransportControls_put_IsEnabled( media_control_statics, FALSE );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsPlayEnabled( media_control_statics, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got value %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsPauseEnabled( media_control_statics, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got value %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsPreviousEnabled( media_control_statics, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got value %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsNextEnabled( media_control_statics, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got value %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
 
     value = TRUE;
     hr = ISystemMediaTransportControls_get_IsEnabled( media_control_statics, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( value == FALSE, "got value %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( value == FALSE, "got value %d.\n", value );
 
     ref = ISystemMediaTransportControls_Release( media_control_statics );
     ok( ref == 1 || broken(ref == 3) /* Win10 1507 */ || broken(ref == 2) /* Win10 1607 */, "got ref %ld.\n", ref );

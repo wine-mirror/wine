@@ -123,6 +123,12 @@ struct media_control
     LONG ref;
 
     HWND window;
+    MediaPlaybackStatus media_playback_status;
+    boolean is_play_enabled;
+    boolean is_pause_enabled;
+    boolean is_previous_enabled;
+    boolean is_next_enabled;
+    boolean is_enabled;
 };
 
 static inline struct media_control *impl_from_ISystemMediaTransportControls( ISystemMediaTransportControls *iface )
@@ -190,14 +196,23 @@ static HRESULT WINAPI media_control_GetTrustLevel( ISystemMediaTransportControls
 
 static HRESULT WINAPI media_control_get_PlaybackStatus( ISystemMediaTransportControls *iface, MediaPlaybackStatus *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->media_playback_status;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_PlaybackStatus( ISystemMediaTransportControls *iface, MediaPlaybackStatus value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    if (value < MediaPlaybackStatus_Closed || value > MediaPlaybackStatus_Paused) return E_INVALIDARG;
+    impl->media_playback_status = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_DisplayUpdater( ISystemMediaTransportControls *iface, __x_ABI_CWindows_CMedia_CISystemMediaTransportControlsDisplayUpdater **value )
@@ -214,26 +229,42 @@ static HRESULT WINAPI media_control_get_SoundLevel( ISystemMediaTransportControl
 
 static HRESULT WINAPI media_control_get_IsEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->is_enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_IsEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    impl->is_enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_IsPlayEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->is_play_enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_IsPlayEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    impl->is_play_enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_IsStopEnabled( ISystemMediaTransportControls *iface, boolean *value )
@@ -250,14 +281,22 @@ static HRESULT WINAPI media_control_put_IsStopEnabled( ISystemMediaTransportCont
 
 static HRESULT WINAPI media_control_get_IsPauseEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->is_pause_enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_IsPauseEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    impl->is_pause_enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_IsRecordEnabled( ISystemMediaTransportControls *iface, boolean *value )
@@ -298,26 +337,42 @@ static HRESULT WINAPI media_control_put_IsRewindEnabled( ISystemMediaTransportCo
 
 static HRESULT WINAPI media_control_get_IsPreviousEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->is_previous_enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_IsPreviousEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    impl->is_previous_enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_IsNextEnabled( ISystemMediaTransportControls *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->is_next_enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_put_IsNextEnabled( ISystemMediaTransportControls *iface, boolean value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct media_control *impl = impl_from_ISystemMediaTransportControls( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    impl->is_next_enabled = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_IsChannelUpEnabled( ISystemMediaTransportControls *iface, boolean *value )
