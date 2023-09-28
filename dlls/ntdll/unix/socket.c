@@ -169,7 +169,7 @@ static NTSTATUS sock_errno_to_status( int err )
         case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
         case EALREADY:          return STATUS_NETWORK_BUSY;
         case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
-        case EDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
+        case EDESTADDRREQ:      return STATUS_INVALID_CONNECTION;
         case EMSGSIZE:          return STATUS_BUFFER_OVERFLOW;
         case EPROTONOSUPPORT:
         case ESOCKTNOSUPPORT:

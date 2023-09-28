@@ -13901,7 +13901,7 @@ static void test_connect_udp(void)
     SetLastError(0xdeadbeef);
     ret = send(client, "data", 4, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+    ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = recv(server, buffer, sizeof(buffer), 0);
@@ -13949,7 +13949,7 @@ static void test_connect_udp(void)
     SetLastError(0xdeadbeef);
     ret = send(server, "data", 4, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+    ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
 
     ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
     ok(!ret, "got error %lu\n", GetLastError());
