@@ -62,6 +62,7 @@ static void test_MediaControlStatics(void)
     ISystemMediaTransportControlsInterop *media_control_interop_statics = NULL;
     ISystemMediaTransportControlsDisplayUpdater *display_updater = NULL;
     ISystemMediaTransportControls *media_control_statics = NULL;
+    MediaPlaybackType playback_type;
     IActivationFactory *factory;
     HWND window = NULL;
     BOOLEAN value;
@@ -153,6 +154,18 @@ static void test_MediaControlStatics(void)
     check_interface( display_updater, &IID_IUnknown );
     check_interface( display_updater, &IID_IInspectable );
     check_interface( display_updater, &IID_IAgileObject );
+
+    hr = ISystemMediaTransportControlsDisplayUpdater_put_Type( display_updater, -1 );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControlsDisplayUpdater_put_Type( display_updater, 4 );
+    todo_wine ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControlsDisplayUpdater_put_Type( display_updater, 1 );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    playback_type = -1;
+    hr = ISystemMediaTransportControlsDisplayUpdater_get_Type( display_updater, &playback_type );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( playback_type == MediaPlaybackType_Music, "got playback_type %d.\n", playback_type );
 
     ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
     ISystemMediaTransportControls_Release( media_control_statics );
