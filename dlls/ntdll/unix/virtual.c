@@ -4184,9 +4184,14 @@ static void virtual_release_address_space(void)
  */
 void virtual_set_large_address_space(void)
 {
-    /* no large address space on win9x */
-    if (peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
-
+#ifdef _WIN64
+    if (is_wow64())
+        user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
+    else
+        free_reserved_memory( 0, (char *)0x7ffe0000 );
+#else
+    if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
+#endif
     user_space_limit = working_set_limit = address_space_limit;
 }
 
