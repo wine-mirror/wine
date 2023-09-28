@@ -5082,6 +5082,10 @@ interface ID3D12GraphicsCommandList7 : ID3D12GraphicsCommandList6
             const D3D12_BARRIER_GROUP *barrier_groups);
 };
 
+cpp_quote("#ifndef D3D12_IGNORE_SDK_LAYERS")
+cpp_quote("#include \"d3d12sdklayers.h\"")
+cpp_quote("#endif")
+
 typedef HRESULT (__stdcall *PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER)(
         const void *data, SIZE_T data_size, REFIID iid, void **deserializer);
 
