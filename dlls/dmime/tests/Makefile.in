@@ -2,7 +2,6 @@ TESTDLL   = dmime.dll
 IMPORTS   = user32 ole32 dsound
 
 C_SRCS = \
-	dmime.c \
-	performance.c
+	dmime.c
 
 RC_SRCS = resource.rc
