@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mediacontrol);
 struct media_control_statics
 {
     IActivationFactory IActivationFactory_iface;
+    ISystemMediaTransportControlsInterop ISystemMediaTransportControlsInterop_iface;
     LONG ref;
 };
 
@@ -47,6 +48,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ISystemMediaTransportControlsInterop ))
+    {
+        *out = &impl->ISystemMediaTransportControlsInterop_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -109,9 +117,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( media_control_statics, ISystemMediaTransportControlsInterop, struct media_control_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI media_control_statics_GetForWindow( ISystemMediaTransportControlsInterop *iface, HWND window, REFIID riid, void **control )
+{
+    FIXME( "iface %p, window %p, riid %s, control %p stub!\n", iface, window, debugstr_guid( riid ), control );
+    return E_NOTIMPL;
+}
+
+static const struct ISystemMediaTransportControlsInteropVtbl media_control_statics_vtbl =
+{
+    media_control_statics_QueryInterface,
+    media_control_statics_AddRef,
+    media_control_statics_Release,
+    /* IInspectable methods */
+    media_control_statics_GetIids,
+    media_control_statics_GetRuntimeClassName,
+    media_control_statics_GetTrustLevel,
+    /* ISystemMediaTransportControlsInterop methods */
+    media_control_statics_GetForWindow,
+};
+
 static struct media_control_statics media_control_statics =
 {
     {&factory_vtbl},
+    {&media_control_statics_vtbl},
     1,
 };
 

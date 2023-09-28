@@ -20,4 +20,5 @@
 
 #pragma makedep register
 
+#include "systemmediatransportcontrolsinterop.idl"
 #include "windows.media.idl"

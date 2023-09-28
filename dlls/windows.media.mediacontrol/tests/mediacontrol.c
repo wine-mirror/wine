@@ -30,6 +30,7 @@
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Media
 #include "windows.media.h"
+#include "systemmediatransportcontrolsinterop.h"
 
 #include "wine/test.h"
 
@@ -48,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_MediaControlStatics(void)
 {
     static const WCHAR *media_control_statics_name = L"Windows.Media.SystemMediaTransportControls";
+    ISystemMediaTransportControlsInterop *media_control_interop_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -69,6 +71,11 @@ static void test_MediaControlStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_ISystemMediaTransportControlsInterop, (void **)&media_control_interop_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = ISystemMediaTransportControlsInterop_Release( media_control_interop_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
