@@ -215,7 +215,7 @@ static HRESULT WINAPI media_control_put_PlaybackStatus( ISystemMediaTransportCon
     return S_OK;
 }
 
-static HRESULT WINAPI media_control_get_DisplayUpdater( ISystemMediaTransportControls *iface, __x_ABI_CWindows_CMedia_CISystemMediaTransportControlsDisplayUpdater **value )
+static HRESULT WINAPI media_control_get_DisplayUpdater( ISystemMediaTransportControls *iface, ISystemMediaTransportControlsDisplayUpdater **value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
     return E_NOTIMPL;

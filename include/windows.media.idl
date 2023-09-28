@@ -22,28 +22,40 @@
 
 import "inspectable.idl";
 import "windows.foundation.idl";
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
 
 namespace Windows.Media
 {
     typedef enum AudioProcessing AudioProcessing;
     typedef enum MediaPlaybackStatus MediaPlaybackStatus;
+    typedef enum MediaPlaybackType MediaPlaybackType;
     typedef enum SoundLevel SoundLevel;
     typedef enum SystemMediaTransportControlsButton SystemMediaTransportControlsButton;
     typedef enum SystemMediaTransportControlsProperty SystemMediaTransportControlsProperty;
 
+    interface IImageDisplayProperties;
     interface IMediaControl;
     interface IMediaMarker;
+    interface IMusicDisplayProperties;
+    interface IMusicDisplayProperties2;
+    interface IMusicDisplayProperties3;
     interface ISystemMediaTransportControls;
     interface ISystemMediaTransportControls2;
     interface ISystemMediaTransportControlsButtonPressedEventArgs;
     interface ISystemMediaTransportControlsDisplayUpdater;
     interface ISystemMediaTransportControlsPropertyChangedEventArgs;
     interface ISystemMediaTransportControlsStatics;
+    interface IVideoDisplayProperties;
+    interface IVideoDisplayProperties2;
 
+    runtimeclass ImageDisplayProperties;
+    runtimeclass MusicDisplayProperties;
     runtimeclass SystemMediaTransportControls;
     runtimeclass SystemMediaTransportControlsButtonPressedEventArgs;
     runtimeclass SystemMediaTransportControlsDisplayUpdater;
     runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs;
+    runtimeclass VideoDisplayProperties;
 
     declare
     {
@@ -74,6 +86,17 @@ namespace Windows.Media
         Stopped  = 2,
         Playing  = 3,
         Paused   = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlaybackType
+    {
+        Unknown = 0,
+        Music   = 1,
+        Video   = 2,
+        Image   = 3,
     };
 
     [
@@ -169,6 +192,30 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControlsDisplayUpdater),
+        uuid(8abbc53e-fa55-4ecf-ad8e-c984e5dd1550)
+    ]
+    interface ISystemMediaTransportControlsDisplayUpdater : IInspectable
+    {
+        [propget] HRESULT Type([out, retval] Windows.Media.MediaPlaybackType *value);
+        [propput] HRESULT Type([in] Windows.Media.MediaPlaybackType value);
+        [propget] HRESULT AppMediaId([out, retval] HSTRING *value);
+        [propput] HRESULT AppMediaId([in] HSTRING value);
+        [propget] HRESULT Thumbnail([out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+        [propput] HRESULT Thumbnail([in] Windows.Storage.Streams.RandomAccessStreamReference *value);
+        [propget] HRESULT MusicProperties([out, retval] Windows.Media.MusicDisplayProperties **value);
+        [propget] HRESULT VideoProperties([out, retval] Windows.Media.VideoDisplayProperties **value);
+        [propget] HRESULT ImageProperties([out, retval] Windows.Media.ImageDisplayProperties **value);
+        HRESULT CopyFromFileAsync(
+            [in] Windows.Media.MediaPlaybackType type, [in] Windows.Storage.StorageFile *source,
+            [out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation
+        );
+        HRESULT ClearAll();
+        HRESULT Update();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.SystemMediaTransportControlsButtonPressedEventArgs),
         uuid(b7f47116-a56f-4dc8-9e11-92031f4a87c2)
     ]
@@ -185,6 +232,28 @@ namespace Windows.Media
     interface ISystemMediaTransportControlsPropertyChangedEventArgs : IInspectable
     {
         [propget] HRESULT Property([out, retval] Windows.Media.SystemMediaTransportControlsProperty *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ImageDisplayProperties
+    {
+        [default] interface Windows.Media.IImageDisplayProperties;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MusicDisplayProperties
+    {
+        [default] interface Windows.Media.IMusicDisplayProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IMusicDisplayProperties2;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3;
     }
 
     [
@@ -225,5 +294,16 @@ namespace Windows.Media
     runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs
     {
         [default] interface Windows.Media.ISystemMediaTransportControlsPropertyChangedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass VideoDisplayProperties
+    {
+        [default] interface Windows.Media.IVideoDisplayProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IVideoDisplayProperties2;
     }
 }
