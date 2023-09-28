@@ -233,7 +233,7 @@ static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportContro
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CMedia_CIMusicDisplayProperties **value )
+static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, IMusicDisplayProperties **value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
     return E_NOTIMPL;

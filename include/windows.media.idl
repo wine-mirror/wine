@@ -147,6 +147,21 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.MusicDisplayProperties),
+        uuid(6bbf0c59-d0a0-4d26-92a0-f978e1d18e7b)
+    ]
+    interface IMusicDisplayProperties : IInspectable
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT AlbumArtist([out, retval] HSTRING *value);
+        [propput] HRESULT AlbumArtist([in] HSTRING value);
+        [propget] HRESULT Artist([out, retval] HSTRING *value);
+        [propput] HRESULT Artist([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.SystemMediaTransportControls),
         uuid(99fa3ff4-1742-42a6-902e-087d41f965ec)
     ]
