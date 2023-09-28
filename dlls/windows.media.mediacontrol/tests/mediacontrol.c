@@ -59,7 +59,8 @@ static void check_interface_GetForWindow( void *media_control_interop_statics, H
 static void test_MediaControlStatics(void)
 {
     static const WCHAR *media_control_statics_name = L"Windows.Media.SystemMediaTransportControls";
-    ISystemMediaTransportControlsInterop *media_control_interop_statics;
+    ISystemMediaTransportControlsInterop *media_control_interop_statics = NULL;
+    ISystemMediaTransportControlsDisplayUpdater *display_updater = NULL;
     ISystemMediaTransportControls *media_control_statics = NULL;
     IActivationFactory *factory;
     HWND window = NULL;
@@ -146,6 +147,14 @@ static void test_MediaControlStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value == FALSE, "got value %d.\n", value );
 
+    hr = ISystemMediaTransportControls_get_DisplayUpdater( media_control_statics, &display_updater );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( display_updater, &IID_IUnknown );
+    check_interface( display_updater, &IID_IInspectable );
+    check_interface( display_updater, &IID_IAgileObject );
+
+    ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
     ISystemMediaTransportControls_Release( media_control_statics );
 done:
     DestroyWindow( window );

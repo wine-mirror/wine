@@ -117,6 +117,172 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct display_updater
+{
+    ISystemMediaTransportControlsDisplayUpdater ISystemMediaTransportControlsDisplayUpdater_iface;
+    LONG ref;
+};
+
+static inline struct display_updater *impl_from_ISystemMediaTransportControlsDisplayUpdater( ISystemMediaTransportControlsDisplayUpdater *iface )
+{
+    return CONTAINING_RECORD( iface, struct display_updater, ISystemMediaTransportControlsDisplayUpdater_iface );
+}
+
+static HRESULT WINAPI display_updater_QueryInterface( ISystemMediaTransportControlsDisplayUpdater *iface, REFIID iid, void **out )
+{
+    struct display_updater *impl = impl_from_ISystemMediaTransportControlsDisplayUpdater( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_ISystemMediaTransportControlsDisplayUpdater ))
+    {
+        *out = &impl->ISystemMediaTransportControlsDisplayUpdater_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI display_updater_AddRef( ISystemMediaTransportControlsDisplayUpdater *iface )
+{
+    struct display_updater *impl = impl_from_ISystemMediaTransportControlsDisplayUpdater( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI display_updater_Release( ISystemMediaTransportControlsDisplayUpdater *iface )
+{
+    struct display_updater *impl = impl_from_ISystemMediaTransportControlsDisplayUpdater( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI display_updater_GetIids( ISystemMediaTransportControlsDisplayUpdater *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_GetRuntimeClassName( ISystemMediaTransportControlsDisplayUpdater *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_GetTrustLevel( ISystemMediaTransportControlsDisplayUpdater *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_Type( ISystemMediaTransportControlsDisplayUpdater *iface, MediaPlaybackType *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_put_Type( ISystemMediaTransportControlsDisplayUpdater *iface, MediaPlaybackType value )
+{
+    FIXME( "iface %p, value %d stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_AppMediaId( ISystemMediaTransportControlsDisplayUpdater *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_put_AppMediaId( ISystemMediaTransportControlsDisplayUpdater *iface, HSTRING value )
+{
+    FIXME( "iface %p, value %s stub!\n", iface, debugstr_hstring( value ) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CStorage_CStreams_CIRandomAccessStreamReference *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CMedia_CIMusicDisplayProperties **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_VideoProperties( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CMedia_CIVideoDisplayProperties **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_get_ImageProperties( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CMedia_CIImageDisplayProperties **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_CopyFromFileAsync( ISystemMediaTransportControlsDisplayUpdater *iface, MediaPlaybackType type, IStorageFile *source,
+    IAsyncOperation_boolean **operation )
+{
+    FIXME( "iface %p, type %d, source %p, operation %p stub!\n", iface, type, source, operation );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_ClearAll( ISystemMediaTransportControlsDisplayUpdater *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_updater_Update( ISystemMediaTransportControlsDisplayUpdater *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct ISystemMediaTransportControlsDisplayUpdaterVtbl display_updater_vtbl =
+{
+    display_updater_QueryInterface,
+    display_updater_AddRef,
+    display_updater_Release,
+    /* IInspectable methods */
+    display_updater_GetIids,
+    display_updater_GetRuntimeClassName,
+    display_updater_GetTrustLevel,
+    /* ISystemMediaTransportControlsDisplayUpdater methods */
+    display_updater_get_Type,
+    display_updater_put_Type,
+    display_updater_get_AppMediaId,
+    display_updater_put_AppMediaId,
+    display_updater_get_Thumbnail,
+    display_updater_put_Thumbnail,
+    display_updater_get_MusicProperties,
+    display_updater_get_VideoProperties,
+    display_updater_get_ImageProperties,
+    display_updater_CopyFromFileAsync,
+    display_updater_ClearAll,
+    display_updater_Update,
+};
+
 struct media_control
 {
     ISystemMediaTransportControls ISystemMediaTransportControls_iface;
@@ -217,8 +383,18 @@ static HRESULT WINAPI media_control_put_PlaybackStatus( ISystemMediaTransportCon
 
 static HRESULT WINAPI media_control_get_DisplayUpdater( ISystemMediaTransportControls *iface, ISystemMediaTransportControlsDisplayUpdater **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct display_updater *impl;
+
+    FIXME( "iface %p, value %p semi-stub!\n", iface, value );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->ISystemMediaTransportControlsDisplayUpdater_iface.lpVtbl = &display_updater_vtbl;
+    impl->ref = 1;
+
+    *value = &impl->ISystemMediaTransportControlsDisplayUpdater_iface;
+    TRACE( "created ISystemMediaTransportControlsDisplayUpdater %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI media_control_get_SoundLevel( ISystemMediaTransportControls *iface, SoundLevel *value )

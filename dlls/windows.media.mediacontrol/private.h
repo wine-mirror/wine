@@ -33,6 +33,8 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Media
+#define WIDL_using_Windows_Storage
+#define WIDL_using_Windows_Storage_Streams
 #include "windows.media.h"
 #include "systemmediatransportcontrolsinterop.h"
 
