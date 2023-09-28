@@ -2068,6 +2068,14 @@ static void D3DXLoadMeshTest(void)
             "}"
             "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 3.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
         "}";
+    static const char framed_xfile_empty[] =
+            "xof 0303txt 0032"
+            "Frame Box01 {"
+            "    Mesh { 0;; 0;;"
+            "        MeshNormals { 0;; 0;; }"
+            "    }"
+            "}";
+
     static const WORD framed_index_buffer[] = { 0, 1, 2 };
     static const D3DXVECTOR3 framed_vertex_buffers[3][3] = {
         {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}},
@@ -2508,6 +2516,16 @@ static void D3DXLoadMeshTest(void)
     ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     frame_hier = NULL;
 
+    hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile_empty, sizeof(framed_xfile_empty) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    container = frame_hier->pMeshContainer;
+    ok(!strcmp(frame_hier->Name, "Box01"), "Unexpected name %s.\n", debugstr_a(frame_hier->Name));
+    ok(!container, "Unexpected container %p.\n", container);
+
+    hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    frame_hier = NULL;
 
     hr = D3DXLoadMeshFromXInMemory(NULL, 0, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
@@ -11317,6 +11335,9 @@ static void test_load_skin_mesh_from_xof(void)
             "1;"
             "3; 0, 1, 2;;"
         "}";
+    static const char simple_xfile_empty[] =
+        "xof 0303txt 0032"
+        "Mesh { 0;; 0;; }";
     static const D3DVERTEXELEMENT9 expected_declaration[] =
     {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -11428,6 +11449,28 @@ static void test_load_skin_mesh_from_xof(void)
     mesh->lpVtbl->Release(mesh);
     adjacency->lpVtbl->Release(adjacency);
     file_data->lpVtbl->Release(file_data);
+
+    /* Empty Mesh Test */
+    file_data = get_mesh_data(simple_xfile_empty, sizeof(simple_xfile_empty) - 1);
+    ok(!!file_data, "Failed to load mesh data.\n");
+
+    adjacency = materials = effects = (void *)0xdeadbeef;
+    count = 0xdeadbeefu;
+    skin_info = (void *)0xdeadbeef;
+    mesh = (void *)0xdeadbeef;
+
+    hr = D3DXLoadSkinMeshFromXof(file_data, 0, device, &adjacency, &materials, &effects, &count,
+            &skin_info, &mesh);
+    todo_wine ok(hr == D3DXERR_LOADEDMESHASNODATA, "Unexpected hr %#lx.\n", hr);
+    ok(!adjacency, "Unexpected adjacency %p.\n", adjacency);
+    ok(!materials, "Unexpected materials %p.\n", materials);
+    ok(!effects, "Unexpected effects %p.\n", effects);
+    ok(count == 0xdeadbeefu, "Unexpected count %lu.\n", count);
+    ok(skin_info == (void *)0xdeadbeef, "Unexpected skin_info %p.\n", skin_info);
+    ok(!mesh, "Unexpected mesh %p.\n", mesh);
+
+    file_data->lpVtbl->Release(file_data);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(hwnd);

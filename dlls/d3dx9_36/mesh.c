@@ -3506,6 +3506,19 @@ HRESULT WINAPI D3DXLoadSkinMeshFromXof(struct ID3DXFileData *filedata, DWORD opt
     hr = parse_mesh(filedata, &mesh_data, provide_flags);
     if (FAILED(hr)) goto cleanup;
 
+    if (!mesh_data.num_vertices)
+    {
+        if (adjacency_out)
+            *adjacency_out = NULL;
+        if (materials_out)
+            *materials_out = NULL;
+        if (effects_out)
+            *effects_out = NULL;
+        *mesh_out = NULL;
+        hr = D3D_OK;
+        goto cleanup;
+    }
+
     total_vertices = mesh_data.num_vertices;
     if (mesh_data.fvf & D3DFVF_NORMAL) {
         /* duplicate vertices with multiple normals */
@@ -3815,12 +3828,15 @@ static HRESULT load_mesh_container(struct ID3DXFileData *filedata, DWORD options
     hr = filedata_get_name(filedata, &name);
     if (FAILED(hr)) goto cleanup;
 
-    hr = alloc_hier->lpVtbl->CreateMeshContainer(alloc_hier, name, &mesh_data,
-            materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL,
-            effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL,
-            num_materials,
-            adjacency ? ID3DXBuffer_GetBufferPointer(adjacency) : NULL,
-            skin_info, mesh_container);
+    if (mesh_data.pMesh)
+    {
+        hr = alloc_hier->lpVtbl->CreateMeshContainer(alloc_hier, name, &mesh_data,
+                materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL,
+                effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL,
+                num_materials,
+                adjacency ? ID3DXBuffer_GetBufferPointer(adjacency) : NULL,
+                skin_info, mesh_container);
+    }
 
 cleanup:
     if (materials) ID3DXBuffer_Release(materials);
@@ -4200,13 +4216,21 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
                 hr = E_OUTOFMEMORY;
                 goto err;
             }
-            list_add_tail(container_list, &container->entry);
-            container->transform = transform;
 
             hr = D3DXLoadSkinMeshFromXof(child, options, device,
                     (provide_flags & PROVIDE_ADJACENCY) ? &container->adjacency : NULL,
                     (provide_flags & PROVIDE_MATERIALS) ? &container->materials : NULL,
                     NULL, &container->num_materials, NULL, &container->mesh);
+
+            if (container->mesh)
+            {
+                list_add_tail(container_list, &container->entry);
+                container->transform = transform;
+            }
+            else
+            {
+                HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, container);
+            }
         } else if (IsEqualGUID(&type, &TID_D3DRMFrameTransformMatrix)) {
             D3DXMATRIX new_transform;
             hr = parse_transform_matrix(child, &new_transform);
@@ -4294,13 +4318,20 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
                     hr = E_OUTOFMEMORY;
                     goto cleanup;
                 }
-                list_add_tail(&container_list, &container_ptr->entry);
-                D3DXMatrixIdentity(&container_ptr->transform);
 
                 hr = D3DXLoadSkinMeshFromXof(filedata, options, device,
                         (provide_flags & PROVIDE_ADJACENCY) ? &container_ptr->adjacency : NULL,
                         (provide_flags & PROVIDE_MATERIALS) ? &container_ptr->materials : NULL,
                         NULL, &container_ptr->num_materials, NULL, &container_ptr->mesh);
+                if (container_ptr->mesh)
+                {
+                    list_add_tail(&container_list, &container_ptr->entry);
+                    D3DXMatrixIdentity(&container_ptr->transform);
+                }
+                else
+                {
+                    HeapFree(GetProcessHeap(), 0, container_ptr);
+                }
             } else if (IsEqualGUID(&guid, &TID_D3DRMFrame)) {
                 hr = parse_frame(filedata, options, device, &identity, &container_list, provide_flags);
             }
