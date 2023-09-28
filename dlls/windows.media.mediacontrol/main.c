@@ -121,6 +121,8 @@ struct display_updater
 {
     ISystemMediaTransportControlsDisplayUpdater ISystemMediaTransportControlsDisplayUpdater_iface;
     LONG ref;
+
+    MediaPlaybackType playback_type;
 };
 
 static inline struct display_updater *impl_from_ISystemMediaTransportControlsDisplayUpdater( ISystemMediaTransportControlsDisplayUpdater *iface )
@@ -188,14 +190,23 @@ static HRESULT WINAPI display_updater_GetTrustLevel( ISystemMediaTransportContro
 
 static HRESULT WINAPI display_updater_get_Type( ISystemMediaTransportControlsDisplayUpdater *iface, MediaPlaybackType *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct display_updater *impl = impl_from_ISystemMediaTransportControlsDisplayUpdater( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->playback_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI display_updater_put_Type( ISystemMediaTransportControlsDisplayUpdater *iface, MediaPlaybackType value )
 {
-    FIXME( "iface %p, value %d stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct display_updater *impl = impl_from_ISystemMediaTransportControlsDisplayUpdater( iface );
+
+    TRACE( "iface %p, value %d\n", iface, value );
+
+    if (value < MediaPlaybackType_Unknown || value > MediaPlaybackType_Image) return E_INVALIDARG;
+    impl->playback_type = value;
+    return S_OK;
 }
 
 static HRESULT WINAPI display_updater_get_AppMediaId( ISystemMediaTransportControlsDisplayUpdater *iface, HSTRING *value )
