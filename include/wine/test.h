@@ -148,6 +148,13 @@ extern void winetest_wait_child_process( HANDLE process );
 # define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
+/* Records the location of the next check.
+ * See the xxx_(file, line) macros.
+ *
+ * Parameters:
+ *   - file - source file name of the check
+ *   - line - source line number of the check
+ */
 static inline void winetest_set_location( const char *file, int line )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
@@ -260,12 +267,13 @@ static LONG winetest_add_line( void )
 }
 
 /*
- * Checks condition.
+ * Checks that a condition has the expected value, that is true except if
+ * preceded by a todo indicating the check is expected to fail.
+ *
  * Parameters:
- *   - condition - condition to check;
- *   - msg test description;
- *   - file - test application source code file name of the check
- *   - line - test application source code file line number of the check
+ *   - condition - true if the check succeeded, false otherwise;
+ *   - msg - failure message format;
+ *   - args - arguments for the failure message
  * Return:
  *   0 if condition does not have the expected value, 1 otherwise
  */
@@ -400,6 +408,14 @@ static void winetest_vskip( const char *msg, va_list args )
     else InterlockedIncrement( &winetest_muted_skipped );
 }
 
+/*
+ * Prints a message to indicate that a group of tests is being skipped
+ * because the requirements for running them are not met.
+ *
+ * Parameters:
+ *   - msg - failure message format;
+ *   - args - arguments for the failure message
+ */
 static void winetest_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static inline void winetest_skip( const char *msg, ... )
 {
@@ -421,6 +437,18 @@ static inline void winetest_win_skip( const char *msg, ... )
     va_end(valist);
 }
 
+/* If is_flaky is true, indicates that the next test may occasionally fail due
+ * to unavoidable outside race conditions. Such failures will be flagged as
+ * flaky so they can be ignored by automated testing tools.
+ *
+ * Remarks:
+ * - This is not meant to paper over race conditions within the test itself.
+ *   Those are bugs and should be fixed.
+ * - This is not meant to be used for tests that normally succeed but
+ *   systematically fail on a specific platform or locale.
+ * - The failures should be rare to start with. If a test fails 25% of the time
+ *   it is probably wrong.
+ */
 static inline void winetest_start_flaky( int is_flaky )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
@@ -442,6 +470,13 @@ static inline void winetest_end_flaky(void)
     data->flaky_level >>= 1;
 }
 
+/* If is_todo is true, indicates that the next test is expected to fail on this
+ * platform. This is used to identify tests that are known to fail in Wine.
+ *
+ * Remarks:
+ * - is_todo should never be true on Windows. To ensure this, always use
+ *   todo_wine_if().
+ */
 static inline void winetest_start_todo( int is_todo )
 {
     struct winetest_thread_data *data = winetest_get_thread_data();
@@ -463,6 +498,31 @@ static inline void winetest_end_todo(void)
     data->todo_level >>= 1;
 }
 
+/* Adds a string to be prepended to the test traces and failure messages.
+ * This must be paired with a winetest_pop_context() call.
+ *
+ * Parameters:
+ *   - msg - failure message format;
+ *   - args - arguments for the failure message
+ *
+ * Remarks:
+ * - Failure messages must always make it possible to figure out what was being
+ *   tested. While not ideal the line number can usually be used for that
+ *   purpose except when the test loops on a list of test parameters. In such
+ *   cases either the test parameters or the loop index should be added to the
+ *   context.
+ *
+ * Example:
+ *
+ *   for (i = 0; i < ARRAY_SIZE(test_parameters); i++)
+ *   {
+ *       winetest_push_context("%d", i);
+ *       ...
+ *       ok(WinAPI(test_parameters[i]), ...);
+ *       ...
+ *       winetest_pop_context();
+ *   }
+ */
 static void winetest_push_context( const char *fmt, ... ) __WINE_PRINTF_ATTR(1, 2);
 static inline void winetest_push_context( const char *fmt, ... )
 {
