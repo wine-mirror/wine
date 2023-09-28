@@ -50,7 +50,9 @@ static void test_MediaControlStatics(void)
 {
     static const WCHAR *media_control_statics_name = L"Windows.Media.SystemMediaTransportControls";
     ISystemMediaTransportControlsInterop *media_control_interop_statics;
+    ISystemMediaTransportControls *media_control_statics = NULL;
     IActivationFactory *factory;
+    HWND window = NULL;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -74,6 +76,18 @@ static void test_MediaControlStatics(void)
     hr = IActivationFactory_QueryInterface( factory, &IID_ISystemMediaTransportControlsInterop, (void **)&media_control_interop_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, NULL, &IID_ISystemMediaTransportControls, (void **)&media_control_statics );
+    todo_wine ok( hr == E_POINTER || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+
+    window = CreateWindowExA( 0, "static", 0, 0, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, GetModuleHandleA( NULL ), 0 );
+    ok( window != NULL, "Failed to create a window\n" );
+    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, &IID_ISystemMediaTransportControlsInterop, (void **)&media_control_statics );
+    todo_wine ok( hr == E_NOINTERFACE || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, &IID_ISystemMediaTransportControls, (void **)&media_control_statics );
+    todo_wine ok( hr == S_OK || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+    if (media_control_statics) ISystemMediaTransportControls_Release( media_control_statics );
+
+    DestroyWindow( window );
     ref = ISystemMediaTransportControlsInterop_Release( media_control_interop_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
