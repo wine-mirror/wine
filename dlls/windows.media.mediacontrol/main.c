@@ -123,6 +123,7 @@ struct music_properties
     IMusicDisplayProperties2 IMusicDisplayProperties2_iface;
     LONG ref;
 
+    HSTRING album_title;
     HSTRING artist;
     HSTRING title;
 };
@@ -266,14 +267,17 @@ DEFINE_IINSPECTABLE( music_properties2, IMusicDisplayProperties2, struct music_p
 
 static HRESULT STDMETHODCALLTYPE music_properties2_get_AlbumTitle( IMusicDisplayProperties2 *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub\n", iface, value );
-    return E_NOTIMPL;
+    struct music_properties *impl = impl_from_IMusicDisplayProperties2( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    return WindowsDuplicateString( impl->album_title, value );
 }
 
 static HRESULT STDMETHODCALLTYPE music_properties2_put_AlbumTitle( IMusicDisplayProperties2 *iface, HSTRING value )
 {
-    FIXME( "iface %p, value %s stub\n", iface, debugstr_hstring( value ) );
-    return E_NOTIMPL;
+    struct music_properties *impl = impl_from_IMusicDisplayProperties2( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    WindowsDeleteString( impl->album_title );
+    return WindowsDuplicateString( value, &impl->album_title );
 }
 
 static HRESULT STDMETHODCALLTYPE music_properties2_get_TrackNumber( IMusicDisplayProperties2 *iface, UINT32 *value )
