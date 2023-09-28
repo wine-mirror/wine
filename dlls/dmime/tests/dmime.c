@@ -1895,6 +1895,12 @@ static void test_parsedescriptor(void)
 
 static void test_performance_InitAudio(void)
 {
+    DMUS_PORTPARAMS params =
+    {
+        .dwSize = sizeof(params),
+        .dwValidParams = DMUS_PORTPARAMS_EFFECTS,
+        .dwEffectFlags = 1,
+    };
     IDirectMusicPerformance8 *performance;
     IDirectMusic *dmusic;
     IDirectSound *dsound;
@@ -2034,6 +2040,20 @@ static void test_performance_InitAudio(void)
     ok(ref == 3, "dsound ref count got %ld expected 3\n", ref);
     ref = get_refcount(dmusic);
     ok(ref == 2, "dmusic ref count got %ld expected 2\n", ref);
+    destroy_performance(performance, dmusic, dsound);
+
+    /* Provided dmusic and dsound, dmusic initialized with SetDirectSound, port created and activated */
+    create_performance(&performance, &dmusic, &dsound, TRUE);
+    hr = IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+    ok(hr == S_OK, "SetDirectSound failed: %#lx\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, &CLSID_DirectMusicSynth, &params, &port, NULL);
+    ok(hr == S_OK, "CreatePort failed: %#lx\n", hr);
+    hr = IDirectMusicPort_Activate(port, TRUE);
+    ok(hr == S_OK, "Activate failed: %#lx\n", hr);
+    hr = IDirectMusicPort_SetNumChannelGroups(port, 1);
+    ok(hr == S_OK, "SetNumChannelGroups failed: %#lx\n", hr);
+    hr = IDirectMusicPerformance8_Init(performance, &dmusic, dsound, 0);
+    todo_wine ok(hr == S_OK, "Init failed: %#lx\n", hr);
     destroy_performance(performance, dmusic, dsound);
 
     /* InitAudio with perf channel count not a multiple of 16 rounds up */
