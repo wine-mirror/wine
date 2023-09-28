@@ -476,7 +476,7 @@ static HRESULT WINAPI display_updater_ClearAll( ISystemMediaTransportControlsDis
 static HRESULT WINAPI display_updater_Update( ISystemMediaTransportControlsDisplayUpdater *iface )
 {
     FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct ISystemMediaTransportControlsDisplayUpdaterVtbl display_updater_vtbl =

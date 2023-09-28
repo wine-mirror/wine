@@ -171,6 +171,9 @@ static void test_MediaControlStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( playback_type == MediaPlaybackType_Music, "got playback_type %d.\n", playback_type );
 
+    hr = ISystemMediaTransportControlsDisplayUpdater_Update( display_updater );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
     hr = ISystemMediaTransportControlsDisplayUpdater_get_MusicProperties( display_updater, &music_properties );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
