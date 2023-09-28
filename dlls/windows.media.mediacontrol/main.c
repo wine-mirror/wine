@@ -121,6 +121,8 @@ struct music_properties
 {
     IMusicDisplayProperties IMusicDisplayProperties_iface;
     LONG ref;
+
+    HSTRING title;
 };
 
 static inline struct music_properties *impl_from_IMusicDisplayProperties( IMusicDisplayProperties *iface )
@@ -164,7 +166,11 @@ static ULONG WINAPI music_properties_Release( IMusicDisplayProperties *iface )
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        WindowsDeleteString( impl->title );
+        free( impl );
+    }
     return ref;
 }
 
@@ -188,14 +194,17 @@ static HRESULT WINAPI music_properties_GetTrustLevel( IMusicDisplayProperties *i
 
 static HRESULT WINAPI music_properties_get_Title( IMusicDisplayProperties *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct music_properties *impl = impl_from_IMusicDisplayProperties( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    return WindowsDuplicateString( impl->title, value );
 }
 
 static HRESULT WINAPI music_properties_put_Title( IMusicDisplayProperties *iface, HSTRING value )
 {
-    FIXME( "iface %p, value %s stub!\n", iface, debugstr_hstring(value) );
-    return E_NOTIMPL;
+    struct music_properties *impl = impl_from_IMusicDisplayProperties( iface );
+    TRACE( "iface %p, value %p\n", iface, value );
+    WindowsDeleteString( impl->title );
+    return WindowsDuplicateString( value, &impl->title );
 }
 
 static HRESULT WINAPI music_properties_get_AlbumArtist( IMusicDisplayProperties *iface, HSTRING *value )
