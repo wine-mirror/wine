@@ -46,6 +46,16 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
     IUnknown_Release( unk );
 }
 
+static void check_interface_GetForWindow( void *media_control_interop_statics, HWND window, const IID *iid )
+{
+    ISystemMediaTransportControls *media_control_statics = NULL;
+    HRESULT hr;
+
+    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, iid, (void **)&media_control_statics );
+    ok( hr == S_OK || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+    if (media_control_statics) ISystemMediaTransportControls_Release( media_control_statics );
+}
+
 static void test_MediaControlStatics(void)
 {
     static const WCHAR *media_control_statics_name = L"Windows.Media.SystemMediaTransportControls";
@@ -77,16 +87,24 @@ static void test_MediaControlStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, NULL, &IID_ISystemMediaTransportControls, (void **)&media_control_statics );
-    todo_wine ok( hr == E_POINTER || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+    ok( hr == E_POINTER || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
 
     window = CreateWindowExA( 0, "static", 0, 0, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, GetModuleHandleA( NULL ), 0 );
     ok( window != NULL, "Failed to create a window\n" );
     hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, &IID_ISystemMediaTransportControlsInterop, (void **)&media_control_statics );
-    todo_wine ok( hr == E_NOINTERFACE || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
-    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, &IID_ISystemMediaTransportControls, (void **)&media_control_statics );
-    todo_wine ok( hr == S_OK || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
-    if (media_control_statics) ISystemMediaTransportControls_Release( media_control_statics );
+    ok( hr == E_NOINTERFACE || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
 
+    check_interface_GetForWindow( media_control_interop_statics, window, &IID_IUnknown );
+    check_interface_GetForWindow( media_control_interop_statics, window, &IID_IInspectable );
+    check_interface_GetForWindow( media_control_interop_statics, window, &IID_IAgileObject );
+
+    hr = ISystemMediaTransportControlsInterop_GetForWindow( media_control_interop_statics, window, &IID_ISystemMediaTransportControls, (void **)&media_control_statics );
+    ok( hr == S_OK || broken(hr == 0x80070578) /* Win8 */, "got hr %#lx.\n", hr );
+    if (!media_control_statics) goto done;
+
+    ref = ISystemMediaTransportControls_Release( media_control_statics );
+    ok( ref == 1 || broken(ref == 3) /* Win10 1507 */ || broken(ref == 2) /* Win10 1607 */, "got ref %ld.\n", ref );
+done:
     DestroyWindow( window );
     ref = ISystemMediaTransportControlsInterop_Release( media_control_interop_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
