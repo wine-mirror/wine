@@ -62,6 +62,7 @@ static void test_MediaControlStatics(void)
     ISystemMediaTransportControlsInterop *media_control_interop_statics = NULL;
     ISystemMediaTransportControlsDisplayUpdater *display_updater = NULL;
     ISystemMediaTransportControls *media_control_statics = NULL;
+    IMusicDisplayProperties *music_properties = NULL;
     MediaPlaybackType playback_type;
     IActivationFactory *factory;
     HWND window = NULL;
@@ -167,6 +168,14 @@ static void test_MediaControlStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( playback_type == MediaPlaybackType_Music, "got playback_type %d.\n", playback_type );
 
+    hr = ISystemMediaTransportControlsDisplayUpdater_get_MusicProperties( display_updater, &music_properties );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( music_properties, &IID_IUnknown );
+    check_interface( music_properties, &IID_IInspectable );
+    check_interface( music_properties, &IID_IAgileObject );
+
+    IMusicDisplayProperties_Release( music_properties );
     ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
     ISystemMediaTransportControls_Release( media_control_statics );
 done:

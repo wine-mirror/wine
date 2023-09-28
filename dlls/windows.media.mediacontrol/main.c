@@ -117,6 +117,129 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct music_properties
+{
+    IMusicDisplayProperties IMusicDisplayProperties_iface;
+    LONG ref;
+};
+
+static inline struct music_properties *impl_from_IMusicDisplayProperties( IMusicDisplayProperties *iface )
+{
+    return CONTAINING_RECORD( iface, struct music_properties, IMusicDisplayProperties_iface );
+}
+
+static HRESULT WINAPI music_properties_QueryInterface( IMusicDisplayProperties *iface, REFIID iid, void **out )
+{
+    struct music_properties *impl = impl_from_IMusicDisplayProperties( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IMusicDisplayProperties ))
+    {
+        *out = &impl->IMusicDisplayProperties_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI music_properties_AddRef( IMusicDisplayProperties *iface )
+{
+    struct music_properties *impl = impl_from_IMusicDisplayProperties( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI music_properties_Release( IMusicDisplayProperties *iface )
+{
+    struct music_properties *impl = impl_from_IMusicDisplayProperties( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI music_properties_GetIids( IMusicDisplayProperties *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_GetRuntimeClassName( IMusicDisplayProperties *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_GetTrustLevel( IMusicDisplayProperties *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_get_Title( IMusicDisplayProperties *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_put_Title( IMusicDisplayProperties *iface, HSTRING value )
+{
+    FIXME( "iface %p, value %s stub!\n", iface, debugstr_hstring(value) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_get_AlbumArtist( IMusicDisplayProperties *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_put_AlbumArtist( IMusicDisplayProperties *iface, HSTRING value )
+{
+    FIXME( "iface %p, value %s stub!\n", iface, debugstr_hstring(value) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_get_Artist( IMusicDisplayProperties *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI music_properties_put_Artist( IMusicDisplayProperties *iface, HSTRING value )
+{
+    FIXME( "iface %p, value %s stub!\n", iface, debugstr_hstring(value) );
+    return E_NOTIMPL;
+}
+
+static const IMusicDisplayPropertiesVtbl music_properties_vtbl =
+{
+    music_properties_QueryInterface,
+    music_properties_AddRef,
+    music_properties_Release,
+    /* IInspectable methods */
+    music_properties_GetIids,
+    music_properties_GetRuntimeClassName,
+    music_properties_GetTrustLevel,
+    /* IMusicDisplayProperties methods */
+    music_properties_get_Title,
+    music_properties_put_Title,
+    music_properties_get_AlbumArtist,
+    music_properties_put_AlbumArtist,
+    music_properties_get_Artist,
+    music_properties_put_Artist,
+};
+
 struct display_updater
 {
     ISystemMediaTransportControlsDisplayUpdater ISystemMediaTransportControlsDisplayUpdater_iface;
@@ -235,8 +358,18 @@ static HRESULT WINAPI display_updater_put_Thumbnail( ISystemMediaTransportContro
 
 static HRESULT WINAPI display_updater_get_MusicProperties( ISystemMediaTransportControlsDisplayUpdater *iface, IMusicDisplayProperties **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct music_properties *impl;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IMusicDisplayProperties_iface.lpVtbl = &music_properties_vtbl;
+    impl->ref = 1;
+
+    *value = &impl->IMusicDisplayProperties_iface;
+    TRACE( "created IMusicDisplayProperties %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI display_updater_get_VideoProperties( ISystemMediaTransportControlsDisplayUpdater *iface, __x_ABI_CWindows_CMedia_CIVideoDisplayProperties **value )
