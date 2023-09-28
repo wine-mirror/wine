@@ -211,6 +211,21 @@ static void test_MediaControlStatics(void)
     hr = IMusicDisplayProperties_QueryInterface( music_properties, &IID_IMusicDisplayProperties2, (void **)&music_properties2 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = IMusicDisplayProperties2_put_AlbumTitle( music_properties2, NULL );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCreateStringReference( L"Wine Hits", wcslen( L"Wine Hits" ), &header, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IMusicDisplayProperties2_put_AlbumTitle( music_properties2, str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IMusicDisplayProperties2_get_AlbumTitle( music_properties2, &ret_str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, ret_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !res, "got string %s.\n", debugstr_hstring( ret_str ) );
+    todo_wine ok( str != ret_str, "got same HSTRINGs %p, %p.\n", str, ret_str );
+    WindowsDeleteString( str );
+    WindowsDeleteString( ret_str );
+
     IMusicDisplayProperties2_Release( music_properties2 );
     IMusicDisplayProperties_Release( music_properties );
     ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
