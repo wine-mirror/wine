@@ -65,10 +65,12 @@ static void test_MediaControlStatics(void)
     IMusicDisplayProperties *music_properties = NULL;
     MediaPlaybackType playback_type;
     IActivationFactory *factory;
+    HSTRING_HEADER header;
+    HSTRING str, ret_str;
     HWND window = NULL;
     BOOLEAN value;
-    HSTRING str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( media_control_statics_name, wcslen( media_control_statics_name ), &str );
@@ -174,6 +176,21 @@ static void test_MediaControlStatics(void)
     check_interface( music_properties, &IID_IUnknown );
     check_interface( music_properties, &IID_IInspectable );
     check_interface( music_properties, &IID_IAgileObject );
+
+    hr = IMusicDisplayProperties_put_Title( music_properties, NULL );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCreateStringReference( L"Wine", wcslen( L"Wine" ), &header, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IMusicDisplayProperties_put_Title( music_properties, str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IMusicDisplayProperties_get_Title( music_properties, &ret_str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, ret_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !res, "got string %s.\n", debugstr_hstring( ret_str ) );
+    todo_wine ok( str != ret_str, "got same HSTRINGs %p, %p.\n", str, ret_str );
+    WindowsDeleteString( str );
+    WindowsDeleteString( ret_str );
 
     IMusicDisplayProperties_Release( music_properties );
     ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
