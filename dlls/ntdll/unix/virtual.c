@@ -4110,12 +4110,6 @@ void virtual_set_force_exec( BOOL enable )
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 }
 
-struct free_range
-{
-    char *base;
-    char *limit;
-};
-
 /* free reserved areas within a given range */
 static void free_reserved_memory( char *base, char *limit )
 {
@@ -4142,6 +4136,8 @@ static void free_reserved_memory( char *base, char *limit )
     }
 }
 
+#ifndef _WIN64
+
 /***********************************************************************
  *           virtual_release_address_space
  *
@@ -4149,32 +4145,13 @@ static void free_reserved_memory( char *base, char *limit )
  */
 static void virtual_release_address_space(void)
 {
-    char *base = (char *)0x82000000;
-    char *limit = get_wow_user_space_limit();
-
-#if defined(__APPLE__) && !defined(__i386__)
-    /* On 64-bit macOS, don't release any address space.
-     * It needs to be reserved for use by Wow64
-     */
-    return;
+#ifndef __APPLE__  /* On macOS, we still want to free some of low memory, for OpenGL resources */
+    if (user_space_limit > (void *)limit_2g) return;
 #endif
-
-    if (limit > (char *)0xfffff000) return;  /* 64-bit limit, nothing to do */
-
-    if (limit > base)
-    {
-        free_reserved_memory( base, limit );
-#ifdef __APPLE__
-        /* On macOS, we still want to free some of low memory, for OpenGL resources */
-        base = (char *)0x40000000;
-#else
-        return;
-#endif
-    }
-    else base = (char *)0x20000000;
-
-    free_reserved_memory( base, (char *)0x7f000000 );
+    free_reserved_memory( (char *)0x20000000, (char *)0x7f000000 );
 }
+
+#endif  /* _WIN64 */
 
 
 /***********************************************************************
@@ -4191,6 +4168,7 @@ void virtual_set_large_address_space(void)
         free_reserved_memory( 0, (char *)0x7ffe0000 );
 #else
     if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
+    free_reserved_memory( (char *)0x80000000, address_space_limit );
 #endif
     user_space_limit = working_set_limit = address_space_limit;
 }
@@ -4564,9 +4542,12 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     /* avoid freeing the DOS area when a broken app passes a NULL pointer */
     if (!base)
     {
+#ifndef _WIN64
         /* address 1 is magic to mean release reserved space */
         if (addr == (void *)1 && !size && type == MEM_RELEASE) virtual_release_address_space();
-        else status = STATUS_INVALID_PARAMETER;
+        else
+#endif
+        status = STATUS_INVALID_PARAMETER;
     }
     else if (!(view = find_view( base, 0 ))) status = STATUS_MEMORY_NOT_ALLOCATED;
     else if (!is_view_valloc( view )) status = STATUS_INVALID_PARAMETER;
