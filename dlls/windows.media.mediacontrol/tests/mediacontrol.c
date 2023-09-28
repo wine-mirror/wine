@@ -62,6 +62,7 @@ static void test_MediaControlStatics(void)
     ISystemMediaTransportControlsInterop *media_control_interop_statics = NULL;
     ISystemMediaTransportControlsDisplayUpdater *display_updater = NULL;
     ISystemMediaTransportControls *media_control_statics = NULL;
+    IMusicDisplayProperties2 *music_properties2 = NULL;
     IMusicDisplayProperties *music_properties = NULL;
     MediaPlaybackType playback_type;
     IActivationFactory *factory;
@@ -207,6 +208,10 @@ static void test_MediaControlStatics(void)
     WindowsDeleteString( str );
     WindowsDeleteString( ret_str );
 
+    hr = IMusicDisplayProperties_QueryInterface( music_properties, &IID_IMusicDisplayProperties2, (void **)&music_properties2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    IMusicDisplayProperties2_Release( music_properties2 );
     IMusicDisplayProperties_Release( music_properties );
     ISystemMediaTransportControlsDisplayUpdater_Release( display_updater );
     ISystemMediaTransportControls_Release( media_control_statics );
