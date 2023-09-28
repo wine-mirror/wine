@@ -193,17 +193,17 @@ static void test_MediaControlStatics(void)
     WindowsDeleteString( ret_str );
 
     hr = IMusicDisplayProperties_put_Artist( music_properties, NULL );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCreateStringReference( L"The Wine Project", wcslen( L"The Wine Project" ), &header, &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IMusicDisplayProperties_put_Artist( music_properties, str );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IMusicDisplayProperties_get_Artist( music_properties, &ret_str );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCompareStringOrdinal( str, ret_str, &res );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( !res, "got string %s.\n", debugstr_hstring( ret_str ) );
-    todo_wine ok( str != ret_str, "got same HSTRINGs %p, %p.\n", str, ret_str );
+    ok( !res, "got string %s.\n", debugstr_hstring( ret_str ) );
+    ok( str != ret_str, "got same HSTRINGs %p, %p.\n", str, ret_str );
     WindowsDeleteString( str );
     WindowsDeleteString( ret_str );
 
