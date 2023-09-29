@@ -7,7 +7,7 @@
 #ifndef _INC_INTRIN
 #define _INC_INTRIN
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
 # include <x86intrin.h>
 #endif
 
@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
 static inline void __cpuidex(int info[4], int ax, int cx)
 {
   __asm__ ("cpuid" : "=a"(info[0]), "=b" (info[1]), "=c"(info[2]), "=d"(info[3]) : "a"(ax), "c"(cx));
@@ -26,7 +26,7 @@ static inline void __cpuid(int info[4], int ax)
 }
 #endif
 
-#ifdef __aarch64__
+#if defined(__aarch64__) || defined(__arm64ec__)
 typedef enum _tag_ARM64INTR_BARRIER_TYPE
 {
     _ARM64_BARRIER_OSHLD  = 0x1,
@@ -58,7 +58,7 @@ typedef enum _tag_ARMINTR_BARRIER_TYPE
 } _ARMINTR_BARRIER_TYPE;
 #endif
 
-#if defined(_MSC_VER) && (defined(__arm__) || defined(__aarch64__))
+#if defined(_MSC_VER) && (defined(__arm__) || defined(__aarch64__) || defined(__arm64ec__))
 
 void __dmb(unsigned int);
 
