@@ -196,7 +196,7 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
 {
     struct wayland_surface *surface = data->wayland_surface;
     uint32_t window_state;
-    struct wayland_surface_config *conf;
+    BOOL processing_config;
 
     pthread_mutex_lock(&surface->mutex);
 
@@ -206,23 +206,33 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
         (NtUserGetWindowLongW(surface->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
         WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
 
-    conf = surface->processing.serial ? &surface->processing : &surface->current;
+    processing_config = surface->processing.serial &&
+                        !surface->processing.processed;
 
-    TRACE("hwnd=%p window_state=%#x conf->state=%#x\n",
-          data->hwnd, window_state, conf->state);
+    TRACE("hwnd=%p window_state=%#x %s->state=%#x\n",
+          data->hwnd, window_state,
+          processing_config ? "processing" : "current",
+          processing_config ? surface->processing.state : surface->current.state);
 
-    if ((window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-       !(conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+    /* If we are not processing a compositor requested config, use the
+     * window state to determine and update the Wayland state. */
+    if (!processing_config)
     {
-        xdg_toplevel_set_maximized(surface->xdg_toplevel);
+        if ((window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+           !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+        {
+            xdg_toplevel_set_maximized(surface->xdg_toplevel);
+        }
+        else if (!(window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+                 (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+        {
+            xdg_toplevel_unset_maximized(surface->xdg_toplevel);
+        }
     }
-    else if (!(window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-             (conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+    else
     {
-        xdg_toplevel_unset_maximized(surface->xdg_toplevel);
+        surface->processing.processed = TRUE;
     }
-
-    conf->processed = TRUE;
 
 out:
     pthread_mutex_unlock(&surface->mutex);
