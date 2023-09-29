@@ -4814,6 +4814,7 @@ static void test_effect_state_group_defaults(void)
     ID3D10EffectPass *pass;
     ID3D10Effect *effect;
     ID3D10Device *device;
+    unsigned int idx;
     ULONG refcount;
     HRESULT hr;
 
@@ -4851,10 +4852,8 @@ static void test_effect_state_group_defaults(void)
     ok(sampler_desc.MaxAnisotropy == 16, "Got unexpected MaxAnisotropy %#x.\n", sampler_desc.MaxAnisotropy);
     ok(sampler_desc.ComparisonFunc == D3D10_COMPARISON_NEVER, "Got unexpected ComparisonFunc %#x.\n",
             sampler_desc.ComparisonFunc);
-    ok(sampler_desc.BorderColor[0] == 0.0f, "Got unexpected BorderColor[0] %.8e.\n", sampler_desc.BorderColor[0]);
-    ok(sampler_desc.BorderColor[1] == 0.0f, "Got unexpected BorderColor[1] %.8e.\n", sampler_desc.BorderColor[1]);
-    ok(sampler_desc.BorderColor[2] == 0.0f, "Got unexpected BorderColor[2] %.8e.\n", sampler_desc.BorderColor[2]);
-    ok(sampler_desc.BorderColor[3] == 0.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(sampler_desc.BorderColor); ++idx)
+        ok(sampler_desc.BorderColor[idx] == 0.0f, "Got unexpected BorderColor[%u] %.8e.\n", idx, sampler_desc.BorderColor[idx]);
     ok(sampler_desc.MinLOD == 0.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
     ok(sampler_desc.MaxLOD == FLT_MAX, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
 
@@ -4934,10 +4933,8 @@ static void test_effect_state_group_defaults(void)
     ok(!pass_desc.pIAInputSignature, "Got unexpected pIAInputSignature %p.\n", pass_desc.pIAInputSignature);
     ok(pass_desc.StencilRef == 0, "Got unexpected StencilRef %#x.\n", pass_desc.StencilRef);
     ok(pass_desc.SampleMask == 0, "Got unexpected SampleMask %#x.\n", pass_desc.SampleMask);
-    ok(pass_desc.BlendFactor[0] == 0.0f, "Got unexpected BlendFactor[0] %.8e.\n", pass_desc.BlendFactor[0]);
-    ok(pass_desc.BlendFactor[1] == 0.0f, "Got unexpected BlendFactor[1] %.8e.\n", pass_desc.BlendFactor[1]);
-    ok(pass_desc.BlendFactor[2] == 0.0f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
-    ok(pass_desc.BlendFactor[3] == 0.0f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(pass_desc.BlendFactor); ++idx)
+        ok(pass_desc.BlendFactor[idx] == 0.0f, "Got unexpected BlendFactor[%u] %.8e.\n", idx, pass_desc.BlendFactor[idx]);
 
     effect->lpVtbl->Release(effect);
 
@@ -7828,6 +7825,7 @@ static void test_effect_dynamic_numeric_field(void)
     float blend_factor[4];
     ID3D10Effect *effect;
     ID3D10Device *device;
+    unsigned int idx;
     ULONG refcount;
     HRESULT hr;
 
@@ -7914,10 +7912,8 @@ static void test_effect_dynamic_numeric_field(void)
     ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
     ok(stencil_ref == 0x4, "Unexpected stencil ref value %#x.\n", stencil_ref);
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
-    ok(blend_factor[0] == 0.123f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 0.123f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 0.123f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 0.123f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 0.123f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Unexpected sample mask %#x.\n", sample_mask);
 
     effect->lpVtbl->Release(effect);
@@ -8711,10 +8707,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 0.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 0.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 0.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 0.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 0.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     f[0] = 1.0f; f[1] = 2.0f; f[2] = 3.0f; f[3] = 4.0f;
@@ -8800,10 +8794,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == get_frc(f[0]), "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == get_frc(f[1]), "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == get_frc(f[2]), "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == get_frc(f[3]), "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == get_frc(f[idx]), "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* Mutable state objects. */
@@ -8854,10 +8846,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 0.3f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 0.3f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 0.3f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 0.3f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 0.3f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* udiv */
@@ -8874,10 +8864,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == UINT_MAX, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == UINT_MAX, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == UINT_MAX, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == UINT_MAX, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == UINT_MAX, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* movc */
@@ -8895,10 +8883,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 2.2f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 2.2f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 2.2f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 2.2f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 2.2f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     f[0] = 0.1f;
@@ -8912,10 +8898,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 0.1f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 0.1f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 0.1f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 0.1f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 0.1f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* umin/umax */
@@ -8932,10 +8916,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 2.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 2.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 2.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 2.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 2.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     pass = t->lpVtbl->GetPassByName(t, "p12");
@@ -8951,10 +8933,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 5.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 5.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 5.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 5.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 5.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* imin */
@@ -8971,10 +8951,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 3.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 3.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 3.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 3.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 3.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* iadd */
@@ -8991,10 +8969,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 8.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 8.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 8.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 8.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 8.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* asin */
@@ -9068,10 +9044,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 2.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 2.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 2.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 2.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 2.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* Signed integer comparison. */
@@ -9090,10 +9064,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 1.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 1.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 1.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 1.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 1.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     i[0] = 2;
@@ -9108,10 +9080,8 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    ok(blend_factor[0] == 2.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
-    ok(blend_factor[1] == 2.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
-    ok(blend_factor[2] == 2.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
-    ok(blend_factor[3] == 2.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
+        ok(blend_factor[idx] == 2.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* Unsigned integer comparison. */
