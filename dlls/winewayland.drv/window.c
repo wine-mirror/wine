@@ -153,9 +153,28 @@ static void wayland_win_data_release(struct wayland_win_data *data)
 static void wayland_win_data_get_config(struct wayland_win_data *data,
                                         struct wayland_window_config *conf)
 {
+    enum wayland_surface_config_state window_state = 0;
+    DWORD style;
+
     conf->rect = data->window_rect;
-    conf->state = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
-                   WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
+    style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
+
+    TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
+
+    /* The fullscreen state is implied by the window position and style. */
+    if (NtUserIsWindowRectFullScreen(&conf->rect))
+    {
+        if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
+            window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
+        else if (!(style & WS_MINIMIZE))
+            window_state |= WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN;
+    }
+    else if (style & WS_MAXIMIZE)
+    {
+        window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
+    }
+
+    conf->state = window_state;
 }
 
 static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
@@ -227,15 +246,28 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
      * window state to determine and update the Wayland state. */
     if (!processing_config)
     {
+         /* First do all state unsettings, before setting new state. Some
+          * Wayland compositors misbehave if the order is reversed. */
+        if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+        {
+            xdg_toplevel_unset_maximized(surface->xdg_toplevel);
+        }
+        if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
+        {
+            xdg_toplevel_unset_fullscreen(surface->xdg_toplevel);
+        }
+
         if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
            !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
         {
             xdg_toplevel_set_maximized(surface->xdg_toplevel);
         }
-        else if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-                 (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+        if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
+           !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
         {
-            xdg_toplevel_unset_maximized(surface->xdg_toplevel);
+            xdg_toplevel_set_fullscreen(surface->xdg_toplevel, NULL);
         }
     }
     else
@@ -353,7 +385,7 @@ static void wayland_configure_window(HWND hwnd)
 {
     struct wayland_surface *surface;
     INT width, height;
-    UINT flags;
+    UINT flags = 0;
     uint32_t state;
     DWORD style;
     BOOL needs_enter_size_move = FALSE;
@@ -394,6 +426,14 @@ static void wayland_configure_window(HWND hwnd)
         needs_exit_size_move = TRUE;
     }
 
+    /* Transitions between normal/max/fullscreen may entail a frame change. */
+    if ((state ^ surface->current.state) &
+        (WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED |
+         WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
+    {
+        flags |= SWP_FRAMECHANGED;
+    }
+
     pthread_mutex_unlock(&surface->mutex);
 
     TRACE("processing=%dx%d,%#x\n", width, height, state);
@@ -401,20 +441,19 @@ static void wayland_configure_window(HWND hwnd)
     if (needs_enter_size_move) send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
     if (needs_exit_size_move) send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
-    flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
+    flags |= SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
     if (width == 0 || height == 0) flags |= SWP_NOSIZE;
 
     style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE))
-    {
         NtUserSetWindowLong(hwnd, GWL_STYLE, style ^ WS_MAXIMIZE, FALSE);
-        flags |= SWP_FRAMECHANGED;
-    }
 
-    /* The Wayland maximized state is very strict about surface size, so don't
-     * let the application override it. The tiled state is not as strict,
-     * but it indicates a strong size preference, so try to respect it. */
+    /* The Wayland maximized and fullscreen states are very strict about
+     * surface size, so don't let the application override it. The tiled state
+     * is not as strict, but it indicates a strong size preference, so try to
+     * respect it. */
     if (state & (WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED |
+                 WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN |
                  WAYLAND_SURFACE_CONFIG_STATE_TILED))
     {
         flags |= SWP_NOSENDCHANGING;

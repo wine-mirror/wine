@@ -97,6 +97,9 @@ static void xdg_toplevel_handle_configure(void *data,
         case XDG_TOPLEVEL_STATE_TILED_BOTTOM:
             config_state |= WAYLAND_SURFACE_CONFIG_STATE_TILED;
             break;
+        case XDG_TOPLEVEL_STATE_FULLSCREEN:
+            config_state |= WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN;
+            break;
         default:
             break;
         }
@@ -334,6 +337,13 @@ static BOOL wayland_surface_configure_is_compatible(struct wayland_surface_confi
     /* The maximized state requires the configured size. */
     if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
         (width != conf->width || height != conf->height))
+    {
+        return FALSE;
+    }
+
+    /* The fullscreen state requires at most the configured size. */
+    if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
+        (width > conf->width || height > conf->height))
     {
         return FALSE;
     }
