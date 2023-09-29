@@ -10102,34 +10102,32 @@ fi
         LDDLLFLAGS="-fPIC" ;;
     esac
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-z,defs" >&5
-printf %s "checking whether the compiler supports -Wl,-z,defs... " >&6; }
-if test ${ac_cv_cflags__Wl__z_defs+y}
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether -Wl,-z,defs works correctly" >&5
+printf %s "checking whether -Wl,-z,defs works correctly... " >&6; }
+if test ${ac_cv_wl_z_defs+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-z,defs"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  ac_save_CFLAGS="$CFLAGS"
+                    CFLAGS="$CFLAGS $UNIXDLLFLAGS $UNIXLDFLAGS -Wl,-z,defs"
+                                        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
+extern char **environ; char **envp; void myfunc(void) { envp = environ; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_cflags__Wl__z_defs=yes
+  ac_cv_wl_z_defs=yes
 else $as_nop
-  ac_cv_cflags__Wl__z_defs=no
+  ac_cv_wl_z_defs=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
+                    CFLAGS=$ac_save_cflags
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__z_defs" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__z_defs" >&6; }
-if test "x$ac_cv_cflags__Wl__z_defs" = xyes
-then :
-  UNIXLDFLAGS="$UNIXLDFLAGS -Wl,-z,defs"
-fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_wl_z_defs" >&5
+printf "%s\n" "$ac_cv_wl_z_defs" >&6; }
+    test $ac_cv_wl_z_defs != yes || as_fn_append UNIXLDFLAGS " -Wl,-z,defs"
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--export-dynamic" >&5
 printf %s "checking whether the compiler supports -Wl,--export-dynamic... " >&6; }
 if test ${ac_cv_cflags__Wl___export_dynamic+y}
