@@ -66,6 +66,13 @@ void __dmb(unsigned int);
 
 #endif
 
+#if defined(_MSC_VER) && (defined(__aarch64__) || defined(__arm64ec__))
+
+unsigned __int64 __getReg(int);
+#pragma intrinsic(__getReg)
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
