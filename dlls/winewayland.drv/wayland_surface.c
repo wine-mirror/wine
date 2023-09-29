@@ -334,21 +334,97 @@ static BOOL wayland_surface_configure_is_compatible(struct wayland_surface_confi
     /* We require the same state. */
     if ((state & mask) != (conf->state & mask)) return FALSE;
 
-    /* The maximized state requires the configured size. */
+    /* The maximized state requires the configured size. During surface
+     * reconfiguration we can use surface geometry to provide smaller areas
+     * from larger sizes, so only smaller sizes are incompatible. */
     if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-        (width != conf->width || height != conf->height))
+        (width < conf->width || height < conf->height))
     {
         return FALSE;
     }
 
-    /* The fullscreen state requires at most the configured size. */
-    if ((conf->state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-        (width > conf->width || height > conf->height))
-    {
-        return FALSE;
-    }
+    /* The fullscreen state requires a size smaller or equal to the configured
+     * size. If we have a larger size, we can use surface geometry during
+     * surface reconfiguration to provide the smaller size, so we are always
+     * compatible with a fullscreen state. */
 
     return TRUE;
+}
+
+/**********************************************************************
+ *          wayland_surface_get_rect_in_monitor
+ *
+ * Gets the largest rectangle within a surface's window (in window coordinates)
+ * that is visible in a monitor.
+ */
+static void wayland_surface_get_rect_in_monitor(struct wayland_surface *surface,
+                                                RECT *rect)
+{
+    HMONITOR hmonitor;
+    MONITORINFO mi;
+
+    mi.cbSize = sizeof(mi);
+    if (!(hmonitor = NtUserMonitorFromRect(&surface->window.rect, 0)) ||
+        !NtUserGetMonitorInfo(hmonitor, (MONITORINFO *)&mi))
+    {
+        SetRectEmpty(rect);
+        return;
+    }
+
+    intersect_rect(rect, &mi.rcMonitor, &surface->window.rect);
+    OffsetRect(rect, -surface->window.rect.left, -surface->window.rect.top);
+}
+
+/**********************************************************************
+ *          wayland_surface_reconfigure_geometry
+ *
+ * Sets the xdg_surface geometry
+ */
+static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface)
+{
+    int width, height;
+    RECT rect;
+
+    width = surface->window.rect.right - surface->window.rect.left;
+    height = surface->window.rect.bottom - surface->window.rect.top;
+
+    /* If the window size is bigger than the current state accepts, use the
+     * largest visible (from Windows' perspective) subregion of the window. */
+    if ((surface->current.state & (WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED |
+                                   WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN)) &&
+        (width > surface->current.width || height > surface->current.height))
+    {
+        wayland_surface_get_rect_in_monitor(surface, &rect);
+
+        /* If the window rect in the monitor is smaller than required,
+         * fall back to an appropriately sized rect at the top-left. */
+        if ((surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+            (rect.right - rect.left < surface->current.width ||
+             rect.bottom - rect.top < surface->current.height))
+        {
+            SetRect(&rect, 0, 0, surface->current.width, surface->current.height);
+        }
+        else
+        {
+            rect.right = min(rect.right, rect.left + surface->current.width);
+            rect.bottom = min(rect.bottom, rect.top + surface->current.height);
+        }
+        TRACE("Window is too large for Wayland state, using subregion\n");
+    }
+    else
+    {
+        SetRect(&rect, 0, 0, width, height);
+    }
+
+    TRACE("hwnd=%p geometry=%s\n", surface->hwnd, wine_dbgstr_rect(&rect));
+
+    if (!IsRectEmpty(&rect))
+    {
+        xdg_surface_set_window_geometry(surface->xdg_surface,
+                                        rect.left, rect.top,
+                                        rect.right - rect.left,
+                                        rect.bottom - rect.top);
+    }
 }
 
 /**********************************************************************
@@ -402,6 +478,8 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     {
         return FALSE;
     }
+
+    wayland_surface_reconfigure_geometry(surface);
 
     return TRUE;
 }
