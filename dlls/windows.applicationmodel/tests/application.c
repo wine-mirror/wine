@@ -28,7 +28,7 @@
 #include "winbase.h"
 #include "initguid.h"
 #include "winstring.h"
-#include "pathcch.h"
+#include "shlwapi.h"
 
 #include "roapi.h"
 
@@ -113,8 +113,7 @@ static void test_PackageStatics(void)
     hr = IStorageItem_get_Path( storage_item, &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     GetModuleFileNameW( NULL, buffer, MAX_PATH );
-    hr = PathCchRemoveFileSpec( buffer, ARRAY_SIZE(buffer) );
-    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    PathRemoveFileSpecW( buffer );
     hr = WindowsCreateString( buffer, wcslen(buffer), &wine_str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = WindowsCompareStringOrdinal( str, wine_str, &res );
