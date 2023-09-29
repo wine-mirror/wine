@@ -4161,15 +4161,20 @@ static void virtual_release_address_space(void)
  */
 void virtual_set_large_address_space(void)
 {
-#ifdef _WIN64
-    if (is_wow64())
-        user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
-    else
-        free_reserved_memory( 0, (char *)0x7ffe0000 );
-#else
-    if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
-    free_reserved_memory( (char *)0x80000000, address_space_limit );
+    if (is_win64)
+    {
+        if (is_wow64())
+            user_space_wow_limit = ((main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) ? limit_4g : limit_2g) - 1;
+#ifndef __APPLE__  /* don't free the zerofill section on macOS */
+        else
+            free_reserved_memory( 0, (char *)0x7ffe0000 );
 #endif
+    }
+    else
+    {
+        if (!(main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
+        free_reserved_memory( (char *)0x80000000, address_space_limit );
+    }
     user_space_limit = working_set_limit = address_space_limit;
 }
 
