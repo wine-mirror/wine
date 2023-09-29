@@ -60,7 +60,8 @@ enum wayland_window_message
 enum wayland_surface_config_state
 {
     WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED = (1 << 0),
-    WAYLAND_SURFACE_CONFIG_STATE_RESIZING = (1 << 1)
+    WAYLAND_SURFACE_CONFIG_STATE_RESIZING = (1 << 1),
+    WAYLAND_SURFACE_CONFIG_STATE_TILED = (1 << 2)
 };
 
 struct wayland_cursor

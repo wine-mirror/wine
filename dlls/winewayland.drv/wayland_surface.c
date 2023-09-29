@@ -91,6 +91,12 @@ static void xdg_toplevel_handle_configure(void *data,
         case XDG_TOPLEVEL_STATE_RESIZING:
             config_state |= WAYLAND_SURFACE_CONFIG_STATE_RESIZING;
             break;
+        case XDG_TOPLEVEL_STATE_TILED_LEFT:
+        case XDG_TOPLEVEL_STATE_TILED_RIGHT:
+        case XDG_TOPLEVEL_STATE_TILED_TOP:
+        case XDG_TOPLEVEL_STATE_TILED_BOTTOM:
+            config_state |= WAYLAND_SURFACE_CONFIG_STATE_TILED;
+            break;
         default:
             break;
         }

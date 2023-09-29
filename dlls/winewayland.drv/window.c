@@ -401,8 +401,13 @@ static void wayland_configure_window(HWND hwnd)
     }
 
     /* The Wayland maximized state is very strict about surface size, so don't
-     * let the application override it. */
-    if (state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) flags |= SWP_NOSENDCHANGING;
+     * let the application override it. The tiled state is not as strict,
+     * but it indicates a strong size preference, so try to respect it. */
+    if (state & (WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED |
+                 WAYLAND_SURFACE_CONFIG_STATE_TILED))
+    {
+        flags |= SWP_NOSENDCHANGING;
+    }
 
     NtUserSetWindowPos(hwnd, 0, 0, 0, width, height, flags);
 }
