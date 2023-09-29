@@ -555,6 +555,228 @@ static HRESULT test_loader_stream_create(IStream *stream, IDirectMusicLoader *lo
     return S_OK;
 }
 
+struct test_track
+{
+    /* Implementing IDirectMusicTrack8 will cause native to call PlayEx */
+    IDirectMusicTrack IDirectMusicTrack_iface;
+    LONG ref;
+
+    DWORD data;
+    BOOL inserted;
+    BOOL initialized;
+    BOOL downloaded;
+    BOOL playing;
+    HANDLE playing_event;
+};
+
+#define check_track_state(track, state, value)                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        DWORD ret = impl_from_IDirectMusicTrack(track)->state;                                    \
+        ok(ret == (value), "got %#lx\n", ret);                                                     \
+    } while (0);
+
+static inline struct test_track *impl_from_IDirectMusicTrack(IDirectMusicTrack *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_track, IDirectMusicTrack_iface);
+}
+
+static HRESULT WINAPI test_track_QueryInterface(IDirectMusicTrack *iface, REFIID riid,
+        void **ret_iface)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown)
+            || IsEqualIID(riid, &IID_IDirectMusicTrack))
+    {
+        *ret_iface = &This->IDirectMusicTrack_iface;
+        IDirectMusicTrack_AddRef(&This->IDirectMusicTrack_iface);
+        return S_OK;
+    }
+
+    ok(IsEqualGUID(riid, &IID_IDirectMusicTrack8) || IsEqualGUID(riid, &IID_IPersistStream),
+            "unexpected %s %p %s\n", __func__, This, debugstr_guid(riid));
+    *ret_iface = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_track_AddRef(IDirectMusicTrack *iface)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI test_track_Release(IDirectMusicTrack *iface)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+    {
+        CloseHandle(This->playing_event);
+        free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI test_track_Init(IDirectMusicTrack *iface, IDirectMusicSegment *segment)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    This->inserted = TRUE;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_track_InitPlay(IDirectMusicTrack *iface, IDirectMusicSegmentState *segment_state,
+        IDirectMusicPerformance *performance, void **state_data, DWORD track_id, DWORD segment_flags)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    ok(!!segment_state, "got %p\n", segment_state);
+    ok(!!performance, "got %p\n", performance);
+    ok(!!state_data, "got %p\n", state_data);
+    ok(!!track_id, "got %lu\n", track_id);
+    ok(!segment_flags, "got %#lx\n", segment_flags);
+    This->initialized = TRUE;
+
+    *state_data = &This->data;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_track_EndPlay(IDirectMusicTrack *iface, void *state_data)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    ok(state_data == &This->data, "got %p\n", state_data);
+    This->playing = FALSE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_track_Play(IDirectMusicTrack *iface, void *state_data,
+        MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD segment_flags,
+        IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state, DWORD track_id)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    ok(state_data == &This->data, "got %p\n", state_data);
+    ok(start_time == 50, "got %lu\n", start_time);
+    ok(end_time == 100, "got %lu\n", end_time);
+    ok(time_offset < 0, "got %lu\n", time_offset);
+    ok(segment_flags == (DMUS_TRACKF_DIRTY|DMUS_TRACKF_START|DMUS_TRACKF_SEEK),
+            "got %#lx\n", segment_flags);
+    ok(!!performance, "got %p\n", performance);
+    ok(!!segment_state, "got %p\n", segment_state);
+    ok(!!track_id, "got %lu\n", track_id);
+    This->playing = TRUE;
+    SetEvent(This->playing_event);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_track_GetParam(IDirectMusicTrack *iface, REFGUID type, MUSIC_TIME time,
+        MUSIC_TIME *next, void *param)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    ok(0, "unexpected %s %p\n", __func__, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_track_SetParam(IDirectMusicTrack *iface, REFGUID type, MUSIC_TIME time, void *param)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
+    {
+        This->downloaded = TRUE;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(type, &GUID_UnloadFromAudioPath))
+    {
+        This->downloaded = FALSE;
+        return S_OK;
+    }
+
+    ok(0, "unexpected %s %p %s %lu %p\n", __func__, This, debugstr_guid(type), time, param);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_track_IsParamSupported(IDirectMusicTrack *iface, REFGUID type)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+
+    if (IsEqualGUID(type, &GUID_DownloadToAudioPath)) return S_OK;
+    if (IsEqualGUID(type, &GUID_UnloadFromAudioPath)) return S_OK;
+    if (IsEqualGUID(type, &GUID_TimeSignature)) return DMUS_E_TYPE_UNSUPPORTED;
+    if (IsEqualGUID(type, &GUID_TempoParam)) return DMUS_E_TYPE_UNSUPPORTED;
+
+    ok(broken(type->Data1 == 0xe8dbd832), /* native also checks some unknown parameter */
+            "unexpected %s %p %s\n", __func__, This, debugstr_guid(type));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_track_AddNotificationType(IDirectMusicTrack *iface, REFGUID type)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    ok(0, "unexpected %s %p\n", __func__, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_track_RemoveNotificationType(IDirectMusicTrack *iface, REFGUID type)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    ok(0, "unexpected %s %p\n", __func__, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_track_Clone(IDirectMusicTrack *iface, MUSIC_TIME start_time,
+        MUSIC_TIME end_time, IDirectMusicTrack **ret_track)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    ok(0, "unexpected %s %p\n", __func__, This);
+    return E_NOTIMPL;
+}
+
+static const IDirectMusicTrackVtbl test_track_vtbl =
+{
+    test_track_QueryInterface,
+    test_track_AddRef,
+    test_track_Release,
+    test_track_Init,
+    test_track_InitPlay,
+    test_track_EndPlay,
+    test_track_Play,
+    test_track_GetParam,
+    test_track_SetParam,
+    test_track_IsParamSupported,
+    test_track_AddNotificationType,
+    test_track_RemoveNotificationType,
+    test_track_Clone,
+};
+
+static HRESULT test_track_create(IDirectMusicTrack **ret_iface)
+{
+    struct test_track *track;
+
+    *ret_iface = NULL;
+    if (!(track = calloc(1, sizeof(*track)))) return E_OUTOFMEMORY;
+    track->IDirectMusicTrack_iface.lpVtbl = &test_track_vtbl;
+    track->ref = 1;
+
+    track->playing_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!track->playing_event, "CreateEventW failed, error %lu\n", GetLastError());
+
+    *ret_iface = &track->IDirectMusicTrack_iface;
+    return S_OK;
+}
+
+static DWORD test_track_wait_playing(IDirectMusicTrack *iface, DWORD timeout)
+{
+    struct test_track *This = impl_from_IDirectMusicTrack(iface);
+    return WaitForSingleObject(This->playing_event, timeout);
+}
+
 static void create_performance(IDirectMusicPerformance8 **performance, IDirectMusic **dmusic,
         IDirectSound **dsound, BOOL set_cooplevel)
 {
@@ -3672,6 +3894,226 @@ static void test_connect_to_collection(void)
     IDirectMusicCollection_Release(collection);
 }
 
+static void test_segment_state(void)
+{
+    static const DWORD message_types[] =
+    {
+        DMUS_PMSGT_DIRTY,
+        DMUS_PMSGT_NOTIFICATION,
+        DMUS_PMSGT_WAVE,
+    };
+    IDirectMusicSegmentState *state, *tmp_state;
+    IDirectMusicSegment *segment, *tmp_segment;
+    IDirectMusicPerformance *performance;
+    IDirectMusicTrack *track;
+    IDirectMusicGraph *graph;
+    IDirectMusicTool *tool;
+    DWORD value, ret;
+    MUSIC_TIME time;
+    HRESULT hr;
+
+    hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = test_track_create(&track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance, (void **)&performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void **)&graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_SetGraph(performance, graph);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicGraph_Release(graph);
+
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_track_state(track, inserted, FALSE);
+    hr = IDirectMusicSegment_InsertTrack(segment, track, 1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_track_state(track, inserted, TRUE);
+
+    check_track_state(track, downloaded, FALSE);
+    hr = IDirectMusicSegment8_Download((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine check_track_state(track, downloaded, TRUE);
+    hr = IDirectMusicSegment8_Unload((IDirectMusicSegment8 *)segment, (IUnknown *)performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    check_track_state(track, downloaded, FALSE);
+
+
+    /* by default the segment length is 1 */
+
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegment_GetLength(segment, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 1, "got %lu\n", time);
+    hr = IDirectMusicSegment_SetStartPoint(segment, 50);
+    ok(hr == DMUS_E_OUT_OF_RANGE, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetRepeats(segment, 10);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 70);
+    ok(hr == DMUS_E_OUT_OF_RANGE, "got %#lx\n", hr);
+
+    /* Setting a larger length will cause PlayEx to be called multiple times,
+     * as native splits the segment into chunks and play each chunk separately */
+    hr = IDirectMusicSegment_SetLength(segment, 100);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetStartPoint(segment, 50);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetRepeats(segment, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    /* InitPlay returns a dummy segment state */
+
+    state = (void *)0xdeadbeef;
+    hr = IDirectMusicSegment_InitPlay(segment, &state, performance, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(state != NULL, "got %p\n", state);
+    ok(state != (void *)0xdeadbeef, "got %p\n", state);
+    check_track_state(track, initialized, FALSE);
+
+    tmp_segment = (void *)0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetSegment(state, &tmp_segment);
+    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+    todo_wine ok(tmp_segment == NULL, "got %p\n", tmp_segment);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 0, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetRepeats(state, &value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartTime(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == -1, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetSeek(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 0, "got %#lx\n", time);
+
+
+    /* PlaySegment returns a different, genuine segment state */
+
+    hr = IDirectMusicPerformance_Init(performance, NULL, 0, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_track_state(track, downloaded, FALSE);
+    check_track_state(track, initialized, FALSE);
+    check_track_state(track, playing, FALSE);
+
+    tmp_state = state;
+    state = (void *)0xdeadbeef;
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 20, &state);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(state != NULL, "got %p\n", state);
+    ok(state != (void *)0xdeadbeef, "got %p\n", state);
+    ok(state != tmp_state, "got %p\n", state);
+    IDirectMusicSegmentState_Release(tmp_state);
+
+    check_track_state(track, downloaded, FALSE);
+    todo_wine check_track_state(track, initialized, TRUE);
+
+
+    /* The track can be removed from the segment */
+    hr = IDirectMusicSegment_RemoveTrack(segment, track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+
+    /* This might be timing dependent and if PlaySegment is already
+     * late, the tracks are played synchronously and right away.
+     */
+    check_track_state(track, playing, FALSE);
+
+    ret = test_track_wait_playing(track, 50);
+    todo_wine ok(ret == 0, "got %#lx\n", ret);
+
+
+    tmp_segment = (void *)0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetSegment(state, &tmp_segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(tmp_segment == segment, "got %p\n", tmp_segment);
+    if (tmp_segment != (void *)0xdeadbeef) IDirectMusicSegment_Release(tmp_segment);
+
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 50, "got %lu\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetRepeats(state, &value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartTime(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 20, "got %#lx\n", time);
+    time = 0xdeadbeef;
+
+    /* The seek value is also dependent on whether the tracks are playing.
+     * It is initially 0, then start_point right before playing, then length.
+     */
+    hr = IDirectMusicSegmentState_GetSeek(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 100, "got %#lx\n", time);
+
+    /* changing the segment values doesn't change the segment state */
+
+    hr = IDirectMusicSegment_SetStartPoint(segment, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetRepeats(segment, 10);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 50, 70);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 50, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetRepeats(state, &value);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetStartTime(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 20, "got %#lx\n", time);
+    time = 0xdeadbeef;
+    hr = IDirectMusicSegmentState_GetSeek(state, &time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    todo_wine ok(time == 100, "got %#lx\n", time);
+
+    IDirectMusicSegment_Release(segment);
+
+
+    check_track_state(track, downloaded, FALSE);
+    todo_wine check_track_state(track, initialized, TRUE);
+    todo_wine check_track_state(track, playing, TRUE);
+
+    hr = IDirectMusicPerformance_CloseDown(performance);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_track_state(track, downloaded, FALSE);
+    todo_wine check_track_state(track, initialized, TRUE);
+    check_track_state(track, playing, FALSE);
+
+
+    IDirectMusicPerformance_Release(performance);
+    IDirectMusicTrack_Release(track);
+    IDirectMusicTool_Release(tool);
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -3708,6 +4150,7 @@ START_TEST(dmime)
     test_sequence_track();
     test_band_track_play();
     test_connect_to_collection();
+    test_segment_state();
 
     CoUninitialize();
 }
