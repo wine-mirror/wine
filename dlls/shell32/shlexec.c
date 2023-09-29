@@ -428,8 +428,14 @@ static BOOL SHELL_TryAppPathW( LPCWSTR szName, LPWSTR lpResult, WCHAR **env)
     BOOL found = FALSE;
 
     if (env) *env = NULL;
-    lstrcpyW(buffer, L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\");
-    lstrcatW(buffer, szName);
+    wcscpy(buffer, L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\");
+    if (wcslen(buffer) + wcslen(szName) + 1 > ARRAY_SIZE(buffer))
+    {
+        WARN("Name is too big.\n");
+        return FALSE;
+    }
+
+    wcscat(buffer, szName);
     res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, buffer, 0, KEY_READ, &hkApp);
     if (res) goto end;
 
