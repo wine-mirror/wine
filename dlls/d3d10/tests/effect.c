@@ -26,6 +26,22 @@
 
 #define D3DERR_INVALIDCALL 0x8876086c
 
+static void set_vec4(float *v, float x, float y, float z, float w)
+{
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
+}
+
+static void set_int4(int *v, int x, int y, int z, int w)
+{
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
+}
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
@@ -5380,7 +5396,7 @@ static void test_vector_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VA
     unsigned int i;
     HRESULT hr;
 
-    set_f[0] = 1.0f; set_f[1] = 2.0f; set_f[2] = 3.0f; set_f[3] = 4.0f;
+    set_vec4(set_f, 1.0f, 2.0f, 3.0f, 4.0f);
     hr = var->lpVtbl->SetFloatVector(var, set_f);
     ok(hr == S_OK, "Variable %s, got unexpected hr %#lx.\n", name, hr);
 
@@ -5405,7 +5421,7 @@ static void test_vector_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VA
     for (i = 0; i < components; ++i)
         ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
 
-    set_i[0] = 5; set_i[1] = 6; set_i[2] = 7; set_i[3] = 8;
+    set_int4(set_i, 5, 6, 7, 8);
     hr = var->lpVtbl->SetIntVector(var, set_i);
     ok(hr == S_OK, "Variable %s, got unexpected hr %#lx.\n", name, hr);
 
@@ -8008,22 +8024,6 @@ static DWORD fx_test_index_expression[] =
     0x00000005, 0x00000488, 0x00000008, 0x00000000, 0x00000005, 0x00000580,
 };
 
-static void set_vec4(float *v, float x, float y, float z, float w)
-{
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-    v[3] = w;
-}
-
-static void set_int4(int *v, int x, int y, int z, int w)
-{
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-    v[3] = w;
-}
-
 static void test_effect_index_expression(void)
 {
     D3D10_PASS_SHADER_DESC shader_desc;
@@ -8850,10 +8850,10 @@ static void test_effect_value_expression(void)
         ok(blend_factor[idx] == 0.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
-    f[0] = 1.0f; f[1] = 2.0f; f[2] = 3.0f; f[3] = 4.0f;
+    set_vec4(f, 1.0f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    f[0] = 2.0f; f[1] = 1.1f; f[2] = 0.1f; f[3] = -3.0f;
+    set_vec4(f, 2.0f, 1.1f, 0.1f, -3.0f);
     hr = g_var2->lpVtbl->SetFloatVector(g_var2, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -8886,7 +8886,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p5");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 1.0f; f[1] = 2.0f; f[2] = 3.0f; f[3] = 4.0f;
+    set_vec4(f, 1.0f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -8905,7 +8905,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p6");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 2.0f; f[1] = 3.0f; f[2] = 4.0f; f[3] = 5.0f;
+    set_vec4(f, 2.0f, 3.0f, 4.0f, 5.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -8924,7 +8924,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p7");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.0f; f[1] = 3.1f; f[2] = -4.2f; f[3] = 0.1f;
+    set_vec4(f, 0.0f, 3.1f, -4.2f, 0.1f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -8941,31 +8941,31 @@ static void test_effect_value_expression(void)
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     ds = v->lpVtbl->AsDepthStencil(v);
 
-    f[0] = 1.0f; f[1] = 2.0f; f[2] = 3.0f; f[3] = 4.0f;
+    set_vec4(f, 1.0f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ds->lpVtbl->GetBackingStore(ds, 0, &ds_desc);
     ok(ds_desc.StencilEnable == 0xffffffff, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
 
-    f[0] = 0.0f;
+    set_vec4(f, 0.0f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ds->lpVtbl->GetBackingStore(ds, 0, &ds_desc);
     ok(!ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
 
-    f[0] = -0.1f;
+    set_vec4(f, -0.1f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ds->lpVtbl->GetBackingStore(ds, 0, &ds_desc);
     ok(ds_desc.StencilEnable == 0xffffffff, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
 
-    f[0] = 0.0f;
+    set_vec4(f, 0.0f, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ds->lpVtbl->GetBackingStore(ds, 0, &ds_desc);
     ok(!ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
 
-    f[0] = NAN;
+    set_vec4(f, NAN, 2.0f, 3.0f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ds->lpVtbl->GetBackingStore(ds, 0, &ds_desc);
@@ -8975,8 +8975,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p8");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = -4.0f;
-    f[1] = -3.0f;
+    set_vec4(f, -4.0f, -3.0f, 3.0f, 4.0f);
     hr = g_var3->lpVtbl->SetFloatVector(g_var3, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -8993,8 +8992,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p9");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 2.0f;
-    f[1] = 0.0f;
+    set_vec4(f, 2.0f, 0.0f, 3.0f, 4.0f);
     hr = g_var3->lpVtbl->SetFloatVector(g_var3, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9011,9 +9009,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p10");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.0f;
-    f[1] = 1.1f;
-    f[2] = 2.2f;
+    set_vec4(f, 0.0f, 1.1f, 2.2f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9026,9 +9022,7 @@ static void test_effect_value_expression(void)
         ok(blend_factor[idx] == 2.2f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
-    f[0] = 0.1f;
-    f[1] = 0.1f;
-    f[2] = 0.2f;
+    set_vec4(f, 0.1f, 0.1f, 0.2f, 4.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9045,8 +9039,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p11");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 3;
-    i[1] = 2;
+    set_int4(i, 3, 2, 0, 0);
     hr = g_var4->lpVtbl->SetIntVector(g_var4, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9062,8 +9055,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p12");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 2;
-    i[1] = 5;
+    set_int4(i, 2, 5, 0, 0);
     hr = g_var4->lpVtbl->SetIntVector(g_var4, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9080,8 +9072,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p13");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 3;
-    i[1] = 5;
+    set_int4(i, 3, 5, 0, 0);
     hr = g_var3->lpVtbl->SetIntVector(g_var3, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9098,8 +9089,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p14");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 3;
-    i[1] = 5;
+    set_int4(i, 3, 5, 0, 0);
     hr = g_var4->lpVtbl->SetIntVector(g_var4, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9116,7 +9106,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p15");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.1234567f;
+    set_vec4(f, 0.1234567f, 0.0f, 0.0f, 0.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9130,7 +9120,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p16");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.1234567f;
+    set_vec4(f, 0.1234567f, 0.0f, 0.0f, 0.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9144,7 +9134,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p17");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.1234567f;
+    set_vec4(f, 0.1234567f, 0.0f, 0.0f, 0.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9158,8 +9148,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p18");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    f[0] = 0.1234567f;
-    f[1] = 0.7654321f;
+    set_vec4(f, 0.1234567f, 0.7654321f, 0.0f, 0.0f);
     hr = g_var->lpVtbl->SetFloatVector(g_var, f);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9173,8 +9162,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p19");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 10;
-    i[1] = 5;
+    set_int4(i, 10, 5, 0, 0);
     hr = g_var3->lpVtbl->SetIntVector(g_var3, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9191,10 +9179,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p20");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 1;
-    i[1] = 5;
-    i[2] = 6;
-    i[3] = 5;
+    set_int4(i, 1, 5, 6, 5);
     hr = g_var3->lpVtbl->SetIntVector(g_var3, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9207,10 +9192,7 @@ static void test_effect_value_expression(void)
         ok(blend_factor[idx] == 1.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
-    i[0] = 2;
-    i[1] = 1;
-    i[2] = 2;
-    i[3] = 5;
+    set_int4(i, 2, 1, 2, 5);
     hr = g_var3->lpVtbl->SetIntVector(g_var3, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9227,10 +9209,7 @@ static void test_effect_value_expression(void)
     pass = t->lpVtbl->GetPassByName(t, "p21");
     ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
 
-    i[0] = 6;
-    i[1] = 5;
-    i[2] = 7;
-    i[3] = 1;
+    set_int4(i, 6, 5, 7, 1);
     hr = g_var4->lpVtbl->SetIntVector(g_var4, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -9243,10 +9222,7 @@ static void test_effect_value_expression(void)
         ok(blend_factor[idx] == 0.0f, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
-    i[0] = 2;
-    i[1] = 5;
-    i[2] = 7;
-    i[3] = 1;
+    set_int4(i, 2, 5, 7, 1);
     hr = g_var4->lpVtbl->SetIntVector(g_var4, i);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
