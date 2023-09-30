@@ -1988,22 +1988,18 @@ xmlUconvWrapper(uconv_t *cd, int toUnicode, unsigned char *out, int *outlen,
         ucnv_convertEx(cd->utf8, cd->uconv, &ucv_out, ucv_out + *outlen,
                        &ucv_in, ucv_in + *inlen, cd->pivot_buf,
                        &cd->pivot_source, &cd->pivot_target,
-                       cd->pivot_buf + ICU_PIVOT_BUF_SIZE, 0, flush, &err);
+                       cd->pivot_buf + ICU_PIVOT_BUF_SIZE, 0, 0, &err);
     } else {
         /* UTF-8 => UTF-16 => encoding */
         ucnv_convertEx(cd->uconv, cd->utf8, &ucv_out, ucv_out + *outlen,
                        &ucv_in, ucv_in + *inlen, cd->pivot_buf,
                        &cd->pivot_source, &cd->pivot_target,
-                       cd->pivot_buf + ICU_PIVOT_BUF_SIZE, 0, flush, &err);
+                       cd->pivot_buf + ICU_PIVOT_BUF_SIZE, 0, 0, &err);
     }
     *inlen = ucv_in - (const char*) in;
     *outlen = ucv_out - (char *) out;
-    if (U_SUCCESS(err)) {
-        /* reset pivot buf if this is the last call for input (flush==TRUE) */
-        if (flush)
-            cd->pivot_source = cd->pivot_target = cd->pivot_buf;
+    if (U_SUCCESS(err))
         return 0;
-    }
     if (err == U_BUFFER_OVERFLOW_ERROR)
         return -1;
     if (err == U_INVALID_CHAR_FOUND || err == U_ILLEGAL_CHAR_FOUND)
@@ -3830,4 +3826,3 @@ static int UTF8ToISO8859_16 (unsigned char* out, int *outlen,
 
 #endif
 #endif
-

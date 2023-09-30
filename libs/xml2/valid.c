@@ -1052,7 +1052,7 @@ xmlCopyDocElementContent(xmlDocPtr doc, xmlElementContentPtr cur) {
 	    if (cur->c1 != NULL)
 	        tmp->c1 = xmlCopyDocElementContent(doc,cur->c1);
 	    if (tmp->c1 != NULL)
-		tmp->c1->parent = ret;
+		tmp->c1->parent = tmp;
 	    prev = tmp;
 	    cur = cur->c2;
 	}
@@ -7153,4 +7153,3 @@ xmlValidGetValidElements(xmlNode *prev, xmlNode *next, const xmlChar **names,
     return(nb_valid_elements);
 }
 #endif /* LIBXML_VALID_ENABLED */
-
