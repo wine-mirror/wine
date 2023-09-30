@@ -288,6 +288,15 @@ static void pres_atan(float **args, unsigned int n, const struct preshader_instr
         retval[i] = atanf(args[0][i]);
 }
 
+static void pres_sqrt(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = sqrtf(args[0][i]);
+}
+
 static void pres_ineg(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     int *arg1 = (int *)args[0];
@@ -680,6 +689,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x10a, "asin", pres_asin },
     { 0x10b, "acos", pres_acos },
     { 0x10c, "atan", pres_atan },
+    { 0x112, "sqrt", pres_sqrt },
     { 0x120, "ineg", pres_ineg },
     { 0x130, "itof", pres_itof },
     { 0x131, "utof", pres_utof },
