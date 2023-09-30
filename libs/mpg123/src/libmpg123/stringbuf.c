@@ -71,8 +71,8 @@ int attribute_align_arg mpg123_resize_string(mpg123_string* sb, size_t new)
 	{
 		char* t;
 		debug("really!");
-		t = (char*) safe_realloc(sb->p, new*sizeof(char));
-		debug1("safe_realloc returned %p", (void*) t); 
+		t = (char*) INT123_safe_realloc(sb->p, new*sizeof(char));
+		debug1("INT123_safe_realloc returned %p", (void*) t);
 		if(t != NULL)
 		{
 			sb->p = t;
@@ -217,23 +217,19 @@ size_t attribute_align_arg mpg123_strlen(mpg123_string *sb, int utf8)
 
 int attribute_align_arg mpg123_chomp_string(mpg123_string *sb)
 {
-	ssize_t i;
 	if(!sb || !sb->fill) return 0;
 
 	/* Ensure that it is zero-terminated. */
-	sb->p[sb->fill-1] = 0;
-	for(i=sb->fill-2; i>=0; --i)
+	char *c = sb->p+sb->fill-1;
+	*c = 0;
+	for(; c >= sb->p; --c)
 	{
-		char *c = sb->p+i;
 		/* Stop at the first proper character. */
 		if(*c && *c != '\r' && *c != '\n') break;
 		else *c = 0;
 	}
-	/* initial fill at least 1, so i at least -1,
-	   +2 means nothing happened for fill=1 .
-	   With i=0, we got one non-null character, fill shall be 2
-	   to accomodate the trailing zero. */
-	sb->fill = (size_t)i+2;
+	// We at least got a trailing zero.
+	sb->fill = (size_t)(c - sb->p + 1) + 1;
 
 	return 1;
 }

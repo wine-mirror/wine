@@ -1,8 +1,11 @@
 /*
-	abi_align: An attempt to avoid breakage because of mixing
-	compilers with different alignment.
+	abi_align: ABI and alignment stuff for library builds.
 
-	copyright 1995-2015 by the mpg123 project
+	Original use was the definitions for avoiding breakage because of mixing
+	compilers with different alignment. Then, the switchery for building
+	DLLs got lumped in.
+
+	copyright 1995-2023 by the mpg123 project
 	free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 
@@ -15,6 +18,12 @@
 #define MPG123_H_ABI_ALIGN
 
 #include "config.h"
+
+// Building any of our libs on/for Windows needs this before
+// including the main API header (define MPG123_EXPORT).
+#if defined(WIN32) && defined(DYNAMIC_BUILD)
+#define BUILD_MPG123_DLL
+#endif
 
 /* ABI conformance for other compilers.
    mpg123 needs 16byte-aligned (or more) stack for SSE and friends.

@@ -1,7 +1,7 @@
 /*
-	libmpg123: MPEG Audio Decoder library (version 1.31.1)
+	libmpg123: MPEG Audio Decoder library
 
-	copyright 1995-2015 by the mpg123 project
+	copyright 1995-2023 by the mpg123 project
 	free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 */
@@ -9,17 +9,17 @@
 #ifndef MPG123_LIB_H
 #define MPG123_LIB_H
 
-#include <fmt123.h>
+#include "fmt123.h"
 
 /** \file mpg123.h The header file for the libmpg123 MPEG Audio decoder */
 
 /** A macro to check at compile time which set of API functions to expect.
- * This should be incremented at least each time a new symbol is added
+ * This must be incremented at least each time a new symbol is added
  * to the header.
  */
-#ifndef MPG123_API_VERSION
-#define MPG123_API_VERSION 47
-#endif
+#define MPG123_API_VERSION 48
+/** library patch level at client build time */
+#define MPG123_PATCHLEVEL  0
 
 #ifndef MPG123_EXPORT
 /** Defines needed for MS Visual Studio(tm) DLL builds.
@@ -71,49 +71,37 @@
 
 #endif
 
-/* You can use this file directly, avoiding the autoconf replacements.
-   Might have to set MPG123_NO_LARGENAME, too, in case you have
-   _FILE_OFFSET_BITS defined where it does not make sense. */
-#ifndef MPG123_NO_CONFIGURE
+#include <stddef.h>
+#include <stdint.h>
 
-#include <stdlib.h>
+#ifndef MPG123_PORTABLE_API
 #include <sys/types.h>
-
 /* A little hack to help MSVC not having ssize_t. */
 #ifdef _MSC_VER
-#include <stddef.h>
 typedef ptrdiff_t mpg123_ssize_t;
 #else
 typedef ssize_t mpg123_ssize_t;
 #endif
-
-/* You can always enforce largefile hackery by setting MPG123_LARGESUFFIX. */
-/* Otherwise, this header disables it if the build system decided so. */
-#if !defined(MPG123_LARGESUFFIX) && 0
-#ifndef MPG123_NO_LARGENAME
-#define MPG123_NO_LARGENAME
-#endif
 #endif
 
-#endif /* MPG123_NO_CONFIGURE */
 
-/* Simplified large file handling.
-	I used to have a check here that prevents building for a library with conflicting large file setup
-	(application that uses 32 bit offsets with library that uses 64 bits).
-	While that was perfectly fine in an environment where there is one incarnation of the library,
-	it hurt GNU/Linux and Solaris systems with multilib where the distribution fails to provide the
-	correct header matching the 32 bit library (where large files need explicit support) or
-	the 64 bit library (where there is no distinction).
+/* Handling of large file offsets.
+	When client code defines _FILE_OFFSET_BITS, it wants non-default large file support,
+	and thus functions with added suffix (mpg123_open_64). The default library build provides
+	wrapper and alias functions to accomodate client code variations (dual-mode library like glibc).
 
-	New approach: When the app defines _FILE_OFFSET_BITS, it wants non-default large file support,
-	and thus functions with added suffix (mpg123_open_64).
-	Any mismatch will be caught at link time because of the _FILE_OFFSET_BITS setting used when
-	building libmpg123. Plus, there's dual mode large file support in mpg123 since 1.12 now.
-	Link failure is not the expected outcome of any half-sane usage anymore.
+	Client code can definie MPG123_NO_LARGENAME and MPG123_LARGESUFFIX, respectively, for disabling
+	or enforcing the suffixes. If explicit usage of 64 bit offsets is desired, the int64_t API
+	(functions with 64 suffix without underscore, notablly mpg123_reader64()) can be used since
+	API version 48 (mpg123 1.32).
 
-	More complication: What about client code defining _LARGEFILE64_SOURCE? It might want direct access to the _64 functions, along with the ones without suffix. Well, that's possible now via defining MPG123_NO_LARGENAME and MPG123_LARGESUFFIX, respectively, for disabling or enforcing the suffix names.
+	When in doubt, use the explicit 64 bit functions and avoid off_t in the API. You can define
+	MPG123_PORTABLE_API to ensure that. That being said, if you and your compiler do not have
+	problems with the	concept of off_t, just use the normal API and be happy. Both 32 and 64
+	bit versions will be present where appropriate.
 */
 
+#ifndef MPG123_PORTABLE_API
 /*
 	Now, the renaming of large file aware functions.
 	By default, it appends underscore _FILE_OFFSET_BITS (so, mpg123_seek_64 for mpg123_seek), if _FILE_OFFSET_BITS is defined. You can force a different suffix via MPG123_LARGESUFFIX (that must include the underscore), or you can just disable the whole mess by defining MPG123_NO_LARGENAME.
@@ -152,6 +140,7 @@ typedef ssize_t mpg123_ssize_t;
 #define mpg123_framepos MPG123_LARGENAME(mpg123_framepos)
 
 #endif /* largefile hackery */
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,6 +162,21 @@ struct mpg123_handle_struct;
  *  Most functions take a pointer to a mpg123_handle as first argument and operate on its data in an object-oriented manner.
  */
 typedef struct mpg123_handle_struct mpg123_handle;
+
+/** Get version of the mpg123 distribution this library build came with.
+ * (optional means non-NULL)
+ * \param major optional address to store major version number
+ * \param minor optional address to store minor version number
+ * \param patch optional address to store patchlevel version number
+ * \return full version string (like "1.2.3-beta4 (experimental)")
+ */
+const char *mpg123_distversion(unsigned int *major, unsigned int *minor, unsigned int *patch);
+
+/** Get API version of library build.
+ * \param patch optional address to store patchlevel
+ * \return API version of library
+ */
+unsigned int mpg123_libversion(unsigned int *patch);
 
 /** Useless no-op that used to do initialization work.
  *
@@ -488,7 +492,7 @@ enum mpg123_errors
 	MPG123_NO_TIMEOUT,		/**< Build does not support stream timeouts. */
 	MPG123_BAD_FILE,		/**< File access error. */
 	MPG123_NO_SEEK,			/**< Seek not supported by stream. */
-	MPG123_NO_READER,		/**< No stream opened. */
+	MPG123_NO_READER,		/**< No stream opened or no reader callback setup. */
 	MPG123_BAD_PARS,		/**< Bad parameter handle. */
 	MPG123_BAD_INDEX_PAR,	/**< Bad parameters to mpg123_index() and mpg123_set_index() */
 	MPG123_OUT_OF_SYNC,	/**< Lost track in bytestream and did not try to resync. */
@@ -711,6 +715,7 @@ MPG123_EXPORT int mpg123_getformat2( mpg123_handle *mh
  * @{
  */
 
+#ifndef MPG123_PORTABLE_API
 /** Open a simple MPEG file with fixed properties.
  *
  *  This function shall simplify the common use case of a plain MPEG
@@ -781,10 +786,12 @@ MPG123_EXPORT int mpg123_open(mpg123_handle *mh, const char *path);
  *  \return MPG123_OK on success
  */
 MPG123_EXPORT int mpg123_open_fd(mpg123_handle *mh, int fd);
+#endif
 
 /** Use an opaque handle as bitstream input. This works only with the
- *  replaced I/O from mpg123_replace_reader_handle()!
- *  mpg123_close() will call the cleanup callback for your handle (if you gave one).
+ *  replaced I/O from mpg123_replace_reader_handle() or mpg123_reader64()!
+ *  mpg123_close() will call the cleanup callback for your non-NULL
+ *  handle (if you gave one).
  *  \param mh handle
  *  \param iohandle your handle
  *  \return MPG123_OK on success
@@ -853,6 +860,7 @@ MPG123_EXPORT int mpg123_decode( mpg123_handle *mh
 ,	const unsigned char *inmemory, size_t inmemsize
 ,	void *outmemory, size_t outmemsize, size_t *done );
 
+#ifndef MPG123_PORTABLE_API
 /** Decode next MPEG frame to internal buffer
  *  or read a frame and return after setting a new format.
  *  \param mh handle
@@ -875,6 +883,30 @@ MPG123_EXPORT int mpg123_decode_frame( mpg123_handle *mh
  */
 MPG123_EXPORT int mpg123_framebyframe_decode( mpg123_handle *mh
 ,	off_t *num, unsigned char **audio, size_t *bytes );
+#endif /* un-portable API */
+
+/** Decode next MPEG frame to internal buffer
+ *  or read a frame and return after setting a new format.
+ *  \param mh handle
+ *  \param num current frame offset gets stored there
+ *  \param audio This pointer is set to the internal buffer to read the decoded audio from.
+ *  \param bytes number of output bytes ready in the buffer
+ *  \return MPG123_OK or error/message code
+ */
+MPG123_EXPORT int mpg123_decode_frame64( mpg123_handle *mh
+,	int64_t *num, unsigned char **audio, size_t *bytes );
+
+/** Decode current MPEG frame to internal buffer.
+ * Warning: This is experimental API that might change in future releases!
+ * Please watch mpg123 development closely when using it.
+ *  \param mh handle
+ *  \param num last frame offset gets stored there
+ *  \param audio this pointer is set to the internal buffer to read the decoded audio from.
+ *  \param bytes number of output bytes ready in the buffer
+ *  \return MPG123_OK or error/message code
+ */
+MPG123_EXPORT int mpg123_framebyframe_decode64( mpg123_handle *mh
+,	int64_t *num, unsigned char **audio, size_t *bytes );
 
 /** Find, read and parse the next mp3 frame
  * Warning: This is experimental API that might change in future releases!
@@ -902,6 +934,7 @@ MPG123_EXPORT int mpg123_framebyframe_next(mpg123_handle *mh);
 MPG123_EXPORT int mpg123_framedata( mpg123_handle *mh
 ,	unsigned long *header, unsigned char **bodydata, size_t *bodybytes );
 
+#ifndef MPG123_PORTABLE_API
 /** Get the input position (byte offset in stream) of the last parsed frame.
  *  This can be used for external seek index building, for example.
  *  It just returns the internally stored offset, regardless of validity --
@@ -910,6 +943,16 @@ MPG123_EXPORT int mpg123_framedata( mpg123_handle *mh
  * \return byte offset in stream
  */
 MPG123_EXPORT off_t mpg123_framepos(mpg123_handle *mh);
+#endif
+
+/** Get the 64 bit input position (byte offset in stream) of the last parsed frame.
+ *  This can be used for external seek index building, for example.
+ *  It just returns the internally stored offset, regardless of validity --
+ *  you ensure that a valid frame has been parsed before!
+ * \param mh handle
+ * \return byte offset in stream
+ */
+MPG123_EXPORT int64_t mpg123_framepos64(mpg123_handle *mh);
 
 /** @} */
 
@@ -936,6 +979,12 @@ MPG123_EXPORT off_t mpg123_framepos(mpg123_handle *mh);
  * - SEEK_CUR: change position by offset from now
  * - SEEK_END: set position to offset from end
  *
+ * Since API version 48 (mpg123 1.32), the offset given with SEEK_END is always
+ * taken to be  negative in the terms of standard lseek(). You can only seek from
+ * the end towards the beginning. All earlier versions had the sign wrong, positive
+ * was towards the beginning, negative past the end (which results in error,
+ * anyway).
+ *
  * Note that sample-accurate seek only works when gapless support has been
  * enabled at compile time; seek is frame-accurate otherwise.
  * Also, really sample-accurate seeking (meaning that you get the identical
@@ -956,57 +1005,131 @@ MPG123_EXPORT off_t mpg123_framepos(mpg123_handle *mh);
  * @{
  */
 
+#ifndef MPG123_PORTABLE_API
 /** Returns the current position in samples.
  *  On the next successful read, you'd get audio data with that offset.
  *  \param mh handle
  *  \return sample (PCM frame) offset or MPG123_ERR (null handle)
  */
 MPG123_EXPORT off_t mpg123_tell(mpg123_handle *mh);
+#endif
 
+/** Returns the current 64 bit position in samples.
+ *  On the next successful read, you'd get audio data with that offset.
+ *  \param mh handle
+ *  \return sample (PCM frame) offset or MPG123_ERR (null handle)
+ */
+MPG123_EXPORT int64_t mpg123_tell64(mpg123_handle *mh);
+
+#ifndef MPG123_PORTABLE_API
 /** Returns the frame number that the next read will give you data from.
  *  \param mh handle
  *  \return frame offset or MPG123_ERR (null handle)
  */
 MPG123_EXPORT off_t mpg123_tellframe(mpg123_handle *mh);
+#endif
 
+/** Returns the 64 bit frame number that the next read will give you data from.
+ *  \param mh handle
+ *  \return frame offset or MPG123_ERR (null handle)
+ */
+MPG123_EXPORT int64_t mpg123_tellframe64(mpg123_handle *mh);
+
+#ifndef MPG123_PORTABLE_API
 /** Returns the current byte offset in the input stream.
  *  \param mh handle
  *  \return byte offset or MPG123_ERR (null handle)
  */
 MPG123_EXPORT off_t mpg123_tell_stream(mpg123_handle *mh);
+#endif
 
+/** Returns the current 64 bit byte offset in the input stream.
+ *  \param mh handle
+ *  \return byte offset or MPG123_ERR (null handle)
+ */
+MPG123_EXPORT int64_t mpg123_tell_stream64(mpg123_handle *mh);
+
+
+#ifndef MPG123_PORTABLE_API
 /** Seek to a desired sample offset.
  *  Usage is modelled afer the standard lseek().
  * \param mh handle
  * \param sampleoff offset in samples (PCM frames)
  * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative since API
+ *        version 48, was inverted from lseek() usage since ever before.)
  * \return The resulting offset >= 0 or error/message code
  */
 MPG123_EXPORT off_t mpg123_seek( mpg123_handle *mh
 ,	off_t sampleoff, int whence );
+#endif
 
+/** Seek to a desired 64 bit sample offset.
+ *  Usage is modelled afer the standard lseek().
+ * \param mh handle
+ * \param sampleoff offset in samples (PCM frames)
+ * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative.)
+ * \return The resulting offset >= 0 or error/message code
+ */
+MPG123_EXPORT int64_t mpg123_seek64( mpg123_handle *mh
+,	int64_t sampleoff, int whence );
+
+#ifndef MPG123_PORTABLE_API
 /** Seek to a desired sample offset in data feeding mode.
  *  This just prepares things to be right only if you ensure that the next chunk
  *  of input data will be from input_offset byte position.
  * \param mh handle
  * \param sampleoff offset in samples (PCM frames)
  * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative since API
+ *        version 48, was inverted from lseek() usage since ever before.)
  * \param input_offset The position it expects to be at the 
  *                     next time data is fed to mpg123_decode().
  * \return The resulting offset >= 0 or error/message code
  */
 MPG123_EXPORT off_t mpg123_feedseek( mpg123_handle *mh
 ,	off_t sampleoff, int whence, off_t *input_offset );
+#endif
 
+/** Seek to a desired 64 bit sample offset in data feeding mode.
+ *  This just prepares things to be right only if you ensure that the next chunk
+ *  of input data will be from input_offset byte position.
+ * \param mh handle
+ * \param sampleoff offset in samples (PCM frames)
+ * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative.)
+ * \param input_offset The position it expects to be at the
+ *                     next time data is fed to mpg123_decode().
+ * \return The resulting offset >= 0 or error/message code
+ */
+MPG123_EXPORT int64_t mpg123_feedseek64( mpg123_handle *mh
+,	int64_t sampleoff, int whence, int64_t *input_offset );
+
+#ifndef MPG123_PORTABLE_API
 /** Seek to a desired MPEG frame offset.
  *  Usage is modelled afer the standard lseek().
  * \param mh handle
  * \param frameoff offset in MPEG frames
  * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative since API
+ *        version 48, was inverted from lseek() usage since ever before.)
  * \return The resulting offset >= 0 or error/message code */
 MPG123_EXPORT off_t mpg123_seek_frame( mpg123_handle *mh
 ,	off_t frameoff, int whence );
+#endif
 
+/** Seek to a desired 64 bit MPEG frame offset.
+ *  Usage is modelled afer the standard lseek().
+ * \param mh handle
+ * \param frameoff offset in MPEG frames
+ * \param whence one of SEEK_SET, SEEK_CUR or SEEK_END
+ *        (Offset for SEEK_END is always effectively negative.)
+ * \return The resulting offset >= 0 or error/message code */
+MPG123_EXPORT int64_t mpg123_seek_frame64( mpg123_handle *mh
+,	int64_t frameoff, int whence );
+
+#ifndef MPG123_PORTABLE_API
 /** Return a MPEG frame offset corresponding to an offset in seconds.
  *  This assumes that the samples per frame do not change in the file/stream, which is a good assumption for any sane file/stream only.
  *  \return frame offset >= 0 or error/message code */
@@ -1014,7 +1137,9 @@ MPG123_EXPORT off_t mpg123_timeframe(mpg123_handle *mh, double sec);
 
 /** Give access to the frame index table that is managed for seeking.
  *  You are asked not to modify the values... Use mpg123_set_index to set the
- *  seek index
+ *  seek index.
+ *  Note: This can be just a copy of the data in case a conversion is done
+ *  from the internal 64 bit values.
  *  \param mh handle
  *  \param offsets pointer to the index array
  *  \param step one index byte offset advances this many MPEG frames
@@ -1023,10 +1148,31 @@ MPG123_EXPORT off_t mpg123_timeframe(mpg123_handle *mh, double sec);
  */
 MPG123_EXPORT int mpg123_index( mpg123_handle *mh
 ,	off_t **offsets, off_t *step, size_t *fill );
+#endif
 
+/** Return a 64 bit MPEG frame offset corresponding to an offset in seconds.
+ *  This assumes that the samples per frame do not change in the file/stream, which is a good assumption for any sane file/stream only.
+ *  \return frame offset >= 0 or error/message code */
+MPG123_EXPORT int64_t mpg123_timeframe64(mpg123_handle *mh, double sec);
+
+/** Give access to the 64 bit frame index table that is managed for seeking.
+ *  You are asked not to modify the values... Use mpg123_set_index to set the
+ *  seek index.
+ *  \param mh handle
+ *  \param offsets pointer to the index array
+ *  \param step one index byte offset advances this many MPEG frames
+ *  \param fill number of recorded index offsets; size of the array
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_index64( mpg123_handle *mh
+,	int64_t **offsets, int64_t *step, size_t *fill );
+
+#ifndef MPG123_PORTABLE_API
 /** Set the frame index table
  *  Setting offsets to NULL and fill > 0 will allocate fill entries. Setting offsets
  *  to NULL and fill to 0 will clear the index and free the allocated memory used by the index.
+ *  Note that this function might involve conversion/copying of data because of
+ *  the varying nature of off_t. Better use mpg123_set_index64().
  *  \param mh handle
  *  \param offsets pointer to the index array
  *  \param step    one index byte offset advances this many MPEG frames
@@ -1035,15 +1181,31 @@ MPG123_EXPORT int mpg123_index( mpg123_handle *mh
  */
 MPG123_EXPORT int mpg123_set_index( mpg123_handle *mh
 ,	off_t *offsets, off_t step, size_t fill );
+#endif
 
+/** Set the 64 bit frame index table
+ *  Setting offsets to NULL and fill > 0 will allocate fill entries. Setting offsets
+ *  to NULL and fill to 0 will clear the index and free the allocated memory used by the index.
+ *  \param mh handle
+ *  \param offsets pointer to the index array
+ *  \param step    one index byte offset advances this many MPEG frames
+ *  \param fill    number of recorded index offsets; size of the array
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_set_index64( mpg123_handle *mh
+,	int64_t *offsets, int64_t step, size_t fill );
+
+
+#ifndef MPG123_PORTABLE_API
 /** An old crutch to keep old mpg123 binaries happy.
  *  WARNING: This function is there only to avoid runtime linking errors with
- *  standalone mpg123 before version 1.23.0 (if you strangely update the
+ *  standalone mpg123 before version 1.32.0 (if you strangely update the
  *  library but not the end-user program) and actually is broken
  *  for various cases (p.ex. 24 bit output). Do never use. It might eventually
  *  be purged from the library.
  */
-MPG123_EXPORT int mpg123_position( mpg123_handle *mh, off_t frame_offset, off_t buffered_bytes, off_t *current_frame, off_t *frames_left, double *current_seconds, double *seconds_left);
+MPG123_EXPORT int mpg123_position( mpg123_handle *mh, off_t INT123_frame_offset, off_t buffered_bytes, off_t *current_frame, off_t *frames_left, double *current_seconds, double *seconds_left);
+#endif
 
 /** @} */
 
@@ -1333,6 +1495,7 @@ MPG123_EXPORT size_t mpg123_safe_buffer(void);
  */
 MPG123_EXPORT int mpg123_scan(mpg123_handle *mh);
 
+#ifndef MPG123_PORTABLE_API
 /** Return, if possible, the full (expected) length of current track in
  *  MPEG frames.
  * \param mh handle
@@ -1361,6 +1524,36 @@ MPG123_EXPORT off_t mpg123_length(mpg123_handle *mh);
  *  \return MPG123_OK on success
  */
 MPG123_EXPORT int mpg123_set_filesize(mpg123_handle *mh, off_t size);
+#endif
+
+/** Return, if possible, the full (expected) length of current track in
+ *  MPEG frames as 64 bit number.
+ * \param mh handle
+ * \return length >= 0 or MPG123_ERR if there is no length guess possible.
+ */
+MPG123_EXPORT int64_t mpg123_framelength64(mpg123_handle *mh);
+
+/** Return, if possible, the full (expected) length of current
+ *  track in samples (PCM frames) as 64 bit value.
+ *
+ *  This relies either on an Info frame at the beginning or a previous
+ *  call to mpg123_scan() to get the real number of MPEG frames in a
+ *  file. It will guess based on file size if neither Info frame nor
+ *  scan data are present. In any case, there is no guarantee that the
+ *  decoder will not give you more data, for example in case the open
+ *  file gets appended to during decoding.
+ * \param mh handle
+ * \return length >= 0 or MPG123_ERR if there is no length guess possible.
+ */
+MPG123_EXPORT int64_t mpg123_length64(mpg123_handle *mh);
+
+/** Override the 64 bit value for file size in bytes.
+ *  Useful for getting sensible track length values in feed mode or for HTTP streams.
+ *  \param mh handle
+ *  \param size file size in bytes
+ *  \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_set_filesize64(mpg123_handle *mh, int64_t size);
 
 /** Get MPEG frame duration in seconds.
  *  \param mh handle
@@ -1984,12 +2177,13 @@ MPG123_EXPORT int mpg123_replace_buffer(mpg123_handle *mh
  */
 MPG123_EXPORT size_t mpg123_outblock(mpg123_handle *mh);
 
+#ifndef MPG123_PORTABLE_API
 /** Replace low-level stream access functions; read and lseek as known in POSIX.
  *  You can use this to make any fancy file opening/closing yourself, 
  *  using mpg123_open_fd() to set the file descriptor for your read/lseek
  *  (doesn't need to be a "real" file descriptor...).
- *  Setting a function to NULL means that the default internal read is 
- *  used (active from next mpg123_open call on).
+ *  Setting a function to NULL means that just a call to POSIX read/lseek is
+ *  done (without handling signals).
  *  Note: As it would be troublesome to mess with this while having a file open,
  *  this implies mpg123_close().
  * \param mh handle
@@ -2012,7 +2206,7 @@ MPG123_EXPORT int mpg123_replace_reader( mpg123_handle *mh
  *  \param mh handle
  *  \param r_read callback for reading (behaviour like POSIX read)
  *  \param r_lseek callback for seeking (like POSIX lseek)
- *  \param cleanup A callback to clean up an I/O handle on mpg123_close,
+ *  \param cleanup A callback to clean up a non-NULL I/O handle on mpg123_close,
  *         can be NULL for none (you take care of cleaning your handles).
  * \return MPG123_OK on success
  */
@@ -2020,6 +2214,27 @@ MPG123_EXPORT int mpg123_replace_reader_handle( mpg123_handle *mh
 ,	mpg123_ssize_t (*r_read) (void *, void *, size_t)
 ,	off_t (*r_lseek)(void *, off_t, int)
 ,	void (*cleanup)(void*) );
+#endif
+
+/** Set up portable read functions on an opaque handle.
+ *  The handle is a void pointer, so you can pass any data you want...
+ *  mpg123_open_handle() is the call you make to use the I/O defined here.
+ *  There is no fallback to internal read/seek here.
+ *  Note: As it would be troublesome to mess with this while having a file open,
+ *  this mpg123_close() is implied here.
+ *  \param mh handle
+ *  \param r_read callback for reading
+ *     The parameters are the handle, the buffer to read into, a byte count to read,
+ *     address to store the returned byte count. Return value is zero for
+ *     no issue, non-zero for some error. Recoverable signal handling has to happen
+ *     inside the callback.
+ *  \param r_lseek callback for seeking (like POSIX lseek), maybe NULL for
+ *         non-seekable streams
+ *  \param cleanup A callback to clean up a non-NULL I/O handle on mpg123_close,
+ *         maybe NULL for none
+ * \return MPG123_OK on success
+ */
+MPG123_EXPORT int mpg123_reader64( mpg123_handle *mh, int (*r_read) (void *, void *, size_t, size_t *), int64_t (*r_lseek)(void *, int64_t, int), void (*cleanup)(void*) );
 
 /** @} */
 

@@ -1,7 +1,7 @@
 /*
 	sampleadjust: gapless sample offset math
 
-	copyright 1995-2012 by the mpg123 project - free software under the terms of the LGPL 2.1
+	copyright 1995-2023 by the mpg123 project - free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 
 	This is no stand-alone header, precisely to be able to fool it into using fake handle types for testing the math.
@@ -11,9 +11,9 @@
 
 #ifdef GAPLESS
 /* From internal sample number to external. */
-static off_t sample_adjust(mpg123_handle *mh, off_t x)
+static int64_t sample_adjust(mpg123_handle *mh, int64_t x)
 {
-	off_t s;
+	int64_t s;
 	if(mh->p.flags & MPG123_GAPLESS)
 	{
 		/* It's a bit tricky to do this computation for the padding samples.
@@ -35,9 +35,9 @@ static off_t sample_adjust(mpg123_handle *mh, off_t x)
 }
 
 /* from external samples to internal */
-static off_t sample_unadjust(mpg123_handle *mh, off_t x)
+static int64_t sample_unadjust(mpg123_handle *mh, int64_t x)
 {
-	off_t s;
+	int64_t s;
 	if(mh->p.flags & MPG123_GAPLESS)
 	{
 		s = x + mh->begin_os;
@@ -74,24 +74,29 @@ static void frame_buffercheck(mpg123_handle *fr)
 	if(fr->lastframe > -1 && fr->num >= fr->lastframe)
 	{
 		/* There can be more than one frame of padding at the end, so we ignore the whole frame if we are beyond lastframe. */
-		off_t byteoff = (fr->num == fr->lastframe) ? samples_to_bytes(fr, fr->lastoff) : 0;
-		if((off_t)fr->buffer.fill > byteoff)
+		int64_t byteoff = (fr->num == fr->lastframe) ? INT123_samples_to_bytes(fr, fr->lastoff) : 0;
+		if((int64_t)fr->buffer.fill > byteoff)
 		{
 			fr->buffer.fill = byteoff;
 		}
-		if(VERBOSE3) fprintf(stderr, "\nNote: Cut frame %"OFF_P" buffer on end of stream to %"OFF_P" samples, fill now %"SIZE_P" bytes.\n", (off_p)fr->num, (off_p)(fr->num == fr->lastframe ? fr->lastoff : 0), (size_p)fr->buffer.fill);
+		if(VERBOSE3)
+			fprintf(stderr, "\nNote: Cut frame %" PRIi64 " buffer on end of stream to %"
+				 PRIi64 " samples, fill now %"SIZE_P" bytes.\n"
+			,	fr->num, (fr->num == fr->lastframe ? fr->lastoff : 0), (size_p)fr->buffer.fill);
 	}
 
 	/* The first interesting frame: Skip some leading samples. */
 	if(fr->firstoff && fr->num == fr->firstframe)
 	{
-		off_t byteoff = samples_to_bytes(fr, fr->firstoff);
-		if((off_t)fr->buffer.fill > byteoff)
+		int64_t byteoff = INT123_samples_to_bytes(fr, fr->firstoff);
+		if((int64_t)fr->buffer.fill > byteoff)
 		{
 			fr->buffer.fill -= byteoff;
 			/* buffer.p != buffer.data only for own buffer */
-			debug6("cutting %li samples/%li bytes on begin, own_buffer=%i at %p=%p, buf[1]=%i",
-			        (long)fr->firstoff, (long)byteoff, fr->own_buffer, (void*)fr->buffer.p, (void*)fr->buffer.data, ((short*)fr->buffer.p)[2]);
+			debug6("cutting %" PRIi64 " samples/%" PRIi64
+				" bytes on begin, own_buffer=%i at %p=%p, buf[1]=%i"
+			,	fr->firstoff, byteoff, fr->own_buffer
+			,	(void*)fr->buffer.p, (void*)fr->buffer.data, ((short*)fr->buffer.p)[2]);
 			if(fr->own_buffer) fr->buffer.p = fr->buffer.data + byteoff;
 			else memmove(fr->buffer.data, fr->buffer.data + byteoff, fr->buffer.fill);
 			debug3("done cutting, buffer at %p =? %p, buf[1]=%i",
@@ -99,7 +104,10 @@ static void frame_buffercheck(mpg123_handle *fr)
 		}
 		else fr->buffer.fill = 0;
 
-		if(VERBOSE3) fprintf(stderr, "\nNote: Cut frame %"OFF_P" buffer on beginning of stream by %"OFF_P" samples, fill now %"SIZE_P" bytes.\n", (off_p)fr->num, (off_p)fr->firstoff, (size_p)fr->buffer.fill);
+		if(VERBOSE3)
+			fprintf(stderr, "\nNote: Cut frame %" PRIi64
+				" buffer on beginning of stream by %" PRIi64 " samples, fill now %zu bytes.\n"
+			,	fr->num, fr->firstoff, fr->buffer.fill);
 		/* We can only reach this frame again by seeking. And on seeking, firstoff will be recomputed.
 		   So it is safe to null it here (and it makes the if() decision abort earlier). */
 		fr->firstoff = 0;

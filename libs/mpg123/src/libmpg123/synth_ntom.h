@@ -1,5 +1,5 @@
 /*
-	synth_ntom.h: ntom-resampling synth functions
+
 
 	This header is used multiple times to create different variants of this function.
 	Hint: MONO_NAME, MONO2STEREO_NAME, SYNTH_NAME and SAMPLE_T as well as WRITE_SAMPLE do vary.
@@ -73,33 +73,33 @@ int SYNTH_NAME(real *bandPtr,int channel, mpg123_handle *fr, int final)
 	int bo1;
 	int ntom;
 #ifndef NO_EQUALIZER
-	if(fr->have_eq_settings) do_equalizer(bandPtr,channel,fr->equalizer);
+	if(fr->have_eq_settings) INT123_do_equalizer(bandPtr,channel,fr->equalizer);
 #endif
 	if(!channel)
 	{
 		fr->bo--;
 		fr->bo &= 0xf;
 		buf = fr->real_buffs[0];
-		ntom = fr->ntom_val[1] = fr->ntom_val[0];
+		ntom = fr->INT123_ntom_val[1] = fr->INT123_ntom_val[0];
 	}
 	else
 	{
 		samples++;
 		buf = fr->real_buffs[1];
-		ntom = fr->ntom_val[1];
+		ntom = fr->INT123_ntom_val[1];
 	}
 
 	if(fr->bo & 0x1)
 	{
 		b0 = buf[0];
 		bo1 = fr->bo;
-		dct64(buf[1]+((fr->bo+1)&0xf),buf[0]+fr->bo,bandPtr);
+		INT123_dct64(buf[1]+((fr->bo+1)&0xf),buf[0]+fr->bo,bandPtr);
 	}
 	else
 	{
 		b0 = buf[1];
 		bo1 = fr->bo+1;
-		dct64(buf[0]+fr->bo,buf[1]+fr->bo+1,bandPtr);
+		INT123_dct64(buf[0]+fr->bo,buf[1]+fr->bo+1,bandPtr);
 	}
 
 	{
@@ -205,9 +205,8 @@ int SYNTH_NAME(real *bandPtr,int channel, mpg123_handle *fr, int final)
 		}
 	}
 
-	fr->ntom_val[channel] = ntom;
+	fr->INT123_ntom_val[channel] = ntom;
 	if(final) fr->buffer.fill = ((unsigned char *) samples - fr->buffer.data - (channel ? sizeof(SAMPLE_T) : 0));
 
 	return clip;
 }
-

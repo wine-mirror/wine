@@ -4,7 +4,7 @@
 
 #ifndef NO_ICY
 /* (string, force conversion) */
-char *icy2utf8(const char *, int);
+char *INT123_icy2utf8(const char *, int);
 #endif
 
 #endif

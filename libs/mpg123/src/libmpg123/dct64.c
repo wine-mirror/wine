@@ -1,5 +1,5 @@
 /*
-	dct64.c: DCT64, the plain C version
+	INT123_dct64.c: DCT64, the plain C version
 
 	copyright ?-2006 by the mpg123 project - free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
@@ -19,7 +19,7 @@
 
 #include "mpg123lib_intern.h"
 
-void dct64(real *out0,real *out1,real *samples)
+void INT123_dct64(real *out0,real *out1,real *samples)
 {
   real bufs[64];
 
@@ -30,7 +30,7 @@ void dct64(real *out0,real *out1,real *samples)
 
   b1 = samples;
   bs = bufs;
-  costab = pnts[0]+16;
+  costab = INT123_pnts[0]+16;
   b2 = b1 + 32;
 
   for(i=15;i>=0;i--)
@@ -39,7 +39,7 @@ void dct64(real *out0,real *out1,real *samples)
     *bs++ = REAL_MUL((*--b2 - *b1++), *--costab);
 
   b1 = bufs;
-  costab = pnts[1]+8;
+  costab = INT123_pnts[1]+8;
   b2 = b1 + 16;
 
   {
@@ -57,7 +57,7 @@ void dct64(real *out0,real *out1,real *samples)
   }
 
   bs = bufs;
-  costab = pnts[2];
+  costab = INT123_pnts[2];
   b2 = b1 + 8;
 
   for(j=2;j;j--)
@@ -75,7 +75,7 @@ void dct64(real *out0,real *out1,real *samples)
   }
 
   b1 = bufs;
-  costab = pnts[3];
+  costab = INT123_pnts[3];
   b2 = b1 + 4;
 
   for(j=4;j;j--)
@@ -92,7 +92,7 @@ void dct64(real *out0,real *out1,real *samples)
     b2 += 8;
   }
   bs = bufs;
-  costab = pnts[4];
+  costab = INT123_pnts[4];
 
   for(j=8;j;j--)
   {
@@ -171,5 +171,3 @@ void dct64(real *out0,real *out1,real *samples)
   out1[0x10*15] = REAL_SCALE_DCT64(bufs[16+15]);
 
 }
-
-

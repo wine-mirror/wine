@@ -32,7 +32,7 @@
 
 	Also, one should minimize code size by really ensuring that only functions that are really needed are included.
 	Currently, all generic functions will be always there (to be safe for fallbacks for advanced decoders).
-	Strictly, at least the synth_1to1 should not be necessary for single-decoder mode.
+	Strictly, at least the INT123_synth_1to1 should not be necessary for single-decoder mode.
 */
 
 
@@ -166,15 +166,15 @@ static const char* decname[] =
 enum optcla { nocla=0, normal, mmxsse };
 
 /*  - Set up the table of synth functions for current decoder choice. */
-int frame_cpu_opt(mpg123_handle *fr, const char* cpu);
+int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu);
 /*  - Choose, from the synth table, the synth functions to use for current output format/rate. */
-int set_synth_functions(mpg123_handle *fr);
+int INT123_set_synth_functions(mpg123_handle *fr);
 /*  - Parse decoder name and return numerical code. */
-enum optdec dectype(const char* decoder);
+enum optdec INT123_dectype(const char* decoder);
 /*  - Return the default decoder type. */
-enum optdec defdec(void);
+enum optdec INT123_defdec(void);
 /*  - Return the class of a decoder type (mmxsse or normal). */
-enum optcla decclass(const enum optdec);
+enum optcla INT123_decclass(const enum optdec);
 
 /* Now comes a whole lot of definitions, for multi decoder mode and single decoder mode.
    Because of the latter, it may look redundant at times. */
@@ -265,7 +265,7 @@ enum optcla decclass(const enum optdec);
 #define OPT_X86
 #ifndef OPT_MULTI
 #	define defopt sse
-#	define opt_dct36(fr) dct36_sse
+#	define opt_dct36(fr) INT123_dct36_sse
 #endif
 #endif
 
@@ -287,22 +287,22 @@ enum optcla decclass(const enum optdec);
 #endif
 #endif
 
-/* same as above but also using 3DNowExt dct36 */
+/* same as above but also using 3DNowExt INT123_dct36 */
 #ifdef OPT_3DNOWEXT_VINTAGE
 #define OPT_MMXORSSE
 #define OPT_MPLAYER
 #define OPT_X86
 #ifndef OPT_MULTI
 #	define defopt dreidnowext_vintage
-#	define opt_dct36(fr) dct36_3dnowext
+#	define opt_dct36(fr) INT123_dct36_3dnowext
 #endif
 #endif
 
 #ifdef OPT_MPLAYER
-extern const int costab_mmxsse[];
+extern const int INT123_costab_mmxsse[];
 #endif
 
-/* 3dnow used to use synth_1to1_i586 for mono / 8bit conversion - was that intentional? */
+/* 3dnow used to use INT123_synth_1to1_i586 for mono / 8bit conversion - was that intentional? */
 /* I'm trying to skip the pentium code here ... until I see that that is indeed a bad idea */
 #ifdef OPT_3DNOW
 #define OPT_X86
@@ -311,12 +311,12 @@ extern const int costab_mmxsse[];
 #endif
 #endif
 
-/* same as above but also using 3DNow dct36 */
+/* same as above but also using 3DNow INT123_dct36 */
 #ifdef OPT_3DNOW_VINTAGE
 #define OPT_X86
 #ifndef OPT_MULTI
 #	define defopt dreidnow_vintage
-#	define opt_dct36(fr) dct36_3dnow
+#	define opt_dct36(fr) INT123_dct36_3dnow
 #endif
 #endif
 
@@ -330,7 +330,7 @@ extern const int costab_mmxsse[];
 #define OPT_MMXORSSE
 #ifndef OPT_MULTI
 #	define defopt x86_64
-#	define opt_dct36(fr) dct36_x86_64
+#	define opt_dct36(fr) INT123_dct36_x86_64
 #endif
 #endif
 
@@ -338,7 +338,7 @@ extern const int costab_mmxsse[];
 #define OPT_MMXORSSE
 #ifndef OPT_MULTI
 #	define defopt avx
-#	define opt_dct36(fr) dct36_avx
+#	define opt_dct36(fr) INT123_dct36_avx
 #endif
 #endif
 
@@ -352,7 +352,7 @@ extern const int costab_mmxsse[];
 #define OPT_MMXORSSE
 #ifndef OPT_MULTI
 #	define defopt neon
-#	define opt_dct36(fr) dct36_neon
+#	define opt_dct36(fr) INT123_dct36_neon
 #endif
 #endif
 
@@ -360,7 +360,7 @@ extern const int costab_mmxsse[];
 #define OPT_MMXORSSE
 #ifndef OPT_MULTI
 #	define defopt neon64
-#	define opt_dct36(fr) dct36_neon64
+#	define opt_dct36(fr) INT123_dct36_neon64
 #endif
 #endif
 
@@ -381,8 +381,7 @@ extern const int costab_mmxsse[];
 #endif /* OPT_MULTI else */
 
 #	ifndef opt_dct36
-#		define opt_dct36(fr) dct36
+#		define opt_dct36(fr) INT123_dct36
 #	endif
 
 #endif /* MPG123_H_OPTIMIZE */
-

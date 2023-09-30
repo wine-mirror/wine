@@ -13,7 +13,7 @@
 	This is what resulted...
 
 	Reason to separate this from synth.h:
-	There are decoders that have a special synth_1to1 but still can use these generic derivations for the mono stuff.
+	There are decoders that have a special INT123_synth_1to1 but still can use these generic derivations for the mono stuff.
 	It generally makes a good deal of sense to set SYNTH_NAME to opt_synth_1to1(fr) (or opt_synth_2to1(fr), etc.).
 */
 

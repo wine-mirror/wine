@@ -4,11 +4,13 @@
 	The mpg123 code is determined to keep it's legacy. A legacy of old, old UNIX.
 	So anything possibly somewhat advanced should be considered to be put here, with proper #ifdef;-)
 
-	copyright 2007-2016 by the mpg123 project - free software under the terms of the LGPL 2.1
+	copyright 2007-2023 by the mpg123 project
+	free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 	initially written by Thomas Orgis, Windows Unicode stuff by JonY.
 */
-
+// Need POSIX 2008 for uselocale stuff.
+#define _POSIX_C_SOURCE 200809L
 #include "compat.h"
 
 /* Win32 is only supported with unicode now. These headers also cover
@@ -20,10 +22,14 @@
 #include <winnls.h>
 #endif
 
+#if HAVE_LOCALE_H
+#include <locale.h>
+#endif
+
 #include "debug.h"
 
 /* A safe realloc also for very old systems where realloc(NULL, size) returns NULL. */
-void *safe_realloc(void *ptr, size_t size)
+void *INT123_safe_realloc(void *ptr, size_t size)
 {
 	if(ptr == NULL) return malloc(size);
 	else return realloc(ptr, size);
@@ -31,25 +37,33 @@ void *safe_realloc(void *ptr, size_t size)
 
 // A more sensible variant of realloc: It deallocates the original memory if
 // realloc fails or if size zero was requested.
-void *safer_realloc(void *ptr, size_t size)
+void *INT123_safer_realloc(void *ptr, size_t size)
 {
-	void *nptr = size ? safe_realloc(ptr, size) : NULL;
+	void *nptr = size ? INT123_safe_realloc(ptr, size) : NULL;
 	if(!nptr && ptr)
 		free(ptr);
 	return nptr;
 }
 
-#ifndef HAVE_STRERROR
-const char *strerror(int errnum)
+const char *INT123_strerror(int errnum)
 {
+#if defined(HAVE_STRERROR_L) && defined(HAVE_USELOCALE)
+	locale_t curloc = uselocale((locale_t)0);
+	if(curloc != LC_GLOBAL_LOCALE)
+		return strerror_l(errnum, curloc);
+#endif
+// Also fall back to strerror() in case of no set locale.
+#if defined(HAVE_STRERROR)
+	return strerror(errnum);
+#else
 	extern int sys_nerr;
 	extern char *sys_errlist[];
 
 	return (errnum < sys_nerr) ?  sys_errlist[errnum]  :  "";
-}
 #endif
+}
 
-char* compat_strdup(const char *src)
+char* INT123_compat_strdup(const char *src)
 {
 	char *dest = NULL;
 	if(src)
@@ -85,17 +99,17 @@ int win32_wide_common(const wchar_t * const wptr, char **mbptr, size_t * buflen,
   return ret;
 }
 
-int win32_wide_utf8(const wchar_t * const wptr, char **mbptr, size_t * buflen)
+int INT123_win32_wide_utf8(const wchar_t * const wptr, char **mbptr, size_t * buflen)
 {
   return win32_wide_common(wptr, mbptr, buflen, CP_UTF8);
 }
 
-int win32_wide_utf7(const wchar_t * const wptr, char **mbptr, size_t * buflen)
+int INT123_win32_wide_utf7(const wchar_t * const wptr, char **mbptr, size_t * buflen)
 {
   return win32_wide_common(wptr, mbptr, buflen, CP_UTF7);
 }
 
-int win32_utf8_wide(const char *const mbptr, wchar_t **wptr, size_t *buflen)
+int INT123_win32_utf8_wide(const char *const mbptr, wchar_t **wptr, size_t *buflen)
 {
   size_t len;
   wchar_t *buf;

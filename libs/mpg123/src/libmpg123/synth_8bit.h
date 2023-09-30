@@ -7,7 +7,7 @@
 
 	Only variable is the BLOCK size to choose 1to1, 2to1 or 4to1.
 	Oh, and the names: BASE_SYNTH_NAME, SYNTH_NAME, MONO_NAME, MONO2STEREO_NAME
-	(p.ex. opt_synth_1to1(fr), synth_1to1_8bit, synth_1to1_8bit_mono, ...).
+	(p.ex. opt_synth_1to1(fr), INT123_synth_1to1_8bit, INT123_synth_1to1_8bit_mono, ...).
 */
 
 int SYNTH_NAME(real *bandPtr, int channel, mpg123_handle *fr, int final)
@@ -83,4 +83,3 @@ int MONO2STEREO_NAME(real *bandPtr, mpg123_handle *fr)
 
 	return ret;
 }
-

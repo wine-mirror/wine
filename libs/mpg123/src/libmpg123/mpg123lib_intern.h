@@ -1,7 +1,7 @@
 /*
 	mpg123lib_intern: Common non-public stuff for libmpg123
 
-	copyright 1995-2021 by the mpg123 project - free software under the terms of the LGPL 2.1
+	copyright 1995-2023 by the mpg123 project - free software under the terms of the LGPL 2.1
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 
 	derived from the old mpg123.h
@@ -14,15 +14,14 @@
 #define MPG123_ENCODINGS 12
 
 #include "config.h" /* Load this before _anything_ */
-#include "intsym.h" /* Prefixing of internal symbols that still are public in a static lib. */
 
 #include "abi_align.h"
 
-/* export DLL symbols */
-#if defined(WIN32) && defined(DYNAMIC_BUILD)
-#define BUILD_MPG123_DLL
-#endif
 #include "compat.h"
+
+// Only portable API plays a role in the library itself, outside of lfs_wrap.c.
+// Also, we need to ensure no suffix renaming for the primary implementations.
+#define MPG123_PORTABLE_API
 #define MPG123_ENUM_API
 #include "mpg123.h"
 
@@ -321,17 +320,17 @@ static inline int32_t scale_rounded(int32_t x, int shift)
 #define VERBOSE4 (NOQUIET && fr->p.verbose > 3)
 #define PVERB(mp, level) (!((mp)->flags & MPG123_QUIET) && (mp)->verbose >= (level))
 
-int decode_update(mpg123_handle *mh);
+int INT123_decode_update(mpg123_handle *mh);
 /* residing in format.c  */
-off_t decoder_synth_bytes(mpg123_handle *fr , off_t s);
-off_t samples_to_bytes(mpg123_handle *fr , off_t s);
-off_t bytes_to_samples(mpg123_handle *fr , off_t b);
-off_t outblock_bytes(mpg123_handle *fr, off_t s);
+int64_t INT123_decoder_synth_bytes(mpg123_handle *fr , int64_t s);
+int64_t INT123_samples_to_bytes(mpg123_handle *fr , int64_t s);
+int64_t INT123_bytes_to_samples(mpg123_handle *fr , int64_t b);
+int64_t INT123_outblock_bytes(mpg123_handle *fr, int64_t s);
 /* Postprocessing format conversion of freshly decoded buffer. */
-void postprocess_buffer(mpg123_handle *fr);
+void INT123_postprocess_buffer(mpg123_handle *fr);
 
-int open_fixed_pre(mpg123_handle *mh, int channels, int encoding);
-int open_fixed_post(mpg123_handle *mh, int channels, int encoding);
+int INT123_open_fixed_pre(mpg123_handle *mh, int channels, int encoding);
+int INT123_open_fixed_post(mpg123_handle *mh, int channels, int encoding);
 
 /* If networking is enabled and we really mean internal networking, the timeout_read function is available. */
 #if defined (NETWORK) && !defined (WANT_WIN32_SOCKETS)

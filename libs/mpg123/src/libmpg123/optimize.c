@@ -63,13 +63,13 @@ static int synth_stereo_wrap(real *bandPtr_l, real *bandPtr_r, mpg123_handle *fr
 static const struct synth_s synth_base =
 {
 	{ /* plain */
-		 OUT_SYNTHS(synth_1to1, synth_1to1_8bit, synth_1to1_real, synth_1to1_s32)
+		 OUT_SYNTHS(INT123_synth_1to1, INT123_synth_1to1_8bit, INT123_synth_1to1_real, INT123_synth_1to1_s32)
 #		ifndef NO_DOWNSAMPLE
-		,OUT_SYNTHS(synth_2to1, synth_2to1_8bit, synth_2to1_real, synth_2to1_s32)
-		,OUT_SYNTHS(synth_4to1, synth_4to1_8bit, synth_4to1_real, synth_4to1_s32)
+		,OUT_SYNTHS(INT123_synth_2to1, INT123_synth_2to1_8bit, INT123_synth_2to1_real, INT123_synth_2to1_s32)
+		,OUT_SYNTHS(INT123_synth_4to1, INT123_synth_4to1_8bit, INT123_synth_4to1_real, INT123_synth_4to1_s32)
 #		endif
 #		ifndef NO_NTOM
-		,OUT_SYNTHS(synth_ntom, synth_ntom_8bit, synth_ntom_real, synth_ntom_s32)
+		,OUT_SYNTHS(INT123_synth_ntom, INT123_synth_ntom_8bit, INT123_synth_ntom_real, INT123_synth_ntom_s32)
 #		endif
 	},
 	{ /* stereo, by default only wrappers over plain synth */
@@ -83,23 +83,23 @@ static const struct synth_s synth_base =
 #		endif
 	},
 	{ /* mono2stereo */
-		 OUT_SYNTHS(synth_1to1_m2s, synth_1to1_8bit_m2s, synth_1to1_real_m2s, synth_1to1_s32_m2s)
+		 OUT_SYNTHS(INT123_synth_1to1_m2s, INT123_synth_1to1_8bit_m2s, INT123_synth_1to1_real_m2s, INT123_synth_1to1_s32_m2s)
 #		ifndef NO_DOWNSAMPLE
-		,OUT_SYNTHS(synth_2to1_m2s, synth_2to1_8bit_m2s, synth_2to1_real_m2s, synth_2to1_s32_m2s)
-		,OUT_SYNTHS(synth_4to1_m2s, synth_4to1_8bit_m2s, synth_4to1_real_m2s, synth_4to1_s32_m2s)
+		,OUT_SYNTHS(INT123_synth_2to1_m2s, INT123_synth_2to1_8bit_m2s, INT123_synth_2to1_real_m2s, INT123_synth_2to1_s32_m2s)
+		,OUT_SYNTHS(INT123_synth_4to1_m2s, INT123_synth_4to1_8bit_m2s, INT123_synth_4to1_real_m2s, INT123_synth_4to1_s32_m2s)
 #		endif
 #		ifndef NO_NTOM
-		,OUT_SYNTHS(synth_ntom_m2s, synth_ntom_8bit_m2s, synth_ntom_real_m2s, synth_ntom_s32_m2s)
+		,OUT_SYNTHS(INT123_synth_ntom_m2s, INT123_synth_ntom_8bit_m2s, INT123_synth_ntom_real_m2s, INT123_synth_ntom_s32_m2s)
 #		endif
 	},
 	{ /* mono*/
-		 OUT_SYNTHS(synth_1to1_mono, synth_1to1_8bit_mono, synth_1to1_real_mono, synth_1to1_s32_mono)
+		 OUT_SYNTHS(INT123_synth_1to1_mono, INT123_synth_1to1_8bit_mono, INT123_synth_1to1_real_mono, INT123_synth_1to1_s32_mono)
 #		ifndef NO_DOWNSAMPLE
-		,OUT_SYNTHS(synth_2to1_mono, synth_2to1_8bit_mono, synth_2to1_real_mono, synth_2to1_s32_mono)
-		,OUT_SYNTHS(synth_4to1_mono, synth_4to1_8bit_mono, synth_4to1_real_mono, synth_4to1_s32_mono)
+		,OUT_SYNTHS(INT123_synth_2to1_mono, INT123_synth_2to1_8bit_mono, INT123_synth_2to1_real_mono, INT123_synth_2to1_s32_mono)
+		,OUT_SYNTHS(INT123_synth_4to1_mono, INT123_synth_4to1_8bit_mono, INT123_synth_4to1_real_mono, INT123_synth_4to1_s32_mono)
 #		endif
 #		ifndef NO_NTOM
-		,OUT_SYNTHS(synth_ntom_mono, synth_ntom_8bit_mono, synth_ntom_real_mono, synth_ntom_s32_mono)
+		,OUT_SYNTHS(INT123_synth_ntom_mono, INT123_synth_ntom_8bit_mono, INT123_synth_ntom_real_mono, INT123_synth_ntom_s32_mono)
 #endif
 	}
 };
@@ -108,21 +108,21 @@ static const struct synth_s synth_base =
 /* More plain synths for i386 */
 const func_synth plain_i386[r_limit][f_limit] =
 { /* plain */
-	 OUT_SYNTHS(synth_1to1_i386, synth_1to1_8bit_i386, synth_1to1_real_i386, synth_1to1_s32_i386)
+	 OUT_SYNTHS(INT123_synth_1to1_i386, INT123_synth_1to1_8bit_i386, INT123_synth_1to1_real_i386, INT123_synth_1to1_s32_i386)
 #	ifndef NO_DOWNSAMPLE
-	,OUT_SYNTHS(synth_2to1_i386, synth_2to1_8bit_i386, synth_2to1_real_i386, synth_2to1_s32_i386)
-	,OUT_SYNTHS(synth_4to1_i386, synth_4to1_8bit_i386, synth_4to1_real_i386, synth_4to1_s32_i386)
+	,OUT_SYNTHS(INT123_synth_2to1_i386, INT123_synth_2to1_8bit_i386, INT123_synth_2to1_real_i386, INT123_synth_2to1_s32_i386)
+	,OUT_SYNTHS(INT123_synth_4to1_i386, INT123_synth_4to1_8bit_i386, INT123_synth_4to1_real_i386, INT123_synth_4to1_s32_i386)
 #	endif
 #	ifndef NO_NTOM
-	,OUT_SYNTHS(synth_ntom, synth_ntom_8bit, synth_ntom_real, synth_ntom_s32)
+	,OUT_SYNTHS(INT123_synth_ntom, INT123_synth_ntom_8bit, INT123_synth_ntom_real, INT123_synth_ntom_s32)
 #	endif
 };
 #endif
 
 
-enum optdec defdec(void){ return defopt; }
+enum optdec INT123_defdec(void){ return defopt; }
 
-enum optcla decclass(const enum optdec type)
+enum optcla INT123_decclass(const enum optdec type)
 {
 	return
 	(
@@ -161,7 +161,7 @@ static enum optdec sse_or_vintage(mpg123_handle *fr)
 	type = sse_vintage;
 #	ifdef OPT_SSE
 #	ifdef OPT_MULTI
-	if(fr->cpu_opts.the_dct36 == dct36_sse)
+	if(fr->cpu_opts.the_dct36 == INT123_dct36_sse)
 #	endif
 	type = sse;
 #	endif
@@ -179,7 +179,7 @@ static int find_dectype(mpg123_handle *fr)
 	func_synth basic_synth = fr->synth;
 #ifndef NO_8BIT
 #ifndef NO_16BIT
-	if(basic_synth == synth_1to1_8bit_wrap)
+	if(basic_synth == INT123_synth_1to1_8bit_wrap)
 	basic_synth = fr->synths.plain[r_1to1][f_16]; /* That is what's really below the surface. */
 #endif
 #endif
@@ -187,71 +187,71 @@ static int find_dectype(mpg123_handle *fr)
 	if(FALSE) ; /* Just to initialize the else if ladder. */
 #ifndef NO_16BIT
 #if defined(OPT_3DNOWEXT) || defined(OPT_3DNOWEXT_VINTAGE)
-	else if(basic_synth == synth_1to1_3dnowext)
+	else if(basic_synth == INT123_synth_1to1_3dnowext)
 	{
 		type = dreidnowext;
 #		ifdef OPT_3DNOWEXT_VINTAGE
 #		ifdef OPT_MULTI
-		if(fr->cpu_opts.the_dct36 == dct36_3dnowext)
+		if(fr->cpu_opts.the_dct36 == INT123_dct36_3dnowext)
 #		endif
 		type = dreidnowext_vintage;
 #		endif
 	}
 #endif
 #if defined(OPT_SSE) || defined(OPT_SSE_VINTAGE)
-	else if(basic_synth == synth_1to1_sse)
+	else if(basic_synth == INT123_synth_1to1_sse)
 	{
 		type = sse_or_vintage(fr);
 	}
 #endif
 #if defined(OPT_3DNOW) || defined(OPT_3DNOW_VINTAGE)
-	else if(basic_synth == synth_1to1_3dnow)
+	else if(basic_synth == INT123_synth_1to1_3dnow)
 	{
 		type = dreidnow;
 #		ifdef OPT_3DNOW_VINTAGE
 #		ifdef OPT_MULTI
-		if(fr->cpu_opts.the_dct36 == dct36_3dnow)
+		if(fr->cpu_opts.the_dct36 == INT123_dct36_3dnow)
 #		endif
 		type = dreidnow_vintage;
 #		endif
 	}
 #endif
 #ifdef OPT_MMX
-	else if(basic_synth == synth_1to1_mmx) type = mmx;
+	else if(basic_synth == INT123_synth_1to1_mmx) type = mmx;
 #endif
 #ifdef OPT_I586_DITHER
-	else if(basic_synth == synth_1to1_i586_dither) type = ifuenf_dither;
+	else if(basic_synth == INT123_synth_1to1_i586_dither) type = ifuenf_dither;
 #endif
 #ifdef OPT_I586
-	else if(basic_synth == synth_1to1_i586) type = ifuenf;
+	else if(basic_synth == INT123_synth_1to1_i586) type = ifuenf;
 #endif
 #ifdef OPT_ALTIVEC
-	else if(basic_synth == synth_1to1_altivec) type = altivec;
+	else if(basic_synth == INT123_synth_1to1_altivec) type = altivec;
 #endif
 #ifdef OPT_X86_64
-	else if(basic_synth == synth_1to1_x86_64) type = x86_64;
+	else if(basic_synth == INT123_synth_1to1_x86_64) type = x86_64;
 #endif
 #ifdef OPT_AVX
-	else if(basic_synth == synth_1to1_avx) type = avx;
+	else if(basic_synth == INT123_synth_1to1_avx) type = avx;
 #endif
 #ifdef OPT_ARM
-	else if(basic_synth == synth_1to1_arm) type = arm;
+	else if(basic_synth == INT123_synth_1to1_arm) type = arm;
 #endif
 #ifdef OPT_NEON
-	else if(basic_synth == synth_1to1_neon) type = neon;
+	else if(basic_synth == INT123_synth_1to1_neon) type = neon;
 #endif
 #ifdef OPT_NEON64
-	else if(basic_synth == synth_1to1_neon64) type = neon64;
+	else if(basic_synth == INT123_synth_1to1_neon64) type = neon64;
 #endif
 #ifdef OPT_GENERIC_DITHER
-	else if(basic_synth == synth_1to1_dither) type = generic_dither;
+	else if(basic_synth == INT123_synth_1to1_dither) type = generic_dither;
 #endif
 #ifdef OPT_DITHER /* either i586 or generic! */
 #ifndef NO_DOWNSAMPLE
 	else if
 	(
-		   basic_synth == synth_2to1_dither
-		|| basic_synth == synth_4to1_dither
+		   basic_synth == INT123_synth_2to1_dither
+		|| basic_synth == INT123_synth_4to1_dither
 	) type = generic_dither;
 #endif
 #endif
@@ -261,50 +261,50 @@ static int find_dectype(mpg123_handle *fr)
 
 #ifndef NO_REAL
 #if defined(OPT_SSE) || defined(OPT_SSE_VINTAGE)
-	else if(basic_synth == synth_1to1_real_sse)
+	else if(basic_synth == INT123_synth_1to1_real_sse)
 	{
 		type = sse_or_vintage(fr);
 	}
 #endif
 #ifdef OPT_X86_64
-	else if(basic_synth == synth_1to1_real_x86_64) type = x86_64;
+	else if(basic_synth == INT123_synth_1to1_real_x86_64) type = x86_64;
 #endif
 #ifdef OPT_AVX
-	else if(basic_synth == synth_1to1_real_avx) type = avx;
+	else if(basic_synth == INT123_synth_1to1_real_avx) type = avx;
 #endif
 #ifdef OPT_ALTIVEC
-	else if(basic_synth == synth_1to1_real_altivec) type = altivec;
+	else if(basic_synth == INT123_synth_1to1_real_altivec) type = altivec;
 #endif
 #ifdef OPT_NEON
-	else if(basic_synth == synth_1to1_real_neon) type = neon;
+	else if(basic_synth == INT123_synth_1to1_real_neon) type = neon;
 #endif
 #ifdef OPT_NEON64
-	else if(basic_synth == synth_1to1_real_neon64) type = neon64;
+	else if(basic_synth == INT123_synth_1to1_real_neon64) type = neon64;
 #endif
 
 #endif /* real */
 
 #ifndef NO_32BIT
 #if defined(OPT_SSE) || defined(OPT_SSE_VINTAGE)
-	else if(basic_synth == synth_1to1_s32_sse)
+	else if(basic_synth == INT123_synth_1to1_s32_sse)
 	{
 		type = sse_or_vintage(fr);
 	}
 #endif
 #ifdef OPT_X86_64
-	else if(basic_synth == synth_1to1_s32_x86_64) type = x86_64;
+	else if(basic_synth == INT123_synth_1to1_s32_x86_64) type = x86_64;
 #endif
 #ifdef OPT_AVX
-	else if(basic_synth == synth_1to1_s32_avx) type = avx;
+	else if(basic_synth == INT123_synth_1to1_s32_avx) type = avx;
 #endif
 #ifdef OPT_ALTIVEC
-	else if(basic_synth == synth_1to1_s32_altivec) type = altivec;
+	else if(basic_synth == INT123_synth_1to1_s32_altivec) type = altivec;
 #endif
 #ifdef OPT_NEON
-	else if(basic_synth == synth_1to1_s32_neon) type = neon;
+	else if(basic_synth == INT123_synth_1to1_s32_neon) type = neon;
 #endif
 #ifdef OPT_NEON64
-	else if(basic_synth == synth_1to1_s32_neon64) type = neon64;
+	else if(basic_synth == INT123_synth_1to1_s32_neon64) type = neon64;
 #endif
 #endif /* 32bit */
 
@@ -329,7 +329,7 @@ static int find_dectype(mpg123_handle *fr)
 	if(type != nodec)
 	{
 		fr->cpu_opts.type = type;
-		fr->cpu_opts.class = decclass(type);
+		fr->cpu_opts.class = INT123_decclass(type);
 
 		debug3("determined active decoder type %i (%s) of class %i", type, decname[type], fr->cpu_opts.class);
 		return MPG123_OK;
@@ -344,7 +344,7 @@ static int find_dectype(mpg123_handle *fr)
 }
 
 /* set synth functions for current frame, optimizations handled by opt_* macros */
-int set_synth_functions(mpg123_handle *fr)
+int INT123_set_synth_functions(mpg123_handle *fr)
 {
 	enum synth_resample resample = r_none;
 	enum synth_format basic_format = f_none; /* Default is always 16bit, or whatever. */
@@ -372,7 +372,7 @@ int set_synth_functions(mpg123_handle *fr)
 	/* Make sure the chosen format is compiled into this lib. */
 	if(basic_format == f_none)
 	{
-		if(NOQUIET) error("set_synth_functions: This output format is disabled in this build!");
+		if(NOQUIET) error("INT123_set_synth_functions: This output format is disabled in this build!");
 
 		return -1;
 	}
@@ -392,7 +392,7 @@ int set_synth_functions(mpg123_handle *fr)
 
 	if(resample == r_none)
 	{
-		if(NOQUIET) error("set_synth_functions: This resampling mode is not supported in this build!");
+		if(NOQUIET) error("INT123_set_synth_functions: This resampling mode is not supported in this build!");
 
 		return -1;
 	}
@@ -411,7 +411,7 @@ int set_synth_functions(mpg123_handle *fr)
 		return MPG123_ERR;
 	}
 
-	if(frame_buffers(fr) != 0)
+	if(INT123_frame_buffers(fr) != 0)
 	{
 		fr->err = MPG123_NO_BUFFERS;
 		if(NOQUIET) error("Failed to set up decoder buffers!");
@@ -422,7 +422,7 @@ int set_synth_functions(mpg123_handle *fr)
 #ifndef NO_8BIT
 	if(basic_format == f_8)
 	{
-		if(make_conv16to8_table(fr) != 0)
+		if(INT123_make_conv16to8_table(fr) != 0)
 		{
 			if(NOQUIET) error("Failed to set up conv16to8 table!");
 			/* it's a bit more work to get proper error propagation up */
@@ -452,32 +452,32 @@ int set_synth_functions(mpg123_handle *fr)
 	  )
 	{
 #ifndef NO_LAYER3
-		init_layer3_stuff(fr, init_layer3_gainpow2_mmx);
+		INT123_init_layer3_stuff(fr, INT123_init_layer3_gainpow2_mmx);
 #endif
 #ifndef NO_LAYER12
-		init_layer12_stuff(fr, init_layer12_table_mmx);
+		INT123_init_layer12_stuff(fr, INT123_init_layer12_table_mmx);
 #endif
-		fr->make_decode_tables = make_decode_tables_mmx;
+		fr->INT123_make_decode_tables = INT123_make_decode_tables_mmx;
 	}
 	else
 #endif
 	{
 #ifndef NO_LAYER3
-		init_layer3_stuff(fr, init_layer3_gainpow2);
+		INT123_init_layer3_stuff(fr, INT123_init_layer3_gainpow2);
 #endif
 #ifndef NO_LAYER12
-		init_layer12_stuff(fr, init_layer12_table);
+		INT123_init_layer12_stuff(fr, INT123_init_layer12_table);
 #endif
-		fr->make_decode_tables = make_decode_tables;
+		fr->INT123_make_decode_tables = INT123_make_decode_tables;
 	}
 
 	/* We allocated the table buffers just now, so (re)create the tables. */
-	fr->make_decode_tables(fr);
+	fr->INT123_make_decode_tables(fr);
 
 	return 0;
 }
 
-int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
+int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 {
 	const char* chosen = ""; /* the chosen decoder opt as string */
 	enum optdec want_dec = nodec;
@@ -487,7 +487,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	int dithered = FALSE; /* If some dithered decoder is chosen. */
 #endif
 
-	want_dec = dectype(cpu);
+	want_dec = INT123_dectype(cpu);
 	auto_choose = want_dec == autodec;
 	/* Fill whole array of synth functions with generic code first. */
 	fr->synths = synth_base;
@@ -506,11 +506,11 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 #ifdef OPT_MULTI
 #ifndef NO_LAYER3
 #if (defined OPT_3DNOW_VINTAGE || defined OPT_3DNOWEXT_VINTAGE || defined OPT_SSE || defined OPT_X86_64 || defined OPT_AVX || defined OPT_NEON || defined OPT_NEON64)
-	fr->cpu_opts.the_dct36 = dct36;
+	fr->cpu_opts.the_dct36 = INT123_dct36;
 #endif
 #endif
 #endif
-	/* covers any i386+ cpu; they actually differ only in the synth_1to1 function, mostly... */
+	/* covers any i386+ cpu; they actually differ only in the INT123_synth_1to1 function, mostly... */
 #ifdef OPT_X86
 	if(cpu_i586(fr->cpu_flags))
 	{
@@ -525,22 +525,22 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			fr->cpu_opts.type = sse;
 #ifdef OPT_MULTI
 #			ifndef NO_LAYER3
-			/* if(cpu_fast_sse(fr->cpu_flags)) */ fr->cpu_opts.the_dct36 = dct36_sse;
+			/* if(cpu_fast_sse(fr->cpu_flags)) */ fr->cpu_opts.the_dct36 = INT123_dct36_sse;
 #			endif
 #endif
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_sse;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_sse;
 #			ifdef ACCURATE_ROUNDING
-			fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_sse;
+			fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_sse;
 #			endif
 #			endif
 #			ifndef NO_REAL
-			fr->synths.plain[r_1to1][f_real] = synth_1to1_real_sse;
-			fr->synths.stereo[r_1to1][f_real] = synth_1to1_real_stereo_sse;
+			fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_sse;
+			fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_real_stereo_sse;
 #			endif
 #			ifndef NO_32BIT
-			fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_sse;
-			fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_sse;
+			fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_sse;
+			fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_sse;
 #			endif
 			done = 1;
 		}
@@ -552,18 +552,18 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			chosen = dn_sse_vintage;
 			fr->cpu_opts.type = sse_vintage;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_sse;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_sse;
 #			ifdef ACCURATE_ROUNDING
-			fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_sse;
+			fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_sse;
 #			endif
 #			endif
 #			ifndef NO_REAL
-			fr->synths.plain[r_1to1][f_real] = synth_1to1_real_sse;
-			fr->synths.stereo[r_1to1][f_real] = synth_1to1_real_stereo_sse;
+			fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_sse;
+			fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_real_stereo_sse;
 #			endif
 #			ifndef NO_32BIT
-			fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_sse;
-			fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_sse;
+			fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_sse;
+			fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_sse;
 #			endif
 			done = 1;
 		}
@@ -577,7 +577,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			chosen = dn_dreidnowext;
 			fr->cpu_opts.type = dreidnowext;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_3dnowext;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnowext;
 #			endif
 			done = 1;
 		}
@@ -592,11 +592,11 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			fr->cpu_opts.type = dreidnowext_vintage;
 #ifdef OPT_MULTI
 #			ifndef NO_LAYER3
-			fr->cpu_opts.the_dct36 = dct36_3dnowext;
+			fr->cpu_opts.the_dct36 = INT123_dct36_3dnowext;
 #			endif
 #endif
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_3dnowext;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnowext;
 #			endif
 			done = 1;
 		}
@@ -608,7 +608,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			chosen = dn_dreidnow;
 			fr->cpu_opts.type = dreidnow;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_3dnow;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnow;
 #			endif
 			done = 1;
 		}
@@ -621,11 +621,11 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			fr->cpu_opts.type = dreidnow_vintage;
 #ifdef OPT_MULTI
 #			ifndef NO_LAYER3
-			fr->cpu_opts.the_dct36 = dct36_3dnow;
+			fr->cpu_opts.the_dct36 = INT123_dct36_3dnow;
 #			endif
 #endif
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_3dnow;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnow;
 #			endif
 			done = 1;
 		}
@@ -637,7 +637,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			chosen = dn_mmx;
 			fr->cpu_opts.type = mmx;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_mmx;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_mmx;
 #			endif
 			done = 1;
 		}
@@ -648,7 +648,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			chosen = "i586/pentium";
 			fr->cpu_opts.type = ifuenf;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_i586;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_i586;
 #			endif
 			done = 1;
 		}
@@ -660,10 +660,10 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 			fr->cpu_opts.type = ifuenf_dither;
 			dithered = TRUE;
 #			ifndef NO_16BIT
-			fr->synths.plain[r_1to1][f_16] = synth_1to1_i586_dither;
+			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_i586_dither;
 #			ifndef NO_DOWNSAMPLE
-			fr->synths.plain[r_2to1][f_16] = synth_2to1_dither;
-			fr->synths.plain[r_4to1][f_16] = synth_4to1_dither;
+			fr->synths.plain[r_2to1][f_16] = INT123_synth_2to1_dither;
+			fr->synths.plain[r_4to1][f_16] = INT123_synth_4to1_dither;
 #			endif
 #			endif
 			done = 1;
@@ -693,7 +693,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	{
 		/*
 			We have chosen some x86 decoder... fillup some i386 stuff.
-			There is an open question about using dithered synth_1to1 for 8bit wrappers.
+			There is an open question about using dithered INT123_synth_1to1 for 8bit wrappers.
 			For quality it won't make sense, but wrapped i586_dither wrapped may still be faster...
 		*/
 		enum synth_resample ri;
@@ -702,9 +702,9 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 #		ifndef NO_16BIT /* possibility to use a 16->8 wrapper... */
 		if(fr->synths.plain[r_1to1][f_16] != synth_base.plain[r_1to1][f_16])
 		{
-			fr->synths.plain[r_1to1][f_8] = synth_1to1_8bit_wrap;
-			fr->synths.mono[r_1to1][f_8] = synth_1to1_8bit_wrap_mono;
-			fr->synths.mono2stereo[r_1to1][f_8] = synth_1to1_8bit_wrap_m2s;
+			fr->synths.plain[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap;
+			fr->synths.mono[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap_mono;
+			fr->synths.mono2stereo[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap_m2s;
 		}
 #		endif
 #		endif
@@ -725,20 +725,20 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->cpu_opts.type = avx;
 #ifdef OPT_MULTI
 #		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = dct36_avx;
+		fr->cpu_opts.the_dct36 = INT123_dct36_avx;
 #		endif
 #endif
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_avx;
-		fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_avx;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_avx;
+		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_avx;
 #		endif
 #		ifndef NO_REAL
-		fr->synths.plain[r_1to1][f_real] = synth_1to1_real_avx;
-		fr->synths.stereo[r_1to1][f_real] = synth_1to1_fltst_avx;
+		fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_avx;
+		fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_fltst_avx;
 #		endif
 #		ifndef NO_32BIT
-		fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_avx;
-		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_avx;
+		fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_avx;
+		fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_avx;
 #		endif
 		done = 1;
 	}
@@ -751,20 +751,20 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->cpu_opts.type = x86_64;
 #ifdef OPT_MULTI
 #		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = dct36_x86_64;
+		fr->cpu_opts.the_dct36 = INT123_dct36_x86_64;
 #		endif
 #endif
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_x86_64;
-		fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_x86_64;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_x86_64;
+		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_x86_64;
 #		endif
 #		ifndef NO_REAL
-		fr->synths.plain[r_1to1][f_real] = synth_1to1_real_x86_64;
-		fr->synths.stereo[r_1to1][f_real] = synth_1to1_real_stereo_x86_64;
+		fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_x86_64;
+		fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_real_stereo_x86_64;
 #		endif
 #		ifndef NO_32BIT
-		fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_x86_64;
-		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_x86_64;
+		fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_x86_64;
+		fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_x86_64;
 #		endif
 		done = 1;
 	}
@@ -776,16 +776,16 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		chosen = dn_altivec;
 		fr->cpu_opts.type = altivec;
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_altivec;
-		fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_altivec;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_altivec;
+		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_altivec;
 #		endif
 #		ifndef NO_REAL
-		fr->synths.plain[r_1to1][f_real] = synth_1to1_real_altivec;
-		fr->synths.stereo[r_1to1][f_real] = synth_1to1_fltst_altivec;
+		fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_altivec;
+		fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_fltst_altivec;
 #		endif
 #		ifndef NO_32BIT
-		fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_altivec;
-		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_altivec;
+		fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_altivec;
+		fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_altivec;
 #		endif
 		done = 1;
 	}
@@ -798,20 +798,20 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->cpu_opts.type = neon;
 #ifdef OPT_MULTI
 #		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = dct36_neon;
+		fr->cpu_opts.the_dct36 = INT123_dct36_neon;
 #		endif
 #endif
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_neon;
-		fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_neon;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_neon;
+		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_neon;
 #		endif
 #		ifndef NO_REAL
-		fr->synths.plain[r_1to1][f_real] = synth_1to1_real_neon;
-		fr->synths.stereo[r_1to1][f_real] = synth_1to1_real_stereo_neon;
+		fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_neon;
+		fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_real_stereo_neon;
 #		endif
 #		ifndef NO_32BIT
-		fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_neon;
-		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32_stereo_neon;
+		fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_neon;
+		fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32_stereo_neon;
 #		endif
 		done = 1;
 	}
@@ -823,7 +823,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		chosen = dn_arm;
 		fr->cpu_opts.type = arm;
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_arm;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_arm;
 #		endif
 		done = 1;
 	}
@@ -836,20 +836,20 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->cpu_opts.type = neon64;
 #ifdef OPT_MULTI
 #		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = dct36_neon64;
+		fr->cpu_opts.the_dct36 = INT123_dct36_neon64;
 #		endif
 #endif
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_neon64;
-		fr->synths.stereo[r_1to1][f_16] = synth_1to1_stereo_neon64;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_neon64;
+		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_neon64;
 #		endif
 #		ifndef NO_REAL
-		fr->synths.plain[r_1to1][f_real] = synth_1to1_real_neon64;
-		fr->synths.stereo[r_1to1][f_real] = synth_1to1_fltst_neon64;
+		fr->synths.plain[r_1to1][f_real] = INT123_synth_1to1_real_neon64;
+		fr->synths.stereo[r_1to1][f_real] = INT123_synth_1to1_fltst_neon64;
 #		endif
 #		ifndef NO_32BIT
-		fr->synths.plain[r_1to1][f_32] = synth_1to1_s32_neon64;
-		fr->synths.stereo[r_1to1][f_32] = synth_1to1_s32st_neon64;
+		fr->synths.plain[r_1to1][f_32] = INT123_synth_1to1_s32_neon64;
+		fr->synths.stereo[r_1to1][f_32] = INT123_synth_1to1_s32st_neon64;
 #		endif
 		done = 1;
 	}
@@ -871,17 +871,17 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		fr->cpu_opts.type = generic_dither;
 		dithered = TRUE;
 #		ifndef NO_16BIT
-		fr->synths.plain[r_1to1][f_16] = synth_1to1_dither;
+		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_dither;
 #		ifndef NO_DOWNSAMPLE
-		fr->synths.plain[r_2to1][f_16] = synth_2to1_dither;
-		fr->synths.plain[r_4to1][f_16] = synth_4to1_dither;
+		fr->synths.plain[r_2to1][f_16] = INT123_synth_2to1_dither;
+		fr->synths.plain[r_4to1][f_16] = INT123_synth_4to1_dither;
 #		endif
 #		endif
 		done = 1;
 	}
 #endif
 
-	fr->cpu_opts.class = decclass(fr->cpu_opts.type);
+	fr->cpu_opts.class = INT123_decclass(fr->cpu_opts.type);
 
 #	ifndef NO_8BIT
 #	ifndef NO_16BIT /* possibility to use a 16->8 wrapper... */
@@ -890,9 +890,9 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	     && fr->cpu_opts.type != generic_dither
 	     && fr->synths.plain[r_1to1][f_16] != synth_base.plain[r_1to1][f_16] )
 	{
-		fr->synths.plain[r_1to1][f_8] = synth_1to1_8bit_wrap;
-		fr->synths.mono[r_1to1][f_8] = synth_1to1_8bit_wrap_mono;
-		fr->synths.mono2stereo[r_1to1][f_8] = synth_1to1_8bit_wrap_m2s;
+		fr->synths.plain[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap;
+		fr->synths.mono[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap_mono;
+		fr->synths.mono2stereo[r_1to1][f_8] = INT123_synth_1to1_8bit_wrap_m2s;
 	}
 #	endif
 #	endif
@@ -901,7 +901,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	if(done && dithered)
 	{
 		/* run-time dither noise table generation */
-		if(!frame_dither_init(fr))
+		if(!INT123_frame_dither_init(fr))
 		{
 			if(NOQUIET) error("Dither noise setup failed!");
 			return 0;
@@ -921,7 +921,7 @@ int frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	}
 }
 
-enum optdec dectype(const char* decoder)
+enum optdec INT123_dectype(const char* decoder)
 {
 	enum optdec dt;
 	if(   (decoder == NULL)
@@ -1072,7 +1072,7 @@ void check_decoders(void)
 	return;
 #else
 	const char **d = mpg123_supported_decoder_list;
-#if (defined OPT_X86) || (defined OPT_X86_64) || (defined OPT_NEON) || (defined OPT_NEON64)
+#ifdef OPT_CPU_FLAGS
 	struct cpuflags cpu_flags;
 	wrap_getcpuflags(&cpu_flags);
 #endif

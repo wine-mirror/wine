@@ -29,7 +29,7 @@
 // The layer12_table is already in real format (fixed or float), just needs
 // a little scaling in the MMX/SSE case.
 
-void init_layer12_stuff(mpg123_handle *fr, real* (*init_table)(mpg123_handle *fr, real *table, int m))
+void INT123_init_layer12_stuff(mpg123_handle *fr, real* (*init_table)(mpg123_handle *fr, real *table, int m))
 {
 	int k;
 	real *table;
@@ -40,7 +40,7 @@ void init_layer12_stuff(mpg123_handle *fr, real* (*init_table)(mpg123_handle *fr
 	}
 }
 
-real* init_layer12_table(mpg123_handle *fr, real *table, int m)
+real* INT123_init_layer12_table(mpg123_handle *fr, real *table, int m)
 {
 	int i;
 	for(i=0;i<63;i++)
@@ -49,7 +49,7 @@ real* init_layer12_table(mpg123_handle *fr, real *table, int m)
 }
 
 #ifdef OPT_MMXORSSE
-real* init_layer12_table_mmx(mpg123_handle *fr, real *table, int m)
+real* INT123_init_layer12_table_mmx(mpg123_handle *fr, real *table, int m)
 {
 	int i,j;
 	if(!fr->p.down_sample) 
@@ -324,7 +324,7 @@ static void II_select_table(mpg123_handle *fr)
 }
 
 
-int do_layer2(mpg123_handle *fr)
+int INT123_do_layer2(mpg123_handle *fr)
 {
 	int clip=0;
 	int i,j;

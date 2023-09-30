@@ -30,6 +30,8 @@ The creator: Michael Hipp (email: hippm@informatik.uni-tuebingen.de - please bot
 
 Contributions/ideas Thomas Orgis era (includes backports from mhipp trunk):
 
+Dave Yeo <dave.r.yeo@gmail.com>: continued OS/2 fixing
+madebr and manx: github mirror and CI
 Vitaly Kirsanov <krokoziabla@gmail.com>: ports/cmake (optional CMake build)
 Won-Kyu Park <wkpark@gmail.com>: patch to get rid of asm textrels (x86 PIC)
 Michael Weiser <michaelweiser@users.sf.net>: update of coreaudio output to AudioComponents API

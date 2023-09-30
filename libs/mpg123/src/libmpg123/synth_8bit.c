@@ -13,7 +13,7 @@
 /* 
 	Part 2: All synth functions that produce 8bit output.
 	What we need is just a special WRITE_SAMPLE. For the generic and i386 functions, that is.
-	For the rather optimized synth_1to1, we will need the postprocessing 8bit converters from synth_8bit.h .
+	For the rather optimized INT123_synth_1to1, we will need the postprocessing 8bit converters from synth_8bit.h .
 */
 
 #define SAMPLE_T unsigned char
@@ -22,14 +22,14 @@
 /* Part 2a: All straight 1to1 decoding functions */
 #define BLOCK 0x40 /* One decoding block is 64 samples. */
 
-#define SYNTH_NAME synth_1to1_8bit
+#define SYNTH_NAME INT123_synth_1to1_8bit
 #include "synth.h"
 #undef SYNTH_NAME
 
-/* Mono-related synths; they wrap over _some_ synth_1to1_8bit (could be generic, could be i386). */
+/* Mono-related synths; they wrap over _some_ INT123_synth_1to1_8bit (could be generic, could be i386). */
 #define SYNTH_NAME       fr->synths.plain[r_1to1][f_8]
-#define MONO_NAME        synth_1to1_8bit_mono
-#define MONO2STEREO_NAME synth_1to1_8bit_m2s
+#define MONO_NAME        INT123_synth_1to1_8bit_mono
+#define MONO2STEREO_NAME INT123_synth_1to1_8bit_m2s
 #include "synth_mono.h"
 #undef SYNTH_NAME
 #undef MONO_NAME
@@ -37,20 +37,20 @@
 
 #ifdef OPT_X86
 #define NO_AUTOINCREMENT
-#define SYNTH_NAME synth_1to1_8bit_i386
+#define SYNTH_NAME INT123_synth_1to1_8bit_i386
 #include "synth.h"
 #undef SYNTH_NAME
 /* i386 uses the normal mono functions. */
 #undef NO_AUTOINCREMENT
 #endif
 
-/* But now, we need functions that take the 16bit output of optimized synth_1to1 and convert it.
+/* But now, we need functions that take the 16bit output of optimized INT123_synth_1to1 and convert it.
    I suppose that is still faster than dropping the optimization altogether! */
 
 #define BASE_SYNTH_NAME  fr->synths.plain[r_1to1][f_16]
-#define SYNTH_NAME       synth_1to1_8bit_wrap
-#define MONO_NAME        synth_1to1_8bit_wrap_mono
-#define MONO2STEREO_NAME synth_1to1_8bit_wrap_m2s
+#define SYNTH_NAME       INT123_synth_1to1_8bit_wrap
+#define MONO_NAME        INT123_synth_1to1_8bit_wrap_mono
+#define MONO2STEREO_NAME INT123_synth_1to1_8bit_wrap_m2s
 #include "synth_8bit.h"
 #undef BASE_SYNTH_NAME
 #undef SYNTH_NAME
@@ -66,14 +66,14 @@
 */
 #define BLOCK 0x20 /* One decoding block is 32 samples. */
 
-#define SYNTH_NAME synth_2to1_8bit
+#define SYNTH_NAME INT123_synth_2to1_8bit
 #include "synth.h"
 #undef SYNTH_NAME
 
-/* Mono-related synths; they wrap over _some_ synth_2to1_8bit (could be generic, could be i386). */
+/* Mono-related synths; they wrap over _some_ INT123_synth_2to1_8bit (could be generic, could be i386). */
 #define SYNTH_NAME       fr->synths.plain[r_2to1][f_8]
-#define MONO_NAME        synth_2to1_8bit_mono
-#define MONO2STEREO_NAME synth_2to1_8bit_m2s
+#define MONO_NAME        INT123_synth_2to1_8bit_mono
+#define MONO2STEREO_NAME INT123_synth_2to1_8bit_m2s
 #include "synth_mono.h"
 #undef SYNTH_NAME
 #undef MONO_NAME
@@ -81,7 +81,7 @@
 
 #ifdef OPT_X86
 #define NO_AUTOINCREMENT
-#define SYNTH_NAME synth_2to1_8bit_i386
+#define SYNTH_NAME INT123_synth_2to1_8bit_i386
 #include "synth.h"
 #undef SYNTH_NAME
 /* i386 uses the normal mono functions. */
@@ -95,14 +95,14 @@
 */
 #define BLOCK 0x10 /* One decoding block is 16 samples. */
 
-#define SYNTH_NAME synth_4to1_8bit
+#define SYNTH_NAME INT123_synth_4to1_8bit
 #include "synth.h"
 #undef SYNTH_NAME
 
-/* Mono-related synths; they wrap over _some_ synth_4to1_8bit (could be generic, could be i386). */
+/* Mono-related synths; they wrap over _some_ INT123_synth_4to1_8bit (could be generic, could be i386). */
 #define SYNTH_NAME       fr->synths.plain[r_4to1][f_8]
-#define MONO_NAME        synth_4to1_8bit_mono
-#define MONO2STEREO_NAME synth_4to1_8bit_m2s
+#define MONO_NAME        INT123_synth_4to1_8bit_mono
+#define MONO2STEREO_NAME INT123_synth_4to1_8bit_m2s
 #include "synth_mono.h"
 #undef SYNTH_NAME
 #undef MONO_NAME
@@ -110,7 +110,7 @@
 
 #ifdef OPT_X86
 #define NO_AUTOINCREMENT
-#define SYNTH_NAME synth_4to1_8bit_i386
+#define SYNTH_NAME INT123_synth_4to1_8bit_i386
 #include "synth.h"
 #undef SYNTH_NAME
 /* i386 uses the normal mono functions. */
@@ -124,13 +124,13 @@
 #ifndef NO_NTOM
 /*
 	Part 2d: ntom synth.
-	Same procedure as above... Just no extra play anymore, straight synth that may use an optimized dct64.
+	Same procedure as above... Just no extra play anymore, straight synth that may use an optimized INT123_dct64.
 */
 
 /* These are all in one header, there's no flexibility to gain. */
-#define SYNTH_NAME       synth_ntom_8bit
-#define MONO_NAME        synth_ntom_8bit_mono
-#define MONO2STEREO_NAME synth_ntom_8bit_m2s
+#define SYNTH_NAME       INT123_synth_ntom_8bit
+#define MONO_NAME        INT123_synth_ntom_8bit_mono
+#define MONO2STEREO_NAME INT123_synth_ntom_8bit_m2s
 #include "synth_ntom.h"
 #undef SYNTH_NAME
 #undef MONO_NAME

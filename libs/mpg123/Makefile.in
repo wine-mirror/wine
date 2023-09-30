@@ -17,6 +17,7 @@ C_SRCS = \
 	src/libmpg123/layer1.c \
 	src/libmpg123/layer2.c \
 	src/libmpg123/layer3.c \
+	src/libmpg123/lfs_wrap.c \
 	src/libmpg123/libmpg123.c \
 	src/libmpg123/ntom.c \
 	src/libmpg123/optimize.c \

@@ -16,7 +16,7 @@
 #else
 const
 #endif
-real *pnts[] = { cos64,cos32,cos16,cos8,cos4 };
+real *INT123_pnts[] = { cos64,cos32,cos16,cos8,cos4 };
 
 static const long intwinbase[] = {
      0,    -1,    -1,    -1,    -1,    -1,    -1,    -2,    -2,    -2,
@@ -48,12 +48,12 @@ static const long intwinbase[] = {
 
 #ifdef OPT_MMXORSSE
 #if !defined(OPT_X86_64) && !defined(OPT_NEON) && !defined(OPT_NEON64) && !defined(OPT_AVX)
-void make_decode_tables_mmx_asm(long scaleval, float* decwin_mmx, float *decwins);
-void make_decode_tables_mmx(mpg123_handle *fr)
+void INT123_make_decode_tables_mmx_asm(long scaleval, float* decwin_mmx, float *decwins);
+void INT123_make_decode_tables_mmx(mpg123_handle *fr)
 {
 	debug("MMX decode tables");
 	/* Take care: The scale should be like before, when we didn't have float output all around. */
-	make_decode_tables_mmx_asm((long)((fr->lastscale < 0 ? fr->p.outscale : fr->lastscale)*SHORT_SCALE), fr->decwin_mmx, fr->decwins);
+	INT123_make_decode_tables_mmx_asm((long)((fr->lastscale < 0 ? fr->p.outscale : fr->lastscale)*SHORT_SCALE), fr->decwin_mmx, fr->decwins);
 	debug("MMX decode tables done");
 }
 #else
@@ -65,7 +65,7 @@ static int rounded(double f)
 }
 
 /* x86-64 doesn't use asm version */
-void make_decode_tables_mmx(mpg123_handle *fr)
+void INT123_make_decode_tables_mmx(mpg123_handle *fr)
 {
 	int i,j,val;
 	int idx = 0;
@@ -135,7 +135,7 @@ static int32_t sat_mul32(int32_t a, int32_t b)
 }
 #endif
 
-void make_decode_tables(mpg123_handle *fr)
+void INT123_make_decode_tables(mpg123_handle *fr)
 {
 	int i,j;
 	int idx = 0;
@@ -231,7 +231,7 @@ void make_decode_tables(mpg123_handle *fr)
 }
 
 #ifndef NO_8BIT
-int make_conv16to8_table(mpg123_handle *fr)
+int INT123_make_conv16to8_table(mpg123_handle *fr)
 {
   int i;
 	int mode = fr->af.dec_enc;
@@ -342,4 +342,3 @@ int make_conv16to8_table(mpg123_handle *fr)
 	return 0;
 }
 #endif
-

@@ -20,10 +20,6 @@
 /* Define if .align takes 3 for alignment of 2^3=8 bytes instead of 8. */
 /* #undef ASMALIGN_EXP */
 
-/* No suffixed symbols for large file support (only alias for backwards
-   compat.) */
-#define BUILD_NO_LARGENAME 1
-
 /* Define if __attribute__((aligned(16))) shall be used */
 #define CCALIGN 1
 
@@ -83,6 +79,9 @@
 
 /* Define to 1 if you have the <byteswap.h> header file. */
 /* #undef HAVE_BYTESWAP_H */
+
+/* Define to 1 if you have the `clock_gettime' function. */
+/* #undef HAVE_CLOCK_GETTIME */
 
 /* Define to 1 if you have the <CoreServices/CoreServices.h> header file. */
 /* #undef HAVE_CORESERVICES_CORESERVICES_H */
@@ -144,14 +143,14 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
+/* Define to 1 if you have the `lseek64' function. */
+/* #undef HAVE_LSEEK64 */
+
 /* Define to 1 if you have the <machine/soundcard.h> header file. */
 /* #undef HAVE_MACHINE_SOUNDCARD_H */
 
 /* Define to 1 if you have the `mbstowcs' function. */
 #define HAVE_MBSTOWCS 1
-
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mkfifo' function. */
 /* #undef HAVE_MKFIFO */
@@ -182,6 +181,9 @@
 
 /* Define to 1 if you have the <os2.h> header file. */
 /* #undef HAVE_OS2_H */
+
+/* Define if O_LARGEFILE flag for open(2) exists. */
+/* #undef HAVE_O_LARGEFILE */
 
 /* Define to 1 if you have the `random' function. */
 /* #undef HAVE_RANDOM */
@@ -233,6 +235,9 @@
 
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
+
+/* Define to 1 if you have the `strerror_l' function. */
+/* #undef HAVE_STRERROR_L */
 
 /* Define to 1 if you have the <strings.h> header file. */
 /* #undef HAVE_STRINGS_H 1 */
@@ -297,6 +302,9 @@
 /* Define to 1 if you have the `unsetenv' function. */
 /* #undef HAVE_UNSETENV */
 
+/* Define to 1 if you have the `uselocale' function. */
+/* #undef HAVE_USELOCALE */
+
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
@@ -330,9 +338,11 @@
 /* Define if IPV6 support is enabled. */
 #define IPV6 1
 
-/* Define this to the size of native offset type in bits, used for LFS alias
-   functions. */
-#define LFS_ALIAS_BITS 32
+/* Define if we use _LARGEFILE64_SOURCE with off64_t and lseek64. */
+/* #undef LFS_LARGEFILE_64 */
+
+/* System redefines off_t when defining _FILE_OFFSET_BITS to 64. */
+/* #undef LFS_SENSITIVE */
 
 /* Define to the extension used for runtime loadable modules, say, ".so". */
 #define LT_MODULE_EXT ".dll"
@@ -429,7 +439,7 @@
 #define PACKAGE_NAME "mpg123"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "mpg123 1.31.1"
+#define PACKAGE_STRING "mpg123 1.32.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "mpg123"
@@ -438,7 +448,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.31.1"
+#define PACKAGE_VERSION "1.32.2"
+
+/* Define to only include portable library API (no off_t, no internal I/O). */
+/* #undef PORTABLE_API */
 
 /* Define if portaudio v18 API is wanted. */
 /* #undef PORTAUDIO18 */
@@ -452,11 +465,8 @@
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
 
-/* The size of `off64_t', as computed by sizeof. */
-#define SIZEOF_OFF64_T 8
-
 /* The size of `off_t', as computed by sizeof. */
-#define SIZEOF_OFF_T 8
+#define SIZEOF_OFF_T 4
 
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 4
@@ -464,7 +474,9 @@
 /* The size of `ssize_t', as computed by sizeof. */
 #define SIZEOF_SSIZE_T 4
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
 
 /* Define to not duplicate some code for likely cases in libsyn123. */
@@ -480,7 +492,7 @@
 /* #undef USE_YASM_FOR_AVX */
 
 /* Version number of package */
-#define VERSION "1.31.1"
+#define VERSION "1.32.2"
 
 /* Define to use Win32 named pipes */
 #define WANT_WIN32_FIFO 1
@@ -512,17 +524,6 @@
 /* Define for extreme debugging. */
 /* #undef XDEBUG */
 
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
-
-/* Number of bits in a file offset, on hosts where this is settable. */
-#define _FILE_OFFSET_BITS 64
-
-/* Define for large files, on AIX-style hosts. */
-/* #undef _LARGE_FILES */
-
 /* Windows Vista and later APIs */
 /* #undef _WIN32_WINNT */
 
@@ -544,11 +545,8 @@
 /* Define to `long long' if <sys/types.h> does not define. */
 /* #undef int64_t */
 
-/* Define to the native offset type (long or actually off_t). */
-#define lfs_alias_t long
-
-/* Define to `long int' if <sys/types.h> does not define. */
-/* #undef off_t */
+/* Define to `long' if <sys/types.h> does not define. */
+/* #undef ptrdiff_t */
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
 /* #undef size_t */

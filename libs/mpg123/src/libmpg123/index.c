@@ -1,20 +1,19 @@
 /*
 	index: frame index data structure and functions
 
-	copyright 2007-2020 by the mpg123 project
+	copyright 2007-2023 by the mpg123 project
 	-= free software under the terms of the LGPL 2.1 =-
 	see COPYING and AUTHORS files in distribution or http://mpg123.org
 	initially written by Thomas Orgis
 */
 
-#include "intsym.h"
 #include "index.h"
 #include "debug.h"
 
 /* The next expected frame offset, one step ahead. */
-static off_t fi_next(struct frame_index *fi)
+static int64_t fi_next(struct frame_index *fi)
 {
-	return (off_t)fi->fill*fi->step;
+	return (int64_t)fi->fill*fi->step;
 }
 
 /* Shrink down the used index to the half.
@@ -36,7 +35,7 @@ static void fi_shrink(struct frame_index *fi)
 	fi->next = fi_next(fi);
 }
 
-void fi_init(struct frame_index *fi)
+void INT123_fi_init(struct frame_index *fi)
 {
 	fi->data = NULL;
 	fi->step = 1;
@@ -46,17 +45,17 @@ void fi_init(struct frame_index *fi)
 	fi->next = fi_next(fi);
 }
 
-void fi_exit(struct frame_index *fi)
+void INT123_fi_exit(struct frame_index *fi)
 {
-	debug2("fi_exit: %p and %lu", (void*)fi->data, (unsigned long)fi->size);
+	debug2("INT123_fi_exit: %p and %lu", (void*)fi->data, (unsigned long)fi->size);
 	if(fi->size && fi->data != NULL) free(fi->data);
 
-	fi_init(fi); /* Be prepared for further fun, still. */
+	INT123_fi_init(fi); /* Be prepared for further fun, still. */
 }
 
-int fi_resize(struct frame_index *fi, size_t newsize)
+int INT123_fi_resize(struct frame_index *fi, size_t newsize)
 {
-	off_t *newdata = NULL;
+	int64_t *newdata = NULL;
 	if(newsize == fi->size) return 0;
 
 	if(newsize > 0 && newsize < fi->size)
@@ -64,7 +63,7 @@ int fi_resize(struct frame_index *fi, size_t newsize)
 		while(fi->fill > newsize){ fi_shrink(fi); }
 	}
 
-	newdata = safe_realloc(fi->data, newsize*sizeof(off_t));
+	newdata = INT123_safe_realloc(fi->data, newsize*sizeof(int64_t));
 	if(newsize == 0 || newdata != NULL)
 	{
 		fi->data = newdata;
@@ -78,15 +77,15 @@ int fi_resize(struct frame_index *fi, size_t newsize)
 		return -1;
 }
 
-void fi_add(struct frame_index *fi, off_t pos)
+void INT123_fi_add(struct frame_index *fi, int64_t pos)
 {
 	debug3("wanting to add to fill %lu, step %lu, size %lu", (unsigned long)fi->fill, (unsigned long)fi->step, (unsigned long)fi->size);
 	if(fi->fill == fi->size)
 	{ /* Index is full, we need to shrink... or grow. */
 		/* Store the current frame number to check later if we still want it. */
-		off_t framenum = fi->fill*fi->step;
+		int64_t framenum = fi->fill*fi->step;
 		/* If we want not / cannot grow, we shrink. */	
-		if( !(fi->grow_size && fi_resize(fi, fi->size+fi->grow_size)==0) )
+		if( !(fi->grow_size && INT123_fi_resize(fi, fi->size+fi->grow_size)==0) )
 		fi_shrink(fi);
 
 		/* Now check if we still want to add this frame (could be that not, because of changed step). */
@@ -103,13 +102,13 @@ void fi_add(struct frame_index *fi, off_t pos)
 	}
 }
 
-int fi_set(struct frame_index *fi, off_t *offsets, off_t step, size_t fill)
+int INT123_fi_set(struct frame_index *fi, int64_t *offsets, int64_t step, size_t fill)
 {
-	if(fi_resize(fi, fill) == -1) return -1;
+	if(INT123_fi_resize(fi, fill) == -1) return -1;
 	fi->step = step;
 	if(offsets != NULL)
 	{
-		memcpy(fi->data, offsets, fill*sizeof(off_t));
+		memcpy(fi->data, offsets, fill*sizeof(int64_t));
 		fi->fill = fill;
 	}
 	else
@@ -123,7 +122,7 @@ int fi_set(struct frame_index *fi, off_t *offsets, off_t step, size_t fill)
 	return 0;
 }
 
-void fi_reset(struct frame_index *fi)
+void INT123_fi_reset(struct frame_index *fi)
 {
 	debug1("reset with size %"SIZE_P, (size_p)fi->size);
 	fi->fill = 0;

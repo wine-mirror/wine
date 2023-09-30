@@ -20,15 +20,15 @@
 */
 
 
-/* Main synth function, uses the plain dct64 or dct64_i386. */
+/* Main synth function, uses the plain INT123_dct64 or INT123_dct64_i386. */
 int SYNTH_NAME(real *bandPtr, int channel, mpg123_handle *fr, int final)
 {
 #ifndef NO_AUTOINCREMENT
 #define BACKPEDAL 0x10 /* We use autoincrement and thus need this re-adjustment for window/b0. */
-#define MY_DCT64 dct64
+#define MY_DCT64 INT123_dct64
 #else
 #define BACKPEDAL 0x00 /* i386 code does not need that. */
-#define MY_DCT64 dct64_i386
+#define MY_DCT64 INT123_dct64_i386
 #endif
 	static const int step = 2;
 	SAMPLE_T *samples = (SAMPLE_T *) (fr->buffer.data + fr->buffer.fill);
@@ -37,7 +37,7 @@ int SYNTH_NAME(real *bandPtr, int channel, mpg123_handle *fr, int final)
 	int clip = 0; 
 	int bo1;
 #ifndef NO_EQUALIZER
-	if(fr->have_eq_settings) do_equalizer(bandPtr,channel,fr->equalizer);
+	if(fr->have_eq_settings) INT123_do_equalizer(bandPtr,channel,fr->equalizer);
 #endif
 	if(!channel)
 	{
