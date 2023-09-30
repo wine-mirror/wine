@@ -1,4 +1,10 @@
 /* libtiff/tif_config.h.  Generated from tif_config.h.in by configure.  */
+/* clang-format off */
+/* clang-format disabled because CMake scripts are very sensitive to the
+ * formatting of this file. configure_file variables of type "@VAR@" are
+ * modified by clang-format and won't be substituted.
+ */
+
 /* libtiff/tif_config.h.in.  Not generated, but originated from autoheader.  */
 
 #include "tiffconf.h"
@@ -35,18 +41,6 @@
 /* Define to 1 if you have the `getopt' function. */
 /* #undef HAVE_GETOPT */
 
-/* Define to 1 if you have the <GLUT/glut.h> header file. */
-/* #undef HAVE_GLUT_GLUT_H */
-
-/* Define to 1 if you have the <GL/glut.h> header file. */
-/* #undef HAVE_GL_GLUT_H */
-
-/* Define to 1 if you have the <GL/glu.h> header file. */
-#define HAVE_GL_GLU_H 1
-
-/* Define to 1 if you have the <GL/gl.h> header file. */
-#define HAVE_GL_GL_H 1
-
 /* Define to 1 if you have the <io.h> header file. */
 #define HAVE_IO_H 1
 
@@ -55,12 +49,6 @@
 
 /* Define to 1 if you have the `mmap' function. */
 /* #undef HAVE_MMAP */
-
-/* Define to 1 if you have the <OpenGL/glu.h> header file. */
-/* #undef HAVE_OPENGL_GLU_H */
-
-/* Define to 1 if you have the <OpenGL/gl.h> header file. */
-/* #undef HAVE_OPENGL_GL_H */
 
 /* Define to 1 if you have the `setmode' function. */
 #define HAVE_SETMODE 1
@@ -93,13 +81,10 @@
 #define PACKAGE "tiff"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "tiff@lists.maptools.org"
+#define PACKAGE_BUGREPORT "tiff@lists.osgeo.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "LibTIFF Software"
-
-/* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LibTIFF Software 4.5.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tiff"
@@ -107,20 +92,17 @@
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "4.5.1"
-
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 4
 
 /* Default size of the strip in bytes (when strip chopping enabled) */
 #define STRIP_SIZE_DEFAULT 8192
 
+/* Maximum number of TIFF IFDs that libtiff can iterate through in a file. */
+#define TIFF_MAX_DIR_COUNT 1048576
+
 /* define to use win32 IO system */
 #define USE_WIN32_FILEIO 1
-
-/* Version number of package */
-#define VERSION "4.5.1"
 
 /* Support webp compression */
 /* #undef WEBP_SUPPORT */
@@ -156,8 +138,19 @@
 
 #if !defined(__MINGW32__)
 #  define TIFF_SIZE_FORMAT "zu"
-#  define TIFF_SSIZE_FORMAT "zd"
-#else
-#  define TIFF_SIZE_FORMAT "Iu"
-#  define TIFF_SSIZE_FORMAT "Id"
 #endif
+#if SIZEOF_SIZE_T == 8
+#  define TIFF_SSIZE_FORMAT PRId64
+#  if defined(__MINGW32__)
+#    define TIFF_SIZE_FORMAT PRIu64
+#  endif
+#elif SIZEOF_SIZE_T == 4
+#  define TIFF_SSIZE_FORMAT PRId32
+#  if defined(__MINGW32__)
+#    define TIFF_SIZE_FORMAT PRIu32
+#  endif
+#else
+#  error "Unsupported size_t size; please submit a bug report"
+#endif
+
+/* clang-format on */
