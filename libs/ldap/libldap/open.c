@@ -501,6 +501,11 @@ ldap_int_open_connection(
 	if( proto == LDAP_PROTO_UDP ) return 0;
 #endif
 
+	if ( async && rc == -2) {
+		/* Need to let the connect complete asynchronously before we continue */
+		return -2;
+	}
+
 #ifdef HAVE_TLS
 	if ((rc == 0 || rc == -2) && ( ld->ld_options.ldo_tls_mode == LDAP_OPT_X_TLS_HARD ||
 		strcmp( srv->lud_scheme, "ldaps" ) == 0 ))
@@ -585,9 +590,9 @@ ldap_open_internal_connection( LDAP **ldp, ber_socket_t *fdp )
 	/* Attach the passed socket as the *LDAP's connection */
 	c = ldap_new_connection( ld, NULL, 1, 0, NULL, 0, 0 );
 	if( c == NULL ) {
+		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		ldap_unbind_ext( ld, NULL, NULL );
 		*ldp = NULL;
-		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		return( LDAP_NO_MEMORY );
 	}
 	ber_sockbuf_ctrl( c->lconn_sb, LBER_SB_OPT_SET_FD, fdp );
