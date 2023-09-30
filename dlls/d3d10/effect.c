@@ -621,10 +621,37 @@ static void pres_movc(float **args, unsigned int n, const struct preshader_instr
         retval[i] = arg1[i] ? arg2[i] : arg3[i];
 }
 
+static void pres_dot(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[2];
+    unsigned int i;
+
+    *retval = 0.0f;
+    for (i = 0; i < instr->comp_count; ++i)
+        *retval += args[0][instr->scalar ? 0 : i] * args[1][i];
+}
+
+static void pres_dotswiz(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[--n];
+    unsigned int i;
+
+    *retval = 0.0f;
+
+    if (n != 6 && n != 8 && instr->comp_count == 1)
+    {
+        WARN("Unexpected argument count %u, or component count %u.\n", n, instr->comp_count);
+        return;
+    }
+
+    for (i = 0; i < n / 2; ++i)
+        *retval += args[i][0] * args[i + n / 2][0];
+}
+
 struct preshader_op_info
 {
     int opcode;
-    char name[8];
+    char name[16];
     pres_op_func func;
 };
 
@@ -667,6 +694,8 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x230, "and",  pres_and  },
     { 0x233, "xor",  pres_xor  },
     { 0x301, "movc", pres_movc },
+    { 0x500, "dot",  pres_dot  },
+    { 0x70e, "d3ds_dotswiz", pres_dotswiz },
 };
 
 static int __cdecl preshader_op_compare(const void *a, const void *b)
@@ -788,7 +817,7 @@ static HRESULT d3d10_effect_preshader_eval(struct d3d10_effect_preshader *p)
     unsigned int i, j, regt, offset, instr_count, arg_count;
     const DWORD *ip = ID3D10Blob_GetBufferPointer(p->code);
     struct preshader_instr ins;
-    float *dst, *args[4];
+    float *dst, *args[9];
 
     dst = d3d10_effect_preshader_get_reg_ptr(p, D3D10_REG_TABLE_RESULT, 0);
     memset(dst, 0, sizeof(float) * p->reg_tables[D3D10_REG_TABLE_RESULT].count);
