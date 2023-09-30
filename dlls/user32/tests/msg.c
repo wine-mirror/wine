@@ -9661,7 +9661,7 @@ static void subtest_hvredraw(HWND hparent, UINT class_style, DWORD style)
         rgn_ok = EqualRgn( hrgn_expect, hrgn_actual );
         ok( !!rgn_ok, "Update region shall match expected region\n" );
 
-        if (!rgn_ok && winetest_debug > 1)
+        if (!rgn_ok)
         {
             trace( "Expected update region: " );
             dump_region( hrgn_expect );
