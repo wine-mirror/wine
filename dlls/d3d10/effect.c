@@ -433,6 +433,20 @@ static void pres_iadd(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_imul(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    int *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        int v = arg1[instr->scalar ? 0 : i] * arg2[i];
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_bilt(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     int *arg1 = (int *)args[0];
@@ -686,6 +700,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x214, "buge", pres_buge },
     { 0x215, "bult", pres_bult },
     { 0x216, "iadd", pres_iadd },
+    { 0x219, "imul", pres_imul },
     { 0x21a, "udiv", pres_udiv },
     { 0x21d, "imin", pres_imin },
     { 0x21e, "imax", pres_imax },
