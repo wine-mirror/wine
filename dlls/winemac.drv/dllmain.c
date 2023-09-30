@@ -243,16 +243,16 @@ static BOOL CALLBACK get_first_resource(HMODULE module, LPCWSTR type, LPWSTR nam
  */
 static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
 {
-    struct app_icon_params *params = arg;
-    struct app_icon_result *result = param_ptr(params->result);
+    struct app_icon_entry entries[64];
     HRSRC res_info;
     HGLOBAL res_data;
     GRPICONDIR *icon_dir;
+    unsigned count;
     int i;
 
     TRACE("()\n");
 
-    result->count = 0;
+    count = 0;
 
     res_info = NULL;
     EnumResourceNamesW(NULL, (LPCWSTR)RT_GROUP_ICON, get_first_resource, (LONG_PTR)&res_info);
@@ -274,9 +274,9 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
         goto cleanup;
     }
 
-    for (i = 0; i < icon_dir->idCount && result->count < ARRAYSIZE(result->entries); i++)
+    for (i = 0; i < icon_dir->idCount && count < ARRAYSIZE(entries); i++)
     {
-        struct app_icon_entry *entry = &result->entries[result->count];
+        struct app_icon_entry *entry = &entries[count];
         int width = icon_dir->idEntries[i].bWidth;
         int height = icon_dir->idEntries[i].bHeight;
         BOOL found_better_bpp = FALSE;
@@ -338,7 +338,7 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
             {
                 entry->png = (UINT_PTR)icon_bits;
                 entry->icon = 0;
-                result->count++;
+                count++;
             }
             else
             {
@@ -348,7 +348,7 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
                 {
                     entry->icon = HandleToUlong(icon);
                     entry->png = 0;
-                    result->count++;
+                    count++;
                 }
                 else
                     WARN("failed to create icon %d from resource with ID %hd\n", i, icon_dir->idEntries[i].nID);
@@ -363,7 +363,7 @@ static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
 cleanup:
     FreeResource(res_data);
 
-    return 0;
+    return NtCallbackReturn(entries, count * sizeof(entries[0]), 0);
 }
 
 typedef NTSTATUS (WINAPI *kernel_callback)(void *params, ULONG size);

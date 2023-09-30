@@ -249,27 +249,33 @@ cleanup:
  */
 CFArrayRef create_app_icon_images(void)
 {
-    struct app_icon_result icons;
-    struct app_icon_params params = { .result = (UINT_PTR)&icons };
     CFMutableArrayRef images = NULL;
+    struct app_icon_entry *entries;
+    ULONG ret_len;
+    unsigned count;
     int i;
 
     TRACE("()\n");
 
-    macdrv_client_func(client_func_app_icon, &params, sizeof(params));
+    if (KeUserModeCallback(client_func_app_icon, NULL, 0, (void**)&entries, &ret_len) ||
+        (ret_len % sizeof(*entries)))
+    {
+        WARN("incorrect callback result\n");
+        return NULL;
+    }
+    count = ret_len / sizeof(*entries);
+    if (!count || !entries) return NULL;
 
-    if (!icons.count) return NULL;
-
-    images = CFArrayCreateMutable(NULL, icons.count, &kCFTypeArrayCallBacks);
+    images = CFArrayCreateMutable(NULL, count, &kCFTypeArrayCallBacks);
     if (!images)
     {
         WARN("failed to create images array\n");
         return NULL;
     }
 
-    for (i = 0; i < icons.count; i++)
+    for (i = 0; i < count; i++)
     {
-        struct app_icon_entry *icon = &icons.entries[i];
+        struct app_icon_entry *icon = &entries[i];
         CGImageRef cgimage = NULL;
 
         if (icon->png)

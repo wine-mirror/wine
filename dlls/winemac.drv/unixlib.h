@@ -104,18 +104,6 @@ struct app_icon_entry
     UINT64 png;
 };
 
-struct app_icon_result
-{
-    UINT32 count;
-    struct app_icon_entry entries[64];
-};
-
-/* macdrv_app_icon params */
-struct app_icon_params
-{
-    UINT64 result; /* FIXME: Use NtCallbackReturn instead */
-};
-
 /* macdrv_app_quit_request params */
 struct app_quit_request_params
 {
