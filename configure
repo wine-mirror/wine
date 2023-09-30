@@ -817,6 +817,14 @@ i386_LDFLAGS
 i386_EXTRACFLAGS
 i386_CFLAGS
 i386_CC
+arm64ec_DISABLED_SUBDIRS
+arm64ec_DELAYLOADFLAG
+arm64ec_TARGET
+arm64ec_DEBUG
+arm64ec_LDFLAGS
+arm64ec_EXTRACFLAGS
+arm64ec_CFLAGS
+arm64ec_CC
 arm_DISABLED_SUBDIRS
 arm_DELAYLOADFLAG
 arm_TARGET
@@ -6404,7 +6412,7 @@ enable_win64=${enable_win64:-no}
 enable_wow64=${enable_wow64:-aarch64,x86_64}
 enable_wow64win=${enable_wow64win:-aarch64,x86_64}
 enable_wow64cpu=${enable_wow64cpu:-x86_64}
-enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64}
+enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -10294,7 +10302,7 @@ then :
      for arch
      do
          case $arch in
-           i386|x86_64|arm|aarch64) cross_archs="$cross_archs $arch" ;;
+           i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
            *) as_fn_error $? "Unknown cross-compilation architecture '$arch'" "$LINENO" 5 ;;
          esac
      done
@@ -10361,6 +10369,56 @@ fi
   test -n "$aarch64_CC" && break
 done
 test -n "$aarch64_CC" || aarch64_CC="false"
+
+            ;;
+          arm64ec)
+            for ac_prog in arm64ec-w64-mingw32-clang arm64ec-w64-mingw32-gcc clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_arm64ec_CC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$arm64ec_CC"; then
+  ac_cv_prog_arm64ec_CC="$arm64ec_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_arm64ec_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+arm64ec_CC=$ac_cv_prog_arm64ec_CC
+if test -n "$arm64ec_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm64ec_CC" >&5
+printf "%s\n" "$arm64ec_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$arm64ec_CC" && break
+done
+test -n "$arm64ec_CC" || arm64ec_CC="false"
 
             ;;
           arm)
@@ -10604,6 +10662,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10713,6 +10772,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-strict-aliasing"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10746,6 +10806,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=unknown-warning-option"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10779,6 +10840,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=ignored-optimization-argument"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10812,6 +10874,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wdeclaration-after-statement"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10845,6 +10908,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wempty-body"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10878,6 +10942,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wignored-qualifiers"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10911,6 +10976,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Winit-self"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10944,6 +11010,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpacked-not-aligned"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10977,6 +11044,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpragma-pack"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11043,6 +11111,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wshift-overflow=2"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11076,6 +11145,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wstrict-prototypes"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11109,6 +11179,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wtype-limits"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11142,6 +11213,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wunused-but-set-parameter"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11175,6 +11247,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wvla"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11208,6 +11281,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wwrite-strings"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11241,6 +11315,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpointer-arith"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11274,6 +11349,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wlogical-op"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11307,6 +11383,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wabsolute-value"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11342,6 +11419,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-omit-frame-pointer"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11375,6 +11453,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--disable-stdcall-fixup"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11408,6 +11487,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wformat-overflow"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11441,6 +11521,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wnonnull"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11474,6 +11555,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcx16"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11507,6 +11589,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcmodel=small"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11563,6 +11646,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gdwarf-4"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11596,6 +11680,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gcodeview"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11633,6 +11718,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11666,6 +11752,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--build-id"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -23200,6 +23287,14 @@ arm_DEBUG = $arm_DEBUG
 arm_TARGET = $arm_TARGET
 arm_DELAYLOADFLAG = $arm_DELAYLOADFLAG
 arm_DISABLED_SUBDIRS = $arm_DISABLED_SUBDIRS
+arm64ec_CC = $arm64ec_CC
+arm64ec_CFLAGS = $arm64ec_CFLAGS
+arm64ec_EXTRACFLAGS = $arm64ec_EXTRACFLAGS
+arm64ec_LDFLAGS = $arm64ec_LDFLAGS
+arm64ec_DEBUG = $arm64ec_DEBUG
+arm64ec_TARGET = $arm64ec_TARGET
+arm64ec_DELAYLOADFLAG = $arm64ec_DELAYLOADFLAG
+arm64ec_DISABLED_SUBDIRS = $arm64ec_DISABLED_SUBDIRS
 i386_CC = $i386_CC
 i386_CFLAGS = $i386_CFLAGS
 i386_EXTRACFLAGS = $i386_EXTRACFLAGS

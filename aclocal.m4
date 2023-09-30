@@ -213,7 +213,8 @@ AC_CACHE_CHECK([whether $CC supports $1], ac_var,
 ac_wine_try_cflags_saved_exeext=$ac_exeext
 CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $1"
 ac_exeext=".exe"
-AC_LINK_IFELSE([AC_LANG_SOURCE([[int __cdecl mainCRTStartup(void) { return 0; }]])],
+AC_LINK_IFELSE([AC_LANG_SOURCE([[void *__os_arm64x_dispatch_ret = 0;
+int __cdecl mainCRTStartup(void) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved
 ac_exeext=$ac_wine_try_cflags_saved_exeext])
