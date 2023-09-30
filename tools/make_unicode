@@ -25,7 +25,7 @@ use Digest::SHA;
 use Encode;
 use Time::Local qw(timegm_modern);
 
-my $UNIVERSION = "15.0.0";
+my $UNIVERSION = "15.1.0";
 my $CLDRVERSION = "43";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2023c";
@@ -33,11 +33,11 @@ my $TZVERSION = "2023c";
 my %data_files =
 (
  ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip",
-                sha  => "5fbde400f3e687d25cc9b0a8d30d7619e76cb2f4c3e85ba9df8ec1312cb6718c" },
+                sha  => "cb1c663d053926500cd501229736045752713a066bd75802098598b7a7056177" },
  unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip",
-                sha  => "24b154691fc97cb44267b925d62064297086b3f896b57a8181c7b6d42702a026" },
+                sha  => "a0226610e324bcf784ac380e11f4cbf533ee1e6b3d028b0991bf8c0dc3f85853" },
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
-                sha  => "cc8522199541d60326a42a8f91f8748fd15630a42502dd2cf4878e81e2066ead" },
+                sha  => "402cbd285f1f952fcd0834b63541d54f69d3d8f1b8f8599bf71a1a14935f82c4" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
                 sha  => "132cdd24e479abb6e86db1429931cec3dada485fd41da39ece3c08e531c477df" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
@@ -280,6 +280,11 @@ my %break_types =
     "EB"  => 0x0029,
     "EM"  => 0x002a,
     "ZWJ" => 0x002b,
+    "AK"  => 0x002c,
+    "AP"  => 0x002d,
+    "AS"  => 0x002e,
+    "VF"  => 0x002f,
+    "VI"  => 0x0030,
 );
 
 my %vertical_types =
