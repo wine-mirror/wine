@@ -344,6 +344,17 @@ static void pres_ftob(float **args, unsigned int n, const struct preshader_instr
 }
 
 /* Only first source component is used. */
+static void pres_floor(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float value = floorf(args[0][0]);
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = value;
+}
+
+/* Only first source component is used. */
 static void pres_ceil(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float value = ceilf(args[0][0]);
@@ -633,6 +644,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x131, "utof", pres_utof },
     { 0x133, "ftou", pres_ftou },
     { 0x137, "ftob", pres_ftob },
+    { 0x139, "floor",pres_floor},
     { 0x13a, "ceil", pres_ceil },
     { 0x200, "min",  pres_min  },
     { 0x201, "max",  pres_max  },
