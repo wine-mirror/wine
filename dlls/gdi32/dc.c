@@ -235,6 +235,12 @@ static BOOL print_copy_devmode( struct print *print, const DEVMODEW *devmode )
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                       const DEVMODEW *devmode )
 {
+    PRINTER_DEFAULTSW prn_defaults =
+    {
+        .pDatatype = NULL,
+        .pDevMode = (DEVMODEW *)devmode,
+        .DesiredAccess = PRINTER_ACCESS_USE
+    };
     UNICODE_STRING device_str, output_str;
     driver_entry_point entry_point = NULL;
     const WCHAR *display = NULL, *p;
@@ -280,7 +286,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    else if (!OpenPrinterW( (WCHAR *)device, &hspool, NULL ))
+    else if (!OpenPrinterW( (WCHAR *)device, &hspool, &prn_defaults ))
     {
         return 0;
     }
