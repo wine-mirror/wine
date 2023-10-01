@@ -98,6 +98,8 @@ static int has_relays( DLLSPEC *spec )
 {
     int i;
 
+    if (target.cpu == CPU_ARM64EC) return 0;
+
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
@@ -652,6 +654,9 @@ void output_module( DLLSPEC *spec )
             output( "\n\t.section \".init\",\"ax\"\n" );
             output( "\tb 1f\n" );
             break;
+        case CPU_ARM64EC:
+            assert( 0 );
+            break;
         }
         output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
@@ -671,6 +676,7 @@ void output_module( DLLSPEC *spec )
     switch (target.cpu)
     {
     case CPU_i386:    machine = IMAGE_FILE_MACHINE_I386; break;
+    case CPU_ARM64EC:
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARMNT; break;
     case CPU_ARM64:   machine = IMAGE_FILE_MACHINE_ARM64; break;
@@ -1089,6 +1095,7 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     switch (target.cpu)
     {
     case CPU_i386:    put_word( IMAGE_FILE_MACHINE_I386 ); break;
+    case CPU_ARM64EC:
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARMNT ); break;
     case CPU_ARM64:   put_word( IMAGE_FILE_MACHINE_ARM64 ); break;

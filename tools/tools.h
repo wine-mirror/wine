@@ -90,7 +90,7 @@ extern char **environ;
 
 struct target
 {
-    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64 } cpu;
+    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64, CPU_ARM64EC } cpu;
 
     enum
     {
@@ -481,6 +481,7 @@ static inline unsigned int get_target_ptr_size( struct target target )
         [CPU_x86_64]    = 8,
         [CPU_ARM]       = 4,
         [CPU_ARM64]     = 8,
+        [CPU_ARM64EC]   = 8,
     };
     return sizes[target.cpu];
 }
@@ -500,6 +501,7 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
         if (size == 8) target->cpu = CPU_ARM64;
         break;
     case CPU_ARM64:
+    case CPU_ARM64EC:
         if (size == 4) target->cpu = CPU_ARM;
         break;
     }
@@ -522,6 +524,7 @@ static inline int get_cpu_from_name( const char *name )
         { "x86_64",    CPU_x86_64 },
         { "amd64",     CPU_x86_64 },
         { "aarch64",   CPU_ARM64 },
+        { "arm64ec",   CPU_ARM64EC },
         { "arm64",     CPU_ARM64 },
         { "arm",       CPU_ARM },
     };
@@ -566,10 +569,11 @@ static inline const char *get_arch_dir( struct target target )
 {
     static const char *cpu_names[] =
     {
-        [CPU_i386]   = "i386",
-        [CPU_x86_64] = "x86_64",
-        [CPU_ARM]    = "arm",
-        [CPU_ARM64]  = "aarch64"
+        [CPU_i386]    = "i386",
+        [CPU_x86_64]  = "x86_64",
+        [CPU_ARM]     = "arm",
+        [CPU_ARM64]   = "aarch64",
+        [CPU_ARM64EC] = "arm64ec",
     };
 
     if (!cpu_names[target.cpu]) return "";
