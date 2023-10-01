@@ -660,6 +660,20 @@ static void pres_and(float **args, unsigned int n, const struct preshader_instr 
     }
 }
 
+static void pres_or(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    unsigned int *arg1 = (unsigned int *)args[0];
+    unsigned int *arg2 = (unsigned int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[0] | arg2[0];
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_xor(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     unsigned int *arg1 = (unsigned int *)args[0];
@@ -761,6 +775,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x21f, "umin", pres_umin },
     { 0x220, "umax", pres_umax },
     { 0x230, "and",  pres_and  },
+    { 0x231, "or",   pres_or   },
     { 0x233, "xor",  pres_xor  },
     { 0x301, "movc", pres_movc },
     { 0x500, "dot",  pres_dot  },
