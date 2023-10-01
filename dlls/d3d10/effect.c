@@ -337,6 +337,19 @@ static void pres_ineg(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_not(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0];
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        int v = ~arg1[0];
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_itof(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[1];
@@ -721,6 +734,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x10c, "atan", pres_atan },
     { 0x112, "sqrt", pres_sqrt },
     { 0x120, "ineg", pres_ineg },
+    { 0x121, "not",  pres_not  },
     { 0x130, "itof", pres_itof },
     { 0x131, "utof", pres_utof },
     { 0x133, "ftou", pres_ftou },
