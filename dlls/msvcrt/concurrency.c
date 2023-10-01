@@ -2241,20 +2241,19 @@ static void execute_chore(_UnrealizedChore *chore,
 static void CALLBACK chore_wrapper_finally(BOOL normal, void *data)
 {
     _UnrealizedChore *chore = data;
-    volatile LONG *ptr;
+    struct _StructuredTaskCollection *task_collection = chore->task_collection;
     LONG finished = 1;
 
     TRACE("(%u %p)\n", normal, data);
 
-    if (!chore->task_collection)
+    if (!task_collection)
         return;
-    ptr = &chore->task_collection->finished;
-
-    if (InterlockedCompareExchange(ptr, 1, FINISHED_INITIAL) != FINISHED_INITIAL)
-        finished = InterlockedIncrement(ptr);
-    if (!finished)
-        call_Context_Unblock(chore->task_collection->event);
     chore->task_collection = NULL;
+
+    if (InterlockedCompareExchange(&task_collection->finished, 1, FINISHED_INITIAL) != FINISHED_INITIAL)
+        finished = InterlockedIncrement(&task_collection->finished);
+    if (!finished)
+        call_Context_Unblock(task_collection->event);
 }
 
 static void __cdecl chore_wrapper(_UnrealizedChore *chore)
