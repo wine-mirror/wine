@@ -232,6 +232,7 @@ struct synth
     struct list waves;
 
     fluid_settings_t *fluid_settings;
+    fluid_synth_t *fluid_synth;
 };
 
 static inline struct synth *impl_from_IDirectMusicSynth8(IDirectMusicSynth8 *iface)
@@ -351,7 +352,8 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
         if ((params->dwValidParams & DMUS_PORTPARAMS_AUDIOCHANNELS) && params->dwAudioChannels)
         {
-            actual.dwAudioChannels = min(params->dwAudioChannels, This->caps.dwMaxAudioChannels);
+            /* FluidSynth only works with stereo */
+            actual.dwAudioChannels = 2;
             modified |= actual.dwAudioChannels != params->dwAudioChannels;
         }
 
@@ -384,6 +386,9 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
         memcpy(params, &actual, size);
     }
 
+    fluid_settings_setnum(This->fluid_settings, "synth.sample-rate", actual.dwSampleRate);
+    if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings))) return E_OUTOFMEMORY;
+
     This->params = actual;
     This->open = TRUE;
 
@@ -399,6 +404,8 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
     if (!This->open)
         return DMUS_E_ALREADYCLOSED;
 
+    delete_fluid_synth(This->fluid_synth);
+    This->fluid_synth = NULL;
     This->open = FALSE;
 
     return S_OK;
