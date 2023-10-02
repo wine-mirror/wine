@@ -89,7 +89,6 @@ typedef struct {
 
 typedef struct {
     DispatchEx dispex;
-    IUnknown IUnknown_iface;
     DispatchEx *obj;
     func_info_t *info;
 } func_disp_t;
