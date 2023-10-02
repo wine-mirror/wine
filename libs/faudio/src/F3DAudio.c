@@ -1274,7 +1274,7 @@ static inline void CalculateMatrix(
 			}
 		}
 	}
-	else
+	else if (curConfig != NULL)
 	{
 		listenerToEmitter = VectorScale(emitterToListener, -1.0f);
 
@@ -1351,8 +1351,10 @@ static inline void CalculateMatrix(
 				}
 			}
 		}
-
-
+	}
+	else
+	{
+		FAudio_assert(0 && "Config info not found!");
 	}
 
 	/* TODO: add post check to validate values

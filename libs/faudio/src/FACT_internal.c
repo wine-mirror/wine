@@ -39,6 +39,8 @@
 #define FACT_CONTENT_VERSION_3_4 45
 #define FACT_CONTENT_VERSION_3_1 44
 #define FACT_CONTENT_VERSION_3_0 43
+#define FACT_CONTENT_VERSION_2_4 41
+#define FACT_CONTENT_VERSION_2_0 37
 
 static inline int FACT_INTERNAL_SupportedContent(uint16_t version)
 {
@@ -3105,7 +3107,17 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 	#define DOSWAP_64(x) x = FAudio_swap64BE(x)
 
 	fileOffset = offset;
-	READ(&header, sizeof(header))
+
+	FAudio_zero(&header, sizeof(header));
+	READ(&header.dwSignature, sizeof(header.dwSignature));
+	READ(&header.dwVersion, sizeof(header.dwVersion));
+	if (header.dwVersion > FACT_CONTENT_VERSION_2_4)
+	{
+		READ(&header.dwHeaderVersion, sizeof(header.dwHeaderVersion));
+	}
+
+	READ(&header.Segments, sizeof(header.Segments));
+
 	se = header.dwSignature == 0x57424E44;
 	if (se)
 	{
@@ -3123,12 +3135,20 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 		return -1; /* TODO: NOT XACT FILE */
 	}
 
-	if (!FACT_INTERNAL_SupportedContent(header.dwVersion))
+	/* We support all Wavebank versions - Restore when SoundBank support them also. */
+	/*if (!FACT_INTERNAL_SupportedContent(header.dwVersion))
+	{
+		return -2;
+	}
+	*/
+	if (	header.dwVersion < FACT_CONTENT_VERSION_2_4 ||
+		header.dwVersion > FACT_CONTENT_VERSION	)
 	{
 		return -2;
 	}
 
-	if (!FACT_INTERNAL_SupportedWBContent(header.dwHeaderVersion))
+	if (	header.dwVersion > FACT_CONTENT_VERSION_2_4 &&
+		!FACT_INTERNAL_SupportedWBContent(header.dwHeaderVersion)	)
 	{
 		return -3;
 	}

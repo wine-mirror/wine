@@ -444,8 +444,8 @@ uint32_t FAudio_PlatformGetDeviceDetails(
 	hr = IMMDevice_GetId(device, &str);
 	FAudio_assert(!FAILED(hr) && "Failed to get audio endpoint id!");
 
-	lstrcpynW(details->DeviceID, str, ARRAYSIZE(details->DeviceID) - 1);
-	lstrcpynW(details->DisplayName, str, ARRAYSIZE(details->DisplayName) - 1);
+	lstrcpynW((WCHAR *)details->DeviceID, str, ARRAYSIZE(details->DeviceID) - 1);
+	lstrcpynW((WCHAR *)details->DisplayName, str, ARRAYSIZE(details->DisplayName) - 1);
 	CoTaskMemFree(str);
 
 	hr = IMMDevice_Activate(
@@ -739,7 +739,7 @@ FAudioIOStream* FAudio_memopen(void *mem, int len)
 uint8_t* FAudio_memptr(FAudioIOStream *io, size_t offset)
 {
 	struct FAudio_mem *memio = io->data;
-	return memio->mem + offset;
+	return (uint8_t *)memio->mem + offset;
 }
 
 void FAudio_close(FAudioIOStream *io)
@@ -896,7 +896,7 @@ FAUDIOAPI float XNA_PlaySong(const char *name)
 	IMFAttributes *attributes = NULL;
 	IMFMediaType *media_type = NULL;
 	UINT32 channels, samplerate;
-	UINT64 duration;
+	INT64 duration;
 	PROPVARIANT var;
 	HRESULT hr;
 	WCHAR filename_w[MAX_PATH];
