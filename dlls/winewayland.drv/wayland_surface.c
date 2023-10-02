@@ -319,14 +319,14 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
 }
 
 /**********************************************************************
- *          wayland_surface_configure_is_compatible
+ *          wayland_surface_config_is_compatible
  *
- * Checks whether a wayland_surface_configure object is compatible with the
+ * Checks whether a wayland_surface_config object is compatible with the
  * the provided arguments.
  */
-static BOOL wayland_surface_configure_is_compatible(struct wayland_surface_config *conf,
-                                                    int width, int height,
-                                                    enum wayland_surface_config_state state)
+static BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
+                                                 int width, int height,
+                                                 enum wayland_surface_config_state state)
 {
     static enum wayland_surface_config_state mask =
         WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
@@ -451,9 +451,9 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 
     /* Acknowledge any compatible processed config. */
     if (surface->processing.serial && surface->processing.processed &&
-        wayland_surface_configure_is_compatible(&surface->processing,
-                                                width, height,
-                                                window->state))
+        wayland_surface_config_is_compatible(&surface->processing,
+                                             width, height,
+                                             window->state))
     {
         surface->current = surface->processing;
         memset(&surface->processing, 0, sizeof(surface->processing));
@@ -463,18 +463,18 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
      * config, use that, in order to draw windows that don't go through the
      * message loop (e.g., some splash screens). */
     else if (!surface->current.serial && surface->requested.serial &&
-             wayland_surface_configure_is_compatible(&surface->requested,
-                                                     width, height,
-                                                     window->state))
+             wayland_surface_config_is_compatible(&surface->requested,
+                                                  width, height,
+                                                  window->state))
     {
         surface->current = surface->requested;
         memset(&surface->requested, 0, sizeof(surface->requested));
         xdg_surface_ack_configure(surface->xdg_surface, surface->current.serial);
     }
     else if (!surface->current.serial ||
-             !wayland_surface_configure_is_compatible(&surface->current,
-                                                      width, height,
-                                                      window->state))
+             !wayland_surface_config_is_compatible(&surface->current,
+                                                   width, height,
+                                                   window->state))
     {
         return FALSE;
     }
