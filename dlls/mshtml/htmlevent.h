@@ -97,6 +97,7 @@ typedef struct DOMEvent {
 
 const WCHAR *get_event_name(eventid_t);
 void check_event_attr(HTMLDocumentNode*,nsIDOMElement*);
+void traverse_event_target(EventTarget*,nsCycleCollectionTraversalCallback*);
 void release_event_target(EventTarget*);
 HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*);
 HRESULT get_event_handler(EventTarget*,eventid_t,VARIANT*);

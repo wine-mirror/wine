@@ -3922,6 +3922,7 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     HTMLOuterWindow *child;
 
+    traverse_event_target(&This->event_target, cb);
     LIST_FOR_EACH_ENTRY(child, &This->children, HTMLOuterWindow, sibling_entry)
         note_cc_edge((nsISupports*)&child->base.IHTMLWindow2_iface, "child", cb);
     if(This->doc)

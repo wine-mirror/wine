@@ -1425,6 +1425,7 @@ void HTMLDOMNode_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback
 {
     HTMLDOMNode *This = HTMLDOMNode_from_DispatchEx(dispex);
 
+    traverse_event_target(&This->event_target, cb);
     if(This->nsnode)
         note_cc_edge((nsISupports*)This->nsnode, "nsnode", cb);
     if(This->doc && &This->doc->node != This)

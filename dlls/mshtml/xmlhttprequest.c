@@ -1514,6 +1514,7 @@ static void HTMLXMLHttpRequest_traverse(DispatchEx *dispex, nsCycleCollectionTra
         note_cc_edge((nsISupports*)&This->pending_progress_event->IDOMEvent_iface, "pending_progress_event", cb);
     if(This->nsxhr)
         note_cc_edge((nsISupports*)This->nsxhr, "nsxhr", cb);
+    traverse_event_target(&This->event_target, cb);
 }
 
 static void HTMLXMLHttpRequest_unlink(DispatchEx *dispex)
