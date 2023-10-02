@@ -257,7 +257,7 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
     mwi = calloc(1, sizeof(*mwi));
     if (!mwi) return -1;
 
-    SetWindowLongW(hWnd, 0, (LPARAM)mwi);
+    SetWindowLongPtrW(hWnd, 0, (LPARAM)mwi);
 
     mwi->dwStyle = cs->style;
     /* There is no need to show stats if there is no caption */
