@@ -25,6 +25,10 @@ struct segment_state
 {
     IDirectMusicSegmentState8 IDirectMusicSegmentState8_iface;
     LONG ref;
+
+    IDirectMusicSegment *segment;
+    MUSIC_TIME start_point;
+    MUSIC_TIME start_time;
 };
 
 static inline struct segment_state *impl_from_IDirectMusicSegmentState8(IDirectMusicSegmentState8 *iface)
@@ -73,7 +77,11 @@ static ULONG WINAPI segment_state_Release(IDirectMusicSegmentState8 *iface)
 
     TRACE("(%p): %ld\n", This, ref);
 
-    if (!ref) free(This);
+    if (!ref)
+    {
+        if (This->segment) IDirectMusicSegment_Release(This->segment);
+        free(This);
+    }
 
     return ref;
 }
@@ -89,17 +97,21 @@ static HRESULT WINAPI segment_state_GetSegment(IDirectMusicSegmentState8 *iface,
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
 
-    FIXME("(%p, %p): semi-stub\n", This, segment);
+    TRACE("(%p, %p)\n", This, segment);
 
-    *segment = NULL;
-    return DMUS_E_NOT_FOUND;
+    if (!(*segment = This->segment)) return DMUS_E_NOT_FOUND;
+
+    IDirectMusicSegment_AddRef(This->segment);
+    return S_OK;
 }
 
 static HRESULT WINAPI segment_state_GetStartTime(IDirectMusicSegmentState8 *iface, MUSIC_TIME *start_time)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): semi-stub\n", This, start_time);
-    *start_time = -1;
+
+    TRACE("(%p, %p)\n", This, start_time);
+
+    *start_time = This->start_time;
     return S_OK;
 }
 
@@ -111,13 +123,13 @@ static HRESULT WINAPI segment_state_GetSeek(IDirectMusicSegmentState8 *iface, MU
     return S_OK;
 }
 
-static HRESULT WINAPI segment_state_GetStartPoint(IDirectMusicSegmentState8 *iface, MUSIC_TIME *start_time)
+static HRESULT WINAPI segment_state_GetStartPoint(IDirectMusicSegmentState8 *iface, MUSIC_TIME *start_point)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
 
-    FIXME("(%p, %p): semi-stub\n", This, start_time);
+    TRACE("(%p, %p)\n", This, start_point);
 
-    *start_time = 0;
+    *start_point = This->start_point;
     return S_OK;
 }
 
@@ -161,8 +173,33 @@ HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface)
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicSegmentState8_iface.lpVtbl = &segment_state_vtbl;
     obj->ref = 1;
+    obj->start_time = -1;
 
+    TRACE("Created IDirectMusicSegmentState %p\n", obj);
     hr = IDirectMusicSegmentState8_QueryInterface(&obj->IDirectMusicSegmentState8_iface, riid, ret_iface);
     IDirectMusicSegmentState8_Release(&obj->IDirectMusicSegmentState8_iface);
+    return hr;
+}
+
+HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time,
+        IDirectMusicSegmentState **ret_iface)
+{
+    IDirectMusicSegmentState *iface;
+    struct segment_state *This;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %p)\n", segment, start_time, ret_iface);
+
+    if (FAILED(hr = create_dmsegmentstate(&IID_IDirectMusicSegmentState, (void **)&iface))) return hr;
+    This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+
+    This->segment = segment;
+    IDirectMusicSegment_AddRef(This->segment);
+
+    This->start_time = start_time;
+    hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
+
+    if (SUCCEEDED(hr)) *ret_iface = iface;
+    else IDirectMusicSegmentState_Release(iface);
     return hr;
 }

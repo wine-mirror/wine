@@ -70,6 +70,9 @@ extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerfor
 extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*);
 extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*);
 
+extern HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time,
+        IDirectMusicSegmentState **ret_iface);
+
 /*****************************************************************************
  * Auxiliary definitions
  */

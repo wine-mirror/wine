@@ -1063,17 +1063,35 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
     return S_OK;
 }
 
-static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface, IUnknown *pSource,
-        WCHAR *pwzSegmentName, IUnknown *pTransition, DWORD dwFlags, __int64 i64StartTime,
-        IDirectMusicSegmentState **ppSegmentState, IUnknown *pFrom, IUnknown *pAudioPath)
+static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface, IUnknown *source,
+        WCHAR *segment_name, IUnknown *transition, DWORD segment_flags, INT64 start_time,
+        IDirectMusicSegmentState **segment_state, IUnknown *from, IUnknown *audio_path)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicSegmentState *state;
+    IDirectMusicSegment *segment;
+    HRESULT hr;
 
-	FIXME("(%p, %p, %p, %p, %ld, 0x%s, %p, %p, %p): stub\n", This, pSource, pwzSegmentName,
-	    pTransition, dwFlags, wine_dbgstr_longlong(i64StartTime), ppSegmentState, pFrom, pAudioPath);
-	if (ppSegmentState)
-          return create_dmsegmentstate(&IID_IDirectMusicSegmentState,(void**)ppSegmentState);
-	return S_OK;
+    FIXME("(%p, %p, %s, %p, %#lx, %I64d, %p, %p, %p): stub\n", This, source, debugstr_w(segment_name),
+            transition, segment_flags, start_time, segment_state, from, audio_path);
+
+    if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
+        return hr;
+    if (FAILED(hr = segment_state_create((IDirectMusicSegment *)segment, start_time, &state)))
+    {
+        IDirectMusicSegment_Release(segment);
+        return hr;
+    }
+
+    if (segment_state)
+    {
+        *segment_state = state;
+        IDirectMusicSegmentState_AddRef(state);
+    }
+
+    IDirectMusicSegmentState_Release(state);
+    IDirectMusicSegment_Release(segment);
+    return hr;
 }
 
 static HRESULT WINAPI performance_StopEx(IDirectMusicPerformance8 *iface, IUnknown *pObjectToStop,

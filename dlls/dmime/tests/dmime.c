@@ -4043,14 +4043,14 @@ static void test_segment_state(void)
 
     tmp_segment = (void *)0xdeadbeef;
     hr = IDirectMusicSegmentState_GetSegment(state, &tmp_segment);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tmp_segment == segment, "got %p\n", tmp_segment);
-    if (tmp_segment) IDirectMusicSegment_Release(tmp_segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(tmp_segment == segment, "got %p\n", tmp_segment);
+    IDirectMusicSegment_Release(tmp_segment);
 
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time == 50, "got %lu\n", time);
+    ok(time == 50, "got %lu\n", time);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -4058,7 +4058,7 @@ static void test_segment_state(void)
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time == 20, "got %#lx\n", time);
+    ok(time == 20, "got %#lx\n", time);
     time = 0xdeadbeef;
 
     /* The seek value is also dependent on whether the tracks are playing.
@@ -4080,7 +4080,7 @@ static void test_segment_state(void)
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time == 50, "got %#lx\n", time);
+    ok(time == 50, "got %#lx\n", time);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -4088,7 +4088,7 @@ static void test_segment_state(void)
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(time == 20, "got %#lx\n", time);
+    ok(time == 20, "got %#lx\n", time);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetSeek(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
