@@ -561,6 +561,7 @@ SOURCES = \
 	ndrtypes.h \
 	netcfgx.idl \
 	netcon.idl \
+	netevent.h \
 	netfw.idl \
 	netioapi.h \
 	netiodef.h \
