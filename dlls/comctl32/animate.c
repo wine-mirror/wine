@@ -534,14 +534,8 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     mmioRead(infoPtr->hMMio, (LPSTR)&infoPtr->ash, sizeof(infoPtr->ash));
 
-    TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(infoPtr->ash.fccType)),
-	                                        HIBYTE(LOWORD(infoPtr->ash.fccType)),
-	                                        LOBYTE(HIWORD(infoPtr->ash.fccType)),
-	                                        HIBYTE(HIWORD(infoPtr->ash.fccType)));
-    TRACE("ash.fccHandler='%c%c%c%c'\n",	LOBYTE(LOWORD(infoPtr->ash.fccHandler)),
-	                                        HIBYTE(LOWORD(infoPtr->ash.fccHandler)),
-	                                        LOBYTE(HIWORD(infoPtr->ash.fccHandler)),
-	                                        HIBYTE(HIWORD(infoPtr->ash.fccHandler)));
+    TRACE("ash.fccType=%s\n",			debugstr_fourcc(infoPtr->ash.fccType));
+    TRACE("ash.fccHandler=%s\n",		debugstr_fourcc(infoPtr->ash.fccHandler));
     TRACE("ash.dwFlags=%ld\n", 			infoPtr->ash.dwFlags);
     TRACE("ash.wPriority=%d\n", 		infoPtr->ash.wPriority);
     TRACE("ash.wLanguage=%d\n", 		infoPtr->ash.wLanguage);
