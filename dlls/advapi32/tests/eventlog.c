@@ -1335,12 +1335,32 @@ done:
     DeleteFileA(filepath);
 }
 
+static BOOL read_record(HANDLE handle, DWORD flags, DWORD offset, EVENTLOGRECORD **record, DWORD *size)
+{
+    DWORD read;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    memset(*record, 0, *size);
+    if (!(ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, size)) &&
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        free(*record);
+        *record = malloc(*size);
+        SetLastError(0xdeadbeef);
+        memset(*record, 0, *size);
+        ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, size);
+    }
+
+    return ret;
+}
+
 static void test_eventlog_start(void)
 {
     BOOL ret, found;
     HANDLE handle, handle2;
     EVENTLOGRECORD *record;
-    DWORD size, read, needed;
+    DWORD size, count, read, needed;
     WCHAR *sourcename, *computername, *localcomputer;
     char *sourcenameA, *computernameA, *localcomputerA;
 
@@ -1482,6 +1502,118 @@ static void test_eventlog_start(void)
     todo_wine ok(found, "EventlogStarted event not found\n");
     CloseEventLog(handle);
     free(localcomputerA);
+
+    /* SEQUENTIAL | FORWARDS - dwRecordOffset is ignored */
+    handle = OpenEventLogW(0, L"System");
+    size = sizeof(EVENTLOGRECORD) + 128;
+    record = malloc(size);
+    todo_wine {
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 100, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 1, "Expected 1, got %lu\n", record->RecordNumber);
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 200, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 2, "Expected 2, got %lu\n", record->RecordNumber);
+
+    /* change direction sequentially */
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 300, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 2, "Expected 2, got %lu\n", record->RecordNumber);
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 400, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 1, "Expected 1, got %lu\n", record->RecordNumber);
+    }
+
+    /* changing how is an error */
+    SetLastError(0xdeadbeef);
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 0, &record, &size);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    CloseEventLog(handle);
+
+    /* SEQUENTIAL | BACKWARDS - dwRecordOffset is ignored */
+    handle = OpenEventLogW(0, L"System");
+    count = 0xdeadbeef;
+    ret = GetNumberOfEventLogRecords(handle, &count);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    todo_wine
+    ok(count, "Zero records in log\n");
+
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 100, &record, &size);
+    todo_wine
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == count, "Expected %lu, got %lu\n", count, record->RecordNumber);
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 100, &record, &size);
+    todo_wine {
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == count - 1, "Expected %lu, got %lu\n", count - 1, record->RecordNumber);
+    }
+    CloseEventLog(handle);
+
+    handle = OpenEventLogW(0, L"System");
+    /* SEEK | FORWARDS */
+    /* bogus offset */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 0, &record, &size);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    todo_wine {
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 2, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 2, "Expected 2, got %lu\n", record->RecordNumber);
+    /* skip one */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 4, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 4, "Expected 4, got %lu\n", record->RecordNumber);
+    /* seek an earlier one */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 3, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 3, "Expected 3, got %lu\n", record->RecordNumber);
+    /* change how */
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 100, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 4, "Expected 4, got %lu\n", record->RecordNumber);
+    /* change direction */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 10, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 10, "Expected 10, got %lu\n", record->RecordNumber);
+    }
+    CloseEventLog(handle);
+
+    /* SEEK | BACKWARDS */
+    handle = OpenEventLogW(0, L"system");
+    /* bogus offset */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 0, &record, &size);
+    ok(!ret, "Expected failure\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    todo_wine {
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 5, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 5, "Expected 5, got %lu\n", record->RecordNumber);
+    /* skip one */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 3, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 3, "Expected 3, got %lu\n", record->RecordNumber);
+    /* seek a later one */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 4, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 4, "Expected 4, got %lu\n", record->RecordNumber);
+    /* change how */
+    ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 100, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 3, "Expected 3, got %lu\n", record->RecordNumber);
+    /* change direction */
+    ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 10, &record, &size);
+    ok(ret, "Expected success : %ld\n", GetLastError());
+    ok(record->RecordNumber == 10, "Expected 10, got %lu\n", record->RecordNumber);
+    }
+    CloseEventLog(handle);
+
+    free(record);
 }
 
 START_TEST(eventlog)
