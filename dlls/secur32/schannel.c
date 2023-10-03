@@ -71,6 +71,7 @@ static struct schan_handle *schan_handle_table;
 static struct schan_handle *schan_free_handles;
 static SIZE_T schan_handle_table_size;
 static SIZE_T schan_handle_count;
+static SRWLOCK handle_table_lock = SRWLOCK_INIT;
 
 /* Protocols enabled, only those may be used for the connection. */
 static DWORD config_enabled_protocols;
@@ -81,22 +82,24 @@ static DWORD config_default_disabled_protocols;
 static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
 {
     struct schan_handle *handle;
+    ULONG_PTR index = SCHAN_INVALID_HANDLE;
 
+    AcquireSRWLockExclusive(&handle_table_lock);
     if (schan_free_handles)
     {
-        DWORD index = schan_free_handles - schan_handle_table;
         /* Use a free handle */
         handle = schan_free_handles;
         if (handle->type != SCHAN_HANDLE_FREE)
         {
-            ERR("Handle %ld(%p) is in the free list, but has type %#x.\n", index, handle, handle->type);
-            return SCHAN_INVALID_HANDLE;
+            ERR("Handle %p is in the free list, but has type %#x.\n", handle, handle->type);
+            goto done;
         }
+        index = schan_free_handles - schan_handle_table;
         schan_free_handles = handle->object;
         handle->object = object;
         handle->type = type;
 
-        return index;
+        goto done;
     }
     if (!(schan_handle_count < schan_handle_table_size))
     {
@@ -106,7 +109,7 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
         if (!new_table)
         {
             ERR("Failed to grow the handle table\n");
-            return SCHAN_INVALID_HANDLE;
+            goto done;
         }
         schan_handle_table = new_table;
         schan_handle_table_size = new_size;
@@ -116,21 +119,30 @@ static ULONG_PTR schan_alloc_handle(void *object, enum schan_handle_type type)
     handle->object = object;
     handle->type = type;
 
-    return handle - schan_handle_table;
+    index = handle - schan_handle_table;
+
+done:
+    ReleaseSRWLockExclusive(&handle_table_lock);
+    return index;
 }
 
 static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type)
 {
     struct schan_handle *handle;
-    void *object;
+    void *object = NULL;
 
     if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
-    if (handle_idx >= schan_handle_count) return NULL;
+
+    AcquireSRWLockExclusive(&handle_table_lock);
+
+    if (handle_idx >= schan_handle_count)
+        goto done;
+
     handle = &schan_handle_table[handle_idx];
     if (handle->type != type)
     {
         ERR("Handle %Id(%p) is not of type %#x\n", handle_idx, handle, type);
-        return NULL;
+        goto done;
     }
 
     object = handle->object;
@@ -138,23 +150,32 @@ static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type
     handle->type = SCHAN_HANDLE_FREE;
     schan_free_handles = handle;
 
+done:
+    ReleaseSRWLockExclusive(&handle_table_lock);
     return object;
 }
 
 static void *schan_get_object(ULONG_PTR handle_idx, enum schan_handle_type type)
 {
     struct schan_handle *handle;
+    void *object = NULL;
 
     if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
-    if (handle_idx >= schan_handle_count) return NULL;
+
+    AcquireSRWLockShared(&handle_table_lock);
+    if (handle_idx >= schan_handle_count)
+        goto done;
     handle = &schan_handle_table[handle_idx];
     if (handle->type != type)
     {
-        ERR("Handle %Id(%p) is not of type %#x\n", handle_idx, handle, type);
-        return NULL;
+        ERR("Handle %Id(%p) is not of type %#x (%#x)\n", handle_idx, handle, type, handle->type);
+        goto done;
     }
+    object = handle->object;
 
-    return handle->object;
+done:
+    ReleaseSRWLockShared(&handle_table_lock);
+    return object;
 }
 
 static void read_config(void)
