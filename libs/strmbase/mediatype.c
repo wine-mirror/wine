@@ -55,14 +55,6 @@ static const char *strmbase_debugstr_guid(const GUID *guid)
     return debugstr_guid(guid);
 }
 
-static const char *debugstr_fourcc(DWORD fourcc)
-{
-    char str[4] = {fourcc, fourcc >> 8, fourcc >> 16, fourcc >> 24};
-    if (isprint(str[0]) && isprint(str[1]) && isprint(str[2]) && isprint(str[3]))
-        return wine_dbgstr_an(str, 4);
-    return wine_dbg_sprintf("%#lx", fourcc);
-}
-
 void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
 {
     if (!TRACE_ON(quartz) || !mt) return;
