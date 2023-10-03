@@ -190,7 +190,7 @@
 @ stub VariantToInt64WithDefault
 @ stub VariantToPropVariant
 @ stub VariantToStrRet
-@ stub VariantToString
+@ stdcall VariantToString(ptr ptr long)
 @ stub VariantToStringAlloc
 @ stub VariantToStringArray
 @ stub VariantToStringArrayAlloc

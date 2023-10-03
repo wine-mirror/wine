@@ -432,6 +432,38 @@ PCWSTR WINAPI VariantToStringWithDefault(const VARIANT *pvar, const WCHAR *defau
 }
 
 /******************************************************************
+ *  VariantToString   (PROPSYS.@)
+ */
+HRESULT WINAPI VariantToString(REFVARIANT var, PWSTR ret, UINT cch)
+{
+    WCHAR *str = NULL;
+
+    TRACE("%p, %p, %u.\n", var, ret, cch);
+
+    *ret = 0;
+
+    if (!cch)
+        return E_INVALIDARG;
+
+    if (V_VT(var) == VT_BSTR)
+    {
+        str = V_BSTR(var);
+    }
+    else
+    {
+        FIXME("Unsupported type %d.\n", V_VT(var));
+
+        return E_NOTIMPL;
+    }
+
+    if (wcslen(str) > cch - 1)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+    wcscpy(ret, str);
+
+    return S_OK;
+}
+
+/******************************************************************
  *  PropVariantChangeType   (PROPSYS.@)
  */
 HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
