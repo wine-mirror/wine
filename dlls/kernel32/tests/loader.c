@@ -2123,10 +2123,13 @@ static void test_import_resolution(void)
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     DWORD dummy;
-    void *expect;
+    void *expect, *tmp;
     char *str;
-    HANDLE hfile;
+    SIZE_T size;
+    HANDLE hfile, mapping;
     HMODULE mod, mod2;
+    NTSTATUS status;
+    LARGE_INTEGER offset;
     struct imports
     {
         IMAGE_IMPORT_DESCRIPTOR descr[2];
@@ -2148,7 +2151,7 @@ static void test_import_resolution(void)
             USHORT type_off[32];
         } rel;
     } data, *ptr;
-    IMAGE_NT_HEADERS nt;
+    IMAGE_NT_HEADERS nt, *pnt;
     IMAGE_SECTION_HEADER section;
     int test, tls_index_save, nb_rel;
 #if defined(__i386__)
@@ -2181,7 +2184,7 @@ static void test_import_resolution(void)
     static const UCHAR entry_point_code[] = { 0x00 };
 #endif
 
-    for (test = 0; test < 4; test++)
+    for (test = 0; test < 7; test++)
     {
 #define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
 #ifdef _WIN64
@@ -2193,12 +2196,13 @@ static void test_import_resolution(void)
         nt.FileHeader.NumberOfSections = 1;
         nt.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
         nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
-        if (test != 2) nt.FileHeader.Characteristics |= IMAGE_FILE_DLL;
+        if (test != 2 && test != 5) nt.FileHeader.Characteristics |= IMAGE_FILE_DLL;
         nt.OptionalHeader.SectionAlignment = page_size;
         nt.OptionalHeader.FileAlignment = 0x200;
         nt.OptionalHeader.SizeOfImage = 2 * page_size;
         nt.OptionalHeader.SizeOfHeaders = nt.OptionalHeader.FileAlignment;
-        nt.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+        nt.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+        if (test < 6) nt.OptionalHeader.DllCharacteristics |= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
         nt.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
         memset( nt.OptionalHeader.DataDirectory, 0, sizeof(nt.OptionalHeader.DataDirectory) );
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size = sizeof(data.descr);
@@ -2343,6 +2347,56 @@ static void test_import_resolution(void)
             if (tls_index_save != 9999 && sizeof(tls_init_code) > 1)
                 ok( tls_init_fn_output == DLL_PROCESS_DETACH,
                     "tls init function didn't run or got wrong reason: %d instead of %d\n", tls_init_fn_output, DLL_PROCESS_DETACH );
+            break;
+        case 4:  /* map with ntdll */
+        case 5:  /* map with ntdll, without IMAGE_FILE_DLL */
+        case 6:  /* map with ntdll, without IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE */
+            hfile = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+            ok( hfile != INVALID_HANDLE_VALUE, "CreateFile failed err %lu\n", GetLastError() );
+            mapping = CreateFileMappingA( hfile, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+            CloseHandle( hfile );
+            if (test == 6 &&
+                (nt_header_template.FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
+                 nt_header_template.FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64))
+            {
+                ok( !mapping, "CreateFileMappingA succeeded\n" );
+                ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %lu\n", GetLastError() );
+                break;
+            }
+            ok( mapping != 0, "CreateFileMappingA failed err %lu\n", GetLastError() );
+            /* make sure that the address is not available */
+            tmp = VirtualAlloc( (void *)nt.OptionalHeader.ImageBase, 0x10000,
+                                MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+            mod = NULL;
+            size = 0;
+            offset.QuadPart = 0;
+            status = pNtMapViewOfSection( mapping, GetCurrentProcess(), (void **)&mod, 0, 0, &offset,
+                                          &size, 1 /* ViewShare */, 0, PAGE_READONLY );
+            todo_wine_if (test < 6)
+            ok( status == (test == 6 ? STATUS_IMAGE_NOT_AT_BASE : STATUS_SUCCESS),
+                "NtMapViewOfSection failed %lx\n", status );
+            ok( mod != (void *)nt.OptionalHeader.ImageBase,  "loaded at image base %p\n", mod );
+            pnt = pRtlImageNtHeader( mod );
+            ptr = (void *)((char *)mod + page_size);
+            if (test == 6)
+            {
+                ok( (void *)pnt->OptionalHeader.ImageBase != mod, "not relocated from %p\n", mod );
+                ok( (char *)ptr->tls.StartAddressOfRawData == (char *)nt.OptionalHeader.ImageBase + DATA_RVA( data.tls_data ),
+                    "tls relocated %p / %p\n", (void *)ptr->tls.StartAddressOfRawData,
+                    (char *)nt.OptionalHeader.ImageBase + DATA_RVA( data.tls_data ));
+            }
+            else todo_wine
+            {
+                ok( (void *)pnt->OptionalHeader.ImageBase == mod, "not at base %p / %p\n",
+                    (void *)pnt->OptionalHeader.ImageBase, mod );
+                ok( (char *)ptr->tls.StartAddressOfRawData == (char *)mod + DATA_RVA( data.tls_data ),
+                    "tls not relocated %p / %p\n", (void *)ptr->tls.StartAddressOfRawData,
+                    (char *)mod + DATA_RVA( data.tls_data ));
+            }
+            UnmapViewOfFile( mod );
+            CloseHandle( mapping );
+            if (tmp) VirtualFree( tmp, 0, MEM_RELEASE );
+            break;
         }
         DeleteFileA( dll_name );
 #undef DATA_RVA
