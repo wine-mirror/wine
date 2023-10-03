@@ -28,15 +28,9 @@ static BOOL MCIAVI_GetInfoAudio(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 {
     MMCKINFO	mmckInfo;
 
-    TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(wma->ash_audio.fccType)),
-	                                        HIBYTE(LOWORD(wma->ash_audio.fccType)),
-	                                        LOBYTE(HIWORD(wma->ash_audio.fccType)),
-	                                        HIBYTE(HIWORD(wma->ash_audio.fccType)));
+    TRACE("ash.fccType=%s\n",			debugstr_fourcc(wma->ash_audio.fccType));
     if (wma->ash_audio.fccHandler) /* not all streams specify a handler */
-        TRACE("ash.fccHandler='%c%c%c%c'\n",	LOBYTE(LOWORD(wma->ash_audio.fccHandler)),
-	                                        HIBYTE(LOWORD(wma->ash_audio.fccHandler)),
-	                                        LOBYTE(HIWORD(wma->ash_audio.fccHandler)),
-	                                        HIBYTE(HIWORD(wma->ash_audio.fccHandler)));
+        TRACE("ash.fccHandler=%s\n",		debugstr_fourcc(wma->ash_audio.fccHandler));
     else
         TRACE("ash.fccHandler=0, no handler specified\n");
     TRACE("ash.dwFlags=%ld\n", 			wma->ash_audio.dwFlags);
@@ -89,14 +83,8 @@ static BOOL MCIAVI_GetInfoVideo(WINE_MCIAVI* wma, const MMCKINFO* mmckList, MMCK
 {
     MMCKINFO	mmckInfo;
 
-    TRACE("ash.fccType='%c%c%c%c'\n", 		LOBYTE(LOWORD(wma->ash_video.fccType)),
-	                                        HIBYTE(LOWORD(wma->ash_video.fccType)),
-	                                        LOBYTE(HIWORD(wma->ash_video.fccType)),
-	                                        HIBYTE(HIWORD(wma->ash_video.fccType)));
-    TRACE("ash.fccHandler='%c%c%c%c'\n",	LOBYTE(LOWORD(wma->ash_video.fccHandler)),
-	                                        HIBYTE(LOWORD(wma->ash_video.fccHandler)),
-	                                        LOBYTE(HIWORD(wma->ash_video.fccHandler)),
-	                                        HIBYTE(HIWORD(wma->ash_video.fccHandler)));
+    TRACE("ash.fccType=%s\n",			debugstr_fourcc(wma->ash_video.fccType));
+    TRACE("ash.fccHandler=%s\n",		debugstr_fourcc(wma->ash_video.fccHandler));
     TRACE("ash.dwFlags=%ld\n", 			wma->ash_video.dwFlags);
     TRACE("ash.wPriority=%d\n", 		wma->ash_video.wPriority);
     TRACE("ash.wLanguage=%d\n", 		wma->ash_video.wLanguage);
