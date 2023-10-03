@@ -826,12 +826,8 @@ DDRAW_dump_pixelformat(const DDPIXELFORMAT *pf)
     TRACE("( ");
     DDRAW_dump_pixelformat_flag(pf->dwFlags);
     if (pf->dwFlags & DDPF_FOURCC)
-        TRACE(", dwFourCC code '%c%c%c%c' (0x%08lx) - %lu bits per pixel",
-                (unsigned char)( pf->dwFourCC     &0xff),
-                (unsigned char)((pf->dwFourCC>> 8)&0xff),
-                (unsigned char)((pf->dwFourCC>>16)&0xff),
-                (unsigned char)((pf->dwFourCC>>24)&0xff),
-                pf->dwFourCC,
+        TRACE(", dwFourCC code %s - %lu bits per pixel",
+                debugstr_fourcc(pf->dwFourCC),
                 pf->dwYUVBitCount);
     if (pf->dwFlags & DDPF_RGB)
     {
