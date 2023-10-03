@@ -2849,7 +2849,7 @@ static void test_performance_pmsg(void)
     ok(clone != NULL, "got %p\n", clone);
 
     msg->mtTime = 500;
-    msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE;
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SendPMsg(performance, msg);
