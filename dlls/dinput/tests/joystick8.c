@@ -4464,7 +4464,7 @@ done:
     cleanup_registry_keys();
 }
 
-static BOOL test_winmm_joystick(void)
+static void test_winmm_joystick(void)
 {
 #include "psh_hid_macros.h"
     const unsigned char report_desc[] =
@@ -4821,8 +4821,6 @@ static BOOL test_winmm_joystick(void)
 done:
     hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
-
-    return device != NULL;
 }
 
 #define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c )
