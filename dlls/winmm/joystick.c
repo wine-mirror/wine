@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "mmsystem.h"
 
+#include "hidusage.h"
 #include "initguid.h"
 #include "dinput.h"
 
@@ -51,69 +52,24 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION joystick_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+enum axis
+{
+    AXIS_X,
+    AXIS_Y,
+    AXIS_Z,
+    AXIS_R,
+    AXIS_U,
+    AXIS_V,
+    AXIS_COUNT,
+};
+
+#define BUTTON_COUNT 32
+
 struct joystick_state
 {
-    LONG x;
-    LONG y;
-    LONG z;
-    LONG u;
-    LONG v;
-    LONG r;
+    LONG axes[AXIS_COUNT];
     LONG pov;
-    BYTE buttons[32];
-};
-
-static const DIOBJECTDATAFORMAT object_formats[] =
-{
-    { &GUID_XAxis, offsetof(struct joystick_state, x), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_YAxis, offsetof(struct joystick_state, y), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_ZAxis, offsetof(struct joystick_state, z), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_RzAxis, offsetof(struct joystick_state, r), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_Slider, offsetof(struct joystick_state, u), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_RxAxis, offsetof(struct joystick_state, v), DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION },
-    { &GUID_POV, offsetof(struct joystick_state, pov), DIDFT_OPTIONAL|DIDFT_POV|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[0]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[1]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[2]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[3]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[4]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[5]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[6]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[7]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[8]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[9]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[10]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[11]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[12]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[13]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[14]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[15]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[16]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[17]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[18]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[19]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[20]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[21]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[22]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[23]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[24]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[25]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[26]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[27]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[28]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[29]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[30]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-    { NULL, offsetof(struct joystick_state, buttons[31]), DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE, 0 },
-};
-
-static const DIDATAFORMAT data_format =
-{
-    .dwSize = sizeof(DIDATAFORMAT),
-    .dwObjSize = sizeof(DIOBJECTDATAFORMAT),
-    .dwFlags = DIDF_ABSAXIS,
-    .dwDataSize = sizeof(struct joystick_state),
-    .dwNumObjs = ARRAY_SIZE(object_formats),
-    .rgodf = (DIOBJECTDATAFORMAT *)object_formats,
+    BYTE buttons[BUTTON_COUNT];
 };
 
 #define JOY_PERIOD_MIN	(10)	/* min Capture time period */
@@ -175,6 +131,111 @@ void joystick_unload(void)
     IDirectInput8_Release( dinput );
 }
 
+static int is_already_mapped( const DIOBJECTDATAFORMAT *object_formats, DWORD count, DWORD instance_number )
+{
+    DWORD i;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (object_formats[i].dwType == instance_number)
+            return 1;
+    }
+
+    return 0;
+}
+
+struct usage_enum_params
+{
+    WORD usage;
+    int found;
+    DWORD instance_number;
+};
+
+static BOOL CALLBACK usage_enum_cb( const DIDEVICEOBJECTINSTANCEW *instance, void *ctx )
+{
+    struct usage_enum_params *params = ctx;
+
+    if (!(instance->dwFlags & DIDOI_ASPECTPOSITION))
+        return DIENUM_CONTINUE;
+
+    if (instance->wUsagePage != HID_USAGE_PAGE_GENERIC)
+        return DIENUM_CONTINUE;
+
+    if ((params->usage == instance->wUsage)
+            || (params->usage == HID_USAGE_GENERIC_Z && instance->wUsage == HID_USAGE_GENERIC_WHEEL))
+    {
+        params->instance_number = instance->dwType;
+        params->found = 1;
+        return DIENUM_STOP;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+static HRESULT set_data_format( IDirectInputDevice8W *device )
+{
+    DIOBJECTDATAFORMAT object_formats[AXIS_COUNT + 1 + BUTTON_COUNT] = {{0}}; /* +1 for hat switch */
+    DIOBJECTDATAFORMAT *object_format;
+    DIDATAFORMAT data_format = {0};
+    unsigned int i, j;
+
+    static const struct
+    {
+        WORD usages[5];
+    }
+    usage_mappings[AXIS_COUNT] =
+    {
+        [AXIS_X] = {{HID_USAGE_GENERIC_X, HID_USAGE_GENERIC_RY}},
+        [AXIS_Y] = {{HID_USAGE_GENERIC_Y, HID_USAGE_GENERIC_RX}},
+        [AXIS_Z] = {{HID_USAGE_GENERIC_Z, HID_USAGE_GENERIC_SLIDER, HID_USAGE_GENERIC_DIAL}},
+        [AXIS_R] = {{HID_USAGE_GENERIC_RZ, HID_USAGE_GENERIC_SLIDER, HID_USAGE_GENERIC_DIAL, HID_USAGE_GENERIC_RY, HID_USAGE_GENERIC_RX}},
+        [AXIS_U] = {{HID_USAGE_GENERIC_SLIDER, HID_USAGE_GENERIC_DIAL, HID_USAGE_GENERIC_RY, HID_USAGE_GENERIC_RX}},
+        [AXIS_V] = {{HID_USAGE_GENERIC_RX}},
+    };
+
+    data_format.dwSize = sizeof(DIDATAFORMAT);
+    data_format.dwObjSize = sizeof(DIOBJECTDATAFORMAT);
+    data_format.dwFlags = DIDF_ABSAXIS;
+    data_format.dwDataSize = sizeof(struct joystick_state);
+    data_format.rgodf = object_formats;
+
+    for (i = 0; i < ARRAY_SIZE(usage_mappings); ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(usage_mappings[i].usages) && usage_mappings[i].usages[j]; ++j)
+        {
+            struct usage_enum_params params = {.usage = usage_mappings[i].usages[j]};
+
+            /* We can almost use GetObjectInfo() here, except that winmm
+             * treats Z and wheel identically. */
+            if (FAILED(IDirectInputDevice8_EnumObjects( device, usage_enum_cb, &params, DIDFT_AXIS )))
+                continue;
+            if (!params.found)
+                continue;
+            if (is_already_mapped( object_formats, data_format.dwNumObjs, params.instance_number ))
+                continue;
+
+            object_format = &object_formats[data_format.dwNumObjs++];
+            object_format->dwOfs = offsetof(struct joystick_state, axes[i]);
+            object_format->dwType = params.instance_number;
+            break;
+        }
+    }
+
+    object_format = &object_formats[data_format.dwNumObjs++];
+    object_format->pguid = &GUID_POV;
+    object_format->dwOfs = offsetof(struct joystick_state, pov);
+    object_format->dwType = DIDFT_OPTIONAL | DIDFT_POV | DIDFT_ANYINSTANCE;
+
+    for (i = 0; i < BUTTON_COUNT; ++i)
+    {
+        object_format = &object_formats[data_format.dwNumObjs++];
+        object_format->dwOfs = offsetof(struct joystick_state, buttons[i]);
+        object_format->dwType = DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_ANYINSTANCE;
+    }
+
+    return IDirectInputDevice8_SetDataFormat( device, &data_format );
+}
+
 static void find_joysticks(void)
 {
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
@@ -212,7 +273,7 @@ static void find_joysticks(void)
             WARN( "SetEventNotification device %p hr %#lx\n", device, hr );
         else if (FAILED(hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_NONEXCLUSIVE|DISCL_BACKGROUND )))
             WARN( "SetCooperativeLevel device %p hr %#lx\n", device, hr );
-        else if (FAILED(hr = IDirectInputDevice8_SetDataFormat( device, &data_format )))
+        else if (FAILED(hr = set_data_format( device )))
             WARN( "SetDataFormat device %p hr %#lx\n", device, hr );
         else if (FAILED(hr = IDirectInputDevice8_Acquire( device )))
             WARN( "Acquire device %p hr %#lx\n", device, hr );
@@ -381,17 +442,17 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetDevCapsW( UINT_PTR id, JOYCAPSW *caps, U
         caps->wVmin = 0;
         caps->wVmax = 0xffff;
         caps->wCaps = 0;
-        caps->wMaxAxes = 6;
+        caps->wMaxAxes = AXIS_COUNT;
         caps->wNumAxes = min( dicaps.dwAxes, caps->wMaxAxes );
-        caps->wMaxButtons = 32;
+        caps->wMaxButtons = BUTTON_COUNT;
 
-        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, z), DIPH_BYOFFSET );
+        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, axes[AXIS_Z]), DIPH_BYOFFSET );
         if (SUCCEEDED(hr)) caps->wCaps |= JOYCAPS_HASZ;
-        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, r), DIPH_BYOFFSET );
+        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, axes[AXIS_R]), DIPH_BYOFFSET );
         if (SUCCEEDED(hr)) caps->wCaps |= JOYCAPS_HASR;
-        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, u), DIPH_BYOFFSET );
+        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, axes[AXIS_U]), DIPH_BYOFFSET );
         if (SUCCEEDED(hr)) caps->wCaps |= JOYCAPS_HASU;
-        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, v), DIPH_BYOFFSET );
+        hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, axes[AXIS_V]), DIPH_BYOFFSET );
         if (SUCCEEDED(hr)) caps->wCaps |= JOYCAPS_HASV;
         hr = IDirectInputDevice8_GetObjectInfo( device, &instance, offsetof(struct joystick_state, pov), DIPH_BYOFFSET );
         if (SUCCEEDED(hr)) caps->wCaps |= JOYCAPS_HASPOV|JOYCAPS_POV4DIR;
@@ -493,12 +554,12 @@ MMRESULT WINAPI DECLSPEC_HOTPATCH joyGetPosEx( UINT id, JOYINFOEX *info )
     }
     else
     {
-        if (info->dwFlags & JOY_RETURNX) info->dwXpos = state.x;
-        if (info->dwFlags & JOY_RETURNY) info->dwYpos = state.y;
-        if (info->dwFlags & JOY_RETURNZ) info->dwZpos = state.z;
-        if (info->dwFlags & JOY_RETURNR) info->dwRpos = state.r;
-        if (info->dwFlags & JOY_RETURNU) info->dwUpos = state.u;
-        if (info->dwFlags & JOY_RETURNV) info->dwVpos = state.v;
+        if (info->dwFlags & JOY_RETURNX) info->dwXpos = state.axes[AXIS_X];
+        if (info->dwFlags & JOY_RETURNY) info->dwYpos = state.axes[AXIS_Y];
+        if (info->dwFlags & JOY_RETURNZ) info->dwZpos = state.axes[AXIS_Z];
+        if (info->dwFlags & JOY_RETURNR) info->dwRpos = state.axes[AXIS_R];
+        if (info->dwFlags & JOY_RETURNU) info->dwUpos = state.axes[AXIS_U];
+        if (info->dwFlags & JOY_RETURNV) info->dwVpos = state.axes[AXIS_V];
         if (info->dwFlags & JOY_RETURNPOV)
         {
             if (state.pov == ~0) info->dwPOV = 0xffff;

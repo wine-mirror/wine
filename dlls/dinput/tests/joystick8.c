@@ -4641,7 +4641,7 @@ static BOOL test_winmm_joystick(void)
     check_member( caps, expect_caps, "%#x", wUmax );
     check_member( caps, expect_caps, "%#x", wVmin );
     check_member( caps, expect_caps, "%#x", wVmax );
-    todo_wine check_member( caps, expect_caps, "%#x", wCaps );
+    check_member( caps, expect_caps, "%#x", wCaps );
     check_member( caps, expect_caps, "%#x", wMaxAxes );
     todo_wine check_member( caps, expect_caps, "%#x", wNumAxes );
     check_member( caps, expect_caps, "%#x", wMaxButtons );
@@ -4677,11 +4677,11 @@ static BOOL test_winmm_joystick(void)
     check_member( infoex, expect_infoex[0], "%#lx", dwSize );
     check_member( infoex, expect_infoex[0], "%#lx", dwFlags );
     check_member( infoex, expect_infoex[0], "%#lx", dwXpos );
-    todo_wine check_member( infoex, expect_infoex[0], "%#lx", dwYpos );
+    check_member( infoex, expect_infoex[0], "%#lx", dwYpos );
     check_member( infoex, expect_infoex[0], "%#lx", dwZpos );
     check_member( infoex, expect_infoex[0], "%#lx", dwRpos );
     check_member( infoex, expect_infoex[0], "%#lx", dwUpos );
-    todo_wine check_member( infoex, expect_infoex[0], "%#lx", dwVpos );
+    check_member( infoex, expect_infoex[0], "%#lx", dwVpos );
     check_member( infoex, expect_infoex[0], "%#lx", dwButtons );
     check_member( infoex, expect_infoex[0], "%#lx", dwButtonNumber );
     check_member( infoex, expect_infoex[0], "%#lx", dwPOV );
@@ -4700,7 +4700,7 @@ static BOOL test_winmm_joystick(void)
     ret = joyGetPos( 0, &info );
     ok( ret == 0, "joyGetPos returned %u\n", ret );
     check_member( info, expect_info, "%#x", wXpos );
-    todo_wine check_member( info, expect_info, "%#x", wYpos );
+    check_member( info, expect_info, "%#x", wYpos );
     check_member( info, expect_info, "%#x", wZpos );
     check_member( info, expect_info, "%#x", wButtons );
 
@@ -4738,11 +4738,11 @@ static BOOL test_winmm_joystick(void)
     check_member( infoex, expect_infoex[1], "%#lx", dwSize );
     check_member( infoex, expect_infoex[1], "%#lx", dwFlags );
     check_member( infoex, expect_infoex[1], "%#lx", dwXpos );
-    todo_wine check_member( infoex, expect_infoex[1], "%#lx", dwYpos );
+    check_member( infoex, expect_infoex[1], "%#lx", dwYpos );
     check_member( infoex, expect_infoex[1], "%#lx", dwZpos );
     check_member( infoex, expect_infoex[1], "%#lx", dwRpos );
     check_member( infoex, expect_infoex[1], "%#lx", dwUpos );
-    todo_wine check_member( infoex, expect_infoex[1], "%#lx", dwVpos );
+    check_member( infoex, expect_infoex[1], "%#lx", dwVpos );
     check_member( infoex, expect_infoex[1], "%#lx", dwButtons );
     check_member( infoex, expect_infoex[1], "%#lx", dwButtonNumber );
     check_member( infoex, expect_infoex[1], "%#lx", dwPOV );
@@ -4760,11 +4760,11 @@ static BOOL test_winmm_joystick(void)
     check_member( infoex, expect_infoex[2], "%#lx", dwSize );
     check_member( infoex, expect_infoex[2], "%#lx", dwFlags );
     check_member( infoex, expect_infoex[2], "%#lx", dwXpos );
-    todo_wine check_member( infoex, expect_infoex[2], "%#lx", dwYpos );
+    check_member( infoex, expect_infoex[2], "%#lx", dwYpos );
     check_member( infoex, expect_infoex[2], "%#lx", dwZpos );
     check_member( infoex, expect_infoex[2], "%#lx", dwRpos );
     check_member( infoex, expect_infoex[2], "%#lx", dwUpos );
-    todo_wine check_member( infoex, expect_infoex[2], "%#lx", dwVpos );
+    check_member( infoex, expect_infoex[2], "%#lx", dwVpos );
     check_member( infoex, expect_infoex[2], "%#lx", dwButtons );
     check_member( infoex, expect_infoex[2], "%#lx", dwButtonNumber );
     check_member( infoex, expect_infoex[2], "%#lx", dwPOV );
