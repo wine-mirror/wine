@@ -1361,7 +1361,7 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
         start = try_map_free_area( base, end, step, start, size, unix_prot );
 
     if (!start)
-        ERR( "couldn't map free area in range %p-%p, size %p", base, end, (void *)size );
+        ERR( "couldn't map free area in range %p-%p, size %p\n", base, end, (void *)size );
 
     return start;
 }
@@ -2031,7 +2031,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
             goto done;
         }
 
-        if (limit_low || limit_high)
+        if (start > address_space_start || end < address_space_limit || top_down)
         {
             if (!(ptr = map_free_area( start, end, size, top_down, get_unix_prot(vprot), align_mask )))
                 return STATUS_NO_MEMORY;
