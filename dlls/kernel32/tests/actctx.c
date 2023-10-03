@@ -3427,7 +3427,7 @@ static void test_settings(void)
     create_manifest_file( "manifest_settings4.manifest", settings_manifest4, -1, NULL, NULL );
     handle = test_create("manifest_settings4.manifest");
     ok( handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError() );
-    DeleteFileA( "manifest_settings3.manifest" );
+    DeleteFileA( "manifest_settings4.manifest" );
     SetLastError( 0xdeadbeef );
     size = 0xdead;
     memset( buffer, 0xcc, sizeof(buffer) );
