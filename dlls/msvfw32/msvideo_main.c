@@ -56,18 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 	(str)[3] = HIBYTE(HIWORD(fcc)); \
 	} while(0)
 
-static inline const char *wine_dbgstr_fcc( DWORD fcc )
-{
-    char fcc_str[5];
-    fourcc_to_string(fcc_str, fcc);
-    fcc_str[4] = '\0';
-    /* Last byte may be ' ' in some cases like "DIB " */
-    if (isalnum(fcc_str[0]) && isalnum(fcc_str[1]) && isalnum(fcc_str[2])
-    && (isalnum(fcc_str[3]) || isspace(fcc_str[3])))
-        return wine_dbg_sprintf("%s", fcc_str);
-    return wine_dbg_sprintf("0x%08lx", fcc);
-}
-
 static const char *wine_dbgstr_icerr( int ret )
 {
     const char *str;
@@ -276,7 +264,7 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
     HKEY key;
 
     TRACE("type %s, handler %s, info %p.\n",
-            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), info);
+            debugstr_fourcc(type), debugstr_fourcc(handler), info);
 
     memset(info, 0, sizeof(*info));
     info->dwSize = sizeof(*info);
@@ -336,7 +324,7 @@ BOOL VFWAPI ICInfo(DWORD type, DWORD handler, ICINFO *info)
 
     info->fccType = type;
     info->fccHandler = handler;
-    WARN("No driver found for codec %s.%s.\n", wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler));
+    WARN("No driver found for codec %s.%s.\n", debugstr_fourcc(type), debugstr_fourcc(handler));
     return FALSE;
 }
 
@@ -350,7 +338,7 @@ BOOL VFWAPI ICInstall(DWORD type, DWORD handler, LPARAM lparam, char *desc, UINT
     struct reg_driver *driver;
 
     TRACE("type %s, handler %s, lparam %#Ix, desc %s, flags %#x.\n",
-            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), lparam, debugstr_a(desc), flags);
+            debugstr_fourcc(type), debugstr_fourcc(handler), lparam, debugstr_a(desc), flags);
 
     LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
@@ -405,7 +393,7 @@ BOOL VFWAPI ICRemove(DWORD type, DWORD handler, UINT flags)
     LONG res;
 
     TRACE("type %s, handler %s, flags %#x.\n",
-            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), flags);
+            debugstr_fourcc(type), debugstr_fourcc(handler), flags);
 
     LIST_FOR_EACH_ENTRY(driver, &reg_driver_list, struct reg_driver, entry)
     {
@@ -446,7 +434,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     struct reg_driver *driver;
     HDRVR hdrv = NULL;
 
-    TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
+    TRACE("(%s,%s,0x%08x)\n", debugstr_fourcc(fccType), debugstr_fourcc(fccHandler), wMode);
 
     if (!fccHandler) /* No specific handler, return the first valid for wMode */
     {
@@ -463,7 +451,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
             if (local != 0)
             {
                 TRACE("Returning %s as default handler for %s\n",
-                      wine_dbgstr_fcc(info.fccHandler), wine_dbgstr_fcc(fccType));
+                      debugstr_fourcc(info.fccHandler), debugstr_fourcc(fccType));
                 return local;
             }
         }
@@ -537,7 +525,7 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPRO
     WINE_HIC*   whic;
 
     TRACE("(%s,%s,%d,%p)\n",
-          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler);
+          debugstr_fourcc(fccType), debugstr_fourcc(fccHandler), wMode, lpfnHandler);
 
     icopen.dwSize      = sizeof(ICOPEN);
     icopen.fccType     = fccType;
@@ -638,7 +626,7 @@ HIC VFWAPI ICLocate(DWORD type, DWORD handler, BITMAPINFOHEADER *in,
     DWORD i;
 
     TRACE("type %s, handler %s, in %p, out %p, mode %u.\n",
-            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler), in, out, mode);
+            debugstr_fourcc(type), debugstr_fourcc(handler), in, out, mode);
 
     switch (mode)
     {
@@ -662,8 +650,8 @@ HIC VFWAPI ICLocate(DWORD type, DWORD handler, BITMAPINFOHEADER *in,
     {
         if (!ICSendMessage(hic, msg, (DWORD_PTR)in, (DWORD_PTR)out))
         {
-            TRACE("Found codec %s.%s.\n", wine_dbgstr_fcc(type),
-                    wine_dbgstr_fcc(handler));
+            TRACE("Found codec %s.%s.\n", debugstr_fourcc(type),
+                    debugstr_fourcc(handler));
             return hic;
         }
         ICClose(hic);
@@ -675,8 +663,8 @@ HIC VFWAPI ICLocate(DWORD type, DWORD handler, BITMAPINFOHEADER *in,
         {
             if (!ICSendMessage(hic, msg, (DWORD_PTR)in, (DWORD_PTR)out))
             {
-                TRACE("Found codec %s.%s.\n", wine_dbgstr_fcc(info.fccType),
-                        wine_dbgstr_fcc(info.fccHandler));
+                TRACE("Found codec %s.%s.\n", debugstr_fourcc(info.fccType),
+                        debugstr_fourcc(info.fccHandler));
                 return hic;
             }
             ICClose(hic);
@@ -687,7 +675,7 @@ HIC VFWAPI ICLocate(DWORD type, DWORD handler, BITMAPINFOHEADER *in,
         return ICLocate(ICTYPE_VIDEO, handler, in, out, mode);
 
     WARN("Could not find a driver for codec %s.%s.\n",
-            wine_dbgstr_fcc(type), wine_dbgstr_fcc(handler));
+            debugstr_fourcc(type), debugstr_fourcc(handler));
 
     return 0;
 }
@@ -886,7 +874,7 @@ static BOOL enum_compressors(HWND list, COMPVARS *pcv, BOOL enum_all)
                 if (ICCompressQuery(hic, pcv->lpbiIn, NULL) != ICERR_OK)
                 {
                     TRACE("fccHandler %s doesn't support input DIB format %ld\n",
-                          wine_dbgstr_fcc(icinfo.fccHandler), pcv->lpbiIn->bmiHeader.biCompression);
+                          debugstr_fourcc(icinfo.fccHandler), pcv->lpbiIn->bmiHeader.biCompression);
                     ICClose(hic);
                     continue;
                 }
@@ -1580,12 +1568,12 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 
     TRACE("Input: %lux%lu, fcc %s, bpp %u, size %lu\n",
           pc->lpbiIn->bmiHeader.biWidth, pc->lpbiIn->bmiHeader.biHeight,
-          wine_dbgstr_fcc(pc->lpbiIn->bmiHeader.biCompression),
+          debugstr_fourcc(pc->lpbiIn->bmiHeader.biCompression),
           pc->lpbiIn->bmiHeader.biBitCount,
           pc->lpbiIn->bmiHeader.biSizeImage);
     TRACE("Output: %lux%lu, fcc %s, bpp %u, size %lu\n",
           pc->lpbiOut->bmiHeader.biWidth, pc->lpbiOut->bmiHeader.biHeight,
-          wine_dbgstr_fcc(pc->lpbiOut->bmiHeader.biCompression),
+          debugstr_fourcc(pc->lpbiOut->bmiHeader.biCompression),
           pc->lpbiOut->bmiHeader.biBitCount,
           pc->lpbiOut->bmiHeader.biSizeImage);
 
@@ -1605,8 +1593,8 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
           "\thandler: %s\n"
           "\tin/out: %p/%p\n"
           "\tkey/data/quality: %li/%li/%li\n",
-    pc->cbSize, pc->dwFlags, pc->hic, wine_dbgstr_fcc(pc->fccType),
-    wine_dbgstr_fcc(pc->fccHandler), pc->lpbiIn, pc->lpbiOut, pc->lKey,
+    pc->cbSize, pc->dwFlags, pc->hic, debugstr_fourcc(pc->fccType),
+    debugstr_fourcc(pc->fccHandler), pc->lpbiIn, pc->lpbiOut, pc->lKey,
     pc->lDataRate, pc->lQ);
 
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
