@@ -349,22 +349,16 @@ static BOOL wayland_surface_configure_is_compatible(struct wayland_surface_confi
  */
 BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 {
-    RECT window_rect;
+    struct wayland_window_config *window = &surface->window;
     int width, height;
-    enum wayland_surface_config_state window_state;
 
     if (!surface->xdg_toplevel) return TRUE;
-    if (!NtUserGetWindowRect(surface->hwnd, &window_rect)) return FALSE;
 
-    width = window_rect.right - window_rect.left;
-    height = window_rect.bottom - window_rect.top;
-
-    window_state =
-        (NtUserGetWindowLongW(surface->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
-        WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
+    width = surface->window.rect.right - surface->window.rect.left;
+    height = surface->window.rect.bottom - surface->window.rect.top;
 
     TRACE("hwnd=%p window=%dx%d,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
-          surface->hwnd, width, height, window_state,
+          surface->hwnd, width, height, window->state,
           surface->processing.width, surface->processing.height,
           surface->processing.state, surface->current.width,
           surface->current.height, surface->current.state);
@@ -373,7 +367,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     if (surface->processing.serial && surface->processing.processed &&
         wayland_surface_configure_is_compatible(&surface->processing,
                                                 width, height,
-                                                window_state))
+                                                window->state))
     {
         surface->current = surface->processing;
         memset(&surface->processing, 0, sizeof(surface->processing));
@@ -385,7 +379,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     else if (!surface->current.serial && surface->requested.serial &&
              wayland_surface_configure_is_compatible(&surface->requested,
                                                      width, height,
-                                                     window_state))
+                                                     window->state))
     {
         surface->current = surface->requested;
         memset(&surface->requested, 0, sizeof(surface->requested));
@@ -394,7 +388,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     else if (!surface->current.serial ||
              !wayland_surface_configure_is_compatible(&surface->current,
                                                       width, height,
-                                                      window_state))
+                                                      window->state))
     {
         return FALSE;
     }

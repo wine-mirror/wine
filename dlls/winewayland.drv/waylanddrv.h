@@ -141,6 +141,12 @@ struct wayland_surface_config
     BOOL processed;
 };
 
+struct wayland_window_config
+{
+    RECT rect;
+    enum wayland_surface_config_state state;
+};
+
 struct wayland_surface
 {
     HWND hwnd;
@@ -151,6 +157,7 @@ struct wayland_surface
     struct wayland_surface_config pending, requested, processing, current;
     struct wayland_shm_buffer *latest_window_buffer;
     BOOL resizing;
+    struct wayland_window_config window;
 };
 
 struct wayland_shm_buffer

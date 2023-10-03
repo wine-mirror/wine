@@ -43,6 +43,8 @@ struct wayland_win_data
     struct wayland_surface *wayland_surface;
     /* wine window_surface backing this window */
     struct window_surface *window_surface;
+    /* USER window rectangle relative to win32 parent window client area */
+    RECT window_rect;
 };
 
 static int wayland_win_data_cmp_rb(const void *key,
@@ -65,7 +67,8 @@ static struct rb_tree win_data_rb = { wayland_win_data_cmp_rb };
  *
  * Create a data window structure for an existing window.
  */
-static struct wayland_win_data *wayland_win_data_create(HWND hwnd)
+static struct wayland_win_data *wayland_win_data_create(HWND hwnd,
+                                                        const RECT *window_rect)
 {
     struct wayland_win_data *data;
     struct rb_entry *rb_entry;
@@ -79,6 +82,7 @@ static struct wayland_win_data *wayland_win_data_create(HWND hwnd)
     if (!(data = calloc(1, sizeof(*data)))) return NULL;
 
     data->hwnd = hwnd;
+    data->window_rect = *window_rect;
 
     pthread_mutex_lock(&win_data_mutex);
 
@@ -146,6 +150,14 @@ static void wayland_win_data_release(struct wayland_win_data *data)
     pthread_mutex_unlock(&win_data_mutex);
 }
 
+static void wayland_win_data_get_config(struct wayland_win_data *data,
+                                        struct wayland_window_config *conf)
+{
+    conf->rect = data->window_rect;
+    conf->state = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
+                   WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
+}
+
 static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
 {
     struct wayland_surface *surface = data->wayland_surface;
@@ -170,19 +182,21 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     xdg_visible = surface->xdg_toplevel != NULL;
 
+    pthread_mutex_lock(&surface->mutex);
+
     if (visible != xdg_visible)
     {
-        pthread_mutex_lock(&surface->mutex);
-
         /* If we have a pre-existing surface ensure it has no role. */
         if (data->wayland_surface) wayland_surface_clear_role(surface);
         /* If the window is a visible toplevel make it a wayland
          * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
          * compositor with empty xdg_toplevels. */
         if (visible) wayland_surface_make_toplevel(surface);
-
-        pthread_mutex_unlock(&surface->mutex);
     }
+
+    wayland_win_data_get_config(data, &surface->window);
+
+    pthread_mutex_unlock(&surface->mutex);
 
     if (data->window_surface)
         wayland_window_surface_update_wayland_surface(data->window_surface, surface);
@@ -195,22 +209,17 @@ out:
 static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
 {
     struct wayland_surface *surface = data->wayland_surface;
-    uint32_t window_state;
     BOOL processing_config;
 
     pthread_mutex_lock(&surface->mutex);
 
     if (!surface->xdg_toplevel) goto out;
 
-    window_state =
-        (NtUserGetWindowLongW(surface->hwnd, GWL_STYLE) & WS_MAXIMIZE) ?
-        WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED : 0;
-
     processing_config = surface->processing.serial &&
                         !surface->processing.processed;
 
     TRACE("hwnd=%p window_state=%#x %s->state=%#x\n",
-          data->hwnd, window_state,
+          data->hwnd, surface->window.state,
           processing_config ? "processing" : "current",
           processing_config ? surface->processing.state : surface->current.state);
 
@@ -218,12 +227,12 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
      * window state to determine and update the Wayland state. */
     if (!processing_config)
     {
-        if ((window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+        if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
            !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
         {
             xdg_toplevel_set_maximized(surface->xdg_toplevel);
         }
-        else if (!(window_state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+        else if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
                  (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
         {
             xdg_toplevel_unset_maximized(surface->xdg_toplevel);
@@ -268,7 +277,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
 
-    if (!data && !(data = wayland_win_data_create(hwnd))) return TRUE;
+    if (!data && !(data = wayland_win_data_create(hwnd, window_rect))) return TRUE;
 
     /* Release the dummy surface wine provides for toplevels. */
     if (*surface) window_surface_release(*surface);
@@ -317,6 +326,8 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
           wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
 
     if (!data) return;
+
+    data->window_rect = *window_rect;
 
     if (surface) window_surface_add_ref(surface);
     if (data->window_surface) window_surface_release(data->window_surface);
