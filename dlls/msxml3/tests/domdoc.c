@@ -2516,6 +2516,11 @@ static void test_domnode( void )
         ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
         ok( node == NULL, "node %p\n", node );
 
+        node = (void*)0xdeadbeef;
+        hr = IXMLDOMElement_selectSingleNode( element, _bstr_("In Valid"), &node );
+        ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+        ok( node == NULL, "node %p\n", node );
+
         str = SysAllocString(L"bs");
         hr = IXMLDOMElement_selectSingleNode( element, str, &node );
         SysFreeString(str);

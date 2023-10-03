@@ -1560,6 +1560,9 @@ HRESULT node_select_singlenode(const xmlnode *This, BSTR query, IXMLDOMNode **no
     IXMLDOMNodeList *list;
     HRESULT hr;
 
+    if (node)
+        *node = NULL;
+
     hr = node_select_nodes(This, query, &list);
     if (hr == S_OK)
     {
