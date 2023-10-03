@@ -76,5 +76,3 @@ extern BOOL get_tag_data( const struct profile *, TAGTYPE, DWORD, void *, DWORD 
 extern BOOL set_tag_data( const struct profile *, TAGTYPE, DWORD, const void *, DWORD * );
 extern void get_profile_header( const struct profile *, PROFILEHEADER * );
 extern void set_profile_header( const struct profile *, const PROFILEHEADER * );
-
-extern const char *dbgstr_tag(DWORD);

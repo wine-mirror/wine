@@ -146,7 +146,7 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest, 
     intent = space->lcsIntent > 3 ? INTENT_PERCEPTUAL : space->lcsIntent;
 
     TRACE( "lcsIntent:   %#lx\n", space->lcsIntent );
-    TRACE( "lcsCSType:   %s\n", dbgstr_tag( space->lcsCSType ) );
+    TRACE( "lcsCSType:   %s\n", debugstr_fourcc( space->lcsCSType ) );
     TRACE( "lcsFilename: %s\n", debugstr_w( space->lcsFilename ) );
 
     input = cmsCreate_sRGBProfile(); /* FIXME: create from supplied color space */

@@ -51,12 +51,6 @@ static inline WCHAR *strdupW( const char *str )
     return ret;
 }
 
-const char *dbgstr_tag( DWORD tag )
-{
-    return wine_dbg_sprintf( "'%c%c%c%c'",
-        (char)(tag >> 24), (char)(tag >> 16), (char)(tag >> 8), (char)(tag) );
-}
-
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 /******************************************************************************
@@ -671,36 +665,36 @@ static BOOL match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_DEVICECLASS)
     {
-        FIXME( "ET_DEVICECLASS: %s\n", dbgstr_tag(rec->dwMediaType) );
+        FIXME( "ET_DEVICECLASS: %s\n", debugstr_fourcc(rec->dwMediaType) );
     }
     if (rec->dwFields & ET_CMMTYPE)
     {
-        TRACE( "ET_CMMTYPE: %s\n", dbgstr_tag(rec->dwCMMType) );
+        TRACE( "ET_CMMTYPE: %s\n", debugstr_fourcc(rec->dwCMMType) );
         if (rec->dwCMMType != hdr->phCMMType) return FALSE;
     }
     if (rec->dwFields & ET_CLASS)
     {
-        TRACE( "ET_CLASS: %s\n", dbgstr_tag(rec->dwClass) );
+        TRACE( "ET_CLASS: %s\n", debugstr_fourcc(rec->dwClass) );
         if (rec->dwClass != hdr->phClass) return FALSE;
     }
     if (rec->dwFields & ET_DATACOLORSPACE)
     {
-        TRACE( "ET_DATACOLORSPACE: %s\n", dbgstr_tag(rec->dwDataColorSpace) );
+        TRACE( "ET_DATACOLORSPACE: %s\n", debugstr_fourcc(rec->dwDataColorSpace) );
         if (rec->dwDataColorSpace != hdr->phDataColorSpace) return FALSE;
     }
     if (rec->dwFields & ET_CONNECTIONSPACE)
     {
-        TRACE( "ET_CONNECTIONSPACE: %s\n", dbgstr_tag(rec->dwConnectionSpace) );
+        TRACE( "ET_CONNECTIONSPACE: %s\n", debugstr_fourcc(rec->dwConnectionSpace) );
         if (rec->dwConnectionSpace != hdr->phConnectionSpace) return FALSE;
     }
     if (rec->dwFields & ET_SIGNATURE)
     {
-        TRACE( "ET_SIGNATURE: %s\n", dbgstr_tag(rec->dwSignature) );
+        TRACE( "ET_SIGNATURE: %s\n", debugstr_fourcc(rec->dwSignature) );
         if (rec->dwSignature != hdr->phSignature) return FALSE;
     }
     if (rec->dwFields & ET_PLATFORM)
     {
-        TRACE( "ET_PLATFORM: %s\n", dbgstr_tag(rec->dwPlatform) );
+        TRACE( "ET_PLATFORM: %s\n", debugstr_fourcc(rec->dwPlatform) );
         if (rec->dwPlatform != hdr->phPlatform) return FALSE;
     }
     if (rec->dwFields & ET_PROFILEFLAGS)
@@ -710,12 +704,12 @@ static BOOL match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_MANUFACTURER)
     {
-        TRACE( "ET_MANUFACTURER: %s\n", dbgstr_tag(rec->dwManufacturer) );
+        TRACE( "ET_MANUFACTURER: %s\n", debugstr_fourcc(rec->dwManufacturer) );
         if (rec->dwManufacturer != hdr->phManufacturer) return FALSE;
     }
     if (rec->dwFields & ET_MODEL)
     {
-        TRACE( "ET_MODEL: %s\n", dbgstr_tag(rec->dwModel) );
+        TRACE( "ET_MODEL: %s\n", debugstr_fourcc(rec->dwModel) );
         if (rec->dwModel != hdr->phModel) return FALSE;
     }
     if (rec->dwFields & ET_ATTRIBUTES)
@@ -732,7 +726,7 @@ static BOOL match_profile( PENUMTYPEW rec, PPROFILEHEADER hdr )
     }
     if (rec->dwFields & ET_CREATOR)
     {
-        TRACE( "ET_CREATOR: %s\n", dbgstr_tag(rec->dwCreator) );
+        TRACE( "ET_CREATOR: %s\n", debugstr_fourcc(rec->dwCreator) );
         if (rec->dwCreator != hdr->phCreator) return FALSE;
     }
     return TRUE;
@@ -1448,7 +1442,7 @@ BOOL WINAPI CloseColorProfile( HPROFILE handle )
  */
 BOOL WINAPI WcsGetUsePerUserProfiles( const WCHAR* name, DWORD class, BOOL* use_per_user_profile )
 {
-    FIXME( "%s %s %p\n", debugstr_w(name), dbgstr_tag(class), use_per_user_profile );
+    FIXME( "%s %s %p\n", debugstr_w(name), debugstr_fourcc(class), use_per_user_profile );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
