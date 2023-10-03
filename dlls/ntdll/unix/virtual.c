@@ -2857,6 +2857,8 @@ static NTSTATUS map_image_view( struct file_view **view_ret, pe_image_info_t *im
     void *base = wine_server_get_ptr( image_info->base );
     NTSTATUS status;
     ULONG_PTR start, end;
+    BOOL top_down = (image_info->image_charact & IMAGE_FILE_DLL) &&
+                    (image_info->image_flags & IMAGE_FLAGS_ImageDynamicallyRelocated);
 
     limit_low = max( limit_low, (ULONG_PTR)address_space_start );  /* make sure the DOS area remains free */
     if (!limit_high) limit_high = (ULONG_PTR)user_space_limit;
@@ -2865,6 +2867,7 @@ static NTSTATUS map_image_view( struct file_view **view_ret, pe_image_info_t *im
 
     if (base && (ULONG_PTR)base == image_info->base)
     {
+        if (top_down) alloc_type |= MEM_TOP_DOWN;
         status = map_view( view_ret, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
         if (!status) return status;
     }
@@ -2883,13 +2886,13 @@ static NTSTATUS map_image_view( struct file_view **view_ret, pe_image_info_t *im
     }
     if (start < end && (start != limit_low || end != limit_high))
     {
-        status = map_view( view_ret, NULL, size, alloc_type, vprot, start, end, 0 );
+        status = map_view( view_ret, NULL, size, top_down ? MEM_TOP_DOWN : 0, vprot, start, end, 0 );
         if (!status) return status;
     }
 
     /* then any suitable address */
 
-    return map_view( view_ret, NULL, size, alloc_type, vprot, limit_low, limit_high, 0 );
+    return map_view( view_ret, NULL, size, top_down ? MEM_TOP_DOWN : 0, vprot, limit_low, limit_high, 0 );
 }
 
 
