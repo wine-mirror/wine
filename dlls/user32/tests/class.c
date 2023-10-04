@@ -50,6 +50,31 @@
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
+#define run_in_process( a ) run_in_process_( __FILE__, __LINE__, a )
+static void run_in_process_( const char *file, int line, const char *args )
+{
+    char cmdline[MAX_PATH * 2], test[MAX_PATH], *tmp, **argv;
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    const char *name;
+    DWORD ret;
+    int argc;
+
+    name = file;
+    if ((tmp = strrchr( name, '\\' ))) name = tmp;
+    if ((tmp = strrchr( name, '/' ))) name = tmp;
+    strcpy( test, name );
+    if ((tmp = strrchr( test, '.' ))) *tmp = 0;
+
+    argc = winetest_get_mainargs( &argv );
+    sprintf( cmdline, "%s %s %s", argv[0], argc > 1 ? argv[1] : test, args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( &info );
+}
+
 static const char comctl32_manifest[] =
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">\n"
@@ -2482,12 +2507,200 @@ void test_class_multithread(void)
     CloseHandle(thread_unregister);
 }
 
+struct real_class_test
+{
+    const char *class_name;
+    const char *real_class_name;
+    BOOL set_by_wm_null;
+    BOOL set_by_wm_create;
+    BOOL set_by_wm_nccreate;
+    BOOL test_cross_process;
+    BOOL wine_todo;
+};
+
+static const struct real_class_test class_tests[] =
+{
+    { "Button",            "Button",           FALSE, FALSE, TRUE,  TRUE,  TRUE },
+    { "ComboBox",          "ComboBox",         FALSE, TRUE,  TRUE,  TRUE,  TRUE },
+    { "Edit",              "Edit",             FALSE, FALSE, TRUE,  TRUE,  TRUE },
+    { "ListBox",           "ListBox",          FALSE, TRUE,  TRUE,  TRUE,  TRUE },
+    { "ScrollBar",         "ScrollBar",        FALSE, TRUE,  FALSE, TRUE,  TRUE },
+    { "Static",            "Static",           TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
+    { "ComboLBox",         "ListBox",          FALSE, TRUE,  TRUE,  TRUE,  TRUE },
+    { "MDIClient",         "MDIClient",        TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
+    { "#32768",            "#32768",           FALSE, FALSE, TRUE,  TRUE,  TRUE },
+    { "#32770",            "#32770",           TRUE,  TRUE,  TRUE,  TRUE,  TRUE },
+    /* Not all built-in classes set real window class. */
+    { "Message",           NULL,               FALSE, FALSE, FALSE, FALSE, FALSE },
+};
+
+static WNDPROC real_class_wndproc;
+static UINT real_class_message;
+static WNDCLASSA test_class;
+
+static LRESULT WINAPI test_real_class_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == real_class_message) CallWindowProcA( real_class_wndproc, hwnd, msg, wparam, lparam );
+    if (msg == WM_NCCREATE) return 1;
+    return 0;
+}
+
+#define check_real_class_name( a, b, c ) check_real_class_name_( __LINE__, a, b, c )
+static void check_real_class_name_( int line, HWND hwnd, const char *expect, BOOL todo )
+{
+    WCHAR expectW[256], nameW[256];
+    char nameA[256];
+    ULONG len;
+
+    len = RealGetWindowClassA( hwnd, nameA, ARRAY_SIZE(nameA) );
+    todo_wine_if( todo ) ok_(__FILE__, line)( !strcmp( nameA, expect ), "got %s\n", nameA );
+    todo_wine_if( todo ) ok_(__FILE__, line)( len == strlen( expect ), "got %ld\n", len );
+
+    MultiByteToWideChar( CP_ACP, 0, expect, -1, expectW, ARRAY_SIZE(expectW));
+    len = RealGetWindowClassW( hwnd, nameW, ARRAY_SIZE(nameW));
+    todo_wine_if( todo ) ok_(__FILE__, line)( !wcscmp( nameW, expectW ), "got %s\n", debugstr_w(nameW));
+    todo_wine_if( todo ) ok_(__FILE__, line)( len == wcslen( expectW ), "got %ld\n", len );
+}
+
+static void test_real_class_name_msg( UINT msg, const char *expect, BOOL cross_process, BOOL todo )
+{
+    const CLIENTCREATESTRUCT client_cs = {NULL, 1}; /* Needed for MDIClient. */
+    HWND hwnd;
+
+    real_class_message = msg;
+    hwnd = CreateWindowA( test_class.lpszClassName, "test", WS_OVERLAPPED, 0, 0, 50, 50, 0, 0, 0, (void *)&client_cs );
+    ok( !!hwnd, "got %p\n", hwnd );
+    if (msg == WM_NULL) SendMessageA( hwnd, WM_NULL, 0, 0 );
+
+    check_real_class_name( hwnd, expect ? expect : test_class.lpszClassName, expect ? todo : FALSE );
+    if (expect && cross_process)
+    {
+        char cmdline[MAX_PATH];
+        sprintf( cmdline, "test_RealGetWindowClass %p %s %d", hwnd, expect, todo );
+        run_in_process( cmdline );
+    }
+
+    DestroyWindow( hwnd );
+}
+
+static void test_RealGetWindowClass( void )
+{
+    WCHAR class_name_w[256];
+    char class_name[20];
+    HWND hwnd;
+    UINT ret;
+    int i;
+
+    hwnd = CreateWindowA( "Button", "test", BS_CHECKBOX | WS_POPUP, 0, 0, 50, 14, 0, 0, 0, NULL );
+    ok( !!hwnd, "hwnd == NULL\n" );
+
+    /* Basic tests. */
+    memset( class_name, 0, sizeof(class_name) );
+    ret = RealGetWindowClassA( hwnd, class_name, ARRAY_SIZE(class_name));
+    ok( !strcmp( class_name, "Button" ), "got %s\n", class_name );
+    ok( ret == strlen( class_name ), "got %d, %s\n", ret, class_name );
+
+    memset( class_name_w, 0, sizeof(class_name_w) );
+    ret = RealGetWindowClassW( hwnd, class_name_w, ARRAY_SIZE(class_name_w));
+    ok( !lstrcmpW( class_name_w, L"Button" ), "got %s\n", debugstr_w(class_name_w));
+    ok( ret == lstrlenW( class_name_w ), "got %d, %s\n", ret, debugstr_w(class_name_w));
+
+    /* Shortened buffer tests. */
+    memset( class_name, 0, sizeof(class_name) );
+    ret = RealGetWindowClassA( hwnd, class_name, 2 );
+    ok( !strcmp( class_name, "B" ), "got %s\n", class_name );
+    ok( ret == strlen( class_name ), "got %d\n", ret );
+
+    memset( class_name_w, 0, sizeof(class_name_w) );
+    ret = RealGetWindowClassW( hwnd, class_name_w, 2 );
+    ok( !lstrcmpW( class_name_w, L"B" ), "got %s\n", debugstr_w(class_name_w));
+    ok( ret == lstrlenW( class_name_w ), "got %d, %s\n", ret, debugstr_w(class_name_w));
+
+    /* A NULL buffer with a non-zero length will result in an access violation. */
+    if (0)
+    {
+        RealGetWindowClassA( hwnd, NULL, ARRAY_SIZE(class_name));
+    }
+
+    /* Invalid length. */
+    memset( class_name, 0, sizeof(class_name) );
+    SetLastError( 0xdeadbeef );
+    ret = RealGetWindowClassA( hwnd, class_name, 0 );
+    ok( !ret, "got %d\n", ret );
+    todo_wine
+    ok( (GetLastError() == ERROR_INSUFFICIENT_BUFFER), "Unexpected last error %ld\n", GetLastError() );
+
+    memset( class_name_w, 0, sizeof(class_name_w) );
+    SetLastError( 0xdeadbeef );
+    ret = RealGetWindowClassW( hwnd, class_name_w, 0 );
+    ok( !ret, "got %d\n", ret );
+    ok( (GetLastError() == ERROR_INSUFFICIENT_BUFFER), "Unexpected last error %ld\n", GetLastError() );
+
+    DestroyWindow( hwnd );
+
+    /* Custom class, RealGetWindowClass behaves the same as GetClassName. */
+    memset( &test_class, 0, sizeof(test_class) );
+    test_class.lpfnWndProc = ClassTest_WndProc2;
+    test_class.hInstance = GetModuleHandleA( NULL );
+    test_class.lpszClassName = "WineTest Class";
+    RegisterClassA( &test_class );
+
+    hwnd = CreateWindowA( test_class.lpszClassName, "test", WS_OVERLAPPED, 0, 0, 50, 50, 0, 0, 0, NULL );
+    ok( !!hwnd, "hwnd == NULL\n" );
+
+    check_real_class_name( hwnd, test_class.lpszClassName, FALSE );
+
+    DestroyWindow( hwnd );
+    UnregisterClassA( test_class.lpszClassName, GetModuleHandleA( NULL ) );
+
+    for (i = 0; i < ARRAY_SIZE(class_tests); i++)
+    {
+        const struct real_class_test *class_test = &class_tests[i];
+        BOOL test_cross_process = class_test->test_cross_process;
+
+        memset( &test_class, 0, sizeof(test_class) );
+        ret = GetClassInfoA( NULL, class_test->class_name, &test_class );
+        ok( ret, "GetClassInfoA failed: %lu\n", GetLastError() );
+        real_class_wndproc = test_class.lpfnWndProc;
+        test_class.lpfnWndProc = test_real_class_wndproc;
+        test_class.hInstance = GetModuleHandleA( NULL );
+        test_class.lpszClassName = "WineTest Class";
+        RegisterClassA( &test_class );
+
+        test_real_class_name_msg( WM_NULL, class_test->set_by_wm_null ? class_test->real_class_name : NULL,
+                                  test_cross_process, class_test->wine_todo );
+        if (class_test->set_by_wm_null) test_cross_process = FALSE;
+
+        test_real_class_name_msg( WM_NCCREATE, class_test->set_by_wm_nccreate ? class_test->real_class_name : NULL,
+                                  test_cross_process, class_test->wine_todo );
+        if (class_test->set_by_wm_nccreate) test_cross_process = FALSE;
+
+        /*
+         * If we pass WM_CREATE without WM_NCCREATE first to the Edit window
+         * procedure, it will trigger a divide by zero exception. Just skip this test.
+         */
+        if (!strcmp( class_test->class_name, "Edit" )) skip( "Skipping edit class\n");
+        else test_real_class_name_msg( WM_CREATE, class_test->set_by_wm_create ? class_test->real_class_name : NULL,
+                                       test_cross_process, class_test->wine_todo );
+        UnregisterClassA( test_class.lpszClassName, GetModuleHandleA( NULL ) );
+    }
+
+    real_class_wndproc = NULL;
+}
+
+static void test_RealGetWindowClass_process( HWND hwnd, const char *expect, BOOL todo )
+{
+    check_real_class_name( hwnd, expect, todo );
+}
+
 START_TEST(class)
 {
     char **argv;
     HANDLE hInstance = GetModuleHandleA( NULL );
     int argc = winetest_get_mainargs( &argv );
 
+    if (argc >= 3 && !strcmp( argv[2], "test_RealGetWindowClass" ))
+        return test_RealGetWindowClass_process( UlongToHandle( strtol( argv[3], NULL, 16 ) ), argv[4], strtol( argv[5], NULL, 0 ) );
     if (argc >= 3)
     {
         test_comctl32_class( argv[2] );
@@ -2519,6 +2732,7 @@ START_TEST(class)
     test_actctx_classes();
     test_class_name();
     test_class_multithread();
+    test_RealGetWindowClass();
 
     /* this test unregisters the Button class so it should be executed at the end */
     test_instances();
