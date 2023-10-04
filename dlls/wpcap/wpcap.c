@@ -519,7 +519,7 @@ static struct sockaddr *get_broadcast( const IP_ADAPTER_UNICAST_ADDRESS *addr )
         struct sockaddr_in *broadcast_addr_in, *addr_in = (struct sockaddr_in *)addr->Address.lpSockaddr;
         ULONG netmask;
 
-        if (!(broadcast_addr_in = calloc( 1, sizeof(*broadcast_addr_in) ))) return FALSE;
+        if (!(broadcast_addr_in = calloc( 1, sizeof(*broadcast_addr_in) ))) return NULL;
         broadcast_addr_in->sin_family = AF_INET;
         ConvertLengthToIpv4Mask( addr->OnLinkPrefixLength, &netmask );
         broadcast_addr_in->sin_addr.S_un.S_addr = addr_in->sin_addr.S_un.S_addr | ~netmask;
