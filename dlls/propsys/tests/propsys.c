@@ -2290,6 +2290,13 @@ static void test_VariantToString(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!buff[0], "Unexpected buffer.\n");
 
+    buff[0] = 0;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 567;
+    hr = VariantToString(&v, buff, 64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buff, L"567"), "Unexpected buffer %s.\n", wine_dbgstr_w(buff));
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(L"test1");
 

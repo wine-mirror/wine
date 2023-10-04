@@ -436,7 +436,7 @@ PCWSTR WINAPI VariantToStringWithDefault(const VARIANT *pvar, const WCHAR *defau
  */
 HRESULT WINAPI VariantToString(REFVARIANT var, PWSTR ret, UINT cch)
 {
-    WCHAR *str = NULL;
+    WCHAR buffer[64], *str = buffer;
 
     TRACE("%p, %p, %u.\n", var, ret, cch);
 
@@ -445,15 +445,17 @@ HRESULT WINAPI VariantToString(REFVARIANT var, PWSTR ret, UINT cch)
     if (!cch)
         return E_INVALIDARG;
 
-    if (V_VT(var) == VT_BSTR)
+    switch (V_VT(var))
     {
-        str = V_BSTR(var);
-    }
-    else
-    {
-        FIXME("Unsupported type %d.\n", V_VT(var));
-
-        return E_NOTIMPL;
+        case VT_BSTR:
+            str = V_BSTR(var);
+            break;
+        case VT_I4:
+            swprintf(buffer, ARRAY_SIZE(buffer), L"%d", V_I4(var));
+            break;
+        default:
+            FIXME("Unsupported type %d.\n", V_VT(var));
+            return E_NOTIMPL;
     }
 
     if (wcslen(str) > cch - 1)
