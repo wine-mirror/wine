@@ -223,10 +223,13 @@ HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLS
 BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
 
 /* uia_com_client.c */
+HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id,
+        DWORD event_time) DECLSPEC_HIDDEN;
 HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
 
 /* uia_event.c */
 HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd) DECLSPEC_HIDDEN;
+BOOL uia_clientside_event_start_event_thread(struct uia_event *event) DECLSPEC_HIDDEN;
 HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie) DECLSPEC_HIDDEN;
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
         struct uia_event *event) DECLSPEC_HIDDEN;

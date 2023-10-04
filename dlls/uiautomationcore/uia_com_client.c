@@ -958,6 +958,12 @@ struct uia_com_event {
     struct uia_event_handler_map_entry *handler_map;
 };
 
+HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id, DWORD event_time)
+{
+    FIXME("%ld, %p, %ld, %ld, %ld, %ld: stub\n", event_id, hwnd, obj_id, child_id, thread_id, event_time);
+    return S_OK;
+}
+
 static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY *runtime_id, int event_id,
         struct uia_com_event *event)
 {
@@ -3310,6 +3316,9 @@ static HRESULT uia_add_com_event_handler(IUIAutomation6 *iface, EVENTID event_id
             uia_com_event_callback, (void *)com_event, &com_event->event);
     if (FAILED(hr))
         goto exit;
+
+    if (!uia_clientside_event_start_event_thread((struct uia_event *)com_event->event))
+        WARN("Failed to start event thread, WinEvents may not be delivered.\n");
 
     hr = uia_event_handlers_add_handler(handler_unk, runtime_id, event_id, com_event);
 

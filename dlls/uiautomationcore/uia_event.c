@@ -78,7 +78,6 @@ static BOOL CALLBACK uia_win_event_enum_top_level_hwnds(HWND hwnd, LPARAM lparam
     return TRUE;
 }
 
-static BOOL uia_clientside_event_start_event_thread(struct uia_event *event);
 HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd)
 {
     if (!uia_clientside_event_start_event_thread(event))
@@ -844,6 +843,11 @@ static void uia_event_thread_process_queue(struct list *event_queue)
         {
             struct uia_queue_win_event *win_event = (struct uia_queue_win_event *)event;
 
+            hr = uia_com_win_event_callback(win_event->event_id, win_event->hwnd, win_event->obj_id, win_event->child_id,
+                    win_event->thread_id, win_event->event_time);
+            if (FAILED(hr))
+                WARN("uia_com_win_event_callback failed with hr %#lx\n", hr);
+
             hr = uia_event_for_each(win_event_to_uia_event_id(win_event->event_id), uia_win_event_for_each_callback,
                     (void *)win_event, TRUE);
             break;
@@ -990,7 +994,7 @@ static void uia_stop_event_thread(void)
     LeaveCriticalSection(&event_thread_cs);
 }
 
-static BOOL uia_clientside_event_start_event_thread(struct uia_event *event)
+BOOL uia_clientside_event_start_event_thread(struct uia_event *event)
 {
     if (!event->u.clientside.event_thread_started)
         event->u.clientside.event_thread_started = uia_start_event_thread();
