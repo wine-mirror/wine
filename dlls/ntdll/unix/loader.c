@@ -1743,7 +1743,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
     wcscat( *image, startW );
     init_unicode_string( &nt_name, *image );
     status = find_builtin_dll( &nt_name, module, &size, &main_image_info, 0, 0, current_machine, 0, FALSE );
-    if (status)
+    if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );

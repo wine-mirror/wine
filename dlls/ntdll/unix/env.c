@@ -2116,7 +2116,7 @@ void init_startup_info(void)
 
     status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
                             machine, &image, &module );
-    if (status)
+    if (!NT_SUCCESS(status))
     {
         MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
         NtTerminateProcess( GetCurrentProcess(), status );

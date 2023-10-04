@@ -2041,7 +2041,8 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
     if (nt->OptionalHeader.SectionAlignment < page_size)
         return STATUS_SUCCESS;
 
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) && NtCurrentTeb()->Peb->ImageBaseAddress)
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
+        module != NtCurrentTeb()->Peb->ImageBaseAddress)
         return STATUS_SUCCESS;
 
     relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
