@@ -771,7 +771,7 @@ case $host_os in
                     dnl On FreeBSD, shared libraries using environ fail to link with -Wl,-z,defs
                     AC_LINK_IFELSE([AC_LANG_SOURCE([[extern char **environ; char **envp; void myfunc(void) { envp = environ; }]])],
                                                    [ac_cv_wl_z_defs=yes],[ac_cv_wl_z_defs=no])
-                    CFLAGS=$ac_save_cflags])
+                    CFLAGS=$ac_save_CFLAGS])
     test $ac_cv_wl_z_defs != yes || AS_VAR_APPEND([UNIXLDFLAGS],[" -Wl,-z,defs"])
 
     WINE_TRY_CFLAGS([-Wl,--export-dynamic],[WINELOADER_LDFLAGS="-Wl,--export-dynamic"])

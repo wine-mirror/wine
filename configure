@@ -10123,7 +10123,7 @@ else $as_nop
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
-                    CFLAGS=$ac_save_cflags
+                    CFLAGS=$ac_save_CFLAGS
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_wl_z_defs" >&5
 printf "%s\n" "$ac_cv_wl_z_defs" >&6; }
