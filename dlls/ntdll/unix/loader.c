@@ -1060,111 +1060,6 @@ static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
     return get_rva( module, data->VirtualAddress );
 }
 
-/* reimplementation of LdrProcessRelocationBlock */
-static const IMAGE_BASE_RELOCATION *process_relocation_block( void *module, const IMAGE_BASE_RELOCATION *rel,
-                                                              INT_PTR delta )
-{
-    char *page = get_rva( module, rel->VirtualAddress );
-    UINT count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT);
-    USHORT *relocs = (USHORT *)(rel + 1);
-
-    while (count--)
-    {
-        USHORT offset = *relocs & 0xfff;
-        switch (*relocs >> 12)
-        {
-        case IMAGE_REL_BASED_ABSOLUTE:
-            break;
-        case IMAGE_REL_BASED_HIGH:
-            *(short *)(page + offset) += HIWORD(delta);
-            break;
-        case IMAGE_REL_BASED_LOW:
-            *(short *)(page + offset) += LOWORD(delta);
-            break;
-        case IMAGE_REL_BASED_HIGHLOW:
-            *(int *)(page + offset) += delta;
-            break;
-        case IMAGE_REL_BASED_DIR64:
-            *(INT64 *)(page + offset) += delta;
-            break;
-        case IMAGE_REL_BASED_THUMB_MOV32:
-        {
-            DWORD *inst = (DWORD *)(page + offset);
-            WORD lo = ((inst[0] << 1) & 0x0800) + ((inst[0] << 12) & 0xf000) +
-                      ((inst[0] >> 20) & 0x0700) + ((inst[0] >> 16) & 0x00ff);
-            WORD hi = ((inst[1] << 1) & 0x0800) + ((inst[1] << 12) & 0xf000) +
-                      ((inst[1] >> 20) & 0x0700) + ((inst[1] >> 16) & 0x00ff);
-            DWORD imm = MAKELONG( lo, hi ) + delta;
-
-            lo = LOWORD( imm );
-            hi = HIWORD( imm );
-            inst[0] = (inst[0] & 0x8f00fbf0) + ((lo >> 1) & 0x0400) + ((lo >> 12) & 0x000f) +
-                                               ((lo << 20) & 0x70000000) + ((lo << 16) & 0xff0000);
-            inst[1] = (inst[1] & 0x8f00fbf0) + ((hi >> 1) & 0x0400) + ((hi >> 12) & 0x000f) +
-                                               ((hi << 20) & 0x70000000) + ((hi << 16) & 0xff0000);
-            break;
-        }
-        default:
-            FIXME("Unknown/unsupported relocation %x\n", *relocs);
-            return NULL;
-        }
-        relocs++;
-    }
-    return (IMAGE_BASE_RELOCATION *)relocs;  /* return address of next block */
-}
-
-
-/***********************************************************************
- *           relocate_module
- */
-static NTSTATUS relocate_module( void *module )
-{
-    const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
-    const IMAGE_BASE_RELOCATION *rel, *end;
-    const IMAGE_SECTION_HEADER *sec;
-    ULONG protect_old[96], i, size;
-    ULONG_PTR image_base;
-    INT_PTR delta;
-
-    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-        image_base = ((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.ImageBase;
-    else
-        image_base = ((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.ImageBase;
-
-    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
-    {
-        ERR( "Need to relocate module from %p to %p, but relocation records are stripped\n",
-             (void *)image_base, module );
-        return STATUS_CONFLICTING_ADDRESSES;
-    }
-
-    TRACE( "%p -> %p\n", (void *)image_base, module );
-
-    if (!(rel = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_BASERELOC, &size )))
-        return STATUS_SUCCESS;
-
-    sec = IMAGE_FIRST_SECTION( nt );
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &protect_old[i] );
-    }
-
-    end = (IMAGE_BASE_RELOCATION *)((const char *)rel + size);
-    delta = (ULONG_PTR)module - image_base;
-    while (rel && rel < end - 1 && rel->SizeOfBlock) rel = process_relocation_block( module, rel, delta );
-
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, protect_old[i], &protect_old[i] );
-    }
-    return STATUS_SUCCESS;
-}
-
-
 /***********************************************************************
  *           fill_builtin_image_info
  */
@@ -1957,7 +1852,7 @@ static void load_ntdll(void)
         sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
         status = open_builtin_so_file( name, &attr, &module, &info, FALSE );
     }
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = relocate_module( module );
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = virtual_relocate_module( module );
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
@@ -2052,7 +1947,7 @@ static void load_wow64_ntdll( USHORT machine )
     wcscat( path, ntdllW );
     init_unicode_string( &nt_name, path );
     status = find_builtin_dll( &nt_name, &module, &size, &info, 0, 0, machine, 0, FALSE );
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = relocate_module( module );
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = virtual_relocate_module( module );
     if (status) fatal_error( "failed to load %s error %x\n", debugstr_w(path), status );
     load_ntdll_wow64_functions( module );
     TRACE("loaded %s at %p\n", debugstr_w(path), module );

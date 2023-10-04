@@ -232,6 +232,7 @@ extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
                                     ULONG_PTR limit_high, USHORT machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
                                              pe_image_info_t *info, void *so_handle ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_relocate_module( void *module ) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;

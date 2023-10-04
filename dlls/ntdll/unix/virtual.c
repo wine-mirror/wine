@@ -2590,6 +2590,90 @@ static void update_arm64x_mapping( struct file_view *view, IMAGE_NT_HEADERS *nt,
 #endif  /* __aarch64__ */
 
 /***********************************************************************
+ *           get_data_dir
+ */
+static IMAGE_DATA_DIRECTORY *get_data_dir( IMAGE_NT_HEADERS *nt, SIZE_T total_size, ULONG dir )
+{
+    IMAGE_DATA_DIRECTORY *data;
+
+    switch (nt->OptionalHeader.Magic)
+    {
+    case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        if (dir >= ((IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        data = &((IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.DataDirectory[dir];
+        break;
+    case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        if (dir >= ((IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+        data = &((IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.DataDirectory[dir];
+        break;
+    default:
+        return NULL;
+    }
+    if (!data->Size) return NULL;
+    if (!data->VirtualAddress) return NULL;
+    if (data->VirtualAddress >= total_size) return NULL;
+    if (data->Size >= total_size - data->VirtualAddress) return NULL;
+    return data;
+}
+
+
+/***********************************************************************
+ *           process_relocation_block
+ *
+ * Reimplementation of LdrProcessRelocationBlock.
+ */
+static IMAGE_BASE_RELOCATION *process_relocation_block( char *page, IMAGE_BASE_RELOCATION *rel,
+                                                        INT_PTR delta )
+{
+    USHORT *reloc = (USHORT *)(rel + 1);
+    unsigned int count;
+
+    for (count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT); count; count--, reloc++)
+    {
+        USHORT offset = *reloc & 0xfff;
+        switch (*reloc >> 12)
+        {
+        case IMAGE_REL_BASED_ABSOLUTE:
+            break;
+        case IMAGE_REL_BASED_HIGH:
+            *(short *)(page + offset) += HIWORD(delta);
+            break;
+        case IMAGE_REL_BASED_LOW:
+            *(short *)(page + offset) += LOWORD(delta);
+            break;
+        case IMAGE_REL_BASED_HIGHLOW:
+            *(int *)(page + offset) += delta;
+            break;
+        case IMAGE_REL_BASED_DIR64:
+            *(INT64 *)(page + offset) += delta;
+            break;
+        case IMAGE_REL_BASED_THUMB_MOV32:
+        {
+            DWORD *inst = (DWORD *)(page + offset);
+            WORD lo = ((inst[0] << 1) & 0x0800) + ((inst[0] << 12) & 0xf000) +
+                      ((inst[0] >> 20) & 0x0700) + ((inst[0] >> 16) & 0x00ff);
+            WORD hi = ((inst[1] << 1) & 0x0800) + ((inst[1] << 12) & 0xf000) +
+                      ((inst[1] >> 20) & 0x0700) + ((inst[1] >> 16) & 0x00ff);
+            DWORD imm = MAKELONG( lo, hi ) + delta;
+
+            lo = LOWORD( imm );
+            hi = HIWORD( imm );
+            inst[0] = (inst[0] & 0x8f00fbf0) + ((lo >> 1) & 0x0400) + ((lo >> 12) & 0x000f) +
+                                               ((lo << 20) & 0x70000000) + ((lo << 16) & 0xff0000);
+            inst[1] = (inst[1] & 0x8f00fbf0) + ((hi >> 1) & 0x0400) + ((hi >> 12) & 0x000f) +
+                                               ((hi << 20) & 0x70000000) + ((hi << 16) & 0xff0000);
+            break;
+        }
+        default:
+            FIXME( "Unknown/unsupported relocation %x\n", *reloc );
+            return NULL;
+        }
+    }
+    return (IMAGE_BASE_RELOCATION *)reloc;  /* return address of next block */
+}
+
+
+/***********************************************************************
  *           map_image_into_view
  *
  * Map an executable (PE format) image into an existing view.
@@ -2633,9 +2717,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
      * copying the headers into local memory is necessary to properly load such applications. */
     memcpy(sections, sec, sizeof(*sections) * nt->FileHeader.NumberOfSections);
     sec = sections;
-
-    imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
-    if (!imports->Size || !imports->VirtualAddress) imports = NULL;
+    imports = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_IMPORT );
 
     /* check for non page-aligned binary */
 
@@ -3362,6 +3444,65 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     return status;
+}
+
+
+/***********************************************************************
+ *           virtual_relocate_module
+ */
+NTSTATUS virtual_relocate_module( void *module )
+{
+    char *ptr = module;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(ptr + ((IMAGE_DOS_HEADER *)module)->e_lfanew);
+    IMAGE_DATA_DIRECTORY *relocs;
+    IMAGE_BASE_RELOCATION *rel, *end;
+    IMAGE_SECTION_HEADER *sec;
+    ULONG total_size = ROUND_SIZE( 0, nt->OptionalHeader.SizeOfImage );
+    ULONG protect_old[96], i;
+    ULONG_PTR image_base;
+    INT_PTR delta;
+
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        image_base = ((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.ImageBase;
+    else
+        image_base = ((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.ImageBase;
+
+
+    if (!(delta = (ULONG_PTR)module - image_base)) return STATUS_SUCCESS;
+
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
+    {
+        ERR( "Need to relocate module from %p to %p, but relocation records are stripped\n",
+             (void *)image_base, module );
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+
+    TRACE( "%p -> %p\n", (void *)image_base, module );
+
+    if (!(relocs = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_BASERELOC ))) return STATUS_SUCCESS;
+
+    sec = IMAGE_FIRST_SECTION( nt );
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = (char *)module + sec[i].VirtualAddress;
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &protect_old[i] );
+    }
+
+
+    rel = (IMAGE_BASE_RELOCATION *)((char *)module + relocs->VirtualAddress);
+    end = (IMAGE_BASE_RELOCATION *)((char *)rel + relocs->Size);
+
+    while (rel && rel < end - 1 && rel->SizeOfBlock && rel->VirtualAddress < total_size)
+        rel = process_relocation_block( (char *)module + rel->VirtualAddress, rel, delta );
+
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = (char *)module + sec[i].VirtualAddress;
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, protect_old[i], &protect_old[i] );
+    }
+    return STATUS_SUCCESS;
 }
 
 
