@@ -688,6 +688,46 @@ static void pres_xor(float **args, unsigned int n, const struct preshader_instr 
     }
 }
 
+static void pres_ishl(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0], *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] << (arg2[i] % 32);
+        retval[i] = *(float *)&v;
+    }
+}
+
+static void pres_ishr(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    int *arg1 = (int *)args[0], *arg2 = (int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] >> (arg2[i] % 32);
+        retval[i] = *(float *)&v;
+    }
+}
+
+static void pres_ushr(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    unsigned int *arg1 = (unsigned int *)args[0];
+    unsigned int *arg2 = (unsigned int *)args[1];
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int v = arg1[instr->scalar ? 0 : i] >> (arg2[i] % 32);
+        retval[i] = *(float *)&v;
+    }
+}
+
 static void pres_movc(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *arg1 = args[0], *arg2 = args[1], *arg3 = args[2];
@@ -777,6 +817,9 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x230, "and",  pres_and  },
     { 0x231, "or",   pres_or   },
     { 0x233, "xor",  pres_xor  },
+    { 0x234, "ishl", pres_ishl },
+    { 0x235, "ishr", pres_ishr },
+    { 0x236, "ushr", pres_ushr },
     { 0x301, "movc", pres_movc },
     { 0x500, "dot",  pres_dot  },
     { 0x70e, "d3ds_dotswiz", pres_dotswiz },
