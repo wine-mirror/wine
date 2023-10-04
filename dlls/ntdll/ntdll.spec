@@ -1175,6 +1175,7 @@
 @ stdcall WinSqmIncrementDWORD(long long long)
 @ stdcall WinSqmIsOptedIn()
 @ stdcall WinSqmSetDWORD(ptr long long)
+@ stdcall WinSqmSetIfMaxDWORD(long long long)
 @ stdcall WinSqmStartSession(ptr long long)
 @ extern -arch=win32 Wow64Transition
 @ stdcall -private -syscall ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort

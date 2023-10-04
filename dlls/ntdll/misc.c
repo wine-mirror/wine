@@ -274,6 +274,14 @@ void WINAPI WinSqmSetDWORD(HANDLE session, DWORD datapoint_id, DWORD datapoint_v
 }
 
 /******************************************************************************
+ *          WinSqmSetIfMaxDWORD (NTDLL.@)
+ */
+void WINAPI WinSqmSetIfMaxDWORD(DWORD unk1, DWORD unk2, DWORD unk3)
+{
+    FIXME("(0x%lx, 0x%lx, 0x%lx): stub\n", unk1, unk2, unk3);
+}
+
+/******************************************************************************
  *                  EtwEventActivityIdControl (NTDLL.@)
  */
 ULONG WINAPI EtwEventActivityIdControl(ULONG code, GUID *guid)
