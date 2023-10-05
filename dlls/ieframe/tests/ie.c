@@ -55,9 +55,72 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+DEFINE_EXPECT(Invoke_BEFORENAVIGATE2);
 DEFINE_EXPECT(Invoke_NAVIGATECOMPLETE2);
+DEFINE_EXPECT(Invoke_NAVIGATEERROR);
+DEFINE_EXPECT(Invoke_DOCUMENTCOMPLETE);
 
-static BOOL navigate_complete;
+static BOOL navigate_complete, navigation_timed_out;
+static const WCHAR *navigate_url;
+
+static BSTR get_window_url(IDispatch *webbrowser)
+{
+    IHTMLPrivateWindow *priv_window;
+    IHTMLLocation *location;
+    IHTMLWindow2 *window;
+    IServiceProvider *sp;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+    BSTR url;
+
+    hres = IDispatch_QueryInterface(webbrowser, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "QueryInterface(IServiceProvider) failed: %08lx\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &SID_SHTMLWindow, &IID_IHTMLWindow2, (void**)&window);
+    ok(hres == S_OK, "Could not get SHTMLWindow service: %08lx\n", hres);
+    ok(window != NULL, "window = NULL\n");
+    IServiceProvider_Release(sp);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLPrivateWindow, (void**)&priv_window);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IHTMLPrivateWindow) returned: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    ok(doc != NULL, "doc = NULL\n");
+    IHTMLWindow2_Release(window);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window = NULL\n");
+    IHTMLDocument2_Release(doc);
+
+    hres = IHTMLWindow2_get_location(window, &location);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+    ok(location != NULL, "location = NULL\n");
+    IHTMLWindow2_Release(window);
+
+    hres = IHTMLLocation_get_href(location, &url);
+    ok(hres == S_OK, "get_href failed: %08lx\n", hres);
+    ok(url != NULL, "url = NULL\n");
+    IHTMLLocation_Release(location);
+
+    return url;
+}
+
+#define test_url(a) _test_url(__LINE__,a)
+static void _test_url(unsigned line, const WCHAR *url)
+{
+    /* If error page, it actually returns the error page's resource URL, followed by #, followed by the original URL.
+       Since the error page's location varies on native, and depends on the error itself, just check for res:// here. */
+    if(called_Invoke_NAVIGATEERROR) {
+        ok_(__FILE__,line)(!wcsncmp(url, L"res://", ARRAY_SIZE(L"res://")-1), "url is not a local resource: %s\n", wine_dbgstr_w(url));
+        url = wcschr(url, '#');
+        ok_(__FILE__,line)(url != NULL, "url has no fragment: %s\n", wine_dbgstr_w(url));
+        ok_(__FILE__,line)(!wcscmp(url + 1, navigate_url), "url after fragment = %s\n", wine_dbgstr_w(url + 1));
+    }else {
+        ok_(__FILE__,line)(!wcscmp(url, navigate_url), "url = %s\n", wine_dbgstr_w(url));
+    }
+}
 
 static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
 {
@@ -104,10 +167,64 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
+    VARIANT *arg;
+    BSTR url;
+
     switch(dispIdMember) {
+    case DISPID_BEFORENAVIGATE2:
+        CHECK_EXPECT(Invoke_BEFORENAVIGATE2);
+
+        arg = pDispParams->rgvarg + 5;
+        ok(V_VT(arg) == (VT_BYREF | VT_VARIANT), "VT = %d\n", V_VT(arg));
+        ok(V_VT(V_VARIANTREF(arg)) == VT_BSTR, "VT = %d\n", V_VT(V_VARIANTREF(arg)));
+
+        test_url(V_BSTR(V_VARIANTREF(arg)));
+        return S_OK;
     case DISPID_NAVIGATECOMPLETE2:
         CHECK_EXPECT(Invoke_NAVIGATECOMPLETE2);
+
+        arg = pDispParams->rgvarg;
+        ok(V_VT(arg) == (VT_BYREF | VT_VARIANT), "VT = %d\n", V_VT(arg));
+        ok(V_VT(V_VARIANTREF(arg)) == VT_BSTR, "VT = %d\n", V_VT(V_VARIANTREF(arg)));
+        todo_wine_if(called_Invoke_NAVIGATEERROR)
+        ok(!wcscmp(V_BSTR(V_VARIANTREF(arg)), navigate_url), "url = %s\n", wine_dbgstr_w(V_BSTR(V_VARIANTREF(arg))));
+
+        arg = pDispParams->rgvarg + 1;
+        ok(V_VT(arg) == VT_DISPATCH, "VT = %d\n", V_VT(arg));
+        ok(V_DISPATCH(arg) != NULL, "V_DISPATCH = NULL\n");
+        url = get_window_url(V_DISPATCH(arg));
+        test_url(url);
+        SysFreeString(url);
+        return S_OK;
+    case DISPID_NAVIGATEERROR:
+        CHECK_EXPECT(Invoke_NAVIGATEERROR);
+        ok(!called_Invoke_NAVIGATECOMPLETE2, "NAVIGATECOMPLETE2 called before NAVIGATEERROR\n");
+
+        arg = pDispParams->rgvarg;
+        ok(V_VT(arg) == (VT_BYREF | VT_BOOL), "VT = %d\n", V_VT(arg));
+        ok(*V_BOOLREF(arg) == VARIANT_FALSE, "cancel = %#x\n", *V_BOOLREF(arg));
+
+        arg = pDispParams->rgvarg + 3;
+        ok(V_VT(arg) == (VT_BYREF | VT_VARIANT), "VT = %d\n", V_VT(arg));
+        ok(V_VT(V_VARIANTREF(arg)) == VT_BSTR, "VT = %d\n", V_VT(V_VARIANTREF(arg)));
+        ok(!wcscmp(V_BSTR(V_VARIANTREF(arg)), navigate_url), "url = %s\n", wine_dbgstr_w(V_BSTR(V_VARIANTREF(arg))));
+        return S_OK;
+    case DISPID_DOCUMENTCOMPLETE:
+        CHECK_EXPECT(Invoke_DOCUMENTCOMPLETE);
         navigate_complete = TRUE;
+
+        arg = pDispParams->rgvarg;
+        ok(V_VT(arg) == (VT_BYREF | VT_VARIANT), "VT = %d\n", V_VT(arg));
+        ok(V_VT(V_VARIANTREF(arg)) == VT_BSTR, "VT = %d\n", V_VT(V_VARIANTREF(arg)));
+        todo_wine_if(called_Invoke_NAVIGATEERROR)
+        ok(!wcscmp(V_BSTR(V_VARIANTREF(arg)), navigate_url), "url = %s\n", wine_dbgstr_w(V_BSTR(V_VARIANTREF(arg))));
+
+        arg = pDispParams->rgvarg + 1;
+        ok(V_VT(arg) == VT_DISPATCH, "VT = %d\n", V_VT(arg));
+        ok(V_DISPATCH(arg) != NULL, "V_DISPATCH = NULL\n");
+        url = get_window_url(V_DISPATCH(arg));
+        test_url(url);
+        SysFreeString(url);
         return S_OK;
     }
 
@@ -141,7 +258,8 @@ static void advise_cp(IUnknown *unk, BOOL init)
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DWebBrowserEvents2, &point);
     IConnectionPointContainer_Release(container);
-    ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
+    if(!navigation_timed_out)
+        ok(hres == S_OK, "FindConnectionPoint failed: %08lx\n", hres);
     if(FAILED(hres))
         return;
 
@@ -211,13 +329,31 @@ static void test_window(IWebBrowser2 *wb)
     ok(!strcmp(buf, "IEFrame"), "Unexpected class name %s\n", buf);
 }
 
-static void test_navigate(IWebBrowser2 *wb, const WCHAR *url)
+static void CALLBACK navigate_timeout(HWND hwnd, UINT msg, UINT_PTR timer, DWORD time)
+{
+    win_skip("Navigation timed out, skipping tests...\n");
+    called_Invoke_BEFORENAVIGATE2 = TRUE;
+    called_Invoke_NAVIGATECOMPLETE2 = TRUE;
+    called_Invoke_DOCUMENTCOMPLETE = TRUE;
+    if(expect_Invoke_NAVIGATEERROR)
+        CHECK_EXPECT(Invoke_NAVIGATEERROR);
+    navigation_timed_out = TRUE;
+    navigate_complete = TRUE;
+}
+
+static void test_navigate(IWebBrowser2 *wb, const WCHAR *url, DWORD timeout)
 {
     VARIANT urlv, emptyv;
+    UINT_PTR timer = 0;
     MSG msg;
     HRESULT hres;
 
+    SET_EXPECT(Invoke_BEFORENAVIGATE2);
     SET_EXPECT(Invoke_NAVIGATECOMPLETE2);
+    SET_EXPECT(Invoke_DOCUMENTCOMPLETE);
+    navigation_timed_out = FALSE;
+    navigate_complete = FALSE;
+    navigate_url = url;
 
     V_VT(&urlv) = VT_BSTR;
     V_BSTR(&urlv) = SysAllocString(url);
@@ -226,12 +362,20 @@ static void test_navigate(IWebBrowser2 *wb, const WCHAR *url)
     ok(hres == S_OK, "Navigate2 failed: %08lx\n", hres);
     SysFreeString(V_BSTR(&urlv));
 
+    if(timeout)
+        timer = SetTimer(NULL, 0, timeout, navigate_timeout);
+
     while(!navigate_complete && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
 
+    if(timer)
+        KillTimer(NULL, timer);
+
+    CHECK_CALLED(Invoke_BEFORENAVIGATE2);
     CHECK_CALLED(Invoke_NAVIGATECOMPLETE2);
+    CHECK_CALLED(Invoke_DOCUMENTCOMPLETE);
 }
 
 static void test_busy(IWebBrowser2 *wb)
@@ -272,7 +416,11 @@ static void test_InternetExplorer(void)
     test_visible(wb);
     test_html_window(wb);
     test_window(wb);
-    test_navigate(wb, L"http://test.winehq.org/tests/hello.html");
+    test_navigate(wb, L"http://test.winehq.org/tests/hello.html", 0);
+
+    SET_EXPECT(Invoke_NAVIGATEERROR);
+    test_navigate(wb, L"http://0.0.0.0:1234/#frag?query=foo&wine=bar", 6000);
+    CHECK_CALLED(Invoke_NAVIGATEERROR);
 
     advise_cp(unk, FALSE);
 

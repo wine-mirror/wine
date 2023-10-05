@@ -277,6 +277,7 @@ HRESULT go_home(DocHost*);
 HRESULT go_back(DocHost*);
 HRESULT go_forward(DocHost*);
 HRESULT refresh_document(DocHost*,const VARIANT*);
+HRESULT get_window(DocHost*,IHTMLWindow2**);
 HRESULT get_location_url(DocHost*,BSTR*);
 HRESULT set_dochost_url(DocHost*,const WCHAR*);
 void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*);
