@@ -2309,6 +2309,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
         case OBJ_PEN: return PSDRV_SelectPen(data->ctx, obj, NULL) != NULL;
         case OBJ_BRUSH: return PSDRV_SelectBrush(data->ctx, obj, pattern) != NULL;
         case OBJ_FONT: return PSDRV_SelectFont(data->ctx, obj, &aa_flags) != NULL;
+        case OBJ_EXTPEN: return PSDRV_SelectPen(data->ctx, obj, NULL) != NULL;
         default:
             FIXME("unhandled object type %ld\n", GetObjectType(obj));
             return 1;
@@ -2843,6 +2844,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     case EMR_SELECTCLIPPATH:
     case EMR_EXTSELECTCLIPRGN:
     case EMR_EXTCREATEFONTINDIRECTW:
+    case EMR_EXTCREATEPEN:
     case EMR_SETLAYOUT:
         return PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
     default:
