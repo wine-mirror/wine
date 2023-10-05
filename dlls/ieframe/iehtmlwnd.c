@@ -22,6 +22,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
+HRESULT get_window(DocHost *doc_host, IHTMLWindow2 **ret)
+{
+    IHTMLDocument2 *doc_obj;
+    HRESULT hres;
+
+    if(!doc_host->document) {
+        *ret = NULL;
+        return S_OK;
+    }
+
+    hres = IUnknown_QueryInterface(doc_host->document, &IID_IHTMLDocument2, (void**)&doc_obj);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLDocument2_get_parentWindow(doc_obj, ret);
+    IHTMLDocument2_Release(doc_obj);
+    return hres;
+}
+
 static inline IEHTMLWindow *impl_from_IHTMLWindow2(IHTMLWindow2 *iface)
 {
     return CONTAINING_RECORD(iface, IEHTMLWindow, IHTMLWindow2_iface);
@@ -432,8 +451,22 @@ static HRESULT WINAPI IEHTMLWindow2_get_onscroll(IHTMLWindow2 *iface, VARIANT *p
 static HRESULT WINAPI IEHTMLWindow2_get_document(IHTMLWindow2 *iface, IHTMLDocument2 **p)
 {
     IEHTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    IHTMLWindow2 *window;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    hres = get_window(This->doc_host, &window);
+    if(FAILED(hres))
+        return hres;
+
+    if(!window)
+        *p = NULL;
+    else {
+        hres = IHTMLWindow2_get_document(window, p);
+        IHTMLWindow2_Release(window);
+    }
+    return hres;
 }
 
 static HRESULT WINAPI IEHTMLWindow2_get_event(IHTMLWindow2 *iface, IHTMLEventObj **p)
