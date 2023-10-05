@@ -6182,8 +6182,9 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
     wined3d_desc->depth = 1;
     wined3d_desc->size = 0;
 
-    if ((caps & DDSCAPS_TEXTURE) || (caps2 & DDSCAPS2_CUBEMAP))
-        wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
+    /* Always specify WINED3D_BIND_SHADER_RESOURCE.
+     * Surfaces without it can be bound on software devices on ddraw < 4. */
+    wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
     if (caps & DDSCAPS_ZBUFFER)
         wined3d_desc->bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
     else if (caps & DDSCAPS_3DDEVICE)
@@ -6307,10 +6308,29 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
     }
     else
     {
+        /* DDSCAPS_TEXTURE is not actually necessary to bind a surface as a
+         * texture for a software device. Worse, one can bind a hardware
+         * surface to a software device. However, some formats (e.g. YUY2) can
+         * live on the GPU but truly aren't texturable, and we don't want to
+         * fail to create them.
+         *
+         * Hence, if we fail to create a texture, and the user didn't
+         * explicitly ask for a texture, strip WINED3D_BIND_SHADER_RESOURCE and
+         * try again. */
+
         if (FAILED(hr = wined3d_texture_create(wined3d_device, &wined3d_desc,
                 layers, levels, WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL,
                 texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
-            return hr;
+        {
+            if ((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE) || (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
+                return hr;
+
+            wined3d_desc.bind_flags &= ~WINED3D_BIND_SHADER_RESOURCE;
+            if (FAILED(hr = wined3d_texture_create(wined3d_device, &wined3d_desc,
+                    layers, levels, WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL,
+                    texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
+                return hr;
+        }
     }
 
     if ((desc->dwFlags & DDSD_LPSURFACE)
@@ -6788,19 +6808,11 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     {
         if (!(desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE)))
         {
-            unsigned int bind_flags = 0;
+            unsigned int bind_flags = WINED3D_BIND_SHADER_RESOURCE;
             DWORD usage = 0;
 
             if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-            {
                 usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
-                bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
-            }
-            else if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            {
-                bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
-            }
-
             if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
                 bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
             else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
