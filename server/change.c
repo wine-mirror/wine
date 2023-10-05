@@ -721,6 +721,25 @@ static unsigned int filter_from_inode( struct inode *inode, int is_parent )
     return filter;
 }
 
+static char *get_path_from_fd( int fd, int sz )
+{
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+    char *ret = malloc( PATH_MAX + sz );
+
+    if (!ret) return NULL;
+    if (!fcntl( fd, F_GETPATH, ret )) return ret;
+    free( ret );
+    return NULL;
+#elif defined(linux)
+    char *ret = malloc( 32 + sz );
+
+    if (ret) sprintf( ret, "/proc/self/fd/%u", fd );
+    return ret;
+#else
+    return NULL;
+#endif
+}
+
 static char *inode_get_path( struct inode *inode, int sz )
 {
     struct list *head;
@@ -734,9 +753,8 @@ static char *inode_get_path( struct inode *inode, int sz )
     if (head)
     {
         int unix_fd = get_unix_fd( LIST_ENTRY( head, struct dir, in_entry )->fd );
-        path = malloc ( 32 + sz );
-        if (path)
-            sprintf( path, "/proc/self/fd/%u/", unix_fd );
+        if (!(path = get_path_from_fd( unix_fd, sz + 1 ))) return NULL;
+        strcat( path, "/" );
         return path;
     }
 
@@ -747,7 +765,7 @@ static char *inode_get_path( struct inode *inode, int sz )
     path = inode_get_path( inode->parent, sz + len + 1 );
     if (!path)
         return NULL;
-    
+
     strcat( path, inode->name );
     strcat( path, "/" );
 
@@ -964,7 +982,7 @@ static int inotify_adjust_changes( struct dir *dir )
     unsigned int filter;
     struct inode *inode;
     struct stat st;
-    char path[32];
+    char *path;
     int wd, unix_fd;
 
     if (!inotify_fd)
@@ -990,8 +1008,9 @@ static int inotify_adjust_changes( struct dir *dir )
 
     filter = filter_from_inode( inode, 0 );
 
-    sprintf( path, "/proc/self/fd/%u", unix_fd );
+    if (!(path = get_path_from_fd( unix_fd, 0 ))) return 0;
     wd = inotify_add_dir( path, filter );
+    free( path );
     if (wd == -1) return 0;
 
     inode_set_wd( inode, wd );
@@ -1037,30 +1056,29 @@ static char *get_basename( const char *link )
     return name;
 }
 
-static int dir_add_to_existing_notify( struct dir *dir )
+static void dir_add_to_existing_notify( struct dir *dir )
 {
     struct inode *inode, *parent;
     unsigned int filter = 0;
     struct stat st, st_new;
-    char link[35], *name;
-    int wd, unix_fd;
+    char *link, *name;
+    int res, wd, unix_fd;
 
     if (!inotify_fd)
-        return 0;
+        return;
 
     unix_fd = get_unix_fd( dir->fd );
 
     /* check if it's in the list of inodes we want to watch */
-    if (-1 == fstat( unix_fd, &st_new ))
-        return 0;
-    inode = find_inode( st_new.st_dev, st_new.st_ino );
-    if (inode)
-        return 0;
+    if (fstat( unix_fd, &st_new )) return;
+    if ((inode = find_inode( st_new.st_dev, st_new.st_ino ))) return;
 
     /* lookup the parent */
-    sprintf( link, "/proc/self/fd/%u/..", unix_fd );
-    if (-1 == stat( link, &st ))
-        return 0;
+    if (!(link = get_path_from_fd( unix_fd, 3 ))) return;
+    strcat( link, "/.." );
+    res = stat( link, &st );
+    free( link );
+    if (res == -1) return;
 
     /*
      * If there's no parent, stop.  We could keep going adding
@@ -1068,34 +1086,28 @@ static int dir_add_to_existing_notify( struct dir *dir )
      *  find a recursively watched ancestor.
      * Assume it's too expensive to search up the tree for now.
      */
-    parent = find_inode( st.st_dev, st.st_ino );
-    if (!parent)
-        return 0;
+    if (!(parent = find_inode( st.st_dev, st.st_ino ))) return;
+    if (parent->wd == -1) return;
 
-    if (parent->wd == -1)
-        return 0;
-
-    filter = filter_from_inode( parent, 1 );
-    if (!filter)
-        return 0;
-
-    sprintf( link, "/proc/self/fd/%u", unix_fd );
-    name = get_basename( link );
-    if (!name)
-        return 0;
+    if (!(filter = filter_from_inode( parent, 1 ))) return;
+    if (!(link = get_path_from_fd( unix_fd, 0 ))) return;
+    if (!(name = get_basename( link )))
+    {
+        free( link );
+        return;
+    }
     inode = inode_add( parent, st_new.st_dev, st_new.st_ino, name );
+    if (inode)
+    {
+        /* Couldn't find this inode at the start of the function, must be new */
+        assert( inode->wd == -1 );
+
+        wd = inotify_add_dir( link, filter );
+        if (wd != -1)
+            inode_set_wd( inode, wd );
+    }
     free( name );
-    if (!inode)
-        return 0;
-
-    /* Couldn't find this inode at the start of the function, must be new */
-    assert( inode->wd == -1 );
-
-    wd = inotify_add_dir( link, filter );
-    if (wd != -1)
-        inode_set_wd( inode, wd );
-
-    return 1;
+    free( link );
 }
 
 #else
@@ -1115,9 +1127,8 @@ static void free_inode( struct inode *inode )
     assert( 0 );
 }
 
-static int dir_add_to_existing_notify( struct dir *dir )
+static void dir_add_to_existing_notify( struct dir *dir )
 {
-    return 0;
 }
 
 #endif  /* HAVE_SYS_INOTIFY_H */
