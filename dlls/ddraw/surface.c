@@ -6189,15 +6189,12 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
     }
     else
     {
-        if (!(ddraw->flags & DDRAW_NO3D))
-        {
-            if (caps & DDSCAPS_TEXTURE)
-                wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
-            if (caps & DDSCAPS_ZBUFFER)
-                wined3d_desc->bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
-            else if (caps & DDSCAPS_3DDEVICE)
-                wined3d_desc->bind_flags |= WINED3D_BIND_RENDER_TARGET;
-        }
+        if (caps & DDSCAPS_TEXTURE)
+            wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
+        if (caps & DDSCAPS_ZBUFFER)
+            wined3d_desc->bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
+        else if (caps & DDSCAPS_3DDEVICE)
+            wined3d_desc->bind_flags |= WINED3D_BIND_RENDER_TARGET;
 
         if (caps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
         {
