@@ -2153,6 +2153,7 @@ static void test_import_resolution(void)
     } data, *ptr;
     IMAGE_NT_HEADERS nt, *pnt;
     IMAGE_SECTION_HEADER section;
+    SECTION_IMAGE_INFORMATION image;
     int test, tls_index_save, nb_rel;
 #if defined(__i386__)
     static const UCHAR tls_init_code[] = {
@@ -2192,6 +2193,7 @@ static void test_import_resolution(void)
 #else
 #define ADD_RELOC(field) data.rel.type_off[nb_rel++] = (IMAGE_REL_BASED_HIGHLOW << 12) + offsetof( struct imports, field )
 #endif
+        winetest_push_context( "%u", test );
         nt = nt_header_template;
         nt.FileHeader.NumberOfSections = 1;
         nt.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
@@ -2363,6 +2365,11 @@ static void test_import_resolution(void)
                 ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "wrong error %lu\n", GetLastError() );
                 break;
             }
+            status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &size );
+            ok( !status, "NtQuerySection failed %lx\n", status );
+            ok( test == 6 ? !image.ImageDynamicallyRelocated : image.ImageDynamicallyRelocated,
+                "image flags %x\n", image.ImageFlags);
+            ok( !image.ImageContainsCode, "contains code %x\n", image.ImageContainsCode);
             ok( mapping != 0, "CreateFileMappingA failed err %lu\n", GetLastError() );
             /* make sure that the address is not available */
             tmp = VirtualAlloc( (void *)nt.OptionalHeader.ImageBase, 0x10000,
@@ -2399,6 +2406,7 @@ static void test_import_resolution(void)
             break;
         }
         DeleteFileA( dll_name );
+        winetest_pop_context();
 #undef DATA_RVA
     }
 }

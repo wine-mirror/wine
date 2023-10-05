@@ -695,7 +695,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         } opt;
     } nt;
     off_t pos;
-    int size;
+    int size, has_relocs;
     size_t mz_size, clr_va = 0, clr_size = 0;
     unsigned int i;
 
@@ -757,10 +757,15 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_size     = nt.opt.hdr32.SizeOfHeaders;
         mapping->image.checksum        = nt.opt.hdr32.CheckSum;
         mapping->image.image_flags     = 0;
+
+        has_relocs = (nt.opt.hdr32.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
+                      nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
+                      nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
+                      !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
         if (nt.opt.hdr32.SectionAlignment & page_mask)
             mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
         else if ((nt.opt.hdr32.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
-            mapping->image.contains_code && !(clr_va && clr_size))
+                 (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
             mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         break;
 
@@ -800,10 +805,20 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.header_size     = nt.opt.hdr64.SizeOfHeaders;
         mapping->image.checksum        = nt.opt.hdr64.CheckSum;
         mapping->image.image_flags     = 0;
+
+        has_relocs = (nt.opt.hdr64.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
+                      nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
+                      nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
+                      !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
         if (nt.opt.hdr64.SectionAlignment & page_mask)
             mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
+        else if (nt.opt.hdr64.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
+                 nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
+                 nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
+                 !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED))
+            mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         else if ((nt.opt.hdr64.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
-            mapping->image.contains_code && !(clr_va && clr_size))
+                 (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
             mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         break;
 
