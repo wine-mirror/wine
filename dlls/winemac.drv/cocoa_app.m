@@ -333,14 +333,15 @@ static NSString* WineLocalizedString(unsigned int stringID)
         {
             if (processEvents)
             {
-                NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-                NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                                    untilDate:timeout
-                                                       inMode:NSDefaultRunLoopMode
-                                                      dequeue:YES];
-                if (event)
-                    [NSApp sendEvent:event];
-                [pool release];
+                @autoreleasepool
+                {
+                    NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                                        untilDate:timeout
+                                                           inMode:NSDefaultRunLoopMode
+                                                          dequeue:YES];
+                    if (event)
+                        [NSApp sendEvent:event];
+                }
             }
             else
                 [[NSRunLoop currentRunLoop] runMode:WineAppWaitQueryResponseMode beforeDate:timeout];
@@ -2281,34 +2282,34 @@ static NSString* WineLocalizedString(unsigned int stringID)
  */
 static void PerformRequest(void *info)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+@autoreleasepool
+{
     WineApplicationController* controller = [WineApplicationController sharedController];
 
     for (;;)
     {
-        __block dispatch_block_t block;
+        @autoreleasepool
+        {
+            __block dispatch_block_t block;
 
-        dispatch_sync(controller->requestsManipQueue, ^{
-            if ([controller->requests count])
-            {
-                block = (dispatch_block_t)[[controller->requests objectAtIndex:0] retain];
-                [controller->requests removeObjectAtIndex:0];
-            }
-            else
-                block = nil;
-        });
+            dispatch_sync(controller->requestsManipQueue, ^{
+                if ([controller->requests count])
+                {
+                    block = (dispatch_block_t)[[controller->requests objectAtIndex:0] retain];
+                    [controller->requests removeObjectAtIndex:0];
+                }
+                else
+                    block = nil;
+            });
 
-        if (!block)
-            break;
+            if (!block)
+                break;
 
-        block();
-        [block release];
-
-        [pool release];
-        pool = [[NSAutoreleasePool alloc] init];
+            block();
+            [block release];
+        }
     }
-
-    [pool release];
+}
 }
 
 /***********************************************************************
@@ -2347,13 +2348,12 @@ void LogError(const char* func, NSString* format, ...)
  */
 void LogErrorv(const char* func, NSString* format, va_list args)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-
+@autoreleasepool
+{
     NSString* message = [[NSString alloc] initWithFormat:format arguments:args];
     fprintf(stderr, "err:%s:%s", func, [message UTF8String]);
     [message release];
-
-    [pool release];
+}
 }
 
 /***********************************************************************

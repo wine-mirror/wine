@@ -88,9 +88,10 @@ int macdrv_has_pasteboard_changed(void)
  */
 CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
 {
+@autoreleasepool
+{
     NSPasteboard* pb = (NSPasteboard*)pasteboard;
     __block CFArrayRef ret = NULL;
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     dispatch_once(&BitmapOutputTypesInitOnce, ^{
         NSArray* bitmapFileTypes = [NSArray arrayWithObjects:
@@ -138,8 +139,8 @@ CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
         }
     });
 
-    [pool release];
     return ret;
+}
 }
 
 

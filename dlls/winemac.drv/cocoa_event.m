@@ -292,7 +292,8 @@ static const OSType WineHotKeySignature = 'Wine';
 
     - (void) discardEventsPassingTest:(BOOL (^)(macdrv_event* event))block
     {
-        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool
+    {
         NSIndexSet* indexes;
 
         [eventsLock lock];
@@ -305,8 +306,7 @@ static const OSType WineHotKeySignature = 'Wine';
         [events removeObjectsAtIndexes:indexes];
 
         [eventsLock unlock];
-
-        [pool release];
+    }
     }
 
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
@@ -494,7 +494,8 @@ static const OSType WineHotKeySignature = 'Wine';
  */
 void OnMainThread(dispatch_block_t block)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+@autoreleasepool
+{
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
     WineEventQueue* queue = [threadDict objectForKey:WineEventQueueThreadDictionaryKey];
     dispatch_semaphore_t semaphore = NULL;
@@ -523,21 +524,19 @@ void OnMainThread(dispatch_block_t block)
     {
         while (!finished)
         {
-            MacDrvEvent* macDrvEvent;
-            struct kevent kev;
-
-            while (!finished &&
-                   (macDrvEvent = [queue getEventMatchingMask:event_mask_for_type(QUERY_EVENT)]))
+            @autoreleasepool
             {
-                queue->event_handler(macDrvEvent->event);
-            }
+                MacDrvEvent* macDrvEvent;
+                struct kevent kev;
 
-            if (!finished)
-            {
-                [pool release];
-                pool = [[NSAutoreleasePool alloc] init];
+                while (!finished &&
+                       (macDrvEvent = [queue getEventMatchingMask:event_mask_for_type(QUERY_EVENT)]))
+                {
+                    queue->event_handler(macDrvEvent->event);
+                }
 
-                kevent(queue->kq, NULL, 0, &kev, 1, NULL);
+                if (!finished)
+                    kevent(queue->kq, NULL, 0, &kev, 1, NULL);
             }
         }
     }
@@ -546,8 +545,7 @@ void OnMainThread(dispatch_block_t block)
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
         dispatch_release(semaphore);
     }
-
-    [pool release];
+}
 }
 
 
@@ -559,7 +557,8 @@ void OnMainThread(dispatch_block_t block)
  */
 macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+@autoreleasepool
+{
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
 
     WineEventQueue* queue = [threadDict objectForKey:WineEventQueueThreadDictionaryKey];
@@ -575,8 +574,8 @@ macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
         }
     }
 
-    [pool release];
     return (macdrv_event_queue)queue;
+}
 }
 
 /***********************************************************************
@@ -587,14 +586,14 @@ macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler)
  */
 void macdrv_destroy_event_queue(macdrv_event_queue queue)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+@autoreleasepool
+{
     WineEventQueue* q = (WineEventQueue*)queue;
     NSMutableDictionary* threadDict = [[NSThread currentThread] threadDictionary];
 
     [[WineApplicationController sharedController] unregisterEventQueue:q];
     [threadDict removeObjectForKey:WineEventQueueThreadDictionaryKey];
-
-    [pool release];
+}
 }
 
 /***********************************************************************
@@ -622,15 +621,16 @@ int macdrv_get_event_queue_fd(macdrv_event_queue queue)
 int macdrv_copy_event_from_queue(macdrv_event_queue queue,
         macdrv_event_mask mask, macdrv_event **event)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+@autoreleasepool
+{
     WineEventQueue* q = (WineEventQueue*)queue;
 
     MacDrvEvent* macDrvEvent = [q getEventMatchingMask:mask];
     if (macDrvEvent)
         *event = macdrv_retain_event(macDrvEvent->event);
 
-    [pool release];
     return (macDrvEvent != nil);
+}
 }
 
 /***********************************************************************
@@ -666,10 +666,10 @@ macdrv_event* macdrv_retain_event(macdrv_event *event)
  */
 void macdrv_release_event(macdrv_event *event)
 {
+@autoreleasepool
+{
     if (OSAtomicDecrement32Barrier(&event->refs) <= 0)
     {
-        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-
         switch (event->type)
         {
             case IM_SET_TEXT:
@@ -691,9 +691,8 @@ void macdrv_release_event(macdrv_event *event)
 
         [(WineWindow*)event->window release];
         free(event);
-
-        [pool release];
     }
+}
 }
 
 /***********************************************************************

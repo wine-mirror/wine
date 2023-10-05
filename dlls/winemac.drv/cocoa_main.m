@@ -64,35 +64,37 @@ static void run_cocoa_app(void* info)
     NSConditionLock* lock = startup_info->lock;
     BOOL created_app = FALSE;
 
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-    if (!NSApp)
+    @autoreleasepool
     {
-        [WineApplication sharedApplication];
-        created_app = TRUE;
+        if (!NSApp)
+        {
+            [WineApplication sharedApplication];
+            created_app = TRUE;
+        }
+
+        if ([NSApp respondsToSelector:@selector(setWineController:)])
+        {
+            WineApplicationController* controller = [WineApplicationController sharedController];
+            [NSApp setWineController:controller];
+            [controller computeEventTimeAdjustmentFromTicks:startup_info->tickcount uptime:startup_info->uptime_ns];
+            startup_info->success = TRUE;
+        }
+
+        /* Retain the lock while we're using it, so macdrv_start_cocoa_app()
+           doesn't deallocate it in the middle of us unlocking it. */
+        [lock retain];
+        [lock lock];
+        [lock unlockWithCondition:COCOA_APP_RUNNING];
+        [lock release];
     }
-
-    if ([NSApp respondsToSelector:@selector(setWineController:)])
-    {
-        WineApplicationController* controller = [WineApplicationController sharedController];
-        [NSApp setWineController:controller];
-        [controller computeEventTimeAdjustmentFromTicks:startup_info->tickcount uptime:startup_info->uptime_ns];
-        startup_info->success = TRUE;
-    }
-
-    /* Retain the lock while we're using it, so macdrv_start_cocoa_app()
-       doesn't deallocate it in the middle of us unlocking it. */
-    [lock retain];
-    [lock lock];
-    [lock unlockWithCondition:COCOA_APP_RUNNING];
-    [lock release];
-
-    [pool release];
 
     if (created_app && startup_info->success)
     {
-        /* Never returns */
-        [NSApp run];
+        @autoreleasepool
+        {
+            /* Never returns */
+            [NSApp run];
+        }
     }
 }
 
@@ -106,6 +108,8 @@ static void run_cocoa_app(void* info)
  */
 int macdrv_start_cocoa_app(unsigned long long tickcount)
 {
+@autoreleasepool
+{
     int ret = -1;
     CFRunLoopSourceRef source;
     struct cocoa_app_startup_info startup_info;
@@ -113,8 +117,6 @@ int macdrv_start_cocoa_app(unsigned long long tickcount)
     mach_timebase_info_data_t mach_timebase;
     NSDate* timeLimit;
     CFRunLoopSourceContext source_context = { 0 };
-
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
     /* Make sure Cocoa is in multi-threading mode by detaching a
        do-nothing thread. */
@@ -151,6 +153,6 @@ int macdrv_start_cocoa_app(unsigned long long tickcount)
     if (source)
         CFRelease(source);
     [startup_info.lock release];
-    [pool release];
     return ret;
+}
 }

@@ -58,8 +58,9 @@ static inline void convert_display_rect(CGRect* out_rect, NSRect in_rect,
  */
 int macdrv_get_displays(struct macdrv_display** displays, int* count)
 {
+@autoreleasepool
+{
     int ret = -1;
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     NSArray* screens = [NSScreen screens];
     if (screens)
@@ -95,8 +96,8 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
         }
     }
 
-    [pool release];
     return ret;
+}
 }
 
 
@@ -191,11 +192,12 @@ done:
  */
 static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_entry_t entry)
 {
+@autoreleasepool
+{
     io_registry_entry_t parent_entry;
     io_registry_entry_t gpu_entry;
     kern_return_t result;
     int ret = -1;
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     gpu_entry = entry;
     while (![@"IOPCIDevice" isEqualToString:[(NSString*)IOObjectCopyClass(gpu_entry) autorelease]])
@@ -211,7 +213,6 @@ static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_en
         }
         else if (result != kIOReturnSuccess)
         {
-            [pool release];
             return ret;
         }
 
@@ -232,8 +233,8 @@ static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_en
 done:
     if (gpu_entry != entry)
         IOObjectRelease(gpu_entry);
-    [pool release];
     return ret;
+}
 }
 
 #ifdef HAVE_MTLDEVICE_REGISTRYID
@@ -298,6 +299,8 @@ static int macdrv_get_gpu_info_from_mtldevice(struct macdrv_gpu* gpu, id<MTLDevi
  */
 static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
 {
+@autoreleasepool
+{
     struct macdrv_gpu* gpus = NULL;
     struct macdrv_gpu primary_gpu;
     id<MTLDevice> primary_device;
@@ -305,7 +308,6 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
     int primary_index = 0, i;
     int gpu_count = 0;
     int ret = -1;
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     /* Test if Metal is available */
     if (&MTLCopyAllDevices == NULL)
@@ -364,8 +366,8 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
 done:
     if (ret)
         macdrv_free_gpus(gpus);
-    [pool release];
     return ret;
+}
 }
 
 /***********************************************************************
@@ -377,9 +379,10 @@ done:
  */
 static int macdrv_get_gpu_info_from_display_id_using_metal(struct macdrv_gpu* gpu, CGDirectDisplayID display_id)
 {
+@autoreleasepool
+{
     id<MTLDevice> device;
     int ret = -1;
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     /* Test if Metal is available */
     if (&CGDirectDisplayCopyCurrentMetalDevice == NULL)
@@ -390,8 +393,8 @@ static int macdrv_get_gpu_info_from_display_id_using_metal(struct macdrv_gpu* gp
         ret = macdrv_get_gpu_info_from_registry_id(gpu, device.registryID);
 
 done:
-    [pool release];
     return ret;
+}
 }
 
 #else
