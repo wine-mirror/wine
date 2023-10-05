@@ -448,7 +448,7 @@ static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
     sc = NewAUGraph(graph);
     if (sc != noErr)
     {
-        ERR("NewAUGraph return %s\n", wine_dbgstr_fourcc(sc));
+        ERR("NewAUGraph return %s\n", coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -463,7 +463,7 @@ static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
     sc = AUGraphAddNode(*graph, &desc, &synth_node);
     if (sc != noErr)
     {
-        ERR("AUGraphAddNode cannot create synthNode : %s\n", wine_dbgstr_fourcc(sc));
+        ERR("AUGraphAddNode cannot create synthNode : %s\n", coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -474,14 +474,14 @@ static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
     sc = AUGraphAddNode(*graph, &desc, &out_node);
     if (sc != noErr)
     {
-        ERR("AUGraphAddNode cannot create outNode %s\n", wine_dbgstr_fourcc(sc));
+        ERR("AUGraphAddNode cannot create outNode %s\n", coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
     sc = AUGraphOpen(*graph);
     if (sc != noErr)
     {
-        ERR("AUGraphOpen returns %s\n", wine_dbgstr_fourcc(sc));
+        ERR("AUGraphOpen returns %s\n", coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -490,7 +490,7 @@ static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
     if (sc != noErr)
     {
         ERR("AUGraphConnectNodeInput cannot connect synthNode to outNode : %s\n",
-            wine_dbgstr_fourcc(sc));
+            coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -498,7 +498,7 @@ static BOOL synth_unit_create_default(AUGraph *graph, AudioUnit *synth)
     sc = AUGraphNodeInfo(*graph, synth_node, 0, synth);
     if (sc != noErr)
     {
-        ERR("AUGraphNodeInfo return %s\n", wine_dbgstr_fourcc(sc));
+        ERR("AUGraphNodeInfo return %s\n", coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -512,14 +512,14 @@ static BOOL synth_unit_init(AudioUnit synth, AUGraph graph)
     sc = AUGraphInitialize(graph);
     if (sc != noErr)
     {
-        ERR("AUGraphInitialize(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        ERR("AUGraphInitialize(%p) returns %s\n", graph, coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
     sc = AUGraphStart(graph);
     if (sc != noErr)
     {
-        ERR("AUGraphStart(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        ERR("AUGraphStart(%p) returns %s\n", graph, coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -533,14 +533,14 @@ static BOOL synth_unit_close(AUGraph graph)
     sc = AUGraphStop(graph);
     if (sc != noErr)
     {
-        ERR("AUGraphStop(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        ERR("AUGraphStop(%p) returns %s\n", graph, coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
     sc = DisposeAUGraph(graph);
     if (sc != noErr)
     {
-        ERR("DisposeAUGraph(%p) returns %s\n", graph, wine_dbgstr_fourcc(sc));
+        ERR("DisposeAUGraph(%p) returns %s\n", graph, coreaudio_dbgstr_fourcc(sc));
         return FALSE;
     }
 
@@ -686,7 +686,7 @@ static UINT midi_out_data(WORD dev_id, UINT data)
         sc = MusicDeviceMIDIEvent(dest->synth, bytes[0], bytes[1], bytes[2], 0);
         if (sc != noErr)
         {
-            ERR("MusicDeviceMIDIEvent returns %s\n", wine_dbgstr_fourcc(sc));
+            ERR("MusicDeviceMIDIEvent returns %s\n", coreaudio_dbgstr_fourcc(sc));
             return MMSYSERR_ERROR;
         }
     }
@@ -739,7 +739,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
         sc = MusicDeviceSysEx(dest->synth, (const UInt8 *)hdr->lpData, hdr->dwBufferLength);
         if (sc != noErr)
         {
-            ERR("MusicDeviceSysEx returns %s\n", wine_dbgstr_fourcc(sc));
+            ERR("MusicDeviceSysEx returns %s\n", coreaudio_dbgstr_fourcc(sc));
             return MMSYSERR_ERROR;
         }
     }

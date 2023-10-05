@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 
 /* fourcc is in native order, where MSB is the first character. */
-static inline const char* wine_dbgstr_fourcc(INT32 fourcc)
+static inline const char* coreaudio_dbgstr_fourcc(INT32 fourcc)
 {
     char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
                     (char) (fourcc >> 8),  (char) fourcc };
