@@ -722,6 +722,7 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     struct wined3d_null_resources_vk *r = &device_vk->null_resources_vk;
     struct wined3d_null_views_vk *v = &device_vk->null_views_vk;
     VkBufferViewCreateInfo buffer_create_info;
+    VkImageViewUsageCreateInfoKHR usage_desc;
     const struct wined3d_vk_info *vk_info;
     VkImageViewCreateInfo view_desc;
     VkResult vr;
@@ -768,6 +769,16 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     view_desc.subresourceRange.levelCount = 1;
     view_desc.subresourceRange.baseArrayLayer = 0;
     view_desc.subresourceRange.layerCount = 1;
+
+    if (vk_info->supported[WINED3D_VK_KHR_MAINTENANCE2] || vk_info->api_version >= VK_API_VERSION_1_1)
+    {
+        usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO_KHR;
+        usage_desc.pNext = NULL;
+        usage_desc.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+
+        view_desc.pNext = &usage_desc;
+    }
+
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_1d.imageView))) < 0)
     {
         ERR("Failed to create 1D image view, vr %s.\n", wined3d_debug_vkresult(vr));

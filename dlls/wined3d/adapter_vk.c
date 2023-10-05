@@ -2359,6 +2359,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,          ~0u},
         {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u,                true},
         {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1, true},
+        {VK_KHR_MAINTENANCE2_EXTENSION_NAME,                VK_API_VERSION_1_1},
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME,VK_API_VERSION_1_2},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
         {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
@@ -2373,6 +2374,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     map[] =
     {
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,           WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
+        {VK_KHR_MAINTENANCE2_EXTENSION_NAME,                 WINED3D_VK_KHR_MAINTENANCE2},
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME, WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,       WINED3D_VK_KHR_SHADER_DRAW_PARAMETERS},
         {VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,             WINED3D_VK_EXT_HOST_QUERY_RESET},
