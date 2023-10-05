@@ -751,11 +751,13 @@ static VkBufferView wined3d_view_vk_create_vk_buffer_view(struct wined3d_context
 
 static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_vk *context_vk,
         const struct wined3d_view_desc *desc, struct wined3d_texture_vk *texture_vk,
-        const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool rtv)
+        const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool rtv,
+        VkImageUsageFlags usage)
 {
     const struct wined3d_resource *resource = &texture_vk->t.resource;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_format_vk *format_vk;
+    VkImageViewUsageCreateInfoKHR usage_info;
     struct wined3d_device_vk *device_vk;
     VkImageViewCreateInfo create_info;
     VkImageView vk_image_view;
@@ -847,6 +849,13 @@ static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_v
         create_info.subresourceRange.baseArrayLayer = desc->u.texture.layer_idx;
         create_info.subresourceRange.layerCount = desc->u.texture.layer_count;
     }
+    if (vk_info->supported[WINED3D_VK_KHR_MAINTENANCE2] || vk_info->api_version >= VK_API_VERSION_1_1)
+    {
+        usage_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO_KHR;
+        usage_info.pNext = NULL;
+        usage_info.usage = usage;
+        create_info.pNext = &usage_info;
+    }
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &create_info, NULL, &vk_image_view))) < 0)
     {
         ERR("Failed to create Vulkan image view, vr %s.\n", wined3d_debug_vkresult(vr));
@@ -864,6 +873,7 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
     struct wined3d_texture_vk *texture_vk;
     struct wined3d_resource *resource;
     struct wined3d_context *context;
+    VkImageUsageFlags vk_usage = 0;
     uint32_t default_flags = 0;
 
     TRACE("view_vk %p.\n", view_vk);
@@ -897,9 +907,14 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
         return;
     }
 
+    if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
+        vk_usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+        vk_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
     context = context_acquire(resource->device, NULL, 0);
     view_vk->vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
-            desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true);
+            desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true, vk_usage);
     context_release(context);
 
     if (!view_vk->vk_image_view)
@@ -1219,7 +1234,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
     context = context_acquire(resource->device, NULL, 0);
     vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
-            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false);
+            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false, VK_IMAGE_USAGE_SAMPLED_BIT);
     context_release(context);
 
     if (!vk_image_view)
@@ -2228,7 +2243,7 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
             vk_image_info.imageView = wined3d_view_vk_create_vk_image_view(context_vk, view_desc, texture_vk,
                     wined3d_format_vk(wined3d_get_format(context_vk->c.device->adapter, format_id,
                         WINED3D_BIND_UNORDERED_ACCESS)),
-                    COLOR_FIXUP_IDENTITY, false);
+                    COLOR_FIXUP_IDENTITY, false, VK_IMAGE_USAGE_STORAGE_BIT);
 
             if (vk_image_info.imageView == VK_NULL_HANDLE)
                 return;
@@ -2446,7 +2461,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
 
     context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
     vk_image_view = wined3d_view_vk_create_vk_image_view(context_vk, desc,
-            texture_vk, format_vk, format_vk->f.color_fixup, false);
+            texture_vk, format_vk, format_vk->f.color_fixup, false, VK_IMAGE_USAGE_STORAGE_BIT);
     context_release(&context_vk->c);
 
     if (!vk_image_view)
