@@ -2472,6 +2472,36 @@ static BOOL WINAPI fpDeleteMonitor(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMo
     return FALSE;
 }
 
+static BOOL WINAPI fpResetPrinter(HANDLE hprinter, PRINTER_DEFAULTSW *def)
+{
+    printer_t *printer = (printer_t *)hprinter;
+
+    if (!printer || printer->header.type != HANDLE_PRINTER)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!def)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    free(printer->datatype);
+    if (def->pDatatype)
+        printer->datatype = wcsdup(def->pDatatype);
+    else
+        printer->datatype = NULL;
+
+    free(printer->devmode);
+    if (def->pDevMode)
+        printer->devmode = dup_devmode(def->pDevMode);
+    else
+        printer->devmode = NULL;
+    return TRUE;
+}
+
 /*****************************************************************************
  * fpDeletePort [exported through PRINTPROVIDOR]
  *
@@ -4111,7 +4141,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpPrinterMessageBox */
         fpAddMonitor,
         fpDeleteMonitor,
-        NULL,   /* fpResetPrinter */
+        fpResetPrinter,
         NULL,   /* fpGetPrinterDriverEx */
         NULL,   /* fpFindFirstPrinterChangeNotification */
         NULL,   /* fpFindClosePrinterChangeNotification */
