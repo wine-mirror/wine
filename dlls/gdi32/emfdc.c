@@ -647,30 +647,45 @@ static BOOL emfdc_select_font( DC_ATTR *dc_attr, HFONT font )
     return emfdc_record( emf, &emr.emr );
 }
 
+static DWORD emfdc_ext_create_pen( struct emf *emf, HPEN pen )
+{
+    EMREXTCREATEPEN *emr;
+    int size, emr_size;
+    DWORD ret = 0;
+
+    if (!(size = GetObjectW( pen, 0, NULL )))
+        return 0;
+    emr_size = sizeof(*emr) - sizeof(emr->elp) + size;
+    emr = HeapAlloc( GetProcessHeap(), 0, emr_size );
+    if (!emr)
+        return 0;
+    GetObjectW( pen, size, &emr->elp );
+
+    if (emr->elp.elpBrushStyle == BS_DIBPATTERN ||
+            emr->elp.elpBrushStyle == BS_DIBPATTERNPT ||
+            emr->elp.elpBrushStyle == BS_PATTERN)
+    {
+        FIXME( "elpBrushStyle = %d\n", emr->elp.elpBrushStyle );
+        HeapFree( GetProcessHeap(), 0, emr );
+        return 0;
+    }
+    emr->offBmi = emr->cbBmi = emr->offBits = emr->cbBits = 0;
+
+    emr->emr.iType = EMR_EXTCREATEPEN;
+    emr->emr.nSize = emr_size;
+    emr->ihPen = ret = emfdc_add_handle( emf, pen );
+    ret = emfdc_record( emf, &emr->emr ) ? ret : 0;
+    HeapFree( GetProcessHeap(), 0, emr );
+    return ret;
+}
+
 static DWORD emfdc_create_pen( struct emf *emf, HPEN hPen )
 {
     EMRCREATEPEN emr;
     DWORD index = 0;
 
     if (!GetObjectW( hPen, sizeof(emr.lopn), &emr.lopn ))
-    {
-        /* must be an extended pen */
-        EXTLOGPEN *elp;
-        INT size = GetObjectW( hPen, 0, NULL );
-
-        if (!size) return 0;
-
-        elp = HeapAlloc( GetProcessHeap(), 0, size );
-
-        GetObjectW( hPen, size, elp );
-        /* FIXME: add support for user style pens */
-        emr.lopn.lopnStyle = elp->elpPenStyle;
-        emr.lopn.lopnWidth.x = elp->elpWidth;
-        emr.lopn.lopnWidth.y = 0;
-        emr.lopn.lopnColor = elp->elpColor;
-
-        HeapFree( GetProcessHeap(), 0, elp );
-    }
+        return emfdc_ext_create_pen( emf, hPen );
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);
