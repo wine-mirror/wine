@@ -758,6 +758,7 @@ static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
     ShellBrowser *This = impl_from_IDocObjectService(iface);
     DocHost *doc_host = This->doc_host;
     IHTMLPrivateWindow *priv_window;
+    const WCHAR *orig_url;
     VARIANTARG params[2];
     DISPPARAMS dp = {params, NULL, 2, 0};
     VARIANT url_var;
@@ -785,6 +786,13 @@ static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
 
     TRACE("got URL %s\n", debugstr_w(url));
     set_dochost_url(This->doc_host, url);
+
+    orig_url = error_url_frag(url);
+    if(orig_url) {
+        BSTR tmp = SysAllocString(orig_url);
+        SysFreeString(url);
+        url = tmp;
+    }
 
     V_VT(params) = (VT_BYREF|VT_VARIANT);
     V_VARIANTREF(params) = &url_var;
