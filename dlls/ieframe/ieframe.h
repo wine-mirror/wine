@@ -281,6 +281,7 @@ HRESULT get_window(DocHost*,IHTMLWindow2**);
 HRESULT get_location_url(DocHost*,BSTR*);
 HRESULT set_dochost_url(DocHost*,const WCHAR*);
 void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*);
+const WCHAR *error_url_frag(const WCHAR*);
 HRESULT dochost_object_available(DocHost*,IUnknown*);
 void set_doc_state(DocHost*,READYSTATE);
 void activate_document(DocHost*);

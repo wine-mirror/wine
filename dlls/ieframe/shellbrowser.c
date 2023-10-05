@@ -29,6 +29,24 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
+const WCHAR *error_url_frag(const WCHAR *url)
+{
+    if(!wcsncmp(url, L"res://", ARRAY_SIZE(L"res://")-1)) {
+        WCHAR buf[MAX_PATH];
+        UINT len = GetSystemDirectoryW(buf, ARRAY_SIZE(buf));
+
+        if(len && !wcsncmp(url + ARRAY_SIZE(L"res://")-1, buf, len)) {
+            len += ARRAY_SIZE(L"res://")-1;
+            if(!wcsncmp(url + len, L"\\shdoclc.dll/ERROR.HTM", ARRAY_SIZE(L"\\shdoclc.dll/ERROR.HTM")-1)) {
+                len += ARRAY_SIZE(L"\\shdoclc.dll/ERROR.HTM")-1;
+                url = wcschr(url + len, '#');
+                return url ? url + 1 : NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
 static inline ShellBrowser *impl_from_IShellBrowser(IShellBrowser *iface)
 {
     return CONTAINING_RECORD(iface, ShellBrowser, IShellBrowser_iface);

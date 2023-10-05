@@ -783,6 +783,10 @@ static void DocHostContainer_on_command_state_change(DocHost *iface, LONG comman
 static void DocHostContainer_set_url(DocHost* iface, const WCHAR *url)
 {
     InternetExplorer *This = impl_from_DocHost(iface);
+    const WCHAR *orig_url = error_url_frag(url);
+
+    if(orig_url)
+        url = orig_url;
 
     This->nohome = FALSE;
     SendMessageW(This->frame_hwnd, WM_UPDATEADDRBAR, 0, (LPARAM)url);
