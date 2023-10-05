@@ -2687,7 +2687,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER sections[96];
     IMAGE_SECTION_HEADER *sec;
-    IMAGE_DATA_DIRECTORY *imports;
+    IMAGE_DATA_DIRECTORY *imports, *relocs;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
     off_t pos;
@@ -2695,6 +2695,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     char *header_end;
     char *ptr = view->base;
     SIZE_T header_size, total_size = view->size;
+    INT_PTR delta;
 
     TRACE_(module)( "mapping PE file %s at %p-%p\n", debugstr_w(filename), ptr, ptr + total_size );
 
@@ -2847,6 +2848,28 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     }
 #endif
     if (machine && machine != nt->FileHeader.Machine) return STATUS_NOT_SUPPORTED;
+
+    /* relocate to dynamic base */
+
+    if (image_info->map_addr && (delta = image_info->map_addr - image_info->base))
+    {
+        TRACE_(module)( "relocating %s dynamic base %lx -> %lx mapped at %p\n", debugstr_w(filename),
+                        (ULONG_PTR)image_info->base, (ULONG_PTR)image_info->map_addr, ptr );
+
+        if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            ((IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.ImageBase = image_info->map_addr;
+        else
+            ((IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.ImageBase = image_info->map_addr;
+
+        if ((relocs = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_BASERELOC )))
+        {
+            IMAGE_BASE_RELOCATION *rel = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress);
+            IMAGE_BASE_RELOCATION *end = (IMAGE_BASE_RELOCATION *)((char *)rel + relocs->Size);
+
+            while (rel && rel < end - 1 && rel->SizeOfBlock && rel->VirtualAddress < total_size)
+                rel = process_relocation_block( ptr + rel->VirtualAddress, rel, delta );
+        }
+    }
 
     /* set the image protections */
 

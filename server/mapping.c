@@ -1407,7 +1407,8 @@ DECL_HANDLER(map_image_view)
         view->image.entry_point = req->entry;
         add_process_view( current, view );
 
-        if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
+        if (view->base != (mapping->image.map_addr ? mapping->image.map_addr : mapping->image.base))
+            set_error( STATUS_IMAGE_NOT_AT_BASE );
         if (view->image.machine != current->process->machine)
         {
             /* on 32-bit, the native 64-bit machine is allowed */
