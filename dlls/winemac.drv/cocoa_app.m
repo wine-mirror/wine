@@ -78,8 +78,7 @@ int macdrv_err_on;
  */
 static NSString* WineLocalizedString(unsigned int stringID)
 {
-    NSNumber* key = [NSNumber numberWithUnsignedInt:stringID];
-    return [(NSDictionary*)localized_strings objectForKey:key];
+    return ((NSDictionary*)localized_strings)[@(stringID)];
 }
 
 
@@ -135,11 +134,13 @@ static NSString* WineLocalizedString(unsigned int stringID)
     {
         if (self == [WineApplicationController class])
         {
-            NSDictionary* defaults = [NSDictionary dictionaryWithObjectsAndKeys:
-                                      @"", @"NSQuotedKeystrokeBinding",
-                                      @"", @"NSRepeatCountBinding",
-                                      [NSNumber numberWithBool:NO], @"ApplePressAndHoldEnabled",
-                                      nil];
+            NSDictionary<NSString *, id> *defaults =
+            @{
+                @"NSQuotedKeystrokeBinding" : @"",
+                    @"NSRepeatCountBinding" : @"",
+                @"ApplePressAndHoldEnabled" : @NO
+            };
+
             [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
 
             if ([NSWindow respondsToSelector:@selector(setAllowsAutomaticWindowTabbing:)])
@@ -539,7 +540,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 CGRect* rect;
                 NSScreen* screen;
 
-                primaryScreenHeight = NSHeight([[screens objectAtIndex:0] frame]);
+                primaryScreenHeight = NSHeight([screens[0] frame]);
                 primaryScreenHeightValid = TRUE;
 
                 size = count * sizeof(CGRect);
@@ -577,7 +578,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         // We don't use -primaryScreenHeight here so there's no chance of having
         // out-of-date cached info.  This method is called infrequently enough
         // that getting the screen height each time is not prohibitively expensive.
-        rect->origin.y = NSMaxY([[[NSScreen screens] objectAtIndex:0] frame]) - NSMaxY(*rect);
+        rect->origin.y = NSMaxY([[NSScreen screens][0] frame]) - NSMaxY(*rect);
     }
 
     - (WineWindow*) frontWineWindow
@@ -835,7 +836,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         NSNumber* displayIDKey = [NSNumber numberWithUnsignedInt:displayID];
         CGDisplayModeRef originalMode;
 
-        originalMode = (CGDisplayModeRef)[originalDisplayModes objectForKey:displayIDKey];
+        originalMode = (CGDisplayModeRef)originalDisplayModes[displayIDKey];
 
         if (originalMode && [self mode:mode matchesMode:originalMode])
         {
@@ -866,7 +867,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             CGDisplayModeRef currentMode;
             NSArray* modes;
 
-            currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
+            currentMode = CGDisplayModeRetain((CGDisplayModeRef)latentDisplayModes[displayIDKey]);
             if (!currentMode)
                 currentMode = CGDisplayCopyDisplayMode(displayID);
             if (!currentMode) // Invalid display ID
@@ -1013,11 +1014,11 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (void) setCursor
     {
-        NSDictionary* frame = [cursorFrames objectAtIndex:cursorFrame];
-        CGImageRef cgimage = (CGImageRef)[frame objectForKey:@"image"];
+        NSDictionary* frame = cursorFrames[cursorFrame];
+        CGImageRef cgimage = (CGImageRef)frame[@"image"];
         CGSize size = CGSizeMake(CGImageGetWidth(cgimage), CGImageGetHeight(cgimage));
         NSImage* image = [[NSImage alloc] initWithCGImage:cgimage size:NSSizeFromCGSize(cgsize_mac_from_win(size))];
-        CFDictionaryRef hotSpotDict = (CFDictionaryRef)[frame objectForKey:@"hotSpot"];
+        CFDictionaryRef hotSpotDict = (CFDictionaryRef)frame[@"hotSpot"];
         CGPoint hotSpot;
 
         if (!CGPointMakeWithDictionaryRepresentation(hotSpotDict, &hotSpot))
@@ -1039,8 +1040,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
             cursorFrame = 0;
         [self setCursor];
 
-        frame = [cursorFrames objectAtIndex:cursorFrame];
-        duration = [[frame objectForKey:@"duration"] doubleValue];
+        frame = cursorFrames[cursorFrame];
+        duration = [frame[@"duration"] doubleValue];
         date = [[theTimer fireDate] dateByAddingTimeInterval:duration];
         [cursorTimer setFireDate:date];
     }
@@ -1059,8 +1060,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
         {
             if ([frames count] > 1)
             {
-                NSDictionary* frame = [frames objectAtIndex:0];
-                NSTimeInterval duration = [[frame objectForKey:@"duration"] doubleValue];
+                NSDictionary* frame = frames[0];
+                NSTimeInterval duration = [frame[@"duration"] doubleValue];
                 NSDate* date = [NSDate dateWithTimeIntervalSinceNow:duration];
                 self.cursorTimer = [[[NSTimer alloc] initWithFireDate:date
                                                              interval:1000000
@@ -2140,7 +2141,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         latentDisplayModes = [[NSMutableDictionary alloc] init];
         for (displayID in modesToRealize)
         {
-            CGDisplayModeRef mode = (CGDisplayModeRef)[modesToRealize objectForKey:displayID];
+            CGDisplayModeRef mode = (CGDisplayModeRef)modesToRealize[displayID];
             [self setMode:mode forDisplay:[displayID unsignedIntValue]];
         }
 
@@ -2295,7 +2296,7 @@ static void PerformRequest(void *info)
             dispatch_sync(controller->requestsManipQueue, ^{
                 if ([controller->requests count])
                 {
-                    block = (dispatch_block_t)[[controller->requests objectAtIndex:0] retain];
+                    block = (dispatch_block_t)[controller->requests[0] retain];
                     [controller->requests removeObjectAtIndex:0];
                 }
                 else

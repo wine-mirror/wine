@@ -73,14 +73,14 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
             NSUInteger i;
             for (i = 0; i < num_screens; i++)
             {
-                NSScreen* screen = [screens objectAtIndex:i];
+                NSScreen* screen = screens[i];
                 NSRect frame = [screen frame];
                 NSRect visible_frame = [screen visibleFrame];
 
                 if (i == 0)
                     primary_frame = frame;
 
-                disps[i].displayID = [[[screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue];
+                disps[i].displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
                 convert_display_rect(&disps[i].frame, frame, primary_frame);
                 convert_display_rect(&disps[i].work_frame, visible_frame,
                                      primary_frame);

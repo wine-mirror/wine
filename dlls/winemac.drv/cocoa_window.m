@@ -1032,9 +1032,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         window->resizable = wf->resizable;
         window->_lastDisplayTime = [[NSDate distantPast] timeIntervalSinceReferenceDate];
 
-        [window registerForDraggedTypes:[NSArray arrayWithObjects:(NSString*)kUTTypeData,
-                                                                  (NSString*)kUTTypeContent,
-                                                                  nil]];
+        [window registerForDraggedTypes:@[(NSString*)kUTTypeData, (NSString*)kUTTypeContent]];
 
         contentView = [[[WineContentView alloc] initWithFrame:NSZeroRect] autorelease];
         if (!contentView)
@@ -1437,7 +1435,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         limit = MIN(origChildren.count, count);
         for (start = 0; start < limit; start++)
         {
-            if ([origChildren objectAtIndex:start] != [childWindows objectAtIndex:start])
+            if (origChildren[start] != childWindows[start])
                 break;
         }
 
@@ -1445,12 +1443,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         // are in the desired order.
         for (i = start; i < count; i++)
         {
-            WineWindow* child = [childWindows objectAtIndex:i];
+            WineWindow* child = childWindows[i];
             [self removeChildWindow:child];
         }
         for (i = start; i < count; i++)
         {
-            WineWindow* child = [childWindows objectAtIndex:i];
+            WineWindow* child = childWindows[i];
             [self addChildWindow:child ordered:NSWindowAbove];
         }
     }
@@ -1507,7 +1505,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
             for (i = 0; i < count; i++)
             {
-                WineWindow* child = [latentChildWindows objectAtIndex:i];
+                WineWindow* child = latentChildWindows[i];
                 if ([child isVisible] && (self.floating || !child.floating))
                 {
                     if (child.latentParentWindow == self)
@@ -1612,7 +1610,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         for (i = lowIndex + 1; i < highIndex; i++)
         {
-            NSInteger interveningWindowNumber = [[windowNumbers objectAtIndex:i] integerValue];
+            NSInteger interveningWindowNumber = [windowNumbers[i] integerValue];
             NSWindow* interveningWindow = [NSApp windowWithWindowNumber:interveningWindowNumber];
             if ([interveningWindow isKindOfClass:[WineWindow class]])
                 return FALSE;
@@ -1693,7 +1691,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 if (index == 0)
                     *ancestorOfOther = nil;
                 else
-                    *ancestorOfOther = [otherAncestors objectAtIndex:index - 1];
+                    *ancestorOfOther = otherAncestors[index - 1];
                 return;
             }
         }
@@ -2234,8 +2232,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (!_lastDisplayID)
             return nil;
 
-        NSMutableDictionary* displayIDToDisplayLinkMap = [self displayIDToDisplayLinkMap];
-        return [displayIDToDisplayLinkMap objectForKey:[NSNumber numberWithUnsignedInt:_lastDisplayID]];
+        return [self displayIDToDisplayLinkMap][@(_lastDisplayID)];
     }
 
     - (void) checkWineDisplayLink
@@ -2248,7 +2245,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             screen = nil;
 #endif
 
-        NSNumber* displayIDNumber = [screen.deviceDescription objectForKey:@"NSScreenNumber"];
+        NSNumber* displayIDNumber = screen.deviceDescription[@"NSScreenNumber"];
         CGDirectDisplayID displayID = [displayIDNumber unsignedIntValue];
         if (displayID == _lastDisplayID)
             return;
@@ -2257,12 +2254,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         if (_lastDisplayID)
         {
-            WineDisplayLink* link = [displayIDToDisplayLinkMap objectForKey:[NSNumber numberWithUnsignedInt:_lastDisplayID]];
+            WineDisplayLink* link = displayIDToDisplayLinkMap[@(_lastDisplayID)];
             [link removeWindow:self];
         }
         if (displayID)
         {
-            WineDisplayLink* link = [displayIDToDisplayLinkMap objectForKey:displayIDNumber];
+            WineDisplayLink* link = displayIDToDisplayLinkMap[displayIDNumber];
             if (!link)
             {
                 link = [[[WineDisplayLink alloc] initWithDisplayID:displayID] autorelease];
@@ -3740,9 +3737,9 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
             NSUInteger index = [subviews indexOfObjectIdenticalTo:view];
             if (!prev && !next && index == [subviews count] - 1)
                 return;
-            if (prev && index + 1 < [subviews count] && [subviews objectAtIndex:index + 1] == prev)
+            if (prev && index + 1 < [subviews count] && subviews[index + 1] == prev)
                 return;
-            if (!prev && next && index > 0 && [subviews objectAtIndex:index - 1] == next)
+            if (!prev && next && index > 0 && subviews[index - 1] == next)
                 return;
         }
 
