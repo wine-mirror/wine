@@ -930,9 +930,10 @@ static HRESULT WINAPI DocObjectService_IsErrorUrl(
         BOOL *pfIsError)
 {
     ShellBrowser *This = impl_from_IDocObjectService(iface);
-    FIXME("%p %s %p\n", This, debugstr_w(lpszUrl), pfIsError);
 
-    *pfIsError = FALSE;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(lpszUrl), pfIsError);
+
+    *pfIsError = !!error_url_frag(lpszUrl);
     return S_OK;
 }
 
