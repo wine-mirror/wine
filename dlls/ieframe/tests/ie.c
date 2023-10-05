@@ -215,7 +215,6 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         arg = pDispParams->rgvarg;
         ok(V_VT(arg) == (VT_BYREF | VT_VARIANT), "VT = %d\n", V_VT(arg));
         ok(V_VT(V_VARIANTREF(arg)) == VT_BSTR, "VT = %d\n", V_VT(V_VARIANTREF(arg)));
-        todo_wine_if(called_Invoke_NAVIGATEERROR)
         ok(!wcscmp(V_BSTR(V_VARIANTREF(arg)), navigate_url), "url = %s\n", wine_dbgstr_w(V_BSTR(V_VARIANTREF(arg))));
 
         arg = pDispParams->rgvarg + 1;

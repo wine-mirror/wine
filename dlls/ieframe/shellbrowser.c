@@ -839,6 +839,7 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
 {
     ShellBrowser *This = impl_from_IDocObjectService(iface);
     IHTMLPrivateWindow *priv_window;
+    const WCHAR *orig_url;
     VARIANTARG params[2];
     DISPPARAMS dp = {params, NULL, 2, 0};
     VARIANT url_var;
@@ -857,6 +858,13 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
         return hres;
 
     TRACE("got URL %s\n", debugstr_w(url));
+
+    orig_url = error_url_frag(url);
+    if(orig_url) {
+        BSTR tmp = SysAllocString(orig_url);
+        SysFreeString(url);
+        url = tmp;
+    }
 
     V_VT(params) = (VT_BYREF|VT_VARIANT);
     V_VARIANTREF(params) = &url_var;
