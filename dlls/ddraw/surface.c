@@ -6182,6 +6182,13 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
     wined3d_desc->depth = 1;
     wined3d_desc->size = 0;
 
+    if ((caps & DDSCAPS_TEXTURE) || (caps2 & DDSCAPS2_CUBEMAP))
+        wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
+    if (caps & DDSCAPS_ZBUFFER)
+        wined3d_desc->bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
+    else if (caps & DDSCAPS_3DDEVICE)
+        wined3d_desc->bind_flags |= WINED3D_BIND_RENDER_TARGET;
+
     if ((caps & DDSCAPS_SYSTEMMEMORY) && !(caps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE)))
     {
         wined3d_desc->access = WINED3D_RESOURCE_ACCESS_CPU
@@ -6189,23 +6196,15 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
     }
     else
     {
-        if (caps & DDSCAPS_TEXTURE)
-            wined3d_desc->bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
-        if (caps & DDSCAPS_ZBUFFER)
-            wined3d_desc->bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
-        else if (caps & DDSCAPS_3DDEVICE)
-            wined3d_desc->bind_flags |= WINED3D_BIND_RENDER_TARGET;
-
         if (caps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
         {
-            wined3d_desc->bind_flags &= ~WINED3D_BIND_RENDER_TARGET;
             wined3d_desc->access |= WINED3D_RESOURCE_ACCESS_CPU;
             wined3d_desc->usage |= WINED3DUSAGE_MANAGED;
         }
         else if (caps & DDSCAPS_VIDEOMEMORY)
         {
             /* Dynamic resources can't be written by the GPU. */
-            if (!(wined3d_desc->bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL)))
+            if (!(caps & (DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER)))
                 wined3d_desc->usage |= WINED3DUSAGE_DYNAMIC;
         }
     }
@@ -6220,19 +6219,6 @@ static void wined3d_resource_desc_from_ddraw(struct ddraw *ddraw,
         wined3d_desc->usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
 }
 
-static bool need_draw_texture(unsigned int draw_bind_flags, const struct wined3d_resource_desc *desc)
-{
-    if (!draw_bind_flags)
-        return false;
-
-    /* If we have a GPU texture that includes all the necessary bind flags, we
-     * don't need a separate draw texture. */
-    if ((desc->access & WINED3D_RESOURCE_ACCESS_GPU) && ((desc->bind_flags & draw_bind_flags) == draw_bind_flags))
-        return false;
-
-    return true;
-}
-
 static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *ddraw,
         unsigned int layers, unsigned int levels, bool sysmem_fallback, bool reserve_memory)
 {
@@ -6242,7 +6228,7 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_texture *wined3d_texture;
     struct ddraw_surface *parent, *root;
-    unsigned int bind_flags;
+    unsigned int draw_bind_flags;
     unsigned int pitch = 0;
     unsigned int i, j;
     HRESULT hr;
@@ -6281,22 +6267,19 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
         }
     }
 
-    bind_flags = 0;
-    if ((desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-            || (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
-        bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
+    draw_bind_flags = wined3d_desc.bind_flags;
 
-    if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
-        bind_flags |= WINED3D_BIND_DEPTH_STENCIL;
-    else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
-        bind_flags |= WINED3D_BIND_RENDER_TARGET;
+    if (!(wined3d_desc.access & WINED3D_RESOURCE_ACCESS_GPU))
+        wined3d_desc.bind_flags = 0;
+    else if (wined3d_desc.usage & WINED3DUSAGE_MANAGED)
+        wined3d_desc.bind_flags &= ~WINED3D_BIND_RENDER_TARGET;
 
-    if (need_draw_texture(bind_flags, &wined3d_desc))
+    if (draw_bind_flags && (wined3d_desc.bind_flags != draw_bind_flags))
     {
         struct wined3d_resource_desc draw_texture_desc;
 
         draw_texture_desc = wined3d_desc;
-        draw_texture_desc.bind_flags = bind_flags;
+        draw_texture_desc.bind_flags = draw_bind_flags;
         draw_texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
         draw_texture_desc.usage = 0;
 
