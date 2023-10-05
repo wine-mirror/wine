@@ -60,8 +60,6 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
 {
 @autoreleasepool
 {
-    int ret = -1;
-
     NSArray* screens = [NSScreen screens];
     if (screens)
     {
@@ -92,11 +90,11 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
 
             *displays = disps;
             *count = num_screens;
-            ret = 0;
+            return 0;
         }
     }
 
-    return ret;
+    return -1;
 }
 }
 
@@ -307,25 +305,24 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
     BOOL hide_integrated = FALSE;
     int primary_index = 0, i;
     int gpu_count = 0;
-    int ret = -1;
 
     /* Test if Metal is available */
     if (&MTLCopyAllDevices == NULL)
-        goto done;
+        return -1;
     NSArray<id<MTLDevice>>* devices = [MTLCopyAllDevices() autorelease];
     if (!devices.count || ![devices[0] respondsToSelector:@selector(registryID)])
-        goto done;
+        return -1;
 
     gpus = calloc(devices.count, sizeof(*gpus));
     if (!gpus)
-        goto done;
+        return -1;
 
     /* Use MTLCreateSystemDefaultDevice instead of CGDirectDisplayCopyCurrentMetalDevice(CGMainDisplayID()) to get
      * the primary GPU because we need to hide the integrated GPU for an automatic graphic switching pair to avoid apps
      * using the integrated GPU. This is the behavior of Windows on a Mac. */
     primary_device = [MTLCreateSystemDefaultDevice() autorelease];
     if (macdrv_get_gpu_info_from_mtldevice(&primary_gpu, primary_device))
-        goto done;
+        goto fail;
 
     /* Hide the integrated GPU if the system default device is a dedicated GPU */
     if (!primary_device.isLowPower)
@@ -337,7 +334,7 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
     for (i = 0; i < devices.count; i++)
     {
         if (macdrv_get_gpu_info_from_mtldevice(&gpus[gpu_count], devices[i]))
-            goto done;
+            goto fail;
 
         if (hide_integrated && devices[i].isLowPower)
         {
@@ -362,11 +359,10 @@ static int macdrv_get_gpus_from_metal(struct macdrv_gpu** new_gpus, int* count)
 
     *new_gpus = gpus;
     *count = gpu_count;
-    ret = 0;
-done:
-    if (ret)
-        macdrv_free_gpus(gpus);
-    return ret;
+    return 0;
+fail:
+    macdrv_free_gpus(gpus);
+    return -1;
 }
 }
 
@@ -382,18 +378,16 @@ static int macdrv_get_gpu_info_from_display_id_using_metal(struct macdrv_gpu* gp
 @autoreleasepool
 {
     id<MTLDevice> device;
-    int ret = -1;
 
     /* Test if Metal is available */
     if (&CGDirectDisplayCopyCurrentMetalDevice == NULL)
-        goto done;
+        return -1;
 
     device = [CGDirectDisplayCopyCurrentMetalDevice(display_id) autorelease];
     if (device && [device respondsToSelector:@selector(registryID)])
-        ret = macdrv_get_gpu_info_from_registry_id(gpu, device.registryID);
-
-done:
-    return ret;
+        return macdrv_get_gpu_info_from_registry_id(gpu, device.registryID);
+    else
+        return -1;
 }
 }
 
