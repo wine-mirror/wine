@@ -524,7 +524,18 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
     print = get_dc_print( dc_attr );
     if (print && print->flags & CALL_END_PAGE) return 0;
     if (!NtGdiResetDC( hdc, devmode, NULL, NULL, NULL )) return 0;
-    if (print && !print_copy_devmode( print, devmode )) return 0;
+    if (print)
+    {
+        PRINTER_DEFAULTSW prn_defaults =
+        {
+            .pDatatype = NULL,
+            .pDevMode = (DEVMODEW *)devmode,
+            .DesiredAccess = PRINTER_ACCESS_USE
+        };
+
+        if (!print_copy_devmode( print, devmode )) return 0;
+        ResetPrinterW( print->printer, &prn_defaults );
+    }
     return hdc;
 }
 
