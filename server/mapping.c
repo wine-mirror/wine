@@ -208,10 +208,31 @@ static const struct fd_ops mapping_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
+/* free address ranges for PE image mappings */
+struct addr_range
+{
+    unsigned int count;
+    unsigned int size;
+    struct
+    {
+        client_ptr_t base;
+        mem_size_t size;
+    } *free;
+};
+
 static size_t page_mask;
+static const mem_size_t granularity_mask = 0xffff;
+static struct addr_range ranges32;
+static struct addr_range ranges64;
 
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
+void init_memory(void)
+{
+    page_mask = sysconf( _SC_PAGESIZE ) - 1;
+    free_map_addr( 0x60000000, 0x1c000000 );
+    free_map_addr( 0x600000000000, 0x100000000000 );
+}
 
 static void ranges_dump( struct object *obj, int verbose )
 {
@@ -826,6 +847,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
+    mapping->image.map_addr      = get_fd_map_address( mapping->fd );
     mapping->image.image_charact = nt.FileHeader.Characteristics;
     mapping->image.machine       = nt.FileHeader.Machine;
     mapping->image.dbg_offset    = nt.FileHeader.PointerToSymbolTable;
@@ -918,8 +940,6 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
     struct fd *fd;
     int unix_fd;
     struct stat st;
-
-    if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
 
     if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd )))
         return NULL;
@@ -1137,9 +1157,70 @@ static enum server_fd_type mapping_get_fd_type( struct fd *fd )
     return FD_TYPE_FILE;
 }
 
+/* assign a mapping address to a PE image mapping */
+static client_ptr_t assign_map_address( struct mapping *mapping )
+{
+    unsigned int i;
+    client_ptr_t ret;
+    struct addr_range *range = (mapping->image.base >> 32) ? &ranges64 : &ranges32;
+    mem_size_t size = (mapping->size + granularity_mask) & ~granularity_mask;
+
+    if (!(mapping->image.image_charact & IMAGE_FILE_DLL)) return 0;
+
+    if ((ret = get_fd_map_address( mapping->fd ))) return ret;
+
+    for (i = 0; i < range->count; i++)
+    {
+        if (range->free[i].size < size) continue;
+        range->free[i].size -= size;
+        ret = range->free[i].base + range->free[i].size;
+        set_fd_map_address( mapping->fd, ret, size );
+        return ret;
+    }
+    return 0;
+}
+
+/* free a PE mapping address range when the last mapping is closed */
+void free_map_addr( client_ptr_t base, mem_size_t size )
+{
+    unsigned int i;
+    client_ptr_t end = base + size;
+    struct addr_range *range = (base >> 32) ? &ranges64 : &ranges32;
+
+    for (i = 0; i < range->count; i++)
+    {
+        if (range->free[i].base > end) continue;
+        if (range->free[i].base + range->free[i].size < base) break;
+        if (range->free[i].base == end)
+        {
+            if (i + 1 < range->count && range->free[i + 1].base + range->free[i + 1].size == base)
+            {
+                size += range->free[i].size;
+                range->count--;
+                memmove( &range->free[i], &range->free[i + 1], (range->count - i) * sizeof(*range->free) );
+            }
+            else range->free[i].base = base;
+        }
+        range->free[i].size += size;
+        return;
+    }
+
+    if (range->count == range->size)
+    {
+        unsigned int new_size = max( 256, range->size * 2 );
+        void *new_free = realloc( range->free, new_size * sizeof(*range->free) );
+        if (!new_free) return;
+        range->size = new_size;
+        range->free = new_free;
+    }
+    memmove( &range->free[i + 1], &range->free[i], (range->count - i) * sizeof(*range->free) );
+    range->free[i].base = base;
+    range->free[i].size = size;
+    range->count++;
+}
+
 int get_page_size(void)
 {
-    if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
     return page_mask + 1;
 }
 
@@ -1230,6 +1311,24 @@ DECL_HANDLER(get_mapping_info)
     if (mapping->shared)
         reply->shared_file = alloc_handle( current->process, mapping->shared->file,
                                            GENERIC_READ|GENERIC_WRITE, 0 );
+    release_object( mapping );
+}
+
+/* get the address to use to map an image mapping */
+DECL_HANDLER(get_image_map_address)
+{
+    struct mapping *mapping;
+
+    if (!(mapping = get_mapping_obj( current->process, req->handle, SECTION_MAP_READ ))) return;
+
+    if ((mapping->flags & SEC_IMAGE) &&
+        (mapping->image.image_flags & IMAGE_FLAGS_ImageDynamicallyRelocated))
+    {
+        if (!mapping->image.map_addr) mapping->image.map_addr = assign_map_address( mapping );
+        reply->addr = mapping->image.map_addr;
+    }
+    else set_error( STATUS_INVALID_PARAMETER );
+
     release_object( mapping );
 }
 

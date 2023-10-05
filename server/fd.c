@@ -136,6 +136,8 @@ struct fd
     struct closed_fd    *closed;      /* structure to store the unix fd at destroy time */
     struct object       *user;        /* object using this file descriptor */
     struct list          locks;       /* list of locks on this fd */
+    client_ptr_t         map_addr;    /* default mapping address for PE files */
+    mem_size_t           map_size;    /* mapping size for PE files */
     unsigned int         access;      /* file access (FILE_READ_DATA etc.) */
     unsigned int         options;     /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
     unsigned int         sharing;     /* file sharing mode */
@@ -1547,6 +1549,7 @@ static void fd_destroy( struct object *obj )
     free_async_queue( &fd->write_q );
     free_async_queue( &fd->wait_q );
 
+    if (fd->map_addr) free_map_addr( fd->map_addr, fd->map_size );
     if (fd->completion) release_object( fd->completion );
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
@@ -1665,6 +1668,8 @@ static struct fd *alloc_fd_object(void)
     fd->user       = NULL;
     fd->inode      = NULL;
     fd->closed     = NULL;
+    fd->map_addr   = 0;
+    fd->map_size   = 0;
     fd->access     = 0;
     fd->options    = 0;
     fd->sharing    = 0;
@@ -1703,6 +1708,8 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->user       = user;
     fd->inode      = NULL;
     fd->closed     = NULL;
+    fd->map_addr   = 0;
+    fd->map_size   = 0;
     fd->access     = 0;
     fd->options    = options;
     fd->sharing    = 0;
@@ -2093,6 +2100,20 @@ int get_unix_fd( struct fd *fd )
 {
     if (fd->unix_fd == -1) set_error( fd->no_fd_status );
     return fd->unix_fd;
+}
+
+/* retrieve the suggested mapping address for the fd */
+client_ptr_t get_fd_map_address( struct fd *fd )
+{
+    return fd->map_addr;
+}
+
+/* set the suggested mapping address for the fd */
+void set_fd_map_address( struct fd *fd, client_ptr_t addr, mem_size_t size )
+{
+    assert( !fd->map_addr );
+    fd->map_addr = addr;
+    fd->map_size = size;
 }
 
 /* check if two file descriptors point to the same file */

@@ -184,6 +184,7 @@ DECL_HANDLER(read_change);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
+DECL_HANDLER(get_image_map_address);
 DECL_HANDLER(map_view);
 DECL_HANDLER(map_image_view);
 DECL_HANDLER(map_builtin_view);
@@ -473,6 +474,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_mapping,
     (req_handler)req_open_mapping,
     (req_handler)req_get_mapping_info,
+    (req_handler)req_get_image_map_address,
     (req_handler)req_map_view,
     (req_handler)req_map_image_view,
     (req_handler)req_map_builtin_view,
@@ -717,7 +719,7 @@ C_ASSERT( sizeof(mem_size_t) == 8 );
 C_ASSERT( sizeof(message_data_t) == 56 );
 C_ASSERT( sizeof(mod_handle_t) == 8 );
 C_ASSERT( sizeof(obj_handle_t) == 4 );
-C_ASSERT( sizeof(pe_image_info_t) == 80 );
+C_ASSERT( sizeof(pe_image_info_t) == 88 );
 C_ASSERT( sizeof(process_id_t) == 4 );
 C_ASSERT( sizeof(property_data_t) == 16 );
 C_ASSERT( sizeof(rectangle_t) == 16 );
@@ -1143,6 +1145,10 @@ C_ASSERT( FIELD_OFFSET(struct get_mapping_info_reply, flags) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_mapping_info_reply, shared_file) == 20 );
 C_ASSERT( FIELD_OFFSET(struct get_mapping_info_reply, total) == 24 );
 C_ASSERT( sizeof(struct get_mapping_info_reply) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_image_map_address_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_image_map_address_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_image_map_address_reply, addr) == 8 );
+C_ASSERT( sizeof(struct get_image_map_address_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct map_view_request, mapping) == 12 );
 C_ASSERT( FIELD_OFFSET(struct map_view_request, access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct map_view_request, base) == 24 );

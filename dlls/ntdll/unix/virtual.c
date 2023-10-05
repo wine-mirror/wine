@@ -2936,7 +2936,7 @@ static NTSTATUS map_image_view( struct file_view **view_ret, pe_image_info_t *im
                                 ULONG_PTR limit_low, ULONG_PTR limit_high, ULONG alloc_type )
 {
     unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
-    void *base = wine_server_get_ptr( image_info->base );
+    void *base;
     NTSTATUS status;
     ULONG_PTR start, end;
     BOOL top_down = (image_info->image_charact & IMAGE_FILE_DLL) &&
@@ -2947,9 +2947,18 @@ static NTSTATUS map_image_view( struct file_view **view_ret, pe_image_info_t *im
 
     /* first try the specified base */
 
-    if (base && (ULONG_PTR)base == image_info->base)
+    if (image_info->map_addr)
     {
-        if (top_down) alloc_type |= MEM_TOP_DOWN;
+        base = wine_server_get_ptr( image_info->map_addr );
+        if ((ULONG_PTR)base != image_info->map_addr) base = NULL;
+    }
+    else
+    {
+        base = wine_server_get_ptr( image_info->base );
+        if ((ULONG_PTR)base != image_info->base) base = NULL;
+    }
+    if (base)
+    {
         status = map_view( view_ret, base, size, alloc_type, vprot, limit_low, limit_high, 0 );
         if (!status) return status;
     }
@@ -3003,6 +3012,18 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     {
         if (needs_close) close( unix_fd );
         return status;
+    }
+
+    if (!image_info->map_addr &&
+        (image_info->image_charact & IMAGE_FILE_DLL) &&
+        (image_info->image_flags & IMAGE_FLAGS_ImageDynamicallyRelocated))
+    {
+        SERVER_START_REQ( get_image_map_address )
+        {
+            req->handle = wine_server_obj_handle( mapping );
+            if (!wine_server_call( req )) image_info->map_addr = reply->addr;
+        }
+        SERVER_END_REQ;
     }
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );

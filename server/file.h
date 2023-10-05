@@ -94,6 +94,8 @@ extern unsigned int get_fd_options( struct fd *fd );
 extern unsigned int get_fd_comp_flags( struct fd *fd );
 extern int is_fd_overlapped( struct fd *fd );
 extern int get_unix_fd( struct fd *fd );
+extern client_ptr_t get_fd_map_address( struct fd *fd );
+extern void set_fd_map_address( struct fd *fd, client_ptr_t addr, mem_size_t size );
 extern int is_same_file_fd( struct fd *fd1, struct fd *fd2 );
 extern int is_fd_removable( struct fd *fd );
 extern int check_fd_events( struct fd *fd, int events );
@@ -172,7 +174,9 @@ extern int is_file_executable( const char *name );
 
 struct memory_view;
 
+extern void init_memory(void);
 extern int grow_file( int unix_fd, file_pos_t new_size );
+extern void free_map_addr( client_ptr_t base, mem_size_t size );
 extern struct memory_view *find_mapped_view( struct process *process, client_ptr_t base );
 extern struct memory_view *get_exe_view( struct process *process );
 extern struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing );
