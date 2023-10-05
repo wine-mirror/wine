@@ -36,7 +36,27 @@ static void test_LoadStringW(void)
     HINSTANCE hInst = GetModuleHandleA(NULL);
     WCHAR copiedstringw[128], returnedstringw[128], *resourcepointer = NULL;
     char copiedstring[128], returnedstring[128];
-    int length1, length2, retvalue;
+    int length1, length2, retvalue, i;
+    static struct
+    {
+        int id;
+        const WCHAR *string;
+    } string_table_tests[] =
+    {
+        { 2,   L"Error" },
+        { 13,  L"&More Windows..." },
+        { 800, L"OK" },
+        { 801, L"Cancel" },
+        { 802, L"&Abort" },
+        { 803, L"&Retry" },
+        { 804, L"&Ignore" },
+        { 805, L"&Yes" },
+        { 806, L"&No" },
+        { 807, L"&Close" },
+        { 808, L"Help" },
+        { 809, L"&Try Again" },
+        { 810, L"&Continue" },
+    };
 
     /* Check that the string which is returned by LoadStringW matches
        the string at the pointer returned by LoadStringW when called with buflen = 0 */
@@ -75,6 +95,31 @@ static void test_LoadStringW(void)
     /* check again, with a different buflen value, that calling LoadStringW with buffer = NULL returns zero */
     retvalue = LoadStringW(hInst, 2, NULL, 128);
     ok(!retvalue, "LoadStringW returned a non-zero value when called with buffer = NULL, retvalue = %d\n", retvalue);
+
+    /* Test builtin string table in user32. */
+    if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH)
+            || (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+    {
+        skip("Skip for Non-English system.\n");
+        return;
+    }
+    else
+    {
+        hInst = GetModuleHandleW(L"user32.dll");
+        ok(!!hInst, "Can't get module %#lx.\n", GetLastError());
+
+        for (i = 0; i < ARRAYSIZE(string_table_tests); i++)
+        {
+            winetest_push_context("Test %u", i);
+
+            length1 = LoadStringW(hInst, string_table_tests[i].id, returnedstringw, sizeof(returnedstringw));
+            ok(length1 == wcslen(string_table_tests[i].string), "Got wrong length %d.\n", length1);
+            ok(!wcscmp(returnedstringw, string_table_tests[i].string), "Got wrong string %s.\n",
+                    debugstr_w(returnedstringw));
+
+            winetest_pop_context();
+        }
+    }
 }
 
 static void test_LoadStringA (void)

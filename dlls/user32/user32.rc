@@ -69,6 +69,17 @@ STRINGTABLE
 {
     IDS_ERROR "Error"
     IDS_MDI_MOREWINDOWS "&More Windows..."
+    IDS_STRING_OK, "OK"
+    IDS_STRING_CANCEL, "Cancel"
+    IDS_STRING_ABORT, "&Abort"
+    IDS_STRING_RETRY, "&Retry"
+    IDS_STRING_IGNORE, "&Ignore"
+    IDS_STRING_YES, "&Yes"
+    IDS_STRING_NO, "&No"
+    IDS_STRING_CLOSE, "&Close"
+    IDS_STRING_HELP, "Help"
+    IDS_STRING_TRYAGAIN, "&Try Again"
+    IDS_STRING_CONTINUE, "&Continue"
 }
 
 MSGBOX DIALOG 100, 80, 216, 168

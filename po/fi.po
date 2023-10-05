@@ -95,24 +95,24 @@ msgstr "Tukitietoja"
 #: dlls/shell32/shell32.rc:274 dlls/shell32/shell32.rc:298
 #: dlls/shell32/shell32.rc:320 dlls/shell32/shell32.rc:339
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
-#: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
-#: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:124
-#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
-#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
-#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
-#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:301
-#: programs/regedit/regedit.rc:312 programs/regedit/regedit.rc:325
-#: programs/regedit/regedit.rc:341 programs/regedit/regedit.rc:354
-#: programs/regedit/regedit.rc:367 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:219
-#: programs/winecfg/winecfg.rc:229 programs/winefile/winefile.rc:127
-#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
-#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
-#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
-#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
-#: programs/wordpad/wordpad.rc:257
+#: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
+#: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
+#: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:47
+#: programs/notepad/notepad.rc:124 programs/oleview/oleview.rc:161
+#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
+#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
+#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
+#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
+#: programs/regedit/regedit.rc:301 programs/regedit/regedit.rc:312
+#: programs/regedit/regedit.rc:325 programs/regedit/regedit.rc:341
+#: programs/regedit/regedit.rc:354 programs/regedit/regedit.rc:367
+#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
+#: programs/winecfg/winecfg.rc:219 programs/winecfg/winecfg.rc:229
+#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
+#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
+#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
+#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
+#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "OK"
 
@@ -199,24 +199,24 @@ msgstr "&Asenna"
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:275
 #: dlls/shell32/shell32.rc:299 dlls/shell32/shell32.rc:310
 #: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
-#: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:125
-#: programs/notepad/notepad.rc:138 programs/oleview/oleview.rc:162
-#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
-#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
-#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
-#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
-#: programs/regedit/regedit.rc:302 programs/regedit/regedit.rc:313
-#: programs/regedit/regedit.rc:326 programs/regedit/regedit.rc:342
-#: programs/regedit/regedit.rc:355 programs/regedit/regedit.rc:368
-#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
-#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:220
-#: programs/winecfg/winecfg.rc:230 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
+#: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
+#: programs/notepad/notepad.rc:125 programs/notepad/notepad.rc:138
+#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
+#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
+#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
+#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
+#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:302
+#: programs/regedit/regedit.rc:313 programs/regedit/regedit.rc:326
+#: programs/regedit/regedit.rc:342 programs/regedit/regedit.rc:355
+#: programs/regedit/regedit.rc:368 programs/taskmgr/taskmgr.rc:443
+#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
+#: programs/winecfg/winecfg.rc:220 programs/winecfg/winecfg.rc:230
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -407,7 +407,8 @@ msgid "&Apply"
 msgstr "&Käytä"
 
 #: dlls/comctl32/comctl32.rc:74 dlls/comctl32/comctl32.rc:88
-#: dlls/comdlg32/comdlg32.rc:309 dlls/user32/user32.rc:88
+#: dlls/comdlg32/comdlg32.rc:309 dlls/user32/user32.rc:99
+#: dlls/user32/user32.rc:81
 msgid "Help"
 msgstr "Ohje"
 
@@ -433,9 +434,9 @@ msgstr "Muokkaa työkalupalkkia"
 
 #: dlls/comctl32/comctl32.rc:100 dlls/comctl32/comctl32.rc:57
 #: dlls/cryptui/cryptui.rc:356 dlls/ieframe/ieframe.rc:43
-#: programs/oleview/oleview.rc:83 programs/oleview/oleview.rc:187
-#: programs/oleview/oleview.rc:200 programs/oleview/oleview.rc:212
-#: programs/taskmgr/taskmgr.rc:139
+#: dlls/user32/user32.rc:80 programs/oleview/oleview.rc:83
+#: programs/oleview/oleview.rc:187 programs/oleview/oleview.rc:200
+#: programs/oleview/oleview.rc:212 programs/taskmgr/taskmgr.rc:139
 msgid "&Close"
 msgstr "&Sulje"
 
@@ -497,16 +498,17 @@ msgid "None"
 msgstr "Ei valittu"
 
 #: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:307
-#: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:79
+#: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "&Kyllä"
 
 #: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:309
-#: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:80
+#: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "&Ei"
 
-#: dlls/comctl32/comctl32.rc:54 dlls/user32/user32.rc:82
+#: dlls/comctl32/comctl32.rc:54 dlls/user32/user32.rc:93
+#: dlls/user32/user32.rc:76
 msgid "&Retry"
 msgstr "&Uudelleen"
 
@@ -12428,23 +12430,23 @@ msgstr "&Sulje\tCtrl+F4"
 msgid "Nex&t\tCtrl+F6"
 msgstr "&Seuraava\tCtrl+F6"
 
-#: dlls/user32/user32.rc:81
+#: dlls/user32/user32.rc:92 dlls/user32/user32.rc:75
 msgid "&Abort"
 msgstr "&Keskeytä"
 
-#: dlls/user32/user32.rc:85
+#: dlls/user32/user32.rc:96 dlls/user32/user32.rc:77
 msgid "&Ignore"
 msgstr "&Hylkää"
 
-#: dlls/user32/user32.rc:86
+#: dlls/user32/user32.rc:97 dlls/user32/user32.rc:82
 msgid "&Try Again"
 msgstr "&Yritä uudelleen"
 
-#: dlls/user32/user32.rc:87
+#: dlls/user32/user32.rc:98 dlls/user32/user32.rc:83
 msgid "&Continue"
 msgstr "&Jatka"
 
-#: dlls/user32/user32.rc:94
+#: dlls/user32/user32.rc:105
 msgid "Select Window"
 msgstr "Valitse ikkuna"
 
@@ -17276,8 +17278,7 @@ msgstr "Virhe: Prosessin itsensä sulkemista ei sallita.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "Prosessi PID %1!u! (prosessin PID %2!u! lapsi) suljettiin "
-"väkisin.\n"
+msgstr "Prosessi PID %1!u! (prosessin PID %2!u! lapsi) suljettiin väkisin.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""

@@ -28,3 +28,14 @@
 #define MSGBOX_IDICON           stc1
 #define MSGBOX_IDTEXT           0xffff
 #define IDS_ERROR               2
+#define IDS_STRING_OK           800
+#define IDS_STRING_CANCEL       801
+#define IDS_STRING_ABORT        802
+#define IDS_STRING_RETRY        803
+#define IDS_STRING_IGNORE       804
+#define IDS_STRING_YES          805
+#define IDS_STRING_NO           806
+#define IDS_STRING_CLOSE        807
+#define IDS_STRING_HELP         808
+#define IDS_STRING_TRYAGAIN     809
+#define IDS_STRING_CONTINUE     810
