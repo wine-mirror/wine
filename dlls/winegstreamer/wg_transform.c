@@ -369,6 +369,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_AUDIO:
         case WG_MAJOR_TYPE_VIDEO:
             break;
+        case WG_MAJOR_TYPE_VIDEO_MPEG1:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", input_format.major_type);
             gst_caps_unref(raw_caps);
@@ -422,6 +423,7 @@ NTSTATUS wg_transform_create(void *args)
         case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+        case WG_MAJOR_TYPE_VIDEO_MPEG1:
             GST_FIXME("Format %u not implemented!", output_format.major_type);
             goto out;
     }

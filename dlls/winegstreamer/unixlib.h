@@ -42,6 +42,7 @@ enum wg_major_type
     WG_MAJOR_TYPE_VIDEO_H264,
     WG_MAJOR_TYPE_VIDEO_WMV,
     WG_MAJOR_TYPE_VIDEO_INDEO,
+    WG_MAJOR_TYPE_VIDEO_MPEG1,
 };
 
 typedef UINT32 wg_audio_format;
@@ -163,6 +164,11 @@ struct wg_format
             uint32_t fps_n, fps_d;
             uint32_t version;
         } video_indeo;
+        struct
+        {
+            int32_t width, height;
+            uint32_t fps_n, fps_d;
+        } video_mpeg1;
     } u;
 };
 
