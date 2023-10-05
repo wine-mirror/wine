@@ -3280,10 +3280,19 @@ BOOL WINAPI ResetPrinterA(HANDLE hPrinter, LPPRINTER_DEFAULTSA pDefault)
 /*****************************************************************************
  *          ResetPrinterW  [WINSPOOL.@]
  */
-BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
+BOOL WINAPI ResetPrinterW(HANDLE printer, PRINTER_DEFAULTSW *def)
 {
-    FIXME("(%p, %p): stub\n", hPrinter, pDefault);
-    return FALSE;
+    HANDLE handle  = get_backend_handle(printer);
+
+    TRACE("(%p, %p)\n", printer, def);
+
+    if (!handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    return backend->fpResetPrinter(handle, def);
 }
 
 /*****************************************************************************
