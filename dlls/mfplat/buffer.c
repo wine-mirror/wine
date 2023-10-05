@@ -1627,7 +1627,7 @@ HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IM
  */
 HRESULT WINAPI MFCreate2DMediaBuffer(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up, IMFMediaBuffer **buffer)
 {
-    TRACE("%lu, %lu, %s, %d, %p.\n", width, height, debugstr_fourcc(fourcc), bottom_up, buffer);
+    TRACE("%lu, %lu, %s, %d, %p.\n", width, height, mf_debugstr_fourcc(fourcc), bottom_up, buffer);
 
     return create_2d_buffer(width, height, fourcc, bottom_up, buffer);
 }

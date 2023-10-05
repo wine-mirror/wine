@@ -2696,7 +2696,7 @@ HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD fourcc, DWORD width, LONG *s
     struct uncompressed_video_format *format;
     GUID subtype;
 
-    TRACE("%s, %lu, %p.\n", debugstr_fourcc(fourcc), width, stride);
+    TRACE("%s, %lu, %p.\n", mf_debugstr_fourcc(fourcc), width, stride);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
@@ -2766,7 +2766,7 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
     unsigned int stride;
     GUID subtype;
 
-    TRACE("%s, %lu, %lu, %p.\n", debugstr_fourcc(fourcc), width, height, size);
+    TRACE("%s, %lu, %lu, %p.\n", mf_debugstr_fourcc(fourcc), width, height, size);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;

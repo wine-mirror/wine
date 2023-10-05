@@ -148,7 +148,7 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
     }
 }
 
-static inline const char *debugstr_fourcc(DWORD format)
+static inline const char *mf_debugstr_fourcc(DWORD format)
 {
     static const struct format_name
     {
