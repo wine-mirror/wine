@@ -444,6 +444,7 @@ enum unix_call
     unix_vkGetImageViewAddressNVX,
     unix_vkGetImageViewHandleNVX,
     unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
+    unix_vkGetLatencyTimingsNV,
     unix_vkGetMemoryHostPointerPropertiesEXT,
     unix_vkGetMicromapBuildSizesEXT,
     unix_vkGetPerformanceParameterINTEL,
@@ -521,6 +522,7 @@ enum unix_call
     unix_vkGetValidationCacheDataEXT,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
+    unix_vkLatencySleepNV,
     unix_vkMapMemory,
     unix_vkMapMemory2KHR,
     unix_vkMergePipelineCaches,
@@ -529,6 +531,7 @@ enum unix_call
     unix_vkQueueBindSparse,
     unix_vkQueueEndDebugUtilsLabelEXT,
     unix_vkQueueInsertDebugUtilsLabelEXT,
+    unix_vkQueueNotifyOutOfBandNV,
     unix_vkQueuePresentKHR,
     unix_vkQueueSetPerformanceConfigurationINTEL,
     unix_vkQueueSubmit,
@@ -550,6 +553,8 @@ enum unix_call
     unix_vkSetDeviceMemoryPriorityEXT,
     unix_vkSetEvent,
     unix_vkSetHdrMetadataEXT,
+    unix_vkSetLatencyMarkerNV,
+    unix_vkSetLatencySleepModeNV,
     unix_vkSetPrivateData,
     unix_vkSetPrivateDataEXT,
     unix_vkSignalSemaphore,
@@ -3880,6 +3885,14 @@ struct vkGetImageViewOpaqueCaptureDescriptorDataEXT_params
     VkResult result;
 };
 
+struct vkGetLatencyTimingsNV_params
+{
+    VkDevice device;
+    VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+    uint32_t *pTimingCount;
+    VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo;
+};
+
 struct vkGetMemoryHostPointerPropertiesEXT_params
 {
     VkDevice device;
@@ -4496,6 +4509,14 @@ struct vkInvalidateMappedMemoryRanges_params
     VkResult result;
 };
 
+struct vkLatencySleepNV_params
+{
+    VkDevice device;
+    VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+    const VkLatencySleepInfoNV *pSleepInfo;
+    VkResult result;
+};
+
 struct vkMapMemory_params
 {
     VkDevice device;
@@ -4557,6 +4578,12 @@ struct vkQueueInsertDebugUtilsLabelEXT_params
 {
     VkQueue queue;
     const VkDebugUtilsLabelEXT *pLabelInfo;
+};
+
+struct vkQueueNotifyOutOfBandNV_params
+{
+    VkQueue queue;
+    const VkOutOfBandQueueTypeInfoNV *pQueueTypeInfo;
 };
 
 struct vkQueuePresentKHR_params
@@ -4713,6 +4740,21 @@ struct vkSetHdrMetadataEXT_params
     uint32_t swapchainCount;
     const VkSwapchainKHR *pSwapchains;
     const VkHdrMetadataEXT *pMetadata;
+};
+
+struct vkSetLatencyMarkerNV_params
+{
+    VkDevice device;
+    VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+    const VkSetLatencyMarkerInfoNV *pLatencyMarkerInfo;
+};
+
+struct vkSetLatencySleepModeNV_params
+{
+    VkDevice device;
+    VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
+    const VkLatencySleepModeInfoNV *pSleepModeInfo;
+    VkResult result;
 };
 
 struct vkSetPrivateData_params

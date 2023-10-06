@@ -4446,6 +4446,18 @@ VkResult WINAPI vkGetImageViewOpaqueCaptureDescriptorDataEXT(VkDevice device, co
     return params.result;
 }
 
+void WINAPI vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, uint32_t *pTimingCount, VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo)
+{
+    struct vkGetLatencyTimingsNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.swapchain = swapchain;
+    params.pTimingCount = pTimingCount;
+    params.pLatencyMarkerInfo = pLatencyMarkerInfo;
+    status = UNIX_CALL(vkGetLatencyTimingsNV, &params);
+    assert(!status && "vkGetLatencyTimingsNV");
+}
+
 VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
 {
     struct vkGetMemoryHostPointerPropertiesEXT_params params;
@@ -5350,6 +5362,18 @@ VkResult WINAPI vkInvalidateMappedMemoryRanges(VkDevice device, uint32_t memoryR
     return params.result;
 }
 
+VkResult WINAPI vkLatencySleepNV(VkDevice device, VkSwapchainKHR swapchain, const VkLatencySleepInfoNV *pSleepInfo)
+{
+    struct vkLatencySleepNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.swapchain = swapchain;
+    params.pSleepInfo = pSleepInfo;
+    status = UNIX_CALL(vkLatencySleepNV, &params);
+    assert(!status && "vkLatencySleepNV");
+    return params.result;
+}
+
 VkResult WINAPI vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void **ppData)
 {
     struct vkMapMemory_params params;
@@ -5443,6 +5467,16 @@ void WINAPI vkQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLab
     params.pLabelInfo = pLabelInfo;
     status = UNIX_CALL(vkQueueInsertDebugUtilsLabelEXT, &params);
     assert(!status && "vkQueueInsertDebugUtilsLabelEXT");
+}
+
+void WINAPI vkQueueNotifyOutOfBandNV(VkQueue queue, const VkOutOfBandQueueTypeInfoNV *pQueueTypeInfo)
+{
+    struct vkQueueNotifyOutOfBandNV_params params;
+    NTSTATUS status;
+    params.queue = queue;
+    params.pQueueTypeInfo = pQueueTypeInfo;
+    status = UNIX_CALL(vkQueueNotifyOutOfBandNV, &params);
+    assert(!status && "vkQueueNotifyOutOfBandNV");
 }
 
 VkResult WINAPI vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *pPresentInfo)
@@ -5683,6 +5717,29 @@ void WINAPI vkSetHdrMetadataEXT(VkDevice device, uint32_t swapchainCount, const 
     params.pMetadata = pMetadata;
     status = UNIX_CALL(vkSetHdrMetadataEXT, &params);
     assert(!status && "vkSetHdrMetadataEXT");
+}
+
+void WINAPI vkSetLatencyMarkerNV(VkDevice device, VkSwapchainKHR swapchain, const VkSetLatencyMarkerInfoNV *pLatencyMarkerInfo)
+{
+    struct vkSetLatencyMarkerNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.swapchain = swapchain;
+    params.pLatencyMarkerInfo = pLatencyMarkerInfo;
+    status = UNIX_CALL(vkSetLatencyMarkerNV, &params);
+    assert(!status && "vkSetLatencyMarkerNV");
+}
+
+VkResult WINAPI vkSetLatencySleepModeNV(VkDevice device, VkSwapchainKHR swapchain, const VkLatencySleepModeInfoNV *pSleepModeInfo)
+{
+    struct vkSetLatencySleepModeNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.swapchain = swapchain;
+    params.pSleepModeInfo = pSleepModeInfo;
+    status = UNIX_CALL(vkSetLatencySleepModeNV, &params);
+    assert(!status && "vkSetLatencySleepModeNV");
+    return params.result;
 }
 
 VkResult WINAPI vkSetPrivateData(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
@@ -6339,6 +6396,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageViewAddressNVX", vkGetImageViewAddressNVX},
     {"vkGetImageViewHandleNVX", vkGetImageViewHandleNVX},
     {"vkGetImageViewOpaqueCaptureDescriptorDataEXT", vkGetImageViewOpaqueCaptureDescriptorDataEXT},
+    {"vkGetLatencyTimingsNV", vkGetLatencyTimingsNV},
     {"vkGetMemoryHostPointerPropertiesEXT", vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetMicromapBuildSizesEXT", vkGetMicromapBuildSizesEXT},
     {"vkGetPerformanceParameterINTEL", vkGetPerformanceParameterINTEL},
@@ -6371,6 +6429,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetValidationCacheDataEXT", vkGetValidationCacheDataEXT},
     {"vkInitializePerformanceApiINTEL", vkInitializePerformanceApiINTEL},
     {"vkInvalidateMappedMemoryRanges", vkInvalidateMappedMemoryRanges},
+    {"vkLatencySleepNV", vkLatencySleepNV},
     {"vkMapMemory", vkMapMemory},
     {"vkMapMemory2KHR", vkMapMemory2KHR},
     {"vkMergePipelineCaches", vkMergePipelineCaches},
@@ -6379,6 +6438,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkQueueBindSparse", vkQueueBindSparse},
     {"vkQueueEndDebugUtilsLabelEXT", vkQueueEndDebugUtilsLabelEXT},
     {"vkQueueInsertDebugUtilsLabelEXT", vkQueueInsertDebugUtilsLabelEXT},
+    {"vkQueueNotifyOutOfBandNV", vkQueueNotifyOutOfBandNV},
     {"vkQueuePresentKHR", vkQueuePresentKHR},
     {"vkQueueSetPerformanceConfigurationINTEL", vkQueueSetPerformanceConfigurationINTEL},
     {"vkQueueSubmit", vkQueueSubmit},
@@ -6400,6 +6460,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkSetDeviceMemoryPriorityEXT", vkSetDeviceMemoryPriorityEXT},
     {"vkSetEvent", vkSetEvent},
     {"vkSetHdrMetadataEXT", vkSetHdrMetadataEXT},
+    {"vkSetLatencyMarkerNV", vkSetLatencyMarkerNV},
+    {"vkSetLatencySleepModeNV", vkSetLatencySleepModeNV},
     {"vkSetPrivateData", vkSetPrivateData},
     {"vkSetPrivateDataEXT", vkSetPrivateDataEXT},
     {"vkSignalSemaphore", vkSignalSemaphore},
