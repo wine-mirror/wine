@@ -3107,6 +3107,8 @@ static void test_notification_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
     ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -3178,8 +3180,6 @@ static void test_notification_pmsg(void)
     ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
     ok(!msg, "got %p\n", msg);
 
-    IDirectMusicSegment_Release(segment);
-
     hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_PERFORMANCE);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
@@ -3237,8 +3237,34 @@ static void test_notification_pmsg(void)
     ok(hr == S_FALSE, "got %#lx\n", hr);
 
 
+    /* RemoveNotificationType returns S_FALSE if already removed */
+
+    hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_PERFORMANCE);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+
+
+    /* CloseDown removes all notifications and notification messages */
+
+    hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
     hr = IDirectMusicPerformance_CloseDown(performance);
     ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    IDirectMusicSegment_Release(segment);
+
 
     IDirectMusicPerformance_Release(performance);
     IDirectMusicTool_Release(tool);
