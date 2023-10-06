@@ -342,7 +342,7 @@ static void wayland_configure_window(HWND hwnd)
 
     if (!surface->xdg_toplevel)
     {
-        TRACE("missing xdg_toplevel, returning");
+        TRACE("missing xdg_toplevel, returning\n");
         pthread_mutex_unlock(&surface->mutex);
         return;
     }
