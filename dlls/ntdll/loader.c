@@ -4219,15 +4219,12 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         init_user_process_params();
         load_global_options();
         version_init();
-
-        get_env_var( L"WINESYSTEMDLLPATH", 0, &system_dll_path );
-
-        wm = build_main_module();
-        wm->ldr.LoadCount = -1;
-
         build_ntdll_module( meminfo.AllocationBase );
 
         if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
+
+        wm = build_main_module();
+        wm->ldr.LoadCount = -1;
 
         if ((status = load_dll( NULL, L"kernel32.dll", 0, &kernel32, FALSE )) != STATUS_SUCCESS)
         {
@@ -4245,6 +4242,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
         actctx_init();
         locale_init();
+        get_env_var( L"WINESYSTEMDLLPATH", 0, &system_dll_path );
         if (wm->ldr.Flags & LDR_COR_ILONLY)
             status = fixup_imports_ilonly( wm, NULL, entry );
         else
