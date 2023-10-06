@@ -833,11 +833,6 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
                       !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
         if (nt.opt.hdr64.SectionAlignment & page_mask)
             mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
-        else if (nt.opt.hdr64.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
-                 nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
-                 nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
-                 !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED))
-            mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         else if ((nt.opt.hdr64.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
                  (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
             mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
