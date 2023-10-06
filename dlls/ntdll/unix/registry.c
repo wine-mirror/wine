@@ -425,6 +425,16 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
         break;
     }
 
+    case KeyValuePartialInformationAlign64:
+    {
+        KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 keyinfo;
+        keyinfo.Type       = type;
+        keyinfo.DataLength = data_len;
+        length = min( length, (char *)keyinfo.Data - (char *)&keyinfo );
+        memcpy( info, &keyinfo, length );
+        break;
+    }
+
     default:
         break;
     }
@@ -517,6 +527,11 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     case KeyValuePartialInformation:
         min_size = fixed_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
         data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION *)info)->Data;
+        break;
+
+    case KeyValuePartialInformationAlign64:
+        min_size = fixed_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data);
+        data_ptr = ((KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *)info)->Data;
         break;
 
     default:

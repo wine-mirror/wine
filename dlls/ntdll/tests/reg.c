@@ -768,6 +768,7 @@ static void test_NtQueryValueKey(void)
     UNICODE_STRING ValName;
     KEY_VALUE_BASIC_INFORMATION *basic_info;
     KEY_VALUE_PARTIAL_INFORMATION *partial_info, pi;
+    KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *aligned_info;
     KEY_VALUE_FULL_INFORMATION *full_info;
     DWORD len, expected;
 
@@ -814,6 +815,42 @@ static void test_NtQueryValueKey(void)
     ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
     ok(*(DWORD *)partial_info->Data == 711, "incorrect Data returned: 0x%lx\n", *(DWORD *)partial_info->Data);
     HeapFree(GetProcessHeap(), 0, partial_info);
+
+    len = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[0]);
+    aligned_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*aligned_info) + 4);
+
+    aligned_info = (KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *)((char *)aligned_info + 4);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformationAlign64, aligned_info, len, &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08lx\n", status);
+    ok(aligned_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", aligned_info->Type);
+    ok(aligned_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", aligned_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[aligned_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
+
+    len = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[0]);
+    aligned_info = (KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *)((char *)aligned_info - 4);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformationAlign64, aligned_info, len, &len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08lx\n", status);
+    ok(aligned_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", aligned_info->Type);
+    ok(aligned_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", aligned_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[aligned_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
+
+    aligned_info = HeapReAlloc(GetProcessHeap(), 0, aligned_info, len + 4);
+    aligned_info = (KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *)((char *)aligned_info + 4);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformationAlign64, aligned_info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(aligned_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", aligned_info->Type);
+    ok(aligned_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", aligned_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[aligned_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
+    ok(*(DWORD *)aligned_info->Data == 711, "incorrect Data returned: 0x%lx\n", *(DWORD *)aligned_info->Data);
+
+    aligned_info = (KEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *)((char *)aligned_info - 4);
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformationAlign64, aligned_info, len, &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(aligned_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", aligned_info->Type);
+    ok(aligned_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", aligned_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data[aligned_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
+    ok(*(DWORD *)aligned_info->Data == 711, "incorrect Data returned: 0x%lx\n", *(DWORD *)aligned_info->Data);
+    HeapFree(GetProcessHeap(), 0, aligned_info);
 
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]);
     full_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*full_info));
