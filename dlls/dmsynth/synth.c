@@ -79,8 +79,8 @@ static void dump_connectionlist(CONNECTIONLIST *list)
     UINT i;
 
     TRACE("CONNECTIONLIST:\n");
-    TRACE(" - cbSize        = %lu", list->cbSize);
-    TRACE(" - cConnections  = %lu", list->cConnections);
+    TRACE(" - cbSize        = %lu\n", list->cbSize);
+    TRACE(" - cConnections  = %lu\n", list->cConnections);
 
     for (i = 0; i < list->cConnections; i++)
     {
