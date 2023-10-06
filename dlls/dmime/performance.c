@@ -52,8 +52,6 @@ struct performance
 
     BOOL audio_paths_enabled;
     IDirectMusicAudioPath *pDefaultPath;
-    HANDLE hNotification;
-    REFERENCE_TIME rtMinimum;
     REFERENCE_TIME rtLatencyTime;
     DWORD dwBumperLength;
     DWORD dwPrepareTime;
@@ -67,6 +65,9 @@ struct performance
     REFERENCE_TIME init_time;
     struct list messages;
 
+    struct list notifications;
+    REFERENCE_TIME notification_timeout;
+    HANDLE notification_event;
     BOOL notification_performance;
     BOOL notification_segment;
 };
@@ -702,62 +703,84 @@ static HRESULT WINAPI performance_SetGraph(IDirectMusicPerformance8 *iface, IDir
 }
 
 static HRESULT WINAPI performance_SetNotificationHandle(IDirectMusicPerformance8 *iface,
-        HANDLE hNotification, REFERENCE_TIME rtMinimum)
+        HANDLE notification_event, REFERENCE_TIME minimum_time)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-    TRACE("(%p, %p, 0x%s)\n", This, hNotification, wine_dbgstr_longlong(rtMinimum));
+    TRACE("(%p, %p, %I64d)\n", This, notification_event, minimum_time);
 
-    This->hNotification = hNotification;
-    if (rtMinimum)
-        This->rtMinimum = rtMinimum;
-    else if (!This->rtMinimum)
-        This->rtMinimum = 20000000; /* 2 seconds */
+    This->notification_event = notification_event;
+    if (minimum_time)
+        This->notification_timeout = minimum_time;
+    else if (!This->notification_timeout)
+        This->notification_timeout = 20000000; /* 2 seconds */
+
     return S_OK;
 }
 
 static HRESULT WINAPI performance_GetNotificationPMsg(IDirectMusicPerformance8 *iface,
-        DMUS_NOTIFICATION_PMSG **ppNotificationPMsg)
+        DMUS_NOTIFICATION_PMSG **ret_msg)
 {
-  struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct list *entry;
 
-  FIXME("(%p, %p): stub\n", This, ppNotificationPMsg);
-  if (NULL == ppNotificationPMsg) {
-    return E_POINTER;
-  }
-  
-  
+    TRACE("(%p, %p)\n", This, ret_msg);
 
-  return S_FALSE;
-  /*return S_OK;*/
+    if (!ret_msg) return E_POINTER;
+
+    EnterCriticalSection(&This->safe);
+    if ((entry = list_head(&This->notifications)))
+    {
+        struct message *message = LIST_ENTRY(entry, struct message, entry);
+        list_remove(&message->entry);
+        list_init(&message->entry);
+        *ret_msg = (DMUS_NOTIFICATION_PMSG *)&message->msg;
+    }
+    LeaveCriticalSection(&This->safe);
+
+    return entry ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI performance_AddNotificationType(IDirectMusicPerformance8 *iface, REFGUID type)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr = S_OK;
 
     FIXME("(%p, %s): stub\n", This, debugstr_dmguid(type));
 
     if (IsEqualGUID(type, &GUID_NOTIFICATION_PERFORMANCE))
+    {
+        hr = This->notification_performance ? S_FALSE : S_OK;
         This->notification_performance = TRUE;
+    }
     if (IsEqualGUID(type, &GUID_NOTIFICATION_SEGMENT))
+    {
+        hr = This->notification_segment ? S_FALSE : S_OK;
         This->notification_segment = TRUE;
+    }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI performance_RemoveNotificationType(IDirectMusicPerformance8 *iface, REFGUID type)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr = S_FALSE;
 
     FIXME("(%p, %s): stub\n", This, debugstr_dmguid(type));
 
     if (IsEqualGUID(type, &GUID_NOTIFICATION_PERFORMANCE))
+    {
+        hr = This->notification_performance ? S_OK : S_FALSE;
         This->notification_performance = FALSE;
+    }
     if (IsEqualGUID(type, &GUID_NOTIFICATION_SEGMENT))
+    {
+        hr = This->notification_segment ? S_OK : S_FALSE;
         This->notification_segment = FALSE;
+    }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *params)
@@ -1021,7 +1044,19 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         CloseHandle(This->procThread);
     }
 
+    This->notification_performance = FALSE;
+    This->notification_segment = FALSE;
+
     LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
+    {
+        list_remove(&message->entry);
+        list_init(&message->entry);
+
+        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
+            WARN("Failed to free message %p, hr %#lx\n", message, hr);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->notifications, struct message, entry)
     {
         list_remove(&message->entry);
         list_init(&message->entry);
@@ -1586,14 +1621,40 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         IDirectMusicPerformance *performance, DMUS_PMSG *msg)
 {
     struct performance *This = impl_from_IDirectMusicTool(iface);
+    struct message *message = message_from_DMUS_PMSG(msg);
 
     FIXME("(%p, %p, %p): semi-stub\n", This, performance, msg);
 
     switch (msg->dwType)
     {
     case DMUS_PMSGT_NOTIFICATION:
-        SetEvent(This->hNotification);
-        /* fallthrough */
+    {
+        DMUS_NOTIFICATION_PMSG *notif = (DMUS_NOTIFICATION_PMSG *)msg;
+        struct message *previous;
+        BOOL enabled = FALSE;
+        HRESULT hr;
+
+        if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_PERFORMANCE))
+            enabled = This->notification_performance;
+        if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT))
+            enabled = This->notification_segment;
+        if (!enabled) return DMUS_S_FREE;
+
+        list_add_tail(&This->notifications, &message->entry);
+
+        /* discard old notification messages */
+        do
+        {
+            previous = LIST_ENTRY(list_head(&This->notifications), struct message, entry);
+            if (message->msg.rtTime - previous->msg.rtTime <= This->notification_timeout) break;
+            list_remove(&previous->entry);
+            list_init(&previous->entry);
+        } while (SUCCEEDED(hr = IDirectMusicPerformance_FreePMsg(performance, &previous->msg)));
+
+        SetEvent(This->notification_event);
+        return S_OK;
+    }
+
     default:
         FIXME("Unhandled message type %#lx\n", msg->dwType);
         break;
@@ -1644,6 +1705,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     wine_rb_init(&obj->pchannels, pchannel_block_compare);
 
     list_init(&obj->messages);
+    list_init(&obj->notifications);
 
     obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
     obj->dwBumperLength =   50; /* 50 ms default */

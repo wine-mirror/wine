@@ -3102,7 +3102,7 @@ static void test_notification_pmsg(void)
     hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
     hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -3162,49 +3162,34 @@ static void test_notification_pmsg(void)
     /* notification messages are also queued for direct access */
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "got %#lx\n", hr);
     check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "got %#lx\n", hr);
     check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "got %#lx\n", hr);
     check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "got %#lx\n", hr);
     check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "got %#lx\n", hr);
     check_dmus_notification_pmsg(notif, &GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     hr = IDirectMusicPerformance_GetNotificationPMsg(performance, &notif);
     ok(hr == S_FALSE, "got %#lx\n", hr);
@@ -3213,7 +3198,7 @@ static void test_notification_pmsg(void)
     /* RemoveNotificationType returns S_FALSE if already removed */
 
     hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_PERFORMANCE);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
 
 
     /* CloseDown removes all notifications and notification messages */
@@ -3232,7 +3217,7 @@ static void test_notification_pmsg(void)
     hr = IDirectMusicPerformance_CloseDown(performance);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
     IDirectMusicSegment_Release(segment);
 
 
