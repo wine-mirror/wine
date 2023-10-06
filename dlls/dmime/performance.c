@@ -948,6 +948,8 @@ static HRESULT WINAPI performance_AdjustTime(IDirectMusicPerformance8 *iface, RE
 static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct message *message, *next;
+    HRESULT hr;
 
     FIXME("(%p): semi-stub\n", This);
 
@@ -956,6 +958,16 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         This->procThreadTicStarted = FALSE;
         CloseHandle(This->procThread);
     }
+
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
+    {
+        list_remove(&message->entry);
+        list_init(&message->entry);
+
+        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
+            WARN("Failed to free message %p, hr %#lx\n", message, hr);
+    }
+
     if (This->master_clock)
     {
         IReferenceClock_Release(This->master_clock);
