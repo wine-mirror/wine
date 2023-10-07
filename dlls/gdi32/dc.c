@@ -2253,7 +2253,7 @@ INT WINAPI SetMetaRgn( HDC hdc )
     DC_ATTR *dc_attr;
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    if (dc_attr->emf) FIXME( "EMFs are not yet supported\n" );
+    if (dc_attr->emf && !EMFDC_SetMetaRgn( dc_attr )) return FALSE;
     return NtGdiSetMetaRgn( hdc );
 }
 

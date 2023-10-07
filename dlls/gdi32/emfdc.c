@@ -2254,6 +2254,15 @@ BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode )
     return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
 }
 
+BOOL EMFDC_SetMetaRgn( DC_ATTR *dc_attr )
+{
+    EMRSETMETARGN emr;
+
+    emr.emr.iType = EMR_SETMETARGN;
+    emr.emr.nSize = sizeof(emr);
+    return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
+}
+
 BOOL EMFDC_SetMiterLimit( DC_ATTR *dc_attr, FLOAT limit )
 {
     struct emr_set_miter_limit emr;

@@ -241,6 +241,7 @@ INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD wi
 BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout );
 BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode );
 BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags );
+BOOL EMFDC_SetMetaRgn( DC_ATTR *dc_attr );
 BOOL EMFDC_SetMiterLimit( DC_ATTR *dc_attr, FLOAT limit );
 BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color );
 BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode );
