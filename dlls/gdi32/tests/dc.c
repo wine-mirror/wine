@@ -38,6 +38,8 @@ static void test_dc_values(void)
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
     COLORREF color;
     int extra, attr;
+    float limit;
+    BOOL ret;
 
     ok( hdc != NULL, "CreateDC failed\n" );
     color = SetBkColor( hdc, 0x12345678 );
@@ -90,6 +92,25 @@ static void test_dc_values(void)
     attr = GetDeviceCaps(ULongToHandle(0xdeadbeef), TECHNOLOGY);
     ok(!attr, "GetDeviceCaps rets %d\n", attr);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %lu\n", GetLastError());
+
+    /* Miter limit */
+    limit = 123.0f;
+    ret = GetMiterLimit(hdc, &limit);
+    ok(ret, "Unexpected return value.\n");
+    ok(limit == 10.0f, "Unexpected default miter limit %f.\n", limit);
+
+    limit = 456.0;
+    ret = SetMiterLimit(hdc, 0.9f, &limit);
+    todo_wine
+    ok(!ret, "Unexpected return value.\n");
+    todo_wine
+    ok(limit == 456.0f, "Unexpected default miter limit %f.\n", limit);
+
+    limit = 0.0;
+    ret = SetMiterLimit(hdc, 1.0f, &limit);
+    ok(ret, "Unexpected return value.\n");
+    todo_wine
+    ok(limit == 10.0f, "Unexpected default miter limit %f.\n", limit);
 
     DeleteDC( hdc );
 }
