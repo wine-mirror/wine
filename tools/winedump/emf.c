@@ -174,7 +174,6 @@ unsigned long dump_emfrecord(const char *pfx, unsigned long offset)
     EMRCASE(EMR_ARCTO);
     EMRCASE(EMR_POLYDRAW);
     EMRCASE(EMR_SETARCDIRECTION);
-    EMRCASE(EMR_SETMITERLIMIT);
     EMRCASE(EMR_BEGINPATH);
     EMRCASE(EMR_ENDPATH);
     EMRCASE(EMR_CLOSEFIGURE);
@@ -185,6 +184,15 @@ unsigned long dump_emfrecord(const char *pfx, unsigned long offset)
     EMRCASE(EMR_WIDENPATH);
     EMRCASE(EMR_SELECTCLIPPATH);
     EMRCASE(EMR_ABORTPATH);
+
+    case EMR_SETMITERLIMIT:
+    {
+        const EMRSETMITERLIMIT *record = PRD(offset, sizeof(*record));
+
+        printf("%s%-20s %08x\n", pfx, "EMR_SETMITERLIMIT", length);
+        printf("%s miter limit %u\n", pfx, *(unsigned int *)&record->eMiterLimit);
+        break;
+    }
 
     case EMR_GDICOMMENT:
     {
