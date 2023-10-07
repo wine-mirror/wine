@@ -18786,8 +18786,10 @@ msgid "&Theme:"
 msgstr "Wys&trój:"
 
 #: programs/winecfg/winecfg.rc:295
-msgid "&WinRT app theme:"
-msgstr ""
+#, fuzzy
+#| msgid "&Theme:"
+msgid "&WinRT theme:"
+msgstr "Wys&trój:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."

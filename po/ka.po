@@ -17793,7 +17793,9 @@ msgid "&Theme:"
 msgstr "&თემა:"
 
 #: programs/winecfg/winecfg.rc:295
-msgid "&WinRT app theme:"
+#, fuzzy
+#| msgid "&WinRT app theme:"
+msgid "&WinRT theme:"
 msgstr "&WinRT აპის თემა:"
 
 #: programs/winecfg/winecfg.rc:297

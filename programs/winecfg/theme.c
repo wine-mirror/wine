@@ -505,6 +505,8 @@ static void on_theme_changed(HWND dialog) {
     index = SendMessageW (GetDlgItem (dialog, IDC_THEME_APPCOMBO), CB_GETCURSEL, 0, 0);
     set_reg_key_dword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                       L"AppsUseLightTheme", !index);
+    set_reg_key_dword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                      L"SystemUsesLightTheme", !index);
 
     theme_dirty = TRUE;
 }

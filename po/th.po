@@ -18280,7 +18280,7 @@ msgid "&Theme:"
 msgstr ""
 
 #: programs/winecfg/winecfg.rc:295
-msgid "&WinRT app theme:"
+msgid "&WinRT theme:"
 msgstr ""
 
 #: programs/winecfg/winecfg.rc:297

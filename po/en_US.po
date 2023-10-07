@@ -18496,8 +18496,8 @@ msgid "&Theme:"
 msgstr "&Theme:"
 
 #: programs/winecfg/winecfg.rc:295
-msgid "&WinRT app theme:"
-msgstr "&WinRT app theme:"
+msgid "&WinRT theme:"
+msgstr "&WinRT theme:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
