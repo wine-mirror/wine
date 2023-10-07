@@ -101,15 +101,12 @@ static void test_dc_values(void)
 
     limit = 456.0;
     ret = SetMiterLimit(hdc, 0.9f, &limit);
-    todo_wine
     ok(!ret, "Unexpected return value.\n");
-    todo_wine
     ok(limit == 456.0f, "Unexpected default miter limit %f.\n", limit);
 
     limit = 0.0;
     ret = SetMiterLimit(hdc, 1.0f, &limit);
     ok(ret, "Unexpected return value.\n");
-    todo_wine
     ok(limit == 10.0f, "Unexpected default miter limit %f.\n", limit);
 
     DeleteDC( hdc );
