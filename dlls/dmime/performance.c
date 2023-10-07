@@ -66,6 +66,9 @@ struct performance
     IReferenceClock *master_clock;
     REFERENCE_TIME init_time;
     struct list messages;
+
+    BOOL notification_performance;
+    BOOL notification_segment;
 };
 
 struct message
@@ -221,6 +224,32 @@ static HRESULT performance_send_dirty_pmsg(struct performance *This, MUSIC_TIME 
     if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, msg))
             || FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, msg)))
         IDirectMusicPerformance8_FreePMsg(performance, msg);
+
+    return hr;
+}
+
+static HRESULT performance_send_notification_pmsg(struct performance *This, MUSIC_TIME music_time, BOOL stamp,
+        GUID type, DWORD option, IUnknown *object)
+{
+    IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
+    IDirectMusicGraph *graph = &This->IDirectMusicGraph_iface;
+    DMUS_NOTIFICATION_PMSG *msg;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(performance, sizeof(*msg), (DMUS_PMSG **)&msg)))
+        return hr;
+
+    msg->mtTime = music_time;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE;
+    msg->dwType = DMUS_PMSGT_NOTIFICATION;
+    if ((msg->punkUser = object)) IUnknown_AddRef(object);
+    msg->guidNotificationType = type;
+    msg->dwNotificationOption = option;
+
+    /* only stamp the message if notifications are enabled, otherwise send them directly to the output tool */
+    if ((stamp && FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg)))
+            || FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)msg)))
+        IDirectMusicPerformance8_FreePMsg(performance, (DMUS_PMSG *)msg);
 
     return hr;
 }
@@ -703,20 +732,32 @@ static HRESULT WINAPI performance_GetNotificationPMsg(IDirectMusicPerformance8 *
   /*return S_OK;*/
 }
 
-static HRESULT WINAPI performance_AddNotificationType(IDirectMusicPerformance8 *iface, REFGUID rguidNotificationType)
+static HRESULT WINAPI performance_AddNotificationType(IDirectMusicPerformance8 *iface, REFGUID type)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+    FIXME("(%p, %s): stub\n", This, debugstr_dmguid(type));
+
+    if (IsEqualGUID(type, &GUID_NOTIFICATION_PERFORMANCE))
+        This->notification_performance = TRUE;
+    if (IsEqualGUID(type, &GUID_NOTIFICATION_SEGMENT))
+        This->notification_segment = TRUE;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI performance_RemoveNotificationType(IDirectMusicPerformance8 *iface, REFGUID rguidNotificationType)
+static HRESULT WINAPI performance_RemoveNotificationType(IDirectMusicPerformance8 *iface, REFGUID type)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+    FIXME("(%p, %s): stub\n", This, debugstr_dmguid(type));
+
+    if (IsEqualGUID(type, &GUID_NOTIFICATION_PERFORMANCE))
+        This->notification_performance = FALSE;
+    if (IsEqualGUID(type, &GUID_NOTIFICATION_SEGMENT))
+        This->notification_segment = FALSE;
+
+    return S_OK;
 }
 
 static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *params)
@@ -1123,10 +1164,25 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     hr = IDirectMusicSegment_GetLength(segment, &length);
     if (SUCCEEDED(hr))
+        hr = performance_send_notification_pmsg(This, start_time, This->notification_performance,
+                GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED, NULL);
+    if (SUCCEEDED(hr))
+        hr = performance_send_notification_pmsg(This, start_time, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
+    if (SUCCEEDED(hr))
         hr = performance_send_dirty_pmsg(This, start_time);
 
     if (SUCCEEDED(hr))
+        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state);
+    if (SUCCEEDED(hr))
+        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
+    if (SUCCEEDED(hr))
         hr = performance_send_dirty_pmsg(This, start_time + length);
+    if (SUCCEEDED(hr))
+        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_performance,
+                GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL);
 
     if (SUCCEEDED(hr) && segment_state)
     {
