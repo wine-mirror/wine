@@ -160,6 +160,15 @@ typedef struct
     INT   nBreakCount;
 } EMRSETTEXTJUSTIFICATION, *PEMRSETTEXTJUSTIFICATION;
 
+/* Public structure EMRSETMITERLIMIT is using a float field,
+   that does not match serialized output or documentation,
+   which are both using unsigned integer. */
+struct emr_set_miter_limit
+{
+    EMR   emr;
+    DWORD eMiterLimit;
+};
+
 BOOL EMFDC_AbortPath( DC_ATTR *dc_attr );
 BOOL EMFDC_AlphaBlend( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                        HDC hdc_src, INT x_src, INT y_src, INT width_src, INT height_src,
@@ -232,6 +241,7 @@ INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD wi
 BOOL EMFDC_SetLayout( DC_ATTR *dc_attr, DWORD layout );
 BOOL EMFDC_SetMapMode( DC_ATTR *dc_attr, INT mode );
 BOOL EMFDC_SetMapperFlags( DC_ATTR *dc_attr, DWORD flags );
+BOOL EMFDC_SetMiterLimit( DC_ATTR *dc_attr, FLOAT limit );
 BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color );
 BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode );
 BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop );

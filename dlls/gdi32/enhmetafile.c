@@ -1680,7 +1680,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETMITERLIMIT:
       {
-        const EMRSETMITERLIMIT *lpSetMiterLimit = (const EMRSETMITERLIMIT *)mr;
+        const struct emr_set_miter_limit *lpSetMiterLimit = (const struct emr_set_miter_limit *)mr;
         SetMiterLimit( hdc, lpSetMiterLimit->eMiterLimit, NULL );
         break;
       }

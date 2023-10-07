@@ -1371,7 +1371,7 @@ BOOL WINAPI SetMiterLimit( HDC hdc, FLOAT limit, FLOAT *old_limit )
 {
     DC_ATTR *dc_attr;
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
-    /* FIXME: record EMFs */
+    if (dc_attr->emf && !EMFDC_SetMiterLimit( dc_attr, limit )) return 0;
     if (old_limit) *old_limit = dc_attr->miter_limit;
     dc_attr->miter_limit = limit;
     return TRUE;
