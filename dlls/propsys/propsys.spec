@@ -145,7 +145,7 @@
 @ stdcall PropVariantToUInt32(ptr ptr)
 @ stub PropVariantToUInt32Vector
 @ stub PropVariantToUInt32VectorAlloc
-@ stub PropVariantToUInt32WithDefault
+@ stdcall PropVariantToUInt32WithDefault(ptr long)
 @ stdcall PropVariantToUInt64(ptr ptr)
 @ stub PropVariantToUInt64Vector
 @ stub PropVariantToUInt64VectorAlloc

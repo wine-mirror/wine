@@ -966,6 +966,9 @@ static void test_intconversions(void)
     hr = PropVariantToUInt32(&propvar, &ulval);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%lx\n", hr);
 
+    ulval = PropVariantToUInt32WithDefault(&propvar, 77);
+    ok(ulval == 77, "ulval=%lu\n", ulval);
+
     hr = PropVariantToInt16(&propvar, &sval);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%lx\n", hr);
 
@@ -991,6 +994,9 @@ static void test_intconversions(void)
     ok(hr == S_OK, "hr=%lx\n", hr);
     ok(ulval == 5, "got wrong value %ld\n", ulval);
 
+    ulval = PropVariantToUInt32WithDefault(&propvar, 77);
+    ok(ulval == 5, "got wrong value %lu\n", ulval);
+
     hr = PropVariantToInt16(&propvar, &sval);
     ok(hr == S_OK, "hr=%lx\n", hr);
     ok(sval == 5, "got wrong value %d\n", sval);
@@ -1015,6 +1021,9 @@ static void test_intconversions(void)
 
     hr = PropVariantToUInt32(&propvar, &ulval);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "hr=%lx\n", hr);
+
+    ulval = PropVariantToUInt32WithDefault(&propvar, 77);
+    ok(ulval == 77, "ulval=%lu\n", ulval);
 
     hr = PropVariantToInt16(&propvar, &sval);
     ok(hr == S_OK, "hr=%lx\n", hr);

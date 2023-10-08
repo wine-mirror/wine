@@ -229,6 +229,20 @@ HRESULT WINAPI PropVariantToUInt32(REFPROPVARIANT propvarIn, ULONG *ret)
     return hr;
 }
 
+ULONG WINAPI PropVariantToUInt32WithDefault(REFPROPVARIANT propvarIn, ULONG ulDefault)
+{
+    LONGLONG res;
+    HRESULT hr;
+
+    TRACE("%p,%lu\n", propvarIn, ulDefault);
+
+    hr = PROPVAR_ConvertNumber(propvarIn, 32, FALSE, &res);
+    if (SUCCEEDED(hr))
+        return (ULONG)res;
+
+    return ulDefault;
+}
+
 HRESULT WINAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret)
 {
     LONGLONG res;
