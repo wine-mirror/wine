@@ -2191,11 +2191,16 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
  *
  * Build the module data for the initially-loaded ntdll.
  */
-static void build_ntdll_module( HMODULE module )
+static void build_ntdll_module(void)
 {
     UNICODE_STRING nt_name = RTL_CONSTANT_STRING( L"\\??\\C:\\windows\\system32\\ntdll.dll" );
+    MEMORY_BASIC_INFORMATION meminfo;
     WINE_MODREF *wm;
+    void *module;
 
+    NtQueryVirtualMemory( GetCurrentProcess(), LdrInitializeThunk, MemoryBasicInformation,
+                          &meminfo, sizeof(meminfo), NULL );
+    module = meminfo.AllocationBase;
     wm = alloc_module( module, &nt_name, TRUE );
     assert( wm );
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
@@ -2724,8 +2729,10 @@ static WINE_MODREF *build_main_module(void)
     status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
     if (status) goto failed;
     status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, FALSE, &wm );
+    if (status) goto failed;
     RtlFreeUnicodeString( &nt_name );
-    if (!status) return wm;
+    wm->ldr.LoadCount = -1;
+    return wm;
 failed:
     MESSAGE( "wine: failed to create main module for %s, status %lx\n",
              debugstr_us(&params->ImagePathName), status );
@@ -4055,12 +4062,29 @@ static void load_global_options(void)
 
 #ifdef _WIN64
 
+static void build_wow64_main_module(void)
+{
+    UNICODE_STRING nt_name;
+    WINE_MODREF *wm;
+    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+    void *module = NtCurrentTeb()->Peb->ImageBaseAddress;
+
+    RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
+    wm = alloc_module( module, &nt_name, FALSE );
+    assert( wm );
+    wm->ldr.LoadCount = -1;
+    RtlFreeUnicodeString( &nt_name );
+}
+
 static void (WINAPI *pWow64LdrpInitialize)( CONTEXT *ctx );
 
 void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context ) = NULL;
 
 static void init_wow64( CONTEXT *context )
 {
+    build_wow64_main_module();
+    build_ntdll_module();
+
     if (!imports_fixup_done)
     {
         HMODULE wow64;
@@ -4219,12 +4243,11 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         init_user_process_params();
         load_global_options();
         version_init();
-        build_ntdll_module( meminfo.AllocationBase );
 
         if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
 
         wm = build_main_module();
-        wm->ldr.LoadCount = -1;
+        build_ntdll_module();
 
         if ((status = load_dll( NULL, L"kernel32.dll", 0, &kernel32, FALSE )) != STATUS_SUCCESS)
         {
