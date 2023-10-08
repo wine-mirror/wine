@@ -118,10 +118,17 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( user_consent_verifier_statics, IUserConsentVerifierStatics, struct user_consent_verifier_statics, IActivationFactory_iface )
 
+static HRESULT WINAPI check_availability_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    result->vt = VT_UI4;
+    result->ulVal = UserConsentVerifierAvailability_DeviceNotPresent;
+    return S_OK;
+}
+
 static HRESULT WINAPI user_consent_verifier_statics_CheckAvailabilityAsync( IUserConsentVerifierStatics *iface, IAsyncOperation_UserConsentVerifierAvailability **result )
 {
-    FIXME( "iface %p, result %p stub!\n", iface, result );
-    return E_NOTIMPL;
+    TRACE( "iface %p, result %p\n", iface, result );
+    return async_operation_user_consent_verifier_availability_create( (IUnknown *)iface, NULL, check_availability_async, result );
 }
 
 static HRESULT WINAPI user_consent_verifier_statics_RequestVerificationAsync( IUserConsentVerifierStatics *iface, HSTRING message,

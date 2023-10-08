@@ -35,6 +35,12 @@
 #define WIDL_using_Windows_Security_Credentials_UI
 #include "windows.security.credentials.ui.h"
 
+#include "provider.h"
+
+typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
+extern HRESULT async_operation_user_consent_verifier_availability_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+                                                                          IAsyncOperation_UserConsentVerifierAvailability **out );
+
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \
@@ -72,5 +78,7 @@
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
+#define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
+    DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface )
 
 #endif
