@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_UserConsentVerifierStatics(void)
 {
     static const WCHAR *user_consent_verifier_statics_name = L"Windows.Security.Credentials.UI.UserConsentVerifier";
+    IUserConsentVerifierStatics *user_consent_verifier_statics = NULL;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -68,6 +69,11 @@ static void test_UserConsentVerifierStatics(void)
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IUserConsentVerifierStatics, (void **)&user_consent_verifier_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IUserConsentVerifierStatics_Release( user_consent_verifier_statics );
+    ok( ref == 1, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(credentials);
 struct user_consent_verifier_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IUserConsentVerifierStatics IUserConsentVerifierStatics_iface;
     LONG ref;
 };
 
@@ -46,6 +47,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IUserConsentVerifierStatics ))
+    {
+        *out = &impl->IUserConsentVerifierStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -108,9 +116,39 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( user_consent_verifier_statics, IUserConsentVerifierStatics, struct user_consent_verifier_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI user_consent_verifier_statics_CheckAvailabilityAsync( IUserConsentVerifierStatics *iface, IAsyncOperation_UserConsentVerifierAvailability **result )
+{
+    FIXME( "iface %p, result %p stub!\n", iface, result );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI user_consent_verifier_statics_RequestVerificationAsync( IUserConsentVerifierStatics *iface, HSTRING message,
+    IAsyncOperation_UserConsentVerificationResult **result )
+{
+    FIXME( "iface %p, message %s, result %p stub!\n", iface, debugstr_hstring( message ), result );
+    return E_NOTIMPL;
+}
+
+static const struct IUserConsentVerifierStaticsVtbl user_consent_verifier_statics_vtbl =
+{
+    user_consent_verifier_statics_QueryInterface,
+    user_consent_verifier_statics_AddRef,
+    user_consent_verifier_statics_Release,
+    /* IInspectable methods */
+    user_consent_verifier_statics_GetIids,
+    user_consent_verifier_statics_GetRuntimeClassName,
+    user_consent_verifier_statics_GetTrustLevel,
+    /* IUserConsentVerifierStatics methods */
+    user_consent_verifier_statics_CheckAvailabilityAsync,
+    user_consent_verifier_statics_RequestVerificationAsync,
+};
+
 static struct user_consent_verifier_statics user_consent_verifier_statics =
 {
     {&factory_vtbl},
+    {&user_consent_verifier_statics_vtbl},
     1,
 };
 
