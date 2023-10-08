@@ -855,6 +855,7 @@ SOURCES = \
 	windows.perception.spatial.idl \
 	windows.perception.spatial.surfaces.idl \
 	windows.security.credentials.idl \
+	windows.security.credentials.ui.idl \
 	windows.security.cryptography.idl \
 	windows.security.isolation.idl \
 	windows.storage.fileproperties.idl \
