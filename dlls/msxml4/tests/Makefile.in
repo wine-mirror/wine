@@ -1,0 +1,5 @@
+TESTDLL = msxml4.dll
+IMPORTS = oleaut32 ole32
+
+C_SRCS = \
+	domdoc.c
