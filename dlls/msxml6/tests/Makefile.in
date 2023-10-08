@@ -1,0 +1,5 @@
+TESTDLL = msxml6.dll
+IMPORTS = oleaut32 ole32
+
+C_SRCS = \
+	domdoc.c

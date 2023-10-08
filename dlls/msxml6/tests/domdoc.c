@@ -32,7 +32,7 @@
 #include "windows.h"
 
 #include "initguid.h"
-#include "msxml2.h"
+#include "msxml6.h"
 
 #include "wine/test.h"
 
@@ -62,7 +62,7 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
-/* see dlls/msxml[36]/tests/domdoc.c */
+/* see dlls/msxml[34]/tests/domdoc.c */
 static void test_namespaces_as_attributes(void)
 {
     struct test
@@ -122,7 +122,7 @@ static void test_namespaces_as_attributes(void)
     test = tests;
     while (test->xml)
     {
-        hr = CoCreateInstance(&CLSID_DOMDocument40, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+        hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IXMLDOMDocument2_loadXML(doc, _bstr_(test->xml), &b);
@@ -180,7 +180,8 @@ static void test_namespaces_as_attributes(void)
             {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
-                    ok(!lstrcmpW(str, L""), "got %s\n", wine_dbgstr_w(str));
+                    ok(!lstrcmpW(str, L"http://www.w3.org/2000/xmlns/"),
+                                 "got %s\n", wine_dbgstr_w(str));
                 else
                     ok(!lstrcmpW(str, _bstr_(test->uris[i])), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
@@ -214,10 +215,10 @@ START_TEST(domdoc)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "failed to init com\n");
 
-    hr = CoCreateInstance(&CLSID_DOMDocument40, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
     if (hr != S_OK)
     {
-        win_skip("class &CLSID_DOMDocument40 not supported\n");
+        win_skip("class &CLSID_DOMDocument60 not supported\n");
         return;
     }
     IXMLDOMDocument2_Release(doc);
