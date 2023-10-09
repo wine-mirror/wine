@@ -744,9 +744,9 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
     WCHAR*              filename;
     struct section_info info;
     BOOL                ret = FALSE;
-    UINT32 target_cpu = (pcs->is_64bit) ? MACHO_CPU_TYPE_X86_64 : MACHO_CPU_TYPE_X86;
-    UINT32 target_magic = (pcs->is_64bit) ? MACHO_MH_MAGIC_64 : MACHO_MH_MAGIC_32;
-    UINT32 target_cmd   = (pcs->is_64bit) ? MACHO_LC_SEGMENT_64 : MACHO_LC_SEGMENT;
+    UINT32 target_cpu = (pcs->is_host_64bit) ? MACHO_CPU_TYPE_X86_64 : MACHO_CPU_TYPE_X86;
+    UINT32 target_magic = (pcs->is_host_64bit) ? MACHO_MH_MAGIC_64 : MACHO_MH_MAGIC_32;
+    UINT32 target_cmd   = (pcs->is_host_64bit) ? MACHO_LC_SEGMENT_64 : MACHO_LC_SEGMENT;
     DWORD bytes_read;
 
     struct
@@ -762,8 +762,8 @@ static BOOL macho_map_file(struct process *pcs, const WCHAR *filenameW,
     ifm->modtype = DMT_MACHO;
     ifm->ops = &macho_file_map_ops;
     ifm->alternate = NULL;
-    ifm->addr_size = (pcs->is_64bit) ? 64 : 32;
-    fmap->header_size = (pcs->is_64bit) ? sizeof(struct macho_header) : FIELD_OFFSET(struct macho_header, reserved);
+    ifm->addr_size = (pcs->is_host_64bit) ? 64 : 32;
+    fmap->header_size = (pcs->is_host_64bit) ? sizeof(struct macho_header) : FIELD_OFFSET(struct macho_header, reserved);
 
     if (!(filename = get_dos_file_name(filenameW))) return FALSE;
 
@@ -1339,8 +1339,8 @@ static BOOL image_uses_split_segs(struct process* process, ULONG_PTR load_addr)
 
     if (load_addr)
     {
-        UINT32 target_cpu = (process->is_64bit) ? MACHO_CPU_TYPE_X86_64 : MACHO_CPU_TYPE_X86;
-        UINT32 target_magic = (process->is_64bit) ? MACHO_MH_MAGIC_64 : MACHO_MH_MAGIC_32;
+        UINT32 target_cpu = (process->is_host_64bit) ? MACHO_CPU_TYPE_X86_64 : MACHO_CPU_TYPE_X86;
+        UINT32 target_magic = (process->is_host_64bit) ? MACHO_MH_MAGIC_64 : MACHO_MH_MAGIC_32;
         struct macho_header header;
 
         if (read_process_memory(process, load_addr, &header, FIELD_OFFSET(struct macho_header, reserved)) &&
@@ -1608,14 +1608,14 @@ static BOOL macho_enum_modules_internal(const struct process* pcs,
     TRACE("(%p/%p, %s, %p, %p)\n", pcs, pcs->handle, debugstr_w(main_name), cb,
             user);
 
-    if (pcs->is_64bit)
+    if (pcs->is_host_64bit)
         len = sizeof(image_infos.infos64);
     else
         len = sizeof(image_infos.infos32);
     if (!pcs->dbg_hdr_addr ||
         !read_process_memory(pcs, pcs->dbg_hdr_addr, &image_infos, len))
         goto done;
-    if (!pcs->is_64bit)
+    if (!pcs->is_host_64bit)
     {
         struct dyld_all_image_infos32 temp = image_infos.infos32;
         image_infos.infos64.infoArrayCount = temp.infoArrayCount;
@@ -1625,7 +1625,7 @@ static BOOL macho_enum_modules_internal(const struct process* pcs,
         goto done;
     TRACE("Process has %u image infos at %I64x\n", image_infos.infos64.infoArrayCount, image_infos.infos64.infoArray);
 
-    if (pcs->is_64bit)
+    if (pcs->is_host_64bit)
         len = sizeof(info_array->info64);
     else
         len = sizeof(info_array->info32);
@@ -1639,7 +1639,7 @@ static BOOL macho_enum_modules_internal(const struct process* pcs,
     for (i = 0; i < image_infos.infos64.infoArrayCount; i++)
     {
         struct dyld_image_info64 info;
-        if (pcs->is_64bit)
+        if (pcs->is_host_64bit)
             info = info_array[i].info64;
         else
         {
@@ -1829,13 +1829,13 @@ static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_in
     char path[1024];
     BOOL got_path = FALSE;
 
-    if (pcs->is_64bit)
+    if (pcs->is_host_64bit)
         len = sizeof(image_infos.infos64);
     else
         len = sizeof(image_infos.infos32);
     if (read_process_memory(pcs, pcs->dbg_hdr_addr, &image_infos, len))
     {
-        if (pcs->is_64bit)
+        if (pcs->is_host_64bit)
             len = sizeof(image_info.info64);
         else
         {
@@ -1847,7 +1847,7 @@ static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_in
         if (image_infos.infos64.infoArray && image_infos.infos64.infoArrayCount &&
             read_process_memory(pcs, image_infos.infos64.infoArray, &image_info, len))
         {
-            if (!pcs->is_64bit)
+            if (!pcs->is_host_64bit)
             {
                 struct dyld_image_info32 temp = image_info.info32;
                 image_info.info64.imageLoadAddress = temp.imageLoadAddress;
