@@ -206,6 +206,18 @@ static char* format_uuid(const UINT8 uuid[16], char out[UUID_STRING_LEN])
     return out;
 }
 
+static USHORT macho_cpu_to_machine(unsigned cpu)
+{
+    switch (cpu)
+    {
+    case MACHO_CPU_TYPE_X86:    return IMAGE_FILE_MACHINE_I386;
+    case MACHO_CPU_TYPE_X86_64: return IMAGE_FILE_MACHINE_AMD64;
+    default:
+        FIXME("Untranslated Mach-O CPU %x\n", cpu);
+        return IMAGE_FILE_MACHINE_UNKNOWN;
+    }
+}
+
 /******************************************************************
  *              macho_calc_range
  *
@@ -1355,6 +1367,26 @@ static BOOL image_uses_split_segs(struct process* process, ULONG_PTR load_addr)
 }
 
 /******************************************************************
+ *              image_get_machine
+ *
+ * For a module identified by its load address, return the machine field
+ * of the (loaded) Macho header.
+ */
+static USHORT image_get_machine(struct process *process, ULONG_PTR load_addr)
+{
+    if (load_addr)
+    {
+        struct macho_header header;
+        UINT32 target_magic = (process->is_host_64bit) ? MACHO_MH_MAGIC_64 : MACHO_MH_MAGIC_32;
+
+        if (read_process_memory(process, load_addr, &header, FIELD_OFFSET(struct macho_header, reserved)) &&
+            header.magic == target_magic)
+            return macho_cpu_to_machine(header.cputype);
+    }
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+}
+
+/******************************************************************
  *              macho_load_debug_info
  *
  * Loads Mach-O debugging information from the module image file.
@@ -1479,7 +1511,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
             load_addr = fmap.u.macho.segs_start;
         macho_info->module = module_new(pcs, filename, DMT_MACHO, FALSE, load_addr,
                                         fmap.u.macho.segs_size, 0, calc_crc32(fmap.u.macho.handle),
-                                        IMAGE_FILE_MACHINE_UNKNOWN);
+                                        image_get_machine(pcs, load_addr));
         if (!macho_info->module)
         {
             HeapFree(GetProcessHeap(), 0, modfmt);
