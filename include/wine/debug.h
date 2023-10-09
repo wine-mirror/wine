@@ -326,7 +326,7 @@ static inline const char *wine_dbgstr_guid( const GUID *id )
 
 static inline const char *wine_dbgstr_fourcc( unsigned int fourcc )
 {
-    char str[4] = { fourcc, fourcc >> 8, fourcc >> 16, fourcc >> 24 };
+    char str[4] = { (char)fourcc, (char)(fourcc >> 8), (char)(fourcc >> 16), (char)(fourcc >> 24) };
     if (!fourcc)
         return "''";
     if (isprint( str[0] ) && isprint( str[1] ) && isprint( str[2] ) && isprint( str[3] ))
