@@ -243,11 +243,14 @@ static BOOL pe_is_valid_pointer_table(const IMAGE_NT_HEADERS* nthdr, const void*
  *
  * Maps an PE file into memory (and checks it's a real PE file)
  */
-BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_type mt)
+BOOL pe_map_file(HANDLE file, struct image_file_map* fmap)
 {
-    void*       mapping;
+    void*                       mapping;
+    IMAGE_NT_HEADERS*           nthdr;
+    IMAGE_SECTION_HEADER*       section;
+    unsigned                    i;
 
-    fmap->modtype = mt;
+    fmap->modtype = DMT_PE;
     fmap->ops = &pe_file_map_ops;
     fmap->alternate = NULL;
     fmap->u.pe.hMap = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
@@ -256,72 +259,61 @@ BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_type mt)
     fmap->u.pe.full_map = NULL;
     if (!(mapping = pe_map_full(fmap, NULL))) goto error;
 
-    switch (mt)
+    if (!(nthdr = RtlImageNtHeader(mapping))) goto error;
+    memcpy(&fmap->u.pe.file_header, &nthdr->FileHeader, sizeof(fmap->u.pe.file_header));
+    switch (nthdr->OptionalHeader.Magic)
     {
-    case DMT_PE:
-        {
-            IMAGE_NT_HEADERS*       nthdr;
-            IMAGE_SECTION_HEADER*   section;
-            unsigned                i;
-
-            if (!(nthdr = RtlImageNtHeader(mapping))) goto error;
-            memcpy(&fmap->u.pe.file_header, &nthdr->FileHeader, sizeof(fmap->u.pe.file_header));
-            switch (nthdr->OptionalHeader.Magic)
-            {
-            case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-                fmap->addr_size = 32;
-                memcpy(&fmap->u.pe.opt.header32, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header32));
-                break;
-            case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-                if (sizeof(void*) == 4) return FALSE;
-                fmap->addr_size = 64;
-                memcpy(&fmap->u.pe.opt.header64, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header64));
-                break;
-            default:
-                return FALSE;
-            }
-
-            fmap->u.pe.builtin = !memcmp((const IMAGE_DOS_HEADER*)mapping + 1, builtin_signature, sizeof(builtin_signature));
-            section = IMAGE_FIRST_SECTION( nthdr );
-            fmap->u.pe.sect = HeapAlloc(GetProcessHeap(), 0,
-                                        nthdr->FileHeader.NumberOfSections * sizeof(fmap->u.pe.sect[0]));
-            if (!fmap->u.pe.sect) goto error;
-            for (i = 0; i < nthdr->FileHeader.NumberOfSections; i++)
-            {
-                memcpy(&fmap->u.pe.sect[i].shdr, section + i, sizeof(IMAGE_SECTION_HEADER));
-                fmap->u.pe.sect[i].mapped = IMAGE_NO_MAP;
-            }
-            if (nthdr->FileHeader.PointerToSymbolTable && nthdr->FileHeader.NumberOfSymbols)
-            {
-                LARGE_INTEGER li;
-
-                if (GetFileSizeEx(file, &li) && pe_is_valid_pointer_table(nthdr, mapping, li.QuadPart))
-                {
-                    /* FIXME ugly: should rather map the relevant content instead of copying it */
-                    const char* src = (const char*)mapping +
-                        nthdr->FileHeader.PointerToSymbolTable +
-                        nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
-                    char* dst;
-                    DWORD sz = *(DWORD*)src;
-
-                    if ((dst = HeapAlloc(GetProcessHeap(), 0, sz)))
-                        memcpy(dst, src, sz);
-                    fmap->u.pe.strtable = dst;
-                }
-                else
-                {
-                    WARN("Bad coff table... wipping out\n");
-                    /* we have bad information here, wipe it out */
-                    fmap->u.pe.file_header.PointerToSymbolTable = 0;
-                    fmap->u.pe.file_header.NumberOfSymbols = 0;
-                    fmap->u.pe.strtable = NULL;
-                }
-            }
-            else fmap->u.pe.strtable = NULL;
-        }
+    case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        fmap->addr_size = 32;
+        memcpy(&fmap->u.pe.opt.header32, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header32));
         break;
-    default: assert(0); goto error;
+    case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        if (sizeof(void*) == 4) return FALSE;
+        fmap->addr_size = 64;
+        memcpy(&fmap->u.pe.opt.header64, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header64));
+        break;
+    default:
+        return FALSE;
     }
+
+    fmap->u.pe.builtin = !memcmp((const IMAGE_DOS_HEADER*)mapping + 1, builtin_signature, sizeof(builtin_signature));
+    section = IMAGE_FIRST_SECTION( nthdr );
+    fmap->u.pe.sect = HeapAlloc(GetProcessHeap(), 0,
+                                nthdr->FileHeader.NumberOfSections * sizeof(fmap->u.pe.sect[0]));
+    if (!fmap->u.pe.sect) goto error;
+    for (i = 0; i < nthdr->FileHeader.NumberOfSections; i++)
+    {
+        memcpy(&fmap->u.pe.sect[i].shdr, section + i, sizeof(IMAGE_SECTION_HEADER));
+        fmap->u.pe.sect[i].mapped = IMAGE_NO_MAP;
+    }
+    if (nthdr->FileHeader.PointerToSymbolTable && nthdr->FileHeader.NumberOfSymbols)
+    {
+        LARGE_INTEGER li;
+
+        if (GetFileSizeEx(file, &li) && pe_is_valid_pointer_table(nthdr, mapping, li.QuadPart))
+        {
+            /* FIXME ugly: should rather map the relevant content instead of copying it */
+            const char* src = (const char*)mapping +
+                nthdr->FileHeader.PointerToSymbolTable +
+                nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
+            char* dst;
+            DWORD sz = *(DWORD*)src;
+
+            if ((dst = HeapAlloc(GetProcessHeap(), 0, sz)))
+                memcpy(dst, src, sz);
+            fmap->u.pe.strtable = dst;
+        }
+        else
+        {
+            WARN("Bad coff table... wipping out\n");
+            /* we have bad information here, wipe it out */
+            fmap->u.pe.file_header.PointerToSymbolTable = 0;
+            fmap->u.pe.file_header.NumberOfSymbols = 0;
+            fmap->u.pe.strtable = NULL;
+        }
+    }
+    else fmap->u.pe.strtable = NULL;
+
     pe_unmap_full(fmap);
 
     return TRUE;
@@ -757,7 +749,7 @@ static BOOL search_builtin_pe(void *param, HANDLE handle, const WCHAR *path)
 {
     struct builtin_search *search = param;
 
-    if (!pe_map_file(handle, &search->fmap, DMT_PE)) return FALSE;
+    if (!pe_map_file(handle, &search->fmap)) return FALSE;
 
     search->path = wcsdup(path);
     return TRUE;
@@ -815,7 +807,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     if ((modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
     {
         modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
-        if (pe_map_file(hFile, &modfmt->u.pe_info->fmap, DMT_PE))
+        if (pe_map_file(hFile, &modfmt->u.pe_info->fmap))
         {
             struct builtin_search builtin = { NULL };
             if (opened && modfmt->u.pe_info->fmap.u.pe.builtin &&

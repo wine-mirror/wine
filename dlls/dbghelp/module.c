@@ -497,7 +497,7 @@ static BOOL image_check_debug_link_crc(const WCHAR* file, struct image_file_map*
 
     SetFilePointer(handle, 0, 0, FILE_BEGIN);
     if (ReadFile(handle, &magic, sizeof(magic), &read_bytes, NULL) && magic == IMAGE_DOS_SIGNATURE)
-        ret = pe_map_file(handle, fmap, DMT_PE);
+        ret = pe_map_file(handle, fmap);
     else
         ret = elf_map_handle(handle, fmap);
     CloseHandle(handle);
@@ -521,7 +521,7 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
     TRACE("Located debug information file at %s\n", debugstr_w(file));
 
     if (ReadFile(handle, &magic, sizeof(magic), &read_bytes, NULL) && magic == IMAGE_DOS_SIGNATURE)
-        ret = pe_map_file(handle, fmap, DMT_PE);
+        ret = pe_map_file(handle, fmap);
     else
         ret = elf_map_handle(handle, fmap);
     CloseHandle(handle);
