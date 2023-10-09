@@ -404,7 +404,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
         do
         {
-            size_t read_size = sysinfo.dwAllocationGranularity - (env & (sysinfo.dwAllocationGranularity - 1));
+            size_t read_size = sysinfo.dwPageSize - (env & (sysinfo.dwPageSize - 1));
             if (!(new_buf = realloc(buf, buf_size + read_size))) break;
             buf = new_buf;
 
