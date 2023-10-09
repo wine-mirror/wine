@@ -1060,6 +1060,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, POINT *oldorg )
 {
     DC_ATTR *dc_attr;
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SetBrushOrgEx( dc_attr, x, y )) return FALSE;
     if (oldorg) *oldorg = dc_attr->brush_org;
     dc_attr->brush_org.x = x;
     dc_attr->brush_org.y = y;

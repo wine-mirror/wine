@@ -2129,6 +2129,16 @@ BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color )
     return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
 }
 
+BOOL EMFDC_SetBrushOrgEx( DC_ATTR *dc_attr, INT x, INT y )
+{
+    EMRSETBRUSHORGEX emr;
+
+    emr.emr.iType = EMR_SETBRUSHORGEX;
+    emr.emr.nSize = sizeof(emr);
+    emr.ptlOrigin.x = x;
+    emr.ptlOrigin.y = y;
+    return emfdc_record( get_dc_emf( dc_attr ), &emr.emr );
+}
 
 BOOL EMFDC_SetTextColor( DC_ATTR *dc_attr, COLORREF color )
 {

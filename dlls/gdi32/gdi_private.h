@@ -233,6 +233,7 @@ BOOL EMFDC_SelectPalette( DC_ATTR *dc_attr, HPALETTE palette );
 BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir );
 BOOL EMFDC_SetBkColor( DC_ATTR *dc_attr, COLORREF color );
 BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode );
+BOOL EMFDC_SetBrushOrgEx( DC_ATTR *dc_attr, INT x, INT y );
 BOOL EMFDC_SetDCBrushColor( DC_ATTR *dc_attr, COLORREF color );
 BOOL EMFDC_SetDCPenColor( DC_ATTR *dc_attr, COLORREF color );
 INT  EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dest, INT y_dest, DWORD width, DWORD height,
