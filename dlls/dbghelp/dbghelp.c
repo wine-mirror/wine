@@ -400,17 +400,13 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
     {
         size_t buf_size = 0, i, last_null = -1;
         WCHAR *buf = NULL;
+        WCHAR *new_buf;
 
         do
         {
             size_t read_size = sysinfo.dwAllocationGranularity - (env & (sysinfo.dwAllocationGranularity - 1));
-            if (buf)
-            {
-                WCHAR *new_buf;
-                if (!(new_buf = realloc(buf, buf_size + read_size))) break;
-                buf = new_buf;
-            }
-            else if(!(buf = malloc(read_size))) break;
+            if (!(new_buf = realloc(buf, buf_size + read_size))) break;
+            buf = new_buf;
 
             if (!read_process_memory(pcs, env, (char*)buf + buf_size, read_size)) break;
             for (i = buf_size / sizeof(WCHAR); i < (buf_size + read_size) / sizeof(WCHAR); i++)
