@@ -398,7 +398,6 @@ struct symt_udt
 
 enum module_type
 {
-    DMT_UNKNOWN,        /* for lookup, not actually used for a module */
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
     DMT_MACHO,          /* a real Mach-O shared module */
@@ -732,8 +731,7 @@ extern const struct loader_ops empty_loader_ops DECLSPEC_HIDDEN;
 extern BOOL         module_init_pair(struct module_pair* pair, HANDLE hProcess,
                                      DWORD64 addr) DECLSPEC_HIDDEN;
 extern struct module*
-                    module_find_by_addr(const struct process* pcs, DWORD64 addr,
-                                        enum module_type type) DECLSPEC_HIDDEN;
+                    module_find_by_addr(const struct process* pcs, DWORD64 addr) DECLSPEC_HIDDEN;
 extern struct module*
                     module_find_by_nameW(const struct process* pcs,
                                          const WCHAR* name) DECLSPEC_HIDDEN;

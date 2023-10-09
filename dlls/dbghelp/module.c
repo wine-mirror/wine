@@ -262,7 +262,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
 BOOL module_init_pair(struct module_pair* pair, HANDLE hProcess, DWORD64 addr)
 {
     if (!(pair->pcs = process_find_by_handle(hProcess))) return FALSE;
-    pair->requested = module_find_by_addr(pair->pcs, addr, DMT_UNKNOWN);
+    pair->requested = module_find_by_addr(pair->pcs, addr);
     return module_get_debug(pair);
 }
 
@@ -413,29 +413,25 @@ BOOL module_get_debug(struct module_pair* pair)
 /***********************************************************************
  *	module_find_by_addr
  *
- * either the addr where module is loaded, or any address inside the 
+ * either the addr where module is loaded, or any address inside the
  * module
  */
-struct module* module_find_by_addr(const struct process* pcs, DWORD64 addr,
-                                   enum module_type type)
+struct module* module_find_by_addr(const struct process* pcs, DWORD64 addr)
 {
-    struct module*      module;
-    
-    if (type == DMT_UNKNOWN)
+    struct module* module;
+
+    for (module = pcs->lmodules; module; module = module->next)
     {
-        if ((module = module_find_by_addr(pcs, addr, DMT_PE)) ||
-            (module = module_find_by_addr(pcs, addr, DMT_ELF)) ||
-            (module = module_find_by_addr(pcs, addr, DMT_MACHO)))
+        if (module->type == DMT_PE && addr >= module->module.BaseOfImage &&
+            addr < module->module.BaseOfImage + module->module.ImageSize)
             return module;
     }
-    else
+    for (module = pcs->lmodules; module; module = module->next)
     {
-        for (module = pcs->lmodules; module; module = module->next)
-        {
-            if (type == module->type && addr >= module->module.BaseOfImage &&
-                addr < module->module.BaseOfImage + module->module.ImageSize) 
-                return module;
-        }
+        if ((module->type == DMT_ELF || module->type == DMT_MACHO) &&
+            addr >= module->module.BaseOfImage &&
+            addr < module->module.BaseOfImage + module->module.ImageSize)
+            return module;
     }
     SetLastError(ERROR_MOD_NOT_FOUND);
     return module;
@@ -1094,7 +1090,7 @@ BOOL WINAPI SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll)
 
     pcs = process_find_by_handle(hProcess);
     if (!pcs) return FALSE;
-    module = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
+    module = module_find_by_addr(pcs, BaseOfDll);
     if (!module) return FALSE;
     module_remove(pcs, module);
     return TRUE;
@@ -1498,7 +1494,7 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
 
     if (!pcs) return FALSE;
     if (ModuleInfo->SizeOfStruct > sizeof(*ModuleInfo)) return FALSE;
-    module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
+    module = module_find_by_addr(pcs, dwAddr);
     if (!module) return FALSE;
 
     miw64 = module->module;
@@ -1537,7 +1533,7 @@ DWORD64 WINAPI SymGetModuleBase64(HANDLE hProcess, DWORD64 dwAddr)
     struct module*      module;
 
     if (!pcs) return 0;
-    module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
+    module = module_find_by_addr(pcs, dwAddr);
     if (!module) return 0;
     return module->module.BaseOfImage;
 }
@@ -1595,7 +1591,7 @@ PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
     struct module*      module;
 
     if (!pcs) return NULL;
-    module = module_find_by_addr(pcs, AddrBase, DMT_UNKNOWN);
+    module = module_find_by_addr(pcs, AddrBase);
     if (!module || !module->cpu->find_runtime_function) return NULL;
 
     return module->cpu->find_runtime_function(module, AddrBase);

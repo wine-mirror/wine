@@ -1148,7 +1148,7 @@ static BOOL symt_enum_locals(struct process* pcs, const WCHAR* mask,
     se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
 
     pair.pcs = pcs;
-    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc, DMT_UNKNOWN);
+    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc);
     if (!module_get_debug(&pair)) return FALSE;
 
     if (symt_check_tag(pcs->localscope_symt, SymTagFunction) ||
@@ -1318,7 +1318,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
         HeapFree(GetProcessHeap(), 0, mod);
         return TRUE;
     }
-    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
+    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll);
     if (!module_get_debug(&pair))
         return FALSE;
 
@@ -1624,7 +1624,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
 
     /* search first in local context */
     pair.pcs = pcs;
-    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc, DMT_UNKNOWN);
+    pair.requested = module_find_by_addr(pair.pcs, pcs->localscope_pc);
     if (module_get_debug(&pair) &&
         (symt_check_tag(pcs->localscope_symt, SymTagFunction) ||
          symt_check_tag(pcs->localscope_symt, SymTagInlineSite)))

@@ -962,7 +962,7 @@ static BOOL x86_64_fetch_minidump_module(struct dump_context* dc, unsigned index
         ULONG                   size;
 
         if (!(pcs = process_find_by_handle(dc->process->handle)) ||
-            !(module = module_find_by_addr(pcs, dc->modules[index].base, DMT_UNKNOWN)))
+            !(module = module_find_by_addr(pcs, dc->modules[index].base)))
             return FALSE;
         rtf = (const RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
         if (rtf)

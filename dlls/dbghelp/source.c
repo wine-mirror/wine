@@ -152,7 +152,7 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
          
     if (ModBase)
     {
-        pair.requested = module_find_by_addr(pair.pcs, ModBase, DMT_UNKNOWN);
+        pair.requested = module_find_by_addr(pair.pcs, ModBase);
         if (!module_get_debug(&pair)) return FALSE;
     }
     else
