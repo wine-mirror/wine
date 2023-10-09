@@ -411,15 +411,35 @@ static void test_brush_org( void )
 {
     HDC hdc = GetDC( 0 );
     POINT old, pt;
+    BOOL ret;
 
-    SetBrushOrgEx( hdc, 0, 0, &old );
+    ret = SetBrushOrgEx( hdc, 0, 0, &old );
+    ok(ret, "Unexpected return value %d.\n", ret);
 
-    SetBrushOrgEx( hdc, 1, 1, &pt );
+    ret = SetBrushOrgEx( hdc, 1, 1, &pt );
+    ok(ret, "Unexpected return value %d.\n", ret);
     ok( pt.x == 0 && pt.y == 0, "got %ld,%ld\n", pt.x, pt.y );
-    SetBrushOrgEx( hdc, 0x10000, -1, &pt );
+    ret = SetBrushOrgEx( hdc, 0x10000, -1, &pt );
+    ok(ret, "Unexpected return value %d.\n", ret);
     ok( pt.x == 1 && pt.y == 1, "got %ld,%ld\n", pt.x, pt.y );
-    SetBrushOrgEx( hdc, old.x, old.y, &pt );
+    ret = SetBrushOrgEx( hdc, old.x, old.y, &pt );
+    ok(ret, "Unexpected return value %d.\n", ret);
     ok( pt.x == 0x10000 && pt.y == -1, "got %ld,%ld\n", pt.x, pt.y );
+
+    ret = GetBrushOrgEx( hdc, &pt );
+    ok(ret, "Unexpected return value %d.\n", ret);
+    ok( pt.x == 0 && pt.y == 0, "got %ld,%ld\n", pt.x, pt.y );
+    pt.x = 10;
+    pt.y = 20;
+    ret = FixBrushOrgEx( hdc, 2, 3, &pt );
+    todo_wine
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    todo_wine
+    ok( pt.x == 10 && pt.y == 20, "got %ld,%ld\n", pt.x, pt.y );
+    ret = GetBrushOrgEx( hdc, &pt );
+    ok(ret, "Unexpected return value %d.\n", ret);
+    todo_wine
+    ok( pt.x == 0 && pt.y == 0, "got %ld,%ld\n", pt.x, pt.y );
 
     ReleaseDC( 0, hdc );
 }
