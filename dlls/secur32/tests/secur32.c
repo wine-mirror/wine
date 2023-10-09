@@ -446,7 +446,7 @@ static void test_kerberos(void)
 
 
     status = QuerySecurityPackageInfoA(provider, &info);
-    ok(status == SEC_E_OK, "Kerberos package not installed, skipping test\n");
+    ok(status == SEC_E_OK, "Kerberos package not installed (%08lx), skipping test\n", status);
     if(status != SEC_E_OK)
         return;
 
@@ -479,7 +479,12 @@ static void test_ticket_cache(void)
 
     RtlInitAnsiString( &name, MICROSOFT_KERBEROS_NAME_A );
     status = LsaLookupAuthenticationPackage( lsa, &name, &package );
-    ok( !status, "got %08lx\n", status );
+    ok(status == SEC_E_OK, "Kerberos package not installed (%08lx), skipping test\n", status);
+    if(status != SEC_E_OK)
+    {
+      LsaDeregisterLogonProcess( lsa );
+      return;
+    }
 
     status = LsaCallAuthenticationPackage( lsa, package, &req, sizeof(req), (void **)&resp, &len, &status );
     ok( !status, "got %08lx\n", status );
