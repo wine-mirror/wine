@@ -134,7 +134,7 @@ WCHAR *get_wine_loader_name(struct process *pcs)
     unsigned len;
 
     name = process_getenv(pcs, L"WINELOADER");
-    if (!name) name = pcs->is_system_64bit ? L"wine64" : L"wine";
+    if (!name) name = pcs->is_host_64bit ? L"wine64" : L"wine";
     len = lstrlenW(name);
 
     /* WINELOADER isn't properly updated in Wow64 process calling inside Windows env block
@@ -145,14 +145,14 @@ WCHAR *get_wine_loader_name(struct process *pcs)
     if (altname)
     {
         memcpy(altname, name, len * sizeof(WCHAR));
-        if (pcs->is_system_64bit && len >= 2 && memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)) != 0)
+        if (pcs->is_host_64bit && len >= 2 && memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)) != 0)
         {
             lstrcpyW(altname + len, L"64");
             /* in multi-arch wow configuration, wine64 doesn't exist */
             if (GetFileAttributesW(altname) == INVALID_FILE_ATTRIBUTES)
                 altname[len] = L'\0';
         }
-        else if (!pcs->is_system_64bit && len >= 2 && !memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)))
+        else if (!pcs->is_host_64bit && len >= 2 && !memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)))
             altname[len - 2] = '\0';
         else
             altname[len] = '\0';

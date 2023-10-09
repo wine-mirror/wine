@@ -378,7 +378,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
             peb_addr += 0x1000;
         if (!ReadProcessMemory(pcs->handle, peb_addr, &peb32, sizeof(peb32), NULL)) return FALSE;
         base = *(const DWORD*)((const char*)&peb32 + 0x460 /* CloudFileFlags */);
-        pcs->is_system_64bit = FALSE;
+        pcs->is_host_64bit = FALSE;
         if (read_process_memory(pcs, peb32.ProcessParameters + 0x48, &env32, sizeof(env32))) env = env32;
     }
     if (pcs->is_64bit || base == 0)
@@ -388,7 +388,7 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
         if (!pcs->is_64bit) peb_addr -= 0x1000; /* PEB32 => PEB64 */
         if (!ReadProcessMemory(pcs->handle, peb_addr, &peb, sizeof(peb), NULL)) return FALSE;
         base = *(const DWORD64*)&peb.CloudFileFlags;
-        pcs->is_system_64bit = TRUE;
+        pcs->is_host_64bit = TRUE;
         if (pcs->is_64bit)
             ReadProcessMemory(pcs->handle,
                               (char *)(ULONG_PTR)peb.ProcessParameters + FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment),

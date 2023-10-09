@@ -517,7 +517,7 @@ struct process
     void*                       buffer;
 
     BOOL                        is_64bit;
-    BOOL                        is_system_64bit;
+    BOOL                        is_host_64bit;
 };
 
 static inline BOOL read_process_memory(const struct process *process, UINT64 addr, void *buf, size_t size)

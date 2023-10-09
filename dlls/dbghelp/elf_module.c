@@ -1345,7 +1345,7 @@ static BOOL elf_search_auxv(const struct process* pcs, unsigned type, ULONG_PTR*
 {
     char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
     SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
-    const unsigned ptr_size = pcs->is_system_64bit ? 8 : 4;
+    const unsigned ptr_size = pcs->is_host_64bit ? 8 : 4;
     UINT64      envp;
     UINT64      addr;
     UINT64      str;
@@ -1385,7 +1385,7 @@ static BOOL elf_search_auxv(const struct process* pcs, unsigned type, ULONG_PTR*
         if (str) break;
     }
 
-    if (pcs->is_system_64bit)
+    if (pcs->is_host_64bit)
     {
         struct
         {
@@ -1479,7 +1479,7 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
     char bufstr[256];
     ULONG_PTR lm_addr;
 
-    if (pcs->is_system_64bit)
+    if (pcs->is_host_64bit)
     {
         struct
         {
