@@ -391,7 +391,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
                 else
                 {
                     if (!(p = wcspbrk(command, L",()[]"))) goto error;
-                    while (p[-1] == ' ') p--;
+                    while (p > command && p[-1] == ' ') p--;
                 }
 
                 new_argv = realloc(argv, (argc + 1) * sizeof(*argv));
