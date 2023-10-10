@@ -23,6 +23,7 @@
 
 #include <windows.h>
 #include <ntgdi.h>
+#include <winppi.h>
 #include <winspool.h>
 #include <ddk/winsplp.h>
 #include <usp10.h>
@@ -40,6 +41,7 @@ struct pp_data
 {
     DWORD magic;
     HANDLE hport;
+    WCHAR *port;
     WCHAR *doc_name;
     WCHAR *out_file;
 
@@ -2980,6 +2982,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         return NULL;
     data->magic = PP_MAGIC;
     data->hport = hport;
+    data->port = wcsdup(port);
     data->doc_name = wcsdup(open_data->pDocumentName);
     data->out_file = wcsdup(open_data->pOutputFile);
 
@@ -3003,6 +3006,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
 BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 {
     struct pp_data *data = get_handle_data(pp);
+    DEVMODEW *devmode = NULL;
     emfspool_header header;
     LARGE_INTEGER pos, cur;
     record_hdr record;
@@ -3015,6 +3019,21 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 
     if (!data)
         return FALSE;
+
+    spool_data = GdiGetSpoolFileHandle(data->port,
+            &data->ctx->Devmode->dmPublic, doc_name);
+    GdiGetDevmodeForPage(spool_data, 1, &devmode, NULL);
+    if (devmode && devmode->dmFields & DM_COPIES)
+    {
+        data->ctx->Devmode->dmPublic.dmFields |= DM_COPIES;
+        data->ctx->Devmode->dmPublic.dmCopies = devmode->dmCopies;
+    }
+    if (devmode && devmode->dmFields & DM_COLLATE)
+    {
+        data->ctx->Devmode->dmPublic.dmFields |= DM_COLLATE;
+        data->ctx->Devmode->dmPublic.dmCollate = devmode->dmCollate;
+    }
+    GdiDeleteSpoolFileHandle(spool_data);
 
     if (!OpenPrinterW(doc_name, &spool_data, NULL))
         return FALSE;
@@ -3166,6 +3185,7 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
         return FALSE;
 
     ClosePrinter(data->hport);
+    free(data->port);
     free(data->doc_name);
     free(data->out_file);
     DeleteDC(data->ctx->hdc);
