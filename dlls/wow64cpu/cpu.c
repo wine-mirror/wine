@@ -288,7 +288,7 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     ULONG old_prot;
     CONTEXT context;
     HMODULE module;
-    UNICODE_STRING str;
+    UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     void **p__wine_unix_call_dispatcher;
     WOW64INFO *wow64info = NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO];
 
@@ -300,7 +300,6 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
 
     wow64info->CpuFlags |= WOW64_CPUFLAGS_MSFT64;
 
-    RtlInitUnicodeString( &str, L"ntdll.dll" );
     LdrGetDllHandle( NULL, 0, &str, &module );
     p__wine_unix_call_dispatcher = RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" );
 
