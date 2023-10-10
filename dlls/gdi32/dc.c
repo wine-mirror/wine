@@ -2673,3 +2673,12 @@ HANDLE WINAPI GdiGetSpoolFileHandle( WCHAR *printer_name,
     FIXME( "%s %p %s\n", wine_dbgstr_w(printer_name), devmode, wine_dbgstr_w(doc_name) );
     return NULL;
 }
+
+/*******************************************************************
+ *           GdiDeleteSpoolFileHandle    (GDI32.@)
+ */
+BOOL WINAPI GdiDeleteSpoolFileHandle( HANDLE h )
+{
+    FIXME( "%p\n", h );
+    return FALSE;
+}

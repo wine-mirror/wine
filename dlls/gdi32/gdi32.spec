@@ -177,7 +177,7 @@
 @ stub GdiDciSetDestination
 @ stub GdiDeleteLocalDC
 @ stub GdiDeleteLocalObject
-# @ stub GdiDeleteSpoolFileHandle
+@ stdcall GdiDeleteSpoolFileHandle(ptr)
 @ stdcall GdiDescribePixelFormat(long long long ptr) NtGdiDescribePixelFormat
 @ stdcall GdiDllInitialize(ptr long ptr)
 @ stdcall GdiDrawStream(long long ptr) NtGdiDrawStream
