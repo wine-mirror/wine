@@ -37,13 +37,8 @@ typedef union tagCY
 {
     struct
     {
-#ifdef WORDS_BIGENDIAN
-        LONG  Hi;
-        ULONG Lo;
-#else
         ULONG Lo;
         LONG  Hi;
-#endif
     } DUMMYSTRUCTNAME;
     LONGLONG int64;
 } CY;
@@ -55,13 +50,8 @@ typedef CY CURRENCY;
 #define _FILETIME_
 typedef struct _FILETIME
 {
-#ifdef WORDS_BIGENDIAN
-    DWORD dwHighDateTime;
-    DWORD dwLowDateTime;
-#else
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
-#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 #endif
 

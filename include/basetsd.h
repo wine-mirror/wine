@@ -295,38 +295,6 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
 #define MINLONGLONG             ((LONGLONG)~MAXLONGLONG)
 
-/* Some Wine-specific definitions */
-
-/* Architecture dependent settings. */
-/* These are hardcoded to avoid dependencies on config.h in Winelib apps. */
-#if defined(__i386__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__x86_64__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
-# define WORDS_BIGENDIAN
-#elif defined(__powerpc64__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__powerpc__)
-# define WORDS_BIGENDIAN
-#elif defined(__ALPHA__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__ARMEB__)
-# define WORDS_BIGENDIAN
-#elif defined(__ARMEL__) || defined(__arm__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__AARCH64EB__)
-# define WORDS_BIGENDIAN
-#elif defined(__AARCH64EL__) || defined(__aarch64__)
-# undef  WORDS_BIGENDIAN
-#elif defined(__MIPSEB__)
-# define WORDS_BIGENDIAN
-#elif defined(__MIPSEL__)
-# undef  WORDS_BIGENDIAN
-#elif !defined(RC_INVOKED) && !defined(__WIDL__) && !defined(__midl)
-# error Unknown CPU architecture!
-#endif
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

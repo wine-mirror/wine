@@ -4788,49 +4788,25 @@ typedef struct _TOKEN_GROUPS {
 
 typedef union _LARGE_INTEGER {
     struct {
-#ifdef WORDS_BIGENDIAN
-        LONG     HighPart;
-        DWORD    LowPart;
-#else
         DWORD    LowPart;
         LONG     HighPart;
-#endif
     } u;
-#ifndef NONAMELESSSTRUCT
     struct {
-#ifdef WORDS_BIGENDIAN
-        LONG     HighPart;
-        DWORD    LowPart;
-#else
         DWORD    LowPart;
         LONG     HighPart;
-#endif
-    };
-#endif
+    } DUMMYSTRUCTNAME;
     LONGLONG QuadPart;
 } LARGE_INTEGER, *PLARGE_INTEGER;
 
 typedef union _ULARGE_INTEGER {
     struct {
-#ifdef WORDS_BIGENDIAN
-        DWORD    HighPart;
-        DWORD    LowPart;
-#else
         DWORD    LowPart;
         DWORD    HighPart;
-#endif
     } u;
-#ifndef NONAMELESSSTRUCT
     struct {
-#ifdef WORDS_BIGENDIAN
-        DWORD    HighPart;
-        DWORD    LowPart;
-#else
         DWORD    LowPart;
         DWORD    HighPart;
-#endif
-    };
-#endif
+    } DUMMYSTRUCTNAME;
     ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 

@@ -252,13 +252,8 @@ typedef struct _SECURITY_ATTRIBUTES
 /* 64 bit number of 100 nanoseconds intervals since January 1, 1601 */
 typedef struct _FILETIME
 {
-#ifdef WORDS_BIGENDIAN
-  DWORD  dwHighDateTime;
-  DWORD  dwLowDateTime;
-#else
   DWORD  dwLowDateTime;
   DWORD  dwHighDateTime;
-#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 #endif /* _FILETIME_ */
 
@@ -556,22 +551,12 @@ typedef struct _SYSTEMTIME{
 /* The 'overlapped' data structure used by async I/O functions.
  */
 typedef struct _OVERLAPPED {
-#ifdef WORDS_BIGENDIAN
-        ULONG_PTR InternalHigh;
-        ULONG_PTR Internal;
-#else
         ULONG_PTR Internal;
         ULONG_PTR InternalHigh;
-#endif
         union {
             struct {
-#ifdef WORDS_BIGENDIAN
-                DWORD OffsetHigh;
-                DWORD Offset;
-#else
                 DWORD Offset;
                 DWORD OffsetHigh;
-#endif
             } DUMMYSTRUCTNAME;
             PVOID Pointer;
         } DUMMYUNIONNAME;

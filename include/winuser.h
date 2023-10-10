@@ -1625,15 +1625,9 @@ typedef struct tagCURSORINFO
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct tagACCEL
 {
-#ifdef WORDS_BIGENDIAN
-    WORD   fVirt;
-    WORD   key;
-    DWORD  cmd;
-#else
     BYTE   fVirt;
     WORD   key;
     WORD   cmd;
-#endif
 } ACCEL, *LPACCEL;
 
 

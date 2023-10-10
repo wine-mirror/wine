@@ -390,23 +390,13 @@ typedef struct _POINTL
 
 typedef struct tagPOINTS
 {
-#ifdef WORDS_BIGENDIAN
-    SHORT y;
-    SHORT x;
-#else
     SHORT x;
     SHORT y;
-#endif
 } POINTS, *PPOINTS, *LPPOINTS;
 
 typedef struct _FILETIME {
-#ifdef WORDS_BIGENDIAN
-    DWORD  dwHighDateTime;
-    DWORD  dwLowDateTime;
-#else
     DWORD  dwLowDateTime;
     DWORD  dwHighDateTime;
-#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 #define _FILETIME_
 
