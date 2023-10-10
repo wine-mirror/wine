@@ -936,6 +936,7 @@ SOURCES = \
 	winnt.h \
 	winnt.rh \
 	winperf.h \
+	winppi.h \
 	winreg.h \
 	winresrc.h \
 	winsafer.h \
