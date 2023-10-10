@@ -36,14 +36,6 @@
 #define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SystemReserved2) + FIELD_OFFSET(struct x86_thread_data,gs) */
 
 
-static void function_header( const char *name )
-{
-    output( "\n\t.align %d\n", get_alignment(4) );
-    output( "\t%s\n", func_declaration(name) );
-    output( "%s\n", asm_globl(name) );
-}
-
-
 /*******************************************************************
  *         BuildCallFrom16Core
  *
@@ -114,9 +106,9 @@ static void function_header( const char *name )
 static void BuildCallFrom16Core( int reg_func, int thunk )
 {
     /* Function header */
-    if (thunk) function_header( "__wine_call_from_16_thunk" );
-    else if (reg_func) function_header( "__wine_call_from_16_regs" );
-    else function_header( "__wine_call_from_16" );
+    if (thunk) output_function_header( "__wine_call_from_16_thunk", 1 );
+    else if (reg_func) output_function_header( "__wine_call_from_16_regs", 1 );
+    else output_function_header( "__wine_call_from_16", 1 );
 
     /* Create STACK16FRAME (except STACK32FRAME link) */
     output( "\tpushw %%gs\n" );
@@ -381,7 +373,7 @@ static void BuildCallTo16Core( int reg_func )
     const char *func_name = is_pe() ? strmake( "%s@12", name ) : name;
 
     /* Function header */
-    function_header( func_name );
+    output_function_header( func_name, 1 );
 
     /* Function entry sequence */
     output_cfi( ".cfi_startproc" );
@@ -533,7 +525,7 @@ static void BuildCallTo16Core( int reg_func )
  */
 static void BuildRet16Func(void)
 {
-    function_header( "__wine_call_to_16_ret" );
+    output_function_header( "__wine_call_to_16_ret", 1 );
 
     /* Save %esp into %esi */
     output( "\tmovl %%esp,%%esi\n" );

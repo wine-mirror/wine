@@ -752,10 +752,7 @@ int is_undefined( const char *name )
 void output_get_pc_thunk(void)
 {
     assert( target.cpu == CPU_i386 );
-    output( "\n\t.text\n" );
-    output( "\t.align %d\n", get_alignment(4) );
-    output( "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
-    output( "%s:\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+    output_function_header( "__wine_spec_get_pc_thunk_eax", 0 );
     output( "\tmovl (%%esp),%%eax\n" );
     output( "\tret\n" );
     output_function_size( "__wine_spec_get_pc_thunk_eax" );
@@ -764,9 +761,7 @@ void output_get_pc_thunk(void)
 /* output a single import thunk */
 static void output_import_thunk( const char *name, const char *table, int pos )
 {
-    output( "\n\t.align %d\n", get_alignment(4) );
-    output( "\t%s\n", func_declaration(name) );
-    output( "%s\n", asm_globl(name) );
+    output_function_header( name, 1 );
 
     switch (target.cpu)
     {
@@ -1030,9 +1025,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
         char *module_func = strmake( "__wine_delay_load_asm_%s", import->c_name );
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t%s\n", func_declaration(module_func) );
-        output( "%s:\n", asm_name(module_func) );
+        output_function_header( module_func, 0 );
         output_cfi( ".cfi_startproc" );
         switch (target.cpu)
         {
@@ -1249,7 +1242,6 @@ void output_stubs( DLLSPEC *spec )
     if (!has_stubs( spec )) return;
 
     output( "\n/* stub functions */\n\n" );
-    output( "\t.text\n" );
 
     for (i = 0; i < spec->nb_entry_points; i++)
     {
@@ -1258,9 +1250,7 @@ void output_stubs( DLLSPEC *spec )
 
         name = get_stub_name( odp, spec );
         exp_name = odp->name ? odp->name : odp->export_name;
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t%s\n", func_declaration(name) );
-        output( "%s:\n", asm_name(name) );
+        output_function_header( name, 0 );
 
         switch (target.cpu)
         {
@@ -1413,7 +1403,6 @@ void output_syscalls( DLLSPEC *spec )
     count = sort_func_list( syscalls, count, cmp_link_name );
 
     output( "\n/* system calls */\n\n" );
-    output( "\t.text\n" );
 
     for (i = 0; i < count; i++)
     {
@@ -1421,9 +1410,7 @@ void output_syscalls( DLLSPEC *spec )
         const char *name = get_link_name(odp);
         unsigned int id = (spec->syscall_table << 12) + i;
 
-        output( "\t.align %d\n", get_alignment(16) );
-        output( "\t%s\n", func_declaration(name) );
-        output( "%s\n", asm_globl(name) );
+        output_function_header( name, 1 );
         switch (target.cpu)
         {
         case CPU_i386:
@@ -1501,16 +1488,12 @@ void output_syscalls( DLLSPEC *spec )
     {
     case CPU_i386:
         if (UsePIC) break;
-        output( "\t.align %d\n", get_alignment(16) );
-        output( "\t%s\n", func_declaration("__wine_syscall") );
-        output( "%s:\n", asm_name("__wine_syscall") );
+        output_function_header( "__wine_syscall", 0 );
         output( "\tjmp *(%s)\n", asm_name("__wine_syscall_dispatcher") );
         output_function_size( "__wine_syscall" );
         break;
     case CPU_ARM:
-        output( "\t.align %d\n", get_alignment(16) );
-        output( "\t%s\n", func_declaration("__wine_syscall") );
-        output( "%s:\n", asm_name("__wine_syscall") );
+        output_function_header( "__wine_syscall", 0 );
         if (UsePIC)
         {
             output( "\tldr r0, 2f\n");
@@ -1675,10 +1658,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
     if (is_delay)
     {
-        output( "\n\t.text\n" );
-        output( "\t.align %d\n", get_alignment( get_ptr_size() ));
-        output( "%s\n", asm_globl( delay_load ) );
-        output( "\t%s\n", func_declaration( delay_load ) );
+        output_function_header( delay_load, 1 );
 
         switch (target.cpu)
         {
@@ -1848,11 +1828,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                                 asm_name( abi_name ) );
 
             new_output_as_file();
-
-            output( "\n\t.text\n" );
-            output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
-            output( "%s\n", asm_globl( abi_name ) );
-            output( "\t%s\n", func_declaration( abi_name ) );
+            output_function_header( abi_name, 1 );
 
             switch (target.cpu)
             {
@@ -1977,10 +1953,7 @@ static void build_unix_import_lib( DLLSPEC *spec, struct strarray files )
         case TYPE_STDCALL:
             prefix = (!odp->name || (odp->flags & FLAG_ORDINAL)) ? import_ord_prefix : import_func_prefix;
             new_output_as_file();
-            output( "\t.text\n" );
-            output( "\n\t.align %d\n", get_alignment( get_ptr_size() ));
-            output( "\t%s\n", func_declaration( name ) );
-            output( "%s\n", asm_globl( name ) );
+            output_function_header( name, 1 );
             output( "\t%s %s%s$%u$%s\n", get_asm_ptr_keyword(),
                     asm_name( prefix ), dll_name, odp->ordinal, name );
             output_function_size( name );

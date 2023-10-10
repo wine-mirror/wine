@@ -338,9 +338,7 @@ static void output_call16_function( ORDDEF *odp )
 
     name = strmake( ".L__wine_spec_call16_%s", get_relay_name(odp) );
 
-    output( "\t.align %d\n", get_alignment(4) );
-    output( "\t%s\n", func_declaration(name) );
-    output( "%s:\n", name );
+    output_function_header( name, 0 );
     output_cfi( ".cfi_startproc" );
     output( "\tpushl %%ebp\n" );
     output_cfi( ".cfi_adjust_cfa_offset 4" );

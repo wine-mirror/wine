@@ -288,7 +288,6 @@ extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
 extern unsigned int get_args_size( const ORDDEF *odp );
 extern const char *asm_name( const char *func );
-extern const char *func_declaration( const char *func );
 extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
@@ -298,6 +297,7 @@ extern const char *get_asm_rsrc_section(void);
 extern const char *get_asm_string_section(void);
 extern const char *arm64_page( const char *sym );
 extern const char *arm64_pageoff( const char *sym );
+extern void output_function_header( const char *func, int global );
 extern void output_function_size( const char *name );
 extern void output_gnu_stack_note(void);
 

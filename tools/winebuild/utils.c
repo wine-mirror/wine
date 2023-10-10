@@ -876,38 +876,42 @@ const char *asm_name( const char *sym )
 }
 
 /* return an assembly function declaration for a C function name */
-const char *func_declaration( const char *func )
+void output_function_header( const char *func, int global )
 {
-    static char *buffer;
+    const char *name = asm_name( func );
+
+    output( "\t.text\n" );
 
     switch (target.platform)
     {
     case PLATFORM_APPLE:
-        return "";
+        if (global) output( "\t.globl %s\n\t.private_extern %s\n", name, name );
+        break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
-        free( buffer );
-        buffer = strmake( ".def %s\n\t.scl 2\n\t.type 32\n\t.endef%s", asm_name(func),
-                          thumb_mode ? "\n\t.thumb_func" : "" );
+        output( "\t.def %s\n\t.scl 2\n\t.type 32\n\t.endef\n", name );
+        if (global) output( "\t.globl %s\n", name );
+        if (thumb_mode) output( "\t.thumb_func\n" );
         break;
     default:
-        free( buffer );
         switch (target.cpu)
         {
         case CPU_ARM:
-            buffer = strmake( ".type %s,%%function%s", func,
-                              thumb_mode ? "\n\t.thumb_func" : "" );
+            output( "\t.type %s,%%function\n", name );
+            if (thumb_mode) output( "\t.thumb_func\n" );
             break;
         case CPU_ARM64:
-            buffer = strmake( ".type %s,%%function", func );
+            output( "\t.type %s,%%function\n", name );
             break;
         default:
-            buffer = strmake( ".type %s,@function", func );
+            output( "\t.type %s,@function\n", name );
             break;
         }
+        if (global) output( "\t.globl %s\n\t.hidden %s\n", name, name );
         break;
     }
-    return buffer;
+    output( "\t.align %u\n", get_alignment(4) );
+    output( "%s:\n", name );
 }
 
 /* output a size declaration for an assembly function */
