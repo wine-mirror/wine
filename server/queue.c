@@ -436,6 +436,15 @@ static int update_desktop_cursor_window( struct desktop *desktop, user_handle_t 
     desktop->cursor.win = win;
     if (updated)
     {
+        struct thread *thread;
+
+        if ((thread = get_window_thread( win )))
+        {
+            struct thread_input *input = thread->queue->input;
+            if (input) handle = input->cursor_count < 0 ? 0 : input->cursor;
+            release_object( thread );
+        }
+
         /* when clipping send the message to the foreground window as well, as some driver have an artificial overlay window */
         if (is_cursor_clipped( desktop )) queue_cursor_message( desktop, 0, WM_WINE_SETCURSOR, win, handle );
         queue_cursor_message( desktop, win, WM_WINE_SETCURSOR, win, handle );
