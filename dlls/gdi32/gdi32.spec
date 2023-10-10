@@ -191,7 +191,7 @@
 @ stdcall GdiGetCharDimensions(long ptr ptr)
 @ stdcall GdiGetCodePage(long)
 # @ stub GdiGetDC
-# @ stub GdiGetDevmodeForPage
+@ stdcall GdiGetDevmodeForPage(ptr long ptr ptr)
 @ stub GdiGetLocalBitmap
 @ stub GdiGetLocalBrush
 @ stub GdiGetLocalDC

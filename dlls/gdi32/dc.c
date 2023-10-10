@@ -2682,3 +2682,12 @@ BOOL WINAPI GdiDeleteSpoolFileHandle( HANDLE h )
     FIXME( "%p\n", h );
     return FALSE;
 }
+
+/*******************************************************************
+ *           GdiGetDevmodeForPage    (GDI32.@)
+ */
+BOOL WINAPI GdiGetDevmodeForPage( HANDLE h, DWORD page, DEVMODEW **cur, DEVMODEW **prev )
+{
+    FIXME( "%p %ld %p %p\n", h, page, cur, prev );
+    return FALSE;
+}
