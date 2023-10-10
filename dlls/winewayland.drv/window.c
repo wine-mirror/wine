@@ -434,6 +434,21 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_FRAMECHANGED;
     }
 
+    /* If the window is already fullscreen and its size is compatible with what
+     * the compositor is requesting, don't force a resize, since some applications
+     * are very insistent on a particular fullscreen size (which may not match
+     * the monitor size). */
+    if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
+        wayland_surface_config_is_compatible(&surface->processing,
+                                             surface->window.rect.right -
+                                                surface->window.rect.left,
+                                             surface->window.rect.bottom -
+                                                surface->window.rect.top,
+                                             surface->window.state))
+    {
+        flags |= SWP_NOSIZE;
+    }
+
     pthread_mutex_unlock(&surface->mutex);
 
     TRACE("processing=%dx%d,%#x\n", width, height, state);

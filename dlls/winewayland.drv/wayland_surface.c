@@ -324,9 +324,9 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
  * Checks whether a wayland_surface_config object is compatible with the
  * the provided arguments.
  */
-static BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
-                                                 int width, int height,
-                                                 enum wayland_surface_config_state state)
+BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
+                                          int width, int height,
+                                          enum wayland_surface_config_state state)
 {
     static enum wayland_surface_config_state mask =
         WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;

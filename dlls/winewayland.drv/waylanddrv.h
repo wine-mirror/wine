@@ -201,6 +201,9 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 HRGN surface_damage_region) DECLSPEC_HIDDEN;
 struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
 BOOL wayland_surface_reconfigure(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
+                                          int width, int height,
+                                          enum wayland_surface_config_state state) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer
