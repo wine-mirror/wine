@@ -112,7 +112,7 @@ static void test_LoadStringW(void)
         {
             winetest_push_context("Test %u", i);
 
-            length1 = LoadStringW(hInst, string_table_tests[i].id, returnedstringw, sizeof(returnedstringw));
+            length1 = LoadStringW(hInst, string_table_tests[i].id, returnedstringw, ARRAY_SIZE(returnedstringw));
             ok(length1 == wcslen(string_table_tests[i].string), "Got wrong length %d.\n", length1);
             ok(!wcscmp(returnedstringw, string_table_tests[i].string), "Got wrong string %s.\n",
                     debugstr_w(returnedstringw));
