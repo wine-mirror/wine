@@ -2663,3 +2663,13 @@ ULONG WINAPI DdQueryDisplaySettingsUniqueness(void)
     if (!warn_once++) FIXME( "stub\n" );
     return 0;
 }
+
+/*******************************************************************
+ *           GdiGetSpoolFileHandle    (GDI32.@)
+ */
+HANDLE WINAPI GdiGetSpoolFileHandle( WCHAR *printer_name,
+        DEVMODEW *devmode, WCHAR *doc_name )
+{
+    FIXME( "%s %p %s\n", wine_dbgstr_w(printer_name), devmode, wine_dbgstr_w(doc_name) );
+    return NULL;
+}

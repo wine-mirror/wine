@@ -198,7 +198,7 @@
 @ stub GdiGetLocalFont
 # @ stub GdiGetPageCount
 # @ stub GdiGetPageHandle
-# @ stub GdiGetSpoolFileHandle
+@ stdcall GdiGetSpoolFileHandle(wstr ptr wstr)
 @ stdcall GdiGetSpoolMessage(ptr long ptr long) NtGdiGetSpoolMessage
 @ stdcall GdiGradientFill(long ptr long ptr long long) 
 @ stdcall GdiInitSpool() NtGdiInitSpool
