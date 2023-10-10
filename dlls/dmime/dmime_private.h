@@ -42,6 +42,8 @@
 #include "dmusics.h"
 #include "dmusicc.h"
 
+#include "dmobject.h"
+
 /*****************************************************************************
  * Interfaces
  */
