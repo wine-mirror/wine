@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <windef.h>
 #include <winerror.h>
+#include <winsock.h>
 #include <sspi.h>
 #include <rpc.h>
 #include <sasl.h>

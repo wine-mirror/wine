@@ -5,14 +5,14 @@
 5   stdcall  getpeername(long ptr ptr)
 6   stdcall  getsockname(long ptr ptr)
 7   stdcall  getsockopt(long long long ptr ptr)
-8   stdcall  htonl(long) WS_htonl
-9   stdcall  htons(long) WS_htons
+8   stdcall  htonl(long)
+9   stdcall  htons(long)
 10  stdcall  ioctlsocket(long long ptr)
 11  stdcall  inet_addr(str)
 12  stdcall  inet_ntoa(ptr)
 13  stdcall  listen(long long)
-14  stdcall  ntohl(long) WS_ntohl
-15  stdcall  ntohs(long) WS_ntohs
+14  stdcall  ntohl(long)
+15  stdcall  ntohs(long)
 16  stdcall  recv(long ptr long long)
 17  stdcall  recvfrom(long ptr long long ptr ptr)
 18  stdcall  select(long ptr ptr ptr ptr)

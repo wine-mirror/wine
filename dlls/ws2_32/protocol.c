@@ -1895,18 +1895,18 @@ u_long WINAPI inet_addr( const char *str )
 /***********************************************************************
  *      htonl   (ws2_32.8)
  */
-u_long WINAPI WS_htonl( u_long hostlong )
+u_long WINAPI htonl( u_long hostlong )
 {
-    return htonl( hostlong );
+    return RtlUlongByteSwap( hostlong );
 }
 
 
 /***********************************************************************
  *      htons   (ws2_32.9)
  */
-u_short WINAPI WS_htons( u_short hostshort )
+u_short WINAPI htons( u_short hostshort )
 {
-    return htons( hostshort );
+    return RtlUshortByteSwap( hostshort );
 }
 
 
@@ -1943,18 +1943,18 @@ int WINAPI WSAHtons( SOCKET s, u_short hostshort, u_short *netshort )
 /***********************************************************************
  *      ntohl   (ws2_32.14)
  */
-u_long WINAPI WS_ntohl( u_long netlong )
+u_long WINAPI ntohl( u_long netlong )
 {
-    return ntohl( netlong );
+    return RtlUlongByteSwap( netlong );
 }
 
 
 /***********************************************************************
  *      ntohs   (ws2_32.15)
  */
-u_short WINAPI WS_ntohs( u_short netshort )
+u_short WINAPI ntohs( u_short netshort )
 {
-    return ntohs( netshort );
+    return RtlUshortByteSwap( netshort );
 }
 
 

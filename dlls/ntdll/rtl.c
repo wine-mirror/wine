@@ -40,6 +40,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 WINE_DECLARE_DEBUG_CHANNEL(debugstr);
 
+#define htons(x) RtlUshortByteSwap(x)
+#define ntohs(x) RtlUshortByteSwap(x)
+
 /* CRC polynomial 0xedb88320 */
 static const DWORD CRC_table[256] =
 {

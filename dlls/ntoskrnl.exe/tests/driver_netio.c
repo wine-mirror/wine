@@ -40,6 +40,11 @@
 
 #include "utils.h"
 
+#define htonl(x) RtlUlongByteSwap(x)
+#define htons(x) RtlUshortByteSwap(x)
+#define ntohl(x) RtlUlongByteSwap(x)
+#define ntohs(x) RtlUshortByteSwap(x)
+
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *device_obj;
 
@@ -148,7 +153,7 @@ static void test_wsk_get_address_info(void)
         ok(addr_info->ai_addrlen == sizeof(*addr), "Got unexpected ai_addrlen %I64u.\n", (UINT64)addr_info->ai_addrlen);
         ok(addr->sin_family == AF_INET, "Got unexpected sin_family %u.\n", addr->sin_family);
         ok(ntohs(addr->sin_port) == 12345, "Got unexpected sin_port %u.\n", ntohs(addr->sin_port));
-        ok(ntohl(addr->sin_addr.s_addr) == 0x7f000001, "Got unexpected sin_addr %#lx.\n",
+        ok(ntohl(addr->sin_addr.s_addr) == INADDR_LOOPBACK, "Got unexpected sin_addr %#lx.\n",
                 ntohl(addr->sin_addr.s_addr));
 
         ++count;
@@ -308,12 +313,12 @@ static void test_wsk_listen_socket(void)
         ok(local_addr.sin_family == AF_INET, "Got unexpected sin_family %u.\n", local_addr.sin_family);
         ok(local_addr.sin_port == htons(SERVER_LISTEN_PORT), "Got unexpected sin_port %u.\n",
                 ntohs(local_addr.sin_port));
-        ok(local_addr.sin_addr.s_addr == htonl(0x7f000001), "Got unexpected sin_addr %#lx.\n",
+        ok(local_addr.sin_addr.s_addr == htonl(INADDR_LOOPBACK), "Got unexpected sin_addr %#lx.\n",
                 ntohl(local_addr.sin_addr.s_addr));
 
         ok(remote_addr.sin_family == AF_INET, "Got unexpected sin_family %u.\n", remote_addr.sin_family);
         ok(remote_addr.sin_port, "Got zero sin_port.\n");
-        ok(remote_addr.sin_addr.s_addr == htonl(0x7f000001), "Got unexpected sin_addr %#lx.\n",
+        ok(remote_addr.sin_addr.s_addr == htonl(INADDR_LOOPBACK), "Got unexpected sin_addr %#lx.\n",
                 ntohl(remote_addr.sin_addr.s_addr));
 
         accept_socket = (WSK_SOCKET *)wsk_irp->IoStatus.Information;
@@ -415,7 +420,7 @@ static void test_wsk_connect_socket(void)
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(CLIENT_LISTEN_PORT);
-    addr.sin_addr.s_addr = htonl(0x7f000001);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
     IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
@@ -443,7 +448,7 @@ static void test_wsk_connect_socket(void)
             wsk_irp->IoStatus.Information);
 
     addr.sin_port = htons(CLIENT_LISTEN_PORT);
-    addr.sin_addr.s_addr = htonl(0x7f000001);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
     IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
