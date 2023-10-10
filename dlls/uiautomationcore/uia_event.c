@@ -56,6 +56,7 @@ static int win_event_to_uia_event_id(int win_event)
     case EVENT_OBJECT_FOCUS: return UIA_AutomationFocusChangedEventId;
     case EVENT_SYSTEM_ALERT: return UIA_SystemAlertEventId;
     case EVENT_OBJECT_SHOW:  return UIA_StructureChangedEventId;
+    case EVENT_OBJECT_DESTROY: return UIA_StructureChangedEventId;
 
     default:
         break;

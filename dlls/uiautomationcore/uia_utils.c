@@ -459,6 +459,23 @@ HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd)
     return S_OK;
 }
 
+void uia_hwnd_map_remove_hwnd(struct rb_tree *hwnd_map, HWND hwnd)
+{
+    struct rb_entry *rb_entry = rb_get(hwnd_map, hwnd);
+    struct uia_hwnd_map_entry *entry;
+
+    if (!rb_entry)
+    {
+        TRACE("hwnd %p not in map %p, nothing to remove.\n", hwnd, hwnd_map);
+        return;
+    }
+
+    TRACE("Removing hwnd %p from map %p\n", hwnd, hwnd_map);
+    entry = RB_ENTRY_VALUE(rb_entry, struct uia_hwnd_map_entry, entry);
+    rb_remove(hwnd_map, &entry->entry);
+    free(entry);
+}
+
 void uia_hwnd_map_init(struct rb_tree *hwnd_map)
 {
     rb_init(hwnd_map, uia_hwnd_map_hwnd_compare);

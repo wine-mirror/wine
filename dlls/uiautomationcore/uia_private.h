@@ -270,5 +270,6 @@ BOOL uia_hwnd_is_visible(HWND hwnd) DECLSPEC_HIDDEN;
 BOOL uia_is_top_level_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
 BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
 HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
+void uia_hwnd_map_remove_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
 void uia_hwnd_map_init(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
 void uia_hwnd_map_destroy(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;

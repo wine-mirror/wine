@@ -1108,6 +1108,38 @@ HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG 
         break;
     }
 
+    case EVENT_OBJECT_DESTROY:
+    {
+        static const int uia_event_id = UIA_AutomationFocusChangedEventId;
+        struct rb_entry *rb_entry;
+
+        if (obj_id != OBJID_WINDOW)
+            break;
+
+        EnterCriticalSection(&com_event_handlers_cs);
+
+        if ((rb_entry = rb_get(&com_event_handlers.handler_event_id_map, &uia_event_id)))
+        {
+            struct uia_event_handler_event_id_map_entry *event_id_map;
+            struct uia_event_handler_map_entry *entry;
+
+            event_id_map = RB_ENTRY_VALUE(rb_entry, struct uia_event_handler_event_id_map_entry, entry);
+            LIST_FOR_EACH_ENTRY(entry, &event_id_map->handlers_list, struct uia_event_handler_map_entry,
+                    handler_event_id_map_list_entry)
+            {
+                struct uia_com_event *event;
+
+                LIST_FOR_EACH_ENTRY(event, &entry->handlers_list, struct uia_com_event, event_handler_map_list_entry)
+                {
+                    uia_hwnd_map_remove_hwnd(&event->focus_hwnd_map, hwnd);
+                }
+            }
+        }
+
+        LeaveCriticalSection(&com_event_handlers_cs);
+        break;
+    }
+
     default:
         break;
     }

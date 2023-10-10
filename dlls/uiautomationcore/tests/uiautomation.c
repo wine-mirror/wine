@@ -15475,6 +15475,30 @@ static void test_uia_com_event_handler_event_advisement(IUIAutomation *uia_iface
     check_uia_hwnd_expects_at_most(0, 1, 1, 3, 0);
     test_hwnd_providers_event_advise_added(&Provider, &Provider_hwnd2, &Provider_nc2, 0, FALSE);
 
+    /* HWND destruction is tracked with EVENT_OBJECT_DESTROY/OBJID_WINDOW. */
+    NotifyWinEvent(EVENT_OBJECT_DESTROY, test_child_hwnd, OBJID_WINDOW, CHILDID_SELF);
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    /*
+     * EVENT_OBJECT_DESTROY removed this HWND, EVENT_OBJECT_FOCUS will now
+     * advise it again.
+     */
+    reset_event_advise_values_for_hwnd_providers(&Provider2, &Provider_hwnd3, &Provider_nc3);
+    set_provider_method_event_data(&Provider2, method_event[0], ADVISE_EVENTS_EVENT_ADDED);
+    SET_EXPECT_MULTI(child_winproc_GETOBJECT_UiaRoot, 3); /* Only sent 3 times on Win11. */
+    set_uia_hwnd_expects(0, 1, 1, 2, 0); /* Only Win11 sends WM_GETOBJECT 2 times. */
+
+    NotifyWinEvent(EVENT_OBJECT_FOCUS, test_child_hwnd, OBJID_CLIENT, CHILDID_SELF);
+    ok(msg_wait_for_all_events(method_event, 1, 2000) != WAIT_TIMEOUT, "Wait for method_event(s) timed out.\n");
+    if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
+
+    set_provider_method_event_data(&Provider2, NULL, -1);
+    check_uia_hwnd_expects_at_most(0, 1, 1, 2, 0);
+    CHECK_CALLED_AT_MOST(child_winproc_GETOBJECT_UiaRoot, 3);
+    test_provider_event_advise_added(&Provider2, UIA_AutomationFocusChangedEventId, FALSE);
+    test_provider_event_advise_added(&Provider_hwnd3, 0, FALSE);
+    test_provider_event_advise_added(&Provider_nc3, 0, FALSE);
+
     set_uia_hwnd_expects(0, 1, 1, 0, 0);
     hr = IUIAutomation_RemoveFocusChangedEventHandler(uia_iface,
             &FocusChangedHandler.IUIAutomationFocusChangedEventHandler_iface);
