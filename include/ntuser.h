@@ -1071,8 +1071,8 @@ enum
     NtUserCallHwnd_SetTaskmanWindow,
     /* temporary exports */
     NtUserGetFullWindowHandle,
-    NtUserIsCurrehtProcessWindow,
-    NtUserIsCurrehtThreadWindow,
+    NtUserIsCurrentProcessWindow,
+    NtUserIsCurrentThreadWindow,
 };
 
 static inline void NtUserActivateOtherWindow( HWND hwnd )

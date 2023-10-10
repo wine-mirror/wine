@@ -113,7 +113,7 @@ static inline BOOL is_broadcast( HWND hwnd )
  */
 HWND WIN_IsCurrentProcess( HWND hwnd )
 {
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrehtProcessWindow ));
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrentProcessWindow ));
 }
 
 
@@ -124,7 +124,7 @@ HWND WIN_IsCurrentProcess( HWND hwnd )
  */
 HWND WIN_IsCurrentThread( HWND hwnd )
 {
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrehtThreadWindow ));
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserIsCurrentThreadWindow ));
 }
 
 

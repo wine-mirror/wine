@@ -5474,10 +5474,10 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserGetFullWindowHandle:
         return HandleToUlong( get_full_window_handle( hwnd ));
 
-    case NtUserIsCurrehtProcessWindow:
+    case NtUserIsCurrentProcessWindow:
         return HandleToUlong( is_current_process_window( hwnd ));
 
-    case NtUserIsCurrehtThreadWindow:
+    case NtUserIsCurrentThreadWindow:
         return HandleToUlong( is_current_thread_window( hwnd ));
 
     default:
