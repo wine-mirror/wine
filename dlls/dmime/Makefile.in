@@ -18,6 +18,7 @@ C_SRCS = \
 	sysextrack.c \
 	tempotrack.c \
 	timesigtrack.c \
+	wave.c \
 	wavetrack.c
 
 IDL_SRCS = dmime.idl

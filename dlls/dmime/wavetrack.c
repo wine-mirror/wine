@@ -17,13 +17,14 @@
  */
 
 #include "dmime_private.h"
+#include "dmusic_wave.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 struct wave_item {
     struct list entry;
     DMUS_IO_WAVE_ITEM_HEADER header;
-    IDirectMusicObject *object;
+    IUnknown *object;
 };
 
 struct wave_part {
@@ -100,8 +101,7 @@ static ULONG WINAPI wave_track_Release(IDirectMusicTrack8 *iface)
             list_remove(&part->entry);
             LIST_FOR_EACH_ENTRY_SAFE(item, item2, &part->items, struct wave_item, entry) {
                 list_remove(&item->entry);
-                if (item->object)
-                    IDirectMusicObject_Release(item->object);
+                if (item->object) IUnknown_Release(item->object);
                 free(item);
             }
             free(part);
@@ -355,7 +355,7 @@ static HRESULT parse_wave_item(struct wave_part *part, IStream *stream, struct c
         hr = DMUS_E_UNSUPPORTED_STREAM;
         goto error;
     }
-    if (FAILED(hr = dmobj_parsereference(stream, &chunk, &item->object)))
+    if (FAILED(hr = dmobj_parsereference(stream, &chunk, (IDirectMusicObject **)&item->object)))
         goto error;
 
     list_add_tail(&part->items, &item->entry);
@@ -483,4 +483,39 @@ HRESULT create_dmwavetrack(REFIID lpcGUID, void **ppobj)
     IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);
 
     return hr;
+}
+
+HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
+        IDirectMusicTrack8 **ret_iface)
+{
+    IDirectMusicTrack8 *iface;
+    struct wave_track *This;
+    struct wave_item *item;
+    struct wave_part *part;
+    HRESULT hr;
+
+    if (FAILED(hr = create_dmwavetrack(&IID_IDirectMusicTrack8, (void **)&iface))) return hr;
+    This = impl_from_IDirectMusicTrack8(iface);
+
+    if (!(part = calloc(1, sizeof(*part))))
+    {
+        IDirectMusicTrack8_Release(iface);
+        return E_OUTOFMEMORY;
+    }
+    list_init(&part->items);
+    list_add_tail(&This->parts, &part->entry);
+
+    if (!(item = calloc(1, sizeof(*item)))
+            || FAILED(hr = wave_create_from_chunk(stream, parent, &item->object)))
+    {
+        IDirectMusicTrack8_Release(iface);
+        free(item);
+        return hr;
+    }
+    if (FAILED(hr = wave_get_duration(item->object, &item->header.rtDuration)))
+        WARN("Failed to get wave duration, hr %#lx\n", hr);
+    list_add_tail(&part->items, &item->entry);
+
+    *ret_iface = iface;
+    return S_OK;
 }

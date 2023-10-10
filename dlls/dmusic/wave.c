@@ -338,3 +338,10 @@ HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, D
     IDirectMusicDownload_Release(download);
     return hr;
 }
+
+HRESULT wave_get_duration(IUnknown *iface, REFERENCE_TIME *duration)
+{
+    struct wave *This = impl_from_IUnknown(iface);
+    *duration = (REFERENCE_TIME)This->data_size * 10000000 / This->format->nAvgBytesPerSec;
+    return S_OK;
+}

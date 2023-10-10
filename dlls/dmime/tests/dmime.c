@@ -3279,7 +3279,7 @@ static void test_wave_pmsg(void)
     length = 0xdeadbeef;
     hr = IDirectMusicSegment_GetLength(segment, &length);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(length == 1, "got %lu\n", length);
+    ok(length == 1, "got %lu\n", length);
 
 
     /* without Download, no DMUS_PMSGT_WAVE is sent */

@@ -741,12 +741,16 @@ static inline void dump_segment_header(DMUS_IO_SEGMENT_HEADER *h, DWORD size)
     }
 }
 
-static HRESULT parse_segment_form(struct segment *This, IStream *stream, const struct chunk_entry *riff)
+static HRESULT parse_dmsg_chunk(struct segment *This, IStream *stream, const struct chunk_entry *riff)
 {
     struct chunk_entry chunk = {.parent = riff};
     HRESULT hr;
 
     TRACE("Parsing segment form in %p: %s\n", stream, debugstr_chunk(riff));
+
+    if (FAILED(hr = dmobj_parsedescriptor(stream, riff, &This->dmobj.desc, DMUS_OBJ_NAME | DMUS_OBJ_CATEGORY))
+                || FAILED(hr = stream_reset_chunk_data(stream, riff)))
+        return hr;
 
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
         switch (chunk.id) {
@@ -786,89 +790,58 @@ static inline struct segment *impl_from_IPersistStream(IPersistStream *iface)
     return CONTAINING_RECORD(iface, struct segment, dmobj.IPersistStream_iface);
 }
 
-static HRESULT parse_wave_form(struct segment *This, IStream *stream, const struct chunk_entry *riff)
-{
-    HRESULT hr;
-    struct chunk_entry chunk = {.parent = riff};
-
-    TRACE("Parsing segment wave in %p: %s\n", stream, debugstr_chunk(riff));
-
-     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
-        switch (chunk.id) {
-            case mmioFOURCC('f','m','t',' '): {
-                if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &This->wave_format,
-                                                      sizeof(This->wave_format))) )
-                    return hr;
-                TRACE("Wave Format tag %d\n", This->wave_format.wf.wFormatTag);
-                break;
-            }
-            case mmioFOURCC('d','a','t','a'): {
-                TRACE("Wave Data size %lu\n", chunk.size);
-                if (This->wave_data)
-                    ERR("Multiple data streams detected\n");
-                This->wave_data = malloc(chunk.size);
-                This->data_size = chunk.size;
-                if (!This->wave_data)
-                    return E_OUTOFMEMORY;
-                if (FAILED(hr = stream_chunk_get_data(stream, &chunk, This->wave_data, chunk.size)))
-                    return hr;
-                break;
-            }
-            case FOURCC_LIST: {
-                FIXME("Skipping LIST tag\n");
-                break;
-            }
-            case mmioFOURCC('I','S','F','T'): {
-                FIXME("Skipping ISFT tag\n");
-                break;
-            }
-            case mmioFOURCC('f','a','c','t'): {
-                FIXME("Skipping fact tag\n");
-                break;
-            }
-        }
-    }
-
-    return SUCCEEDED(hr) ? S_OK : hr;
-}
-
 static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
     struct segment *This = impl_from_IPersistStream(iface);
-    struct chunk_entry riff = {0};
+    struct chunk_entry chunk = {0};
     HRESULT hr;
 
     TRACE("(%p, %p): Loading\n", This, stream);
 
-    if (!stream)
-        return E_POINTER;
+    if (!stream) return E_POINTER;
 
-    if (stream_get_chunk(stream, &riff) != S_OK ||
-            (riff.id != FOURCC_RIFF && riff.id != mmioFOURCC('M','T','h','d')))
-        return DMUS_E_UNSUPPORTED_STREAM;
-    stream_reset_chunk_start(stream, &riff);
+    if ((hr = stream_get_chunk(stream, &chunk)) == S_OK)
+    {
+        switch (MAKE_IDTYPE(chunk.id, chunk.type))
+        {
+        case MAKE_IDTYPE(FOURCC_RIFF, DMUS_FOURCC_SEGMENT_FORM):
+            hr = parse_dmsg_chunk(This, stream, &chunk);
+            break;
 
-    if (riff.id == mmioFOURCC('M','T','h','d')) {
-        FIXME("MIDI file loading not supported\n");
-        return S_OK;
+        case mmioFOURCC('M','T','h','d'):
+            FIXME("MIDI file loading not supported\n");
+            break;
+
+        case MAKE_IDTYPE(FOURCC_RIFF, mmioFOURCC('W','A','V','E')):
+        {
+            IDirectMusicTrack8 *track;
+            HRESULT hr;
+
+            TRACE("Loading segment %p from wave file\n", This);
+
+            This->header.mtLength = 1;
+            if (FAILED(hr = wave_track_create_from_chunk(stream, &chunk, &track))) break;
+            hr = segment_append_track(This, (IDirectMusicTrack *)track, 1, 0);
+            break;
+        }
+
+        default:
+            WARN("Invalid segment chunk %s %s\n", debugstr_fourcc(chunk.id), debugstr_fourcc(chunk.type));
+            hr = DMUS_E_UNSUPPORTED_STREAM;
+            break;
+        }
     }
 
-    hr = IDirectMusicObject_ParseDescriptor(&This->dmobj.IDirectMusicObject_iface, stream,
-            &This->dmobj.desc);
     if (FAILED(hr))
-        return hr;
-    stream_reset_chunk_data(stream, &riff);
-
-    if (riff.type == DMUS_FOURCC_SEGMENT_FORM)
-        hr = parse_segment_form(This, stream, &riff);
-    else if(riff.type == mmioFOURCC('W','A','V','E'))
-        hr = parse_wave_form(This, stream, &riff);
-    else {
-        FIXME("Unknown type %s\n", debugstr_chunk(&riff));
-        hr = S_OK;
+    {
+        WARN("Failed to load segment from stream %p, hr %#lx\n", stream, hr);
+        return DMUS_E_UNSUPPORTED_STREAM;
     }
 
-    return hr;
+    This->dmobj.desc.guidClass = CLSID_DirectMusicSegment;
+    This->dmobj.desc.dwValidData |= DMUS_OBJ_CLASS;
+
+    return S_OK;
 }
 
 static const IPersistStreamVtbl segment_persist_stream_vtbl =
