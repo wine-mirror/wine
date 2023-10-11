@@ -219,7 +219,20 @@ static void keyboard_handle_modifiers(void *data, struct wl_keyboard *wl_keyboar
 static void keyboard_handle_repeat_info(void *data, struct wl_keyboard *wl_keyboard,
                                         int rate, int delay)
 {
-    FIXME("rate=%d delay=%d stub!\n", rate, delay);
+    UINT speed;
+
+    TRACE("rate=%d delay=%d\n", rate, delay);
+
+    /* Handle non-negative rate values, ignore invalid (negative) values.  A
+     * rate of 0 disables repeat. */
+    if (rate >= 80) speed = 31;
+    else if (rate >= 5) speed = rate * 400 / 1000 - 1;
+    else speed = 0;
+
+    delay = max(0, min(3, round(delay / 250.0) - 1));
+    NtUserSystemParametersInfo(SPI_SETKEYBOARDSPEED, speed, NULL, 0);
+    NtUserSystemParametersInfo(SPI_SETKEYBOARDDELAY, delay, NULL, 0);
+    NtUserCallOneParam(rate > 0, NtUserCallOneParam_SetKeyboardAutoRepeat);
 }
 
 static const struct wl_keyboard_listener keyboard_listener = {
@@ -245,6 +258,7 @@ void wayland_keyboard_init(struct wl_keyboard *wl_keyboard)
         return;
     }
 
+    NtUserCallOneParam(TRUE, NtUserCallOneParam_SetKeyboardAutoRepeat);
     pthread_mutex_lock(&keyboard->mutex);
     keyboard->wl_keyboard = wl_keyboard;
     keyboard->xkb_context = xkb_context;

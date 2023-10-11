@@ -242,6 +242,9 @@ HICON alloc_cursoricon_handle( BOOL is_icon );
 extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *extra_rect );
 
+/* message.c */
+extern BOOL set_keyboard_auto_repeat( BOOL enable ) DECLSPEC_HIDDEN;
+
 /* window.c */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );
 void *free_user_handle( HANDLE handle, unsigned int type );

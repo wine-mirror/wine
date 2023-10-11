@@ -6324,6 +6324,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         process_layout = arg;
         return TRUE;
 
+    case NtUserCallOneParam_SetKeyboardAutoRepeat:
+        return set_keyboard_auto_repeat( arg );
+
     /* temporary exports */
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );

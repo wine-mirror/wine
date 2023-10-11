@@ -878,6 +878,7 @@ enum
     NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
+    NtUserCallOneParam_SetKeyboardAutoRepeat,
     /* temporary exports */
     NtUserGetDeskPattern,
 };

@@ -288,6 +288,7 @@ struct send_message_info
 };
 
 static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, IMO_UNAVAILABLE };
+static BOOL keyboard_auto_repeat_enabled;
 
 /* flag for messages that contain pointers */
 /* 32 messages per entry, messages 0..31 map to bits 0..31 */
@@ -506,6 +507,13 @@ static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
 {
     if (!hwnd_filter || hwnd_filter == get_desktop_window()) return TRUE;
     return (msg->hwnd == hwnd_filter || is_child( hwnd_filter, msg->hwnd ));
+}
+
+BOOL set_keyboard_auto_repeat( BOOL enable )
+{
+    BOOL enabled = keyboard_auto_repeat_enabled;
+    keyboard_auto_repeat_enabled = enable;
+    return enabled;
 }
 
 /***********************************************************************
