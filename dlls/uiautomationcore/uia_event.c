@@ -588,14 +588,6 @@ static struct uia_queue_event *uia_event_queue_pop(struct list *event_queue)
     return queue_event;
 }
 
-static void uia_node_lresult_release(LRESULT lr)
-{
-    IWineUiaNode *node;
-
-    if (lr && SUCCEEDED(ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&node)))
-        IWineUiaNode_Release(node);
-}
-
 static HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args,
         struct uia_event *event);
 static HRESULT uia_raise_clientside_event(struct uia_queue_uia_event *event)

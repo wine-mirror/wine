@@ -219,6 +219,7 @@ HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers, int node_flags) DECLSPEC_HIDDEN;
 HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode) DECLSPEC_HIDDEN;
+void uia_node_lresult_release(LRESULT lr) DECLSPEC_HIDDEN;
 HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags) DECLSPEC_HIDDEN;
 HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;
 BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;

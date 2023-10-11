@@ -2572,7 +2572,10 @@ HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
 
     hr = create_uia_node(&node, 0);
     if (FAILED(hr))
+    {
+        uia_node_lresult_release(lr);
         return hr;
+    }
 
     uia_start_client_thread();
     hr = create_wine_uia_nested_node_provider(node, lr, FALSE);
@@ -2599,6 +2602,14 @@ HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode)
     *huianode = (void *)&node->IWineUiaNode_iface;
 
     return hr;
+}
+
+void uia_node_lresult_release(LRESULT lr)
+{
+    IWineUiaNode *node;
+
+    if (lr && SUCCEEDED(ObjectFromLresult(lr, &IID_IWineUiaNode, 0, (void **)&node)))
+        IWineUiaNode_Release(node);
 }
 
 /*
