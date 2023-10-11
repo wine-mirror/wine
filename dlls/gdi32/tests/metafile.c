@@ -5066,6 +5066,65 @@ static void test_emf_blit(void)
     ok(ret, "DeleteMetaFile(%p) error %ld\n", hmf, GetLastError());
 }
 
+struct check_mf_arg
+{
+    int pos;
+    const WORD *records;
+};
+
+static int WINAPI check_mf_records(HDC hdc, HANDLETABLE *htable,
+        METARECORD *rec, int n, LPARAM ctx)
+{
+    struct check_mf_arg *records = (struct check_mf_arg *)ctx;
+
+    ok(rec->rdFunction == records->records[records->pos], "got record %x, expected %x\n",
+            rec->rdFunction, records->records[records->pos]);
+    return rec->rdFunction == records->records[records->pos++];
+}
+
+static void test_PlayMetaFile(void)
+{
+    static WORD line_records[] = { META_LINETO, 0 };
+    struct check_mf_arg records;
+    HMETAFILE hmeta;
+    HDC dc, metadc;
+    BOOL r;
+
+    dc = CreateCompatibleDC(NULL);
+    ok(dc != NULL, "CreateCompatibleDC failed\n");
+
+    metadc = CreateMetaFileW(NULL);
+    ok(metadc != NULL, "CreateMetaFile failed\n");
+    r = LineTo(metadc, 10, 10);
+    ok(r, "LineTo failed\n");
+    hmeta = CloseMetaFile(metadc);
+    ok(hmeta != NULL, "CloseMetaFile failed\n");
+
+    records.pos = 0;
+    records.records = line_records;
+    r = EnumMetaFile(dc, hmeta, check_mf_records, (LPARAM)&records);
+    ok(r, "EnumMetaFile failed\n");
+
+    metadc = CreateMetaFileW(NULL);
+    ok(metadc != NULL, "CreateMetaFile failed\n");
+    r = PlayMetaFile(metadc, hmeta);
+    ok(r, "PlayMetaFile failed\n");
+    r = DeleteMetaFile(hmeta);
+    ok(r, "DeleteMetaFile failed\n");
+    hmeta = CloseMetaFile(metadc);
+    ok(hmeta != NULL, "CloseMetaFile failed\n");
+
+    records.pos = 0;
+    records.records = line_records;
+    r = EnumMetaFile(dc, hmeta, check_mf_records, (LPARAM)&records);
+    ok(r, "EnumMetaFile failed\n");
+
+    r = DeleteMetaFile(hmeta);
+    ok(r, "DeleteMetaFile failed\n");
+    r = DeleteDC(dc);
+    ok(r, "DeleteDC failed\n");
+}
+
 static void test_emf_mask_blit(void)
 {
     BITMAPINFO bmi = {{ sizeof(bmi) }};
@@ -10769,6 +10828,7 @@ START_TEST(metafile)
     test_mf_select();
     test_mf_palette();
     test_mf_blit();
+    test_PlayMetaFile();
 
     /* For metafile conversions */
     test_mf_conversions();
