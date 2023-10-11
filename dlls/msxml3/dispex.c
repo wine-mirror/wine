@@ -82,7 +82,7 @@ static lib_id_t lib_ids[] = {
 };
 
 static tid_id_t tid_ids[] = {
-    { &IID_NULL, LibXml_Last },
+    { &IID_NULL, LibXml2 },
     { &IID_IXMLDOMAttribute, LibXml2 },
     { &IID_IXMLDOMCDATASection, LibXml2 },
     { &IID_IXMLDOMComment, LibXml2 },
