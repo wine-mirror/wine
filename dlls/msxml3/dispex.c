@@ -294,9 +294,9 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
         data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
     }
 
-    qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
-
     if(data->funcs) {
+        qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
+
         data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
         for(i=0; i < data->func_cnt; i++)
             data->name_table[i] = data->funcs+i;
