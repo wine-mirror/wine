@@ -32,6 +32,9 @@ enum system_timer_id
 {
     SYSTEM_TIMER_TRACK_MOUSE = 0xfffa,
     SYSTEM_TIMER_CARET = 0xffff,
+
+    /* not compatible with native */
+    SYSTEM_TIMER_KEY_REPEAT = 0xfff0,
 };
 
 struct rawinput_thread_data
@@ -126,6 +129,7 @@ struct user_thread_info
     struct received_message_info *receive_info;           /* Message being currently received */
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */
+    MSG                           key_repeat_msg;         /* Last WM_KEYDOWN message to repeat */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
     struct rawinput_thread_data  *rawinput;               /* RawInput thread local data / buffer */
