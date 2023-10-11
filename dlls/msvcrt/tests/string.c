@@ -642,10 +642,11 @@ static void test_mbsspnp( void)
 
 static void test_strdup(void)
 {
-   char *str;
-   str = _strdup( 0 );
-   ok( str == 0, "strdup returns %s should be 0\n", str);
-   free( str );
+    char *str;
+    errno = 0xdeadbeef;
+    str = strdup(0);
+    ok(str == 0, "strdup returned %s, expected NULL\n", wine_dbgstr_a(str));
+    ok(errno == 0xdeadbeef, "errno is %d, expected 0xdeadbeef\n", errno);
 }
 
 static void test_strcmp(void)
