@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-07-22 00:47+0300\n"
+"PO-Revision-Date: 2023-10-11 23:56+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -18519,10 +18519,8 @@ msgid "&Theme:"
 msgstr "&Apipavidalinimas:"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&WinRT app theme:"
 msgid "&WinRT theme:"
-msgstr "&WinRT programos tema:"
+msgstr "&WinRT tema:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
