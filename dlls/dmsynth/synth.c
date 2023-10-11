@@ -303,6 +303,7 @@ struct synth
     BOOL open;
     IDirectMusicSynthSink *sink;
 
+    CRITICAL_SECTION cs;
     struct list instruments;
     struct list waves;
 
@@ -384,6 +385,10 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
         delete_fluid_sfont(This->fluid_sfont);
         This->fluid_sfont = NULL;
         delete_fluid_settings(This->fluid_settings);
+
+        This->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->cs);
+
         free(This);
     }
 
@@ -411,11 +416,21 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
     TRACE("(%p, %p)\n", This, params);
 
-    if (This->open) return DMUS_E_ALREADYOPEN;
+    EnterCriticalSection(&This->cs);
+    if (This->open)
+    {
+        LeaveCriticalSection(&This->cs);
+        return DMUS_E_ALREADYOPEN;
+    }
 
     if (params)
     {
-        if (params->dwSize < sizeof(DMUS_PORTPARAMS7)) return E_INVALIDARG;
+        if (params->dwSize < sizeof(DMUS_PORTPARAMS7))
+        {
+            LeaveCriticalSection(&This->cs);
+            return E_INVALIDARG;
+        }
+
         if (size > params->dwSize) size = params->dwSize;
 
         if ((params->dwValidParams & DMUS_PORTPARAMS_VOICES) && params->dwVoices)
@@ -473,6 +488,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 
     This->params = actual;
     This->open = TRUE;
+    LeaveCriticalSection(&This->cs);
 
     return modified ? S_FALSE : S_OK;
 }
@@ -483,13 +499,18 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
 
     TRACE("(%p)\n", This);
 
+    EnterCriticalSection(&This->cs);
     if (!This->open)
+    {
+        LeaveCriticalSection(&This->cs);
         return DMUS_E_ALREADYCLOSED;
+    }
 
     fluid_synth_remove_sfont(This->fluid_synth, This->fluid_sfont);
     delete_fluid_synth(This->fluid_synth);
     This->fluid_synth = NULL;
     This->open = FALSE;
+    LeaveCriticalSection(&This->cs);
 
     return S_OK;
 }
@@ -549,14 +570,17 @@ static struct wave *synth_find_wave_from_id(struct synth *This, DWORD id)
 {
     struct wave *wave;
 
+    EnterCriticalSection(&This->cs);
     LIST_FOR_EACH_ENTRY(wave, &This->waves, struct wave, entry)
     {
         if (wave->id == id)
         {
             wave_addref(wave);
+            LeaveCriticalSection(&This->cs);
             return wave;
         }
     }
+    LeaveCriticalSection(&This->cs);
 
     WARN("Failed to find wave with id %#lx\n", id);
     return NULL;
@@ -627,9 +651,11 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
             instrument_info->ulGlobalArtIdx, &instrument->articulations)))
         goto error;
 
+    EnterCriticalSection(&This->cs);
     list_add_tail(&This->instruments, &instrument->entry);
-    *ret_handle = instrument;
+    LeaveCriticalSection(&This->cs);
 
+    *ret_handle = instrument;
     return S_OK;
 
 error:
@@ -693,9 +719,11 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
         }
     }
 
+    EnterCriticalSection(&This->cs);
     list_add_tail(&This->waves, &wave->entry);
-    *ret_handle = wave;
+    LeaveCriticalSection(&This->cs);
 
+    *ret_handle = wave;
     return S_OK;
 }
 
@@ -757,11 +785,14 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
     TRACE("(%p)->(%p, %p, %p)\n", This, handle, callback, user_data);
     if (callback) FIXME("Unload callbacks not implemented\n");
 
+    EnterCriticalSection(&This->cs);
     LIST_FOR_EACH_ENTRY(instrument, &This->instruments, struct instrument, entry)
     {
         if (instrument == handle)
         {
             list_remove(&instrument->entry);
+            LeaveCriticalSection(&This->cs);
+
             instrument_release(instrument);
             return S_OK;
         }
@@ -772,10 +803,13 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
         if (wave == handle)
         {
             list_remove(&wave->entry);
+            LeaveCriticalSection(&This->cs);
+
             wave_release(wave);
             return S_OK;
         }
     }
+    LeaveCriticalSection(&This->cs);
 
     return E_FAIL;
 }
@@ -1216,6 +1250,9 @@ HRESULT synth_create(IUnknown **ret_iface)
             synth_sfont_iter_start, synth_sfont_iter_next, synth_sfont_free)))
         goto failed;
     fluid_sfont_set_data(obj->fluid_sfont, obj);
+
+    InitializeCriticalSection(&obj->cs);
+    obj->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     TRACE("Created DirectMusicSynth %p\n", obj);
     *ret_iface = (IUnknown *)&obj->IDirectMusicSynth8_iface;
