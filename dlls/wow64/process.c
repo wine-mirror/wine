@@ -431,8 +431,7 @@ NTSTATUS WINAPI wow64_NtDebugActiveProcess( UINT *args )
  */
 NTSTATUS WINAPI wow64_NtFlushProcessWriteBuffers( UINT *args )
 {
-    NtFlushProcessWriteBuffers();
-    return STATUS_SUCCESS;
+    return NtFlushProcessWriteBuffers();
 }
 
 
