@@ -252,8 +252,7 @@ static void uia_event_map_entry_release(struct uia_event_map_entry *entry)
     }
 }
 
-typedef HRESULT UiaWineEventForEachCallback(struct uia_event *, void *);
-static HRESULT uia_event_for_each(int event_id, UiaWineEventForEachCallback *callback, void *user_data,
+HRESULT uia_event_for_each(int event_id, UiaWineEventForEachCallback *callback, void *user_data,
         BOOL clientside_only)
 {
     struct uia_event_map_entry *event_entry;

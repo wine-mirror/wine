@@ -15659,11 +15659,11 @@ static void test_uia_com_focus_change_event_handler_win_event_handling(IUIAutoma
 
     set_uia_hwnd_expects(0, 2, 2, 4, 0); /* Win11 sends 4 WM_GETOBJECT messages, normally only 3. */
     NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, CHILDID_SELF);
-    todo_wine ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
     if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 3, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
-    todo_wine CHECK_CALLED(uia_event_callback);
+    check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 3, FALSE, 0, FALSE);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
 
     /*
      * Child ID is ignored when translating EVENT_OBJECT_FOCUS events into
@@ -15674,11 +15674,11 @@ static void test_uia_com_focus_change_event_handler_win_event_handling(IUIAutoma
     set_uia_hwnd_expects(0, 2, 2, 4, 0); /* Win11 sends 4 WM_GETOBJECT messages, normally only 3. */
 
     NotifyWinEvent(EVENT_OBJECT_FOCUS, test_hwnd, OBJID_CLIENT, -1);
-    todo_wine ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
+    ok(msg_wait_for_all_events(event_handles, 2, 5000) != WAIT_TIMEOUT, "Wait for event_handle(s) timed out.\n");
     if (wait_for_clientside_callbacks(2000)) trace("Kept getting callbacks up until timeout\n");
-    check_uia_hwnd_expects_at_least(0, FALSE, 2, TRUE, 2, TRUE, 3, TRUE, 0, FALSE);
-    todo_wine CHECK_CALLED(uia_com_event_callback);
-    todo_wine CHECK_CALLED(uia_event_callback);
+    check_uia_hwnd_expects_at_least(0, FALSE, 2, FALSE, 2, FALSE, 3, FALSE, 0, FALSE);
+    CHECK_CALLED(uia_com_event_callback);
+    CHECK_CALLED(uia_event_callback);
 
     /*
      * UIA queries the serverside provider for UIA_HasKeyboardFocusPropertyId.

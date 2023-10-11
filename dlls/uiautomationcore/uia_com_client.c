@@ -979,6 +979,40 @@ struct uia_com_event {
     struct uia_event_handler_map_entry *handler_map;
 };
 
+static HRESULT uia_com_focus_win_event_callback(struct uia_event *event, void *user_data)
+{
+    struct uia_node *node = impl_from_IWineUiaNode((IWineUiaNode *)user_data);
+    VARIANT v, v2;
+    HRESULT hr;
+
+    /* Only match desktop events. */
+    if (!event->desktop_subtree_event)
+        return S_OK;
+
+    VariantInit(&v);
+    VariantInit(&v2);
+
+    hr = create_node_from_node_provider(&node->IWineUiaNode_iface, 0, PROV_METHOD_FLAG_RETURN_NODE_LRES, &v);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create new node lres with hr %#lx\n", hr);
+        return hr;
+    }
+
+    if (V_VT(&v) == VT_I4)
+    {
+        hr = IWineUiaEvent_raise_event(&event->IWineUiaEvent_iface, v, v2);
+        if (FAILED(hr))
+        {
+            WARN("raise_event failed with hr %#lx\n", hr);
+            uia_node_lresult_release(V_I4(&v));
+        }
+    }
+    VariantClear(&v);
+
+    return hr;
+}
+
 static void uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIANODE node, HWND hwnd)
 {
     HRESULT hr;
@@ -998,6 +1032,8 @@ static void uia_com_focus_handler_advise_node(struct uia_com_event *event, HUIAN
 static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia_event_handler_event_id_map_entry *event_id_map)
 {
     struct uia_event_handler_map_entry *entry;
+    HRESULT hr;
+    VARIANT v;
 
     LIST_FOR_EACH_ENTRY(entry, &event_id_map->handlers_list, struct uia_event_handler_map_entry, handler_event_id_map_list_entry)
     {
@@ -1009,6 +1045,17 @@ static void uia_com_focus_win_event_handler(HUIANODE node, HWND hwnd, struct uia
                 uia_com_focus_handler_advise_node(event, node, hwnd);
         }
     }
+
+    VariantInit(&v);
+    hr = UiaGetPropertyValue(node, UIA_HasKeyboardFocusPropertyId, &v);
+    if (SUCCEEDED(hr) && (V_VT(&v) == VT_BOOL && V_BOOL(&v) == VARIANT_TRUE))
+    {
+        hr = uia_event_for_each(UIA_AutomationFocusChangedEventId, uia_com_focus_win_event_callback, (void *)node, TRUE);
+        if (FAILED(hr))
+            WARN("uia_event_for_each failed with hr %#lx\n", hr);
+    }
+
+    VariantClear(&v);
 }
 
 HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id, DWORD event_time)

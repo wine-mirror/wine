@@ -95,6 +95,7 @@ library UIA_wine_private
         HRESULT attach_event([in]LONG_PTR huiaevent);
         HRESULT respond_to_win_event([in]DWORD win_event, [in]ULONG hwnd, [in]LONG obj_id, [in]LONG child_id,
                                     [in]IProxyProviderWinEventSink *sink);
+        HRESULT create_node_from_prov([in]long flags, [out, retval]VARIANT *ret_val);
     }
 
     [
