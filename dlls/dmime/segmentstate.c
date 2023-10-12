@@ -51,6 +51,7 @@ struct segment_state
     MUSIC_TIME start_time;
     MUSIC_TIME start_point;
     MUSIC_TIME end_point;
+    BOOL auto_download;
 
     struct list tracks;
 };
@@ -103,7 +104,7 @@ static ULONG WINAPI segment_state_Release(IDirectMusicSegmentState8 *iface)
 
     if (!ref)
     {
-        segment_state_end_play((IDirectMusicSegmentState *)iface);
+        segment_state_end_play((IDirectMusicSegmentState *)iface, NULL);
         if (This->segment) IDirectMusicSegment_Release(This->segment);
         free(This);
     }
@@ -224,8 +225,13 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     This->segment = segment;
     IDirectMusicSegment_AddRef(This->segment);
 
+    if (SUCCEEDED(hr = IDirectMusicPerformance_GetGlobalParam(performance, &GUID_PerfAutoDownload,
+            &This->auto_download, sizeof(This->auto_download))) && This->auto_download)
+        hr = IDirectMusicSegment_SetParam(segment, &GUID_DownloadToAudioPath, -1,
+                    DMUS_SEG_ALLTRACKS, 0, performance);
+
     This->start_time = start_time;
-    hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
+    if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLength(segment, &This->end_point);
 
     for (i = 0; SUCCEEDED(hr); i++)
@@ -283,16 +289,21 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
     return hr;
 }
 
-HRESULT segment_state_end_play(IDirectMusicSegmentState *iface)
+HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance *performance)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
     struct track_entry *entry, *next;
+    HRESULT hr;
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, next, &This->tracks, struct track_entry, entry)
     {
         list_remove(&entry->entry);
         track_entry_destroy(entry);
     }
+
+    if (performance && This->auto_download && FAILED(hr = IDirectMusicSegment_SetParam(This->segment,
+            &GUID_UnloadFromAudioPath, -1, DMUS_SEG_ALLTRACKS, 0, performance)))
+        ERR("Failed to unload segment from performance, hr %#lx\n", hr);
 
     return S_OK;
 }

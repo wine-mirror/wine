@@ -1740,7 +1740,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)
                 && notif->dwNotificationOption == DMUS_NOTIFICATION_SEGEND)
         {
-            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser)))
+            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser, performance)))
                 WARN("Failed to end segment state %p, hr %#lx\n", notif->punkUser, hr);
         }
 

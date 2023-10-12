@@ -234,7 +234,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
             band_connect_to_collection(entry->band, param);
     }
     else if (IsEqualGUID(type, &GUID_Disable_Auto_Download))
-        FIXME("GUID_Disable_Auto_Download not handled yet\n");
+        This->header.bAutoDownload = FALSE;
     else if (IsEqualGUID(type, &GUID_Download))
         FIXME("GUID_Download not handled yet\n");
     else if (IsEqualGUID(type, &GUID_DownloadToAudioPath))
@@ -265,7 +265,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         IDirectMusicPerformance_Release(performance);
     }
     else if (IsEqualGUID(type, &GUID_Enable_Auto_Download))
-        FIXME("GUID_Enable_Auto_Download not handled yet\n");
+        This->header.bAutoDownload = TRUE;
     else if (IsEqualGUID(type, &GUID_IDirectMusicBand))
         FIXME("GUID_IDirectMusicBand not handled yet\n");
     else if (IsEqualGUID(type, &GUID_StandardMIDIFile))

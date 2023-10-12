@@ -75,7 +75,7 @@ extern void set_audiopath_primary_dsound_buffer(IDirectMusicAudioPath*,IDirectSo
 extern HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time,
         IDirectMusicPerformance *performance, IDirectMusicSegmentState **ret_iface);
 extern HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance *performance);
-extern HRESULT segment_state_end_play(IDirectMusicSegmentState *iface);
+extern HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance *performance);
 
 extern HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         IDirectMusicTrack8 **ret_iface);
