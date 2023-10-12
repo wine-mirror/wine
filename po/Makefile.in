@@ -1,4 +1,4 @@
-PO_SRCS = \
+SOURCES = \
 	ar.po \
 	ast.po \
 	bg.po \

@@ -338,7 +338,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.mc$/)
+        if ($name =~ /\.(mc|po)$/)
         {
             push @{${$make}{"=SOURCES"}}, $name;
             next;
@@ -362,10 +362,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.rc$/)
         {
             push @{${$make}{"=RC_SRCS"}}, $name;
-        }
-        elsif ($name =~ /\.po$/)
-        {
-            push @{${$make}{"=PO_SRCS"}}, $name;
         }
         elsif ($name =~ /\.idl$/)
         {
