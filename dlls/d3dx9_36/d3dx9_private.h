@@ -32,6 +32,8 @@
 
 #define ULONG64_MAX (~(ULONG64)0)
 
+#define FOURCC_TX_1 0x54580100
+
 struct vec4
 {
     float x, y, z, w;

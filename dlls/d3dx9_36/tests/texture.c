@@ -2475,17 +2475,25 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     hr = D3DXCreateTextureShader(NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
+    tx = (void *)0xdeadbeef;
     hr = D3DXCreateTextureShader(NULL, &tx);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(tx == (void *)0xdeadbeef, "Unexpected pointer %p.\n", tx);
 
+    tx = (void *)0xdeadbeef;
     hr = D3DXCreateTextureShader(shader_invalid, &tx);
-    todo_wine ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(tx == (void *)0xdeadbeef, "Unexpected pointer %p.\n", tx);
 
+    tx = (void *)0xdeadbeef;
     hr = D3DXCreateTextureShader(shader_zero, &tx);
-    todo_wine ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(tx == (void *)0xdeadbeef, "Unexpected pointer %p.\n", tx);
 
+    tx = (void *)0xdeadbeef;
     hr = D3DXCreateTextureShader(shader_empty, &tx);
-    todo_wine ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3DXERR_INVALIDDATA, "Got unexpected hr %#lx.\n", hr);
+    ok(tx == (void *)0xdeadbeef, "Unexpected pointer %p.\n", tx);
 
     hr = D3DXCreateTextureShader(shader_code, &tx);
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);

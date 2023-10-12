@@ -2653,6 +2653,9 @@ HRESULT WINAPI D3DXCreateTextureShader(const DWORD *function, ID3DXTextureShader
     if (!function || !texture_shader)
         return D3DERR_INVALIDCALL;
 
+    if (*function != FOURCC_TX_1)
+        return D3DXERR_INVALIDDATA;
+
     if (!(size = D3DXGetShaderSize(function)))
         return D3DXERR_INVALIDDATA;
 

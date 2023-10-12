@@ -144,7 +144,6 @@ static double pres_div(double *args, int n) {return 0.0;}
 #define FOURCC_CLIT 0x54494c43
 #define FOURCC_FXLC 0x434c5846
 #define FOURCC_PRSI 0x49535250
-#define FOURCC_TX_1 0x54580100
 #define PRES_SIGN 0x46580000
 
 struct op_info
