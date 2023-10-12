@@ -1,7 +1,7 @@
 TESTDLL   = gdi32.dll
 IMPORTS   = setupapi user32 gdi32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	bitmap.c \
 	brush.c \
 	clipping.c \
@@ -16,9 +16,8 @@ C_SRCS = \
 	metafile.c \
 	palette.c \
 	path.c \
-	pen.c
-
-FONT_SRCS = \
+	pen.c \
+	resource.rc \
 	vertical.sfd \
 	wine_langnames.sfd \
 	wine_langnames2.sfd \
@@ -29,5 +28,3 @@ FONT_SRCS = \
 	wine_ttfnames.sfd \
 	wine_ttfnames_bold.sfd \
 	wine_vdmx.sfd
-
-RC_SRCS = resource.rc

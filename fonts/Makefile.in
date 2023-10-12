@@ -1,4 +1,4 @@
-FONT_SRCS = \
+SOURCES = \
 	courier.sfd \
 	fixedsys.sfd \
 	fixedsys_jp.sfd \

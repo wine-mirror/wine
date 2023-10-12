@@ -338,7 +338,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.(m|mc|po)$/)
+        if ($name =~ /\.(m|mc|po|sfd)$/)
         {
             push @{${$make}{"=SOURCES"}}, $name;
             next;
@@ -346,10 +346,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
         elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
-        elsif ($name =~ /\.sfd$/)
-        {
-            push @{${$make}{"=FONT_SRCS"}}, $name;
-        }
         elsif ($name =~ /\.c$/)
         {
             push @{${$make}{"=C_SRCS"}}, $name;
