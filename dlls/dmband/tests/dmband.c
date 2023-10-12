@@ -233,7 +233,6 @@ static void test_bandtrack(void)
     hr = IDirectMusicTrack8_EndPlay(dmt8, NULL);
     ok(hr == S_OK, "IDirectMusicTrack8_EndPlay failed: %#lx\n", hr);
     hr = IDirectMusicTrack8_Play(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
-    todo_wine
     ok(hr == DMUS_S_END, "IDirectMusicTrack8_Play failed: %#lx\n", hr);
     hr = IDirectMusicTrack8_GetParam(dmt8, NULL, 0, NULL, NULL);
     ok(hr == E_POINTER, "IDirectMusicTrack8_GetParam failed: %#lx\n", hr);

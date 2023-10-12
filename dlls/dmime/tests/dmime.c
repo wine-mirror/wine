@@ -3756,39 +3756,27 @@ static void test_band_track_play(void)
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
     ok(!ret, "got %#lx\n", ret);
-    if (patch->dwType == DMUS_PMSGT_PATCH)
-    {
     check_dmus_patch_pmsg(patch, 0, 1, 0, 1);
-    }
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     check_dmus_patch_pmsg(patch, 1000, 2, 0, 3);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&patch);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     check_dmus_patch_pmsg(patch, 1000, 1, 0, 2);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)patch);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     ret = test_tool_wait_message(tool, 500, &msg);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     IDirectMusicSegment_Release(segment);
 

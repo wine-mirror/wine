@@ -486,3 +486,37 @@ HRESULT band_connect_to_collection(IDirectMusicBand *iface, IDirectMusicCollecti
 
     return S_OK;
 }
+
+HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *performance,
+        IDirectMusicGraph *graph, MUSIC_TIME time, DWORD track_id)
+{
+    struct band *This = impl_from_IDirectMusicBand(iface);
+    struct instrument_entry *entry;
+    HRESULT hr = S_OK;
+
+    LIST_FOR_EACH_ENTRY_REV(entry, &This->instruments, struct instrument_entry, entry)
+    {
+        DMUS_PATCH_PMSG *msg;
+
+        if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
+                (DMUS_PMSG **)&msg)))
+            break;
+
+        msg->mtTime = time;
+        msg->dwFlags = DMUS_PMSGF_MUSICTIME;
+        msg->dwPChannel = entry->instrument.dwPChannel;
+        msg->dwVirtualTrackID = track_id;
+        msg->dwType = DMUS_PMSGT_PATCH;
+        msg->dwGroupID = 1;
+        msg->byInstrument = entry->instrument.dwPatch;
+
+        if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
+                || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))
+        {
+            IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)msg);
+            break;
+        }
+    }
+
+    return hr;
+}
