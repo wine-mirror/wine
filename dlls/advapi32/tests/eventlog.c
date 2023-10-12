@@ -1327,11 +1327,13 @@ static void test_eventlog_start(void)
     char *sourcenameA, *computernameA, *localcomputerA;
 
     /* ReadEventLogW */
-    size = MAX_COMPUTERNAME_LENGTH + 1;
-    localcomputer = malloc(size * sizeof(WCHAR));
-    GetComputerNameW(localcomputer, &size);
-
     handle = OpenEventLogW(0, L"System");
+    if (!handle && (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == RPC_S_SERVER_UNAVAILABLE))
+    {
+        win_skip( "Can't open event log\n" );
+        return;
+    }
+    ok(handle != NULL, "OpenEventLogW(System) failed : %ld\n", GetLastError());
     handle2 = OpenEventLogW(0, L"System");
     todo_wine ok(handle != handle2, "Expected different handle\n");
     CloseEventLog(handle2);
@@ -1339,6 +1341,10 @@ static void test_eventlog_start(void)
     handle2 = OpenEventLogW(0, L"SYSTEM");
     ok(!!handle2, "Expected valid handle\n");
     CloseEventLog(handle2);
+
+    size = MAX_COMPUTERNAME_LENGTH + 1;
+    localcomputer = malloc(size * sizeof(WCHAR));
+    GetComputerNameW(localcomputer, &size);
 
     ret = TRUE;
     found = FALSE;
