@@ -409,11 +409,9 @@ static HRESULT WINAPI segment_SetParam(IDirectMusicSegment8 *iface, REFGUID type
             if (index != DMUS_SEG_ALLTRACKS && index--) continue;
         }
 
-        hr = IDirectMusicTrack_IsParamSupported(entry->pTrack, type);
-        if (hr == DMUS_E_TYPE_UNSUPPORTED) continue;
-
-        hr = IDirectMusicTrack_SetParam(entry->pTrack, type, music_time, param);
-        if (FAILED(hr)) break;
+        if (SUCCEEDED(hr = IDirectMusicTrack_IsParamSupported(entry->pTrack, type))
+                && FAILED(hr = IDirectMusicTrack_SetParam(entry->pTrack, type, music_time, param)))
+            WARN("SetParam for track %p failed, hr %#lx\n", entry->pTrack, hr);
     }
 
     return S_OK;
