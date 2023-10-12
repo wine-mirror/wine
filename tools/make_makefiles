@@ -338,7 +338,12 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
+        if ($name =~ /\.mc$/)
+        {
+            push @{${$make}{"=SOURCES"}}, $name;
+            next;
+        }
+        elsif ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
         elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
         elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
@@ -357,10 +362,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.rc$/)
         {
             push @{${$make}{"=RC_SRCS"}}, $name;
-        }
-        elsif ($name =~ /\.mc$/)
-        {
-            push @{${$make}{"=MC_SRCS"}}, $name;
         }
         elsif ($name =~ /\.po$/)
         {
@@ -408,6 +409,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{$file};
         my $parent = get_parent_makefile( $file );
         next unless $parent;
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "SOURCES" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "C_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "RC_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "IDL_SRCS" );

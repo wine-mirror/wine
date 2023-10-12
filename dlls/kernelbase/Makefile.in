@@ -7,10 +7,11 @@ EXTRADLLFLAGS = -nodefaultlibs -nostartfiles
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b000000
 x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x174000000
 
-C_SRCS = \
+SOURCES = \
 	console.c \
 	debug.c \
 	file.c \
+	kernelbase.rc \
 	loader.c \
 	locale.c \
 	main.c \
@@ -23,7 +24,5 @@ C_SRCS = \
 	sync.c \
 	thread.c \
 	version.c \
-	volume.c
-
-RC_SRCS = kernelbase.rc
-MC_SRCS = winerror.mc
+	volume.c \
+	winerror.mc
