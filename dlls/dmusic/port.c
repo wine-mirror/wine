@@ -274,30 +274,36 @@ static HRESULT WINAPI synth_port_GetNumChannelGroups(IDirectMusicPort *iface, DW
 static HRESULT WINAPI synth_port_Activate(IDirectMusicPort *iface, BOOL active)
 {
     struct synth_port *This = synth_from_IDirectMusicPort(iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%d): semi-stub\n", iface, This, active);
+    TRACE("(%p/%p)->(%d)\n", iface, This, active);
 
-    if (This->active == active)
-        return S_FALSE;
+    if (This->active == active) return S_FALSE;
 
-    if (active) {
-        /* Acquire the dsound */
-        if (!This->dsound) {
-            IDirectSound_AddRef(This->parent->dsound);
-            This->dsound = This->parent->dsound;
-        }
-        IDirectSound_AddRef(This->dsound);
-    } else {
-        /* Release the dsound */
-        IDirectSound_Release(This->dsound);
-        IDirectSound_Release(This->parent->dsound);
-        if (This->dsound == This->parent->dsound)
-            This->dsound = NULL;
+    if (active)
+    {
+        if (!This->dsound && FAILED(hr = IDirectMusicPort_SetDirectSound(iface,
+                This->parent->dsound, NULL)))
+            return hr;
+        if (FAILED(hr = IDirectMusicSynthSink_SetDirectSound(This->synth_sink,
+                This->dsound, This->dsbuffer)))
+            return hr;
+
+        if (FAILED(hr = IDirectMusicSynth_Activate(This->synth, active)))
+            return hr;
+        This->active = TRUE;
+    }
+    else
+    {
+        if (FAILED(hr = IDirectMusicSynth_Activate(This->synth, FALSE))) return hr;
+        This->active = FALSE;
+
+        if (FAILED(hr = IDirectMusicSynthSink_SetDirectSound(This->synth_sink, NULL, NULL)))
+            return hr;
+        hr = IDirectMusicPort_SetDirectSound(iface, NULL, NULL);
     }
 
-    This->active = active;
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI synth_port_SetChannelPriority(IDirectMusicPort *iface, DWORD channel_group,
