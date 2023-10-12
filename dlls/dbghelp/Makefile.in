@@ -3,7 +3,6 @@ IMPORTLIB = dbghelp
 IMPORTS   = kernelbase $(ZLIB_PE_LIBS)
 EXTRAINCL = $(ZLIB_PE_CFLAGS)
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
-DELAYIMPORTS = version
 
 C_SRCS = \
 	coff.c \
