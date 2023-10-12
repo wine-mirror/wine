@@ -369,7 +369,8 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.in$/)
         {
-            push @{${$make}{"=IN_SRCS"}}, $name;
+            push @{${$make}{"=SOURCES"}}, $name;
+            next;
         }
         elsif ($name =~ /\.spec$/)
         {

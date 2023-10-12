@@ -3,18 +3,13 @@ UNIXLIB   = wineandroid.so
 IMPORTS   = ntoskrnl
 UNIX_LIBS = -lwin32u $(PTHREAD_LIBS)
 
-C_SRCS = \
+SOURCES = \
+	build.gradle.in \
 	device.c \
 	dllmain.c \
 	init.c \
 	keyboard.c \
 	opengl.c \
-	window.c
-
-IN_SRCS = \
-	build.gradle.in
-
-SVG_SRCS = \
+	window.c \
 	wine.svg
-
 EXTRA_TARGETS = wine-debug.apk
