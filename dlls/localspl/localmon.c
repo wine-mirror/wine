@@ -542,7 +542,7 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
     }
 
     port->hfile = CreateFileW(doc_info->pOutputFile, GENERIC_WRITE,
-            FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+            FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
     return port->hfile != INVALID_HANDLE_VALUE;
 }
 
