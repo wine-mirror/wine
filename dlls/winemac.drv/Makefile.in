@@ -14,8 +14,17 @@ UNIX_LIBS    = \
 	-framework Security \
 	$(METAL_LIBS)
 
-C_SRCS = \
+SOURCES = \
 	clipboard.c \
+	cocoa_app.m \
+	cocoa_clipboard.m \
+	cocoa_cursorclipping.m \
+	cocoa_display.m \
+	cocoa_event.m \
+	cocoa_main.m \
+	cocoa_opengl.m \
+	cocoa_status_item.m \
+	cocoa_window.m \
 	display.c \
 	dllmain.c \
 	dragdrop.c \
@@ -29,17 +38,5 @@ C_SRCS = \
 	surface.c \
 	systray.c \
 	vulkan.c \
-	window.c
-
-OBJC_SRCS = \
-	cocoa_app.m \
-	cocoa_clipboard.m \
-	cocoa_cursorclipping.m \
-	cocoa_display.m \
-	cocoa_event.m \
-	cocoa_main.m \
-	cocoa_opengl.m \
-	cocoa_status_item.m \
-	cocoa_window.m
-
-RC_SRCS = winemac.rc
+	window.c \
+	winemac.rc
