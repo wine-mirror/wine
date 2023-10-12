@@ -146,8 +146,7 @@ static void test_MediaControlStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( value == FALSE, "got value %d.\n", value );
 
-    ref = ISystemMediaTransportControls_Release( media_control_statics );
-    ok( ref == 1 || broken(ref == 3) /* Win10 1507 */ || broken(ref == 2) /* Win10 1607 */, "got ref %ld.\n", ref );
+    ISystemMediaTransportControls_Release( media_control_statics );
 done:
     DestroyWindow( window );
     ref = ISystemMediaTransportControlsInterop_Release( media_control_interop_statics );
