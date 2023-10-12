@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-#define BUFFER_SUBDIVISIONS 8
+#define BUFFER_SUBDIVISIONS 100
 
 struct synth_sink
 {
@@ -74,6 +74,128 @@ static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
     }
 }
 
+static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer *buffer,
+        DSBCAPS *caps, WAVEFORMATEX *format, const void *data, DWORD size)
+{
+    DWORD write_end, size1, size2, current_pos;
+    void *data1, *data2;
+    HRESULT hr;
+
+    TRACE("sink %p, data %p, size %#lx\n", sink, data, size);
+
+    current_pos = sink->written % caps->dwBufferBytes;
+
+    if (sink->written)
+    {
+        DWORD play_pos, write_pos;
+
+        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos))) return hr;
+
+        if (current_pos - play_pos <= write_pos - play_pos)
+        {
+            ERR("Underrun detected, sink %p, play pos %#lx, write pos %#lx, current pos %#lx!\n",
+                    buffer, play_pos, write_pos, current_pos);
+            current_pos = write_pos;
+        }
+
+        write_end = (current_pos + size) % caps->dwBufferBytes;
+        if (write_end - current_pos >= play_pos - current_pos) return S_FALSE;
+    }
+
+    if (FAILED(hr = IDirectSoundBuffer_Lock(buffer, current_pos, size,
+            &data1, &size1, &data2, &size2, 0)))
+    {
+        ERR("IDirectSoundBuffer_Lock failed, hr %#lx\n", hr);
+        return hr;
+    }
+
+    if (!data)
+    {
+        memset(data1, format->wBitsPerSample == 8 ? 128 : 0, size1);
+        memset(data2, format->wBitsPerSample == 8 ? 128 : 0, size2);
+    }
+    else
+    {
+        memcpy(data1, data, size1);
+        data = (char *)data + size1;
+        memcpy(data2, data, size2);
+    }
+
+    if (FAILED(hr = IDirectSoundBuffer_Unlock(buffer, data1, size1, data2, size2)))
+    {
+        ERR("IDirectSoundBuffer_Unlock failed, hr %#lx\n", hr);
+        return hr;
+    }
+
+    sink->written += size;
+    TRACE("Written size %#lx, total %#lx\n", size, sink->written);
+    return S_OK;
+}
+
+static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuffer *buffer,
+        DSBCAPS *caps, WAVEFORMATEX *format, HANDLE buffer_event)
+{
+    DWORD current_pos, start_pos, play_pos, written, played = 0;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &start_pos, NULL)))
+    {
+        ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
+        return hr;
+    }
+
+    current_pos = sink->written % caps->dwBufferBytes;
+    written = current_pos - start_pos + (current_pos < start_pos ? caps->dwBufferBytes : 0);
+    if (FAILED(hr = synth_sink_write_data(sink, buffer, caps, format, NULL, caps->dwBufferBytes / 2))) return hr;
+
+    for (;;)
+    {
+        DWORD ret;
+
+        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, NULL)))
+        {
+            ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
+            return hr;
+        }
+
+        played += play_pos - start_pos + (play_pos < start_pos ? caps->dwBufferBytes : 0);
+        if (played >= written) break;
+
+        TRACE("Waiting for EOS, start_pos %#lx, play_pos %#lx, written %#lx, played %#lx\n",
+                start_pos, play_pos, written, played);
+        if ((ret = WaitForMultipleObjects(1, &buffer_event, FALSE, INFINITE)))
+        {
+            ERR("WaitForMultipleObjects returned %#lx\n", ret);
+            break;
+        }
+
+        start_pos = play_pos;
+    }
+
+    return S_OK;
+}
+
+static HRESULT synth_sink_render_data(struct synth_sink *sink, IDirectMusicSynth *synth,
+        IDirectSoundBuffer *buffer, WAVEFORMATEX *format, short *samples, DWORD samples_size)
+{
+    REFERENCE_TIME sample_time;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicSynth_Render(synth, samples, samples_size / format->nBlockAlign,
+            sink->written / format->nBlockAlign)))
+        ERR("Failed to render synthesizer samples, hr %#lx\n", hr);
+
+    if (FAILED(hr = IDirectMusicSynthSink_SampleToRefTime(&sink->IDirectMusicSynthSink_iface,
+            (sink->written + samples_size) / format->nBlockAlign, &sample_time)))
+        ERR("Failed to convert sample position to time, hr %#lx\n", hr);
+
+    EnterCriticalSection(&sink->cs);
+    sink->latency_time = sample_time;
+    LeaveCriticalSection(&sink->cs);
+
+    return hr;
+}
+
 struct render_thread_params
 {
     struct synth_sink *sink;
@@ -90,7 +212,10 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
     IDirectMusicSynth *synth = params->synth;
     struct synth_sink *sink = params->sink;
     IDirectSoundNotify *notify;
+    WAVEFORMATEX format;
     HANDLE buffer_event;
+    DWORD samples_size;
+    short *samples;
     HRESULT hr;
 
     TRACE("Starting thread, args %p\n", args);
@@ -103,6 +228,8 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         ERR("Failed to create buffer event, error %lu\n", GetLastError());
     else if (FAILED(hr = IDirectSoundBuffer_GetCaps(buffer, &caps)))
         ERR("Failed to query sound buffer caps, hr %#lx.\n", hr);
+    else if (FAILED(hr = IDirectSoundBuffer_GetFormat(buffer, &format, sizeof(format), NULL)))
+        ERR("Failed to query sound buffer format, hr %#lx.\n", hr);
     else if (FAILED(hr = IDirectSoundBuffer_QueryInterface(buffer, &IID_IDirectSoundNotify,
                 (void **)&notify)))
         ERR("Failed to query IDirectSoundNotify iface, hr %#lx.\n", hr);
@@ -124,14 +251,27 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         IDirectSoundNotify_Release(notify);
     }
 
+    samples_size = caps.dwBufferBytes / BUFFER_SUBDIVISIONS;
+    if (!(samples = malloc(samples_size)))
+    {
+        ERR("Failed to allocate memory for samples\n");
+        goto done;
+    }
+
+    if (FAILED(hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size)))
+        ERR("Failed to render initial buffer data, hr %#lx.\n", hr);
     if (FAILED(hr = IDirectSoundBuffer_Play(buffer, 0, 0, DSBPLAY_LOOPING)))
         ERR("Failed to start sound buffer, hr %#lx.\n", hr);
     SetEvent(params->started_event);
 
-    while (hr == S_OK)
+    while (SUCCEEDED(hr) && SUCCEEDED(hr = synth_sink_write_data(sink, buffer,
+            &caps, &format, samples, samples_size)))
     {
         HANDLE handles[] = {sink->stop_event, buffer_event};
         DWORD ret;
+
+        if (hr == S_OK) /* if successfully written, render more data */
+            hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size);
 
         if (!(ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE))
                 || ret >= ARRAY_SIZE(handles))
@@ -148,6 +288,10 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         return hr;
     }
 
+    synth_sink_wait_play_end(sink, buffer, &caps, &format, buffer_event);
+    free(samples);
+
+done:
     IDirectSoundBuffer_Release(buffer);
     IDirectMusicSynth_Release(synth);
     CloseHandle(buffer_event);

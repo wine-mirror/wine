@@ -1317,7 +1317,7 @@ static void test_IDirectMusicSynthSink(void)
     tmp_time = time;
     hr = IReferenceClock_GetTime(latency_clock, &tmp_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(tmp_time > time, "got %I64d\n", tmp_time - time);
+    ok(tmp_time > time, "got %I64d\n", tmp_time - time);
     ok(tmp_time - time <= 2000000, "got %I64d\n", tmp_time - time);
 
     /* setting the clock while active is fine */
