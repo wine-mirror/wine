@@ -35,20 +35,8 @@
 #define DPWS_GUARANTEED_MAXBUFFERSIZE 1048547
 #define DPWS_GUARANTEED_MAXPLAYERS    64
 
-typedef struct tagDPWS_THREADDATA
-{
-    BOOL           is_running;
-    SOCKET         sock;
-    SOCKADDR_IN    addr;
-    HANDLE         handle;
-    LPDIRECTPLAYSP lpISP;
-} DPWS_THREADDATA, *LPDPWS_THREADDATA;
-
 typedef struct tagDPWS_DATA
 {
-    SOCKET          sock;
-    DPWS_THREADDATA tcp_listener, udp_listener, dplaysrv;
-    SOCKADDR_IN     nameserverAddr;
     LPDIRECTPLAYSP  lpISP;
 } DPWS_DATA, *LPDPWS_DATA;
 
