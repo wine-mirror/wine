@@ -996,7 +996,11 @@ static void test_readwrite(void)
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
                             0, buf, needed, &read, &needed);
         ok(ret, "Expected success: %ld\n", GetLastError());
-
+        if (!ret)
+        {
+             winetest_pop_context();
+             break;
+        }
         record = (EVENTLOGRECORD *)buf;
 
         ok(record->Length == read,
