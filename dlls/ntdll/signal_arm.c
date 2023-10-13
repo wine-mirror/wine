@@ -1487,13 +1487,14 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     return 0;
 }
 
-/***********************************************************************
- *           signal_start_thread
+/******************************************************************
+ *		LdrInitializeThunk (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( signal_start_thread,
-                   "mov sp, r0\n\t"  /* context */
-                   "mov r1, #1\n\t"
-                   "b " __ASM_NAME("NtContinue") )
+void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
+{
+    loader_init( context, (void **)&context->R0 );
+    NtContinue( context, TRUE );
+}
 
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)

@@ -1590,6 +1590,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           signal_start_thread
  */
+extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %rcx,%rbx\n\t"        /* context */
                    /* clear the thread stack */
@@ -1605,6 +1606,16 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %rbx,%rcx\n\t"
                    "movl $1,%edx\n\t"
                    "call " __ASM_NAME("NtContinue") )
+
+
+/******************************************************************
+ *		LdrInitializeThunk (NTDLL.@)
+ */
+void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
+{
+    loader_init( context, (void **)&context->Rcx );
+    signal_start_thread( context );
+}
 
 
 /**********************************************************************

@@ -4188,28 +4188,17 @@ static void release_address_space(void)
 }
 
 /******************************************************************
- *		LdrInitializeThunk (NTDLL.@)
+ *		loader_init
  *
  * Attach to all the loaded dlls.
  * If this is the first time, perform the full process initialization.
  */
-void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR unknown3, ULONG_PTR unknown4 )
+void loader_init( CONTEXT *context, void **entry )
 {
     static int attach_done;
     NTSTATUS status;
     ULONG_PTR cookie;
     WINE_MODREF *wm;
-    void **entry;
-
-#ifdef __i386__
-    entry = (void **)&context->Eax;
-#elif defined(__x86_64__)
-    entry = (void **)&context->Rcx;
-#elif defined(__arm__)
-    entry = (void **)&context->R0;
-#elif defined(__aarch64__)
-    entry = (void **)&context->X0;
-#endif
 
     if (process_detaching) NtTerminateThread( GetCurrentThread(), 0 );
 
@@ -4335,7 +4324,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
     }
 
     RtlLeaveCriticalSection( &loader_section );
-    signal_start_thread( context );
 }
 
 
