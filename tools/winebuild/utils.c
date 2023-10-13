@@ -842,6 +842,7 @@ void output_function_header( const char *func, int global )
         break;
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
+        if (target.cpu == CPU_ARM64EC) output( ".section .text,\"xr\",discard,%s\n\t", name );
         output( "\t.def %s\n\t.scl 2\n\t.type 32\n\t.endef\n", name );
         if (global) output( "\t.globl %s\n", name );
         if (thumb_mode) output( "\t.thumb_func\n" );
