@@ -30,6 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
+#define DPWS_PORT           47624
 #define DPWS_START_TCP_PORT 2300
 #define DPWS_END_TCP_PORT   2350
 
@@ -105,15 +106,19 @@ static void DPWS_Stop( DPWS_DATA *dpwsData )
 
 static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
 {
+    DPSP_MSG_HEADER *header = (DPSP_MSG_HEADER *) data->lpMessage;
     DPWS_DATA *dpwsData;
     DWORD dpwsDataSize;
+    SOCKADDR_IN addr;
+    BOOL true = TRUE;
+    SOCKET sock;
     HRESULT hr;
 
-    FIXME( "(%p,%ld,%p,%u) stub\n",
+    TRACE( "(%p,%ld,%p,%u)\n",
            data->lpMessage, data->dwMessageSize,
            data->lpISP, data->bReturnStatus );
 
-    hr = IDirectPlaySP_GetSPData( data->lpISP, (void **)&dpwsData, &dpwsDataSize, DPSET_LOCAL );
+    hr = IDirectPlaySP_GetSPData( data->lpISP, (void **) &dpwsData, &dpwsDataSize, DPSET_LOCAL );
     if ( FAILED( hr ) )
         return hr;
 
@@ -121,7 +126,42 @@ static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
     if ( FAILED (hr) )
         return hr;
 
-    return S_OK;
+    sock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    if ( sock == INVALID_SOCKET )
+    {
+        ERR( "socket() failed\n" );
+        return DPERR_UNAVAILABLE;
+    }
+
+    if ( SOCKET_ERROR == setsockopt( sock, SOL_SOCKET, SO_BROADCAST, (const char *) &true,
+                                     sizeof( true ) ) )
+    {
+        ERR( "setsockopt() failed\n" );
+        closesocket( sock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    memset( header, 0, sizeof( DPSP_MSG_HEADER ) );
+    header->mixed = DPSP_MSG_MAKE_MIXED( data->dwMessageSize, DPSP_MSG_TOKEN_REMOTE );
+    header->SockAddr.sin_family = AF_INET;
+    header->SockAddr.sin_port = dpwsData->tcpAddr.sin_port;
+
+    memset( &addr, 0, sizeof( addr ) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl( INADDR_BROADCAST );
+    addr.sin_port = htons( DPWS_PORT );
+
+    if ( SOCKET_ERROR == sendto( sock, data->lpMessage, data->dwMessageSize, 0, (SOCKADDR *) &addr,
+                                 sizeof( addr ) ) )
+    {
+        ERR( "sendto() failed\n" );
+        closesocket( sock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    closesocket( sock );
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_Reply( LPDPSP_REPLYDATA data )

@@ -784,12 +784,7 @@ static SOCKET connectTcp_( int line, unsigned short port )
     addr.sin_port = htons( port );
     addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
     wsResult = connect( sock, (SOCKADDR *) &addr, sizeof( addr ) );
-    todo_wine ok_( __FILE__, line)( !wsResult, "connect returned %d.\n", wsResult );
-    if ( wsResult == SOCKET_ERROR )
-    {
-        closesocket( sock );
-        return INVALID_SOCKET;
-    }
+    ok_( __FILE__, line)( !wsResult, "connect returned %d.\n", wsResult );
 
     return sock;
 }
@@ -870,8 +865,8 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
     expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedPasswordSize;
 
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
-    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n",
-                                     wsResult );
+    todo_wine_if( expectedPassword ) ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n",
+                                                            wsResult );
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
@@ -881,10 +876,10 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
                            wine_dbgstr_guid( &request.request.appGuid ) );
     if ( expectedPassword )
     {
-        ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
-                               request.request.passwordOffset );
-        ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
-                               wine_dbgstr_w( request.password ) );
+        todo_wine ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
+                                         request.request.passwordOffset );
+        todo_wine ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
+                                         wine_dbgstr_w( request.password ) );
     }
     else
     {
