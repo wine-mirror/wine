@@ -882,6 +882,8 @@ static void test_readwrite(void)
         DWORD oldest;
         BOOL run_sidtests = read_write[i].evt_sid & sidavailable;
 
+        winetest_push_context("%lu:%s", i, read_write[i].evt_src);
+
         /* We don't need to use RegisterEventSource to report events */
         if (i % 2)
             handle = OpenEventLogA(NULL, read_write[i].evt_src);
@@ -918,6 +920,7 @@ static void test_readwrite(void)
         else
             ret = DeregisterEventSource(handle);
         ok(ret, "Expected success : %ld\n", GetLastError());
+        winetest_pop_context();
     }
 
     handle = OpenEventLogA(NULL, eventlogname);
@@ -969,7 +972,9 @@ static void test_readwrite(void)
         char *ptr;
         BOOL run_sidtests = read_write[i].evt_sid & sidavailable;
 
+        winetest_push_context("%lu", i);
         buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
+
         SetLastError(0xdeadbeef);
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
                             0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
@@ -978,6 +983,7 @@ static void test_readwrite(void)
         {
             HeapFree(GetProcessHeap(), 0, buf);
             ok(GetLastError() == ERROR_HANDLE_EOF, "record %ld, got %ld\n", i, GetLastError());
+            winetest_pop_context();
             break;
         }
 
@@ -1052,6 +1058,7 @@ static void test_readwrite(void)
            "Expected the closing DWORD to contain the length of the record\n");
 
         HeapFree(GetProcessHeap(), 0, buf);
+        winetest_pop_context();
         i++;
     }
     CloseEventLog(handle);
