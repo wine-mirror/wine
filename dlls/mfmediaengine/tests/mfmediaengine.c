@@ -2373,6 +2373,138 @@ done:
     IMFByteStream_Release(stream);
 }
 
+struct test_extension
+{
+    IMFMediaEngineExtension IMFMediaEngineExtension_iface;
+    LONG refcount;
+};
+
+static struct test_extension *impl_from_IMFMediaEngineExtension(IMFMediaEngineExtension *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_extension, IMFMediaEngineExtension_iface);
+}
+
+static HRESULT WINAPI test_extension_QI(IMFMediaEngineExtension *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFMediaEngineExtension) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFMediaEngineExtension_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_extension_AddRef(IMFMediaEngineExtension *iface)
+{
+    struct test_extension *extension = impl_from_IMFMediaEngineExtension(iface);
+    return InterlockedIncrement(&extension->refcount);
+}
+
+static ULONG WINAPI test_extension_Release(IMFMediaEngineExtension *iface)
+{
+    struct test_extension *extension = impl_from_IMFMediaEngineExtension(iface);
+    ULONG refcount = InterlockedDecrement(&extension->refcount);
+
+    if (!refcount)
+        free(extension);
+
+    return refcount;
+}
+
+static HRESULT WINAPI test_extension_CanPlayType(IMFMediaEngineExtension *iface,
+        BOOL audio_only, BSTR mime_type, MF_MEDIA_ENGINE_CANPLAY *answer)
+{
+    return 0x80001234;
+}
+
+static HRESULT WINAPI test_extension_BeginCreateObject(IMFMediaEngineExtension *iface,
+        BSTR url, IMFByteStream *bytestream, MF_OBJECT_TYPE type, IUnknown **cancel_cookie,
+        IMFAsyncCallback *callback, IUnknown *state)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_extension_CancelObjectCreation(IMFMediaEngineExtension *iface,
+        IUnknown *cancel_cookie)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_extension_EndCreateObject(IMFMediaEngineExtension *iface, IMFAsyncResult *result,
+        IUnknown **object)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFMediaEngineExtensionVtbl test_extension_vtbl =
+{
+    test_extension_QI,
+    test_extension_AddRef,
+    test_extension_Release,
+    test_extension_CanPlayType,
+    test_extension_BeginCreateObject,
+    test_extension_CancelObjectCreation,
+    test_extension_EndCreateObject,
+};
+
+static struct test_extension *create_extension(void)
+{
+    struct test_extension *object;
+
+    object = calloc(1, sizeof(*object));
+
+    object->IMFMediaEngineExtension_iface.lpVtbl = &test_extension_vtbl;
+    object->refcount = 1;
+
+    return object;
+}
+
+static void test_media_extension(void)
+{
+    struct media_engine_notify *notify;
+    struct test_extension *extension;
+    MF_MEDIA_ENGINE_CANPLAY answer;
+    IMFMediaEngine *media_engine;
+    IMFAttributes *attributes;
+    HRESULT hr;
+    BSTR mime;
+
+    notify = create_callback();
+
+    hr = MFCreateAttributes(&attributes, 3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    extension = create_extension();
+    ok(!!extension, "Failed to create an extension.\n");
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)&notify->IMFMediaEngineNotify_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_EXTENSION, (IUnknown *)&extension->IMFMediaEngineExtension_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_AUDIOONLY, attributes, &media_engine);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFAttributes_Release(attributes);
+
+    mime = SysAllocString(L"doesnotexist");
+    hr = IMFMediaEngine_CanPlayType(media_engine, mime, &answer);
+    todo_wine
+    ok(hr == 0x80001234, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(mime);
+
+    IMFMediaEngine_Release(media_engine);
+
+    IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
+    IMFMediaEngineExtension_Release(&extension->IMFMediaEngineExtension_iface);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -2407,6 +2539,7 @@ START_TEST(mfmediaengine)
     test_effect();
     test_GetDuration();
     test_GetSeekable();
+    test_media_extension();
 
     IMFMediaEngineClassFactory_Release(factory);
 

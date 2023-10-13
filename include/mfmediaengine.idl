@@ -365,3 +365,18 @@ interface IMFMediaEngineAudioEndpointId : IUnknown
     HRESULT SetAudioEndpointId([in] LPCWSTR id);
     HRESULT GetAudioEndpointId([out] LPWSTR *id);
 }
+
+[
+    object,
+    uuid(2f69d622-20b5-41e9-afdf-89ced1dda04e),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineExtension : IUnknown
+{
+    HRESULT CanPlayType([in] BOOL audio_only, [in] BSTR mime_type, [out] MF_MEDIA_ENGINE_CANPLAY *answer);
+    HRESULT BeginCreateObject([in] BSTR url, [in] IMFByteStream *bytestream, [in] MF_OBJECT_TYPE type,
+            [out] IUnknown **cancel_cookie, [in] IMFAsyncCallback *callback, [in] IUnknown *state);
+    HRESULT CancelObjectCreation([in] IUnknown *cancel_cookie);
+    HRESULT EndCreateObject([in] IMFAsyncResult *result, [out] IUnknown **object);
+}

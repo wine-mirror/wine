@@ -158,6 +158,7 @@ struct media_engine
     IMFMediaSession *session;
     IMFPresentationClock *clock;
     IMFSourceResolver *resolver;
+    IMFMediaEngineExtension *extension;
     BSTR current_source;
     struct
     {
@@ -1460,6 +1461,8 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    if (engine->extension)
+        IMFMediaEngineExtension_Release(engine->extension);
     media_engine_clear_effects(&engine->audio_effects);
     media_engine_clear_effects(&engine->video_effects);
     media_engine_release_video_frame_resources(engine);
@@ -1559,6 +1562,9 @@ static HRESULT media_engine_set_source(struct media_engine *engine, IMFByteStrea
 
     if (url || bytestream)
     {
+        if (engine->extension)
+            FIXME("Use extension to load from.\n");
+
         flags = MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
         if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
             flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
@@ -3246,10 +3252,15 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->video_frame.pts = MINLONGLONG;
     InitializeCriticalSection(&engine->cs);
 
-    hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
-            (void **)&engine->callback);
-    if (FAILED(hr))
+    if (FAILED(hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
+            (void **)&engine->callback)))
+    {
+        WARN("Notification callback was not provided.\n");
         return hr;
+    }
+
+    IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_EXTENSION, &IID_IMFMediaEngineExtension,
+            (void **)&engine->extension);
 
     IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_DXGI_MANAGER, &IID_IMFDXGIDeviceManager,
             (void **)&engine->device_manager);
