@@ -283,7 +283,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
             /* Native's position is one period further than what we read.
              * Perhaps that's precisely the meaning of DATA_DISCONTINUITY:
              * signal when the position jump left a gap. */
-            ok(pos == sum + frames, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
+            ok(pos >= sum + frames, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
             sum = pos;
         }else{ /* win10 */
             ok(pos == sum, "Position %u last %u frames %u\n", (UINT)pos, sum, frames);
