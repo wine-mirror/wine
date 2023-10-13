@@ -1048,7 +1048,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (void) setCursorWithFrames:(NSArray*)frames
     {
-        if (self.cursorFrames == frames)
+        if (self.cursorFrames == frames || [self.cursorFrames isEqualToArray:frames])
             return;
 
         self.cursorFrames = frames;
