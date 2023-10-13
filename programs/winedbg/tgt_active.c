@@ -1067,7 +1067,17 @@ static BOOL tgt_process_active_write(HANDLE hProcess, void* addr,
 
 static BOOL tgt_process_active_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
 {
+#ifdef _WIN64
+    THREAD_DESCRIPTOR_INFORMATION desc = { .Selector = sel };
+    ULONG retlen;
+
+    if (RtlWow64GetThreadSelectorEntry( hThread, &desc, sizeof(desc), &retlen ))
+        return FALSE;
+    *le = desc.Entry;
+    return TRUE;
+#else
     return GetThreadSelectorEntry( hThread, sel, le );
+#endif
 }
 
 static struct be_process_io be_process_active_io =

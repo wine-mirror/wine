@@ -40,7 +40,12 @@ static ADDRESS_MODE get_selector_type(HANDLE hThread, const WOW64_CONTEXT *ctx, 
     /* null or system selector */
     if (!(sel & 4) || ((sel >> 3) < first_ldt_entry)) return AddrModeFlat;
     if (dbg_curr_process->process_io->get_selector(hThread, sel, &le))
-        return le.HighWord.Bits.Default_Big ? AddrMode1632 : AddrMode1616;
+    {
+        ULONG base = (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow;
+        if (le.HighWord.Bits.Default_Big)
+            return base == 0 ? AddrModeFlat : AddrMode1632;
+        return AddrMode1616;
+    }
     /* selector doesn't exist */
     return -1;
 }
