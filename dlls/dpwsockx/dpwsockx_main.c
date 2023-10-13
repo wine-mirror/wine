@@ -60,6 +60,13 @@ static HRESULT DPWS_BindToFreePort( SOCKET sock, SOCKADDR_IN *addr, int startPor
     return DPERR_UNAVAILABLE;
 }
 
+static void DPWS_RemoveInConnection( DPWS_IN_CONNECTION *connection )
+{
+    list_remove( &connection->entry );
+    closesocket( connection->tcpSock );
+    free( connection );
+}
+
 static DWORD WINAPI DPWS_ThreadProc( void *param )
 {
     DPWS_DATA *dpwsData = (DPWS_DATA *)param;
@@ -68,8 +75,18 @@ static DWORD WINAPI DPWS_ThreadProc( void *param )
 
     for ( ;; )
     {
+        DPWS_IN_CONNECTION *connection;
+        WSANETWORKEVENTS networkEvents;
+        WSAEVENT events[2];
+        SOCKADDR_IN addr;
         DWORD waitResult;
-        waitResult = WSAWaitForMultipleEvents( 1, &dpwsData->stopEvent, FALSE, WSA_INFINITE, TRUE );
+        int addrSize;
+        SOCKET sock;
+
+        events[ 0 ] = dpwsData->stopEvent;
+        events[ 1 ] = dpwsData->acceptEvent;
+        waitResult = WSAWaitForMultipleEvents( ARRAYSIZE( events ), events, FALSE, WSA_INFINITE,
+                                               TRUE );
         if ( waitResult == WSA_WAIT_FAILED )
         {
             ERR( "WSAWaitForMultipleEvents() failed\n" );
@@ -79,6 +96,35 @@ static DWORD WINAPI DPWS_ThreadProc( void *param )
             continue;
         if ( waitResult == WSA_WAIT_EVENT_0 )
             break;
+
+        if ( SOCKET_ERROR == WSAEnumNetworkEvents( dpwsData->tcpSock, dpwsData->acceptEvent,
+                                                   &networkEvents ) )
+        {
+            ERR( "WSAEnumNetworkEvents() failed\n" );
+            break;
+        }
+
+        addrSize = sizeof( addr );
+        sock = accept( dpwsData->tcpSock, (SOCKADDR *)&addr, &addrSize );
+        if ( sock == INVALID_SOCKET )
+        {
+            if ( WSAGetLastError() == WSAEWOULDBLOCK )
+                continue;
+            ERR( "accept() failed\n" );
+            break;
+        }
+
+        connection = calloc( 1, sizeof( DPWS_IN_CONNECTION ) );
+        if ( !connection )
+        {
+            ERR( "failed to allocate required memory.\n" );
+            closesocket( sock );
+            continue;
+        }
+
+        connection->tcpSock = sock;
+
+        list_add_tail( &dpwsData->inConnections, &connection->entry );
     }
 
     return 0;
@@ -113,10 +159,29 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
         return DPERR_UNAVAILABLE;
     }
 
+    dpwsData->acceptEvent = WSACreateEvent();
+    if ( !dpwsData->acceptEvent )
+    {
+        ERR( "WSACreateEvent() failed\n" );
+        closesocket( dpwsData->tcpSock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    if ( SOCKET_ERROR == WSAEventSelect( dpwsData->tcpSock, dpwsData->acceptEvent, FD_ACCEPT ) )
+    {
+        ERR( "WSAEventSelect() failed\n" );
+        WSACloseEvent( dpwsData->acceptEvent );
+        closesocket( dpwsData->tcpSock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    list_init( &dpwsData->inConnections );
+
     dpwsData->stopEvent = WSACreateEvent();
     if ( !dpwsData->stopEvent )
     {
         ERR( "WSACreateEvent() failed\n" );
+        WSACloseEvent( dpwsData->acceptEvent );
         closesocket( dpwsData->tcpSock );
         return DPERR_UNAVAILABLE;
     }
@@ -126,6 +191,7 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
     {
         ERR( "CreateThread() failed\n" );
         WSACloseEvent( dpwsData->stopEvent );
+        WSACloseEvent( dpwsData->acceptEvent );
         closesocket( dpwsData->tcpSock );
         return DPERR_UNAVAILABLE;
     }
@@ -137,6 +203,9 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
 
 static void DPWS_Stop( DPWS_DATA *dpwsData )
 {
+    DPWS_IN_CONNECTION *inConnection2;
+    DPWS_IN_CONNECTION *inConnection;
+
     if ( !dpwsData->started )
         return;
 
@@ -146,7 +215,12 @@ static void DPWS_Stop( DPWS_DATA *dpwsData )
     WaitForSingleObject( dpwsData->thread, INFINITE );
     CloseHandle( dpwsData->thread );
 
+    LIST_FOR_EACH_ENTRY_SAFE( inConnection, inConnection2, &dpwsData->inConnections,
+                              DPWS_IN_CONNECTION, entry )
+        DPWS_RemoveInConnection( inConnection );
+
     WSACloseEvent( dpwsData->stopEvent );
+    WSACloseEvent( dpwsData->acceptEvent );
     closesocket( dpwsData->tcpSock );
 }
 

@@ -24,6 +24,7 @@
 #include "winsock2.h"
 #include "winnt.h"
 #include "wine/dplaysp.h"
+#include "wine/list.h"
 
 #define DPWS_MAXQUEUESIZE             0
 #define DPWS_HUNDREDBAUD              0
@@ -35,12 +36,21 @@
 #define DPWS_GUARANTEED_MAXBUFFERSIZE 1048547
 #define DPWS_GUARANTEED_MAXPLAYERS    64
 
+typedef struct
+{
+    struct list              entry;
+
+    SOCKET                   tcpSock;
+} DPWS_IN_CONNECTION;
+
 typedef struct tagDPWS_DATA
 {
     LPDIRECTPLAYSP        lpISP;
 
     SOCKET                tcpSock;
     SOCKADDR_IN           tcpAddr;
+    WSAEVENT              acceptEvent;
+    struct list           inConnections;
 
     BOOL                  started;
     HANDLE                thread;
