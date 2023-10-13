@@ -353,3 +353,15 @@ interface IMFMediaEngineNotify : IUnknown
 {
     HRESULT EventNotify([in] DWORD event, [in] DWORD_PTR param1, [in] DWORD param2);
 }
+
+[
+    object,
+    uuid(7a3bac98-0e76-49fb-8c20-8a86fd98eaf2),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineAudioEndpointId : IUnknown
+{
+    HRESULT SetAudioEndpointId([in] LPCWSTR id);
+    HRESULT GetAudioEndpointId([out] LPWSTR *id);
+}
