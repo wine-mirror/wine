@@ -2495,7 +2495,6 @@ static void test_media_extension(void)
 
     mime = SysAllocString(L"doesnotexist");
     hr = IMFMediaEngine_CanPlayType(media_engine, mime, &answer);
-    todo_wine
     ok(hr == 0x80001234, "Unexpected hr %#lx.\n", hr);
     SysFreeString(mime);
 
