@@ -60,6 +60,30 @@ static HRESULT DPWS_BindToFreePort( SOCKET sock, SOCKADDR_IN *addr, int startPor
     return DPERR_UNAVAILABLE;
 }
 
+static DWORD WINAPI DPWS_ThreadProc( void *param )
+{
+    DPWS_DATA *dpwsData = (DPWS_DATA *)param;
+
+    SetThreadDescription( GetCurrentThread(), L"dpwsockx" );
+
+    for ( ;; )
+    {
+        DWORD waitResult;
+        waitResult = WSAWaitForMultipleEvents( 1, &dpwsData->stopEvent, FALSE, WSA_INFINITE, TRUE );
+        if ( waitResult == WSA_WAIT_FAILED )
+        {
+            ERR( "WSAWaitForMultipleEvents() failed\n" );
+            break;
+        }
+        if ( waitResult == WSA_WAIT_IO_COMPLETION )
+            continue;
+        if ( waitResult == WSA_WAIT_EVENT_0 )
+            break;
+    }
+
+    return 0;
+}
+
 static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
 {
     HRESULT hr;
@@ -89,6 +113,23 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
         return DPERR_UNAVAILABLE;
     }
 
+    dpwsData->stopEvent = WSACreateEvent();
+    if ( !dpwsData->stopEvent )
+    {
+        ERR( "WSACreateEvent() failed\n" );
+        closesocket( dpwsData->tcpSock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    dpwsData->thread = CreateThread( NULL, 0, DPWS_ThreadProc, dpwsData, 0, NULL );
+    if ( !dpwsData->thread )
+    {
+        ERR( "CreateThread() failed\n" );
+        WSACloseEvent( dpwsData->stopEvent );
+        closesocket( dpwsData->tcpSock );
+        return DPERR_UNAVAILABLE;
+    }
+
     dpwsData->started = TRUE;
 
     return S_OK;
@@ -101,6 +142,11 @@ static void DPWS_Stop( DPWS_DATA *dpwsData )
 
     dpwsData->started = FALSE;
 
+    WSASetEvent( dpwsData->stopEvent );
+    WaitForSingleObject( dpwsData->thread, INFINITE );
+    CloseHandle( dpwsData->thread );
+
+    WSACloseEvent( dpwsData->stopEvent );
     closesocket( dpwsData->tcpSock );
 }
 

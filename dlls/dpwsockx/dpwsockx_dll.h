@@ -43,6 +43,8 @@ typedef struct tagDPWS_DATA
     SOCKADDR_IN           tcpAddr;
 
     BOOL                  started;
+    HANDLE                thread;
+    WSAEVENT              stopEvent;
 } DPWS_DATA, *LPDPWS_DATA;
 
 #include "pshpack1.h"
