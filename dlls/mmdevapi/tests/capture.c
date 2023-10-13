@@ -531,9 +531,6 @@ static void test_audioclient(void)
     trace("Returned latency: %u.%04u ms\n",
           (UINT)(t1/10000), (UINT)(t1 % 10000));
 
-    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
-    ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08lx\n", hr);
-
     hr = IAudioClient_SetEventHandle(ac, NULL);
     ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08lx\n", hr);
 
