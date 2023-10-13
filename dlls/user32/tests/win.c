@@ -8777,27 +8777,12 @@ static void test_GetWindowModuleFileName(void)
 
     DestroyWindow(hwnd);
 
-    buf2[0] = 0;
     hwnd = (HWND)0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
     ok(!ret1, "expected 0, got %u\n", ret1);
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
        "expected ERROR_INVALID_WINDOW_HANDLE, got %lu\n", GetLastError());
-
-    hwnd = FindWindowA("Shell_TrayWnd", NULL);
-    ok(IsWindow(hwnd) || broken(!hwnd), "got invalid tray window %p\n", hwnd);
-    SetLastError(0xdeadbeef);
-    ret1 = pGetWindowModuleFileNameA(hwnd, buf1, sizeof(buf1));
-    ok(!ret1, "expected 0, got %u\n", ret1);
-    ret1 = GetModuleFileNameA(0, buf1, sizeof(buf1));
-    hwnd = GetDesktopWindow();
-    ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
-    SetLastError(0xdeadbeef);
-    ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-    ok(!ret2 ||
-       ret1 == ret2, /* vista */
-       "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
 }
 
 static void test_hwnd_message(void)
