@@ -780,6 +780,7 @@ static void test_readwrite(void)
     DWORD i;
     char *localcomputer = NULL;
     DWORD size;
+    void* buf;
 
     if (pCreateWellKnownSid)
     {
@@ -962,9 +963,10 @@ static void test_readwrite(void)
     handle = OpenEventLogA(NULL, eventlogname);
     ok(handle != NULL, "OpenEventLogA(%s) failed : %ld\n", eventlogname, GetLastError());
     i = 0;
+    size = sizeof(EVENTLOGRECORD) + 128;
+    buf = HeapAlloc(GetProcessHeap(), 0, size);
     for (;;)
     {
-        void *buf;
         DWORD read, needed;
         EVENTLOGRECORD *record;
         char *sourcename, *computername;
@@ -973,7 +975,6 @@ static void test_readwrite(void)
         BOOL run_sidtests = read_write[i].evt_sid & sidavailable;
 
         winetest_push_context("%lu", i);
-        buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
 
         SetLastError(0xdeadbeef);
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
@@ -981,13 +982,17 @@ static void test_readwrite(void)
         ok(!ret, "Expected failure\n");
         if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         {
-            HeapFree(GetProcessHeap(), 0, buf);
             ok(GetLastError() == ERROR_HANDLE_EOF, "record %ld, got %ld\n", i, GetLastError());
             winetest_pop_context();
             break;
         }
 
-        buf = HeapReAlloc(GetProcessHeap(), 0, buf, needed);
+        if (needed > size)
+        {
+             HeapFree(GetProcessHeap(), 0, buf);
+             size = needed;
+             buf = HeapAlloc(GetProcessHeap(), 0, size);
+        }
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
                             0, buf, needed, &read, &needed);
         ok(ret, "Expected success: %ld\n", GetLastError());
@@ -1057,10 +1062,10 @@ static void test_readwrite(void)
         ok(record->Length == *(DWORD *)((BYTE *)buf + record->Length - sizeof(DWORD)),
            "Expected the closing DWORD to contain the length of the record\n");
 
-        HeapFree(GetProcessHeap(), 0, buf);
         winetest_pop_context();
         i++;
     }
+    HeapFree(GetProcessHeap(), 0, buf);
     CloseEventLog(handle);
 
     /* Test clearing a real eventlog */
