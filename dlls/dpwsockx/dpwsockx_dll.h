@@ -67,6 +67,11 @@ struct tagDPWS_IN_CONNECTION
     IDirectPlaySP           *sp;
 };
 
+typedef struct
+{
+    SOCKADDR_IN         addr;
+} DPWS_OUT_CONNECTION;
+
 typedef struct tagDPWS_DATA
 {
     LPDIRECTPLAYSP        lpISP;
@@ -75,6 +80,8 @@ typedef struct tagDPWS_DATA
     SOCKADDR_IN           tcpAddr;
     WSAEVENT              acceptEvent;
     struct list           inConnections;
+
+    DPWS_OUT_CONNECTION   nameserverConnection;
 
     BOOL                  started;
     HANDLE                thread;

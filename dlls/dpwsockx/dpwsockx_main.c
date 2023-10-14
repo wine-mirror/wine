@@ -498,10 +498,30 @@ static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
 
 static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
 {
-    FIXME( "(%u,%p,%p,%u,0x%08lx,0x%08lx) stub\n",
+    DPSP_MSG_HEADER *header = (DPSP_MSG_HEADER *) data->lpSPMessageHeader;
+    DPWS_DATA *dpwsData;
+    DWORD dpwsDataSize;
+    HRESULT hr;
+
+    TRACE( "(%u,%p,%p,%u,0x%08lx,0x%08lx)\n",
            data->bCreate, data->lpSPMessageHeader, data->lpISP,
            data->bReturnStatus, data->dwOpenFlags, data->dwSessionFlags );
-    return DPERR_UNSUPPORTED;
+
+    if ( data->bCreate )
+    {
+        FIXME( "session creation is not yet supported\n" );
+        return DPERR_UNSUPPORTED;
+    }
+
+    hr = IDirectPlaySP_GetSPData( data->lpISP, (void **)&dpwsData, &dpwsDataSize, DPSET_LOCAL );
+    if ( FAILED( hr ) )
+        return hr;
+
+    dpwsData->nameserverConnection.addr.sin_family = AF_INET;
+    dpwsData->nameserverConnection.addr.sin_addr = header->SockAddr.sin_addr;
+    dpwsData->nameserverConnection.addr.sin_port = header->SockAddr.sin_port;
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_CloseEx( LPDPSP_CLOSEDATA data )
