@@ -2617,8 +2617,8 @@ static void test_ShouldSystemUseDarkMode(void)
                       L"SystemUsesLightTheme", RRF_RT_REG_DWORD, NULL, &light_theme, &light_theme_size);
     if (ls == ERROR_FILE_NOT_FOUND)
     {
-        light_theme = 1;
-        ls = 0;
+        skip("SystemUsesLightTheme registry value not found.\n");
+        return;
     }
     ok(ls == 0, "RegGetValue failed: %ld.\n", ls);
 
