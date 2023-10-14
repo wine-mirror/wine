@@ -1399,7 +1399,8 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
             return E_OUTOFMEMORY;
     }
 
-    if (!(buffer->dirty_ranges = heap_alloc(sizeof(*buffer->dirty_ranges))))
+    if (!wined3d_array_reserve((void **)&buffer->dirty_ranges,
+            &buffer->dirty_ranges_capacity, 1, sizeof(*buffer->dirty_ranges)))
     {
         ERR("Out of memory.\n");
         buffer_resource_unload(resource);
@@ -1407,7 +1408,6 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
         wined3d_resource_wait_idle(resource);
         return E_OUTOFMEMORY;
     }
-    buffer->dirty_ranges_capacity = 1;
 
     if (buffer->locations & WINED3D_LOCATION_DISCARDED)
         buffer->resource.client.addr.buffer_object = CLIENT_BO_DISCARDED;
