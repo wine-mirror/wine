@@ -1,7 +1,6 @@
 PROGRAMS = winebuild
-MANPAGES = winebuild.man.in
 
-C_SRCS = \
+SOURCES = \
 	import.c \
 	main.c \
 	parser.c \
@@ -10,6 +9,7 @@ C_SRCS = \
 	res32.c \
 	spec16.c \
 	spec32.c \
-	utils.c
+	utils.c \
+	winebuild.man.in
 
 INSTALL_DEV = $(PROGRAMS)

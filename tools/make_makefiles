@@ -338,7 +338,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.(m|mc|po|sfd)$/)
+        if ($name =~ /\.(in|m|mc|po|sfd)$/)
         {
             push @{${$make}{"=SOURCES"}}, $name;
             next;
@@ -362,15 +362,6 @@ sub assign_sources_to_makefiles(@)
         {
             die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
             push @{${$make}{"=IDL_SRCS"}}, $name;
-        }
-        elsif ($name =~ /\.man\.in$/)
-        {
-            push @{${$make}{"=MANPAGES"}}, $name;
-        }
-        elsif ($name =~ /\.in$/)
-        {
-            push @{${$make}{"=SOURCES"}}, $name;
-            next;
         }
         elsif ($name =~ /\.spec$/)
         {

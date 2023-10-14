@@ -1,12 +1,16 @@
 PROGRAMS = widl
 PARENTSRC = ../wrc
 
-C_SRCS = \
+SOURCES = \
 	attribute.c \
 	client.c \
 	expr.c \
 	hash.c \
 	header.c \
+	parser.l \
+	parser.y \
+	ppl.l \
+	ppy.y \
 	proxy.c \
 	register.c \
 	server.c \
@@ -15,18 +19,9 @@ C_SRCS = \
 	typetree.c \
 	utils.c \
 	widl.c \
+	widl.man.in \
 	wpp.c \
 	write_msft.c
-
-LEX_SRCS = \
-	parser.l \
-	ppl.l
-
-BISON_SRCS = \
-	parser.y \
-	ppy.y
-
-MANPAGES = widl.man.in
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \

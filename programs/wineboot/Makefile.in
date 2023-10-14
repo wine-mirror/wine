@@ -4,10 +4,8 @@ DELAYIMPORTS = shell32 shlwapi version user32 setupapi newdev
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = \
+SOURCES = \
 	shutdown.c \
-	wineboot.c
-
-RC_SRCS = wineboot.rc
-
-MANPAGES = wineboot.man.in
+	wineboot.c \
+	wineboot.man.in \
+	wineboot.rc

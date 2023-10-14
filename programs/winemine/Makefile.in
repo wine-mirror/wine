@@ -4,12 +4,9 @@ DELAYIMPORTS = shell32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	dialog.c \
-	main.c
-
-RC_SRCS = winemine.rc
-
-MANPAGES = winemine.man.in
-
-SVG_SRCS = winemine.svg
+	main.c \
+	winemine.man.in \
+	winemine.rc \
+	winemine.svg

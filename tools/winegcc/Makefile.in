@@ -1,12 +1,11 @@
 PROGRAMS = winegcc
 
-MANPAGES = winegcc.man.in
+SOURCES = \
+	utils.c \
+	winegcc.c \
+	winegcc.man.in
 
 winegcc_SYMLINKS = winecpp wineg++
-
-C_SRCS = \
-	utils.c \
-	winegcc.c
 
 winegcc_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \

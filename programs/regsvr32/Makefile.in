@@ -3,9 +3,7 @@ IMPORTS   = ole32 user32 kernelbase
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
-	regsvr32.c
-
-RC_SRCS = regsvr32.rc
-
-MANPAGES = regsvr32.man.in
+SOURCES = \
+	regsvr32.c \
+	regsvr32.man.in \
+	regsvr32.rc

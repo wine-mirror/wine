@@ -1,23 +1,18 @@
 PROGRAMS = wrc
 UNIX_LIBS = $(GETTEXTPO_LIBS)
 
-C_SRCS = \
+SOURCES = \
 	genres.c \
 	newstruc.c \
+	parser.l \
+	parser.y \
 	po.c \
+	ppl.l \
+	ppy.y \
 	utils.c \
 	wpp.c \
-	wrc.c
-
-LEX_SRCS = \
-	parser.l \
-	ppl.l
-
-BISON_SRCS = \
-	parser.y \
-	ppy.y
-
-MANPAGES = wrc.man.in
+	wrc.c \
+	wrc.man.in
 
 wrc_EXTRADEFS = \
 	-DNLSDIR="\"${nlsdir}\"" \

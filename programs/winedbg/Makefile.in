@@ -5,13 +5,15 @@ DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32 ws2_32
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = \
+SOURCES = \
 	be_arm.c \
 	be_arm64.c \
 	be_i386.c \
 	be_x86_64.c \
 	break.c \
 	crashdlg.c \
+	dbg.y \
+	debug.l \
 	display.c \
 	expr.c \
 	gdbproxy.c \
@@ -24,11 +26,6 @@ C_SRCS = \
 	tgt_minidump.c \
 	tgt_module.c \
 	types.c \
-	winedbg.c
-
-RC_SRCS = winedbg.rc
-
-LEX_SRCS   = debug.l
-BISON_SRCS = dbg.y
-
-MANPAGES = winedbg.man.in
+	winedbg.c \
+	winedbg.man.in \
+	winedbg.rc

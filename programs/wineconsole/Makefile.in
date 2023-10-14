@@ -4,9 +4,7 @@ DELAYIMPORTS = comctl32 user32 gdi32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
-	wineconsole.c
-
-RC_SRCS = wineconsole.rc
-
-MANPAGES = wineconsole.man.in
+SOURCES = \
+	wineconsole.c \
+	wineconsole.man.in \
+	wineconsole.rc

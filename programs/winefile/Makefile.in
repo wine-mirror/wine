@@ -3,11 +3,8 @@ IMPORTS   = uuid shell32 comdlg32 comctl32 ole32 mpr version user32 gdi32 advapi
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
-	winefile.c
-
-RC_SRCS = winefile.rc
-
-MANPAGES = winefile.man.in
-
-SVG_SRCS = winefile.svg
+SOURCES = \
+	winefile.c \
+	winefile.man.in \
+	winefile.rc \
+	winefile.svg

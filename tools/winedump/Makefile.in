@@ -1,8 +1,7 @@
 PROGRAMS = winedump
-MANPAGES = winedump.man.in
 SCRIPTS  = function_grep.pl
 
-C_SRCS = \
+SOURCES = \
 	debug.c \
 	dos.c \
 	dump.c \
@@ -26,6 +25,7 @@ C_SRCS = \
 	reg.c \
 	search.c \
 	symbol.c \
-	tlb.c
+	tlb.c \
+	winedump.man.in
 
 INSTALL_DEV = $(PROGRAMS) $(SCRIPTS)

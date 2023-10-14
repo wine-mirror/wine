@@ -2,6 +2,6 @@ MODULE    = winepath.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = winepath.c
-
-MANPAGES = winepath.man.in
+SOURCES = \
+	winepath.c \
+	winepath.man.in
