@@ -1,10 +1,11 @@
 MODULE    = jscript.dll
 IMPORTS   = oleaut32 ole32 user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	activex.c \
 	array.c \
 	bool.c \
+	cc_parser.y \
 	compile.c \
 	date.c \
 	decode.c \
@@ -15,7 +16,10 @@ C_SRCS = \
 	function.c \
 	global.c \
 	jscript.c \
+	jscript.rc \
+	jscript_classes.idl \
 	jscript_main.c \
+	jsglobal.idl \
 	json.c \
 	jsregexp.c \
 	jsstr.c \
@@ -24,17 +28,8 @@ C_SRCS = \
 	math.c \
 	number.c \
 	object.c \
+	parser.y \
 	regexp.c \
 	set.c \
 	string.c \
 	vbarray.c
-
-RC_SRCS = jscript.rc
-
-IDL_SRCS = \
-	jscript_classes.idl \
-	jsglobal.idl
-
-BISON_SRCS = \
-	cc_parser.y \
-	parser.y

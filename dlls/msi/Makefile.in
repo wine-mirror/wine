@@ -4,13 +4,14 @@ IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 
 
 EXTRAIDLFLAGS = --prefix-server=s_
 
-C_SRCS = \
+SOURCES = \
 	action.c \
 	alter.c \
 	appsearch.c \
 	assembly.c \
 	automation.c \
 	classes.c \
+	cond.y \
 	create.c \
 	custom.c \
 	database.c \
@@ -26,8 +27,10 @@ C_SRCS = \
 	install.c \
 	media.c \
 	msi.c \
+	msi.rc \
 	msi_main.c \
 	msiquery.c \
+	msiserver.idl \
 	package.c \
 	patch.c \
 	record.c \
@@ -35,6 +38,7 @@ C_SRCS = \
 	script.c \
 	select.c \
 	source.c \
+	sql.y \
 	storages.c \
 	streams.c \
 	string.c \
@@ -43,14 +47,5 @@ C_SRCS = \
 	tokenize.c \
 	update.c \
 	upgrade.c \
-	where.c
-
-IDL_SRCS = \
-	msiserver.idl \
+	where.c \
 	winemsi.idl
-
-BISON_SRCS = \
-	cond.y \
-	sql.y
-
-RC_SRCS = msi.rc

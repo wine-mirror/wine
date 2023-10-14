@@ -338,12 +338,11 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.(in|l|m|mc|po|sfd|svg)$/)
+        if ($name =~ /\.(in|l|m|mc|po|sfd|svg|y)$/)
         {
             push @{${$make}{"=SOURCES"}}, $name;
             next;
         }
-        elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
         elsif ($name =~ /\.c$/)
         {
             push @{${$make}{"=C_SRCS"}}, $name;
@@ -394,7 +393,6 @@ sub assign_sources_to_makefiles(@)
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "C_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "RC_SRCS" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "IDL_SRCS" );
-        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "BISON_SRCS" );
     }
 }
 
