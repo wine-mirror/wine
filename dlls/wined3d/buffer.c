@@ -122,7 +122,7 @@ static void wined3d_buffer_invalidate_range(struct wined3d_buffer *buffer, DWORD
     TRACE("buffer %p, location %s, offset %u, size %u.\n",
             buffer, wined3d_debug_location(location), offset, size);
 
-    if (location & WINED3D_LOCATION_BUFFER)
+    if ((location & WINED3D_LOCATION_BUFFER) && (buffer->flags & WINED3D_BUFFER_USE_BO))
         buffer_invalidate_bo_range(buffer, offset, size);
 
     buffer->locations &= ~location;
@@ -1399,7 +1399,7 @@ static HRESULT wined3d_buffer_init(struct wined3d_buffer *buffer, struct wined3d
             return E_OUTOFMEMORY;
     }
 
-    if (!wined3d_array_reserve((void **)&buffer->dirty_ranges,
+    if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !wined3d_array_reserve((void **)&buffer->dirty_ranges,
             &buffer->dirty_ranges_capacity, 1, sizeof(*buffer->dirty_ranges)))
     {
         ERR("Out of memory.\n");
