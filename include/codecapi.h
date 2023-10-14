@@ -61,4 +61,6 @@ enum eAVEncH264VLevel
     eAVEncH264VLevel5_2 = 52
 };
 
+DEFINE_GUID(AVDecVideoAcceleration_H264, 0xf7db8a2f, 0x4f48, 0x4ee8, 0xae, 0x31, 0x8b, 0x6e, 0xbe, 0x55, 0x8a, 0xe2);
+
 #endif /* __CODECAPI_H */
