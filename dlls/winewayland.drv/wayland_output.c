@@ -167,6 +167,14 @@ static void wayland_output_done(struct wayland_output *output)
 
     output->pending_flags = 0;
 
+    /* Ensure the logical dimensions have sane values. */
+    if ((!output->current.logical_w || !output->current.logical_h) &&
+        output->current.current_mode)
+    {
+        output->current.logical_w = output->current.current_mode->width;
+        output->current.logical_h = output->current.current_mode->height;
+    }
+
     pthread_mutex_unlock(&process_wayland.output_mutex);
 
     TRACE("name=%s logical=%d,%d+%dx%d\n",
