@@ -4782,6 +4782,7 @@ static void test_GetSecurityInfo(void)
     SID_IDENTIFIER_AUTHORITY sia = { SECURITY_NT_AUTHORITY };
     int domain_users_ace_id = -1, admins_ace_id = -1, i;
     DWORD sid_size = sizeof(admin_ptr), l = sizeof(b);
+    SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa)};
     PSID admin_sid = (PSID) admin_ptr, user_sid;
     char sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     BOOL owner_defaulted, group_defaulted;
@@ -4795,6 +4796,24 @@ static void test_GetSecurityInfo(void)
     PACL pDacl;
     BYTE flags;
     DWORD ret;
+
+    static const SE_OBJECT_TYPE kernel_types[] =
+    {
+        SE_FILE_OBJECT,
+        SE_KERNEL_OBJECT,
+        SE_WMIGUID_OBJECT,
+    };
+
+    static const SE_OBJECT_TYPE invalid_types[] =
+    {
+        SE_UNKNOWN_OBJECT_TYPE,
+        SE_DS_OBJECT,
+        SE_DS_OBJECT_ALL,
+        SE_PROVIDER_DEFINED_OBJECT,
+        SE_REGISTRY_WOW64_32KEY,
+        SE_REGISTRY_WOW64_64KEY,
+        0xdeadbeef,
+    };
 
     if (!pSetSecurityInfo)
     {
@@ -4984,6 +5003,80 @@ static void test_GetSecurityInfo(void)
            "Builtin Admins ACE has unexpected mask (0x%lx != 0x%x)\n", ace->Mask, PROCESS_ALL_ACCESS);
     }
     LocalFree(pSD);
+
+    ret = GetSecurityInfo(NULL, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+    ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+    ret = GetSecurityInfo(GetCurrentProcess(), SE_FILE_OBJECT,
+            DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+    ok(!ret, "got error %lu\n", ret);
+    LocalFree(pSD);
+
+    sa.lpSecurityDescriptor = sd;
+    obj = CreateEventA(&sa, TRUE, TRUE, NULL);
+    pDacl = (PACL)&dacl;
+
+    for (size_t i = 0; i < ARRAY_SIZE(kernel_types); ++i)
+    {
+        winetest_push_context("Type %#x", kernel_types[i]);
+
+        ret = GetSecurityInfo(NULL, kernel_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+        ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+        ret = GetSecurityInfo(GetCurrentProcess(), kernel_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+        ok(!ret, "got error %lu\n", ret);
+        LocalFree(pSD);
+
+        ret = GetSecurityInfo(obj, kernel_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+        ok(!ret, "got error %lu\n", ret);
+        LocalFree(pSD);
+
+        ret = SetSecurityInfo(NULL, kernel_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, pDacl, NULL);
+        ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+        ret = SetSecurityInfo(obj, kernel_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, pDacl, NULL);
+        ok(!ret || ret == ERROR_NO_SECURITY_ON_OBJECT /* win 7 */, "got error %lu\n", ret);
+
+        winetest_pop_context();
+    }
+
+    ret = GetSecurityInfo(GetCurrentProcess(), SE_REGISTRY_KEY,
+            DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+    todo_wine ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+    ret = GetSecurityInfo(obj, SE_REGISTRY_KEY,
+            DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+    todo_wine ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+    CloseHandle(obj);
+
+    for (size_t i = 0; i < ARRAY_SIZE(invalid_types); ++i)
+    {
+        winetest_push_context("Type %#x", invalid_types[i]);
+
+        ret = GetSecurityInfo(NULL, invalid_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+        ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+        ret = GetSecurityInfo((HANDLE)0xdeadbeef, invalid_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &pSD);
+        todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got error %lu\n", ret);
+
+        ret = SetSecurityInfo(NULL, invalid_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, pDacl, NULL);
+        ok(ret == ERROR_INVALID_HANDLE, "got error %lu\n", ret);
+
+        ret = SetSecurityInfo((HANDLE)0xdeadbeef, invalid_types[i],
+                DACL_SECURITY_INFORMATION, NULL, NULL, pDacl, NULL);
+        todo_wine ok(ret == ERROR_INVALID_PARAMETER, "got error %lu\n", ret);
+
+        winetest_pop_context();
+    }
 }
 
 static void test_GetSidSubAuthority(void)
