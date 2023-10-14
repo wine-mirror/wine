@@ -9598,19 +9598,19 @@ static void subtest_hvredraw(HWND hparent, UINT class_style, DWORD style)
     static const struct movesize_test {
         int dx, dy, dw, dh;
     } movesize_tests[] = {
-        {   0,   0,   0,  50 },
-        {   0,   0,  50,   0 },
-        {   0,   0,  50,  50 },
-        {   0,   0, -50, -50 },
-        { -50, -50,   0,  50 },
-        { -50, -50,  50,   0 },
-        { -50, -50,  50,  50 },
+        {  0,  0,  0,  5 },
+        {  0,  0,  5,  0 },
+        {  0,  0,  5,  5 },
+        {  0,  0, -5, -5 },
+        { -5, -5,  0,  5 },
+        { -5, -5,  5,  0 },
+        { -5, -5,  5,  5 },
     };
     HRGN hrgn_old_vis = CreateRectRgn( 0, 0, 0, 0 );
     HRGN hrgn_new_vis = CreateRectRgn( 0, 0, 0, 0 );
     HRGN hrgn_expect = CreateRectRgn( 0, 0, 0, 0 );
     HRGN hrgn_actual = CreateRectRgn( 0, 0, 0, 0 );
-    const int x0 = 100, y0 = 100, w0 = 200, h0 = 200;
+    const int x0 = 100, y0 = 100, w0 = 150, h0 = 150;
     size_t i;
     HWND hwnd;
     WNDCLASSA cls = {
