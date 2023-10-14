@@ -185,7 +185,7 @@ static inline DWORD get_security_file( LPCWSTR full_file_name, DWORD access, HAN
 }
 
 /* helper function for SE_SERVICE objects in [Get|Set]NamedSecurityInfo */
-static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access, HANDLE *service )
+static DWORD get_security_service( const WCHAR *full_service_name, DWORD access, HANDLE *service )
 {
     SC_HANDLE manager = OpenSCManagerW( NULL, NULL, access );
     if (manager)
@@ -199,9 +199,9 @@ static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access
 }
 
 /* helper function for SE_REGISTRY_KEY objects in [Get|Set]NamedSecurityInfo */
-static inline DWORD get_security_regkey( LPWSTR full_key_name, DWORD access, HANDLE *key )
+static DWORD get_security_regkey( const WCHAR *full_key_name, DWORD access, HANDLE *key )
 {
-    LPWSTR p = wcschr(full_key_name, '\\');
+    const WCHAR *p = wcschr(full_key_name, '\\');
     int len = p-full_key_name;
     HKEY hParent;
 
@@ -2676,7 +2676,7 @@ BOOL WINAPI CreateProcessWithTokenW(HANDLE token, DWORD logon_flags, LPCWSTR app
 /******************************************************************************
  * GetNamedSecurityInfoA [ADVAPI32.@]
  */
-DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
+DWORD WINAPI GetNamedSecurityInfoA(const char *pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID* ppsidOwner, PSID* ppsidGroup, PACL* ppDacl, PACL* ppSacl,
         PSECURITY_DESCRIPTOR* ppSecurityDescriptor)
@@ -2684,7 +2684,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     LPWSTR wstr;
     DWORD r;
 
-    TRACE("%s %d %ld %p %p %p %p %p\n", pObjectName, ObjectType, SecurityInfo,
+    TRACE("%s %d %ld %p %p %p %p %p\n", debugstr_a(pObjectName), ObjectType, SecurityInfo,
         ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
 
     wstr = strdupAW(pObjectName);
@@ -2699,7 +2699,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
 /******************************************************************************
  * GetNamedSecurityInfoW [ADVAPI32.@]
  */
-DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
+DWORD WINAPI GetNamedSecurityInfoW( const WCHAR *name, SE_OBJECT_TYPE type,
     SECURITY_INFORMATION info, PSID* owner, PSID* group, PACL* dacl,
     PACL* sacl, PSECURITY_DESCRIPTOR* descriptor )
 {

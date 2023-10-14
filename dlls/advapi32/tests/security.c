@@ -87,7 +87,7 @@ static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSEC
                                                                             SECURITY_INFORMATION, LPSTR *, PULONG );
 static BOOL (WINAPI *pSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR);
-static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
+static DWORD (WINAPI *pGetNamedSecurityInfoA)(const char *, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID*, PSID*, PACL*, PACL*,
                                               PSECURITY_DESCRIPTOR*);
 static DWORD (WINAPI *pSetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
