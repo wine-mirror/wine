@@ -2,7 +2,7 @@ MODULE    = msxml3.dll
 IMPORTS   = $(XSLT_PE_LIBS) $(XML2_PE_LIBS) uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
 EXTRAINCL = $(XSLT_PE_CFLAGS) $(XML2_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	attribute.c \
 	bsc.c \
 	cdata.c \
@@ -17,6 +17,7 @@ C_SRCS = \
 	factory.c \
 	httprequest.c \
 	main.c \
+	msxml3_v1.idl \
 	mxnamespace.c \
 	mxwriter.c \
 	node.c \
@@ -26,24 +27,17 @@ C_SRCS = \
 	pi.c \
 	saxreader.c \
 	schema.c \
+	schemas.rc \
 	selection.c \
 	stylesheet.c \
 	text.c \
 	uuid.c \
+	version.rc \
 	xdr.c \
 	xmldoc.c \
 	xmlelem.c \
 	xmlparser.c \
-	xmlview.c
-
-LEX_SRCS = xslpattern.l
-
-BISON_SRCS = xslpattern.y
-
-RC_SRCS = \
-	schemas.rc \
-	version.rc
-
-IDL_SRCS = \
-	msxml3_v1.idl \
-	xmlparser.idl
+	xmlparser.idl \
+	xmlview.c \
+	xslpattern.l \
+	xslpattern.y
