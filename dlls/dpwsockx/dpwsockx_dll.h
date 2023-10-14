@@ -36,12 +36,36 @@
 #define DPWS_GUARANTEED_MAXBUFFERSIZE 1048547
 #define DPWS_GUARANTEED_MAXPLAYERS    64
 
-typedef struct
+#include "pshpack1.h"
+
+typedef struct tagDPSP_MSG_HEADER
+{
+    DWORD       mixed;
+    SOCKADDR_IN SockAddr;
+} DPSP_MSG_HEADER, *LPDPSP_MSG_HEADER;
+typedef const DPSP_MSG_HEADER* LPCDPSP_MSG_HEADER;
+
+#include "poppack.h"
+
+typedef struct tagDPWS_IN_CONNECTION DPWS_IN_CONNECTION;
+typedef void DPWS_COMPLETION_ROUTINE( DPWS_IN_CONNECTION *connection );
+
+struct tagDPWS_IN_CONNECTION
 {
     struct list              entry;
+    SOCKADDR_IN              addr;
 
     SOCKET                   tcpSock;
-} DPWS_IN_CONNECTION;
+    WSAOVERLAPPED            overlapped;
+    WSABUF                   wsaBuffer;
+    DPWS_COMPLETION_ROUTINE *completionRoutine;
+
+    DPSP_MSG_HEADER          header;
+    char                    *buffer;
+    DWORD                    bufferSize;
+
+    IDirectPlaySP           *sp;
+};
 
 typedef struct tagDPWS_DATA
 {
@@ -56,18 +80,6 @@ typedef struct tagDPWS_DATA
     HANDLE                thread;
     WSAEVENT              stopEvent;
 } DPWS_DATA, *LPDPWS_DATA;
-
-#include "pshpack1.h"
-
-typedef struct tagDPSP_MSG_HEADER
-{
-    DWORD       mixed;
-    SOCKADDR_IN SockAddr;
-} DPSP_MSG_HEADER, *LPDPSP_MSG_HEADER;
-typedef const DPSP_MSG_HEADER* LPCDPSP_MSG_HEADER;
-
-#include "poppack.h"
-
 
 #define DPSP_MSG_TOKEN_REMOTE    0xFAB00000
 #define DPSP_MSG_TOKEN_FORWARDED 0xCAB00000

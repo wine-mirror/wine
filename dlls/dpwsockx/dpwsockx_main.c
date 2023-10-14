@@ -34,6 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 #define DPWS_START_TCP_PORT 2300
 #define DPWS_END_TCP_PORT   2350
 
+static void DPWS_MessageBodyReceiveCompleted( DPWS_IN_CONNECTION *connection );
+
 static HRESULT DPWS_BindToFreePort( SOCKET sock, SOCKADDR_IN *addr, int startPort, int endPort )
 {
     int port;
@@ -64,7 +66,137 @@ static void DPWS_RemoveInConnection( DPWS_IN_CONNECTION *connection )
 {
     list_remove( &connection->entry );
     closesocket( connection->tcpSock );
+    free( connection->buffer );
     free( connection );
+}
+
+static void WINAPI DPWS_TcpReceiveCompleted( DWORD error, DWORD transferred,
+                                             WSAOVERLAPPED *overlapped, DWORD flags )
+{
+    DPWS_IN_CONNECTION *connection = (DPWS_IN_CONNECTION *)overlapped->hEvent;
+
+    if ( error != ERROR_SUCCESS )
+    {
+        ERR( "WSARecv() failed\n" );
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
+
+    if ( !transferred )
+    {
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
+
+    if ( transferred < connection->wsaBuffer.len )
+    {
+        connection->wsaBuffer.len -= transferred;
+        connection->wsaBuffer.buf += transferred;
+
+        if ( SOCKET_ERROR == WSARecv( connection->tcpSock, &connection->wsaBuffer, 1, &transferred,
+                                      &flags, &connection->overlapped, DPWS_TcpReceiveCompleted ) )
+        {
+            if ( WSAGetLastError() != WSA_IO_PENDING )
+            {
+                ERR( "WSARecv() failed\n" );
+                DPWS_RemoveInConnection( connection );
+                return;
+            }
+        }
+        return;
+    }
+
+    connection->completionRoutine( connection );
+}
+
+static HRESULT DPWS_TcpReceive( DPWS_IN_CONNECTION *connection, void *data, DWORD size,
+                                DPWS_COMPLETION_ROUTINE *completionRoutine )
+{
+    DWORD transferred;
+    DWORD flags = 0;
+
+    connection->wsaBuffer.len = size;
+    connection->wsaBuffer.buf = data;
+
+    connection->completionRoutine = completionRoutine;
+
+    if ( SOCKET_ERROR == WSARecv( connection->tcpSock, &connection->wsaBuffer, 1, &transferred,
+                                  &flags, &connection->overlapped, DPWS_TcpReceiveCompleted ) )
+    {
+        if ( WSAGetLastError() != WSA_IO_PENDING )
+        {
+            ERR( "WSARecv() failed\n" );
+            return DPERR_UNAVAILABLE;
+        }
+    }
+
+    return DP_OK;
+}
+
+static void DPWS_HeaderReceiveCompleted( DPWS_IN_CONNECTION *connection )
+{
+    int messageBodySize;
+    int messageSize;
+
+    messageSize = DPSP_MSG_SIZE( connection->header.mixed );
+    if ( messageSize < sizeof( DPSP_MSG_HEADER ))
+    {
+        ERR( "message is too short: %d\n", messageSize );
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
+    messageBodySize = messageSize - sizeof( DPSP_MSG_HEADER );
+
+    if ( messageBodySize > DPWS_GUARANTEED_MAXBUFFERSIZE )
+    {
+        ERR( "message is too long: %d\n", messageSize );
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
+
+    if ( connection->bufferSize < messageBodySize )
+    {
+        int newSize = max( connection->bufferSize * 2, messageBodySize );
+        char *newBuffer = malloc( newSize );
+        if ( !newBuffer )
+        {
+            ERR( "failed to allocate required memory.\n" );
+            DPWS_RemoveInConnection( connection );
+            return;
+        }
+        free( connection->buffer );
+        connection->buffer = newBuffer;
+        connection->bufferSize = newSize;
+    }
+
+    if ( FAILED( DPWS_TcpReceive( connection, connection->buffer, messageBodySize,
+                                  DPWS_MessageBodyReceiveCompleted ) ) )
+    {
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
+}
+
+static void DPWS_MessageBodyReceiveCompleted( DPWS_IN_CONNECTION *connection )
+{
+    int messageBodySize;
+    int messageSize;
+
+    if ( connection->header.SockAddr.sin_addr.s_addr == INADDR_ANY )
+        connection->header.SockAddr.sin_addr = connection->addr.sin_addr;
+
+    messageSize = DPSP_MSG_SIZE( connection->header.mixed );
+    messageBodySize = messageSize - sizeof( DPSP_MSG_HEADER );
+
+    IDirectPlaySP_HandleMessage( connection->sp, connection->buffer, messageBodySize,
+                                 &connection->header );
+
+    if ( FAILED( DPWS_TcpReceive( connection, &connection->header, sizeof( DPSP_MSG_HEADER ),
+                                  DPWS_HeaderReceiveCompleted ) ) )
+    {
+        DPWS_RemoveInConnection( connection );
+        return;
+    }
 }
 
 static DWORD WINAPI DPWS_ThreadProc( void *param )
@@ -122,9 +254,19 @@ static DWORD WINAPI DPWS_ThreadProc( void *param )
             continue;
         }
 
+        connection->addr = addr;
         connection->tcpSock = sock;
+        connection->overlapped.hEvent = connection;
+        connection->sp = dpwsData->lpISP;
 
         list_add_tail( &dpwsData->inConnections, &connection->entry );
+
+        if ( FAILED( DPWS_TcpReceive( connection, &connection->header, sizeof( DPSP_MSG_HEADER ),
+                                      DPWS_HeaderReceiveCompleted ) ) )
+        {
+            DPWS_RemoveInConnection( connection );
+            continue;
+        }
     }
 
     return 0;

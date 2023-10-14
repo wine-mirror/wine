@@ -1874,8 +1874,8 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
         if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
             continue;
 
-        todo_wine_if( expectedSessionCount ) ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
-                                                                    "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                               callbackData.actualCount );
         ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected, "got timeout count %d.\n",
                                callbackData.timeoutCount );
 
@@ -1967,8 +1967,8 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
         if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
             continue;
 
-        todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
-                                         "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                               callbackData.actualCount );
         ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
 
         break;
@@ -1991,8 +1991,8 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     hr = enumSessionsAsyncWait( param, 2000 );
     ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
-    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
-                                     callbackData.actualCount );
+    ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                           callbackData.actualCount );
     ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
 
     /* Check that requests are sent periodically */
@@ -2031,8 +2031,8 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
         if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
             continue;
 
-        todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
-                                         "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                               callbackData.actualCount );
         ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
 
         break;
