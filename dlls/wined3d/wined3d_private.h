@@ -3832,8 +3832,11 @@ struct wined3d_buffer
     struct wined3d_bo *buffer_object;
     struct wined3d_bo_user bo_user;
 
-    struct wined3d_range *maps;
-    SIZE_T maps_size, modified_areas;
+    /* For buffers which are GPU accessible but for which BUFFER is not
+     * currently a valid location, this is a list of areas that need to be
+     * uploaded to BUFFER. */
+    struct wined3d_range *dirty_ranges;
+    SIZE_T dirty_range_count, dirty_ranges_capacity;
 
     /* conversion stuff */
     UINT decl_change_count, full_conversion_count;
