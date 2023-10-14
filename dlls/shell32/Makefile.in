@@ -4,7 +4,7 @@ IMPORTLIB = shell32
 IMPORTS   = uuid shlwapi user32 gdi32 advapi32
 DELAYIMPORTS = ole32 oleaut32 shdocvw version comctl32 comdlg32 gdiplus
 
-C_SRCS = \
+SOURCES = \
 	appbar.c \
 	assoc.c \
 	autocomplete.c \
@@ -25,37 +25,6 @@ C_SRCS = \
 	iconcache.c \
 	pidl.c \
 	recyclebin.c \
-	shell32_main.c \
-	shelldispatch.c \
-	shellitem.c \
-	shelllink.c \
-	shellole.c \
-	shellord.c \
-	shellpath.c \
-	shellreg.c \
-	shellstring.c \
-	shfldr_desktop.c \
-	shfldr_fs.c \
-	shfldr_mycomp.c \
-	shfldr_netplaces.c \
-	shfldr_printers.c \
-	shlexec.c \
-	shlfileop.c \
-	shlfolder.c \
-	shlfsbind.c \
-	shlmenu.c \
-	shlview.c \
-	shlview_cmenu.c \
-	shpolicy.c \
-	systray.c
-
-RC_SRCS = shell32.rc
-
-IDL_SRCS = \
-	shell32_classes.idl \
-	shell32_tlb.idl
-
-SVG_SRCS = \
 	resources/audio.svg \
 	resources/blank.svg \
 	resources/control.svg \
@@ -98,4 +67,30 @@ SVG_SRCS = \
 	resources/update.svg \
 	resources/users.svg \
 	resources/video.svg \
-	resources/window.svg
+	resources/window.svg \
+	shell32.rc \
+	shell32_classes.idl \
+	shell32_main.c \
+	shell32_tlb.idl \
+	shelldispatch.c \
+	shellitem.c \
+	shelllink.c \
+	shellole.c \
+	shellord.c \
+	shellpath.c \
+	shellreg.c \
+	shellstring.c \
+	shfldr_desktop.c \
+	shfldr_fs.c \
+	shfldr_mycomp.c \
+	shfldr_netplaces.c \
+	shfldr_printers.c \
+	shlexec.c \
+	shlfileop.c \
+	shlfolder.c \
+	shlfsbind.c \
+	shlmenu.c \
+	shlview.c \
+	shlview_cmenu.c \
+	shpolicy.c \
+	systray.c

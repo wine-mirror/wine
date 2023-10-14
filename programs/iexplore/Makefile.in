@@ -4,9 +4,7 @@ DELAYIMPORTS = advpack version user32
 
 EXTRADLLFLAGS = -mwindows -municode -Wl,--large-address-aware
 
-C_SRCS = \
+SOURCES = \
+	iexplore.rc \
+	iexplore.svg \
 	main.c
-
-RC_SRCS = iexplore.rc
-
-SVG_SRCS = iexplore.svg

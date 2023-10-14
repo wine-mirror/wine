@@ -4,11 +4,12 @@ IMPORTLIB = comctl32
 IMPORTS   = uuid user32 gdi32 advapi32 imm32 kernelbase
 DELAYIMPORTS = winmm uxtheme
 
-C_SRCS = \
+SOURCES = \
 	animate.c \
 	button.c \
 	combo.c \
 	comboex.c \
+	comctl32.rc \
 	commctrl.c \
 	datetime.c \
 	dpa.c \
@@ -18,6 +19,16 @@ C_SRCS = \
 	flatsb.c \
 	header.c \
 	hotkey.c \
+	idb_hist_large.svg \
+	idb_hist_small.svg \
+	idb_std_large.svg \
+	idb_std_small.svg \
+	idb_view_large.svg \
+	idb_view_small.svg \
+	idc_copy.svg \
+	idc_divider.svg \
+	idc_divideropen.svg \
+	idc_movebutton.svg \
 	imagelist.c \
 	ipaddress.c \
 	listbox.c \
@@ -40,17 +51,3 @@ C_SRCS = \
 	trackbar.c \
 	treeview.c \
 	updown.c
-
-RC_SRCS = comctl32.rc
-
-SVG_SRCS = \
-	idb_hist_large.svg \
-	idb_hist_small.svg \
-	idb_std_large.svg \
-	idb_std_small.svg \
-	idb_view_large.svg \
-	idb_view_small.svg \
-	idc_copy.svg \
-	idc_divider.svg \
-	idc_divideropen.svg \
-	idc_movebutton.svg

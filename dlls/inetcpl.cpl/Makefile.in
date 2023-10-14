@@ -4,14 +4,11 @@ DELAYIMPORTS = cryptui wininet ole32 urlmon shell32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	connections.c \
 	content.c \
 	general.c \
 	inetcpl.c \
+	inetcpl.rc \
+	inetcpl.svg \
 	security.c
-
-RC_SRCS = inetcpl.rc
-
-SVG_SRCS = \
-	inetcpl.svg

@@ -4,16 +4,13 @@ DELAYIMPORTS = ole32
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = \
+SOURCES = \
 	gui.c \
 	main.c \
 	send.c \
-	util.c
-
-RC_SRCS = \
-	winetest.rc
-
-SVG_SRCS = winetest.svg
+	util.c \
+	winetest.rc \
+	winetest.svg
 
 EXTRA_OBJS = build.res
 

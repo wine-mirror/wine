@@ -3,16 +3,13 @@ IMPORTS   = comdlg32 uuid ole32 shell32 user32 gdi32 advapi32 comctl32
 
 EXTRADLLFLAGS = -mwindows
 
-C_SRCS = \
+SOURCES = \
+	formatbar.svg \
 	olecallback.c \
 	print.c \
 	registry.c \
-	wordpad.c
-
-RC_SRCS = wordpad.rc
-
-SVG_SRCS = \
-	formatbar.svg \
 	toolbar.svg \
+	wordpad.c \
+	wordpad.rc \
 	wordpad.svg \
 	zoom.svg

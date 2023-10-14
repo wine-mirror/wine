@@ -2,9 +2,7 @@ MODULE = light.msstyles
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-RC_SRCS = light.rc
-
-SVG_SRCS = \
+SOURCES = \
 	blue_button.svg \
 	blue_checkbox_13px.svg \
 	blue_checkbox_16px.svg \
@@ -482,4 +480,5 @@ SVG_SRCS = \
 	blue_window_small_close_button_glyph.svg \
 	blue_window_small_frame_bottom.svg \
 	blue_window_small_frame_left.svg \
-	blue_window_small_frame_right.svg
+	blue_window_small_frame_right.svg \
+	light.rc

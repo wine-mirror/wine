@@ -4,10 +4,7 @@ IMPORTS   = comctl32 user32 advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
+	banner.svg \
+	credui.rc \
 	credui_main.c
-
-RC_SRCS = credui.rc
-
-SVG_SRCS = \
-	banner.svg

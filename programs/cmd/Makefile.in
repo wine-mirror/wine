@@ -3,12 +3,10 @@ IMPORTS   = shell32 user32 advapi32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
 	batch.c \
 	builtins.c \
+	cmd.rc \
 	directory.c \
+	wcmd.svg \
 	wcmdmain.c
-
-RC_SRCS = cmd.rc
-
-SVG_SRCS = wcmd.svg

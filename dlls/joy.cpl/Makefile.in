@@ -3,12 +3,9 @@ IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 gdi32 advapi32 xinput
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	dinput.c \
+	joy.rc \
+	joy.svg \
 	main.c \
 	xinput.c
-
-RC_SRCS = joy.rc
-
-SVG_SRCS = \
-	joy.svg

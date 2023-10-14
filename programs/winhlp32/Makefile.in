@@ -4,15 +4,12 @@ DELAYIMPORTS = shell32 comctl32 comdlg32
 
 EXTRADLLFLAGS = -mwindows
 
-C_SRCS = \
+SOURCES = \
 	callback.c \
 	hlpfile.c \
 	macro.c \
+	macro.lex.l \
 	string.c \
-	winhelp.c
-
-LEX_SRCS = macro.lex.l
-
-RC_SRCS = winhlp32.rc
-
-SVG_SRCS = winhelp.svg
+	winhelp.c \
+	winhelp.svg \
+	winhlp32.rc

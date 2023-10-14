@@ -3,7 +3,7 @@ IMPORTS   = shell32 shlwapi comctl32 user32 gdi32 advapi32
 
 EXTRADLLFLAGS = -mwindows
 
-C_SRCS = \
+SOURCES = \
 	about.c \
 	affinity.c \
 	applpage.c \
@@ -21,9 +21,6 @@ C_SRCS = \
 	procpage.c \
 	run.c \
 	taskmgr.c \
+	taskmgr.rc \
+	taskmgr.svg \
 	trayicon.c
-
-RC_SRCS = taskmgr.rc
-
-SVG_SRCS = \
-	taskmgr.svg

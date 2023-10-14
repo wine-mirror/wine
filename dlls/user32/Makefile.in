@@ -5,7 +5,7 @@ IMPORTS   = $(PNG_PE_LIBS) gdi32 sechost advapi32 kernelbase win32u
 EXTRAINCL = $(PNG_PE_CFLAGS)
 DELAYIMPORTS = imm32
 
-C_SRCS = \
+SOURCES = \
 	button.c \
 	class.c \
 	clipboard.c \
@@ -33,21 +33,6 @@ C_SRCS = \
 	nonclient.c \
 	property.c \
 	resource.c \
-	scroll.c \
-	static.c \
-	sysparams.c \
-	text.c \
-	uitools.c \
-	user_main.c \
-	win.c \
-	winhelp.c \
-	winproc.c \
-	winstation.c \
-	wsprintf.c
-
-RC_SRCS = user32.rc
-
-SVG_SRCS = \
 	resources/ocr_appstarting.svg \
 	resources/ocr_cross.svg \
 	resources/ocr_hand.svg \
@@ -70,4 +55,16 @@ SVG_SRCS = \
 	resources/oic_ques.svg \
 	resources/oic_sample.svg \
 	resources/oic_shield.svg \
-	resources/oic_winlogo.svg
+	resources/oic_winlogo.svg \
+	scroll.c \
+	static.c \
+	sysparams.c \
+	text.c \
+	uitools.c \
+	user32.rc \
+	user_main.c \
+	win.c \
+	winhelp.c \
+	winproc.c \
+	winstation.c \
+	wsprintf.c
