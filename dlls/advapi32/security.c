@@ -2969,10 +2969,11 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                     return RtlNtStatusToDosError(status);
                 }
 
-                for (name_info->Name.Length-=2; name_info->Name.Length>0; name_info->Name.Length-=2)
-                    if (name_info->Name.Buffer[name_info->Name.Length/2-1]=='\\' ||
-                            name_info->Name.Buffer[name_info->Name.Length/2-1]=='/')
-                        break;
+                if (name_info->Name.Length && name_info->Name.Buffer[(name_info->Name.Length / 2) - 1] == '\\')
+                    name_info->Name.Length -= 2;
+                while (name_info->Name.Length && name_info->Name.Buffer[(name_info->Name.Length / 2) - 1] != '\\')
+                    name_info->Name.Length -= 2;
+
                 if (name_info->Name.Length)
                 {
                     OBJECT_ATTRIBUTES attr;
