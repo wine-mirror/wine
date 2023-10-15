@@ -42,6 +42,8 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libxext-dev:amd64 libxext-dev:i386 \
                        libxi-dev:amd64 libxi-dev:i386 \
                        libxinerama-dev:amd64 libxinerama-dev:i386 \
+                       libxkbcommon-dev:amd64 libxkbcommon-dev:i386 \
+                       libxkbregistry-dev:amd64 libxkbregistry-dev:i386 \
                        libxrandr-dev:amd64 libxrandr-dev:i386 \
                        libxrender-dev:amd64 libxrender-dev:i386 \
                        libxxf86vm-dev:amd64 libxxf86vm-dev:i386 \
