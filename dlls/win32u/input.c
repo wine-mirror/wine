@@ -514,7 +514,7 @@ static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const
     ctrl = state[VK_CONTROL] & 0x80;
     caps = state[VK_CAPITAL] & 1;
 
-    if (ctrl && alt) return WCH_NONE;
+    if (ctrl && alt && !(tables->fLocaleFlags & KLLF_ALTGR)) return WCH_NONE;
     if (!ctrl && vkey == VK_ESCAPE) return VK_ESCAPE;
     if (ctrl && !alt)
     {

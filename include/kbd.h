@@ -40,6 +40,10 @@
 #define KANALOK          0x08
 #define GRPSELTAP        0x80
 
+#define KLLF_ALTGR       0x0001
+#define KLLF_SHIFTLOCK   0x0002
+#define KLLF_LRM_RLM     0x0004
+
 typedef struct
 {
     BYTE Vk;
