@@ -119,15 +119,8 @@ static void test_lsa(void)
                 LPSTR name = NULL;
                 LPSTR domain = NULL;
                 LPSTR forest = NULL;
-                LPSTR guidstr = NULL;
-                WCHAR guidstrW[64];
                 UINT len;
-                guidstrW[0] = '\0';
                 ConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
-                StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, ARRAY_SIZE(guidstrW));
-                len = WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, NULL, 0, NULL, NULL );
-                guidstr = LocalAlloc( 0, len );
-                WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, guidstr, len, NULL, NULL );
                 if (dns_domain_info->Name.Buffer) {
                     len = WideCharToMultiByte( CP_ACP, 0, dns_domain_info->Name.Buffer, -1, NULL, 0, NULL, NULL );
                     name = LocalAlloc( 0, len );
@@ -144,12 +137,11 @@ static void test_lsa(void)
                     WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsForestName.Buffer, -1, forest, len, NULL, NULL );
                 }
                 trace("  name: %s domain: %s forest: %s guid: %s sid: %s\n",
-                      name ? name : "NULL", domain ? domain : "NULL",
-                      forest ? forest : "NULL", guidstr, strsid ? strsid : "NULL");
+                      debugstr_a(name), debugstr_a(domain), debugstr_a(forest),
+                      debugstr_guid(&dns_domain_info->DomainGuid), debugstr_a(strsid));
                 LocalFree( name );
                 LocalFree( forest );
                 LocalFree( domain );
-                LocalFree( guidstr );
                 LocalFree( strsid );
             }
             else
