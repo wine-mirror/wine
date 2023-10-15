@@ -37,7 +37,7 @@ especially the wealth of information found at https://www.winehq.org.
 To compile and run Wine, you must have one of the following:
 
   Linux version 2.0.36 or later
-  FreeBSD 8.0 or later
+  FreeBSD 12.4 or later
   Solaris x86 9 or later
   NetBSD-current
   Mac OS X 10.8 or later
@@ -47,7 +47,6 @@ systems mentioned above are supported.  Other operating systems which
 support kernel threads may be supported in the future.
 
 FreeBSD info:
-  Wine will generally not work properly on versions before FreeBSD 8.0.
   See https://wiki.freebsd.org/Wine for more information.
 
 Solaris info:
