@@ -2925,6 +2925,9 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
     PACL dacl = pDacl;
     NTSTATUS status;
 
+    if (!handle)
+        return ERROR_INVALID_HANDLE;
+
     if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
         return ERROR_INVALID_SECURITY_DESCR;
 
@@ -3032,13 +3035,18 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
 
     switch (ObjectType)
     {
-    case SE_SERVICE:
-        FIXME("stub: Service objects are not supported at this time.\n");
-        status = STATUS_SUCCESS; /* Implement SetServiceObjectSecurity */
-        break;
-    default:
+    case SE_FILE_OBJECT:
+    case SE_KERNEL_OBJECT:
+    case SE_WMIGUID_OBJECT:
+    case SE_REGISTRY_KEY:
         status = NtSetSecurityObject(handle, SecurityInfo, &sd);
         break;
+
+    default:
+        FIXME("unimplemented type %u, returning success\n", ObjectType);
+        status = STATUS_SUCCESS;
+        break;
+
     }
     if (dacl != pDacl)
         free(dacl);
