@@ -8780,6 +8780,28 @@ static void test_IsValidSecurityDescriptor(void)
     free(sd);
 }
 
+static void test_window_security(void)
+{
+    PSECURITY_DESCRIPTOR sd;
+    BOOL present, defaulted;
+    HDESK desktop;
+    DWORD ret;
+    ACL *dacl;
+
+    desktop = GetThreadDesktop(GetCurrentThreadId());
+
+    ret = GetSecurityInfo(desktop, SE_WINDOW_OBJECT,
+            DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &sd);
+    ok(!ret, "got error %lu\n", ret);
+
+    ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
+    ok(ret == TRUE, "got error %lu\n", GetLastError());
+    todo_wine ok(present == TRUE, "got present %d\n", present);
+    ok(defaulted == FALSE, "got defaulted %d\n", defaulted);
+
+    LocalFree(sd);
+}
+
 START_TEST(security)
 {
     init();
@@ -8850,6 +8872,7 @@ START_TEST(security)
     test_elevation();
     test_group_as_file_owner();
     test_IsValidSecurityDescriptor();
+    test_window_security();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();

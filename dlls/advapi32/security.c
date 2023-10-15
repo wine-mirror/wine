@@ -1529,6 +1529,21 @@ DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFOR
         }
         break;
 
+    case SE_WINDOW_OBJECT:
+        if (!GetUserObjectSecurity( handle, &SecurityInfo, NULL, 0, &size )
+                && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return GetLastError();
+
+        if (!(sd = LocalAlloc( 0, size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+
+        if (!GetUserObjectSecurity( handle, &SecurityInfo, sd, size, &size ))
+        {
+            LocalFree( sd );
+            return GetLastError();
+        }
+        break;
+
     case SE_KERNEL_OBJECT:
     case SE_FILE_OBJECT:
     case SE_WMIGUID_OBJECT:
