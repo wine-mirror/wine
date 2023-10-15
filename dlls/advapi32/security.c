@@ -1497,6 +1497,10 @@ DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFOR
     NTSTATUS status;
     ULONG size;
     BOOL present, defaulted;
+    HKEY key = NULL;
+
+    if (!handle)
+        return ERROR_INVALID_HANDLE;
 
     /* A NULL descriptor is allowed if any one of the other pointers is not NULL */
     if (!(ppsidOwner||ppsidGroup||ppDacl||ppSacl||ppSecurityDescriptor)) return ERROR_INVALID_PARAMETER;
@@ -1509,8 +1513,9 @@ DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFOR
     ||  ((SecurityInfo & SACL_SECURITY_INFORMATION)  && !ppSacl)  ))
         return ERROR_INVALID_PARAMETER;
 
-    if (type == SE_SERVICE)
+    switch (type)
     {
+    case SE_SERVICE:
         if (!QueryServiceObjectSecurity( handle, SecurityInfo, NULL, 0, &size )
             && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             return GetLastError();
@@ -1522,11 +1527,12 @@ DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFOR
             LocalFree(sd);
             return GetLastError();
         }
-    }
-    else
-    {
-        HKEY key = NULL;
+        break;
 
+    case SE_KERNEL_OBJECT:
+    case SE_FILE_OBJECT:
+    case SE_WMIGUID_OBJECT:
+    case SE_REGISTRY_KEY:
         if (type == SE_REGISTRY_KEY && (HandleToUlong(handle) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST))
                 && (HandleToUlong(handle) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
         {
@@ -1562,6 +1568,11 @@ DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFOR
             return RtlNtStatusToDosError( status );
         }
         RegCloseKey( key );
+        break;
+
+    default:
+        FIXME("unimplemented type %u\n", type);
+        return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
     if (ppsidOwner)
