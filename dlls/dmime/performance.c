@@ -54,11 +54,10 @@ struct performance
     REFERENCE_TIME rtLatencyTime;
     DWORD dwBumperLength;
     DWORD dwPrepareTime;
-    /** Message Processing */
-    HANDLE procThread;
-    DWORD procThreadId;
-    BOOL procThreadTicStarted;
+
+    HANDLE message_thread;
     CRITICAL_SECTION safe;
+    CONDITION_VARIABLE cond;
 
     IReferenceClock *master_clock;
     REFERENCE_TIME init_time;
@@ -124,25 +123,20 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
     return hr;
 }
 
-#define PROCESSMSG_START           (WM_APP + 0)
-#define PROCESSMSG_EXIT            (WM_APP + 1)
-#define PROCESSMSG_REMOVE          (WM_APP + 2)
-#define PROCESSMSG_ADD             (WM_APP + 4)
-
-static DWORD WINAPI ProcessMsgThread(LPVOID lpParam)
+static DWORD WINAPI message_thread_proc(void *args)
 {
-    struct performance *This = lpParam;
-    DWORD timeout = INFINITE;
-    MSG msg;
-    HRESULT hr;
+    struct performance *This = args;
     struct message *message, *next;
+    HRESULT hr;
 
-    while (TRUE)
+    TRACE("performance %p message thread\n", This);
+    SetThreadDescription(GetCurrentThread(), L"wine_dmime_message");
+
+    EnterCriticalSection(&This->safe);
+
+    while (This->message_thread)
     {
-        if (timeout > 0) MsgWaitForMultipleObjects(0, NULL, FALSE, timeout, QS_POSTMESSAGE | QS_SENDMESSAGE | QS_TIMER);
-        timeout = INFINITE;
-
-        EnterCriticalSection(&This->safe);
+        DWORD timeout = INFINITE;
 
         LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
         {
@@ -154,57 +148,13 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam)
             if (hr != S_OK) break;
         }
 
-        LeaveCriticalSection(&This->safe);
-
-        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            /** if hwnd we suppose that is a windows event ... */
-            if (NULL != msg.hwnd)
-            {
-                TranslateMessage(&msg);
-                DispatchMessageA(&msg);
-            }
-            else
-            {
-                switch (msg.message)
-                {
-                case WM_QUIT:
-                case PROCESSMSG_EXIT: goto outofthread;
-                case PROCESSMSG_START: break;
-                case PROCESSMSG_ADD: break;
-                case PROCESSMSG_REMOVE: break;
-                default: ERR("Unhandled message %u. Critical Path\n", msg.message); break;
-                }
-            }
-        }
-
-        /** here we should run a little of current AudioPath */
+        SleepConditionVariableCS(&This->cond, &This->safe, timeout);
     }
 
-outofthread:
+    LeaveCriticalSection(&This->safe);
+
     TRACE("(%p): Exiting\n", This);
-
     return 0;
-}
-
-static BOOL PostMessageToProcessMsgThread(struct performance *This, UINT iMsg) {
-  if (FALSE == This->procThreadTicStarted && PROCESSMSG_EXIT != iMsg) {
-    BOOL res;
-    This->procThread = CreateThread(NULL, 0, ProcessMsgThread, This, 0, &This->procThreadId);
-    if (NULL == This->procThread) return FALSE;
-    SetThreadPriority(This->procThread, THREAD_PRIORITY_TIME_CRITICAL);
-    This->procThreadTicStarted = TRUE;
-    while(1) {
-      res = PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
-      /* Let the thread creates its message queue (with MsgWaitForMultipleObjects call) by yielding and retrying */
-      if (!res && (GetLastError() == ERROR_INVALID_THREAD_ID))
-	Sleep(0);
-      else
-	break;
-    }
-    return res;
-  }
-  return PostThreadMessageA(This->procThreadId, iMsg, 0, 0);
 }
 
 static HRESULT performance_send_dirty_pmsg(struct performance *This, MUSIC_TIME music_time)
@@ -424,7 +374,12 @@ static HRESULT WINAPI performance_Init(IDirectMusicPerformance8 *iface, IDirectM
         return hr;
     }
 
-    PostMessageToProcessMsgThread(This, PROCESSMSG_START);
+    if (!(This->message_thread = CreateThread(NULL, 0, message_thread_proc, This, 0, NULL)))
+    {
+        ERR("Failed to start performance message thread, error %lu\n", GetLastError());
+        IDirectMusicPerformance_CloseDown(iface);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     if (dmusic && !*dmusic)
     {
@@ -549,13 +504,13 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
         LIST_FOR_EACH_ENTRY(next, &This->messages, struct message, entry)
             if (next->msg.rtTime > message->msg.rtTime) break;
         list_add_before(&next->entry, &message->entry);
-        PostThreadMessageW(This->procThreadId, PROCESSMSG_ADD, 0, 0);
 
         hr = S_OK;
     }
 
 done:
     LeaveCriticalSection(&This->safe);
+    if (SUCCEEDED(hr)) WakeConditionVariable(&This->cond);
 
     return hr;
 }
@@ -1033,14 +988,20 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     struct message *message, *next;
+    HANDLE message_thread;
     HRESULT hr;
 
     FIXME("(%p): semi-stub\n", This);
 
-    if (PostMessageToProcessMsgThread(This, PROCESSMSG_EXIT)) {
-        WaitForSingleObject(This->procThread, INFINITE);
-        This->procThreadTicStarted = FALSE;
-        CloseHandle(This->procThread);
+    if ((message_thread = This->message_thread))
+    {
+        EnterCriticalSection(&This->safe);
+        This->message_thread = NULL;
+        LeaveCriticalSection(&This->safe);
+        WakeConditionVariable(&This->cond);
+
+        WaitForSingleObject(message_thread, INFINITE);
+        CloseHandle(message_thread);
     }
 
     This->notification_performance = FALSE;
