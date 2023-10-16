@@ -1714,6 +1714,27 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         break;
     }
 
+    case DMUS_PMSGT_CURVE:
+    {
+        DMUS_CURVE_PMSG *curve = (DMUS_CURVE_PMSG *)msg;
+
+        msg->mtTime += curve->nOffset;
+        switch (curve->dwType)
+        {
+        case DMUS_CURVET_CCCURVE:
+            if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                    MIDI_CONTROL_CHANGE, curve->bCCData, curve->nStartValue)))
+                WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+            break;
+        case DMUS_CURVET_RPNCURVE:
+        case DMUS_CURVET_NRPNCURVE:
+            FIXME("Unhandled curve type %#lx\n", curve->dwType);
+            break;
+        }
+
+        break;
+    }
+
     case DMUS_PMSGT_PATCH:
     {
         DMUS_PATCH_PMSG *patch = (DMUS_PATCH_PMSG *)msg;
