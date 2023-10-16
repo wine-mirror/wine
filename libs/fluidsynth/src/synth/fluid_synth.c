@@ -300,6 +300,7 @@ fluid_synth_init(void)
 
     init_dither();
 
+#if 0 /* unused in Wine */
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.
      it is intended to replace default_vel2att_mod on demand using
      API fluid_set_breath_mode() or command shell setbreathmode.
@@ -480,6 +481,7 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
+#endif /* unused in Wine */
 
 #if defined(LIBINSTPATCH_SUPPORT)
     /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */

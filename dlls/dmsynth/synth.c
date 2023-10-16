@@ -28,6 +28,7 @@
 #include "dls2.h"
 
 #include <fluidsynth.h>
+#include <math.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
@@ -36,9 +37,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 #define CONN_SRC_CC   0x0080
 #define CONN_SRC_CC2  0x0082
 #define CONN_SRC_RPN0 0x0100
+#define CONN_SRC_RPN1 0x0101
+#define CONN_SRC_RPN2 0x0102
 
 #define CONN_TRN_BIPOLAR (1<<4)
 #define CONN_TRN_INVERT  (1<<5)
+
+#define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
 
 static const char *debugstr_conn_src(UINT src)
 {
@@ -64,6 +69,7 @@ static const char *debugstr_conn_src(UINT src)
 
     case CONN_SRC_CC2: return "SRC_CC2";
     case CONN_SRC_RPN0: return "SRC_RPN0";
+    case CONN_SRC_RPN2: return "SRC_RPN2";
     }
 
     return wine_dbg_sprintf("%#x", src);
@@ -421,6 +427,52 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
     return ref;
 }
 
+static void synth_reset_default_values(struct synth *This)
+{
+    BYTE chan;
+
+    fluid_synth_system_reset(This->fluid_synth);
+
+    for (chan = 0; chan < 0x10; chan++)
+    {
+        fluid_synth_cc(This->fluid_synth, chan | 0xe0 /* PITCH_BEND */, 0, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xd0 /* CHANNEL_PRESSURE */, 0, 0);
+
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x01 /* MODULATION_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x21 /* MODULATION_LSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x07 /* VOLUME_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x27 /* VOLUME_LSB */, 100);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x0a /* PAN_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x0a /* PAN_LSB */, 64);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x0b /* EXPRESSION_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x2b /* EXPRESSION_LSB */, 127);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x40 /* SUSTAIN_SWITCH */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x5b /* EFFECTS_DEPTH1 / Reverb Send */, 40);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x5d /* EFFECTS_DEPTH3 / Chorus Send */, 0);
+
+        /* RPN0 Pitch Bend Range */
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x64 /* RPN_LSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x65 /* RPN_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x06 /* DATA_ENTRY_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x26 /* DATA_ENTRY_LSB */, 2);
+
+        /* RPN1 Fine Tuning */
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x64 /* RPN_LSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x65 /* RPN_MSB */, 1);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x06 /* DATA_ENTRY_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x26 /* DATA_ENTRY_LSB */, 0);
+
+        /* RPN2 Coarse Tuning */
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x64 /* RPN_LSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x65 /* RPN_MSB */, 1);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x06 /* DATA_ENTRY_MSB */, 0);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x26 /* DATA_ENTRY_LSB */, 0);
+
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x64 /* RPN_LSB */, 127);
+        fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x65 /* RPN_MSB */, 127);
+    }
+}
+
 static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *params)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
@@ -511,6 +563,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
     if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings))) return E_OUTOFMEMORY;
     if ((id = fluid_synth_add_sfont(This->fluid_synth, This->fluid_sfont)) == FLUID_FAILED)
         WARN("Failed to add fluid_sfont to fluid_synth\n");
+    synth_reset_default_values(This);
 
     This->params = actual;
     This->open = TRUE;
@@ -1509,6 +1562,162 @@ static void add_voice_connections(fluid_voice_t *fluid_voice, const CONNECTIONLI
     }
 }
 
+static void set_default_voice_connections(fluid_voice_t *fluid_voice)
+{
+    const CONNECTION connections[] =
+    {
+#define ABS_PITCH_HZ(f) (LONG)((1200 * log2((f) / 440.) + 6900) * 65536)
+#define ABS_TIME_MS(x) ((x) ? (LONG)(1200 * log2((x) / 1000.) * 65536) : 0x80000000)
+#define REL_PITCH_CTS(x) ((x) * 65536)
+#define REL_GAIN_DB(x) ((-x) * 10 * 65536)
+
+        /* Modulator LFO */
+        {.usDestination = CONN_DST_LFO_FREQUENCY, .lScale = ABS_PITCH_HZ(5)},
+        {.usDestination = CONN_DST_LFO_STARTDELAY, .lScale = ABS_TIME_MS(10)},
+
+        /* Vibrato LFO */
+        {.usDestination = CONN_DST_VIB_FREQUENCY, .lScale = ABS_PITCH_HZ(5)},
+        {.usDestination = CONN_DST_VIB_STARTDELAY, .lScale = ABS_TIME_MS(10)},
+        /* Vol EG */
+        {.usDestination = CONN_DST_EG1_DELAYTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG1_ATTACKTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG1_HOLDTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG1_DECAYTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG1_SUSTAINLEVEL, .lScale = 100 * 65536},
+        {.usDestination = CONN_DST_EG1_RELEASETIME, .lScale = ABS_TIME_MS(0)},
+        /* FIXME: {.usDestination = CONN_DST_EG1_SHUTDOWNTIME, .lScale = ABS_TIME_MS(15)}, */
+        {.usSource = CONN_SRC_KEYONVELOCITY, .usDestination = CONN_DST_EG1_ATTACKTIME, .lScale = 0},
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG1_DECAYTIME, .lScale = 0},
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG1_HOLDTIME, .lScale = 0},
+
+        /* Modulator EG */
+        {.usDestination = CONN_DST_EG2_DELAYTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG2_ATTACKTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG2_HOLDTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG2_DECAYTIME, .lScale = ABS_TIME_MS(0)},
+        {.usDestination = CONN_DST_EG2_SUSTAINLEVEL, .lScale = 100 * 65536},
+        {.usDestination = CONN_DST_EG2_RELEASETIME, .lScale = ABS_TIME_MS(0)},
+        {.usSource = CONN_SRC_KEYONVELOCITY, .usDestination = CONN_DST_EG2_ATTACKTIME, .lScale = 0},
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG2_DECAYTIME, .lScale = 0},
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_EG2_HOLDTIME, .lScale = 0},
+
+        /* Key number generator */
+        /* FIXME: This doesn't seem to be supported by FluidSynth, there's also no MIDINOTE source */
+        /* {.usSource = CONN_SRC_MIDINOTE?, .usDestination = CONN_DST_KEYNUMBER, .lScale = REL_PITCH_CTS(12800)}, */
+        {
+            .usSource = CONN_SRC_RPN2, .usDestination = CONN_DST_KEYNUMBER, .lScale = REL_PITCH_CTS(6400),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+
+        /* Filter */
+        {.usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0x7fffffff},
+        {.usDestination = CONN_DST_FILTER_Q, .lScale = 0},
+        {
+            .usSource = CONN_SRC_LFO, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0,
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CC1, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0,
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CHANNELPRESSURE, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0,
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {.usSource = CONN_SRC_EG2, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0},
+        {.usSource = CONN_SRC_KEYONVELOCITY, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0},
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_FILTER_CUTOFF, .lScale = 0},
+
+        /* Gain */
+        {
+            .usSource = CONN_SRC_LFO, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CC1, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CHANNELPRESSURE, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_KEYONVELOCITY, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(-96),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_CONCAVE | CONN_TRN_INVERT, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_CC7, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(-96),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_CONCAVE | CONN_TRN_INVERT, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_CC11, .usDestination = CONN_DST_GAIN, .lScale = REL_GAIN_DB(-96),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_CONCAVE | CONN_TRN_INVERT, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+
+        /* Pitch */
+        {.usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0)},
+        {
+            .usSource = CONN_SRC_PITCHWHEEL, .usControl = CONN_SRC_RPN0, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(12800),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        /* FIXME: key to pitch default should be 12800 but FluidSynth GEN_PITCH modulator doesn't work as expected */
+        {.usSource = CONN_SRC_KEYNUMBER, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0)},
+        {
+            .usSource = CONN_SRC_RPN1, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(100),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_VIBRATO, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_VIBRATO, .usControl = CONN_SRC_CC1, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_VIBRATO, .usControl = CONN_SRC_CHANNELPRESSURE, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CC1, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {
+            .usSource = CONN_SRC_LFO, .usControl = CONN_SRC_CHANNELPRESSURE, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0),
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {.usSource = CONN_SRC_EG2, .usDestination = CONN_DST_PITCH, .lScale = REL_PITCH_CTS(0)},
+
+        /* Output */
+        {.usDestination = CONN_DST_PAN, .lScale = 0},
+        {
+            .usSource = CONN_SRC_CC10, .usDestination = CONN_DST_PAN, .lScale = 508 * 65536,
+            .usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE),
+        },
+        {.usSource = CONN_SRC_CC91, .usDestination = CONN_DST_REVERB, .lScale = 1000 * 65536},
+        {.usDestination = CONN_DST_REVERB, .lScale = 0},
+        {.usSource = CONN_SRC_CC93, .usDestination = CONN_DST_CHORUS, .lScale = 1000 * 65536},
+        {.usDestination = CONN_DST_CHORUS, .lScale = 0},
+
+#undef ABS_PITCH_HZ
+#undef ABS_TIME_MS
+#undef REL_PITCH_CTS
+#undef REL_GAIN_DB
+    };
+    CONNECTIONLIST list = {.cbSize = sizeof(CONNECTIONLIST), .cConnections = ARRAY_SIZE(connections)};
+
+    fluid_voice_gen_set(fluid_voice, GEN_KEYNUM, -1.);
+    fluid_voice_gen_set(fluid_voice, GEN_VELOCITY, -1.);
+    fluid_voice_gen_set(fluid_voice, GEN_SCALETUNE, 100.0);
+    fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, -1.);
+
+    add_voice_connections(fluid_voice, &list, connections);
+}
+
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
 {
     struct instrument *instrument = fluid_preset_get_data(fluid_preset);
@@ -1551,6 +1760,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
             return FLUID_FAILED;
         }
 
+        set_default_voice_connections(fluid_voice);
         LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
             add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
         LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
