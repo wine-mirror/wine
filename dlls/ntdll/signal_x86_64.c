@@ -1589,6 +1589,37 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 
 
 /***********************************************************************
+ *           RtlUserThreadStart (NTDLL.@)
+ */
+#ifdef __ASM_SEH_SUPPORTED
+__ASM_GLOBAL_FUNC( RtlUserThreadStart,
+                   "subq $0x28,%rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   "movq %rdx,%r8\n\t"
+                   "movq %rcx,%rdx\n\t"
+                   "xorq %rcx,%rcx\n\t"
+                   "movq " __ASM_NAME( "pBaseThreadInitThunk" ) "(%rip),%r9\n\t"
+                   "call *%r9\n\t"
+                   "int3\n\t"
+                   ".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", @except" )
+#else
+void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
+    }
+    __EXCEPT(call_unhandled_exception_filter)
+    {
+        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
+    }
+    __ENDTRY
+}
+#endif
+
+
+/***********************************************************************
  *           signal_start_thread
  */
 extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;

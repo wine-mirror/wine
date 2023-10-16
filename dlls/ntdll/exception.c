@@ -279,6 +279,27 @@ LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr )
     return unhandled_exception_filter( eptr );
 }
 
+/*******************************************************************
+ *         call_unhandled_exception_handler
+ */
+EXCEPTION_DISPOSITION WINAPI call_unhandled_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                                               CONTEXT *context, void *dispatch )
+{
+    EXCEPTION_POINTERS ep = { rec, context };
+
+    switch (call_unhandled_exception_filter( &ep ))
+    {
+    case EXCEPTION_CONTINUE_SEARCH:
+        return ExceptionContinueSearch;
+    case EXCEPTION_CONTINUE_EXECUTION:
+        return ExceptionContinueExecution;
+    case EXCEPTION_EXECUTE_HANDLER:
+        break;
+    }
+    NtTerminateProcess( GetCurrentProcess(), rec->ExceptionCode );
+    return ExceptionContinueExecution;
+}
+
 
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 

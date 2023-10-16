@@ -1488,6 +1488,22 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     return 0;
 }
 
+/***********************************************************************
+ *           RtlUserThreadStart (NTDLL.@)
+ */
+void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
+    }
+    __EXCEPT(call_unhandled_exception_filter)
+    {
+        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
+    }
+    __ENDTRY
+}
+
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  */
