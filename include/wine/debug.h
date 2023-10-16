@@ -330,7 +330,7 @@ static inline const char *wine_dbgstr_fourcc( unsigned int fourcc )
     if (!fourcc)
         return "''";
     if (isprint( str[0] ) && isprint( str[1] ) && isprint( str[2] ) && isprint( str[3] ))
-        return wine_dbg_sprintf( "'%4s'", str );
+        return wine_dbg_sprintf( "'%.4s'", str );
     return wine_dbg_sprintf( "0x%08x", fourcc );
 }
 
