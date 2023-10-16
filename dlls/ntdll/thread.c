@@ -275,7 +275,6 @@ void DECLSPEC_HIDDEN call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *ar
 {
     __TRY
     {
-        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
         call_thread_func_wrapper( pBaseThreadInitThunk, entry, arg );
     }
     __EXCEPT(call_unhandled_exception_filter)
@@ -325,7 +324,6 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
     {
-        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
         pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
     }
     __EXCEPT(call_unhandled_exception_filter)
