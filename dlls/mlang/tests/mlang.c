@@ -2306,18 +2306,18 @@ static void test_GetGlobalFontLinkObject(void)
 
     unknown = (void *)0xdeadbeef;
     ret = GetGlobalFontLinkObject(&unknown);
-todo_wine {
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
     ok(unknown != NULL && unknown != (void *)0xdeadbeef,
        "GetGlobalFontLinkObject() returned %p\n", unknown);
     if (unknown == (void *)0xdeadbeef || !unknown) return;
-    }
 
     ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangFontLink2, (void**)&IMLFL2);
-    ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+    todo_wine ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+    if (ret == S_OK) IMLangFontLink2_Release(IMLFL2);
 
     ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMultiLanguage, (void**)&IML);
-    ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+    todo_wine ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+    if (ret == S_OK) IMultiLanguage_Release(IML);
 
     ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangFontLink, (void**)&IMLFL);
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);

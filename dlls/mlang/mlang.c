@@ -44,6 +44,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
 #include "initguid.h"
 
+static INIT_ONCE font_link_global_init_once = INIT_ONCE_STATIC_INIT;
+static IUnknown *font_link_global = NULL;
+
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj);
 static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum);
@@ -3882,11 +3885,25 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return dll_count == 0 ? S_OK : S_FALSE;
 }
 
+static BOOL WINAPI allocate_font_link_cb(PINIT_ONCE init_once, PVOID args, PVOID *context)
+{
+    return SUCCEEDED(MultiLanguage_create(NULL, (void**)&font_link_global));
+}
+
 HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)
 {
+    TRACE("%p\n", unknown);
+
     if (!unknown) return E_INVALIDARG;
 
-    FIXME("%p: stub\n", unknown);
+    if (!InitOnceExecuteOnce(&font_link_global_init_once, allocate_font_link_cb, NULL, NULL))
+    {
+        ERR("Failed to create global font link object.\n");
+        return E_FAIL;
+    }
 
-    return S_FALSE;
+    IUnknown_AddRef(font_link_global);
+    *unknown = font_link_global;
+
+    return S_OK;
 }
