@@ -930,7 +930,7 @@ enum wined3d_memory_segment_group
 #define WINED3DUSAGE_MASK                                       0x10007bf0
 
 #define WINED3DUSAGE_SCRATCH                                    0x00400000
-#define WINED3DUSAGE_PRIVATE                                    0x00800000
+#define WINED3DUSAGE_CS                                         0x00800000
 #define WINED3DUSAGE_LEGACY_CUBEMAP                             0x01000000
 #define WINED3DUSAGE_OWNDC                                      0x02000000
 #define WINED3DUSAGE_STATICDECL                                 0x04000000

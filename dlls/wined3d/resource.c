@@ -35,7 +35,7 @@ static void resource_check_usage(uint32_t usage, unsigned int access)
             | WINED3DUSAGE_OVERLAY
             | WINED3DUSAGE_SCRATCH
             | WINED3DUSAGE_MANAGED
-            | WINED3DUSAGE_PRIVATE
+            | WINED3DUSAGE_CS
             | WINED3DUSAGE_LEGACY_CUBEMAP
             | ~WINED3DUSAGE_MASK;
 
@@ -222,7 +222,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         adapter_adjust_memory(device->adapter, size);
     }
 
-    if (!(usage & WINED3DUSAGE_PRIVATE))
+    if (!(usage & WINED3DUSAGE_CS))
         device_resource_add(device, resource);
 
     return WINED3D_OK;
@@ -248,7 +248,7 @@ void resource_cleanup(struct wined3d_resource *resource)
         adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
     }
 
-    if (!(resource->usage & WINED3DUSAGE_PRIVATE))
+    if (!(resource->usage & WINED3DUSAGE_CS))
         device_resource_released(resource->device, resource);
 
     wined3d_resource_reference(resource);

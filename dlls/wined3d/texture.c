@@ -418,7 +418,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
             desc.format = resolve_format_id;
             desc.multisample_type = src_texture->resource.multisample_type;
             desc.multisample_quality = src_texture->resource.multisample_quality;
-            desc.usage = WINED3DUSAGE_PRIVATE;
+            desc.usage = WINED3DUSAGE_CS;
             desc.bind_flags = 0;
             desc.access = WINED3D_RESOURCE_ACCESS_GPU;
             desc.width = wined3d_texture_get_level_width(src_texture, src_level);
@@ -457,7 +457,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
             desc.format = resolve_format_id;
             desc.multisample_type = dst_texture->resource.multisample_type;
             desc.multisample_quality = dst_texture->resource.multisample_quality;
-            desc.usage = WINED3DUSAGE_PRIVATE;
+            desc.usage = WINED3DUSAGE_CS;
             desc.bind_flags = 0;
             desc.access = WINED3D_RESOURCE_ACCESS_GPU;
             desc.width = wined3d_texture_get_level_width(dst_texture, dst_level);
@@ -6298,7 +6298,7 @@ static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         desc.format = src_texture->resource.format->id;
         desc.multisample_type = src_texture->resource.multisample_type;
         desc.multisample_quality = src_texture->resource.multisample_quality;
-        desc.usage = WINED3DUSAGE_PRIVATE;
+        desc.usage = WINED3DUSAGE_CS;
         desc.bind_flags = 0;
         desc.access = WINED3D_RESOURCE_ACCESS_GPU;
         desc.width = wined3d_texture_get_level_width(src_texture, src_level);
