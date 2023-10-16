@@ -91,3 +91,16 @@ coclass CWMVDecMediaObject {}
     uuid(7e320092-596a-41b2-bbeb-175d10504eb6)
 ]
 coclass CWMVXEncMediaObject {}
+
+typedef float ChMtxType;
+
+[
+    local,
+    object,
+    uuid(e7e9984f-f09f-4da4-903f-6e2e0efe56b5),
+]
+interface IWMResamplerProps : IUnknown
+{
+    HRESULT SetHalfFilterLength(LONG length);
+    HRESULT SetUserChannelMtx(ChMtxType *conversion_matrix);
+}

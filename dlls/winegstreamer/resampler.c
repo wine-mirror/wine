@@ -41,6 +41,7 @@ struct resampler
     IMediaObject IMediaObject_iface;
     IPropertyBag IPropertyBag_iface;
     IPropertyStore IPropertyStore_iface;
+    IWMResamplerProps IWMResamplerProps_iface;
     IUnknown *outer;
     LONG refcount;
 
@@ -97,6 +98,8 @@ static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID iid, void *
         *out = &impl->IPropertyBag_iface;
     else if (IsEqualIID(iid, &IID_IPropertyStore))
         *out = &impl->IPropertyStore_iface;
+    else if (IsEqualIID(iid, &IID_IWMResamplerProps))
+        *out = &impl->IWMResamplerProps_iface;
     else
     {
         *out = NULL;
@@ -872,6 +875,47 @@ static const IPropertyStoreVtbl property_store_vtbl =
     property_store_Commit,
 };
 
+static inline struct resampler *impl_from_IWMResamplerProps(IWMResamplerProps *iface)
+{
+    return CONTAINING_RECORD(iface, struct resampler, IWMResamplerProps_iface);
+}
+
+static HRESULT WINAPI resampler_props_QueryInterface(IWMResamplerProps *iface, REFIID iid, void **out)
+{
+    return IUnknown_QueryInterface(impl_from_IWMResamplerProps(iface)->outer, iid, out);
+}
+
+static ULONG WINAPI resampler_props_AddRef(IWMResamplerProps *iface)
+{
+    return IUnknown_AddRef(impl_from_IWMResamplerProps(iface)->outer);
+}
+
+static ULONG WINAPI resampler_props_Release(IWMResamplerProps *iface)
+{
+    return IUnknown_Release(impl_from_IWMResamplerProps(iface)->outer);
+}
+
+static HRESULT WINAPI resampler_props_SetHalfFilterLength(IWMResamplerProps *iface, LONG length)
+{
+    FIXME("iface %p, count %lu stub!\n", iface, length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI resampler_props_SetUserChannelMtx(IWMResamplerProps *iface, ChMtxType *conversion_matrix)
+{
+    FIXME("iface %p, userChannelMtx %p stub!\n", iface, conversion_matrix);
+    return E_NOTIMPL;
+}
+
+static const IWMResamplerPropsVtbl resampler_props_vtbl =
+{
+    resampler_props_QueryInterface,
+    resampler_props_AddRef,
+    resampler_props_Release,
+    resampler_props_SetHalfFilterLength,
+    resampler_props_SetUserChannelMtx,
+};
+
 HRESULT resampler_create(IUnknown *outer, IUnknown **out)
 {
     static const struct wg_format input_format =
@@ -924,6 +968,7 @@ HRESULT resampler_create(IUnknown *outer, IUnknown **out)
     impl->IMediaObject_iface.lpVtbl = &media_object_vtbl;
     impl->IPropertyBag_iface.lpVtbl = &property_bag_vtbl;
     impl->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
+    impl->IWMResamplerProps_iface.lpVtbl = &resampler_props_vtbl;
     impl->refcount = 1;
     impl->outer = outer ? outer : &impl->IUnknown_inner;
 
