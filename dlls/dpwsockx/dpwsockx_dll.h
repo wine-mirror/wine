@@ -25,6 +25,7 @@
 #include "winnt.h"
 #include "wine/dplaysp.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 #define DPWS_MAXQUEUESIZE             0
 #define DPWS_HUNDREDBAUD              0
@@ -75,10 +76,16 @@ struct tagDPWS_IN_CONNECTION
 
 typedef struct
 {
+    struct rb_entry     entry;
     SOCKADDR_IN         addr;
 
     SOCKET              tcpSock;
 } DPWS_OUT_CONNECTION;
+
+typedef struct
+{
+    DPWS_OUT_CONNECTION *connection;
+} DPWS_PLAYER;
 
 typedef struct tagDPWS_DATA
 {
@@ -90,7 +97,8 @@ typedef struct tagDPWS_DATA
     struct list           inConnections;
 
     CRITICAL_SECTION      sendCs;
-    DPWS_OUT_CONNECTION   nameserverConnection;
+    DPWS_PLAYER           nameserver;
+    struct rb_tree        connections;
 
     BOOL                  started;
     HANDLE                thread;

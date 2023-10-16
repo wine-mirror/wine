@@ -36,6 +36,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
 static void DPWS_MessageBodyReceiveCompleted( DPWS_IN_CONNECTION *connection );
 
+static int DPWS_CompareConnections( const void *key, const struct rb_entry *entry )
+{
+    DPWS_OUT_CONNECTION *connection = RB_ENTRY_VALUE( entry, DPWS_OUT_CONNECTION, entry );
+    SOCKADDR_IN *addr = (SOCKADDR_IN *)key;
+
+    if ( addr->sin_port < connection->addr.sin_port )
+        return -1;
+    if ( addr->sin_port > connection->addr.sin_port )
+        return 1;
+
+    if ( addr->sin_addr.s_addr < connection->addr.sin_addr.s_addr )
+        return -1;
+    if ( addr->sin_addr.s_addr > connection->addr.sin_addr.s_addr )
+        return 1;
+
+    return 0;
+}
+
 static HRESULT DPWS_BindToFreePort( SOCKET sock, SOCKADDR_IN *addr, int startPort, int endPort )
 {
     int port;
@@ -319,6 +337,8 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
 
     list_init( &dpwsData->inConnections );
 
+    rb_init( &dpwsData->connections, DPWS_CompareConnections );
+
     dpwsData->stopEvent = WSACreateEvent();
     if ( !dpwsData->stopEvent )
     {
@@ -348,6 +368,8 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
 
 static void DPWS_Stop( DPWS_DATA *dpwsData )
 {
+    DPWS_OUT_CONNECTION *outConnection2;
+    DPWS_OUT_CONNECTION *outConnection;
     DPWS_IN_CONNECTION *inConnection2;
     DPWS_IN_CONNECTION *inConnection;
 
@@ -360,8 +382,14 @@ static void DPWS_Stop( DPWS_DATA *dpwsData )
     WaitForSingleObject( dpwsData->thread, INFINITE );
     CloseHandle( dpwsData->thread );
 
-    if ( dpwsData->nameserverConnection.tcpSock != INVALID_SOCKET )
-        closesocket( dpwsData->nameserverConnection.tcpSock );
+    RB_FOR_EACH_ENTRY_DESTRUCTOR( outConnection, outConnection2, &dpwsData->connections,
+                                  DPWS_OUT_CONNECTION, entry )
+    {
+        rb_remove( &dpwsData->connections, &outConnection->entry );
+        if ( outConnection->tcpSock != INVALID_SOCKET )
+            closesocket( outConnection->tcpSock );
+        free( outConnection );
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE( inConnection, inConnection2, &dpwsData->inConnections,
                               DPWS_IN_CONNECTION, entry )
@@ -450,12 +478,39 @@ static HRESULT WINAPI DPWSCB_Send( LPDPSP_SENDDATA data )
     return DPERR_UNSUPPORTED;
 }
 
+static HRESULT DPWS_GetConnection( DPWS_DATA *dpwsData, SOCKADDR_IN *addr,
+                                   DPWS_OUT_CONNECTION **connection )
+{
+    struct rb_entry *entry;
+
+    entry = rb_get( &dpwsData->connections, addr );
+    if ( entry )
+    {
+        *connection = RB_ENTRY_VALUE( entry, DPWS_OUT_CONNECTION, entry );
+        return DP_OK;
+    }
+
+    *connection = calloc( 1, sizeof( DPWS_OUT_CONNECTION ) );
+    if ( !*connection )
+        return DPERR_OUTOFMEMORY;
+
+    (*connection)->addr = *addr;
+    (*connection)->tcpSock = INVALID_SOCKET;
+
+    rb_put( &dpwsData->connections, &(*connection)->addr, &(*connection)->entry );
+
+    return DP_OK;
+}
+
 static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 {
+    DPWS_PLAYER playerPlaceholder = { 0 };
     DPWS_PLAYERDATA *playerData;
     DWORD playerDataSize;
+    DPWS_PLAYER *player;
     DPWS_DATA *dpwsData;
     DWORD dpwsDataSize;
+    DWORD playerSize;
     HRESULT hr;
 
     TRACE( "(%ld,0x%08lx,%p,%p)\n",
@@ -498,14 +553,35 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
         playerData->udpAddr.sin_family = AF_INET;
     }
 
+    hr = IDirectPlaySP_SetSPPlayerData( data->lpISP, data->idPlayer, (void *) &playerPlaceholder,
+                                        sizeof( playerPlaceholder ), DPSET_LOCAL );
+    if ( FAILED( hr ) )
+        return hr;
+
+    hr = IDirectPlaySP_GetSPPlayerData( data->lpISP, data->idPlayer,
+                                        (void **) &player, &playerSize, DPSET_LOCAL );
+    if ( FAILED( hr ) )
+        return hr;
+
+    if ( data->dwFlags & DPLAYI_PLAYER_PLAYERLOCAL )
+        return DP_OK;
+
+    hr = DPWS_GetConnection( dpwsData, &playerData->tcpAddr, &player->connection );
+    if ( FAILED( hr ) )
+    {
+        free( player );
+        return hr;
+    }
+
     return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_DeletePlayer( LPDPSP_DELETEPLAYERDATA data )
 {
-    FIXME( "(%ld,0x%08lx,%p) stub\n",
+    TRACE( "(%ld,0x%08lx,%p)\n",
            data->idPlayer, data->dwFlags, data->lpISP );
-    return DPERR_UNSUPPORTED;
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_GetAddress( LPDPSP_GETADDRESSDATA data )
@@ -549,6 +625,7 @@ static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
 static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
 {
     DPSP_MSG_HEADER *header = (DPSP_MSG_HEADER *) data->lpSPMessageHeader;
+    SOCKADDR_IN nameserverAddr;
     DPWS_DATA *dpwsData;
     DWORD dpwsDataSize;
     HRESULT hr;
@@ -571,11 +648,14 @@ static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
     if ( FAILED (hr) )
         return hr;
 
-    dpwsData->nameserverConnection.addr.sin_family = AF_INET;
-    dpwsData->nameserverConnection.addr.sin_addr = header->SockAddr.sin_addr;
-    dpwsData->nameserverConnection.addr.sin_port = header->SockAddr.sin_port;
+    memset( &nameserverAddr, 0, sizeof( nameserverAddr ) );
+    nameserverAddr.sin_family = AF_INET;
+    nameserverAddr.sin_addr = header->SockAddr.sin_addr;
+    nameserverAddr.sin_port = header->SockAddr.sin_port;
 
-    dpwsData->nameserverConnection.tcpSock = INVALID_SOCKET;
+    hr = DPWS_GetConnection( dpwsData, &nameserverAddr, &dpwsData->nameserver.connection );
+    if ( FAILED( hr ) )
+        return hr;
 
     return DP_OK;
 }
@@ -627,6 +707,7 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
 {
     DPWS_OUT_CONNECTION *connection;
     DPSP_MSG_HEADER header = { 0 };
+    DPWS_PLAYER *player;
     DPWS_DATA *dpwsData;
     DWORD dpwsDataSize;
     DWORD transferred;
@@ -637,12 +718,6 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
            data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
            data->dwPriority, data->dwTimeout, data->lpDPContext,
            data->lpdwSPMsgID, data->bSystemMessage );
-
-    if ( data->idPlayerTo )
-    {
-        FIXME( "only sending to nameserver is currently implemented\n" );
-        return DPERR_UNSUPPORTED;
-    }
 
     if ( !( data->dwFlags & DPSEND_GUARANTEED ) )
     {
@@ -668,7 +743,20 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
 
     EnterCriticalSection( &dpwsData->sendCs );
 
-    connection = &dpwsData->nameserverConnection;
+    if ( data->idPlayerTo )
+    {
+        DWORD playerSize;
+        hr = IDirectPlaySP_GetSPPlayerData( data->lpISP, data->idPlayerTo, (void **) &player,
+                                            &playerSize, DPSET_LOCAL );
+        if ( FAILED( hr ) )
+            return hr;
+    }
+    else
+    {
+        player = &dpwsData->nameserver;
+    }
+
+    connection = player->connection;
 
     if ( connection->tcpSock == INVALID_SOCKET )
     {
