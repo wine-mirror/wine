@@ -1302,7 +1302,7 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
     return instrument->patch;
 }
 
-static BOOL fluid_gen_from_connection(CONNECTION *conn, UINT *gen)
+static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
 {
     switch (conn->usDestination)
     {
@@ -1333,7 +1333,7 @@ static BOOL fluid_gen_from_connection(CONNECTION *conn, UINT *gen)
     }
 }
 
-static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn)
+static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, const CONNECTION *conn)
 {
     UINT gen;
 
@@ -1342,7 +1342,7 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn
 
     if (conn->usSource == CONN_SRC_NONE)
     {
-        if (!fluid_gen_from_connection(conn, &gen)) return FALSE;
+        if (!gen_from_connection(conn, &gen)) return FALSE;
     }
     if (conn->usSource == CONN_SRC_KEYNUMBER)
     {
@@ -1391,7 +1391,7 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn
     return TRUE;
 }
 
-static BOOL fluid_source_from_connection(USHORT source, USHORT transform, UINT *fluid_source, UINT *fluid_flags)
+static BOOL mod_from_connection(USHORT source, USHORT transform, UINT *fluid_source, UINT *fluid_flags)
 {
     UINT flags = FLUID_MOD_GC;
     if (source >= CONN_SRC_CC1 && source <= CONN_SRC_CC1 + 0x7f)
@@ -1425,8 +1425,8 @@ static BOOL fluid_source_from_connection(USHORT source, USHORT transform, UINT *
     return TRUE;
 }
 
-static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn, UINT src1, UINT flags1,
-        UINT src2, UINT flags2)
+static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION *conn,
+        UINT src1, UINT flags1, UINT src2, UINT flags2)
 {
     fluid_mod_t *mod;
     UINT gen = -1;
@@ -1453,7 +1453,7 @@ static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn
         flags2 = 0;
     }
 
-    if (gen == -1 && !fluid_gen_from_connection(conn, &gen)) return FALSE;
+    if (gen == -1 && !gen_from_connection(conn, &gen)) return FALSE;
 
     if (!(mod = new_fluid_mod())) return FALSE;
     fluid_mod_set_source1(mod, src1, flags1);
@@ -1465,33 +1465,26 @@ static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, CONNECTION *conn
     return TRUE;
 }
 
-static void fluid_voice_add_articulation(fluid_voice_t *fluid_voice, struct articulation *articulation)
+static void add_voice_connections(fluid_voice_t *fluid_voice, const CONNECTIONLIST *list,
+        const CONNECTION *connections)
 {
     UINT i;
 
-    for (i = 0; i < articulation->list.cConnections; i++)
+    for (i = 0; i < list->cConnections; i++)
     {
         UINT src1 = FLUID_MOD_NONE, flags1 = 0, src2 = FLUID_MOD_NONE, flags2 = 0;
-        CONNECTION *conn = articulation->connections + i;
+        const CONNECTION *conn = connections + i;
 
         if (set_gen_from_connection(fluid_voice, conn)) continue;
 
-        if (!fluid_source_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f,
+        if (!mod_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f,
                 &src1, &flags1))
             continue;
-        if (!fluid_source_from_connection(conn->usControl, (conn->usControl >> 4) & 0x3f,
+        if (!mod_from_connection(conn->usControl, (conn->usControl >> 4) & 0x3f,
                 &src2, &flags2))
             continue;
         add_mod_from_connection(fluid_voice, conn, src1, flags1, src2, flags2);
     }
-}
-
-static void fluid_voice_add_articulations(fluid_voice_t *fluid_voice, struct list *list)
-{
-    struct articulation *articulation;
-
-    LIST_FOR_EACH_ENTRY(articulation, list, struct articulation, entry)
-        fluid_voice_add_articulation(fluid_voice, articulation);
 }
 
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
@@ -1508,6 +1501,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 
     LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
     {
+        struct articulation *articulation;
         struct wave *wave = region->wave;
 
         if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
@@ -1535,8 +1529,10 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
             return FLUID_FAILED;
         }
 
-        fluid_voice_add_articulations(fluid_voice, &instrument->articulations);
-        fluid_voice_add_articulations(fluid_voice, &region->articulations);
+        LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
+            add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
+        LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
+            add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
         fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
         return FLUID_OK;
     }
