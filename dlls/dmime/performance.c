@@ -468,7 +468,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
     struct message *message, *next;
     HRESULT hr;
 
-    FIXME("(%p, %p): semi-stub\n", This, msg);
+    TRACE("(%p, %p)\n", This, msg);
 
     if (!(message = message_from_DMUS_PMSG(msg))) return E_POINTER;
     if (!This->dmusic) return DMUS_E_NO_MASTER_CLOCK;
@@ -519,9 +519,11 @@ done:
 static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 *iface,
         MUSIC_TIME music_time, REFERENCE_TIME *time)
 {
+    static int once;
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-    FIXME("(%p, %ld, %p): semi-stub\n", This, music_time, time);
+    if (!once++) FIXME("(%p, %ld, %p): semi-stub\n", This, music_time, time);
+    else TRACE("(%p, %ld, %p)\n", This, music_time, time);
 
     if (!time) return E_POINTER;
     *time = 0;
@@ -538,9 +540,11 @@ static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 
 static HRESULT WINAPI performance_ReferenceToMusicTime(IDirectMusicPerformance8 *iface,
         REFERENCE_TIME time, MUSIC_TIME *music_time)
 {
+    static int once;
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-    FIXME("(%p, %I64d, %p): semi-stub\n", This, time, music_time);
+    if (!once++) FIXME("(%p, %I64d, %p): semi-stub\n", This, time, music_time);
+    else TRACE("(%p, %I64d, %p)\n", This, time, music_time);
 
     if (!music_time) return E_POINTER;
     *music_time = 0;
@@ -1657,7 +1661,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
     struct message *message = message_from_DMUS_PMSG(msg);
     HRESULT hr;
 
-    FIXME("(%p, %p, %p): semi-stub\n", This, performance, msg);
+    TRACE("(%p, %p, %p)\n", This, performance, msg);
 
     switch (msg->dwType)
     {
