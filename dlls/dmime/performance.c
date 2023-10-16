@@ -51,7 +51,7 @@ struct performance
 
     BOOL audio_paths_enabled;
     IDirectMusicAudioPath *pDefaultPath;
-    REFERENCE_TIME rtLatencyTime;
+    REFERENCE_TIME latency_offset;
     DWORD dwBumperLength;
     DWORD dwPrepareTime;
 
@@ -737,6 +737,31 @@ static HRESULT WINAPI performance_RemoveNotificationType(IDirectMusicPerformance
     return hr;
 }
 
+static void performance_update_latency_time(struct performance *This, IDirectMusicPort *port,
+        REFERENCE_TIME *ret_time)
+{
+    IDirectMusicPerformance8 *iface = &This->IDirectMusicPerformance8_iface;
+    REFERENCE_TIME latency_time, current_time;
+    IReferenceClock *latency_clock;
+    HRESULT hr;
+
+    if (!ret_time) ret_time = &latency_time;
+    if (SUCCEEDED(hr = IDirectMusicPort_GetLatencyClock(port, &latency_clock)))
+    {
+        hr = IReferenceClock_GetTime(latency_clock, ret_time);
+        if (SUCCEEDED(hr)) hr = IDirectMusicPerformance8_GetTime(iface, &current_time, NULL);
+        if (SUCCEEDED(hr) && This->latency_offset < (*ret_time - current_time))
+        {
+            TRACE("Updating performance %p latency %I64d -> %I64d\n", This,
+                    This->latency_offset, *ret_time - current_time);
+            This->latency_offset = *ret_time - current_time;
+        }
+        IReferenceClock_Release(latency_clock);
+    }
+
+    if (FAILED(hr)) ERR("Failed to update performance %p latency, hr %#lx\n", This, hr);
+}
+
 static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *params)
 {
     IDirectMusicPort *port;
@@ -760,6 +785,7 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     for (i = 0; i < params->dwChannelGroups; i++)
         pchannel_block_set(&perf->pchannels, i, port, i + 1, FALSE);
 
+    performance_update_latency_time(perf, port, NULL);
     return S_OK;
 }
 
@@ -787,6 +813,8 @@ static HRESULT WINAPI performance_AddPort(IDirectMusicPerformance8 *iface, IDire
      * We should remember added Ports (for example using a list)
      * and control if Port is registered for each api who use ports
      */
+
+    performance_update_latency_time(This, port, NULL);
     return S_OK;
 }
 
@@ -958,13 +986,18 @@ static HRESULT WINAPI performance_SetGlobalParam(IDirectMusicPerformance8 *iface
 	return S_OK;
 }
 
-static HRESULT WINAPI performance_GetLatencyTime(IDirectMusicPerformance8 *iface, REFERENCE_TIME *prtTime)
+static HRESULT WINAPI performance_GetLatencyTime(IDirectMusicPerformance8 *iface, REFERENCE_TIME *ret_time)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    REFERENCE_TIME current_time;
+    HRESULT hr;
 
-	TRACE("(%p, %p): stub\n", This, prtTime);
-	*prtTime = This->rtLatencyTime;
-	return S_OK;
+    TRACE("(%p, %p)\n", This, ret_time);
+
+    if (SUCCEEDED(hr = IDirectMusicPerformance8_GetTime(iface, &current_time, NULL)))
+        *ret_time = current_time + This->latency_offset;
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_GetQueueTime(IDirectMusicPerformance8 *iface, REFERENCE_TIME *prtTime)
@@ -1632,7 +1665,6 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         static const UINT event_size = sizeof(DMUS_EVENTHEADER) + sizeof(DWORD);
         DMUS_BUFFERDESC desc = {.dwSize = sizeof(desc), .cbBuffer = 2 * event_size};
         DMUS_MIDI_PMSG *midi = (DMUS_MIDI_PMSG *)msg;
-        IReferenceClock *latency_clock;
         REFERENCE_TIME latency_time;
         IDirectMusicBuffer *buffer;
         IDirectMusicPort *port;
@@ -1645,13 +1677,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             WARN("Failed to get message port, hr %#lx\n", hr);
             return DMUS_S_FREE;
         }
-
-        if (SUCCEEDED(hr = IDirectMusicPort_GetLatencyClock(port, &latency_clock)))
-        {
-            if (FAILED(hr = IReferenceClock_GetTime(latency_clock, &latency_time)))
-                ERR("Failed to get port latency time, hr %#lx\n", hr);
-            IReferenceClock_Release(latency_clock);
-        }
+        performance_update_latency_time(This, port, &latency_time);
 
         value |= channel;
         value |= (UINT)midi->bStatus;
@@ -1796,7 +1822,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     list_init(&obj->messages);
     list_init(&obj->notifications);
 
-    obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
+    obj->latency_offset = 50;
     obj->dwBumperLength =   50; /* 50 ms default */
     obj->dwPrepareTime  = 1000; /* 1000 ms default */
 
