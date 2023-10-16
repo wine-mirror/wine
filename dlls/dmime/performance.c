@@ -490,7 +490,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
         if (!(msg->dwFlags & DMUS_PMSGF_REFTIME))
         {
             if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(iface,
-                    msg->mtTime, &msg->rtTime)))
+                    msg->mtTime == -1 ? 0 : msg->mtTime, &msg->rtTime)))
                 goto done;
             msg->dwFlags |= DMUS_PMSGF_REFTIME;
         }
@@ -1632,6 +1632,8 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         static const UINT event_size = sizeof(DMUS_EVENTHEADER) + sizeof(DWORD);
         DMUS_BUFFERDESC desc = {.dwSize = sizeof(desc), .cbBuffer = 2 * event_size};
         DMUS_MIDI_PMSG *midi = (DMUS_MIDI_PMSG *)msg;
+        IReferenceClock *latency_clock;
+        REFERENCE_TIME latency_time;
         IDirectMusicBuffer *buffer;
         IDirectMusicPort *port;
         DWORD group, channel;
@@ -1644,6 +1646,13 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             return DMUS_S_FREE;
         }
 
+        if (SUCCEEDED(hr = IDirectMusicPort_GetLatencyClock(port, &latency_clock)))
+        {
+            if (FAILED(hr = IReferenceClock_GetTime(latency_clock, &latency_time)))
+                ERR("Failed to get port latency time, hr %#lx\n", hr);
+            IReferenceClock_Release(latency_clock);
+        }
+
         value |= channel;
         value |= (UINT)midi->bStatus;
         value |= (UINT)midi->bByte1 << 8;
@@ -1651,6 +1660,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
 
         if (SUCCEEDED(hr = IDirectMusic_CreateMusicBuffer(This->dmusic, &desc, &buffer, NULL)))
         {
+            if (msg->rtTime == -1) msg->rtTime = latency_time;
             hr = IDirectMusicBuffer_PackStructured(buffer, msg->rtTime, group, value);
             if (SUCCEEDED(hr)) hr = IDirectMusicPort_PlayBuffer(port, buffer);
             IDirectMusicBuffer_Release(buffer);
