@@ -1570,7 +1570,10 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
     EnterCriticalSection(&synth->cs);
 
     LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
-        if (instrument->patch == patch) break;
+    {
+        if (bank == 128 && instrument->patch == (0x80000000 | patch)) break;
+        else if (instrument->patch == ((bank << 8) | patch)) break;
+    }
 
     if (&instrument->entry == &synth->instruments)
     {
