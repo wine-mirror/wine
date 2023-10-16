@@ -496,6 +496,7 @@ HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *per
 
     LIST_FOR_EACH_ENTRY_REV(entry, &This->instruments, struct instrument_entry, entry)
     {
+        DWORD patch = entry->instrument.dwPatch;
         DMUS_PATCH_PMSG *msg;
 
         if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
@@ -509,6 +510,13 @@ HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *per
         msg->dwType = DMUS_PMSGT_PATCH;
         msg->dwGroupID = 1;
         msg->byInstrument = entry->instrument.dwPatch;
+
+        msg->byInstrument = patch & 0x7F;
+        patch >>= 8;
+        msg->byLSB = patch & 0x7f;
+        patch >>= 8;
+        msg->byMSB = patch & 0x7f;
+        patch >>= 8;
 
         if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
                 || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))
