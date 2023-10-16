@@ -1528,18 +1528,17 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
-void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
-{
-    __TRY
-    {
-        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
-    }
-    __EXCEPT(call_unhandled_exception_filter)
-    {
-        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
-    }
-    __ENDTRY
-}
+__ASM_GLOBAL_FUNC( RtlUserThreadStart,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "adr x8, " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
+                   "ldr x8, [x8]\n\t"
+                   "mov x2, x1\n\t"
+                   "mov x1, x0\n\t"
+                   "mov x0, #0\n\t"
+                   "blr x8\n\t"
+                   __ASM_SEH(".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", @except") )
 
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
