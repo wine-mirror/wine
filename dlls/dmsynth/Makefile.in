@@ -1,6 +1,7 @@
 MODULE    = dmsynth.dll
 IMPORTS   = $(FLUIDSYNTH_PE_LIBS) dxguid uuid ole32 advapi32 user32
 EXTRAINCL = $(FLUIDSYNTH_PE_CFLAGS)
+PARENTSRC = ../dmusic
 
 C_SRCS = \
 	dmsynth_main.c \

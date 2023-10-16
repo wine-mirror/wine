@@ -25,6 +25,7 @@
 #include "dmksctrl.h"
 
 #include "dmsynth_private.h"
+#include "dmusic_midi.h"
 #include "dls2.h"
 
 #include <fluidsynth.h>
@@ -1063,16 +1064,16 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
 
         switch (status)
         {
-        case 0x80:
+        case MIDI_NOTE_OFF:
             fluid_synth_noteoff(This->fluid_synth, chan, event->midi[1]);
             break;
-        case 0x90:
+        case MIDI_NOTE_ON:
             fluid_synth_noteon(This->fluid_synth, chan, event->midi[1], event->midi[2]);
             break;
-        case 0xb0:
+        case MIDI_CONTROL_CHANGE:
             fluid_synth_cc(This->fluid_synth, chan, event->midi[1], event->midi[2]);
             break;
-        case 0xc0:
+        case MIDI_PROGRAM_CHANGE:
             fluid_synth_program_change(This->fluid_synth, chan, event->midi[1]);
             break;
         default:

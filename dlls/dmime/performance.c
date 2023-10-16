@@ -19,6 +19,7 @@
  */
 
 #include "dmime_private.h"
+#include "dmusic_midi.h"
 #include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
@@ -1702,12 +1703,12 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
 
         msg->mtTime += note->nOffset;
         if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
-                0x90 /* NOTE_ON */, note->bMidiValue, note->bVelocity)))
+                MIDI_NOTE_ON, note->bMidiValue, note->bVelocity)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
         msg->mtTime += note->mtDuration;
         if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE,
-                0x80 /* NOTE_OFF */, note->bMidiValue, 0)))
+                MIDI_NOTE_OFF, note->bMidiValue, 0)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
         break;
@@ -1718,15 +1719,15 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         DMUS_PATCH_PMSG *patch = (DMUS_PATCH_PMSG *)msg;
 
         if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
-                0xb0 /* Control Change */, 0x00 /* CC: Bank MSB */, patch->byMSB)))
+                MIDI_CONTROL_CHANGE, MIDI_CC_BANK_MSB, patch->byMSB)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
         if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
-                0xb0 /* Control Change */, 0x20 /* CC: Bank LSB */, patch->byLSB)))
+                MIDI_CONTROL_CHANGE, MIDI_CC_BANK_LSB, patch->byLSB)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
         if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
-                0xc0 /* Program Change */, patch->byInstrument, 0)))
+                MIDI_PROGRAM_CHANGE, patch->byInstrument, 0)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
         break;
