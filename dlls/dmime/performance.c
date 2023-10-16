@@ -89,10 +89,10 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
 
     do
     {
-        REFERENCE_TIME current, offset = 0;
+        REFERENCE_TIME latency, offset = 0;
         IDirectMusicTool *tool;
 
-        if (FAILED(hr = IDirectMusicPerformance_GetTime(performance, &current, NULL))) return hr;
+        if (FAILED(hr = IDirectMusicPerformance_GetLatencyTime(performance, &latency))) return hr;
         if (!(tool = msg->pTool)) tool = &This->IDirectMusicTool_iface;
 
         switch (msg->dwFlags & delivery_flags)
@@ -107,9 +107,9 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
             offset = This->dwBumperLength * 10000;
             /* fallthrough */
         case DMUS_PMSGF_TOOL_ATTIME:
-            if (msg->rtTime >= offset && msg->rtTime - offset >= current)
+            if (msg->rtTime >= offset && msg->rtTime - offset >= latency)
             {
-                if (timeout) *timeout = (msg->rtTime - offset - current) / 10000;
+                if (timeout) *timeout = (msg->rtTime - offset - latency) / 10000;
                 return DMUS_S_REQUEUE;
             }
 
