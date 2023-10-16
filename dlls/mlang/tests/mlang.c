@@ -2295,6 +2295,11 @@ static void test_GetGlobalFontLinkObject(void)
 {
     HRESULT ret;
     void *unknown;
+    LONG refcount;
+    IMLangFontLink2 *IMLFL2;
+    IMLangFontLink *IMLFL;
+    IMLangCodePages *IMLCP;
+    IMultiLanguage *IML;
 
     ret = GetGlobalFontLinkObject(NULL);
     ok(ret == E_INVALIDARG, "expected E_INVALIDARG got %#lx\n", ret);
@@ -2305,7 +2310,26 @@ todo_wine {
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
     ok(unknown != NULL && unknown != (void *)0xdeadbeef,
        "GetGlobalFontLinkObject() returned %p\n", unknown);
+    if (unknown == (void *)0xdeadbeef || !unknown) return;
     }
+
+    ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangFontLink2, (void**)&IMLFL2);
+    ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+
+    ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMultiLanguage, (void**)&IML);
+    ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+
+    ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangFontLink, (void**)&IMLFL);
+    ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
+    IMLangFontLink_Release(IMLFL);
+
+    ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangCodePages, (void**)&IMLCP);
+    ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
+    IMLangCodePages_Release(IMLCP);
+
+
+    refcount = IUnknown_Release((IUnknown*)unknown);
+    ok(refcount == 1, "Got refcount %ld\n", refcount);
 }
 
 static void test_IMLangConvertCharset(IMultiLanguage *ml)
@@ -2778,14 +2802,14 @@ START_TEST(mlang)
     if (!init_function_ptrs())
         return;
 
+    test_GetGlobalFontLinkObject();
+
     CoInitialize(NULL);
     test_Rfc1766ToLcid();
     test_LcidToRfc1766();
 
     test_ConvertINetUnicodeToMultiByte();
     test_JapaneseConversion();
-
-    test_GetGlobalFontLinkObject();
 
     trace("IMultiLanguage\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
