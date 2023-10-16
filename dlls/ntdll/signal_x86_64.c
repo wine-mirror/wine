@@ -347,14 +347,47 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "fxsave 0x100(%rcx)\n\t"         /* context->FltSave */
                    "ret" );
 
-static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
         return ExceptionNestedException;
 
     return ExceptionContinueSearch;
 }
+
+/***********************************************************************
+ *		exception_handler_call_wrapper
+ */
+#ifdef __ASM_SEH_SUPPORTED
+DWORD WINAPI exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
+                                      CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
+
+C_ASSERT( offsetof(DISPATCHER_CONTEXT, LanguageHandler) == 0x30 );
+
+__ASM_GLOBAL_FUNC( exception_handler_call_wrapper,
+                   ".seh_endprologue\n\t"
+                   "subq $0x28, %rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   "callq *0x30(%r9)\n\t"       /* dispatch->LanguageHandler */
+                   "nop\n\t"                    /* avoid epilogue so handler is called */
+                   "addq $0x28, %rsp\n\t"
+                   "ret\n\t"
+                   ".seh_handler " __ASM_NAME("nested_exception_handler") ", @except\n\t" )
+#else
+static DWORD exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
+                                             CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+{
+    EXCEPTION_REGISTRATION_RECORD wrapper_frame;
+    DWORD res;
+
+    wrapper_frame.Handler = nested_exception_handler;
+    __wine_push_frame( &wrapper_frame );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    __wine_pop_frame( &wrapper_frame );
+    return res;
+}
+#endif
 
 /**********************************************************************
  *           call_handler
@@ -363,19 +396,14 @@ static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_
  */
 static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    EXCEPTION_REGISTRATION_RECORD frame;
     DWORD res;
-
-    frame.Handler = nested_exception_handler;
-    __wine_push_frame( &frame );
 
     TRACE_(seh)( "calling handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
                  dispatch->LanguageHandler, rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    res = exception_handler_call_wrapper( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
     TRACE_(seh)( "handler at %p returned %lu\n", dispatch->LanguageHandler, res );
 
     rec->ExceptionFlags &= EH_NONCONTINUABLE;
-    __wine_pop_frame( &frame );
     return res;
 }
 
