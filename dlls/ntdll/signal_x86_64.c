@@ -351,7 +351,7 @@ static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_
                                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        rec->ExceptionFlags |= EH_NESTED_CALL;
+        return ExceptionNestedException;
 
     return ExceptionContinueSearch;
 }
@@ -360,7 +360,6 @@ static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_
  *           call_handler
  *
  * Call a single exception handler.
- * FIXME: Handle nested exceptions.
  */
 static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
@@ -447,7 +446,8 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             case ExceptionContinueSearch:
                 break;
             case ExceptionNestedException:
-                FIXME_(seh)( "nested exception\n" );
+                rec->ExceptionFlags |= EH_NESTED_CALL;
+                TRACE_(seh)( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
@@ -477,7 +477,8 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             case ExceptionContinueSearch:
                 break;
             case ExceptionNestedException:
-                FIXME_(seh)( "nested exception\n" );
+                rec->ExceptionFlags |= EH_NESTED_CALL;
+                TRACE_(seh)( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
