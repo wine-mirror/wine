@@ -70,6 +70,8 @@ struct tagDPWS_IN_CONNECTION
 typedef struct
 {
     SOCKADDR_IN         addr;
+
+    SOCKET              tcpSock;
 } DPWS_OUT_CONNECTION;
 
 typedef struct tagDPWS_DATA
@@ -81,6 +83,7 @@ typedef struct tagDPWS_DATA
     WSAEVENT              acceptEvent;
     struct list           inConnections;
 
+    CRITICAL_SECTION      sendCs;
     DPWS_OUT_CONNECTION   nameserverConnection;
 
     BOOL                  started;
