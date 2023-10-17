@@ -209,7 +209,7 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             break;
     }
 
-    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_an((const char *)&tag, 4));
+    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_fourcc(tag));
 
     return add;
 }
@@ -341,7 +341,7 @@ static BOOL check_blob_strip(DWORD tag, UINT flags)
             break;
     }
 
-    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_an((const char *)&tag, 4));
+    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_fourcc(tag));
 
     return add;
 }

@@ -1705,7 +1705,7 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
             break;
 
         default:
-            FIXME("Unhandled section %s!\n", debugstr_an((const char *)&section->tag, 4));
+            FIXME("Unhandled section %s!\n", debugstr_fourcc(section->tag));
             element_size = D3DCOMPILER_SIGNATURE_ELEMENT_SIZE6;
             break;
     }
@@ -1963,7 +1963,7 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
                 break;
 
             default:
-                FIXME("Unhandled section %s!\n", debugstr_an((const char *)&section->tag, 4));
+                FIXME("Unhandled section %s!\n", debugstr_fourcc(section->tag));
                 break;
         }
     }
