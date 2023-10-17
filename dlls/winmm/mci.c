@@ -501,7 +501,6 @@ static void MCI_UnmapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
         break;
 
     default:
-        FIXME("Message %s needs unmapping\n", MCI_MessageToString(msg));
         break;
     }
 }
@@ -2294,8 +2293,8 @@ DWORD WINAPI mciSendCommandA(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, 
         return MCIERR_OUT_OF_MEMORY;
     }
     ret = mciSendCommandW(wDevID, wMsg, dwParam1, dwParam2);
-    if (mapped)
-        MCI_UnmapMsgAtoW(wMsg, dwParam1, dwParam2, ret);
+
+    MCI_UnmapMsgAtoW(wMsg, dwParam1, dwParam2, ret);
     return ret;
 }
 
