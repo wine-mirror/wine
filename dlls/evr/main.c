@@ -213,7 +213,7 @@ HRESULT WINAPI MFCreateVideoMixerAndPresenter(IUnknown *mixer_outer, IUnknown *p
  */
 BOOL WINAPI MFIsFormatYUV(DWORD format)
 {
-    TRACE("%s.\n", debugstr_an((char *)&format, 4));
+    TRACE("%s.\n", debugstr_fourcc(format));
 
     switch (format)
     {
