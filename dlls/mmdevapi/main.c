@@ -295,10 +295,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     unsigned int i = 0;
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if(!InitOnceExecuteOnce(&init_once, init_driver, NULL, NULL)) {
-        ERR("Driver initialization failed\n");
-        return E_FAIL;
-    }
+    InitOnceExecuteOnce(&init_once, init_driver, NULL, NULL);
 
     if (ppv == NULL) {
         WARN("invalid parameter\n");
