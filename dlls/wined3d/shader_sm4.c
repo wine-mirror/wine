@@ -1853,10 +1853,12 @@ struct aon9_header
     unsigned int byte_code_offset;
 };
 
-static void read_dword(const char **ptr, unsigned int *d)
+static unsigned int read_dword(const char **ptr)
 {
-    memcpy(d, *ptr, sizeof(*d));
-    *ptr += sizeof(*d);
+    unsigned int ret;
+    memcpy(&ret, *ptr, sizeof(ret));
+    *ptr += sizeof(ret);
+    return ret;
 }
 
 static BOOL require_space(size_t offset, size_t count, size_t size, size_t data_size)
@@ -1872,7 +1874,7 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     WARN("Skipping %u unknown DWORDs:\n", count);
     for (i = 0; i < count; ++i)
     {
-        read_dword(ptr, &d);
+        d = read_dword(ptr);
         WARN("\t0x%08x\n", d);
     }
 }
@@ -1906,7 +1908,7 @@ static HRESULT shader_parse_signature(DWORD tag, const char *data, unsigned int 
         return E_INVALIDARG;
     }
 
-    read_dword(&ptr, &count);
+    count = read_dword(&ptr);
     TRACE("%u elements.\n", count);
 
     skip_dword_unknown(&ptr, 1); /* It seems to always be 0x00000008. */
@@ -1931,24 +1933,24 @@ static HRESULT shader_parse_signature(DWORD tag, const char *data, unsigned int 
         unsigned int name_offset;
 
         if (has_stream_index)
-            read_dword(&ptr, &e[i].stream_idx);
+            e[i].stream_idx = read_dword(&ptr);
         else
             e[i].stream_idx = 0;
-        read_dword(&ptr, &name_offset);
+        name_offset = read_dword(&ptr);
         if (!(e[i].semantic_name = shader_get_string(data, data_size, name_offset)))
         {
             WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
             heap_free(e);
             return E_INVALIDARG;
         }
-        read_dword(&ptr, &e[i].semantic_idx);
-        read_dword(&ptr, &e[i].sysval_semantic);
-        read_dword(&ptr, &e[i].component_type);
-        read_dword(&ptr, &e[i].register_idx);
-        read_dword(&ptr, &e[i].mask);
+        e[i].semantic_idx = read_dword(&ptr);
+        e[i].sysval_semantic = read_dword(&ptr);
+        e[i].component_type = read_dword(&ptr);
+        e[i].register_idx = read_dword(&ptr);
+        e[i].mask = read_dword(&ptr);
 
         if (has_min_precision)
-            read_dword(&ptr, &e[i].min_precision);
+            e[i].min_precision = read_dword(&ptr);
         else
             e[i].min_precision = 0;
 
