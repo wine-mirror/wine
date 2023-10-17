@@ -2117,7 +2117,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (is_inside_syscall( ucontext ))
     {
         DECLSPEC_ALIGN(64) XSTATE xs;
-        context.c.ContextFlags = CONTEXT_FULL;
+        context.c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS;
         context_init_xstate( &context.c, &xs );
 
         NtGetContextThread( GetCurrentThread(), &context.c );
