@@ -1148,8 +1148,8 @@ static void checkSpData_( int line, SpData *spData )
     ok_( __FILE__, line )( !spData->tcpAddr.sin_addr.s_addr, "got TCP address %#lx.\n",
                            spData->tcpAddr.sin_addr.s_addr );
     ok_( __FILE__, line )( spData->udpAddr.sin_family == AF_INET, "got UDP family %d.\n", spData->udpAddr.sin_family );
-    todo_wine ok_( __FILE__, line )( 2350 <= ntohs( spData->udpAddr.sin_port ) && ntohs( spData->udpAddr.sin_port ) < 2400,
-                                     "got UDP port %d.\n", ntohs( spData->udpAddr.sin_port ) );
+    ok_( __FILE__, line )( 2350 <= ntohs( spData->udpAddr.sin_port ) && ntohs( spData->udpAddr.sin_port ) < 2400,
+                           "got UDP port %d.\n", ntohs( spData->udpAddr.sin_port ) );
     ok_( __FILE__, line )( !spData->udpAddr.sin_addr.s_addr, "got UDP address %#lx.\n",
                            spData->udpAddr.sin_addr.s_addr );
 }
@@ -1883,9 +1883,7 @@ static void receiveGameMessage_( int line, SOCKET sock, DPID expectedFromId, DPI
     DWORD expectedSize = sizeof( request.request ) + expectedDataSize;
 
     wsResult = receiveMessage_( line, sock, &request, expectedSize );
-    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
-    if ( wsResult == SOCKET_ERROR )
-        return;
+    ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
 
     checkGameMessage_( line, &request.request, expectedFromId, expectedToId );
     ok_( __FILE__, line )( !memcmp( &request.data, expectedData, expectedDataSize ), "message data didn't match.\n" );
@@ -7768,7 +7766,7 @@ static void test_Send(void)
     udpSock = bindUdp( 2399 );
 
     hr = IDirectPlayX_Send( dp, 0x07734, 0x1337, 0, data, sizeof( data ) );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
 
     receiveGameMessage( udpSock, 0x07734, 0x1337, data, sizeof( data ) );
 

@@ -33,22 +33,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 #define DPWS_PORT           47624
 #define DPWS_START_TCP_PORT 2300
 #define DPWS_END_TCP_PORT   2350
+#define DPWS_START_UDP_PORT 2350
+#define DPWS_END_UDP_PORT   2400
 
 static void DPWS_MessageBodyReceiveCompleted( DPWS_IN_CONNECTION *connection );
 
 static int DPWS_CompareConnections( const void *key, const struct rb_entry *entry )
 {
     DPWS_OUT_CONNECTION *connection = RB_ENTRY_VALUE( entry, DPWS_OUT_CONNECTION, entry );
-    SOCKADDR_IN *addr = (SOCKADDR_IN *)key;
+    DPWS_CONNECTION_KEY *connection_key = (DPWS_CONNECTION_KEY *)key;
 
-    if ( addr->sin_port < connection->addr.sin_port )
+    if ( connection_key->addr.sin_port < connection->key.addr.sin_port )
         return -1;
-    if ( addr->sin_port > connection->addr.sin_port )
+    if ( connection_key->addr.sin_port > connection->key.addr.sin_port )
         return 1;
 
-    if ( addr->sin_addr.s_addr < connection->addr.sin_addr.s_addr )
+    if ( connection_key->addr.sin_addr.s_addr < connection->key.addr.sin_addr.s_addr )
         return -1;
-    if ( addr->sin_addr.s_addr > connection->addr.sin_addr.s_addr )
+    if ( connection_key->addr.sin_addr.s_addr > connection->key.addr.sin_addr.s_addr )
+        return 1;
+
+    if ( connection_key->guaranteed < connection->key.guaranteed )
+        return -1;
+    if ( connection_key->guaranteed > connection->key.guaranteed )
         return 1;
 
     return 0;
@@ -344,6 +351,25 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
 
     list_init( &dpwsData->inConnections );
 
+    dpwsData->udpSock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    if ( dpwsData->udpSock == INVALID_SOCKET )
+    {
+        ERR( "socket() failed\n" );
+        WSACloseEvent( dpwsData->acceptEvent );
+        closesocket( dpwsData->tcpSock );
+        return DPERR_UNAVAILABLE;
+    }
+
+    hr = DPWS_BindToFreePort( dpwsData->udpSock, &dpwsData->udpAddr, DPWS_START_UDP_PORT,
+                              DPWS_END_UDP_PORT );
+    if ( FAILED( hr ) )
+    {
+        closesocket( dpwsData->udpSock );
+        WSACloseEvent( dpwsData->acceptEvent );
+        closesocket( dpwsData->tcpSock );
+        return hr;
+    }
+
     rb_init( &dpwsData->connections, DPWS_CompareConnections );
 
     dpwsData->stopEvent = WSACreateEvent();
@@ -510,7 +536,7 @@ static HRESULT WINAPI DPWSCB_AddPlayerToGroup( DPSP_ADDPLAYERTOGROUPDATA *data )
 
     RB_FOR_EACH_ENTRY( playerConnectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
     {
-        entry = rb_get( &group->connectionRefs, &playerConnectionRef->connection->addr );
+        entry = rb_get( &group->connectionRefs, &playerConnectionRef->connection->key );
         if ( entry )
         {
             groupConnectionRef = RB_ENTRY_VALUE( entry, DPWS_CONNECTION_REF, entry );
@@ -522,7 +548,7 @@ static HRESULT WINAPI DPWSCB_AddPlayerToGroup( DPSP_ADDPLAYERTOGROUPDATA *data )
             return DPERR_OUTOFMEMORY;
         groupConnectionRef->ref = 1;
         groupConnectionRef->connection = playerConnectionRef->connection;
-        rb_put( &group->connectionRefs, &groupConnectionRef->connection->addr,
+        rb_put( &group->connectionRefs, &groupConnectionRef->connection->key,
                 &groupConnectionRef->entry );
     }
 
@@ -554,12 +580,16 @@ static HRESULT WINAPI DPWSCB_CreateGroup( DPSP_CREATEGROUPDATA *data )
     return DP_OK;
 }
 
-static HRESULT DPWS_GetConnection( DPWS_DATA *dpwsData, SOCKADDR_IN *addr,
+static HRESULT DPWS_GetConnection( DPWS_DATA *dpwsData, SOCKADDR_IN *addr, BOOL guaranteed,
                                    DPWS_OUT_CONNECTION **connection )
 {
+    DPWS_CONNECTION_KEY key;
     struct rb_entry *entry;
 
-    entry = rb_get( &dpwsData->connections, addr );
+    key.addr = *addr;
+    key.guaranteed = guaranteed;
+
+    entry = rb_get( &dpwsData->connections, &key );
     if ( entry )
     {
         *connection = RB_ENTRY_VALUE( entry, DPWS_OUT_CONNECTION, entry );
@@ -570,10 +600,10 @@ static HRESULT DPWS_GetConnection( DPWS_DATA *dpwsData, SOCKADDR_IN *addr,
     if ( !*connection )
         return DPERR_OUTOFMEMORY;
 
-    (*connection)->addr = *addr;
+    (*connection)->key = key;
     (*connection)->tcpSock = INVALID_SOCKET;
 
-    rb_put( &dpwsData->connections, &(*connection)->addr, &(*connection)->entry );
+    rb_put( &dpwsData->connections, &(*connection)->key, &(*connection)->entry );
 
     return DP_OK;
 }
@@ -581,6 +611,7 @@ static HRESULT DPWS_GetConnection( DPWS_DATA *dpwsData, SOCKADDR_IN *addr,
 static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 {
     DPWS_CONNECTION_REF *tcpConnectionRef;
+    DPWS_CONNECTION_REF *udpConnectionRef;
     DPWS_PLAYER playerPlaceholder = { 0 };
     DPWS_PLAYERDATA *playerData;
     DWORD playerDataSize;
@@ -628,6 +659,7 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
         playerData->tcpAddr.sin_family = AF_INET;
         playerData->tcpAddr.sin_port = dpwsData->tcpAddr.sin_port;
         playerData->udpAddr.sin_family = AF_INET;
+        playerData->udpAddr.sin_port = dpwsData->udpAddr.sin_port;
     }
 
     hr = IDirectPlaySP_SetSPPlayerData( data->lpISP, data->idPlayer, (void *) &playerPlaceholder,
@@ -654,7 +686,7 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 
     tcpConnectionRef->ref = 1;
 
-    hr = DPWS_GetConnection( dpwsData, &playerData->tcpAddr, &tcpConnectionRef->connection );
+    hr = DPWS_GetConnection( dpwsData, &playerData->tcpAddr, TRUE, &tcpConnectionRef->connection );
     if ( FAILED( hr ) )
     {
         free( tcpConnectionRef );
@@ -662,8 +694,27 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
         return hr;
     }
 
-    rb_put( &player->connectionRefs, &tcpConnectionRef->connection->addr,
-            &tcpConnectionRef->entry );
+    udpConnectionRef = calloc( 1, sizeof( DPWS_CONNECTION_REF ) );
+    if ( !udpConnectionRef )
+    {
+        free( tcpConnectionRef );
+        free( player );
+        return DPERR_OUTOFMEMORY;
+    }
+
+    udpConnectionRef->ref = 1;
+
+    hr = DPWS_GetConnection( dpwsData, &playerData->udpAddr, FALSE, &udpConnectionRef->connection );
+    if ( FAILED( hr ) )
+    {
+        free( udpConnectionRef );
+        free( tcpConnectionRef );
+        free( player );
+        return hr;
+    }
+
+    rb_put( &player->connectionRefs, &tcpConnectionRef->connection->key, &tcpConnectionRef->entry );
+    rb_put( &player->connectionRefs, &udpConnectionRef->connection->key, &udpConnectionRef->entry );
 
     return DP_OK;
 }
@@ -790,13 +841,13 @@ static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
 
     rb_init( &dpwsData->nameserver.connectionRefs, DPWS_CompareConnectionRefs );
 
-    hr = DPWS_GetConnection( dpwsData, &nameserverAddr,
+    hr = DPWS_GetConnection( dpwsData, &nameserverAddr, TRUE,
                              &dpwsData->nameserverConnectionRef.connection );
     if ( FAILED( hr ) )
         return hr;
 
     rb_put( &dpwsData->nameserver.connectionRefs,
-            &dpwsData->nameserverConnectionRef.connection->addr,
+            &dpwsData->nameserverConnectionRef.connection->key,
             &dpwsData->nameserverConnectionRef.entry );
 
     return DP_OK;
@@ -827,7 +878,7 @@ static HRESULT WINAPI DPWSCB_RemovePlayerFromGroup( DPSP_REMOVEPLAYERFROMGROUPDA
 
     RB_FOR_EACH_ENTRY( playerConnectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
     {
-        entry = rb_get( &group->connectionRefs, &playerConnectionRef->connection->addr );
+        entry = rb_get( &group->connectionRefs, &playerConnectionRef->connection->key );
         if ( !entry )
             continue;
         groupConnectionRef = RB_ENTRY_VALUE( entry, DPWS_CONNECTION_REF, entry );
@@ -885,57 +936,48 @@ static HRESULT WINAPI DPWSCB_GetAddressChoices( LPDPSP_GETADDRESSCHOICESDATA dat
 }
 
 static HRESULT DPWS_SendImpl( DPWS_DATA *dpwsData, DPWS_PLAYER *player, SGBUFFER *buffers,
-                              DWORD bufferCount, DWORD messageSize )
+                              DWORD bufferCount, DWORD messageSize, BOOL guaranteed, BOOL system )
 {
     DPWS_CONNECTION_REF *connectionRef;
     DPSP_MSG_HEADER header = { 0 };
     HRESULT sendResult;
 
-    header.mixed = DPSP_MSG_MAKE_MIXED( messageSize, DPSP_MSG_TOKEN_REMOTE );
-    header.SockAddr.sin_family = AF_INET;
-    header.SockAddr.sin_port = dpwsData->tcpAddr.sin_port;
+    if ( guaranteed || system )
+    {
+        header.mixed = DPSP_MSG_MAKE_MIXED( messageSize, DPSP_MSG_TOKEN_REMOTE );
+        header.SockAddr.sin_family = AF_INET;
+        header.SockAddr.sin_port = dpwsData->tcpAddr.sin_port;
 
-    buffers[ 0 ].pData = (unsigned char *) &header;
+        buffers[ 0 ].pData = (unsigned char *) &header;
+    }
 
     EnterCriticalSection( &dpwsData->sendCs );
 
-    RB_FOR_EACH_ENTRY( connectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
+    if ( guaranteed )
     {
-        DPWS_OUT_CONNECTION *connection = connectionRef->connection;
-
-        if ( connection->tcpSock != INVALID_SOCKET )
-            continue;
-
-        connection->tcpSock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
-        if ( connection->tcpSock == INVALID_SOCKET )
+        RB_FOR_EACH_ENTRY( connectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
         {
-            ERR( "socket() failed\n" );
-            LeaveCriticalSection( &dpwsData->sendCs );
-            return DPERR_UNAVAILABLE;
-        }
+            DPWS_OUT_CONNECTION *connection = connectionRef->connection;
 
-        if ( SOCKET_ERROR == connect( connection->tcpSock, (SOCKADDR *) &connection->addr,
-                                      sizeof( connection->addr ) ) )
-        {
-            ERR( "connect() failed\n" );
-            closesocket( connection->tcpSock );
-            connection->tcpSock = INVALID_SOCKET;
-            LeaveCriticalSection( &dpwsData->sendCs );
-            return DPERR_UNAVAILABLE;
-        }
-    }
+            if ( !connection->key.guaranteed )
+                continue;
+            if ( connection->tcpSock != INVALID_SOCKET )
+                continue;
 
-    RB_FOR_EACH_ENTRY( connectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
-    {
-        DPWS_OUT_CONNECTION *connection = connectionRef->connection;
-        DWORD transferred;
-
-        if ( SOCKET_ERROR == WSASend( connection->tcpSock, (WSABUF *) buffers, bufferCount,
-                                      &transferred, 0, &connection->overlapped, NULL ) )
-        {
-            if ( WSAGetLastError() != WSA_IO_PENDING )
+            connection->tcpSock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+            if ( connection->tcpSock == INVALID_SOCKET )
             {
-                ERR( "WSASend() failed\n" );
+                ERR( "socket() failed\n" );
+                LeaveCriticalSection( &dpwsData->sendCs );
+                return DPERR_UNAVAILABLE;
+            }
+
+            if ( SOCKET_ERROR == connect( connection->tcpSock, (SOCKADDR *) &connection->key.addr,
+                                          sizeof( connection->key.addr ) ) )
+            {
+                ERR( "connect() failed\n" );
+                closesocket( connection->tcpSock );
+                connection->tcpSock = INVALID_SOCKET;
                 LeaveCriticalSection( &dpwsData->sendCs );
                 return DPERR_UNAVAILABLE;
             }
@@ -949,15 +991,58 @@ static HRESULT DPWS_SendImpl( DPWS_DATA *dpwsData, DPWS_PLAYER *player, SGBUFFER
         DPWS_OUT_CONNECTION *connection = connectionRef->connection;
         DWORD transferred;
 
-        if ( !WSAGetOverlappedResult( connection->tcpSock, &connection->overlapped, &transferred,
-                                      TRUE, NULL ) )
+        if ( connection->key.guaranteed != guaranteed )
+            continue;
+
+        if ( guaranteed )
+        {
+            if ( SOCKET_ERROR == WSASend( connection->tcpSock, (WSABUF *) buffers, bufferCount,
+                                          &transferred, 0, &connection->overlapped, NULL ) )
+            {
+                if ( WSAGetLastError() != WSA_IO_PENDING )
+                {
+                    ERR( "WSASend() failed\n" );
+                    LeaveCriticalSection( &dpwsData->sendCs );
+                    return DPERR_UNAVAILABLE;
+                }
+            }
+        }
+        else
+        {
+            if ( SOCKET_ERROR == WSASendTo( dpwsData->udpSock, (WSABUF *) buffers, bufferCount,
+                                            &transferred, 0, (SOCKADDR *) &connection->key.addr,
+                                            sizeof( connection->key.addr ), &connection->overlapped,
+                                            NULL ) )
+            {
+                if ( WSAGetLastError() != WSA_IO_PENDING )
+                {
+                    ERR( "WSASendTo() failed\n" );
+                    LeaveCriticalSection( &dpwsData->sendCs );
+                    return DPERR_UNAVAILABLE;
+                }
+            }
+        }
+    }
+
+    RB_FOR_EACH_ENTRY( connectionRef, &player->connectionRefs, DPWS_CONNECTION_REF, entry )
+    {
+        DPWS_OUT_CONNECTION *connection = connectionRef->connection;
+        DWORD transferred;
+        SOCKET sock;
+
+        if ( connection->key.guaranteed != guaranteed )
+            continue;
+
+        sock = guaranteed ? connection->tcpSock : dpwsData->udpSock;
+
+        if ( !WSAGetOverlappedResult( sock, &connection->overlapped, &transferred, TRUE, NULL ) )
         {
             ERR( "WSAGetOverlappedResult() failed\n" );
             sendResult = DPERR_UNAVAILABLE;
             continue;
         }
 
-        if ( transferred < messageSize )
+        if ( guaranteed && transferred < messageSize )
         {
             ERR( "lost connection\n" );
             closesocket( connection->tcpSock );
@@ -985,12 +1070,6 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
            data->dwPriority, data->dwTimeout, data->lpDPContext,
            data->lpdwSPMsgID, data->bSystemMessage );
 
-    if ( !( data->dwFlags & DPSEND_GUARANTEED ) )
-    {
-        FIXME( "non-guaranteed delivery is not yet supported\n" );
-        return DPERR_UNSUPPORTED;
-    }
-
     if ( data->dwFlags & DPSEND_ASYNC )
     {
         FIXME("asynchronous send is not yet supported\n");
@@ -1015,7 +1094,8 @@ static HRESULT WINAPI DPWSCB_SendEx( LPDPSP_SENDEXDATA data )
     }
 
     return DPWS_SendImpl( dpwsData, player, data->lpSendBuffers, data->cBuffers,
-                          data->dwMessageSize );
+                          data->dwMessageSize, !!( data->dwFlags & DPSEND_GUARANTEED ),
+                          data->bSystemMessage );
 }
 
 static HRESULT WINAPI DPWSCB_SendToGroupEx( LPDPSP_SENDTOGROUPEXDATA data )
@@ -1047,7 +1127,8 @@ static HRESULT WINAPI DPWSCB_SendToGroupEx( LPDPSP_SENDTOGROUPEXDATA data )
     if ( FAILED( hr ) )
         return hr;
 
-    return DPWS_SendImpl( dpwsData, group, data->lpSendBuffers, data->cBuffers, data->dwMessageSize );
+    return DPWS_SendImpl( dpwsData, group, data->lpSendBuffers, data->cBuffers, data->dwMessageSize,
+                          !!( data->dwFlags & DPSEND_GUARANTEED ), FALSE );
 }
 
 static HRESULT WINAPI DPWSCB_Cancel( LPDPSP_CANCELDATA data )
