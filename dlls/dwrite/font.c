@@ -674,7 +674,7 @@ const void* get_fontface_table(IDWriteFontFace5 *fontface, UINT32 tag, struct dw
     hr = IDWriteFontFace5_TryGetFontTable(fontface, tag, (const void **)&table->data, &table->size, &table->context,
         &table->exists);
     if (FAILED(hr) || !table->exists) {
-        TRACE("Font does not have %s table\n", debugstr_tag(tag));
+        TRACE("Font does not have %s table\n", debugstr_fourcc(tag));
         return NULL;
     }
 
@@ -1050,7 +1050,7 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace5 *iface, UI
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
     struct file_stream_desc stream_desc;
 
-    TRACE("%p, %s, %p, %p, %p, %p.\n", iface, debugstr_tag(table_tag), table_data, table_size, context, exists);
+    TRACE("%p, %s, %p, %p, %p, %p.\n", iface, debugstr_fourcc(table_tag), table_data, table_size, context, exists);
 
     stream_desc.stream = fontface->stream;
     stream_desc.face_type = fontface->type;

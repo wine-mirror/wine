@@ -108,11 +108,6 @@ static inline BOOL dwrite_array_reserve(void **elements, size_t *capacity, size_
     return TRUE;
 }
 
-static inline const char *debugstr_tag(DWORD tag)
-{
-    return debugstr_an((char *)&tag, 4);
-}
-
 const char *debugstr_sa_script(UINT16) DECLSPEC_HIDDEN;
 
 static inline unsigned short get_table_entry_16(const unsigned short *table, WCHAR ch)

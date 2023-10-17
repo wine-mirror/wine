@@ -3140,7 +3140,7 @@ static unsigned int opentype_get_sbix_formats(IDWriteFontFace5 *fontface)
                         ret |= DWRITE_GLYPH_IMAGE_FORMATS_TIFF;
                         break;
                     default:
-                        FIXME("unexpected bitmap format %s\n", debugstr_tag(GET_BE_DWORD(glyph_data->graphic_type)));
+                        FIXME("unexpected bitmap format %s\n", debugstr_fourcc(GET_BE_DWORD(glyph_data->graphic_type)));
                 }
             }
         }

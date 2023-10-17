@@ -5413,7 +5413,7 @@ static HRESULT WINAPI dwritetypography_AddFontFeature(IDWriteTypography *iface, 
 {
     struct dwrite_typography *typography = impl_from_IDWriteTypography(iface);
 
-    TRACE("%p, %s, %u.\n", iface, debugstr_tag(feature.nameTag), feature.parameter);
+    TRACE("%p, %s, %u.\n", iface, debugstr_fourcc(feature.nameTag), feature.parameter);
 
     if (!dwrite_array_reserve((void **)&typography->features, &typography->capacity, typography->count + 1,
             sizeof(*typography->features)))

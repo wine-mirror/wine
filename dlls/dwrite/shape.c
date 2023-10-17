@@ -272,8 +272,8 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigne
 
             if ((language = shape_select_language(cache, MS_GPOS_TAG, script_index, language, &language_index)))
             {
-                TRACE("script %s, language %s.\n", debugstr_tag(script), language != ~0u ?
-                        debugstr_tag(language) : "deflangsys");
+                TRACE("script %s, language %s.\n", debugstr_fourcc(script), language != ~0u ?
+                        debugstr_fourcc(language) : "deflangsys");
                 opentype_layout_apply_gpos_features(context, script_index, language_index, &features);
             }
         }
