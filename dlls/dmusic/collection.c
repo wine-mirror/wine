@@ -42,7 +42,7 @@ C_ASSERT(sizeof(struct pool) == offsetof(struct pool, cues[0]));
 struct wave_entry
 {
     struct list entry;
-    IUnknown *wave;
+    IDirectMusicObject *wave;
     DWORD offset;
 };
 
@@ -59,13 +59,13 @@ struct collection
     struct list waves;
 };
 
-extern void collection_internal_addref(struct collection *collection)
+void collection_internal_addref(struct collection *collection)
 {
     ULONG ref = InterlockedIncrement( &collection->internal_ref );
     TRACE( "collection %p, internal ref %lu.\n", collection, ref );
 }
 
-extern void collection_internal_release(struct collection *collection)
+void collection_internal_release(struct collection *collection)
 {
     ULONG ref = InterlockedDecrement( &collection->internal_ref );
     TRACE( "collection %p, internal ref %lu.\n", collection, ref );
@@ -74,7 +74,7 @@ extern void collection_internal_release(struct collection *collection)
         free(collection);
 }
 
-extern HRESULT collection_get_wave(struct collection *collection, DWORD index, IUnknown **out)
+HRESULT collection_get_wave(struct collection *collection, DWORD index, IDirectMusicObject **out)
 {
     struct wave_entry *wave_entry;
     DWORD offset;

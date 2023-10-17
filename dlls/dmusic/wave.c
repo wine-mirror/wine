@@ -170,6 +170,11 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
     return hr;
 }
 
+static inline struct wave *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
+{
+    return CONTAINING_RECORD(iface, struct wave, dmobj.IDirectMusicObject_iface);
+}
+
 static HRESULT WINAPI wave_object_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
@@ -259,7 +264,7 @@ static const IPersistStreamVtbl wave_persist_stream_vtbl =
     unimpl_IPersistStream_GetSizeMax,
 };
 
-static HRESULT wave_create(IUnknown **ret_iface)
+static HRESULT wave_create(IDirectMusicObject **ret_iface)
 {
     struct wave *obj;
 
@@ -270,24 +275,24 @@ static HRESULT wave_create(IUnknown **ret_iface)
     obj->dmobj.IDirectMusicObject_iface.lpVtbl = &wave_object_vtbl;
     obj->dmobj.IPersistStream_iface.lpVtbl = &wave_persist_stream_vtbl;
 
-    *ret_iface = &obj->IUnknown_iface;
+    *ret_iface = &obj->dmobj.IDirectMusicObject_iface;
     return S_OK;
 }
 
-HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnknown **ret_iface)
+HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IDirectMusicObject **ret_iface)
 {
     struct wave *This;
-    IUnknown *iface;
+    IDirectMusicObject *iface;
     HRESULT hr;
 
     TRACE("(%p, %p, %p)\n", stream, parent, ret_iface);
 
     if (FAILED(hr = wave_create(&iface))) return hr;
-    This = impl_from_IUnknown(iface);
+    This = impl_from_IDirectMusicObject(iface);
 
     if (FAILED(hr = parse_wave_chunk(This, stream, parent)))
     {
-        IUnknown_Release(iface);
+        IDirectMusicObject_Release(iface);
         return DMUS_E_UNSUPPORTED_STREAM;
     }
 
@@ -324,7 +329,7 @@ HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IUnk
     return S_OK;
 }
 
-HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnknown **ret_iface)
+HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDirectMusicObject **ret_iface)
 {
     struct sf_sample *sf_sample = soundfont->shdr + index;
     struct sample *sample = NULL;
@@ -333,7 +338,7 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnk
     UINT data_size, offset;
     struct wave *This;
     void *data = NULL;
-    IUnknown *iface;
+    IDirectMusicObject *iface;
 
     TRACE("(%p, %u, %p)\n", soundfont, index, ret_iface);
 
@@ -360,7 +365,7 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IUnk
 
     if (FAILED(hr = wave_create(&iface))) goto failed;
 
-    This = impl_from_IUnknown(iface);
+    This = impl_from_IDirectMusicObject(iface);
     This->format = format;
     This->sample = sample;
     This->data_size = data_size;
@@ -403,7 +408,7 @@ failed:
     return hr;
 }
 
-HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, DWORD *id)
+HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownload *port, DWORD *id)
 {
     struct download_buffer
     {
@@ -413,7 +418,7 @@ HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, D
         DMUS_WAVEDATA data;
     } *buffer;
 
-    struct wave *This = impl_from_IUnknown(iface);
+    struct wave *This = impl_from_IDirectMusicObject(iface);
     DWORD size = offsetof(struct download_buffer, data.byData[This->data_size]);
     IDirectMusicDownload *download;
     HRESULT hr;
@@ -446,9 +451,9 @@ HRESULT wave_download_to_port(IUnknown *iface, IDirectMusicPortDownload *port, D
     return hr;
 }
 
-HRESULT wave_download_to_dsound(IUnknown *iface, IDirectSound *dsound, IDirectSoundBuffer **ret_iface)
+HRESULT wave_download_to_dsound(IDirectMusicObject *iface, IDirectSound *dsound, IDirectSoundBuffer **ret_iface)
 {
-    struct wave *This = impl_from_IUnknown(iface);
+    struct wave *This = impl_from_IDirectMusicObject(iface);
     DSBUFFERDESC desc =
     {
         .dwSize = sizeof(desc),
@@ -485,9 +490,9 @@ HRESULT wave_download_to_dsound(IUnknown *iface, IDirectSound *dsound, IDirectSo
     return S_OK;
 }
 
-HRESULT wave_get_duration(IUnknown *iface, REFERENCE_TIME *duration)
+HRESULT wave_get_duration(IDirectMusicObject *iface, REFERENCE_TIME *duration)
 {
-    struct wave *This = impl_from_IUnknown(iface);
+    struct wave *This = impl_from_IDirectMusicObject(iface);
     *duration = (REFERENCE_TIME)This->data_size * 10000000 / This->format->nAvgBytesPerSec;
     return S_OK;
 }

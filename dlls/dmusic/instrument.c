@@ -747,7 +747,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
     IDirectMusicDownload *download;
     DWORD size, offset_count;
     struct region *region;
-    IUnknown *wave;
+    IDirectMusicObject *wave;
     HRESULT hr;
 
     if (This->download) goto done;
@@ -827,7 +827,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
             if (SUCCEEDED(hr = collection_get_wave(This->collection, region->wave_link.ulTableIndex, &wave)))
             {
                 hr = wave_download_to_port(wave, port, &dmus_region->WaveLink.ulTableIndex);
-                IUnknown_Release(wave);
+                IDirectMusicObject_Release(wave);
             }
             if (FAILED(hr)) goto failed;
 

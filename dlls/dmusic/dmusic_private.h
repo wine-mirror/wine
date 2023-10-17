@@ -80,7 +80,7 @@ typedef struct port_info {
 struct collection;
 extern void collection_internal_addref(struct collection *collection);
 extern void collection_internal_release(struct collection *collection);
-extern HRESULT collection_get_wave(struct collection *collection, DWORD index, IUnknown **out);
+extern HRESULT collection_get_wave(struct collection *collection, DWORD index, IDirectMusicObject **out);
 
 /* CLSID */
 extern HRESULT music_create(IUnknown **ret_iface);
