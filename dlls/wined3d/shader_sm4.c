@@ -2070,7 +2070,7 @@ static HRESULT shader_dxbc_process_section(struct wined3d_shader *shader, unsign
             break;
 
         default:
-            TRACE("Skipping chunk %s.\n", debugstr_an((const char *)&tag, 4));
+            TRACE("Skipping chunk %s.\n", debugstr_fourcc(tag));
             break;
     }
 
