@@ -193,7 +193,7 @@ static unsigned int get_glyph_bitmap_pitch(DWRITE_RENDERING_MODE1 rendering_mode
     return rendering_mode == DWRITE_RENDERING_MODE1_ALIASED ? ((width + 31) >> 5) << 2 : (width + 3) / 4 * 4;
 }
 
-static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface, DWRITE_RENDERING_MODE rendering_mode,
+static HRESULT dwrite_fontface_get_glyph_bitmap(struct dwrite_fontface *fontface, DWRITE_RENDERING_MODE1 rendering_mode,
         unsigned int *is_1bpp, struct dwrite_glyphbitmap *bitmap)
 {
     struct cache_key key = { .size = bitmap->emsize, .glyph = bitmap->glyph, .mode = DWRITE_MEASURING_MODE_NATURAL };
@@ -1798,7 +1798,7 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
     IDWriteRenderingParams *params, DWRITE_RENDERING_MODE1 *rendering_mode, DWRITE_GRID_FIT_MODE *gridfit_mode)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    unsigned int flags;
+    unsigned int flags, mode;
     FLOAT emthreshold;
 
     TRACE("%p, %.8e, %.8e, %.8e, %p, %d, %d, %d, %p, %p, %p.\n", iface, emSize, dpiX, dpiY, m, is_sideways, threshold,
@@ -1821,11 +1821,12 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
         hr = IDWriteRenderingParams_QueryInterface(params, &IID_IDWriteRenderingParams3, (void**)&params3);
         if (hr == S_OK) {
             *rendering_mode = IDWriteRenderingParams3_GetRenderingMode1(params3);
-            *gridfit_mode = IDWriteRenderingParams3_GetGridFitMode(params3);
+            mode = IDWriteRenderingParams3_GetGridFitMode(params3);
             IDWriteRenderingParams3_Release(params3);
         }
         else
-            *rendering_mode = IDWriteRenderingParams_GetRenderingMode(params);
+            mode = IDWriteRenderingParams_GetRenderingMode(params);
+        *rendering_mode = mode;
     }
 
     emthreshold = threshold == DWRITE_OUTLINE_THRESHOLD_ANTIALIASED ? RECOMMENDED_OUTLINE_AA_THRESHOLD : RECOMMENDED_OUTLINE_A_THRESHOLD;
@@ -1834,9 +1835,10 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
 
     if (*rendering_mode == DWRITE_RENDERING_MODE1_DEFAULT) {
         if (emSize >= emthreshold)
-            *rendering_mode = DWRITE_RENDERING_MODE1_OUTLINE;
+            mode = DWRITE_RENDERING_MODE1_OUTLINE;
         else
-            *rendering_mode = fontface_renderingmode_from_measuringmode(measuring_mode, emSize, flags);
+            mode = fontface_renderingmode_from_measuringmode(measuring_mode, emSize, flags);
+        *rendering_mode = mode;
     }
 
     if (*gridfit_mode == DWRITE_GRID_FIT_MODE_DEFAULT) {
