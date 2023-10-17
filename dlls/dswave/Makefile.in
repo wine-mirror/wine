@@ -4,8 +4,8 @@ PARENTSRC = ../dmusic
 
 C_SRCS = \
 	dmobject.c \
-	dswave.c \
-	dswave_main.c
+	dswave_main.c \
+	wave.c
 
 IDL_SRCS = dswave.idl
 

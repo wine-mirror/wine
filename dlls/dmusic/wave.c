@@ -264,7 +264,7 @@ static const IPersistStreamVtbl wave_persist_stream_vtbl =
     unimpl_IPersistStream_GetSizeMax,
 };
 
-static HRESULT wave_create(IDirectMusicObject **ret_iface)
+HRESULT wave_create(IDirectMusicObject **ret_iface)
 {
     struct wave *obj;
 

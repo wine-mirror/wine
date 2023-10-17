@@ -39,9 +39,4 @@
 #include "dmusicf.h"
 #include "dmusics.h"
 
-/*****************************************************************************
- * ClassFactory
- */
-extern HRESULT create_dswave(REFIID lpcGUID, void **ret_iface);
-
 #endif	/* __WINE_DSWAVE_PRIVATE_H */

@@ -35,6 +35,7 @@
 #include "dmusici.h"
 
 #include "dswave_private.h"
+#include "dmusic_wave.h"
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dswave);
@@ -79,14 +80,17 @@ static ULONG WINAPI WaveCF_Release(IClassFactory * iface)
 static HRESULT WINAPI WaveCF_CreateInstance(IClassFactory * iface, IUnknown *outer_unk, REFIID riid,
         void **ret_iface)
 {
-    TRACE ("(%p, %s, %p)\n", outer_unk, debugstr_dmguid(riid), ret_iface);
+    IDirectMusicObject *object;
+    HRESULT hr;
 
-    if (outer_unk) {
-        *ret_iface = NULL;
-        return CLASS_E_NOAGGREGATION;
-    }
+    TRACE("(%p, %s, %p)\n", outer_unk, debugstr_dmguid(riid), ret_iface);
 
-    return create_dswave(riid, ret_iface);
+    *ret_iface = NULL;
+    if (outer_unk) return CLASS_E_NOAGGREGATION;
+    if (FAILED(hr = wave_create(&object))) return hr;
+    hr = IDirectMusicObject_QueryInterface(object, riid, ret_iface);
+    IDirectMusicObject_Release(object);
+    return hr;
 }
 
 static HRESULT WINAPI WaveCF_LockServer(IClassFactory * iface, BOOL dolock)

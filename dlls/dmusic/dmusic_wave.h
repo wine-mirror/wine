@@ -29,6 +29,7 @@
 struct soundfont;
 struct chunk_entry;
 
+extern HRESULT wave_create(IDirectMusicObject **ret_iface);
 extern HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDirectMusicObject **out);
 extern HRESULT wave_create_from_chunk(IStream *stream, struct chunk_entry *parent, IDirectMusicObject **out);
 extern HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownload *port, DWORD *id);
