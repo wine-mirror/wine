@@ -2544,8 +2544,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext1 *
 
     if (SUCCEEDED(ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap)))
     {
-        d2d_device_context_draw_bitmap(context, bitmap, NULL, 1.0f, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
-                image_rect, target_offset, NULL);
+        d2d_device_context_draw_bitmap(context, bitmap, NULL, 1.0f, interpolation_mode, image_rect, target_offset, NULL);
 
         ID2D1Bitmap_Release(bitmap);
         return;
