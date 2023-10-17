@@ -3030,9 +3030,9 @@ static const struct exception
 
 static int got_exception;
 
-static void run_exception_test(void *handler, const void* context,
+static void run_exception_test_flags(void *handler, const void* context,
                                const void *code, unsigned int code_size,
-                               DWORD access)
+                               DWORD access, DWORD handler_flags)
 {
     unsigned char buf[8 + 6 + 8 + 8];
     RUNTIME_FUNCTION runtime_func;
@@ -3045,7 +3045,7 @@ static void run_exception_test(void *handler, const void* context,
     runtime_func.UnwindData = 0x1000;
 
     unwind->Version = 1;
-    unwind->Flags = UNW_FLAG_EHANDLER;
+    unwind->Flags = handler_flags;
     unwind->SizeOfProlog = 0;
     unwind->CountOfCodes = 0;
     unwind->FrameRegister = 0;
@@ -3070,6 +3070,13 @@ static void run_exception_test(void *handler, const void* context,
 
     if(access)
         VirtualProtect(code_mem, code_size, oldaccess, &oldaccess2);
+}
+
+static void run_exception_test(void *handler, const void* context,
+                               const void *code, unsigned int code_size,
+                               DWORD access)
+{
+    run_exception_test_flags(handler, context, code, code_size, access, UNW_FLAG_EHANDLER);
 }
 
 static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
@@ -4962,23 +4969,91 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     return ExceptionContinueExecution;
 }
 
+static const BYTE nested_except_code[] =
+{
+    0xe8, 0x02, 0x00, 0x00, 0x00, /* call nest */
+    0x90,                         /* nop */
+    0xc3,                         /* ret */
+    /* nest: */
+    0xcc,                         /* int3 */
+    0x90,                         /* nop */
+    0xc3,                         /* ret  */
+};
+
 static void test_nested_exception(void)
 {
-    static const BYTE except_code[] =
-    {
-        0xe8, 0x02, 0x00, 0x00, 0x00, /* call nest */
-        0x90,                         /* nop */
-        0xc3,                         /* ret */
-        /* nest: */
-        0xcc,                         /* int3 */
-        0x90,                         /* nop */
-        0xc3,                         /* ret  */
-    };
-
     got_nested_exception = got_prev_frame_exception = FALSE;
-    run_exception_test(nested_exception_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
+    run_exception_test(nested_exception_handler, NULL, nested_except_code, ARRAY_SIZE(nested_except_code), PAGE_EXECUTE_READ);
     ok(got_nested_exception, "Did not get nested exception.\n");
     ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
+}
+
+static unsigned int collided_unwind_exception_count;
+
+static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    CONTEXT ctx;
+
+    trace("collided_exception_handler Rip %p, Rsp %p, code %#lx, flags %#lx, ExceptionAddress %p, frame %p.\n",
+            (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, frame);
+
+    switch(collided_unwind_exception_count++)
+    {
+        case 0:
+            /* Initial exception from nested_except_code. */
+            ok(rec->ExceptionCode == STATUS_BREAKPOINT, "got %#lx.\n", rec->ExceptionCode);
+            nested_exception_initial_frame = frame;
+            /* Start unwind. */
+            pRtlUnwindEx((char *)nested_exception_initial_frame + 8, (char *)code_mem + 5, NULL, NULL, &ctx, NULL);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 1:
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == EH_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)context->Rip == (char *)code_mem + 7, "got %p.\n", rec->ExceptionAddress);
+            /* generate exception in unwind handler. */
+            RaiseException(0xdeadbeef, 0, 0, 0);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 2:
+            /* Inner call frame, continue search. */
+            ok(rec->ExceptionCode == 0xdeadbeef, "got %#lx.\n", rec->ExceptionCode);
+            ok(!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE, "got %#lx.\n", rec->ExceptionFlags);
+            ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            break;
+        case 3:
+            /* Top level call frame, handle exception by unwinding. */
+            ok(rec->ExceptionCode == 0xdeadbeef, "got %#lx.\n", rec->ExceptionCode);
+            ok(!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE, "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            pRtlUnwindEx((char *)nested_exception_initial_frame + 8, (char *)code_mem + 5, NULL, NULL, &ctx, NULL);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 4:
+            /* Collided unwind. */
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            break;
+        case 5:
+            /* EH_COLLIDED_UNWIND cleared for the following frames. */
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame,
+                    (char *)nested_exception_initial_frame + 8);
+            break;
+    }
+    return ExceptionContinueSearch;
+}
+
+static void test_collided_unwind(void)
+{
+    got_nested_exception = got_prev_frame_exception = FALSE;
+    collided_unwind_exception_count = 0;
+    run_exception_test_flags(collided_exception_handler, NULL, nested_except_code, ARRAY_SIZE(nested_except_code),
+            PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER);
+    ok(collided_unwind_exception_count == 6, "got %u.\n", collided_unwind_exception_count);
 }
 
 static CONTEXT test_unwind_apc_context;
@@ -11561,6 +11636,7 @@ START_TEST(exception)
     test_wow64_context();
     test_kiuserexceptiondispatcher();
     test_nested_exception();
+    test_collided_unwind();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
