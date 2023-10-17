@@ -2766,6 +2766,7 @@ BOOL WINAPI GdiDeleteSpoolFileHandle( HANDLE h )
     for (i = 0; i < sh->devmodes_no; i++)
         HeapFree( GetProcessHeap(), 0, sh->devmodes[i].devmode );
     HeapFree( GetProcessHeap(), 0, sh->devmodes );
+    HeapFree( GetProcessHeap(), 0, sh );
     return TRUE;
 }
 
