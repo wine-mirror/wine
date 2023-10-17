@@ -1965,7 +1965,8 @@ static BOOL write_freedesktop_mime_type_entry(const WCHAR *packages_dir, const W
 static BOOL is_extension_banned(LPCWSTR extension)
 {
     /* These are managed through external tools like wine.desktop, to evade malware created file type associations */
-    if (!wcsicmp(extension, L".com") ||
+    if (!wcsicmp(extension, L".bat") ||
+        !wcsicmp(extension, L".com") ||
         !wcsicmp(extension, L".exe") ||
         !wcsicmp(extension, L".msi"))
         return TRUE;
