@@ -288,9 +288,10 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
             IsEqualGUID(lpcGUID, &DSDEVID_DefaultVoiceCapture))
         return DSERR_NODRIVER;
 
-    if (GetDeviceID(lpcGUID, &devGUID) != DS_OK) {
+    hr = GetDeviceID(lpcGUID, &devGUID);
+    if (FAILED(hr)) {
         WARN("invalid parameter: lpcGUID\n");
-        return DSERR_INVALIDPARAM;
+        return hr;
     }
 
     hr = get_mmdevice(eRender, &devGUID, &mmdevice);
