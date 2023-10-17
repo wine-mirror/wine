@@ -1643,7 +1643,6 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         DWORD point_count = 0;
         DWORD spot_count = 0;
         DWORD directional_count = 0;
-        DWORD parallel_point_count = 0;
 
         for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
         {
@@ -1662,7 +1661,6 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                     ++directional_count;
                     break;
                 case WINED3D_LIGHT_PARALLELPOINT:
-                    ++parallel_point_count;
                     break;
                 default:
                     FIXME("Unhandled light type %#x.\n", state->light_state.lights[i]->OriginalParms.type);
