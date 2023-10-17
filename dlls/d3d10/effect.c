@@ -2853,7 +2853,7 @@ static HRESULT fxlvm_chunk_handler(const struct vkd3d_shader_dxbc_section_desc *
     size_t data_size = section->data.size;
     uint32_t tag = section->tag;
 
-    TRACE("Chunk tag: %s, size: %Iu.\n", debugstr_an((const char *)&tag, 4), data_size);
+    TRACE("Chunk tag: %s, size: %Iu.\n", debugstr_fourcc(tag), data_size);
 
     switch (tag)
     {
@@ -2867,7 +2867,7 @@ static HRESULT fxlvm_chunk_handler(const struct vkd3d_shader_dxbc_section_desc *
             return parse_fx10_ctab(ctx, data, data_size);
 
         default:
-            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
+            FIXME("Unhandled chunk %s.\n", debugstr_fourcc(tag));
             return S_OK;
     }
 }
@@ -4325,12 +4325,12 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *effect, const void *data, SIZE_T
         section = &dxbc_desc.sections[i];
 
         TRACE("Section %u: tag %s, data {%p, %#Ix}.\n",
-                i, debugstr_an((const char *)&section->tag, 4),
+                i, debugstr_fourcc(section->tag),
                 section->data.code, section->data.size);
 
         if (section->tag != TAG_FX10)
         {
-            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&section->tag, 4));
+            FIXME("Unhandled chunk %s.\n", debugstr_fourcc(section->tag));
             continue;
         }
 
