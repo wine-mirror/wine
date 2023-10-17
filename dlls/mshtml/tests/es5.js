@@ -1336,6 +1336,9 @@ sync_test("reduce", function() {
     r = [1,2,3].reduce(function(a, value) { return a + value; }, "str");
     ok(r === "str123", "reduce() returned " + r);
 
+    r = [1,2,].reduce(function(a, value) { return a + value; }, "str");
+    ok(r === "str12", "reduce() returned " + r);
+
     array = [1,2,3];
     r = array.reduce(function(a, value, index, src) {
         ok(src === array, "src != array");

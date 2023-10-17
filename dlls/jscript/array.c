@@ -1422,8 +1422,10 @@ static HRESULT Array_reduce(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
 
     for(k = 0; k < length; k++) {
         hres = jsdisp_get_idx(jsthis, k, &callback_args[1]);
-        if(hres == DISP_E_UNKNOWNNAME)
+        if(hres == DISP_E_UNKNOWNNAME) {
+            hres = S_OK;
             continue;
+        }
         if(FAILED(hres))
             break;
 
