@@ -1015,7 +1015,7 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
         IUnknown_Release(object->system_clock);
         strmbase_filter_cleanup(&object->filter);
         free(object);
-        return hr;
+        return hr == DSERR_NODRIVER ? VFW_E_NO_AUDIO_HARDWARE : hr;
     }
 
     if (FAILED(hr = IDirectSound8_SetCooperativeLevel(object->dsound,
