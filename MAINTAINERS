@@ -373,6 +373,7 @@ F:	dlls/wmvcore/
 Windows Media Foundation
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 P:	Rémi Bernon <rbernon@codeweavers.com>
+F:	dlls/evr/
 F:	dlls/mf/
 F:	dlls/mferror/
 F:	dlls/mfmediaengine/
