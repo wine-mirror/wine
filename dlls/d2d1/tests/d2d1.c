@@ -2266,41 +2266,41 @@ static void test_bitmap_brush(BOOL d3d11)
         /* Crash on Windows 7+ */
         if (0)
         {
-            ID2D1DeviceContext_DrawImage(context, NULL, NULL, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+            ID2D1DeviceContext_DrawImage(context, NULL, NULL, NULL, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                     D2D1_COMPOSITE_MODE_SOURCE_OVER);
         }
 
-        ID2D1DeviceContext_DrawImage(context, image, NULL, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, NULL, NULL, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         set_rect(&src_rect, 0.0f, 0.0f, image_size.width, image_size.height);
 
-        ID2D1DeviceContext_DrawImage(context, image, NULL, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, NULL, &src_rect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         offset.x = -1;
         offset.y = -1;
-        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         offset.x = image_size.width * 2;
         offset.y = image_size.height;
-        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         offset.x = image_size.width * 3;
         set_rect(&src_rect, image_size.width / 2, image_size.height / 2, image_size.width, image_size.height);
-        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         offset.x = image_size.width * 4;
         set_rect(&src_rect, 0.0f, 0.0f, image_size.width * 2, image_size.height * 2);
-        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         offset.x = image_size.width * 5;
         set_rect(&src_rect, image_size.width, image_size.height, 0.0f, 0.0f);
-        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
@@ -2312,7 +2312,7 @@ static void test_bitmap_brush(BOOL d3d11)
 
         offset.x = image_size.width * 6;
         set_rect(&src_rect, 1.0f, 0.0f, 1.0f, image_size.height);
-        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
                 D2D1_COMPOSITE_MODE_SOURCE_OVER);
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
