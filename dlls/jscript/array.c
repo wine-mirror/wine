@@ -1354,14 +1354,16 @@ static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
     if(argc > 1)
         context_this = argv[1];
 
-    hres = create_array(ctx, length, &array);
+    hres = create_array(ctx, 0, &array);
     if(FAILED(hres))
         goto done;
 
     for(k = 0; k < length; k++) {
         hres = jsdisp_get_idx(jsthis, k, &callback_args[0]);
-        if(hres == DISP_E_UNKNOWNNAME)
+        if(hres == DISP_E_UNKNOWNNAME) {
+            hres = S_OK;
             continue;
+        }
         if(FAILED(hres))
             break;
 
