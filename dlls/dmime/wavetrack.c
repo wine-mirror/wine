@@ -296,6 +296,8 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
                 item->buffer = NULL;
             }
         }
+
+        return S_OK;
     }
 
     return DMUS_E_TYPE_UNSUPPORTED;
