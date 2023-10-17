@@ -6927,7 +6927,7 @@ const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
 struct arbfp_blit_type
 {
     enum complex_fixup fixup : 4;
-    enum wined3d_gl_resource_type res_type : 3;
+    unsigned int res_type : 3;
     DWORD use_color_key : 1;
     DWORD padding : 24;
 };
