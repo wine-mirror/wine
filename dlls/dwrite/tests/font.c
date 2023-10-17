@@ -7058,7 +7058,8 @@ static void test_GetRecommendedRenderingMode(void)
         /* IDWriteFontFace3 - and another one */
         if (fontface3) {
             DWRITE_GRID_FIT_MODE gridfit, expected_gridfit;
-            DWRITE_RENDERING_MODE1 mode1, expected1;
+            DWRITE_RENDERING_MODE1 mode1;
+            unsigned int expected1;
 
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
             for (i = 0; i < ARRAY_SIZE(recmode_tests1); ++i)
