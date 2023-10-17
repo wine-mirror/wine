@@ -1356,6 +1356,12 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
 
     EnterCriticalSection(&engine->cs);
 
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+    {
+        LeaveCriticalSection(&engine->cs);
+        return S_OK;
+    }
+
     engine->network_state = MF_MEDIA_ENGINE_NETWORK_LOADING;
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADSTART, 0, 0);
 
