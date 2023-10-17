@@ -273,6 +273,8 @@ static HRESULT WINAPI wave_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
                 }
             }
         }
+
+        return hr;
     }
     if (IsEqualGUID(type, &GUID_Enable_Auto_Download)) {
         FIXME("GUID_Enable_Auto_Download not handled yet\n");
