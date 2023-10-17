@@ -1192,11 +1192,19 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     int i, j;
     BYTE keystate[256];
     WORD vkey;
+    DWORD flags;
+    KeyCode keycode;
+    HWND keymapnotify_hwnd;
     BOOL changed = FALSE;
     struct {
         WORD vkey;
+        WORD scan;
         WORD pressed;
     } keys[256];
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+
+    keymapnotify_hwnd = thread_data->keymapnotify_hwnd;
+    thread_data->keymapnotify_hwnd = NULL;
 
     if (!get_async_key_state( keystate )) return FALSE;
 
@@ -1211,11 +1219,17 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     {
         for (j = 0; j < 8; j++)
         {
-            vkey = keyc2vkey[(i * 8) + j];
+            keycode = (i * 8) + j;
+            vkey = keyc2vkey[keycode];
 
             /* If multiple keys map to the same vkey, we want to report it as
              * pressed iff any of them are pressed. */
-            if (!keys[vkey & 0xff].vkey) keys[vkey & 0xff].vkey = vkey;
+            if (!keys[vkey & 0xff].vkey)
+            {
+                keys[vkey & 0xff].vkey = vkey;
+                keys[vkey & 0xff].scan = keyc2scan[keycode] & 0xff;
+            }
+
             if (event->xkeymap.key_vector[i] & (1<<j)) keys[vkey & 0xff].pressed = TRUE;
         }
     }
@@ -1226,6 +1240,31 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         {
             TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
                    keys[vkey].vkey, keystate[vkey]);
+
+            /* This KeymapNotify follows a FocusIn(mode=NotifyUngrab) event,
+             * which is caused by a keyboard grab being released.
+             * See XGrabKeyboard().
+             *
+             * We might have missed some key press/release events while the
+             * keyboard was grabbed, but keyboard grab doesn't generate focus
+             * lost / focus gained events on the Windows side, so the affected
+             * program is not aware that it needs to resync the keyboard state.
+             *
+             * This, for example, may cause Alt being stuck after using Alt+Tab.
+             *
+             * To work around that problem we sync any possible key releases.
+             *
+             * Syncing key presses is not feasible as window managers differ in
+             * event sequences, e.g. KDE performs two keyboard grabs for
+             * Alt+Tab, which would sync the Tab press.
+             */
+            if (keymapnotify_hwnd && !keys[vkey].pressed)
+            {
+                TRACE( "Sending KEYUP for a modifier %#.2x\n", vkey);
+                flags = KEYEVENTF_KEYUP;
+                if (keys[vkey].vkey & 0x1000) flags |= KEYEVENTF_EXTENDEDKEY;
+                X11DRV_send_keyboard_input( keymapnotify_hwnd, vkey, keys[vkey].scan, flags, NtGetTickCount() );
+            }
 
             update_key_state( keystate, vkey, keys[vkey].pressed );
             changed = TRUE;
