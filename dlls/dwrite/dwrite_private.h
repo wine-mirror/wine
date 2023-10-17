@@ -829,7 +829,7 @@ extern HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *font
 extern HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_typographic_features(struct scriptshaping_context *context, const unsigned int *scripts,
-        unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags) DECLSPEC_HIDDEN;
+        unsigned int max_tagcount, unsigned int *actual_tagcount, DWRITE_FONT_FEATURE_TAG *tags) DECLSPEC_HIDDEN;
 extern HRESULT shape_check_typographic_feature(struct scriptshaping_context *context, const unsigned int *scripts,
         unsigned int tag, unsigned int glyph_count, const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;
 

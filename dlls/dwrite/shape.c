@@ -373,7 +373,7 @@ static int __cdecl tag_array_sorting_compare(const void *a, const void *b)
 };
 
 HRESULT shape_get_typographic_features(struct scriptshaping_context *context, const unsigned int *scripts,
-        unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags)
+        unsigned int max_tagcount, unsigned int *actual_tagcount, DWRITE_FONT_FEATURE_TAG *tags)
 {
     unsigned int i, j, script_index, language_index;
     struct tag_array t = { 0 };
