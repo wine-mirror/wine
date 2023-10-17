@@ -1783,6 +1783,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         do
         {
             previous = LIST_ENTRY(list_head(&This->notifications), struct message, entry);
+            if (This->notification_timeout <= 0) break; /* negative values may be used to keep everything */
             if (message->msg.rtTime - previous->msg.rtTime <= This->notification_timeout) break;
             list_remove(&previous->entry);
             list_init(&previous->entry);
