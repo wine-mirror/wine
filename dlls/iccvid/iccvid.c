@@ -750,7 +750,7 @@ static void ICCVID_dump_BITMAPINFO(const BITMAPINFO * bmi)
         bmi->bmiHeader.biBitCount,
         bmi->bmiHeader.biHeight,
         bmi->bmiHeader.biWidth,
-        debugstr_an( (const char *)&bmi->bmiHeader.biCompression, 4 ) );
+        debugstr_fourcc(bmi->bmiHeader.biCompression));
 }
 
 static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLORREF blueMask, COLORREF greenMask)
