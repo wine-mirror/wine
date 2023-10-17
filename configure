@@ -15710,7 +15710,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER"
+if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o "$ac_cv_header_linux_input_h" = "no"
 then :
   case "x$with_wayland" in
   x)   as_fn_append wine_notices "|Wayland ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
