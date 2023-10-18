@@ -501,7 +501,14 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
  */
 UINT WINAPI RealGetWindowClassA( HWND hwnd, LPSTR buffer, UINT count )
 {
-    return GetClassNameA( hwnd, buffer, count );
+    WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+    DWORD len;
+
+    if (count <= 0) return 0;
+    if (!RealGetWindowClassW( hwnd, tmpbuf, ARRAY_SIZE( tmpbuf ))) return 0;
+    RtlUnicodeToMultiByteN( buffer, count - 1, &len, tmpbuf, lstrlenW(tmpbuf) * sizeof(WCHAR) );
+    buffer[len] = 0;
+    return len;
 }
 
 
@@ -510,7 +517,8 @@ UINT WINAPI RealGetWindowClassA( HWND hwnd, LPSTR buffer, UINT count )
  */
 UINT WINAPI RealGetWindowClassW( HWND hwnd, LPWSTR buffer, UINT count )
 {
-    return GetClassNameW( hwnd, buffer, count );
+    UNICODE_STRING name = { .Buffer = buffer, .MaximumLength = count * sizeof(WCHAR) };
+    return NtUserGetClassName( hwnd, TRUE, &name );
 }
 
 
