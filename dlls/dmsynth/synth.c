@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 #define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 
+#define CONN_SRC_CC   0x0080
 #define CONN_SRC_CC2  0x0082
 #define CONN_SRC_RPN0 0x0100
 
@@ -1394,9 +1395,9 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
 static BOOL mod_from_connection(USHORT source, USHORT transform, UINT *fluid_source, UINT *fluid_flags)
 {
     UINT flags = FLUID_MOD_GC;
-    if (source >= CONN_SRC_CC1 && source <= CONN_SRC_CC1 + 0x7f)
+    if (source >= CONN_SRC_CC && source <= CONN_SRC_CC + 0x7f)
     {
-        *fluid_source = source;
+        *fluid_source = source - CONN_SRC_CC;
         flags = FLUID_MOD_CC;
     }
     else switch (source)
