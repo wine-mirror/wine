@@ -1345,7 +1345,7 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
     {
         if (!gen_from_connection(conn, &gen)) return FALSE;
     }
-    if (conn->usSource == CONN_SRC_KEYNUMBER)
+    else if (conn->usSource == CONN_SRC_KEYNUMBER)
     {
         switch (conn->usDestination)
         {
