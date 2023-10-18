@@ -1,5 +1,6 @@
 EXTLIB    = libzydis.a
 EXTRAINCL = $(ZYDIS_PE_CFLAGS) -I$(srcdir)/src
+EXTRADEFS = -DNDEBUG
 
 SOURCES = \
 	src/Decoder.c \
