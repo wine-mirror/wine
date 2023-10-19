@@ -1806,31 +1806,6 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
     return TRUE;
 }
 
-static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
-{
-    struct wg_parser_stream *stream;
-    GstElement *element;
-
-    if (!(element = create_element("mpegaudioparse", "good")))
-        return FALSE;
-
-    gst_bin_add(GST_BIN(parser->container), element);
-
-    if (!link_src_to_element(parser->my_src, element))
-        return FALSE;
-
-    if (!(stream = create_stream(parser)))
-        return FALSE;
-
-    if (!link_element_to_sink(element, stream->my_sink))
-        return FALSE;
-    gst_pad_set_active(stream->my_sink, 1);
-
-    parser->no_more_pads = true;
-
-    return TRUE;
-}
-
 static BOOL wave_parser_init_gst(struct wg_parser *parser)
 {
     struct wg_parser_stream *stream;
@@ -1862,7 +1837,6 @@ static NTSTATUS wg_parser_create(void *args)
     {
         [WG_PARSER_DECODEBIN] = decodebin_parser_init_gst,
         [WG_PARSER_AVIDEMUX] = avi_parser_init_gst,
-        [WG_PARSER_MPEGAUDIOPARSE] = mpeg_audio_parser_init_gst,
         [WG_PARSER_WAVPARSE] = wave_parser_init_gst,
     };
 
