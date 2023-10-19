@@ -1565,6 +1565,7 @@ void free_installed_fonts(void)
 
     installedFontCollection.FontFamilies = NULL;
     installedFontCollection.allocated = 0;
+    installedFontCollection.count = 0;
 }
 
 static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
