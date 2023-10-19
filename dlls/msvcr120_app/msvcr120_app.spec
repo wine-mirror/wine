@@ -852,7 +852,7 @@
 @ cdecl __AdjustPointer(ptr ptr) msvcr120.__AdjustPointer
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
-@ stdcall -arch=x86_64,arm __C_specific_handler(ptr long ptr ptr) msvcr120.__C_specific_handler
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) msvcr120.__C_specific_handler
 @ cdecl __CppXcptFilter(long ptr) msvcr120.__CppXcptFilter
 @ cdecl __CxxDetectRethrow(ptr) msvcr120.__CxxDetectRethrow
 @ cdecl __CxxExceptionFilter(ptr ptr long ptr) msvcr120.__CxxExceptionFilter
@@ -1274,7 +1274,7 @@
 @ cdecl -arch=i386 -norelay _libm_sse2_sin_precise() msvcr120._libm_sse2_sin_precise
 @ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() msvcr120._libm_sse2_sqrt_precise
 @ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() msvcr120._libm_sse2_tan_precise
-@ cdecl -arch=x86_64 _local_unwind(ptr ptr) msvcr120._local_unwind
+@ cdecl -arch=win64 _local_unwind(ptr ptr) msvcr120._local_unwind
 @ cdecl -arch=i386 _local_unwind2(ptr long) msvcr120._local_unwind2
 @ cdecl -arch=i386 _local_unwind4(ptr ptr long) msvcr120._local_unwind4
 @ cdecl _localtime32(ptr) msvcr120._localtime32
@@ -1377,7 +1377,7 @@
 @ cdecl _set_purecall_handler(ptr) msvcr120._set_purecall_handler
 @ cdecl -norelay _setjmp(ptr) msvcr120._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcr120._setjmp3
-@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) msvcr120._setjmpex
+@ cdecl -arch=!i386 -norelay _setjmpex(ptr ptr) msvcr120._setjmpex
 @ cdecl _setmaxstdio(long) msvcr120._setmaxstdio
 @ cdecl _setmbcp(long) msvcr120._setmbcp
 @ cdecl _setmode(long long) msvcr120._setmode

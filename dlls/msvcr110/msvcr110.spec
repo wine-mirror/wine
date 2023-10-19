@@ -872,7 +872,7 @@
 @ cdecl __AdjustPointer(ptr ptr)
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
-@ stdcall -arch=x86_64,arm __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ cdecl __CppXcptFilter(long ptr)
 @ cdecl __CxxDetectRethrow(ptr)
 @ cdecl __CxxExceptionFilter(ptr ptr long ptr)
@@ -1399,7 +1399,7 @@
 @ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() __libm_sse2_sqrt_precise
 @ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() __libm_sse2_tan
 @ cdecl _loaddll(str)
-@ cdecl -arch=x86_64 _local_unwind(ptr ptr)
+@ cdecl -arch=win64 _local_unwind(ptr ptr)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
 @ cdecl -arch=i386 _local_unwind4(ptr ptr long)
 @ cdecl _localtime32(ptr)
@@ -1643,7 +1643,7 @@
 @ cdecl _seterrormode(long)
 @ cdecl -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ cdecl -arch=x86_64,arm -norelay _setjmpex(ptr ptr) __wine_setjmpex
+@ cdecl -arch=!i386 -norelay _setjmpex(ptr ptr) __wine_setjmpex
 @ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)

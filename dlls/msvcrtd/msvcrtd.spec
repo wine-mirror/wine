@@ -381,7 +381,7 @@
 @ cdecl _kbhit()
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
-@ cdecl -arch=x86_64 _local_unwind(ptr ptr)
+@ cdecl -arch=win64 _local_unwind(ptr ptr)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
 @ cdecl _lock(long)
 @ cdecl _locking(long long long)
