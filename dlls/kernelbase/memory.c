@@ -1453,17 +1453,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryVirtualMemoryInformation( HANDLE process, con
  ***********************************************************************/
 
 
-#if defined(__i386__) || defined(__x86_64__)
-/***********************************************************************
- *             GetEnabledXStateFeatures   (kernelbase.@)
- */
-DWORD64 WINAPI GetEnabledXStateFeatures(void)
-{
-    TRACE( "\n" );
-    return RtlGetEnabledExtendedFeatures( ~(ULONG64)0 );
-}
-
-
 /***********************************************************************
  *             InitializeContext2         (kernelbase.@)
  */
@@ -1519,10 +1508,19 @@ BOOL WINAPI CopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src )
 {
     return set_ntstatus( RtlCopyContext( dst, context_flags, src ));
 }
-#endif
 
 
 #if defined(__x86_64__)
+
+/***********************************************************************
+ *             GetEnabledXStateFeatures   (kernelbase.@)
+ */
+DWORD64 WINAPI GetEnabledXStateFeatures(void)
+{
+    TRACE( "\n" );
+    return RtlGetEnabledExtendedFeatures( ~(ULONG64)0 );
+}
+
 /***********************************************************************
  *           LocateXStateFeature   (kernelbase.@)
  */
@@ -1583,7 +1581,18 @@ BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
 
     return TRUE;
 }
+
 #elif defined(__i386__)
+
+/***********************************************************************
+ *             GetEnabledXStateFeatures   (kernelbase.@)
+ */
+DWORD64 WINAPI GetEnabledXStateFeatures(void)
+{
+    TRACE( "\n" );
+    return RtlGetEnabledExtendedFeatures( ~(ULONG64)0 );
+}
+
 /***********************************************************************
  *           LocateXStateFeature   (kernelbase.@)
  */

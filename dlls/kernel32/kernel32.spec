@@ -256,7 +256,7 @@
 @ stdcall -import ConvertThreadToFiber(ptr)
 @ stdcall -import ConvertThreadToFiberEx(ptr long)
 @ stdcall ConvertToGlobalHandle(long)
-@ stdcall -import -arch=i386,x86_64 CopyContext(ptr long ptr)
+@ stdcall -import CopyContext(ptr long ptr)
 @ stdcall CopyFileA(str str long)
 @ stdcall CopyFileExA (str str ptr ptr ptr long)
 @ stdcall -import CopyFileExW(wstr wstr ptr ptr ptr long)
@@ -962,8 +962,8 @@
 @ stdcall InitOnceExecuteOnce(ptr ptr ptr ptr) kernelbase.InitOnceExecuteOnce
 @ stdcall InitOnceInitialize(ptr) NTDLL.RtlRunOnceInitialize
 @ stdcall InitializeConditionVariable(ptr) NTDLL.RtlInitializeConditionVariable
-@ stdcall -import -arch=i386,x86_64 InitializeContext(ptr long ptr ptr)
-@ stdcall -import -arch=i386,x86_64 InitializeContext2(ptr long ptr ptr int64)
+@ stdcall -import InitializeContext(ptr long ptr ptr)
+@ stdcall -import InitializeContext2(ptr long ptr ptr int64)
 @ stdcall InitializeCriticalSection(ptr) NTDLL.RtlInitializeCriticalSection
 @ stdcall -import InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall -import InitializeCriticalSectionEx(ptr long long)

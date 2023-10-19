@@ -167,7 +167,7 @@
 @ stdcall ConvertThreadToFiber(ptr)
 @ stdcall ConvertThreadToFiberEx(ptr long)
 @ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
-@ stdcall -arch=i386,x86_64 CopyContext(ptr long ptr)
+@ stdcall CopyContext(ptr long ptr)
 # @ stub CopyFile2
 @ stdcall CopyFileExW(wstr wstr ptr ptr ptr long)
 @ stdcall CopyFileW(wstr wstr long)
@@ -831,8 +831,8 @@
 @ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
 @ stdcall InitializeAcl(ptr long long)
 @ stdcall InitializeConditionVariable(ptr) ntdll.RtlInitializeConditionVariable
-@ stdcall -arch=i386,x86_64 InitializeContext(ptr long ptr ptr)
-@ stdcall -arch=i386,x86_64 InitializeContext2(ptr long ptr ptr int64)
+@ stdcall InitializeContext(ptr long ptr ptr)
+@ stdcall InitializeContext2(ptr long ptr ptr int64)
 @ stdcall InitializeCriticalSection(ptr) ntdll.RtlInitializeCriticalSection
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
