@@ -1643,7 +1643,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
     if (FAILED(hr = MFAllocateWorkQueue(&object->async_commands_queue)))
         goto fail;
 
-    if (!(parser = wg_parser_create(WG_PARSER_DECODEBIN)))
+    if (!(parser = wg_parser_create(WG_PARSER_DECODEBIN, FALSE)))
     {
         hr = E_OUTOFMEMORY;
         goto fail;

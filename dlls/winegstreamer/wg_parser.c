@@ -78,6 +78,7 @@ struct wg_parser
     pthread_mutex_t mutex;
 
     pthread_cond_t init_cond;
+    bool output_compressed;
     bool no_more_pads, has_duration, error;
     bool err_on, warn_on;
 
@@ -976,7 +977,7 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
     gst_caps_unref(caps);
 
     /* For compressed stream, create an extra decodebin to decode it. */
-    if (format_is_compressed(&stream->codec_format))
+    if (!parser->output_compressed && format_is_compressed(&stream->codec_format))
     {
         if (!stream_decodebin_create(stream))
         {
@@ -1876,6 +1877,7 @@ static NTSTATUS wg_parser_create(void *args)
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
     parser->init_gst = init_funcs[params->type];
+    parser->output_compressed = params->output_compressed;
     parser->err_on = params->err_on;
     parser->warn_on = params->warn_on;
     GST_DEBUG("Created winegstreamer parser %p.", parser);
