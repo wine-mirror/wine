@@ -286,6 +286,7 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
     const char *name = gst_structure_get_name(structure);
+    gboolean parsed;
 
     memset(format, 0, sizeof(*format));
 
@@ -303,7 +304,7 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
         if (gst_video_info_from_caps(&info, caps))
             wg_format_from_video_info(format, &info);
     }
-    else if (!strcmp(name, "audio/mpeg"))
+    else if (!strcmp(name, "audio/mpeg") && gst_structure_get_boolean(structure, "parsed", &parsed) && parsed)
     {
         wg_format_from_caps_audio_mpeg1(format, caps);
     }
