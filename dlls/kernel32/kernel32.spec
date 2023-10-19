@@ -343,8 +343,8 @@
 @ stdcall -import CreateTimerQueue()
 @ stdcall -import CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateToolhelp32Snapshot(long long)
-@ stdcall -arch=x86_64 CreateUmsCompletionList(ptr)
-@ stdcall -arch=x86_64 CreateUmsThreadContext(ptr)
+@ stdcall -arch=win64 CreateUmsCompletionList(ptr)
+@ stdcall -arch=win64 CreateUmsThreadContext(ptr)
 @ stub CreateVirtualBuffer
 @ stdcall CreateWaitableTimerA(ptr long str)
 @ stdcall CreateWaitableTimerExA(ptr str long long)
@@ -377,11 +377,11 @@
 @ stdcall DeleteTimerQueue(long)
 @ stdcall -import DeleteTimerQueueEx(long long)
 @ stdcall -import DeleteTimerQueueTimer(long long long)
-@ stdcall -arch=x86_64 DeleteUmsCompletionList(ptr)
-@ stdcall -arch=x86_64 DeleteUmsThreadContext(ptr)
+@ stdcall -arch=win64 DeleteUmsCompletionList(ptr)
+@ stdcall -arch=win64 DeleteUmsThreadContext(ptr)
 @ stdcall DeleteVolumeMountPointA(str)
 @ stdcall -import DeleteVolumeMountPointW(wstr)
-@ stdcall -arch=x86_64 DequeueUmsCompletionListItems(ptr long ptr)
+@ stdcall -arch=win64 DequeueUmsCompletionListItems(ptr long ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) KERNEL32_DeviceIoControl
 @ stdcall -import DisableThreadLibraryCalls(long)
 @ stdcall -import DisconnectNamedPipe(long)
@@ -438,10 +438,10 @@
 @ stdcall -import EnumUILanguagesW(ptr long long)
 # @ stub EnumerateLocalComputerNamesA
 # @ stub EnumerateLocalComputerNamesW
-@ stdcall -arch=x86_64 EnterUmsSchedulingMode(ptr)
+@ stdcall -arch=win64 EnterUmsSchedulingMode(ptr)
 @ stdcall EraseTape(ptr long long)
 @ stdcall -import EscapeCommFunction(long long)
-@ stdcall -arch=x86_64 ExecuteUmsThread(ptr)
+@ stdcall -arch=win64 ExecuteUmsThread(ptr)
 @ stdcall ExitProcess(long)
 @ stdcall ExitThread(long) NTDLL.RtlExitUserThread
 @ stub ExitVDM
@@ -643,7 +643,7 @@
 @ stdcall -norelay GetCurrentThread() KERNEL32_GetCurrentThread
 @ stdcall -norelay GetCurrentThreadId() KERNEL32_GetCurrentThreadId
 @ stdcall -import GetCurrentThreadStackLimits(ptr ptr)
-@ stdcall -arch=x86_64 GetCurrentUmsThread()
+@ stdcall -arch=win64 GetCurrentUmsThread()
 @ stdcall -import GetDateFormatA(long long ptr str ptr long)
 @ stdcall -import GetDateFormatEx(wstr long ptr wstr ptr long wstr)
 @ stdcall -import GetDateFormatW(long long ptr wstr ptr long)
@@ -746,7 +746,7 @@
 @ stdcall GetNamedPipeServerProcessId(long ptr)
 @ stdcall GetNamedPipeServerSessionId(long ptr)
 @ stdcall -import GetNativeSystemInfo(ptr)
-@ stdcall -arch=x86_64 GetNextUmsListItem(ptr)
+@ stdcall -arch=win64 GetNextUmsListItem(ptr)
 @ stub GetNextVDMCommand
 @ stub GetNlsSectionName
 # @ stub GetNumaAvailableMemory
@@ -883,8 +883,8 @@
 @ stdcall -import GetTimeZoneInformation(ptr)
 @ stdcall -import GetTimeZoneInformationForYear(long ptr ptr)
 # @ stub GetUILanguageInfo
-@ stdcall -arch=x86_64 GetUmsCompletionListEvent(ptr ptr)
-# @ stub -arch=x86_64 GetUmsSystemThreadInformation
+@ stdcall -arch=win64 GetUmsCompletionListEvent(ptr ptr)
+# @ stub -arch=win64 GetUmsSystemThreadInformation
 @ stdcall -import GetUserDefaultLCID()
 @ stdcall -import GetUserDefaultLangID()
 @ stdcall -import GetUserDefaultLocaleName(ptr long)
@@ -1200,7 +1200,7 @@
 @ stdcall -import QueryThreadCycleTime(long ptr)
 # @ stub QueryThreadProfiling
 @ stdcall -import QueryThreadpoolStackInformation(ptr ptr)
-@ stdcall -arch=x86_64 QueryUmsThreadInformation(ptr long ptr long ptr)
+@ stdcall -arch=win64 QueryUmsThreadInformation(ptr long ptr long ptr)
 @ stdcall -import QueryUnbiasedInterruptTime(ptr)
 @ stub QueryWin31IniFilesMappedToRegistry
 @ stdcall -import QueueUserAPC(ptr long long)
@@ -1497,7 +1497,7 @@
 @ stdcall SetThreadpoolWait(ptr long ptr) NTDLL.TpSetWait
 @ stdcall -import SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
-@ stdcall -arch=x86_64 SetUmsThreadInformation(ptr long ptr long)
+@ stdcall -arch=win64 SetUmsThreadInformation(ptr long ptr long)
 @ stdcall -import SetUnhandledExceptionFilter(ptr)
 @ stdcall -import SetUserGeoID(long)
 @ stdcall -import SetUserGeoName(wstr)
@@ -1558,7 +1558,7 @@
 # @ stub -arch=x86_64 uaw_wcsicmp
 # @ stub -arch=x86_64 uaw_wcslen
 # @ stub -arch=x86_64 uaw_wcsrchr
-@ stdcall -arch=x86_64 UmsThreadYield(ptr)
+@ stdcall -arch=win64 UmsThreadYield(ptr)
 # @ stub -arch=x86_64 __misaligned_access
 @ stdcall -i386 -private UTRegister(long str str str ptr ptr ptr) krnl386.exe16.UTRegister
 @ stdcall -i386 -private UTUnRegister(long) krnl386.exe16.UTUnRegister
