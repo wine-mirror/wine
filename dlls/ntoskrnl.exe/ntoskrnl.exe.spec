@@ -1200,7 +1200,7 @@
 @ stub RtlLookupElementGenericTableAvl
 @ stub RtlLookupElementGenericTableFull
 @ stub RtlLookupElementGenericTableFullAvl
-@ stdcall -arch=arm,arm64,x86_64 RtlLookupFunctionEntry(long ptr ptr)
+@ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr)
 @ stdcall RtlMapGenericMask(ptr ptr)
 @ stub RtlMapSecurityErrorToNtStatus
 @ stub RtlMergeRangeLists
@@ -1240,7 +1240,7 @@
 @ stub RtlRealSuccessor
 @ stub RtlRemoveUnicodePrefix
 @ stub RtlReserveChunk
-@ cdecl -arch=x86_64 RtlRestoreContext(ptr ptr)
+@ cdecl -arch=!i386 RtlRestoreContext(ptr ptr)
 @ stdcall RtlRunOnceBeginInitialize(ptr long ptr)
 @ stdcall RtlRunOnceComplete(ptr long ptr)
 @ stdcall RtlRunOnceExecuteOnce(ptr ptr ptr ptr)
@@ -1296,7 +1296,7 @@
 @ stdcall RtlUnicodeToUTF8N(ptr long ptr ptr long)
 @ stub RtlUnlockBootStatusData
 @ stdcall -norelay RtlUnwind(ptr ptr ptr ptr)
-@ stdcall -arch=arm64,x86_64 RtlUnwindEx(ptr ptr ptr ptr ptr ptr)
+@ stdcall -arch=!i386 RtlUnwindEx(ptr ptr ptr ptr ptr ptr)
 @ stdcall RtlUpcaseUnicodeChar(long)
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long)
 @ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long)
@@ -1312,7 +1312,7 @@
 @ stdcall RtlValidSecurityDescriptor(ptr)
 @ stdcall RtlValidSid(ptr)
 @ stdcall RtlVerifyVersionInfo(ptr long int64)
-@ stdcall -arch=arm64,x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
+@ stdcall -arch=!i386 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
 @ stub RtlVolumeDeviceToDosName
 @ stub RtlWalkFrameChain
 @ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long)
@@ -1540,8 +1540,8 @@
 @ stdcall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwYieldExecution() NtYieldExecution
-@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
-@ cdecl -arch=arm,arm64,x86_64 -norelay __chkstk()
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
+@ cdecl -arch=!i386 -norelay __chkstk()
 @ cdecl -private -arch=i386 _CIcos()
 @ cdecl -private -arch=i386 _CIsin()
 @ cdecl -private -arch=i386 _CIsqrt()
@@ -1568,14 +1568,14 @@
 @ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long)
 @ cdecl _itow_s(long ptr long long)
-@ cdecl -arch=x86_64 _local_unwind(ptr ptr)
+@ cdecl -arch=win64 _local_unwind(ptr ptr)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
 @ cdecl _ltoa_s(long ptr long long)
 @ cdecl _ltow_s(long ptr long long)
 @ cdecl _makepath_s(ptr long str str str str)
 @ cdecl _purecall()
-@ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr)
-@ cdecl -arch=x86_64,arm,arm64 -norelay _setjmpex(ptr ptr)
+@ cdecl -norelay _setjmp(ptr)
+@ cdecl -arch=!i386 -norelay _setjmpex(ptr ptr)
 @ varargs _snprintf(ptr long str)
 @ varargs _snprintf_s(ptr long long str)
 @ varargs _snscanf_s(str long str)
@@ -1628,7 +1628,7 @@
 @ cdecl iswdigit(long)
 @ cdecl iswspace(long)
 @ cdecl isxdigit(long)
-@ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long)
+@ cdecl longjmp(ptr long)
 @ cdecl mbstowcs(ptr str long)
 @ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long)
