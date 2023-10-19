@@ -49,6 +49,7 @@ static HRESULT (WINAPI *pGetBufferedPaintTargetRect)(HPAINTBUFFER, RECT *);
 static HRESULT (WINAPI *pGetThemeIntList)(HTHEME, int, int, int, INTLIST *);
 static HRESULT (WINAPI *pGetThemeTransitionDuration)(HTHEME, int, int, int, int, DWORD *);
 static BOOL (WINAPI *pShouldSystemUseDarkMode)(void);
+static BOOL (WINAPI *pShouldAppsUseDarkMode)(void);
 
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
@@ -76,6 +77,7 @@ static void init_funcs(void)
     HMODULE uxtheme = GetModuleHandleA("uxtheme.dll");
 
     pShouldSystemUseDarkMode = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(138));
+    pShouldAppsUseDarkMode = (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132));
 
 #define GET_PROC(module, func)                       \
     p##func = (void *)GetProcAddress(module, #func); \
@@ -2629,6 +2631,35 @@ static void test_ShouldSystemUseDarkMode(void)
     ok(result == !light_theme, "Expected value %d, got %d.\n", !light_theme, result);
 }
 
+static void test_ShouldAppsUseDarkMode(void)
+{
+    DWORD light_theme, light_theme_size = sizeof(light_theme), last_error;
+    BOOL result;
+    LSTATUS ls;
+
+    if (!pShouldAppsUseDarkMode)
+    {
+        win_skip("ShouldAppsUseDarkMode() is unavailable\n");
+        return;
+    }
+
+    ls = RegGetValueW(HKEY_CURRENT_USER,
+                      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                      L"AppsUseLightTheme", RRF_RT_REG_DWORD, NULL, &light_theme, &light_theme_size);
+    if (ls == ERROR_FILE_NOT_FOUND)
+    {
+        skip("AppsUseLightTheme registry value not found.\n");
+        return;
+    }
+    ok(ls == 0, "RegGetValue failed: %ld.\n", ls);
+
+    SetLastError(0xdeadbeef);
+    result = pShouldAppsUseDarkMode();
+    last_error = GetLastError();
+    ok(last_error == 0xdeadbeef, "ShouldAppsUseDarkMode set last error: %ld.\n", last_error);
+    ok(result == !light_theme, "Expected value %d, got %d\n", !light_theme, result);
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2655,6 +2686,7 @@ START_TEST(system)
     test_GetThemeBackgroundRegion();
     test_theme();
     test_ShouldSystemUseDarkMode();
+    test_ShouldAppsUseDarkMode();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {

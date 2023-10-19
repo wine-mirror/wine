@@ -1273,3 +1273,20 @@ BOOL WINAPI ShouldSystemUseDarkMode(void)
 
     return !light_theme;
 }
+
+/**********************************************************************
+ *      ShouldAppsUseDarkMode                           (UXTHEME.132)
+ *
+ * RETURNS
+ *     Whether or not apps should use dark mode.
+ */
+BOOL WINAPI ShouldAppsUseDarkMode(void)
+{
+    DWORD light_theme = TRUE, light_theme_size = sizeof(light_theme);
+
+    RegGetValueW(HKEY_CURRENT_USER,
+                 L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                 L"AppsUseLightTheme", RRF_RT_REG_DWORD, NULL, &light_theme, &light_theme_size);
+
+    return !light_theme;
+}

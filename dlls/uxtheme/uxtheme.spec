@@ -42,6 +42,7 @@
 61 stdcall OpenThemeDataEx(ptr wstr long)
 62 stub -noname ServerClearStockObjects
 63 stub -noname MarkSelection
+132 stdcall -noname ShouldAppsUseDarkMode()
 138 stdcall -noname ShouldSystemUseDarkMode()
 
 # Standard functions
