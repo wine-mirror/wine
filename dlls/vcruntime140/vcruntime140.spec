@@ -10,15 +10,15 @@
 @ cdecl __AdjustPointer(ptr ptr) ucrtbase.__AdjustPointer
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
-@ stdcall -arch=x86_64,arm,arm64 __C_specific_handler(ptr long ptr ptr) ucrtbase.__C_specific_handler
+@ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr) ucrtbase.__C_specific_handler
 @ stub __C_specific_handler_noexcept
-@ cdecl -arch=i386,x86_64,arm,arm64 __CxxDetectRethrow(ptr) ucrtbase.__CxxDetectRethrow
-@ cdecl -arch=i386,x86_64,arm,arm64 __CxxExceptionFilter(ptr ptr long ptr) ucrtbase.__CxxExceptionFilter
-@ cdecl -arch=i386,x86_64,arm,arm64 -norelay __CxxFrameHandler(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler
-@ cdecl -arch=i386,x86_64,arm,arm64 -norelay __CxxFrameHandler2(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler2
-@ cdecl -arch=i386,x86_64,arm,arm64 -norelay __CxxFrameHandler3(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler3
+@ cdecl __CxxDetectRethrow(ptr) ucrtbase.__CxxDetectRethrow
+@ cdecl __CxxExceptionFilter(ptr ptr long ptr) ucrtbase.__CxxExceptionFilter
+@ cdecl -norelay __CxxFrameHandler(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler
+@ cdecl -norelay __CxxFrameHandler2(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler2
+@ cdecl -norelay __CxxFrameHandler3(ptr ptr ptr ptr) ucrtbase.__CxxFrameHandler3
 @ stdcall -arch=i386 __CxxLongjmpUnwind(ptr) ucrtbase.__CxxLongjmpUnwind
-@ cdecl -arch=i386,x86_64,arm,arm64 __CxxQueryExceptionSize() ucrtbase.__CxxQueryExceptionSize
+@ cdecl __CxxQueryExceptionSize() ucrtbase.__CxxQueryExceptionSize
 @ cdecl __CxxRegisterExceptionObject(ptr ptr) ucrtbase.__CxxRegisterExceptionObject
 @ cdecl __CxxUnregisterExceptionObject(ptr long) ucrtbase.__CxxUnregisterExceptionObject
 @ cdecl __DestructExceptionObject(ptr) ucrtbase.__DestructExceptionObject
@@ -32,8 +32,8 @@
 @ stub __TypeMatch
 @ cdecl __current_exception() ucrtbase.__current_exception
 @ cdecl __current_exception_context() ucrtbase.__current_exception_context
-@ cdecl -arch=i386,x86_64,arm,arm64 -norelay __intrinsic_setjmp(ptr) ucrtbase.__intrinsic_setjmp
-@ cdecl -arch=x86_64,arm,arm64 -norelay __intrinsic_setjmpex(ptr ptr) ucrtbase.__intrinsic_setjmpex
+@ cdecl -norelay __intrinsic_setjmp(ptr) ucrtbase.__intrinsic_setjmp
+@ cdecl -arch=!i386 -norelay __intrinsic_setjmpex(ptr ptr) ucrtbase.__intrinsic_setjmpex
 @ stdcall -arch=arm __jump_unwind(ptr ptr) ucrtbase.__jump_unwind
 @ cdecl __processing_throw() ucrtbase.__processing_throw
 @ stub __report_gsfailure
@@ -65,14 +65,14 @@
 @ cdecl -arch=i386 _local_unwind2(ptr long) ucrtbase._local_unwind2
 @ cdecl -arch=i386 _local_unwind4(ptr ptr long) ucrtbase._local_unwind4
 @ cdecl -arch=i386 _longjmpex(ptr long) ucrtbase._longjmpex
-@ cdecl -arch=x86_64,arm64 _local_unwind(ptr ptr) ucrtbase._local_unwind
+@ cdecl -arch=win64 _local_unwind(ptr ptr) ucrtbase._local_unwind
 @ cdecl _purecall() ucrtbase._purecall
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr) ucrtbase._seh_longjmp_unwind4
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr) ucrtbase._seh_longjmp_unwind
 @ cdecl _set_purecall_handler(ptr) ucrtbase._set_purecall_handler
 @ cdecl _set_se_translator(ptr) ucrtbase._set_se_translator
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) ucrtbase._setjmp3
-@ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) ucrtbase.longjmp
+@ cdecl longjmp(ptr long) ucrtbase.longjmp
 @ cdecl memchr(ptr long long) ucrtbase.memchr
 @ cdecl memcmp(ptr ptr long) ucrtbase.memcmp
 @ cdecl memcpy(ptr ptr long) ucrtbase.memcpy
