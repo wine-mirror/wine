@@ -1909,7 +1909,6 @@ static HRESULT WINAPI uia_provider_attach_event(IWineUiaProvider *iface, LONG_PT
         if (!prov->return_nested_node && SUCCEEDED(IRawElementProviderFragmentRoot_QueryInterface(elroot,
                         &IID_IProxyProviderWinEventHandler, (void **)&winevent_handler)))
         {
-            FIXME("MSAA to UIA event bridge currently unimplemented\n");
             hr = uia_event_add_win_event_hwnd(event, prov->hwnd);
             if (FAILED(hr))
                 WARN("Failed to add hwnd for win_event, hr %#lx\n", hr);
