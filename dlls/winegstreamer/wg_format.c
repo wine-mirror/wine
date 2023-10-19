@@ -477,6 +477,11 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
         return NULL;
 
     gst_video_info_set_format(&info, video_format, format->u.video.width, abs(format->u.video.height));
+    if (format->u.video.fps_d)
+    {
+        info.fps_n = format->u.video.fps_n;
+        info.fps_d = format->u.video.fps_d;
+    }
     if ((caps = gst_video_info_to_caps(&info)))
     {
         for (i = 0; i < gst_caps_get_size(caps); ++i)
