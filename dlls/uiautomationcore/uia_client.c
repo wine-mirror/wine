@@ -3131,6 +3131,7 @@ HRESULT WINAPI UiaHUiaNodeFromVariant(VARIANT *in_val, HUIANODE *huianode)
 static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderType prov_type)
 {
     IRawElementProviderSimple *elprov = NULL;
+    static BOOL fixme_once;
     SAFEARRAY *sa = NULL;
     HRESULT hr;
 
@@ -3153,7 +3154,8 @@ static SAFEARRAY WINAPI *default_uia_provider_callback(HWND hwnd, enum ProviderT
     }
 
     case ProviderType_NonClientArea:
-        FIXME("Default ProviderType_NonClientArea provider unimplemented.\n");
+        if (!fixme_once++)
+            FIXME("Default ProviderType_NonClientArea provider unimplemented.\n");
         break;
 
     case ProviderType_BaseHwnd:
@@ -3238,6 +3240,7 @@ exit:
 
 static HRESULT uia_get_providers_for_hwnd(struct uia_node *node)
 {
+    static BOOL fixme_once;
     HRESULT hr;
 
     hr = uia_get_provider_from_hwnd(node);
@@ -3251,7 +3254,7 @@ static HRESULT uia_get_providers_for_hwnd(struct uia_node *node)
             return hr;
     }
 
-    if (!node->prov[PROV_TYPE_OVERRIDE])
+    if (!node->prov[PROV_TYPE_OVERRIDE] && !fixme_once++)
         FIXME("Override provider callback currently unimplemented.\n");
 
     if (!node->prov[PROV_TYPE_NONCLIENT])
