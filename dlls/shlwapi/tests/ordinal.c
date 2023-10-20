@@ -51,8 +51,8 @@ static HRESULT(WINAPI *pIConnectionPoint_InvokeWithCancel)(IConnectionPoint*,DIS
 static HRESULT(WINAPI *pConnectToConnectionPoint)(IUnknown*,REFIID,BOOL,IUnknown*, LPDWORD,IConnectionPoint **);
 static HRESULT(WINAPI *pSHPropertyBag_ReadLONG)(IPropertyBag *,LPCWSTR,LPLONG);
 static LONG   (WINAPI *pSHSetWindowBits)(HWND, INT, UINT, UINT);
-static INT    (WINAPI *pSHFormatDateTimeA)(const FILETIME UNALIGNED*, DWORD*, LPSTR, UINT);
-static INT    (WINAPI *pSHFormatDateTimeW)(const FILETIME UNALIGNED*, DWORD*, LPWSTR, UINT);
+static INT    (WINAPI *pSHFormatDateTimeA)(const FILETIME*, DWORD*, LPSTR, UINT);
+static INT    (WINAPI *pSHFormatDateTimeW)(const FILETIME*, DWORD*, LPWSTR, UINT);
 static DWORD  (WINAPI *pSHGetObjectCompatFlags)(IUnknown*, const CLSID*);
 static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
 static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
@@ -1668,8 +1668,8 @@ static void test_SHSetWindowBits(void)
 
 static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
 {
-    FILETIME UNALIGNED filetime;
-    FILETIME UNALIGNED filetimeCheck;
+    FILETIME filetime;
+    FILETIME filetimeCheck;
     SYSTEMTIME universalSystemTime;
     CHAR buff[100], buff2[100], buff3[100];
     BOOL dstMatch;
@@ -1837,7 +1837,7 @@ static void test_SHFormatDateTimeA(const SYSTEMTIME *st)
 
 static void test_SHFormatDateTimeW(void)
 {
-    FILETIME UNALIGNED filetime;
+    FILETIME filetime;
     SYSTEMTIME universalSystemTime;
     WCHAR buff[100], buff2[100], buff3[100], *p1, *p2;
     SYSTEMTIME st;

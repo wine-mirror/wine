@@ -4282,7 +4282,7 @@ HRESULT WINAPI SHCreatePropertyBagOnRegKey (HKEY hKey, LPCWSTR subkey,
  *  failure: 0
  *
  */
-INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
+INT WINAPI SHFormatDateTimeW(const FILETIME *fileTime, DWORD *flags,
     LPWSTR buf, UINT size)
 {
 #define SHFORMATDT_UNSUPPORTED_FLAGS (FDTF_RELATIVE | FDTF_LTRDATE | FDTF_RTLDATE | FDTF_NOAUTOREADINGORDER)
@@ -4346,7 +4346,7 @@ INT WINAPI SHFormatDateTimeW(const FILETIME UNALIGNED *fileTime, DWORD *flags,
  * See SHFormatDateTimeW.
  *
  */
-INT WINAPI SHFormatDateTimeA(const FILETIME UNALIGNED *fileTime, DWORD *flags,
+INT WINAPI SHFormatDateTimeA(const FILETIME *fileTime, DWORD *flags,
     LPSTR buf, UINT size)
 {
     WCHAR *bufW;
