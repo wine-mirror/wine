@@ -103,12 +103,12 @@ C_ASSERT( sizeof(struct block) == 8 );
 #define BLOCK_FLAG_PREV_FREE   0x02
 #define BLOCK_FLAG_FREE_LINK   0x03
 #define BLOCK_FLAG_LARGE       0x04
-#define BLOCK_FLAG_LFH         0x08 /* block is handled by the LFH frontend */
-#define BLOCK_FLAG_USER_INFO   0x10 /* user flags up to 0xf0 */
-#define BLOCK_FLAG_USER_MASK   0xf0
+#define BLOCK_FLAG_LFH         0x80 /* block is handled by the LFH frontend */
+#define BLOCK_FLAG_USER_INFO   0x08 /* user flags bits 3-6 */
+#define BLOCK_FLAG_USER_MASK   0x78
 
-#define BLOCK_USER_FLAGS( heap_flags ) (((heap_flags) >> 4) & BLOCK_FLAG_USER_MASK)
-#define HEAP_USER_FLAGS( block_flags ) (((block_flags) & BLOCK_FLAG_USER_MASK) << 4)
+#define BLOCK_USER_FLAGS( heap_flags ) (((heap_flags) >> 5) & BLOCK_FLAG_USER_MASK)
+#define HEAP_USER_FLAGS( block_flags ) (((block_flags) & BLOCK_FLAG_USER_MASK) << 5)
 
 /* entry to link free blocks in free lists */
 
@@ -1946,7 +1946,7 @@ static NTSTATUS heap_allocate_block_lfh( struct heap *heap, ULONG flags, SIZE_T 
     if ((block = find_free_bin_block( heap, flags, block_size, bin )))
     {
         block_set_type( block, BLOCK_TYPE_USED );
-        block_set_flags( block, ~BLOCK_FLAG_LFH, BLOCK_USER_FLAGS( flags ) );
+        block_set_flags( block, (BYTE)~BLOCK_FLAG_LFH, BLOCK_USER_FLAGS( flags ) );
         block->tail_size = block_size - sizeof(*block) - size;
         initialize_block( block, 0, size, flags );
         mark_block_tail( block, flags );
@@ -1971,7 +1971,7 @@ static NTSTATUS heap_free_block_lfh( struct heap *heap, ULONG flags, struct bloc
     i = block_get_group_index( block );
     valgrind_make_writable( block, sizeof(*block) );
     block_set_type( block, BLOCK_TYPE_FREE );
-    block_set_flags( block, ~BLOCK_FLAG_LFH, BLOCK_FLAG_FREE );
+    block_set_flags( block, (BYTE)~BLOCK_FLAG_LFH, BLOCK_FLAG_FREE );
     mark_block_free( block + 1, (char *)block + block_size - (char *)(block + 1), flags );
 
     /* if this was the last used block in a group and GROUP_FLAG_FREE was set */
