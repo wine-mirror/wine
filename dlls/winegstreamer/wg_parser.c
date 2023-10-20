@@ -436,7 +436,10 @@ static NTSTATUS wg_parser_stream_seek(void *args)
     const struct wg_parser_stream_seek_params *params = args;
     DWORD start_flags = params->start_flags;
     DWORD stop_flags = params->stop_flags;
+    const struct wg_parser_stream *stream;
     GstSeekFlags flags = 0;
+
+    stream = get_stream(params->stream);
 
     if (start_flags & AM_SEEKING_SeekToKeyFrame)
         flags |= GST_SEEK_FLAG_KEY_UNIT;
@@ -450,8 +453,9 @@ static NTSTATUS wg_parser_stream_seek(void *args)
     if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
         stop_type = GST_SEEK_TYPE_NONE;
 
-    if (!push_event(get_stream(params->stream)->my_sink, gst_event_new_seek(params->rate, GST_FORMAT_TIME,
-            flags, start_type, params->start_pos * 100, stop_type, params->stop_pos * 100)))
+    if (!push_event(stream->my_sink, gst_event_new_seek(params->rate, GST_FORMAT_TIME,
+            flags, start_type, params->start_pos * 100, stop_type,
+            params->stop_pos == stream->duration ? -1 : params->stop_pos * 100)))
         GST_ERROR("Failed to seek.\n");
 
     return S_OK;
