@@ -779,13 +779,19 @@ BlendState blend_state
     srcblend[0] = zero;
 };
 
+BlendState blend_state2
+{
+    blendenable = true;
+    srcblend = src_color;
+};
+
 BlendState default_blend_state {};
 #endif
 static DWORD fx_4_1_test_blend_state[] =
 {
-    0x43425844, 0x9e1570b0, 0x0ed82fb4, 0x16300839, 0x88b70426, 0x00000001, 0x000002b3, 0x00000001,
-    0x00000024, 0x30315846, 0x00000287, 0xfeff1011, 0x00000000, 0x00000000, 0x00000002, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x0000010b, 0x00000000, 0x00000000, 0x00000000, 0x00000002,
+    0x43425844, 0x93b3fe48, 0xee555ce6, 0xc07d00df, 0x616889d5, 0x00000001, 0x000003d4, 0x00000001,
+    0x00000024, 0x30315846, 0x000003a8, 0xfeff1011, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000184, 0x00000000, 0x00000000, 0x00000000, 0x00000003,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6e656c42,
     0x61745364, 0x04006574, 0x02000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000,
     0x62000000, 0x646e656c, 0x6174735f, 0x01006574, 0x04000000, 0x01000000, 0x01000000, 0x04000000,
@@ -794,22 +800,32 @@ static DWORD fx_4_1_test_blend_state[] =
     0x01000000, 0x04000000, 0x01000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000,
     0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000,
     0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000, 0x01000000, 0x02000000, 0x02000000,
-    0x01000000, 0x02000000, 0x01000000, 0x64000000, 0x75616665, 0x625f746c, 0x646e656c, 0x6174735f,
-    0x2b006574, 0x0f000000, 0x00000000, 0xff000000, 0x10ffffff, 0x25000000, 0x00000000, 0x01000000,
-    0x37000000, 0x25000000, 0x01000000, 0x01000000, 0x43000000, 0x25000000, 0x02000000, 0x01000000,
-    0x4f000000, 0x25000000, 0x03000000, 0x01000000, 0x5b000000, 0x25000000, 0x04000000, 0x01000000,
-    0x67000000, 0x25000000, 0x05000000, 0x01000000, 0x73000000, 0x25000000, 0x06000000, 0x01000000,
-    0x7f000000, 0x25000000, 0x07000000, 0x01000000, 0x8b000000, 0x26000000, 0x01000000, 0x01000000,
-    0x97000000, 0x26000000, 0x02000000, 0x01000000, 0xa3000000, 0x26000000, 0x03000000, 0x01000000,
-    0xaf000000, 0x26000000, 0x04000000, 0x01000000, 0xbb000000, 0x26000000, 0x05000000, 0x01000000,
-    0xc7000000, 0x26000000, 0x06000000, 0x01000000, 0xd3000000, 0x26000000, 0x07000000, 0x01000000,
-    0xdf000000, 0x26000000, 0x00000000, 0x01000000, 0xeb000000, 0x00000000, 0xf7000000, 0x0f000000,
-    0x00000000, 0xff000000, 0x00ffffff, 0x00000000, 0x00000000,
+    0x01000000, 0x02000000, 0x01000000, 0x62000000, 0x646e656c, 0x6174735f, 0x00326574, 0x00000001,
+    0x00000004, 0x00000001, 0x00000001, 0x00000002, 0x00000003, 0x00000001, 0x00000002, 0x00000003,
+    0x00000001, 0x00000002, 0x00000003, 0x00000001, 0x00000002, 0x00000003, 0x00000001, 0x00000002,
+    0x00000003, 0x00000001, 0x00000002, 0x00000003, 0x00000001, 0x00000002, 0x00000003, 0x00000001,
+    0x00000002, 0x00000003, 0x61666564, 0x5f746c75, 0x6e656c62, 0x74735f64, 0x00657461, 0x0000002b,
+    0x0000000f, 0x00000000, 0xffffffff, 0x00000010, 0x00000025, 0x00000000, 0x00000001, 0x00000037,
+    0x00000025, 0x00000001, 0x00000001, 0x00000043, 0x00000025, 0x00000002, 0x00000001, 0x0000004f,
+    0x00000025, 0x00000003, 0x00000001, 0x0000005b, 0x00000025, 0x00000004, 0x00000001, 0x00000067,
+    0x00000025, 0x00000005, 0x00000001, 0x00000073, 0x00000025, 0x00000006, 0x00000001, 0x0000007f,
+    0x00000025, 0x00000007, 0x00000001, 0x0000008b, 0x00000026, 0x00000001, 0x00000001, 0x00000097,
+    0x00000026, 0x00000002, 0x00000001, 0x000000a3, 0x00000026, 0x00000003, 0x00000001, 0x000000af,
+    0x00000026, 0x00000004, 0x00000001, 0x000000bb, 0x00000026, 0x00000005, 0x00000001, 0x000000c7,
+    0x00000026, 0x00000006, 0x00000001, 0x000000d3, 0x00000026, 0x00000007, 0x00000001, 0x000000df,
+    0x00000026, 0x00000000, 0x00000001, 0x000000eb, 0x00000000, 0x000000f7, 0x0000000f, 0x00000000,
+    0xffffffff, 0x00000009, 0x00000025, 0x00000000, 0x00000001, 0x00000104, 0x00000026, 0x00000000,
+    0x00000001, 0x00000110, 0x00000026, 0x00000001, 0x00000001, 0x0000011c, 0x00000026, 0x00000002,
+    0x00000001, 0x00000128, 0x00000026, 0x00000003, 0x00000001, 0x00000134, 0x00000026, 0x00000004,
+    0x00000001, 0x00000140, 0x00000026, 0x00000005, 0x00000001, 0x0000014c, 0x00000026, 0x00000006,
+    0x00000001, 0x00000158, 0x00000026, 0x00000007, 0x00000001, 0x00000164, 0x00000000, 0x00000170,
+    0x0000000f, 0x00000000, 0xffffffff, 0x00000000, 0x00000000,
 };
 
 static void test_fx_4_1_blend_state(void)
 {
     ID3D10EffectBlendVariable *blend;
+    struct device_desc device_desc;
     ID3D10EffectVariable *v;
     D3D10_BLEND_DESC1 desc1;
     ID3D10BlendState1 *bs1;
@@ -830,7 +846,11 @@ static void test_fx_4_1_blend_state(void)
     hr = create_effect(fx_4_1_test_blend_state, 0, device, NULL, &effect);
     todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) goto done;
+    if (FAILED(hr))
+    {
+        ID3D10Device1_Release(device);
+        return;
+    }
 
     v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
     ok(v->lpVtbl->IsValid(v), "Invalid variable.\n");
@@ -942,9 +962,79 @@ static void test_fx_4_1_blend_state(void)
     ID3D10BlendState1_Release(bs1);
     ID3D10BlendState_Release(bs);
 
-    effect->lpVtbl->Release(effect);
+    refcount = effect->lpVtbl->Release(effect);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
 
-done:
+    refcount = ID3D10Device1_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    /* Using feature level 10.0 device. */
+    device_desc.flags = 0;
+    device_desc.feature_level = D3D10_FEATURE_LEVEL_10_0;
+
+    device = create_device(&device_desc);
+    ok(!!device, "Failed to create device.\n");
+
+    hr = create_effect(fx_4_1_test_blend_state, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
+    ok(!v->lpVtbl->IsValid(v), "Unexpected variable.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "blend_state2");
+    ok(v->lpVtbl->IsValid(v), "Unexpected variable.\n");
+    blend = v->lpVtbl->AsBlend(v);
+    ok(blend->lpVtbl->IsValid(blend), "Invalid variable.\n");
+
+    memset(&desc, 0, sizeof(desc));
+    hr = blend->lpVtbl->GetBackingStore(blend, 0, &desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!desc.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc.AlphaToCoverageEnable);
+    ok(desc.BlendEnable[0], "Unexpected value %#x.\n", desc.BlendEnable[0]);
+    for (i = 1; i < ARRAY_SIZE(desc.BlendEnable); ++i)
+        ok(!desc.BlendEnable[i], "Unexpected value[%u] %#x.\n", i, desc.BlendEnable[i]);
+    ok(desc.SrcBlend == D3D10_BLEND_SRC_COLOR, "Unexpected value %u.\n", desc.SrcBlend);
+    ok(desc.DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlend);
+    ok(desc.BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOp);
+    ok(desc.SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlendAlpha);
+    ok(desc.DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlendAlpha);
+    ok(desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOpAlpha);
+    for (i = 0; i < ARRAY_SIZE(desc.RenderTargetWriteMask); ++i)
+        ok(desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value[%u] %#x.\n",
+                i, desc.RenderTargetWriteMask[i]);
+
+    /* Default state. */
+    v = effect->lpVtbl->GetVariableByName(effect, "default_blend_state");
+    ok(v->lpVtbl->IsValid(v), "Invalid variable.\n");
+    blend = v->lpVtbl->AsBlend(v);
+    ok(blend->lpVtbl->IsValid(blend), "Invalid variable.\n");
+
+    memset(&desc, 0, sizeof(desc));
+    hr = blend->lpVtbl->GetBackingStore(blend, 0, &desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!desc.AlphaToCoverageEnable, "Unexpected value %#x.\n", desc1.AlphaToCoverageEnable);
+    for (i = 0; i < ARRAY_SIZE(desc.BlendEnable); ++i)
+        ok(!desc.BlendEnable[i], "Unexpected value[%u] %#x.\n", i, desc.BlendEnable[i]);
+    ok(desc.SrcBlend == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlend);
+    ok(desc.DestBlend == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlend);
+    ok(desc.BlendOp == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOp);
+    ok(desc.SrcBlendAlpha == D3D10_BLEND_ONE, "Unexpected value %u.\n", desc.SrcBlendAlpha);
+    ok(desc.DestBlendAlpha == D3D10_BLEND_ZERO, "Unexpected value %u.\n", desc.DestBlendAlpha);
+    ok(desc.BlendOpAlpha == D3D10_BLEND_OP_ADD, "Unexpected value %u.\n", desc.BlendOpAlpha);
+    for (i = 0; i < ARRAY_SIZE(desc.RenderTargetWriteMask); ++i)
+        ok(desc.RenderTargetWriteMask[i] == D3D10_COLOR_WRITE_ENABLE_ALL, "Unexpected value[%u] %#x.\n",
+                i, desc.RenderTargetWriteMask[i]);
+
+    hr = blend->lpVtbl->GetBlendState(blend, 0, &bs);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D10BlendState_QueryInterface(bs, &IID_ID3D10BlendState1, (void **)&bs1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10BlendState1_Release(bs1);
+    ID3D10BlendState_Release(bs);
+
+    refcount = effect->lpVtbl->Release(effect);
+    ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+
     refcount = ID3D10Device1_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
