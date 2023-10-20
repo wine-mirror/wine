@@ -35,7 +35,10 @@ extern NTSTATUS wg_init_gstreamer(void *args) DECLSPEC_HIDDEN;
 
 extern GstStreamType stream_type_from_caps(GstCaps *caps) DECLSPEC_HIDDEN;
 extern GstElement *create_element(const char *name, const char *plugin_set) DECLSPEC_HIDDEN;
-extern GstElement *find_element(GstElementFactoryListType type, GstCaps *src_caps, GstCaps *sink_caps) DECLSPEC_HIDDEN;
+extern GList *find_element_factories(GstElementFactoryListType type, GstRank min_rank,
+        GstCaps *element_sink_caps, GstCaps *element_src_caps) DECLSPEC_HIDDEN;
+extern GstElement *find_element(GstElementFactoryListType type,
+        GstCaps *element_sink_caps, GstCaps *element_src_caps) DECLSPEC_HIDDEN;
 extern bool append_element(GstElement *container, GstElement *element, GstElement **first, GstElement **last) DECLSPEC_HIDDEN;
 extern bool link_src_to_sink(GstPad *src_pad, GstPad *sink_pad) DECLSPEC_HIDDEN;
 extern bool link_src_to_element(GstPad *src_pad, GstElement *element) DECLSPEC_HIDDEN;
