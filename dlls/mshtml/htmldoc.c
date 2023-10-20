@@ -6196,7 +6196,7 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
         lock_document_mode(doc);
     }
 
-    if(!doc_obj->window || (window && is_main_content_window(window->base.outer_window)))
+    if(doc_obj && (!doc_obj->window || (window && is_main_content_window(window->base.outer_window))))
         doc->cp_container.forward_container = &doc_obj->cp_container;
 
     /* Share reference with HTMLDOMNode */

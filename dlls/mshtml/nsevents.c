@@ -208,6 +208,8 @@ static nsresult handle_focus(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
     TRACE("(%p)\n", doc);
 
+    if(!doc->doc_obj)
+        return NS_ERROR_FAILURE;
     doc_obj = doc->doc_obj;
 
     if(!doc_obj->focus) {
@@ -220,7 +222,7 @@ static nsresult handle_focus(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
 static nsresult handle_keypress(HTMLDocumentNode *doc, nsIDOMEvent *event)
 {
-    if(!doc->browser)
+    if(!doc->browser || !doc->browser->doc)
         return NS_ERROR_FAILURE;
 
     TRACE("(%p)->(%p)\n", doc, event);
@@ -391,7 +393,7 @@ static nsresult handle_beforeunload(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
     DOMEvent *event;
     HRESULT hres;
 
-    if(!(window = doc->window))
+    if(!(window = doc->window) || doc->unload_sent)
         return NS_OK;
 
     /* Gecko dispatches this to the document, but IE dispatches it to the window */

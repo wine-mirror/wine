@@ -4525,7 +4525,10 @@ static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHA
 
 static void test_simple_script(void)
 {
+    IHTMLDocument2 *doc_node;
+    IHTMLWindow2 *window;
     IHTMLDocument2 *doc;
+    HRESULT hres;
 
     doc = create_document();
     if(!doc)
@@ -4596,6 +4599,12 @@ static void test_simple_script(void)
     if(window_dispex)
         IDispatchEx_Release(window_dispex);
 
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &doc_node);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+
     SET_EXPECT(SetScriptState_DISCONNECTED);
     SET_EXPECT(Close);
     SET_EXPECT(Close2);
@@ -4605,6 +4614,14 @@ static void test_simple_script(void)
     CHECK_CALLED(SetScriptState_DISCONNECTED);
     CHECK_CALLED(Close);
     CHECK_CALLED(Close2);
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    ok(doc != doc_node, "doc == doc_node\n");
+
+    IHTMLDocument2_Release(doc_node);
+    IHTMLDocument2_Release(doc);
+    IHTMLWindow2_Release(window);
 }
 
 static void run_from_moniker(IMoniker *mon)

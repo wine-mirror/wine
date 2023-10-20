@@ -1012,7 +1012,8 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
 
         if(This->bsc.binding)
             process_document_response_headers(This->bsc.window->doc, This->bsc.binding);
-        if(This->bsc.window->base.outer_window->readystate != READYSTATE_LOADING)
+        if(This->bsc.window->base.outer_window->readystate != READYSTATE_LOADING &&
+           This->bsc.window->base.outer_window->browser->doc)
             set_ready_state(This->bsc.window->base.outer_window, READYSTATE_LOADING);
     }
 
@@ -1370,7 +1371,7 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
     HRESULT hres;
 
     if(This->is_doc_channel && This->bsc.window && This->bsc.window->base.outer_window
-       && (browser = This->bsc.window->base.outer_window->browser)) {
+       && (browser = This->bsc.window->base.outer_window->browser) && browser->doc) {
         if(browser->doc->hostinfo.dwFlags & DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION)
             This->bsc.bindinfo_options |= BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS;
     }

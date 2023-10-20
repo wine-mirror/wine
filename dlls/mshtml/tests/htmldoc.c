@@ -8461,10 +8461,12 @@ static void test_doc_domain(IHTMLDocument2 *doc)
 
 static void test_HTMLDocument_http(BOOL with_wbapp)
 {
+    IHTMLDocument2 *doc, *doc_node;
+    IHTMLWindow2 *window;
     IMoniker *http_mon;
-    IHTMLDocument2 *doc;
-    ULONG ref;
     HRESULT hres;
+    ULONG ref;
+    BSTR bstr;
 
     trace("Testing HTMLDocument (http%s)...\n", with_wbapp ? " with IWebBrowserApp" : "");
 
@@ -8529,11 +8531,41 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_IsDirty(doc, S_FALSE);
     test_GetCurMoniker((IUnknown*)doc, NULL, prev_url, support_wbapp);
 
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &doc_node);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+
+    hres = IHTMLDocument2_get_readyState(doc_node, &bstr);
+    ok(hres == S_OK, "get_readyState failed: %08lx\n", hres);
+    todo_wine_if(support_wbapp)
+    ok(!wcscmp(bstr, support_wbapp ? L"interactive" : L"complete"), "readyState = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     if(view)
         IOleDocumentView_Release(view);
     view = NULL;
 
     release_document(doc);
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    ok(doc != doc_node, "doc == doc_node\n");
+
+    hres = IHTMLDocument2_get_readyState(doc_node, &bstr);
+    ok(hres == S_OK, "get_readyState failed: %08lx\n", hres);
+    ok(!wcscmp(bstr, L"uninitialized"), "readyState = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hres = IHTMLDocument2_get_readyState(doc, &bstr);
+    ok(hres == S_OK, "get_readyState failed: %08lx\n", hres);
+    ok(!wcscmp(bstr, L"uninitialized"), "readyState = %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    IHTMLDocument2_Release(doc_node);
+    IHTMLDocument2_Release(doc);
+    IHTMLWindow2_Release(window);
 
     ref = IMoniker_Release(http_mon);
     ok(!ref, "ref=%ld, expected 0\n", ref);

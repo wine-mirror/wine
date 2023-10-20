@@ -1082,7 +1082,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                     TRACE("canceled\n");
                     nsres = NS_BINDING_ABORTED;
                 }
-            }else if(window->browser->doc->mime) {
+            }else if(window->browser->doc && window->browser->doc->mime) {
                 free(This->content_type);
                 This->content_type = strdupWtoA(window->browser->doc->mime);
             }
