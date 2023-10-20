@@ -738,6 +738,147 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
     return hr;
 }
 
+static HRESULT mpeg_video_codec_sink_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
+{
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            || !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1Payload)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_MPEGVideo)
+            || mt->cbFormat < sizeof(MPEG1VIDEOINFO))
+        return S_FALSE;
+
+    return S_OK;
+}
+
+static HRESULT mpeg_video_codec_source_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
+{
+    if (!filter->sink.pin.peer)
+        return S_FALSE;
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            || mt->cbFormat < sizeof(VIDEOINFOHEADER))
+        return S_FALSE;
+
+    if (!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_YV12)
+            /* missing: MEDIASUBTYPE_Y41P, not supported by GStreamer */
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_YUY2)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_UYVY)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB32)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB565)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB555)
+            /* missing: MEDIASUBTYPE_RGB8, not supported by GStreamer */)
+        return S_FALSE;
+
+    return S_OK;
+}
+
+static HRESULT mpeg_video_codec_source_get_media_type(struct transform *filter, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    static const enum wg_video_format formats[] = {
+        WG_VIDEO_FORMAT_YV12,
+        WG_VIDEO_FORMAT_YUY2,
+        WG_VIDEO_FORMAT_UYVY,
+        WG_VIDEO_FORMAT_BGR,
+        WG_VIDEO_FORMAT_BGRx,
+        WG_VIDEO_FORMAT_RGB16,
+        WG_VIDEO_FORMAT_RGB15,
+    };
+
+    const MPEG1VIDEOINFO *input_format = (MPEG1VIDEOINFO*)filter->sink.pin.mt.pbFormat;
+    struct wg_format wg_format = {};
+    VIDEOINFO *video_format;
+
+    if (!filter->sink.pin.peer)
+        return VFW_S_NO_MORE_ITEMS;
+
+    if (index >= ARRAY_SIZE(formats))
+        return VFW_S_NO_MORE_ITEMS;
+
+    input_format = (MPEG1VIDEOINFO*)filter->sink.pin.mt.pbFormat;
+    wg_format.major_type = WG_MAJOR_TYPE_VIDEO;
+    wg_format.u.video.format = formats[index];
+    wg_format.u.video.width = input_format->hdr.bmiHeader.biWidth;
+    wg_format.u.video.height = input_format->hdr.bmiHeader.biHeight;
+    wg_format.u.video.fps_n = 10000000;
+    wg_format.u.video.fps_d = input_format->hdr.AvgTimePerFrame;
+    if (!amt_from_wg_format(mt, &wg_format, false))
+        return E_OUTOFMEMORY;
+
+    video_format = (VIDEOINFO*)mt->pbFormat;
+    video_format->bmiHeader.biHeight = abs(video_format->bmiHeader.biHeight);
+    SetRect(&video_format->rcSource, 0, 0, video_format->bmiHeader.biWidth, video_format->bmiHeader.biHeight);
+
+    video_format->bmiHeader.biXPelsPerMeter = 2000;
+    video_format->bmiHeader.biYPelsPerMeter = 2000;
+    video_format->dwBitRate = MulDiv(video_format->bmiHeader.biSizeImage * 8, 10000000, video_format->AvgTimePerFrame);
+    mt->lSampleSize = video_format->bmiHeader.biSizeImage;
+    mt->bTemporalCompression = FALSE;
+    mt->bFixedSizeSamples = TRUE;
+
+    return S_OK;
+}
+
+static HRESULT mpeg_video_codec_source_decide_buffer_size(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    VIDEOINFOHEADER *output_format = (VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
+    ALLOCATOR_PROPERTIES ret_props;
+
+    props->cBuffers = max(props->cBuffers, 1);
+    props->cbBuffer = max(props->cbBuffer, output_format->bmiHeader.biSizeImage);
+    props->cbAlign = max(props->cbAlign, 1);
+
+    return IMemAllocator_SetProperties(allocator, props, &ret_props);
+}
+
+static const struct transform_ops mpeg_video_codec_transform_ops =
+{
+    mpeg_video_codec_sink_query_accept,
+    mpeg_video_codec_source_query_accept,
+    mpeg_video_codec_source_get_media_type,
+    mpeg_video_codec_source_decide_buffer_size,
+};
+
+HRESULT mpeg_video_codec_create(IUnknown *outer, IUnknown **out)
+{
+    static const struct wg_format output_format =
+    {
+        .major_type = WG_MAJOR_TYPE_VIDEO,
+        .u.video = {
+            .format = WG_VIDEO_FORMAT_I420,
+            /* size doesn't matter, this one is only used to check if the GStreamer plugin exists */
+        },
+    };
+    static const struct wg_format input_format =
+    {
+        .major_type = WG_MAJOR_TYPE_VIDEO_MPEG1,
+        .u.video_mpeg1 = {},
+    };
+    struct wg_transform_attrs attrs = {0};
+    wg_transform_t transform;
+    struct transform *object;
+    HRESULT hr;
+
+    transform = wg_transform_create(&input_format, &output_format, &attrs);
+    if (!transform)
+    {
+        ERR_(winediag)("GStreamer doesn't support MPEG-1 video decoding, please install appropriate plugins.\n");
+        return E_FAIL;
+    }
+    wg_transform_destroy(transform);
+
+    hr = transform_create(outer, &CLSID_CMpegVideoCodec, &mpeg_video_codec_transform_ops, &object);
+    if (FAILED(hr))
+        return hr;
+
+    wcscpy(object->sink.pin.name, L"Input");
+    wcscpy(object->source.pin.name, L"Output");
+
+    TRACE("Created MPEG video decoder %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
+    return hr;
+}
+
 static HRESULT mpeg_layer3_decoder_sink_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
 {
     const MPEGLAYER3WAVEFORMAT *format;
