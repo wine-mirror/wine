@@ -40,6 +40,7 @@ static inline BOOL is_literal(xmlChar const* tok)
 
 static void xslpattern_error(parser_param* param, void const* scanner, char const* msg)
 {
+    param->err++;
     FIXME("%s:\n"
           "  param {\n"
           "    yyscanner=%p\n"
@@ -52,7 +53,7 @@ static void xslpattern_error(parser_param* param, void const* scanner, char cons
           "  }\n"
           "  scanner=%p\n",
           msg, param->yyscanner, param->ctx, param->in, param->pos,
-          param->len, param->out, ++param->err, scanner);
+          param->len, param->out, param->err, scanner);
 }
 
 %}
