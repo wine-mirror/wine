@@ -1526,9 +1526,41 @@ static HRESULT WINAPI stream_select_Info(IAMStreamSelect *iface, LONG index,
         AM_MEDIA_TYPE **mt, DWORD *flags, LCID *lcid, DWORD *group, WCHAR **name,
         IUnknown **object, IUnknown **unknown)
 {
-    FIXME("iface %p, index %ld, mt %p, flags %p, lcid %p, group %p, name %p, object %p, unknown %p, stub!\n",
-            iface, index, mt, flags, lcid, group, name, object, unknown);
-    return E_NOTIMPL;
+    struct parser *filter = impl_from_IAMStreamSelect(iface);
+    HRESULT hr = S_OK;
+
+    FIXME("filter %p, index %ld, mt %p, flags %p, lcid %p, group %p, name %p, object %p, unknown %p, semi-stub!\n",
+            filter, index, mt, flags, lcid, group, name, object, unknown);
+    EnterCriticalSection(&filter->filter.filter_cs);
+
+    if (!filter->sink.pin.peer)
+    {
+        LeaveCriticalSection(&filter->filter.filter_cs);
+        return VFW_E_NOT_CONNECTED;
+    }
+    if (index < 0 || index >= filter->source_count)
+    {
+        LeaveCriticalSection(&filter->filter.filter_cs);
+        return S_FALSE;
+    }
+
+    if (mt)
+        *mt = CreateMediaType(&filter->sources[index]->pin.pin.mt);
+    if (flags) /* todo */
+        *flags = 0;
+    if (lcid) /* todo */
+        *lcid = 0;
+    if (group) /* todo */
+        *group = 0;
+    if (name) /* todo */
+        *name = NULL;
+    if (object) /* todo */
+        *object = NULL;
+    if (unknown)
+        *unknown = NULL;
+
+    LeaveCriticalSection(&filter->filter.filter_cs);
+    return hr;
 }
 
 static HRESULT WINAPI stream_select_Enable(IAMStreamSelect *iface, LONG index, DWORD flags)
