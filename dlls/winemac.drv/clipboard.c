@@ -569,7 +569,7 @@ static void *import_html(CFDataRef data, size_t *ret_size)
     if ((ret = malloc(total)))
     {
         char *p = ret;
-        p += sprintf(p, header, total - 1, len, len + size + 1 /* include the final \n in the data */);
+        p += snprintf(p, total, header, total - 1, len, len + size + 1 /* include the final \n in the data */);
         CFDataGetBytes(data, CFRangeMake(0, size), (UInt8*)p);
         strcpy(p + size, trailer);
         *ret_size = total;

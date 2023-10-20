@@ -1361,7 +1361,7 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
             if (!len)
             {
                 char name[16];
-                len = sprintf(name, "Key 0x%02x", vkey);
+                len = snprintf(name, sizeof(name), "Key 0x%02x", vkey);
                 len = min(len + 1, size);
                 ascii_to_unicode(buffer, name, len);
                 if (len) buffer[--len] = 0;

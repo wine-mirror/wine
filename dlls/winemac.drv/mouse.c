@@ -187,7 +187,7 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     else
     {
         char buf[16];
-        sprintf(buf, "%hu", info->wResID);
+        snprintf(buf, sizeof(buf), "%hu", info->wResID);
         asciiz_to_unicode(p, buf);
     }
 
