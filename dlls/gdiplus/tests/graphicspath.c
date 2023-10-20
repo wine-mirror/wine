@@ -1883,6 +1883,147 @@ static void test_isvisible(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_is_outline_visible_path_point(void)
+{
+    BOOL result;
+    GpBitmap *bitmap;
+    GpGraphics *graphics = NULL;
+    GpPath *path;
+    GpPen *pen = NULL;
+    GpStatus status;
+    static const int width = 20, height = 20;
+
+    /* Graphics associated with an Image object.*/
+    status = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppRGB, NULL, &bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected the graphics context to be initialized.\n");
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+
+    status = GdipAddPathRectangle(path, 2.0, 0.0, 13.0, 15.0);
+    expect(Ok, status);
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 3.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* With NULL pen */
+    result = 9;
+    status = GdipIsOutlineVisiblePathPoint(path, 0.0, 1.0, NULL, graphics, &result);
+    expect(InvalidParameter, status);
+    expect(9, result);
+
+    /* Without transformation */
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 0.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 1.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 10.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 16.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 17.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+
+    /* Translating */
+    status = GdipTranslateWorldTransform(graphics, 50.0, 50.0, MatrixOrderPrepend);
+    expect(Ok, status);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 10.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 15.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 16.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+
+    /* Scaling */
+    status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, status);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 0.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 1.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    todo_wine expect(FALSE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 2.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 3.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 14.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    todo_wine expect(FALSE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 15.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 16.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+
+    /* Page Unit */
+    GdipResetWorldTransform(graphics);
+    status = GdipSetPageUnit(graphics, UnitMillimeter);
+    expect(Ok, status);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 0.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 1.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 2.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    todo_wine expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 3.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 14.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+    result = FALSE;
+    status = GdipIsOutlineVisiblePathPoint(path, 15.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    todo_wine expect(TRUE, result);
+    result = TRUE;
+    status = GdipIsOutlineVisiblePathPoint(path, 16.0, 1.0, pen, graphics, &result);
+    expect(Ok, status);
+    expect(FALSE, result);
+
+    GdipResetWorldTransform(graphics);
+    GdipDeletePath(path);
+    GdipDeleteGraphics(graphics);
+}
+
 static void test_empty_rect(void)
 {
     GpPath *path;
@@ -1976,6 +2117,7 @@ START_TEST(graphicspath)
     test_widen();
     test_widen_cap();
     test_isvisible();
+    test_is_outline_visible_path_point();
     test_empty_rect();
 
     GdiplusShutdown(gdiplusToken);
