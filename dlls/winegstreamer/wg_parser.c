@@ -461,6 +461,7 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
 {
     const struct wg_parser_stream_notify_qos_params *params = args;
     struct wg_parser_stream *stream = get_stream(params->stream);
+    GstClockTimeDiff diff = params->diff * 100;
     GstClockTime stream_time;
     GstEvent *event;
 
@@ -468,6 +469,8 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
      * file (or other medium), but gst_event_new_qos() expects the timestamp in
      * running time. */
     stream_time = gst_segment_to_running_time(&stream->segment, GST_FORMAT_TIME, params->timestamp * 100);
+    if (diff < (GstClockTimeDiff)-stream_time)
+        diff = -stream_time;
     if (stream_time == -1)
     {
         /* This can happen legitimately if the sample falls outside of the
@@ -478,7 +481,7 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
     }
 
     if (!(event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
-            params->proportion, params->diff * 100, stream_time)))
+            params->proportion, diff, stream_time)))
         GST_ERROR("Failed to create QOS event.\n");
     push_event(stream->my_sink, event);
 
