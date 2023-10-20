@@ -2205,10 +2205,10 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
 {
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
         return S_FALSE;
-    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1Audio))
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1Audio)
+            || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1System))
         return S_OK;
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1Video)
-            || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1System)
             || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1VideoCD))
         FIXME("Unsupported subtype %s.\n", wine_dbgstr_guid(&mt->subtype));
     return S_FALSE;
@@ -2223,8 +2223,28 @@ static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 
 static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
 {
-    if (!create_pin(filter, wg_parser_get_stream(filter->wg_parser, 0), L"Audio"))
-        return FALSE;
+    wg_parser_t parser = filter->wg_parser;
+    unsigned int i, stream_count;
+    wg_parser_stream_t stream;
+    struct wg_format fmt;
+
+    stream_count = wg_parser_get_stream_count(parser);
+    for (i = 0; i < stream_count; ++i)
+    {
+        stream = wg_parser_get_stream(parser, i);
+        wg_parser_stream_get_preferred_format(stream, &fmt);
+        if (fmt.major_type == WG_MAJOR_TYPE_VIDEO_MPEG1)
+        {
+            if (!create_pin(filter, wg_parser_get_stream(parser, i), L"Video"))
+                return FALSE;
+        }
+        else if (fmt.major_type == WG_MAJOR_TYPE_AUDIO_MPEG1)
+        {
+            if (!create_pin(filter, wg_parser_get_stream(parser, i), L"Audio"))
+                return FALSE;
+        }
+        else FIXME("unexpected format %u\n", fmt.major_type);
+    }
 
     return TRUE;
 }
