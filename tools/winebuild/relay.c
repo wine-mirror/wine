@@ -590,7 +590,7 @@ void output_asm_relays16(void)
     output_function_size( "__wine_spec_thunk_text_16" );
 
     /* Declare the return address and data selector variables */
-    output( "\n\t.data\n\t.align %d\n", get_alignment(4) );
+    output( "\n\t.data\n\t.balign 4\n" );
     output( "%s\n\t.long 0\n", asm_globl("CallTo16_DataSelector") );
     output( "%s\n\t.long 0\n", asm_globl("CallTo16_TebSelector") );
 }

@@ -830,7 +830,7 @@ static void output_immediate_imports(void)
 
     output( "\n/* import table */\n" );
     output( "\n\t.data\n" );
-    output( "\t.align %d\n", get_alignment(4) );
+    output( "\t.balign 4\n" );
     output( ".L__wine_spec_imports:\n" );
 
     /* list of dlls */
@@ -851,7 +851,7 @@ static void output_immediate_imports(void)
     output( "\t.long 0\n" );     /* Name */
     output( "\t.long 0\n" );     /* FirstThunk */
 
-    output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\n\t.balign %u\n", get_ptr_size() );
     /* output the names twice, once for OriginalFirstThunk and once for FirstThunk */
     for (i = 0; i < 2; i++)
     {
@@ -880,7 +880,7 @@ static void output_immediate_imports(void)
         {
             struct import_func *func = &import->imports[j];
             if (!func->name) continue;
-            output( "\t.align %d\n", get_alignment(2) );
+            output( "\t.balign 2\n" );
             output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, func->name );
             output( "\t.short %d\n", func->hint );
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
@@ -905,7 +905,7 @@ static void output_immediate_import_thunks(void)
 
     output( "\n/* immediate import thunks */\n\n" );
     output( "\t.text\n" );
-    output( "\t.align %d\n", get_alignment(8) );
+    output( "\t.balign 8\n" );
     output( "%s:\n", asm_name(import_thunks));
 
     pos = 0;
@@ -932,7 +932,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
 
     output( "\n/* delayed imports */\n\n" );
     output( "\t.data\n" );
-    output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\t.balign %u\n", get_ptr_size() );
     output( ".L__wine_spec_delay_imports:\n" );
 
     /* list of dlls */
@@ -998,7 +998,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
         {
             struct import_func *func = &import->imports[j];
             if (!func->name) continue;
-            output( "\t.align %d\n", get_alignment(2) );
+            output( "\t.balign 2\n" );
             output( ".L__wine_delay_data_%s_%s:\n", import->c_name, func->name );
             output( "\t.short %d\n", func->hint );
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
@@ -1018,7 +1018,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
 
     output( "\n/* delayed import thunks */\n\n" );
     output( "\t.text\n" );
-    output( "\t.align %d\n", get_alignment(8) );
+    output( "\t.balign 8\n" );
     output( "%s:\n", asm_name(delayed_import_loaders));
 
     pos = iat_pos = 0;
@@ -1177,7 +1177,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     }
     output_function_size( delayed_import_loaders );
 
-    output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\n\t.balign %u\n", get_ptr_size() );
     output( "%s:\n", asm_name(delayed_import_thunks));
     pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
@@ -1210,13 +1210,13 @@ static void output_external_link_imports( DLLSPEC *spec )
 
     output( "\n/* external link thunks */\n\n" );
     output( "\t.data\n" );
-    output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\t.balign %u\n", get_ptr_size() );
     output( ".L__wine_spec_external_links:\n" );
     for (i = 0; i < ext_link_imports.count; i++)
         output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(ext_link_imports.str[i]) );
 
     output( "\n\t.text\n" );
-    output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\t.balign %u\n", get_ptr_size() );
     output( "%s:\n", asm_name("__wine_spec_external_link_thunks") );
 
     for (i = pos = 0; i < ext_link_imports.count; i++)
@@ -1513,7 +1513,7 @@ void output_syscalls( DLLSPEC *spec )
         break;
     }
     output( "\t.data\n" );
-    output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
+    output( "\t.balign %u\n", get_ptr_size() );
     output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
     output( "\t%s 0\n", get_asm_ptr_keyword() );    /* dispatcher */
     output( "\t.long 0xca110001\n" );               /* version */

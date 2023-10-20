@@ -419,7 +419,7 @@ void output_resources( DLLSPEC *spec )
 
     output( "\n/* resources */\n\n" );
     output( "\t%s\n", get_asm_rsrc_section() );
-    output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( "\t.balign %u\n", get_ptr_size() );
     output( ".L__wine_spec_resources:\n" );
 
     for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
@@ -471,7 +471,7 @@ void output_resources( DLLSPEC *spec )
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
-        output( "\n\t.align %d\n", get_alignment(4) );
+        output( "\n\t.balign 4\n" );
         output( ".L__wine_spec_res_%d:\n", i );
         output( "\t.incbin \"%s\",%d,%d\n", res->input_name, res->input_offset, res->data_size );
     }

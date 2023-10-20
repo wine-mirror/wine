@@ -543,7 +543,7 @@ static void output_module16( DLLSPEC *spec )
 
     output( "\n/* module data */\n\n" );
     output( "\t.data\n" );
-    output( "\t.align %d\n", get_alignment(16) );
+    output( "\t.balign 16\n" );
     output( ".L__wine_spec_dos_header:\n" );
     output( "\t.short 0x5a4d\n" );                                         /* e_magic */
     output( "\t.short 0\n" );                                              /* e_cblp */
@@ -567,7 +567,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), fakedll_signature );
-    output( "\t.align %d\n", get_alignment(16) );
+    output( "\t.balign 16\n" );
     output( ".L__wine_spec_ne_header:\n" );
     output( "\t.short 0x454e\n" );                                         /* ne_magic */
     output( "\t.byte 0\n" );                                               /* ne_ver */
@@ -626,7 +626,7 @@ static void output_module16( DLLSPEC *spec )
 
     /* resident names table */
 
-    output( "\n\t.align %d\n", get_alignment(2) );
+    output( "\n\t.balign 2\n" );
     output( ".L__wine_spec_ne_restab:\n" );
     output_resident_name( spec->dll_name, 0 );
     for (i = 1; i <= spec->limit; i++)
@@ -640,7 +640,7 @@ static void output_module16( DLLSPEC *spec )
 
     /* imported names table */
 
-    output( "\n\t.align %d\n", get_alignment(2) );
+    output( "\n\t.balign 2\n" );
     output( ".L__wine_spec_ne_modtab:\n" );
     output( ".L__wine_spec_ne_imptab:\n" );
     output( "\t.byte 0,0\n" );
@@ -653,7 +653,7 @@ static void output_module16( DLLSPEC *spec )
 
     /* code segment */
 
-    output( "\n\t.align %d\n", get_alignment(2) );
+    output( "\n\t.balign 2\n" );
     output( ".L__wine_spec_code_segment:\n" );
 
     for ( i = 0; i < nb_funcs; i++ )
