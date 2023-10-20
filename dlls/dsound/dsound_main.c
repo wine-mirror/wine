@@ -73,8 +73,11 @@ static CRITICAL_SECTION_DEBUG DSOUND_renderers_lock_debug =
 };
 CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 0, 0, 0 };
 
-GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
-GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
+/* Some applications expect the GUID pointers emitted from DirectSoundCaptureEnumerate to remain
+ * valid at least until the next time DirectSoundCaptureEnumerate is called, so we store them in
+ * these dynamically allocated arrays. */
+GUID *DSOUND_renderer_guids;
+GUID *DSOUND_capture_guids;
 
 const WCHAR wine_vxd_drv[] = L"winemm.vxd";
 
@@ -461,10 +464,18 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         return DS_OK;
     }
 
+    free(guids);
     if(count == 0){
         IMMDeviceCollection_Release(coll);
         release_mmdevenum(devenum, init_hr);
+        guids = NULL;
         return DS_OK;
+    }
+    guids = malloc((count + 1) * sizeof(GUID));
+    if(!guids){
+        IMMDeviceCollection_Release(coll);
+        release_mmdevenum(devenum, init_hr);
+        return E_OUTOFMEMORY;
     }
 
     TRACE("Calling back with NULL (Primary Sound Driver)\n");

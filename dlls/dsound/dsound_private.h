@@ -255,8 +255,8 @@ HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **
 extern CRITICAL_SECTION DSOUND_renderers_lock;
 extern struct list DSOUND_renderers;
 
-extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
-extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
+extern GUID *DSOUND_renderer_guids;
+extern GUID *DSOUND_capture_guids;
 
 extern const WCHAR wine_vxd_drv[];
 

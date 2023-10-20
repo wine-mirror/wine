@@ -60,12 +60,6 @@ typedef HWAVEOUT *LPHWAVEOUT;
 
 typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 
-#define MAXWAVEDRIVERS	10
-#define MAXMIDIDRIVERS	10
-#define MAXAUXDRIVERS	10
-#define MAXMCIDRIVERS	32
-#define MAXMIXERDRIVERS	10
-
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
 #define MAXERRORLENGTH   256    /* max error text length (including NULL) */
 #define MAX_JOYSTICKOEMVXDNAME	260
