@@ -1964,7 +1964,7 @@ static void test_is_outline_visible_path_point(void)
     result = TRUE;
     status = GdipIsOutlineVisiblePathPoint(path, 1.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
-    todo_wine expect(FALSE, result);
+    expect(FALSE, result);
     result = FALSE;
     status = GdipIsOutlineVisiblePathPoint(path, 2.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
@@ -1976,7 +1976,7 @@ static void test_is_outline_visible_path_point(void)
     result = TRUE;
     status = GdipIsOutlineVisiblePathPoint(path, 14.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
-    todo_wine expect(FALSE, result);
+    expect(FALSE, result);
     result = FALSE;
     status = GdipIsOutlineVisiblePathPoint(path, 15.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
@@ -2001,7 +2001,7 @@ static void test_is_outline_visible_path_point(void)
     result = FALSE;
     status = GdipIsOutlineVisiblePathPoint(path, 2.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
-    todo_wine expect(TRUE, result);
+    expect(TRUE, result);
     result = TRUE;
     status = GdipIsOutlineVisiblePathPoint(path, 3.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
@@ -2013,7 +2013,7 @@ static void test_is_outline_visible_path_point(void)
     result = FALSE;
     status = GdipIsOutlineVisiblePathPoint(path, 15.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
-    todo_wine expect(TRUE, result);
+    expect(TRUE, result);
     result = TRUE;
     status = GdipIsOutlineVisiblePathPoint(path, 16.0, 1.0, pen, graphics, &result);
     expect(Ok, status);
