@@ -6003,12 +6003,13 @@ static void test_document_close(void)
 {
     IHTMLPrivateWindow *priv_window;
     IHTMLDocument2 *doc, *doc_node;
+    IHTMLLocation *location;
     IHTMLDocument3 *doc3;
     IHTMLElement *elem;
     DWORD cookie;
+    BSTR bstr, bstr2;
     HRESULT hres;
     VARIANT v;
-    BSTR bstr;
     LONG ref;
     MSG msg;
 
@@ -6091,6 +6092,24 @@ static void test_document_close(void)
 
     IHTMLDocument2_Release(doc_node);
     IHTMLDocument2_Release(doc);
+
+    bstr = SysAllocString(L"about:blank");
+    hres = IHTMLWindow2_get_location(window, &location);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+    hres = IHTMLLocation_put_href(location, bstr);
+    ok(hres == E_UNEXPECTED || broken(hres == E_ABORT), "put_href returned: %08lx\n", hres);
+    IHTMLLocation_Release(location);
+
+    V_VT(&v) = VT_EMPTY;
+    bstr2 = SysAllocString(L"");
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLPrivateWindow, (void**)&priv_window);
+    ok(hres == S_OK, "Could not get IHTMLPrivateWindow) interface: %08lx\n", hres);
+    hres = IHTMLPrivateWindow_SuperNavigate(priv_window, bstr, bstr2, NULL, NULL, &v, &v, 0);
+    ok(hres == E_FAIL, "SuperNavigate returned: %08lx\n", hres);
+    IHTMLPrivateWindow_Release(priv_window);
+    SysFreeString(bstr2);
+    SysFreeString(bstr);
+
     IHTMLWindow2_Release(window);
     window = NULL;
 

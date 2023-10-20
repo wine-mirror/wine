@@ -2679,6 +2679,9 @@ HRESULT navigate_url(HTMLOuterWindow *window, const WCHAR *new_url, IUri *base_u
     BSTR display_uri;
     HRESULT hres;
 
+    if(!window->browser)
+        return E_UNEXPECTED;
+
     if(new_url && base_uri)
         hres = CoInternetCombineUrlEx(base_uri, new_url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
                 &nav_uri, 0);

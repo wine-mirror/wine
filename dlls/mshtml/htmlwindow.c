@@ -2832,7 +2832,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         FIXME("unimplemented flags %lx\n", flags & ~2);
 
     if(!window || !window->browser)
-        return E_UNEXPECTED;
+        return E_FAIL;
 
     if(window->browser->doc->hostui) {
         hres = IDocHostUIHandler_TranslateUrl(window->browser->doc->hostui, 0, url, &translated_url);
