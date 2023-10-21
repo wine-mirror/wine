@@ -2228,13 +2228,13 @@ static void test_query_process_debug_port_custom_dacl(int argc, char **argv)
 
     if (!pDbgUiSetThreadDebugObject)
     {
-        skip("DbgUiGetThreadDebugObject not found\n");
+        win_skip("DbgUiGetThreadDebugObject not found\n");
         return;
     }
 
     if (!pDbgUiGetThreadDebugObject)
     {
-        skip("DbgUiSetThreadDebugObject not found\n");
+        win_skip("DbgUiSetThreadDebugObject not found\n");
         return;
     }
 
