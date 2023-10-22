@@ -1706,7 +1706,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         DMUS_NOTE_PMSG *note = (DMUS_NOTE_PMSG *)msg;
 
         msg->mtTime += note->nOffset;
-        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
                 MIDI_NOTE_ON, note->bMidiValue, note->bVelocity)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
