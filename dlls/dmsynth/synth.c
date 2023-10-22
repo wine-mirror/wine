@@ -46,6 +46,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 #define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
 
+/* from src/rvoice/fluid_rvoice.h */
+#define FLUID_LOOP_DURING_RELEASE 1
+#define FLUID_LOOP_UNTIL_RELEASE  3
+
 static const char *debugstr_conn_src(UINT src)
 {
     switch (src)
@@ -1747,11 +1751,6 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 
         fluid_sample_set_sound_data(fluid_sample, wave->samples, NULL, wave->sample_count,
                 wave->format.nSamplesPerSec, TRUE);
-        if (region->wave_sample.cSampleLoops)
-        {
-            WLOOP *loop = region->wave_loops;
-            fluid_sample_set_loop(fluid_sample, loop->ulStart, loop->ulStart + loop->ulLength);
-        }
         fluid_sample_set_pitch(fluid_sample, region->wave_sample.usUnityNote, region->wave_sample.sFineTune);
 
         if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, fluid_sample, chan, key, vel)))
@@ -1762,6 +1761,20 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         }
 
         set_default_voice_connections(fluid_voice);
+        if (region->wave_sample.cSampleLoops)
+        {
+            WLOOP *loop = region->wave_loops;
+
+            if (loop->ulType == WLOOP_TYPE_FORWARD)
+                fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_DURING_RELEASE);
+            else if (loop->ulType == WLOOP_TYPE_RELEASE)
+                fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_UNTIL_RELEASE);
+            else
+                FIXME("Unsupported loop type %lu\n", loop->ulType);
+
+            fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, loop->ulStart);
+            fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, loop->ulStart + loop->ulLength);
+        }
         LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
             add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
         LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
