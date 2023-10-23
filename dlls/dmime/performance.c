@@ -21,6 +21,7 @@
 #include "dmime_private.h"
 #include "dmusic_midi.h"
 #include "wine/rbtree.h"
+#include <math.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
@@ -677,20 +678,39 @@ done:
 static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 *iface,
         MUSIC_TIME music_time, REFERENCE_TIME *time)
 {
-    static int once;
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    MUSIC_TIME tempo_time, next = 0;
+    DMUS_TEMPO_PARAM param;
+    double tempo, duration;
+    HRESULT hr;
 
-    if (!once++) FIXME("(%p, %ld, %p): semi-stub\n", This, music_time, time);
-    else TRACE("(%p, %ld, %p)\n", This, music_time, time);
+    TRACE("(%p, %ld, %p)\n", This, music_time, time);
 
     if (!time) return E_POINTER;
     *time = 0;
 
     if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
 
-    /* FIXME: This should be (music_time * 60) / (DMUS_PPQ * tempo)
-     * but it gives innacurate results */
-    *time = This->init_time + (music_time * 6510);
+    EnterCriticalSection(&This->safe);
+
+    for (tempo = 120.0, duration = tempo_time = 0; music_time > 0; tempo_time += next)
+    {
+        if (FAILED(hr = IDirectMusicPerformance_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
+                tempo_time, &next, &param)))
+            break;
+
+        if (!next) next = music_time;
+        else next = min(next, music_time);
+
+        if (param.mtTime <= 0) tempo = param.dblTempo;
+        duration += (600000000.0 * next) / (tempo * DMUS_PPQ);
+        music_time -= next;
+    }
+
+    duration += (600000000.0 * music_time) / (tempo * DMUS_PPQ);
+    *time = This->init_time + duration;
+
+    LeaveCriticalSection(&This->safe);
 
     return S_OK;
 }
@@ -698,20 +718,38 @@ static HRESULT WINAPI performance_MusicToReferenceTime(IDirectMusicPerformance8 
 static HRESULT WINAPI performance_ReferenceToMusicTime(IDirectMusicPerformance8 *iface,
         REFERENCE_TIME time, MUSIC_TIME *music_time)
 {
-    static int once;
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    MUSIC_TIME tempo_time, next = 0;
+    double tempo, duration, step;
+    DMUS_TEMPO_PARAM param;
+    HRESULT hr;
 
-    if (!once++) FIXME("(%p, %I64d, %p): semi-stub\n", This, time, music_time);
-    else TRACE("(%p, %I64d, %p)\n", This, time, music_time);
+    TRACE("(%p, %I64d, %p)\n", This, time, music_time);
 
     if (!music_time) return E_POINTER;
     *music_time = 0;
 
     if (!This->master_clock) return DMUS_E_NO_MASTER_CLOCK;
 
-    /* FIXME: This should be (time * DMUS_PPQ * tempo) / 60
-     * but it gives innacurate results */
-    *music_time = (time - This->init_time) / 6510;
+    EnterCriticalSection(&This->safe);
+
+    duration = time - This->init_time;
+
+    for (tempo = 120.0, tempo_time = 0; duration > 0; tempo_time += next, duration -= step)
+    {
+        if (FAILED(hr = IDirectMusicPerformance_GetParam(iface, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS,
+                tempo_time, &next, &param)))
+            break;
+
+        if (param.mtTime <= 0) tempo = param.dblTempo;
+        step = (600000000.0 * next) / (tempo * DMUS_PPQ);
+        if (!next || duration < step) break;
+        *music_time = *music_time + next;
+    }
+
+    *music_time = *music_time + round((duration * tempo * DMUS_PPQ) / 600000000.0);
+
+    LeaveCriticalSection(&This->safe);
 
     return S_OK;
 }
@@ -1085,13 +1123,26 @@ static HRESULT WINAPI performance_Invalidate(IDirectMusicPerformance8 *iface, MU
 	return S_OK;
 }
 
-static HRESULT WINAPI performance_GetParam(IDirectMusicPerformance8 *iface, REFGUID rguidType,
-        DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext, void *pParam)
+static HRESULT WINAPI performance_GetParam(IDirectMusicPerformance8 *iface, REFGUID type,
+        DWORD group, DWORD index, MUSIC_TIME music_time, MUSIC_TIME *next_time, void *param)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr;
 
-	FIXME("(%p, %s, %ld, %ld, %ld, %p, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pmtNext, pParam);
-	return S_OK;
+    TRACE("(%p, %s, %ld, %ld, %ld, %p, %p)\n", This, debugstr_dmguid(type), group, index, music_time, next_time, param);
+
+    if (next_time) *next_time = 0;
+
+    if (!This->control_segment) hr = DMUS_E_NOT_FOUND;
+    else hr = IDirectMusicSegment_GetParam(This->control_segment, type, group, index, music_time, next_time, param);
+
+    if (FAILED(hr))
+    {
+        if (!This->primary_segment) hr = DMUS_E_NOT_FOUND;
+        else hr = IDirectMusicSegment_GetParam(This->primary_segment, type, group, index, music_time, next_time, param);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_SetParam(IDirectMusicPerformance8 *iface, REFGUID rguidType,

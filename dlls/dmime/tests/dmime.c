@@ -2735,11 +2735,11 @@ static void test_performance_time(void)
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(1000, 120));
+    check_music_time(time - init_time, scale_music_time(1000, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 2000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(2000, 120));
+    check_music_time(time - init_time, scale_music_time(2000, 120));
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time, &music_time);
@@ -4098,19 +4098,19 @@ static void test_tempo_track_play(void)
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 100, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(100, 120));
+    check_music_time(time - init_time, scale_music_time(100, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 150, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(50, 80));
+    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(50, 80));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 200, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(100, 80));
+    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(100, 80));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 400, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(200, 80) + scale_music_time(100, 20));
+    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(200, 80) + scale_music_time(100, 20));
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time, &music_time);
@@ -4120,15 +4120,15 @@ static void test_tempo_track_play(void)
     time = scale_music_time(100, 120) + scale_music_time(50, 80);
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time + time, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 150, "got %ld\n", music_time);
+    ok(music_time == 150, "got %ld\n", music_time);
     music_time = 0xdeadbeef;
     time = scale_music_time(100, 120) + scale_music_time(200, 80) + scale_music_time(100, 20);
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time + time, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(music_time == 400, "got %ld\n", music_time);
+    ok(music_time == 400, "got %ld\n", music_time);
 
 
-    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&tempo);
+    ret = test_tool_wait_message(tool, 2000, (DMUS_PMSG **)&tempo);
     ok(!ret, "got %#lx\n", ret);
     todo_wine ok(tempo->dwType == DMUS_PMSGT_TEMPO, "got %#lx\n", tempo->dwType);
     if (tempo->dwType != DMUS_PMSGT_TEMPO) goto skip_tests;
