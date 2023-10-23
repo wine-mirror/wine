@@ -344,6 +344,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     resolv_query,
 };
 
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
 #ifdef _WIN64
 
 typedef ULONG PTR32;
@@ -414,6 +416,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     resolv_set_serverlist,
     wow64_resolv_query,
 };
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
 
 #endif  /* _WIN64 */
 

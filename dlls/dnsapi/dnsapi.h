@@ -127,6 +127,7 @@ enum unix_funcs
     unix_get_serverlist,
     unix_set_serverlist,
     unix_query,
+    unix_funcs_count
 };
 
 #define RESOLV_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
