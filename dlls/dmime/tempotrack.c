@@ -140,42 +140,32 @@ static HRESULT WINAPI tempo_track_Play(IDirectMusicTrack8 *iface, void *pStateDa
   return S_OK;
 }
 
-static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
-        MUSIC_TIME *next, void *param)
+static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME music_time,
+        MUSIC_TIME *next_time, void *param)
 {
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-    DMUS_TEMPO_PARAM *prm = param;
-    unsigned int i;
+    DMUS_IO_TEMPO_ITEM *item = This->items, *end = item + This->count;
+    DMUS_TEMPO_PARAM *tempo = param;
 
-    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), music_time, next_time, param);
 
-    if (!param)
-        return E_POINTER;
-    if (!IsEqualGUID(type, &GUID_TempoParam))
-        return DMUS_E_GET_UNSUPPORTED;
+    if (!param) return E_POINTER;
+    if (!IsEqualGUID(type, &GUID_TempoParam)) return DMUS_E_GET_UNSUPPORTED;
+    if (item == end) return DMUS_E_NOT_FOUND;
 
-    FIXME("Partial support for GUID_TempoParam\n");
+    tempo->mtTime = item->lTime - music_time;
+    tempo->dblTempo = item->dblTempo;
 
-    if (next)
-        *next = 0;
-    prm->mtTime = 0;
-    prm->dblTempo = 0.123456;
-
-    for (i = 0; i < This->count; i++) {
-        if (This->items[i].lTime <= time) {
-            MUSIC_TIME ofs = This->items[i].lTime - time;
-            if (ofs > prm->mtTime) {
-                prm->mtTime = ofs;
-                prm->dblTempo = This->items[i].dblTempo;
-            }
-            if (next && This->items[i].lTime > time && This->items[i].lTime < *next)
-                *next = This->items[i].lTime;
-        }
+    for (; item < end; item++)
+    {
+        MUSIC_TIME time = item->lTime - music_time;
+        if (next_time) *next_time = item->lTime - music_time;
+        if (time > 0) break;
+        tempo->mtTime = time;
+        tempo->dblTempo = item->dblTempo;
     }
 
-    if (0.123456 == prm->dblTempo)
-        return DMUS_E_NOT_FOUND;
-
+    if (next_time && item == end) *next_time = 0;
     return S_OK;
 }
 
