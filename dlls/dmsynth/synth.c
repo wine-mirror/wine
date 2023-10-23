@@ -1080,6 +1080,9 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
         case MIDI_PROGRAM_CHANGE:
             fluid_synth_program_change(This->fluid_synth, chan, event->midi[1]);
             break;
+        case MIDI_PITCH_BEND_CHANGE:
+            fluid_synth_pitch_bend(This->fluid_synth, chan, event->midi[1] | (event->midi[2] << 7));
+            break;
         default:
             FIXME("MIDI event not implemented: %#x %#x %#x\n", event->midi[0], event->midi[1], event->midi[2]);
             break;
