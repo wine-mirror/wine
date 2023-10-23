@@ -3971,11 +3971,6 @@ static void test_segment_state(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
 
-    /* This might be timing dependent and if PlaySegment is already
-     * late, the tracks are played synchronously and right away.
-     */
-    todo_wine check_track_state(track, playing, FALSE);
-
     ret = test_track_wait_playing(track, 50);
     ok(ret == 0, "got %#lx\n", ret);
 
