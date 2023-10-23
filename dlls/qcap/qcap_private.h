@@ -141,6 +141,7 @@ enum unix_funcs
     unix_get_prop,
     unix_set_prop,
     unix_read_frame,
+    unix_funcs_count
 };
 
 #endif
