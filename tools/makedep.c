@@ -3898,7 +3898,7 @@ static FILE *create_temp_file( const char *orig )
 
     for (i = 0; i < 100; i++)
     {
-        sprintf( name, "%s.tmp%08x", orig, id );
+        snprintf( name, strlen(orig) + 13, "%s.tmp%08x", orig, id );
         if ((fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0666 )) != -1)
         {
             ret = fdopen( fd, "w" );
