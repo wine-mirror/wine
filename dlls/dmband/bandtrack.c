@@ -174,7 +174,6 @@ static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_dat
 
     if (start_time != 0) FIXME("start_time %ld not implemented\n", start_time);
     if (end_time != -1) FIXME("end_time %ld not implemented\n", end_time);
-    if (time_offset != 0) FIXME("time_offset %ld not implemented\n", time_offset);
     if (segment_flags) FIXME("segment_flags %#lx not implemented\n", segment_flags);
     if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
 
@@ -184,8 +183,9 @@ static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_dat
 
     LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
     {
-        if (FAILED(hr = band_send_messages(entry->band, performance, graph,
-                entry->head.lBandTimeLogical, track_id)))
+        MUSIC_TIME music_time = entry->head.lBandTimeLogical;
+        if (music_time != -1) music_time += time_offset;
+        if (FAILED(hr = band_send_messages(entry->band, performance, graph, music_time, track_id)))
             break;
     }
 
