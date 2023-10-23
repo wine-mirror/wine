@@ -1772,8 +1772,11 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
             else
                 FIXME("Unsupported loop type %lu\n", loop->ulType);
 
-            fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, loop->ulStart);
-            fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, loop->ulStart + loop->ulLength);
+            /* When copy_data is TRUE, fluid_sample_set_sound_data() adds
+             * 8-frame padding around the sample data. Offset the loop points
+             * to compensate for this. */
+            fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, 8 + loop->ulStart);
+            fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, 8 + loop->ulStart + loop->ulLength);
         }
         LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
             add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
