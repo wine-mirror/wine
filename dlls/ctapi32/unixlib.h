@@ -60,4 +60,5 @@ enum ctapi_funcs
     unix_ct_init,
     unix_ct_data,
     unix_ct_close,
+    unix_funcs_count
 };
