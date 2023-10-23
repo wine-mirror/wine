@@ -3722,7 +3722,10 @@ static void test_band_track_play(void)
             &IID_IDirectMusicLoader8, (void **)&loader);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicLoader_SetObject(loader, &desc);
-    ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == DMUS_E_LOADER_FAILEDOPEN)
+        skip("Failed to open gm.dls, missing system SoundFont?\n");
+    else
+        ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = test_loader_stream_create(stream, loader, &loader_stream);
     ok(hr == S_OK, "got %#lx\n", hr);
