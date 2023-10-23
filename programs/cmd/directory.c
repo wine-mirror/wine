@@ -937,6 +937,7 @@ void WCMD_directory (WCHAR *args)
       if (lastDrive != '?') {
         trailerReqd = FALSE;
         WCMD_dir_trailer(prevEntry->dirName);
+        byte_total = file_total = dir_total = 0;
       }
 
       lastDrive = towupper(thisEntry->dirName[0]);
