@@ -195,6 +195,7 @@ enum cups_funcs
     unix_start_doc,
     unix_write_doc,
     unix_end_doc,
+    unix_funcs_count
 };
 
 #endif /* __WINE_LOCALSPL_PRIVATE__ */
