@@ -379,4 +379,5 @@ enum pcap_funcs
     unix_tstamp_type_name_to_val,
     unix_tstamp_type_val_to_description,
     unix_tstamp_type_val_to_name,
+    unix_funcs_count
 };
