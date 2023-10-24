@@ -4333,9 +4333,11 @@ static void shader_glsl_to_int(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
 
     if (mask_size > 1)
-        shader_addline(buffer, "ivec%u(max(%s, vec%u(-2147483648.0))));\n", mask_size, src_param.param_str, mask_size);
+        shader_addline(buffer, "mix(ivec%u(max(%s, vec%u(-2147483648.0))), ivec%u(0x7fffffff), greaterThanEqual(%s, vec%u(2147483648.0))));\n",
+                mask_size, src_param.param_str, mask_size, mask_size, src_param.param_str, mask_size);
     else
-        shader_addline(buffer, "int(max(%s, -2147483648.0)));\n", src_param.param_str);
+        shader_addline(buffer, "mix(int(max(%s, -2147483648.0)), 0x7fffffff, %s >= 2147483648.0));\n",
+                src_param.param_str, src_param.param_str);
 }
 
 static void shader_glsl_to_uint(const struct wined3d_shader_instruction *ins)
