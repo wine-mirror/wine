@@ -13479,9 +13479,9 @@ static void test_instanced_draw(void)
         {"color",    0, DXGI_FORMAT_R8_UNORM,           1, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 1},
         {"color",    1, DXGI_FORMAT_R8_UNORM,           2, D3D11_APPEND_ALIGNED_ELEMENT,
-                D3D10_INPUT_PER_INSTANCE_DATA, 0},
+                D3D11_INPUT_PER_INSTANCE_DATA, 0},
         {"color",    2, DXGI_FORMAT_R8_UNORM,           3, D3D11_APPEND_ALIGNED_ELEMENT,
-                D3D10_INPUT_PER_INSTANCE_DATA, 2},
+                D3D11_INPUT_PER_INSTANCE_DATA, 2},
         {"v_offset", 0, DXGI_FORMAT_R32_FLOAT,          1, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 1},
     };
