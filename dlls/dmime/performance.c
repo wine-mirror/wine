@@ -1196,7 +1196,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
         return hr;
-    if (FAILED(hr = segment_state_create(segment, start_time, (IDirectMusicPerformance *)iface, &state)))
+    if (FAILED(hr = segment_state_create(segment, start_time, iface, &state)))
     {
         IDirectMusicSegment_Release(segment);
         return hr;
@@ -1213,7 +1213,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = performance_send_dirty_pmsg(This, start_time);
 
     if (SUCCEEDED(hr))
-        hr = segment_state_play(state, (IDirectMusicPerformance *)iface);
+        hr = segment_state_play(state, iface);
 
     if (SUCCEEDED(hr))
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
@@ -1767,7 +1767,8 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)
                 && notif->dwNotificationOption == DMUS_NOTIFICATION_SEGEND)
         {
-            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser, performance)))
+            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser,
+                    (IDirectMusicPerformance8 *)performance)))
                 WARN("Failed to end segment state %p, hr %#lx\n", notif->punkUser, hr);
         }
 
