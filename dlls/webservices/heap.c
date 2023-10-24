@@ -320,7 +320,7 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
 }
 
 #define XML_BUFFER_INITIAL_ALLOCATED_SIZE 256
-struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap, SIZE_T size, WS_XML_WRITER_ENCODING_TYPE encoding, WS_CHARSET charset,
+struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap, SIZE_T size, unsigned int encoding, WS_CHARSET charset,
                              const WS_XML_DICTIONARY *dict_static, WS_XML_DICTIONARY *dict )
 {
     struct xmlbuf *ret;

@@ -27,7 +27,7 @@ struct xmlbuf
     WS_HEAP                     *heap;
     WS_BYTES                     bytes;
     SIZE_T                       size;
-    WS_XML_WRITER_ENCODING_TYPE  encoding;
+    unsigned int                 encoding;
     WS_CHARSET                   charset;
     const WS_XML_DICTIONARY     *dict_static;
     WS_XML_DICTIONARY           *dict;
@@ -38,7 +38,7 @@ void *ws_alloc_zero( WS_HEAP *, SIZE_T );
 void *ws_realloc( WS_HEAP *, void *, SIZE_T, SIZE_T );
 void *ws_realloc_zero( WS_HEAP *, void *, SIZE_T, SIZE_T );
 void ws_free( WS_HEAP *, void *, SIZE_T );
-struct xmlbuf *alloc_xmlbuf( WS_HEAP *, SIZE_T, WS_XML_WRITER_ENCODING_TYPE, WS_CHARSET,
+struct xmlbuf *alloc_xmlbuf( WS_HEAP *, SIZE_T, unsigned int, WS_CHARSET,
                              const WS_XML_DICTIONARY *, WS_XML_DICTIONARY * );
 void free_xmlbuf( struct xmlbuf * );
 
