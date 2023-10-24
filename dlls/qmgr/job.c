@@ -831,7 +831,8 @@ static HRESULT WINAPI BackgroundCopyJob_RemoveCredentials(
 
     EnterCriticalSection(&job->cs);
 
-    new_cred->Target = new_cred->Scheme = 0;
+    new_cred->Target = 0;
+    new_cred->Scheme = 0;
     free(new_cred->Credentials.Basic.UserName);
     new_cred->Credentials.Basic.UserName = NULL;
     free(new_cred->Credentials.Basic.Password);
