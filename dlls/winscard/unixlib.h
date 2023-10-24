@@ -184,4 +184,5 @@ enum winscard_funcs
     unix_scard_control,
     unix_scard_get_attrib,
     unix_scard_set_attrib,
+    unix_funcs_count
 };
