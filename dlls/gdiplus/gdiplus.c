@@ -36,7 +36,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 static const REAL mm_per_inch = 25.4;
+static const REAL inch_per_mm = 1.0 / 25.4;
 static const REAL point_per_inch = 72.0;
+static const REAL inch_per_point = 1.0 / 72.0;
 
 static Status WINAPI NotificationHook(ULONG_PTR *token)
 {
@@ -333,17 +335,17 @@ REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi, BOOL printer_display)
         return units;
     case UnitDisplay:
         if (printer_display)
-            return units * dpi / 100.0;
+            return units * dpi * 0.01f;
         else
             return units;
     case UnitPoint:
-        return units * dpi / point_per_inch;
+        return units * dpi * inch_per_point;
     case UnitInch:
         return units * dpi;
     case UnitDocument:
-        return units * dpi / 300.0; /* Per MSDN */
+        return units * dpi * (1.0f / 300.0f); /* Per MSDN */
     case UnitMillimeter:
-        return units * dpi / mm_per_inch;
+        return units * dpi * inch_per_mm;
     default:
         FIXME("Unhandled unit type: %d\n", unit);
         return 0;
