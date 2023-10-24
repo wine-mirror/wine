@@ -134,6 +134,9 @@ struct wined3d_settings wined3d_settings =
 
 enum wined3d_renderer CDECL wined3d_get_renderer(void)
 {
+    if (wined3d_settings.renderer == WINED3D_RENDERER_AUTO)
+        return WINED3D_RENDERER_OPENGL;
+
     return wined3d_settings.renderer;
 }
 
@@ -498,9 +501,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     }
 
     vkd3d_set_log_callback(vkd3d_log_callback);
-
-    if (wined3d_settings.renderer == WINED3D_RENDERER_AUTO)
-        wined3d_settings.renderer = WINED3D_RENDERER_OPENGL;
 
     return TRUE;
 }
