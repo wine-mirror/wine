@@ -93,6 +93,7 @@ enum session_state
     SESSION_STATE_STARTING_SOURCES,
     SESSION_STATE_PREROLLING_SINKS,
     SESSION_STATE_STARTING_SINKS,
+    SESSION_STATE_RESTARTING_SOURCES,
     SESSION_STATE_STARTED,
     SESSION_STATE_PAUSING_SINKS,
     SESSION_STATE_PAUSING_SOURCES,
@@ -929,6 +930,7 @@ static void session_start(struct media_session *session, const GUID *time_format
 {
     struct media_source *source;
     struct topo_node *topo_node;
+    MFTIME duration;
     HRESULT hr;
     UINT i;
 
@@ -981,8 +983,36 @@ static void session_start(struct media_session *session, const GUID *time_format
             session->state = SESSION_STATE_STARTING_SOURCES;
             break;
         case SESSION_STATE_STARTED:
-            FIXME("Seeking is not implemented.\n");
-            session_command_complete(session);
+            /* Check for invalid positions */
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+            {
+                hr = IMFPresentationDescriptor_GetUINT64(source->pd, &MF_PD_DURATION, (UINT64 *)&duration);
+                if (SUCCEEDED(hr) && IsEqualGUID(time_format, &GUID_NULL)
+                        && start_position->vt == VT_I8 && start_position->hVal.QuadPart > duration)
+                {
+                    WARN("Start position %s out of range, hr %#lx.\n", wine_dbgstr_longlong(start_position->hVal.QuadPart), hr);
+                    session_command_complete_with_event(session, MESessionStarted, MF_E_INVALID_POSITION, NULL);
+                    return;
+                }
+            }
+
+            /* Stop sources */
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+            {
+                if (FAILED(hr = IMFMediaSource_Stop(source->source)))
+                {
+                    WARN("Failed to stop media source %p, hr %#lx.\n", source->source, hr);
+                    session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                    return;
+                }
+            }
+
+            session->presentation.time_format = *time_format;
+            session->presentation.start_position.vt = VT_EMPTY;
+            PropVariantCopy(&session->presentation.start_position, start_position);
+
+            /* SESSION_STATE_STARTED -> SESSION_STATE_RESTARTING_SOURCES -> SESSION_STATE_STARTED */
+            session->state = SESSION_STATE_RESTARTING_SOURCES;
             break;
         default:
             session_command_complete_with_event(session, MESessionStarted, MF_E_INVALIDREQUEST, NULL);
@@ -2888,6 +2918,7 @@ static BOOL session_set_node_object_state(struct media_session *session, IUnknow
 static void session_set_source_object_state(struct media_session *session, IUnknown *object,
         MediaEventType event_type)
 {
+    struct media_source *source;
     IMFStreamSink *stream_sink;
     struct media_source *src;
     struct media_sink *sink;
@@ -2939,6 +2970,15 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
 
             session_set_presentation_clock(session);
 
+            /* If sinks are already started, start session immediately. This can happen when doing a
+             * seek from SESSION_STATE_STARTED */
+            if (session_is_output_nodes_state(session, OBJ_STATE_STARTED)
+                    && SUCCEEDED(session_start_clock(session)))
+            {
+                session_set_started(session);
+                return;
+            }
+
             if (session->presentation.flags & SESSION_FLAG_NEEDS_PREROLL)
             {
                 MFTIME preroll_time = 0;
@@ -2976,6 +3016,25 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             else if (SUCCEEDED(session_start_clock(session)))
                 session->state = SESSION_STATE_STARTING_SINKS;
 
+            break;
+        case SESSION_STATE_RESTARTING_SOURCES:
+            if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
+                break;
+
+            session_flush_nodes(session);
+
+            /* Start sources */
+            LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+            {
+                if (FAILED(hr = IMFMediaSource_Start(source->source, source->pd,
+                        &session->presentation.time_format, &session->presentation.start_position)))
+                {
+                    WARN("Failed to start media source %p, hr %#lx.\n", source->source, hr);
+                    session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                    return;
+                }
+            }
+            session->state = SESSION_STATE_STARTING_SOURCES;
             break;
         case SESSION_STATE_PAUSING_SOURCES:
             if (!session_is_source_nodes_state(session, OBJ_STATE_PAUSED))
