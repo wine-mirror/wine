@@ -243,7 +243,7 @@ struct d3d8_texture
     IDirect3DBaseTexture8 IDirect3DBaseTexture8_iface;
     struct d3d8_resource resource;
     struct wined3d_texture *wined3d_texture, *draw_texture;
-    IDirect3DDevice8 *parent_device;
+    struct d3d8_device *parent_device;
     struct list rtv_list;
 };
 
