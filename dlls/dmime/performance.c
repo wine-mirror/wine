@@ -88,6 +88,19 @@ static inline struct message *message_from_DMUS_PMSG(DMUS_PMSG *msg)
     return msg ? CONTAINING_RECORD(msg, struct message, msg) : NULL;
 }
 
+static void performance_queue_message(struct performance *This, struct message *message, struct list *hint)
+{
+    struct message *prev;
+
+    LIST_FOR_EACH_ENTRY_REV(prev, hint ? hint : &This->messages, struct message, entry)
+    {
+        if (&prev->entry == &This->messages) break;
+        if (prev->msg.rtTime <= message->msg.rtTime) break;
+    }
+
+    list_add_after(&prev->entry, &message->entry);
+}
+
 static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *msg, DWORD *timeout)
 {
     static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
@@ -133,8 +146,8 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
 static DWORD WINAPI message_thread_proc(void *args)
 {
     struct performance *This = args;
-    struct message *message, *next;
-    HRESULT hr;
+    HRESULT hr = DMUS_S_REQUEUE;
+    struct list *ptr;
 
     TRACE("performance %p message thread\n", This);
     SetThreadDescription(GetCurrentThread(), L"wine_dmime_message");
@@ -145,13 +158,15 @@ static DWORD WINAPI message_thread_proc(void *args)
     {
         DWORD timeout = INFINITE;
 
-        LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
+        while ((ptr = list_head(&This->messages)))
         {
+            struct message *message = LIST_ENTRY(ptr, struct message, entry);
+            struct list *next = ptr->next;
             list_remove(&message->entry);
             list_init(&message->entry);
 
             hr = performance_process_message(This, &message->msg, &timeout);
-            if (hr == DMUS_S_REQUEUE) list_add_before(&next->entry, &message->entry);
+            if (hr == DMUS_S_REQUEUE) performance_queue_message(This, message, next);
             if (hr != S_OK) break;
         }
 
@@ -486,7 +501,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
 {
     const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    struct message *message, *next;
+    struct message *message;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", This, msg);
@@ -523,10 +538,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
             if (hr != DMUS_S_REQUEUE) goto done;
         }
 
-        LIST_FOR_EACH_ENTRY(next, &This->messages, struct message, entry)
-            if (next->msg.rtTime > message->msg.rtTime) break;
-        list_add_before(&next->entry, &message->entry);
-
+        performance_queue_message(This, message, NULL);
         hr = S_OK;
     }
 
