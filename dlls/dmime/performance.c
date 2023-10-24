@@ -1203,8 +1203,8 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     IDirectMusicSegmentState *state;
+    MUSIC_TIME length, music_time;
     IDirectMusicSegment *segment;
-    MUSIC_TIME length;
     HRESULT hr;
 
     FIXME("(%p, %p, %s, %p, %#lx, %I64d, %p, %p, %p): stub\n", This, source, debugstr_w(segment_name),
@@ -1216,7 +1216,8 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
         return hr;
-    if (FAILED(hr = segment_state_create(segment, start_time, iface, &state)))
+    if ((!(music_time = start_time) && FAILED(hr = IDirectMusicPerformance8_GetTime(iface, NULL, &music_time)))
+            || FAILED(hr = segment_state_create(segment, music_time, iface, &state)))
     {
         IDirectMusicSegment_Release(segment);
         return hr;
@@ -1224,27 +1225,27 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     hr = IDirectMusicSegment_GetLength(segment, &length);
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, start_time, This->notification_performance,
+        hr = performance_send_notification_pmsg(This, music_time, This->notification_performance,
                 GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED, NULL);
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, start_time, This->notification_segment,
+        hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, start_time, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
+        hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
 
     if (SUCCEEDED(hr))
         hr = segment_state_play(state, iface);
 
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
+        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
+        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, start_time + length, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
+        hr = performance_send_pmsg(This, music_time + length, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, start_time + length, This->notification_performance,
+        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_performance,
                 GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL);
 
     if (SUCCEEDED(hr) && segment_state)
