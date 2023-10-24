@@ -67,7 +67,7 @@ HRESULT WINAPI GetProcessDpiAwareness(HANDLE process, PROCESS_DPI_AWARENESS *val
 
 HRESULT WINAPI SetProcessDpiAwareness(PROCESS_DPI_AWARENESS value)
 {
-    if (SetProcessDpiAwarenessInternal( value )) return S_OK;
+    if (SetProcessDpiAwarenessInternal( (DPI_AWARENESS)value )) return S_OK;
     return HRESULT_FROM_WIN32( GetLastError() );
 }
 
