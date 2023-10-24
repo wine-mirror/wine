@@ -144,7 +144,7 @@ static HRESULT WINAPI wave_track_EndPlay(IDirectMusicTrack8 *iface, void *pState
 }
 
 static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_data,
-        MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD segment_flags,
+        MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD track_flags,
         IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state, DWORD track_id)
 {
     struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
@@ -155,12 +155,11 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_dat
     HRESULT hr;
 
     TRACE("(%p, %p, %ld, %ld, %ld, %#lx, %p, %p, %ld)\n", This, state_data, start_time, end_time,
-            time_offset, segment_flags, performance, segment_state, track_id);
+            time_offset, track_flags, performance, segment_state, track_id);
 
-    if (start_time != 0) FIXME("start_time %ld not implemented\n", start_time);
-    if (end_time != -1) FIXME("end_time %ld not implemented\n", end_time);
-    if (segment_flags) FIXME("segment_flags %#lx not implemented\n", segment_flags);
+    if (track_flags) FIXME("track_flags %#lx not implemented\n", track_flags);
     if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
+    if (!(track_flags & DMUS_TRACKF_START)) return S_OK;
 
     if (FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
             &IID_IDirectMusicGraph, (void **)&graph)))
@@ -175,6 +174,8 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_dat
             DMUS_WAVE_PMSG *msg;
 
             if (!item->buffer) continue;
+            if (item->header.rtTime < start_time) continue;
+            if (item->header.rtTime >= end_time) continue;
 
             if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
                     (DMUS_PMSG **)&msg)))
