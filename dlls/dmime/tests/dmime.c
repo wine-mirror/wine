@@ -3294,6 +3294,55 @@ static void test_notification_pmsg(void)
     ok(hr == S_FALSE, "got %#lx\n", hr);
 
 
+    /* Stop finishes segment immediately and skips notification messages */
+
+    hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, &state);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_GetTime(performance, NULL, &music_time);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 50, (DMUS_PMSG **)&notif);
+    ok(!ret, "got %#lx\n", ret);
+    check_dmus_notification_pmsg(notif, music_time, DMUS_PMSGF_TOOL_IMMEDIATE, &GUID_NOTIFICATION_SEGMENT,
+            DMUS_NOTIFICATION_SEGSTART, state);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicPerformance_Stop(performance, NULL, NULL, 0, DMUS_SEGF_DEFAULT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicPerformance_RemoveNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 50, &msg);
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 50, (DMUS_PMSG **)&notif);
+    todo_wine ok(!ret, "got %#lx\n", ret);
+    if (!ret)
+    {
+    check_dmus_notification_pmsg(notif, music_time, DMUS_PMSGF_TOOL_IMMEDIATE, &GUID_NOTIFICATION_SEGMENT,
+            DMUS_NOTIFICATION_SEGABORT, state);
+    hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    }
+
+    ret = test_tool_wait_message(tool, 500, &msg);
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg->dwType == DMUS_PMSGT_DIRTY, "got dwType %#lx\n", msg->dwType);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 100, &msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
+
+    IDirectMusicSegmentState_Release(state);
+
+
     /* CloseDown removes all notifications and notification messages */
 
     hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
