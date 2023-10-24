@@ -278,8 +278,8 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
 
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
-        if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data, start_time,
-                end_time, 0, track_flags, (IDirectMusicPerformance *)performance, iface, entry->track_id)))
+        if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data, start_time, end_time,
+                This->start_time, track_flags, (IDirectMusicPerformance *)performance, iface, entry->track_id)))
         {
             WARN("Failed to play track %p, hr %#lx\n", entry->track, hr);
             break;
