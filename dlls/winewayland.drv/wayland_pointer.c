@@ -50,30 +50,42 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
                                   uint32_t time, wl_fixed_t sx, wl_fixed_t sy)
 {
     INPUT input = {0};
-    RECT window_rect;
+    RECT *window_rect;
     HWND hwnd;
-    int screen_x, screen_y;
+    POINT screen;
+    struct wayland_surface *surface;
 
     if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
-    if (!NtUserGetWindowRect(hwnd, &window_rect)) return;
+    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
 
-    screen_x = round(wl_fixed_to_double(sx)) + window_rect.left;
-    screen_y = round(wl_fixed_to_double(sy)) + window_rect.top;
+    window_rect = &surface->window.rect;
+
+    wayland_surface_coords_to_window(surface,
+                                     wl_fixed_to_double(sx),
+                                     wl_fixed_to_double(sy),
+                                     (int *)&screen.x, (int *)&screen.y);
+    screen.x += window_rect->left;
+    screen.y += window_rect->top;
     /* Sometimes, due to rounding, we may end up with pointer coordinates
      * slightly outside the target window, so bring them within bounds. */
-    if (screen_x >= window_rect.right) screen_x = window_rect.right - 1;
-    else if (screen_x < window_rect.left) screen_x = window_rect.left;
-    if (screen_y >= window_rect.bottom) screen_y = window_rect.bottom - 1;
-    else if (screen_y < window_rect.top) screen_y = window_rect.top;
+    if (screen.x >= window_rect->right) screen.x = window_rect->right - 1;
+    else if (screen.x < window_rect->left) screen.x = window_rect->left;
+    if (screen.y >= window_rect->bottom) screen.y = window_rect->bottom - 1;
+    else if (screen.y < window_rect->top) screen.y = window_rect->top;
+
+    pthread_mutex_unlock(&surface->mutex);
+
+    /* Hardware input events are in physical coordinates. */
+    if (!NtUserLogicalToPerMonitorDPIPhysicalPoint(hwnd, &screen)) return;
 
     input.type = INPUT_MOUSE;
-    input.mi.dx = screen_x;
-    input.mi.dy = screen_y;
+    input.mi.dx = screen.x;
+    input.mi.dy = screen.y;
     input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
 
     TRACE("hwnd=%p wayland_xy=%.2f,%.2f screen_xy=%d,%d\n",
           hwnd, wl_fixed_to_double(sx), wl_fixed_to_double(sy),
-          screen_x, screen_y);
+          (int)screen.x, (int)screen.y);
 
     __wine_send_input(hwnd, &input, NULL);
 }

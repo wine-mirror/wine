@@ -384,7 +384,8 @@ static void wayland_resize_desktop(void)
 static void wayland_configure_window(HWND hwnd)
 {
     struct wayland_surface *surface;
-    INT width, height;
+    INT width, height, window_width, window_height;
+    INT window_surf_width, window_surf_height;
     UINT flags = 0;
     uint32_t state;
     DWORD style;
@@ -434,20 +435,27 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_FRAMECHANGED;
     }
 
+    wayland_surface_coords_from_window(surface,
+                                       surface->window.rect.right -
+                                           surface->window.rect.left,
+                                       surface->window.rect.bottom -
+                                           surface->window.rect.top,
+                                       &window_surf_width, &window_surf_height);
+
     /* If the window is already fullscreen and its size is compatible with what
      * the compositor is requesting, don't force a resize, since some applications
      * are very insistent on a particular fullscreen size (which may not match
      * the monitor size). */
     if ((surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
         wayland_surface_config_is_compatible(&surface->processing,
-                                             surface->window.rect.right -
-                                                surface->window.rect.left,
-                                             surface->window.rect.bottom -
-                                                surface->window.rect.top,
+                                             window_surf_width, window_surf_height,
                                              surface->window.state))
     {
         flags |= SWP_NOSIZE;
     }
+
+    wayland_surface_coords_to_window(surface, width, height,
+                                     &window_width, &window_height);
 
     pthread_mutex_unlock(&surface->mutex);
 
@@ -457,7 +465,7 @@ static void wayland_configure_window(HWND hwnd)
     if (needs_exit_size_move) send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
     flags |= SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE;
-    if (width == 0 || height == 0) flags |= SWP_NOSIZE;
+    if (window_width == 0 || window_height == 0) flags |= SWP_NOSIZE;
 
     style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     if (!(state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) != !(style & WS_MAXIMIZE))
@@ -474,7 +482,7 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_NOSENDCHANGING;
     }
 
-    NtUserSetWindowPos(hwnd, 0, 0, 0, width, height, flags);
+    NtUserSetWindowPos(hwnd, 0, 0, 0, window_width, window_height, flags);
 }
 
 /**********************************************************************

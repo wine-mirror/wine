@@ -214,6 +214,12 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface) DECLSPEC_HIDDE
 BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
                                           int width, int height,
                                           enum wayland_surface_config_state state) DECLSPEC_HIDDEN;
+void wayland_surface_coords_from_window(struct wayland_surface *surface,
+                                        int window_x, int window_y,
+                                        int *surface_x, int *surface_y) DECLSPEC_HIDDEN;
+void wayland_surface_coords_to_window(struct wayland_surface *surface,
+                                      double surface_x, double surface_y,
+                                      int *window_x, int *window_y) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer
