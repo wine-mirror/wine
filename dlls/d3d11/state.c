@@ -738,6 +738,16 @@ static const struct wined3d_parent_ops d3d_depthstencil_state_wined3d_parent_ops
     d3d_depthstencil_state_wined3d_object_destroyed,
 };
 
+static enum wined3d_cmp_func wined3d_cmp_func_from_d3d11(D3D11_COMPARISON_FUNC func)
+{
+    return (enum wined3d_cmp_func)func;
+}
+
+static enum wined3d_stencil_op wined3d_stencil_op_from_d3d11(D3D11_STENCIL_OP stencil_op)
+{
+    return (enum wined3d_stencil_op)stencil_op;
+}
+
 HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEPTH_STENCIL_DESC *desc,
         struct d3d_depthstencil_state **state)
 {
@@ -822,18 +832,18 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
 
     wined3d_desc.depth = desc->DepthEnable;
     wined3d_desc.depth_write = desc->DepthWriteMask;
-    wined3d_desc.depth_func = desc->DepthFunc;
+    wined3d_desc.depth_func = wined3d_cmp_func_from_d3d11(desc->DepthFunc);
     wined3d_desc.stencil = desc->StencilEnable;
     wined3d_desc.stencil_read_mask = desc->StencilReadMask;
     wined3d_desc.stencil_write_mask = desc->StencilWriteMask;
-    wined3d_desc.front.fail_op = desc->FrontFace.StencilFailOp;
-    wined3d_desc.front.depth_fail_op = desc->FrontFace.StencilDepthFailOp;
-    wined3d_desc.front.pass_op = desc->FrontFace.StencilPassOp;
-    wined3d_desc.front.func = desc->FrontFace.StencilFunc;
-    wined3d_desc.back.fail_op = desc->BackFace.StencilFailOp;
-    wined3d_desc.back.depth_fail_op = desc->BackFace.StencilDepthFailOp;
-    wined3d_desc.back.pass_op = desc->BackFace.StencilPassOp;
-    wined3d_desc.back.func = desc->BackFace.StencilFunc;
+    wined3d_desc.front.fail_op = wined3d_stencil_op_from_d3d11(desc->FrontFace.StencilFailOp);
+    wined3d_desc.front.depth_fail_op = wined3d_stencil_op_from_d3d11(desc->FrontFace.StencilDepthFailOp);
+    wined3d_desc.front.pass_op = wined3d_stencil_op_from_d3d11(desc->FrontFace.StencilPassOp);
+    wined3d_desc.front.func = wined3d_cmp_func_from_d3d11(desc->FrontFace.StencilFunc);
+    wined3d_desc.back.fail_op = wined3d_stencil_op_from_d3d11(desc->BackFace.StencilFailOp);
+    wined3d_desc.back.depth_fail_op = wined3d_stencil_op_from_d3d11(desc->BackFace.StencilDepthFailOp);
+    wined3d_desc.back.pass_op = wined3d_stencil_op_from_d3d11(desc->BackFace.StencilPassOp);
+    wined3d_desc.back.func = wined3d_cmp_func_from_d3d11(desc->BackFace.StencilFunc);
 
     /* We cannot fail after creating a wined3d_depth_stencil_state object. It
      * would lead to double free. */
@@ -1561,11 +1571,6 @@ static enum wined3d_texture_filter_type wined3d_texture_filter_min_from_d3d11(en
 static BOOL wined3d_texture_compare_from_d3d11(enum D3D11_FILTER f)
 {
     return D3D11_DECODE_IS_COMPARISON_FILTER(f);
-}
-
-static enum wined3d_cmp_func wined3d_cmp_func_from_d3d11(D3D11_COMPARISON_FUNC f)
-{
-    return (enum wined3d_cmp_func)f;
 }
 
 static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_device *device,
