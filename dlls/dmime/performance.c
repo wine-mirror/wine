@@ -76,6 +76,8 @@ struct performance
     HANDLE notification_event;
     BOOL notification_performance;
     BOOL notification_segment;
+
+    IDirectMusicSegment *primary_segment;
 };
 
 struct message
@@ -338,6 +340,12 @@ HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME
     return S_OK;
 }
 
+static void performance_set_primary_segment(struct performance *This, IDirectMusicSegment *segment)
+{
+    if (This->primary_segment) IDirectMusicSegment_Release(This->primary_segment);
+    if ((This->primary_segment = segment)) IDirectMusicSegment_AddRef(This->primary_segment);
+}
+
 /* IDirectMusicPerformance8 IUnknown part: */
 static HRESULT WINAPI performance_QueryInterface(IDirectMusicPerformance8 *iface, REFIID riid, void **ret_iface)
 {
@@ -487,6 +495,42 @@ static HRESULT WINAPI performance_PlaySegment(IDirectMusicPerformance8 *iface, I
             segment_flags, start_time, ret_state, NULL, NULL);
 }
 
+struct state_entry
+{
+    struct list entry;
+    IDirectMusicSegmentState *state;
+};
+
+static void state_entry_destroy(struct state_entry *entry)
+{
+    list_remove(&entry->entry);
+    IDirectMusicSegmentState_Release(entry->state);
+    free(entry);
+}
+
+static void enum_segment_states(struct performance *This, IDirectMusicSegment *segment, struct list *list)
+{
+    struct state_entry *entry;
+    struct message *message;
+
+    LIST_FOR_EACH_ENTRY(message, &This->messages, struct message, entry)
+    {
+        IDirectMusicSegmentState *message_state;
+
+        if (message->msg.dwType != DMUS_PMSGT_INTERNAL_SEGMENT_TICK
+                && message->msg.dwType != DMUS_PMSGT_INTERNAL_SEGMENT_END)
+            continue;
+
+        message_state = (IDirectMusicSegmentState *)message->msg.punkUser;
+        if (segment && !segment_state_has_segment(message_state, segment)) continue;
+
+        if (!(entry = malloc(sizeof(*entry)))) return;
+        entry->state = message_state;
+        IDirectMusicSegmentState_AddRef(entry->state);
+        list_add_tail(list, &entry->entry);
+    }
+}
+
 static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectMusicSegment *pSegment,
         IDirectMusicSegmentState *pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags)
 {
@@ -497,12 +541,36 @@ static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectM
 }
 
 static HRESULT WINAPI performance_GetSegmentState(IDirectMusicPerformance8 *iface,
-        IDirectMusicSegmentState **ppSegmentState, MUSIC_TIME mtTime)
+        IDirectMusicSegmentState **state, MUSIC_TIME time)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct list *ptr, states = LIST_INIT(states);
+    struct state_entry *entry, *next;
+    HRESULT hr = S_OK;
 
-	FIXME("(%p,%p, %ld): stub\n", This, ppSegmentState, mtTime);
-	return S_OK;
+    TRACE("(%p, %p, %ld)\n", This, state, time);
+
+    if (!state) return E_POINTER;
+
+    EnterCriticalSection(&This->safe);
+
+    enum_segment_states(This, This->primary_segment, &states);
+
+    if (!(ptr = list_head(&states))) hr = DMUS_E_NOT_FOUND;
+    else
+    {
+        entry = LIST_ENTRY(ptr, struct state_entry, entry);
+
+        *state = entry->state;
+        IDirectMusicSegmentState_AddRef(entry->state);
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &states, struct state_entry, entry)
+            state_entry_destroy(entry);
+    }
+
+    LeaveCriticalSection(&This->safe);
+
+    return hr;
 }
 
 static HRESULT WINAPI performance_SetPrepareTime(IDirectMusicPerformance8 *iface, DWORD dwMilliSeconds)
@@ -1152,6 +1220,8 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
             WARN("Failed to free message %p, hr %#lx\n", message, hr);
     }
 
+    performance_set_primary_segment(This, NULL);
+
     if (This->master_clock)
     {
         IReferenceClock_Release(This->master_clock);
@@ -1278,17 +1348,26 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     if (FAILED(hr = IUnknown_QueryInterface(source, &IID_IDirectMusicSegment, (void **)&segment)))
         return hr;
+
+    EnterCriticalSection(&This->safe);
+
+    performance_set_primary_segment(This, segment);
+
     if ((!(music_time = start_time) && FAILED(hr = IDirectMusicPerformance8_GetTime(iface, NULL, &music_time)))
             || FAILED(hr = segment_state_create(segment, music_time, iface, &state)))
     {
+        performance_set_primary_segment(This, NULL);
+        LeaveCriticalSection(&This->safe);
+
         IDirectMusicSegment_Release(segment);
         return hr;
     }
 
-    EnterCriticalSection(&This->safe);
-
     if (FAILED(hr = segment_state_play(state, iface)))
+    {
         ERR("Failed to play segment state, hr %#lx\n", hr);
+        performance_set_primary_segment(This, NULL);
+    }
     else if (segment_state)
     {
         *segment_state = state;

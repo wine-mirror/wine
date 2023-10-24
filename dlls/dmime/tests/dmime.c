@@ -4054,9 +4054,9 @@ static void test_segment_state(void)
     check_track_state(track, playing, FALSE);
 
     hr = IDirectMusicPerformance_GetSegmentState(performance, NULL, 0);
-    todo_wine ok(hr == E_POINTER, "got %#lx\n", hr);
+    ok(hr == E_POINTER, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 0);
-    todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
 
 
     tmp_state = state;
@@ -4071,14 +4071,14 @@ static void test_segment_state(void)
     tmp_state = (void *)0xdeadbeef;
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(state == tmp_state, "got %p\n", state);
-    if (tmp_state != (void *)0xdeadbeef) IDirectMusicSegmentState_Release(tmp_state);
+    ok(state == tmp_state, "got %p\n", state);
+    IDirectMusicSegmentState_Release(tmp_state);
 
     tmp_state = (void *)0xdeadbeef;
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 69);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(state == tmp_state, "got %p\n", state);
-    if (tmp_state != (void *)0xdeadbeef) IDirectMusicSegmentState_Release(tmp_state);
+    ok(state == tmp_state, "got %p\n", state);
+    IDirectMusicSegmentState_Release(tmp_state);
 
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 70);
     todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);

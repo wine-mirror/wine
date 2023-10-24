@@ -363,3 +363,9 @@ HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerf
 
     return S_OK;
 }
+
+BOOL segment_state_has_segment(IDirectMusicSegmentState *iface, IDirectMusicSegment *segment)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+    return !segment || This->segment == segment;
+}

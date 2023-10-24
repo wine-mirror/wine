@@ -77,6 +77,7 @@ extern HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME sta
 extern HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
 extern HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
 extern HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
+extern BOOL segment_state_has_segment(IDirectMusicSegmentState *iface, IDirectMusicSegment *segment);
 
 extern HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         IDirectMusicTrack8 **ret_iface);
