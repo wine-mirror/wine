@@ -4531,7 +4531,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
     (*metafile)->bounds.X = (*metafile)->bounds.Y = 0.0;
     (*metafile)->bounds.Width = (*metafile)->bounds.Height = 1.0;
     (*metafile)->unit = UnitPixel;
-    (*metafile)->metafile_type = type;
+    (*metafile)->metafile_type = (MetafileType)type;
     (*metafile)->record_dc = record_dc;
     (*metafile)->comment_data = NULL;
     (*metafile)->comment_data_size = 0;
