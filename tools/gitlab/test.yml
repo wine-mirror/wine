@@ -21,6 +21,7 @@
     - export PATH=$BASEDIR/usr/local/bin:$PATH
     - export DISPLAY=:0
     - export LC_ALL=C.UTF-8
+    - export LP_NUM_THREADS=4
     - export WINEDEBUG=err-all,fixme-all
     - |
       cat >$HOME/xorg.conf << EOF
