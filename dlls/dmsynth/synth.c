@@ -1125,7 +1125,9 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
 
         TRACE("status %#x chan %#x midi %#x %#x\n", status, chan, event->midi[1], event->midi[2]);
 
-        switch (status)
+        if (event->midi[0] == MIDI_SYSTEM_RESET)
+            synth_reset_default_values(This);
+        else switch (status)
         {
         case MIDI_NOTE_OFF:
             fluid_synth_noteoff(This->fluid_synth, chan, event->midi[1]);
