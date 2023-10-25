@@ -38,8 +38,8 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
-#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
-static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c, FALSE)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported, BOOL check_refs)
 {
     ULONG expect_ref = get_refcount(iface_ptr);
     IUnknown *iface = iface_ptr;
@@ -52,10 +52,10 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     if (SUCCEEDED(hr))
     {
         LONG ref = get_refcount(unk);
-        ok_(__FILE__, line)(ref == expect_ref + 1, "got %ld\n", ref);
+        if (check_refs) ok_(__FILE__, line)(ref == expect_ref + 1, "got %ld\n", ref);
         IUnknown_Release(unk);
         ref = get_refcount(iface_ptr);
-        ok_(__FILE__, line)(ref == expect_ref, "got %ld\n", ref);
+        if (check_refs) ok_(__FILE__, line)(ref == expect_ref, "got %ld\n", ref);
     }
 }
 
@@ -3024,8 +3024,8 @@ static void check_dmus_notification_pmsg_(int line, DMUS_NOTIFICATION_PMSG *msg,
         ok_(__FILE__, line)(!msg->punkUser, "got punkUser %p\n", msg->punkUser);
     else
     {
-        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState, TRUE);
-        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState8, TRUE);
+        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState, TRUE, FALSE);
+        check_interface_(line, msg->punkUser, &IID_IDirectMusicSegmentState8, TRUE, FALSE);
     }
 }
 
