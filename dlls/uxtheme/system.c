@@ -1290,3 +1290,13 @@ BOOL WINAPI ShouldAppsUseDarkMode(void)
 
     return !light_theme;
 }
+
+/**********************************************************************
+ *      SetPreferredAppMode                             (UXTHEME.135)
+ *
+ */
+int WINAPI SetPreferredAppMode(int app_mode)
+{
+    FIXME("%d: stub\n", app_mode);
+    return 0;
+}

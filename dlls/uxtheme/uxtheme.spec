@@ -43,6 +43,7 @@
 62 stub -noname ServerClearStockObjects
 63 stub -noname MarkSelection
 132 stdcall -noname ShouldAppsUseDarkMode()
+135 stdcall -noname SetPreferredAppMode(long)
 138 stdcall -noname ShouldSystemUseDarkMode()
 
 # Standard functions
