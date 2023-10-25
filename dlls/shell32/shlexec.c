@@ -77,7 +77,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
     BOOL    found_p1 = FALSE;
     PWSTR   res = out;
     PCWSTR  cmd;
-    DWORD   used = 0;
+    DWORD   size, used = 0;
 
     TRACE("%p, %d, %s, %s, %p, %p\n", out, len, debugstr_w(fmt),
           debugstr_w(lpFile), pidl, args);
@@ -164,11 +164,16 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             case 'l':
             case 'L':
 		if (lpFile) {
-		    used += lstrlenW(lpFile);
+		    if ((size = SearchPathW(NULL, lpFile, L".exe", ARRAY_SIZE(xlpFile), xlpFile, NULL)
+                    && size <= ARRAY_SIZE(xlpFile)))
+		        cmd = xlpFile;
+		    else
+		        cmd = lpFile;
+		    used += lstrlenW(cmd);
 		    if (used < len)
 		    {
-			lstrcpyW(res, lpFile);
-			res += lstrlenW(lpFile);
+			lstrcpyW(res, cmd);
+			res += lstrlenW(cmd);
 		    }
 		}
 		found_p1 = TRUE;

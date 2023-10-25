@@ -1624,7 +1624,7 @@ static void test_argify(void)
 
 static void test_filename(void)
 {
-    char filename[MAX_PATH + 20];
+    char filename[MAX_PATH + 20], curdir[MAX_PATH];
     const filename_tests_t* test;
     char* c;
     INT_PTR rc;
@@ -1634,6 +1634,31 @@ static void test_filename(void)
         skip("No ShellExecute/filename tests due to lack of .shlexec association\n");
         return;
     }
+
+    GetCurrentDirectoryA(sizeof(curdir), curdir);
+
+    SetCurrentDirectoryA(tmpdir);
+    rc=shell_execute("QuotedLowerL", "simple.shlexec", NULL, NULL);
+    if (rc > 32)
+        rc=33;
+    okShell(rc == 33, "failed: rc=%Id err=%lu\n", rc, GetLastError());
+    okChildInt("argcA", 5);
+    okChildString("argvA3", "QuotedLowerL");
+    strcpy(filename, tmpdir);
+    strcat(filename, "\\simple.shlexec");
+    okChildPath("argvA4", filename);
+
+    rc=shell_execute("QuotedUpperL", "simple.shlexec", NULL, NULL);
+    if (rc > 32)
+        rc=33;
+    okShell(rc == 33, "failed: rc=%Id err=%lu\n", rc, GetLastError());
+    okChildInt("argcA", 5);
+    okChildString("argvA3", "QuotedUpperL");
+    strcpy(filename, tmpdir);
+    strcat(filename, "\\simple.shlexec");
+    okChildPath("argvA4", filename);
+
+    SetCurrentDirectoryA(curdir);
 
     test=filename_tests;
     while (test->basename)
