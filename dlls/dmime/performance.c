@@ -199,7 +199,7 @@ static HRESULT performance_send_notification_pmsg(struct performance *This, MUSI
         return hr;
 
     msg->mtTime = music_time;
-    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE;
     msg->dwType = DMUS_PMSGT_NOTIFICATION;
     if ((msg->punkUser = object)) IUnknown_AddRef(object);
     msg->guidNotificationType = type;
@@ -1230,7 +1230,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = performance_send_notification_pmsg(This, start_time, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, start_time, DMUS_PMSGF_TOOL_QUEUE, DMUS_PMSGT_DIRTY, NULL);
+        hr = performance_send_pmsg(This, start_time, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
 
     if (SUCCEEDED(hr))
         hr = segment_state_play(state, iface);
@@ -1242,7 +1242,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, start_time + length, DMUS_PMSGF_TOOL_QUEUE, DMUS_PMSGT_DIRTY, NULL);
+        hr = performance_send_pmsg(This, start_time + length, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
     if (SUCCEEDED(hr))
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_performance,
                 GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL);
@@ -1789,6 +1789,21 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT))
             enabled = This->notification_segment;
         if (!enabled) return DMUS_S_FREE;
+
+        if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE)
+        {
+            /* re-send the message for queueing at the expected time */
+            msg->dwFlags &= ~DMUS_PMSGF_TOOL_IMMEDIATE;
+            msg->dwFlags |= DMUS_PMSGF_TOOL_ATTIME;
+
+            if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)msg)))
+            {
+                ERR("Failed to send notification message, hr %#lx\n", hr);
+                return DMUS_S_FREE;
+            }
+
+            return S_OK;
+        }
 
         list_add_tail(&This->notifications, &message->entry);
 
