@@ -97,6 +97,11 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
     }
     else  /* system-global hook */
     {
+        if (id == WH_JOURNALRECORD || id == WH_JOURNALPLAYBACK)
+        {
+            RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
+            return 0;
+        }
         if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
         else if (!inst)
         {

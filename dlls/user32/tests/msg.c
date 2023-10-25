@@ -12271,7 +12271,6 @@ static void test_set_hook(void)
     SetLastError(0xdeadbeef);
     hhook = SetWindowsHookExA(WH_JOURNALRECORD, cbt_hook_proc, 0, 0);
     ok(!hhook, "global hook requires hModule != 0\n");
-    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -12297,9 +12296,7 @@ static void test_set_hook(void)
         error = GetLastError();
         if (i == WH_JOURNALRECORD || i == WH_JOURNALPLAYBACK)
         {
-            todo_wine
             ok(!hhook, "SetWinEventHook succeeded.\n");
-            todo_wine
             ok(error == ERROR_ACCESS_DENIED, "Got unexpected error %ld.\n", GetLastError());
         }
         else
