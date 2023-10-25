@@ -1,7 +1,9 @@
 TESTDLL   = user32.dll
 IMPORTS   = user32 gdi32 advapi32 hid imm32 setupapi
 
-C_SRCS = \
+testdll_IMPORTS = user32
+
+SOURCES = \
 	broadcast.c \
 	class.c \
 	clipboard.c \
@@ -18,13 +20,14 @@ C_SRCS = \
 	monitor.c \
 	msg.c \
 	resource.c \
+	resource.rc \
 	scroll.c \
 	static.c \
 	sysparams.c \
+	testdll.c \
+	testdll.spec \
 	text.c \
 	uitools.c \
 	win.c \
 	winstation.c \
 	wsprintf.c
-
-RC_SRCS = resource.rc

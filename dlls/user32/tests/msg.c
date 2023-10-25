@@ -12223,11 +12223,41 @@ skip_mouse_ll_hook_test:
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
 }
 
+static char *get_test_dll_path(void)
+{
+    static const char *dll_name = "testdll.dll";
+    static char path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    strcat(path, dll_name);
+
+    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s: %lu.\n", debugstr_a(path), GetLastError());
+
+    res = FindResourceA(NULL, dll_name, "TESTDLL");
+    ok(!!res, "Failed to load resource: %lu\n", GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource\n");
+    CloseHandle(file);
+
+    return path;
+}
+
 static void test_set_hook(void)
 {
+    LRESULT (CALLBACK *p_dummy_hook_proc)(int code, WPARAM wp, LPARAM lp);
+    HMODULE test_dll_module;
+    char *test_dll_path;
+    DWORD error;
     BOOL ret;
     HHOOK hhook;
     HWINEVENTHOOK hwinevent_hook;
+    int i;
 
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, GetModuleHandleA(0), GetCurrentThreadId());
     ok(hhook != 0, "local hook does not require hModule set to 0\n");
@@ -12252,6 +12282,58 @@ static void test_set_hook(void)
     SetLastError(0xdeadbeef);
     ok(!UnhookWindowsHookEx((HHOOK)0xdeadbeef), "UnhookWindowsHookEx succeeded\n");
     ok(GetLastError() == ERROR_INVALID_HOOK_HANDLE, "unexpected error %ld\n", GetLastError());
+
+    test_dll_path = get_test_dll_path();
+    test_dll_module = LoadLibraryA(test_dll_path);
+    p_dummy_hook_proc = (void *)GetProcAddress(test_dll_module, "dummy_hook_proc");
+    for (i = WH_MIN; i <= WH_MAX; i++)
+    {
+        winetest_push_context("ID %d", i);
+
+        /* Test that setting hooks should succeed for hook procs in a library. But for WH_JOURNALRECORD
+         * and WH_JOURNALPLAYBACK, ERROR_ACCESS_DENIED is returned, even with administrator rights */
+        SetLastError(0xdeadbeef);
+        hhook = SetWindowsHookExA(i, p_dummy_hook_proc, test_dll_module, 0);
+        error = GetLastError();
+        if (i == WH_JOURNALRECORD || i == WH_JOURNALPLAYBACK)
+        {
+            todo_wine
+            ok(!hhook, "SetWinEventHook succeeded.\n");
+            todo_wine
+            ok(error == ERROR_ACCESS_DENIED, "Got unexpected error %ld.\n", GetLastError());
+        }
+        else
+        {
+            ok(!!hhook, "SetWinEventHook failed.\n");
+            ok(error == NO_ERROR, "Got unexpected error %ld.\n", GetLastError());
+        }
+        if (hhook)
+            UnhookWindowsHookEx(hhook);
+
+        /* Test settings global hooks with a thread ID */
+        SetLastError(0xdeadbeef);
+        hhook = SetWindowsHookExA(i, p_dummy_hook_proc, test_dll_module, GetCurrentThreadId());
+        error = GetLastError();
+        if (i == WH_JOURNALRECORD || i == WH_JOURNALPLAYBACK || i == WH_SYSMSGFILTER
+            || i == WH_KEYBOARD_LL || i == WH_MOUSE_LL)
+        {
+            ok(!hhook, "SetWinEventHook succeeded.\n");
+            todo_wine
+            ok(error == ERROR_GLOBAL_ONLY_HOOK, "Got unexpected error %ld.\n", GetLastError());
+        }
+        else
+        {
+            ok(!!hhook, "SetWinEventHook failed.\n");
+            ok(error == NO_ERROR, "Got unexpected error %ld.\n", GetLastError());
+        }
+        if (hhook)
+            UnhookWindowsHookEx(hhook);
+
+        winetest_pop_context();
+    }
+    FreeLibrary(test_dll_module);
+    ret = DeleteFileA(test_dll_path);
+    ok(ret, "Failed to remove the test dll, error %ld.\n", GetLastError());
 
     if (!pSetWinEventHook || !pUnhookWinEvent) return;
 
