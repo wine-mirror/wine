@@ -62,6 +62,7 @@ static DWORD (WINAPI *pEnumDynamicTimeZoneInformation)(const DWORD,
                                                        DYNAMIC_TIME_ZONE_INFORMATION*);
 
 static BOOL limited_user;
+static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
 static const char *dbgstr_SYSTEMTIME(const SYSTEMTIME *st)
 {
@@ -1163,9 +1164,9 @@ static void test_reg_open_key(void)
      * the registry access check is performed correctly. Redirection isn't
      * being tested, so the tests don't care about whether the process is
      * running under WOW64. */
-    if (!pIsWow64Process)
+    if (!is_64bit)
     {
-        win_skip("WOW64 flags are not recognized\n");
+        skip("Not running WoW64 tests on 32-bit\n");
         return;
     }
 
