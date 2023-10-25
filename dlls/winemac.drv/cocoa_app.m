@@ -25,6 +25,8 @@
 #import "cocoa_event.h"
 #import "cocoa_window.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 
 static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponseMode";
 

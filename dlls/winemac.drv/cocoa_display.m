@@ -26,6 +26,8 @@
 #endif
 #include "macdrv_cocoa.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 static uint64_t dedicated_gpu_id;
 static uint64_t integrated_gpu_id;
 

@@ -23,6 +23,8 @@
 #import "cocoa_event.h"
 #import "cocoa_window.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 #if !defined(MAC_OS_X_VERSION_10_14) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_14
 /* For older SDKs, #define the new names of constants deprecated/renamed in macOS 10.14. */
 #define NSBitmapImageFileTypeBMP        NSBMPFileType

@@ -23,6 +23,8 @@
 #import "cocoa_cursorclipping.h"
 #import "cocoa_window.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 
 /* Neither Quartz nor Cocoa has an exact analog for Win32 cursor clipping.
  *

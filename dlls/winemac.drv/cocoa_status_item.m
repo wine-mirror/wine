@@ -23,6 +23,8 @@
 #import "cocoa_app.h"
 #import "cocoa_event.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 
 @interface WineStatusItem : NSView
 {

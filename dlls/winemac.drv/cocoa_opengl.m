@@ -26,6 +26,8 @@
 #include "cocoa_app.h"
 #include "cocoa_event.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 
 @interface WineOpenGLContext ()
 @property (retain, nonatomic) NSView* latentView;

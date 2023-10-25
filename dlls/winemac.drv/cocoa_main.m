@@ -25,6 +25,8 @@
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 
+#pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+
 
 /* Condition values for an NSConditionLock. Used to signal between run_cocoa_app
    and macdrv_start_cocoa_app so the latter knows when the former is running
