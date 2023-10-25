@@ -1237,11 +1237,11 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = segment_state_play(state, iface);
 
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_segment,
-                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state);
+        hr = performance_send_notification_pmsg(This, music_time + length - 1450, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
         hr = performance_send_notification_pmsg(This, music_time + length, This->notification_segment,
-                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
         hr = performance_send_pmsg(This, music_time + length, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
     if (SUCCEEDED(hr))

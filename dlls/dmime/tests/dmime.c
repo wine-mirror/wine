@@ -3019,8 +3019,6 @@ static void check_dmus_notification_pmsg_(int line, DMUS_NOTIFICATION_PMSG *msg,
             "got dwType %#lx\n", msg->dwType);
     ok_(__FILE__, line)(IsEqualGUID(&msg->guidNotificationType, type),
             "got guidNotificationType %s\n", debugstr_guid(&msg->guidNotificationType));
-    todo_wine_if(IsEqualGUID(type, &GUID_NOTIFICATION_SEGMENT) &&
-            (option == DMUS_NOTIFICATION_SEGALMOSTEND || option == DMUS_NOTIFICATION_SEGEND))
     ok_(__FILE__, line)(msg->dwNotificationOption == option,
             "got dwNotificationOption %#lx\n", msg->dwNotificationOption);
     ok_(__FILE__, line)(!msg->dwField1, "got dwField1 %lu\n", msg->dwField1);
