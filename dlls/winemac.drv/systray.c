@@ -26,15 +26,7 @@
 #endif
 
 #include "config.h"
-
 #include "macdrv.h"
-
-#include "windef.h"
-#include "winuser.h"
-#include "shellapi.h"
-
-#include "wine/list.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 

@@ -23,9 +23,7 @@
 #endif
 
 #include "config.h"
-
 #include "macdrv.h"
-#include "winuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(image);
 

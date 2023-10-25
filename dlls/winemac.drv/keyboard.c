@@ -29,10 +29,7 @@
 #endif
 
 #include "config.h"
-
 #include "macdrv.h"
-#include "winuser.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);

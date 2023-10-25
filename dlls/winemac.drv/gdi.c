@@ -24,9 +24,7 @@
 #endif
 
 #include "config.h"
-
 #include "macdrv.h"
-#include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 

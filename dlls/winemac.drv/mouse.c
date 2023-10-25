@@ -25,10 +25,7 @@
 #endif
 
 #include "config.h"
-
-#define OEMRESOURCE
 #include "macdrv.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 

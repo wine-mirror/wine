@@ -27,14 +27,7 @@
 #endif
 
 #include "config.h"
-
-#include "ntstatus.h"
 #include "macdrv.h"
-#include "winuser.h"
-#include "shellapi.h"
-#include "shlobj.h"
-#include "wine/list.h"
-#include "wine/server.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);

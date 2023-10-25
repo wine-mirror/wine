@@ -24,14 +24,7 @@
 #endif
 
 #include "config.h"
-
 #include "macdrv.h"
-
-#include "winuser.h"
-#include "winternl.h"
-#include "winnt.h"
-#include "wine/debug.h"
-#include "wine/opengl_driver.h"
 
 #define GL_SILENCE_DEPRECATION
 #define __gl_h_

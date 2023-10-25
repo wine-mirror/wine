@@ -29,13 +29,27 @@
 
 #include "macdrv_cocoa.h"
 
+/* All Windows headers needed by Unix C/ObjC files must be included here. */
+#define OEMRESOURCE
 #include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"
+#include "ddrawi.h"
+#include "oleidl.h"
+#include "shellapi.h"
+#include "shlobj.h"
+#include "unixlib.h"
+#include "winnt.h"
+#include "winternl.h"
+#include "winuser.h"
 #include "wine/debug.h"
 #include "wine/gdi_driver.h"
-#include "unixlib.h"
+#include "wine/list.h"
+#include "wine/server.h"
+#include "wine/opengl_driver.h"
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 
 extern bool allow_vsync;

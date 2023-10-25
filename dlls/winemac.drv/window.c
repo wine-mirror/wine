@@ -26,16 +26,9 @@
 #endif
 
 #include "config.h"
+#include "macdrv.h"
 
 #include <IOKit/pwr_mgt/IOPMLib.h>
-#define GetCurrentThread Mac_GetCurrentThread
-#define LoadResource Mac_LoadResource
-#include <CoreServices/CoreServices.h>
-#undef GetCurrentThread
-#undef LoadResource
-
-#include "macdrv.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
