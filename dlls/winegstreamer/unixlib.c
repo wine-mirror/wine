@@ -78,6 +78,19 @@ GstElement *create_element(const char *name, const char *plugin_set)
     return element;
 }
 
+GstElement *factory_create_element(GstElementFactory *factory)
+{
+    GstElement *element;
+
+    if ((element = gst_element_factory_create(factory, NULL)))
+        GST_INFO("Created element %"GST_PTR_FORMAT" from factory %"GST_PTR_FORMAT".",
+                element, factory);
+    else
+        GST_WARNING("Failed to create element from factory %"GST_PTR_FORMAT".", factory);
+
+    return element;
+}
+
 GList *find_element_factories(GstElementFactoryListType type, GstRank min_rank,
         GstCaps *element_sink_caps, GstCaps *element_src_caps)
 {
@@ -135,15 +148,12 @@ GstElement *find_element(GstElementFactoryListType type, GstCaps *element_sink_c
             continue;
         }
 
-        if (!(element = gst_element_factory_create(GST_ELEMENT_FACTORY(tmp->data), NULL)))
-            GST_WARNING("Failed to create %s element.", name);
+        element = factory_create_element(GST_ELEMENT_FACTORY(tmp->data));
     }
 
     gst_plugin_feature_list_free(transforms);
 
-    if (element)
-        GST_DEBUG("Created %s element %p.", name, element);
-    else
+    if (!element)
         GST_WARNING("Failed to create element matching caps %"GST_PTR_FORMAT" / %"GST_PTR_FORMAT".",
                 element_sink_caps, element_src_caps);
 
