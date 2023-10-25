@@ -28,6 +28,7 @@ enum dmus_internal_message_type
 {
     DMUS_PMSGT_INTERNAL_FIRST = 0x10,
     DMUS_PMSGT_INTERNAL_SEGMENT_END = DMUS_PMSGT_INTERNAL_FIRST,
+    DMUS_PMSGT_INTERNAL_SEGMENT_TICK,
 };
 
 struct pchannel_block {
@@ -273,6 +274,43 @@ static struct pchannel_block *pchannel_block_set(struct wine_rb_tree *tree, DWOR
 static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusicPerformance8 *iface)
 {
     return CONTAINING_RECORD(iface, struct performance, IDirectMusicPerformance8_iface);
+}
+
+static HRESULT performance_send_segment_start(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
+        IDirectMusicSegmentState *state)
+{
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr;
+
+    if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_performance,
+            GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED, NULL)))
+        return hr;
+    if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
+            GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state)))
+        return hr;
+    if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_IMMEDIATE,
+            DMUS_PMSGT_DIRTY, NULL)))
+        return hr;
+
+    return S_OK;
+}
+
+HRESULT performance_send_segment_tick(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
+        IDirectMusicSegmentState *state)
+{
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    REFERENCE_TIME time;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(iface, music_time, &time)))
+        return hr;
+    if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(iface, time + 2000000, &music_time)))
+        return hr;
+    if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_QUEUE,
+            DMUS_PMSGT_INTERNAL_SEGMENT_TICK, (IUnknown *)state)))
+        return hr;
+
+    return S_OK;
 }
 
 HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
@@ -1235,16 +1273,11 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         return hr;
     }
 
+    EnterCriticalSection(&This->safe);
+
     hr = IDirectMusicSegment_GetLength(segment, &length);
     if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time, This->notification_performance,
-                GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTARTED, NULL);
-    if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
-                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
-    if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
-
+        hr = performance_send_segment_start(iface, music_time, state);
     if (SUCCEEDED(hr))
         hr = segment_state_play(state, iface);
 
@@ -1265,6 +1298,8 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         *segment_state = state;
         IDirectMusicSegmentState_AddRef(state);
     }
+
+    LeaveCriticalSection(&This->safe);
 
     IDirectMusicSegmentState_Release(state);
     IDirectMusicSegment_Release(segment);
@@ -1838,6 +1873,21 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         if (FAILED(hr = IDirectSoundBuffer_Play((IDirectSoundBuffer *)msg->punkUser, 0, 0, 0)))
             WARN("Failed to play wave buffer, hr %#lx\n", hr);
         break;
+
+    case DMUS_PMSGT_INTERNAL_SEGMENT_TICK:
+        msg->rtTime += 10000000;
+        msg->dwFlags &= ~DMUS_PMSGF_MUSICTIME;
+
+        /* re-send the tick message until segment_state_tick returns S_FALSE */
+        if (FAILED(hr = segment_state_tick((IDirectMusicSegmentState *)msg->punkUser,
+                (IDirectMusicPerformance8 *)performance)))
+            ERR("Failed to tick segment state %p, hr %#lx\n", msg->punkUser, hr);
+        else if (hr == S_FALSE)
+            return DMUS_S_FREE; /* done ticking */
+        else if (FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, msg)))
+            ERR("Failed to queue tick for segment state %p, hr %#lx\n", msg->punkUser, hr);
+
+        return S_OK;
 
     case DMUS_PMSGT_INTERNAL_SEGMENT_END:
         if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)msg->punkUser,

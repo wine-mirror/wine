@@ -51,6 +51,7 @@ struct segment_state
     MUSIC_TIME start_time;
     MUSIC_TIME start_point;
     MUSIC_TIME end_point;
+    MUSIC_TIME played;
     BOOL auto_download;
 
     struct list tracks;
@@ -271,25 +272,63 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     return hr;
 }
 
-HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
+static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusicPerformance8 *performance,
+        REFERENCE_TIME duration, DWORD track_flags)
 {
-    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
-    DWORD track_flags = DMUS_TRACKF_DIRTY | DMUS_TRACKF_START | DMUS_TRACKF_SEEK;
-    MUSIC_TIME start_time = This->start_point, end_time = This->end_point;
+    IDirectMusicSegmentState *iface = (IDirectMusicSegmentState *)&This->IDirectMusicSegmentState8_iface;
+    MUSIC_TIME next_time, played;
     struct track_entry *entry;
+    REFERENCE_TIME time;
     HRESULT hr = S_OK;
+
+    if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance,
+            This->start_time + This->played, &time)))
+        return hr;
+    if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(performance,
+            time + duration, &next_time)))
+        return hr;
+    played = min(next_time - This->start_time, This->end_point - This->start_point);
 
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
-        if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data, start_time, end_time,
-                This->start_time, track_flags, (IDirectMusicPerformance *)performance, iface, entry->track_id)))
+        if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data,
+                This->start_point + This->played, This->start_point + played,
+                This->start_time, track_flags, (IDirectMusicPerformance *)performance,
+                iface, entry->track_id)))
         {
             WARN("Failed to play track %p, hr %#lx\n", entry->track, hr);
             break;
         }
     }
 
-    return hr;
+    This->played = played;
+    if (This->start_point + This->played >= This->end_point)
+        return S_FALSE;
+    return S_OK;
+}
+
+HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+    HRESULT hr;
+
+    TRACE("%p %p\n", iface, performance);
+
+    if (FAILED(hr = segment_state_play_chunk(This, performance, 10000000,
+            DMUS_TRACKF_START | DMUS_TRACKF_SEEK | DMUS_TRACKF_DIRTY)))
+        return hr;
+
+    if (hr == S_FALSE) return S_OK;
+    return performance_send_segment_tick(performance, This->start_time, iface);
+}
+
+HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+
+    TRACE("%p %p\n", iface, performance);
+
+    return segment_state_play_chunk(This, performance, 10000000, 0);
 }
 
 HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
