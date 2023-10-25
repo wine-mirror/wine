@@ -3147,8 +3147,8 @@ static void test_notification_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 50, &msg);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
-    if (ret == WAIT_TIMEOUT) ret = test_tool_wait_message(tool, 500, &msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
+    ret = test_tool_wait_message(tool, 500, &msg);
     ok(!ret, "got %#lx\n", ret);
     check_dmus_dirty_pmsg(msg, music_time + length);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
@@ -3312,8 +3312,7 @@ static void test_notification_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 500, &msg);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
-    if (!ret) IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(ret == WAIT_TIMEOUT, "got %#lx\n", ret);
 
     IDirectMusicSegmentState_Release(state);
     IDirectMusicSegment_Release(segment);

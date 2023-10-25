@@ -276,7 +276,7 @@ static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusi
     return CONTAINING_RECORD(iface, struct performance, IDirectMusicPerformance8_iface);
 }
 
-static HRESULT performance_send_segment_start(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
+HRESULT performance_send_segment_start(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
         IDirectMusicSegmentState *state)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
@@ -319,6 +319,18 @@ HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     HRESULT hr;
 
+    if (FAILED(hr = performance_send_notification_pmsg(This, music_time - 1450, This->notification_segment,
+            GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state)))
+        return hr;
+    if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
+            GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state)))
+        return hr;
+    if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_IMMEDIATE,
+            DMUS_PMSGT_DIRTY, NULL)))
+        return hr;
+    if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_performance,
+            GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL)))
+        return hr;
     if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_ATTIME,
             DMUS_PMSGT_INTERNAL_SEGMENT_END, (IUnknown *)state)))
         return hr;
@@ -1253,8 +1265,8 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     IDirectMusicSegmentState *state;
-    MUSIC_TIME length, music_time;
     IDirectMusicSegment *segment;
+    MUSIC_TIME music_time;
     HRESULT hr;
 
     FIXME("(%p, %p, %s, %p, %#lx, %I64d, %p, %p, %p): stub\n", This, source, debugstr_w(segment_name),
@@ -1275,25 +1287,9 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     EnterCriticalSection(&This->safe);
 
-    hr = IDirectMusicSegment_GetLength(segment, &length);
-    if (SUCCEEDED(hr))
-        hr = performance_send_segment_start(iface, music_time, state);
-    if (SUCCEEDED(hr))
-        hr = segment_state_play(state, iface);
-
-    if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time + length - 1450, This->notification_segment,
-                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
-    if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_segment,
-                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state);
-    if (SUCCEEDED(hr))
-        hr = performance_send_pmsg(This, music_time + length, DMUS_PMSGF_TOOL_IMMEDIATE, DMUS_PMSGT_DIRTY, NULL);
-    if (SUCCEEDED(hr))
-        hr = performance_send_notification_pmsg(This, music_time + length, This->notification_performance,
-                GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL);
-
-    if (SUCCEEDED(hr) && segment_state)
+    if (FAILED(hr = segment_state_play(state, iface)))
+        ERR("Failed to play segment state, hr %#lx\n", hr);
+    else if (segment_state)
     {
         *segment_state = state;
         IDirectMusicSegmentState_AddRef(state);

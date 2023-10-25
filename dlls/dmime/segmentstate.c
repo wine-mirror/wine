@@ -215,8 +215,8 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     IDirectMusicSegmentState *iface;
     struct segment_state *This;
     IDirectMusicTrack *track;
-    UINT i, duration;
     HRESULT hr;
+    UINT i;
 
     TRACE("(%p, %lu, %p)\n", segment, start_time, ret_iface);
 
@@ -264,9 +264,6 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
         }
     }
 
-    duration = This->end_point - This->start_point;
-    if (SUCCEEDED(hr)) hr = performance_send_segment_end(performance, start_time + duration, iface);
-
     if (SUCCEEDED(hr)) *ret_iface = iface;
     else IDirectMusicSegmentState_Release(iface);
     return hr;
@@ -303,7 +300,18 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
 
     This->played = played;
     if (This->start_point + This->played >= This->end_point)
+    {
+        MUSIC_TIME end_time = This->start_time + This->played;
+
+        if (FAILED(hr = performance_send_segment_end(performance, end_time, iface)))
+        {
+            ERR("Failed to send segment end, hr %#lx\n", hr);
+            return hr;
+        }
+
         return S_FALSE;
+    }
+
     return S_OK;
 }
 
@@ -313,6 +321,12 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
     HRESULT hr;
 
     TRACE("%p %p\n", iface, performance);
+
+    if (FAILED(hr = performance_send_segment_start(performance, This->start_time, iface)))
+    {
+        ERR("Failed to send segment start, hr %#lx\n", hr);
+        return hr;
+    }
 
     if (FAILED(hr = segment_state_play_chunk(This, performance, 10000000,
             DMUS_TRACKF_START | DMUS_TRACKF_SEEK | DMUS_TRACKF_DIRTY)))
