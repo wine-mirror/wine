@@ -267,12 +267,8 @@ static void test_set_value(void)
     static const char string2A[] = "This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
     static const char substring2A[] = "This";
 
-    if (0)
-    {
-        /* Crashes on NT4, Windows 2000 and XP SP1 */
-        ret = RegSetValueA(hkey_main, NULL, REG_SZ, NULL, 0);
-        ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have failed with ERROR_INVALID_PARAMETER instead of %ld\n", ret);
-    }
+    ret = RegSetValueA(hkey_main, NULL, REG_SZ, NULL, 0);
+    ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueA should have failed with ERROR_INVALID_PARAMETER instead of %ld\n", ret);
 
     ret = RegSetValueA(hkey_main, NULL, REG_SZ, string1A, sizeof(string1A));
     ok(ret == ERROR_SUCCESS, "RegSetValueA failed: %ld, GLE=%ld\n", ret, GetLastError());
@@ -335,7 +331,6 @@ static void test_set_value(void)
 
     if (0)
     {
-        /* Crashes on NT4, Windows 2000 and XP SP1 */
         ret = RegSetValueW(hkey_main, NULL, REG_SZ, NULL, 0);
         ok(ret == ERROR_INVALID_PARAMETER, "RegSetValueW should have failed with ERROR_INVALID_PARAMETER instead of %ld\n", ret);
 
@@ -907,14 +902,9 @@ static void test_get_value(void)
     size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_ZB_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
-    ok(size == 0 ||
-       size == 1, /* win2k3 */
-       "size=%ld\n", size);
+    todo_wine ok(size == 1, "size=%ld\n", size);
     ok(type == REG_SZ, "type=%ld\n", type);
-    ok(!strcmp(sTestpath1, buf) ||
-       !strcmp(buf, ""),
-       "Expected \"%s\" or \"\", got \"%s\"\n", sTestpath1, buf);
+    todo_wine ok(!strcmp(buf, ""), "Expected \"\", got \"%s\"\n", buf);
 
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
@@ -928,18 +918,15 @@ static void test_get_value(void)
     size = 0;
     ret = pRegGetValueA(hkey_main, NULL, "TP2_EXP_SZ", RRF_RT_REG_SZ, NULL, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    ok((size == strlen(expanded2)+1) || /* win2k3 SP1 */
-       (size == strlen(expanded2)+2) || /* win2k3 SP2 */
-       (size == strlen(sTestpath2)+1),
-        "strlen(expanded2)=%d, strlen(sTestpath2)=%d, size=%ld\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
+    todo_wine ok(size == strlen(expanded2)+2,
+       "strlen(expanded2)=%d, strlen(sTestpath2)=%d, size=%ld\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
-    ok(size == strlen(expanded)+1 || broken(size == strlen(sTestpath1)+1),
-        "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
+    todo_wine ok(size == strlen(sTestpath1)+1,
+       "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
 
@@ -947,8 +934,7 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP2_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath2 length + 1 here. */
-    ok(size == strlen(expanded2)+1 || broken(size == strlen(sTestpath2)+1),
+    ok(size == strlen(expanded2)+1,
         "strlen(expanded2)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded2), lstrlenA(sTestpath2), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(expanded2, buf), "expanded2=\"%s\" buf=\"%s\"\n", expanded2, buf);
@@ -965,9 +951,7 @@ static void test_get_value(void)
     size = 0xbadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, NULL, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    /* v5.2.3790.1830 (2003 SP1) returns sTestpath1 length + 2 here. */
-    ok(size == strlen(sTestpath1)+1 || broken(size == strlen(sTestpath1)+2),
-       "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
+    todo_wine ok(size == strlen(sTestpath1)+2, "strlen(sTestpath1)=%d size=%ld\n", lstrlenA(sTestpath1), size);
 
     /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (type mismatch) */
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, NULL, NULL, NULL);
@@ -982,8 +966,7 @@ static void test_get_value(void)
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_ANY, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded sTestpath1 length + 1 here. */
-    ok(size == strlen(expanded)+1 || broken(size == strlen(sTestpath1)+1),
+    todo_wine ok(size == strlen(sTestpath1)+1,
         "strlen(expanded)=%d, strlen(sTestpath1)=%d, size=%ld\n", lstrlenA(expanded), lstrlenA(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
@@ -1078,15 +1061,13 @@ static void test_reg_open_key(void)
 
     /*  beginning backslash character */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "\\Software\\Wine\\Test", &hkResult);
-    ok(ret == ERROR_BAD_PATHNAME || /* NT/2k/XP */
-       broken(ret == ERROR_SUCCESS),  /* wow64 */
+    ok(ret == ERROR_BAD_PATHNAME || broken(ret == ERROR_SUCCESS),  /* wow64 */
        "expected ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
     if (!ret) RegCloseKey(hkResult);
 
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, "\\clsid", 0, KEY_QUERY_VALUE, &hkResult);
-    ok(ret == ERROR_SUCCESS || /* 2k/XP */
-       ret == ERROR_BAD_PATHNAME, /* NT */
+    ok(ret == ERROR_SUCCESS,
        "expected ERROR_SUCCESS, ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
     RegCloseKey(hkResult);
 
@@ -1125,7 +1106,7 @@ static void test_reg_open_key(void)
     hkResult = hkPreserve;
     ret = RegOpenKeyExW(NULL, L"", 0, KEY_QUERY_VALUE, &hkResult);
     ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", ret);
-    ok(hkResult == NULL || broken(hkResult == hkPreserve /* Windows XP */), "expected hkResult == NULL\n");
+    ok(hkResult == NULL, "expected hkResult == NULL\n");
 
     hkResult = hkPreserve;
     ret = RegOpenKeyExA(NULL, "", 0, KEY_QUERY_VALUE, &hkResult);
@@ -1137,14 +1118,12 @@ static void test_reg_open_key(void)
     /* WOW64 flags */
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_32KEY, &hkResult);
-    ok((ret == ERROR_SUCCESS && hkResult != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
-        "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
+    ok(ret == ERROR_SUCCESS && hkResult, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
     RegCloseKey(hkResult);
 
     hkResult = NULL;
     ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software", 0, KEY_READ|KEY_WOW64_64KEY, &hkResult);
-    ok((ret == ERROR_SUCCESS && hkResult != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
-        "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
+    ok(ret == ERROR_SUCCESS && hkResult, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
     RegCloseKey(hkResult);
 
     /* check special HKEYs on 64bit
@@ -1192,21 +1171,22 @@ static void test_reg_open_key(void)
 
     ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
                           KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &hkRoot32, NULL);
-    if (limited_user)
-        ok(ret == ERROR_ACCESS_DENIED && hkRoot32 == NULL,
-           "RegCreateKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
-    else
-        ok(ret == ERROR_SUCCESS && hkRoot32 != NULL,
-           "RegCreateKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
+    ok(ret == ERROR_SUCCESS || ret == ERROR_ACCESS_DENIED,
+       "RegCreateKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
+    if (ret == ERROR_ACCESS_DENIED) return;
+    ok(hkRoot32 != NULL, "hkRoot32 was set\n");
 
     ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
                           KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &hkRoot64, NULL);
-    if (limited_user)
-        ok(ret == ERROR_ACCESS_DENIED && hkRoot64 == NULL,
-           "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
-    else
-        ok(ret == ERROR_SUCCESS && hkRoot64 != NULL,
-           "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
+    ok(ret == ERROR_SUCCESS || ERROR_ACCESS_DENIED,
+       "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
+    if (ret == ERROR_ACCESS_DENIED)
+    {
+        RegDeleteKeyA(hkRoot32, "");
+        RegCloseKey(hkRoot32);
+        return;
+    }
+    ok(hkRoot64 != NULL, "hkRoot64 was set\n");
 
     bRet = AllocateAndInitializeSid(&sid_authority, 1, SECURITY_WORLD_RID,
                                     0, 0, 0, 0, 0, 0, 0, &world_sid);
@@ -1253,14 +1233,14 @@ static void test_reg_open_key(void)
 
         hkResult = NULL;
         ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, KEY_WOW64_64KEY | KEY_READ, &hkResult);
-        ok(ret == ERROR_SUCCESS && hkResult != NULL,
-           "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
+        ok(ret == ERROR_SUCCESS, "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
+        ok(hkResult != NULL, "hkResult wasn't set\n");
         RegCloseKey(hkResult);
 
         hkResult = NULL;
         ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, KEY_WOW64_32KEY | KEY_READ, &hkResult);
-        ok(ret == ERROR_SUCCESS && hkResult != NULL,
-           "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
+        ok(ret == ERROR_SUCCESS, "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%lu)\n", ret);
+        ok(hkResult != NULL, "hkResult wasn't set\n");
         RegCloseKey(hkResult);
     }
 
@@ -1475,22 +1455,7 @@ static void test_reg_delete_key(void)
     HKEY key;
 
     ret = RegDeleteKeyA(hkey_main, NULL);
-
-    /* There is a bug in NT4 and W2K that doesn't check if the subkey is NULL. If
-     * there are also no subkeys available it will delete the key pointed to by hkey_main.
-     * Not re-creating will make some next tests fail.
-     */
-    if (ret == ERROR_SUCCESS)
-    {
-        trace("We are probably running on NT4 or W2K as the main key is deleted,"
-            " re-creating the main key\n");
-        setup_main_key();
-    }
-    else
-        ok(ret == ERROR_INVALID_PARAMETER ||
-           ret == ERROR_ACCESS_DENIED ||
-           ret == ERROR_BADKEY, /* Win95 */
-           "ret=%ld\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %ld\n", ret);
 
     ret = RegCreateKeyA(hkey_main, "deleteme", &key);
     ok(ret == ERROR_SUCCESS, "Could not create key, got %ld\n", ret);
@@ -1725,17 +1690,11 @@ static void test_regconnectregistry( void)
     lstrcpynA(netwName+2, compName, MAX_COMPUTERNAME_LENGTH + 1);
 
     retl = RegConnectRegistryA( compName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl ||
-        retl == ERROR_DLL_INIT_FAILED ||
-        retl == ERROR_BAD_NETPATH, /* some win2k */
-        "RegConnectRegistryA failed err = %ld\n", retl);
+    ok( !retl, "RegConnectRegistryA failed err = %ld\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     retl = RegConnectRegistryA( netwName, HKEY_LOCAL_MACHINE, &hkey);
-    ok( !retl ||
-        retl == ERROR_DLL_INIT_FAILED ||
-        retl == ERROR_BAD_NETPATH, /* some win2k */
-        "RegConnectRegistryA failed err = %ld\n", retl);
+    ok( !retl, "RegConnectRegistryA failed err = %ld\n", retl);
     if( !retl) RegCloseKey( hkey);
 
     SetLastError(0xdeadbeef);
@@ -2013,8 +1972,7 @@ static void test_reg_query_info(void)
     classlen = 0;
     ret = RegQueryInfoKeyA(subkey, classbuffer, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "ret = %ld\n", ret);
-    ok(classlen == strlen(subkey_class) /* win2k */ ||
-       classlen == 0, "classlen = %lu\n", classlen);
+    todo_wine ok(classlen == 0, "classlen = %lu\n", classlen);
     memset(expectbuffer, 0x55, sizeof(expectbuffer));
     ok(!memcmp(classbuffer, expectbuffer, sizeof(classbuffer)), "classbuffer was modified\n");
 
@@ -2022,8 +1980,7 @@ static void test_reg_query_info(void)
     classlen = 0;
     ret = RegQueryInfoKeyW(subkey, classbufferW, &classlen, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "ret = %ld\n", ret);
-    ok(classlen == strlen(subkey_class) /* win2k */ ||
-       classlen == 0, "classlen = %lu\n", classlen);
+    todo_wine ok(classlen == 0, "classlen = %lu\n", classlen);
     memset(expectbufferW, 0x55, sizeof(expectbufferW));
     ok(!memcmp(classbufferW, expectbufferW, sizeof(classbufferW)), "classbufferW was modified\n");
 
@@ -3787,8 +3744,7 @@ static void test_delete_value(void)
     memset(longname, 'a', 400);
     longname[400] = 0;
     res = RegDeleteValueA( hkey_main, longname );
-    ok(res == ERROR_FILE_NOT_FOUND || broken(res == ERROR_MORE_DATA), /* nt4, win2k */
-       "expect ERROR_FILE_NOT_FOUND, got %li\n", res);
+    ok(res == ERROR_FILE_NOT_FOUND, "expect ERROR_FILE_NOT_FOUND, got %li\n", res);
 
     /* Default registry value */
     res = RegSetValueExA(hkey_main, "", 0, REG_SZ, (const BYTE *)"value", 6);
@@ -4999,6 +4955,6 @@ START_TEST(registry)
 
     /* cleanup */
     delete_key( hkey_main );
-    
+
     test_regconnectregistry();
 }
