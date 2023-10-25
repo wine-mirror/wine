@@ -24,6 +24,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
+enum dmus_internal_message_type
+{
+    DMUS_PMSGT_INTERNAL_FIRST = 0x10,
+    DMUS_PMSGT_INTERNAL_SEGMENT_END = DMUS_PMSGT_INTERNAL_FIRST,
+};
+
 struct pchannel_block {
     DWORD block_num;   /* Block 0 is PChannels 0-15, Block 1 is PChannels 16-31, etc */
     struct {
@@ -158,7 +164,8 @@ static DWORD WINAPI message_thread_proc(void *args)
     return 0;
 }
 
-static HRESULT performance_send_dirty_pmsg(struct performance *This, MUSIC_TIME music_time)
+static HRESULT performance_send_pmsg(struct performance *This, MUSIC_TIME music_time, DWORD flags,
+        DWORD type, IUnknown *object)
 {
     IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
     IDirectMusicGraph *graph = &This->IDirectMusicGraph_iface;
@@ -169,10 +176,11 @@ static HRESULT performance_send_dirty_pmsg(struct performance *This, MUSIC_TIME 
         return hr;
 
     msg->mtTime = music_time;
-    msg->dwFlags = DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE;
-    msg->dwType = DMUS_PMSGT_DIRTY;
+    msg->dwFlags = DMUS_PMSGF_MUSICTIME | flags;
+    msg->dwType = type;
+    if ((msg->punkUser = object)) IUnknown_AddRef(object);
 
-    if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, msg))
+    if ((type < DMUS_PMSGT_INTERNAL_FIRST && FAILED(hr = IDirectMusicGraph_StampPMsg(graph, msg)))
             || FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, msg)))
         IDirectMusicPerformance8_FreePMsg(performance, msg);
 
@@ -250,6 +258,19 @@ static struct pchannel_block *pchannel_block_set(struct wine_rb_tree *tree, DWOR
 static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusicPerformance8 *iface)
 {
     return CONTAINING_RECORD(iface, struct performance, IDirectMusicPerformance8_iface);
+}
+
+HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
+        IDirectMusicSegmentState *state)
+{
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    HRESULT hr;
+
+    if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_ATTIME,
+            DMUS_PMSGT_INTERNAL_SEGMENT_END, (IUnknown *)state)))
+        return hr;
+
+    return S_OK;
 }
 
 /* IDirectMusicPerformance8 IUnknown part: */
@@ -1050,8 +1071,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         list_remove(&message->entry);
         list_init(&message->entry);
 
-        /* process notifications to end any pending segment states */
-        if (message->msg.dwType == DMUS_PMSGT_NOTIFICATION)
+        if (message->msg.dwType == DMUS_PMSGT_INTERNAL_SEGMENT_END)
             hr = IDirectMusicTool_ProcessPMsg(&This->IDirectMusicTool_iface,
                     (IDirectMusicPerformance *)iface, &message->msg);
         else
@@ -1210,7 +1230,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = performance_send_notification_pmsg(This, start_time, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGSTART, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_dirty_pmsg(This, start_time);
+        hr = performance_send_pmsg(This, start_time, DMUS_PMSGF_TOOL_QUEUE, DMUS_PMSGT_DIRTY, NULL);
 
     if (SUCCEEDED(hr))
         hr = segment_state_play(state, iface);
@@ -1222,7 +1242,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_segment,
                 GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state);
     if (SUCCEEDED(hr))
-        hr = performance_send_dirty_pmsg(This, start_time + length);
+        hr = performance_send_pmsg(This, start_time + length, DMUS_PMSGF_TOOL_QUEUE, DMUS_PMSGT_DIRTY, NULL);
     if (SUCCEEDED(hr))
         hr = performance_send_notification_pmsg(This, start_time + length, This->notification_performance,
                 GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL);
@@ -1764,14 +1784,6 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         struct message *previous;
         BOOL enabled = FALSE;
 
-        if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)
-                && notif->dwNotificationOption == DMUS_NOTIFICATION_SEGEND)
-        {
-            if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)notif->punkUser,
-                    (IDirectMusicPerformance8 *)performance)))
-                WARN("Failed to end segment state %p, hr %#lx\n", notif->punkUser, hr);
-        }
-
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_PERFORMANCE))
             enabled = This->notification_performance;
         if (IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT))
@@ -1797,6 +1809,12 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
     case DMUS_PMSGT_WAVE:
         if (FAILED(hr = IDirectSoundBuffer_Play((IDirectSoundBuffer *)msg->punkUser, 0, 0, 0)))
             WARN("Failed to play wave buffer, hr %#lx\n", hr);
+        break;
+
+    case DMUS_PMSGT_INTERNAL_SEGMENT_END:
+        if (FAILED(hr = segment_state_end_play((IDirectMusicSegmentState *)msg->punkUser,
+                (IDirectMusicPerformance8 *)performance)))
+            WARN("Failed to end segment state %p, hr %#lx\n", msg->punkUser, hr);
         break;
 
     default:

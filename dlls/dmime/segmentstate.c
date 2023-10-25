@@ -214,8 +214,8 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     IDirectMusicSegmentState *iface;
     struct segment_state *This;
     IDirectMusicTrack *track;
+    UINT i, duration;
     HRESULT hr;
-    UINT i;
 
     TRACE("(%p, %lu, %p)\n", segment, start_time, ret_iface);
 
@@ -262,6 +262,9 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
             free(entry);
         }
     }
+
+    duration = This->end_point - This->start_point;
+    if (SUCCEEDED(hr)) hr = performance_send_segment_end(performance, start_time + duration, iface);
 
     if (SUCCEEDED(hr)) *ret_iface = iface;
     else IDirectMusicSegmentState_Release(iface);
