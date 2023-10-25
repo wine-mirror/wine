@@ -12318,7 +12318,6 @@ static void test_set_hook(void)
             || i == WH_KEYBOARD_LL || i == WH_MOUSE_LL)
         {
             ok(!hhook, "SetWinEventHook succeeded.\n");
-            todo_wine
             ok(error == ERROR_GLOBAL_ONLY_HOOK, "Got unexpected error %ld.\n", GetLastError());
         }
         else

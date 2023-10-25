@@ -91,7 +91,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
             id == WH_SYSMSGFILTER)
         {
             /* these can only be global */
-            RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+            RtlSetLastWin32Error( ERROR_GLOBAL_ONLY_HOOK );
             return 0;
         }
     }
