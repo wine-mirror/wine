@@ -816,7 +816,6 @@ static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream
         case MAKE_IDTYPE(FOURCC_RIFF, mmioFOURCC('W','A','V','E')):
         {
             IDirectMusicTrack8 *track;
-            HRESULT hr;
 
             TRACE("Loading segment %p from wave file\n", This);
 
