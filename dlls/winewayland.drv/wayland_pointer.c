@@ -417,7 +417,7 @@ static BOOL get_icon_info(HICON handle, ICONINFOEXW *ret)
     return TRUE;
 }
 
-static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor)
+static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor, double scale)
 {
     struct wayland_cursor *cursor = &process_wayland.pointer.cursor;
     ICONINFOEXW info = {0};
@@ -469,6 +469,9 @@ static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor)
         cursor->hotspot_y = cursor->shm_buffer->height / 2;
     }
 
+    cursor->hotspot_x = round(cursor->hotspot_x / scale);
+    cursor->hotspot_y = round(cursor->hotspot_y / scale);
+
     return;
 
 clear_cursor:
@@ -479,7 +482,7 @@ clear_cursor:
     }
 }
 
-static void wayland_pointer_update_cursor_surface(void)
+static void wayland_pointer_update_cursor_surface(double scale)
 {
     struct wayland_cursor *cursor = &process_wayland.pointer.cursor;
 
@@ -496,12 +499,32 @@ static void wayland_pointer_update_cursor_surface(void)
         }
     }
 
+    if (!cursor->wp_viewport && process_wayland.wp_viewporter)
+    {
+        cursor->wp_viewport =
+            wp_viewporter_get_viewport(process_wayland.wp_viewporter,
+                                       cursor->wl_surface);
+        if (!cursor->wp_viewport)
+            WARN("Failed to create wp_viewport for cursor\n");
+    }
+
     /* Commit the cursor buffer to the cursor surface. */
     wl_surface_attach(cursor->wl_surface,
                       cursor->shm_buffer->wl_buffer, 0, 0);
     wl_surface_damage_buffer(cursor->wl_surface, 0, 0,
                              cursor->shm_buffer->width,
                              cursor->shm_buffer->height);
+    /* Setting only the viewport is enough, but some compositors don't
+     * support wp_viewport for cursor surfaces, so also set the buffer
+     * scale. Note that setting the viewport destination overrides
+     * the buffer scale, so it's fine to set both. */
+    wl_surface_set_buffer_scale(cursor->wl_surface, round(scale));
+    if (cursor->wp_viewport)
+    {
+        wp_viewport_set_destination(cursor->wp_viewport,
+                                    round(cursor->shm_buffer->width / scale),
+                                    round(cursor->shm_buffer->height / scale));
+    }
     wl_surface_commit(cursor->wl_surface);
 
     return;
@@ -511,6 +534,11 @@ clear_cursor:
     {
         wayland_shm_buffer_unref(cursor->shm_buffer);
         cursor->shm_buffer = NULL;
+    }
+    if (cursor->wp_viewport)
+    {
+        wp_viewport_destroy(cursor->wp_viewport);
+        cursor->wp_viewport = NULL;
     }
     if (cursor->wl_surface)
     {
@@ -522,12 +550,24 @@ clear_cursor:
 static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
+    struct wayland_surface *surface;
+    double scale;
+
+    if ((surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        scale = surface->window.scale;
+        pthread_mutex_unlock(&surface->mutex);
+    }
+    else
+    {
+        scale = 1.0;
+    }
 
     pthread_mutex_lock(&pointer->mutex);
     if (pointer->focused_hwnd == hwnd)
     {
-        if (use_hcursor) wayland_pointer_update_cursor_buffer(hcursor);
-        wayland_pointer_update_cursor_surface();
+        if (use_hcursor) wayland_pointer_update_cursor_buffer(hcursor, scale);
+        wayland_pointer_update_cursor_surface(scale);
         wl_pointer_set_cursor(pointer->wl_pointer,
                               pointer->enter_serial,
                               pointer->cursor.wl_surface,
