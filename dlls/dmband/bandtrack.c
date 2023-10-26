@@ -568,6 +568,7 @@ static HRESULT WINAPI band_track_persist_stream_Load(IPersistStream *iface, IStr
         }
     }
 
+    stream_skip_chunk(stream, &chunk);
     if (FAILED(hr)) return hr;
 
     if (TRACE_ON(dmband))
@@ -590,7 +591,6 @@ static HRESULT WINAPI band_track_persist_stream_Load(IPersistStream *iface, IStr
         }
     }
 
-    stream_skip_chunk(stream, &chunk);
     return S_OK;
 }
 
