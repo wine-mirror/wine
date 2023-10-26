@@ -1847,7 +1847,6 @@ static void test_Get_Release_DC(void)
     status = GdipSetPageScale(graphics, 1.0);
     expect(ObjectBusy, status);
     status = GdipSetPageScale(graphics, 0.0);
-    todo_wine
     expect(ObjectBusy, status);
     status = GdipSetPageUnit(graphics, UnitWorld);
     expect(ObjectBusy, status);

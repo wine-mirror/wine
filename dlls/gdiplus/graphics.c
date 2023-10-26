@@ -6164,11 +6164,14 @@ GpStatus WINGDIPAPI GdipSetPageScale(GpGraphics *graphics, REAL scale)
 
     TRACE("(%p, %.2f)\n", graphics, scale);
 
-    if(!graphics || (scale <= 0.0))
+    if(!graphics)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if(scale <= 0.0)
+        return InvalidParameter;
 
     if (is_metafile_graphics(graphics))
     {
