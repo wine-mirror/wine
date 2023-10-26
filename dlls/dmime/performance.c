@@ -32,14 +32,17 @@ enum dmus_internal_message_type
     DMUS_PMSGT_INTERNAL_SEGMENT_TICK,
 };
 
+struct channel
+{
+    DWORD midi_group;
+    DWORD midi_channel;
+    IDirectMusicPort *port;
+};
+
 struct channel_block
 {
     DWORD block_num;   /* Block 0 is PChannels 0-15, Block 1 is PChannels 16-31, etc */
-    struct {
-       DWORD channel;  /* MIDI channel */
-       DWORD group;    /* MIDI group */
-       IDirectMusicPort *port;
-    } pchannel[16];
+    struct channel channels[16];
     struct wine_rb_entry entry;
 };
 
@@ -247,7 +250,7 @@ static void channel_block_free(struct wine_rb_entry *entry, void *context)
 }
 
 static struct channel_block *channel_block_set(struct wine_rb_tree *tree, DWORD block_num,
-        IDirectMusicPort *port, DWORD group, BOOL only_set_new)
+        IDirectMusicPort *port, DWORD midi_group, BOOL only_set_new)
 {
     struct channel_block *block;
     struct wine_rb_entry *entry;
@@ -264,9 +267,9 @@ static struct channel_block *channel_block_set(struct wine_rb_tree *tree, DWORD 
     }
 
     for (i = 0; i < 16; ++i) {
-        block->pchannel[i].port = port;
-        block->pchannel[i].group = group;
-        block->pchannel[i].channel = i;
+        block->channels[i].port = port;
+        block->channels[i].midi_group = midi_group;
+        block->channels[i].midi_channel = i;
     }
     if (!entry)
         wine_rb_put(tree, &block->block_num, &block->entry);
@@ -1030,51 +1033,51 @@ static HRESULT WINAPI performance_RemovePort(IDirectMusicPerformance8 *iface, ID
 }
 
 static HRESULT WINAPI performance_AssignPChannelBlock(IDirectMusicPerformance8 *iface,
-        DWORD block_num, IDirectMusicPort *port, DWORD group)
+        DWORD block_num, IDirectMusicPort *port, DWORD midi_group)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
 
-    FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, block_num, port, group);
+    FIXME("(%p, %ld, %p, %ld): semi-stub\n", This, block_num, port, midi_group);
 
     if (!port) return E_POINTER;
     if (block_num > MAXDWORD / 16) return E_INVALIDARG;
     if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
-    channel_block_set(&This->channel_blocks, block_num, port, group, FALSE);
+    channel_block_set(&This->channel_blocks, block_num, port, midi_group, FALSE);
 
     return S_OK;
 }
 
-static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface, DWORD pchannel,
-        IDirectMusicPort *port, DWORD group, DWORD channel)
+static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface, DWORD channel_num,
+        IDirectMusicPort *port, DWORD midi_group, DWORD midi_channel)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     struct channel_block *block;
 
-    FIXME("(%p)->(%ld, %p, %ld, %ld) semi-stub\n", This, pchannel, port, group, channel);
+    FIXME("(%p)->(%ld, %p, %ld, %ld) semi-stub\n", This, channel_num, port, midi_group, midi_channel);
 
     if (!port) return E_POINTER;
     if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
-    block = channel_block_set(&This->channel_blocks, pchannel / 16, port, 0, TRUE);
+    block = channel_block_set(&This->channel_blocks, channel_num / 16, port, 0, TRUE);
     if (block) {
-        block->pchannel[pchannel % 16].group = group;
-        block->pchannel[pchannel % 16].channel = channel;
+        block->channels[channel_num % 16].midi_group = midi_group;
+        block->channels[channel_num % 16].midi_channel = midi_channel;
     }
 
     return S_OK;
 }
 
-static HRESULT WINAPI performance_PChannelInfo(IDirectMusicPerformance8 *iface, DWORD pchannel,
-        IDirectMusicPort **port, DWORD *group, DWORD *channel)
+static HRESULT WINAPI performance_PChannelInfo(IDirectMusicPerformance8 *iface, DWORD channel_num,
+        IDirectMusicPort **port, DWORD *midi_group, DWORD *midi_channel)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     struct channel_block *block;
     struct wine_rb_entry *entry;
-    DWORD block_num = pchannel / 16;
-    unsigned int index = pchannel % 16;
+    DWORD block_num = channel_num / 16;
+    unsigned int index = channel_num % 16;
 
-    TRACE("(%p)->(%ld, %p, %p, %p)\n", This, pchannel, port, group, channel);
+    TRACE("(%p)->(%ld, %p, %p, %p)\n", This, channel_num, port, midi_group, midi_channel);
 
     entry = wine_rb_get(&This->channel_blocks, &block_num);
     if (!entry)
@@ -1082,13 +1085,11 @@ static HRESULT WINAPI performance_PChannelInfo(IDirectMusicPerformance8 *iface, 
     block = WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry);
 
     if (port) {
-        *port = block->pchannel[index].port;
+        *port = block->channels[index].port;
         IDirectMusicPort_AddRef(*port);
     }
-    if (group)
-        *group = block->pchannel[index].group;
-    if (channel)
-        *channel = block->pchannel[index].channel;
+    if (midi_group) *midi_group = block->channels[index].midi_group;
+    if (midi_channel) *midi_channel = block->channels[index].midi_channel;
 
     return S_OK;
 }
