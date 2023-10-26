@@ -90,6 +90,8 @@ static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
     __wine_send_input(hwnd, &input, NULL);
 }
 
+static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor);
+
 static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
                                  uint32_t serial, struct wl_surface *wl_surface,
                                  wl_fixed_t sx, wl_fixed_t sy)
@@ -107,14 +109,11 @@ static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
     pthread_mutex_lock(&pointer->mutex);
     pointer->focused_hwnd = hwnd;
     pointer->enter_serial = serial;
+    pthread_mutex_unlock(&pointer->mutex);
+
     /* The cursor is undefined at every enter, so we set it again with
      * the latest information we have. */
-    wl_pointer_set_cursor(pointer->wl_pointer,
-                          pointer->enter_serial,
-                          pointer->cursor.wl_surface,
-                          pointer->cursor.hotspot_x,
-                          pointer->cursor.hotspot_y);
-    pthread_mutex_unlock(&pointer->mutex);
+    wayland_set_cursor(hwnd, NULL, FALSE);
 
     /* Handle the enter as a motion, to account for cases where the
      * window first appears beneath the pointer and won't get a separate
@@ -418,7 +417,7 @@ static BOOL get_icon_info(HICON handle, ICONINFOEXW *ret)
     return TRUE;
 }
 
-static void wayland_pointer_update_cursor(HCURSOR hcursor)
+static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor)
 {
     struct wayland_cursor *cursor = &process_wayland.pointer.cursor;
     ICONINFOEXW info = {0};
@@ -470,6 +469,22 @@ static void wayland_pointer_update_cursor(HCURSOR hcursor)
         cursor->hotspot_y = cursor->shm_buffer->height / 2;
     }
 
+    return;
+
+clear_cursor:
+    if (cursor->shm_buffer)
+    {
+        wayland_shm_buffer_unref(cursor->shm_buffer);
+        cursor->shm_buffer = NULL;
+    }
+}
+
+static void wayland_pointer_update_cursor_surface(void)
+{
+    struct wayland_cursor *cursor = &process_wayland.pointer.cursor;
+
+    if (!cursor->shm_buffer) goto clear_cursor;
+
     if (!cursor->wl_surface)
     {
         cursor->wl_surface =
@@ -504,19 +519,15 @@ clear_cursor:
     }
 }
 
-/***********************************************************************
- *           WAYLAND_SetCursor
- */
-void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor)
+static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
-
-    TRACE("hwnd=%p hcursor=%p\n", hwnd, hcursor);
 
     pthread_mutex_lock(&pointer->mutex);
     if (pointer->focused_hwnd == hwnd)
     {
-        wayland_pointer_update_cursor(hcursor);
+        if (use_hcursor) wayland_pointer_update_cursor_buffer(hcursor);
+        wayland_pointer_update_cursor_surface();
         wl_pointer_set_cursor(pointer->wl_pointer,
                               pointer->enter_serial,
                               pointer->cursor.wl_surface,
@@ -525,4 +536,14 @@ void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor)
         wl_display_flush(process_wayland.wl_display);
     }
     pthread_mutex_unlock(&pointer->mutex);
+}
+
+/***********************************************************************
+ *           WAYLAND_SetCursor
+ */
+void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor)
+{
+    TRACE("hwnd=%p hcursor=%p\n", hwnd, hcursor);
+
+    wayland_set_cursor(hwnd, hcursor, TRUE);
 }
