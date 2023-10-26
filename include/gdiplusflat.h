@@ -290,6 +290,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileNameI(GDIPCONST WCHAR*,HDC,EmfType,
     GDIPCONST GpRect*,MetafileFrameUnit,GDIPCONST WCHAR*,GpMetafile**);
 GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics*,HDC);
 GpStatus WINGDIPAPI GdipResetClip(GpGraphics*);
+GpStatus WINGDIPAPI GdipResetPageTransform(GpGraphics*);
 GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics*);
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics*,GraphicsState);
 GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics*,REAL,GpMatrixOrder);

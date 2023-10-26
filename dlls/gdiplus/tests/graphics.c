@@ -1828,6 +1828,9 @@ static void test_Get_Release_DC(void)
     /* GdipMeasureString */
     status = GdipResetClip(graphics);
     expect(ObjectBusy, status);
+    status = GdipResetPageTransform(graphics);
+    todo_wine
+    expect(ObjectBusy, status);
     status = GdipResetWorldTransform(graphics);
     expect(ObjectBusy, status);
     /* GdipRestoreGraphics */
@@ -1843,6 +1846,9 @@ static void test_Get_Release_DC(void)
     status = GdipSetInterpolationMode(graphics, InterpolationModeDefault);
     expect(ObjectBusy, status);
     status = GdipSetPageScale(graphics, 1.0);
+    expect(ObjectBusy, status);
+    status = GdipSetPageScale(graphics, 0.0);
+    todo_wine
     expect(ObjectBusy, status);
     status = GdipSetPageUnit(graphics, UnitWorld);
     expect(ObjectBusy, status);
@@ -4056,6 +4062,96 @@ static void test_transform(void)
         status = GdipDisposeImage(image);
         expect(Ok, status);
     }
+}
+
+static void test_set_page_transform(void)
+{
+    static const struct
+    {
+        GpUnit unit;
+        BOOL isInvalid;
+    } td_unit[] =
+    {
+        {UnitWorld, TRUE},
+        {UnitDisplay},
+        {UnitPixel},
+        {UnitPoint},
+        {UnitInch},
+        {UnitDocument},
+        {UnitMillimeter},
+        {UnitMillimeter + 1, TRUE},
+    };
+    static const struct {
+        REAL scale;
+        BOOL isInvalid;
+    } td_scale[] =
+    {
+        {-1.0, TRUE},
+        {0.0, TRUE},
+        {0.5},
+        {1.0},
+        {2.0},
+    };
+    GpStatus status;
+    GpGraphics *graphics;
+    HDC hdc = GetDC( hwnd );
+    GpUnit unit;
+    REAL scale;
+    UINT i;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    for (i = 0; i < ARRAY_SIZE(td_unit); i++)
+    {
+        winetest_push_context("%u", i);
+        status = GdipSetPageUnit(graphics, td_unit[i].unit);
+        todo_wine_if(td_unit[i].unit > UnitMillimeter)
+        expect(td_unit[i].isInvalid ? InvalidParameter : Ok, status);
+        if (status == Ok)
+        {
+            status = GdipGetPageUnit(graphics, &unit);
+            expect(Ok, status);
+            expect(td_unit[i].unit, unit);
+        }
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(td_scale); i++)
+    {
+        winetest_push_context("%u", i);
+        status = GdipSetPageScale(graphics, td_scale[i].scale);
+        expect(td_scale[i].isInvalid ? InvalidParameter : Ok, status);
+        if (status == Ok)
+        {
+            status = GdipGetPageScale(graphics, &scale);
+            expect(Ok, status);
+            expectf_(td_scale[i].scale, scale, 0);
+        }
+        winetest_pop_context();
+    }
+
+    status = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, status);
+    todo_wine
+    expect(UnitMillimeter, unit);
+    status = GdipGetPageScale(graphics, &scale);
+    expect(Ok, status);
+    expectf_(2.0, scale, 0);
+    status = GdipResetPageTransform(graphics);
+    todo_wine
+    expect(Ok, status);
+    status = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, status);
+    todo_wine
+    expect(UnitDisplay, unit);
+    status = GdipGetPageScale(graphics, &scale);
+    expect(Ok, status);
+    todo_wine
+    expectf_(1.0, scale, 0);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void test_pen_thickness(void)
@@ -7275,6 +7371,7 @@ START_TEST(graphics)
     test_measure_string();
     test_font_height_scaling();
     test_transform();
+    test_set_page_transform();
     test_pen_thickness();
     test_GdipMeasureString();
     test_constructor_destructor();
