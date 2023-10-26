@@ -1186,7 +1186,7 @@ static void test_GetCharABCWidths(void)
     ok(!ret, "GetCharABCWidthsW should have failed\n");
 
     ret = GetCharABCWidthsW(hdc, 'a', 'a', abc);
-    ok(!ret, "GetCharABCWidthsW should have failed\n");
+    ok(ret || broken(!ret) /* < win10 */, "GetCharABCWidthsW should have succeeded\n");
 
     ret = GetCharABCWidthsFloatW(NULL, 'a', 'a', abcf);
     ok(!ret, "GetCharABCWidthsFloatW should have failed\n");
