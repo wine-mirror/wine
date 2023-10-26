@@ -167,6 +167,7 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
         if (FAILED(hr)) break;
     }
 
+    if (This->format && This->data) return S_OK;
     return hr;
 }
 
