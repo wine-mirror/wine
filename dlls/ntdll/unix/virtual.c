@@ -2612,7 +2612,7 @@ static IMAGE_DATA_DIRECTORY *get_data_dir( IMAGE_NT_HEADERS *nt, SIZE_T total_si
     if (!data->Size) return NULL;
     if (!data->VirtualAddress) return NULL;
     if (data->VirtualAddress >= total_size) return NULL;
-    if (data->Size >= total_size - data->VirtualAddress) return NULL;
+    if (data->Size > total_size - data->VirtualAddress) return NULL;
     return data;
 }
 
