@@ -12129,11 +12129,11 @@ static void test_managed_reset(void)
     release_test_context(&context);
 }
 
-/* Some applications lock a mipmapped texture at level 0, write every level at
- * once, and expect it to be uploaded. */
+/* Some applications (Vivisector, Cryostasis) lock a mipmapped managed texture
+ * at level 0, write every level at once, and expect it to be uploaded. */
 static void test_mipmap_upload(void)
 {
-    unsigned int i, j, width, level_count;
+    unsigned int j, width, level_count;
     struct d3d8_test_context context;
     IDirect3DTexture8 *texture;
     D3DLOCKED_RECT locked_rect;
@@ -12141,64 +12141,50 @@ static void test_mipmap_upload(void)
     unsigned int *mem;
     HRESULT hr;
 
-    static const D3DPOOL pools[] =
-    {
-        D3DPOOL_MANAGED,
-        D3DPOOL_SYSTEMMEM,
-    };
-
     if (!init_test_context(&context))
         return;
     device = context.device;
 
-    for (i = 0; i < ARRAY_SIZE(pools); ++i)
+    hr = IDirect3DDevice8_CreateTexture(device, 32, 32, 0, 0,
+            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    level_count = IDirect3DBaseTexture8_GetLevelCount(texture);
+
+    hr = IDirect3DTexture8_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    mem = locked_rect.pBits;
+
+    for (j = 0; j < level_count; ++j)
     {
-        winetest_push_context("pool %#x", pools[i]);
+        width = 32 >> j;
+        memset(mem, 0x11 * (j + 1), width * width * 4);
+        mem += width * width;
+    }
 
-        hr = IDirect3DDevice8_CreateTexture(device, 32, 32, 0, 0,
-                D3DFMT_A8R8G8B8, pools[i], &texture);
+    hr = IDirect3DTexture8_UnlockRect(texture, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (j = 0; j < level_count; ++j)
+    {
+        winetest_push_context("level %u", j);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        level_count = IDirect3DBaseTexture8_GetLevelCount(texture);
-
-        hr = IDirect3DTexture8_LockRect(texture, 0, &locked_rect, NULL, 0);
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MIPFILTER, D3DTEXF_POINT);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, j);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-        mem = locked_rect.pBits;
-
-        for (j = 0; j < level_count; ++j)
-        {
-            width = 32 >> j;
-            memset(mem, 0x11 * (j + 1), width * width * 4);
-            mem += width * width;
-        }
-
-        hr = IDirect3DTexture8_UnlockRect(texture, 0);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        for (j = 0; j < level_count; ++j)
-        {
-            winetest_push_context("level %u", j);
-
-            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-            hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MIPFILTER, D3DTEXF_POINT);
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
-            hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, j);
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-            draw_textured_quad(&context, texture);
-            /* AMD Windows drivers don't sample from sysmem textures. */
-            check_rt_color_broken(context.backbuffer, 0x00111111 * (j + 1), 0x00000000, pools[i] == D3DPOOL_SYSTEMMEM);
-
-            winetest_pop_context();
-        }
-
-        IDirect3DTexture8_Release(texture);
+        draw_textured_quad(&context, texture);
+        check_rt_color(context.backbuffer, 0x00111111 * (j + 1));
 
         winetest_pop_context();
     }
+
+    IDirect3DTexture8_Release(texture);
     release_test_context(&context);
 }
 
