@@ -6197,7 +6197,7 @@ GpStatus WINGDIPAPI GdipSetPageUnit(GpGraphics *graphics, GpUnit unit)
     if(graphics->busy)
         return ObjectBusy;
 
-    if(unit == UnitWorld)
+    if(unit == UnitWorld || unit > UnitMillimeter)
         return InvalidParameter;
 
     if (is_metafile_graphics(graphics))

@@ -4104,7 +4104,6 @@ static void test_set_page_transform(void)
     {
         winetest_push_context("%u", i);
         status = GdipSetPageUnit(graphics, td_unit[i].unit);
-        todo_wine_if(td_unit[i].unit > UnitMillimeter)
         expect(td_unit[i].isInvalid ? InvalidParameter : Ok, status);
         if (status == Ok)
         {
@@ -4131,7 +4130,6 @@ static void test_set_page_transform(void)
 
     status = GdipGetPageUnit(graphics, &unit);
     expect(Ok, status);
-    todo_wine
     expect(UnitMillimeter, unit);
     status = GdipGetPageScale(graphics, &scale);
     expect(Ok, status);
