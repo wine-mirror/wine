@@ -78,6 +78,7 @@ struct performance
     BOOL notification_segment;
 
     IDirectMusicSegment *primary_segment;
+    IDirectMusicSegment *control_segment;
 };
 
 struct message
@@ -344,6 +345,12 @@ static void performance_set_primary_segment(struct performance *This, IDirectMus
 {
     if (This->primary_segment) IDirectMusicSegment_Release(This->primary_segment);
     if ((This->primary_segment = segment)) IDirectMusicSegment_AddRef(This->primary_segment);
+}
+
+static void performance_set_control_segment(struct performance *This, IDirectMusicSegment *segment)
+{
+    if (This->control_segment) IDirectMusicSegment_Release(This->control_segment);
+    if ((This->control_segment = segment)) IDirectMusicSegment_AddRef(This->control_segment);
 }
 
 /* IDirectMusicPerformance8 IUnknown part: */
@@ -1221,6 +1228,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
     }
 
     performance_set_primary_segment(This, NULL);
+    performance_set_control_segment(This, NULL);
 
     if (This->master_clock)
     {
@@ -1333,6 +1341,7 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
         WCHAR *segment_name, IUnknown *transition, DWORD segment_flags, INT64 start_time,
         IDirectMusicSegmentState **segment_state, IUnknown *from, IUnknown *audio_path)
 {
+    BOOL primary = !(segment_flags & DMUS_SEGF_SECONDARY), control = (segment_flags & DMUS_SEGF_CONTROL);
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     IDirectMusicSegmentState *state;
     IDirectMusicSegment *segment;
@@ -1351,12 +1360,14 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
 
     EnterCriticalSection(&This->safe);
 
-    performance_set_primary_segment(This, segment);
+    if (primary) performance_set_primary_segment(This, segment);
+    if (control) performance_set_control_segment(This, segment);
 
     if ((!(music_time = start_time) && FAILED(hr = IDirectMusicPerformance8_GetTime(iface, NULL, &music_time)))
             || FAILED(hr = segment_state_create(segment, music_time, iface, &state)))
     {
-        performance_set_primary_segment(This, NULL);
+        if (primary) performance_set_primary_segment(This, NULL);
+        if (control) performance_set_control_segment(This, NULL);
         LeaveCriticalSection(&This->safe);
 
         IDirectMusicSegment_Release(segment);
@@ -1366,7 +1377,8 @@ static HRESULT WINAPI performance_PlaySegmentEx(IDirectMusicPerformance8 *iface,
     if (FAILED(hr = segment_state_play(state, iface)))
     {
         ERR("Failed to play segment state, hr %#lx\n", hr);
-        performance_set_primary_segment(This, NULL);
+        if (primary) performance_set_primary_segment(This, NULL);
+        if (control) performance_set_control_segment(This, NULL);
     }
     else if (segment_state)
     {
