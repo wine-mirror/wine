@@ -249,6 +249,14 @@ static void channel_block_free(struct wine_rb_entry *entry, void *context)
     free(b);
 }
 
+static struct channel *performance_get_channel(struct performance *This, DWORD channel_num)
+{
+    DWORD block_num = channel_num / 16;
+    struct wine_rb_entry *entry;
+    if (!(entry = wine_rb_get(&This->channel_blocks, &block_num))) return NULL;
+    return WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry)->channels + channel_num % 16;
+}
+
 static struct channel_block *channel_block_set(struct wine_rb_tree *tree, DWORD block_num,
         IDirectMusicPort *port, DWORD midi_group, BOOL only_set_new)
 {
@@ -1052,18 +1060,26 @@ static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface
         IDirectMusicPort *port, DWORD midi_group, DWORD midi_channel)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    struct channel_block *block;
+    struct channel *channel;
+    HRESULT hr;
 
     FIXME("(%p)->(%ld, %p, %ld, %ld) semi-stub\n", This, channel_num, port, midi_group, midi_channel);
 
     if (!port) return E_POINTER;
     if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
-    block = channel_block_set(&This->channel_blocks, channel_num / 16, port, 0, TRUE);
-    if (block) {
-        block->channels[channel_num % 16].midi_group = midi_group;
-        block->channels[channel_num % 16].midi_channel = midi_channel;
+    if (!(channel = performance_get_channel(This, channel_num)))
+    {
+        if (FAILED(hr = IDirectMusicPerformance8_AssignPChannelBlock(iface,
+                channel_num / 16, port, 0)))
+            return hr;
+        if (!(channel = performance_get_channel(This, channel_num)))
+            return DMUS_E_NOT_FOUND;
     }
+
+    channel->midi_group = midi_group;
+    channel->midi_channel = midi_channel;
+    channel->port = port;
 
     return S_OK;
 }
@@ -1072,24 +1088,18 @@ static HRESULT WINAPI performance_PChannelInfo(IDirectMusicPerformance8 *iface, 
         IDirectMusicPort **port, DWORD *midi_group, DWORD *midi_channel)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    struct channel_block *block;
-    struct wine_rb_entry *entry;
-    DWORD block_num = channel_num / 16;
-    unsigned int index = channel_num % 16;
+    struct channel *channel;
 
     TRACE("(%p)->(%ld, %p, %p, %p)\n", This, channel_num, port, midi_group, midi_channel);
 
-    entry = wine_rb_get(&This->channel_blocks, &block_num);
-    if (!entry)
-        return E_INVALIDARG;
-    block = WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry);
-
-    if (port) {
-        *port = block->channels[index].port;
+    if (!(channel = performance_get_channel(This, channel_num))) return E_INVALIDARG;
+    if (port)
+    {
+        *port = channel->port;
         IDirectMusicPort_AddRef(*port);
     }
-    if (midi_group) *midi_group = block->channels[index].midi_group;
-    if (midi_channel) *midi_channel = block->channels[index].midi_channel;
+    if (midi_group) *midi_group = channel->midi_group;
+    if (midi_channel) *midi_channel = channel->midi_channel;
 
     return S_OK;
 }
