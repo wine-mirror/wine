@@ -10958,7 +10958,7 @@ static void test_sample_c_lz(void)
         0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00100006,
         0x00000000, 0x0100003e,
     };
-    static const float depth_values[] = {1.0f, 0.0f, 0.5f, 0.6f, 0.4f, 0.1f};
+    static const float depth_values[] = {0.0f, 1.0f, 0.5f, 0.6f, 0.4f, 0.1f};
     static const struct
     {
         unsigned int layer;
@@ -10967,8 +10967,8 @@ static void test_sample_c_lz(void)
     }
     tests[] =
     {
-        {0, 0.5f, 0.0f},
-        {1, 0.5f, 1.0f},
+        {0, 0.5f, 1.0f},
+        {1, 0.5f, 0.0f},
         {2, 0.5f, 0.0f},
         {3, 0.5f, 0.0f},
         {4, 0.5f, 1.0f},
@@ -10981,8 +10981,8 @@ static void test_sample_c_lz(void)
         {4, 0.0f, 0.0f},
         {5, 0.0f, 0.0f},
 
-        {0, 1.0f, 0.0f},
-        {1, 1.0f, 1.0f},
+        {0, 1.0f, 1.0f},
+        {1, 1.0f, 0.0f},
         {2, 1.0f, 1.0f},
         {3, 1.0f, 1.0f},
         {4, 1.0f, 1.0f},
