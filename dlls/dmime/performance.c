@@ -257,32 +257,31 @@ static struct channel *performance_get_channel(struct performance *This, DWORD c
     return WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry)->channels + channel_num % 16;
 }
 
-static struct channel_block *channel_block_set(struct wine_rb_tree *tree, DWORD block_num,
-        IDirectMusicPort *port, DWORD midi_group, BOOL only_set_new)
+static HRESULT channel_block_init(struct performance *This, DWORD block_num,
+        IDirectMusicPort *port, DWORD midi_group)
 {
     struct channel_block *block;
     struct wine_rb_entry *entry;
-    unsigned int i;
+    UINT i;
 
-    entry = wine_rb_get(tree, &block_num);
-    if (entry) {
+    if ((entry = wine_rb_get(&This->channel_blocks, &block_num)))
         block = WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry);
-        if (only_set_new)
-            return block;
-    } else {
-        if (!(block = malloc(sizeof(*block)))) return NULL;
+    else
+    {
+        if (!(block = calloc(1, sizeof(*block)))) return E_OUTOFMEMORY;
         block->block_num = block_num;
+        wine_rb_put(&This->channel_blocks, &block_num, &block->entry);
     }
 
-    for (i = 0; i < 16; ++i) {
-        block->channels[i].port = port;
-        block->channels[i].midi_group = midi_group;
-        block->channels[i].midi_channel = i;
+    for (i = 0; i < ARRAY_SIZE(block->channels); ++i)
+    {
+        struct channel *channel = block->channels + i;
+        channel->midi_group = midi_group;
+        channel->midi_channel = i;
+        channel->port = port;
     }
-    if (!entry)
-        wine_rb_put(tree, &block->block_num, &block->entry);
 
-    return block;
+    return S_OK;
 }
 
 static inline struct performance *impl_from_IDirectMusicPerformance8(IDirectMusicPerformance8 *iface)
@@ -994,7 +993,10 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     }
 
     for (i = 0; i < params->dwChannelGroups; i++)
-        channel_block_set(&perf->channel_blocks, i, port, i + 1, FALSE);
+    {
+        if (FAILED(hr = channel_block_init(perf, i, port, i + 1)))
+            ERR("Failed to init channel block, hr %#lx\n", hr);
+    }
 
     performance_update_latency_time(perf, port, NULL);
     return S_OK;
@@ -1051,9 +1053,7 @@ static HRESULT WINAPI performance_AssignPChannelBlock(IDirectMusicPerformance8 *
     if (block_num > MAXDWORD / 16) return E_INVALIDARG;
     if (This->audio_paths_enabled) return DMUS_E_AUDIOPATHS_IN_USE;
 
-    channel_block_set(&This->channel_blocks, block_num, port, midi_group, FALSE);
-
-    return S_OK;
+    return channel_block_init(This, block_num, port, midi_group);
 }
 
 static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface, DWORD channel_num,
