@@ -1829,7 +1829,6 @@ static void test_Get_Release_DC(void)
     status = GdipResetClip(graphics);
     expect(ObjectBusy, status);
     status = GdipResetPageTransform(graphics);
-    todo_wine
     expect(ObjectBusy, status);
     status = GdipResetWorldTransform(graphics);
     expect(ObjectBusy, status);
@@ -4139,15 +4138,12 @@ static void test_set_page_transform(void)
     expect(Ok, status);
     expectf_(2.0, scale, 0);
     status = GdipResetPageTransform(graphics);
-    todo_wine
     expect(Ok, status);
     status = GdipGetPageUnit(graphics, &unit);
     expect(Ok, status);
-    todo_wine
     expect(UnitDisplay, unit);
     status = GdipGetPageScale(graphics, &scale);
     expect(Ok, status);
-    todo_wine
     expectf_(1.0, scale, 0);
 
     GdipDeleteGraphics(graphics);
