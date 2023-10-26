@@ -76,8 +76,10 @@ extern HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME sta
         IDirectMusicPerformance8 *performance, IDirectMusicSegmentState **ret_iface);
 extern HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
 extern HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
+extern HRESULT segment_state_stop(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
 extern HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance);
 extern BOOL segment_state_has_segment(IDirectMusicSegmentState *iface, IDirectMusicSegment *segment);
+extern BOOL segment_state_has_track(IDirectMusicSegmentState *iface, DWORD track_id);
 
 extern HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         IDirectMusicTrack8 **ret_iface);
@@ -88,7 +90,7 @@ extern HRESULT performance_send_segment_start(IDirectMusicPerformance8 *iface, M
 extern HRESULT performance_send_segment_tick(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
         IDirectMusicSegmentState *state);
 extern HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
-        IDirectMusicSegmentState *state);
+        IDirectMusicSegmentState *state, BOOL abort);
 
 /*****************************************************************************
  * Auxiliary definitions

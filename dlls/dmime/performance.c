@@ -336,24 +336,28 @@ HRESULT performance_send_segment_tick(IDirectMusicPerformance8 *iface, MUSIC_TIM
 }
 
 HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
-        IDirectMusicSegmentState *state)
+        IDirectMusicSegmentState *state, BOOL abort)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     HRESULT hr;
 
-    if (FAILED(hr = performance_send_notification_pmsg(This, music_time - 1450, This->notification_segment,
-            GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state)))
-        return hr;
-    if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
-            GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state)))
-        return hr;
+    if (!abort)
+    {
+        if (FAILED(hr = performance_send_notification_pmsg(This, music_time - 1450, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGALMOSTEND, (IUnknown *)state)))
+            return hr;
+        if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGEND, (IUnknown *)state)))
+            return hr;
+    }
+
     if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_IMMEDIATE,
             DMUS_PMSGT_DIRTY, NULL)))
         return hr;
     if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_performance,
             GUID_NOTIFICATION_PERFORMANCE, DMUS_NOTIFICATION_MUSICSTOPPED, NULL)))
         return hr;
-    if (FAILED(hr = performance_send_pmsg(This, music_time, DMUS_PMSGF_TOOL_ATTIME,
+    if (FAILED(hr = performance_send_pmsg(This, music_time, abort ? DMUS_PMSGF_TOOL_IMMEDIATE : DMUS_PMSGF_TOOL_ATTIME,
             DMUS_PMSGT_INTERNAL_SEGMENT_END, (IUnknown *)state)))
         return hr;
 
@@ -557,13 +561,118 @@ static void enum_segment_states(struct performance *This, IDirectMusicSegment *s
     }
 }
 
-static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectMusicSegment *pSegment,
-        IDirectMusicSegmentState *pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags)
+static BOOL message_needs_flushing(struct message *message, IDirectMusicSegmentState *state)
 {
-        struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    if (!state) return TRUE;
 
-	FIXME("(%p, %p, %p, %ld, %ld): stub\n", This, pSegment, pSegmentState, mtTime, dwFlags);
-	return S_OK;
+    switch (message->msg.dwType)
+    {
+    case DMUS_PMSGT_MIDI:
+    case DMUS_PMSGT_NOTE:
+    case DMUS_PMSGT_CURVE:
+    case DMUS_PMSGT_PATCH:
+    case DMUS_PMSGT_WAVE:
+        if (!segment_state_has_track(state, message->msg.dwVirtualTrackID)) return FALSE;
+        break;
+
+    case DMUS_PMSGT_NOTIFICATION:
+    {
+        DMUS_NOTIFICATION_PMSG *notif = (DMUS_NOTIFICATION_PMSG *)&message->msg;
+        if (!IsEqualGUID(&notif->guidNotificationType, &GUID_NOTIFICATION_SEGMENT)) return FALSE;
+        if ((IDirectMusicSegmentState *)message->msg.punkUser != state) return FALSE;
+        break;
+    }
+
+    case DMUS_PMSGT_INTERNAL_SEGMENT_TICK:
+    case DMUS_PMSGT_INTERNAL_SEGMENT_END:
+        if ((IDirectMusicSegmentState *)message->msg.punkUser != state) return FALSE;
+        break;
+
+    default:
+        FIXME("Unhandled message type %#lx\n", message->msg.dwType);
+        break;
+    }
+
+    return TRUE;
+}
+
+static void performance_flush_messages(struct performance *This, IDirectMusicSegmentState *state)
+{
+    IDirectMusicPerformance *iface = (IDirectMusicPerformance *)&This->IDirectMusicPerformance8_iface;
+    struct message *message, *next;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
+    {
+        if (!message_needs_flushing(message, state)) continue;
+
+        list_remove(&message->entry);
+        list_init(&message->entry);
+
+        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
+            ERR("Failed to free message %p, hr %#lx\n", message, hr);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->notifications, struct message, entry)
+    {
+        if (!message_needs_flushing(message, state)) continue;
+
+        list_remove(&message->entry);
+        list_init(&message->entry);
+
+        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
+            ERR("Failed to free message %p, hr %#lx\n", message, hr);
+    }
+}
+
+static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectMusicSegment *segment,
+        IDirectMusicSegmentState *state, MUSIC_TIME music_time, DWORD flags)
+{
+    struct performance *This = impl_from_IDirectMusicPerformance8(iface);
+    struct list states = LIST_INIT(states);
+    struct state_entry *entry, *next;
+    HRESULT hr;
+
+    FIXME("(%p, %p, %p, %ld, %ld): semi-stub\n", This, segment, state, music_time, flags);
+
+    if (music_time) FIXME("time parameter %lu not implemented\n", music_time);
+    if (flags != DMUS_SEGF_DEFAULT) FIXME("flags parameter %#lx not implemented\n", flags);
+
+    if (!music_time && FAILED(hr = IDirectMusicPerformance8_GetTime(iface, NULL, &music_time)))
+        return hr;
+
+    EnterCriticalSection(&This->safe);
+
+    if (!state)
+        enum_segment_states(This, segment, &states);
+    else if ((entry = malloc(sizeof(*entry))))
+    {
+        entry->state = state;
+        IDirectMusicSegmentState_AddRef(entry->state);
+        list_add_tail(&states, &entry->entry);
+    }
+
+    if (!segment && !state)
+        performance_flush_messages(This, NULL);
+    else LIST_FOR_EACH_ENTRY(entry, &states, struct state_entry, entry)
+        performance_flush_messages(This, entry->state);
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &states, struct state_entry, entry)
+    {
+        if (FAILED(hr = performance_send_notification_pmsg(This, music_time, This->notification_segment,
+                GUID_NOTIFICATION_SEGMENT, DMUS_NOTIFICATION_SEGABORT, (IUnknown *)entry->state)))
+            ERR("Failed to send DMUS_NOTIFICATION_SEGABORT, hr %#lx\n", hr);
+        if (FAILED(hr = segment_state_stop(entry->state, iface)))
+            ERR("Failed to stop segment state, hr %#lx\n", hr);
+
+        IDirectMusicSegmentState_Release(entry->state);
+        list_remove(&entry->entry);
+        free(entry);
+    }
+
+    LeaveCriticalSection(&This->safe);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI performance_GetSegmentState(IDirectMusicPerformance8 *iface,
@@ -1257,7 +1366,8 @@ static HRESULT WINAPI performance_AdjustTime(IDirectMusicPerformance8 *iface, RE
 static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
 {
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
-    struct message *message, *next;
+    struct list states = LIST_INIT(states);
+    struct state_entry *entry, *next;
     HANDLE message_thread;
     HRESULT hr;
 
@@ -1277,28 +1387,17 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
     This->notification_performance = FALSE;
     This->notification_segment = FALSE;
 
-    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->messages, struct message, entry)
+    enum_segment_states(This, NULL, &states);
+    performance_flush_messages(This, NULL);
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &states, struct state_entry, entry)
     {
-        list_remove(&message->entry);
-        list_init(&message->entry);
+        if (FAILED(hr = segment_state_end_play(entry->state, iface)))
+            ERR("Failed to stop segment state, hr %#lx\n", hr);
 
-        if (message->msg.dwType == DMUS_PMSGT_INTERNAL_SEGMENT_END)
-            hr = IDirectMusicTool_ProcessPMsg(&This->IDirectMusicTool_iface,
-                    (IDirectMusicPerformance *)iface, &message->msg);
-        else
-            hr = DMUS_S_FREE;
-
-        if (hr == DMUS_S_FREE && FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
-            WARN("Failed to free message %p, hr %#lx\n", message, hr);
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE(message, next, &This->notifications, struct message, entry)
-    {
-        list_remove(&message->entry);
-        list_init(&message->entry);
-
-        if (FAILED(hr = IDirectMusicPerformance8_FreePMsg(iface, &message->msg)))
-            WARN("Failed to free message %p, hr %#lx\n", message, hr);
+        IDirectMusicSegmentState_Release(entry->state);
+        list_remove(&entry->entry);
+        free(entry);
     }
 
     performance_set_primary_segment(This, NULL);

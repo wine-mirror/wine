@@ -303,7 +303,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
     {
         MUSIC_TIME end_time = This->start_time + This->played;
 
-        if (FAILED(hr = performance_send_segment_end(performance, end_time, iface)))
+        if (FAILED(hr = performance_send_segment_end(performance, end_time, iface, FALSE)))
         {
             ERR("Failed to send segment end, hr %#lx\n", hr);
             return hr;
@@ -345,6 +345,16 @@ HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerforma
     return segment_state_play_chunk(This, performance, 10000000, 0);
 }
 
+HRESULT segment_state_stop(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+
+    TRACE("%p %p\n", iface, performance);
+
+    This->played = This->end_point - This->start_point;
+    return performance_send_segment_end(performance, This->start_time + This->played, iface, TRUE);
+}
+
 HRESULT segment_state_end_play(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
@@ -368,4 +378,15 @@ BOOL segment_state_has_segment(IDirectMusicSegmentState *iface, IDirectMusicSegm
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
     return !segment || This->segment == segment;
+}
+
+BOOL segment_state_has_track(IDirectMusicSegmentState *iface, DWORD track_id)
+{
+    struct segment_state *This = impl_from_IDirectMusicSegmentState8((IDirectMusicSegmentState8 *)iface);
+    struct track_entry *entry;
+
+    LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
+        if (entry->track_id == track_id) return TRUE;
+
+    return FALSE;
 }

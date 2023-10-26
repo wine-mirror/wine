@@ -3322,14 +3322,11 @@ static void test_notification_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     ret = test_tool_wait_message(tool, 50, (DMUS_PMSG **)&notif);
-    todo_wine ok(!ret, "got %#lx\n", ret);
-    if (!ret)
-    {
+    ok(!ret, "got %#lx\n", ret);
     check_dmus_notification_pmsg(notif, music_time, DMUS_PMSGF_TOOL_IMMEDIATE, &GUID_NOTIFICATION_SEGMENT,
             DMUS_NOTIFICATION_SEGABORT, state);
     hr = IDirectMusicPerformance_FreePMsg(performance, (DMUS_PMSG *)notif);
     ok(hr == S_OK, "got %#lx\n", hr);
-    }
 
     ret = test_tool_wait_message(tool, 500, &msg);
     ok(!ret, "got %#lx\n", ret);
