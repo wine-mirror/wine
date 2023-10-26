@@ -1614,7 +1614,8 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
     }
 #else
     FIXME( "not implemented\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    *count = 0;
+    return STATUS_SUCCESS;
 #endif
 
     if (!want_data || num <= *count) *count = num;
