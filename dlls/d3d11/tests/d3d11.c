@@ -34831,7 +34831,7 @@ static void test_vertex_formats(void)
         {DXGI_FORMAT_R8_SNORM,              { 2.59842515e-01,  0.0,             0.0,             1.0}},
 
         {DXGI_FORMAT_B8G8R8A8_UNORM,        { 3.96078438e-01,  2.62745112e-01,  1.29411772e-01,  5.29411793e-01}},
-        {DXGI_FORMAT_B8G8R8X8_UNORM,        { 3.96078438e-01,  2.62745112e-01,  1.29411772e-01,  1.0}},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        { 3.96078438e-01,  2.62745112e-01,  1.29411772e-01}},
     };
 
     if (!init_test_context(&test_context, NULL))
@@ -34875,9 +34875,12 @@ static void test_vertex_formats(void)
         };
 
         static const unsigned int stride = sizeof(*quad);
+        const struct vec4 *expect = &tests[i].expect;
         static const unsigned int offset = 0;
         ID3D11InputLayout *input_layout;
+        struct resource_readback rb;
         unsigned int format_support;
+        struct vec4 value;
 
         hr = ID3D11Device_CheckFormatSupport(device, tests[i].format, &format_support);
         ok(hr == S_OK || hr == E_FAIL, "Got hr %#lx.\n", hr);
@@ -34900,8 +34903,15 @@ static void test_vertex_formats(void)
         ID3D11DeviceContext_PSSetShader(context, test_context.ps, NULL, 0);
         ID3D11DeviceContext_Draw(context, 4, 0);
 
-        todo_wine_if (damavand && tests[i].format == DXGI_FORMAT_B8G8R8X8_UNORM)
-            check_texture_vec4(rt, &tests[i].expect, 1);
+        get_texture_readback(rt, 0, &rb);
+        value = *get_readback_vec4(&rb, 0, 0);
+        /* AMD supports B8G8R8X8_UNORM but puts garbage in the w component. */
+        if (tests[i].format == DXGI_FORMAT_B8G8R8X8_UNORM)
+            value.w = 0.0f;
+        ok(compare_vec4(&value, expect, 1),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    value.x, value.y, value.z, value.w, expect->x, expect->y, expect->z, expect->w);
+        release_resource_readback(&rb);
 
         ID3D11InputLayout_Release(input_layout);
 
