@@ -472,6 +472,35 @@ static HRESULT performance_init_dmusic(struct performance *This, IDirectSound *d
     return hr;
 }
 
+static HRESULT performance_send_midi_pmsg(struct performance *This, DMUS_PMSG *msg, UINT flags,
+        BYTE status, BYTE byte1, BYTE byte2)
+{
+    IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
+    DMUS_MIDI_PMSG *midi;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(performance, sizeof(*midi),
+            (DMUS_PMSG **)&midi)))
+        return hr;
+
+    if (flags & DMUS_PMSGF_REFTIME) midi->rtTime = msg->rtTime;
+    if (flags & DMUS_PMSGF_MUSICTIME) midi->mtTime = msg->mtTime;
+    midi->dwFlags = flags;
+    midi->dwPChannel = msg->dwPChannel;
+    midi->dwVirtualTrackID = msg->dwVirtualTrackID;
+    midi->dwVoiceID = msg->dwVoiceID;
+    midi->dwGroupID = msg->dwGroupID;
+    midi->dwType = DMUS_PMSGT_MIDI;
+    midi->bStatus = status;
+    midi->bByte1 = byte1;
+    midi->bByte2 = byte2;
+
+    if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)midi)))
+        IDirectMusicPerformance8_FreePMsg(performance, (DMUS_PMSG *)midi);
+
+    return hr;
+}
+
 static HRESULT WINAPI performance_Init(IDirectMusicPerformance8 *iface, IDirectMusic **dmusic,
         IDirectSound *dsound, HWND hwnd)
 {
@@ -631,6 +660,7 @@ static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectM
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     struct list states = LIST_INIT(states);
     struct state_entry *entry, *next;
+    DMUS_PMSG msg = {.mtTime = -1};
     HRESULT hr;
 
     FIXME("(%p, %p, %p, %ld, %ld): semi-stub\n", This, segment, state, music_time, flags);
@@ -668,6 +698,13 @@ static HRESULT WINAPI performance_Stop(IDirectMusicPerformance8 *iface, IDirectM
         IDirectMusicSegmentState_Release(entry->state);
         list_remove(&entry->entry);
         free(entry);
+    }
+
+    if (!state && !segment)
+    {
+        if (FAILED(hr = performance_send_midi_pmsg(This, &msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                MIDI_SYSTEM_RESET, 0, 0)))
+            ERR("Failed to send MIDI_SYSTEM_RESET message, hr %#lx\n", hr);
     }
 
     LeaveCriticalSection(&This->safe);
@@ -1368,6 +1405,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
     struct performance *This = impl_from_IDirectMusicPerformance8(iface);
     struct list states = LIST_INIT(states);
     struct state_entry *entry, *next;
+    DMUS_PMSG msg = {.mtTime = -1};
     HANDLE message_thread;
     HRESULT hr;
 
@@ -1399,6 +1437,10 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
         list_remove(&entry->entry);
         free(entry);
     }
+
+    if (FAILED(hr = performance_send_midi_pmsg(This, &msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+            MIDI_SYSTEM_RESET, 0, 0)))
+        ERR("Failed to send MIDI_SYSTEM_RESET message, hr %#lx\n", hr);
 
     performance_set_primary_segment(This, NULL);
     performance_set_control_segment(This, NULL);
@@ -1951,35 +1993,6 @@ static HRESULT WINAPI performance_tool_GetMediaTypes(IDirectMusicTool *iface, DW
     struct performance *This = impl_from_IDirectMusicTool(iface);
     TRACE("(%p, %p, %lu)\n", This, types, size);
     return E_NOTIMPL;
-}
-
-static HRESULT performance_send_midi_pmsg(struct performance *This, DMUS_PMSG *msg, UINT flags,
-        BYTE status, BYTE byte1, BYTE byte2)
-{
-    IDirectMusicPerformance8 *performance = &This->IDirectMusicPerformance8_iface;
-    DMUS_MIDI_PMSG *midi;
-    HRESULT hr;
-
-    if (FAILED(hr = IDirectMusicPerformance8_AllocPMsg(performance, sizeof(*midi),
-            (DMUS_PMSG **)&midi)))
-        return hr;
-
-    if (flags & DMUS_PMSGF_REFTIME) midi->rtTime = msg->rtTime;
-    if (flags & DMUS_PMSGF_MUSICTIME) midi->mtTime = msg->mtTime;
-    midi->dwFlags = flags;
-    midi->dwPChannel = msg->dwPChannel;
-    midi->dwVirtualTrackID = msg->dwVirtualTrackID;
-    midi->dwVoiceID = msg->dwVoiceID;
-    midi->dwGroupID = msg->dwGroupID;
-    midi->dwType = DMUS_PMSGT_MIDI;
-    midi->bStatus = status;
-    midi->bByte1 = byte1;
-    midi->bByte2 = byte2;
-
-    if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)midi)))
-        IDirectMusicPerformance8_FreePMsg(performance, (DMUS_PMSG *)midi);
-
-    return hr;
 }
 
 static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
