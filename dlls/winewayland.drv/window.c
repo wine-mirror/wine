@@ -412,9 +412,18 @@ static void wayland_configure_window(HWND hwnd)
     surface->processing = surface->requested;
     memset(&surface->requested, 0, sizeof(surface->requested));
 
-    width = surface->processing.width;
-    height = surface->processing.height;
     state = surface->processing.state;
+    /* Ignore size hints if we don't have a state that requires strict
+     * size adherence, in order to avoid spurious resizes. */
+    if (state)
+    {
+        width = surface->processing.width;
+        height = surface->processing.height;
+    }
+    else
+    {
+        width = height = 0;
+    }
 
     if ((state & WAYLAND_SURFACE_CONFIG_STATE_RESIZING) && !surface->resizing)
     {
