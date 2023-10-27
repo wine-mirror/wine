@@ -534,33 +534,26 @@ GpStatus WINGDIPAPI GdipAddPathCurve(GpPath *path, GDIPCONST GpPointF *points, I
 {
     TRACE("(%p, %p, %d)\n", path, points, count);
 
-    if(!path || !points || count <= 1)
-        return InvalidParameter;
-
-    return GdipAddPathCurve2(path, points, count, 0.5);
+    return GdipAddPathCurve3(path, points, count, 0, count - 1, 0.5);
 }
 
 GpStatus WINGDIPAPI GdipAddPathCurveI(GpPath *path, GDIPCONST GpPoint *points, INT count)
 {
     TRACE("(%p, %p, %d)\n", path, points, count);
 
-    if(!path || !points || count <= 1)
-        return InvalidParameter;
-
-    return GdipAddPathCurve2I(path, points, count, 0.5);
+    return GdipAddPathCurve3I(path, points, count, 0, count - 1, 0.5);
 }
 
-GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, INT count,
-    REAL tension)
+GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
+    INT count, INT offset, INT nseg, REAL tension)
 {
-    INT i, len_pt = count*3-2;
+    INT i, len_pt = nseg * 3 + 1;
     GpPointF *pt;
     REAL x1, x2, y1, y2;
     GpStatus stat;
+    TRACE("(%p, %p, %d, %d, %d, %.2f)\n", path, points, count, offset, nseg, tension);
 
-    TRACE("(%p, %p, %d, %.2f)\n", path, points, count, tension);
-
-    if(!path || !points || count <= 1)
+    if(!path || !points || offset + 1 >= count || count - offset < nseg + 1 || nseg < 1)
         return InvalidParameter;
 
     pt = heap_alloc_zero(len_pt * sizeof(GpPointF));
@@ -569,32 +562,32 @@ GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, 
 
     tension = tension * TENSION_CONST;
 
-    calc_curve_bezier_endp(points[0].X, points[0].Y, points[1].X, points[1].Y,
+    calc_curve_bezier_endp(points[offset].X, points[offset].Y, points[offset + 1].X, points[offset + 1].Y,
         tension, &x1, &y1);
 
-    pt[0].X = points[0].X;
-    pt[0].Y = points[0].Y;
+    pt[0].X = points[offset].X;
+    pt[0].Y = points[offset].Y;
     pt[1].X = x1;
     pt[1].Y = y1;
 
-    for(i = 0; i < count-2; i++){
-        calc_curve_bezier(&(points[i]), tension, &x1, &y1, &x2, &y2);
+    for(i = 0; i < nseg-1; i++){
+        calc_curve_bezier(&(points[offset + i]), tension, &x1, &y1, &x2, &y2);
 
         pt[3*i+2].X = x1;
         pt[3*i+2].Y = y1;
-        pt[3*i+3].X = points[i+1].X;
-        pt[3*i+3].Y = points[i+1].Y;
+        pt[3*i+3].X = points[offset + i + 1].X;
+        pt[3*i+3].Y = points[offset + i + 1].Y;
         pt[3*i+4].X = x2;
         pt[3*i+4].Y = y2;
     }
 
-    calc_curve_bezier_endp(points[count-1].X, points[count-1].Y,
-        points[count-2].X, points[count-2].Y, tension, &x1, &y1);
+    calc_curve_bezier_endp(points[offset + nseg].X, points[offset + nseg].Y,
+        points[offset + nseg - 1].X, points[offset + nseg - 1].Y, tension, &x1, &y1);
 
     pt[len_pt-2].X = x1;
     pt[len_pt-2].Y = y1;
-    pt[len_pt-1].X = points[count-1].X;
-    pt[len_pt-1].Y = points[count-1].Y;
+    pt[len_pt-1].X = points[offset + nseg].X;
+    pt[len_pt-1].Y = points[offset + nseg].Y;
 
     stat = extend_current_figure(path, pt, len_pt, PathPointTypeBezier);
 
@@ -606,51 +599,45 @@ GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, 
 GpStatus WINGDIPAPI GdipAddPathCurve2I(GpPath *path, GDIPCONST GpPoint *points,
     INT count, REAL tension)
 {
+    TRACE("(%p, %p, %d, %.2f)\n", path, points, count, tension);
+
+    return GdipAddPathCurve3I(path, points, count, 0, count - 1, tension);
+}
+
+GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, INT count,
+    REAL tension)
+{
+    TRACE("(%p, %p, %d, %.2f)\n", path, points, count, tension);
+
+    return GdipAddPathCurve3(path, points, count, 0, count - 1, tension);
+}
+
+GpStatus WINGDIPAPI GdipAddPathCurve3I(GpPath *path, GDIPCONST GpPoint *points,
+    INT count, INT offset, INT nseg, REAL tension)
+{
     GpPointF *ptf;
     INT i;
     GpStatus stat;
 
-    TRACE("(%p, %p, %d, %.2f)\n", path, points, count, tension);
+    TRACE("(%p, %p, %d, %d, %d, %.2f)\n", path, points, count, offset, nseg, tension);
 
-    if(!path || !points || count <= 1)
+    if(!path || !points || offset + 1 >= count || count - offset < nseg + 1 || nseg < 1)
         return InvalidParameter;
 
     ptf = heap_alloc_zero(sizeof(GpPointF)*count);
     if(!ptf)
         return OutOfMemory;
 
-    for(i = 0; i < count; i++){
+    for(i = 0; i < count; i++) {
         ptf[i].X = (REAL)points[i].X;
         ptf[i].Y = (REAL)points[i].Y;
     }
 
-    stat = GdipAddPathCurve2(path, ptf, count, tension);
+    stat = GdipAddPathCurve3(path, ptf, count, offset, nseg, tension);
 
     heap_free(ptf);
 
     return stat;
-}
-
-GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
-    INT count, INT offset, INT nseg, REAL tension)
-{
-    TRACE("(%p, %p, %d, %d, %d, %.2f)\n", path, points, count, offset, nseg, tension);
-
-    if(!path || !points || offset + 1 >= count || count - offset < nseg + 1)
-        return InvalidParameter;
-
-    return GdipAddPathCurve2(path, &points[offset], nseg + 1, tension);
-}
-
-GpStatus WINGDIPAPI GdipAddPathCurve3I(GpPath *path, GDIPCONST GpPoint *points,
-    INT count, INT offset, INT nseg, REAL tension)
-{
-    TRACE("(%p, %p, %d, %d, %d, %.2f)\n", path, points, count, offset, nseg, tension);
-
-    if(!path || !points || offset + 1 >= count || count - offset < nseg + 1)
-        return InvalidParameter;
-
-    return GdipAddPathCurve2I(path, &points[offset], nseg + 1, tension);
 }
 
 GpStatus WINGDIPAPI GdipAddPathEllipse(GpPath *path, REAL x, REAL y, REAL width,
