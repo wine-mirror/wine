@@ -6485,9 +6485,11 @@ static void test_scheme_resolvers(void)
         PropVariantInit(&propvar);
         hr = IMFAttributes_GetItem(attributes, &MF_BYTESTREAM_EFFECTIVE_URL, &propvar);
         ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "got hr %#lx\n", hr);
-        ok(!wcsncmp(expect_domain[i], propvar.pwszVal, wcslen(expect_domain[i]))
-                || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */,
-                "got url %s\n", debugstr_w(propvar.pwszVal));
+        if (hr == S_OK)
+        {
+            ok(!wcsncmp(expect_domain[i], propvar.pwszVal, wcslen(expect_domain[i])),
+                    "got url %s\n", debugstr_w(propvar.pwszVal));
+        }
         hr = PropVariantClear(&propvar);
         ok(hr == S_OK, "got hr %#lx\n", hr);
 
