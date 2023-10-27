@@ -947,7 +947,7 @@ static path_test_t addcurve_path2[] = {
     };
 static path_test_t addcurve_path3[] = {
     {10.0, 10.0, PathPointTypeStart,  0, 0}, /*0*/
-    {13.3, 16.7, PathPointTypeBezier, 0, 1}, /*1*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*1*/
     {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*3*/
     {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*4*/
@@ -957,13 +957,13 @@ static path_test_t addcurve_path3[] = {
 static path_test_t addcurve_path4[] = {
     {0.0,  0.0,  PathPointTypeStart,  0, 0}, /*0*/
     {3.33, 3.33, PathPointTypeBezier, 0, 0}, /*1*/
-    {6.66, 3.33, PathPointTypeBezier, 0, 1}, /*2*/
+    {6.66, 3.33, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
     };
 static path_test_t addcurve_path5[] = {
     {10.0, 10.0, PathPointTypeStart,  0, 0}, /*0*/
-    {13.3, 16.6, PathPointTypeBezier, 0, 1}, /*1*/
-    {3.33, 20.0, PathPointTypeBezier, 0, 1}, /*2*/
+    {13.3, 16.6, PathPointTypeBezier, 0, 0}, /*1*/
+    {3.33, 20.0, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}  /*3*/
     };
 

@@ -562,15 +562,23 @@ GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
 
     tension = tension * TENSION_CONST;
 
-    calc_curve_bezier_endp(points[offset].X, points[offset].Y, points[offset + 1].X, points[offset + 1].Y,
-        tension, &x1, &y1);
-
     pt[0].X = points[offset].X;
     pt[0].Y = points[offset].Y;
-    pt[1].X = x1;
-    pt[1].Y = y1;
+    if (offset > 0)
+    {
+        calc_curve_bezier(&(points[offset - 1]), tension, &x1, &y1, &x2, &y2);
+        pt[1].X = x2;
+        pt[1].Y = y2;
+    }
+    else
+    {
+        calc_curve_bezier_endp(points[offset].X, points[offset].Y,
+            points[offset + 1].X, points[offset + 1].Y, tension, &x1, &y1);
+        pt[1].X = x1;
+        pt[1].Y = y1;
+    }
 
-    for(i = 0; i < nseg-1; i++){
+    for (i = 0; i < nseg - 1; i++){
         calc_curve_bezier(&(points[offset + i]), tension, &x1, &y1, &x2, &y2);
 
         pt[3*i+2].X = x1;
@@ -581,8 +589,12 @@ GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
         pt[3*i+4].Y = y2;
     }
 
-    calc_curve_bezier_endp(points[offset + nseg].X, points[offset + nseg].Y,
-        points[offset + nseg - 1].X, points[offset + nseg - 1].Y, tension, &x1, &y1);
+    if (offset + nseg + 1 < count)
+        /* If there are one more point in points table then use it for curve calculation */
+        calc_curve_bezier(&(points[offset + nseg - 1]), tension, &x1, &y1, &x2, &y2);
+    else
+        calc_curve_bezier_endp(points[offset + nseg].X, points[offset + nseg].Y,
+            points[offset + nseg - 1].X, points[offset + nseg - 1].Y, tension, &x1, &y1);
 
     pt[len_pt-2].X = x1;
     pt[len_pt-2].Y = y1;
