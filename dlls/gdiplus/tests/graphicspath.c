@@ -954,6 +954,19 @@ static path_test_t addcurve_path3[] = {
     {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*5*/
     {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*6*/
     };
+static path_test_t addcurve_path4[] = {
+    {0.0,  0.0,  PathPointTypeStart,  0, 0}, /*0*/
+    {3.33, 3.33, PathPointTypeBezier, 0, 0}, /*1*/
+    {6.66, 3.33, PathPointTypeBezier, 0, 1}, /*2*/
+    {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
+    };
+static path_test_t addcurve_path5[] = {
+    {10.0, 10.0, PathPointTypeStart,  0, 0}, /*0*/
+    {13.3, 16.6, PathPointTypeBezier, 0, 1}, /*1*/
+    {3.33, 20.0, PathPointTypeBezier, 0, 1}, /*2*/
+    {10.0, 20.0, PathPointTypeBezier, 0, 0}  /*3*/
+    };
+
 static void test_addcurve(void)
 {
     GpStatus status;
@@ -1027,9 +1040,23 @@ static void test_addcurve(void)
     ok_path(path, addcurve_path, ARRAY_SIZE(addcurve_path), FALSE);
     GdipResetPath(path);
 
+    /* Skip first point */
     status = GdipAddPathCurve3(path, points, 4, 1, 2, 1.0);
     expect(Ok, status);
     ok_path(path, addcurve_path3, ARRAY_SIZE(addcurve_path3), FALSE);
+    GdipResetPath(path);
+
+    /* Skip two last points */
+    status = GdipAddPathCurve3(path, points, 4, 0, 1, 1.0);
+    expect(Ok, status);
+    ok_path(path, addcurve_path4, ARRAY_SIZE(addcurve_path4), FALSE);
+    GdipResetPath(path);
+
+    /* Skip first and last points */
+    status = GdipAddPathCurve3(path, points, 4, 1, 1, 1.0);
+    expect(Ok, status);
+    ok_path(path, addcurve_path5, ARRAY_SIZE(addcurve_path5), FALSE);
+    GdipResetPath(path);
 
     GdipDeletePath(path);
 }
