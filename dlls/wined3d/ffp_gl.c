@@ -1314,6 +1314,121 @@ void state_fogdensity(struct wined3d_context *context, const struct wined3d_stat
     checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
 }
 
+/* Activates the texture dimension according to the bound D3D texture. Does
+ * not care for the colorop or correct gl texture unit (when using nvrc).
+ * Requires the caller to activate the correct unit. */
+/* Context activation is done by the caller (state handler). */
+void texture_activate_dimensions(struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
+{
+    if (texture)
+    {
+        switch (wined3d_texture_gl(texture)->target)
+        {
+            case GL_TEXTURE_2D:
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                }
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                }
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_2D);
+                checkGLcall("glEnable(GL_TEXTURE_2D)");
+                break;
+
+            case GL_TEXTURE_RECTANGLE_ARB:
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                }
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_RECTANGLE_ARB);
+                checkGLcall("glEnable(GL_TEXTURE_RECTANGLE_ARB)");
+                break;
+
+            case GL_TEXTURE_3D:
+                if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+                }
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                }
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_3D);
+                checkGLcall("glEnable(GL_TEXTURE_3D)");
+                break;
+
+            case GL_TEXTURE_CUBE_MAP_ARB:
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
+                checkGLcall("glDisable(GL_TEXTURE_2D)");
+                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
+                checkGLcall("glDisable(GL_TEXTURE_3D)");
+                if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+                {
+                    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+                    checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+                }
+                gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+                checkGLcall("glEnable(GL_TEXTURE_CUBE_MAP_ARB)");
+                break;
+        }
+    }
+    else
+    {
+        gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_2D);
+        checkGLcall("glEnable(GL_TEXTURE_2D)");
+        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
+        checkGLcall("glDisable(GL_TEXTURE_3D)");
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+        {
+            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+        }
+        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+        {
+            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+        }
+        /* Binding textures is done by samplers. A dummy texture will be bound. */
+    }
+}
+
+/* Context activation is done by the caller (state handler). */
+void sampler_texdim(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    unsigned int sampler = state_id - STATE_SAMPLER(0);
+    unsigned int mapped_stage;
+
+    /* No need to enable / disable anything here for unused samplers. The
+     * tex_colorop handler takes care. Also no action is needed with pixel
+     * shaders, or if tex_colorop will take care of this business. */
+    mapped_stage = context_gl->tex_unit_map[sampler];
+    if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context_gl->gl_info->limits.ffp_textures)
+        return;
+    if (sampler >= context->lowest_disabled_stage)
+        return;
+    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
+        return;
+
+    wined3d_context_gl_active_texture(context_gl, context_gl->gl_info, sampler);
+    texture_activate_dimensions(wined3d_state_get_ffp_texture(state, sampler), context_gl->gl_info);
+}
+
 static void state_colormat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
