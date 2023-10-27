@@ -11548,20 +11548,67 @@ static VOID CALLBACK tfunc(HWND hwnd, UINT uMsg, UINT_PTR id, DWORD dwTime)
 {
 }
 
-#define TIMER_ID               0x19
-#define TIMER_COUNT_EXPECTED   100
-#define TIMER_COUNT_TOLERANCE  10
+#define TIMER_ID                 0x19
+#define TIMER_COUNT              500 /* 499 samples */
+#define TIMER_DURATION_EXPECTED  10000 /* 10 ms */
+#define TIMER_DURATION_ALT       15600 /* 15.6 ms */
+#define TIMER_DURATION_TOLERANCE 1000 /* 1 ms */
 
 static int count = 0;
+static ULONGLONG timer_ticks[TIMER_COUNT];
+static int timer_duration = 0;
+
+static int compare_ulonglong(const void *a, const void *b)
+{
+    ULONGLONG la, lb;
+    la = *(ULONGLONG*)a;
+    lb = *(ULONGLONG*)b;
+    return (la > lb) - (la < lb);
+}
+
+static void timer_fired(void)
+{
+    if (count < TIMER_COUNT)
+    {
+        LARGE_INTEGER performance_counter;
+        BOOL ret;
+
+        ret = QueryPerformanceCounter(&performance_counter);
+        ok(ret, "QueryPerformanceCounter failed\n");
+
+        timer_ticks[count] = performance_counter.QuadPart;
+    }
+
+    count++;
+
+    if (count == TIMER_COUNT)
+    {
+        LARGE_INTEGER performance_frequency;
+        BOOL ret;
+
+        /* calculate durations */
+        for (int i=0; i < TIMER_COUNT-1; i++)
+            timer_ticks[i] = timer_ticks[i+1] - timer_ticks[i];
+
+        qsort(timer_ticks, TIMER_COUNT - 1, sizeof(timer_ticks[0]), compare_ulonglong);
+
+        ret = QueryPerformanceFrequency(&performance_frequency);
+        ok(ret, "QueryPerformanceFrequency failed\n");
+
+        /* median duration, converted to microseconds */
+        timer_duration = (int)(timer_ticks[(TIMER_COUNT - 1) / 2] * 1000000 / performance_frequency.QuadPart);
+    }
+}
+
 static void CALLBACK callback_count(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
-    count++;
+    timer_fired();
 }
 
 static DWORD exception;
 static void CALLBACK callback_exception(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
-    count++;
+    timer_fired();
     RaiseException(exception, 0, 0, NULL);
 }
 
@@ -11583,7 +11630,6 @@ static DWORD WINAPI timer_thread_proc(LPVOID x)
 static void test_timers(void)
 {
     struct timer_info info;
-    DWORD start;
     DWORD id;
     MSG msg;
 
@@ -11609,44 +11655,37 @@ static void test_timers(void)
 
     /* Check the minimum allowed timeout for a timer.  MSDN indicates that it should be 10.0 ms,
      * which occurs sometimes, but most testing on the VMs indicates a minimum timeout closer to
-     * 15.6 ms.  Since there is some measurement error between test runs we are allowing for
-     * ±9 counts (~4 ms) around the expected value.
+     * 15.6 ms.
      */
     count = 0;
     id = SetTimer(info.hWnd, TIMER_ID, 0, callback_count);
     ok(id != 0, "did not get id from SetTimer.\n");
     ok(id==TIMER_ID, "SetTimer timer ID different\n");
-    start = GetTickCount();
-    while (GetTickCount()-start < 1001 && GetMessageA(&msg, info.hWnd, 0, 0))
+    while (count < TIMER_COUNT && GetMessageA(&msg, info.hWnd, 0, 0))
         DispatchMessageA(&msg);
-    ok(abs(count-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE /* xp */
-       || broken(abs(count-64) <= TIMER_COUNT_TOLERANCE) /* most common */
-       || broken(abs(count-43) <= TIMER_COUNT_TOLERANCE) /* w2k3, win8 */,
-       "did not get expected count for minimum timeout (%d != ~%d).\n",
-       count, TIMER_COUNT_EXPECTED);
+    ok(abs(timer_duration-TIMER_DURATION_EXPECTED) < TIMER_DURATION_TOLERANCE /* xp, win7 */
+       || broken(abs(timer_duration - TIMER_DURATION_ALT) < TIMER_DURATION_TOLERANCE) /* most common */,
+       "did not get expected median timeout (%d != ~%d).\n",
+       timer_duration, TIMER_DURATION_EXPECTED);
     ok(KillTimer(info.hWnd, id), "KillTimer failed\n");
     /* Perform the same check on SetSystemTimer (only available on w2k3 and older) */
     if (pSetSystemTimer)
     {
-        int syscount = 0;
-
         count = 0;
         id = pSetSystemTimer(info.hWnd, TIMER_ID, 0, callback_count);
         ok(id != 0, "did not get id from SetSystemTimer.\n");
         ok(id==TIMER_ID, "SetTimer timer ID different\n");
-        start = GetTickCount();
-        while (GetTickCount()-start < 1001 && GetMessageA(&msg, info.hWnd, 0, 0))
+        while (count < TIMER_COUNT && GetMessageA(&msg, info.hWnd, 0, 0))
         {
             if (msg.message == WM_SYSTIMER)
-                syscount++;
+                timer_fired();
+            ok(msg.message != WM_TIMER, "unexpected WM_TIMER\n");
             DispatchMessageA(&msg);
         }
-        ok(abs(syscount-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE
-           || broken(abs(syscount-64) < TIMER_COUNT_TOLERANCE) /* most common */
-           || broken(syscount > 4000 && syscount < 12000) /* win2k3sp0 */,
-           "did not get expected count for minimum timeout (%d != ~%d).\n",
-           syscount, TIMER_COUNT_EXPECTED);
-        ok(count == 0, "did not get expected count for callback timeout (%d != 0).\n", count);
+        ok(abs(timer_duration-TIMER_DURATION_EXPECTED) < TIMER_DURATION_TOLERANCE
+           || broken(abs(timer_duration - TIMER_DURATION_ALT) < TIMER_DURATION_TOLERANCE) /* most common */,
+           "did not get expected median timeout (%d != ~%d).\n",
+           timer_duration, TIMER_DURATION_EXPECTED);
         ok(pKillSystemTimer(info.hWnd, id), "KillSystemTimer failed\n");
     }
 
@@ -11679,20 +11718,17 @@ static void test_timers_no_wnd(void)
 
     /* Check the minimum allowed timeout for a timer.  MSDN indicates that it should be 10.0 ms,
      * which occurs sometimes, but most testing on the VMs indicates a minimum timeout closer to
-     * 15.6 ms.  Since there is some measurement error between test runs we are allowing for
-     * ±9 counts (~4 ms) around the expected value.
+     * 15.6 ms.
      */
     count = 0;
     id = SetTimer(NULL, 0, 0, callback_count);
     ok(id != 0, "did not get id from SetTimer.\n");
-    start = GetTickCount();
-    while (GetTickCount()-start < 1001 && GetMessageA(&msg, NULL, 0, 0))
+    while (count < TIMER_COUNT && GetMessageA(&msg, NULL, 0, 0))
         DispatchMessageA(&msg);
-    ok(abs(count-TIMER_COUNT_EXPECTED) < TIMER_COUNT_TOLERANCE /* xp */
-       || broken(abs(count-64) <= TIMER_COUNT_TOLERANCE) /* most common */
-       || broken(abs(count-43) <= TIMER_COUNT_TOLERANCE) /* w1064v1809 */,
-       "did not get expected count for minimum timeout (%d != ~%d).\n",
-       count, TIMER_COUNT_EXPECTED);
+    ok(abs(timer_duration-TIMER_DURATION_EXPECTED) < TIMER_DURATION_TOLERANCE /* xp */
+       || broken(abs(timer_duration - TIMER_DURATION_ALT) < TIMER_DURATION_TOLERANCE) /* most common */,
+       "did not get expected median timeout (%d != ~%d).\n",
+       timer_duration, TIMER_DURATION_EXPECTED);
     KillTimer(NULL, id);
     /* Note: SetSystemTimer doesn't support a NULL window, see test_timers */
 
