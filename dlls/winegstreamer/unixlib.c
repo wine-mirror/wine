@@ -181,11 +181,10 @@ bool link_src_to_element(GstPad *src_pad, GstElement *element)
     GstPadLinkReturn ret;
     GstPad *sink_pad;
 
-    if (!(sink_pad = gst_element_get_static_pad(element, "sink")))
+    if (!(sink_pad = gst_element_get_compatible_pad(element, src_pad, NULL)))
     {
-        gchar *name = gst_element_get_name(element);
-        GST_ERROR("Failed to find sink pad on %s", name);
-        g_free(name);
+        GST_ERROR("Failed to find sink pad compatible to %"GST_PTR_FORMAT" on %"GST_PTR_FORMAT".",
+                src_pad, element);
         return false;
     }
     ret = link_src_to_sink(src_pad, sink_pad);
@@ -198,11 +197,10 @@ bool link_element_to_sink(GstElement *element, GstPad *sink_pad)
     GstPadLinkReturn ret;
     GstPad *src_pad;
 
-    if (!(src_pad = gst_element_get_static_pad(element, "src")))
+    if (!(src_pad = gst_element_get_compatible_pad(element, sink_pad, NULL)))
     {
-        gchar *name = gst_element_get_name(element);
-        GST_ERROR("Failed to find src pad on %s", name);
-        g_free(name);
+        GST_ERROR("Failed to find src pad compatible to %"GST_PTR_FORMAT" on %"GST_PTR_FORMAT".",
+                sink_pad, element);
         return false;
     }
     ret = link_src_to_sink(src_pad, sink_pad);
