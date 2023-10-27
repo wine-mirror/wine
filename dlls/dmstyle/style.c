@@ -62,7 +62,8 @@ static void style_part_destroy(struct style_part *part)
     free(part);
 }
 
-struct style_motif {
+struct style_pattern
+{
     struct list entry;
     DWORD dwRhythm;
     DMUS_IO_PATTERN pattern;
@@ -79,7 +80,7 @@ struct style
     struct dmobject dmobj;
     LONG ref;
     DMUS_IO_STYLE style;
-    struct list motifs;
+    struct list patterns;
     struct list bands;
     struct list parts;
 };
@@ -133,7 +134,7 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
 
     if (!ref) {
         struct style_band *band, *band2;
-        struct style_motif *motif, *motif2;
+        struct style_pattern *pattern;
         struct style_part_ref *part_ref;
         struct style_part *part;
         void *next;
@@ -144,14 +145,15 @@ static ULONG WINAPI style_Release(IDirectMusicStyle8 *iface)
                 IDirectMusicBand_Release(band->pBand);
             free(band);
         }
-        LIST_FOR_EACH_ENTRY_SAFE(motif, motif2, &This->motifs, struct style_motif, entry) {
-            list_remove(&motif->entry);
-            LIST_FOR_EACH_ENTRY_SAFE(part_ref, next, &motif->part_refs, struct style_part_ref, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(pattern, next, &This->patterns, struct style_pattern, entry)
+        {
+            list_remove(&pattern->entry);
+            LIST_FOR_EACH_ENTRY_SAFE(part_ref, next, &pattern->part_refs, struct style_part_ref, entry)
             {
                 list_remove(&part_ref->entry);
                 free(part_ref);
             }
-            free(motif);
+            free(pattern);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(part, next, &This->parts, struct style_part, entry)
@@ -227,7 +229,7 @@ static HRESULT WINAPI style_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
         WCHAR *name)
 {
     struct style *This = impl_from_IDirectMusicStyle8(iface);
-    const struct style_motif *motif = NULL;
+    const struct style_pattern *pattern = NULL;
     const struct list *cursor;
     unsigned int i = 0;
 
@@ -237,18 +239,19 @@ static HRESULT WINAPI style_EnumMotif(IDirectMusicStyle8 *iface, DWORD index,
         return E_POINTER;
 
     /* index is zero based */
-    LIST_FOR_EACH(cursor, &This->motifs) {
+    LIST_FOR_EACH(cursor, &This->patterns)
+    {
         if (i == index) {
-            motif = LIST_ENTRY(cursor, struct style_motif, entry);
+            pattern = LIST_ENTRY(cursor, struct style_pattern, entry);
             break;
         }
         i++;
     }
-    if (!motif)
+    if (!pattern)
         return S_FALSE;
 
-    if (motif->desc.dwValidData & DMUS_OBJ_NAME)
-        lstrcpynW(name, motif->desc.wszName, DMUS_MAX_NAME);
+    if (pattern->desc.dwValidData & DMUS_OBJ_NAME)
+        lstrcpynW(name, pattern->desc.wszName, DMUS_MAX_NAME);
     else
         name[0] = 0;
 
@@ -524,7 +527,7 @@ static HRESULT parse_pattern_list(struct style *This, DMUS_PRIVATE_CHUNK *pChunk
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
   IDirectMusicBand* pBand = NULL;
-  struct style_motif *pNewMotif = NULL;
+  struct style_pattern *pNewMotif = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_PATTERN_LIST) {
     ERR_(dmfile)(": %s chunk should be a PATTERN list\n", debugstr_fourcc (pChunk->fccID));
@@ -543,7 +546,7 @@ static HRESULT parse_pattern_list(struct style *This, DMUS_PRIVATE_CHUNK *pChunk
       TRACE_(dmfile)(": Pattern chunk\n");
       /** alloc new motif entry */
       if (!(pNewMotif = calloc(1, sizeof(*pNewMotif)))) return E_OUTOFMEMORY;
-      list_add_tail(&This->motifs, &pNewMotif->entry);
+      list_add_tail(&This->patterns, &pNewMotif->entry);
 
       IStream_Read (pStm, &pNewMotif->pattern, Chunk.dwSize, NULL);
       /** TODO trace pattern */
@@ -896,7 +899,7 @@ HRESULT create_dmstyle(REFIID lpcGUID, void **ppobj)
     obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
     list_init(&obj->parts);
     list_init(&obj->bands);
-    list_init(&obj->motifs);
+    list_init(&obj->patterns);
 
     hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
     IDirectMusicStyle8_Release(&obj->IDirectMusicStyle8_iface);
