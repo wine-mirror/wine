@@ -421,7 +421,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve(GpPath *path, GDIPCONST GpPointF *poi
 {
     TRACE("(%p, %p, %d)\n", path, points, count);
 
-    return GdipAddPathClosedCurve2(path, points, count, 1.0);
+    return GdipAddPathClosedCurve2(path, points, count, 0.5);
 }
 
 GpStatus WINGDIPAPI GdipAddPathClosedCurveI(GpPath *path, GDIPCONST GpPoint *points,
@@ -429,7 +429,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurveI(GpPath *path, GDIPCONST GpPoint *poi
 {
     TRACE("(%p, %p, %d)\n", path, points, count);
 
-    return GdipAddPathClosedCurve2I(path, points, count, 1.0);
+    return GdipAddPathClosedCurve2I(path, points, count, 0.5);
 }
 
 GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *points,
@@ -537,7 +537,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve(GpPath *path, GDIPCONST GpPointF *points, I
     if(!path || !points || count <= 1)
         return InvalidParameter;
 
-    return GdipAddPathCurve2(path, points, count, 1.0);
+    return GdipAddPathCurve2(path, points, count, 0.5);
 }
 
 GpStatus WINGDIPAPI GdipAddPathCurveI(GpPath *path, GDIPCONST GpPoint *points, INT count)
@@ -547,7 +547,7 @@ GpStatus WINGDIPAPI GdipAddPathCurveI(GpPath *path, GDIPCONST GpPoint *points, I
     if(!path || !points || count <= 1)
         return InvalidParameter;
 
-    return GdipAddPathCurve2I(path, points, count, 1.0);
+    return GdipAddPathCurve2I(path, points, count, 0.5);
 }
 
 GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, INT count,
