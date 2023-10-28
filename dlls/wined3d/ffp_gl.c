@@ -1,5 +1,5 @@
 /*
- * Direct3D state management
+ * GL fixed-function pipeline
  *
  * Copyright 2002 Lionel Ulmer
  * Copyright 2002-2005 Jason Edmeades

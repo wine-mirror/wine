@@ -15,6 +15,7 @@ SOURCES = \
 	cs.c \
 	device.c \
 	directx.c \
+	ffp_gl.c \
 	gl_compat.c \
 	glsl_shader.c \
 	nvidia_texture_shader.c \
@@ -26,7 +27,6 @@ SOURCES = \
 	shader_sm1.c \
 	shader_sm4.c \
 	shader_spirv.c \
-	state.c \
 	stateblock.c \
 	surface.c \
 	swapchain.c \
