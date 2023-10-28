@@ -6749,6 +6749,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];
     settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
+    settings->specular_enable = !!state->render_states[WINED3D_RS_SPECULARENABLE];
     settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
     settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
 

@@ -2761,7 +2761,8 @@ struct wined3d_ffp_vs_settings
     DWORD texcoords       : 8;  /* WINED3D_MAX_FFP_TEXTURES */
     DWORD ortho_fog       : 1;
     DWORD flatshading     : 1;
-    DWORD padding         : 18;
+    DWORD specular_enable : 1;
+    DWORD padding         : 17;
 
     DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
 

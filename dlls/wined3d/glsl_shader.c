@@ -1359,17 +1359,8 @@ static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
-    if (state->render_states[WINED3D_RS_SPECULARENABLE])
-    {
-        GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, &state->material.specular.r));
-        GL_EXTCALL(glUniform1f(prog->vs.material_shininess_location, state->material.power));
-    }
-    else
-    {
-        static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-        GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, black));
-    }
+    GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, &state->material.specular.r));
+    GL_EXTCALL(glUniform1f(prog->vs.material_shininess_location, state->material.power));
     GL_EXTCALL(glUniform4fv(prog->vs.material_ambient_location, 1, &state->material.ambient.r));
     GL_EXTCALL(glUniform4fv(prog->vs.material_diffuse_location, 1, &state->material.diffuse.r));
     GL_EXTCALL(glUniform4fv(prog->vs.material_emissive_location, 1, &state->material.emissive.r));
@@ -8881,9 +8872,10 @@ static void shader_glsl_ffp_vertex_lighting_footer(struct wined3d_string_buffer 
         shader_addline(buffer, "t = dot(normal, ffp_normalize(dir - ffp_normalize(ec_pos.xyz)));\n");
     else
         shader_addline(buffer, "t = dot(normal, ffp_normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-    shader_addline(buffer, "if (dot(dir, normal) > 0.0 && t > 0.0%s) specular +="
-            " pow(t, ffp_material.shininess) * ffp_light[%u].specular * att;\n",
-            legacy_lighting ? " && ffp_material.shininess > 0.0" : "", idx);
+    if (settings->specular_enable)
+        shader_addline(buffer, "if (dot(dir, normal) > 0.0 && t > 0.0%s) specular +="
+                " pow(t, ffp_material.shininess) * ffp_light[%u].specular * att;\n",
+                legacy_lighting ? " && ffp_material.shininess > 0.0" : "", idx);
 }
 
 static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer,
@@ -8901,9 +8893,11 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
 
     shader_addline(buffer, "vec3 ambient = ffp_light_ambient;\n");
     shader_addline(buffer, "vec3 diffuse = vec3(0.0);\n");
-    shader_addline(buffer, "vec4 specular = vec4(0.0);\n");
     shader_addline(buffer, "vec3 dir, dst;\n");
     shader_addline(buffer, "float att, t;\n");
+
+    if (settings->specular_enable)
+        shader_addline(buffer, "vec4 specular = vec4(0.0);\n");
 
     ambient = shader_glsl_ffp_mcs(settings->ambient_source, "ffp_material.ambient");
     diffuse = shader_glsl_ffp_mcs(settings->diffuse_source, "ffp_material.diffuse");
@@ -9006,7 +9000,10 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
     shader_addline(buffer, "ffp_varying_diffuse.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
             ambient, diffuse, emissive);
     shader_addline(buffer, "ffp_varying_diffuse.w = %s.w;\n", diffuse);
-    shader_addline(buffer, "ffp_varying_specular = %s * specular;\n", specular);
+    if (settings->specular_enable)
+        shader_addline(buffer, "ffp_varying_specular = %s * specular;\n", specular);
+    else
+        shader_addline(buffer, "ffp_varying_specular = ffp_attrib_specular;\n");
 }
 
 /* Context activation is done by the caller. */
@@ -11917,8 +11914,7 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     glsl_vertex_pipe_hs    }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 glsl_vertex_pipe_geometry_shader}, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_vertex_pipe_pixel_shader}, WINED3D_GL_EXT_NONE    },
-    {STATE_MATERIAL,                                             {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
+    {STATE_MATERIAL,                                             {STATE_MATERIAL,                                             glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
     /* Clip planes */
     {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
     {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
@@ -11996,6 +11992,7 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_AMBIENTMATERIALSOURCE),             {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_EMISSIVEMATERIALSOURCE),            {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_VERTEXBLEND),                       {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
+    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_vertex_pipe_shader}, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE),                         {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize}, WINED3D_GL_EXT_NONE       },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 state_pointsprite      }, ARB_POINT_SPRITE             },

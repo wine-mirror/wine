@@ -12342,7 +12342,7 @@ static void test_specular_shaders(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirect3DDevice8_EndScene(device);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    check_rt_color_todo(context.backbuffer, 0x00007f00);
+    check_rt_color(context.backbuffer, 0x00007f00);
 
     hr = IDirect3DDevice8_BeginScene(device);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -12352,7 +12352,7 @@ static void test_specular_shaders(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IDirect3DDevice8_EndScene(device);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    check_rt_color_todo(context.backbuffer, 0x00007f00);
+    check_rt_color(context.backbuffer, 0x00007f00);
 
     /* Vertex shader and pixel shader. */
 
