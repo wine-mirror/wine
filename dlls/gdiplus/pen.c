@@ -445,8 +445,9 @@ GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
 GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
 {
     static int calls;
+    BOOL result;
 
-    TRACE("(%p,%s)\n", pen, debugstr_matrix(matrix));
+    TRACE("(%p, %s)\n", pen, debugstr_matrix(matrix));
 
     if(!pen || !matrix)
         return InvalidParameter;
@@ -454,6 +455,9 @@ GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
     if(!(calls++))
         FIXME("(%p,%p) Semi-stub\n", pen, matrix);
 
+    GdipIsMatrixInvertible(matrix, &result);
+    if (!result)
+        return InvalidParameter;
     pen->transform = *matrix;
 
     return Ok;
