@@ -8,6 +8,8 @@
  * Copyright 2006-2008 Henri Verbeet
  * Copyright 2007 Andrew Riedi
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
+ * Copyright 2016, 2018 Józef Kucia for CodeWeavers
+ * Copyright 2020 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -268,6 +270,232 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
     }
 
     return refcount;
+}
+
+ULONG CDECL wined3d_blend_state_incref(struct wined3d_blend_state *state)
+{
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static void wined3d_blend_state_destroy_object(void *object)
+{
+    TRACE("object %p.\n", object);
+
+    heap_free(object);
+}
+
+ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
+{
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    struct wined3d_device *device = state->device;
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        state->parent_ops->wined3d_object_destroyed(state->parent);
+        wined3d_cs_destroy_object(device->cs, wined3d_blend_state_destroy_object, state);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+void * CDECL wined3d_blend_state_get_parent(const struct wined3d_blend_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    return state->parent;
+}
+
+static bool is_dual_source(enum wined3d_blend state)
+{
+    return state >= WINED3D_BLEND_SRC1COLOR && state <= WINED3D_BLEND_INVSRC1ALPHA;
+}
+
+HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
+        const struct wined3d_blend_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_blend_state **state)
+{
+    struct wined3d_blend_state *object;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
+            device, desc, parent, parent_ops, state);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->desc = *desc;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
+    object->device = device;
+
+    object->dual_source = desc->rt[0].enable
+            && (is_dual_source(desc->rt[0].src)
+            || is_dual_source(desc->rt[0].dst)
+            || is_dual_source(desc->rt[0].src_alpha)
+            || is_dual_source(desc->rt[0].dst_alpha));
+
+    TRACE("Created blend state %p.\n", object);
+    *state = object;
+
+    return WINED3D_OK;
+}
+
+ULONG CDECL wined3d_depth_stencil_state_incref(struct wined3d_depth_stencil_state *state)
+{
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static void wined3d_depth_stencil_state_destroy_object(void *object)
+{
+    TRACE("object %p.\n", object);
+
+    heap_free(object);
+}
+
+ULONG CDECL wined3d_depth_stencil_state_decref(struct wined3d_depth_stencil_state *state)
+{
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    struct wined3d_device *device = state->device;
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        state->parent_ops->wined3d_object_destroyed(state->parent);
+        wined3d_cs_destroy_object(device->cs, wined3d_depth_stencil_state_destroy_object, state);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+void * CDECL wined3d_depth_stencil_state_get_parent(const struct wined3d_depth_stencil_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    return state->parent;
+}
+
+static bool stencil_op_writes_ds(const struct wined3d_stencil_op_desc *desc)
+{
+    return desc->fail_op != WINED3D_STENCIL_OP_KEEP
+            || desc->depth_fail_op != WINED3D_STENCIL_OP_KEEP
+            || desc->pass_op != WINED3D_STENCIL_OP_KEEP;
+}
+
+static bool depth_stencil_state_desc_writes_ds(const struct wined3d_depth_stencil_state_desc *desc)
+{
+    if (desc->depth && desc->depth_write)
+        return true;
+
+    if (desc->stencil && desc->stencil_write_mask)
+    {
+        if (stencil_op_writes_ds(&desc->front) || stencil_op_writes_ds(&desc->back))
+            return true;
+    }
+
+    return false;
+}
+
+HRESULT CDECL wined3d_depth_stencil_state_create(struct wined3d_device *device,
+        const struct wined3d_depth_stencil_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_depth_stencil_state **state)
+{
+    struct wined3d_depth_stencil_state *object;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
+            device, desc, parent, parent_ops, state);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->desc = *desc;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
+    object->device = device;
+
+    object->writes_ds = depth_stencil_state_desc_writes_ds(desc);
+
+    TRACE("Created depth/stencil state %p.\n", object);
+    *state = object;
+
+    return WINED3D_OK;
+}
+
+ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state)
+{
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static void wined3d_rasterizer_state_destroy_object(void *object)
+{
+    TRACE("object %p.\n", object);
+
+    heap_free(object);
+}
+
+ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
+{
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    struct wined3d_device *device = state->device;
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        state->parent_ops->wined3d_object_destroyed(state->parent);
+        wined3d_cs_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+void * CDECL wined3d_rasterizer_state_get_parent(const struct wined3d_rasterizer_state *state)
+{
+    TRACE("rasterizer_state %p.\n", state);
+
+    return state->parent;
+}
+
+HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
+        const struct wined3d_rasterizer_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_rasterizer_state **state)
+{
+    struct wined3d_rasterizer_state *object;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
+            device, desc, parent, parent_ops, state);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->desc = *desc;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
+    object->device = device;
+
+    TRACE("Created rasterizer state %p.\n", object);
+    *state = object;
+
+    return WINED3D_OK;
 }
 
 UINT CDECL wined3d_device_get_swapchain_count(const struct wined3d_device *device)
