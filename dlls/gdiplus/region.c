@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -1313,6 +1314,208 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionRectI(GpRegion* region, INT x, INT y, INT
     return GdipIsVisibleRegionRect(region, (REAL)x, (REAL)y, (REAL)w, (REAL)h, graphics, res);
 }
 
+/* get_region_bounding_box
+ *
+ * Returns a box guaranteed to enclose the entire region, but not guaranteed to be minimal.
+ * Sets "empty" if bounding box is empty.
+ * Sets "infinite" if everything outside bounding box is inside the region.
+ * In the infinite case, the bounding box encloses all points not in the region. */
+static void get_region_bounding_box(struct region_element *element,
+    REAL *min_x, REAL *min_y, REAL *max_x, REAL *max_y, BOOL *empty, BOOL *infinite)
+{
+    REAL left_min_x, left_min_y, left_max_x, left_max_y;
+    BOOL left_empty, left_infinite;
+    REAL right_min_x, right_min_y, right_max_x, right_max_y;
+    BOOL right_empty, right_infinite;
+    /* For combine modes, we convert the mode to flags as follows to simplify the logic:
+     * 0x8 = point in combined region if it's in both
+     * 0x4 = point in combined region if it's in left and not right
+     * 0x2 = point in combined region if it's not in left and is in right
+     * 0x1 = point in combined region if it's in neither region */
+    int flags;
+    const int combine_mode_flags[] = {
+        0xa, /* CombineModeReplace - shouldn't be used */
+        0x8, /* CombineModeIntersect */
+        0xe, /* CombineModeUnion */
+        0x6, /* CombineModeXor */
+        0x4, /* CombineModeExclude */
+        0x2, /* CombineModeComplement */
+    };
+
+    /* handle unit elements first */
+    switch (element->type)
+    {
+        case RegionDataInfiniteRect:
+            *min_x = *min_y = *max_x = *max_y = 0.0;
+            *empty = TRUE;
+            *infinite = TRUE;
+            return;
+        case RegionDataEmptyRect:
+            *min_x = *min_y = *max_x = *max_y = 0.0;
+            *empty = TRUE;
+            *infinite = FALSE;
+            return;
+        case RegionDataPath:
+        {
+            GpPath *path = element->elementdata.path;
+            int i;
+
+            if (path->pathdata.Count <= 1) {
+                *min_x = *min_y = *max_x = *max_y = 0.0;
+                *empty = TRUE;
+                *infinite = FALSE;
+                return;
+            }
+
+            *min_x = *max_x = path->pathdata.Points[0].X;
+            *min_y = *max_y = path->pathdata.Points[0].Y;
+            *empty = FALSE;
+            *infinite = FALSE;
+
+            for (i=1; i < path->pathdata.Count; i++)
+            {
+                if (path->pathdata.Points[i].X < *min_x)
+                    *min_x = path->pathdata.Points[i].X;
+                else if (path->pathdata.Points[i].X > *max_x)
+                    *max_x = path->pathdata.Points[i].X;
+                if (path->pathdata.Points[i].Y < *min_y)
+                    *min_y = path->pathdata.Points[i].Y;
+                else if (path->pathdata.Points[i].Y > *max_y)
+                    *max_y = path->pathdata.Points[i].Y;
+            }
+
+            return;
+        }
+        case RegionDataRect:
+            *min_x = element->elementdata.rect.X;
+            *min_y = element->elementdata.rect.Y;
+            *max_x = element->elementdata.rect.X + element->elementdata.rect.Width;
+            *max_y = element->elementdata.rect.Y + element->elementdata.rect.Height;
+            *empty = FALSE;
+            *infinite = FALSE;
+            return;
+    }
+
+    /* Should be only combine modes left */
+    assert(element->type < ARRAY_SIZE(combine_mode_flags));
+
+    flags = combine_mode_flags[element->type];
+
+    get_region_bounding_box(element->elementdata.combine.left,
+        &left_min_x, &left_min_y, &left_max_x, &left_max_y, &left_empty, &left_infinite);
+
+    if (left_infinite)
+    {
+        /* change our function so we can ignore the infinity */
+        flags = ((flags & 0x3) << 2) | ((flags & 0xc) >> 2);
+    }
+
+    if (left_empty && (flags & 0x3) == 0) {
+        /* no points in region regardless of right region, return empty */
+        *empty = TRUE;
+        *infinite = FALSE;
+        return;
+    }
+
+    if (left_empty && (flags & 0x3) == 0x3) {
+        /* all points in region regardless of right region, return infinite */
+        *empty = TRUE;
+        *infinite = TRUE;
+        return;
+    }
+
+    get_region_bounding_box(element->elementdata.combine.right,
+        &right_min_x, &right_min_y, &right_max_x, &right_max_y, &right_empty, &right_infinite);
+
+    if (right_infinite)
+    {
+        /* change our function so we can ignore the infinity */
+        flags = ((flags & 0x5) << 1) | ((flags & 0xa) >> 1);
+    }
+
+    /* result is infinite if points in neither region are in the result */
+    *infinite = (flags & 0x1);
+
+    if (*infinite)
+    {
+        /* Again, we modify our function to ignore the infinity.
+         * The points we care about are the ones that are different from the outside of our box,
+         * not the points inside the region, so we invert the whole thing.
+         * From here we can assume 0x1 is not set. */
+        flags ^= 0xf;
+    }
+
+    if (left_empty)
+    {
+        /* We already took care of the cases where the right region doesn't matter,
+         * so we can just use the right bounding box. */
+        *min_x = right_min_x;
+        *min_y = right_min_y;
+        *max_x = right_max_x;
+        *max_y = right_max_y;
+        *empty = right_empty;
+        return;
+    }
+
+    if (right_empty)
+    {
+        /* With no points in right region, and infinities eliminated, we only care
+         * about flag 0x4, the case where a point is in left region and not right. */
+        if (flags & 0x4)
+        {
+            /* We have a copy of the left region. */
+            *min_x = left_min_x;
+            *min_y = left_min_y;
+            *max_x = left_max_x;
+            *max_y = left_max_y;
+            *empty = left_empty;
+            return;
+        }
+        /* otherwise, it's an empty (or infinite) region */
+        *empty = TRUE;
+        return;
+    }
+
+    /* From here we know 0x1 isn't set, and we know at least one flag is set.
+     * We can ignore flag 0x8 because we must assume that any point within the
+     * intersection of the bounding boxes might be within the region. */
+    switch (flags & 0x6)
+    {
+    case 0x0:
+        /* intersection */
+        *min_x = fmaxf(left_min_x, right_min_x);
+        *min_y = fmaxf(left_min_y, right_min_y);
+        *max_x = fminf(left_max_x, right_max_x);
+        *max_y = fminf(left_max_y, right_max_y);
+        *empty = *min_x > *max_x || *min_y > *max_y;
+        return;
+    case 0x2:
+        /* right (or complement) */
+        *min_x = right_min_x;
+        *min_y = right_min_y;
+        *max_x = right_max_x;
+        *max_y = right_max_y;
+        *empty = right_empty;
+        return;
+    case 0x4:
+        /* left (or exclude) */
+        *min_x = left_min_x;
+        *min_y = left_min_y;
+        *max_x = left_max_x;
+        *max_y = left_max_y;
+        *empty = left_empty;
+        return;
+    case 0x6:
+        /* union (or xor) */
+        *min_x = fminf(left_min_x, right_min_x);
+        *min_y = fminf(left_min_y, right_min_y);
+        *max_x = fmaxf(left_max_x, right_max_x);
+        *max_y = fmaxf(left_max_y, right_max_y);
+        *empty = FALSE;
+        return;
+    }
+}
+
 /*****************************************************************************
  * GdipIsVisibleRegionPoint [GDIPLUS.@]
  */
@@ -1320,11 +1523,24 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
 {
     HRGN hrgn;
     GpStatus stat;
+    REAL min_x, min_y, max_x, max_y;
+    BOOL empty, infinite;
 
     TRACE("(%p, %.2f, %.2f, %p, %p)\n", region, x, y, graphics, res);
 
     if(!region || !res)
         return InvalidParameter;
+
+    x = gdip_round(x);
+    y = gdip_round(y);
+
+    /* Check for cases where we can skip quantization. */
+    get_region_bounding_box(&region->node, &min_x, &min_y, &max_x, &max_y, &empty, &infinite);
+    if (empty || x < min_x || y < min_y || x > max_x || y > max_y)
+    {
+        *res = infinite;
+        return Ok;
+    }
 
     if((stat = GdipGetRegionHRgn(region, NULL, &hrgn)) != Ok)
         return stat;
@@ -1335,7 +1551,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPoint(GpRegion* region, REAL x, REAL y, G
         return Ok;
     }
 
-    *res = PtInRegion(hrgn, gdip_round(x), gdip_round(y));
+    *res = PtInRegion(hrgn, x, y);
 
     DeleteObject(hrgn);
 
