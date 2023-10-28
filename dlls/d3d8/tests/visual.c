@@ -12325,13 +12325,13 @@ static void test_specular_shaders(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     get_surface_readback(context.backbuffer, &rb);
     color = get_readback_color(&rb, 160, 120);
-    todo_wine ok(color_match(color, 0x003300, 1), "Got color %08x.\n", color);
+    ok(color_match(color, 0x003300, 1), "Got color %08x.\n", color);
     color = get_readback_color(&rb, 480, 120);
-    todo_wine ok(color_match(color, 0x001900, 1), "Got color %08x.\n", color);
+    ok(color_match(color, 0x001900, 1), "Got color %08x.\n", color);
     color = get_readback_color(&rb, 160, 360);
-    todo_wine ok(color_match(color, 0x009900, 1), "Got color %08x.\n", color);
+    ok(color_match(color, 0x009900, 1), "Got color %08x.\n", color);
     color = get_readback_color(&rb, 480, 360);
-    todo_wine ok(color_match(color, 0x003300, 1), "Got color %08x.\n", color);
+    ok(color_match(color, 0x003300, 1), "Got color %08x.\n", color);
     release_surface_readback(&rb);
 
     hr = IDirect3DDevice8_BeginScene(device);

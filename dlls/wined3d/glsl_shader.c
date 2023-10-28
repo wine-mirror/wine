@@ -10595,7 +10595,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
     else
     {
         entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
-                | WINED3D_SHADER_CONST_FFP_PROJ;
+                | WINED3D_SHADER_CONST_FFP_PROJ | WINED3D_SHADER_CONST_FFP_LIGHTS;
 
         for (i = 1; i < MAX_VERTEX_BLENDS; ++i)
         {
@@ -10619,8 +10619,6 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
                 || entry->vs.material_emissive_location != -1
                 || entry->vs.material_shininess_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
-        if (entry->vs.light_ambient_location != -1)
-            entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_LIGHTS;
     }
     if (entry->vs.clip_planes_location != -1)
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
