@@ -445,9 +445,10 @@ static void test_transform(void)
 {
     GpStatus status;
     GpPen *pen;
-    GpMatrix *matrix, *matrix2;
+    GpMatrix *matrix, *matrix2, *not_invertible_matrix;
     REAL values[6];
 
+    /* Check default Pen Transformation */
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
     expect(Ok, status);
 
@@ -467,6 +468,26 @@ static void test_transform(void)
     expectf(0.0, values[4]);
     expectf(0.0, values[5]);
 
+    /* Setting Pen Tranformation to Not invertible matrix, should return InvalidParameter */
+    GdipCreateMatrix2(3.0, 3.0, 2.0, 2.0, 6.0, 3.0, &not_invertible_matrix);
+
+    status = GdipSetPenTransform(pen, not_invertible_matrix);
+    todo_wine expect(InvalidParameter, status);
+    GdipDeleteMatrix(not_invertible_matrix);
+
+    status = GdipGetPenTransform(pen, matrix);
+    expect(Ok, status);
+    status = GdipGetMatrixElements(matrix, values);
+    expect(Ok, status);
+
+    todo_wine expectf(1.0, values[0]);
+    todo_wine expectf(0.0, values[1]);
+    todo_wine expectf(0.0, values[2]);
+    todo_wine expectf(1.0, values[3]);
+    todo_wine expectf(0.0, values[4]);
+    todo_wine expectf(0.0, values[5]);
+
+    /* Setting Pen Tranformation to invertible matrix, should be successfull */
     GdipCreateMatrix2(3.0, -2.0, 5.0, 2.0, 6.0, 3.0, &matrix2);
     status = GdipSetPenTransform(pen, matrix2);
     expect(Ok, status);
