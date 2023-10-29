@@ -19,7 +19,6 @@
 #include <windows.h>
 #include <stdio.h>
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static void read_all_from_handle(HANDLE handle, BYTE **str, int *len)
@@ -27,14 +26,14 @@ static void read_all_from_handle(HANDLE handle, BYTE **str, int *len)
     char buffer[4096];
     DWORD bytes_read;
     DWORD length = 0;
-    BYTE *ret = heap_alloc_zero(1);
+    BYTE *ret = calloc(1, 1);
 
     for (;;)
     {
         BOOL success = ReadFile(handle, buffer, sizeof(buffer), &bytes_read, NULL);
         if (!success || !bytes_read)
             break;
-        ret = heap_realloc(ret, length + bytes_read);
+        ret = realloc(ret, length + bytes_read);
         memcpy((char *)ret + length, buffer, bytes_read);
         length += bytes_read;
     }
@@ -64,8 +63,8 @@ static void check_find_output(const BYTE *child_output, int child_output_len, co
     }
 
     /* Format strings for debug printing */
-    child_output_copy = heap_alloc_zero(child_output_len * 4 + 1);
-    out_expected_copy = heap_alloc_zero(out_expected_len * 4 + 1);
+    child_output_copy = calloc(1, child_output_len * 4 + 1);
+    out_expected_copy = calloc(1, out_expected_len * 4 + 1);
 
     for (i = 0, pos = 0; i < child_output_len; i++)
     {
@@ -97,8 +96,8 @@ static void check_find_output(const BYTE *child_output, int child_output_len, co
                                        "####################\n",
                                        out_expected_copy, child_output_copy);
 
-    heap_free(child_output_copy);
-    heap_free(out_expected_copy);
+    free(child_output_copy);
+    free(out_expected_copy);
 }
 
 static void mangle_text(const BYTE *input, int input_len, BYTE *output, int output_max, int *output_len) {
@@ -176,7 +175,7 @@ static void run_find_stdin_(const WCHAR *commandline, const BYTE *input, int inp
 
     ok_(file, line)(exitcode == exitcode_expected, "Expected exitcode %d, got %ld\n", exitcode_expected, exitcode);
 
-    heap_free(child_output);
+    free(child_output);
 }
 
 static void run_find_file_(const WCHAR *commandline, const BYTE *input, int input_len, const BYTE *out_expected, int out_expected_len, int exitcode_expected, const char *file, int line)
@@ -200,12 +199,12 @@ static void run_find_file_(const WCHAR *commandline, const BYTE *input, int inpu
     CharUpperA(path_temp_file);
     wsprintfA(header, "\r\n---------- %s\r\n", path_temp_file);
     header_len = lstrlenA(header);
-    out_expected_new = heap_alloc(header_len + out_expected_len);
+    out_expected_new = malloc(header_len + out_expected_len);
     memcpy(out_expected_new, header, header_len);
     memcpy(out_expected_new + header_len, out_expected, out_expected_len);
 
     run_find_stdin_(commandline_new, (BYTE*)"", 0, out_expected_new, header_len + out_expected_len, exitcode_expected, file, line);
-    heap_free(out_expected_new);
+    free(out_expected_new);
 
     DeleteFileA(path_temp_file);
 }
@@ -223,14 +222,14 @@ static void run_find_str_(const char *commandline, const char *input, const char
 
     /* Turn commandline into WCHAR string */
     len_commandlineW = MultiByteToWideChar(CP_UTF8, 0, commandline, -1, 0, 0);
-    commandlineW = heap_alloc(len_commandlineW * sizeof(WCHAR));
+    commandlineW = malloc(len_commandlineW * sizeof(WCHAR));
     MultiByteToWideChar(CP_UTF8, 0, commandline, -1, commandlineW, len_commandlineW);
 
     if (is_file)
         run_find_file_(commandlineW, (BYTE *)input, lstrlenA(input), (BYTE *)out_expected, lstrlenA(out_expected), exitcode_expected, file, line);
     else
         run_find_stdin_(commandlineW, (BYTE *)input, lstrlenA(input), (BYTE *)out_expected, lstrlenA(out_expected), exitcode_expected, file, line);
-    heap_free(commandlineW);
+    free(commandlineW);
 }
 
 #define run_find_stdin_unicode(input, out_expected, exitcode_expected) \
