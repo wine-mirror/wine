@@ -30,7 +30,6 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msscript);
@@ -280,7 +279,7 @@ static void clear_named_items(ScriptHost *host)
        list_remove(&item->entry);
        SysFreeString(item->name);
        IDispatch_Release(item->disp);
-       heap_free(item);
+       free(item);
     }
 }
 
@@ -388,14 +387,14 @@ static HRESULT add_script_object(ScriptHost *host, BSTR name, IDispatch *object,
     if (host_get_named_item(host, name))
         return E_INVALIDARG;
 
-    item = heap_alloc(sizeof(*item));
+    item = malloc(sizeof(*item));
     if (!item)
         return E_OUTOFMEMORY;
 
     item->name = SysAllocString(name);
     if (!item->name)
     {
-        heap_free(item);
+        free(item);
         return E_OUTOFMEMORY;
     }
     IDispatch_AddRef(item->disp = object);
@@ -407,7 +406,7 @@ static HRESULT add_script_object(ScriptHost *host, BSTR name, IDispatch *object,
         list_remove(&item->entry);
         IDispatch_Release(item->disp);
         SysFreeString(item->name);
-        heap_free(item);
+        free(item);
         return hr;
     }
 
@@ -498,7 +497,7 @@ static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRA
     dp.cArgs = args->rgsabound[0].cElements;
     dp.rgdispidNamedArgs = NULL;
     dp.cNamedArgs = 0;
-    dp.rgvarg = heap_alloc(dp.cArgs * sizeof(*dp.rgvarg));
+    dp.rgvarg = malloc(dp.cArgs * sizeof(*dp.rgvarg));
     if (!dp.rgvarg) return E_OUTOFMEMORY;
 
     hr = SafeArrayLock(args);
@@ -522,7 +521,7 @@ static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRA
             IDispatchEx_Release(dispex);
         }
     }
-    heap_free(dp.rgvarg);
+    free(dp.rgvarg);
 
     return hr;
 }
@@ -668,7 +667,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 
     if(!ref) {
         clear_named_items(This);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -908,7 +907,7 @@ static ULONG WINAPI ScriptProcedure_Release(IScriptProcedure *iface)
     {
         list_remove(&This->entry);
         SysFreeString(This->name);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1054,7 +1053,7 @@ static HRESULT get_script_procedure(ScriptProcedureCollection *procedures, IType
         }
     }
 
-    if (!(proc = heap_alloc(sizeof(*proc))))
+    if (!(proc = malloc(sizeof(*proc))))
     {
         hr = E_OUTOFMEMORY;
         SysFreeString(str);
@@ -1115,7 +1114,7 @@ static ULONG WINAPI procedure_enum_Release(IEnumVARIANT *iface)
     if (!ref)
     {
         IScriptProcedureCollection_Release(&This->procedures->IScriptProcedureCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1200,7 +1199,7 @@ static HRESULT WINAPI procedure_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **p
 
     if (!ppEnum) return E_POINTER;
 
-    if (!(clone = heap_alloc(sizeof(*clone))))
+    if (!(clone = malloc(sizeof(*clone))))
         return E_OUTOFMEMORY;
 
     *clone = *This;
@@ -1267,7 +1266,7 @@ static ULONG WINAPI ScriptProcedureCollection_Release(IScriptProcedureCollection
 
         This->module->procedures = NULL;
         IScriptModule_Release(&This->module->IScriptModule_iface);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1359,7 +1358,7 @@ static HRESULT WINAPI ScriptProcedureCollection_get__NewEnum(IScriptProcedureCol
     count = attr->cFuncs;
     ITypeInfo_ReleaseTypeAttr(ti, attr);
 
-    if (!(proc_enum = heap_alloc(sizeof(*proc_enum))))
+    if (!(proc_enum = malloc(sizeof(*proc_enum))))
         return E_OUTOFMEMORY;
 
     proc_enum->IEnumVARIANT_iface.lpVtbl = &procedure_enum_vtbl;
@@ -1572,7 +1571,7 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
         detach_module(This);
         SysFreeString(This->name);
         uncache_module_objects(This);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1687,7 +1686,7 @@ static HRESULT WINAPI ScriptModule_get_Procedures(IScriptModule *iface, IScriptP
         ScriptProcedureCollection *procs;
         UINT i;
 
-        if (!(procs = heap_alloc(sizeof(*procs))))
+        if (!(procs = malloc(sizeof(*procs))))
             return E_OUTOFMEMORY;
 
         procs->IScriptProcedureCollection_iface.lpVtbl = &ScriptProcedureCollectionVtbl;
@@ -1819,7 +1818,7 @@ static ULONG WINAPI module_enum_Release(IEnumVARIANT *iface)
     {
         IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         IScriptControl_Release(&This->control->IScriptControl_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1886,7 +1885,7 @@ static HRESULT WINAPI module_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEn
     if (!ppEnum) return E_POINTER;
     if (This->host != This->control->host) return E_FAIL;
 
-    if (!(clone = heap_alloc(sizeof(*clone))))
+    if (!(clone = malloc(sizeof(*clone))))
         return E_OUTOFMEMORY;
 
     *clone = *This;
@@ -1912,13 +1911,13 @@ static ScriptModule *create_module(ScriptHost *host, BSTR name)
 {
     ScriptModule *module;
 
-    if (!(module = heap_alloc_zero(sizeof(*module)))) return NULL;
+    if (!(module = calloc(1, sizeof(*module)))) return NULL;
 
     module->IScriptModule_iface.lpVtbl = &ScriptModuleVtbl;
     module->ref = 1;
     if (name && !(module->name = SysAllocString(name)))
     {
-        heap_free(module);
+        free(module);
         return NULL;
     }
     module->host = host;
@@ -1935,7 +1934,7 @@ static void release_modules(ScriptControl *control, BOOL force_detach)
         IScriptModule_Release(&control->modules[i]->IScriptModule_iface);
     }
 
-    heap_free(control->modules);
+    free(control->modules);
 }
 
 static ScriptModule *find_module(ScriptControl *control, BSTR name)
@@ -2056,7 +2055,7 @@ static HRESULT WINAPI ScriptModuleCollection_get__NewEnum(IScriptModuleCollectio
     if (!ppenumContexts) return E_POINTER;
     if (!This->host) return E_FAIL;
 
-    if (!(module_enum = heap_alloc(sizeof(*module_enum))))
+    if (!(module_enum = malloc(sizeof(*module_enum))))
         return E_OUTOFMEMORY;
 
     module_enum->IEnumVARIANT_iface.lpVtbl = &module_enum_vtbl;
@@ -2136,7 +2135,7 @@ static HRESULT WINAPI ScriptModuleCollection_Add(IScriptModuleCollection *iface,
     /* See if we need to grow the array */
     if (is_power_of_2(host->module_count))
     {
-        modules = heap_realloc(This->modules, host->module_count * 2 * sizeof(*This->modules));
+        modules = realloc(This->modules, host->module_count * 2 * sizeof(*This->modules));
         if (!modules) return E_OUTOFMEMORY;
         This->modules = modules;
     }
@@ -2264,7 +2263,7 @@ static ULONG WINAPI ScriptError_Release(IScriptError *iface)
     if (!ref)
     {
         IScriptError_Clear(&This->IScriptError_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2498,7 +2497,7 @@ static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, Scri
 
     *ret = NULL;
 
-    host = heap_alloc(sizeof(*host));
+    host = malloc(sizeof(*host));
     if (!host)
         return E_OUTOFMEMORY;
 
@@ -2631,7 +2630,7 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
             IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         }
         IScriptError_Release(&This->error->IScriptError_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2742,11 +2741,11 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
         return hres;
 
     /* Alloc global module */
-    This->modules = heap_alloc_zero(sizeof(*This->modules));
+    This->modules = calloc(1, sizeof(*This->modules));
     if (This->modules) {
         This->modules[0] = create_module(This->host, NULL);
         if (!This->modules[0]) {
-            heap_free(This->modules);
+            free(This->modules);
             This->modules = NULL;
             hres = E_OUTOFMEMORY;
         }
@@ -3959,14 +3958,14 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
-    script_control = heap_alloc_zero(sizeof(*script_control));
+    script_control = calloc(1, sizeof(*script_control));
     if(!script_control)
         return E_OUTOFMEMORY;
 
-    script_control->error = heap_alloc_zero(sizeof(*script_control->error));
+    script_control->error = calloc(1, sizeof(*script_control->error));
     if(!script_control->error)
     {
-        heap_free(script_control);
+        free(script_control);
         return E_OUTOFMEMORY;
     }
 
