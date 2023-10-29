@@ -1606,7 +1606,7 @@ static HRESULT render_state_test_init(IDirect3DDevice9 *device, struct state_tes
     const struct render_state_arg *rsarg = test->test_arg;
     unsigned int i, j;
 
-    struct render_state_context *ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
+    struct render_state_context *ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL) return E_FAIL;
     test->test_context = ctx;
 
@@ -1649,7 +1649,7 @@ static HRESULT render_state_test_init(IDirect3DDevice9 *device, struct state_tes
 
 static void render_state_test_cleanup(IDirect3DDevice9 *device, struct state_test *test)
 {
-    HeapFree(GetProcessHeap(), 0, test->test_context);
+    free(test->test_context);
 }
 
 static void render_states_queue_test(struct state_test *test, const struct render_state_arg *test_arg)
@@ -1839,14 +1839,14 @@ static void resource_default_data_init(struct resource_test_data *data, const st
     data->vs = NULL;
     data->ps = NULL;
     data->ib = NULL;
-    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    data->vb = malloc(arg->stream_count * sizeof(*data->vb));
     for (i = 0; i < arg->stream_count; ++i)
     {
         data->vb[i] = NULL;
     }
     data->stream_offset = 0;
     data->stream_stride = 0;
-    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    data->tex = malloc(arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
         data->tex[i] = NULL;
@@ -1913,7 +1913,7 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
             D3DFMT_INDEX32, D3DPOOL_DEFAULT, &data->ib, NULL);
     ok(SUCCEEDED(hr), "CreateIndexBuffer returned %#lx.\n", hr);
 
-    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    data->vb = malloc(arg->stream_count * sizeof(*data->vb));
     for (i = 0; i < arg->stream_count; ++i)
     {
         hr = IDirect3DDevice9_CreateVertexBuffer(device, 64, D3DUSAGE_DYNAMIC,
@@ -1922,7 +1922,7 @@ static void resource_test_data_init(IDirect3DDevice9 *device,
     }
     data->stream_offset = 4;
     data->stream_stride = 64;
-    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    data->tex = malloc(arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
         hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0,
@@ -1940,14 +1940,14 @@ static void resource_poison_data_init(struct resource_test_data *data, const str
     data->vs = (IDirect3DVertexShader9 *)poison++;
     data->ps = (IDirect3DPixelShader9 *)poison++;
     data->ib = (IDirect3DIndexBuffer9 *)poison++;
-    data->vb = HeapAlloc(GetProcessHeap(), 0, arg->stream_count * sizeof(*data->vb));
+    data->vb = malloc(arg->stream_count * sizeof(*data->vb));
     for (i = 0; i < arg->stream_count; ++i)
     {
         data->vb[i] = (IDirect3DVertexBuffer9 *)poison++;
     }
     data->stream_offset = 16;
     data->stream_stride = 128;
-    data->tex = HeapAlloc(GetProcessHeap(), 0, arg->tex_count * sizeof(*data->tex));
+    data->tex = malloc(arg->tex_count * sizeof(*data->tex));
     for (i = 0; i < arg->tex_count; ++i)
     {
         data->tex[i] = (IDirect3DTexture9 *)poison++;
@@ -1959,7 +1959,7 @@ static HRESULT resource_test_init(IDirect3DDevice9 *device, struct state_test *t
     const struct resource_test_arg *arg = test->test_arg;
     struct resource_test_context *ctx;
 
-    ctx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx));
+    ctx = calloc(1, sizeof(*ctx));
     if (!ctx) return E_OUTOFMEMORY;
 
     test->test_context = ctx;
@@ -2005,17 +2005,17 @@ static void resource_test_cleanup(IDirect3DDevice9 *device, struct state_test *t
         IDirect3DBaseTexture9_Release(ctx->test_data_all.tex[i]);
     }
 
-    HeapFree(GetProcessHeap(), 0, ctx->default_data.vb);
-    HeapFree(GetProcessHeap(), 0, ctx->default_data.tex);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_all.vb);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_all.tex);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_vertex.vb);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_vertex.tex);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_pixel.vb);
-    HeapFree(GetProcessHeap(), 0, ctx->test_data_pixel.tex);
-    HeapFree(GetProcessHeap(), 0, ctx->poison_data.vb);
-    HeapFree(GetProcessHeap(), 0, ctx->poison_data.tex);
-    HeapFree(GetProcessHeap(), 0, ctx);
+    free(ctx->default_data.vb);
+    free(ctx->default_data.tex);
+    free(ctx->test_data_all.vb);
+    free(ctx->test_data_all.tex);
+    free(ctx->test_data_vertex.vb);
+    free(ctx->test_data_vertex.tex);
+    free(ctx->test_data_pixel.vb);
+    free(ctx->test_data_pixel.tex);
+    free(ctx->poison_data.vb);
+    free(ctx->poison_data.tex);
+    free(ctx);
 }
 
 static void resource_test_queue(struct state_test *test, const struct resource_test_arg *test_arg)

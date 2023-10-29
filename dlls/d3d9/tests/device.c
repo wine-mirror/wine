@@ -25,7 +25,6 @@
 #define COBJMACROS
 #include <d3d9.h>
 #include "utils.h"
-#include "wine/heap.h"
 
 struct vec3
 {
@@ -93,7 +92,7 @@ static BOOL compare_elements(IDirect3DVertexDeclaration9 *declaration, const D3D
 
     hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, NULL, &element_count);
     ok(SUCCEEDED(hr), "Failed to get declaration, hr %#lx.\n", hr);
-    elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(*elements));
+    elements = malloc(element_count * sizeof(*elements));
     hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, elements, &element_count);
     ok(SUCCEEDED(hr), "Failed to get declaration, hr %#lx.\n", hr);
 
@@ -116,7 +115,7 @@ static BOOL compare_elements(IDirect3DVertexDeclaration9 *declaration, const D3D
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, elements);
+    free(elements);
     return equal;
 }
 
@@ -174,7 +173,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
     DISPLAY_DEVICEW display_device;
     DEVMODEW *modes, *tmp;
 
-    if (!(modes = heap_alloc(size * sizeof(*modes))))
+    if (!(modes = malloc(size * sizeof(*modes))))
         return FALSE;
 
     display_device.cb = sizeof(display_device);
@@ -190,9 +189,9 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         if (count >= size)
         {
             size *= 2;
-            if (!(tmp = heap_realloc(modes, size * sizeof(*modes))))
+            if (!(tmp = realloc(modes, size * sizeof(*modes))))
             {
-                heap_free(modes);
+                free(modes);
                 return FALSE;
             }
             modes = tmp;
@@ -202,7 +201,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         modes[count].dmSize = sizeof(modes[count]);
         if (!EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &modes[count]))
         {
-            heap_free(modes);
+            free(modes);
             return FALSE;
         }
 
@@ -457,7 +456,7 @@ static void test_get_declaration(void)
             element_count, expected_element_count);
 
     /* Also test the returned data. */
-    elements = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(simple_decl));
+    elements = calloc(1, sizeof(simple_decl));
 
     element_count = 0x1337c0de;
     hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, elements, &element_count);
@@ -477,7 +476,7 @@ static void test_get_declaration(void)
     ok(!memcmp(elements, simple_decl, element_count * sizeof(*elements)),
             "Original and returned vertexdeclarations are not the same.\n");
 
-    HeapFree(GetProcessHeap(), 0, elements);
+    free(elements);
     IDirect3DVertexDeclaration9_Release(declaration);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -2042,7 +2041,7 @@ static void test_reset(void)
 
     IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &d3ddm);
     adapter_mode_count = IDirect3D9_GetAdapterModeCount(d3d, D3DADAPTER_DEFAULT, d3ddm.Format);
-    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    modes = malloc(sizeof(*modes) * adapter_mode_count);
     for(i = 0; i < adapter_mode_count; ++i)
     {
         UINT j;
@@ -2552,7 +2551,7 @@ static void test_reset(void)
     if (surface) IDirect3DSurface9_Release(surface);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, modes);
+    free(modes);
     if (device2)
     {
         ULONG refcount = IDirect3DDevice9_Release(device2);
@@ -5852,7 +5851,7 @@ done:
     IDirect3D9_Release(d3d9);
     ret = restore_display_modes(original_modes, display_count);
     ok(ret, "Failed to restore display modes.\n");
-    heap_free(original_modes);
+    free(original_modes);
 }
 
 static void test_device_window_reset(void)
@@ -11074,7 +11073,7 @@ static void test_shared_handle(void)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#lx.\n", hr);
-    mem = HeapAlloc(GetProcessHeap(), 0, 128 * 128 * 4);
+    mem = malloc(128 * 128 * 4);
 
     /* Windows XP returns E_NOTIMPL, Windows 7 returns INVALIDCALL, except for
      * CreateVertexBuffer, where it returns NOTAVAILABLE. */
@@ -11136,7 +11135,7 @@ static void test_shared_handle(void)
             D3DMULTISAMPLE_NONE, 0, TRUE, &surface, &handle);
     ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#lx.\n", hr);
 
-    HeapFree(GetProcessHeap(), 0, mem);
+    free(mem);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);

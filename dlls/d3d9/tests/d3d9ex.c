@@ -752,7 +752,7 @@ static void test_user_memory(void)
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#lx.\n", hr);
 
-    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 128 * 128 * 4);
+    mem = calloc(128 * 128, 4);
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 0, 0, D3DFMT_A8R8G8B8,
             D3DPOOL_SYSTEMMEM, &texture, &mem);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
@@ -877,7 +877,7 @@ static void test_user_memory(void)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
     IDirect3DTexture9_Release(texture2);
     IDirect3DTexture9_Release(texture);
-    HeapFree(GetProcessHeap(), 0, mem);
+    free(mem);
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
 
@@ -942,7 +942,7 @@ static void test_reset(void)
 
     IDirect3D9_GetAdapterDisplayMode(d3d9, D3DADAPTER_DEFAULT, &d3ddm);
     adapter_mode_count = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, d3ddm.Format);
-    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    modes = malloc(sizeof(*modes) * adapter_mode_count);
     for (i = 0; i < adapter_mode_count; ++i)
     {
         UINT j;
@@ -1410,7 +1410,7 @@ static void test_reset(void)
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, modes);
+    free(modes);
     IDirect3D9_Release(d3d9);
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -1456,7 +1456,7 @@ static void test_reset_ex(void)
     mode_filter.Size = sizeof(mode_filter);
     mode_filter.Format = mode.Format;
     adapter_mode_count = IDirect3D9Ex_GetAdapterModeCountEx(d3d9, D3DADAPTER_DEFAULT, &mode_filter);
-    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    modes = malloc(sizeof(*modes) * adapter_mode_count);
     for (i = 0; i < adapter_mode_count; ++i)
     {
         unsigned int j;
@@ -1833,7 +1833,7 @@ static void test_reset_ex(void)
     IDirect3DSwapChain9_Release(swapchain);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, modes);
+    free(modes);
     IDirect3D9Ex_Release(d3d9);
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -1975,7 +1975,7 @@ static void test_user_memory_getdc(void)
         goto done;
     }
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * 16 * 16);
+    data = malloc(sizeof(*data) * 16 * 16);
     memset(data, 0xaa, sizeof(*data) * 16 * 16);
     hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 16, 16,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, (HANDLE *)&data);
@@ -1997,7 +1997,7 @@ static void test_user_memory_getdc(void)
     ok(data[8 * 16] == 0x00000000, "Expected color 0x00000000, got %#x.\n", data[8 * 16]);
 
     IDirect3DSurface9_Release(surface);
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     ref = IDirect3DDevice9_Release(device);
     ok(!ref, "Unexpected refcount %lu.\n", ref);

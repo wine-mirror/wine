@@ -35,7 +35,6 @@
 #define COBJMACROS
 #include <d3d9.h>
 #include "utils.h"
-#include "wine/heap.h"
 
 struct vec2
 {
@@ -1027,8 +1026,8 @@ static void test_specular_lighting(void)
     } *quad;
     WORD *indices;
 
-    quad = HeapAlloc(GetProcessHeap(), 0, vertices_side * vertices_side * sizeof(*quad));
-    indices = HeapAlloc(GetProcessHeap(), 0, indices_count * sizeof(*indices));
+    quad = malloc(vertices_side * vertices_side * sizeof(*quad));
+    indices = malloc(indices_count * sizeof(*indices));
     for (i = 0, y = 0; y < vertices_side; ++y)
     {
         for (x = 0; x < vertices_side; ++x)
@@ -1130,8 +1129,8 @@ static void test_specular_lighting(void)
 done:
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
-    HeapFree(GetProcessHeap(), 0, indices);
-    HeapFree(GetProcessHeap(), 0, quad);
+    free(indices);
+    free(quad);
 }
 
 static void clear_test(void)
@@ -17065,7 +17064,7 @@ static void fp_special_test(void)
         if (vs_body[i].size > body_size) body_size = vs_body[i].size;
     }
 
-    vs_code = HeapAlloc(GetProcessHeap(), 0, sizeof(vs_header) + body_size + sizeof(vs_footer));
+    vs_code = malloc(sizeof(vs_header) + body_size + sizeof(vs_footer));
     memcpy(vs_code, vs_header, sizeof(vs_header));
 
     for (i = 0; i < ARRAY_SIZE(vs_body); ++i)
@@ -17107,7 +17106,7 @@ static void fp_special_test(void)
         IDirect3DVertexShader9_Release(vs);
     }
 
-    HeapFree(GetProcessHeap(), 0, vs_code);
+    free(vs_code);
 
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#lx.\n", hr);
@@ -26319,7 +26318,7 @@ static void test_nrm_instruction(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
         body_size = max(body_size, tests[i].body_size);
 
-    ps_code = heap_alloc(sizeof(ps_header) + body_size * sizeof(*ps_code) + sizeof(ps_footer));
+    ps_code = malloc(sizeof(ps_header) + body_size * sizeof(*ps_code) + sizeof(ps_footer));
     memcpy(ps_code, ps_header, sizeof(ps_header));
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
@@ -26365,7 +26364,7 @@ static void test_nrm_instruction(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-    heap_free(ps_code);
+    free(ps_code);
     IDirect3DVertexShader9_Release(vertex_shader);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     refcount = IDirect3DDevice9_Release(device);
