@@ -83,8 +83,8 @@ static ULONG WINAPI d3d9_Release(IDirect3D9Ex *iface)
     {
         wined3d_decref(d3d9->wined3d);
 
-        heap_free(d3d9->wined3d_outputs);
-        heap_free(d3d9);
+        free(d3d9->wined3d_outputs);
+        free(d3d9);
     }
 
     return refcount;
@@ -489,14 +489,14 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, device);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = device_init(object, d3d9, d3d9->wined3d, adapter, device_type, focus_window, flags, parameters, NULL);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -610,14 +610,14 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDeviceEx(IDirect3D9Ex *iface,
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, mode %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, mode, device);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = device_init(object, d3d9, d3d9->wined3d, adapter, device_type, focus_window, flags, parameters, mode);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -710,7 +710,7 @@ BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
         output_count += wined3d_adapter_get_output_count(wined3d_adapter);
     }
 
-    d3d9->wined3d_outputs = heap_calloc(output_count, sizeof(*d3d9->wined3d_outputs));
+    d3d9->wined3d_outputs = calloc(output_count, sizeof(*d3d9->wined3d_outputs));
     if (!d3d9->wined3d_outputs)
     {
         wined3d_decref(d3d9->wined3d);

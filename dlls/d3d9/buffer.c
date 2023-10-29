@@ -266,7 +266,7 @@ static void STDMETHODCALLTYPE d3d9_vertexbuffer_wined3d_object_destroyed(void *p
     if (buffer->draw_buffer)
         wined3d_buffer_decref(buffer->wined3d_buffer);
     d3d9_resource_cleanup(&buffer->resource);
-    heap_free(buffer);
+    free(buffer);
 }
 
 static const struct wined3d_parent_ops d3d9_vertexbuffer_wined3d_parent_ops =
@@ -586,7 +586,7 @@ static void STDMETHODCALLTYPE d3d9_indexbuffer_wined3d_object_destroyed(void *pa
     struct d3d9_indexbuffer *buffer = parent;
 
     d3d9_resource_cleanup(&buffer->resource);
-    heap_free(buffer);
+    free(buffer);
 }
 
 static const struct wined3d_parent_ops d3d9_indexbuffer_wined3d_parent_ops =

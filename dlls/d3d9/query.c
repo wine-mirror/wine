@@ -78,7 +78,7 @@ static ULONG WINAPI d3d9_query_Release(IDirect3DQuery9 *iface)
     {
         wined3d_query_decref(query->wined3d_query);
         IDirect3DDevice9Ex_Release(query->parent_device);
-        heap_free(query);
+        free(query);
     }
     return refcount;
 }

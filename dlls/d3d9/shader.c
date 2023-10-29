@@ -119,7 +119,7 @@ static const IDirect3DVertexShader9Vtbl d3d9_vertexshader_vtbl =
 
 static void STDMETHODCALLTYPE d3d9_vertexshader_wined3d_object_destroyed(void *parent)
 {
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d9_vertexshader_wined3d_parent_ops =
@@ -262,7 +262,7 @@ static const IDirect3DPixelShader9Vtbl d3d9_pixelshader_vtbl =
 
 static void STDMETHODCALLTYPE d3d9_pixelshader_wined3d_object_destroyed(void *parent)
 {
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d9_pixelshader_wined3d_parent_ops =

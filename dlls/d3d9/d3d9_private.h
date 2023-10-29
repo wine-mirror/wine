@@ -32,7 +32,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "d3d9.h"
 #include "wine/wined3d.h"

@@ -69,7 +69,7 @@ static ULONG WINAPI d3d9_stateblock_Release(IDirect3DStateBlock9 *iface)
         wined3d_stateblock_decref(stateblock->wined3d_stateblock);
 
         IDirect3DDevice9Ex_Release(stateblock->parent_device);
-        heap_free(stateblock);
+        free(stateblock);
     }
 
     return refcount;

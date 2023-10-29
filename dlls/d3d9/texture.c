@@ -1264,7 +1264,7 @@ static void STDMETHODCALLTYPE d3d9_texture_wined3d_object_destroyed(void *parent
     if (texture->draw_texture)
         wined3d_texture_decref(texture->wined3d_texture);
     d3d9_resource_cleanup(&texture->resource);
-    heap_free(texture);
+    free(texture);
 }
 
 static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
