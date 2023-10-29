@@ -23,7 +23,6 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
-#include "wine/heap.h"
 #include "wine/wined3d.h"
 #include "wine/test.h"
 
@@ -88,7 +87,7 @@ static void queue_test(void (*test)(void))
     if (mt_test_count >= mt_tests_size)
     {
         mt_tests_size = max(16, mt_tests_size * 2);
-        mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
+        mt_tests = realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
     }
     mt_tests[mt_test_count++].test = test;
 }
@@ -126,7 +125,7 @@ static void run_queued_tests(void)
 
     GetSystemInfo(&si);
     thread_count = si.dwNumberOfProcessors;
-    threads = heap_calloc(thread_count, sizeof(*threads));
+    threads = calloc(thread_count, sizeof(*threads));
     for (i = 0, test_idx = 0; i < thread_count; ++i)
     {
         threads[i] = CreateThread(NULL, 0, thread_func, &test_idx, 0, NULL);
@@ -137,7 +136,7 @@ static void run_queued_tests(void)
     {
         CloseHandle(threads[i]);
     }
-    heap_free(threads);
+    free(threads);
 }
 
 static void set_box(D3D10_BOX *box, UINT left, UINT top, UINT front, UINT right, UINT bottom, UINT back)
@@ -3249,7 +3248,7 @@ static void test_render_target_views(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    data = heap_alloc_zero(texture_desc.Width * texture_desc.Height * 4);
+    data = calloc(texture_desc.Width * texture_desc.Height, 4);
     ok(!!data, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -3290,7 +3289,7 @@ static void test_render_target_views(void)
         ID3D10Texture2D_Release(texture);
     }
 
-    heap_free(data);
+    free(data);
     release_test_context(&test_context);
 }
 
@@ -10441,7 +10440,7 @@ static void test_resource_access(void)
 
     data.SysMemPitch = 0;
     data.SysMemSlicePitch = 0;
-    data.pSysMem = heap_alloc(10240);
+    data.pSysMem = malloc(10240);
     ok(!!data.pSysMem, "Failed to allocate memory.\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -10588,7 +10587,7 @@ static void test_resource_access(void)
         }
     }
 
-    heap_free((void *)data.pSysMem);
+    free((void *)data.pSysMem);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
@@ -15036,7 +15035,7 @@ static void test_buffer_srv(void)
                 resource_data.SysMemSlicePitch = 0;
                 if (current_buffer->data_offset)
                 {
-                    data = heap_alloc_zero(current_buffer->byte_count);
+                    data = calloc(1, current_buffer->byte_count);
                     ok(!!data, "Failed to allocate memory.\n");
                     memcpy(data + current_buffer->data_offset, current_buffer->data,
                             current_buffer->byte_count - current_buffer->data_offset);
@@ -15048,7 +15047,7 @@ static void test_buffer_srv(void)
                 }
                 hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
                 ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#lx.\n", i, hr);
-                heap_free(data);
+                free(data);
             }
             else
             {
@@ -16100,7 +16099,7 @@ static void test_depth_bias(void)
     rasterizer_desc.SlopeScaledDepthBias = 0.0f;
     rasterizer_desc.DepthClipEnable = TRUE;
 
-    depth_values = heap_calloc(swapchain_desc.height, sizeof(*depth_values));
+    depth_values = calloc(swapchain_desc.height, sizeof(*depth_values));
     ok(!!depth_values, "Failed to allocate memory.\n");
 
     for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
@@ -16307,7 +16306,7 @@ static void test_depth_bias(void)
         winetest_pop_context();
     }
 
-    heap_free(depth_values);
+    free(depth_values);
     release_test_context(&test_context);
 }
 
@@ -17301,7 +17300,7 @@ static void test_generate_mips(void)
 
     device = test_context.device;
 
-    data = heap_alloc(sizeof(*data) * 32 * 32 * 32);
+    data = malloc(sizeof(*data) * 32 * 32 * 32);
 
     for (z = 0; z < 32; ++z)
     {
@@ -17328,7 +17327,7 @@ static void test_generate_mips(void)
         }
     }
 
-    zero_data = heap_alloc_zero(sizeof(*zero_data) * 16 * 16 * 16);
+    zero_data = calloc(16 * 16 * 16, sizeof(*zero_data));
 
     for (i = 0; i < ARRAY_SIZE(resource_types); ++i)
     {
@@ -17472,8 +17471,8 @@ static void test_generate_mips(void)
     if (is_warp_device(device))
     {
         win_skip("Creating the next texture crashes WARP on some testbot boxes.\n");
-        heap_free(zero_data);
-        heap_free(data);
+        free(zero_data);
+        free(data);
         release_test_context(&test_context);
         return;
     }
@@ -17541,8 +17540,8 @@ static void test_generate_mips(void)
 
     ID3D10Resource_Release(resource);
 
-    heap_free(zero_data);
-    heap_free(data);
+    free(zero_data);
+    free(data);
 
     release_test_context(&test_context);
 }
@@ -19069,7 +19068,7 @@ static void test_texture_compressed_3d(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Simply test all combinations of r0 and r1. */
-    texture_data = heap_alloc(256 * 256 * sizeof(UINT64));
+    texture_data = malloc(256 * 256 * sizeof(UINT64));
     for (r1 = 0; r1 < 256; ++r1)
     {
         for (r0 = 0; r0 < 256; ++r0)
@@ -19094,7 +19093,7 @@ static void test_texture_compressed_3d(void)
     texture_desc.MiscFlags = 0;
     hr = ID3D10Device_CreateTexture3D(device, &texture_desc, &resource_data, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    heap_free(texture_data);
+    free(texture_data);
 
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
