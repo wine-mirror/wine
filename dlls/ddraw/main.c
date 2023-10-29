@@ -115,7 +115,7 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
 /* Handle table functions */
 BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size)
 {
-    if (!(t->entries = heap_alloc_zero(initial_size * sizeof(*t->entries))))
+    if (!(t->entries = calloc(initial_size, sizeof(*t->entries))))
     {
         ERR("Failed to allocate handle table memory.\n");
         return FALSE;
@@ -129,7 +129,7 @@ BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size)
 
 void ddraw_handle_table_destroy(struct ddraw_handle_table *t)
 {
-    heap_free(t->entries);
+    free(t->entries);
     memset(t, 0, sizeof(*t));
 }
 
@@ -160,7 +160,7 @@ DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddr
         UINT new_size = t->table_size + (t->table_size >> 1);
         struct ddraw_handle_entry *new_entries;
 
-        if (!(new_entries = heap_realloc(t->entries, new_size * sizeof(*t->entries))))
+        if (!(new_entries = realloc(t->entries, new_size * sizeof(*t->entries))))
         {
             ERR("Failed to grow the handle table.\n");
             return DDRAW_INVALID_HANDLE;
@@ -311,7 +311,7 @@ static HRESULT DDRAW_Create(const GUID *guid, void **out, IUnknown *outer_unknow
     if (!IsEqualGUID(iid, &IID_IDirectDraw7))
         flags = WINED3D_LEGACY_FFP_LIGHTING;
 
-    if (!(ddraw = heap_alloc_zero(sizeof(*ddraw))))
+    if (!(ddraw = calloc(1, sizeof(*ddraw))))
     {
         ERR("Out of memory when creating DirectDraw.\n");
         return E_OUTOFMEMORY;
@@ -320,7 +320,7 @@ static HRESULT DDRAW_Create(const GUID *guid, void **out, IUnknown *outer_unknow
     if (FAILED(hr = ddraw_init(ddraw, flags, device_type)))
     {
         WARN("Failed to initialize ddraw object, hr %#lx.\n", hr);
-        heap_free(ddraw);
+        free(ddraw);
         return hr;
     }
 
@@ -681,7 +681,7 @@ static ULONG WINAPI ddraw_class_factory_Release(IClassFactory *iface)
     TRACE("%p decreasing refcount to %lu.\n", factory, ref);
 
     if (!ref)
-        heap_free(factory);
+        free(factory);
 
     return ref;
 }
@@ -765,7 +765,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
         return CLASS_E_CLASSNOTAVAILABLE;
     }
 
-    if (!(factory = heap_alloc_zero(sizeof(*factory))))
+    if (!(factory = calloc(1, sizeof(*factory))))
         return E_OUTOFMEMORY;
 
     factory->IClassFactory_iface.lpVtbl = &IClassFactory_Vtbl;

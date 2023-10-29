@@ -137,7 +137,7 @@ static ULONG WINAPI d3d_light_Release(IDirect3DLight *iface)
 
     if (!ref)
     {
-        heap_free(light);
+        free(light);
         return 0;
     }
     return ref;

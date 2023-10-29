@@ -110,7 +110,7 @@ static ULONG WINAPI ddraw_clipper_Release(IDirectDrawClipper *iface)
         if (clipper->region)
             DeleteObject(clipper->region);
         clipper->IDirectDrawClipper_iface.lpVtbl = NULL; /* Should help with detecting freed clippers. */
-        heap_free(clipper);
+        free(clipper);
     }
 
     return refcount;

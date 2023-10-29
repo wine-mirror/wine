@@ -97,7 +97,7 @@ static ULONG WINAPI ddraw_palette_Release(IDirectDrawPalette *iface)
             IUnknown_Release(palette->ifaceToRelease);
         wined3d_mutex_unlock();
 
-        heap_free(palette);
+        free(palette);
     }
 
     return ref;

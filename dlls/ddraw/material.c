@@ -147,7 +147,7 @@ static ULONG WINAPI d3d_material3_Release(IDirect3DMaterial3 *iface)
             wined3d_mutex_unlock();
         }
 
-        heap_free(material);
+        free(material);
     }
 
     return ref;
@@ -499,7 +499,7 @@ struct d3d_material *d3d_material_create(struct ddraw *ddraw)
 {
     struct d3d_material *material;
 
-    if (!(material = heap_alloc_zero(sizeof(*material))))
+    if (!(material = calloc(1, sizeof(*material))))
         return NULL;
 
     material->IDirect3DMaterial3_iface.lpVtbl = &d3d_material3_vtbl;

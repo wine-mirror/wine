@@ -25,7 +25,6 @@
 #include <stdbool.h>
 #define COBJMACROS
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "winbase.h"
 #include "wingdi.h"

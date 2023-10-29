@@ -387,7 +387,7 @@ static void ddraw_destroy_swapchain(struct ddraw *ddraw)
     {
         wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
     }
-    heap_free(ddraw->decls);
+    free(ddraw->decls);
     ddraw->numConvertedDecls = 0;
 
     wined3d_swapchain_decref(ddraw->wined3d_swapchain);
@@ -445,7 +445,7 @@ static void ddraw_destroy(struct ddraw *This)
         This->d3ddevice->ddraw = NULL;
 
     /* Now free the object */
-    heap_free(This);
+    free(This);
 }
 
 /*****************************************************************************
@@ -631,7 +631,7 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
     }
 
     ddraw->declArraySize = 2;
-    if (!(ddraw->decls = heap_alloc_zero(ddraw->declArraySize * sizeof(*ddraw->decls))))
+    if (!(ddraw->decls = calloc(ddraw->declArraySize, sizeof(*ddraw->decls))))
     {
         ERR("Error allocating an array for the converted vertex decls.\n");
         ddraw->declArraySize = 0;
@@ -2441,7 +2441,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     if (!cb)
         return DDERR_INVALIDPARAMS;
 
-    if (!(enum_modes = heap_alloc(enum_mode_array_size * sizeof(*enum_modes))))
+    if (!(enum_modes = malloc(enum_mode_array_size * sizeof(*enum_modes))))
         return DDERR_OUTOFMEMORY;
 
     wined3d_mutex_lock();
@@ -2506,7 +2506,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
             if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
             {
                 TRACE("Application asked to terminate the enumeration\n");
-                heap_free(enum_modes);
+                free(enum_modes);
                 wined3d_mutex_unlock();
                 return DD_OK;
             }
@@ -2516,9 +2516,9 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
                 struct wined3d_display_mode *new_enum_modes;
 
                 enum_mode_array_size *= 2;
-                if (!(new_enum_modes = heap_realloc(enum_modes, enum_mode_array_size * sizeof(*new_enum_modes))))
+                if (!(new_enum_modes = realloc(enum_modes, enum_mode_array_size * sizeof(*new_enum_modes))))
                 {
-                    heap_free(enum_modes);
+                    free(enum_modes);
                     wined3d_mutex_unlock();
                     return DDERR_OUTOFMEMORY;
                 }
@@ -2530,7 +2530,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     }
 
     TRACE("End of enumeration\n");
-    heap_free(enum_modes);
+    free(enum_modes);
     wined3d_mutex_unlock();
 
     return DD_OK;
@@ -3450,7 +3450,7 @@ HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper
 
     wined3d_mutex_lock();
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -3460,7 +3460,7 @@ HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper
     if (FAILED(hr))
     {
         WARN("Failed to initialize clipper, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -3560,7 +3560,7 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
         return DDERR_NOCOOPERATIVELEVELSET;
     }
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = malloc(sizeof(*object))))
     {
         ERR("Out of memory when allocating memory for a palette implementation\n");
         wined3d_mutex_unlock();
@@ -3571,7 +3571,7 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
     if (FAILED(hr))
     {
         WARN("Failed to initialize palette, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -3978,7 +3978,7 @@ static HRESULT WINAPI d3d3_CreateLight(IDirect3D3 *iface, IDirect3DLight **light
     if (outer_unknown)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         ERR("Failed to allocate light memory.\n");
         return DDERR_OUTOFMEMORY;
@@ -4125,7 +4125,7 @@ static HRESULT WINAPI d3d3_CreateViewport(IDirect3D3 *iface, IDirect3DViewport3 
 
     if (outer_unknown) return CLASS_E_NOAGGREGATION;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         ERR("Failed to allocate viewport memory.\n");
         return DDERR_OUTOFMEMORY;
@@ -4921,7 +4921,7 @@ struct wined3d_vertex_declaration *ddraw_find_decl(struct ddraw *This, DWORD fvf
     {
         unsigned int grow = max(This->declArraySize / 2, 8);
 
-        if (!(convertedDecls = heap_realloc(convertedDecls,
+        if (!(convertedDecls = realloc(convertedDecls,
                 (This->numConvertedDecls + grow) * sizeof(*convertedDecls))))
         {
             wined3d_vertex_declaration_decref(pDecl);
