@@ -1968,7 +1968,8 @@ static BOOL is_extension_banned(LPCWSTR extension)
     if (!wcsicmp(extension, L".bat") ||
         !wcsicmp(extension, L".com") ||
         !wcsicmp(extension, L".exe") ||
-        !wcsicmp(extension, L".msi"))
+        !wcsicmp(extension, L".msi") ||
+        !wcsicmp(extension, L".url"))
         return TRUE;
     return FALSE;
 }
