@@ -61,12 +61,12 @@ static void output_writeconsole(const WCHAR *str, DWORD len)
      * If this occurs, we should use an OEM codepage and call WriteFile.
      */
     lenA = WideCharToMultiByte(GetOEMCP(), 0, str, len, NULL, 0, NULL, NULL);
-    strA = HeapAlloc(GetProcessHeap(), 0, lenA);
+    strA = malloc(lenA);
     if (strA)
     {
         WideCharToMultiByte(GetOEMCP(), 0, str, len, strA, lenA, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &written, FALSE);
-        HeapFree(GetProcessHeap(), 0, strA);
+        free(strA);
     }
 }
 
@@ -257,13 +257,12 @@ static int FetchFromRootKey(HKEY root)
             if (!RegQueryValueExW(hkeyApp, L"WindowsInstaller", NULL, &type, (BYTE *)&value, &size) &&
                 type == REG_DWORD && value == 1)
             {
-                command = HeapAlloc(GetProcessHeap(), 0,
-                        sizeof(L"msiexec /x") + wcslen(subKeyName) * sizeof(WCHAR));
+                command = malloc(sizeof(L"msiexec /x") + wcslen(subKeyName) * sizeof(WCHAR));
                 wsprintfW(command, L"msiexec /x%s", subKeyName);
             }
             else if (!RegQueryValueExW(hkeyApp, L"UninstallString", NULL, NULL, NULL, &uninstlen))
             {
-                command = HeapAlloc(GetProcessHeap(), 0, uninstlen);
+                command = malloc(uninstlen);
                 RegQueryValueExW(hkeyApp, L"UninstallString", 0, 0, (BYTE *)command, &uninstlen);
             }
             else
@@ -273,11 +272,10 @@ static int FetchFromRootKey(HKEY root)
                 continue;
             }
             numentries++;
-            entries = HeapReAlloc(GetProcessHeap(), 0, entries, numentries*sizeof(uninst_entry));
+            entries = realloc(entries, numentries * sizeof(uninst_entry));
             entries[numentries-1].root = root;
-            entries[numentries-1].key = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(subKeyName)+1)*sizeof(WCHAR));
-            lstrcpyW(entries[numentries-1].key, subKeyName);
-            entries[numentries-1].descr = HeapAlloc(GetProcessHeap(), 0, displen);
+            entries[numentries-1].key = wcsdup(subKeyName);
+            entries[numentries-1].descr = malloc(displen);
             RegQueryValueExW(hkeyApp, L"DisplayName", 0, 0, (BYTE *)entries[numentries-1].descr, &displen);
             entries[numentries-1].command = command;
             entries[numentries-1].active = 0;
@@ -302,7 +300,7 @@ static int FetchUninstallInformation(void)
     numentries = 0;
     oldsel = -1;
     if (!entries)
-        entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
+        entries = malloc(sizeof(uninst_entry));
 
     if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &root))
     {
