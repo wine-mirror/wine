@@ -1497,9 +1497,9 @@ static BOOL mod_from_connection(USHORT source, USHORT transform, UINT *fluid_sou
     return TRUE;
 }
 
-static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION *conn,
-        UINT src1, UINT flags1, UINT src2, UINT flags2)
+static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION *conn)
 {
+    UINT src1 = FLUID_MOD_NONE, flags1 = 0, src2 = FLUID_MOD_NONE, flags2 = 0;
     fluid_mod_t *mod;
     UINT gen = -1;
     double value;
@@ -1520,10 +1520,15 @@ static BOOL add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
 
     if (conn->usControl != CONN_SRC_NONE && gen != -1)
     {
-        src1 = src2;
-        flags1 = flags2;
-        src2 = 0;
-        flags2 = 0;
+        if (!mod_from_connection(conn->usControl, (conn->usTransform >> 4) & 0x3f, &src1, &flags1))
+            return FALSE;
+    }
+    else
+    {
+        if (!mod_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f, &src1, &flags1))
+            return FALSE;
+        if (!mod_from_connection(conn->usControl, (conn->usTransform >> 4) & 0x3f, &src2, &flags2))
+            return FALSE;
     }
 
     if (gen == -1 && !gen_from_connection(conn, &gen)) return FALSE;
@@ -1555,18 +1560,11 @@ static void add_voice_connections(fluid_voice_t *fluid_voice, const CONNECTIONLI
 
     for (i = 0; i < list->cConnections; i++)
     {
-        UINT src1 = FLUID_MOD_NONE, flags1 = 0, src2 = FLUID_MOD_NONE, flags2 = 0;
         const CONNECTION *conn = connections + i;
 
         if (set_gen_from_connection(fluid_voice, conn)) continue;
 
-        if (!mod_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f,
-                &src1, &flags1))
-            continue;
-        if (!mod_from_connection(conn->usControl, (conn->usTransform >> 4) & 0x3f,
-                &src2, &flags2))
-            continue;
-        add_mod_from_connection(fluid_voice, conn, src1, flags1, src2, flags2);
+        add_mod_from_connection(fluid_voice, conn);
     }
 }
 
