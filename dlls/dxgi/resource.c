@@ -77,7 +77,7 @@ static ULONG STDMETHODCALLTYPE dxgi_resource_inner_Release(IUnknown *iface)
     if (!refcount)
     {
         wined3d_private_store_cleanup(&resource->private_store);
-        heap_free(resource);
+        free(resource);
     }
 
     return refcount;

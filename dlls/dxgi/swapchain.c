@@ -803,7 +803,7 @@ static void STDMETHODCALLTYPE d3d11_swapchain_wined3d_object_released(void *pare
     struct d3d11_swapchain *swapchain = parent;
 
     wined3d_private_store_cleanup(&swapchain->private_store);
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d11_swapchain_wined3d_parent_ops =
@@ -1126,7 +1126,7 @@ static void d3d12_swapchain_op_destroy(struct d3d12_swapchain *swapchain, struct
         vk_funcs->p_vkFreeMemory(swapchain->vk_device, op->resize_buffers.vk_memory, NULL);
     }
 
-    heap_free(op);
+    free(op);
 }
 
 static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapchain, struct d3d12_swapchain_op *op);
@@ -1224,14 +1224,14 @@ static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    if (!(formats = heap_calloc(format_count, sizeof(*formats))))
+    if (!(formats = calloc(format_count, sizeof(*formats))))
         return E_OUTOFMEMORY;
 
     if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device,
             vk_surface, &format_count, formats)) < 0)
     {
         WARN("Failed to enumerate supported surface formats, vr %d.\n", vr);
-        heap_free(formats);
+        free(formats);
         return hresult_from_vk_result(vr);
     }
 
@@ -1254,7 +1254,7 @@ static HRESULT select_vk_format(const struct dxgi_vk_funcs *vk_funcs,
             }
         }
     }
-    heap_free(formats);
+    free(formats);
     if (i == format_count)
     {
         FIXME("Failed to find Vulkan swapchain format for %s.\n", debug_dxgi_format(swapchain_desc->Format));
@@ -1313,7 +1313,7 @@ static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *sw
 
     supported = FALSE;
 
-    if (!(modes = heap_calloc(count, sizeof(*modes))))
+    if (!(modes = calloc(count, sizeof(*modes))))
         return FALSE;
     if ((vr = vk_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
             swapchain->vk_surface, &count, modes)) >= 0)
@@ -1331,7 +1331,7 @@ static BOOL d3d12_swapchain_is_present_mode_supported(struct d3d12_swapchain *sw
     {
         WARN("Failed to get available present modes, vr %d.\n", vr);
     }
-    heap_free(modes);
+    free(modes);
 
     return supported;
 }
@@ -1983,7 +1983,7 @@ static ULONG STDMETHODCALLTYPE d3d12_swapchain_Release(IDXGISwapChain4 *iface)
     if (!refcount)
     {
         d3d12_swapchain_destroy(swapchain);
-        heap_free(swapchain);
+        free(swapchain);
     }
 
     return refcount;
@@ -2216,7 +2216,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         return S_OK;
     }
 
-    if (!(op = heap_alloc_zero(sizeof(*op))))
+    if (!(op = calloc(1, sizeof(*op))))
     {
         WARN("Cannot allocate memory.\n");
         return E_OUTOFMEMORY;
@@ -2499,7 +2499,7 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
         return S_OK;
     }
 
-    if (!(op = heap_alloc_zero(sizeof(*op))))
+    if (!(op = calloc(1, sizeof(*op))))
     {
         WARN("Cannot allocate memory.\n");
         return E_OUTOFMEMORY;
@@ -3304,13 +3304,13 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
         fullscreen_desc = &default_fullscreen_desc;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = ID3D12CommandQueue_GetDevice(queue, &IID_ID3D12Device, (void **)&device)))
     {
         ERR("Failed to get d3d12 device, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -3318,7 +3318,7 @@ HRESULT d3d12_swapchain_create(IWineDXGIFactory *factory, ID3D12CommandQueue *qu
     ID3D12Device_Release(device);
     if (FAILED(hr))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
