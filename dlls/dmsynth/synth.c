@@ -1563,7 +1563,7 @@ static void add_voice_connections(fluid_voice_t *fluid_voice, const CONNECTIONLI
         if (!mod_from_connection(conn->usSource, (conn->usTransform >> 10) & 0x3f,
                 &src1, &flags1))
             continue;
-        if (!mod_from_connection(conn->usControl, (conn->usControl >> 4) & 0x3f,
+        if (!mod_from_connection(conn->usControl, (conn->usTransform >> 4) & 0x3f,
                 &src2, &flags2))
             continue;
         add_mod_from_connection(fluid_voice, conn, src1, flags1, src2, flags2);
