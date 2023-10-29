@@ -26,7 +26,6 @@
 #include <initguid.h>
 #include <d3d8.h>
 #include "wine/test.h"
-#include "wine/heap.h"
 
 struct vec3
 {
@@ -129,7 +128,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
     DISPLAY_DEVICEW display_device;
     DEVMODEW *modes, *tmp;
 
-    if (!(modes = heap_alloc(size * sizeof(*modes))))
+    if (!(modes = malloc(size * sizeof(*modes))))
         return FALSE;
 
     display_device.cb = sizeof(display_device);
@@ -145,9 +144,9 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         if (count >= size)
         {
             size *= 2;
-            if (!(tmp = heap_realloc(modes, size * sizeof(*modes))))
+            if (!(tmp = realloc(modes, size * sizeof(*modes))))
             {
-                heap_free(modes);
+                free(modes);
                 return FALSE;
             }
             modes = tmp;
@@ -157,7 +156,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         modes[count].dmSize = sizeof(modes[count]);
         if (!EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &modes[count]))
         {
-            heap_free(modes);
+            free(modes);
             return FALSE;
         }
 
@@ -1554,7 +1553,7 @@ static void test_reset(void)
     hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
     ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#lx.\n", hr);
     adapter_mode_count = IDirect3D8_GetAdapterModeCount(d3d8, D3DADAPTER_DEFAULT);
-    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    modes = malloc(sizeof(*modes) * adapter_mode_count);
     for (i = 0; i < adapter_mode_count; ++i)
     {
         UINT j;
@@ -2120,7 +2119,7 @@ static void test_reset(void)
         IDirect3DSurface8_Release(surface);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, modes);
+    free(modes);
     if (device2)
         IDirect3DDevice8_Release(device2);
     if (device1)
@@ -2264,7 +2263,7 @@ static void test_shader(void)
     hr = IDirect3DDevice8_GetVertexShaderDeclaration(device, hVertexShader, NULL, &data_size);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     ok(data_size == vertex_decl_size, "Got data_size %lu, expected %lu.\n", data_size, vertex_decl_size);
-    data = HeapAlloc(GetProcessHeap(), 0, vertex_decl_size);
+    data = malloc(vertex_decl_size);
     data_size = 1;
     hr = IDirect3DDevice8_GetVertexShaderDeclaration(device, hVertexShader, data, &data_size);
     ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
@@ -2274,12 +2273,12 @@ static void test_shader(void)
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     ok(data_size == vertex_decl_size, "Got data_size %lu, expected %lu.\n", data_size, vertex_decl_size);
     ok(!memcmp(data, dwVertexDecl, vertex_decl_size), "data not equal to shader declaration\n");
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
     /* Verify that we can retrieve the shader function */
     hr = IDirect3DDevice8_GetVertexShaderFunction(device, hVertexShader, NULL, &data_size);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     ok(data_size == simple_vs_size, "Got data_size %lu, expected %lu.\n", data_size, simple_vs_size);
-    data = HeapAlloc(GetProcessHeap(), 0, simple_vs_size);
+    data = malloc(simple_vs_size);
     data_size = 1;
     hr = IDirect3DDevice8_GetVertexShaderFunction(device, hVertexShader, data, &data_size);
     ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
@@ -2289,7 +2288,7 @@ static void test_shader(void)
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     ok(data_size == simple_vs_size, "Got data_size %lu, expected %lu.\n", data_size, simple_vs_size);
     ok(!memcmp(data, simple_vs, simple_vs_size), "data not equal to shader function\n");
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
     /* Delete the assigned shader. This is supposed to work */
     hr = IDirect3DDevice8_DeleteVertexShader(device, hVertexShader);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
@@ -2331,7 +2330,7 @@ static void test_shader(void)
         hr = IDirect3DDevice8_GetPixelShaderFunction(device, hPixelShader, NULL, &data_size);
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
         ok(data_size == simple_ps_size, "Got data_size %lu, expected %lu.\n", data_size, simple_ps_size);
-        data = HeapAlloc(GetProcessHeap(), 0, simple_ps_size);
+        data = malloc(simple_ps_size);
         data_size = 1;
         hr = IDirect3DDevice8_GetPixelShaderFunction(device, hPixelShader, data, &data_size);
         ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
@@ -2341,7 +2340,7 @@ static void test_shader(void)
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
         ok(data_size == simple_ps_size, "Got data_size %lu, expected %lu.\n", data_size, simple_ps_size);
         ok(!memcmp(data, simple_ps, simple_ps_size), "data not equal to shader function\n");
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         /* Delete the assigned shader. This is supposed to work */
         hr = IDirect3DDevice8_DeletePixelShader(device, hPixelShader);
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
@@ -4711,7 +4710,7 @@ done:
     IDirect3D8_Release(d3d8);
     ret = restore_display_modes(original_modes, display_count);
     ok(ret, "Failed to restore display modes.\n");
-    heap_free(original_modes);
+    free(original_modes);
 }
 
 static void test_device_window_reset(void)
@@ -5052,11 +5051,11 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(NULL, NULL, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    heap_free(errors);
+    free(errors);
     hr = ValidateVertexShader(NULL, NULL, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    heap_free(errors);
+    free(errors);
 
     hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5065,7 +5064,7 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    heap_free(errors);
+    free(errors);
 
     hr = ValidateVertexShader(vs_code, declaration_valid1, NULL, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5102,11 +5101,11 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    heap_free(errors);
+    free(errors);
     hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    heap_free(errors);
+    free(errors);
 }
 
 static void test_validate_ps(void)
@@ -5150,7 +5149,7 @@ static void test_validate_ps(void)
     hr = ValidatePixelShader(ps_1_1_code, NULL, TRUE, &errors);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    heap_free(errors);
+    free(errors);
 
     memset(&caps, 0, sizeof(caps));
     caps.PixelShaderVersion = D3DPS_VERSION(1, 1);
@@ -5180,11 +5179,11 @@ static void test_validate_ps(void)
     hr = ValidatePixelShader(ps_1_1_code, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    heap_free(errors);
+    free(errors);
     hr = ValidatePixelShader(ps_1_1_code, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    heap_free(errors);
+    free(errors);
 }
 
 static void test_volume_get_container(void)
