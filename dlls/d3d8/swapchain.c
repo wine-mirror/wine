@@ -148,7 +148,7 @@ static const IDirect3DSwapChain8Vtbl d3d8_swapchain_vtbl =
 
 static void STDMETHODCALLTYPE d3d8_swapchain_wined3d_object_released(void *parent)
 {
-    heap_free(parent);
+    free(parent);
 }
 
 static const struct wined3d_parent_ops d3d8_swapchain_wined3d_parent_ops =
@@ -199,13 +199,13 @@ HRESULT d3d8_swapchain_create(struct d3d8_device *device, struct wined3d_swapcha
     unsigned int i;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = swapchain_init(object, device, desc, swap_interval)))
     {
         WARN("Failed to initialize swapchain, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

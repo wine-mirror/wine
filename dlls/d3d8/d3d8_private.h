@@ -31,7 +31,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "d3d8.h"
 #include "wine/wined3d.h"
 

@@ -25,7 +25,7 @@ static void STDMETHODCALLTYPE d3d8_vertexshader_wined3d_object_destroyed(void *p
 {
     struct d3d8_vertex_shader *shader = parent;
     d3d8_vertex_declaration_destroy(shader->vertex_declaration);
-    heap_free(shader);
+    free(shader);
 }
 
 void d3d8_vertex_shader_destroy(struct d3d8_vertex_shader *shader)
@@ -58,14 +58,14 @@ static HRESULT d3d8_vertexshader_create_vertexdeclaration(struct d3d8_device *de
     TRACE("device %p, declaration %p, shader_handle %#lx, decl_ptr %p.\n",
             device, declaration, shader_handle, decl_ptr);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = d3d8_vertex_declaration_init(object, device, declaration, shader_handle);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -136,7 +136,7 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
 
 static void STDMETHODCALLTYPE d3d8_pixelshader_wined3d_object_destroyed(void *parent)
 {
-    heap_free(parent);
+    free(parent);
 }
 
 void d3d8_pixel_shader_destroy(struct d3d8_pixel_shader *shader)

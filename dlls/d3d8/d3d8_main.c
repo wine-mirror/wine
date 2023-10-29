@@ -40,13 +40,13 @@ IDirect3D8 * WINAPI DECLSPEC_HOTPATCH Direct3DCreate8(UINT sdk_version)
 
     TRACE("sdk_version %#x.\n", sdk_version);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return NULL;
 
     if (!d3d8_init(object))
     {
         WARN("Failed to initialize d3d8.\n");
-        heap_free(object);
+        free(object);
         return NULL;
     }
 
@@ -95,7 +95,7 @@ done:
     if (!return_error)
         message = "";
     message_size = strlen(message) + 1;
-    if (errors && (*errors = heap_alloc(message_size)))
+    if (errors && (*errors = malloc(message_size)))
         memcpy(*errors, message, message_size);
 
     return hr;
@@ -140,7 +140,7 @@ done:
     if (!return_error)
         message = "";
     message_size = strlen(message) + 1;
-    if (errors && (*errors = heap_alloc(message_size)))
+    if (errors && (*errors = malloc(message_size)))
         memcpy(*errors, message, message_size);
 
     return hr;

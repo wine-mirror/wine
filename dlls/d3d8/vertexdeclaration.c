@@ -261,7 +261,7 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
 
     *stream_map = 0;
     /* 128 should be enough for anyone... */
-    *wined3d_elements = heap_alloc_zero(128 * sizeof(**wined3d_elements));
+    *wined3d_elements = calloc(128, sizeof(**wined3d_elements));
     while (D3DVSD_END() != *token)
     {
         token_type = ((*token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
@@ -311,8 +311,8 @@ static UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3
 static void STDMETHODCALLTYPE d3d8_vertexdeclaration_wined3d_object_destroyed(void *parent)
 {
     struct d3d8_vertex_declaration *declaration = parent;
-    heap_free(declaration->elements);
-    heap_free(declaration);
+    free(declaration->elements);
+    free(declaration);
 }
 
 void d3d8_vertex_declaration_destroy(struct d3d8_vertex_declaration *declaration)
@@ -338,10 +338,10 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
 
     wined3d_element_count = convert_to_wined3d_declaration(elements, &declaration->elements_size,
             &wined3d_elements, &declaration->stream_map);
-    if (!(declaration->elements = heap_alloc(declaration->elements_size)))
+    if (!(declaration->elements = malloc(declaration->elements_size)))
     {
         ERR("Failed to allocate vertex declaration elements memory.\n");
-        heap_free(wined3d_elements);
+        free(wined3d_elements);
         return E_OUTOFMEMORY;
     }
 
@@ -351,11 +351,11 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
     hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, wined3d_element_count,
             declaration, &d3d8_vertexdeclaration_wined3d_parent_ops, &declaration->wined3d_vertex_declaration);
     wined3d_mutex_unlock();
-    heap_free(wined3d_elements);
+    free(wined3d_elements);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration, hr %#lx.\n", hr);
-        heap_free(declaration->elements);
+        free(declaration->elements);
         if (hr == E_INVALIDARG)
             hr = E_FAIL;
         return hr;

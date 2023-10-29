@@ -70,8 +70,8 @@ static ULONG WINAPI d3d8_Release(IDirect3D8 *iface)
         wined3d_decref(d3d8->wined3d);
         wined3d_mutex_unlock();
 
-        heap_free(d3d8->wined3d_outputs);
-        heap_free(d3d8);
+        free(d3d8->wined3d_outputs);
+        free(d3d8);
     }
 
     return refcount;
@@ -432,14 +432,14 @@ static HRESULT WINAPI d3d8_CreateDevice(IDirect3D8 *iface, UINT adapter,
     TRACE("iface %p, adapter %u, device_type %#x, focus_window %p, flags %#lx, parameters %p, device %p.\n",
             iface, adapter, device_type, focus_window, flags, parameters, device);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = device_init(object, d3d8, d3d8->wined3d, adapter, device_type, focus_window, flags, parameters);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -498,7 +498,7 @@ BOOL d3d8_init(struct d3d8 *d3d8)
         output_count += wined3d_adapter_get_output_count(wined3d_adapter);
     }
 
-    d3d8->wined3d_outputs = heap_calloc(output_count, sizeof(*d3d8->wined3d_outputs));
+    d3d8->wined3d_outputs = calloc(output_count, sizeof(*d3d8->wined3d_outputs));
     if (!d3d8->wined3d_outputs)
     {
         wined3d_decref(d3d8->wined3d);

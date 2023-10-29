@@ -192,7 +192,7 @@ static void STDMETHODCALLTYPE volume_wined3d_object_destroyed(void *parent)
 {
     struct d3d8_volume *volume = parent;
     d3d8_resource_cleanup(&volume->resource);
-    heap_free(volume);
+    free(volume);
 }
 
 static const struct wined3d_parent_ops d3d8_volume_wined3d_parent_ops =
