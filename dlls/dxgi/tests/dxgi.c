@@ -27,7 +27,6 @@
 #include "d3d12sdklayers.h"
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
-#include "wine/heap.h"
 #include "wine/test.h"
 
 enum frame_latency
@@ -67,7 +66,7 @@ static void queue_test(void (*test)(void))
     if (mt_test_count >= mt_tests_size)
     {
         mt_tests_size = max(16, mt_tests_size * 2);
-        mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
+        mt_tests = realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
     }
     mt_tests[mt_test_count++].test = test;
 }
@@ -105,7 +104,7 @@ static void run_queued_tests(void)
 
     GetSystemInfo(&si);
     thread_count = si.dwNumberOfProcessors;
-    threads = heap_calloc(thread_count, sizeof(*threads));
+    threads = calloc(thread_count, sizeof(*threads));
     for (i = 0, test_idx = 0; i < thread_count; ++i)
     {
         threads[i] = CreateThread(NULL, 0, thread_func, &test_idx, 0, NULL);
@@ -116,7 +115,7 @@ static void run_queued_tests(void)
     {
         CloseHandle(threads[i]);
     }
-    heap_free(threads);
+    free(threads);
 }
 
 static ULONG get_refcount(void *iface)
@@ -149,7 +148,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
     DISPLAY_DEVICEW display_device;
     DEVMODEW *modes, *tmp;
 
-    if (!(modes = heap_alloc(size * sizeof(*modes))))
+    if (!(modes = malloc(size * sizeof(*modes))))
         return FALSE;
 
     display_device.cb = sizeof(display_device);
@@ -165,9 +164,9 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         if (count >= size)
         {
             size *= 2;
-            if (!(tmp = heap_realloc(modes, size * sizeof(*modes))))
+            if (!(tmp = realloc(modes, size * sizeof(*modes))))
             {
-                heap_free(modes);
+                free(modes);
                 return FALSE;
             }
             modes = tmp;
@@ -177,7 +176,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         modes[count].dmSize = sizeof(modes[count]);
         if (!EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &modes[count]))
         {
-            heap_free(modes);
+            free(modes);
             return FALSE;
         }
 
@@ -1440,7 +1439,7 @@ static void test_output(void)
     ok(mode_count >= mode_count_comp, "Got unexpected mode_count %u, expected >= %u.\n", mode_count, mode_count_comp);
     mode_count_comp = mode_count;
 
-    modes = heap_calloc(mode_count + 10, sizeof(*modes));
+    modes = calloc(mode_count + 10, sizeof(*modes));
     ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -1514,7 +1513,7 @@ static void test_output(void)
         skip("Not enough modes for test.\n");
     }
 
-    heap_free(modes);
+    free(modes);
     IDXGIOutput_Release(output);
     IDXGIAdapter_Release(adapter);
     refcount = IDXGIDevice_Release(device);
@@ -1572,7 +1571,7 @@ static void test_find_closest_matching_mode(void)
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    modes = heap_calloc(mode_count, sizeof(*modes));
+    modes = calloc(mode_count, sizeof(*modes));
     ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
@@ -1703,7 +1702,7 @@ static void test_find_closest_matching_mode(void)
         }
     }
 
-    heap_free(modes);
+    free(modes);
 
 done:
     IDXGIOutput_Release(output);
@@ -2623,7 +2622,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         ++output_count;
     }
 
-    output_monitor_info = heap_calloc(output_count, sizeof(*output_monitor_info));
+    output_monitor_info = calloc(output_count, sizeof(*output_monitor_info));
     ok(!!output_monitor_info, "Failed to allocate memory.\n");
     for (i = 0; i < output_count; ++i)
     {
@@ -2724,7 +2723,7 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         IDXGIOutput_Release(output);
     }
 
-    heap_free(output_monitor_info);
+    free(output_monitor_info);
 }
 
 static void test_set_fullscreen(IUnknown *device, BOOL is_d3d12)
@@ -3159,7 +3158,7 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
         return;
     }
 
-    modes = heap_calloc(mode_count, sizeof(*modes));
+    modes = calloc(mode_count, sizeof(*modes));
     ok(!!modes, "Failed to allocate memory.\n");
 
     hr = IDXGIOutput_GetDisplayModeList(target, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
@@ -3196,7 +3195,7 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
                 wine_dbgstr_rect(&expected_state.fullscreen_state.monitor_rect));
     }
 
-    heap_free(modes);
+    free(modes);
     IDXGIOutput_Release(target);
 }
 
@@ -6895,7 +6894,7 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
                 continue;
             }
 
-            modes = heap_calloc(mode_count, sizeof(*modes));
+            modes = calloc(mode_count, sizeof(*modes));
             hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -6926,7 +6925,7 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
             swapchain_desc.BufferDesc.ScanlineOrdering = modes[mode_idx].ScanlineOrdering;
             swapchain_desc.BufferDesc.Scaling = modes[mode_idx].Scaling;
             swapchain_desc.OutputWindow = create_window();
-            heap_free(modes);
+            free(modes);
             hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -7715,7 +7714,7 @@ done:
     ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
     ret = restore_display_modes(original_modes, display_count);
     ok(ret, "Failed to restore display modes.\n");
-    heap_free(original_modes);
+    free(original_modes);
 }
 
 static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
