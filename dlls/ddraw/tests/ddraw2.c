@@ -22,7 +22,6 @@
 
 #define COBJMACROS
 #include "wine/test.h"
-#include "wine/heap.h"
 #include <limits.h>
 #include <math.h>
 #include "ddrawi.h"
@@ -276,7 +275,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
     DISPLAY_DEVICEW display_device;
     DEVMODEW *modes, *tmp;
 
-    if (!(modes = heap_alloc(size * sizeof(*modes))))
+    if (!(modes = malloc(size * sizeof(*modes))))
         return FALSE;
 
     display_device.cb = sizeof(display_device);
@@ -292,9 +291,9 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         if (count >= size)
         {
             size *= 2;
-            if (!(tmp = heap_realloc(modes, size * sizeof(*modes))))
+            if (!(tmp = realloc(modes, size * sizeof(*modes))))
             {
-                heap_free(modes);
+                free(modes);
                 return FALSE;
             }
             modes = tmp;
@@ -304,7 +303,7 @@ static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_
         modes[count].dmSize = sizeof(modes[count]);
         if (!EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &modes[count]))
         {
-            heap_free(modes);
+            free(modes);
             return FALSE;
         }
 
@@ -914,7 +913,7 @@ static void test_clipper_blt(void)
     ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#lx.\n", hr);
     hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
     ok(SUCCEEDED(hr), "Failed to get clip list size, hr %#lx.\n", hr);
-    rgn_data = HeapAlloc(GetProcessHeap(), 0, ret);
+    rgn_data = malloc(ret);
     hr = IDirectDrawClipper_GetClipList(clipper, NULL, rgn_data, &ret);
     ok(SUCCEEDED(hr), "Failed to get clip list, hr %#lx.\n", hr);
     ok(rgn_data->rdh.dwSize == sizeof(rgn_data->rdh), "Got unexpected structure size %#lx.\n", rgn_data->rdh.dwSize);
@@ -923,7 +922,7 @@ static void test_clipper_blt(void)
     ok(EqualRect(&rgn_data->rdh.rcBound, &client_rect),
             "Got unexpected bounding rect %s, expected %s.\n",
             wine_dbgstr_rect(&rgn_data->rdh.rcBound), wine_dbgstr_rect(&client_rect));
-    HeapFree(GetProcessHeap(), 0, rgn_data);
+    free(rgn_data);
 
     r1 = CreateRectRgn(0, 0, 320, 240);
     ok(!!r1, "Failed to create region.\n");
@@ -931,7 +930,7 @@ static void test_clipper_blt(void)
     ok(!!r2, "Failed to create region.\n");
     CombineRgn(r1, r1, r2, RGN_OR);
     ret = GetRegionData(r1, 0, NULL);
-    rgn_data = HeapAlloc(GetProcessHeap(), 0, ret);
+    rgn_data = malloc(ret);
     ret = GetRegionData(r1, ret, rgn_data);
     ok(!!ret, "Failed to get region data.\n");
 
@@ -945,7 +944,7 @@ static void test_clipper_blt(void)
     hr = IDirectDrawClipper_SetClipList(clipper, rgn_data, 0);
     ok(SUCCEEDED(hr), "Failed to set clip list, hr %#lx.\n", hr);
 
-    HeapFree(GetProcessHeap(), 0, rgn_data);
+    free(rgn_data);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -3097,7 +3096,7 @@ static void test_coop_level_mode_set(void)
     if (!param.user32_height)
     {
         skip("Fewer than 3 different modes supported, skipping mode restore test.\n");
-        heap_free(original_modes);
+        free(original_modes);
         return;
     }
 
@@ -3890,7 +3889,7 @@ done:
     UnregisterClassA("ddraw_test_wndproc_wc2", GetModuleHandleA(NULL));
     ret = restore_display_modes(original_modes, display_count);
     ok(ret, "Failed to restore display modes.\n");
-    heap_free(original_modes);
+    free(original_modes);
 }
 
 static void test_coop_level_mode_set_multi(void)
@@ -4301,7 +4300,7 @@ done:
     DestroyWindow(window);
     ret = restore_display_modes(original_modes, display_count);
     ok(ret, "Failed to restore display modes.\n");
-    heap_free(original_modes);
+    free(original_modes);
 }
 
 static void test_initialize(void)
@@ -7283,7 +7282,7 @@ static void test_create_surface_pitch(void)
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
-    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
+    mem = calloc((63 * 4) + 8, 63);
 
     /* We need a primary surface and exclusive mode for video memory accounting to work
      * right on Windows. Otherwise it gives us junk data, like creating a video memory
@@ -7381,7 +7380,7 @@ static void test_create_surface_pitch(void)
     }
 
     IDirectDrawSurface_Release(primary);
-    HeapFree(GetProcessHeap(), 0, mem);
+    free(mem);
     refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     DestroyWindow(window);
@@ -8406,8 +8405,8 @@ static void test_specular_lighting(void)
         return;
     }
 
-    quad = HeapAlloc(GetProcessHeap(), 0, vertices_side * vertices_side * sizeof(*quad));
-    indices = HeapAlloc(GetProcessHeap(), 0, indices_count * sizeof(*indices));
+    quad = malloc(vertices_side * vertices_side * sizeof(*quad));
+    indices = malloc(indices_count * sizeof(*indices));
     for (i = 0, y = 0; y < vertices_side; ++y)
     {
         for (x = 0; x < vertices_side; ++x)
@@ -8516,8 +8515,8 @@ static void test_specular_lighting(void)
     refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "Ddraw object has %lu references left.\n", refcount);
     DestroyWindow(window);
-    HeapFree(GetProcessHeap(), 0, indices);
-    HeapFree(GetProcessHeap(), 0, quad);
+    free(indices);
+    free(quad);
 }
 
 static void test_palette_gdi(void)
@@ -9982,8 +9981,7 @@ static void test_color_fill(void)
 
     hr = IDirectDraw2_GetFourCCCodes(ddraw, &num_fourcc_codes, NULL);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-    fourcc_codes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            num_fourcc_codes * sizeof(*fourcc_codes));
+    fourcc_codes = calloc(num_fourcc_codes, sizeof(*fourcc_codes));
     if (!fourcc_codes)
         goto done;
     hr = IDirectDraw2_GetFourCCCodes(ddraw, &num_fourcc_codes, fourcc_codes);
@@ -9995,7 +9993,7 @@ static void test_color_fill(void)
         else if (fourcc_codes[i] == MAKEFOURCC('U', 'Y', 'V', 'Y'))
             support_uyvy = TRUE;
     }
-    HeapFree(GetProcessHeap(), 0, fourcc_codes);
+    free(fourcc_codes);
 
     memset(&hal_caps, 0, sizeof(hal_caps));
     hal_caps.dwSize = sizeof(hal_caps);
@@ -15044,7 +15042,7 @@ static void test_clipper_refcount(void)
 
     /* It looks like the protection against invalid thispointers is part of
      * the IDirectDrawClipper method implementation, not IDirectDrawSurface. */
-    clipper = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 0x1000);
+    clipper = calloc(1, 0x1000);
     ok(!!clipper, "failed to allocate memory\n");
 
     /* Assigning the vtable to our fake clipper does NOT make a difference on
@@ -15076,7 +15074,7 @@ static void test_clipper_refcount(void)
 
     IDirectDraw_Release(ddraw1);
 
-    HeapFree(GetProcessHeap(), 0, clipper);
+    free(clipper);
 
     refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "%lu references left.\n", refcount);

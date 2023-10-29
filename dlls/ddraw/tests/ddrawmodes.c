@@ -321,16 +321,16 @@ static void test_DirectDrawEnumerateExW(void)
 static void adddisplaymode(DDSURFACEDESC *lpddsd)
 {
     if (!modes)
-        modes = HeapAlloc(GetProcessHeap(), 0, (modes_size = 2) * sizeof(DDSURFACEDESC));
+        modes = malloc((modes_size = 2) * sizeof(DDSURFACEDESC));
     if (modes_cnt == modes_size)
-        modes = HeapReAlloc(GetProcessHeap(), 0, modes, (modes_size *= 2) * sizeof(DDSURFACEDESC));
+        modes = realloc(modes, (modes_size *= 2) * sizeof(DDSURFACEDESC));
     assert(modes);
     modes[modes_cnt++] = *lpddsd;
 }
 
 static void flushdisplaymodes(void)
 {
-    HeapFree(GetProcessHeap(), 0, modes);
+    free(modes);
     modes = 0;
     modes_cnt = modes_size = 0;
 }
@@ -969,7 +969,7 @@ static void testddraw7(void)
     {
          dddi2Bytes = FIELD_OFFSET(DDDEVICEIDENTIFIER2, dwWHQLLevel) + sizeof(DWORD);
 
-         pdddi2 = HeapAlloc( GetProcessHeap(), 0, dddi2Bytes + 2*sizeof(DWORD) );
+         pdddi2 = malloc(dddi2Bytes + 2 * sizeof(DWORD));
          pend = (DWORD *)((char *)pdddi2 + dddi2Bytes);
          pend[0] = 0xdeadbeef;
          pend[1] = 0xdeadbeef;
@@ -1009,7 +1009,7 @@ static void testddraw7(void)
          }
 
          IDirectDraw_Release(dd7);
-         HeapFree( GetProcessHeap(), 0, pdddi2 );
+         free(pdddi2);
     }
 }
 
