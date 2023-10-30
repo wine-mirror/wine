@@ -292,7 +292,7 @@ unsigned int CDECL _set_abort_behavior(unsigned int flags, unsigned int mask)
  */
 void DECLSPEC_NORETURN CDECL _wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
 {
-  TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
+  ERR("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 
   if ((MSVCRT_error_mode == _OUT_TO_MSGBOX) ||
      ((MSVCRT_error_mode == _OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
