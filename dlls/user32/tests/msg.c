@@ -12233,27 +12233,25 @@ static void test_set_hook(void)
     ok(hhook != 0, "local hook does not require hModule set to 0\n");
     UnhookWindowsHookEx(hhook);
 
-    if (0)
-    {
-    /* this test doesn't pass under Win9x: BUG! */
     SetLastError(0xdeadbeef);
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, 0);
     ok(!hhook, "global hook requires hModule != 0\n");
     ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD, "unexpected error %ld\n", GetLastError());
-    }
+
+    SetLastError(0xdeadbeef);
+    hhook = SetWindowsHookExA(WH_JOURNALRECORD, cbt_hook_proc, 0, 0);
+    ok(!hhook, "global hook requires hModule != 0\n");
+    todo_wine
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hhook = SetWindowsHookExA(WH_CBT, 0, GetModuleHandleA(0), GetCurrentThreadId());
     ok(!hhook, "SetWinEventHook with invalid proc should fail\n");
-    ok(GetLastError() == ERROR_INVALID_FILTER_PROC || /* Win2k */
-       GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_FILTER_PROC, "unexpected error %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ok(!UnhookWindowsHookEx((HHOOK)0xdeadbeef), "UnhookWindowsHookEx succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_HOOK_HANDLE || /* Win2k */
-       GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HOOK_HANDLE, "unexpected error %ld\n", GetLastError());
 
     if (!pSetWinEventHook || !pUnhookWinEvent) return;
 
@@ -12262,22 +12260,15 @@ static void test_set_hook(void)
     hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
         GetCurrentProcessId(), 0, WINEVENT_INCONTEXT);
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
-    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
-       GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD, "unexpected error %ld\n", GetLastError());
 
     /* even thread local incontext hooks require hmodule */
     SetLastError(0xdeadbeef);
     hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
         GetCurrentProcessId(), GetCurrentThreadId(), WINEVENT_INCONTEXT);
     ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
-    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
-       GetLastError() == 0xdeadbeef, /* Win9x */
-       "unexpected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD, "unexpected error %ld\n", GetLastError());
 
-    if (0)
-    {
-    /* these 3 tests don't pass under Win9x */
     SetLastError(0xdeadbeef);
     hwinevent_hook = pSetWinEventHook(1, 0, 0, win_event_proc,
         GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
@@ -12294,8 +12285,8 @@ static void test_set_hook(void)
     hwinevent_hook = pSetWinEventHook(EVENT_MIN, EVENT_MAX, 0, win_event_proc,
         0, 0xdeadbeef, WINEVENT_OUTOFCONTEXT);
     ok(!hwinevent_hook, "SetWinEventHook with invalid tid should fail\n");
+    todo_wine
     ok(GetLastError() == ERROR_INVALID_THREAD_ID, "unexpected error %ld\n", GetLastError());
-    }
 
     SetLastError(0xdeadbeef);
     hwinevent_hook = pSetWinEventHook(0, 0, 0, win_event_proc,
@@ -12319,9 +12310,7 @@ todo_wine {
 
     SetLastError(0xdeadbeef);
     ok(!pUnhookWinEvent((HWINEVENTHOOK)0xdeadbeef), "UnhookWinEvent succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */
-	GetLastError() == 0xdeadbeef, /* Win9x */
-	"unexpected error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "unexpected error %ld\n", GetLastError());
 }
 
 static HWND hook_hwnd;
