@@ -729,7 +729,7 @@
 @ cdecl _mbscspn(str str)
 @ cdecl _mbscspn_l(str str ptr)
 @ cdecl _mbsdec(ptr ptr)
-# stub _mbsdec_l(ptr ptr ptr)
+@ cdecl _mbsdec_l(ptr ptr ptr)
 @ cdecl _mbsdup(str) _strdup
 # stub _strdup_dbg(str long str long)
 @ cdecl _mbsicmp(str str)

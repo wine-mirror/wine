@@ -1478,7 +1478,7 @@
 @ cdecl _mbscspn(str str)
 @ cdecl _mbscspn_l(str str ptr)
 @ cdecl _mbsdec(ptr ptr)
-@ stub _mbsdec_l
+@ cdecl _mbsdec_l(ptr ptr ptr)
 @ cdecl _mbsicmp(str str)
 @ cdecl _mbsicmp_l(str str ptr)
 @ cdecl _mbsicoll(str str)
