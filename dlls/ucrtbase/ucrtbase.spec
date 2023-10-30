@@ -640,7 +640,7 @@
 @ cdecl _mbslwr_s(str long)
 @ cdecl _mbslwr_s_l(str long ptr)
 @ cdecl _mbsnbcat(str str long)
-@ stub _mbsnbcat_l
+@ cdecl _mbsnbcat_l(str str long ptr)
 @ cdecl _mbsnbcat_s(str long ptr long)
 @ stub _mbsnbcat_s_l
 @ cdecl _mbsnbcmp(str str long)
@@ -1209,7 +1209,7 @@
 @ cdecl _o__mbslwr_s(str long) _mbslwr_s
 @ cdecl _o__mbslwr_s_l(str long ptr) _mbslwr_s_l
 @ cdecl _o__mbsnbcat(str str long) _mbsnbcat
-@ stub _o__mbsnbcat_l
+@ cdecl _o__mbsnbcat_l(str str long ptr) _mbsnbcat_l
 @ cdecl _o__mbsnbcat_s(str long ptr long) _mbsnbcat_s
 @ stub _o__mbsnbcat_s_l
 @ cdecl _o__mbsnbcmp(str str long) _mbsnbcmp

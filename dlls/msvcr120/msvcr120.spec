@@ -1492,7 +1492,7 @@
 @ cdecl _mbslwr_s(str long)
 @ cdecl _mbslwr_s_l(str long ptr)
 @ cdecl _mbsnbcat(str str long)
-@ stub _mbsnbcat_l
+@ cdecl _mbsnbcat_l(str str long ptr)
 @ cdecl _mbsnbcat_s(str long ptr long)
 @ stub _mbsnbcat_s_l
 @ cdecl _mbsnbcmp(str str long)

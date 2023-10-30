@@ -2187,29 +2187,53 @@ size_t CDECL _mbsnbcnt(const unsigned char* str, size_t len)
 }
 
 /*********************************************************************
- *		_mbsnbcat(MSVCRT.@)
+ *		_mbsnbcat_l(MSVCRT.@)
  */
-unsigned char* CDECL _mbsnbcat(unsigned char* dst, const unsigned char* src, size_t len)
+unsigned char* CDECL _mbsnbcat_l(unsigned char *dst, const unsigned char *src, size_t len, _locale_t locale)
 {
-    if(get_mbcinfo()->ismbcodepage)
+    pthreadmbcinfo mbcinfo;
+
+    if (!MSVCRT_CHECK_PMT(dst && src))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
     {
         unsigned char *res = dst;
-        while (*dst) {
-	    if (_ismbblead(*dst++)) {
-		if (*dst) {
-		    dst++;
-		} else {
-		    /* as per msdn overwrite the lead byte in front of '\0' */
-		    dst--;
-		    break;
-		}
-	    }
-	}
+
+        while (*dst)
+        {
+            if (_ismbblead_l(*dst++, locale))
+            {
+                if (*dst)
+                {
+                    dst++;
+                }
+                else
+                {
+                    /* as per msdn overwrite the lead byte in front of '\0' */
+                    dst--;
+                    break;
+                }
+            }
+        }
         while (*src && len--) *dst++ = *src++;
         *dst = '\0';
         return res;
     }
     return u_strncat(dst, src, len); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbsnbcat(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsnbcat(unsigned char *dst, const unsigned char *src, size_t len)
+{
+    return _mbsnbcat_l(dst, src, len, NULL);
 }
 
 int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src, size_t len)
