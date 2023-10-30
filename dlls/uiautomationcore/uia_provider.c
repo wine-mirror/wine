@@ -1883,7 +1883,7 @@ static HRESULT WINAPI base_hwnd_fragment_GetEmbeddedFragmentRoots(IRawElementPro
 {
     FIXME("%p, %p: stub!\n", iface, ret_val);
     *ret_val = NULL;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI base_hwnd_fragment_SetFocus(IRawElementProviderFragment *iface)
