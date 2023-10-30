@@ -400,7 +400,7 @@
 @ cdecl _copysign(double double) copysign
 @ cdecl -arch=!i386 _copysignf(float float) copysignf
 @ varargs _cprintf(str)
-@ stub _cprintf_l
+@ varargs _cprintf_l(str ptr)
 @ stub _cprintf_p
 @ stub _cprintf_p_l
 @ stub _cprintf_s

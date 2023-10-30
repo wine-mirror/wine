@@ -540,6 +540,23 @@ int CDECL _vcprintf(const char* format, va_list valist)
     return pf_printf_a(puts_clbk_console_a, NULL, format, NULL, 0, arg_clbk_valist, NULL, &valist);
 }
 
+#if _MSVCR_VER<=120
+/*********************************************************************
+ *		_cprintf_l (MSVCRT.@)
+ */
+int WINAPIV _cprintf_l(const char* format, _locale_t locale, ...)
+{
+    int retval;
+    va_list valist;
+
+    va_start(valist, locale);
+    retval = _vcprintf_l(format, locale, valist);
+    va_end(valist);
+
+    return retval;
+}
+#endif
+
 /*********************************************************************
  *		_cprintf (MSVCRT.@)
  */
