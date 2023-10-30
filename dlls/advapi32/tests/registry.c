@@ -1179,7 +1179,7 @@ static void test_reg_open_key(void)
 
     ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
                           KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &hkRoot64, NULL);
-    ok(ret == ERROR_SUCCESS || ERROR_ACCESS_DENIED,
+    ok(ret == ERROR_SUCCESS || ret == ERROR_ACCESS_DENIED,
        "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%lu)\n", ret);
     if (ret == ERROR_ACCESS_DENIED)
     {
