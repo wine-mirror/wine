@@ -1176,7 +1176,7 @@
 @ cdecl _mbspbrk(str str)
 @ stub _mbspbrk_l
 @ cdecl _mbsrchr(str long)
-@ stub _mbsrchr_l
+@ cdecl _mbsrchr_l(str long ptr)
 @ cdecl _mbsrev(str)
 @ stub _mbsrev_l
 @ cdecl _mbsset(ptr long)

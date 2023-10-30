@@ -1442,26 +1442,44 @@ unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
 }
 
 /*********************************************************************
+ *		_mbsrchr_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsrchr_l(const unsigned char *s, unsigned int x, _locale_t locale)
+{
+    pthreadmbcinfo mbcinfo;
+
+    if (!MSVCRT_CHECK_PMT(s))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned char *match = NULL;
+        unsigned int c;
+
+        while (1)
+        {
+            c = _mbsnextc_l(s, locale);
+            if (c == x)
+                match = (unsigned char *)s;
+            if (!c)
+                return match;
+            s += (c > 255) ? 2 : 1;
+        }
+    }
+    return u_strrchr(s, x);
+}
+
+/*********************************************************************
  *		_mbsrchr(MSVCRT.@)
  */
 unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
 {
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int c;
-    unsigned char* match=NULL;
-    if(!s)
-      return NULL;
-    while (1) {
-      c = _mbsnextc(s);
-      if (c == x)
-        match=(unsigned char*)s;
-      if (!c)
-        return match;
-      s +=(c > 255) ? 2 : 1;
-    }
-  }
-  return u_strrchr(s, x);
+    return _mbsrchr_l(s, x, NULL);
 }
 
 /*********************************************************************
