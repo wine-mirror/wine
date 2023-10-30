@@ -602,14 +602,15 @@ static DWORD WINAPI stream_thread(void *arg)
             IMediaSample_SetTime(sample, &start_pts, &end_pts);
 
             TRACE("Sending buffer %p.\n", sample);
-            hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample);
-            IMediaSample_Release(sample);
-            if (FAILED(hr))
+            if (FAILED(hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample)))
             {
                 ERR("IMemInputPin::Receive() returned %#lx.\n", hr);
+                IMediaSample_Release(sample);
                 break;
             }
         }
+
+        IMediaSample_Release(sample);
     }
 
     LeaveCriticalSection(&filter->state_cs);
