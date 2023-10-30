@@ -448,7 +448,7 @@ interface ID3D10Effect : IUnknown
 [
     local,
     object,
-    uuid(95e7ab04-3250-412e-8213-fcd2f8677933),
+    uuid(9537ab04-3250-412e-8213-fcd2f8677933),
 ]
 interface ID3D10EffectPool : IUnknown
 {
