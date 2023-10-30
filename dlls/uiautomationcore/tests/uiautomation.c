@@ -18607,6 +18607,15 @@ static void test_uia_event_ProxyProviderWinEventHandler(void)
     UiaRegisterProviderCallback(NULL);
 }
 
+static void test_UiaClientsAreListening(void)
+{
+    BOOL ret;
+
+    /* Always returns TRUE on Windows 7 and above. */
+    ret = UiaClientsAreListening();
+    ok(!!ret, "ret != TRUE\n");
+}
+
 /*
  * Once a process returns a UI Automation provider with
  * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
@@ -18663,6 +18672,7 @@ START_TEST(uiautomation)
         return;
     }
 
+    test_UiaClientsAreListening();
     test_UiaHostProviderFromHwnd();
     test_uia_reserved_value_ifaces();
     test_UiaLookupId();
