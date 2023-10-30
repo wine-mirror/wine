@@ -46,7 +46,8 @@ struct wg_muxer_stream
     uint32_t id;
 
     GstPad *my_src;
-    GstCaps *my_src_caps;
+    GstCaps *my_src_caps, *parser_src_caps;
+    GstElement *parser;
 
     struct list entry;
 };
@@ -76,6 +77,8 @@ static gboolean muxer_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *qu
 
 static void stream_free(struct wg_muxer_stream *stream)
 {
+    if (stream->parser_src_caps)
+        gst_caps_unref(stream->parser_src_caps);
     gst_object_unref(stream->my_src);
     gst_caps_unref(stream->my_src_caps);
     free(stream);
@@ -200,6 +203,22 @@ NTSTATUS wg_muxer_add_stream(void *args)
         goto out;
     gst_pad_set_element_private(stream->my_src, stream);
 
+    /* Create parser. */
+    if ((stream->parser = find_element(GST_ELEMENT_FACTORY_TYPE_PARSER, stream->my_src_caps, NULL)))
+    {
+        GstPad *parser_src;
+
+        if (!gst_bin_add(GST_BIN(muxer->container), stream->parser)
+                || !link_src_to_element(stream->my_src, stream->parser))
+            goto out;
+
+        parser_src = gst_element_get_static_pad(stream->parser, "src");
+        stream->parser_src_caps = gst_pad_query_caps(parser_src, NULL);
+        GST_INFO("Created parser %"GST_PTR_FORMAT" for stream %u %p.",
+                stream->parser, stream->id, stream);
+        gst_object_unref(parser_src);
+    }
+
     /* Add to muxer stream list. */
     list_add_tail(&muxer->streams, &stream->entry);
 
@@ -210,6 +229,8 @@ NTSTATUS wg_muxer_add_stream(void *args)
     return STATUS_SUCCESS;
 
 out:
+    if (stream->parser)
+        gst_object_unref(stream->parser);
     if (stream->my_src)
         gst_object_unref(stream->my_src);
     if (template)
