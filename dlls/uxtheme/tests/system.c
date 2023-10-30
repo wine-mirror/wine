@@ -560,14 +560,14 @@ static void test_OpenThemeData(void)
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, L"dead::beef;explorer::treeview");
+    todo_wine
     ok(!hTheme, "OpenThemeData() should fail\n");
+    todo_wine
     ok(GetLastError() == E_PROP_ID_UNSUPPORTED, "Got unexpected %#lx.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, L"explorer::treeview");
-    todo_wine
     ok(hTheme != NULL, "OpenThemeData() failed\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError());
     CloseThemeData(hTheme);
 
