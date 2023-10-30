@@ -220,6 +220,9 @@ static void test___unDName(void)
            "struct my_iter<int,0>",
            NULL,
            UNDNAME_NO_ARGUMENTS},
+/*   8 */ {"??$foo@J_W$$T@bar@@YAJQB_W$$THQAUgod@@@Z",
+           "long __cdecl bar::foo<long,wchar_t,std::nullptr_t>(wchar_t const * const,std::nullptr_t,int,struct god * const)"},
+
     };
     unsigned i;
     for (i = 0; i < ARRAY_SIZE(und_tests); i++)

@@ -1160,6 +1160,11 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 sym->current++;
                 if (!get_qualified_type(ct, sym, '$', flags)) goto done;
             }
+            else if (*sym->current == 'T')
+            {
+                sym->current++;
+                ct->left = str_printf(sym, "std::nullptr_t");
+            }
             break;
         }
         break;
