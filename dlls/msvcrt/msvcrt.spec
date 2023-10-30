@@ -393,7 +393,7 @@
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
 @ varargs _cwprintf(wstr)
-# stub _cwprintf_l(wstr ptr)
+@ varargs _cwprintf_l(wstr ptr)
 # stub _cwprintf_p(wstr)
 # stub _cwprintf_p_l(wstr ptr)
 # stub _cwprintf_s(wstr)

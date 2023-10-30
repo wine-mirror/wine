@@ -421,7 +421,7 @@
 @ cdecl _ctime64_s(str long ptr)
 @ cdecl _cwait(ptr long long)
 @ varargs _cwprintf(wstr)
-@ stub _cwprintf_l
+@ varargs _cwprintf_l(wstr ptr)
 @ stub _cwprintf_p
 @ stub _cwprintf_p_l
 @ stub _cwprintf_s
