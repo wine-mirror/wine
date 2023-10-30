@@ -1408,9 +1408,15 @@ static void test_symboliclink(void)
     pNtClose(link);
 
     RtlInitUnicodeString(&str, L"\\");
+    attr.Attributes = OBJ_OPENIF;
     status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, &attr, &target);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH,
-                 "NtCreateSymbolicLinkObject should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+       "NtCreateSymbolicLinkObject should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
+    attr.Attributes = 0;
+    status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, &attr, &target);
+    todo_wine
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH,
+       "NtCreateSymbolicLinkObject should have failed with STATUS_OBJECT_TYPE_MISMATCH got(%08lx)\n", status);
 
     RtlInitUnicodeString( &target, L"->Somewhere");
 
@@ -1478,6 +1484,16 @@ static void test_symboliclink(void)
 
     status = pNtOpenSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr );
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    pNtClose(h);
+
+    attr.Attributes = OBJ_OPENIF;
+    status = pNtCreateSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr, &target );
+    ok(status == STATUS_SUCCESS || broken( status == STATUS_OBJECT_NAME_EXISTS ), /* <= win10 1507 */
+       "Got unexpected status %#lx.\n", status);
+    pNtClose(h);
+    attr.Attributes = 0;
+    status = pNtCreateSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr, &target );
+    ok(status == STATUS_OBJECT_NAME_COLLISION, "Got unexpected status %#lx.\n", status);
     pNtClose(h);
 
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
