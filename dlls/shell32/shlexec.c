@@ -164,8 +164,8 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             case 'l':
             case 'L':
 		if (lpFile) {
-		    if ((size = SearchPathW(NULL, lpFile, L".exe", ARRAY_SIZE(xlpFile), xlpFile, NULL)
-                    && size <= ARRAY_SIZE(xlpFile)))
+		    size = SearchPathW(NULL, lpFile, L".exe", ARRAY_SIZE(xlpFile), xlpFile, NULL);
+		    if (size && size <= ARRAY_SIZE(xlpFile))
 		        cmd = xlpFile;
 		    else
 		        cmd = lpFile;
