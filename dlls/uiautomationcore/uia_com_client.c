@@ -1372,8 +1372,7 @@ static HRESULT uia_event_handlers_add_handler(IUnknown *handler_iface, SAFEARRAY
         {
             HUIANODE node = NULL;
 
-            hr = create_uia_node_from_hwnd(info.hwndFocus, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS);
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(create_uia_node_from_hwnd(info.hwndFocus, &node, NODE_FLAG_IGNORE_CLIENTSIDE_HWND_PROVS)))
                 uia_com_focus_handler_advise_node(event, node, info.hwndFocus);
             UiaNodeRelease(node);
         }
