@@ -1005,9 +1005,9 @@ static HRESULT WINAPI msaa_fragment_get_BoundingRectangle(IRawElementProviderFra
 static HRESULT WINAPI msaa_fragment_GetEmbeddedFragmentRoots(IRawElementProviderFragment *iface,
         SAFEARRAY **ret_val)
 {
-    FIXME("%p, %p: stub!\n", iface, ret_val);
+    TRACE("%p, %p\n", iface, ret_val);
     *ret_val = NULL;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI msaa_fragment_SetFocus(IRawElementProviderFragment *iface)

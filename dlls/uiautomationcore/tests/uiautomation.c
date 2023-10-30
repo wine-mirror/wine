@@ -3836,6 +3836,7 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     IRawElementProviderFragmentRoot *elroot, *elroot2;
     IRawElementProviderFragment *elfrag, *elfrag2;
     IRawElementProviderSimple *elprov;
+    SAFEARRAY *ret_arr;
     ULONG old_ref;
     HRESULT hr;
 
@@ -3851,6 +3852,12 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!elfrag, "elfrag == NULL\n");
+
+    /* GetEmbeddedFragmentRoots test. */
+    ret_arr = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_GetEmbeddedFragmentRoots(elfrag, &ret_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!ret_arr, "ret_arr != NULL\n");
 
     /*
      * get_FragmentRoot does the equivalent of calling
@@ -4161,6 +4168,12 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!elfrag, "elfrag == NULL\n");
 
+    /* GetEmbeddedFragmentRoots test. */
+    ret_arr = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_GetEmbeddedFragmentRoots(elfrag, &ret_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!ret_arr, "ret_arr != NULL\n");
+
     /*
      * Simple child element queries HWND as well, does not just return its
      * parent.
@@ -4211,6 +4224,12 @@ static void test_uia_prov_from_acc_fragment_root(HWND hwnd)
     hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!elfrag, "elfrag == NULL\n");
+
+    /* GetEmbeddedFragmentRoots test. */
+    ret_arr = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_GetEmbeddedFragmentRoots(elfrag, &ret_arr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!ret_arr, "ret_arr != NULL\n");
 
     /*
      * Again, same behavior as simple children. It doesn't just retrieve the
