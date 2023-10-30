@@ -2271,30 +2271,50 @@ unsigned char* CDECL _mbsncat(unsigned char* dst, const unsigned char* src, size
 
 
 /*********************************************************************
+ *              _mbslwr_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbslwr_l(unsigned char *s, _locale_t locale)
+{
+    pthreadmbcinfo mbcinfo;
+    unsigned char *ret = s;
+
+    if (!s)
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned int c;
+
+        while (*s)
+        {
+            c = _mbctolower_l(_mbsnextc_l(s, locale), locale);
+            /* Note that I assume that the size of the character is unchanged */
+            if (c > 255)
+            {
+                *s++ = (c >> 8);
+                c = c & 0xff;
+            }
+            *s++ = c;
+        }
+    }
+    else
+    {
+        for ( ; *s; s++) *s = _tolower_l(*s, locale);
+    }
+    return ret;
+}
+
+/*********************************************************************
  *              _mbslwr(MSVCRT.@)
  */
-unsigned char* CDECL _mbslwr(unsigned char* s)
+unsigned char* CDECL _mbslwr(unsigned char *s)
 {
-  unsigned char *ret = s;
-  if (!s)
-    return NULL;
-  if (get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int c;
-    while (*s)
-    {
-      c = _mbctolower(_mbsnextc(s));
-      /* Note that I assume that the size of the character is unchanged */
-      if (c > 255)
-      {
-          *s++=(c>>8);
-          c=c & 0xff;
-      }
-      *s++=c;
-    }
-  }
-  else for ( ; *s; s++) *s = _tolower_l(*s, NULL);
-  return ret;
+    return _mbslwr_l(s, NULL);
 }
 
 /*********************************************************************

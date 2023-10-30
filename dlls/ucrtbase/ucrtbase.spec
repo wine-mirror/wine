@@ -636,7 +636,7 @@
 @ cdecl _mbslen(str)
 @ cdecl _mbslen_l(str ptr)
 @ cdecl _mbslwr(str)
-@ stub _mbslwr_l
+@ cdecl _mbslwr_l(str ptr)
 @ cdecl _mbslwr_s(str long)
 @ cdecl _mbslwr_s_l(str long ptr)
 @ cdecl _mbsnbcat(str str long)
@@ -1205,7 +1205,7 @@
 @ cdecl _o__mbslen(str) _mbslen
 @ cdecl _o__mbslen_l(str ptr) _mbslen_l
 @ cdecl _o__mbslwr(str) _mbslwr
-@ stub _o__mbslwr_l
+@ cdecl _o__mbslwr_l(str ptr) _mbslwr_l
 @ cdecl _o__mbslwr_s(str long) _mbslwr_s
 @ cdecl _o__mbslwr_s_l(str long ptr) _mbslwr_s_l
 @ cdecl _o__mbsnbcat(str str long) _mbsnbcat
