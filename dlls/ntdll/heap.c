@@ -1050,17 +1050,17 @@ static NTSTATUS heap_free_large( struct heap *heap, ULONG flags, struct block *b
 }
 
 
-/***********************************************************************
- *           find_large_block
- */
-static BOOL find_large_block( const struct heap *heap, const struct block *block )
+static ARENA_LARGE *find_arena_large( const struct heap *heap, const struct block *block, BOOL heap_walk )
 {
     ARENA_LARGE *arena;
 
     LIST_FOR_EACH_ENTRY( arena, &heap->large_list, ARENA_LARGE, entry )
-        if (block == &arena->block) return TRUE;
+    {
+        if (contains( &arena->block, arena->block_size, block, 1 ))
+            return !heap_walk || block == &arena->block ? arena : NULL;
+    }
 
-    return FALSE;
+    return NULL;
 }
 
 static BOOL validate_large_block( const struct heap *heap, const struct block *block )
@@ -1220,10 +1220,34 @@ static BOOL validate_free_block( const struct heap *heap, const SUBHEAP *subheap
 static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap, const struct block *block,
                                  unsigned int expected_block_type )
 {
-    const char *err = NULL, *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
+    const char *err = NULL, *base = NULL, *commit_end;
     DWORD flags = heap->flags;
     const struct block *next;
+    ARENA_LARGE *arena_large;
     int i;
+
+    if (subheap)
+    {
+        base = subheap_base( subheap );
+        commit_end = subheap_commit_end( subheap );
+    }
+    else if ((arena_large = find_arena_large( heap, block, FALSE )))
+    {
+        if (!validate_large_block( heap, &arena_large->block )) return FALSE;
+        if (block == &arena_large->block) return TRUE;
+
+        if (contains( &arena_large->block + 1, arena_large->data_size, block, sizeof(*block) )
+            && block_get_flags( block ) & BLOCK_FLAG_LFH)
+        {
+            base = (char *)arena_large;
+            commit_end = (char *)(arena_large + 1) + arena_large->data_size;
+        }
+    }
+    if (!base)
+    {
+        WARN( "heap %p, ptr %p: block region not found.\n", heap, block + 1 );
+        return FALSE;
+    }
 
     if ((ULONG_PTR)(block + 1) % BLOCK_ALIGN)
         err = "invalid block BLOCK_ALIGN";
@@ -1237,9 +1261,8 @@ static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap
         err = "invalid block size";
     else if (block->tail_size > block_get_size( block ) - sizeof(*block))
         err = "invalid block unused size";
-    else if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_PREV_FREE) &&
-             /* LFH blocks do not use BLOCK_FLAG_PREV_FREE or back pointer */
-             !(block_get_flags( block ) & BLOCK_FLAG_LFH))
+    else if (!(block_get_flags( block ) & BLOCK_FLAG_LFH) /* LFH blocks do not use BLOCK_FLAG_PREV_FREE or back pointer */
+             && (next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_PREV_FREE))
         err = "invalid next block flags";
     else if (block_get_flags( block ) & BLOCK_FLAG_PREV_FREE)
     {
@@ -1280,20 +1303,8 @@ static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap
 static BOOL heap_validate_ptr( const struct heap *heap, const void *ptr )
 {
     const struct block *block = (struct block *)ptr - 1;
-    const SUBHEAP *subheap;
 
-    if (!(subheap = find_subheap( heap, block, FALSE )))
-    {
-        if (!find_large_block( heap, block ))
-        {
-            WARN("heap %p, ptr %p: block region not found\n", heap, ptr );
-            return FALSE;
-        }
-
-        return validate_large_block( heap, block );
-    }
-
-    return validate_used_block( heap, subheap, block, BLOCK_TYPE_USED );
+    return validate_used_block( heap, find_subheap( heap, block, FALSE ), block, BLOCK_TYPE_USED );
 }
 
 static BOOL heap_validate( const struct heap *heap )
@@ -2448,7 +2459,7 @@ static NTSTATUS heap_walk_blocks( const struct heap *heap, const SUBHEAP *subhea
 static NTSTATUS heap_walk( const struct heap *heap, struct rtl_heap_entry *entry )
 {
     const char *data = entry->lpData;
-    const ARENA_LARGE *large = NULL;
+    const ARENA_LARGE *large;
     const struct block *block;
     const struct list *next;
     const SUBHEAP *subheap;
@@ -2459,9 +2470,8 @@ static NTSTATUS heap_walk( const struct heap *heap, struct rtl_heap_entry *entry
     else if (entry->wFlags & RTL_HEAP_ENTRY_BUSY) block = (struct block *)data - 1;
     else block = (struct block *)(data - sizeof(struct list)) - 1;
 
-    if (find_large_block( heap, block ))
+    if ((large = find_arena_large( heap, block, TRUE )))
     {
-        large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         next = &large->entry;
     }
     else if ((subheap = find_subheap( heap, block, TRUE )))
