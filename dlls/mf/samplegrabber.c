@@ -1109,9 +1109,9 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
     {
         grabber->is_shut_down = TRUE;
         sample_grabber_release_pending_items(grabber);
+        sample_grabber_set_presentation_clock(grabber, NULL);
         if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
         {
-            sample_grabber_set_presentation_clock(grabber, NULL);
             IMFMediaType_Release(grabber->current_media_type);
             grabber->current_media_type = NULL;
             IMFMediaEventQueue_Shutdown(grabber->stream_event_queue);
