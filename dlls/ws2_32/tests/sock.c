@@ -14025,7 +14025,7 @@ static void test_select_after_WSAEventSelect(void)
     check_poll(client, POLLRDNORM | POLLWRNORM);
 
     ret = WaitForSingleObject(event, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
 
     CloseHandle(event);
     closesocket(server);

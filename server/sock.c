@@ -787,18 +787,11 @@ static unsigned int afd_poll_flag_to_win32( unsigned int flags )
     return ret;
 }
 
-/* wake anybody waiting on the socket event or send the associated message */
-static void sock_wake_up( struct sock *sock )
+static void post_sock_messages( struct sock *sock )
 {
     unsigned int events = sock->pending_events & sock->mask;
     int i;
 
-    if (sock->event)
-    {
-        if (debug_level) fprintf(stderr, "signalling events %x ptr %p\n", events, sock->event );
-        if (events)
-            set_event( sock->event );
-    }
     if (sock->window)
     {
         if (debug_level) fprintf(stderr, "signalling events %x win %08x\n", events, sock->window );
@@ -1285,6 +1278,9 @@ static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit )
     {
         sock->pending_events |= event;
         sock->reported_events |= event;
+
+        if ((sock->mask & event) && sock->event)
+            set_event( sock->event );
     }
 }
 
@@ -1329,7 +1325,7 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
         break;
     }
 
-    sock_wake_up( sock );
+    post_sock_messages( sock );
 }
 
 static void sock_poll_event( struct fd *fd, int event )
@@ -2858,11 +2854,23 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         sock->nonblocking = 1;
 
         sock_reselect( sock );
-        /* Explicitly wake the socket up if the mask causes it to become
-         * signaled. Note that reselecting isn't enough, since we might already
-         * have had events recorded in sock->reported_events and we don't want
-         * to select for them again. */
-        sock_wake_up( sock );
+
+        /* Explicitly wake the socket up if the mask matches pending_events.
+         *
+         * The logic here is a bit surprising. We always set the event if the
+         * socket has events that haven't been consumed by
+         * WSAEnumNetworkEvents() yet, including if WSAEventSelect() is called
+         * multiple times without consuming the events.
+         * However, once the events are consumed by WSAEnumNetworkEvents(), we
+         * don't set the event again (even though e.g. data is still available)
+         * until a "reset" call (i.e. that clears reported_events). */
+
+        if (event && (sock->pending_events & mask))
+        {
+            if (debug_level) fprintf( stderr, "signalling pending events %#x due to event select\n",
+                                      sock->pending_events & mask );
+            set_event( event );
+        }
 
         return;
     }
