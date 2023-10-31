@@ -1343,15 +1343,11 @@ static BOOL heap_validate( const struct heap *heap )
         {
             if (!(block = heap->pending_free[i])) break;
 
-            subheap = find_subheap( heap, block, FALSE );
-            if (!subheap)
+            if (!validate_used_block( heap, find_subheap( heap, block, FALSE ), block, BLOCK_TYPE_DEAD ))
             {
-                ERR( "heap %p: cannot find valid subheap for delayed freed block %p\n", heap, block );
-                if (TRACE_ON(heap)) heap_dump( heap );
+                ERR( "heap %p: failed to to validate delayed free block %p\n", heap, block );
                 return FALSE;
             }
-
-            if (!validate_used_block( heap, subheap, block, BLOCK_TYPE_DEAD )) return FALSE;
         }
 
         for (; i < MAX_FREE_PENDING; i++)
