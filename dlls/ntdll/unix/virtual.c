@@ -2462,6 +2462,34 @@ static void alloc_arm64ec_map(void)
 
 
 /***********************************************************************
+ *           update_arm64ec_ranges
+ */
+static void update_arm64ec_ranges( struct file_view *view, IMAGE_NT_HEADERS *nt,
+                                   const IMAGE_DATA_DIRECTORY *dir )
+{
+    const IMAGE_ARM64EC_METADATA *metadata;
+    const IMAGE_CHPE_RANGE_ENTRY *map;
+    char *base = view->base;
+    const IMAGE_LOAD_CONFIG_DIRECTORY *cfg = (void *)(base + dir->VirtualAddress);
+    ULONG i, size = min( dir->Size, cfg->Size );
+
+    if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return;
+    if (!cfg->CHPEMetadataPointer) return;
+    if (!arm64ec_view) alloc_arm64ec_map();
+    commit_arm64ec_map( view );
+    metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
+    if (!metadata->CodeMap) return;
+    map = (void *)(base + metadata->CodeMap);
+
+    for (i = 0; i < metadata->CodeMapCount; i++)
+    {
+        if ((map[i].StartOffset & 0x3) != 1 /* arm64ec */) continue;
+        set_arm64ec_range( base + (map[i].StartOffset & ~3), map[i].Length );
+    }
+}
+
+
+/***********************************************************************
  *           apply_arm64x_relocations
  */
 static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *reloc, size_t size )
@@ -2506,44 +2534,13 @@ static void apply_arm64x_relocations( char *base, const IMAGE_BASE_RELOCATION *r
  *           update_arm64x_mapping
  */
 static void update_arm64x_mapping( struct file_view *view, IMAGE_NT_HEADERS *nt,
-                                   IMAGE_SECTION_HEADER *sections )
+                                   const IMAGE_DATA_DIRECTORY *dir, IMAGE_SECTION_HEADER *sections )
 {
-    ULONG i, size, sec, offset;
-    const IMAGE_DATA_DIRECTORY *dir;
-    const IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
-    const IMAGE_ARM64EC_METADATA *metadata;
     const IMAGE_DYNAMIC_RELOCATION_TABLE *table;
     const char *ptr, *end;
     char *base = view->base;
-
-    /* retrieve config directory */
-
-    if (nt->FileHeader.Machine != IMAGE_FILE_MACHINE_ARM64) return;
-    if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return;
-    dir = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG;
-    if (!dir->VirtualAddress || !dir->Size) return;
-    cfg = (void *)(base + dir->VirtualAddress);
-    size = min( dir->Size, cfg->Size );
-
-    /* update code ranges */
-
-    if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return;
-    if (!cfg->CHPEMetadataPointer) return;
-    if (!arm64ec_view) alloc_arm64ec_map();
-    commit_arm64ec_map( view );
-    metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
-    if (metadata->CodeMap)
-    {
-        const IMAGE_CHPE_RANGE_ENTRY *map = (void *)(base + metadata->CodeMap);
-
-        for (i = 0; i < metadata->CodeMapCount; i++)
-        {
-            if ((map[i].StartOffset & 0x3) != 1 /* arm64ec */) continue;
-            set_arm64ec_range( base + (map[i].StartOffset & ~3), map[i].Length );
-        }
-    }
-
-    /* apply dynamic relocations */
+    const IMAGE_LOAD_CONFIG_DIRECTORY *cfg = (void *)(base + dir->VirtualAddress);
+    ULONG sec, offset, size = min( dir->Size, cfg->Size );
 
     if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, DynamicValueRelocTableSection )) return;
     offset = cfg->DynamicValueRelocTableOffset;
@@ -2687,7 +2684,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER sections[96];
     IMAGE_SECTION_HEADER *sec;
-    IMAGE_DATA_DIRECTORY *imports, *relocs;
+    IMAGE_DATA_DIRECTORY *imports, *dir;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
     off_t pos;
@@ -2838,13 +2835,18 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     }
 
 #ifdef __aarch64__
-    if (machine == IMAGE_FILE_MACHINE_AMD64 ||
-        (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64))
+    if ((dir = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG )))
     {
-        update_arm64x_mapping( view, nt, sections );
-        /* reload changed data from NT header */
-        image_info->machine     = nt->FileHeader.Machine;
-        image_info->entry_point = nt->OptionalHeader.AddressOfEntryPoint;
+        if (image_info->machine == IMAGE_FILE_MACHINE_ARM64 &&
+            (machine == IMAGE_FILE_MACHINE_AMD64 ||
+             (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64)))
+        {
+            update_arm64x_mapping( view, nt, dir, sections );
+            /* reload changed data from NT header */
+            image_info->machine     = nt->FileHeader.Machine;
+            image_info->entry_point = nt->OptionalHeader.AddressOfEntryPoint;
+        }
+        if (image_info->machine == IMAGE_FILE_MACHINE_AMD64) update_arm64ec_ranges( view, nt, dir );
     }
 #endif
     if (machine && machine != nt->FileHeader.Machine) return STATUS_NOT_SUPPORTED;
@@ -2861,10 +2863,10 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         else
             ((IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.ImageBase = image_info->map_addr;
 
-        if ((relocs = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_BASERELOC )))
+        if ((dir = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_BASERELOC )))
         {
-            IMAGE_BASE_RELOCATION *rel = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress);
-            IMAGE_BASE_RELOCATION *end = (IMAGE_BASE_RELOCATION *)((char *)rel + relocs->Size);
+            IMAGE_BASE_RELOCATION *rel = (IMAGE_BASE_RELOCATION *)(ptr + dir->VirtualAddress);
+            IMAGE_BASE_RELOCATION *end = (IMAGE_BASE_RELOCATION *)((char *)rel + dir->Size);
 
             while (rel && rel < end - 1 && rel->SizeOfBlock && rel->VirtualAddress < total_size)
                 rel = process_relocation_block( ptr + rel->VirtualAddress, rel, delta );
