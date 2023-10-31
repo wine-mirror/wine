@@ -85,8 +85,6 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
     case IMAGE_FILE_MACHINE_TARGET_HOST: return system_dir;
     case IMAGE_FILE_MACHINE_I386:        return L"C:\\windows\\syswow64";
     case IMAGE_FILE_MACHINE_ARMNT:       return L"C:\\windows\\sysarm32";
-    case IMAGE_FILE_MACHINE_AMD64:       return L"C:\\windows\\sysx8664";
-    case IMAGE_FILE_MACHINE_ARM64:       return L"C:\\windows\\sysarm64";
     default: return NULL;
     }
 }
