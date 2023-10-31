@@ -1990,8 +1990,6 @@ void init_registry(void)
             {
             case IMAGE_FILE_MACHINE_I386:  mkdir( "drive_c/windows/syswow64", 0777 ); break;
             case IMAGE_FILE_MACHINE_ARMNT: mkdir( "drive_c/windows/sysarm32", 0777 ); break;
-            case IMAGE_FILE_MACHINE_AMD64: mkdir( "drive_c/windows/sysx8664", 0777 ); break;
-            case IMAGE_FILE_MACHINE_ARM64: mkdir( "drive_c/windows/sysarm64", 0777 ); break;
             }
         }
     }
