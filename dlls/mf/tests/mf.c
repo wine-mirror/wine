@@ -4697,10 +4697,9 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to get type count, hr %#lx.\n", hr);
 
     ref = IMFMediaType_Release(media_type2);
-    todo_wine
-    ok(ref == 0, "Release returned %ld\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     ref = IMFMediaType_Release(media_type);
-    ok(ref == 0, "Release returned %ld\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &media_type);
     ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);

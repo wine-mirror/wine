@@ -655,34 +655,50 @@ static HRESULT WINAPI sample_grabber_stream_type_handler_GetCurrentMediaType(IMF
         IMFMediaType **media_type)
 {
     struct sample_grabber *grabber = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, media_type);
 
     if (!media_type)
         return E_POINTER;
 
+    EnterCriticalSection(&grabber->cs);
+
     if (grabber->is_shut_down)
-        return MF_E_STREAMSINK_REMOVED;
+    {
+        hr = MF_E_STREAMSINK_REMOVED;
+    }
+    else
+    {
+        *media_type = grabber->current_media_type;
+        IMFMediaType_AddRef(*media_type);
+    }
 
-    *media_type = grabber->current_media_type;
-    IMFMediaType_AddRef(*media_type);
+    LeaveCriticalSection(&grabber->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
 {
     struct sample_grabber *grabber = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr;
 
     TRACE("%p, %p.\n", iface, type);
 
     if (!type)
         return E_POINTER;
 
-    if (grabber->is_shut_down)
-        return MF_E_STREAMSINK_REMOVED;
+    EnterCriticalSection(&grabber->cs);
 
-    return IMFMediaType_GetMajorType(grabber->current_media_type, type);
+    if (grabber->is_shut_down)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+        hr = IMFMediaType_GetMajorType(grabber->current_media_type, type);
+
+    LeaveCriticalSection(&grabber->cs);
+
+    return hr;
 }
 
 static const IMFMediaTypeHandlerVtbl sample_grabber_stream_type_handler_vtbl =
@@ -867,7 +883,8 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
             IMFSampleGrabberSinkCallback_Release(grabber->callback);
         if (grabber->callback2)
             IMFSampleGrabberSinkCallback2_Release(grabber->callback2);
-        IMFMediaType_Release(grabber->current_media_type);
+        if (grabber->current_media_type)
+            IMFMediaType_Release(grabber->current_media_type);
         IMFMediaType_Release(grabber->media_type);
         if (grabber->event_queue)
             IMFMediaEventQueue_Release(grabber->event_queue);
@@ -1091,6 +1108,8 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
         if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
         {
             sample_grabber_set_presentation_clock(grabber, NULL);
+            IMFMediaType_Release(grabber->current_media_type);
+            grabber->current_media_type = NULL;
             IMFMediaEventQueue_Shutdown(grabber->stream_event_queue);
             IMFMediaEventQueue_Shutdown(grabber->event_queue);
         }
