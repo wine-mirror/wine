@@ -465,6 +465,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
 
         if (opts->out_implib)
             strarray_add(&link_args, strmake("-Wl,-implib:%s", opts->out_implib));
+        else
+            strarray_add(&link_args, strmake("-Wl,-implib:%s", make_temp_file( output_name, ".lib" )));
 
         strarray_add( &link_args, strmake( "-Wl,-filealign:%s", opts->file_align ? opts->file_align : "0x1000" ));
 
