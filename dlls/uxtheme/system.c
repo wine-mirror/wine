@@ -1292,6 +1292,16 @@ BOOL WINAPI ShouldAppsUseDarkMode(void)
 }
 
 /**********************************************************************
+ *      AllowDarkModeForWindow                          (UXTHEME.133)
+ *
+ */
+BOOL WINAPI AllowDarkModeForWindow(HWND hwnd, BOOL allow)
+{
+    FIXME("%p %d: stub\n", hwnd, allow);
+    return FALSE;
+}
+
+/**********************************************************************
  *      SetPreferredAppMode                             (UXTHEME.135)
  *
  */
