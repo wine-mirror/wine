@@ -14002,6 +14002,36 @@ static void test_tcp_sendto_recvfrom(void)
     closesocket(server);
 }
 
+/* Regression test for an internal bug affecting wget.exe. */
+static void test_select_after_WSAEventSelect(void)
+{
+    SOCKET client, server;
+    HANDLE event;
+    int ret;
+
+    tcp_socketpair(&client, &server);
+    event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    ret = WSAEventSelect(client, event, FD_READ);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "got %d\n", ret);
+
+    /* Poll. This must not trigger any events to be signalled again. */
+    check_poll(client, POLLRDNORM | POLLWRNORM);
+
+    ret = WaitForSingleObject(event, 0);
+    todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+
+    CloseHandle(event);
+    closesocket(server);
+    closesocket(client);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -14061,6 +14091,7 @@ START_TEST( sock )
     test_write_watch();
 
     test_events();
+    test_select_after_WSAEventSelect();
 
     test_ipv6only();
     test_TransmitFile();
