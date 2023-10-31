@@ -1019,8 +1019,13 @@ static void sample_grabber_cancel_timer(struct sample_grabber *grabber)
     }
 }
 
-static void sample_grabber_set_presentation_clock(struct sample_grabber *grabber, IMFPresentationClock *clock)
+static HRESULT sample_grabber_set_presentation_clock(struct sample_grabber *grabber, IMFPresentationClock *clock)
 {
+    HRESULT hr;
+
+    if (FAILED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber), clock)))
+        return hr;
+
     if (grabber->clock)
     {
         sample_grabber_cancel_timer(grabber);
@@ -1043,6 +1048,8 @@ static void sample_grabber_set_presentation_clock(struct sample_grabber *grabber
             grabber->timer = NULL;
         }
     }
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
@@ -1058,10 +1065,9 @@ static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *ifa
     {
         hr = MF_E_SHUTDOWN;
     }
-    else if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber),
-            clock)))
+    else
     {
-        sample_grabber_set_presentation_clock(grabber, clock);
+        hr = sample_grabber_set_presentation_clock(grabber, clock);
     }
 
     LeaveCriticalSection(&grabber->cs);
@@ -1109,8 +1115,9 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
     {
         grabber->is_shut_down = TRUE;
         sample_grabber_release_pending_items(grabber);
-        sample_grabber_set_presentation_clock(grabber, NULL);
-        if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
+        if (SUCCEEDED(hr = sample_grabber_set_presentation_clock(grabber, NULL)))
+            hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber));
+        if (SUCCEEDED(hr))
         {
             IMFMediaType_Release(grabber->current_media_type);
             grabber->current_media_type = NULL;
