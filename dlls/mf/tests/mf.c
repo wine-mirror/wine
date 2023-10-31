@@ -4649,9 +4649,16 @@ static void test_sample_grabber(void)
     EXPECT_REF(clock, 3);
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+    EXPECT_REF(clock, 1);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     ref = IMFPresentationClock_Release(clock);
-    ok(ref == 0, "Release returned %ld\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     hr = IMFMediaEventGenerator_GetEvent(eg, MF_EVENT_FLAG_NO_WAIT, &event);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
@@ -4730,9 +4737,9 @@ static void test_sample_grabber(void)
     IMFStreamSink_Release(stream);
 
     ref = IMFActivate_Release(activate);
-    ok(ref == 0, "Release returned %ld\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     ref = IMFMediaSink_Release(sink);
-    ok(ref == 0, "Release returned %ld\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     /* Rateless mode with MF_SAMPLEGRABBERSINK_IGNORE_CLOCK. */
     hr = MFCreateMediaType(&media_type);

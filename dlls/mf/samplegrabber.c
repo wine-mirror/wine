@@ -1054,7 +1054,11 @@ static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *ifa
 
     EnterCriticalSection(&grabber->cs);
 
-    if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber),
+    if (grabber->is_shut_down)
+    {
+        hr = MF_E_SHUTDOWN;
+    }
+    else if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber),
             clock)))
     {
         sample_grabber_set_presentation_clock(grabber, clock);
