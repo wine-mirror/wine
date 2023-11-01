@@ -3,11 +3,9 @@ IMPORTS   = dxguid uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	client.c \
+	dpvoice.idl \
 	main.c \
-	server.c
-
-RC_SRCS = version.rc
-
-IDL_SRCS = dpvoice.idl
+	server.c \
+	version.rc

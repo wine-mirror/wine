@@ -4,15 +4,13 @@ IMPORTLIB = winhttp
 IMPORTS   = uuid jsproxy user32 advapi32 ws2_32
 DELAYIMPORTS = oleaut32 crypt32 secur32 iphlpapi dhcpcsvc
 
-C_SRCS = \
+SOURCES = \
 	cookie.c \
 	handle.c \
 	main.c \
 	net.c \
 	request.c \
+	rsrc.rc \
 	session.c \
-	url.c
-
-IDL_SRCS = winhttp_tlb.idl
-
-RC_SRCS = rsrc.rc
+	url.c \
+	winhttp_tlb.idl

@@ -3,10 +3,9 @@ IMPORTLIB = hlink
 IMPORTS   = uuid shell32 ole32 advapi32
 DELAYIMPORTS = urlmon
 
-C_SRCS = \
+SOURCES = \
 	browse_ctx.c \
 	extserv.c \
+	hlink_classes.idl \
 	hlink_main.c \
 	link.c
-
-IDL_SRCS = hlink_classes.idl

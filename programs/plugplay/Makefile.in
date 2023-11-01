@@ -3,8 +3,6 @@ IMPORTS   = advapi32 rpcrt4 user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
-	main.c
-
-IDL_SRCS = \
+SOURCES = \
+	main.c \
 	plugplay.idl

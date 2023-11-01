@@ -2,12 +2,10 @@ MODULE    = d3dxof.dll
 IMPORTLIB = d3dxof
 IMPORTS   = dxguid uuid ole32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	d3dxof.c \
+	d3dxof.idl \
 	main.c \
 	mszip.c \
-	parsing.c
-
-IDL_SRCS = d3dxof.idl
-
-RC_SRCS = version.rc
+	parsing.c \
+	version.rc

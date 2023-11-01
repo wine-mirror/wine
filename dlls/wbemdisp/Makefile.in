@@ -3,10 +3,8 @@ IMPORTS   = oleaut32 ole32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	locator.c \
-	main.c
-
-IDL_SRCS = \
+	main.c \
 	wbemdisp_classes.idl \
 	wbemdisp_tlb.idl

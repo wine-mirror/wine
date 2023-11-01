@@ -3,18 +3,15 @@ UNIXLIB   = qcap.so
 IMPORTS   = strmbase strmiids uuid ole32 oleaut32 winmm
 DELAYIMPORTS = msvfw32
 
-C_SRCS = \
+SOURCES = \
 	audiorecord.c \
 	avico.c \
 	avimux.c \
 	capturegraph.c \
 	filewriter.c \
+	qcap_classes.idl \
 	qcap_main.c \
 	smartteefilter.c \
 	v4l.c \
+	version.rc \
 	vfwcapture.c
-
-RC_SRCS = version.rc
-
-IDL_SRCS = \
-	qcap_classes.idl

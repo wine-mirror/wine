@@ -3,7 +3,7 @@ IMPORTLIB = windowscodecs
 IMPORTS   = $(TIFF_PE_LIBS) $(JPEG_PE_LIBS) $(PNG_PE_LIBS) windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi user32 gdi32 advapi32
 EXTRAINCL = $(TIFF_PE_CFLAGS) $(JPEG_PE_CFLAGS) $(PNG_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	bitmap.c \
 	bmpdecode.c \
 	bmpencode.c \
@@ -36,10 +36,8 @@ C_SRCS = \
 	tgaformat.c \
 	ungif.c \
 	uuid.c \
-	wincodecs_common.c
-
-RC_SRCS = version.rc
-
-IDL_SRCS = windowscodecs_wincodec.idl
+	version.rc \
+	wincodecs_common.c \
+	windowscodecs_wincodec.idl
 
 dlldata_EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

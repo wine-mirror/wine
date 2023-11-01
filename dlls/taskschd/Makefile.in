@@ -3,13 +3,11 @@ IMPORTS   = oleaut32 ole32 advapi32 xmllite rpcrt4
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	folder.c \
 	folder_collection.c \
 	regtask.c \
-	task.c \
-	taskschd.c
-
-IDL_SRCS = \
 	schrpc.idl \
+	task.c \
+	taskschd.c \
 	taskschd_tlb.idl

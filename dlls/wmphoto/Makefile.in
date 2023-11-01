@@ -5,10 +5,9 @@ PARENTSRC = ../windowscodecs
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	decoder.c \
 	jxrlib.c \
 	main.c \
-	wincodecs_common.c
-
-IDL_SRCS = wmphoto.idl
+	wincodecs_common.c \
+	wmphoto.idl

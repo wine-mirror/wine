@@ -1,9 +1,7 @@
 MODULE  = windows.ui.dll
 IMPORTS = combase advapi32
 
-C_SRCS = \
+SOURCES = \
+	classes.idl \
 	main.c \
 	uisettings.c
-
-IDL_SRCS = \
-	classes.idl

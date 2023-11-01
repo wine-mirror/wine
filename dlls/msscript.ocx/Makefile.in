@@ -1,9 +1,9 @@
 MODULE    = msscript.ocx
-RC_SRCS   = msscript.rc
-IDL_SRCS  = msscript.idl
 IMPORTS   = gdi32 user32 ole32 oleaut32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	msscript.c
+SOURCES = \
+	msscript.c \
+	msscript.idl \
+	msscript.rc

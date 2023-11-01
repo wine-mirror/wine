@@ -1,5 +1,6 @@
 MODULE    = msxml4.dll
 IMPORTS   = ole32 advapi32
 
-IDL_SRCS = msxml4_tlb.idl
-RC_SRCS = rsrc.rc
+SOURCES = \
+	msxml4_tlb.idl \
+	rsrc.rc

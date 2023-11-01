@@ -2,8 +2,7 @@ MODULE    = olepro32.dll
 IMPORTLIB = olepro32
 IMPORTS   = oleaut32
 
-C_SRCS = olepro32stubs.c
-
-IDL_SRCS = olepro.idl
-
-RC_SRCS = version.rc
+SOURCES = \
+	olepro.idl \
+	olepro32stubs.c \
+	version.rc

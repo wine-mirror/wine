@@ -5,9 +5,8 @@ PARENTSRC = ../wscript
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
 	arguments.c \
 	host.c \
+	ihost.idl \
 	main.c
-
-IDL_SRCS = ihost.idl

@@ -3,12 +3,10 @@ IMPORTS   = rpcrt4 advapi32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
-	epmp.c \
-	irotp.c \
-	rpcss_main.c
-
-IDL_SRCS = \
+SOURCES = \
 	epm.idl \
+	epmp.c \
 	irot.idl \
-	irpcss.idl
+	irotp.c \
+	irpcss.idl \
+	rpcss_main.c

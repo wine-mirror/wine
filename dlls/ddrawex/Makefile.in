@@ -1,11 +1,9 @@
 MODULE    = ddrawex.dll
 IMPORTS   = dxguid uuid ddraw ole32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	ddraw.c \
+	ddrawex.idl \
 	main.c \
-	surface.c
-
-IDL_SRCS = ddrawex.idl
-
-RC_SRCS = version.rc
+	surface.c \
+	version.rc

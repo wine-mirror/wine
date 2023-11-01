@@ -3,9 +3,7 @@ IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	main.c
-
-IDL_SRCS = \
+SOURCES = \
+	main.c \
 	uianimation_reg.idl \
 	uianimation_typelib.idl

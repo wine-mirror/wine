@@ -1,7 +1,6 @@
 TESTDLL   = wshom.ocx
 IMPORTS   = oleaut32 ole32 advapi32
 
-C_SRCS = \
-	wshom.c
-
-IDL_SRCS = wshom.idl
+SOURCES = \
+	wshom.c \
+	wshom.idl

@@ -3,9 +3,8 @@ IMPORTS   = oleaut32 ole32 advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	main.c \
 	path.c \
-	statuscode.c
-
-IDL_SRCS = wmiutils_classes.idl
+	statuscode.c \
+	wmiutils_classes.idl

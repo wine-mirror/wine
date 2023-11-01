@@ -2,5 +2,6 @@ MODULE    = stdole32.tlb
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-RC_SRCS = rsrc.rc
-IDL_SRCS = std_ole_v1.idl
+SOURCES = \
+	rsrc.rc \
+	std_ole_v1.idl

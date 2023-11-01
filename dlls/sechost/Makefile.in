@@ -3,11 +3,9 @@ IMPORTLIB = sechost
 IMPORTS   = kernelbase
 DELAYIMPORTS = rpcrt4
 
-C_SRCS = \
+SOURCES = \
+	plugplay.idl \
 	security.c \
 	service.c \
+	svcctl.idl \
 	trace.c
-
-IDL_SRCS = \
-	plugplay.idl \
-	svcctl.idl

@@ -1,8 +1,6 @@
 MODULE  = windows.media.mediacontrol.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
+	classes.idl \
 	main.c
-
-IDL_SRCS = \
-	classes.idl

@@ -2,9 +2,10 @@ MODULE    = quartz.dll
 IMPORTLIB = quartz
 IMPORTS   = strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 rpcrt4 user32 gdi32 advapi32 winmm
 
-C_SRCS = \
+SOURCES = \
 	acmwrapper.c \
 	avidec.c \
+	control_tlb.idl \
 	dsoundrender.c \
 	filesource.c \
 	filtergraph.c \
@@ -12,16 +13,12 @@ C_SRCS = \
 	main.c \
 	memallocator.c \
 	passthrough.c \
+	quartz.rc \
+	quartz_strmif.idl \
 	regsvr.c \
 	systemclock.c \
 	videorenderer.c \
 	vmr9.c \
 	window.c
-
-RC_SRCS = quartz.rc
-
-IDL_SRCS = \
-	control_tlb.idl \
-	quartz_strmif.idl
 
 dlldata_EXTRADEFS = -DENTRY_PREFIX=QUARTZ_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

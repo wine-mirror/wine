@@ -3,10 +3,8 @@ IMPORTS   = uuid rpcrt4
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
+	diasymreader.idl \
+	diasymreader.rc \
 	main.c \
 	writer.c
-
-IDL_SRCS = diasymreader.idl
-
-RC_SRCS = diasymreader.rc

@@ -3,7 +3,6 @@ IMPORTS   = uuid urlmon ole32 oleaut32 xmllite advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	scrobj.c
-
-IDL_SRCS = scrobj.idl
+SOURCES = \
+	scrobj.c \
+	scrobj.idl

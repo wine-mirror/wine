@@ -3,13 +3,10 @@ IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
 DELAYIMPORTS = rpcrt4 setupapi
 
-C_SRCS = \
+SOURCES = \
 	instr.c \
 	ntoskrnl.c \
+	ntoskrnl.rc \
+	plugplay.idl \
 	pnp.c \
 	sync.c
-
-RC_SRCS = ntoskrnl.rc
-
-IDL_SRCS = \
-	plugplay.idl

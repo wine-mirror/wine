@@ -4,11 +4,9 @@ IMPORTS   = $(FAUDIO_PE_LIBS) ole32
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 PARENTSRC = ../xaudio2_7
 
-C_SRCS = \
+SOURCES = \
+	version.rc \
 	xapo.c \
 	xapofx.c \
-	xaudio_allocator.c
-
-RC_SRCS = version.rc
-
-IDL_SRCS = xaudio_classes.idl
+	xaudio_allocator.c \
+	xaudio_classes.idl

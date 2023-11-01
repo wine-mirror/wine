@@ -4,9 +4,8 @@ IMPORTS   = ole32 oleaut32 uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	propstore.c \
+	propsys_classes.idl \
 	propsys_main.c \
 	propvar.c
-
-IDL_SRCS = propsys_classes.idl

@@ -6,15 +6,13 @@ EXTRADEFS = -DPROXY_DELEGATION
 server_EXTRAIDLFLAGS = -Os --prefix-client=mixed_
 server_interp_EXTRAIDLFLAGS = -Oicf --prefix-client=interp_
 
-C_SRCS = \
+SOURCES = \
 	cstub.c \
+	cstub.idl \
 	generated.c \
 	ndr_marshall.c \
 	rpc.c \
 	rpc_async.c \
-	server.c
-
-IDL_SRCS = \
-	cstub.idl \
+	server.c \
 	server.idl \
 	server_interp.idl

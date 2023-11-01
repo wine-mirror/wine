@@ -3,8 +3,7 @@ IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	main.c \
-	netcfg.c
-
-IDL_SRCS = netcfgx_classes.idl
+	netcfg.c \
+	netcfgx_classes.idl

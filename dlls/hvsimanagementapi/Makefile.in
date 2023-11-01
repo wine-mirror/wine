@@ -1,9 +1,7 @@
 MODULE  = hvsimanagementapi.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
+	classes.idl \
 	host.c \
 	main.c
-
-IDL_SRCS = \
-	classes.idl

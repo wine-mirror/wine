@@ -1,8 +1,7 @@
 MODULE = packager.dll
 IMPORTS = uuid shell32 shlwapi user32
 
-C_SRCS = \
+SOURCES = \
+	packager.rc \
+	packager_classes.idl \
 	packager_main.c
-
-RC_SRCS = packager.rc
-IDL_SRCS = packager_classes.idl

@@ -1,7 +1,7 @@
 MODULE = ieproxy.dll
 IMPORTS = uuid ole32 rpcrt4
 
-IDL_SRCS = \
+SOURCES = \
 	ieproxy_ieautomation.idl \
 	ieproxy_perhist.idl
 

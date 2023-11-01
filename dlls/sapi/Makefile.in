@@ -2,19 +2,15 @@ MODULE    = sapi.dll
 IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
 
-C_SRCS = \
+SOURCES = \
 	async.c \
 	automation.c \
 	main.c \
 	mmaudio.c \
 	resource.c \
+	sapi.rc \
+	sapi_classes.idl \
+	sapi_typelib.idl \
 	stream.c \
 	token.c \
 	tts.c
-
-IDL_SRCS = \
-	sapi_classes.idl \
-	sapi_typelib.idl
-
-RC_SRCS = \
-	sapi.rc

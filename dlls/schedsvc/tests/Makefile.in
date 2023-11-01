@@ -1,10 +1,8 @@
 TESTDLL   = schedsvc.dll
 IMPORTS   = advapi32 rpcrt4 ole32
 
-C_SRCS = \
-	atsvcapi.c \
-	rpcapi.c
-
-IDL_SRCS = \
+SOURCES = \
 	atsvc.idl \
+	atsvcapi.c \
+	rpcapi.c \
 	schrpc.idl

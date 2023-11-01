@@ -3,9 +3,8 @@ IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	arguments.c \
 	host.c \
+	ihost.idl \
 	main.c
-
-IDL_SRCS = ihost.idl

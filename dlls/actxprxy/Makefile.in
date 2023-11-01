@@ -1,10 +1,7 @@
 MODULE    = actxprxy.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4
 
-C_SRCS = \
-	usrmarshal.c
-
-IDL_SRCS = \
+SOURCES = \
 	actxprxy_activscp.idl \
 	actxprxy_comcat.idl \
 	actxprxy_docobj.idl \
@@ -16,6 +13,7 @@ IDL_SRCS = \
 	actxprxy_servprov.idl \
 	actxprxy_shldisp.idl \
 	actxprxy_shobjidl.idl \
-	actxprxy_urlhist.idl
+	actxprxy_urlhist.idl \
+	usrmarshal.c
 
 dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_DELEGATION

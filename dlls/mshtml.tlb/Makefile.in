@@ -2,4 +2,5 @@ MODULE    = mshtml.tlb
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-IDL_SRCS = mshtml_tlb.idl
+SOURCES = \
+	mshtml_tlb.idl

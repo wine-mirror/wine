@@ -2,14 +2,12 @@ MODULE    = dmcompos.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
-C_SRCS = \
+SOURCES = \
 	chordmap.c \
 	chordmaptrack.c \
 	composer.c \
+	dmcompos.idl \
 	dmcompos_main.c \
 	dmobject.c \
-	signposttrack.c
-
-IDL_SRCS = dmcompos.idl
-
-RC_SRCS = version.rc
+	signposttrack.c \
+	version.rc

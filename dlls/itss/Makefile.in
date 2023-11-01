@@ -1,14 +1,12 @@
 MODULE    = itss.dll
 IMPORTS   = uuid urlmon shlwapi ole32
 
-C_SRCS = \
+SOURCES = \
 	chm_lib.c \
 	itss.c \
+	itss.idl \
 	lzx.c \
 	moniker.c \
 	protocol.c \
+	rsrc.rc \
 	storage.c
-
-IDL_SRCS = itss.idl
-
-RC_SRCS = rsrc.rc

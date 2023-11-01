@@ -3,10 +3,7 @@ IMPORTS   = dmoguids strmiids uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	main.c
-
-IDL_SRCS = \
-	dsdmo.idl
-
-RC_SRCS = version.rc
+SOURCES = \
+	dsdmo.idl \
+	main.c \
+	version.rc

@@ -1,5 +1,5 @@
 MODULE = msxml.dll
 
-IDL_SRCS = msxml_tlb.idl
-
-RC_SRCS = rsrc.rc
+SOURCES = \
+	msxml_tlb.idl \
+	rsrc.rc

@@ -1,9 +1,7 @@
 MODULE  = appxdeploymentclient.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
+	classes.idl \
 	main.c \
 	package.c
-
-IDL_SRCS = \
-	classes.idl

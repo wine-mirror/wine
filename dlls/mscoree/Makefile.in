@@ -3,15 +3,14 @@ IMPORTS   = dbghelp uuid shell32 advapi32 ole32 oleaut32 shlwapi
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	assembly.c \
 	config.c \
 	cordebug.c \
 	corruntimehost.c \
 	metadata.c \
 	metahost.c \
+	mscoree_classes.idl \
 	mscoree_main.c
-
-IDL_SRCS = mscoree_classes.idl
 
 metahost_EXTRADEFS = -DINSTALL_DATADIR="\"${datadir}\""

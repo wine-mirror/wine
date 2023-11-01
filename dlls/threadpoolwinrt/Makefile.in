@@ -1,7 +1,6 @@
 MODULE = threadpoolwinrt.dll
 IMPORTS = combase uuid
 
-C_SRCS = \
+SOURCES = \
+	classes.idl \
 	main.c
-
-IDL_SRCS = classes.idl

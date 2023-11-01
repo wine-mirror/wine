@@ -1,17 +1,14 @@
 MODULE    = oledb32.dll
 IMPORTS   = uuid oleaut32 ole32 comctl32 user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	convert.c \
+	convert.idl \
 	datainit.c \
 	dslocator.c \
 	errorinfo.c \
 	main.c \
-	rowpos.c
-
-IDL_SRCS = \
-	convert.idl \
 	oledb32_classes.idl \
-	oledb32_typelib.idl
-
-RC_SRCS = version.rc
+	oledb32_typelib.idl \
+	rowpos.c \
+	version.rc
