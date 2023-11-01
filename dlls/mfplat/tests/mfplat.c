@@ -3599,6 +3599,7 @@ static void test_scheduled_items(void)
     IMFAsyncResult *result;
     MFWORKITEM_KEY key, key2;
     HRESULT hr;
+    ULONG refcount;
 
     callback = create_test_callback(NULL);
 
@@ -3611,6 +3612,9 @@ static void test_scheduled_items(void)
     hr = MFCancelWorkItem(key);
     ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
 
+    refcount = IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
+    todo_wine ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
+
     hr = MFCancelWorkItem(key);
     ok(hr == MF_E_NOT_FOUND || broken(hr == S_OK) /* < win10 */, "Unexpected hr %#lx.\n", hr);
 
@@ -3619,6 +3623,8 @@ static void test_scheduled_items(void)
         win_skip("Waiting items are not supported.\n");
         return;
     }
+
+    callback = create_test_callback(NULL);
 
     hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
@@ -3716,6 +3722,7 @@ static void test_periodic_callback(void)
 {
     DWORD period, key;
     HRESULT hr;
+    struct test_callback *context = create_test_callback(NULL);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -3745,6 +3752,16 @@ static void test_periodic_callback(void)
     ok(hr == S_OK, "Failed to remove callback, hr %#lx.\n", hr);
 
     ok(periodic_counter > 0, "Unexpected counter value %lu.\n", periodic_counter);
+
+    hr= pMFAddPeriodicCallback(periodic_callback, (IUnknown *)&context->IMFAsyncCallback_iface, &key);
+    ok(hr == S_OK, "Failed to add periodic callback, hr %#lx.\n", hr);
+    EXPECT_REF(&context->IMFAsyncCallback_iface, 2);
+
+    hr = pMFRemovePeriodicCallback(key);
+    ok(hr == S_OK, "Failed to remove callback, hr %#lx.\n", hr);
+    Sleep(500);
+    todo_wine EXPECT_REF(&context->IMFAsyncCallback_iface, 1);
+    IMFAsyncCallback_Release(&context->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
