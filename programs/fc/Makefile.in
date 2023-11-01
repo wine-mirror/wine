@@ -2,4 +2,5 @@ MODULE    = fc.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = fc.c
+SOURCES = \
+	fc.c

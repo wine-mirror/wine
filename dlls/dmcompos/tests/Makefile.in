@@ -1,5 +1,5 @@
 TESTDLL   = dmcompos.dll
 IMPORTS   = ole32
 
-C_SRCS = \
+SOURCES = \
 	dmcompos.c

@@ -3,5 +3,5 @@ IMPORTLIB = pdh
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	pdh_main.c

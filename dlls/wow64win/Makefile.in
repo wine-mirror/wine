@@ -3,7 +3,7 @@ IMPORTS   = wow64 win32u ntdll winecrt0
 
 EXTRADLLFLAGS = -nodefaultlibs
 
-C_SRCS = \
+SOURCES = \
 	gdi.c \
 	syscall.c \
 	user.c

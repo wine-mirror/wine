@@ -1,7 +1,7 @@
 TESTDLL   = urlmon.dll
 IMPORTS   = urlmon wininet ole32 oleaut32 shlwapi user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	generated.c \
 	misc.c \
 	protocol.c \

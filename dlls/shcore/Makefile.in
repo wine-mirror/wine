@@ -5,5 +5,5 @@ DELAYIMPORTS = user32 ole32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	main.c

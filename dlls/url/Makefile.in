@@ -4,4 +4,5 @@ IMPORTS   = shell32 shlwapi
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = url_main.c
+SOURCES = \
+	url_main.c

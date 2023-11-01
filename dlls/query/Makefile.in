@@ -3,5 +3,5 @@ IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	query_main.c

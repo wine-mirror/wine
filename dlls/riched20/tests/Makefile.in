@@ -1,7 +1,7 @@
 TESTDLL   = riched20.dll
 IMPORTS   = ole32 oleaut32 user32 gdi32
 
-C_SRCS = \
+SOURCES = \
 	editor.c \
 	richole.c \
 	txtsrv.c

@@ -4,7 +4,7 @@ PARENTSRC = ../msvcp90
 IMPORTLIB = msvcp140
 IMPORTS   = vcruntime140
 
-C_SRCS = \
+SOURCES = \
 	details.c \
 	exception.c \
 	ios.c \

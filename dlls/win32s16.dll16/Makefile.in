@@ -1,4 +1,5 @@
 MODULE    = win32s16.dll16
 EXTRADLLFLAGS = -m16 -Wb,--main-module,w32skrnl.dll
 
-C_SRCS = win32s16.c
+SOURCES = \
+	win32s16.c

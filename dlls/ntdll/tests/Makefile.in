@@ -1,7 +1,7 @@
 TESTDLL   = ntdll.dll
 IMPORTS   = user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	atom.c \
 	change.c \
 	directory.c \

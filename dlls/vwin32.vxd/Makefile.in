@@ -1,5 +1,5 @@
 MODULE    = vwin32.vxd
 IMPORTS   = kernel
 
-C_SRCS = \
+SOURCES = \
 	vwin32.c

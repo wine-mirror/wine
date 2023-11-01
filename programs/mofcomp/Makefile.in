@@ -2,4 +2,5 @@ MODULE    = mofcomp.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = mofcomp.c
+SOURCES = \
+	mofcomp.c

@@ -1,4 +1,4 @@
 STATICLIB = libdmoguids.a
 
-C_SRCS = \
+SOURCES = \
 	dmoguids.c

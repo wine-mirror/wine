@@ -2,5 +2,5 @@ MODULE    = wldp.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	wldp.c

@@ -1,4 +1,4 @@
 MODULE    = vssapi.dll
 
-C_SRCS = \
+SOURCES = \
 	main.c

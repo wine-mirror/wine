@@ -5,7 +5,7 @@ DELAYIMPORTS = winmm
 UNIX_LIBS    = $(OSS4_LIBS) $(PTHREAD_LIBS)
 UNIX_CFLAGS  = $(OSS4_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	midi.c \
 	midipatch.c \
 	mmaux.c \

@@ -2,7 +2,7 @@ MODULE    = tapi32.dll
 IMPORTLIB = tapi32
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	assisted.c \
 	line.c \
 	phone.c

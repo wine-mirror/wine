@@ -2,4 +2,5 @@ MODULE    = msimg32.dll
 IMPORTLIB = msimg32
 IMPORTS   = gdi32
 
-C_SRCS = msimg32_main.c
+SOURCES = \
+	msimg32_main.c

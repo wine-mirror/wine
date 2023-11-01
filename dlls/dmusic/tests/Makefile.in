@@ -1,5 +1,5 @@
 TESTDLL   = dmusic.dll
 IMPORTS   = oleaut32 ole32 uuid user32 dsound
 
-C_SRCS = \
+SOURCES = \
 	dmusic.c

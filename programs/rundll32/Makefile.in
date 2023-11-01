@@ -3,5 +3,5 @@ IMPORTS   = user32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	rundll32.c

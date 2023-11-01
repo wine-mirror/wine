@@ -1,5 +1,5 @@
 TESTDLL   = rsaenh.dll
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	rsaenh.c

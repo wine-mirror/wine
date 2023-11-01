@@ -8,7 +8,7 @@ UNIX_LIBS    = $(CARBON_LIBS) $(APPKIT_LIBS) $(PTHREAD_LIBS) -lm
 
 EXTRADLLFLAGS = -nodefaultlibs -Wb,--syscall-table,1
 
-C_SRCS = \
+SOURCES = \
 	bitblt.c \
 	bitmap.c \
 	brush.c \

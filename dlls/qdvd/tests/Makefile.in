@@ -1,6 +1,6 @@
 TESTDLL   = qdvd.dll
 IMPORTS   = strmiids uuid ole32
 
-C_SRCS = \
+SOURCES = \
 	graph.c \
 	navigator.c

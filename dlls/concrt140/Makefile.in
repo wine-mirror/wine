@@ -2,7 +2,7 @@ EXTRADEFS = -D_CONCRT=
 MODULE = concrt140.dll
 PARENTSRC = ../msvcrt
 
-C_SRCS = \
+SOURCES = \
 	concrt140.c \
 	concurrency.c \
 	details.c \

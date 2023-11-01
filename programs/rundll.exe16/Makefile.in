@@ -2,4 +2,5 @@ MODULE    = rundll.exe16
 
 EXTRADLLFLAGS = -mconsole -m16
 
-C_SRCS = rundll.c
+SOURCES = \
+	rundll.c

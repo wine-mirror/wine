@@ -4,5 +4,5 @@ PARENTSRC = ../xaudio2_7
 IMPORTS   = $(FAUDIO_PE_LIBS)
 EXTRAINCL = $(FAUDIO_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	x3daudio.c

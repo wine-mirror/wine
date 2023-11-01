@@ -2,7 +2,7 @@ EXTLIB    = libxml2.a
 EXTRAINCL = $(XML2_PE_CFLAGS)
 EXTRADEFS = -DHAVE_VA_COPY
 
-C_SRCS = \
+SOURCES = \
 	HTMLparser.c \
 	HTMLtree.c \
 	SAX.c \

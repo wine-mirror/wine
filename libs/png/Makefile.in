@@ -2,7 +2,7 @@ EXTLIB    = libpng.a
 EXTRAINCL = $(ZLIB_PE_CFLAGS)
 EXTRADEFS = -DPNG_ARM_NEON_OPT=0
 
-C_SRCS = \
+SOURCES = \
 	png.c \
 	pngerror.c \
 	pngget.c \

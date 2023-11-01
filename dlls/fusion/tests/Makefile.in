@@ -1,7 +1,7 @@
 TESTDLL   = fusion.dll
 IMPORTS   = user32
 
-C_SRCS = \
+SOURCES = \
 	asmcache.c \
 	asmenum.c \
 	asmname.c \

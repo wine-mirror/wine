@@ -2,5 +2,5 @@ MODULE    = secedit.exe
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = \
+SOURCES = \
 	main.c

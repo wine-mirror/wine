@@ -1,5 +1,5 @@
 MODULE    = bcryptprimitives.dll
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	main.c

@@ -1,7 +1,7 @@
 EXTLIB    = liblcms2.a
 EXTRAINCL = $(LCMS2_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	src/cmsalpha.c \
 	src/cmscnvrt.c \
 	src/cmserr.c \

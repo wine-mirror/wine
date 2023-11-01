@@ -1,4 +1,4 @@
 TESTDLL   = serialui.dll
 
-C_SRCS = \
+SOURCES = \
 	confdlg.c

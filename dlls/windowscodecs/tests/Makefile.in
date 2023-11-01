@@ -1,7 +1,7 @@
 TESTDLL   = windowscodecs.dll
 IMPORTS   = windowscodecs propsys oleaut32 ole32 user32 gdi32 shlwapi uuid
 
-C_SRCS = \
+SOURCES = \
 	bitmap.c \
 	bmpformat.c \
 	converter.c \

@@ -1,5 +1,5 @@
 MODULE    = sensapi.dll
 IMPORTLIB = sensapi
 
-C_SRCS = \
+SOURCES = \
 	sensapi.c

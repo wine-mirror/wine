@@ -1,7 +1,7 @@
 TESTDLL   = sapi.dll
 IMPORTS   = ole32 user32 advapi32 winmm
 
-C_SRCS = \
+SOURCES = \
 	automation.c \
 	mmaudio.c \
 	resource.c \

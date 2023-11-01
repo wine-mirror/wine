@@ -1,7 +1,7 @@
 TESTDLL   = mmdevapi.dll
 IMPORTS   = ole32 version user32 advapi32 winmm
 
-C_SRCS = \
+SOURCES = \
 	capture.c \
 	dependency.c \
 	mmdevenum.c \

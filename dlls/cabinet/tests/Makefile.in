@@ -1,6 +1,6 @@
 TESTDLL   = cabinet.dll
 IMPORTS   = cabinet
 
-C_SRCS = \
+SOURCES = \
 	extract.c \
 	fdi.c

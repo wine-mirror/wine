@@ -1,4 +1,5 @@
 MODULE    = imaadp32.acm
 IMPORTS   = winmm user32
 
-C_SRCS = imaadp32.c
+SOURCES = \
+	imaadp32.c

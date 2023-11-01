@@ -1,4 +1,4 @@
 MODULE    = vmm.vxd
 
-C_SRCS = \
+SOURCES = \
 	vmm.c

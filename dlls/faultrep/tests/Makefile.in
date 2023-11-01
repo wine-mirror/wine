@@ -1,5 +1,5 @@
 TESTDLL   = faultrep.dll
 IMPORTS   = faultrep advapi32
 
-C_SRCS = \
+SOURCES = \
 	faultrep.c

@@ -1,4 +1,4 @@
 TESTDLL  = wpcap.dll
 
-C_SRCS = \
+SOURCES = \
 	wpcap.c

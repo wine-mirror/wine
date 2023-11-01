@@ -1,5 +1,5 @@
 TESTDLL   = wevtapi.dll
 IMPORTS   = wevtapi advapi32
 
-C_SRCS = \
+SOURCES = \
 	wevtapi.c

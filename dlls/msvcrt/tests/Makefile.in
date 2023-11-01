@@ -1,7 +1,7 @@
 TESTDLL   = msvcrt.dll
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	cpp.c \
 	data.c \
 	dir.c \

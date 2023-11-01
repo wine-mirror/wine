@@ -4,5 +4,5 @@ IMPORTLIB = userenv
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	userenv_main.c

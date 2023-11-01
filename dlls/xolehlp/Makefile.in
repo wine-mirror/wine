@@ -3,4 +3,5 @@ IMPORTS   = uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = xolehlp.c
+SOURCES = \
+	xolehlp.c

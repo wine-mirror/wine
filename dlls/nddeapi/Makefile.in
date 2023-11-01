@@ -1,5 +1,5 @@
 MODULE    = nddeapi.dll
 IMPORTLIB = nddeapi
 
-C_SRCS = \
+SOURCES = \
 	nddeapi.c

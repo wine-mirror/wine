@@ -1,5 +1,5 @@
 TESTDLL   = dmloader.dll
 IMPORTS   = ole32
 
-C_SRCS = \
+SOURCES = \
 	loader.c

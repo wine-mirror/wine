@@ -2,5 +2,5 @@ MODULE    = mshta.exe
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	main.c

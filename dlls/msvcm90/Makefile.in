@@ -3,5 +3,5 @@ PARENTSRC = ../msvcm80
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	msvcm_main.c

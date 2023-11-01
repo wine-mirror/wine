@@ -3,4 +3,5 @@ IMPORTS   = msvfw32 version advapi32 user32
 
 EXTRADLLFLAGS = -m16 -Wb,--main-module,msvfw32.dll
 
-C_SRCS = msvideo16.c
+SOURCES = \
+	msvideo16.c

@@ -1,4 +1,4 @@
 MODULE    = monodebg.vxd
 
-C_SRCS = \
+SOURCES = \
 	monodebg.c

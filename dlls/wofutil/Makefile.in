@@ -1,4 +1,4 @@
 MODULE    = wofutil.dll
 
-C_SRCS = \
+SOURCES = \
 	main.c

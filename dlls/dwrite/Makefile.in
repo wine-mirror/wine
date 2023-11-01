@@ -4,7 +4,7 @@ UNIXLIB   = dwrite.so
 IMPORTS   = user32 gdi32 advapi32
 UNIX_CFLAGS = $(FREETYPE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	analyzer.c \
 	bidi.c \
 	bracket.c \

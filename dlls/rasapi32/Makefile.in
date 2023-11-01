@@ -1,4 +1,5 @@
 MODULE    = rasapi32.dll
 IMPORTLIB = rasapi32
 
-C_SRCS = rasapi.c
+SOURCES = \
+	rasapi.c

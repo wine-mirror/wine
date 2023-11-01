@@ -1,5 +1,5 @@
 MODULE = vcomp140.dll
 PARENTSRC = ../vcomp
 
-C_SRCS = \
+SOURCES = \
 	main.c

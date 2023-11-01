@@ -2,5 +2,5 @@ MODULE    = wevtutil.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
 	main.c

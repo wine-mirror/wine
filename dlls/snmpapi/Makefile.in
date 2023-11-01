@@ -3,5 +3,5 @@ IMPORTLIB = snmpapi
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	main.c

@@ -4,5 +4,5 @@ IMPORTS   = bcrypt
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	main.c

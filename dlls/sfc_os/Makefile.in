@@ -3,4 +3,5 @@ IMPORTLIB = sfc_os
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = sfc_os.c
+SOURCES = \
+	sfc_os.c

@@ -3,5 +3,5 @@ IMPORTLIB = rasdlg
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	rasdlg_main.c

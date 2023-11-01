@@ -3,6 +3,6 @@ EXTRADEFS = -D_MSVCIRT
 PARENTSRC = ../msvcp90
 IMPORTS   = msvcrt
 
-C_SRCS = \
+SOURCES = \
 	exception.c \
 	msvcirt.c

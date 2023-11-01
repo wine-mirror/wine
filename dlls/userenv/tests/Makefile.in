@@ -1,5 +1,5 @@
 TESTDLL   = userenv.dll
 IMPORTS   = userenv advapi32
 
-C_SRCS = \
+SOURCES = \
 	userenv.c

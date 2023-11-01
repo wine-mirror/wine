@@ -1,5 +1,5 @@
 TESTDLL = windows.media.devices.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
 	devices.c

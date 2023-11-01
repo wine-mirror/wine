@@ -1,4 +1,4 @@
 MODULE    = tbs.dll
 
-C_SRCS = \
+SOURCES = \
 	tbs.c

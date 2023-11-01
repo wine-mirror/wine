@@ -5,7 +5,7 @@ IMPORTS   = advapi32
 DELAYIMPORTS = crypt32
 UNIX_CFLAGS  = $(GNUTLS_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	lsa.c \
 	negotiate.c \
 	schannel.c \

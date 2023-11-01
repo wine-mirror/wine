@@ -3,4 +3,5 @@ IMPORTS   = msi shlwapi
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = main.c
+SOURCES = \
+	main.c

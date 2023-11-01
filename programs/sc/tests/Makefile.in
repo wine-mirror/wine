@@ -1,5 +1,5 @@
 TESTDLL   = sc.exe
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	sc.c

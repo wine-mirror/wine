@@ -3,4 +3,5 @@ IMPORTLIB = wsnmp32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = wsnmp32.c
+SOURCES = \
+	wsnmp32.c

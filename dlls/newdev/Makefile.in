@@ -2,4 +2,5 @@ MODULE    = newdev.dll
 IMPORTLIB = newdev
 IMPORTS   = setupapi
 
-C_SRCS = main.c
+SOURCES = \
+	main.c

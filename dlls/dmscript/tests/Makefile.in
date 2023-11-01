@@ -1,5 +1,5 @@
 TESTDLL   = dmscript.dll
 IMPORTS   = ole32
 
-C_SRCS = \
+SOURCES = \
 	dmscript.c

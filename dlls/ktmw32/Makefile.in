@@ -1,4 +1,4 @@
 MODULE    = ktmw32.dll
 
-C_SRCS = \
+SOURCES = \
 	ktmw32_main.c

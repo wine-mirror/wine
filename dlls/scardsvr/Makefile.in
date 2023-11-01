@@ -1,5 +1,5 @@
 MODULE    = scardsvr.dll
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	scardsvr.c

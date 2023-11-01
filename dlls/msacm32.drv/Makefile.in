@@ -1,5 +1,5 @@
 MODULE    = msacm32.drv
 IMPORTS   = msacm32 winmm user32
 
-C_SRCS = \
+SOURCES = \
 	wavemap.c

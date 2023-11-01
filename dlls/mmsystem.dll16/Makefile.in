@@ -3,7 +3,7 @@ IMPORTS   = winmm user32
 
 EXTRADLLFLAGS = -m16 -Wb,--main-module,winmm.dll
 
-C_SRCS = \
+SOURCES = \
 	driver.c \
 	mci16.c \
 	message16.c \

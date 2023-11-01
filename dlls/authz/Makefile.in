@@ -2,5 +2,5 @@ MODULE    = authz.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	authz.c

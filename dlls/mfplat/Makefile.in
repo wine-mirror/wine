@@ -5,7 +5,7 @@ DELAYIMPORTS = bcrypt
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	buffer.c \
 	main.c \
 	mediatype.c \

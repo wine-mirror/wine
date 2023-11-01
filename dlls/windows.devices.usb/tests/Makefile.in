@@ -1,5 +1,5 @@
 TESTDLL = windows.devices.usb.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
 	usb.c

@@ -1,6 +1,6 @@
 STATICLIB = libstrmbase.a
 
-C_SRCS = \
+SOURCES = \
 	dispatch.c \
 	filter.c \
 	mediatype.c \

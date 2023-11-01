@@ -5,7 +5,7 @@ IMPORTS   = msvcrt
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	exception.c \
 	ios.c \
 	locale.c \

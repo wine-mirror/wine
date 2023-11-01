@@ -2,5 +2,5 @@ MODULE    = icacls.exe
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = \
+SOURCES = \
 	icacls_main.c

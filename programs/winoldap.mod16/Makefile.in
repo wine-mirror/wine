@@ -2,4 +2,5 @@ MODULE    = winoldap.mod16
 
 EXTRADLLFLAGS = -mconsole -m16
 
-C_SRCS = winoldap.c
+SOURCES = \
+	winoldap.c

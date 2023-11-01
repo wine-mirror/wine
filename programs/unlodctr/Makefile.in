@@ -3,4 +3,5 @@ IMPORTS   = loadperf
 
 EXTRADLLFLAGS = -mconsole
 
-C_SRCS = unlodctr_main.c
+SOURCES = \
+	unlodctr_main.c

@@ -1,4 +1,4 @@
 MODULE    = vdhcp.vxd
 
-C_SRCS = \
+SOURCES = \
 	vdhcp.c

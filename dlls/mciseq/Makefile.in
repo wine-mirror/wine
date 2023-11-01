@@ -1,5 +1,5 @@
 MODULE    = mciseq.dll
 IMPORTS   = winmm user32
 
-C_SRCS = \
+SOURCES = \
 	mcimidi.c

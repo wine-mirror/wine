@@ -2,4 +2,5 @@ MODULE = mgmtapi.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = mgmtapi.c
+SOURCES = \
+	mgmtapi.c

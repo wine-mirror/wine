@@ -1,4 +1,4 @@
 TESTDLL   = xcopy.exe
 
-C_SRCS = \
+SOURCES = \
 	xcopy.c

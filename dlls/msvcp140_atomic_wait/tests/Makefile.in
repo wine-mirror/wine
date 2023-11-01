@@ -1,4 +1,4 @@
 TESTDLL = msvcp140_atomic_wait.dll
 
-C_SRCS = \
+SOURCES = \
 	msvcp140_atomic_wait.c

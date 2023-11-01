@@ -2,7 +2,7 @@ EXTLIB    = libjxr.a
 EXTRAINCL = $(JXR_PE_CFLAGS)
 EXTRADEFS = -DDISABLE_PERF_MEASUREMENT
 
-C_SRCS = \
+SOURCES = \
 	image/decode/JXRTranscode.c \
 	image/decode/decode.c \
 	image/decode/postprocess.c \

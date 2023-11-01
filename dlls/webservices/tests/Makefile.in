@@ -1,7 +1,7 @@
 TESTDLL   = webservices.dll
 IMPORTS   = webservices oleaut32 ole32 user32 rpcrt4 ws2_32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	channel.c \
 	msg.c \
 	proxy.c \

@@ -1,4 +1,4 @@
 MODULE = gamingtcui.dll
 
-C_SRCS = \
+SOURCES = \
 	gamingtcui_main.c

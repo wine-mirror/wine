@@ -1,5 +1,5 @@
 STATICLIB = libuuid.a
 
-C_SRCS = \
+SOURCES = \
 	d2d.c \
 	uuid.c

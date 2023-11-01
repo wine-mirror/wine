@@ -1,5 +1,5 @@
 TESTDLL   = dsdmo.dll
 IMPORTS   = dmoguids uuid msdmo ole32
 
-C_SRCS = \
+SOURCES = \
 	dsdmo.c

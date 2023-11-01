@@ -1,4 +1,4 @@
 TESTDLL   = ntprint.dll
 
-C_SRCS = \
+SOURCES = \
 	ntprint.c

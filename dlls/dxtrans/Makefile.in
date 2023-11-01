@@ -1,4 +1,4 @@
 MODULE    = dxtrans.dll
 
-C_SRCS = \
+SOURCES = \
 	main.c

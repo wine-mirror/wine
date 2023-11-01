@@ -1,5 +1,5 @@
 MODULE    = nsi.dll
 IMPORTLIB = nsi
 
-C_SRCS = \
+SOURCES = \
 	nsi.c

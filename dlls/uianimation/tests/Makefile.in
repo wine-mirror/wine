@@ -1,5 +1,5 @@
 TESTDLL = uianimation.dll
 IMPORTS = ole32
 
-C_SRCS = \
+SOURCES = \
 	uianimation.c

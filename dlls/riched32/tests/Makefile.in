@@ -1,5 +1,5 @@
 TESTDLL   = riched32.dll
 IMPORTS   = ole32 user32
 
-C_SRCS = \
+SOURCES = \
 	editor.c

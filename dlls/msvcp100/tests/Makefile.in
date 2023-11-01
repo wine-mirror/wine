@@ -1,5 +1,5 @@
 TESTDLL   = msvcp100.dll
 
-C_SRCS = \
+SOURCES = \
 	misc.c \
 	string.c

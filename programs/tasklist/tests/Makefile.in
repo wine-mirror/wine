@@ -1,4 +1,4 @@
 TESTDLL   = tasklist.exe
 
-C_SRCS = \
+SOURCES = \
 	tasklist.c

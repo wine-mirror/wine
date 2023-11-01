@@ -1,4 +1,4 @@
 TESTDLL   = msvcr70.dll
 
-C_SRCS = \
+SOURCES = \
 	msvcr70.c

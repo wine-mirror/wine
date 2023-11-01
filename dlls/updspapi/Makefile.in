@@ -1,5 +1,5 @@
 MODULE    = updspapi.dll
 IMPORTS   = setupapi
 
-C_SRCS = \
+SOURCES = \
 	main.c

@@ -1,7 +1,7 @@
 TESTDLL   = qmgr.dll
 IMPORTS   = uuid ole32 shlwapi user32
 
-C_SRCS = \
+SOURCES = \
 	enum_files.c \
 	enum_jobs.c \
 	file.c \

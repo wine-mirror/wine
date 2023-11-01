@@ -1,5 +1,5 @@
 TESTDLL   = propsys.dll
 IMPORTS   = propsys ole32 oleaut32
 
-C_SRCS = \
+SOURCES = \
 	propsys.c

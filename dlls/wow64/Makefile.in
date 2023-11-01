@@ -4,7 +4,7 @@ IMPORTS   = ntdll winecrt0
 
 EXTRADLLFLAGS = -nodefaultlibs
 
-C_SRCS = \
+SOURCES = \
 	file.c \
 	process.c \
 	registry.c \

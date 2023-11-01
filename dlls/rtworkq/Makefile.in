@@ -2,5 +2,5 @@ MODULE    = rtworkq.dll
 IMPORTLIB = rtworkq
 IMPORTS   = ole32
 
-C_SRCS = \
+SOURCES = \
 	queue.c

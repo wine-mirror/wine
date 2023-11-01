@@ -1,6 +1,6 @@
 EXTLIB    = libjpeg.a
 
-C_SRCS = \
+SOURCES = \
 	jaricom.c \
 	jcapimin.c \
 	jcapistd.c \

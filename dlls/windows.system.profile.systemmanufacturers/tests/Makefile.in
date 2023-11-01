@@ -1,5 +1,5 @@
 TESTDLL = windows.system.profile.systemmanufacturers.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
 	smbios.c

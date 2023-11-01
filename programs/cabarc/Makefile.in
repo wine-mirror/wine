@@ -3,4 +3,5 @@ IMPORTS   = cabinet
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = cabarc.c
+SOURCES = \
+	cabarc.c

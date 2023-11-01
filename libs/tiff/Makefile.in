@@ -1,7 +1,7 @@
 EXTLIB    = libtiff.a
 EXTRAINCL = $(TIFF_PE_CFLAGS) $(JPEG_PE_CFLAGS) $(ZLIB_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	libtiff/tif_aux.c \
 	libtiff/tif_close.c \
 	libtiff/tif_codec.c \

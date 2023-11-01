@@ -1,4 +1,4 @@
 TESTDLL   = msvcrtd.dll
 
-C_SRCS = \
+SOURCES = \
 	debug.c

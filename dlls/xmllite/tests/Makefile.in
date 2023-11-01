@@ -1,6 +1,6 @@
 TESTDLL   = xmllite.dll
 IMPORTS   = xmllite ole32
 
-C_SRCS = \
+SOURCES = \
 	reader.c \
 	writer.c

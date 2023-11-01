@@ -2,5 +2,5 @@ MODULE = cryptext.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	cryptext_main.c

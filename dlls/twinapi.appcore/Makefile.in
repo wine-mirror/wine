@@ -1,5 +1,5 @@
 EXTRADEFS = -D_CONTRACT_GEN
 MODULE    = twinapi.appcore.dll
 
-C_SRCS = \
+SOURCES = \
 	main.c

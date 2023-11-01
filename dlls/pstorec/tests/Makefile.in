@@ -1,4 +1,4 @@
 TESTDLL = pstorec.dll
 
-C_SRCS = \
+SOURCES = \
 	pstorec.c

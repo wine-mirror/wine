@@ -4,5 +4,5 @@ IMPORTS   = mfplat mf ole32 user32 uuid mfuuid strmiids
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	player.c

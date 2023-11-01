@@ -1,4 +1,4 @@
 TESTDLL   = findstr.exe
 
-C_SRCS = \
+SOURCES = \
 	findstr.c

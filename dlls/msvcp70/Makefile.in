@@ -3,7 +3,7 @@ IMPORTS = msvcr70
 EXTRADEFS = -D_MSVCP_VER=70
 PARENTSRC = ../msvcp90
 
-C_SRCS = \
+SOURCES = \
 	exception.c \
 	ios.c \
 	locale.c \

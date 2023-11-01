@@ -1,7 +1,7 @@
 EXTLIB    = libxslt.a
 EXTRAINCL = $(XML2_PE_CFLAGS) $(XSLT_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	libxslt/attributes.c \
 	libxslt/attrvt.c \
 	libxslt/documents.c \

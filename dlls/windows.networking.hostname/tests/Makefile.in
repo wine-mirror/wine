@@ -1,5 +1,5 @@
 TESTDLL = windows.networking.hostname.dll
 IMPORTS = combase
 
-C_SRCS = \
+SOURCES = \
 	hostname.c

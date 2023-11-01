@@ -1,5 +1,5 @@
 TESTDLL   = mmcndmgr.dll
 IMPORTS   = ole32 shlwapi uuid
 
-C_SRCS = \
+SOURCES = \
 	mmcndmgr.c

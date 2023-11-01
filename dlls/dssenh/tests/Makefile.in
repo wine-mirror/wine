@@ -1,5 +1,5 @@
 TESTDLL   = dssenh.dll
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	dssenh.c

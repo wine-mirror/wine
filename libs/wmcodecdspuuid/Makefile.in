@@ -1,4 +1,4 @@
 STATICLIB = libwmcodecdspuuid.a
 
-C_SRCS = \
+SOURCES = \
 	wmcodecdspuuid.c

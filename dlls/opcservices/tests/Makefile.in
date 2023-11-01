@@ -1,5 +1,5 @@
 TESTDLL = opcservices.dll
 IMPORTS = ole32 urlmon oleaut32
 
-C_SRCS = \
+SOURCES = \
 	opcservices.c

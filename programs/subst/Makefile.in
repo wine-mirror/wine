@@ -2,5 +2,5 @@ MODULE    = subst.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
 	main.c

@@ -1,4 +1,4 @@
 STATICLIB = libadsiid.a
 
-C_SRCS = \
+SOURCES = \
 	adsiid.c

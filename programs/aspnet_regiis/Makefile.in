@@ -2,5 +2,5 @@ MODULE    = aspnet_regiis.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
 	main.c

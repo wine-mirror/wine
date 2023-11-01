@@ -1,6 +1,6 @@
 TESTDLL   = hlink.dll
 IMPORTS   = hlink ole32
 
-C_SRCS = \
+SOURCES = \
 	browse_ctx.c \
 	hlink.c

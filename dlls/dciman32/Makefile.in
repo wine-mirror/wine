@@ -1,4 +1,5 @@
 MODULE    = dciman32.dll
 IMPORTLIB = dciman32
 
-C_SRCS = dciman_main.c
+SOURCES = \
+	dciman_main.c

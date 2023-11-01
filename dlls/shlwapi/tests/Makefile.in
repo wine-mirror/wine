@@ -1,7 +1,7 @@
 TESTDLL   = shlwapi.dll
 IMPORTS   = shlwapi shell32 mlang oleaut32 ole32 user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	assoc.c \
 	clist.c \
 	clsid.c \

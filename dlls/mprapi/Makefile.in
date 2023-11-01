@@ -3,5 +3,5 @@ IMPORTLIB = mprapi
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	mprapi.c

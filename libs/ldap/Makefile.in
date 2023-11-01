@@ -2,7 +2,7 @@ EXTLIB    = libldap.a
 EXTRAINCL = -I$(srcdir)/include
 EXTRADEFS = -D_TIMEVAL_DEFINED
 
-C_SRCS = \
+SOURCES = \
 	liblber/bprint.c \
 	liblber/decode.c \
 	liblber/encode.c \

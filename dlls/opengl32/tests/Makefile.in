@@ -1,5 +1,5 @@
 TESTDLL   = opengl32.dll
 IMPORTS   = opengl32 user32 gdi32
 
-C_SRCS = \
+SOURCES = \
 	opengl.c
