@@ -998,9 +998,7 @@ HRESULT create_history(HTMLInnerWindow*,OmHistory**);
 HRESULT create_namespace_collection(compat_mode_t,IHTMLNamespaceCollection**);
 HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**);
 void detach_dom_implementation(IHTMLDOMImplementation*);
-
 HRESULT create_html_storage(HTMLInnerWindow*,BOOL,IHTMLStorage**);
-void detach_html_storage(IHTMLStorage*);
 
 void HTMLDocument_View_Init(HTMLDocumentObj*);
 void HTMLDocumentObj_Persist_Init(HTMLDocumentObj*);

@@ -4001,13 +4001,11 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
     unlink_ref(&This->navigator);
     if(This->session_storage) {
         IHTMLStorage *session_storage = This->session_storage;
-        detach_html_storage(session_storage);
         This->session_storage = NULL;
         IHTMLStorage_Release(session_storage);
     }
     if(This->local_storage) {
         IHTMLStorage *local_storage = This->local_storage;
-        detach_html_storage(local_storage);
         This->local_storage = NULL;
         IHTMLStorage_Release(local_storage);
     }
