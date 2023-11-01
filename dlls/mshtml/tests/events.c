@@ -3236,8 +3236,10 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
 static void test_window_refs(IHTMLDocument2 *doc)
 {
+    IHTMLOptionElementFactory *option_factory;
     IHTMLImageElementFactory *image_factory;
     IHTMLWindow2 *self, *parent, *child;
+    IHTMLOptionElement *option_elem;
     IHTMLImgElement *img_elem;
     IHTMLFrameBase2 *iframe;
     IHTMLDocument6 *doc6;
@@ -3265,6 +3267,8 @@ static void test_window_refs(IHTMLDocument2 *doc)
 
     hres = IHTMLWindow2_get_Image(window, &image_factory);
     ok(hres == S_OK, "get_Image failed: %08lx\n", hres);
+    hres = IHTMLWindow2_get_Option(window, &option_factory);
+    ok(hres == S_OK, "get_Option failed: %08lx\n", hres);
 
     hres = IHTMLWindow2_get_self(window, &self);
     ok(hres == S_OK, "get_self failed: %08lx\n", hres);
@@ -3287,6 +3291,12 @@ static void test_window_refs(IHTMLDocument2 *doc)
     ok(img_elem != NULL, "img_elem == NULL\n");
     IHTMLImageElementFactory_Release(image_factory);
     IHTMLImgElement_Release(img_elem);
+
+    hres = IHTMLOptionElementFactory_create(option_factory, vempty, vempty, vempty, vempty, &option_elem);
+    ok(hres == S_OK, "create failed: %08lx\n", hres);
+    ok(option_elem != NULL, "option_elem == NULL\n");
+    IHTMLOptionElementFactory_Release(option_factory);
+    IHTMLOptionElement_Release(option_elem);
 }
 
 static void test_doc_obj(IHTMLDocument2 *doc)

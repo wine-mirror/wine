@@ -3982,7 +3982,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
     }
     if(This->option_factory) {
         HTMLOptionElementFactory *option_factory = This->option_factory;
-        This->option_factory->window = NULL;
         This->option_factory = NULL;
         IHTMLOptionElementFactory_Release(&option_factory->IHTMLOptionElementFactory_iface);
     }

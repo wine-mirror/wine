@@ -491,11 +491,6 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_variant(&text), debugstr_variant(&value),
           debugstr_variant(&defaultselected), debugstr_variant(&selected), optelem);
 
-    if(!This->window || !This->window->doc) {
-        WARN("NULL doc\n");
-        return E_UNEXPECTED;
-    }
-
     *optelem = NULL;
 
     hres = create_nselem(This->window->doc, L"OPTION", &nselem);
@@ -555,6 +550,25 @@ static void *HTMLOptionElementFactory_query_interface(DispatchEx *dispex, REFIID
     return NULL;
 }
 
+static void HTMLOptionElementFactory_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void HTMLOptionElementFactory_unlink(DispatchEx *dispex)
+{
+    HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
 static void HTMLOptionElementFactory_destructor(DispatchEx *dispex)
 {
     HTMLOptionElementFactory *This = HTMLOptionElementFactory_from_DispatchEx(dispex);
@@ -601,6 +615,8 @@ static const tid_t HTMLOptionElementFactory_iface_tids[] = {
 static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
     .query_interface  = HTMLOptionElementFactory_query_interface,
     .destructor       = HTMLOptionElementFactory_destructor,
+    .traverse         = HTMLOptionElementFactory_traverse,
+    .unlink           = HTMLOptionElementFactory_unlink,
     .value            = HTMLOptionElementFactory_value,
 };
 
@@ -621,6 +637,7 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionEleme
 
     ret->IHTMLOptionElementFactory_iface.lpVtbl = &HTMLOptionElementFactoryVtbl;
     ret->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     init_dispatch(&ret->dispex, &HTMLOptionElementFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
