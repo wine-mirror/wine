@@ -3236,12 +3236,17 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
 static void test_window_refs(IHTMLDocument2 *doc)
 {
+    IHTMLImageElementFactory *image_factory;
     IHTMLWindow2 *self, *parent, *child;
+    IHTMLImgElement *img_elem;
     IHTMLFrameBase2 *iframe;
     IHTMLDocument6 *doc6;
     IHTMLElement2 *elem;
+    VARIANT vempty;
     HRESULT hres;
     BSTR bstr;
+
+    V_VT(&vempty) = VT_EMPTY;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
     ok(hres == S_OK, "Could not get IHTMLDocument6 iface: %08lx\n", hres);
@@ -3258,6 +3263,9 @@ static void test_window_refs(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_contentWindow failed: %08lx\n", hres);
     IHTMLFrameBase2_Release(iframe);
 
+    hres = IHTMLWindow2_get_Image(window, &image_factory);
+    ok(hres == S_OK, "get_Image failed: %08lx\n", hres);
+
     hres = IHTMLWindow2_get_self(window, &self);
     ok(hres == S_OK, "get_self failed: %08lx\n", hres);
     hres = IHTMLWindow2_get_parent(child, &parent);
@@ -3271,9 +3279,14 @@ static void test_window_refs(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_parent(child, &parent);
     ok(hres == S_OK, "get_parent failed: %08lx\n", hres);
     ok(parent == child, "parent != child\n");
-
     IHTMLWindow2_Release(parent);
     IHTMLWindow2_Release(child);
+
+    hres = IHTMLImageElementFactory_create(image_factory, vempty, vempty, &img_elem);
+    ok(hres == S_OK, "create failed: %08lx\n", hres);
+    ok(img_elem != NULL, "img_elem == NULL\n");
+    IHTMLImageElementFactory_Release(image_factory);
+    IHTMLImgElement_Release(img_elem);
 }
 
 static void test_doc_obj(IHTMLDocument2 *doc)

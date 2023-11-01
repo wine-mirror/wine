@@ -3977,7 +3977,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
 
     if(This->image_factory) {
         HTMLImageElementFactory *image_factory = This->image_factory;
-        This->image_factory->window = NULL;
         This->image_factory = NULL;
         IHTMLImageElementFactory_Release(&image_factory->IHTMLImageElementFactory_iface);
     }

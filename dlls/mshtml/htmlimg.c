@@ -846,7 +846,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
         VARIANT width, VARIANT height, IHTMLImgElement **img_elem)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
-    HTMLDocumentNode *doc;
+    HTMLDocumentNode *doc = This->window->doc;
     IHTMLImgElement *img;
     HTMLElement *elem;
     nsIDOMElement *nselem;
@@ -855,13 +855,6 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&width),
             debugstr_variant(&height), img_elem);
-
-    if(!This->window || !This->window->doc) {
-        WARN("NULL doc\n");
-        return E_UNEXPECTED;
-    }
-
-    doc = This->window->doc;
 
     *img_elem = NULL;
 
@@ -921,6 +914,25 @@ static void *HTMLImageElementFactory_query_interface(DispatchEx *dispex, REFIID 
     return NULL;
 }
 
+static void HTMLImageElementFactory_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void HTMLImageElementFactory_unlink(DispatchEx *dispex)
+{
+    HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
 static void HTMLImageElementFactory_destructor(DispatchEx *dispex)
 {
     HTMLImageElementFactory *This = impl_from_DispatchEx(dispex);
@@ -963,6 +975,8 @@ static const tid_t HTMLImageElementFactory_iface_tids[] = {
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
     .query_interface  = HTMLImageElementFactory_query_interface,
     .destructor       = HTMLImageElementFactory_destructor,
+    .traverse         = HTMLImageElementFactory_traverse,
+    .unlink           = HTMLImageElementFactory_unlink,
     .value            = HTMLImageElementFactory_value,
 };
 
@@ -983,6 +997,7 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElement
 
     ret->IHTMLImageElementFactory_iface.lpVtbl = &HTMLImageElementFactoryVtbl;
     ret->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     init_dispatch(&ret->dispex, &HTMLImageElementFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
