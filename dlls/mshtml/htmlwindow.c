@@ -3987,7 +3987,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
     }
     if(This->xhr_factory) {
         HTMLXMLHttpRequestFactory *xhr_factory = This->xhr_factory;
-        This->xhr_factory->window = NULL;
         This->xhr_factory = NULL;
         IHTMLXMLHttpRequestFactory_Release(&xhr_factory->IHTMLXMLHttpRequestFactory_iface);
     }

@@ -3237,14 +3237,17 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 static void test_window_refs(IHTMLDocument2 *doc)
 {
     IHTMLOptionElementFactory *option_factory;
+    IHTMLXMLHttpRequestFactory *xhr_factory;
     IHTMLImageElementFactory *image_factory;
     IHTMLWindow2 *self, *parent, *child;
     IHTMLOptionElement *option_elem;
     IHTMLImgElement *img_elem;
+    IHTMLXMLHttpRequest *xhr;
     IHTMLFrameBase2 *iframe;
+    IHTMLWindow5 *window5;
     IHTMLDocument6 *doc6;
     IHTMLElement2 *elem;
-    VARIANT vempty;
+    VARIANT vempty, var;
     HRESULT hres;
     BSTR bstr;
 
@@ -3264,6 +3267,16 @@ static void test_window_refs(IHTMLDocument2 *doc)
     hres = IHTMLFrameBase2_get_contentWindow(iframe, &child);
     ok(hres == S_OK, "get_contentWindow failed: %08lx\n", hres);
     IHTMLFrameBase2_Release(iframe);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow5, (void**)&window5);
+    ok(hres == S_OK, "Could not get IHTMLWindow5: %08lx\n", hres);
+    hres = IHTMLWindow5_get_XMLHttpRequest(window5, &var);
+    ok(hres == S_OK, "get_XMLHttpRequest failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(XMLHttpRequest) = %d\n", V_VT(&var));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLXMLHttpRequestFactory, (void**)&xhr_factory);
+    ok(hres == S_OK, "Could not get IHTMLXMLHttpRequestFactory: %08lx\n", hres);
+    IHTMLWindow5_Release(window5);
+    VariantClear(&var);
 
     hres = IHTMLWindow2_get_Image(window, &image_factory);
     ok(hres == S_OK, "get_Image failed: %08lx\n", hres);
@@ -3285,6 +3298,12 @@ static void test_window_refs(IHTMLDocument2 *doc)
     ok(parent == child, "parent != child\n");
     IHTMLWindow2_Release(parent);
     IHTMLWindow2_Release(child);
+
+    hres = IHTMLXMLHttpRequestFactory_create(xhr_factory, &xhr);
+    todo_wine
+    ok(hres == S_OK, "create failed: %08lx\n", hres);
+    IHTMLXMLHttpRequestFactory_Release(xhr_factory);
+    if(hres == S_OK) IHTMLXMLHttpRequest_Release(xhr);
 
     hres = IHTMLImageElementFactory_create(image_factory, vempty, vempty, &img_elem);
     ok(hres == S_OK, "create failed: %08lx\n", hres);

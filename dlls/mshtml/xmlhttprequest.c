@@ -1686,6 +1686,9 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->window->base.outer_window)
+        return E_FAIL;
+
     nsxhr = create_nsxhr(This->window->base.outer_window->nswindow);
     if(!nsxhr)
         return E_FAIL;
@@ -1768,6 +1771,25 @@ static void *HTMLXMLHttpRequestFactory_query_interface(DispatchEx *dispex, REFII
     return NULL;
 }
 
+static void HTMLXMLHttpRequestFactory_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void HTMLXMLHttpRequestFactory_unlink(DispatchEx *dispex)
+{
+    HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
 static void HTMLXMLHttpRequestFactory_destructor(DispatchEx *dispex)
 {
     HTMLXMLHttpRequestFactory *This = factory_from_DispatchEx(dispex);
@@ -1800,6 +1822,8 @@ static HRESULT HTMLXMLHttpRequestFactory_value(DispatchEx *iface, LCID lcid, WOR
 static const dispex_static_data_vtbl_t HTMLXMLHttpRequestFactory_dispex_vtbl = {
     .query_interface  = HTMLXMLHttpRequestFactory_query_interface,
     .destructor       = HTMLXMLHttpRequestFactory_destructor,
+    .traverse         = HTMLXMLHttpRequestFactory_traverse,
+    .unlink           = HTMLXMLHttpRequestFactory_unlink,
     .value            = HTMLXMLHttpRequestFactory_value
 };
 
@@ -1824,6 +1848,7 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
 
     ret->IHTMLXMLHttpRequestFactory_iface.lpVtbl = &HTMLXMLHttpRequestFactoryVtbl;
     ret->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     init_dispatch(&ret->dispex, &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
