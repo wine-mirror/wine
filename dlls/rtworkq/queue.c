@@ -883,7 +883,8 @@ static HRESULT queue_submit_timer(struct queue *queue, IRtwqAsyncResult *result,
 
 static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
 {
-    HRESULT hr = RTWQ_E_NOT_FOUND;
+    TP_WAIT *wait_object;
+    TP_TIMER *timer_object;
     struct work_item *item;
 
     EnterCriticalSection(&queue->cs);
@@ -891,29 +892,58 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
     {
         if (item->key == key)
         {
+            /* We can't immediately release the item here, because the callback could already be
+             * running somewhere else. And if we release it here, the callback will access freed memory.
+             * So instead we have to make sure the callback is really stopped, or has really finished
+             * running before we do that. And we can't do that in this critical section, which would be a
+             * deadlock. So we first keep an extra reference to it, then leave the critical section to
+             * wait for the thread-pool objects, finally we re-enter critical section to release it. */
             key >>= 32;
+            IUnknown_AddRef(&item->IUnknown_iface);
             if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
             {
-                IRtwqAsyncResult_SetStatus(item->result, RTWQ_E_OPERATION_CANCELLED);
-                invoke_async_callback(item->result);
-                CloseThreadpoolWait(item->u.wait_object);
+                wait_object = item->u.wait_object;
                 item->u.wait_object = NULL;
+                LeaveCriticalSection(&queue->cs);
+
+                SetThreadpoolWait(wait_object, NULL, NULL);
+                WaitForThreadpoolWaitCallbacks(wait_object, TRUE);
+                CloseThreadpoolWait(wait_object);
             }
             else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
             {
-                CloseThreadpoolTimer(item->u.timer_object);
+                timer_object = item->u.timer_object;
                 item->u.timer_object = NULL;
+                LeaveCriticalSection(&queue->cs);
+
+                SetThreadpoolTimer(timer_object, NULL, 0, 0);
+                WaitForThreadpoolTimerCallbacks(timer_object, TRUE);
+                CloseThreadpoolTimer(timer_object);
             }
             else
+            {
                 WARN("Unknown item key mask %#I64x.\n", key);
-            queue_release_pending_item(item);
-            hr = S_OK;
-            break;
+                LeaveCriticalSection(&queue->cs);
+            }
+
+            if (queue_release_pending_item(item))
+            {
+                /* This means the callback wasn't run during our wait, so we can invoke the
+                 * callback with a canceled status, and release the work item. */
+                if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
+                {
+                    IRtwqAsyncResult_SetStatus(item->result, RTWQ_E_OPERATION_CANCELLED);
+                    invoke_async_callback(item->result);
+                }
+                IUnknown_Release(&item->IUnknown_iface);
+            }
+            IUnknown_Release(&item->IUnknown_iface);
+            return S_OK;
         }
     }
     LeaveCriticalSection(&queue->cs);
 
-    return hr;
+    return RTWQ_E_NOT_FOUND;
 }
 
 static HRESULT alloc_user_queue(const struct queue_desc *desc, DWORD *queue_id)

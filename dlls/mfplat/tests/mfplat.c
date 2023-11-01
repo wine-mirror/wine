@@ -3613,7 +3613,7 @@ static void test_scheduled_items(void)
     ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
 
     refcount = IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
-    todo_wine ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
+    ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
 
     hr = MFCancelWorkItem(key);
     ok(hr == MF_E_NOT_FOUND || broken(hr == S_OK) /* < win10 */, "Unexpected hr %#lx.\n", hr);
@@ -3760,7 +3760,7 @@ static void test_periodic_callback(void)
     hr = pMFRemovePeriodicCallback(key);
     ok(hr == S_OK, "Failed to remove callback, hr %#lx.\n", hr);
     Sleep(500);
-    todo_wine EXPECT_REF(&context->IMFAsyncCallback_iface, 1);
+    EXPECT_REF(&context->IMFAsyncCallback_iface, 1);
     IMFAsyncCallback_Release(&context->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
