@@ -644,7 +644,7 @@ static HRESULT WINAPI OmHistory_get_length(IOmHistory *iface, short *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->window && This->window->base.outer_window)
+    if(This->window->base.outer_window)
         browser = This->window->base.outer_window->browser;
 
     *p = browser && browser->doc->travel_log
@@ -703,6 +703,25 @@ static void *OmHistory_query_interface(DispatchEx *dispex, REFIID riid)
     return NULL;
 }
 
+static void OmHistory_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    OmHistory *This = OmHistory_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+static void OmHistory_unlink(DispatchEx *dispex)
+{
+    OmHistory *This = OmHistory_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
 static void OmHistory_destructor(DispatchEx *dispex)
 {
     OmHistory *This = OmHistory_from_DispatchEx(dispex);
@@ -712,6 +731,8 @@ static void OmHistory_destructor(DispatchEx *dispex)
 static const dispex_static_data_vtbl_t OmHistory_dispex_vtbl = {
     .query_interface  = OmHistory_query_interface,
     .destructor       = OmHistory_destructor,
+    .traverse         = OmHistory_traverse,
+    .unlink           = OmHistory_unlink,
 };
 
 static const tid_t OmHistory_iface_tids[] = {
@@ -738,6 +759,7 @@ HRESULT create_history(HTMLInnerWindow *window, OmHistory **ret)
     history->IOmHistory_iface.lpVtbl = &OmHistoryVtbl;
 
     history->window = window;
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
     *ret = history;
     return S_OK;

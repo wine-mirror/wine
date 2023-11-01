@@ -3247,8 +3247,10 @@ static void test_window_refs(IHTMLDocument2 *doc)
     IHTMLWindow5 *window5;
     IHTMLDocument6 *doc6;
     IHTMLElement2 *elem;
+    IOmHistory *history;
     VARIANT vempty, var;
     HRESULT hres;
+    short length;
     BSTR bstr;
 
     V_VT(&vempty) = VT_EMPTY;
@@ -3282,6 +3284,8 @@ static void test_window_refs(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_Image failed: %08lx\n", hres);
     hres = IHTMLWindow2_get_Option(window, &option_factory);
     ok(hres == S_OK, "get_Option failed: %08lx\n", hres);
+    hres = IHTMLWindow2_get_history(window, &history);
+    ok(hres == S_OK, "get_history failed: %08lx\n", hres);
 
     hres = IHTMLWindow2_get_self(window, &self);
     ok(hres == S_OK, "get_self failed: %08lx\n", hres);
@@ -3316,6 +3320,12 @@ static void test_window_refs(IHTMLDocument2 *doc)
     ok(option_elem != NULL, "option_elem == NULL\n");
     IHTMLOptionElementFactory_Release(option_factory);
     IHTMLOptionElement_Release(option_elem);
+
+    hres = IOmHistory_get_length(history, &length);
+    ok(hres == S_OK, "get_length failed: %08lx\n", hres);
+    todo_wine
+    ok(length == 42, "length = %d\n", length);
+    IOmHistory_Release(history);
 }
 
 static void test_doc_obj(IHTMLDocument2 *doc)
@@ -4396,7 +4406,7 @@ static HRESULT WINAPI TravelLog_Clone(ITravelLog *iface, ITravelLog **pptl)
 
 static DWORD WINAPI TravelLog_CountEntries(ITravelLog *iface, IUnknown *punk)
 {
-    return 0;
+    return 42;
 }
 
 static HRESULT WINAPI TravelLog_Revert(ITravelLog *iface)

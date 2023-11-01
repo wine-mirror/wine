@@ -3994,7 +3994,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
     unlink_ref(&This->screen);
     if(This->history) {
         OmHistory *history = This->history;
-        This->history->window = NULL;
         This->history = NULL;
         IOmHistory_Release(&history->IOmHistory_iface);
     }
