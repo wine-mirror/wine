@@ -5868,6 +5868,10 @@ static void HTMLDocumentNode_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 
     if(This->window)
         note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+    if(This->dom_implementation)
+        note_cc_edge((nsISupports*)This->dom_implementation, "dom_implementation", cb);
+    if(This->namespaces)
+        note_cc_edge((nsISupports*)This->namespaces, "namespaces", cb);
 }
 
 static void HTMLDocumentNode_unlink(DispatchEx *dispex)
