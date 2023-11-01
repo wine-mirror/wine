@@ -3,9 +3,8 @@ IMPORTLIB = mspatcha
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	lzxd_dec.c \
 	mspatcha_main.c \
-	pa19.c
-
-RC_SRCS = version.rc
+	pa19.c \
+	version.rc

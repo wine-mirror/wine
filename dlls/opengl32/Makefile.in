@@ -8,10 +8,9 @@ UNIX_LIBS    = -lwin32u
 
 EXTRADLLFLAGS = -Wl,--image-base,0x7a800000
 
-C_SRCS = \
+SOURCES = \
 	thunks.c \
 	unix_thunks.c \
 	unix_wgl.c \
+	version.rc \
 	wgl.c
-
-RC_SRCS = version.rc

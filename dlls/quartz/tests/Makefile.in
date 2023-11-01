@@ -1,7 +1,7 @@
 TESTDLL   = quartz.dll
 IMPORTS   = strmbase advapi32 d3d9 dsound msdmo msvfw32 ole32 oleaut32 user32 uuid winmm
 
-C_SRCS = \
+SOURCES = \
 	acmwrapper.c \
 	avidec.c \
 	avisplit.c \
@@ -14,12 +14,9 @@ C_SRCS = \
 	mpeglayer3.c \
 	mpegsplit.c \
 	passthrough.c \
+	rsrc.rc \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \
 	vmr9.c \
 	waveparser.c
-
-
-RC_SRCS = \
-	rsrc.rc

@@ -1,8 +1,6 @@
 TESTDLL   = wmvcore.dll
 IMPORTS   = ole32 wmvcore
 
-C_SRCS = \
+SOURCES = \
+	rsrc.rc \
 	wmvcore.c
-
-RC_SRCS = \
-	rsrc.rc

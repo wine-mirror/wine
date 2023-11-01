@@ -3,8 +3,6 @@ IMPORTS   = secur32 advapi32 user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
+SOURCES = \
+	klist.rc \
 	main.c
-
-RC_SRCS = \
-	klist.rc

@@ -3,7 +3,7 @@ IMPORTLIB = wined3d
 IMPORTS   = $(VKD3D_PE_LIBS) dxguid opengl32 user32 gdi32 advapi32
 EXTRAINCL = $(VKD3D_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	adapter_gl.c \
 	adapter_vk.c \
 	arb_program_shader.c \
@@ -32,8 +32,7 @@ C_SRCS = \
 	swapchain.c \
 	texture.c \
 	utils.c \
+	version.rc \
 	vertexdeclaration.c \
 	view.c \
 	wined3d_main.c
-
-RC_SRCS = version.rc

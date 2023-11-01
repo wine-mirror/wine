@@ -4,11 +4,10 @@ DELAYIMPORTS = comctl32 shell32 oleaut32 ole32 shlwapi
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	appbar.c \
 	desktop.c \
 	explorer.c \
+	explorer.rc \
 	startmenu.c \
 	systray.c
-
-RC_SRCS = explorer.rc

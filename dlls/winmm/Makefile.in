@@ -3,7 +3,7 @@ IMPORTLIB = winmm
 IMPORTS   = uuid user32 advapi32 ole32 msacm32
 DELAYIMPORTS = dinput8
 
-C_SRCS = \
+SOURCES = \
 	driver.c \
 	joystick.c \
 	lolvldrv.c \
@@ -12,8 +12,6 @@ C_SRCS = \
 	playsound.c \
 	time.c \
 	waveform.c \
-	winmm.c
-
-RC_SRCS = \
+	winmm.c \
 	winmm.rc \
 	winmm_res.rc

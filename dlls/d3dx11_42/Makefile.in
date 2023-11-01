@@ -6,9 +6,8 @@ PARENTSRC = ../d3dx11_43
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	async.c \
 	main.c \
-	texture.c
-
-RC_SRCS = version.rc
+	texture.c \
+	version.rc

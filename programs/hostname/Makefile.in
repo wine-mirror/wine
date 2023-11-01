@@ -3,6 +3,6 @@ DELAYIMPORTS = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = hostname.c
-
-RC_SRCS = hostname.rc
+SOURCES = \
+	hostname.c \
+	hostname.rc

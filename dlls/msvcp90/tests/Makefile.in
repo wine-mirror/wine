@@ -1,9 +1,7 @@
 TESTDLL   = msvcp90.dll
 
-C_SRCS = \
+SOURCES = \
 	ios.c \
 	misc.c \
+	msvcp90.rc \
 	string.c
-
-RC_SRCS = \
-	msvcp90.rc

@@ -1,7 +1,5 @@
 TESTDLL   = msvcr80.dll
 
-C_SRCS = \
-	msvcr80.c
-
-RC_SRCS = \
+SOURCES = \
+	msvcr80.c \
 	msvcr80.rc

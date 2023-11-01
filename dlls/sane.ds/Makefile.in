@@ -4,13 +4,12 @@ IMPORTS   = comctl32 user32 gdi32
 UNIX_LIBS    = $(SANE_LIBS)
 UNIX_CFLAGS  = $(SANE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	capability.c \
 	ds_ctrl.c \
 	ds_image.c \
 	options.c \
+	sane.rc \
 	sane_main.c \
 	ui.c \
 	unixlib.c
-
-RC_SRCS = sane.rc

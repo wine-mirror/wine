@@ -2,7 +2,7 @@ MODULE    = webservices.dll
 IMPORTLIB = webservices
 IMPORTS   = winhttp rpcrt4 user32 ws2_32
 
-C_SRCS = \
+SOURCES = \
 	channel.c \
 	error.c \
 	heap.c \
@@ -10,8 +10,7 @@ C_SRCS = \
 	msg.c \
 	proxy.c \
 	reader.c \
+	rsrc.rc \
 	string.c \
 	url.c \
 	writer.c
-
-RC_SRCS = rsrc.rc

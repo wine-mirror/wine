@@ -3,12 +3,10 @@ IMPORTLIB = wintrust
 IMPORTS   = crypt32 user32 advapi32
 DELAYIMPORTS = cryptui imagehlp
 
-C_SRCS = \
+SOURCES = \
 	asn.c \
 	crypt.c \
 	register.c \
 	softpub.c \
+	version.rc \
 	wintrust_main.c
-
-RC_SRCS = \
-	version.rc

@@ -4,8 +4,7 @@ DELAYIMPORTS = comctl32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
+SOURCES = \
 	conhost.c \
+	conhost.rc \
 	window.c
-
-RC_SRCS = conhost.rc

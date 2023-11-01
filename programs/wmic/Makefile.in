@@ -3,7 +3,6 @@ IMPORTS   = oleaut32 ole32 user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = wmic.rc
+SOURCES = \
+	main.c \
+	wmic.rc

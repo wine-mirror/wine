@@ -1,10 +1,9 @@
 TESTDLL   = qedit.dll
 IMPORTS   = strmbase strmiids uuid oleaut32 ole32
 
-C_SRCS = \
+SOURCES = \
 	mediadet.c \
 	nullrenderer.c \
+	qedit.rc \
 	samplegrabber.c \
 	timeline.c
-
-RC_SRCS = qedit.rc

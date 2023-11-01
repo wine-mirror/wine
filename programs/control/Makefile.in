@@ -3,6 +3,6 @@ IMPORTS   = shell32 user32 comctl32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = control.c
-
-RC_SRCS = control.rc
+SOURCES = \
+	control.c \
+	control.rc

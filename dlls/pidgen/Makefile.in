@@ -2,7 +2,6 @@ MODULE    = pidgen.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = rsrc.rc
+SOURCES = \
+	main.c \
+	rsrc.rc

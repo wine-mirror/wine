@@ -7,7 +7,7 @@ EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b800000
 x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x178000000
 
-C_SRCS = \
+SOURCES = \
 	atom.c \
 	comm.c \
 	computername.c \
@@ -29,8 +29,6 @@ C_SRCS = \
 	thread.c \
 	toolhelp.c \
 	version.c \
+	version.rc \
 	virtual.c \
 	volume.c
-
-RC_SRCS = \
-	version.rc

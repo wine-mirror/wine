@@ -3,7 +3,6 @@ IMPORTS   = winspool
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	ntprint.c
-
-RC_SRCS = ntprint.rc
+SOURCES = \
+	ntprint.c \
+	ntprint.rc

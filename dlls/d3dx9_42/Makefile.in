@@ -6,7 +6,7 @@ DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	animation.c \
 	core.c \
 	effect.c \
@@ -25,7 +25,6 @@ C_SRCS = \
 	txc_compress_dxtn.c \
 	txc_fetch_dxtn.c \
 	util.c \
+	version.rc \
 	volume.c \
 	xfile.c
-
-RC_SRCS = version.rc

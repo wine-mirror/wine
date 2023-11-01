@@ -1,7 +1,6 @@
 TESTDLL   = mfmediaengine.dll
 IMPORTS   = ole32 mf mfplat oleaut32 mfuuid uuid
 
-C_SRCS = \
-	mfmediaengine.c
-
-RC_SRCS = resource.rc
+SOURCES = \
+	mfmediaengine.c \
+	resource.rc

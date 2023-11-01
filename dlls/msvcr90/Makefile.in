@@ -5,7 +5,7 @@ IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
 
-C_SRCS = \
+SOURCES = \
 	console.c \
 	cpp.c \
 	ctype.c \
@@ -30,6 +30,7 @@ C_SRCS = \
 	mathf.c \
 	mbcs.c \
 	misc.c \
+	msvcr90.rc \
 	onexit.c \
 	process.c \
 	scanf.c \
@@ -39,5 +40,3 @@ C_SRCS = \
 	time.c \
 	undname.c \
 	wcs.c
-
-RC_SRCS = msvcr90.rc

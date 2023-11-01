@@ -2,7 +2,6 @@ MODULE    = d3dx10_33.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	d3dx10_33_main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	d3dx10_33_main.c \
+	version.rc

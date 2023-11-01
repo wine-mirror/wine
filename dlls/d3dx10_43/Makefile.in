@@ -5,13 +5,12 @@ DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	async.c \
 	compiler.c \
 	d3dx10_43_main.c \
 	font.c \
 	mesh.c \
 	sprite.c \
-	texture.c
-
-RC_SRCS = version.rc
+	texture.c \
+	version.rc

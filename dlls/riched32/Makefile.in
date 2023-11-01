@@ -1,7 +1,6 @@
 MODULE    = riched32.dll
 IMPORTS   = riched20 user32
 
-C_SRCS = \
-	richedit.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	richedit.c \
+	version.rc

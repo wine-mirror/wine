@@ -1,3 +1,4 @@
 MODULE    = vga.dll
 
-RC_SRCS   = version.rc
+SOURCES = \
+	version.rc

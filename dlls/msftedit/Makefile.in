@@ -3,7 +3,6 @@ IMPORTS   = uuid riched20
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	msftedit_main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	msftedit_main.c \
+	version.rc

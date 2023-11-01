@@ -2,7 +2,6 @@ MODULE    = tdh.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
-	tdh_main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	tdh_main.c \
+	version.rc

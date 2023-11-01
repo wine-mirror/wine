@@ -1,7 +1,7 @@
 TESTDLL   = shell32.dll
 IMPORTS   = shell32 ole32 oleaut32 user32 gdi32 advapi32 shlwapi
 
-C_SRCS = \
+SOURCES = \
 	appbar.c \
 	assoc.c \
 	autocomplete.c \
@@ -10,6 +10,7 @@ C_SRCS = \
 	generated.c \
 	progman_dde.c \
 	recyclebin.c \
+	rsrc.rc \
 	shelldispatch.c \
 	shelllink.c \
 	shellole.c \
@@ -21,5 +22,3 @@ C_SRCS = \
 	shlview.c \
 	string.c \
 	systray.c
-
-RC_SRCS = rsrc.rc

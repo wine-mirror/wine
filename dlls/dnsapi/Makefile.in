@@ -4,12 +4,10 @@ IMPORTLIB = dnsapi
 DELAYIMPORTS = netapi32
 UNIX_LIBS    = $(RESOLV_LIBS)
 
-C_SRCS = \
+SOURCES = \
 	libresolv.c \
 	main.c \
 	name.c \
 	query.c \
-	record.c
-
-RC_SRCS = \
+	record.c \
 	version.rc

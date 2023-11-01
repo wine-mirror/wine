@@ -5,7 +5,7 @@ IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
 
-C_SRCS = \
+SOURCES = \
 	console.c \
 	cpp.c \
 	crt_gccmain.c \
@@ -43,6 +43,5 @@ C_SRCS = \
 	thread.c \
 	time.c \
 	undname.c \
+	version.rc \
 	wcs.c
-
-RC_SRCS = version.rc

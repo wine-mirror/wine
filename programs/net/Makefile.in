@@ -3,6 +3,6 @@ IMPORTS   = netapi32 user32 advapi32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = net.c
-
-RC_SRCS = net.rc
+SOURCES = \
+	net.c \
+	net.rc

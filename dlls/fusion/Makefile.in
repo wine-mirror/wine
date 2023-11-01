@@ -1,11 +1,10 @@
 MODULE    = fusion.dll
 IMPORTS   = bcrypt dbghelp shlwapi version user32
 
-C_SRCS = \
+SOURCES = \
 	asmcache.c \
 	asmenum.c \
 	asmname.c \
 	assembly.c \
-	fusion.c
-
-RC_SRCS = version.rc
+	fusion.c \
+	version.rc

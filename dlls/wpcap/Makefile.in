@@ -4,8 +4,7 @@ IMPORTS   = iphlpapi
 DELAYIMPORTS = ws2_32
 UNIX_LIBS    = $(PCAP_LIBS)
 
-C_SRCS = \
+SOURCES = \
 	unixlib.c \
+	version.rc \
 	wpcap.c
-
-RC_SRCS = version.rc

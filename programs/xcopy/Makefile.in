@@ -3,7 +3,6 @@ IMPORTS   = shell32 user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = \
-	xcopy.c
-
-RC_SRCS = xcopy.rc
+SOURCES = \
+	xcopy.c \
+	xcopy.rc

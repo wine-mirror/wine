@@ -3,7 +3,6 @@ IMPORTS   = user32 kernel
 
 EXTRADLLFLAGS = -mwindows
 
-C_SRCS = \
-	winevdm.c
-
-RC_SRCS = winevdm.rc
+SOURCES = \
+	winevdm.c \
+	winevdm.rc

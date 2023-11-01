@@ -1,11 +1,10 @@
 TESTDLL   = comdlg32.dll
 IMPORTS   = uuid shell32 ole32 comdlg32 winspool user32 gdi32
 
-C_SRCS = \
+SOURCES = \
 	filedlg.c \
 	finddlg.c \
 	fontdlg.c \
 	itemdlg.c \
-	printdlg.c
-
-RC_SRCS = rsrc.rc
+	printdlg.c \
+	rsrc.rc

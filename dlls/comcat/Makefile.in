@@ -1,5 +1,5 @@
 MODULE    = comcat.dll
 IMPORTS   = ole32
 
-RC_SRCS = \
+SOURCES = \
 	version.rc

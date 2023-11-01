@@ -1,4 +1,5 @@
 MODULE    = rsabase.dll
 IMPORTS   = rsaenh
 
-RC_SRCS = version.rc
+SOURCES = \
+	version.rc

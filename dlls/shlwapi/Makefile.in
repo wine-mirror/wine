@@ -4,7 +4,7 @@ IMPORTLIB = shlwapi
 IMPORTS   = uuid shcore user32 gdi32 advapi32 kernelbase
 DELAYIMPORTS = userenv oleaut32 ole32 comctl32 comdlg32 mpr mlang urlmon shell32 winmm
 
-C_SRCS = \
+SOURCES = \
 	assoc.c \
 	clist.c \
 	istream.c \
@@ -13,11 +13,10 @@ C_SRCS = \
 	path.c \
 	reg.c \
 	regstream.c \
+	shlwapi.rc \
 	shlwapi_main.c \
 	stopwatch.c \
 	string.c \
 	thread.c \
 	url.c \
 	wsprintf.c
-
-RC_SRCS = shlwapi.rc

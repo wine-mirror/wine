@@ -3,7 +3,7 @@ IMPORTLIB = uxtheme
 IMPORTS   = user32 gdi32 advapi32
 DELAYIMPORTS = msimg32
 
-C_SRCS = \
+SOURCES = \
 	buffer.c \
 	dialog.c \
 	draw.c \
@@ -15,6 +15,5 @@ C_SRCS = \
 	stylemap.c \
 	system.c \
 	uxini.c \
+	version.rc \
 	window.c
-
-RC_SRCS = version.rc

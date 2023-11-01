@@ -1,8 +1,7 @@
 TESTDLL   = version.dll
 IMPORTS   = version shell32
 
-C_SRCS = \
+SOURCES = \
 	info.c \
-	install.c
-
-RC_SRCS = version.rc
+	install.c \
+	version.rc

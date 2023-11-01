@@ -1,6 +1,5 @@
 MODULE    = dpnhpast.dll
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	main.c \
+	version.rc

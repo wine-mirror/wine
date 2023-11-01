@@ -6,12 +6,11 @@ UNIX_CFLAGS  = $(UDEV_CFLAGS) $(SDL2_CFLAGS)
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
+SOURCES = \
 	bus_iohid.c \
 	bus_sdl.c \
 	bus_udev.c \
 	hid.c \
 	main.c \
-	unixlib.c
-
-RC_SRCS = winebus.rc
+	unixlib.c \
+	winebus.rc

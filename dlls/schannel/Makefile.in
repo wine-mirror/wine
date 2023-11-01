@@ -3,9 +3,8 @@ IMPORTS   = secur32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	lsamode.c \
 	schannel_main.c \
-	usermode.c
-
-RC_SRCS = version.rc
+	usermode.c \
+	version.rc

@@ -4,6 +4,6 @@ IMPORTS   = comctl32 user32 advapi32 gdi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = aclui_main.c
-
-RC_SRCS = aclui.rc
+SOURCES = \
+	aclui.rc \
+	aclui_main.c

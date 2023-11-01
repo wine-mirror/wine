@@ -1,7 +1,6 @@
 TESTDLL   = mfreadwrite.dll
 IMPORTS   = ole32 user32 d3d9 dxva2 mfplat mfreadwrite mfuuid
 
-C_SRCS = \
-	mfplat.c
-
-RC_SRCS = resource.rc
+SOURCES = \
+	mfplat.c \
+	resource.rc

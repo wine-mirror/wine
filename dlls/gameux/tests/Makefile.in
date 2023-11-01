@@ -1,8 +1,7 @@
 TESTDLL   = gameux.dll
 IMPORTS   = uuid shlwapi oleaut32 ole32 advapi32 shell32
 
-C_SRCS = \
+SOURCES = \
 	gameexplorer.c \
-	gamestatistics.c
-
-RC_SRCS = rsrc.rc
+	gamestatistics.c \
+	rsrc.rc

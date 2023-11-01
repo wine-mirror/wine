@@ -1,7 +1,6 @@
 MODULE    = serialui.dll
 IMPORTS   = user32 advapi32
 
-C_SRCS = \
-	confdlg.c
-
-RC_SRCS = serialui.rc
+SOURCES = \
+	confdlg.c \
+	serialui.rc

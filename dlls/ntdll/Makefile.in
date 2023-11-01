@@ -10,7 +10,7 @@ EXTRADLLFLAGS = -nodefaultlibs
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
 x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x170000000
 
-C_SRCS = \
+SOURCES = \
 	actctx.c \
 	atom.c \
 	crypt.c \
@@ -66,9 +66,8 @@ C_SRCS = \
 	unix/thread.c \
 	unix/virtual.c \
 	version.c \
+	version.rc \
 	wcstring.c
-
-RC_SRCS = version.rc
 
 EXTRA_OBJS = unix/version.o
 

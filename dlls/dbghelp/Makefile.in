@@ -4,7 +4,7 @@ IMPORTS   = kernelbase $(ZLIB_PE_LIBS)
 EXTRAINCL = $(ZLIB_PE_CFLAGS)
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
 
-C_SRCS = \
+SOURCES = \
 	coff.c \
 	cpu_arm.c \
 	cpu_arm64.c \
@@ -25,6 +25,5 @@ C_SRCS = \
 	stack.c \
 	storage.c \
 	symbol.c \
-	type.c
-
-RC_SRCS = version.rc
+	type.c \
+	version.rc

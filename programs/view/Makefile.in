@@ -3,7 +3,6 @@ IMPORTS   = comdlg32 user32 gdi32 comctl32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
-	view.c
-
-RC_SRCS = view.rc
+SOURCES = \
+	view.c \
+	view.rc

@@ -1,7 +1,6 @@
 MODULE    = msvidc32.dll
 IMPORTS   = user32
 
-C_SRCS = \
+SOURCES = \
+	msvidc32.rc \
 	msvideo1.c
-
-RC_SRCS = msvidc32.rc

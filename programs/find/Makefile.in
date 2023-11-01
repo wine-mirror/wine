@@ -3,6 +3,6 @@ IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = find.c
-
-RC_SRCS = find.rc
+SOURCES = \
+	find.c \
+	find.rc

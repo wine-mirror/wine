@@ -2,6 +2,6 @@ MODULE    = dism.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
-RC_SRCS = version.rc
-
-C_SRCS = dism.c
+SOURCES = \
+	dism.c \
+	version.rc

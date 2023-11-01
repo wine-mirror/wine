@@ -1,10 +1,8 @@
 TESTDLL   = msvfw32.dll
 IMPORTS   = msvfw32 advapi32 gdi32 user32
 
-C_SRCS = \
+SOURCES = \
 	drawdib.c \
 	mciwnd.c \
-	msvfw.c
-
-RC_SRCS = \
+	msvfw.c \
 	msvfw32.rc

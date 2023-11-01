@@ -3,7 +3,6 @@ IMPORTS   = shell32 user32 comctl32
 
 EXTRADLLFLAGS = -mwindows -municode
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = msinfo32.rc
+SOURCES = \
+	main.c \
+	msinfo32.rc

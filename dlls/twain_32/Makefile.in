@@ -1,8 +1,7 @@
 MODULE    = twain_32.dll
 IMPORTS   = user32
 
-C_SRCS = \
+SOURCES = \
 	dsm_ctrl.c \
+	twain.rc \
 	twain32_main.c
-
-RC_SRCS = twain.rc

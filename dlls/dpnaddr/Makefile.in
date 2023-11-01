@@ -1,4 +1,5 @@
 MODULE    = dpnaddr.dll
 IMPORTS   = dpnet
 
-RC_SRCS = version.rc
+SOURCES = \
+	version.rc

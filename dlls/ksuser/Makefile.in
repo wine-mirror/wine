@@ -2,4 +2,5 @@ MODULE    = ksuser.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-RC_SRCS = version.rc
+SOURCES = \
+	version.rc

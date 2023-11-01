@@ -3,8 +3,7 @@ UNIXLIB   = odbc32.so
 IMPORTLIB = odbc32
 IMPORTS   = advapi32
 
-C_SRCS = \
+SOURCES = \
 	proxyodbc.c \
+	rsrc.rc \
 	unixlib.c
-
-RC_SRCS = rsrc.rc

@@ -5,7 +5,6 @@ IMPORTLIB = cryptui
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
+	cryptui.rc \
 	main.c
-
-RC_SRCS = cryptui.rc

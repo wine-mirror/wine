@@ -2,7 +2,7 @@ MODULE    = d3d9.dll
 IMPORTLIB = d3d9
 IMPORTS   = dxguid uuid wined3d
 
-C_SRCS = \
+SOURCES = \
 	buffer.c \
 	d3d9_main.c \
 	device.c \
@@ -13,7 +13,6 @@ C_SRCS = \
 	surface.c \
 	swapchain.c \
 	texture.c \
+	version.rc \
 	vertexdeclaration.c \
 	volume.c
-
-RC_SRCS = version.rc

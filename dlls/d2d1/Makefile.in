@@ -3,7 +3,7 @@ IMPORTLIB = d2d1
 IMPORTS   = d3d10_1 dxguid uuid gdi32 user32 advapi32
 DELAYIMPORTS = dwrite xmllite ole32
 
-C_SRCS = \
+SOURCES = \
 	bitmap.c \
 	bitmap_render_target.c \
 	brush.c \
@@ -18,6 +18,5 @@ C_SRCS = \
 	mesh.c \
 	state_block.c \
 	stroke.c \
+	version.rc \
 	wic_render_target.c
-
-RC_SRCS = version.rc

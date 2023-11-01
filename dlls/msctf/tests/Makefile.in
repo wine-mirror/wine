@@ -1,8 +1,6 @@
 TESTDLL   = msctf.dll
 IMPORTS   = ole32 user32 advapi32
 
-C_SRCS = \
-	inputprocessor.c
-
-RC_SRCS = \
+SOURCES = \
+	inputprocessor.c \
 	msctf.rc

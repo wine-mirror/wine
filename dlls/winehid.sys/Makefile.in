@@ -3,7 +3,6 @@ IMPORTS   = hidclass ntoskrnl
 
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = winehid.rc
+SOURCES = \
+	main.c \
+	winehid.rc

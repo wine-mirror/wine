@@ -4,7 +4,7 @@ IMPORTS   = d3dxof ddraw
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-C_SRCS = \
+SOURCES = \
 	d3drm.c \
 	d3drm_main.c \
 	device.c \
@@ -15,6 +15,5 @@ C_SRCS = \
 	math.c \
 	meshbuilder.c \
 	texture.c \
+	version.rc \
 	viewport.c
-
-RC_SRCS = version.rc

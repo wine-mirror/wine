@@ -1,7 +1,6 @@
 MODULE    = dssenh.dll
 IMPORTS   = bcrypt crypt32 advapi32
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = rsrc.rc
+SOURCES = \
+	main.c \
+	rsrc.rc

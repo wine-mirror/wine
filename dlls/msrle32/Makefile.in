@@ -1,6 +1,6 @@
 MODULE    = msrle32.dll
 IMPORTS   = winmm user32
 
-C_SRCS = msrle32.c
-
-RC_SRCS = msrle32.rc
+SOURCES = \
+	msrle32.c \
+	msrle32.rc

@@ -3,7 +3,7 @@ IMPORTLIB = wldap32
 IMPORTS   = $(LDAP_PE_LIBS) crypt32 secur32 ws2_32 user32
 EXTRAINCL = $(LDAP_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	add.c \
 	ber.c \
 	bind.c \
@@ -23,6 +23,5 @@ C_SRCS = \
 	parse.c \
 	rename.c \
 	search.c \
-	value.c
-
-RC_SRCS = wldap32.rc
+	value.c \
+	wldap32.rc

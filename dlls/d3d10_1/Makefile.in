@@ -2,7 +2,6 @@ MODULE    = d3d10_1.dll
 IMPORTLIB = d3d10_1
 IMPORTS   = dxguid d3d10core dxgi
 
-C_SRCS = \
-	d3d10_1_main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	d3d10_1_main.c \
+	version.rc

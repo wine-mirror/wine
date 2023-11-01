@@ -5,11 +5,10 @@ EXTRAINCL = $(JPEG_PE_CFLAGS)
 UNIX_LIBS    = $(GPHOTO2_LIBS) $(GPHOTO2_PORT_LIBS)
 UNIX_CFLAGS  = $(GPHOTO2_CFLAGS) $(GPHOTO2_PORT_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	capability.c \
 	ds_image.c \
+	gphoto2.rc \
 	gphoto2_main.c \
 	ui.c \
 	unixlib.c
-
-RC_SRCS = gphoto2.rc

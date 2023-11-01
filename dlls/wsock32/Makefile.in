@@ -2,9 +2,8 @@ MODULE    = wsock32.dll
 IMPORTLIB = wsock32
 IMPORTS   = mswsock ws2_32 iphlpapi
 
-C_SRCS = \
+SOURCES = \
 	protocol.c \
 	service.c \
-	socket.c
-
-RC_SRCS = version.rc
+	socket.c \
+	version.rc

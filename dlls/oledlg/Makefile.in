@@ -2,9 +2,8 @@ MODULE    = oledlg.dll
 IMPORTLIB = oledlg
 IMPORTS   = ole32 comdlg32 user32 advapi32
 
-C_SRCS = \
+SOURCES = \
 	insobjdlg.c \
+	oledlg.rc \
 	oledlg_main.c \
 	pastespl.c
-
-RC_SRCS = oledlg.rc

@@ -338,7 +338,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.(in|l|m|mc|po|sfd|svg|y)$/)
+        if ($name =~ /\.(in|l|m|mc|po|rc|sfd|svg|y)$/)
         {
             push @{${$make}{"=SOURCES"}}, $name;
             next;
@@ -350,10 +350,6 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.h$/ || $name =~ /\.rh$/ || $name =~ /\.inl$/ || $name =~ /\.x$/)
         {
             next if $dir ne "include";
-        }
-        elsif ($name =~ /\.rc$/)
-        {
-            push @{${$make}{"=RC_SRCS"}}, $name;
         }
         elsif ($name =~ /\.idl$/)
         {
@@ -392,7 +388,6 @@ sub assign_sources_to_makefiles(@)
         next unless $parent;
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "SOURCES" );
         preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "C_SRCS" );
-        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "RC_SRCS" );
     }
 }
 

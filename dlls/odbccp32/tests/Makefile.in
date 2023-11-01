@@ -1,8 +1,6 @@
 TESTDLL   = odbccp32.dll
 IMPORTS   = odbccp32 advapi32
 
-C_SRCS = \
-	misc.c
-
-RC_SRCS = \
+SOURCES = \
+	misc.c \
 	odbccp32.rc

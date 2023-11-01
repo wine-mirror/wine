@@ -3,6 +3,6 @@ IMPORTS   = user32
 
 EXTRADLLFLAGS = -mconsole -municode
 
-C_SRCS = taskkill.c
-
-RC_SRCS = taskkill.rc
+SOURCES = \
+	taskkill.c \
+	taskkill.rc

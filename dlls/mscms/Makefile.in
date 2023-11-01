@@ -3,12 +3,11 @@ IMPORTLIB = mscms
 IMPORTS   = $(LCMS2_PE_LIBS) shlwapi advapi32
 EXTRAINCL = $(LCMS2_PE_CFLAGS)
 
-C_SRCS = \
+SOURCES = \
 	handle.c \
 	icc.c \
 	mscms_main.c \
 	profile.c \
 	stub.c \
-	transform.c
-
-RC_SRCS = version.rc
+	transform.c \
+	version.rc

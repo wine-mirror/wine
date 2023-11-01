@@ -3,6 +3,6 @@ IMPORTS   = shell32 comctl32
 
 EXTRADLLFLAGS = -mwindows
 
-C_SRCS = winver.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	version.rc \
+	winver.c

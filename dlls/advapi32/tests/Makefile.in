@@ -1,7 +1,7 @@
 TESTDLL   = advapi32.dll
 IMPORTS   = advapi32 user32
 
-C_SRCS = \
+SOURCES = \
 	cred.c \
 	crypt.c \
 	crypt_lmhash.c \
@@ -12,7 +12,6 @@ C_SRCS = \
 	lsa.c \
 	perf.c \
 	registry.c \
+	rsrc.rc \
 	security.c \
 	service.c
-
-RC_SRCS = rsrc.rc

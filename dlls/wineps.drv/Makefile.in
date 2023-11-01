@@ -3,7 +3,7 @@ UNIXLIB   = wineps.so
 IMPORTS   = user32 gdi32 winspool advapi32 win32u
 UNIX_LIBS = -lwin32u -lm
 
-C_SRCS = \
+SOURCES = \
 	afm.c \
 	bitblt.c \
 	bitmap.c \
@@ -64,6 +64,5 @@ C_SRCS = \
 	type1afm.c \
 	type42.c \
 	unixlib.c \
-	vertical.c
-
-RC_SRCS = wineps.rc
+	vertical.c \
+	wineps.rc

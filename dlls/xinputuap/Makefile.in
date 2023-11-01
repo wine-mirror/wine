@@ -2,7 +2,6 @@ MODULE    = xinputuap.dll
 IMPORTS   = hid setupapi advapi32 user32
 PARENTSRC = ../xinput1_3
 
-C_SRCS = \
-	main.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	main.c \
+	version.rc

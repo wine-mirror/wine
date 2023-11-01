@@ -3,7 +3,7 @@ IMPORTLIB = kernel
 DELAYIMPORTS = user32
 EXTRADLLFLAGS = -m16 -Wb,--dll-name,kernel
 
-C_SRCS = \
+SOURCES = \
 	atom.c \
 	dosmem.c \
 	error.c \
@@ -32,7 +32,6 @@ C_SRCS = \
 	task.c \
 	thunk.c \
 	utthunk.c \
+	version.rc \
 	vxd.c \
 	wowthunk.c
-
-RC_SRCS = version.rc

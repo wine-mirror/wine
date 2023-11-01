@@ -2,7 +2,6 @@ MODULE    = mswsock.dll
 IMPORTLIB = mswsock
 IMPORTS   = ws2_32
 
-C_SRCS = \
-	mswsock.c
-
-RC_SRCS = version.rc
+SOURCES = \
+	mswsock.c \
+	version.rc

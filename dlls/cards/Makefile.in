@@ -2,9 +2,7 @@ MODULE    = cards.dll
 IMPORTLIB = cards
 IMPORTS   = user32 gdi32
 
-C_SRCS = \
-	cards.c
-
-RC_SRCS = \
+SOURCES = \
+	cards.c \
 	cards.rc \
 	version.rc

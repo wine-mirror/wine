@@ -1,9 +1,7 @@
 TESTDLL   = wmp.dll
 IMPORTS   = ole32 oleaut32 user32 gdi32
 
-C_SRCS = \
+SOURCES = \
 	media.c \
-	oleobj.c
-
-RC_SRCS = \
+	oleobj.c \
 	rsrc.rc
