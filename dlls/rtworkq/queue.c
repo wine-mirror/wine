@@ -734,9 +734,10 @@ static HRESULT invoke_async_callback(IRtwqAsyncResult *result)
  * removed from pending items when it got canceled. */
 static BOOL queue_release_pending_item(struct work_item *item)
 {
+    struct queue *queue = item->queue;
     BOOL ret = FALSE;
 
-    EnterCriticalSection(&item->queue->cs);
+    EnterCriticalSection(&queue->cs);
     if (item->key)
     {
         list_remove(&item->entry);
@@ -744,7 +745,7 @@ static BOOL queue_release_pending_item(struct work_item *item)
         item->key = 0;
         IUnknown_Release(&item->IUnknown_iface);
     }
-    LeaveCriticalSection(&item->queue->cs);
+    LeaveCriticalSection(&queue->cs);
     return ret;
 }
 
