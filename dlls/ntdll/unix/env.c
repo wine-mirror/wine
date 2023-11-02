@@ -108,8 +108,7 @@ static char *get_nls_file_path( UINT type, UINT id )
         break;
     }
     if (!name) return NULL;
-    if (!(path = malloc( strlen(dir) + strlen(name) + 10 ))) return NULL;
-    sprintf( path, "%s/nls/%s.nls", dir, name );
+    if (asprintf( &path, "%s/nls/%s.nls", dir, name ) == -1) return NULL;
     return path;
 }
 
@@ -121,8 +120,7 @@ static void *read_nls_file( const char *name )
     void *data, *ret = NULL;
     int fd;
 
-    if (!(path = malloc( strlen(dir) + strlen(name) + 10 ))) return NULL;
-    sprintf( path, "%s/nls/%s", dir, name );
+    if (asprintf( &path, "%s/nls/%s", dir, name ) == -1) return NULL;
 
     if ((fd = open( path, O_RDONLY )) != -1)
     {
@@ -2238,9 +2236,7 @@ NTSTATUS WINAPI NtInitializeNlsFiles( void **ptr, LCID *lcid, LARGE_INTEGER *siz
     SIZE_T mapsize;
     NTSTATUS status;
 
-    if (!(path = malloc( strlen(dir) + sizeof("/nls/locale.nls") ))) return STATUS_NO_MEMORY;
-    strcpy( path, dir );
-    strcat( path, "/nls/locale.nls" );
+    if (asprintf( &path, "%s/nls/locale.nls", dir ) == -1) return STATUS_NO_MEMORY;
     status = open_nls_data_file( path, system_dir, &file );
     free( path );
     if (!status)

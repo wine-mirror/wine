@@ -1243,29 +1243,25 @@ int server_pipe( int fd[2] )
  */
 static const char *init_server_dir( dev_t dev, ino_t ino )
 {
-    char *p, *dir;
-    size_t len = sizeof("/server-") + 2 * sizeof(dev) + 2 * sizeof(ino) + 2;
+    char *dir = NULL;
+    int p;
+    char tmp[2 * sizeof(dev) + 2 * sizeof(ino) + 2];
 
-#ifdef __ANDROID__  /* there's no /tmp dir on Android */
-    len += strlen( config_dir ) + sizeof("/.wineserver");
-    dir = malloc( len );
-    strcpy( dir, config_dir );
-    strcat( dir, "/.wineserver/server-" );
-#else
-    len += sizeof("/tmp/.wine-") + 12;
-    dir = malloc( len );
-    sprintf( dir, "/tmp/.wine-%u/server-", getuid() );
-#endif
-    p = dir + strlen( dir );
     if (dev != (unsigned long)dev)
-        p += sprintf( p, "%lx%08lx-", (unsigned long)((unsigned long long)dev >> 32), (unsigned long)dev );
+        p = snprintf( tmp, sizeof(tmp), "%lx%08lx-", (unsigned long)((unsigned long long)dev >> 32), (unsigned long)dev );
     else
-        p += sprintf( p, "%lx-", (unsigned long)dev );
+        p = snprintf( tmp, sizeof(tmp), "%lx-", (unsigned long)dev );
 
     if (ino != (unsigned long)ino)
-        sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
+        snprintf( tmp + p, sizeof(tmp) - p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
     else
-        sprintf( p, "%lx", (unsigned long)ino );
+        snprintf( tmp + p, sizeof(tmp) - p, "%lx", (unsigned long)ino );
+
+#ifdef __ANDROID__  /* there's no /tmp dir on Android */
+    asprintf( &dir, "%s/.wineserver/server-%s", config_dir, tmp );
+#else
+    asprintf( &dir, "/tmp/.wine-%u/server-%s", getuid(), tmp );
+#endif
     return dir;
 }
 

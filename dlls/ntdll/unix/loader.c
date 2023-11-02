@@ -663,9 +663,7 @@ static void init_paths( char *argv[] )
     }
     else wineloader = build_path( build_path( build_dir, "loader" ), basename );
 
-    env = malloc( sizeof("WINELOADER=") + strlen(wineloader) );
-    strcpy( env, "WINELOADER=" );
-    strcat( env, wineloader );
+    asprintf( &env, "WINELOADER=%s", wineloader );
     putenv( env );
 
     set_dll_path();
@@ -1835,18 +1833,18 @@ static void load_ntdll(void)
     UNICODE_STRING str;
     void *module;
     SIZE_T size = 0;
-    char *name;
+    char *name = NULL;
 
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
-    name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
-    if (build_dir) sprintf( name, "%s%s/ntdll.dll", ntdll_dir, pe_dir );
-    else sprintf( name, "%s%s/ntdll.dll", dll_dir, pe_dir );
+    if (build_dir) asprintf( &name, "%s%s/ntdll.dll", ntdll_dir, pe_dir );
+    else asprintf( &name, "%s%s/ntdll.dll", dll_dir, pe_dir );
     status = open_builtin_pe_file( name, &attr, &module, &size, &info, 0, 0, current_machine, FALSE );
     if (status == STATUS_DLL_NOT_FOUND)
     {
-        sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
+        free( name );
+        asprintf( &name, "%s/ntdll.dll.so", ntdll_dir );
         status = open_builtin_so_file( name, &attr, &module, &info, FALSE );
     }
     if (status == STATUS_IMAGE_NOT_AT_BASE) status = virtual_relocate_module( module );
@@ -1873,16 +1871,15 @@ static void load_apiset_dll(void)
     unsigned int status;
     HANDLE handle, mapping;
     SIZE_T size;
-    char *name;
+    char *name = NULL;
     void *ptr;
     UINT i;
 
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
-    name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/apisetschema/apisetschema.dll") );
-    if (build_dir) sprintf( name, "%s/dlls/apisetschema%s/apisetschema.dll", build_dir, pe_dir );
-    else sprintf( name, "%s%s/apisetschema.dll", dll_dir, pe_dir );
+    if (build_dir) asprintf( &name, "%s/dlls/apisetschema%s/apisetschema.dll", build_dir, pe_dir );
+    else asprintf( &name, "%s%s/apisetschema.dll", dll_dir, pe_dir );
     status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, &attr, 0,
                              FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 );

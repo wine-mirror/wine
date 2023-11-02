@@ -2098,10 +2098,8 @@ static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
         struct stat st;
         unsigned int i;
 
-        if ((buffer = malloc( strlen(config_dir) + sizeof("/dosdevices/a:") )))
+        if (asprintf( &buffer, "%s/dosdevices/a:", config_dir ) != -1)
         {
-            strcpy( buffer, config_dir );
-            strcat( buffer, "/dosdevices/a:" );
             p = buffer + strlen(buffer) - 2;
 
             for (i = nb_drives = 0; i < MAX_DOS_DRIVES; i++)
@@ -2898,9 +2896,7 @@ static void init_redirects(void)
     char *dir;
     struct stat st;
 
-    if (!(dir = malloc( strlen(config_dir) + sizeof(system_dir) ))) return;
-    strcpy( dir, config_dir );
-    strcat( dir, system_dir );
+    if (asprintf( &dir, "%s%s", config_dir, system_dir ) == -1) return;
     if (!stat( dir, &st ))
     {
         sysdir.dev = st.st_dev;
@@ -3904,11 +3900,9 @@ static NTSTATUS unmount_device( HANDLE handle )
 #else
                 static const char umount[] = "umount >/dev/null 2>&1 ";
 #endif
-                char *cmd = malloc( strlen(mount_point)+sizeof(umount));
-                if (cmd)
+                char *cmd;
+                if (asprintf( &cmd, "%s%s", umount, mount_point ) != -1)
                 {
-                    strcpy( cmd, umount );
-                    strcat( cmd, mount_point );
                     system( cmd );
                     free( cmd );
 #ifdef linux
