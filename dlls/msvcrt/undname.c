@@ -23,15 +23,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "msvcrt.h"
+#include "winver.h"
+#include "imagehlp.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
-
-/* TODO:
- * - document a bit (grammar + functions)
- * - back-port this new code into tools/winedump/msmangle.c
- */
 
 /* How data types qualifiers are stored:
  * M (in the following definitions) is defined for
@@ -48,8 +45,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  *      in data fields:
  *              same as for arguments and also the following
  *              ?<M>x   {<M>}x
- *              
+ *
  */
+
+#define UNDNAME_NO_COMPLEX_TYPE (0x8000)
 
 struct array
 {

@@ -24,6 +24,9 @@
 
 #include "windef.h"
 #include "winternl.h"
+#include "winbase.h"
+#include "winver.h"
+#include "imagehlp.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "msvcrt.h"
