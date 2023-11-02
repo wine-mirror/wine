@@ -716,7 +716,7 @@
 @ stub _mbstrnlen
 @ stub _mbstrnlen_l
 @ cdecl _mbsupr(str)
-@ stub _mbsupr_l
+@ cdecl _mbsupr_l(str ptr)
 @ cdecl _mbsupr_s(str long)
 @ cdecl _mbsupr_s_l(str long ptr)
 @ cdecl _mbtowc_l(ptr str long ptr)
@@ -1285,7 +1285,7 @@
 @ stub _o__mbstrnlen
 @ stub _o__mbstrnlen_l
 @ cdecl _o__mbsupr(str) _mbsupr
-@ stub _o__mbsupr_l
+@ cdecl _o__mbsupr_l(str ptr) _mbsupr_l
 @ cdecl _o__mbsupr_s(str long) _mbsupr_s
 @ cdecl _o__mbsupr_s_l(str long ptr) _mbsupr_s_l
 @ cdecl _o__mbtowc_l(ptr str long ptr) _mbtowc_l
