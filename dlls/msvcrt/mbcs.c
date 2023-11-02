@@ -1297,28 +1297,49 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, size_t l
  *
  * Compare two multibyte strings case insensitively to 'len' characters.
  */
+int CDECL _mbsnicmp_l(const unsigned char* str, const unsigned char* cmp, size_t len, _locale_t locale)
+{
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return 0;
+    if (!MSVCRT_CHECK_PMT(str && cmp))
+        return _NLSCMPERROR;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+    /* FIXME: No tolower() for mb strings yet */
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned int strc, cmpc;
+        while (len--)
+        {
+            if (!*str)
+                return *cmp ? -1 : 0;
+            if (!*cmp)
+                return 1;
+            strc = _mbctolower_l(_mbsnextc_l(str, locale), locale);
+            cmpc = _mbctolower_l(_mbsnextc_l(cmp, locale), locale);
+            if (strc != cmpc)
+                return strc < cmpc ? -1 : 1;
+            str += (strc > 255) ? 2 : 1;
+            cmp += (strc > 255) ? 2 : 1; /* Equal, use same increment */
+        }
+        return 0; /* Matched len chars */
+    }
+    return u_strncasecmp(str, cmp, len); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbsnicmp(MSVCRT.@)
+ *
+ * Compare two multibyte strings case insensitively to 'len' characters.
+ */
 int CDECL _mbsnicmp(const unsigned char* str, const unsigned char* cmp, size_t len)
 {
-  /* FIXME: No tolower() for mb strings yet */
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int strc, cmpc;
-    while(len--)
-    {
-      if(!*str)
-        return *cmp ? -1 : 0;
-      if(!*cmp)
-        return 1;
-      strc = _mbctolower(_mbsnextc(str));
-      cmpc = _mbctolower(_mbsnextc(cmp));
-      if(strc != cmpc)
-        return strc < cmpc ? -1 : 1;
-      str +=(strc > 255) ? 2 : 1;
-      cmp +=(strc > 255) ? 2 : 1; /* Equal, use same increment */
-    }
-    return 0; /* Matched len chars */
-  }
-  return u_strncasecmp(str, cmp, len); /* ASCII CP */
+  return _mbsnicmp_l(str, cmp, len,  NULL);
 }
 
 /*********************************************************************
