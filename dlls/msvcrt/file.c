@@ -4682,19 +4682,7 @@ errno_t CDECL freopen_s(FILE** pFile,
  */
 int CDECL fsetpos(FILE* file, fpos_t *pos)
 {
-  int ret;
-
-  _lock_file(file);
-  msvcrt_flush_buffer(file);
-
-  /* Reset direction of i/o */
-  if(file->_flag & _IORW) {
-        file->_flag &= ~(_IOREAD|_IOWRT);
-  }
-
-  ret = (_lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
-  _unlock_file(file);
-  return ret;
+    return _fseeki64(file,*pos,SEEK_SET);
 }
 
 /*********************************************************************

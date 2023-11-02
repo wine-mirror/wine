@@ -226,7 +226,50 @@ static void test_fileops( void )
     ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
     /* feof should be set now */
     ok(feof(file), "feof after fread failed\n");
-    fclose (file);
+    clearerr(file);
+    ok(!feof(file), "feof after clearerr failed\n");
+    fclose(file);
+
+    file = fopen("fdopen.tst", "rb");
+    ok( file != NULL, "fopen failed\n");
+    /* sizeof(buffer) > content of file */
+    ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
+    /* feof should be set now */
+    ok(feof(file), "feof after fread failed\n");
+    rewind(file);
+    ok(!feof(file), "feof after rewind failed\n");
+    fclose(file);
+
+    file = fopen("fdopen.tst", "rb");
+    ok( file != NULL, "fopen failed\n");
+    /* sizeof(buffer) > content of file */
+    ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
+    /* feof should be set now */
+    ok(feof(file), "feof after fread failed\n");
+    fseek(file, 0, SEEK_SET);
+    ok(!feof(file), "feof after fseek failed\n");
+    fclose(file);
+
+    file = fopen("fdopen.tst", "rb");
+    ok( file != NULL, "fopen failed\n");
+    /* sizeof(buffer) > content of file */
+    ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
+    /* feof should be set now */
+    ok(feof(file), "feof after fread failed\n");
+    fgetpos(file, &pos);
+    fsetpos(file, &pos);
+    ok(!feof(file), "feof after fsetpos failed\n");
+    fclose(file);
+
+    file = fopen("fdopen.tst", "rb");
+    ok( file != NULL, "fopen failed\n");
+    /* sizeof(buffer) > content of file */
+    ok(fread(buffer, sizeof(buffer), 1, file) == 0, "fread test failed\n");
+    /* feof should be set now */
+    ok(feof(file), "feof after fread failed\n");
+    fsetpos(file, &pos);
+    ok(!feof(file), "feof after fsetpos failed\n");
+    fclose(file);
 
     unlink ("fdopen.tst");
 }
