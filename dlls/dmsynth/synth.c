@@ -288,11 +288,6 @@ struct instrument
     struct synth *synth;
 };
 
-static void instrument_addref(struct instrument *instrument)
-{
-    InterlockedIncrement(&instrument->ref);
-}
-
 static void instrument_release(struct instrument *instrument)
 {
     ULONG ref = InterlockedDecrement(&instrument->ref);
@@ -327,7 +322,7 @@ struct preset
 
     fluid_preset_t *fluid_preset;
 
-    struct instrument *instrument;
+    struct synth *synth;
 };
 
 struct event
@@ -637,7 +632,6 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
     LIST_FOR_EACH_ENTRY_SAFE(preset, next, &This->presets, struct preset, entry)
     {
         list_remove(&preset->entry);
-        instrument_release(preset->instrument);
         delete_fluid_preset(preset->fluid_preset);
         free(preset);
     }
@@ -1785,12 +1779,27 @@ static void set_default_voice_connections(fluid_voice_t *fluid_voice)
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
 {
     struct preset *preset = fluid_preset_get_data(fluid_preset);
-    struct instrument *instrument = preset->instrument;
-    struct synth *synth = instrument->synth;
+    struct synth *synth = preset->synth;
+    struct instrument *instrument;
     fluid_voice_t *fluid_voice;
     struct region *region;
 
     TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
+
+    EnterCriticalSection(&synth->cs);
+
+    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
+    {
+        if (preset->bank == 128 && instrument->patch == (0x80000000 | preset->patch)) break;
+        else if (instrument->patch == ((preset->bank << 8) | preset->patch)) break;
+    }
+
+    if (&instrument->entry == &synth->instruments)
+    {
+        WARN("Could not find instrument with patch %#x\n", preset->patch);
+        LeaveCriticalSection(&synth->cs);
+        return FLUID_FAILED;
+    }
 
     LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
     {
@@ -1804,6 +1813,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, wave->fluid_sample, chan, key, vel)))
         {
             WARN("Failed to allocate FluidSynth voice\n");
+            LeaveCriticalSection(&synth->cs);
             return FLUID_FAILED;
         }
 
@@ -1819,7 +1829,10 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         if (&voice->entry == &synth->voices)
         {
             if (!(voice = calloc(1, sizeof(struct voice))))
+            {
+                LeaveCriticalSection(&synth->cs);
                 return FLUID_FAILED;
+            }
             voice->fluid_voice = fluid_voice;
             list_add_tail(&synth->voices, &voice->entry);
         }
@@ -1852,8 +1865,11 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
             add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
         fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
+        LeaveCriticalSection(&synth->cs);
         return FLUID_OK;
     }
+
+    LeaveCriticalSection(&synth->cs);
 
     WARN("Failed to find instrument matching note / velocity\n");
     return FLUID_FAILED;
@@ -1871,7 +1887,6 @@ static const char *synth_sfont_get_name(fluid_sfont_t *fluid_sfont)
 static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int bank, int patch)
 {
     struct synth *synth = fluid_sfont_get_data(fluid_sfont);
-    struct instrument *instrument;
     fluid_preset_t *fluid_preset;
     struct preset *preset;
 
@@ -1886,19 +1901,6 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
             LeaveCriticalSection(&synth->cs);
             return preset->fluid_preset;
         }
-    }
-
-    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
-    {
-        if (bank == 128 && instrument->patch == (0x80000000 | patch)) break;
-        else if (instrument->patch == ((bank << 8) | patch)) break;
-    }
-
-    if (&instrument->entry == &synth->instruments)
-    {
-        WARN("Could not find instrument with patch %#x\n", patch);
-        LeaveCriticalSection(&synth->cs);
-        return NULL;
     }
 
     if (!(fluid_preset = new_fluid_preset(fluid_sfont, synth_preset_get_name, synth_preset_get_bank,
@@ -1918,12 +1920,11 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
     preset->bank = bank;
     preset->patch = patch;
     preset->fluid_preset = fluid_preset;
-    preset->instrument = instrument;
+    preset->synth = synth;
     fluid_preset_set_data(fluid_preset, preset);
-    instrument_addref(instrument);
     list_add_tail(&synth->presets, &preset->entry);
 
-    TRACE("Created fluid_preset %p for instrument %p\n", fluid_preset, instrument);
+    TRACE("Created fluid_preset %p\n", fluid_preset);
 
     LeaveCriticalSection(&synth->cs);
 
