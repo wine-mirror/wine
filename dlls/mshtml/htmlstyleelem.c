@@ -380,7 +380,7 @@ static void *HTMLStyleElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLStyleElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsstyle)
         note_cc_edge((nsISupports*)This->nsstyle, "nsstyle", cb);
@@ -389,7 +389,7 @@ static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLStyleElement_unlink(DispatchEx *dispex)
 {
     HTMLStyleElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsstyle);
 }
 

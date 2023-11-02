@@ -425,7 +425,7 @@ static void *HTMLTextAreaElement_query_interface(DispatchEx *dispex, REFIID riid
 static void HTMLTextAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLTextAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nstextarea)
         note_cc_edge((nsISupports*)This->nstextarea, "nstextarea", cb);
@@ -434,7 +434,7 @@ static void HTMLTextAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTr
 static void HTMLTextAreaElement_unlink(DispatchEx *dispex)
 {
     HTMLTextAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nstextarea);
 }
 

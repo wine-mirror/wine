@@ -466,19 +466,27 @@ static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+
+    if(This->elem)
+        note_cc_edge((nsISupports*)&This->elem->node.IHTMLDOMNode_iface, "elem", cb);
     traverse_variant(&This->value, "value", cb);
 }
 
 static void HTMLDOMAttribute_unlink(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
+
+    if(This->elem) {
+        HTMLElement *elem = This->elem;
+        This->elem = NULL;
+        IHTMLDOMNode_Release(&elem->node.IHTMLDOMNode_iface);
+    }
     unlink_variant(&This->value);
 }
 
 static void HTMLDOMAttribute_destructor(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
-    assert(!This->elem);
     VariantClear(&This->value);
     free(This->name);
     free(This);
@@ -527,6 +535,8 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
 
     /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
     if(elem) {
+        IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
+
         hres = HTMLElement_get_attr_col(&elem->node, &col);
         if(FAILED(hres)) {
             IHTMLDOMAttribute_Release(&ret->IHTMLDOMAttribute_iface);

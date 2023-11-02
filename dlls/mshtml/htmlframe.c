@@ -944,7 +944,7 @@ static void *HTMLFrameElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLFrameElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLFrameElement *This = frame_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->framebase.nsframe)
         note_cc_edge((nsISupports*)This->framebase.nsframe, "nsframe", cb);
@@ -1534,7 +1534,7 @@ static void *HTMLIFrame_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLIFrame_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLIFrame *This = iframe_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->framebase.nsiframe)
         note_cc_edge((nsISupports*)This->framebase.nsiframe, "nsiframe", cb);

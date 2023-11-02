@@ -683,7 +683,7 @@ static void *HTMLImgElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLImgElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLImg *This = HTMLImg_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsimg)
         note_cc_edge((nsISupports*)This->nsimg, "nsimg", cb);
@@ -692,7 +692,7 @@ static void HTMLImgElement_traverse(DispatchEx *dispex, nsCycleCollectionTravers
 static void HTMLImgElement_unlink(DispatchEx *dispex)
 {
     HTMLImg *This = HTMLImg_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsimg);
 }
 

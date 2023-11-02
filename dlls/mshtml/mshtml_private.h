@@ -1204,6 +1204,8 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t*,compat_mode_t);
 
 void *HTMLElement_query_interface(DispatchEx*,REFIID);
 void HTMLElement_destructor(DispatchEx*);
+void HTMLElement_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
+void HTMLElement_unlink(DispatchEx*);
 HRESULT HTMLElement_populate_props(DispatchEx*);
 HRESULT HTMLElement_clone(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode*,HTMLAttributeCollection**);

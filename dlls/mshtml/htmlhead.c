@@ -168,8 +168,8 @@ static const event_target_vtbl_t HTMLTitleElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTitleElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event
@@ -338,8 +338,8 @@ static const event_target_vtbl_t HTMLHtmlElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLHtmlElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event
@@ -565,8 +565,8 @@ static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLMetaElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event
@@ -727,8 +727,8 @@ static const event_target_vtbl_t HTMLHeadElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLHeadElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event

@@ -810,7 +810,7 @@ static void *HTMLAnchorElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLAnchorElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsanchor)
         note_cc_edge((nsISupports*)This->nsanchor, "nsanchor", cb);
@@ -819,7 +819,7 @@ static void HTMLAnchorElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLAnchorElement_unlink(DispatchEx *dispex)
 {
     HTMLAnchorElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsanchor);
 }
 

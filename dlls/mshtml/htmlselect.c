@@ -359,7 +359,7 @@ static void *HTMLOptionElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLOptionElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLOptionElement *This = HTMLOptionElement_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsoption)
         note_cc_edge((nsISupports*)This->nsoption, "nsoption", cb);
@@ -368,7 +368,7 @@ static void HTMLOptionElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLOptionElement_unlink(DispatchEx *dispex)
 {
     HTMLOptionElement *This = HTMLOptionElement_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsoption);
 }
 
@@ -1351,7 +1351,7 @@ static void *HTMLSelectElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLSelectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsselect)
         note_cc_edge((nsISupports*)This->nsselect, "nsselect", cb);
@@ -1360,7 +1360,7 @@ static void HTMLSelectElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLSelectElement_unlink(DispatchEx *dispex)
 {
     HTMLSelectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsselect);
 }
 

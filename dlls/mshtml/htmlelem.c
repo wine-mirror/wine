@@ -4792,6 +4792,7 @@ static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLD
         replace->elem = NULL;
     }else {
         list_add_tail(&attrs->attrs, &attr->entry);
+        IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
     }
 
     IHTMLDOMAttribute_AddRef(&attr->IHTMLDOMAttribute_iface);
@@ -6857,6 +6858,27 @@ void *HTMLElement_query_interface(DispatchEx *dispex, REFIID riid)
     return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
 
+void HTMLElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_traverse(&This->node.event_target.dispex, cb);
+
+    if(This->attrs)
+        note_cc_edge((nsISupports*)&This->attrs->IHTMLAttributeCollection_iface, "attrs", cb);
+}
+
+void HTMLElement_unlink(DispatchEx *dispex)
+{
+    HTMLElement *This = impl_from_DispatchEx(dispex);
+    HTMLDOMNode_unlink(&This->node.event_target.dispex);
+
+    if(This->attrs) {
+        HTMLAttributeCollection *attrs = This->attrs;
+        This->attrs = NULL;
+        IHTMLAttributeCollection_Release(&attrs->IHTMLAttributeCollection_iface);
+    }
+}
+
 void HTMLElement_destructor(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
@@ -6870,15 +6892,6 @@ void HTMLElement_destructor(DispatchEx *dispex)
     if(This->runtime_style) {
         This->runtime_style->elem = NULL;
         IHTMLStyle_Release(&This->runtime_style->IHTMLStyle_iface);
-    }
-    if(This->attrs) {
-        HTMLDOMAttribute *attr;
-
-        LIST_FOR_EACH_ENTRY(attr, &This->attrs->attrs, HTMLDOMAttribute, entry)
-            attr->elem = NULL;
-
-        This->attrs->elem = NULL;
-        IHTMLAttributeCollection_Release(&This->attrs->IHTMLAttributeCollection_iface);
     }
 
     free(This->filter);
@@ -7278,8 +7291,8 @@ static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface     = HTMLElement_query_interface,
         .destructor          = HTMLElement_destructor,
-        .traverse            = HTMLDOMNode_traverse,
-        .unlink              = HTMLDOMNode_unlink,
+        .traverse            = HTMLElement_traverse,
+        .unlink              = HTMLElement_unlink,
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event            = HTMLElement_handle_event
@@ -8226,11 +8239,6 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
         }
     }
 
-    if(!This->elem) {
-        WARN("NULL elem\n");
-        return E_UNEXPECTED;
-    }
-
     hres = IDispatchEx_GetDispID(&This->elem->node.event_target.dispex.IDispatchEx_iface,
             name, fdexNameCaseInsensitive, id);
     return hres;
@@ -8252,11 +8260,6 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG
     }
 
     if(!*attr) {
-        if(!This->elem) {
-            WARN("NULL elem\n");
-            return E_UNEXPECTED;
-        }
-
         hres = HTMLDOMAttribute_Create(NULL, This->elem, id, dispex_compat_mode(&This->elem->node.event_target.dispex), attr);
         if(FAILED(hres))
             return hres;
@@ -8811,6 +8814,8 @@ static void HTMLAttributeCollection_traverse(DispatchEx *dispex, nsCycleCollecti
 
     LIST_FOR_EACH_ENTRY(attr, &This->attrs, HTMLDOMAttribute, entry)
         note_cc_edge((nsISupports*)&attr->IHTMLDOMAttribute_iface, "attr", cb);
+    if(This->elem)
+        note_cc_edge((nsISupports*)&This->elem->node.IHTMLDOMNode_iface, "elem", cb);
 }
 
 static void HTMLAttributeCollection_unlink(DispatchEx *dispex)
@@ -8820,8 +8825,12 @@ static void HTMLAttributeCollection_unlink(DispatchEx *dispex)
         HTMLDOMAttribute *attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
 
         list_remove(&attr->entry);
-        attr->elem = NULL;
         IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
+    }
+    if(This->elem) {
+        HTMLElement *elem = This->elem;
+        This->elem = NULL;
+        IHTMLDOMNode_Release(&elem->node.IHTMLDOMNode_iface);
     }
 }
 
@@ -8938,6 +8947,7 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
     This->attrs->IHTMLAttributeCollection2_iface.lpVtbl = &HTMLAttributeCollection2Vtbl;
     This->attrs->IHTMLAttributeCollection3_iface.lpVtbl = &HTMLAttributeCollection3Vtbl;
 
+    IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
     This->attrs->elem = This;
     list_init(&This->attrs->attrs);
     init_dispatch(&This->attrs->dispex, &HTMLAttributeCollection_dispex, dispex_compat_mode(&iface->event_target.dispex));

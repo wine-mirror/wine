@@ -459,7 +459,7 @@ static void *HTMLTableCell_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLTableCell_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLTableCell *This = HTMLTableCell_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nscell)
         note_cc_edge((nsISupports*)This->nscell, "nstablecell", cb);
@@ -468,7 +468,7 @@ static void HTMLTableCell_traverse(DispatchEx *dispex, nsCycleCollectionTraversa
 static void HTMLTableCell_unlink(DispatchEx *dispex)
 {
     HTMLTableCell *This = HTMLTableCell_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nscell);
 }
 
@@ -884,7 +884,7 @@ static void *HTMLTableRow_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLTableRow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLTableRow *This = HTMLTableRow_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsrow)
         note_cc_edge((nsISupports*)This->nsrow, "nstablerow", cb);
@@ -893,7 +893,7 @@ static void HTMLTableRow_traverse(DispatchEx *dispex, nsCycleCollectionTraversal
 static void HTMLTableRow_unlink(DispatchEx *dispex)
 {
     HTMLTableRow *This = HTMLTableRow_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsrow);
 }
 
@@ -1887,7 +1887,7 @@ static void *HTMLTable_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLTable_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLTable *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nstable)
         note_cc_edge((nsISupports*)This->nstable, "nstable", cb);
@@ -1896,7 +1896,7 @@ static void HTMLTable_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCal
 static void HTMLTable_unlink(DispatchEx *dispex)
 {
     HTMLTable *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nstable);
 }
 

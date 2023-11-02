@@ -687,7 +687,7 @@ static void *HTMLObjectElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLObjectElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLObjectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsobject)
         note_cc_edge((nsISupports*)This->nsobject, "nsobject", cb);
@@ -696,7 +696,7 @@ static void HTMLObjectElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLObjectElement_unlink(DispatchEx *dispex)
 {
     HTMLObjectElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsobject);
 }
 
@@ -1010,8 +1010,8 @@ static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLEmbedElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event

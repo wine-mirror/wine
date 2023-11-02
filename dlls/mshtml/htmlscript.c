@@ -398,7 +398,7 @@ static void *HTMLScriptElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLScriptElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLScriptElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsscript)
         note_cc_edge((nsISupports*)This->nsscript, "nsscript", cb);
@@ -407,7 +407,7 @@ static void HTMLScriptElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLScriptElement_unlink(DispatchEx *dispex)
 {
     HTMLScriptElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsscript);
 }
 

@@ -943,7 +943,7 @@ static void *HTMLBodyElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLBodyElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLBodyElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsbody)
         note_cc_edge((nsISupports*)This->nsbody, "nsbody", cb);
@@ -952,7 +952,7 @@ static void HTMLBodyElement_traverse(DispatchEx *dispex, nsCycleCollectionTraver
 static void HTMLBodyElement_unlink(DispatchEx *dispex)
 {
     HTMLBodyElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsbody);
 }
 

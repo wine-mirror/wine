@@ -426,7 +426,7 @@ static void *HTMLAreaElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsarea)
         note_cc_edge((nsISupports*)This->nsarea, "nsarea", cb);
@@ -435,7 +435,7 @@ static void HTMLAreaElement_traverse(DispatchEx *dispex, nsCycleCollectionTraver
 static void HTMLAreaElement_unlink(DispatchEx *dispex)
 {
     HTMLAreaElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsarea);
 }
 

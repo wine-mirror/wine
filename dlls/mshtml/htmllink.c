@@ -404,7 +404,7 @@ static void *HTMLLinkElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLLinkElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLLinkElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nslink)
         note_cc_edge((nsISupports*)This->nslink, "nslink", cb);
@@ -413,7 +413,7 @@ static void HTMLLinkElement_traverse(DispatchEx *dispex, nsCycleCollectionTraver
 static void HTMLLinkElement_unlink(DispatchEx *dispex)
 {
     HTMLLinkElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nslink);
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {

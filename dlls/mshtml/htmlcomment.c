@@ -187,8 +187,8 @@ static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLCommentElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event

@@ -1397,7 +1397,7 @@ static void *HTMLInputElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLInputElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLInputElement *This = input_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsinput)
         note_cc_edge((nsISupports*)This->nsinput, "nsinput", cb);
@@ -1406,7 +1406,7 @@ static void HTMLInputElement_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLInputElement_unlink(DispatchEx *dispex)
 {
     HTMLInputElement *This = input_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsinput);
 }
 
@@ -1621,8 +1621,8 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLLabelElement_query_interface,
         .destructor     = HTMLElement_destructor,
-        .traverse       = HTMLDOMNode_traverse,
-        .unlink         = HTMLDOMNode_unlink
+        .traverse       = HTMLElement_traverse,
+        .unlink         = HTMLElement_unlink
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
     .handle_event       = HTMLElement_handle_event
@@ -1932,7 +1932,7 @@ static void *HTMLButtonElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLButtonElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLButtonElement *This = button_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsbutton)
         note_cc_edge((nsISupports*)This->nsbutton, "nsbutton", cb);
@@ -1941,7 +1941,7 @@ static void HTMLButtonElement_traverse(DispatchEx *dispex, nsCycleCollectionTrav
 static void HTMLButtonElement_unlink(DispatchEx *dispex)
 {
     HTMLButtonElement *This = button_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsbutton);
 }
 

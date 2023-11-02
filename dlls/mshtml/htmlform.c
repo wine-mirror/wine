@@ -788,7 +788,7 @@ static void *HTMLFormElement_query_interface(DispatchEx *dispex, REFIID riid)
 static void HTMLFormElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     HTMLFormElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_traverse(dispex, cb);
+    HTMLElement_traverse(dispex, cb);
 
     if(This->nsform)
         note_cc_edge((nsISupports*)This->nsform, "nsform", cb);
@@ -797,7 +797,7 @@ static void HTMLFormElement_traverse(DispatchEx *dispex, nsCycleCollectionTraver
 static void HTMLFormElement_unlink(DispatchEx *dispex)
 {
     HTMLFormElement *This = impl_from_DispatchEx(dispex);
-    HTMLDOMNode_unlink(dispex);
+    HTMLElement_unlink(dispex);
     unlink_ref(&This->nsform);
 }
 
