@@ -777,7 +777,7 @@
 @ stub _mbsncoll(str str long)
 # stub _mbsncoll_l(str str long ptr)
 @ cdecl _mbsncpy(ptr str long)
-# stub _mbsncpy_l(ptr str long ptr)
+@ cdecl _mbsncpy_l(ptr str long ptr)
 # stub _mbsncpy_s(ptr long str long)
 # stub _mbsncpy_s_l(ptr long str long ptr)
 @ cdecl _mbsnextc(str)

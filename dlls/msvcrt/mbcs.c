@@ -839,6 +839,57 @@ int CDECL _mbccpy_s(unsigned char* dest, size_t maxsize,
     return _mbccpy_s_l(dest, maxsize, copied, src, NULL);
 }
 
+
+/*********************************************************************
+ *		_mbsncpy_l(MSVCRT.@)
+ * REMARKS
+ *  The parameter n is the number or characters to copy, not the size of
+ *  the buffer. Use _mbsnbcpy_l for a function analogical to strncpy
+ */
+unsigned char* CDECL _mbsncpy_l(unsigned char* dst, const unsigned char* src, size_t n, _locale_t locale)
+{
+    unsigned char* ret = dst;
+    pthreadmbcinfo mbcinfo;
+
+    if (!n)
+        return dst;
+    if (!MSVCRT_CHECK_PMT(dst && src))
+        return NULL;
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        while (*src && n)
+        {
+            n--;
+            if (_ismbblead_l(*src, locale))
+            {
+                if (!*(src + 1))
+                {
+                    *dst++ = 0;
+                    *dst++ = 0;
+                    break;
+                }
+                *dst++ = *src++;
+            }
+            *dst++ = *src++;
+        }
+    }
+    else
+    {
+        while (n)
+        {
+            n--;
+            if (!(*dst++ = *src++)) break;
+        }
+    }
+    while (n--) *dst++ = 0;
+    return ret;
+}
+
 /*********************************************************************
  *		_mbsncpy(MSVCRT.@)
  * REMARKS
@@ -847,39 +898,7 @@ int CDECL _mbccpy_s(unsigned char* dest, size_t maxsize,
  */
 unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, size_t n)
 {
-  unsigned char* ret = dst;
-  if(!n)
-    return dst;
-  if (get_mbcinfo()->ismbcodepage)
-  {
-    while (*src && n)
-    {
-      n--;
-      if (_ismbblead(*src))
-      {
-        if (!*(src+1))
-        {
-            *dst++ = 0;
-            *dst++ = 0;
-            break;
-        }
-
-        *dst++ = *src++;
-      }
-
-      *dst++ = *src++;
-    }
-  }
-  else
-  {
-    while (n)
-    {
-        n--;
-        if (!(*dst++ = *src++)) break;
-    }
-  }
-  while (n--) *dst++ = 0;
-  return ret;
+    return _mbsncpy_l(dst, src, n, NULL);
 }
 
 /*********************************************************************

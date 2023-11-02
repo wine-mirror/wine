@@ -264,6 +264,7 @@ static void test_mbcp(void)
     unsigned char *mbstring2 = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5"; /* correct string */
     unsigned char *mbsonlylead = (unsigned char *)"\xb0\0\xb1\xb2 \xb3";
     unsigned char buf[16];
+    unsigned char *ret;
     int step;
     CPINFO cp_info;
 
@@ -461,6 +462,53 @@ static void test_mbcp(void)
         ok(copied == 1, "copied = %d\n", copied);
         expect_bin(buf, "\x00\xff", 2);
     }
+
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(NULL, mbstring, 1);
+    ok(ret == NULL, "_mbsncpy returned %p, expected NULL\n", ret);
+    ok(errno == EINVAL, "_mbsncpy returned %d\n", errno);
+
+    memset(buf, 0xff, sizeof(buf));
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(buf, NULL, 1);
+    ok(ret == NULL, "_mbsncpy returned %p, expected NULL\n", ret);
+    ok(errno == EINVAL, "_mbsncpy returned %d\n", errno);
+    expect_bin(buf, "\xff\xff\xff", 3);
+
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(NULL, mbstring, 0);
+    ok(ret == NULL, "_mbsncpy returned %p, expected NULL\n", ret);
+    ok(errno == 0xdeadbeef, "_mbsncpy should not change errno\n");
+
+    memset(buf, 0xff, sizeof(buf));
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(buf, NULL, 0);
+    ok(ret == buf, "_mbsncpy returned %p, expected %sp\n", ret, buf);
+    ok(errno == 0xdeadbeef, "_mbsncpy should not change errno\n");
+
+    memset(buf, 0xff, sizeof(buf));
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(NULL, mbstring, 1);
+    ok(ret == NULL, "_mbsncpy returned %p, expected NULL\n", ret);
+    ok(errno == EINVAL, "_mbsncpy returned %d\n", errno);
+
+    memset(buf, 0xff, sizeof(buf));
+    errno = 0xdeadbeef;
+    ret = _mbsncpy(buf, NULL, 1);
+    ok(ret == NULL, "_mbsncpy returned %p, expected NULL\n", ret);
+    ok(errno == EINVAL, "_mbsncpy returned %d\n", errno);
+
+    memset(buf, 0xff, sizeof(buf));
+    ret = _mbsncpy(NULL, mbstring, 0);
+    ok(ret == NULL, "_mbsncpy returned %p, expected %p\n", ret, buf);
+
+    memset(buf, 0xff, sizeof(buf));
+    ret = _mbsncpy(buf, NULL, 0);
+    ok(ret == buf, "_mbsncpy returned %p, expected %sp\n", ret, buf);
+
+    memset(buf, 0xff, sizeof(buf));
+    ret = _mbsncpy(buf, mbstring, 0);
+    ok(ret == buf, "_mbsncpy returned %p, expected %p\n", ret, buf);
 
     memset(buf, 0xff, sizeof(buf));
     _mbsncpy(buf, mbstring, 1);
