@@ -45,10 +45,20 @@ namespace Windows.UI.ViewManagement
     interface IUISettings5;
     interface IUISettings6;
 
+    interface IInputPane;
+    interface IInputPane2;
+    interface IInputPaneControl;
+    interface IInputPaneVisibilityEventArgs;
+    interface IInputPaneStatics;
+    interface IInputPaneStatics2;
+
     runtimeclass UISettings;
+    runtimeclass InputPane;
+    runtimeclass InputPaneVisibilityEventArgs;
 
     declare {
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.InputPane*, Windows.UI.ViewManagement.InputPaneVisibilityEventArgs*>;
     }
 
     [
@@ -172,6 +182,74 @@ namespace Windows.UI.ViewManagement
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPane),
+        uuid(640ada70-06f3-4c87-a678-9829c9127c28)
+    ]
+    interface IInputPane : IInspectable
+    {
+        [eventadd] HRESULT Showing([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.InputPane*, Windows.UI.ViewManagement.InputPaneVisibilityEventArgs*> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Showing([in] EventRegistrationToken token);
+        [eventadd] HRESULT Hiding([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.InputPane*, Windows.UI.ViewManagement.InputPaneVisibilityEventArgs*> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Hiding([in] EventRegistrationToken token);
+        [propget] HRESULT OccludedRect([out, retval] Windows.Foundation.Rect *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPane),
+        uuid(8a6b3f26-7090-4793-944c-c3f2cde26276)
+    ]
+    interface IInputPane2 : IInspectable
+    {
+        HRESULT TryShow([out, retval] boolean *result);
+        HRESULT TryHide([out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPane),
+        uuid(088bb24f-962f-489d-aa6e-c6be1a0a6e52)
+    ]
+    interface IInputPaneControl : IInspectable
+    {
+        [propget] HRESULT Visible([out, retval] boolean *value);
+        [propput] HRESULT Visible([in] boolean value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPaneVisibilityEventArgs),
+        uuid(d243e016-d907-4fcc-bb8d-f77baa5028f1)
+    ]
+    interface IInputPaneVisibilityEventArgs : IInspectable
+    {
+        [propget] HRESULT OccludedRect([out, retval] Windows.Foundation.Rect *value);
+        [propput] HRESULT EnsuredFocusedElementInView([in] boolean value);
+        [propget] HRESULT EnsuredFocusedElementInView([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPane),
+        uuid(95f4af3a-ef47-424a-9741-fd2815eba2bd)
+    ]
+    interface IInputPaneStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.UI.ViewManagement.InputPane **input_pane);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.UI.ViewManagement.InputPane),
+        uuid(1b63529b-d9ec-4531-8445-71bab9fb828e)
+    ]
+    interface IInputPaneStatics2 : IInspectable
+    {
+        HRESULT GetForUIContext([in] Windows.UI.UIContext *context, [out, retval] Windows.UI.ViewManagement.InputPane **result);
+    }
+
+    [
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile)
@@ -181,5 +259,27 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IUISettings;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings3;
+    }
+
+    [
+        static(Windows.UI.ViewManagement.IInputPaneStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.UI.ViewManagement.IInputPaneStatics2, Windows.Foundation.UniversalApiContract, 8.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard)
+    ]
+    runtimeclass InputPane
+    {
+        [default] interface Windows.UI.ViewManagement.IInputPane;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IInputPane2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IInputPaneControl;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard)
+    ]
+    runtimeclass InputPaneVisibilityEventArgs
+    {
+        [default] interface Windows.UI.ViewManagement.IInputPaneVisibilityEventArgs;
     }
 }
