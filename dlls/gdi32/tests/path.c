@@ -413,9 +413,9 @@ static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected,
     ok(size > 0, "GetPath returned size %d, last error %ld\n", size, GetLastError());
     if (size <= 0) return;
 
-    pnt = HeapAlloc(GetProcessHeap(), 0, size*sizeof(POINT));
+    pnt = malloc(size * sizeof(POINT));
     assert(pnt != 0);
-    types = HeapAlloc(GetProcessHeap(), 0, size*sizeof(BYTE));
+    types = malloc(size);
     assert(types != 0);
     size = GetPath(hdc, pnt, types, size);
     assert(size > 0);
@@ -448,8 +448,8 @@ static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected,
         printf("};\n" );
     }
 
-    HeapFree(GetProcessHeap(), 0, types);
-    HeapFree(GetProcessHeap(), 0, pnt);
+    free(types);
+    free(pnt);
 }
 
 static const path_test_t arcto_path[] =

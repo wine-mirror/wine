@@ -285,13 +285,13 @@ static void test_GdiConvertToDevmodeW(void)
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize >= FIELD_OFFSET(DEVMODEW, dmICMMethod), "dmSize is too small: %04x\n", dmW->dmSize);
     ok(dmW->dmSize <= sizeof(DEVMODEW), "dmSize is too large: %04x\n", dmW->dmSize);
-    HeapFree(GetProcessHeap(), 0, dmW);
+    free(dmW);
 
     dmA.dmSize = FIELD_OFFSET(DEVMODEA, dmFields) + sizeof(dmA.dmFields);
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dmW->dmFields),
        "wrong size %u\n", dmW->dmSize);
-    HeapFree(GetProcessHeap(), 0, dmW);
+    free(dmW);
 
     dmA.dmICMMethod = DMICMMETHOD_NONE;
     dmA.dmSize = FIELD_OFFSET(DEVMODEA, dmICMMethod) + sizeof(dmA.dmICMMethod);
@@ -300,13 +300,13 @@ static void test_GdiConvertToDevmodeW(void)
        "wrong size %u\n", dmW->dmSize);
     ok(dmW->dmICMMethod == DMICMMETHOD_NONE,
        "expected DMICMMETHOD_NONE, got %lu\n", dmW->dmICMMethod);
-    HeapFree(GetProcessHeap(), 0, dmW);
+    free(dmW);
 
     dmA.dmSize = 1024;
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmPanningHeight) + sizeof(dmW->dmPanningHeight),
        "wrong size %u\n", dmW->dmSize);
-    HeapFree(GetProcessHeap(), 0, dmW);
+    free(dmW);
 
     SetLastError(0xdeadbeef);
     dmA.dmSize = 0;
@@ -319,7 +319,7 @@ static void test_GdiConvertToDevmodeW(void)
     dmW = pGdiConvertToDevmodeW(&dmA);
     ok(dmW->dmSize == FIELD_OFFSET(DEVMODEW, dmFields),
        "expected %04lx, got %04x\n", FIELD_OFFSET(DEVMODEW, dmFields), dmW->dmSize);
-    HeapFree(GetProcessHeap(), 0, dmW);
+    free(dmW);
 }
 
 static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale )
@@ -1361,11 +1361,11 @@ static HDC create_printer_dc(int scale, BOOL reset)
     if (!pOpenPrinterA( buffer, &hprn, NULL )) goto done;
 
     pGetPrinterA( hprn, 2, NULL, 0, &len );
-    pbuf = HeapAlloc( GetProcessHeap(), 0, len );
+    pbuf = malloc( len );
     if (!pGetPrinterA( hprn, 2, (LPBYTE)pbuf, len, &len )) goto done;
 
     pGetPrinterDriverA( hprn, NULL, 3, NULL, 0, &len );
-    dbuf = HeapAlloc( GetProcessHeap(), 0, len );
+    dbuf = malloc( len );
     if (!pGetPrinterDriverA( hprn, NULL, 3, (LPBYTE)dbuf, len, &len )) goto done;
 
     pbuf->pDevMode->dmScale = scale;
@@ -1378,8 +1378,8 @@ static HDC create_printer_dc(int scale, BOOL reset)
 
     if (reset) ResetDCA( hdc, pbuf->pDevMode );
 done:
-    HeapFree( GetProcessHeap(), 0, dbuf );
-    HeapFree( GetProcessHeap(), 0, pbuf );
+    free( dbuf );
+    free( pbuf );
     if (hprn) pClosePrinter( hprn );
     if (winspool) FreeLibrary( winspool );
     if (!hdc) skip( "could not create a DC for the default printer\n" );
