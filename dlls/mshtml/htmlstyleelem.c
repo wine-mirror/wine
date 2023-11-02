@@ -382,6 +382,8 @@ static void HTMLStyleElement_traverse(DispatchEx *dispex, nsCycleCollectionTrave
     HTMLStyleElement *This = impl_from_DispatchEx(dispex);
     HTMLElement_traverse(dispex, cb);
 
+    if(This->style_sheet)
+        note_cc_edge((nsISupports*)This->style_sheet, "style_sheet", cb);
     if(This->nsstyle)
         note_cc_edge((nsISupports*)This->nsstyle, "nsstyle", cb);
 }
@@ -390,15 +392,8 @@ static void HTMLStyleElement_unlink(DispatchEx *dispex)
 {
     HTMLStyleElement *This = impl_from_DispatchEx(dispex);
     HTMLElement_unlink(dispex);
-    unlink_ref(&This->nsstyle);
-}
-
-static void HTMLStyleElement_destructor(DispatchEx *dispex)
-{
-    HTMLStyleElement *This = impl_from_DispatchEx(dispex);
-
     unlink_ref(&This->style_sheet);
-    HTMLElement_destructor(dispex);
+    unlink_ref(&This->nsstyle);
 }
 
 static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
@@ -429,7 +424,7 @@ static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLStyleElement_query_interface,
-        .destructor     = HTMLStyleElement_destructor,
+        .destructor     = HTMLElement_destructor,
         .traverse       = HTMLStyleElement_traverse,
         .unlink         = HTMLStyleElement_unlink
     },
