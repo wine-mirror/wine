@@ -562,12 +562,14 @@ static void test_OpenThemeData(void)
     hTheme = OpenThemeData(hWnd, szButtonClassList);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
     ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
+    CloseThemeData(hTheme);
 
     /* Test with bUtToN instead of Button */
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szButtonClassList2);
     ok( hTheme != NULL, "got NULL, expected a HTHEME handle\n");
     ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
+    CloseThemeData(hTheme);
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, szClassList);
@@ -582,6 +584,12 @@ static void test_OpenThemeData(void)
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
+
+    SetLastError(0xdeadbeef);
+    bTPDefined = IsThemePartDefined(hTheme, 0, 0);
+    todo_wine
+    ok( bTPDefined == FALSE, "Expected FALSE\n" );
+    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     hRes = CloseThemeData(hTheme);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08lx\n", hRes);
@@ -599,12 +607,6 @@ static void test_OpenThemeData(void)
     ok( GetLastError() == 0xdeadbeef,
         "Expected 0xdeadbeef, got 0x%08lx\n",
         GetLastError());
-
-    SetLastError(0xdeadbeef);
-    bTPDefined = IsThemePartDefined(hTheme, 0 , 0);
-    todo_wine
-    ok( bTPDefined == FALSE, "Expected FALSE\n" );
-    ok( GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError() );
 
     DestroyWindow(hWnd);
 }
@@ -2591,7 +2593,7 @@ static void test_theme(void)
     /* > XP use opaque scrollbar arrow parts, but TMT_TRANSPARENT is TRUE */
     else
     {
-        ok(hr == S_OK, "Got unexpected hr %#lx,\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(transparent, "Expected transparent.\n");
 
         transparent = IsThemeBackgroundPartiallyTransparent(htheme, SBP_ARROWBTN, 0);
