@@ -641,7 +641,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
                 if(newext)
                 {
                     WCHAR *ext = PathFindExtensionW(canon_filename);
-                    if(lstrcmpW(ext, newext))
+                    if(lstrcmpiW(ext, newext))
                         lstrcatW(canon_filename, newext);
                 }
             }

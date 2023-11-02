@@ -1494,6 +1494,7 @@ static void test_filename(void)
     static const WCHAR filename_dotextW[] = {'w','i','n','e','t','e','s','t','.',0};
     static const WCHAR filename_dotanddefW[] = {'w','i','n','e','t','e','s','t','.','.','w','t','e',0};
     static const WCHAR filename_defextW[] = {'w','i','n','e','t','e','s','t','.','w','t','e',0};
+    static const WCHAR filename_mixedcaseW[] = {'w','i','n','e','t','e','s','t','.','W','T','E',0};
     static const WCHAR filename_ext1W[] = {'w','i','n','e','t','e','s','t','.','w','t','1',0};
     static const WCHAR filename_ext2W[] = {'w','i','n','e','t','e','s','t','.','w','t','2',0};
     static const WCHAR filename_ext1anddefW[] =
@@ -1530,6 +1531,8 @@ static void test_filename(void)
     test_filename_savedlg(filename_noextW, defextW, filterspec, 3, filename_ext1W);
     /* Default extension, filterspec with "complex" extension */
     test_filename_savedlg(filename_noextW, defextW, filterspec2, 1, filename_ext2W);
+    /* Default extension, filterspec with extension that differs in case from the specified filename */
+    test_filename_savedlg(filename_mixedcaseW, defextW, filterspec, 0, filename_mixedcaseW);
 
     GetCurrentDirectoryW(MAX_PATH, buf);
     ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
