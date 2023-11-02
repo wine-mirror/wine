@@ -130,58 +130,11 @@ void dump_unicode_str( const WCHAR *str, int len )
 
 const char* get_symbol_str(const char* symname)
 {
-    char*       tmp;
-    const char* ret;
+    const char* ret = NULL;
 
     if (!symname) return "(nil)";
-    if (globals.do_demangle)
-    {
-        parsed_symbol   symbol;
-
-        symbol_init(&symbol, symname);
-        if (!symbol_demangle(&symbol))
-            ret = symname;
-        else if (symbol.flags & SYM_DATA)
-        {
-            ret = tmp = dump_want_n(strlen(symbol.arg_text[0]) + 1);
-            if (tmp) strcpy(tmp, symbol.arg_text[0]);
-        }
-        else
-        {
-            unsigned int i, len, start = symbol.flags & SYM_THISCALL ? 1 : 0;
-
-            len = strlen(symbol.return_text) + 3 /* ' __' */ +
-                strlen(symbol_get_call_convention(&symbol)) + 1 /* ' ' */+
-                strlen(symbol.function_name) + 1 /* ')' */;
-            if (!symbol.argc || (symbol.argc == 1 && symbol.flags & SYM_THISCALL))
-                len += 4 /* "void" */;
-            else for (i = start; i < symbol.argc; i++)
-                len += (i > start ? 2 /* ", " */ : 0 /* "" */) + strlen(symbol.arg_text[i]);
-            if (symbol.varargs) len += 5 /* ", ..." */;
-            len += 2; /* ")\0" */
-
-            ret = tmp = dump_want_n(len);
-            if (tmp)
-            {
-                sprintf(tmp, "%s __%s %s(",
-                        symbol.return_text,
-                        symbol_get_call_convention(&symbol),
-                        symbol.function_name);
-                if (!symbol.argc || (symbol.argc == 1 && symbol.flags & SYM_THISCALL))
-                    strcat(tmp, "void");
-                else for (i = start; i < symbol.argc; i++)
-                {
-                    if (i > start) strcat(tmp, ", ");
-                    strcat(tmp, symbol.arg_text[i]);
-                }
-                if (symbol.varargs) strcat(tmp, ", ...");
-                strcat(tmp, ")");
-            }
-        }
-        symbol_clear(&symbol);
-    }
-    else ret = symname;
-    return ret;
+    if (globals.do_demangle) ret = demangle( symname );
+    return ret ? ret : symname;
 }
 
 const char* get_guid_str(const GUID* guid)

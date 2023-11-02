@@ -453,7 +453,7 @@ int   main (int argc, char *argv[])
 	    if (globals.do_code && symbol_searched(count, symbol.symbol))
 	    {
 		/* Attempt to get information about the symbol */
-                BOOL result = symbol_demangle (&symbol) || symbol_search(&symbol);
+                BOOL result = symbol_search(&symbol);
 
                 if (result && symbol.function_name)
 		    /* Clean up the prototype */
