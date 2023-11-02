@@ -583,9 +583,7 @@ static void test_OpenThemeData(void)
 
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, L"deadbeef::treeview;dead::beef");
-    todo_wine
     ok(hTheme != NULL, "OpenThemeData() failed\n");
-    todo_wine
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got 0x%08lx\n", GetLastError());
     CloseThemeData(hTheme);
 

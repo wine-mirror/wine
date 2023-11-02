@@ -1079,6 +1079,10 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
             cls = MSSTYLES_FindClass(tfActiveTheme, szAppName, szClassName);
         else
             cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+
+        /* Fall back to default class if the specified subclass is not found */
+        if (!cls) cls = MSSTYLES_FindClass(tfActiveTheme, NULL, szClassName);
+
         if(cls) break;
     }
     if(!cls && *start) {
@@ -1087,6 +1091,9 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
             cls = MSSTYLES_FindClass(tfActiveTheme, szAppName, szClassName);
         else
             cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+
+        /* Fall back to default class if the specified subclass is not found */
+        if (!cls) cls = MSSTYLES_FindClass(tfActiveTheme, NULL, szClassName);
     }
     if(cls) {
         TRACE("Opened app %s, class %s from list %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName), debugstr_w(pszClassList));
