@@ -28,7 +28,6 @@
 #include "iads.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(security);
 
@@ -1080,7 +1079,7 @@ static BOOL parse_sd( const WCHAR *string, SECURITY_DESCRIPTOR_RELATIVE *sd, DWO
 
     *size = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-    tok = heap_alloc( (wcslen(string) + 1) * sizeof(WCHAR) );
+    tok = malloc( (wcslen(string) + 1) * sizeof(WCHAR) );
     if (!tok)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
@@ -1208,7 +1207,7 @@ static BOOL parse_sd( const WCHAR *string, SECURITY_DESCRIPTOR_RELATIVE *sd, DWO
     ret = TRUE;
 
 out:
-    heap_free(tok);
+    free(tok);
     return ret;
 }
 
