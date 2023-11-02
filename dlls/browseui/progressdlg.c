@@ -100,12 +100,8 @@ struct create_params
 static LPWSTR load_string(HINSTANCE hInstance, UINT uiResourceId)
 {
     WCHAR string[256];
-    LPWSTR ret;
-
     LoadStringW(hInstance, uiResourceId, string, ARRAY_SIZE(string));
-    ret = malloc((lstrlenW(string) + 1) * sizeof(WCHAR));
-    lstrcpyW(ret, string);
-    return ret;
+    return wcsdup(string);
 }
 
 static void set_progress_marquee(ProgressDialog *This)
