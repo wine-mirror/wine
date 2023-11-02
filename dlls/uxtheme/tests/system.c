@@ -562,9 +562,7 @@ static void test_OpenThemeData(void)
     ok(hRes == S_OK, "Got unexpected hr %#lx.\n", hRes);
     SetLastError(0xdeadbeef);
     hTheme = OpenThemeData(hWnd, L"explorer::treeview");
-    todo_wine
     ok(!hTheme, "OpenThemeData() should fail\n");
-    todo_wine
     ok(GetLastError() == E_PROP_ID_UNSUPPORTED, "Got unexpected %#lx.\n", GetLastError());
     SetWindowTheme(hWnd, NULL, NULL);
 

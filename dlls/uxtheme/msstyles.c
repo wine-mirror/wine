@@ -1076,9 +1076,12 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
 
         parse_app_class_name(buf, szAppName, szClassName);
         if (szAppName[0])
-            cls = MSSTYLES_FindClass(tfActiveTheme, szAppName, szClassName);
-        else
-            cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+        {
+            /* If the application class is already set then fail */
+            if (pszAppName) return NULL;
+            pszAppName = szAppName;
+        }
+        cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
 
         /* Fall back to default class if the specified subclass is not found */
         if (!cls) cls = MSSTYLES_FindClass(tfActiveTheme, NULL, szClassName);
@@ -1088,9 +1091,12 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList, U
     if(!cls && *start) {
         parse_app_class_name(start, szAppName, szClassName);
         if (szAppName[0])
-            cls = MSSTYLES_FindClass(tfActiveTheme, szAppName, szClassName);
-        else
-            cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
+        {
+            /* If the application class is already set then fail */
+            if (pszAppName) return NULL;
+            pszAppName = szAppName;
+        }
+        cls = MSSTYLES_FindClass(tfActiveTheme, pszAppName, szClassName);
 
         /* Fall back to default class if the specified subclass is not found */
         if (!cls) cls = MSSTYLES_FindClass(tfActiveTheme, NULL, szClassName);
