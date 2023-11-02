@@ -611,7 +611,7 @@
 @ cdecl _mbctoupper_l(long ptr)
 @ stub _mblen_l
 @ cdecl _mbsbtype(str long)
-@ stub _mbsbtype_l
+@ cdecl _mbsbtype_l(str long ptr)
 @ cdecl _mbscat_s(ptr long str)
 @ cdecl _mbscat_s_l(ptr long str ptr)
 @ cdecl _mbschr(str long)
@@ -1181,7 +1181,7 @@
 @ cdecl _o__mbctoupper_l(long ptr) _mbctoupper_l
 @ stub _o__mblen_l
 @ cdecl _o__mbsbtype(str long) _mbsbtype
-@ stub _o__mbsbtype_l
+@ cdecl _o__mbsbtype_l(str long ptr) _mbsbtype_l
 @ cdecl _o__mbscat_s(ptr long str) _mbscat_s
 @ cdecl _o__mbscat_s_l(ptr long str ptr) _mbscat_s_l
 @ cdecl _o__mbschr(str long) _mbschr

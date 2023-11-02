@@ -2028,34 +2028,55 @@ int CDECL _mbbtype(unsigned char c, int type)
 }
 
 /*********************************************************************
+ *		_mbsbtype_l (MSVCRT.@)
+ */
+int CDECL _mbsbtype_l(const unsigned char *str, size_t count, _locale_t locale)
+{
+    int lead = 0;
+    pthreadmbcinfo mbcinfo;
+    const unsigned char *end = str + count;
+
+    if (!MSVCRT_CHECK_PMT(str))
+        return _MBC_ILLEGAL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    /* Lead bytes can also be trail bytes so we need to analyse the string.
+    * Also we must return _MBC_ILLEGAL for chars past the end of the string
+    */
+    while (str < end) /* Note: we skip the last byte - will check after the loop */
+    {
+        if (!*str)
+            return _MBC_ILLEGAL;
+        lead = mbcinfo->ismbcodepage && !lead && _ismbblead_l(*str, locale);
+        str++;
+    }
+
+    if (lead)
+    {
+        if (_ismbbtrail_l(*str, locale))
+            return _MBC_TRAIL;
+        else
+            return _MBC_ILLEGAL;
+    }
+    else
+    {
+        if (_ismbblead_l(*str, locale))
+            return _MBC_LEAD;
+        else
+            return _MBC_SINGLE;
+    }
+}
+
+/*********************************************************************
  *		_mbsbtype (MSVCRT.@)
  */
 int CDECL _mbsbtype(const unsigned char *str, size_t count)
 {
-  int lead = 0;
-  const unsigned char *end = str + count;
-
-  /* Lead bytes can also be trail bytes so we need to analyse the string.
-   * Also we must return _MBC_ILLEGAL for chars past the end of the string
-   */
-  while (str < end) /* Note: we skip the last byte - will check after the loop */
-  {
-    if (!*str)
-      return _MBC_ILLEGAL;
-    lead = get_mbcinfo()->ismbcodepage && !lead && _ismbblead(*str);
-    str++;
-  }
-
-  if (lead)
-    if (_ismbbtrail(*str))
-      return _MBC_TRAIL;
-    else
-      return _MBC_ILLEGAL;
-  else
-    if (_ismbblead(*str))
-      return _MBC_LEAD;
-    else
-      return _MBC_SINGLE;
+    return _mbsbtype_l(str, count, NULL);
 }
 
 /*********************************************************************

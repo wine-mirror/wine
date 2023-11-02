@@ -713,7 +713,7 @@
 @ extern _mbctype MSVCRT_mbctype
 # stub _mblen_l(str long ptr)
 @ cdecl _mbsbtype(str long)
-# stub _mbsbtype_l(str long ptr)
+@ cdecl _mbsbtype_l(str long ptr)
 @ cdecl _mbscat(str str)
 @ cdecl _mbscat_s(ptr long str)
 @ cdecl _mbscat_s_l(ptr long str ptr)

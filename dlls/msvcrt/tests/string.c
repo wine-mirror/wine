@@ -335,6 +335,7 @@ static void test_mbcp(void)
     expect_eq(_ismbstrail(mbsonlylead, &mbsonlylead[5]), FALSE, int, "%d");
 
     /* _mbsbtype */
+    expect_eq(_mbsbtype(NULL, 0), _MBC_ILLEGAL, int, "%d");
     expect_eq(_mbsbtype(mbstring, 0), _MBC_LEAD, int, "%d");
     expect_eq(_mbsbtype(mbstring, 1), _MBC_TRAIL, int, "%d");
     expect_eq(_mbsbtype(mbstring, 2), _MBC_LEAD, int, "%d");
