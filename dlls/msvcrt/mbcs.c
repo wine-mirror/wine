@@ -2206,24 +2206,44 @@ size_t CDECL _mbsnccnt(const unsigned char* str, size_t len)
 }
 
 /*********************************************************************
+ *		_mbsnbcnt_l(MSVCRT.@)
+ * 'b' is for byte count.
+ */
+size_t CDECL _mbsnbcnt_l(const unsigned char* str, size_t len, _locale_t locale)
+{
+    size_t ret;
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return 0;
+    if (!MSVCRT_CHECK_PMT(str))
+        return 0;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+    if (mbcinfo->ismbcodepage)
+    {
+        const unsigned char* xstr = str;
+        while (*xstr && len-- > 0)
+        {
+            if (_ismbblead_l(*xstr++, locale))
+                xstr++;
+        }
+        return xstr - str;
+    }
+    ret = u_strlen(str);
+    return min(ret, len); /* ASCII CP */
+}
+
+/*********************************************************************
  *		_mbsnbcnt(MSVCRT.@)
  * 'b' is for byte count.
  */
 size_t CDECL _mbsnbcnt(const unsigned char* str, size_t len)
 {
-  size_t ret;
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    const unsigned char* xstr = str;
-    while(*xstr && len-- > 0)
-    {
-      if (_ismbblead(*xstr++))
-        xstr++;
-    }
-    return xstr-str;
-  }
-  ret=u_strlen(str);
-  return min(ret, len); /* ASCII CP */
+    return _mbsnbcnt_l(str, len, NULL);
 }
 
 /*********************************************************************
