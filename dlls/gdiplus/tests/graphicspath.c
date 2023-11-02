@@ -94,8 +94,8 @@ static void _ok_path_fudge(GpPath* path, const path_test_t *expected, INT expect
         ok_(__FILE__,line)(size == expected_size, "Path size %d does not match expected size %d\n",
             size, expected_size);
 
-    points = HeapAlloc(GetProcessHeap(), 0, size * sizeof(GpPointF));
-    types = HeapAlloc(GetProcessHeap(), 0, size);
+    points = malloc(size * sizeof(GpPointF));
+    types = malloc(size);
 
     if(GdipGetPathPoints(path, points, size) != Ok || GdipGetPathTypes(path, types, size) != Ok){
         skip("Cannot perform path comparisons due to failure to retrieve path.\n");
@@ -125,8 +125,8 @@ static void _ok_path_fudge(GpPath* path, const path_test_t *expected, INT expect
     }
 
 end:
-    HeapFree(GetProcessHeap(), 0, types);
-    HeapFree(GetProcessHeap(), 0, points);
+    free(types);
+    free(points);
 }
 
 static void test_constructor_destructor(void)

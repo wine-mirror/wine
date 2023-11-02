@@ -3797,7 +3797,7 @@ static void check_properties_id_list(GpImage *image, const struct property_test_
     if (count_broken != ~0 && count_broken == prop_count)
         td = td_broken;
 
-    prop_id = HeapAlloc(GetProcessHeap(), 0, prop_count * sizeof(*prop_id));
+    prop_id = malloc(prop_count * sizeof(*prop_id));
 
     status = GdipGetPropertyIdList(image, prop_count, prop_id);
     expect(Ok, status);
@@ -3821,7 +3821,7 @@ static void check_properties_id_list(GpImage *image, const struct property_test_
         if (prop_size)
             *prop_size += size;
 
-        prop_item = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+        prop_item = calloc(1, size);
         status = GdipGetPropertyItem(image, prop_id[i], size, prop_item);
         size -= sizeof(*prop_item);
         expect(Ok, status);
@@ -3845,12 +3845,12 @@ static void check_properties_id_list(GpImage *image, const struct property_test_
                 trace("(id %#lx) %s\n", prop_item->id, dbgstr_hexdata(prop_item->value, prop_item->length));
         }
 
-        HeapFree(GetProcessHeap(), 0, prop_item);
+        free(prop_item);
 
         winetest_pop_context();
     }
 
-    HeapFree(GetProcessHeap(), 0, prop_id);
+    free(prop_id);
 }
 
 static void check_properties_get_all(GpImage *image, const struct property_test_data *td, UINT count,
@@ -3872,7 +3872,7 @@ static void check_properties_get_all(GpImage *image, const struct property_test_
     if (count_broken != ~0 && count_broken == total_count)
         td = td_broken;
 
-    prop_item = HeapAlloc(GetProcessHeap(), 0, total_size);
+    prop_item = malloc(total_size);
     status = GdipGetAllPropertyItems(image, total_size, total_count, prop_item);
     expect(Ok, status);
 
@@ -3902,7 +3902,7 @@ static void check_properties_get_all(GpImage *image, const struct property_test_
         winetest_pop_context();
     }
 
-    HeapFree(GetProcessHeap(), 0, prop_item);
+    free(prop_item);
 }
 
 static void test_image_properties(void)
@@ -4072,7 +4072,7 @@ static void test_image_properties(void)
         expect(InvalidParameter, status);
         status = GdipGetAllPropertyItems(image, prop_size, prop_count, NULL);
         expect(InvalidParameter, status);
-        prop_item = HeapAlloc(GetProcessHeap(), 0, prop_size);
+        prop_item = malloc(prop_size);
         expected = (image_type == ImageTypeMetafile) ? NotImplemented : InvalidParameter;
         if (prop_count != 1)
         {
@@ -4091,7 +4091,7 @@ static void test_image_properties(void)
         status = GdipGetAllPropertyItems(image, prop_size, prop_count, prop_item);
         ok(status == expected || broken(status == Ok && prop_count == 0), /* XP */
            "Expected %d, got %d\n", expected, status);
-        HeapFree(GetProcessHeap(), 0, prop_item);
+        free(prop_item);
 
         GdipDisposeImage(image);
 
@@ -6132,7 +6132,7 @@ static BYTE *init_bitmap(UINT *width, UINT *height, UINT *stride)
     *stride = (*width * 3 + 3) & ~3;
     trace("width %d, height %d, stride %d\n", *width, *height, *stride);
 
-    src = HeapAlloc(GetProcessHeap(), 0, *stride * *height);
+    src = malloc(*stride * *height);
 
     scale = 256 / *width;
     if (!scale) scale = 1;
@@ -6263,7 +6263,7 @@ static void test_GdipInitializePalette(void)
 
     GdipFree(palette);
     GdipDisposeImage((GpImage *)bitmap);
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 }
 
 static void test_graphics_clear(void)
