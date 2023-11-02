@@ -6863,6 +6863,10 @@ void HTMLElement_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback
     HTMLElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode_traverse(&This->node.event_target.dispex, cb);
 
+    if(This->style)
+        note_cc_edge((nsISupports*)&This->style->IHTMLStyle_iface, "style", cb);
+    if(This->runtime_style)
+        note_cc_edge((nsISupports*)&This->runtime_style->IHTMLStyle_iface, "runtime_style", cb);
     if(This->attrs)
         note_cc_edge((nsISupports*)&This->attrs->IHTMLAttributeCollection_iface, "attrs", cb);
 }
@@ -6872,6 +6876,16 @@ void HTMLElement_unlink(DispatchEx *dispex)
     HTMLElement *This = impl_from_DispatchEx(dispex);
     HTMLDOMNode_unlink(&This->node.event_target.dispex);
 
+    if(This->style) {
+        HTMLStyle *style = This->style;
+        This->style = NULL;
+        IHTMLStyle_Release(&style->IHTMLStyle_iface);
+    }
+    if(This->runtime_style) {
+        HTMLStyle *runtime_style = This->runtime_style;
+        This->runtime_style = NULL;
+        IHTMLStyle_Release(&runtime_style->IHTMLStyle_iface);
+    }
     if(This->attrs) {
         HTMLAttributeCollection *attrs = This->attrs;
         This->attrs = NULL;
@@ -6884,16 +6898,6 @@ void HTMLElement_destructor(DispatchEx *dispex)
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
     ConnectionPointContainer_Destroy(&This->cp_container);
-
-    if(This->style) {
-        This->style->elem = NULL;
-        IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
-    }
-    if(This->runtime_style) {
-        This->runtime_style->elem = NULL;
-        IHTMLStyle_Release(&This->runtime_style->IHTMLStyle_iface);
-    }
-
     free(This->filter);
     HTMLDOMNode_destructor(&This->node.event_target.dispex);
 }

@@ -1295,7 +1295,9 @@ static void *HTMLCurrentStyle_query_interface(DispatchEx *dispex, REFIID riid)
 
 static const dispex_static_data_vtbl_t HTMLCurrentStyle_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
-    .query_interface   = HTMLCurrentStyle_query_interface
+    .query_interface   = HTMLCurrentStyle_query_interface,
+    .traverse          = CSSStyle_traverse,
+    .unlink            = CSSStyle_unlink
 };
 
 static const tid_t HTMLCurrentStyle_iface_tids[] = {

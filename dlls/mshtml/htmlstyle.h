@@ -166,6 +166,4 @@ HRESULT set_elem_style(HTMLElement*,styleid_t,const WCHAR*);
 
 #define CSSSTYLE_DISPEX_VTBL_ENTRIES           \
     .destructor        = CSSStyle_destructor,  \
-    .traverse          = CSSStyle_traverse,    \
-    .unlink            = CSSStyle_unlink,      \
     .get_dispid        = CSSStyle_get_dispid

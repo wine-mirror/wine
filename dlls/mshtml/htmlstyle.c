@@ -9967,9 +9967,14 @@ HRESULT CSSStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *
     return DISP_E_UNKNOWNNAME;
 }
 
+static inline HTMLStyle *HTMLStyle_from_DispatchEx(DispatchEx *dispex)
+{
+    return CONTAINING_RECORD(dispex, HTMLStyle, css_style.dispex);
+}
+
 static void *HTMLStyle_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLStyle *This = CONTAINING_RECORD(dispex, HTMLStyle, css_style.dispex);
+    HTMLStyle *This = HTMLStyle_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLStyle, riid))
         return &This->IHTMLStyle_iface;
@@ -9986,6 +9991,27 @@ static void *HTMLStyle_query_interface(DispatchEx *dispex, REFIID riid)
     return CSSStyle_query_interface(&This->css_style.dispex, riid);
 }
 
+static void HTMLStyle_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLStyle *This = HTMLStyle_from_DispatchEx(dispex);
+    CSSStyle_traverse(&This->css_style.dispex, cb);
+
+    if(This->elem)
+        note_cc_edge((nsISupports*)&This->elem->node.IHTMLDOMNode_iface, "elem", cb);
+}
+
+static void HTMLStyle_unlink(DispatchEx *dispex)
+{
+    HTMLStyle *This = HTMLStyle_from_DispatchEx(dispex);
+    CSSStyle_unlink(&This->css_style.dispex);
+
+    if(This->elem) {
+        HTMLElement *elem = This->elem;
+        This->elem = NULL;
+        IHTMLDOMNode_Release(&elem->node.IHTMLDOMNode_iface);
+    }
+}
+
 void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
@@ -9994,9 +10020,11 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration2_tid, NULL);
 }
 
-static const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
+static const dispex_static_data_vtbl_t HTMLStyle_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
-    .query_interface   = HTMLStyle_query_interface
+    .query_interface   = HTMLStyle_query_interface,
+    .traverse          = HTMLStyle_traverse,
+    .unlink            = HTMLStyle_unlink
 };
 
 static const tid_t HTMLStyle_iface_tids[] = {
@@ -10010,7 +10038,7 @@ static const tid_t HTMLStyle_iface_tids[] = {
 };
 static dispex_static_data_t HTMLStyle_dispex = {
     "MSStyleCSSProperties",
-    &CSSStyle_dispex_vtbl,
+    &HTMLStyle_dispex_vtbl,
     DispHTMLStyle_tid,
     HTMLStyle_iface_tids,
     CSSStyle_init_dispex_info
@@ -10088,6 +10116,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     style->IHTMLStyle6_iface.lpVtbl = &HTMLStyle6Vtbl;
 
     style->elem = elem;
+    IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
 
     init_css_style(&style->css_style, nsstyle, &HTMLStyle_dispex, dispex_compat_mode(&elem->node.event_target.dispex));
     nsIDOMCSSStyleDeclaration_Release(nsstyle);
@@ -10098,7 +10127,9 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
 static const dispex_static_data_vtbl_t HTMLW3CComputedStyle_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
-    .query_interface   = CSSStyle_query_interface
+    .query_interface   = CSSStyle_query_interface,
+    .traverse          = CSSStyle_traverse,
+    .unlink            = CSSStyle_unlink
 };
 
 static const tid_t HTMLW3CComputedStyle_iface_tids[] = {
