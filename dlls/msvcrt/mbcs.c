@@ -2386,13 +2386,19 @@ unsigned char* CDECL _mbslwr(unsigned char *s)
 int CDECL _mbslwr_s_l(unsigned char* s, size_t len, _locale_t locale)
 {
   unsigned char *p = s;
+  pthreadmbcinfo mbcinfo;
 
   if (!s && !len)
     return 0;
   if (!MSVCRT_CHECK_PMT(s && len))
     return EINVAL;
 
-  if (get_mbcinfo()->ismbcodepage)
+  if (locale)
+    mbcinfo = locale->mbcinfo;
+  else
+    mbcinfo = get_mbcinfo();
+
+  if (mbcinfo->ismbcodepage)
   {
     unsigned int c;
     for ( ; *s && len > 0; len--)
