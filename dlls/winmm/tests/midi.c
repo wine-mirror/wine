@@ -136,7 +136,7 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     mhdr.dwUser = 0x56FA552C;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
     mhdr.dwBytesRecorded = 5;
-    mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
+    mhdr.lpData = malloc(mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %ld bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         rc = midiInPrepareHeader(hm, &mhdr, offsetof(MIDIHDR,dwOffset)-1);
@@ -204,7 +204,7 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     ok(!rc, "midiInClose rc=%s\n", mmsys_error(rc));
 
     ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %Ix\n", mhdr.dwUser);
-    HeapFree(GetProcessHeap(), 0, mhdr.lpData);
+    free(mhdr.lpData);
     test_notification(hwnd, "midiInClose", MIM_CLOSE, 0);
     test_notification(hwnd, "midiIn over", 0, WHATEVER);
 }
@@ -358,7 +358,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     mhdr.dwUser   = 0x56FA552C;
     mhdr.dwOffset = 0xDEADBEEF;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
-    mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
+    mhdr.lpData = malloc(mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %ld bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         rc = midiOutLongMsg(hm, &mhdr, sizeof(mhdr));
@@ -399,7 +399,7 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
         ok(mhdr.dwFlags == (MHDR_INQUEUE|MHDR_DONE), "dwFlags=%lx\n", mhdr.dwFlags);
 
-        HeapFree(GetProcessHeap(), 0, mhdr.lpData);
+        free(mhdr.lpData);
     }
     ok(mhdr.dwUser==0x56FA552C, "MIDIHDR.dwUser changed to %Ix\n", mhdr.dwUser);
     ok(mhdr.dwOffset==0xDEADBEEF, "MIDIHDR.dwOffset changed to %lx\n", mhdr.dwOffset);
@@ -810,7 +810,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     ok(0==strmNops[1].dwStreamID, "dwStreamID[1] set to %lx\n", strmNops[1].dwStreamID);
 
     mhdr.dwBufferLength = 70000; /* > 64KB! */
-    mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
+    mhdr.lpData = malloc(mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %ld bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         mhdr.dwFlags = 0;
@@ -821,7 +821,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
 
-        HeapFree(GetProcessHeap(), 0, mhdr.lpData);
+        free(mhdr.lpData);
     }
 
     rc = midiStreamClose(hm);
@@ -999,7 +999,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
     memset(&mhdr, 0, sizeof(mhdr));
     mhdr.dwBufferLength = sizeof(MIDISHORTEVENT) * 5 + ROUNDUP4(sizeof(SysEx_reset)) +
         ROUNDUP4(sizeof(SysEx_volume_off)) + ROUNDUP4(sizeof(SysEx_volume_full));
-    mhdr.lpData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mhdr.dwBufferLength);
+    mhdr.lpData = calloc(1, mhdr.dwBufferLength);
     ok(mhdr.lpData!=NULL, "No %ld bytes of memory!\n", mhdr.dwBufferLength);
     if (mhdr.lpData) {
         MIDIEVENT *e;
@@ -1042,7 +1042,7 @@ static void test_midiStream(UINT udev, HWND hwnd)
         rc = midiOutUnprepareHeader((HMIDIOUT)hm, &mhdr, sizeof(mhdr));
         ok(!rc, "midiOutUnprepare rc=%s\n", mmsys_error(rc));
 
-        HeapFree(GetProcessHeap(), 0, mhdr.lpData);
+        free(mhdr.lpData);
     }
     rc = midiStreamClose(hm);
     ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));

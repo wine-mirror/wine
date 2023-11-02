@@ -512,8 +512,7 @@ static void mixer_test_deviceA(int device)
                               mixerlineA.Target.wMid, mixerlineA.Target.wPid);
                     }
                     if (mixerlineA.cControls) {
-                        array=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                            mixerlineA.cControls*sizeof(MIXERCONTROLA));
+                        array=calloc(mixerlineA.cControls, sizeof(MIXERCONTROLA));
                         if (array) {
                             memset(&controls, 0, sizeof(controls));
 
@@ -565,7 +564,7 @@ static void mixer_test_deviceA(int device)
                                 }
                             }
 
-                            HeapFree(GetProcessHeap(),0,array);
+                            free(array);
                         }
                     }
                 }
@@ -913,8 +912,7 @@ static void mixer_test_deviceW(int device)
                               mixerlineW.Target.wMid, mixerlineW.Target.wPid);
                     }
                     if (mixerlineW.cControls) {
-                        array=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                            mixerlineW.cControls*sizeof(MIXERCONTROLW));
+                        array=calloc(mixerlineW.cControls, sizeof(MIXERCONTROLW));
                         if (array) {
                             rc = mixerGetLineControlsW(mix, 0, MIXER_GETLINECONTROLSF_ALL);
                             ok(rc==MMSYSERR_INVALPARAM,
@@ -967,7 +965,7 @@ static void mixer_test_deviceW(int device)
                                 }
                             }
 
-                            HeapFree(GetProcessHeap(),0,array);
+                            free(array);
                         }
                     }
                 }
