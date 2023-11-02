@@ -34,7 +34,6 @@
 #include "ddk/d3dkmthk.h"
 #include "setupapi.h"
 #include "ntddvdeo.h"
-#include "wine/heap.h"
 #include <stdio.h>
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
@@ -496,7 +495,7 @@ static void test_ChangeDisplaySettingsEx(void)
     /* Save the original mode for all devices so that they can be restored at the end of tests */
     device_count = 0;
     device_size = 2;
-    devices = heap_calloc(device_size, sizeof(*devices));
+    devices = calloc(device_size, sizeof(*devices));
     ok(devices != NULL, "Failed to allocate memory.\n");
 
     primary = 0;
@@ -519,7 +518,7 @@ static void test_ChangeDisplaySettingsEx(void)
         if (device_count >= device_size)
         {
             device_size *= 2;
-            devices = heap_realloc(devices, device_size * sizeof(*devices));
+            devices = realloc(devices, device_size * sizeof(*devices));
             ok(devices != NULL, "Failed to reallocate memory.\n");
         }
 
@@ -1165,7 +1164,7 @@ static void test_ChangeDisplaySettingsEx(void)
     for (device = 0; device < device_count; ++device)
         expect_dm(&devices[device].original_mode, devices[device].name, 0);
 
-    heap_free(devices);
+    free(devices);
 }
 
 static void test_monitors(void)

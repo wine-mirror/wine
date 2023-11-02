@@ -2418,13 +2418,13 @@ static void add_message_(int line, const struct recvd_message *msg)
     EnterCriticalSection( &sequence_cs );
     if (!sequence)
     {
-	sequence_size = 10;
-	sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof(*sequence) );
+        sequence_size = 10;
+        sequence = malloc( sequence_size * sizeof(*sequence) );
     }
     if (sequence_cnt == sequence_size) 
     {
-	sequence_size *= 2;
-	sequence = HeapReAlloc( GetProcessHeap(), 0, sequence, sequence_size * sizeof(*sequence) );
+        sequence_size *= 2;
+        sequence = realloc( sequence, sequence_size * sizeof(*sequence) );
     }
 
     seq = &sequence[sequence_cnt++];
@@ -2625,7 +2625,7 @@ static void flush_events(void)
 static void flush_sequence(void)
 {
     EnterCriticalSection( &sequence_cs );
-    HeapFree(GetProcessHeap(), 0, sequence);
+    free( sequence );
     sequence = 0;
     sequence_cnt = sequence_size = 0;
     LeaveCriticalSection( &sequence_cs );
@@ -8196,13 +8196,13 @@ void dump_region(HRGN hrgn)
         return;
     }
     if (!(size = GetRegionData( hrgn, 0, NULL ))) return;
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return;
+    if (!(data = malloc( size ))) return;
     GetRegionData( hrgn, size, data );
     printf("%ld rects:", data->rdh.nCount );
     for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
         printf( " %s", wine_dbgstr_rect( rect ));
     printf("\n");
-    HeapFree( GetProcessHeap(), 0, data );
+    free( data );
 }
 
 #define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, hwnd, hrgn )
@@ -18043,9 +18043,9 @@ static void test_broadcast(void)
     HWND hwnd;
     HWND *hwnd_sub;
 
-    hwnd_sub = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*hwnd_sub) );
-    g_oldproc_sub = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*g_oldproc_sub) );
-    g_broadcast_sub_wparam = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*g_broadcast_sub_wparam) );
+    hwnd_sub = malloc(ARRAY_SIZE(bcast_expect) * sizeof(*hwnd_sub));
+    g_oldproc_sub = malloc(ARRAY_SIZE(bcast_expect) * sizeof(*g_oldproc_sub));
+    g_broadcast_sub_wparam = malloc(ARRAY_SIZE(bcast_expect) * sizeof(*g_broadcast_sub_wparam));
 
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL);
     ok(hwnd != NULL, "got %p\n", hwnd);
@@ -18147,9 +18147,9 @@ static void test_broadcast(void)
     for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
         DestroyWindow(hwnd_sub[j]);
 
-    HeapFree(GetProcessHeap(), 0, g_broadcast_sub_wparam);
-    HeapFree(GetProcessHeap(), 0, g_oldproc_sub);
-    HeapFree(GetProcessHeap(), 0, hwnd_sub);
+    free(g_broadcast_sub_wparam);
+    free(g_oldproc_sub);
+    free(hwnd_sub);
 
     DestroyWindow(hwnd);
 }

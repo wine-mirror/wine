@@ -1531,10 +1531,10 @@ static void test_handles( HWND hwnd )
 
     if (0)  /* crashes on vista64 */
     {
-        ptr = HeapAlloc( GetProcessHeap(), 0, 0 );
+        ptr = malloc( sizeof(void *) );
         h = SetClipboardData( format_id2, ptr );
         ok( !h, "got %p\n", h );
-        HeapFree( GetProcessHeap(), 0, ptr );
+        free( ptr );
     }
 
     h = SetClipboardData( format_id2, empty_fixed );
@@ -1547,12 +1547,12 @@ static void test_handles( HWND hwnd )
     ok( h == hmoveable, "got %p\n", h );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
 
-    ptr = HeapAlloc( GetProcessHeap(), 0, 37 );
+    ptr = malloc( 37 );
     h = SetClipboardData( 0xdeadfade, ptr );
     ok( h == ptr || !h, "got %p\n", h );
     if (!h)  /* heap blocks are rejected on >= win8 */
     {
-        HeapFree( GetProcessHeap(), 0, ptr );
+        free( ptr );
         ptr = NULL;
     }
 

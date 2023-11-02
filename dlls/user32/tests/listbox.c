@@ -178,18 +178,18 @@ check (DWORD style, const struct listbox_test test)
 	WCHAR *txtw;
 	int resA, resW;
 
-	txt = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, size+1);
+	txt = calloc(1, size + 1);
 	resA=SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
         ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
-	txtw = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, 2*size+2);
+	txtw = calloc(1, 2 * size + 2);
 	resW=SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
 	ok(resA == resW, "Unexpected text length.\n");
 	WideCharToMultiByte( CP_ACP, 0, txtw, -1, txt, size, NULL, NULL );
         ok(!strcmp (txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
-	HeapFree (GetProcessHeap(), 0, txtw);
-	HeapFree (GetProcessHeap(), 0, txt);
+	free(txtw);
+	free(txt);
   }
   
   /* Confirm the count of items, and that an invalid delete does not remove anything */

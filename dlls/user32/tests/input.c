@@ -2029,7 +2029,7 @@ static void test_GetRawInputDeviceList(void)
                 (info.dwType != RIM_TYPEHID && sz == 0),
                 "Got wrong PPD size for type 0x%lx: %u\n", info.dwType, sz);
 
-        ppd = HeapAlloc(GetProcessHeap(), 0, sz);
+        ppd = malloc(sz);
         ret = pGetRawInputDeviceInfoW(devices[i].hDevice, RIDI_PREPARSEDDATA, ppd, &sz);
         ok(ret == sz, "GetRawInputDeviceInfo gave wrong return: %u, should be %u\n", ret, sz);
 
@@ -2056,7 +2056,7 @@ static void test_GetRawInputDeviceList(void)
                 HidD_FreePreparsedData(preparsed);
         }
 
-        HeapFree(GetProcessHeap(), 0, ppd);
+        free(ppd);
 
         CloseHandle(file);
     }
