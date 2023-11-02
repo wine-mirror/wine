@@ -1156,24 +1156,10 @@ static void test_autocreation(void)
     /* On Windows we also automatically get an eventlog file */
     GetSystemDirectoryA(sysdir, sizeof(sysdir));
 
-    /* NT4 - W2K3 */
     lstrcpyA(eventlogfile, sysdir);
-    lstrcatA(eventlogfile, "\\config\\");
+    lstrcatA(eventlogfile, "\\winevt\\Logs\\");
     lstrcatA(eventlogfile, eventlogname);
-    lstrcatA(eventlogfile, ".evt");
-
-    if (GetFileAttributesA(eventlogfile) == INVALID_FILE_ATTRIBUTES)
-    {
-        /* Vista+ */
-        lstrcpyA(eventlogfile, sysdir);
-        lstrcatA(eventlogfile, "\\winevt\\Logs\\");
-        lstrcatA(eventlogfile, eventlogname);
-        lstrcatA(eventlogfile, ".evtx");
-    }
-
-    todo_wine
-    ok(GetFileAttributesA(eventlogfile) != INVALID_FILE_ATTRIBUTES,
-       "Expected an eventlog file\n");
+    lstrcatA(eventlogfile, ".evtx");
 
     if (pWow64RevertWow64FsRedirection)
         pWow64RevertWow64FsRedirection(redir);
