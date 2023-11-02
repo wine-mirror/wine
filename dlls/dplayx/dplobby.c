@@ -115,7 +115,7 @@ static void dplobby_destroy(IDirectPlayLobbyImpl *obj)
     DPQ_DELETEQ( obj->msgs, msgs, LPDPLMSG, cbDeleteElemFromHeap );
     obj->lock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &obj->lock );
-    HeapFree( GetProcessHeap(), 0, obj );
+    free( obj );
 }
 
 static HRESULT WINAPI IDirectPlayLobbyAImpl_QueryInterface( IDirectPlayLobbyA *iface, REFIID riid,
@@ -405,7 +405,7 @@ static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID 
     return hr;
   }
 
-  lpConn = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwConnSize );
+  lpConn = calloc( 1, dwConnSize );
 
   if( lpConn == NULL )
   {
@@ -417,7 +417,7 @@ static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID 
                                                0, lpConn, &dwConnSize );
   if( FAILED( hr ) )
   {
-    HeapFree( GetProcessHeap(), 0, lpConn );
+    free( lpConn );
     return hr;
   }
 
@@ -442,7 +442,7 @@ static HRESULT DPL_ConnectEx( IDirectPlayLobbyImpl *This, DWORD dwFlags, REFIID 
   hr = IDirectPlayX_Open( (*(LPDIRECTPLAY2*)lplpDP), lpConn->lpSessionDesc,
                           dwOpenFlags );
 
-  HeapFree( GetProcessHeap(), 0, lpConn );
+  free( lpConn );
 
   return hr;
 }
@@ -1153,8 +1153,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     }
     else
     {
-        if ((lpData->lpszCommandLine = HeapAlloc( GetProcessHeap(), 0, strlen(returnBuffer)+1 )))
-            strcpy( lpData->lpszCommandLine, returnBuffer );
+        lpData->lpszCommandLine = strdup( returnBuffer );
     }
 
     sizeOfReturnBuffer = 200;
@@ -1167,8 +1166,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     }
     else
     {
-        if ((lpData->lpszCurrentDirectory = HeapAlloc( GetProcessHeap(), 0, strlen(returnBuffer)+1 )))
-            strcpy( lpData->lpszCurrentDirectory, returnBuffer );
+        lpData->lpszCurrentDirectory = strdup( returnBuffer );
     }
 
     sizeOfReturnBuffer = 200;
@@ -1181,8 +1179,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     }
     else
     {
-        if ((lpData->lpszFileName = HeapAlloc( GetProcessHeap(), 0, strlen(returnBuffer)+1 )))
-            strcpy( lpData->lpszFileName, returnBuffer );
+        lpData->lpszFileName = strdup( returnBuffer );
     }
 
     sizeOfReturnBuffer = 200;
@@ -1195,8 +1192,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     }
     else
     {
-        if ((lpData->lpszPath = HeapAlloc( GetProcessHeap(), 0, strlen(returnBuffer)+1 )))
-            strcpy( lpData->lpszPath, returnBuffer );
+        lpData->lpszPath = strdup( returnBuffer );
     }
 
     return FALSE; /* No need to keep going as we found what we wanted */
@@ -1330,16 +1326,15 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   strcpy( temp, enumData.lpszPath );
   strcat( temp, "\\" );
   strcat( temp, enumData.lpszFileName );
-  HeapFree( GetProcessHeap(), 0, enumData.lpszPath );
-  HeapFree( GetProcessHeap(), 0, enumData.lpszFileName );
-  if ((appName = HeapAlloc( GetProcessHeap(), 0, strlen(temp)+1 ))) strcpy( appName, temp );
+  free( enumData.lpszPath );
+  free( enumData.lpszFileName );
+  appName = strdup( temp );
 
   /* Now the command line */
   strcat( temp, " " );
   strcat( temp, enumData.lpszCommandLine );
-  HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
-  if ((enumData.lpszCommandLine = HeapAlloc( GetProcessHeap(), 0, strlen(temp)+1 )))
-      strcpy( enumData.lpszCommandLine, temp );
+  free( enumData.lpszCommandLine );
+  enumData.lpszCommandLine = strdup( temp );
 
   ZeroMemory( &startupInfo, sizeof( startupInfo ) );
   startupInfo.cb = sizeof( startupInfo );
@@ -1362,17 +1357,17 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_RunApplication( IDirectPlayLobby3A 
   {
     ERR( "Failed to create process for app %s\n", appName );
 
-    HeapFree( GetProcessHeap(), 0, appName );
-    HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
-    HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
+    free( appName );
+    free( enumData.lpszCommandLine );
+    free( enumData.lpszCurrentDirectory );
 
     LeaveCriticalSection( &This->lock );
     return DPERR_CANTCREATEPROCESS;
   }
 
-  HeapFree( GetProcessHeap(), 0, appName );
-  HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
-  HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
+  free( appName );
+  free( enumData.lpszCommandLine );
+  free( enumData.lpszCurrentDirectory );
 
   /* Reserve this global application id! */
   if( !DPLAYX_CreateLobbyApplication( newProcessInfo.dwProcessId ) )
@@ -2029,7 +2024,7 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
     TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
 
     *ppv = NULL;
-    obj = HeapAlloc( GetProcessHeap(), 0, sizeof( *obj ) );
+    obj = malloc( sizeof( *obj ) );
     if ( !obj )
         return DPERR_OUTOFMEMORY;
 

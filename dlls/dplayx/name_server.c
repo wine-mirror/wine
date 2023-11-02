@@ -105,7 +105,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   }
 
   /* Add this to the list */
-  lpCacheNode = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpCacheNode ) );
+  lpCacheNode = calloc( 1, sizeof( *lpCacheNode ) );
 
   if( lpCacheNode == NULL )
   {
@@ -113,22 +113,21 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
     return;
   }
 
-  lpCacheNode->lpNSAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        dwHdrSize );
+  lpCacheNode->lpNSAddrHdr = malloc( dwHdrSize );
   CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
 
-  lpCacheNode->data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *(lpCacheNode->data) ) );
+  lpCacheNode->data = calloc( 1, sizeof( *(lpCacheNode->data) ) );
 
   if( lpCacheNode->data == NULL )
   {
     ERR( "no memory for SESSIONDESC2\n" );
-    HeapFree( GetProcessHeap(), 0, lpCacheNode );
+    free( lpCacheNode );
     return;
   }
 
   *lpCacheNode->data = lpcMsg->sd;
   len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
-  if ((lpCacheNode->data->lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
+  if ((lpCacheNode->data->lpszSessionNameA = malloc( len )))
   {
       WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1,
                            lpCacheNode->data->lpszSessionNameA, len, NULL, NULL );
@@ -183,7 +182,7 @@ void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
 {
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
 
-  lpCache->lpLocalAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwHdrSize );
+  lpCache->lpLocalAddrHdr = malloc( dwHdrSize );
 
   CopyMemory( lpCache->lpLocalAddrHdr, lpHdr, dwHdrSize );
 }
@@ -205,8 +204,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   FIXME( ": not all data fields are correct\n" );
 
   data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ); /*FIXME!*/
-  data.lpMessage = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                              data.dwMessageSize );
+  data.lpMessage = calloc( 1, data.dwMessageSize );
   data.lpISP = lpSpData->lpISP;
   data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) != 0;
 
@@ -232,9 +230,9 @@ static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
   /* NOTE: This proc doesn't deal with the walking pointer */
 
   /* FIXME: Memory leak on data (contained ptrs) */
-  HeapFree( GetProcessHeap(), 0, elem->data );
-  HeapFree( GetProcessHeap(), 0, elem->lpNSAddrHdr );
-  HeapFree( GetProcessHeap(), 0, elem );
+  free( elem->data );
+  free( elem->lpNSAddrHdr );
+  free( elem );
 }
 
 /* Render all data in a session cache invalid */
@@ -260,7 +258,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
 /* Create and initialize a session cache */
 BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
 {
-  lpNSCache lpCache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( *lpCache ) );
+  lpNSCache lpCache = calloc( 1, sizeof( *lpCache ) );
 
   *lplpNSInfo = lpCache;
 
@@ -371,8 +369,7 @@ void NS_ReplyToEnumSessionsRequest( const void *lpcMsg, void **lplpReplyData, DW
 
   *lpdwReplySize = lpDP->dp2->spData.dwSPHeaderSize +
                      sizeof( *rmsg ) + dwVariableSize;
-  *lplpReplyData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                              *lpdwReplySize );
+  *lplpReplyData = calloc( 1, *lpdwReplySize );
 
   rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)*lplpReplyData +
                                              lpDP->dp2->spData.dwSPHeaderSize);

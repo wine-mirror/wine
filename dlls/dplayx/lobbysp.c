@@ -73,7 +73,7 @@ static ULONG WINAPI IDPLobbySPImpl_Release( IDPLobbySP *iface )
   TRACE( "(%p) ref=%ld\n", This, ref );
 
   if( !ref )
-    HeapFree( GetProcessHeap(), 0, This );
+    free( This );
 
   return ref;
 }
@@ -235,7 +235,7 @@ HRESULT dplobbysp_create( REFIID riid, void **ppv, IDirectPlayImpl *dp )
   TRACE( "(%s, %p)\n", debugstr_guid( riid ), ppv );
 
   *ppv = NULL;
-  obj = HeapAlloc( GetProcessHeap(), 0, sizeof( *obj ) );
+  obj = malloc( sizeof( *obj ) );
   if ( !obj )
     return DPERR_OUTOFMEMORY;
 
