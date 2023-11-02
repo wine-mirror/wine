@@ -1213,45 +1213,64 @@ int CDECL _mbsncmp(const unsigned char* str, const unsigned char* cmp, size_t le
 }
 
 /*********************************************************************
+ *              _mbsnbcmp_l(MSVCRT.@)
+ */
+int CDECL _mbsnbcmp_l(const unsigned char* str, const unsigned char* cmp, size_t len, _locale_t locale)
+{
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return 0;
+
+    if (!MSVCRT_CHECK_PMT(str && cmp))
+        return _NLSCMPERROR;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned int strc, cmpc;
+        while (len)
+        {
+            int clen;
+            if (!*str)
+                return *cmp ? -1 : 0;
+            if (!*cmp)
+                return 1;
+            if (_ismbblead_l(*str, locale))
+            {
+                strc = (len >= 2) ? _mbsnextc_l(str, locale) : 0;
+                clen = 2;
+            }
+            else
+            {
+                strc = *str;
+                clen = 1;
+            }
+            if (_ismbblead_l(*cmp, locale))
+                cmpc = (len >= 2) ? _mbsnextc_l(cmp, locale) : 0;
+            else
+                cmpc = *cmp;
+            if(strc != cmpc)
+                return strc < cmpc ? -1 : 1;
+            len -= clen;
+            str += clen;
+            cmp += clen;
+        }
+        return 0; /* Matched len chars */
+    }
+    return u_strncmp(str, cmp, len);
+}
+
+/*********************************************************************
  *              _mbsnbcmp(MSVCRT.@)
  */
 int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, size_t len)
 {
-  if (!len)
-    return 0;
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int strc, cmpc;
-    while (len)
-    {
-      int clen;
-      if(!*str)
-        return *cmp ? -1 : 0;
-      if(!*cmp)
-        return 1;
-      if (_ismbblead(*str))
-      {
-        strc=(len>=2)?_mbsnextc(str):0;
-        clen=2;
-      }
-      else
-      {
-        strc=*str;
-        clen=1;
-      }
-      if (_ismbblead(*cmp))
-        cmpc=(len>=2)?_mbsnextc(cmp):0;
-      else
-        cmpc=*cmp;
-      if(strc != cmpc)
-        return strc < cmpc ? -1 : 1;
-      len -= clen;
-      str += clen;
-      cmp += clen;
-    }
-    return 0; /* Matched len chars */
-  }
-  return u_strncmp(str,cmp,len);
+    return _mbsnbcmp_l(str, cmp, len, NULL);
 }
 
 /*********************************************************************

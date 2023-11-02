@@ -1496,7 +1496,7 @@
 @ cdecl _mbsnbcat_s(str long ptr long)
 @ stub _mbsnbcat_s_l
 @ cdecl _mbsnbcmp(str str long)
-@ stub _mbsnbcmp_l
+@ cdecl _mbsnbcmp_l(str str long ptr)
 @ cdecl _mbsnbcnt(ptr long)
 @ stub _mbsnbcnt_l
 @ cdecl _mbsnbcoll(str str long)

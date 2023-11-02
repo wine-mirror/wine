@@ -749,7 +749,7 @@
 @ cdecl _mbsnbcat_s(str long ptr long)
 # stub _mbsnbcat_s_l(str long ptr long ptr)
 @ cdecl _mbsnbcmp(str str long)
-# stub _mbsnbcmp_l(str str long ptr)
+@ cdecl _mbsnbcmp_l(str str long ptr)
 @ cdecl _mbsnbcnt(ptr long)
 # stub _mbsnbcnt_l(ptr long ptr)
 @ cdecl _mbsnbcoll(str str long)
