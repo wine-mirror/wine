@@ -1278,9 +1278,14 @@ static const IHTMLCurrentStyle4Vtbl HTMLCurrentStyle4Vtbl = {
     HTMLCurrentStyle4_get_maxWidth
 };
 
+static inline HTMLCurrentStyle *impl_from_DispatchEx(DispatchEx *dispex)
+{
+    return CONTAINING_RECORD(dispex, HTMLCurrentStyle, css_style.dispex);
+}
+
 static void *HTMLCurrentStyle_query_interface(DispatchEx *dispex, REFIID riid)
 {
-    HTMLCurrentStyle *This = CONTAINING_RECORD(dispex, HTMLCurrentStyle, css_style.dispex);
+    HTMLCurrentStyle *This = impl_from_DispatchEx(dispex);
 
     if(IsEqualGUID(&IID_IHTMLCurrentStyle, riid))
         return &This->IHTMLCurrentStyle_iface;
@@ -1293,11 +1298,32 @@ static void *HTMLCurrentStyle_query_interface(DispatchEx *dispex, REFIID riid)
     return CSSStyle_query_interface(&This->css_style.dispex, riid);
 }
 
+static void HTMLCurrentStyle_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    HTMLCurrentStyle *This = impl_from_DispatchEx(dispex);
+    CSSStyle_traverse(&This->css_style.dispex, cb);
+
+    if(This->elem)
+        note_cc_edge((nsISupports*)&This->elem->node.IHTMLDOMNode_iface, "elem", cb);
+}
+
+static void HTMLCurrentStyle_unlink(DispatchEx *dispex)
+{
+    HTMLCurrentStyle *This = impl_from_DispatchEx(dispex);
+    CSSStyle_unlink(&This->css_style.dispex);
+
+    if(This->elem) {
+        HTMLElement *elem = This->elem;
+        This->elem = NULL;
+        IHTMLDOMNode_Release(&elem->node.IHTMLDOMNode_iface);
+    }
+}
+
 static const dispex_static_data_vtbl_t HTMLCurrentStyle_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
     .query_interface   = HTMLCurrentStyle_query_interface,
-    .traverse          = CSSStyle_traverse,
-    .unlink            = CSSStyle_unlink
+    .traverse          = HTMLCurrentStyle_traverse,
+    .unlink            = HTMLCurrentStyle_unlink
 };
 
 static const tid_t HTMLCurrentStyle_iface_tids[] = {
