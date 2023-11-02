@@ -938,7 +938,7 @@ static NTSTATUS create_logical_proc_info(void)
                 continue;
             }
 
-            sprintf(name, core_info, i, "physical_package_id");
+            snprintf(name, sizeof(name), core_info, i, "physical_package_id");
             f = fopen(name, "r");
             if (f)
             {
@@ -964,13 +964,13 @@ static NTSTATUS create_logical_proc_info(void)
              */
 
             /* Mask of logical threads sharing same physical core in kernel core numbering. */
-            sprintf(name, core_info, i, "thread_siblings");
+            snprintf(name, sizeof(name), core_info, i, "thread_siblings");
             if(!sysfs_parse_bitmap(name, &thread_mask)) thread_mask = 1<<i;
 
             /* Needed later for NumaNode and Group. */
             all_cpus_mask |= thread_mask;
 
-            sprintf(name, core_info, i, "thread_siblings_list");
+            snprintf(name, sizeof(name), core_info, i, "thread_siblings_list");
             f = fopen(name, "r");
             if (f)
             {
@@ -990,31 +990,31 @@ static NTSTATUS create_logical_proc_info(void)
                 CACHE_DESCRIPTOR cache;
                 ULONG_PTR mask = 0;
 
-                sprintf(name, cache_info, i, j, "shared_cpu_map");
+                snprintf(name, sizeof(name), cache_info, i, j, "shared_cpu_map");
                 if(!sysfs_parse_bitmap(name, &mask)) continue;
 
-                sprintf(name, cache_info, i, j, "level");
+                snprintf(name, sizeof(name), cache_info, i, j, "level");
                 f = fopen(name, "r");
                 if(!f) continue;
                 fscanf(f, "%u", &r);
                 fclose(f);
                 cache.Level = r;
 
-                sprintf(name, cache_info, i, j, "ways_of_associativity");
+                snprintf(name, sizeof(name), cache_info, i, j, "ways_of_associativity");
                 f = fopen(name, "r");
                 if(!f) continue;
                 fscanf(f, "%u", &r);
                 fclose(f);
                 cache.Associativity = r;
 
-                sprintf(name, cache_info, i, j, "coherency_line_size");
+                snprintf(name, sizeof(name), cache_info, i, j, "coherency_line_size");
                 f = fopen(name, "r");
                 if(!f) continue;
                 fscanf(f, "%u", &r);
                 fclose(f);
                 cache.LineSize = r;
 
-                sprintf(name, cache_info, i, j, "size");
+                snprintf(name, sizeof(name), cache_info, i, j, "size");
                 f = fopen(name, "r");
                 if(!f) continue;
                 fscanf(f, "%u%c", &r, &op);
@@ -1023,7 +1023,7 @@ static NTSTATUS create_logical_proc_info(void)
                     WARN("unknown cache size %u%c\n", r, op);
                 cache.Size = (op=='K' ? r*1024 : r);
 
-                sprintf(name, cache_info, i, j, "type");
+                snprintf(name, sizeof(name), cache_info, i, j, "type");
                 f = fopen(name, "r");
                 if(!f) continue;
                 fscanf(f, "%s", name);
@@ -1066,7 +1066,7 @@ static NTSTATUS create_logical_proc_info(void)
             {
                 ULONG_PTR mask = 0;
 
-                sprintf(name, numa_info, i);
+                snprintf(name, sizeof(name), numa_info, i);
                 if (!sysfs_parse_bitmap( name, &mask )) continue;
 
                 if (!logical_proc_info_add_numa_node( mask, i ))
@@ -2218,7 +2218,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     char buffer[128];
     KEY_BASIC_INFORMATION *info = (KEY_BASIC_INFORMATION *)buffer;
 
-    sprintf( buffer, "%u", year );
+    snprintf( buffer, sizeof(buffer), "%u", year );
     ascii_to_unicode( yearW, buffer, strlen(buffer) + 1 );
     init_unicode_string( &nameW, Time_ZonesW );
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
@@ -3780,7 +3780,7 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
             FILE* f;
 
             for(i = 0; i < out_cpus; i++) {
-                sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+                snprintf(filename, sizeof(filename), "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
                 f = fopen(filename, "r");
                 if (f && (fscanf(f, "%u", &val) == 1)) {
                     cpu_power[i].MaxMhz = val / 1000;
@@ -3799,7 +3799,7 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
                     if(f) fclose(f);
                 }
 
-                sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq", i);
+                snprintf(filename, sizeof(filename), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq", i);
                 f = fopen(filename, "r");
                 if(f && (fscanf(f, "%u", &val) == 1)) {
                     cpu_power[i].MhzLimit = val / 1000;

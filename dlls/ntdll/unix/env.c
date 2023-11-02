@@ -95,7 +95,7 @@ static char *get_nls_file_path( UINT type, UINT id )
     {
     case NLS_SECTION_SORTKEYS: name = "sortdefault"; break;
     case NLS_SECTION_CASEMAP:  name = "l_intl"; break;
-    case NLS_SECTION_CODEPAGE: name = tmp; sprintf( tmp, "c_%03u", id ); break;
+    case NLS_SECTION_CODEPAGE: name = tmp; snprintf( tmp, sizeof(tmp), "c_%03u", id ); break;
     case NLS_SECTION_NORMALIZE:
         switch (id)
         {
@@ -182,10 +182,10 @@ static NTSTATUS get_nls_section_name( UINT type, UINT id, WCHAR name[32] )
         strcpy( buffer, "\\NLS\\NlsSectionLANG_INTL" );
         break;
     case NLS_SECTION_CODEPAGE:
-        sprintf( buffer, "\\NLS\\NlsSectionCP%03u", id);
+        snprintf( buffer, sizeof(buffer), "\\NLS\\NlsSectionCP%03u", id);
         break;
     case NLS_SECTION_NORMALIZE:
-        sprintf( buffer, "\\NLS\\NlsSectionNORM%08x", id);
+        snprintf( buffer, sizeof(buffer), "\\NLS\\NlsSectionNORM%08x", id);
         break;
     default:
         return STATUS_INVALID_PARAMETER_1;
@@ -303,7 +303,7 @@ static void init_unix_codepage(void)
                 char buffer[16];
                 void *data;
 
-                sprintf( buffer, "c_%03u.nls", charset_names[pos].cp );
+                snprintf( buffer, sizeof(buffer), "c_%03u.nls", charset_names[pos].cp );
                 if ((data = read_nls_file( buffer ))) init_codepage_table( data, &unix_cp );
             }
             return;
@@ -1077,10 +1077,10 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     add_path_var( env, pos, size, "WINECONFIGDIR", config_dir );
     for (i = 0; dll_paths[i]; i++)
     {
-        sprintf( str, "WINEDLLDIR%u", i );
+        snprintf( str, sizeof(str), "WINEDLLDIR%u", i );
         add_path_var( env, pos, size, str, dll_paths[i] );
     }
-    sprintf( str, "WINEDLLDIR%u", i );
+    snprintf( str, sizeof(str), "WINEDLLDIR%u", i );
     append_envW( env, pos, size, str, NULL );
     add_system_dll_path_var( env, pos, size );
     append_envA( env, pos, size, "WINELOADER", wineloader );
@@ -1088,7 +1088,7 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     append_envA( env, pos, size, "WINEDLLOVERRIDES", overrides );
     if (unix_cp.CodePage != CP_UTF8)
     {
-        sprintf( str, "%u", unix_cp.CodePage );
+        snprintf( str, sizeof(str), "%u", unix_cp.CodePage );
         append_envA( env, pos, size, "WINEUNIXCP", str );
     }
     else append_envW( env, pos, size, "WINEUNIXCP", NULL );

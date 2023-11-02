@@ -55,12 +55,12 @@ NTSTATUS open_hkcu_key( const char *path, HANDLE *key )
     if (status) return status;
 
     sid = ((TOKEN_USER *)sid_data)->User.Sid;
-    len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
+    len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
                    (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
                                   MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += sprintf( buffer + len, "-%u", (int)sid->SubAuthority[i] );
-    len += sprintf( buffer + len, "\\%s", path );
+        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
+    len += snprintf( buffer + len, sizeof(buffer) - len, "\\%s", path );
 
     ascii_to_unicode( bufferW, buffer, len + 1 );
     init_unicode_string( &name, bufferW );

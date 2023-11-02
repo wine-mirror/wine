@@ -2207,7 +2207,7 @@ done:
 static ULONG integral_atom_name( WCHAR *buffer, ULONG len, RTL_ATOM atom )
 {
     char tmp[16];
-    int ret = sprintf( tmp, "#%u", atom );
+    int ret = snprintf( tmp, sizeof(tmp), "#%u", atom );
 
     len /= sizeof(WCHAR);
     if (len)

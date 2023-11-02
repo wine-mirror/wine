@@ -113,7 +113,7 @@ static const char* iocode2str(UINT ioc)
         X(IOCTL_SERIAL_WAIT_ON_MASK);
         X(IOCTL_SERIAL_XOFF_COUNTER);
 #undef X
-    default: { static char tmp[32]; sprintf(tmp, "IOCTL_SERIAL_%d\n", ioc); return tmp; }
+    default: return wine_dbg_sprintf("IOCTL_SERIAL_%d\n", ioc);
     }
 }
 

@@ -1613,7 +1613,7 @@ static int fd_set_dos_attrib( int fd, UINT attr, BOOL force_set )
          * this format with more features, but retains compatibility with the
          * earlier format. */
         char data[11];
-        int len = sprintf( data, "0x%x", attr );
+        int len = snprintf( data, sizeof(data), "0x%x", attr );
         return xattr_fset( fd, SAMBA_XATTR_DOS_ATTRIB, data, len );
     }
     else return xattr_fremove( fd, SAMBA_XATTR_DOS_ATTRIB );
