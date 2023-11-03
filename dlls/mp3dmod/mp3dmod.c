@@ -31,7 +31,6 @@
 #include "rpcproxy.h"
 #include "wmcodecdsp.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "initguid.h"
 DEFINE_GUID(WMMEDIATYPE_Audio, 0x73647561,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
@@ -107,7 +106,7 @@ static ULONG WINAPI Unknown_Release(IUnknown *iface)
             MoFreeMediaType(&This->intype);
         MoFreeMediaType(&This->outtype);
         mpg123_delete(This->mh);
-        heap_free(This);
+        free(This);
     }
     return refcount;
 }
@@ -575,7 +574,7 @@ static HRESULT create_mp3_decoder(IUnknown *outer, REFIID iid, void **obj)
     HRESULT hr;
     int err;
 
-    if (!(This = heap_alloc_zero(sizeof(*This))))
+    if (!(This = calloc(1, sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IUnknown_inner.lpVtbl = &Unknown_vtbl;
