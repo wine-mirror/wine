@@ -27,18 +27,16 @@
 static IP_ADAPTER_ADDRESSES *get_adapters(void)
 {
     ULONG err, size = 1024;
-    IP_ADAPTER_ADDRESSES *ret = HeapAlloc( GetProcessHeap(), 0, size );
     for (;;)
     {
+        IP_ADAPTER_ADDRESSES *ret = malloc( size );
         err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
                                                GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME,
                                     NULL, ret, &size );
-        if (err != ERROR_BUFFER_OVERFLOW) break;
-        ret = HeapReAlloc( GetProcessHeap(), 0, ret, size );
+        if (err == ERROR_SUCCESS) return ret;
+        free( ret );
+        if (err != ERROR_BUFFER_OVERFLOW) return NULL;
     }
-    if (err == ERROR_SUCCESS) return ret;
-    HeapFree( GetProcessHeap(), 0, ret );
-    return NULL;
 }
 
 static void test_DhcpRequestParams(void)
@@ -86,12 +84,12 @@ static void test_DhcpRequestParams(void)
         recv_params.Params  = params;
 
         size = 0;
-        buf = HeapAlloc( GetProcessHeap(), 0, size );
+        buf = NULL;
         err = DhcpRequestParams( DHCPCAPI_REQUEST_SYNCHRONOUS, NULL, name, NULL, send_params, recv_params,
                                  buf, &size, NULL );
         while (err == ERROR_MORE_DATA)
         {
-            buf = HeapReAlloc( GetProcessHeap(), 0, buf, size );
+            buf = realloc( buf, size );
             err = DhcpRequestParams( DHCPCAPI_REQUEST_SYNCHRONOUS, NULL, name, NULL, send_params, recv_params,
                                      buf, &size, NULL );
         }
@@ -117,13 +115,13 @@ static void test_DhcpRequestParams(void)
                 case OPTION_MSFT_IE_PROXY:
                     if (params[i].Data)
                     {
-                        char *str = HeapAlloc( GetProcessHeap(), 0, params[i].nBytesData + 1 );
+                        char *str = malloc( params[i].nBytesData + 1 );
                         memcpy( str, params[i].Data, params[i].nBytesData );
                         str[params[i].nBytesData] = 0;
                         trace( "%lu: Data %p (%s) nBytesData %lu OptionId %lu Flags %08lx IsVendor %d\n",
                                i, params[i].Data, str, params[i].nBytesData, params[i].OptionId,
                                params[i].Flags, params[i].IsVendor );
-                        HeapFree( GetProcessHeap(), 0, str );
+                        free( str );
                     }
                     break;
                 default:
@@ -132,9 +130,9 @@ static void test_DhcpRequestParams(void)
                 }
             }
         }
-        HeapFree( GetProcessHeap(), 0, buf );
+        free( buf );
     }
-    HeapFree( GetProcessHeap(), 0, adapters );
+    free( adapters );
 }
 
 START_TEST(dhcpcsvc)
