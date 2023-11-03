@@ -373,7 +373,7 @@ struct REG_RF
 
 struct REG_RFP
 {
-    BYTE signature[4]; /* e.g. "0pi3" */
+    DWORD signature; /* e.g. '0pi3' */
     DWORD dwFlags;
     DWORD dwInstances;
     DWORD dwMediaTypes;
@@ -384,7 +384,7 @@ struct REG_RFP
 
 struct REG_TYPE
 {
-    BYTE signature[4]; /* e.g. "0ty3" */
+    DWORD signature; /* e.g. '0ty3' */
     DWORD dwUnused;
     DWORD dwOffsetMajor;
     DWORD dwOffsetMinor;
@@ -613,11 +613,7 @@ static HRESULT FM2_WriteFilterData(const REGFILTER2 * prf2, BYTE **ppData, ULONG
         REGFILTERPINS2 rgPin2 = prf2->rgPins2[i];
         unsigned int j;
 
-        rrfp.signature[0] = '0';
-        rrfp.signature[1] = 'p';
-        rrfp.signature[2] = 'i';
-        rrfp.signature[3] = '3';
-        rrfp.signature[0] += i;
+        rrfp.signature = MAKEFOURCC('0'+i,'p','i','3');
         rrfp.dwFlags = rgPin2.dwFlags;
         rrfp.dwInstances = rgPin2.cInstances;
         rrfp.dwMediaTypes = rgPin2.nMediaTypes;
@@ -639,11 +635,7 @@ static HRESULT FM2_WriteFilterData(const REGFILTER2 * prf2, BYTE **ppData, ULONG
         {
             struct REG_TYPE rt;
             const CLSID * clsMinorType = rgPin2.lpMediaType[j].clsMinorType ? rgPin2.lpMediaType[j].clsMinorType : &MEDIASUBTYPE_NULL;
-            rt.signature[0] = '0';
-            rt.signature[1] = 't';
-            rt.signature[2] = 'y';
-            rt.signature[3] = '3';
-            rt.signature[0] += j;
+            rt.signature = MAKEFOURCC('0'+j,'t','y','3');
             rt.dwUnused = 0;
             rt.dwOffsetMajor = find_data(&clsidStore, rgPin2.lpMediaType[j].clsMajorType, sizeof(CLSID));
             if (rt.dwOffsetMajor == -1)
@@ -726,7 +718,7 @@ static HRESULT FM2_ReadFilterData(BYTE *pData, REGFILTER2 * prf2)
 
             /* FIXME: check signature */
 
-            TRACE("\tsignature = %s\n", debugstr_an((const char*)prrfp->signature, 4));
+            TRACE("\tsignature = %s\n", debugstr_fourcc(prrfp->signature));
 
             TRACE("\tPin %lu: dwFlags %#lx, dwInstances %lu, dwMediaTypes %lu, dwMediums %lu.\n",
                 i, prrfp->dwFlags, prrfp->dwInstances, prrfp->dwMediaTypes, prrfp->dwMediums);
@@ -760,7 +752,7 @@ static HRESULT FM2_ReadFilterData(BYTE *pData, REGFILTER2 * prf2)
                 CLSID * clsMinor = CoTaskMemAlloc(sizeof(CLSID));
 
                 /* FIXME: check signature */
-                TRACE("\t\tsignature = %s\n", debugstr_an((const char*)prt->signature, 4));
+                TRACE("\t\tsignature = %s\n", debugstr_fourcc(prt->signature));
 
                 memcpy(clsMajor, pData + prt->dwOffsetMajor, sizeof(CLSID));
                 memcpy(clsMinor, pData + prt->dwOffsetMinor, sizeof(CLSID));
