@@ -1415,15 +1415,15 @@ static HRESULT async_stop_request(nsChannelBSC *This)
     stop_request_task_t *task;
     HRESULT hres;
 
+    task = malloc(sizeof(*task));
+    if(!task)
+        return E_OUTOFMEMORY;
+
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
     if(!This->bsc.read) {
         TRACE("No data read, calling OnStartRequest\n");
         on_start_nsrequest(This);
     }
-
-    task = malloc(sizeof(*task));
-    if(!task)
-        return E_OUTOFMEMORY;
 
     IBindStatusCallback_AddRef(&This->bsc.IBindStatusCallback_iface);
     task->bsc = This;
