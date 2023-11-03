@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#define WINSCARDAPI
 #include "windef.h"
 #include "winbase.h"
 #include "winscard.h"
