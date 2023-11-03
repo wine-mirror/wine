@@ -22,6 +22,12 @@
 #include <wbemcli.h>
 #include <profinfo.h>
 
+#ifdef _USERENV_
+#define USERENVAPI
+#else
+#define USERENVAPI DECLSPEC_IMPORT
+#endif
+
 #define PT_TEMPORARY    0x00000001
 #define PT_ROAMING      0x00000002
 #define PT_MANDATORY    0x00000004
@@ -73,32 +79,32 @@ DECL_WINELIB_TYPE_AW(PGROUP_POLICY_OBJECT)
 extern "C" {
 #endif
 
-BOOL WINAPI CreateEnvironmentBlock(LPVOID*,HANDLE,BOOL);
-BOOL WINAPI DestroyEnvironmentBlock(LPVOID);
-HANDLE WINAPI EnterCriticalPolicySection(BOOL);
-BOOL WINAPI ExpandEnvironmentStringsForUserA(HANDLE,LPCSTR,LPSTR,DWORD);
-BOOL WINAPI ExpandEnvironmentStringsForUserW(HANDLE,LPCWSTR,LPWSTR,DWORD);
-#define     ExpandEnvironmentStringsForUser WINELIB_NAME_AW(ExpandEnvironmentStringsForUser)
-DWORD WINAPI GetAppliedGPOListW(DWORD,LPCWSTR,PSID,GUID*,PGROUP_POLICY_OBJECTW*);
-DWORD WINAPI GetAppliedGPOListA(DWORD,LPCSTR,PSID,GUID*,PGROUP_POLICY_OBJECTA*);
-#define      GetAppliedGPOList WINELIB_NAME_AW(GetAppliedGPOList)
-BOOL WINAPI GetUserProfileDirectoryA(HANDLE,LPSTR,LPDWORD);
-BOOL WINAPI GetUserProfileDirectoryW(HANDLE,LPWSTR,LPDWORD);
-#define     GetUserProfileDirectory WINELIB_NAME_AW(GetUserProfileDirectory)
-BOOL WINAPI GetProfilesDirectoryA(LPSTR,LPDWORD);
-BOOL WINAPI GetProfilesDirectoryW(LPWSTR,LPDWORD);
-#define     GetProfilesDirectory WINELIB_NAME_AW(GetProfilesDirectory)
-BOOL WINAPI GetAllUsersProfileDirectoryA(LPSTR,LPDWORD);
-BOOL WINAPI GetAllUsersProfileDirectoryW(LPWSTR,LPDWORD);
-#define     GetAllUsersProfileDirectory WINELIB_NAME_AW(GetAllUsersProfileDirectory)
-BOOL WINAPI GetProfileType(DWORD*);
-BOOL WINAPI LeaveCriticalPolicySection(HANDLE);
-BOOL WINAPI LoadUserProfileA(HANDLE,LPPROFILEINFOA);
-BOOL WINAPI LoadUserProfileW(HANDLE,LPPROFILEINFOW);
-#define     LoadUserProfile WINELIB_NAME_AW(LoadUserProfile)
-BOOL WINAPI RegisterGPNotification(HANDLE,BOOL);
-BOOL WINAPI UnloadUserProfile(HANDLE,HANDLE);
-BOOL WINAPI UnregisterGPNotification(HANDLE);
+USERENVAPI BOOL WINAPI CreateEnvironmentBlock(LPVOID*,HANDLE,BOOL);
+USERENVAPI BOOL WINAPI DestroyEnvironmentBlock(LPVOID);
+USERENVAPI HANDLE WINAPI EnterCriticalPolicySection(BOOL);
+USERENVAPI BOOL WINAPI ExpandEnvironmentStringsForUserA(HANDLE,LPCSTR,LPSTR,DWORD);
+USERENVAPI BOOL WINAPI ExpandEnvironmentStringsForUserW(HANDLE,LPCWSTR,LPWSTR,DWORD);
+#define                ExpandEnvironmentStringsForUser WINELIB_NAME_AW(ExpandEnvironmentStringsForUser)
+USERENVAPI DWORD WINAPI GetAppliedGPOListW(DWORD,LPCWSTR,PSID,GUID*,PGROUP_POLICY_OBJECTW*);
+USERENVAPI DWORD WINAPI GetAppliedGPOListA(DWORD,LPCSTR,PSID,GUID*,PGROUP_POLICY_OBJECTA*);
+#define                 GetAppliedGPOList WINELIB_NAME_AW(GetAppliedGPOList)
+USERENVAPI BOOL WINAPI GetUserProfileDirectoryA(HANDLE,LPSTR,LPDWORD);
+USERENVAPI BOOL WINAPI GetUserProfileDirectoryW(HANDLE,LPWSTR,LPDWORD);
+#define                GetUserProfileDirectory WINELIB_NAME_AW(GetUserProfileDirectory)
+USERENVAPI BOOL WINAPI GetProfilesDirectoryA(LPSTR,LPDWORD);
+USERENVAPI BOOL WINAPI GetProfilesDirectoryW(LPWSTR,LPDWORD);
+#define                GetProfilesDirectory WINELIB_NAME_AW(GetProfilesDirectory)
+USERENVAPI BOOL WINAPI GetAllUsersProfileDirectoryA(LPSTR,LPDWORD);
+USERENVAPI BOOL WINAPI GetAllUsersProfileDirectoryW(LPWSTR,LPDWORD);
+#define                GetAllUsersProfileDirectory WINELIB_NAME_AW(GetAllUsersProfileDirectory)
+USERENVAPI BOOL WINAPI GetProfileType(DWORD*);
+USERENVAPI BOOL WINAPI LeaveCriticalPolicySection(HANDLE);
+USERENVAPI BOOL WINAPI LoadUserProfileA(HANDLE,LPPROFILEINFOA);
+USERENVAPI BOOL WINAPI LoadUserProfileW(HANDLE,LPPROFILEINFOW);
+#define                LoadUserProfile WINELIB_NAME_AW(LoadUserProfile)
+USERENVAPI BOOL WINAPI RegisterGPNotification(HANDLE,BOOL);
+USERENVAPI BOOL WINAPI UnloadUserProfile(HANDLE,HANDLE);
+USERENVAPI BOOL WINAPI UnregisterGPNotification(HANDLE);
 
 #ifdef __cplusplus
 }
