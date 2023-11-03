@@ -32,7 +32,6 @@
 #include "inseng.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inseng);
 
@@ -87,7 +86,7 @@ static ULONG WINAPI InstallEngine_Release(IInstallEngine2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -334,7 +333,7 @@ static HRESULT WINAPI InstallEngineCF_CreateInstance(IClassFactory *iface, IUnkn
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
-    engine = heap_alloc(sizeof(*engine));
+    engine = malloc(sizeof(*engine));
     if(!engine)
         return E_OUTOFMEMORY;
 
