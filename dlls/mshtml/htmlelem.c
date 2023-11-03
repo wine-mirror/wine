@@ -6476,7 +6476,7 @@ static HRESULT WINAPI ElementSelector_querySelector(IElementSelector *iface, BST
 static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, BSTR v, IHTMLDOMChildrenCollection **pel)
 {
     HTMLElement *This = impl_from_IElementSelector(iface);
-    nsIDOMNodeList *node_list;
+    nsIDOMNodeList *node_list = NULL;
     nsAString nsstr;
     nsresult nsres;
     HRESULT hres;
@@ -6493,6 +6493,8 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         WARN("QuerySelectorAll failed: %08lx\n", nsres);
+        if(node_list)
+            nsIDOMNodeList_Release(node_list);
         return map_nsresult(nsres);
     }
 

@@ -2685,7 +2685,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
         IHTMLElementCollection **ppelColl)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument3(iface);
-    nsIDOMNodeList *node_list;
+    nsIDOMNodeList *node_list = NULL;
     nsAString selector_str;
     WCHAR *selector;
     nsresult nsres;
@@ -2715,6 +2715,8 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
     free(selector);
     if(NS_FAILED(nsres)) {
         ERR("QuerySelectorAll failed: %08lx\n", nsres);
+        if(node_list)
+            nsIDOMNodeList_Release(node_list);
         return E_FAIL;
     }
 
@@ -2781,12 +2783,15 @@ static HRESULT WINAPI HTMLDocument3_getElementsByTagName(IHTMLDocument3 *iface, 
             return E_UNEXPECTED;
         }
 
+        nslist = NULL;
         nsAString_InitDepend(&nsstr, v);
         nsres = nsIDOMDocumentFragment_QuerySelectorAll(docfrag, &nsstr, &nslist);
         nsAString_Finish(&nsstr);
         nsIDOMDocumentFragment_Release(docfrag);
         if(NS_FAILED(nsres)) {
             ERR("QuerySelectorAll failed: %08lx\n", nsres);
+            if(nslist)
+                nsIDOMNodeList_Release(nslist);
             return E_FAIL;
         }
     }
@@ -4751,7 +4756,7 @@ static HRESULT WINAPI DocumentSelector_querySelector(IDocumentSelector *iface, B
 static HRESULT WINAPI DocumentSelector_querySelectorAll(IDocumentSelector *iface, BSTR v, IHTMLDOMChildrenCollection **pel)
 {
     HTMLDocumentNode *This = impl_from_IDocumentSelector(iface);
-    nsIDOMNodeList *node_list;
+    nsIDOMNodeList *node_list = NULL;
     nsAString nsstr;
     nsresult nsres;
     HRESULT hres;
@@ -4773,6 +4778,8 @@ static HRESULT WINAPI DocumentSelector_querySelectorAll(IDocumentSelector *iface
 
     if(NS_FAILED(nsres)) {
         WARN("QuerySelectorAll failed: %08lx\n", nsres);
+        if(node_list)
+            nsIDOMNodeList_Release(node_list);
         return map_nsresult(nsres);
     }
 
@@ -5946,7 +5953,7 @@ static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPI
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
-    nsIDOMNodeList *node_list;
+    nsIDOMNodeList *node_list = NULL;
     const PRUnichar *name;
     nsIDOMElement *nselem;
     nsIDOMNode *nsnode;
@@ -5973,8 +5980,11 @@ static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPI
     nsAString_InitDepend(&nsstr, L":-moz-any(applet,embed,form,iframe,img,object)[name]");
     nsres = nsIDOMHTMLDocument_QuerySelectorAll(This->html_document, &nsstr, &node_list);
     nsAString_Finish(&nsstr);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
+        if(node_list)
+            nsIDOMNodeList_Release(node_list);
         return map_nsresult(nsres);
+    }
 
     for(i = 0, hres = S_OK; SUCCEEDED(hres); i++) {
         nsres = nsIDOMNodeList_Item(node_list, i, &nsnode);
