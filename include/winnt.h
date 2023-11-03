@@ -2386,9 +2386,9 @@ struct _TEB;
 
 #ifdef WINE_UNIX_LIB
 # ifdef __GNUC__
-struct _TEB * WINAPI NtCurrentTeb(void) __attribute__((pure));
+NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void) __attribute__((pure));
 # else
-struct _TEB * WINAPI NtCurrentTeb(void);
+NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void);
 # endif
 #elif defined(__i386__) && defined(__GNUC__)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)

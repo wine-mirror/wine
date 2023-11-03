@@ -1849,7 +1849,7 @@ BOOLEAN   WINAPI PsGetVersion(ULONG*,ULONG*,ULONG*,UNICODE_STRING*);
 NTSTATUS  WINAPI PsTerminateSystemThread(NTSTATUS);
 
 #ifdef __x86_64__
-void      WINAPI RtlCopyMemoryNonTemporal(void*,const void*,SIZE_T);
+NTSYSAPI void WINAPI RtlCopyMemoryNonTemporal(void*,const void*,SIZE_T);
 #else
 #define RtlCopyMemoryNonTemporal RtlCopyMemory
 #endif

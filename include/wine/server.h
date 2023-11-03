@@ -49,9 +49,9 @@ struct __server_request_info
     struct __server_iovec data[__SERVER_MAX_DATA];  /* request variable size data */
 };
 
-extern unsigned int CDECL wine_server_call( void *req_ptr );
-extern NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle );
-extern NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd, unsigned int *options );
+NTSYSAPI unsigned int CDECL wine_server_call( void *req_ptr );
+NTSYSAPI NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle );
+NTSYSAPI NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd, unsigned int *options );
 
 /* do a server call and set the last error code */
 static inline unsigned int wine_server_call_err( void *req_ptr )
