@@ -23,10 +23,20 @@
 
 #include <commctrl.h>
 
+#ifndef THEMEAPI
+#ifdef _UXTHEME_
+#define THEMEAPI          STDAPI
+#define THEMEAPI_(type)   STDAPI_(type)
+#else
+#define THEMEAPI          DECLSPEC_IMPORT STDAPI
+#define THEMEAPI_(type)   DECLSPEC_IMPORT STDAPI_(type)
+#endif
+#endif
+
 typedef HANDLE HTHEME;
 
-HRESULT WINAPI CloseThemeData(HTHEME hTheme);
-HRESULT WINAPI DrawThemeBackground(HTHEME,HDC,int,int,const RECT*,const RECT*);
+THEMEAPI CloseThemeData(HTHEME hTheme);
+THEMEAPI DrawThemeBackground(HTHEME,HDC,int,int,const RECT*,const RECT*);
 
 #define DTBG_CLIPRECT        0x00000001
 #define DTBG_DRAWSOLID       0x00000002
@@ -41,17 +51,13 @@ typedef struct _DTBGOPTS {
     RECT rcClip;
 } DTBGOPTS, *PDTBGOPTS;
 
-HRESULT WINAPI DrawThemeBackgroundEx(HTHEME,HDC,int,int,const RECT*,
-                                     const DTBGOPTS*);
-HRESULT WINAPI DrawThemeEdge(HTHEME,HDC,int,int,const RECT*,UINT,UINT,
-                             RECT*);
-HRESULT WINAPI DrawThemeIcon(HTHEME,HDC,int,int,const RECT*,HIMAGELIST,int);
-HRESULT WINAPI DrawThemeParentBackground(HWND,HDC,RECT*);
+THEMEAPI DrawThemeBackgroundEx(HTHEME,HDC,int,int,const RECT*, const DTBGOPTS*);
+THEMEAPI DrawThemeEdge(HTHEME,HDC,int,int,const RECT*,UINT,UINT, RECT*);
+THEMEAPI DrawThemeIcon(HTHEME,HDC,int,int,const RECT*,HIMAGELIST,int);
+THEMEAPI DrawThemeParentBackground(HWND,HDC,RECT*);
+THEMEAPI DrawThemeText(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,DWORD, const RECT*);
 
 #define DTT_GRAYED      0x1
-
-HRESULT WINAPI DrawThemeText(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,DWORD,
-                             const RECT*);
 
 /* DTTOPTS.dwFlags bits */
 #define DTT_TEXTCOLOR    0x00000001
@@ -90,7 +96,7 @@ typedef struct _DTTOPTS {
     LPARAM lParam;
 } DTTOPTS, *PDTTOPTS;
 
-HRESULT WINAPI DrawThemeTextEx(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,RECT*,
+THEMEAPI DrawThemeTextEx(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,RECT*,
                                const DTTOPTS*);
 
 #define ETDT_DISABLE       0x00000001
@@ -101,21 +107,20 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,RECT*,
 #define ETDT_ENABLEAEROWIZARDTAB (ETDT_ENABLE|ETDT_USEAEROWIZARDTABTEXTURE)
 #define ETDT_VALIDBITS     (ETDT_DISABLE|ETDT_ENABLE|ETDT_USETABTEXTURE|ETDT_USEAEROWIZARDTABTEXTURE)
 
-HRESULT WINAPI EnableThemeDialogTexture(HWND,DWORD);
-HRESULT WINAPI EnableTheming(BOOL);
-HRESULT WINAPI GetCurrentThemeName(LPWSTR,int,LPWSTR,int,LPWSTR,int);
+THEMEAPI EnableThemeDialogTexture(HWND,DWORD);
+THEMEAPI EnableTheming(BOOL);
+THEMEAPI GetCurrentThemeName(LPWSTR,int,LPWSTR,int,LPWSTR,int);
 
 #define STAP_ALLOW_NONCLIENT    (1<<0)
 #define STAP_ALLOW_CONTROLS     (1<<1)
 #define STAP_ALLOW_WEBCONTENT   (1<<2)
 
-DWORD WINAPI GetThemeAppProperties(void);
-HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME,HDC,int,int,
-                                             const RECT*,RECT*);
-HRESULT WINAPI GetThemeBackgroundExtent(HTHEME,HDC,int,int,const RECT*,RECT*);
-HRESULT WINAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
-HRESULT WINAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
-HRESULT WINAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
+THEMEAPI_(DWORD) GetThemeAppProperties(void);
+THEMEAPI GetThemeBackgroundContentRect(HTHEME,HDC,int,int, const RECT*,RECT*);
+THEMEAPI GetThemeBackgroundExtent(HTHEME,HDC,int,int,const RECT*,RECT*);
+THEMEAPI GetThemeBackgroundRegion(HTHEME,HDC,int,int,const RECT*,HRGN*);
+THEMEAPI GetThemeBool(HTHEME,int,int,int,BOOL*);
+THEMEAPI GetThemeColor(HTHEME,int,int,int,COLORREF*);
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 # define SZ_THDOCPROP_DISPLAYNAME   L"DisplayName"
@@ -129,11 +134,11 @@ static const WCHAR SZ_THDOCPROP_TOOLTIP[] =       { 'T','o','o','l','T','i','p',
 static const WCHAR SZ_THDOCPROP_AUTHOR[] =        { 'a','u','t','h','o','r',0 };
 #endif
 
-HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR,LPCWSTR,LPWSTR,int);
-HRESULT WINAPI GetThemeEnumValue(HTHEME,int,int,int,int*);
-HRESULT WINAPI GetThemeFilename(HTHEME,int,int,int,LPWSTR,int);
-HRESULT WINAPI GetThemeFont(HTHEME,HDC,int,int,int,LOGFONTW*);
-HRESULT WINAPI GetThemeInt(HTHEME,int,int,int,int*);
+THEMEAPI GetThemeDocumentationProperty(LPCWSTR,LPCWSTR,LPWSTR,int);
+THEMEAPI GetThemeEnumValue(HTHEME,int,int,int,int*);
+THEMEAPI GetThemeFilename(HTHEME,int,int,int,LPWSTR,int);
+THEMEAPI GetThemeFont(HTHEME,HDC,int,int,int,LOGFONTW*);
+THEMEAPI GetThemeInt(HTHEME,int,int,int,int*);
 
 /* MAX_INTLIST_COUNT was 10 before Vista */
 #define MAX_INTLIST_COUNT 402
@@ -142,7 +147,7 @@ typedef struct _INTLIST {
     int iValues[MAX_INTLIST_COUNT];
 } INTLIST, *PINTLIST;
 
-HRESULT WINAPI GetThemeIntList(HTHEME,int,int,int,INTLIST*);
+THEMEAPI GetThemeIntList(HTHEME,int,int,int,INTLIST*);
 
 typedef struct _MARGINS {
     int cxLeftWidth;
@@ -151,8 +156,8 @@ typedef struct _MARGINS {
     int cyBottomHeight;
 } MARGINS, *PMARGINS;
 
-HRESULT WINAPI GetThemeMargins(HTHEME,HDC,int,int,int,RECT*,MARGINS*);
-HRESULT WINAPI GetThemeMetric(HTHEME,HDC,int,int,int,int*);
+THEMEAPI GetThemeMargins(HTHEME,HDC,int,int,int,RECT*,MARGINS*);
+THEMEAPI GetThemeMetric(HTHEME,HDC,int,int,int,int*);
 
 typedef enum {
     TS_MIN,
@@ -160,8 +165,8 @@ typedef enum {
     TS_DRAW
 } THEMESIZE;
 
-HRESULT WINAPI GetThemePartSize(HTHEME,HDC,int,int,RECT*,THEMESIZE,SIZE*);
-HRESULT WINAPI GetThemePosition(HTHEME,int,int,int,POINT*);
+THEMEAPI GetThemePartSize(HTHEME,HDC,int,int,RECT*,THEMESIZE,SIZE*);
+THEMEAPI GetThemePosition(HTHEME,int,int,int,POINT*);
 
 typedef enum {
     PO_STATE,
@@ -171,21 +176,20 @@ typedef enum {
     PO_NOTFOUND
 } PROPERTYORIGIN;
 
-HRESULT WINAPI GetThemePropertyOrigin(HTHEME,int,int,int,PROPERTYORIGIN*);
-HRESULT WINAPI GetThemeRect(HTHEME,int,int,int,RECT*);
-HRESULT WINAPI GetThemeString(HTHEME,int,int,int,LPWSTR,int);
-BOOL WINAPI GetThemeSysBool(HTHEME,int);
-COLORREF WINAPI GetThemeSysColor(HTHEME,int);
-HBRUSH WINAPI GetThemeSysColorBrush(HTHEME,int);
-HRESULT WINAPI GetThemeSysFont(HTHEME,int,LOGFONTW*);
-HRESULT WINAPI GetThemeSysInt(HTHEME,int,int*);
-int WINAPI GetThemeSysSize(HTHEME,int);
-HRESULT WINAPI GetThemeSysString(HTHEME,int,LPWSTR,int);
-HRESULT WINAPI GetThemeTextExtent(HTHEME,HDC,int,int,LPCWSTR,int,DWORD,
-                                  const RECT*,RECT*);
-HRESULT WINAPI GetThemeTextMetrics(HTHEME,HDC,int,int,TEXTMETRICW*);
-HRESULT WINAPI GetThemeTransitionDuration(HTHEME,int,int,int,int,DWORD*);
-HTHEME WINAPI GetWindowTheme(HWND);
+THEMEAPI GetThemePropertyOrigin(HTHEME,int,int,int,PROPERTYORIGIN*);
+THEMEAPI GetThemeRect(HTHEME,int,int,int,RECT*);
+THEMEAPI GetThemeString(HTHEME,int,int,int,LPWSTR,int);
+THEMEAPI_(BOOL) GetThemeSysBool(HTHEME,int);
+THEMEAPI_(COLORREF) GetThemeSysColor(HTHEME,int);
+THEMEAPI_(HBRUSH) GetThemeSysColorBrush(HTHEME,int);
+THEMEAPI GetThemeSysFont(HTHEME,int,LOGFONTW*);
+THEMEAPI GetThemeSysInt(HTHEME,int,int*);
+THEMEAPI_(int) GetThemeSysSize(HTHEME,int);
+THEMEAPI GetThemeSysString(HTHEME,int,LPWSTR,int);
+THEMEAPI GetThemeTextExtent(HTHEME,HDC,int,int,LPCWSTR,int,DWORD, const RECT*,RECT*);
+THEMEAPI GetThemeTextMetrics(HTHEME,HDC,int,int,TEXTMETRICW*);
+THEMEAPI GetThemeTransitionDuration(HTHEME,int,int,int,int,DWORD*);
+THEMEAPI_(HTHEME) GetWindowTheme(HWND);
 
 #define HTTB_BACKGROUNDSEG          0x0000
 #define HTTB_FIXEDBORDER            0x0002
@@ -206,27 +210,26 @@ HTHEME WINAPI GetWindowTheme(HWND);
 
 enum WINDOWTHEMEATTRIBUTETYPE { WTA_NONCLIENT = 1 };
 
-HRESULT WINAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*,
-                                      HRGN,POINT,WORD*);
-BOOL WINAPI IsAppThemed(void);
-BOOL WINAPI IsCompositionActive(void);
-BOOL WINAPI IsThemeActive(void);
-BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME,int,int);
-BOOL WINAPI IsThemeDialogTextureEnabled(HWND);
-BOOL WINAPI IsThemePartDefined(HTHEME,int,int);
-HTHEME WINAPI OpenThemeData(HWND,LPCWSTR);
-HTHEME WINAPI OpenThemeDataEx(HWND,LPCWSTR,DWORD);
-HTHEME WINAPI OpenThemeDataForDpi(HWND,LPCWSTR,UINT);
-void WINAPI SetThemeAppProperties(DWORD);
-HRESULT WINAPI SetWindowTheme(HWND,LPCWSTR,LPCWSTR);
-HRESULT WINAPI SetWindowThemeAttribute(HWND,enum WINDOWTHEMEATTRIBUTETYPE,PVOID,DWORD);
+THEMEAPI HitTestThemeBackground(HTHEME,HDC,int,int,DWORD,const RECT*, HRGN,POINT,WORD*);
+THEMEAPI_(BOOL) IsAppThemed(void);
+THEMEAPI_(BOOL) IsCompositionActive(void);
+THEMEAPI_(BOOL) IsThemeActive(void);
+THEMEAPI_(BOOL) IsThemeBackgroundPartiallyTransparent(HTHEME,int,int);
+THEMEAPI_(BOOL) IsThemeDialogTextureEnabled(HWND);
+THEMEAPI_(BOOL) IsThemePartDefined(HTHEME,int,int);
+THEMEAPI_(HTHEME) OpenThemeData(HWND,LPCWSTR);
+THEMEAPI_(HTHEME) OpenThemeDataEx(HWND,LPCWSTR,DWORD);
+THEMEAPI_(HTHEME) OpenThemeDataForDpi(HWND,LPCWSTR,UINT);
+THEMEAPI_(void) SetThemeAppProperties(DWORD);
+THEMEAPI SetWindowTheme(HWND,LPCWSTR,LPCWSTR);
+THEMEAPI SetWindowThemeAttribute(HWND,enum WINDOWTHEMEATTRIBUTETYPE,PVOID,DWORD);
 
 /* Double-buffered Drawing API */
 
 typedef HANDLE HPAINTBUFFER;
 
-HRESULT WINAPI BufferedPaintInit(VOID);
-HRESULT WINAPI BufferedPaintUnInit(VOID);
+THEMEAPI BufferedPaintInit(VOID);
+THEMEAPI BufferedPaintUnInit(VOID);
 
 typedef enum _BP_BUFFERFORMAT
 {
@@ -244,17 +247,14 @@ typedef struct _BP_PAINTPARAMS
 	const BLENDFUNCTION *pBlendFunction;
 } BP_PAINTPARAMS, *PBP_PAINTPARAMS;
 
-HPAINTBUFFER WINAPI BeginBufferedPaint(HDC, const RECT *, BP_BUFFERFORMAT,
-                                       BP_PAINTPARAMS *,HDC *);
-
-HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER, BOOL);
-
-HRESULT WINAPI BufferedPaintClear(HPAINTBUFFER, const RECT *);
-HRESULT WINAPI BufferedPaintSetAlpha(HPAINTBUFFER, const RECT *, BYTE);
-HRESULT WINAPI GetBufferedPaintBits(HPAINTBUFFER, RGBQUAD **, int *);
-HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER);
-HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER);
-HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER, RECT *prc);
+THEMEAPI_(HPAINTBUFFER) BeginBufferedPaint(HDC, const RECT *, BP_BUFFERFORMAT, BP_PAINTPARAMS *,HDC *);
+THEMEAPI EndBufferedPaint(HPAINTBUFFER, BOOL);
+THEMEAPI BufferedPaintClear(HPAINTBUFFER, const RECT *);
+THEMEAPI BufferedPaintSetAlpha(HPAINTBUFFER, const RECT *, BYTE);
+THEMEAPI GetBufferedPaintBits(HPAINTBUFFER, RGBQUAD **, int *);
+THEMEAPI_(HDC) GetBufferedPaintDC(HPAINTBUFFER);
+THEMEAPI_(HDC) GetBufferedPaintTargetDC(HPAINTBUFFER);
+THEMEAPI GetBufferedPaintTargetRect(HPAINTBUFFER, RECT *prc);
 
 /* double-buffered animation functions */
 
@@ -276,12 +276,11 @@ typedef struct _BP_ANIMATIONPARAMS
     DWORD dwDuration;
 } BP_ANIMATIONPARAMS, *PBP_ANIMATIONPARAMS;
 
-HANIMATIONBUFFER WINAPI BeginBufferedAnimation(HWND, HDC, const RECT *,
-                                               BP_BUFFERFORMAT, BP_PAINTPARAMS *,
-                                               BP_ANIMATIONPARAMS *, HDC *, HDC *);
-
-BOOL WINAPI BufferedPaintRenderAnimation(HWND, HDC);
-HRESULT WINAPI BufferedPaintStopAllAnimations(HWND);
-HRESULT WINAPI EndBufferedAnimation(HANIMATIONBUFFER, BOOL);
+THEMEAPI_(HANIMATIONBUFFER) BeginBufferedAnimation(HWND, HDC, const RECT *,
+                                                   BP_BUFFERFORMAT, BP_PAINTPARAMS *,
+                                                   BP_ANIMATIONPARAMS *, HDC *, HDC *);
+THEMEAPI_(BOOL) BufferedPaintRenderAnimation(HWND, HDC);
+THEMEAPI BufferedPaintStopAllAnimations(HWND);
+THEMEAPI EndBufferedAnimation(HANIMATIONBUFFER, BOOL);
 
 #endif
