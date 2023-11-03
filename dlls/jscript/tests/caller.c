@@ -173,6 +173,7 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
     else {
         call_change_type(change_type, &v, src, VT_UNKNOWN);
         ok(V_UNKNOWN(&v) == V_UNKNOWN(src), "V_UNKNOWN(v) != V_UNKNOWN(src)\n");
+        VariantClear(&v);
     }
 
     if(V_VT(src) != VT_DISPATCH)
@@ -180,6 +181,7 @@ static void test_change_type(IVariantChangeType *change_type, VARIANT *src, cons
     else {
         call_change_type(change_type, &v, src, VT_DISPATCH);
         ok(V_DISPATCH(&v) == V_DISPATCH(src), "V_DISPATCH(v) != V_DISPATCH(src)\n");
+        VariantClear(&v);
     }
 }
 
