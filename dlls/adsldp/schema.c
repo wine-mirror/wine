@@ -25,7 +25,6 @@
 
 #include "adsldp_private.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
