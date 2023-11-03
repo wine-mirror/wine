@@ -48,7 +48,7 @@ static WCHAR *strdupAW(const char *src)
     if (src)
     {
         int len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-        if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if ((dst = malloc(len * sizeof(WCHAR))))
             MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
     }
     return dst;
@@ -65,12 +65,12 @@ BOOL WINAPI TestApplyPatchToFileA(LPCSTR patch_file, LPCSTR old_file, ULONG appl
     if (!(patch_fileW = strdupAW(patch_file))) return FALSE;
     if (old_file && !(old_fileW = strdupAW(old_file)))
     {
-        HeapFree(GetProcessHeap(), 0, patch_fileW);
+        free(patch_fileW);
         return FALSE;
     }
     ret = apply_patch_to_file(patch_fileW, old_fileW, NULL, apply_flags, NULL, NULL, TRUE);
-    HeapFree(GetProcessHeap(), 0, patch_fileW);
-    HeapFree(GetProcessHeap(), 0, old_fileW);
+    free(patch_fileW);
+    free(old_fileW);
     return ret;
 }
 
@@ -123,10 +123,10 @@ BOOL WINAPI ApplyPatchToFileExA(LPCSTR patch_file, LPCSTR old_file, LPCSTR new_f
 
     ret = apply_patch_to_file(patch_fileW, old_fileW, new_fileW, apply_flags, progress_fn, progress_ctx, FALSE);
 
-    HeapFree(GetProcessHeap(), 0, new_fileW);
+    free(new_fileW);
 free_wstrs:
-    HeapFree(GetProcessHeap(), 0, patch_fileW);
-    HeapFree(GetProcessHeap(), 0, old_fileW);
+    free(patch_fileW);
+    free(old_fileW);
     return ret;
 }
 

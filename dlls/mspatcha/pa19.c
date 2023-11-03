@@ -37,7 +37,6 @@
 
 #include "windef.h"
 #include "winternl.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "patchapi.h"
@@ -319,7 +318,7 @@ static int read_header(struct patch_file_header *ph, const BYTE *buf, size_t siz
     if (ph->err != ERROR_SUCCESS)
         return -1;
 
-    ph->file_table = heap_calloc(ph->input_file_count, sizeof(struct input_file_info));
+    ph->file_table = calloc(ph->input_file_count, sizeof(struct input_file_info));
     if (ph->file_table == NULL)
     {
         ph->err = ERROR_OUTOFMEMORY;
@@ -434,11 +433,6 @@ static int read_header(struct patch_file_header *ph, const BYTE *buf, size_t siz
     }
 
     return (ph->err == ERROR_SUCCESS) ? 0 : -1;
-}
-
-static void free_header(struct patch_file_header *ph)
-{
-    heap_free(ph->file_table);
 }
 
 #define TICKS_PER_SEC 10000000
@@ -787,7 +781,7 @@ free_decode_buf:
         VirtualFree(decode_buf, 0, MEM_RELEASE);
 
 free_patch_header:
-    free_header(&ph);
+    free(ph.file_table);
 
     return err;
 }
