@@ -84,6 +84,8 @@ static void Enumerator_destructor(jsdisp_t *dispex)
 
     TRACE("\n");
 
+    if(This->enumvar)
+        IEnumVARIANT_Release(This->enumvar);
     jsval_release(This->item);
     free(dispex);
 }
