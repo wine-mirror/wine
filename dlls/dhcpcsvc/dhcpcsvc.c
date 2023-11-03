@@ -32,7 +32,6 @@
 #include "ddk/mountmgr.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dhcpcsvc);
 
@@ -102,7 +101,7 @@ DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adapter, DHC
     if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
 
     size = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[recv_params.nParams]) + *buflen;
-    if (!(query = heap_alloc_zero( size )))
+    if (!(query = calloc( 1, size )))
     {
         err = ERROR_OUTOFMEMORY;
         goto done;
@@ -146,7 +145,7 @@ DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adapter, DHC
     err = ERROR_SUCCESS;
 
 done:
-    heap_free( query );
+    free( query );
     CloseHandle( mgr );
     return err;
 }
