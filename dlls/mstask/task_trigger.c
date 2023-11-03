@@ -87,7 +87,7 @@ static ULONG WINAPI MSTASK_ITaskTrigger_Release(
     if (ref == 0)
     {
         ITask_Release(This->parent_task);
-        heap_free(This);
+        free(This);
         InterlockedDecrement(&dll_ref);
     }
     return ref;
@@ -139,7 +139,7 @@ HRESULT TaskTriggerConstructor(ITask *task, WORD idx, ITaskTrigger **trigger)
 
     TRACE("(%p, %u, %p)\n", task, idx, trigger);
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 

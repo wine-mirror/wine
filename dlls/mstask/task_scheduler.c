@@ -60,7 +60,7 @@ static void TaskSchedulerDestructor(TaskSchedulerImpl *This)
 {
     TRACE("%p\n", This);
     ITaskService_Release(This->service);
-    heap_free(This);
+    free(This);
     InterlockedDecrement(&dll_ref);
 }
 
@@ -100,7 +100,7 @@ static ULONG WINAPI EnumWorkItems_Release(IEnumWorkItems *iface)
     {
         if (This->handle != INVALID_HANDLE_VALUE)
             FindClose(This->handle);
-        heap_free(This);
+        free(This);
         InterlockedDecrement(&dll_ref);
     }
 
@@ -259,7 +259,7 @@ static HRESULT create_task_enum(IEnumWorkItems **ret)
 
     *ret = NULL;
 
-    tasks = heap_alloc(sizeof(*tasks));
+    tasks = malloc(sizeof(*tasks));
     if (!tasks)
         return E_OUTOFMEMORY;
 
@@ -523,7 +523,7 @@ HRESULT TaskSchedulerConstructor(LPVOID *ppObj)
         return hr;
     }
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
     {
         ITaskService_Release(service);

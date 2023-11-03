@@ -74,12 +74,12 @@ DWORD WINAPI NetrJobGetInfo_wrapper(ATSVC_HANDLE server_name, DWORD jobid, LPAT_
 
 DECLSPEC_HIDDEN void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
 {
-    return HeapAlloc(GetProcessHeap(), 0, n);
+    return malloc(n);
 }
 
 DECLSPEC_HIDDEN void __RPC_USER MIDL_user_free(void __RPC_FAR *p)
 {
-    HeapFree(GetProcessHeap(), 0, p);
+    free(p);
 }
 
 DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)

@@ -19,8 +19,6 @@
 #ifndef __MSTASK_PRIVATE_H__
 #define __MSTASK_PRIVATE_H__
 
-#include "wine/heap.h"
-
 extern LONG dll_ref DECLSPEC_HIDDEN;
 
 typedef struct ClassFactoryImpl ClassFactoryImpl;
