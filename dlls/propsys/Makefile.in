@@ -1,3 +1,4 @@
+EXTRADEFS = -D_PROPSYS_
 MODULE    = propsys.dll
 IMPORTLIB = propsys
 IMPORTS   = ole32 oleaut32 uuid
