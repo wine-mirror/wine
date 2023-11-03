@@ -7073,7 +7073,7 @@ BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
 /***********************************************************************
  *           DrawTextW    (win32u.so)
  */
-INT WINAPI DECLSPEC_HIDDEN DrawTextW( HDC hdc, const WCHAR *str, INT count, RECT *rect, UINT flags )
+INT WINAPI DrawTextW( HDC hdc, const WCHAR *str, INT count, RECT *rect, UINT flags )
 {
     struct draw_text_params *params;
     ULONG ret_len, size;

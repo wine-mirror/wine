@@ -26,6 +26,7 @@
 
 #include "vulkan_private.h"
 #include "wine/vulkan_driver.h"
+#include "ntgdi.h"
 #include "ntuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);

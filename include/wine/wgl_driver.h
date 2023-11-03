@@ -3405,6 +3405,4 @@ struct opengl_funcs
     USE_GL_FUNC(glVertexPointer) \
     USE_GL_FUNC(glViewport)
 
-extern const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version );
-
 #endif /* __WINE_WGL_DRIVER_H */

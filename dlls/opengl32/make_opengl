@@ -919,8 +919,6 @@ foreach (sort keys %norm_functions)
     printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
 }
 print HEADER "\n\n";
-
-print HEADER "extern const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version );\n\n";
 print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
 close HEADER;
 

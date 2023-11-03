@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wingdi.h"
+#include "ntgdi.h"
 
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
