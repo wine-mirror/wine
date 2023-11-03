@@ -36,6 +36,12 @@
 # define DECL_WINELIB_SETUPAPI_TYPE_AW(type)  typedef WINELIB_NAME_AW(type##_) type;
 #endif
 
+#ifdef _SETUPAPI_
+#define WINSETUPAPI
+#else
+#define WINSETUPAPI DECLSPEC_IMPORT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1417,447 +1423,442 @@ typedef enum {
 /* SetupUninstallOEMInf Flags values */
 #define SUOI_FORCEDELETE 0x00000001
 
-void     WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, PCSTR cmdline, INT show );
-void     WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, PCWSTR cmdline, INT show );
-#define         InstallHinfSection WINELIB_NAME_AW(InstallHinfSection)
-BOOL     WINAPI SetupAddSectionToDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, UINT, PVOID, UINT);
-BOOL     WINAPI SetupAddSectionToDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, UINT, PVOID, UINT);
-#define         SetupAddSectionToDiskSpaceList WINELIB_NAME_AW(SetupAddSectionToDiskSpaceList)
-BOOL     WINAPI SetupAddToDiskSpaceListA(HDSKSPC, PCSTR, LONGLONG, UINT, PVOID, UINT);
-BOOL     WINAPI SetupAddToDiskSpaceListW(HDSKSPC, PCWSTR, LONGLONG, UINT, PVOID, UINT);
-#define         SetupAddToDiskSpaceList WINELIB_NAME_AW(SetupAddToDiskSpaceList)
-BOOL     WINAPI SetupAddToSourceListA(DWORD, PCSTR);
-BOOL     WINAPI SetupAddToSourceListW(DWORD, PCWSTR);
-#define         SetupAddToSourceList WINELIB_NAME_AW(SetupAddToSourceList)
-BOOL     WINAPI SetupAdjustDiskSpaceListA(HDSKSPC, LPCSTR, LONGLONG, PVOID, UINT);
-BOOL     WINAPI SetupAdjustDiskSpaceListW(HDSKSPC, LPCWSTR, LONGLONG, PVOID, UINT);
-#define         SetupAdjustDiskSpaceList WINELIB_NAME_AW(SetupAdjustDiskSpaceList)
-BOOL     WINAPI SetupCancelTemporarySourceList(void);
-BOOL     WINAPI SetupConfigureWmiFromInfSectionA(HINF, PCSTR, DWORD);
-BOOL     WINAPI SetupConfigureWmiFromInfSectionW(HINF, PCWSTR, DWORD);
-#define         SetupConfigureWmiFromInfSection WINELIB_NAME_AW(SetupConfigureWmiFromInfSection)
-UINT     WINAPI SetupBackupErrorA(HWND, PCSTR, PCSTR, PCSTR, UINT, DWORD);
-UINT     WINAPI SetupBackupErrorW(HWND, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD);
-#define         SetupBackupError WINELIB_NAME_AW(SetupBackupError)
-BOOL     WINAPI SetupCloseFileQueue( HSPFILEQ );
-void     WINAPI SetupCloseInfFile( HINF hinf );
-void     WINAPI SetupCloseLog(void);
-BOOL     WINAPI SetupCommitFileQueueA( HWND, HSPFILEQ, PSP_FILE_CALLBACK_A, PVOID );
-BOOL     WINAPI SetupCommitFileQueueW( HWND, HSPFILEQ, PSP_FILE_CALLBACK_W, PVOID );
-#define         SetupCommitFileQueue WINELIB_NAME_AW(SetupCommitFileQueue)
-UINT     WINAPI SetupCopyErrorA( HWND, PCSTR, PCSTR, PCSTR, PCSTR, PCSTR, UINT, DWORD, PSTR, DWORD, PDWORD );
-UINT     WINAPI SetupCopyErrorW( HWND, PCWSTR, PCWSTR, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD, PWSTR, DWORD, PDWORD );
-#define         SetupCopyError WINELIB_NAME_AW(SetupCopyError)
-BOOL     WINAPI SetupCopyOEMInfA( PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR * );
-BOOL     WINAPI SetupCopyOEMInfW( PCWSTR, PCWSTR, DWORD, DWORD, PWSTR, DWORD, PDWORD, PWSTR * );
-#define         SetupCopyOEMInf WINELIB_NAME_AW(SetupCopyOEMInf)
-HDSKSPC  WINAPI SetupCreateDiskSpaceListA(PVOID, DWORD, UINT);
-HDSKSPC  WINAPI SetupCreateDiskSpaceListW(PVOID, DWORD, UINT);
-#define         SetupCreateDiskSpaceList WINELIB_NAME_AW(SetupCreateDiskSpaceList)
-DWORD    WINAPI SetupDecompressOrCopyFileA( PCSTR, PCSTR, PUINT );
-DWORD    WINAPI SetupDecompressOrCopyFileW( PCWSTR, PCWSTR, PUINT );
-#define         SetupDecompressOrCopyFile WINELIB_NAME_AW(SetupDecompressOrCopyFile)
-UINT     WINAPI SetupDefaultQueueCallbackA( PVOID, UINT, UINT_PTR, UINT_PTR );
-UINT     WINAPI SetupDefaultQueueCallbackW( PVOID, UINT, UINT_PTR, UINT_PTR );
-#define         SetupDefaultQueueCallback WINELIB_NAME_AW(SetupDefaultQueueCallback)
-UINT     WINAPI SetupDeleteErrorA( HWND, PCSTR, PCSTR, UINT, DWORD );
-UINT     WINAPI SetupDeleteErrorW( HWND, PCWSTR, PCWSTR, UINT, DWORD );
-#define         SetupDeleteError WINELIB_NAME_AW(SetupDeleteError)
-BOOL     WINAPI SetupDestroyDiskSpaceList(HDSKSPC);
-BOOL     WINAPI SetupDiAskForOEMDisk(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiBuildClassInfoList(DWORD, LPGUID, DWORD, PDWORD);
-BOOL     WINAPI SetupDiBuildClassInfoListExA(DWORD, LPGUID, DWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiBuildClassInfoListExW(DWORD, LPGUID, DWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiBuildClassInfoListEx WINELIB_NAME_AW(SetupDiBuildClassInfoListEx)
-BOOL     WINAPI SetupDiBuildDriverInfoList(HDEVINFO, PSP_DEVINFO_DATA, DWORD);
-BOOL     WINAPI SetupDiCallClassInstaller(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiCancelDriverInfoSearch(HDEVINFO);
-BOOL     WINAPI SetupDiChangeState(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiClassGuidsFromNameA(LPCSTR, LPGUID, DWORD, PDWORD);
-BOOL     WINAPI SetupDiClassGuidsFromNameW(LPCWSTR, LPGUID, DWORD, PDWORD);
-#define         SetupDiClassGuidsFromName WINELIB_NAME_AW(SetupDiClassGuidsFromName)
-BOOL     WINAPI SetupDiClassGuidsFromNameExA(LPCSTR, LPGUID, DWORD, PDWORD, LPCSTR, PVOID);
-BOOL     WINAPI SetupDiClassGuidsFromNameExW(LPCWSTR, LPGUID, DWORD, PDWORD, LPCWSTR, PVOID);
-#define         SetupDiClassGuidsFromNameEx WINELIB_NAME_AW(SetupDiClassGuidsFromNameEx)
-BOOL     WINAPI SetupDiClassNameFromGuidA(const GUID*, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupDiClassNameFromGuidW(const GUID*, PWSTR, DWORD, PDWORD);
-#define         SetupDiClassNameFromGuid WINELIB_NAME_AW(SetupDiClassNameFromGuid)
-BOOL     WINAPI SetupDiClassNameFromGuidExA(const GUID*, PSTR, DWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiClassNameFromGuidExW(const GUID*, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiClassNameFromGuidEx WINELIB_NAME_AW(SetupDiClassNameFromGuidEx)
-HDEVINFO WINAPI SetupDiCreateDeviceInfoList(const GUID *, HWND);
-HDEVINFO WINAPI SetupDiCreateDeviceInfoListExA(const GUID *, HWND, PCSTR, PVOID);
-HDEVINFO WINAPI SetupDiCreateDeviceInfoListExW(const GUID *, HWND, PCWSTR, PVOID);
-#define         SetupDiCreateDeviceInfoListEx WINELIB_NAME_AW(SetupDiCreateDeviceInfoListEx)
-BOOL     WINAPI SetupDiCreateDeviceInfoA(HDEVINFO, PCSTR, const GUID*, PCSTR, HWND, DWORD,PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiCreateDeviceInfoW(HDEVINFO, PCWSTR, const GUID*, PCWSTR, HWND, DWORD,PSP_DEVINFO_DATA);
-#define         SetupDiCreateDeviceInfo WINELIB_NAME_AW(SetupDiCreateDeviceInfo)
-BOOL     WINAPI SetupDiCreateDeviceInterfaceA(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiCreateDeviceInterfaceW(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCWSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
-#define         SetupDiCreateDeviceInterface WINELIB_NAME_AW(SetupDiCreateDeviceInterface)
-HKEY     WINAPI SetupDiCreateDeviceInterfaceRegKeyA(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM, HINF, PCSTR);
-HKEY     WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM, HINF, PCWSTR);
-#define         SetupDiCreateDeviceInterfaceRegKey WINELIB_NAME_AW(SetupDiCreateDeviceInterfaceRegKey)
-HKEY     WINAPI SetupDiCreateDevRegKeyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCSTR);
-HKEY     WINAPI SetupDiCreateDevRegKeyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
-#define         SetupDiCreateDevRegKey WINELIB_NAME_AW(SetupDiCreateDevRegKey)
-BOOL     WINAPI SetupDiDeleteDeviceInfo(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiDeleteDeviceInterfaceData(HDEVINFO, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD);
-BOOL     WINAPI SetupDiDeleteDevRegKey(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD);
-BOOL     WINAPI SetupDiDestroyClassImageList(PSP_CLASSIMAGELIST_DATA);
-BOOL     WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO);
-BOOL     WINAPI SetupDiDestroyDriverInfoList(HDEVINFO, PSP_DEVINFO_DATA, DWORD);
-INT      WINAPI SetupDiDrawMiniIcon(HDC, RECT, INT, DWORD);
-BOOL     WINAPI SetupDiEnumDeviceInfo(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiEnumDriverInfoA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, PSP_DRVINFO_DATA_A);
-BOOL     WINAPI SetupDiEnumDriverInfoW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, PSP_DRVINFO_DATA_W);
-#define         SetupDiEnumDriverInfo WINELIB_NAME_AW(SetupDiEnumDriverInfo)
-BOOL     WINAPI SetupDiGetActualModelsSectionA(PINFCONTEXT, PSP_ALTPLATFORM_INFO, PSTR, DWORD, PDWORD, PVOID);
-BOOL     WINAPI SetupDiGetActualModelsSectionW(PINFCONTEXT, PSP_ALTPLATFORM_INFO, PWSTR, DWORD, PDWORD, PVOID);
-#define         SetupDiGetActualModelsSection WINELIB_NAME_AW(SetupDiGetActualModelsSection)
-BOOL     WINAPI SetupDiGetActualSectionToInstallA(HINF, PCSTR, PSTR, DWORD, PDWORD, PSTR *);
-BOOL     WINAPI SetupDiGetActualSectionToInstallW(HINF, PCWSTR, PWSTR, DWORD, PDWORD, PWSTR *);
-#define         SetupDiGetActualSectionToInstall WINELIB_NAME_AW(SetupDiGetActualSectionToInstall)
-BOOL     WINAPI SetupDiGetActualSectionToInstallExA(HINF, PCSTR, PSP_ALTPLATFORM_INFO, PSTR, DWORD, PDWORD, PSTR *, PVOID);
-BOOL     WINAPI SetupDiGetActualSectionToInstallExW(HINF, PCWSTR, PSP_ALTPLATFORM_INFO, PWSTR, DWORD, PDWORD, PWSTR *, PVOID);
-#define         SetupDiGetActualSectionToInstallEx WINELIB_NAME_AW(SetupDiGetActualSectionToInstallEx)
-BOOL     WINAPI SetupDiGetClassBitmapIndex(const GUID *, PINT);
-BOOL     WINAPI SetupDiGetClassDescriptionA(const GUID*, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetClassDescriptionW(const GUID*, PWSTR, DWORD, PDWORD);
-#define         SetupDiGetClassDescription WINELIB_NAME_AW(SetupDiGetClassDescription)
-BOOL     WINAPI SetupDiGetClassDescriptionExA(const GUID*, PSTR, DWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiGetClassDescriptionExW(const GUID*, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiGetClassDescriptionEx WINELIB_NAME_AW(SetupDiGetClassDescriptionEx)
-BOOL     WINAPI SetupDiGetClassDevPropertySheetsA(HDEVINFO, PSP_DEVINFO_DATA, LPPROPSHEETHEADERA, DWORD, PDWORD, DWORD);
-BOOL     WINAPI SetupDiGetClassDevPropertySheetsW(HDEVINFO, PSP_DEVINFO_DATA, LPPROPSHEETHEADERW, DWORD, PDWORD, DWORD);
-#define         SetupDiGetClassDevPropertySheets WINELIB_NAME_AW(SetupDiGetClassDevPropertySheets)
-HDEVINFO WINAPI SetupDiGetClassDevsA(const GUID *,LPCSTR,HWND,DWORD);
-HDEVINFO WINAPI SetupDiGetClassDevsW(const GUID *,LPCWSTR,HWND,DWORD);
-#define         SetupDiGetClassDevs WINELIB_NAME_AW(SetupDiGetClassDevs)
-HDEVINFO WINAPI SetupDiGetClassDevsExA(const GUID *, PCSTR, HWND, DWORD, HDEVINFO, PCSTR, PVOID);
-HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *, PCWSTR, HWND, DWORD, HDEVINFO, PCWSTR, PVOID);
-#define         SetupDiGetClassDevsEx WINELIB_NAME_AW(SetupDiGetClassDevsEx)
-BOOL     WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA, const GUID *, PINT);
-BOOL     WINAPI SetupDiGetClassImageList(PSP_CLASSIMAGELIST_DATA);
-BOOL     WINAPI SetupDiGetClassImageListExA(PSP_CLASSIMAGELIST_DATA, PCSTR, PVOID);
-BOOL     WINAPI SetupDiGetClassImageListExW(PSP_CLASSIMAGELIST_DATA, PCWSTR, PVOID);
-#define         SetupDiGetClassImageListEx WINELIB_NAME_AW(SetupDiGetClassImageListEx)
-BOOL     WINAPI SetupDiGetClassInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetClassInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD, PDWORD);
-#define         SetupDiGetClassInstallParams WINELIB_NAME_AW(SetupDiGetClassInstallParams)
-BOOL     WINAPI SetupDiGetClassRegistryPropertyA(const GUID *, DWORD, PDWORD, PBYTE, DWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiGetClassRegistryPropertyW(const GUID *, DWORD, PDWORD, PBYTE, DWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiGetClassRegistryProperty WINELIB_NAME_AW(SetupDiGetClassRegistryProperty)
-BOOL     WINAPI SetupDiGetCustomDevicePropertyA(HDEVINFO, PSP_DEVINFO_DATA, PCSTR, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetCustomDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, PCWSTR, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-#define         SetupDiGetCustomDeviceProperty WINELIB_NAME_AW(SetupDiGetCustomDeviceProperty)
-BOOL     WINAPI SetupDiGetDeviceInfoListClass(HDEVINFO, LPGUID);
-BOOL     WINAPI SetupDiGetDeviceInfoListDetailA(HDEVINFO, PSP_DEVINFO_LIST_DETAIL_DATA_A);
-BOOL     WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO, PSP_DEVINFO_LIST_DETAIL_DATA_W);
-#define         SetupDiGetDeviceInfoListDetail WINELIB_NAME_AW(SetupDiGetDeviceInfoListDetail)
-BOOL     WINAPI SetupDiGetDeviceInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_A);
-BOOL     WINAPI SetupDiGetDeviceInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_W);
-#define         SetupDiGetDeviceInstallParams WINELIB_NAME_AW(SetupDiGetDeviceInstallParams)
-BOOL     WINAPI SetupDiGetDeviceInstanceIdA(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetDeviceInstanceIdW(HDEVINFO, PSP_DEVINFO_DATA, PWSTR, DWORD, PDWORD);
-#define         SetupDiGetDeviceInstanceId WINELIB_NAME_AW(SetupDiGetDeviceInstanceId)
-BOOL     WINAPI SetupDiGetDeviceInterfaceAlias(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, const GUID *, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A,
-                                                 DWORD, PDWORD, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W,
-                                                 DWORD, PDWORD, PSP_DEVINFO_DATA);
-#define         SetupDiGetDeviceInterfaceDetail WINELIB_NAME_AW(SetupDiGetDeviceInterfaceDetail)
-BOOL     WINAPI SetupDiGetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD,
-                                          DWORD *, DWORD);
-#define         SetupDiGetDeviceProperty WINELIB_NAME_AW(SetupDiGetDeviceProperty)  /* note: A function doesn't exist */
-BOOL     WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
-#define         SetupDiGetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiGetDeviceRegistryProperty)
-BOOL     WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINFO_DETAIL_DATA_A, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetDriverInfoDetailW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINFO_DETAIL_DATA_W, DWORD, PDWORD);
-#define         SetupDiGetDriverInfoDetail WINELIB_NAME_AW(SetupDiGetDriverInfoDetail)
-BOOL     WINAPI SetupDiGetDriverInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINSTALL_PARAMS);
-BOOL     WINAPI SetupDiGetDriverInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINSTALL_PARAMS);
-#define         SetupDiGetDriverInstallParams WINELIB_NAME_AW(SetupDiGetDriverInstallParams)
-BOOL     WINAPI SetupDiGetHwProfileFriendlyNameA(DWORD, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetHwProfileFriendlyNameW(DWORD, PWSTR, DWORD, PDWORD);
-#define         SetupDiGetHwProfileFriendlyName WINELIB_NAME_AW(SetupDiGetHwProfileFriendlyName)
-BOOL     WINAPI SetupDiGetHwProfileFriendlyNameExA(DWORD, PSTR, DWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiGetHwProfileFriendlyNameExW(DWORD, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiGetHwProfileFriendlyNameEx WINELIB_NAME_AW(SetupDiGetHwProfileFriendlyNameEx)
-BOOL     WINAPI SetupDiGetHwProfileList(PDWORD, DWORD, PDWORD, PDWORD);
-BOOL     WINAPI SetupDiGetHwProfileListExA(PDWORD, DWORD, PDWORD, PDWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiGetHwProfileListExW(PDWORD, DWORD, PDWORD, PDWORD, PCWSTR, PVOID);
-#define         SetupDiGetHwProfileListEx WINELIB_NAME_AW(SetupDiGetHwProfileListEx)
-BOOL     WINAPI SetupDiGetINFClassA(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupDiGetINFClassW(PCWSTR, LPGUID, PWSTR, DWORD, PDWORD);
-#define         SetupDiGetINFClass WINELIB_NAME_AW(SetupDiGetINFClass)
-BOOL     WINAPI SetupDiGetSelectedDevice(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiGetSelectedDriverA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A);
-BOOL     WINAPI SetupDiGetSelectedDriverW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W);
-#define         SetupDiGetSelectedDriver WINELIB_NAME_AW(SetupDiGetSelectedDriver)
-HPROPSHEETPAGE WINAPI SetupDiGetWizardPage(HDEVINFO, PSP_DEVINFO_DATA, PSP_INSTALLWIZARD_DATA, DWORD, DWORD);
-BOOL     WINAPI SetupDiInstallClassA(HWND, PCSTR, DWORD, HSPFILEQ);
-BOOL     WINAPI SetupDiInstallClassW(HWND, PCWSTR, DWORD, HSPFILEQ);
-#define         SetupDiInstallClass WINELIB_NAME_AW(SetupDiInstallClass)
-BOOL     WINAPI SetupDiInstallClassExA(HWND, PCSTR, DWORD, HSPFILEQ, const GUID *, PVOID, PVOID);
-BOOL     WINAPI SetupDiInstallClassExW(HWND, PCWSTR, DWORD, HSPFILEQ, const GUID *, PVOID, PVOID);
-#define         SetupDiInstallClassEx WINELIB_NAME_AW(SetupDiInstallClassEx)
-BOOL     WINAPI SetupDiInstallDevice(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiInstallDriverFiles(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiLoadClassIcon(const GUID *, HICON *, PINT);
-HKEY     WINAPI SetupDiOpenClassRegKey(const GUID*, REGSAM);
-HKEY     WINAPI SetupDiOpenClassRegKeyExA(const GUID*, REGSAM, DWORD, PCSTR, PVOID);
-HKEY     WINAPI SetupDiOpenClassRegKeyExW(const GUID*, REGSAM, DWORD, PCWSTR, PVOID);
-#define         SetupDiOpenClassRegKeyEx WINELIB_NAME_AW(SetupDiOpenClassRegKeyEx)
-BOOL     WINAPI SetupDiOpenDeviceInfoA(HDEVINFO, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiOpenDeviceInfoW(HDEVINFO, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
-#define         SetupDiOpenDeviceInfo WINELIB_NAME_AW(SetupDiOpenDeviceInfo)
-BOOL     WINAPI SetupDiOpenDeviceInterfaceA(HDEVINFO, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiOpenDeviceInterfaceW(HDEVINFO, PCWSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
-#define         SetupDiOpenDeviceInterface WINELIB_NAME_AW(SetupDiOpenDeviceInterface)
-HKEY     WINAPI SetupDiOpenDeviceInterfaceRegKey(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM);
-HKEY     WINAPI SetupDiOpenDevRegKey(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
-BOOL     WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiRegisterDeviceInfo(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiRemoveDevice(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiRemoveDeviceInterface(HDEVINFO, PSP_DEVICE_INTERFACE_DATA);
-BOOL     WINAPI SetupDiRestartDevices(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiSelectBestCompatDrv(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiSelectDevice(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiSelectOEMDrv(HWND, HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiSetClassInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD);
-BOOL     WINAPI SetupDiSetClassInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD);
-#define         SetupDiSetClassInstallParams WINELIB_NAME_AW(SetupDiSetClassInstallParams)
-BOOL     WINAPI SetupDiSetClassRegistryPropertyA(const GUID *, DWORD, const BYTE *, DWORD, PCSTR, PVOID);
-BOOL     WINAPI SetupDiSetClassRegistryPropertyW(const GUID *, DWORD, const BYTE *, DWORD, PCWSTR, PVOID);
-#define         SetupDiSetClassRegistryProperty WINELIB_NAME_AW(SetupDiSetClassRegistryProperty)
-BOOL     WINAPI SetupDiSetDeviceInterfaceDefault(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, PVOID);
-BOOL     WINAPI SetupDiSetDeviceInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_A);
-BOOL     WINAPI SetupDiSetDeviceInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_W);
-#define         SetupDiSetDeviceInstallParams WINELIB_NAME_AW(SetupDiSetDeviceInstallParams)
-BOOL     WINAPI SetupDiSetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
-#define         SetupDiSetDeviceProperty WINELIB_NAME_AW(SetupDiSetDeviceProperty) /* note: A function doesn't exist */
-BOOL     WINAPI SetupDiSetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
-BOOL     WINAPI SetupDiSetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
-#define         SetupDiSetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiSetDeviceRegistryProperty)
-BOOL     WINAPI SetupDiSetDriverInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINSTALL_PARAMS);
-BOOL     WINAPI SetupDiSetDriverInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINSTALL_PARAMS);
-#define         SetupDiSetDriverInstallParams WINELIB_NAME_AW(SetupDiSetDriverInstallParams)
-BOOL     WINAPI SetupDiSetSelectedDevice(HDEVINFO, PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupDiSetSelectedDriverA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A);
-BOOL     WINAPI SetupDiSetSelectedDriverW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W);
-#define         SetupDiSetSelectedDriver WINELIB_NAME_AW(SetupDiSetSelectedDriver)
-BOOL     WINAPI SetupDiUnremoveDevice(HDEVINFO, PSP_DEVINFO_DATA);
-HDSKSPC  WINAPI SetupDuplicateDiskSpaceListA(HDSKSPC, PVOID, DWORD, UINT);
-HDSKSPC  WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC, PVOID, DWORD, UINT);
-#define         SetupDuplicateDiskSpaceList WINELIB_NAME_AW(SetupDuplicateDiskSpaceList)
-BOOL     WINAPI SetupEnumInfSectionsA(HINF, UINT, PSTR, DWORD, DWORD *);
-BOOL     WINAPI SetupEnumInfSectionsW(HINF, UINT, PWSTR, DWORD, DWORD *);
-#define         SetupEnumInfSections WINELIB_NAME_AW(SetupEnumInfSections)
-BOOL     WINAPI SetupFindFirstLineA( HINF hinf, PCSTR section, PCSTR key, INFCONTEXT *context );
-BOOL     WINAPI SetupFindFirstLineW( HINF hinf, PCWSTR section, PCWSTR key, INFCONTEXT *context );
-#define         SetupFindFirstLine WINELIB_NAME_AW(SetupFindFirstLine)
-BOOL     WINAPI SetupFindNextLine( PINFCONTEXT context_in, PINFCONTEXT context_out );
-BOOL     WINAPI SetupFindNextMatchLineA( PINFCONTEXT context_in, PCSTR key, PINFCONTEXT context_out );
-BOOL     WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key, PINFCONTEXT context_out );
-#define         SetupFindNextMatchLine WINELIB_NAME_AW(SetupFindNextMatchLine)
-BOOL     WINAPI SetupFreeSourceListA(PCSTR **, UINT);
-BOOL     WINAPI SetupFreeSourceListW(PCWSTR **, UINT);
-#define         SetupFreeSourceList WINELIB_NAME_AW(SetupFreeSourceList)
-BOOL     WINAPI SetupGetBackupInformationA(HSPFILEQ, PSP_BACKUP_QUEUE_PARAMS_A BackupParams);
-BOOL     WINAPI SetupGetBackupInformationW(HSPFILEQ, PSP_BACKUP_QUEUE_PARAMS_W BackupParams);
-#define         SetupGetBackupInformation WINELIB_NAME_AW(SetupGetBackupInformation)
-BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer, DWORD size, LPDWORD required );
-DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
-DWORD    WINAPI SetupGetFileCompressionInfoA(PCSTR, PSTR *, PDWORD, PDWORD, PUINT);
-DWORD    WINAPI SetupGetFileCompressionInfoW(PCWSTR, PWSTR *, PDWORD, PDWORD, PUINT);
-#define         SetupGetFileCompressionInfo WINELIB_NAME_AW(SetupGetFileCompressionInfo)
-BOOL     WINAPI SetupGetFileCompressionInfoExA(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
-BOOL     WINAPI SetupGetFileCompressionInfoExW(PCWSTR, PWSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
-#define         SetupGetFileCompressionInfoEx WINELIB_NAME_AW(SetupGetFileCompressionInfoEx)
-BOOL     WINAPI SetupGetFileQueueCount( HSPFILEQ, UINT, PUINT );
-BOOL     WINAPI SetupGetFileQueueFlags( HSPFILEQ, PDWORD );
-BOOL     WINAPI SetupGetInfFileListA(PCSTR, DWORD, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupGetInfFileListW(PCWSTR, DWORD, PWSTR, DWORD, PDWORD);
-#define         SetupGetInfFileList WINELIB_NAME_AW(SetupGetFileList)
-BOOL     WINAPI SetupGetInfInformationA( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
-BOOL     WINAPI SetupGetInfInformationW( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
-#define         SetupGetInfInformation WINELIB_NAME_AW(SetupGetInfInformation)
-BOOL     WINAPI SetupGetIntField( PINFCONTEXT context, DWORD index, PINT result );
-BOOL     WINAPI SetupGetLineByIndexA( HINF, PCSTR, DWORD, INFCONTEXT * );
-BOOL     WINAPI SetupGetLineByIndexW( HINF, PCWSTR, DWORD, INFCONTEXT * );
-#define         SetupGetLineByIndex WINELIB_NAME_AW(SetupGetLineByIndex)
-LONG     WINAPI SetupGetLineCountA( HINF hinf, PCSTR section );
-LONG     WINAPI SetupGetLineCountW( HINF hinf, PCWSTR section );
-#define         SetupGetLineCount WINELIB_NAME_AW(SetupGetLineCount)
-BOOL     WINAPI SetupGetLineTextA( PINFCONTEXT context, HINF hinf, PCSTR section_name,PCSTR key_name, PSTR buffer, DWORD size, PDWORD required );
-BOOL     WINAPI SetupGetLineTextW( PINFCONTEXT context, HINF hinf, PCWSTR section_name, PCWSTR key_name, PWSTR buffer, DWORD size, PDWORD required );
-#define         SetupGetLineText WINELIB_NAME_AW(SetupGetLineText)
-BOOL     WINAPI SetupGetMultiSzFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, LPDWORD required );
-BOOL     WINAPI SetupGetMultiSzFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, LPDWORD required );
-#define         SetupGetMultiSzField WINELIB_NAME_AW(SetupGetMultiSzField)
-BOOL     WINAPI SetupGetNonInteractiveMode(void);
-BOOL     WINAPI SetupGetSourceFileLocationA( HINF hinf, PINFCONTEXT context, PCSTR filename, PUINT source_id, PSTR buffer, DWORD buffer_size, PDWORD required_size );
-BOOL     WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR filename, PUINT source_id, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
-#define         SetupGetSourceFileLocation WINELIB_NAME_AW(SetupGetSourceFileLocation)
-BOOL     WINAPI SetupGetSourceFileSizeA(HINF, PINFCONTEXT, PCSTR, PCSTR, PDWORD, UINT);
-BOOL     WINAPI SetupGetSourceFileSizeW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PDWORD, UINT);
-#define         SetupGetSourceFileSize WINELIB_NAME_AW(SetupGetSourceFileSize)
-BOOL     WINAPI SetupGetSourceInfoA( HINF hinf, UINT source_id, UINT info, PSTR buffer, DWORD buffer_size, LPDWORD required_size );
-BOOL     WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info, PWSTR buffer, DWORD buffer_size, LPDWORD required_size );
-#define         SetupGetSourceInfo WINELIB_NAME_AW(SetupGetSourceInfo)
-BOOL     WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, PDWORD required );
-BOOL     WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, PDWORD required );
-#define         SetupGetStringField WINELIB_NAME_AW(SetupGetStringField)
-BOOL     WINAPI SetupGetTargetPathA( HINF hinf, PINFCONTEXT context, PCSTR section, PSTR buffer, DWORD buffer_size, PDWORD required_size );
-BOOL     WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
-#define         SetupGetTargetPath WINELIB_NAME_AW(SetupGetTargetPath)
-PVOID    WINAPI SetupInitDefaultQueueCallback( HWND );
-PVOID    WINAPI SetupInitDefaultQueueCallbackEx( HWND, HWND, UINT, DWORD, PVOID );
-HSPFILELOG WINAPI SetupInitializeFileLogA(PCSTR, DWORD);
-HSPFILELOG WINAPI SetupInitializeFileLogW(PCWSTR, DWORD);
-#define           SetupInitializeFileLog WINELIB_NAME_AW(SetupInitializeFileLog)
-BOOL     WINAPI SetupInstallFileA(HINF, PINFCONTEXT, PCSTR, PCSTR, PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
-BOOL     WINAPI SetupInstallFileW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
-#define         SetupInstallFile WINELIB_NAME_AW(SetupInstallFile)
-BOOL     WINAPI SetupInstallFileExA(HINF, PINFCONTEXT, PCSTR, PCSTR, PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID, PBOOL);
-BOOL     WINAPI SetupInstallFileExW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID, PBOOL);
-#define         SetupInstallFileEx WINELIB_NAME_AW(SetupInstallFileEx)
-BOOL     WINAPI SetupInstallFilesFromInfSectionA( HINF, HINF, HSPFILEQ, PCSTR, PCSTR, UINT );
-BOOL     WINAPI SetupInstallFilesFromInfSectionW( HINF, HINF, HSPFILEQ, PCWSTR, PCWSTR, UINT );
-#define         SetupInstallFilesFromInfSection WINELIB_NAME_AW(SetupInstallFilesFromInfSection)
-BOOL     WINAPI SetupInstallFromInfSectionA(HWND,HINF,PCSTR,UINT,HKEY,PCSTR,UINT,
-                                            PSP_FILE_CALLBACK_A,PVOID,HDEVINFO,PSP_DEVINFO_DATA);
-BOOL     WINAPI SetupInstallFromInfSectionW(HWND,HINF,PCWSTR,UINT,HKEY,PCWSTR,UINT,
-                                            PSP_FILE_CALLBACK_W,PVOID,HDEVINFO,PSP_DEVINFO_DATA);
-#define         SetupInstallFromInfSection WINELIB_NAME_AW(SetupInstallFromInfSection)
-BOOL     WINAPI SetupInstallServicesFromInfSectionA(HINF, PCSTR, DWORD);
-BOOL     WINAPI SetupInstallServicesFromInfSectionW(HINF, PCWSTR, DWORD);
-#define         SetupInstallServicesFromInfSection WINELIB_NAME_AW(SetupInstallServicesFromInfSection)
-BOOL     WINAPI SetupInstallServicesFromInfSectionExA(HINF, PCSTR, DWORD, HDEVINFO, PSP_DEVINFO_DATA, PVOID, PVOID);
-BOOL     WINAPI SetupInstallServicesFromInfSectionExW(HINF, PCWSTR, DWORD, HDEVINFO, PSP_DEVINFO_DATA, PVOID, PVOID);
-#define         SetupInstallServicesFromInfSectionEx WINELIB_NAME_AW(SetupInstallServicesFromInfSectionEx)
-BOOL     WINAPI SetupIterateCabinetA(PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
-BOOL     WINAPI SetupIterateCabinetW(PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
-#define         SetupIterateCabinet WINELIB_NAME_AW(SetupIterateCabinet)
-BOOL     WINAPI SetupLogErrorA(LPCSTR,LogSeverity);
-BOOL     WINAPI SetupLogErrorW(LPCWSTR,LogSeverity);
-#define         SetupLogError WINELIB_NAME_AW(SetupLogError)
-BOOL     WINAPI SetupLogFileA(HSPFILELOG, PCSTR, PCSTR, PCSTR, DWORD, PCSTR, PCSTR, PCSTR, DWORD);
-BOOL     WINAPI SetupLogFileW(HSPFILELOG, PCWSTR, PCWSTR, PCWSTR, DWORD, PCWSTR, PCWSTR, PCWSTR, DWORD);
-#define         SetupLogFile WINELIB_NAME_AW(SetupLogFile)
-BOOL     WINAPI SetupOpenAppendInfFileA( PCSTR, HINF, UINT * );
-BOOL     WINAPI SetupOpenAppendInfFileW( PCWSTR, HINF, UINT * );
-#define         SetupOpenAppendInfFile WINELIB_NAME_AW(SetupOpenAppendInfFile)
-HSPFILEQ WINAPI SetupOpenFileQueue(void);
-HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT *error );
-HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
-#define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
-BOOL     WINAPI SetupOpenLog(BOOL);
-HINF     WINAPI SetupOpenMasterInf( VOID );
-BOOL     WINAPI SetupPrepareQueueForRestoreA(HSPFILEQ, PCSTR, DWORD);
-BOOL     WINAPI SetupPrepareQueueForRestoreW(HSPFILEQ, PCWSTR, DWORD);
-#define         SetupPrepareQueueForRestore WINELIB_NAME_AW(SetupPrepareQueueForRestore)
-UINT     WINAPI SetupPromptForDiskA(HWND, PCSTR, PCSTR, PCSTR, PCSTR, PCSTR, DWORD, PSTR, DWORD, PDWORD);
-UINT     WINAPI SetupPromptForDiskW(HWND, PCWSTR, PCWSTR, PCWSTR, PCWSTR, PCWSTR, DWORD, PWSTR, DWORD, PDWORD);
-#define         SetupPromptForDisk WINELIB_NAME_AW(SetupPromptForDisk)
-INT      WINAPI SetupPromptReboot( HSPFILEQ, HWND, BOOL);
-BOOL     WINAPI SetupQueryDrivesInDiskSpaceListA(HDSKSPC, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupQueryDrivesInDiskSpaceListW(HDSKSPC, PWSTR, DWORD, PDWORD);
-#define         SetupQueryDrivesInDiskSpaceList WINELIB_NAME_AW(SetupQueryDrivesInDiskSpaceList)
-BOOL     WINAPI SetupQueryFileLogA(HSPFILELOG, PCSTR, PCSTR, SetupFileLogInfo, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupQueryFileLogW(HSPFILELOG, PCWSTR, PCWSTR, SetupFileLogInfo, PWSTR, DWORD, PDWORD);
-#define         SetupQueryFileLog WINELIB_NAME_AW(SetupQueryFileLog)
-BOOL     WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION, UINT, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION, UINT, PWSTR, DWORD, PDWORD);
-#define         SetupQueryInfFileInformation WINELIB_NAME_AW(SetupQueryInFileInformation)
-BOOL     WINAPI SetupQueryInfOriginalFileInformationA(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_A);
-BOOL     WINAPI SetupQueryInfOriginalFileInformationW(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_W);
-#define         SetupQueryInfOriginalFileInformation WINELIB_NAME_AW(SetupQueryInfOriginalFileInformation)
-BOOL     WINAPI SetupQueryInfVersionInformationA(PSP_INF_INFORMATION, UINT, PCSTR, PSTR, DWORD, PDWORD);
-BOOL     WINAPI SetupQueryInfVersionInformationW(PSP_INF_INFORMATION, UINT, PCWSTR, PWSTR, DWORD, PDWORD);
-#define         SetupQueryInfVersionInformation WINELIB_NAME_AW(SetupQueryInfVersionInformation)
-BOOL     WINAPI SetupQuerySourceListA(DWORD, PCSTR **, PUINT);
-BOOL     WINAPI SetupQuerySourceListW(DWORD, PCWSTR **, PUINT);
-#define         SetupQuerySourceList WINELIB_NAME_AW(SetupQuerySourceList)
-BOOL     WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC, PCSTR, LONGLONG *, PVOID, UINT);
-BOOL     WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC, PCWSTR, LONGLONG *, PVOID, UINT);
-#define         SetupQuerySpaceRequiredOnDrive WINELIB_NAME_AW(SetupQuerySpaceRequiredOnDrive)
-BOOL     WINAPI SetupQueueCopyA(HSPFILEQ,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,DWORD);
-BOOL     WINAPI SetupQueueCopyW(HSPFILEQ,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,DWORD);
-#define         SetupQueueCopy WINELIB_NAME_AW(SetupQueueCopy)
-BOOL     WINAPI SetupQueueCopyIndirectA( PSP_FILE_COPY_PARAMS_A );
-BOOL     WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W );
-#define         SetupQueueCopyIndirect WINELIB_NAME_AW(SetupQueueCopyIndirect)
-BOOL     WINAPI SetupQueueCopySectionA( HSPFILEQ, PCSTR, HINF, HINF, PCSTR, DWORD );
-BOOL     WINAPI SetupQueueCopySectionW( HSPFILEQ, PCWSTR, HINF, HINF, PCWSTR, DWORD );
-#define         SetupQueueCopySection WINELIB_NAME_AW(SetupQueueCopySection)
-BOOL     WINAPI SetupQueueDefaultCopyA( HSPFILEQ, HINF, PCSTR, PCSTR, PCSTR, DWORD );
-BOOL     WINAPI SetupQueueDefaultCopyW( HSPFILEQ, HINF, PCWSTR, PCWSTR, PCWSTR, DWORD );
-#define         SetupQueueDefaultCopy WINELIB_NAME_AW(SetupQueueDefaultCopy)
-BOOL     WINAPI SetupQueueDeleteA( HSPFILEQ, PCSTR, PCSTR );
-BOOL     WINAPI SetupQueueDeleteW( HSPFILEQ, PCWSTR, PCWSTR );
-#define         SetupQueueDelete WINELIB_NAME_AW(SetupQueueDelete)
-BOOL     WINAPI SetupQueueDeleteSectionA( HSPFILEQ, HINF, HINF, PCSTR );
-BOOL     WINAPI SetupQueueDeleteSectionW( HSPFILEQ, HINF, HINF, PCWSTR );
-#define         SetupQueueDeleteSection WINELIB_NAME_AW(SetupQueueDeleteSection)
-BOOL     WINAPI SetupQueueRenameA( HSPFILEQ, PCSTR, PCSTR, PCSTR, PCSTR );
-BOOL     WINAPI SetupQueueRenameW( HSPFILEQ, PCWSTR, PCWSTR, PCWSTR, PCWSTR );
-#define         SetupQueueRename WINELIB_NAME_AW(SetupQueueRename)
-BOOL     WINAPI SetupQueueRenameSectionA( HSPFILEQ, HINF, HINF, PCSTR );
-BOOL     WINAPI SetupQueueRenameSectionW( HSPFILEQ, HINF, HINF, PCWSTR );
-#define         SetupQueueRenameSection WINELIB_NAME_AW(SetupQueueRenameSection)
-BOOL     WINAPI SetupRemoveFileLogEntryA(HSPFILELOG, PCSTR, PCSTR);
-BOOL     WINAPI SetupRemoveFileLogEntryW(HSPFILELOG, PCWSTR, PCWSTR);
-#define         SetupRemoveFileLogEntry WINELIB_NAME_AW(SetupRemoveFileLogEntry)
-BOOL     WINAPI SetupRemoveFromDiskSpaceListA(HDSKSPC, PCSTR, UINT, PVOID, UINT);
-BOOL     WINAPI SetupRemoveFromDiskSpaceListW(HDSKSPC, PCWSTR, UINT, PVOID, UINT);
-#define         SetupRemoveFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveFromDiskSpaceList)
-BOOL     WINAPI SetupRemoveInstallSectionFromDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, PVOID, UINT);
-BOOL     WINAPI SetupRemoveInstallSectionFromDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, PVOID, UINT);
-#define         SetupRemoveInstallSectionFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveInstallSectionFromDiskSpaceList)
-BOOL     WINAPI SetupRemoveSectionFromDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, UINT, PVOID, UINT);
-BOOL     WINAPI SetupRemoveSectionFromDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, UINT, PVOID, UINT);
-#define         SetupRemoveSectionFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveSectionFromDiskSpaceList)
-BOOL     WINAPI SetupRemoveFromSourceListA(DWORD, PCSTR);
-BOOL     WINAPI SetupRemoveFromSourceListW(DWORD, PCWSTR);
-#define         SetupRemoveFromSourceList WINELIB_NAME_AW(SetupRemoveFromSourceList)
-UINT     WINAPI SetupRenameErrorA( HWND, PCSTR, PCSTR, PCSTR, UINT, DWORD );
-UINT     WINAPI SetupRenameErrorW( HWND, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD );
-#define         SetupRenameError WINELIB_NAME_AW(SetupRenameError)
-BOOL     WINAPI SetupScanFileQueueA( HSPFILEQ, DWORD, HWND, PSP_FILE_CALLBACK_A, PVOID, PDWORD );
-BOOL     WINAPI SetupScanFileQueueW( HSPFILEQ, DWORD, HWND, PSP_FILE_CALLBACK_W, PVOID, PDWORD );
-#define         SetupScanFileQueue WINELIB_NAME_AW(SetupScanFileQueue)
-BOOL     WINAPI SetupSetDirectoryIdA( HINF, DWORD, PCSTR );
-BOOL     WINAPI SetupSetDirectoryIdW( HINF, DWORD, PCWSTR );
-#define         SetupSetDirectoryId WINELIB_NAME_AW(SetupSetDirectoryId)
-BOOL     WINAPI SetupSetDirectoryIdExA( HINF, DWORD, PCSTR, DWORD, DWORD, PVOID );
-BOOL     WINAPI SetupSetDirectoryIdExW( HINF, DWORD, PCWSTR, DWORD, DWORD, PVOID );
-#define         SetupSetDirectoryIdEx WINELIB_NAME_AW(SetupSetDirectoryIdEx)
-BOOL     WINAPI SetupSetFileQueueAlternatePlatformA( HSPFILEQ, PSP_ALTPLATFORM_INFO, PCSTR );
-BOOL     WINAPI SetupSetFileQueueAlternatePlatformW( HSPFILEQ, PSP_ALTPLATFORM_INFO, PCWSTR );
-#define         SetupSetFileQueueAlternatePlatform WINELIB_NAME_AW(SetupSetFileQueueAlternatePlatform)
-BOOL     WINAPI SetupSetFileQueueFlags( HSPFILEQ, DWORD, DWORD );
-BOOL     WINAPI SetupSetNonInteractiveMode(BOOL);
-BOOL     WINAPI SetupSetPlatformPathOverrideA(PCSTR);
-BOOL     WINAPI SetupSetPlatformPathOverrideW(PCWSTR);
-#define         SetupSetPlatformPathOverride WINELIB_NAME_AW(SetupSetPlatformPathOverride)
-BOOL     WINAPI SetupSetSourceListA(DWORD, PCSTR *, UINT);
-BOOL     WINAPI SetupSetSourceListW(DWORD, PCWSTR *, UINT);
-#define         SetupSetSourceList WINELIB_NAME_AW(SetupSetSourceList)
-void     WINAPI SetupTermDefaultQueueCallback( PVOID );
-BOOL     WINAPI SetupTerminateFileLog(HSPFILELOG);
-BOOL     WINAPI SetupUninstallOEMInfA(PCSTR, DWORD, PVOID);
-BOOL     WINAPI SetupUninstallOEMInfW(PCWSTR, DWORD, PVOID);
-#define         SetupUninstallOEMInf WINELIB_NAME_AW(SetupUninstallOEMInf)
-BOOL     WINAPI SetupUninstallNewlyCopiedInfs(HSPFILEQ, DWORD, PVOID);
-BOOL     WINAPI SetupVerifyInfFileA(PCSTR, PSP_ALTPLATFORM_INFO, PSP_INF_SIGNER_INFO_A);
-BOOL     WINAPI SetupVerifyInfFileW(PCWSTR, PSP_ALTPLATFORM_INFO, PSP_INF_SIGNER_INFO_W);
-#define         SetupVerifyInfFile WINELIB_NAME_AW(SetupVerifyInfFile)
+WINSETUPAPI void     WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, PCSTR cmdline, INT show );
+WINSETUPAPI void     WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, PCWSTR cmdline, INT show );
+#define                     InstallHinfSection WINELIB_NAME_AW(InstallHinfSection)
+WINSETUPAPI BOOL     WINAPI SetupAddSectionToDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, UINT, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupAddSectionToDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, UINT, PVOID, UINT);
+#define                     SetupAddSectionToDiskSpaceList WINELIB_NAME_AW(SetupAddSectionToDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupAddToDiskSpaceListA(HDSKSPC, PCSTR, LONGLONG, UINT, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupAddToDiskSpaceListW(HDSKSPC, PCWSTR, LONGLONG, UINT, PVOID, UINT);
+#define                     SetupAddToDiskSpaceList WINELIB_NAME_AW(SetupAddToDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupAddToSourceListA(DWORD, PCSTR);
+WINSETUPAPI BOOL     WINAPI SetupAddToSourceListW(DWORD, PCWSTR);
+#define                     SetupAddToSourceList WINELIB_NAME_AW(SetupAddToSourceList)
+WINSETUPAPI BOOL     WINAPI SetupAdjustDiskSpaceListA(HDSKSPC, LPCSTR, LONGLONG, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupAdjustDiskSpaceListW(HDSKSPC, LPCWSTR, LONGLONG, PVOID, UINT);
+#define                     SetupAdjustDiskSpaceList WINELIB_NAME_AW(SetupAdjustDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupCancelTemporarySourceList(void);
+WINSETUPAPI BOOL     WINAPI SetupConfigureWmiFromInfSectionA(HINF, PCSTR, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupConfigureWmiFromInfSectionW(HINF, PCWSTR, DWORD);
+#define                     SetupConfigureWmiFromInfSection WINELIB_NAME_AW(SetupConfigureWmiFromInfSection)
+WINSETUPAPI UINT     WINAPI SetupBackupErrorA(HWND, PCSTR, PCSTR, PCSTR, UINT, DWORD);
+WINSETUPAPI UINT     WINAPI SetupBackupErrorW(HWND, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD);
+#define                     SetupBackupError WINELIB_NAME_AW(SetupBackupError)
+WINSETUPAPI BOOL     WINAPI SetupCloseFileQueue( HSPFILEQ );
+WINSETUPAPI void     WINAPI SetupCloseInfFile( HINF hinf );
+WINSETUPAPI void     WINAPI SetupCloseLog(void);
+WINSETUPAPI BOOL     WINAPI SetupCommitFileQueueA( HWND, HSPFILEQ, PSP_FILE_CALLBACK_A, PVOID );
+WINSETUPAPI BOOL     WINAPI SetupCommitFileQueueW( HWND, HSPFILEQ, PSP_FILE_CALLBACK_W, PVOID );
+#define                     SetupCommitFileQueue WINELIB_NAME_AW(SetupCommitFileQueue)
+WINSETUPAPI UINT     WINAPI SetupCopyErrorA( HWND, PCSTR, PCSTR, PCSTR, PCSTR, PCSTR, UINT, DWORD, PSTR, DWORD, PDWORD );
+WINSETUPAPI UINT     WINAPI SetupCopyErrorW( HWND, PCWSTR, PCWSTR, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD, PWSTR, DWORD, PDWORD );
+#define                     SetupCopyError WINELIB_NAME_AW(SetupCopyError)
+WINSETUPAPI BOOL     WINAPI SetupCopyOEMInfA( PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR * );
+WINSETUPAPI BOOL     WINAPI SetupCopyOEMInfW( PCWSTR, PCWSTR, DWORD, DWORD, PWSTR, DWORD, PDWORD, PWSTR * );
+#define                     SetupCopyOEMInf WINELIB_NAME_AW(SetupCopyOEMInf)
+WINSETUPAPI HDSKSPC  WINAPI SetupCreateDiskSpaceListA(PVOID, DWORD, UINT);
+WINSETUPAPI HDSKSPC  WINAPI SetupCreateDiskSpaceListW(PVOID, DWORD, UINT);
+#define                     SetupCreateDiskSpaceList WINELIB_NAME_AW(SetupCreateDiskSpaceList)
+WINSETUPAPI DWORD    WINAPI SetupDecompressOrCopyFileA( PCSTR, PCSTR, PUINT );
+WINSETUPAPI DWORD    WINAPI SetupDecompressOrCopyFileW( PCWSTR, PCWSTR, PUINT );
+#define                     SetupDecompressOrCopyFile WINELIB_NAME_AW(SetupDecompressOrCopyFile)
+WINSETUPAPI UINT     WINAPI SetupDefaultQueueCallbackA( PVOID, UINT, UINT_PTR, UINT_PTR );
+WINSETUPAPI UINT     WINAPI SetupDefaultQueueCallbackW( PVOID, UINT, UINT_PTR, UINT_PTR );
+#define                     SetupDefaultQueueCallback WINELIB_NAME_AW(SetupDefaultQueueCallback)
+WINSETUPAPI UINT     WINAPI SetupDeleteErrorA( HWND, PCSTR, PCSTR, UINT, DWORD );
+WINSETUPAPI UINT     WINAPI SetupDeleteErrorW( HWND, PCWSTR, PCWSTR, UINT, DWORD );
+#define                     SetupDeleteError WINELIB_NAME_AW(SetupDeleteError)
+WINSETUPAPI BOOL     WINAPI SetupDestroyDiskSpaceList(HDSKSPC);
+WINSETUPAPI BOOL     WINAPI SetupDiAskForOEMDisk(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiBuildClassInfoList(DWORD, LPGUID, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiBuildClassInfoListExA(DWORD, LPGUID, DWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiBuildClassInfoListExW(DWORD, LPGUID, DWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiBuildClassInfoListEx WINELIB_NAME_AW(SetupDiBuildClassInfoListEx)
+WINSETUPAPI BOOL     WINAPI SetupDiBuildDriverInfoList(HDEVINFO, PSP_DEVINFO_DATA, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiCallClassInstaller(DI_FUNCTION, HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiCancelDriverInfoSearch(HDEVINFO);
+WINSETUPAPI BOOL     WINAPI SetupDiChangeState(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiClassGuidsFromNameA(LPCSTR, LPGUID, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiClassGuidsFromNameW(LPCWSTR, LPGUID, DWORD, PDWORD);
+#define                     SetupDiClassGuidsFromName WINELIB_NAME_AW(SetupDiClassGuidsFromName)
+WINSETUPAPI BOOL     WINAPI SetupDiClassGuidsFromNameExA(LPCSTR, LPGUID, DWORD, PDWORD, LPCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiClassGuidsFromNameExW(LPCWSTR, LPGUID, DWORD, PDWORD, LPCWSTR, PVOID);
+#define                     SetupDiClassGuidsFromNameEx WINELIB_NAME_AW(SetupDiClassGuidsFromNameEx)
+WINSETUPAPI BOOL     WINAPI SetupDiClassNameFromGuidA(const GUID*, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiClassNameFromGuidW(const GUID*, PWSTR, DWORD, PDWORD);
+#define                     SetupDiClassNameFromGuid WINELIB_NAME_AW(SetupDiClassNameFromGuid)
+WINSETUPAPI BOOL     WINAPI SetupDiClassNameFromGuidExA(const GUID*, PSTR, DWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiClassNameFromGuidExW(const GUID*, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiClassNameFromGuidEx WINELIB_NAME_AW(SetupDiClassNameFromGuidEx)
+WINSETUPAPI HDEVINFO WINAPI SetupDiCreateDeviceInfoList(const GUID *, HWND);
+WINSETUPAPI HDEVINFO WINAPI SetupDiCreateDeviceInfoListExA(const GUID *, HWND, PCSTR, PVOID);
+WINSETUPAPI HDEVINFO WINAPI SetupDiCreateDeviceInfoListExW(const GUID *, HWND, PCWSTR, PVOID);
+#define                     SetupDiCreateDeviceInfoListEx WINELIB_NAME_AW(SetupDiCreateDeviceInfoListEx)
+WINSETUPAPI BOOL     WINAPI SetupDiCreateDeviceInfoA(HDEVINFO, PCSTR, const GUID*, PCSTR, HWND, DWORD,PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiCreateDeviceInfoW(HDEVINFO, PCWSTR, const GUID*, PCWSTR, HWND, DWORD,PSP_DEVINFO_DATA);
+#define                     SetupDiCreateDeviceInfo WINELIB_NAME_AW(SetupDiCreateDeviceInfo)
+WINSETUPAPI BOOL     WINAPI SetupDiCreateDeviceInterfaceA(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiCreateDeviceInterfaceW(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCWSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
+#define                     SetupDiCreateDeviceInterface WINELIB_NAME_AW(SetupDiCreateDeviceInterface)
+WINSETUPAPI HKEY     WINAPI SetupDiCreateDeviceInterfaceRegKeyA(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM, HINF, PCSTR);
+WINSETUPAPI HKEY     WINAPI SetupDiCreateDeviceInterfaceRegKeyW(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM, HINF, PCWSTR);
+#define                     SetupDiCreateDeviceInterfaceRegKey WINELIB_NAME_AW(SetupDiCreateDeviceInterfaceRegKey)
+WINSETUPAPI HKEY     WINAPI SetupDiCreateDevRegKeyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCSTR);
+WINSETUPAPI HKEY     WINAPI SetupDiCreateDevRegKeyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, HINF, PCWSTR);
+#define                     SetupDiCreateDevRegKey WINELIB_NAME_AW(SetupDiCreateDevRegKey)
+WINSETUPAPI BOOL     WINAPI SetupDiDeleteDeviceInfo(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiDeleteDeviceInterfaceData(HDEVINFO, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiDeleteDevRegKey(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiDestroyClassImageList(PSP_CLASSIMAGELIST_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO);
+WINSETUPAPI BOOL     WINAPI SetupDiDestroyDriverInfoList(HDEVINFO, PSP_DEVINFO_DATA, DWORD);
+WINSETUPAPI INT      WINAPI SetupDiDrawMiniIcon(HDC, RECT, INT, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiEnumDeviceInfo(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiEnumDeviceInterfaces(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiEnumDriverInfoA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, PSP_DRVINFO_DATA_A);
+WINSETUPAPI BOOL     WINAPI SetupDiEnumDriverInfoW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, PSP_DRVINFO_DATA_W);
+#define                     SetupDiEnumDriverInfo WINELIB_NAME_AW(SetupDiEnumDriverInfo)
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualModelsSectionA(PINFCONTEXT, PSP_ALTPLATFORM_INFO, PSTR, DWORD, PDWORD, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualModelsSectionW(PINFCONTEXT, PSP_ALTPLATFORM_INFO, PWSTR, DWORD, PDWORD, PVOID);
+#define                     SetupDiGetActualModelsSection WINELIB_NAME_AW(SetupDiGetActualModelsSection)
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualSectionToInstallA(HINF, PCSTR, PSTR, DWORD, PDWORD, PSTR *);
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualSectionToInstallW(HINF, PCWSTR, PWSTR, DWORD, PDWORD, PWSTR *);
+#define                     SetupDiGetActualSectionToInstall WINELIB_NAME_AW(SetupDiGetActualSectionToInstall)
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualSectionToInstallExA(HINF, PCSTR, PSP_ALTPLATFORM_INFO, PSTR, DWORD, PDWORD, PSTR *, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetActualSectionToInstallExW(HINF, PCWSTR, PSP_ALTPLATFORM_INFO, PWSTR, DWORD, PDWORD, PWSTR *, PVOID);
+#define                     SetupDiGetActualSectionToInstallEx WINELIB_NAME_AW(SetupDiGetActualSectionToInstallEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassBitmapIndex(const GUID *, PINT);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDescriptionA(const GUID*, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDescriptionW(const GUID*, PWSTR, DWORD, PDWORD);
+#define                     SetupDiGetClassDescription WINELIB_NAME_AW(SetupDiGetClassDescription)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDescriptionExA(const GUID*, PSTR, DWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDescriptionExW(const GUID*, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiGetClassDescriptionEx WINELIB_NAME_AW(SetupDiGetClassDescriptionEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDevPropertySheetsA(HDEVINFO, PSP_DEVINFO_DATA, LPPROPSHEETHEADERA, DWORD, PDWORD, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassDevPropertySheetsW(HDEVINFO, PSP_DEVINFO_DATA, LPPROPSHEETHEADERW, DWORD, PDWORD, DWORD);
+#define                     SetupDiGetClassDevPropertySheets WINELIB_NAME_AW(SetupDiGetClassDevPropertySheets)
+WINSETUPAPI HDEVINFO WINAPI SetupDiGetClassDevsA(const GUID *,LPCSTR,HWND,DWORD);
+WINSETUPAPI HDEVINFO WINAPI SetupDiGetClassDevsW(const GUID *,LPCWSTR,HWND,DWORD);
+#define                     SetupDiGetClassDevs WINELIB_NAME_AW(SetupDiGetClassDevs)
+WINSETUPAPI HDEVINFO WINAPI SetupDiGetClassDevsExA(const GUID *, PCSTR, HWND, DWORD, HDEVINFO, PCSTR, PVOID);
+WINSETUPAPI HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *, PCWSTR, HWND, DWORD, HDEVINFO, PCWSTR, PVOID);
+#define                     SetupDiGetClassDevsEx WINELIB_NAME_AW(SetupDiGetClassDevsEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA, const GUID *, PINT);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassImageList(PSP_CLASSIMAGELIST_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassImageListExA(PSP_CLASSIMAGELIST_DATA, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassImageListExW(PSP_CLASSIMAGELIST_DATA, PCWSTR, PVOID);
+#define                     SetupDiGetClassImageListEx WINELIB_NAME_AW(SetupDiGetClassImageListEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD, PDWORD);
+#define                     SetupDiGetClassInstallParams WINELIB_NAME_AW(SetupDiGetClassInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassRegistryPropertyA(const GUID *, DWORD, PDWORD, PBYTE, DWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetClassRegistryPropertyW(const GUID *, DWORD, PDWORD, PBYTE, DWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiGetClassRegistryProperty WINELIB_NAME_AW(SetupDiGetClassRegistryProperty)
+WINSETUPAPI BOOL     WINAPI SetupDiGetCustomDevicePropertyA(HDEVINFO, PSP_DEVINFO_DATA, PCSTR, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetCustomDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, PCWSTR, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+#define                     SetupDiGetCustomDeviceProperty WINELIB_NAME_AW(SetupDiGetCustomDeviceProperty)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInfoListClass(HDEVINFO, LPGUID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInfoListDetailA(HDEVINFO, PSP_DEVINFO_LIST_DETAIL_DATA_A);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO, PSP_DEVINFO_LIST_DETAIL_DATA_W);
+#define                     SetupDiGetDeviceInfoListDetail WINELIB_NAME_AW(SetupDiGetDeviceInfoListDetail)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_A);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_W);
+#define                     SetupDiGetDeviceInstallParams WINELIB_NAME_AW(SetupDiGetDeviceInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInstanceIdA(HDEVINFO, PSP_DEVINFO_DATA, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInstanceIdW(HDEVINFO, PSP_DEVINFO_DATA, PWSTR, DWORD, PDWORD);
+#define                     SetupDiGetDeviceInstanceId WINELIB_NAME_AW(SetupDiGetDeviceInstanceId)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInterfaceAlias(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, const GUID *, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_A, DWORD, PDWORD, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W, DWORD, PDWORD, PSP_DEVINFO_DATA);
+#define                     SetupDiGetDeviceInterfaceDetail WINELIB_NAME_AW(SetupDiGetDeviceInterfaceDetail)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD, DWORD *, DWORD);
+#define                     SetupDiGetDeviceProperty WINELIB_NAME_AW(SetupDiGetDeviceProperty)  /* note: A function doesn't exist */
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+#define                     SetupDiGetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiGetDeviceRegistryProperty)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINFO_DETAIL_DATA_A, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDriverInfoDetailW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINFO_DETAIL_DATA_W, DWORD, PDWORD);
+#define                     SetupDiGetDriverInfoDetail WINELIB_NAME_AW(SetupDiGetDriverInfoDetail)
+WINSETUPAPI BOOL     WINAPI SetupDiGetDriverInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINSTALL_PARAMS);
+WINSETUPAPI BOOL     WINAPI SetupDiGetDriverInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINSTALL_PARAMS);
+#define                     SetupDiGetDriverInstallParams WINELIB_NAME_AW(SetupDiGetDriverInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileFriendlyNameA(DWORD, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileFriendlyNameW(DWORD, PWSTR, DWORD, PDWORD);
+#define                     SetupDiGetHwProfileFriendlyName WINELIB_NAME_AW(SetupDiGetHwProfileFriendlyName)
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileFriendlyNameExA(DWORD, PSTR, DWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileFriendlyNameExW(DWORD, PWSTR, DWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiGetHwProfileFriendlyNameEx WINELIB_NAME_AW(SetupDiGetHwProfileFriendlyNameEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileList(PDWORD, DWORD, PDWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileListExA(PDWORD, DWORD, PDWORD, PDWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiGetHwProfileListExW(PDWORD, DWORD, PDWORD, PDWORD, PCWSTR, PVOID);
+#define                     SetupDiGetHwProfileListEx WINELIB_NAME_AW(SetupDiGetHwProfileListEx)
+WINSETUPAPI BOOL     WINAPI SetupDiGetINFClassA(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiGetINFClassW(PCWSTR, LPGUID, PWSTR, DWORD, PDWORD);
+#define                     SetupDiGetINFClass WINELIB_NAME_AW(SetupDiGetINFClass)
+WINSETUPAPI BOOL     WINAPI SetupDiGetSelectedDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiGetSelectedDriverA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A);
+WINSETUPAPI BOOL     WINAPI SetupDiGetSelectedDriverW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W);
+#define                     SetupDiGetSelectedDriver WINELIB_NAME_AW(SetupDiGetSelectedDriver)
+WINSETUPAPI HPROPSHEETPAGE WINAPI SetupDiGetWizardPage(HDEVINFO, PSP_DEVINFO_DATA, PSP_INSTALLWIZARD_DATA, DWORD, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiInstallClassA(HWND, PCSTR, DWORD, HSPFILEQ);
+WINSETUPAPI BOOL     WINAPI SetupDiInstallClassW(HWND, PCWSTR, DWORD, HSPFILEQ);
+#define                     SetupDiInstallClass WINELIB_NAME_AW(SetupDiInstallClass)
+WINSETUPAPI BOOL     WINAPI SetupDiInstallClassExA(HWND, PCSTR, DWORD, HSPFILEQ, const GUID *, PVOID, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiInstallClassExW(HWND, PCWSTR, DWORD, HSPFILEQ, const GUID *, PVOID, PVOID);
+#define                     SetupDiInstallClassEx WINELIB_NAME_AW(SetupDiInstallClassEx)
+WINSETUPAPI BOOL     WINAPI SetupDiInstallDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiInstallDriverFiles(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiLoadClassIcon(const GUID *, HICON *, PINT);
+WINSETUPAPI HKEY     WINAPI SetupDiOpenClassRegKey(const GUID*, REGSAM);
+WINSETUPAPI HKEY     WINAPI SetupDiOpenClassRegKeyExA(const GUID*, REGSAM, DWORD, PCSTR, PVOID);
+WINSETUPAPI HKEY     WINAPI SetupDiOpenClassRegKeyExW(const GUID*, REGSAM, DWORD, PCWSTR, PVOID);
+#define                     SetupDiOpenClassRegKeyEx WINELIB_NAME_AW(SetupDiOpenClassRegKeyEx)
+WINSETUPAPI BOOL     WINAPI SetupDiOpenDeviceInfoA(HDEVINFO, PCSTR, HWND, DWORD, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiOpenDeviceInfoW(HDEVINFO, PCWSTR, HWND, DWORD, PSP_DEVINFO_DATA);
+#define                     SetupDiOpenDeviceInfo WINELIB_NAME_AW(SetupDiOpenDeviceInfo)
+WINSETUPAPI BOOL     WINAPI SetupDiOpenDeviceInterfaceA(HDEVINFO, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiOpenDeviceInterfaceW(HDEVINFO, PCWSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
+#define                     SetupDiOpenDeviceInterface WINELIB_NAME_AW(SetupDiOpenDeviceInterface)
+WINSETUPAPI HKEY     WINAPI SetupDiOpenDeviceInterfaceRegKey(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, REGSAM);
+WINSETUPAPI HKEY     WINAPI SetupDiOpenDevRegKey(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
+WINSETUPAPI BOOL     WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiRegisterDeviceInfo(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PSP_DETSIG_CMPPROC, PVOID, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiRemoveDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiRemoveDeviceInterface(HDEVINFO, PSP_DEVICE_INTERFACE_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiRestartDevices(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiSelectBestCompatDrv(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiSelectDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiSelectOEMDrv(HWND, HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiSetClassInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiSetClassInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_CLASSINSTALL_HEADER, DWORD);
+#define                     SetupDiSetClassInstallParams WINELIB_NAME_AW(SetupDiSetClassInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiSetClassRegistryPropertyA(const GUID *, DWORD, const BYTE *, DWORD, PCSTR, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiSetClassRegistryPropertyW(const GUID *, DWORD, const BYTE *, DWORD, PCWSTR, PVOID);
+#define                     SetupDiSetClassRegistryProperty WINELIB_NAME_AW(SetupDiSetClassRegistryProperty)
+WINSETUPAPI BOOL     WINAPI SetupDiSetDeviceInterfaceDefault(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, DWORD, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupDiSetDeviceInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_A);
+WINSETUPAPI BOOL     WINAPI SetupDiSetDeviceInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DEVINSTALL_PARAMS_W);
+#define                     SetupDiSetDeviceInstallParams WINELIB_NAME_AW(SetupDiSetDeviceInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiSetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
+#define                     SetupDiSetDeviceProperty WINELIB_NAME_AW(SetupDiSetDeviceProperty) /* note: A function doesn't exist */
+WINSETUPAPI BOOL     WINAPI SetupDiSetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupDiSetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
+#define                     SetupDiSetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiSetDeviceRegistryProperty)
+WINSETUPAPI BOOL     WINAPI SetupDiSetDriverInstallParamsA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINSTALL_PARAMS);
+WINSETUPAPI BOOL     WINAPI SetupDiSetDriverInstallParamsW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINSTALL_PARAMS);
+#define                     SetupDiSetDriverInstallParams WINELIB_NAME_AW(SetupDiSetDriverInstallParams)
+WINSETUPAPI BOOL     WINAPI SetupDiSetSelectedDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupDiSetSelectedDriverA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A);
+WINSETUPAPI BOOL     WINAPI SetupDiSetSelectedDriverW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W);
+#define                     SetupDiSetSelectedDriver WINELIB_NAME_AW(SetupDiSetSelectedDriver)
+WINSETUPAPI BOOL     WINAPI SetupDiUnremoveDevice(HDEVINFO, PSP_DEVINFO_DATA);
+WINSETUPAPI HDSKSPC  WINAPI SetupDuplicateDiskSpaceListA(HDSKSPC, PVOID, DWORD, UINT);
+WINSETUPAPI HDSKSPC  WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC, PVOID, DWORD, UINT);
+#define                     SetupDuplicateDiskSpaceList WINELIB_NAME_AW(SetupDuplicateDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupEnumInfSectionsA(HINF, UINT, PSTR, DWORD, DWORD *);
+WINSETUPAPI BOOL     WINAPI SetupEnumInfSectionsW(HINF, UINT, PWSTR, DWORD, DWORD *);
+#define                     SetupEnumInfSections WINELIB_NAME_AW(SetupEnumInfSections)
+WINSETUPAPI BOOL     WINAPI SetupFindFirstLineA( HINF hinf, PCSTR section, PCSTR key, INFCONTEXT *context );
+WINSETUPAPI BOOL     WINAPI SetupFindFirstLineW( HINF hinf, PCWSTR section, PCWSTR key, INFCONTEXT *context );
+#define                     SetupFindFirstLine WINELIB_NAME_AW(SetupFindFirstLine)
+WINSETUPAPI BOOL     WINAPI SetupFindNextLine( PINFCONTEXT context_in, PINFCONTEXT context_out );
+WINSETUPAPI BOOL     WINAPI SetupFindNextMatchLineA( PINFCONTEXT context_in, PCSTR key, PINFCONTEXT context_out );
+WINSETUPAPI BOOL     WINAPI SetupFindNextMatchLineW( PINFCONTEXT context_in, PCWSTR key, PINFCONTEXT context_out );
+#define                     SetupFindNextMatchLine WINELIB_NAME_AW(SetupFindNextMatchLine)
+WINSETUPAPI BOOL     WINAPI SetupFreeSourceListA(PCSTR **, UINT);
+WINSETUPAPI BOOL     WINAPI SetupFreeSourceListW(PCWSTR **, UINT);
+#define                     SetupFreeSourceList WINELIB_NAME_AW(SetupFreeSourceList)
+WINSETUPAPI BOOL     WINAPI SetupGetBackupInformationA(HSPFILEQ, PSP_BACKUP_QUEUE_PARAMS_A BackupParams);
+WINSETUPAPI BOOL     WINAPI SetupGetBackupInformationW(HSPFILEQ, PSP_BACKUP_QUEUE_PARAMS_W BackupParams);
+#define                     SetupGetBackupInformation WINELIB_NAME_AW(SetupGetBackupInformation)
+WINSETUPAPI BOOL     WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer, DWORD size, LPDWORD required );
+WINSETUPAPI DWORD    WINAPI SetupGetFieldCount( PINFCONTEXT context );
+WINSETUPAPI DWORD    WINAPI SetupGetFileCompressionInfoA(PCSTR, PSTR *, PDWORD, PDWORD, PUINT);
+WINSETUPAPI DWORD    WINAPI SetupGetFileCompressionInfoW(PCWSTR, PWSTR *, PDWORD, PDWORD, PUINT);
+#define                     SetupGetFileCompressionInfo WINELIB_NAME_AW(SetupGetFileCompressionInfo)
+WINSETUPAPI BOOL     WINAPI SetupGetFileCompressionInfoExA(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+WINSETUPAPI BOOL     WINAPI SetupGetFileCompressionInfoExW(PCWSTR, PWSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
+#define                     SetupGetFileCompressionInfoEx WINELIB_NAME_AW(SetupGetFileCompressionInfoEx)
+WINSETUPAPI BOOL     WINAPI SetupGetFileQueueCount( HSPFILEQ, UINT, PUINT );
+WINSETUPAPI BOOL     WINAPI SetupGetFileQueueFlags( HSPFILEQ, PDWORD );
+WINSETUPAPI BOOL     WINAPI SetupGetInfFileListA(PCSTR, DWORD, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupGetInfFileListW(PCWSTR, DWORD, PWSTR, DWORD, PDWORD);
+#define                     SetupGetInfFileList WINELIB_NAME_AW(SetupGetFileList)
+WINSETUPAPI BOOL     WINAPI SetupGetInfInformationA( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupGetInfInformationW( LPCVOID, DWORD, PSP_INF_INFORMATION, DWORD, PDWORD);
+#define                     SetupGetInfInformation WINELIB_NAME_AW(SetupGetInfInformation)
+WINSETUPAPI BOOL     WINAPI SetupGetIntField( PINFCONTEXT context, DWORD index, PINT result );
+WINSETUPAPI BOOL     WINAPI SetupGetLineByIndexA( HINF, PCSTR, DWORD, INFCONTEXT * );
+WINSETUPAPI BOOL     WINAPI SetupGetLineByIndexW( HINF, PCWSTR, DWORD, INFCONTEXT * );
+#define                     SetupGetLineByIndex WINELIB_NAME_AW(SetupGetLineByIndex)
+WINSETUPAPI LONG     WINAPI SetupGetLineCountA( HINF hinf, PCSTR section );
+WINSETUPAPI LONG     WINAPI SetupGetLineCountW( HINF hinf, PCWSTR section );
+#define                     SetupGetLineCount WINELIB_NAME_AW(SetupGetLineCount)
+WINSETUPAPI BOOL     WINAPI SetupGetLineTextA( PINFCONTEXT context, HINF hinf, PCSTR section_name,PCSTR key_name, PSTR buffer, DWORD size, PDWORD required );
+WINSETUPAPI BOOL     WINAPI SetupGetLineTextW( PINFCONTEXT context, HINF hinf, PCWSTR section_name, PCWSTR key_name, PWSTR buffer, DWORD size, PDWORD required );
+#define                     SetupGetLineText WINELIB_NAME_AW(SetupGetLineText)
+WINSETUPAPI BOOL     WINAPI SetupGetMultiSzFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, LPDWORD required );
+WINSETUPAPI BOOL     WINAPI SetupGetMultiSzFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, LPDWORD required );
+#define                     SetupGetMultiSzField WINELIB_NAME_AW(SetupGetMultiSzField)
+WINSETUPAPI BOOL     WINAPI SetupGetNonInteractiveMode(void);
+WINSETUPAPI BOOL     WINAPI SetupGetSourceFileLocationA( HINF hinf, PINFCONTEXT context, PCSTR filename, PUINT source_id, PSTR buffer, DWORD buffer_size, PDWORD required_size );
+WINSETUPAPI BOOL     WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR filename, PUINT source_id, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
+#define                     SetupGetSourceFileLocation WINELIB_NAME_AW(SetupGetSourceFileLocation)
+WINSETUPAPI BOOL     WINAPI SetupGetSourceFileSizeA(HINF, PINFCONTEXT, PCSTR, PCSTR, PDWORD, UINT);
+WINSETUPAPI BOOL     WINAPI SetupGetSourceFileSizeW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PDWORD, UINT);
+#define                     SetupGetSourceFileSize WINELIB_NAME_AW(SetupGetSourceFileSize)
+WINSETUPAPI BOOL     WINAPI SetupGetSourceInfoA( HINF hinf, UINT source_id, UINT info, PSTR buffer, DWORD buffer_size, LPDWORD required_size );
+WINSETUPAPI BOOL     WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info, PWSTR buffer, DWORD buffer_size, LPDWORD required_size );
+#define                     SetupGetSourceInfo WINELIB_NAME_AW(SetupGetSourceInfo)
+WINSETUPAPI BOOL     WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, PDWORD required );
+WINSETUPAPI BOOL     WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, PDWORD required );
+#define                     SetupGetStringField WINELIB_NAME_AW(SetupGetStringField)
+WINSETUPAPI BOOL     WINAPI SetupGetTargetPathA( HINF hinf, PINFCONTEXT context, PCSTR section, PSTR buffer, DWORD buffer_size, PDWORD required_size );
+WINSETUPAPI BOOL     WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
+#define                     SetupGetTargetPath WINELIB_NAME_AW(SetupGetTargetPath)
+WINSETUPAPI PVOID    WINAPI SetupInitDefaultQueueCallback( HWND );
+WINSETUPAPI PVOID    WINAPI SetupInitDefaultQueueCallbackEx( HWND, HWND, UINT, DWORD, PVOID );
+WINSETUPAPI HSPFILELOG WINAPI SetupInitializeFileLogA(PCSTR, DWORD);
+WINSETUPAPI HSPFILELOG WINAPI SetupInitializeFileLogW(PCWSTR, DWORD);
+#define                       SetupInitializeFileLog WINELIB_NAME_AW(SetupInitializeFileLog)
+WINSETUPAPI BOOL     WINAPI SetupInstallFileA(HINF, PINFCONTEXT, PCSTR, PCSTR, PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupInstallFileW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
+#define                     SetupInstallFile WINELIB_NAME_AW(SetupInstallFile)
+WINSETUPAPI BOOL     WINAPI SetupInstallFileExA(HINF, PINFCONTEXT, PCSTR, PCSTR, PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID, PBOOL);
+WINSETUPAPI BOOL     WINAPI SetupInstallFileExW(HINF, PINFCONTEXT, PCWSTR, PCWSTR, PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID, PBOOL);
+#define                     SetupInstallFileEx WINELIB_NAME_AW(SetupInstallFileEx)
+WINSETUPAPI BOOL     WINAPI SetupInstallFilesFromInfSectionA( HINF, HINF, HSPFILEQ, PCSTR, PCSTR, UINT );
+WINSETUPAPI BOOL     WINAPI SetupInstallFilesFromInfSectionW( HINF, HINF, HSPFILEQ, PCWSTR, PCWSTR, UINT );
+#define                     SetupInstallFilesFromInfSection WINELIB_NAME_AW(SetupInstallFilesFromInfSection)
+WINSETUPAPI BOOL     WINAPI SetupInstallFromInfSectionA(HWND,HINF,PCSTR,UINT,HKEY,PCSTR,UINT,PSP_FILE_CALLBACK_A,PVOID,HDEVINFO,PSP_DEVINFO_DATA);
+WINSETUPAPI BOOL     WINAPI SetupInstallFromInfSectionW(HWND,HINF,PCWSTR,UINT,HKEY,PCWSTR,UINT,PSP_FILE_CALLBACK_W,PVOID,HDEVINFO,PSP_DEVINFO_DATA);
+#define                     SetupInstallFromInfSection WINELIB_NAME_AW(SetupInstallFromInfSection)
+WINSETUPAPI BOOL     WINAPI SetupInstallServicesFromInfSectionA(HINF, PCSTR, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupInstallServicesFromInfSectionW(HINF, PCWSTR, DWORD);
+#define                     SetupInstallServicesFromInfSection WINELIB_NAME_AW(SetupInstallServicesFromInfSection)
+WINSETUPAPI BOOL     WINAPI SetupInstallServicesFromInfSectionExA(HINF, PCSTR, DWORD, HDEVINFO, PSP_DEVINFO_DATA, PVOID, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupInstallServicesFromInfSectionExW(HINF, PCWSTR, DWORD, HDEVINFO, PSP_DEVINFO_DATA, PVOID, PVOID);
+#define                     SetupInstallServicesFromInfSectionEx WINELIB_NAME_AW(SetupInstallServicesFromInfSectionEx)
+WINSETUPAPI BOOL     WINAPI SetupIterateCabinetA(PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupIterateCabinetW(PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
+#define                     SetupIterateCabinet WINELIB_NAME_AW(SetupIterateCabinet)
+WINSETUPAPI BOOL     WINAPI SetupLogErrorA(LPCSTR,LogSeverity);
+WINSETUPAPI BOOL     WINAPI SetupLogErrorW(LPCWSTR,LogSeverity);
+#define                     SetupLogError WINELIB_NAME_AW(SetupLogError)
+WINSETUPAPI BOOL     WINAPI SetupLogFileA(HSPFILELOG, PCSTR, PCSTR, PCSTR, DWORD, PCSTR, PCSTR, PCSTR, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupLogFileW(HSPFILELOG, PCWSTR, PCWSTR, PCWSTR, DWORD, PCWSTR, PCWSTR, PCWSTR, DWORD);
+#define                     SetupLogFile WINELIB_NAME_AW(SetupLogFile)
+WINSETUPAPI BOOL     WINAPI SetupOpenAppendInfFileA( PCSTR, HINF, UINT * );
+WINSETUPAPI BOOL     WINAPI SetupOpenAppendInfFileW( PCWSTR, HINF, UINT * );
+#define                     SetupOpenAppendInfFile WINELIB_NAME_AW(SetupOpenAppendInfFile)
+WINSETUPAPI HSPFILEQ WINAPI SetupOpenFileQueue(void);
+WINSETUPAPI HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT *error );
+WINSETUPAPI HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
+#define                     SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
+WINSETUPAPI BOOL     WINAPI SetupOpenLog(BOOL);
+WINSETUPAPI HINF     WINAPI SetupOpenMasterInf( VOID );
+WINSETUPAPI BOOL     WINAPI SetupPrepareQueueForRestoreA(HSPFILEQ, PCSTR, DWORD);
+WINSETUPAPI BOOL     WINAPI SetupPrepareQueueForRestoreW(HSPFILEQ, PCWSTR, DWORD);
+#define                     SetupPrepareQueueForRestore WINELIB_NAME_AW(SetupPrepareQueueForRestore)
+WINSETUPAPI UINT     WINAPI SetupPromptForDiskA(HWND, PCSTR, PCSTR, PCSTR, PCSTR, PCSTR, DWORD, PSTR, DWORD, PDWORD);
+WINSETUPAPI UINT     WINAPI SetupPromptForDiskW(HWND, PCWSTR, PCWSTR, PCWSTR, PCWSTR, PCWSTR, DWORD, PWSTR, DWORD, PDWORD);
+#define                     SetupPromptForDisk WINELIB_NAME_AW(SetupPromptForDisk)
+WINSETUPAPI INT      WINAPI SetupPromptReboot( HSPFILEQ, HWND, BOOL);
+WINSETUPAPI BOOL     WINAPI SetupQueryDrivesInDiskSpaceListA(HDSKSPC, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupQueryDrivesInDiskSpaceListW(HDSKSPC, PWSTR, DWORD, PDWORD);
+#define                     SetupQueryDrivesInDiskSpaceList WINELIB_NAME_AW(SetupQueryDrivesInDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupQueryFileLogA(HSPFILELOG, PCSTR, PCSTR, SetupFileLogInfo, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupQueryFileLogW(HSPFILELOG, PCWSTR, PCWSTR, SetupFileLogInfo, PWSTR, DWORD, PDWORD);
+#define                     SetupQueryFileLog WINELIB_NAME_AW(SetupQueryFileLog)
+WINSETUPAPI BOOL     WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION, UINT, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION, UINT, PWSTR, DWORD, PDWORD);
+#define                     SetupQueryInfFileInformation WINELIB_NAME_AW(SetupQueryInFileInformation)
+WINSETUPAPI BOOL     WINAPI SetupQueryInfOriginalFileInformationA(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_A);
+WINSETUPAPI BOOL     WINAPI SetupQueryInfOriginalFileInformationW(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_W);
+#define                     SetupQueryInfOriginalFileInformation WINELIB_NAME_AW(SetupQueryInfOriginalFileInformation)
+WINSETUPAPI BOOL     WINAPI SetupQueryInfVersionInformationA(PSP_INF_INFORMATION, UINT, PCSTR, PSTR, DWORD, PDWORD);
+WINSETUPAPI BOOL     WINAPI SetupQueryInfVersionInformationW(PSP_INF_INFORMATION, UINT, PCWSTR, PWSTR, DWORD, PDWORD);
+#define                     SetupQueryInfVersionInformation WINELIB_NAME_AW(SetupQueryInfVersionInformation)
+WINSETUPAPI BOOL     WINAPI SetupQuerySourceListA(DWORD, PCSTR **, PUINT);
+WINSETUPAPI BOOL     WINAPI SetupQuerySourceListW(DWORD, PCWSTR **, PUINT);
+#define                     SetupQuerySourceList WINELIB_NAME_AW(SetupQuerySourceList)
+WINSETUPAPI BOOL     WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC, PCSTR, LONGLONG *, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC, PCWSTR, LONGLONG *, PVOID, UINT);
+#define                     SetupQuerySpaceRequiredOnDrive WINELIB_NAME_AW(SetupQuerySpaceRequiredOnDrive)
+WINSETUPAPI BOOL     WINAPI SetupQueueCopyA(HSPFILEQ,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,PCSTR,DWORD);
+WINSETUPAPI BOOL     WINAPI SetupQueueCopyW(HSPFILEQ,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,PCWSTR,DWORD);
+#define                     SetupQueueCopy WINELIB_NAME_AW(SetupQueueCopy)
+WINSETUPAPI BOOL     WINAPI SetupQueueCopyIndirectA( PSP_FILE_COPY_PARAMS_A );
+WINSETUPAPI BOOL     WINAPI SetupQueueCopyIndirectW( PSP_FILE_COPY_PARAMS_W );
+#define                     SetupQueueCopyIndirect WINELIB_NAME_AW(SetupQueueCopyIndirect)
+WINSETUPAPI BOOL     WINAPI SetupQueueCopySectionA( HSPFILEQ, PCSTR, HINF, HINF, PCSTR, DWORD );
+WINSETUPAPI BOOL     WINAPI SetupQueueCopySectionW( HSPFILEQ, PCWSTR, HINF, HINF, PCWSTR, DWORD );
+#define                     SetupQueueCopySection WINELIB_NAME_AW(SetupQueueCopySection)
+WINSETUPAPI BOOL     WINAPI SetupQueueDefaultCopyA( HSPFILEQ, HINF, PCSTR, PCSTR, PCSTR, DWORD );
+WINSETUPAPI BOOL     WINAPI SetupQueueDefaultCopyW( HSPFILEQ, HINF, PCWSTR, PCWSTR, PCWSTR, DWORD );
+#define                     SetupQueueDefaultCopy WINELIB_NAME_AW(SetupQueueDefaultCopy)
+WINSETUPAPI BOOL     WINAPI SetupQueueDeleteA( HSPFILEQ, PCSTR, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupQueueDeleteW( HSPFILEQ, PCWSTR, PCWSTR );
+#define                     SetupQueueDelete WINELIB_NAME_AW(SetupQueueDelete)
+WINSETUPAPI BOOL     WINAPI SetupQueueDeleteSectionA( HSPFILEQ, HINF, HINF, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupQueueDeleteSectionW( HSPFILEQ, HINF, HINF, PCWSTR );
+#define                     SetupQueueDeleteSection WINELIB_NAME_AW(SetupQueueDeleteSection)
+WINSETUPAPI BOOL     WINAPI SetupQueueRenameA( HSPFILEQ, PCSTR, PCSTR, PCSTR, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupQueueRenameW( HSPFILEQ, PCWSTR, PCWSTR, PCWSTR, PCWSTR );
+#define                     SetupQueueRename WINELIB_NAME_AW(SetupQueueRename)
+WINSETUPAPI BOOL     WINAPI SetupQueueRenameSectionA( HSPFILEQ, HINF, HINF, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupQueueRenameSectionW( HSPFILEQ, HINF, HINF, PCWSTR );
+#define                     SetupQueueRenameSection WINELIB_NAME_AW(SetupQueueRenameSection)
+WINSETUPAPI BOOL     WINAPI SetupRemoveFileLogEntryA(HSPFILELOG, PCSTR, PCSTR);
+WINSETUPAPI BOOL     WINAPI SetupRemoveFileLogEntryW(HSPFILELOG, PCWSTR, PCWSTR);
+#define                     SetupRemoveFileLogEntry WINELIB_NAME_AW(SetupRemoveFileLogEntry)
+WINSETUPAPI BOOL     WINAPI SetupRemoveFromDiskSpaceListA(HDSKSPC, PCSTR, UINT, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupRemoveFromDiskSpaceListW(HDSKSPC, PCWSTR, UINT, PVOID, UINT);
+#define                     SetupRemoveFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveFromDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupRemoveInstallSectionFromDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupRemoveInstallSectionFromDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, PVOID, UINT);
+#define                     SetupRemoveInstallSectionFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveInstallSectionFromDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupRemoveSectionFromDiskSpaceListA(HDSKSPC, HINF, HINF, PCSTR, UINT, PVOID, UINT);
+WINSETUPAPI BOOL     WINAPI SetupRemoveSectionFromDiskSpaceListW(HDSKSPC, HINF, HINF, PCWSTR, UINT, PVOID, UINT);
+#define                     SetupRemoveSectionFromDiskSpaceList WINELIB_NAME_AW(SetupRemoveSectionFromDiskSpaceList)
+WINSETUPAPI BOOL     WINAPI SetupRemoveFromSourceListA(DWORD, PCSTR);
+WINSETUPAPI BOOL     WINAPI SetupRemoveFromSourceListW(DWORD, PCWSTR);
+#define                     SetupRemoveFromSourceList WINELIB_NAME_AW(SetupRemoveFromSourceList)
+WINSETUPAPI UINT     WINAPI SetupRenameErrorA( HWND, PCSTR, PCSTR, PCSTR, UINT, DWORD );
+WINSETUPAPI UINT     WINAPI SetupRenameErrorW( HWND, PCWSTR, PCWSTR, PCWSTR, UINT, DWORD );
+#define                     SetupRenameError WINELIB_NAME_AW(SetupRenameError)
+WINSETUPAPI BOOL     WINAPI SetupScanFileQueueA( HSPFILEQ, DWORD, HWND, PSP_FILE_CALLBACK_A, PVOID, PDWORD );
+WINSETUPAPI BOOL     WINAPI SetupScanFileQueueW( HSPFILEQ, DWORD, HWND, PSP_FILE_CALLBACK_W, PVOID, PDWORD );
+#define                     SetupScanFileQueue WINELIB_NAME_AW(SetupScanFileQueue)
+WINSETUPAPI BOOL     WINAPI SetupSetDirectoryIdA( HINF, DWORD, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupSetDirectoryIdW( HINF, DWORD, PCWSTR );
+#define                     SetupSetDirectoryId WINELIB_NAME_AW(SetupSetDirectoryId)
+WINSETUPAPI BOOL     WINAPI SetupSetDirectoryIdExA( HINF, DWORD, PCSTR, DWORD, DWORD, PVOID );
+WINSETUPAPI BOOL     WINAPI SetupSetDirectoryIdExW( HINF, DWORD, PCWSTR, DWORD, DWORD, PVOID );
+#define                     SetupSetDirectoryIdEx WINELIB_NAME_AW(SetupSetDirectoryIdEx)
+WINSETUPAPI BOOL     WINAPI SetupSetFileQueueAlternatePlatformA( HSPFILEQ, PSP_ALTPLATFORM_INFO, PCSTR );
+WINSETUPAPI BOOL     WINAPI SetupSetFileQueueAlternatePlatformW( HSPFILEQ, PSP_ALTPLATFORM_INFO, PCWSTR );
+#define                     SetupSetFileQueueAlternatePlatform WINELIB_NAME_AW(SetupSetFileQueueAlternatePlatform)
+WINSETUPAPI BOOL     WINAPI SetupSetFileQueueFlags( HSPFILEQ, DWORD, DWORD );
+WINSETUPAPI BOOL     WINAPI SetupSetNonInteractiveMode(BOOL);
+WINSETUPAPI BOOL     WINAPI SetupSetPlatformPathOverrideA(PCSTR);
+WINSETUPAPI BOOL     WINAPI SetupSetPlatformPathOverrideW(PCWSTR);
+#define                     SetupSetPlatformPathOverride WINELIB_NAME_AW(SetupSetPlatformPathOverride)
+WINSETUPAPI BOOL     WINAPI SetupSetSourceListA(DWORD, PCSTR *, UINT);
+WINSETUPAPI BOOL     WINAPI SetupSetSourceListW(DWORD, PCWSTR *, UINT);
+#define                     SetupSetSourceList WINELIB_NAME_AW(SetupSetSourceList)
+WINSETUPAPI void     WINAPI SetupTermDefaultQueueCallback( PVOID );
+WINSETUPAPI BOOL     WINAPI SetupTerminateFileLog(HSPFILELOG);
+WINSETUPAPI BOOL     WINAPI SetupUninstallOEMInfA(PCSTR, DWORD, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupUninstallOEMInfW(PCWSTR, DWORD, PVOID);
+#define                     SetupUninstallOEMInf WINELIB_NAME_AW(SetupUninstallOEMInf)
+WINSETUPAPI BOOL     WINAPI SetupUninstallNewlyCopiedInfs(HSPFILEQ, DWORD, PVOID);
+WINSETUPAPI BOOL     WINAPI SetupVerifyInfFileA(PCSTR, PSP_ALTPLATFORM_INFO, PSP_INF_SIGNER_INFO_A);
+WINSETUPAPI BOOL     WINAPI SetupVerifyInfFileW(PCWSTR, PSP_ALTPLATFORM_INFO, PSP_INF_SIGNER_INFO_W);
+#define                     SetupVerifyInfFile WINELIB_NAME_AW(SetupVerifyInfFile)
 
 #ifdef __cplusplus
 }
