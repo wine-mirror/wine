@@ -20,6 +20,14 @@
 
 #include <prsht.h>
 
+#ifndef CRYPTDLGAPI
+#ifdef _CRYPTDLG_
+#define CRYPTDLGAPI
+#else
+#define CRYPTDLGAPI DECLSPEC_IMPORT
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -115,8 +123,8 @@ typedef struct tagCSSW
 
 #define CERT_SELECT_STRUCT WINELIB_NAME_AW(CERT_SELECT_STRUCT_)
 
-BOOL WINAPI CertSelectCertificateA(PCERT_SELECT_STRUCT_A pCertSelectInfo);
-BOOL WINAPI CertSelectCertificateW(PCERT_SELECT_STRUCT_W pCertSelectInfo);
+CRYPTDLGAPI BOOL WINAPI CertSelectCertificateA(PCERT_SELECT_STRUCT_A pCertSelectInfo);
+CRYPTDLGAPI BOOL WINAPI CertSelectCertificateW(PCERT_SELECT_STRUCT_W pCertSelectInfo);
 #define CertSelectCertificate WINELIB_NAME_AW(CertSelectCertificate)
 
 #define CM_VIEWFLAGS_MASK       0x00ffffff
@@ -196,8 +204,8 @@ typedef struct tagCERT_VIEWPROPERTIES_STRUCT_W
 #define PCERT_VIEWPROPERTIES_STRUCT \
  WINELIB_NAME_AW(PCERT_VIEWPROPERTIES_STRUCT_)
 
-BOOL WINAPI CertViewPropertiesA(PCERT_VIEWPROPERTIES_STRUCT_A pCertViewInfo);
-BOOL WINAPI CertViewPropertiesW(PCERT_VIEWPROPERTIES_STRUCT_W pCertViewInfo);
+CRYPTDLGAPI BOOL WINAPI CertViewPropertiesA(PCERT_VIEWPROPERTIES_STRUCT_A pCertViewInfo);
+CRYPTDLGAPI BOOL WINAPI CertViewPropertiesW(PCERT_VIEWPROPERTIES_STRUCT_W pCertViewInfo);
 #define CertViewProperties WINELIB_NAME_AW(CertViewProperties)
 
 #define CERT_FILTER_OP_EXISTS     1
@@ -227,10 +235,8 @@ typedef struct tagCMFLTR
     DWORD                        dwCheckingFlags;
 } CERT_FILTER_DATA;
 
-DWORD WINAPI GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer,
- DWORD cchBuffer);
-DWORD WINAPI GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer,
- DWORD cchBuffer);
+CRYPTDLGAPI DWORD WINAPI GetFriendlyNameOfCertA(PCCERT_CONTEXT pccert, LPSTR pchBuffer, DWORD cchBuffer);
+CRYPTDLGAPI DWORD WINAPI GetFriendlyNameOfCertW(PCCERT_CONTEXT pccert, LPWSTR pchBuffer, DWORD cchBuffer);
 #define GetFriendlyNameOfCert WINELIB_NAME_AW(GetFriendlyNameOfCert)
 
 #define CERT_CERTIFICATE_ACTION_VERIFY \
@@ -302,7 +308,7 @@ typedef struct _CTL_MODIFY_REQUEST
     DWORD          dwError;
 } CTL_MODIFY_REQUEST, *PCTL_MODIFY_REQUEST;
 
-HRESULT WINAPI CertModifyCertificatesToTrust(int cCertStore,
+CRYPTDLGAPI HRESULT WINAPI CertModifyCertificatesToTrust(int cCertStore,
  PCTL_MODIFY_REQUEST rgCerts, LPCSTR szPurpose, HWND hwnd,
  HCERTSTORE hcertstoreTrust);
 
