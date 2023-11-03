@@ -527,8 +527,10 @@ static HRESULT Array_shift(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
         hres = jsdisp_get_idx(jsthis, i, &v);
         if(hres == DISP_E_UNKNOWNNAME)
             hres = jsdisp_delete_idx(jsthis, i-1);
-        else if(SUCCEEDED(hres))
+        else if(SUCCEEDED(hres)) {
             hres = jsdisp_propput_idx(jsthis, i-1, v);
+            jsval_release(v);
+        }
     }
 
     if(SUCCEEDED(hres)) {
