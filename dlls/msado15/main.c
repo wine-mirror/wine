@@ -26,7 +26,6 @@
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "msado15_private.h"
 
