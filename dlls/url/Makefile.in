@@ -1,3 +1,4 @@
+EXTRADEFS = -D_INTSHCUT_
 MODULE    = url.dll
 IMPORTLIB = url
 IMPORTS   = shell32 shlwapi
