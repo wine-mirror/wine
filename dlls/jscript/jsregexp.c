@@ -390,7 +390,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, L"input", jsval_string(jsstr_addref(input_str)));
+        hres = jsdisp_propput_name(array, L"input", jsval_string(input_str));
         if(FAILED(hres))
             break;
 

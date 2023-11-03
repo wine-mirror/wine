@@ -758,7 +758,7 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
 
     if (scope == frame->base_scope && func->name && func->local_ref == INVALID_LOCAL_REF &&
         ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
-        jsdisp_propput_name(jsobj, func->name, jsval_obj(jsdisp_addref(frame->function_instance)));
+        jsdisp_propput_name(jsobj, func->name, jsval_obj(frame->function_instance));
 
     index = scope->scope_index;
     for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
