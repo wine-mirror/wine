@@ -20,7 +20,6 @@
 #include "wmsdkidl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 
@@ -82,7 +81,7 @@ static ULONG WINAPI WMWriter_Release(IWMWriter *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -359,7 +358,7 @@ HRESULT WINAPI WMCreateWriter(IUnknown *reserved, IWMWriter **writer)
 
     TRACE("(%p %p)\n", reserved, writer);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
