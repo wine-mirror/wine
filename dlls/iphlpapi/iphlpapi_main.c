@@ -20,6 +20,7 @@
  */
 #include <stdarg.h>
 
+#define IPHLPAPI_DLL_LINKAGE
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
