@@ -3069,6 +3069,7 @@ static void test_default_value(void)
     V_VT(&v) = VT_EMPTY;
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
     ok(hres == E_UNEXPECTED, "Invoke failed: %08lx\n", hres);
+    IDispatch_Release(disp);
 
     hres = parse_script_expr(L"new Date()", &v, &script);
     ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
