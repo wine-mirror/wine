@@ -836,6 +836,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
     ok(hres == S_OK, "ReportResult failed: %08lx\n", hres);
 
+    ReleaseBindInfo(&bindinfo);
     return S_OK;
 }
 
