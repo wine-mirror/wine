@@ -43,9 +43,9 @@ extern const int extension_registry_size DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs null_opengl_funcs DECLSPEC_HIDDEN;
 
-static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
+static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
 {
-    struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
+    const struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
     if (!funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
     else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
     return funcs;
