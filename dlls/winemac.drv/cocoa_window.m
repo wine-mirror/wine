@@ -1340,10 +1340,20 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             {
                 if ([self wouldBeVisible])
                 {
-                    if ([self styleMask] & NSWindowStyleMaskFullScreen)
+                    if (([self styleMask] & NSWindowStyleMaskFullScreen) || stage_manager_enabled())
                     {
                         [self postDidUnminimizeEvent];
                         discard &= ~event_mask_for_type(WINDOW_DID_UNMINIMIZE);
+
+                        /* When Stage Manager is enabled, it's not possible to minimize the window
+                         * (miniaturize: just moves the window to the background).
+                         * Post an unminimize event, then miniaturize:.
+                         */
+                        if (stage_manager_enabled())
+                        {
+                            [self setStyleMask:([self styleMask] | NSWindowStyleMaskMiniaturizable)];
+                            [super miniaturize:nil];
+                        }
                     }
                     else
                     {
