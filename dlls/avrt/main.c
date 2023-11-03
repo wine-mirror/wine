@@ -23,18 +23,17 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "avrt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(avrt);
 
-static inline WCHAR *heap_strdupAW(const char *src)
+static inline WCHAR *strdupAW(const char *src)
 {
     int len;
     WCHAR *dst;
     if (!src) return NULL;
     len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-    if ((dst = heap_alloc(len * sizeof(*dst)))) MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
+    if ((dst = malloc(len * sizeof(*dst)))) MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
     return dst;
 }
 
@@ -43,7 +42,7 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsA(const char *name, DWORD *index)
     WCHAR *nameW = NULL;
     HANDLE ret;
 
-    if (name && !(nameW = heap_strdupAW(name)))
+    if (name && !(nameW = strdupAW(name)))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return NULL;
@@ -51,7 +50,7 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsA(const char *name, DWORD *index)
 
     ret = AvSetMmThreadCharacteristicsW(nameW, index);
 
-    heap_free(nameW);
+    free(nameW);
     return ret;
 }
 
@@ -97,13 +96,13 @@ HANDLE WINAPI AvSetMmMaxThreadCharacteristicsA(const char *task1, const char *ta
     WCHAR *task1W = NULL, *task2W = NULL;
     HANDLE ret;
 
-    if (task1 && !(task1W = heap_strdupAW(task1)))
+    if (task1 && !(task1W = strdupAW(task1)))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return NULL;
     }
 
-    if (task2 && !(task2W = heap_strdupAW(task2)))
+    if (task2 && !(task2W = strdupAW(task2)))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return NULL;
@@ -111,8 +110,8 @@ HANDLE WINAPI AvSetMmMaxThreadCharacteristicsA(const char *task1, const char *ta
 
     ret = AvSetMmMaxThreadCharacteristicsW(task1W, task2W, index);
 
-    heap_free(task2W);
-    heap_free(task1W);
+    free(task2W);
+    free(task1W);
     return ret;
 }
 
