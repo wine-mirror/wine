@@ -27,6 +27,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "wmistr.h"
+#define _WMI_SOURCE_
 #include "evntrace.h"
 #include "evntprov.h"
 
