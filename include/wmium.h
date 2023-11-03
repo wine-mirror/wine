@@ -22,7 +22,7 @@
 #ifdef _WMI_SOURCE_
 #define WMIAPI __stdcall
 #else
-#define WMIAPI DECLSPEC_HIDDEN __stdcall
+#define WMIAPI DECLSPEC_IMPORT __stdcall
 #endif
 
 #include <guiddef.h>
