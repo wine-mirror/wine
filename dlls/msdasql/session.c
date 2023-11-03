@@ -25,7 +25,6 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "msdasc.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "msdasql.h"
@@ -409,7 +408,7 @@ static ULONG WINAPI session_Release(IUnknown *iface)
         TRACE( "destroying %p\n", session );
 
         IUnknown_Release(session->datasource);
-        heap_free( session );
+        free(session);
     }
     return refs;
 }
@@ -693,15 +692,15 @@ static ULONG WINAPI command_Release(ICommandText *iface)
     if (!refs)
     {
         TRACE( "destroying %p\n", command );
-        heap_free(command->properties);
+        free(command->properties);
         if (command->session)
             IUnknown_Release(command->session);
 
         if (command->hstmt)
             SQLFreeHandle(SQL_HANDLE_STMT, command->hstmt);
 
-        heap_free( command->query );
-        heap_free( command );
+        free(command->query);
+        free(command);
     }
     return refs;
 }
@@ -826,7 +825,7 @@ static ULONG WINAPI msdasql_rowset_Release(IRowset *iface)
         if (rowset->caller)
             IUnknown_Release(rowset->caller);
 
-        heap_free( rowset );
+        free(rowset);
     }
     return refs;
 }
@@ -1259,7 +1258,7 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
     *rowset = NULL;
     if (!wcsnicmp( command->query, L"select ", 7 ))
     {
-        msrowset = heap_alloc(sizeof(*msrowset));
+        msrowset = malloc(sizeof(*msrowset));
         if (!msrowset)
             return E_OUTOFMEMORY;
 
@@ -1326,8 +1325,7 @@ static HRESULT WINAPI command_GetCommandText(ICommandText *iface, GUID *dialect,
         hr = DB_S_DIALECTIGNORED;
     }
 
-    *commandstr = heap_alloc((lstrlenW(command->query)+1)*sizeof(WCHAR));
-    wcscpy(*commandstr, command->query);
+    *commandstr = wcsdup(command->query);
     return hr;
 }
 
@@ -1339,15 +1337,13 @@ static HRESULT WINAPI command_SetCommandText(ICommandText *iface, REFGUID dialec
     if (!IsEqualGUID(&DBGUID_DEFAULT, dialect))
         FIXME("Currently non Default Dialect isn't supported\n");
 
-    heap_free(command->query);
+    free(command->query);
 
     if (commandstr)
     {
-        command->query = heap_alloc((lstrlenW(commandstr)+1)*sizeof(WCHAR));
+        command->query = wcsdup(commandstr);
         if (!command->query)
             return E_OUTOFMEMORY;
-
-        wcscpy(command->query, commandstr);
     }
     else
         command->query = NULL;
@@ -1775,7 +1771,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     if (outer)
         FIXME("Outer not currently supported\n");
 
-    command = heap_alloc(sizeof(*command));
+    command = malloc(sizeof(*command));
     if (!command)
         return E_OUTOFMEMORY;
 
@@ -1791,7 +1787,7 @@ static HRESULT WINAPI createcommand_CreateCommand(IDBCreateCommand *iface, IUnkn
     command->hstmt = NULL;
 
     command->prop_count = ARRAY_SIZE(msdasql_init_props);
-    command->properties = heap_alloc(sizeof(msdasql_init_props));
+    command->properties = malloc(sizeof(msdasql_init_props));
     memcpy(command->properties, msdasql_init_props, sizeof(msdasql_init_props));
 
     IUnknown_QueryInterface(&session->session_iface, &IID_IUnknown, (void**)&command->session);
@@ -1915,7 +1911,7 @@ HRESULT create_db_session(REFIID riid, IUnknown *datasource, HDBC hdbc, void **u
     struct msdasql_session *session;
     HRESULT hr;
 
-    session = heap_alloc(sizeof(*session));
+    session = malloc(sizeof(*session));
     if (!session)
         return E_OUTOFMEMORY;
 
