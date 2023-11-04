@@ -9,6 +9,7 @@ apiset api-ms-win-core-atoms-l1-1-0 = kernel32.dll
 apiset api-ms-win-core-backgroundtask-l1-1-0 = kernelbase.dll
 apiset api-ms-win-core-calendar-l1-1-0 = kernel32.dll
 apiset api-ms-win-core-com-l1-1-1 = combase.dll
+apiset api-ms-win-core-com-l2-1-1 = coml2.dll
 apiset api-ms-win-core-com-midlproxystub-l1-1-0 = combase.dll
 apiset api-ms-win-core-com-private-l1-1-0 = combase.dll
 apiset api-ms-win-core-com-private-l1-2-0 = combase.dll
