@@ -39,18 +39,10 @@
 static BSTR alloced_bstrs[256];
 static int alloced_bstrs_count;
 
-static BSTR alloc_str_from_narrow(const char *str)
-{
-    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    BSTR ret = SysAllocStringLen(NULL, len - 1);  /* NUL character added automatically */
-    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
-static BSTR _bstr_(const char *str)
+static BSTR _bstr_(const WCHAR *str)
 {
     assert(alloced_bstrs_count < ARRAY_SIZE(alloced_bstrs));
-    alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
+    alloced_bstrs[alloced_bstrs_count] = SysAllocString(str);
     return alloced_bstrs[alloced_bstrs_count++];
 }
 
@@ -67,45 +59,45 @@ static void test_namespaces_as_attributes(void)
 {
     struct test
     {
-        const char *xml;
+        const WCHAR *xml;
         int explen;
-        const char *names[3];
-        const char *prefixes[3];
-        const char *basenames[3];
-        const char *uris[3];
-        const char *texts[3];
+        const WCHAR *names[3];
+        const WCHAR *prefixes[3];
+        const WCHAR *basenames[3];
+        const WCHAR *uris[3];
+        const WCHAR *texts[3];
     };
     static const struct test tests[] =
     {
         {
-            "<a ns:b=\"b attr\" d=\"d attr\" xmlns:ns=\"nshref\" />", 3,
-            { "ns:b",   "d",     "xmlns:ns" },  /* nodeName */
-            { "ns",     NULL,     "xmlns" },    /* prefix */
-            { "b",      "d",      "ns" },       /* baseName */
-            { "nshref", NULL,     "" },         /* namespaceURI */
-            { "b attr", "d attr", "nshref" },   /* text */
+            L"<a ns:b=\"b attr\" d=\"d attr\" xmlns:ns=\"nshref\" />", 3,
+            { L"ns:b",   L"d",      L"xmlns:ns" }, /* nodeName */
+            { L"ns",     NULL,      L"xmlns" },    /* prefix */
+            { L"b",      L"d",      L"ns" },       /* baseName */
+            { L"nshref", NULL,      L"" },         /* namespaceURI */
+            { L"b attr", L"d attr", L"nshref" },   /* text */
         },
         /* property only */
         {
-            "<a d=\"d attr\" />", 1,
-            { "d" },            /* nodeName */
-            { NULL },           /* prefix */
-            { "d" },            /* baseName */
-            { NULL },           /* namespaceURI */
-            { "d attr" },       /* text */
+            L"<a d=\"d attr\" />", 1,
+            { L"d" },                   /* nodeName */
+            { NULL },                   /* prefix */
+            { L"d" },                   /* baseName */
+            { NULL },                   /* namespaceURI */
+            { L"d attr" },              /* text */
         },
         /* namespace only */
         {
-            "<a xmlns:ns=\"nshref\" />", 1,
-            { "xmlns:ns" },             /* nodeName */
-            { "xmlns" },                /* prefix */
-            { "ns" },                   /* baseName */
-            { "" },                     /* namespaceURI */
-            { "nshref" },               /* text */
+            L"<a xmlns:ns=\"nshref\" />", 1,
+            { L"xmlns:ns" },            /* nodeName */
+            { L"xmlns" },               /* prefix */
+            { L"ns" },                  /* baseName */
+            { L"" },                    /* namespaceURI */
+            { L"nshref" },              /* text */
         },
         /* no properties or namespaces */
         {
-            "<a />", 0,
+            L"<a />", 0,
         },
 
         { NULL }
@@ -129,7 +121,7 @@ static void test_namespaces_as_attributes(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         node = NULL;
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("a"), &node);
+        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_(L"a"), &node);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IXMLDOMNode_get_attributes(node, &map);
@@ -154,7 +146,7 @@ static void test_namespaces_as_attributes(void)
             str = NULL;
             hr = IXMLDOMNode_get_nodeName(item, &str);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(!lstrcmpW(str, _bstr_(test->names[i])), "got %s\n", wine_dbgstr_w(str));
+            ok(!lstrcmpW(str, test->names[i]), "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);
 
             str = NULL;
@@ -162,7 +154,7 @@ static void test_namespaces_as_attributes(void)
             if (test->prefixes[i])
             {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                ok(!lstrcmpW(str, _bstr_(test->prefixes[i])), "got %s\n", wine_dbgstr_w(str));
+                ok(!lstrcmpW(str, test->prefixes[i]), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
             }
             else
@@ -171,7 +163,7 @@ static void test_namespaces_as_attributes(void)
             str = NULL;
             hr = IXMLDOMNode_get_baseName(item, &str);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(!lstrcmpW(str, _bstr_(test->basenames[i])), "got %s\n", wine_dbgstr_w(str));
+            ok(!lstrcmpW(str, test->basenames[i]), "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);
 
             str = NULL;
@@ -179,11 +171,11 @@ static void test_namespaces_as_attributes(void)
             if (test->uris[i])
             {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
+                if (test->prefixes[i] && !lstrcmpW(test->prefixes[i], L"xmlns"))
                     ok(!lstrcmpW(str, L"http://www.w3.org/2000/xmlns/"),
                                  "got %s\n", wine_dbgstr_w(str));
                 else
-                    ok(!lstrcmpW(str, _bstr_(test->uris[i])), "got %s\n", wine_dbgstr_w(str));
+                    ok(!lstrcmpW(str, test->uris[i]), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
             }
             else
@@ -192,7 +184,7 @@ static void test_namespaces_as_attributes(void)
             str = NULL;
             hr = IXMLDOMNode_get_text(item, &str);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(!lstrcmpW(str, _bstr_(test->texts[i])), "got %s\n", wine_dbgstr_w(str));
+            ok(!lstrcmpW(str, test->texts[i]), "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);
 
             IXMLDOMNode_Release(item);
