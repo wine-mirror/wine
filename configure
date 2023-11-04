@@ -1016,6 +1016,7 @@ enable_combase
 enable_comcat
 enable_comctl32
 enable_comdlg32
+enable_coml2
 enable_compstui
 enable_comsvcs
 enable_concrt140
@@ -21509,6 +21510,7 @@ wine_fn_config_makefile dlls/comctl32 enable_comctl32
 wine_fn_config_makefile dlls/comctl32/tests enable_tests
 wine_fn_config_makefile dlls/comdlg32 enable_comdlg32
 wine_fn_config_makefile dlls/comdlg32/tests enable_tests
+wine_fn_config_makefile dlls/coml2 enable_coml2
 wine_fn_config_makefile dlls/comm.drv16 enable_win16
 wine_fn_config_makefile dlls/commdlg.dll16 enable_win16
 wine_fn_config_makefile dlls/compobj.dll16 enable_win16
