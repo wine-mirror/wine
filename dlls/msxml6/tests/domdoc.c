@@ -66,6 +66,7 @@ static void test_namespaces_as_attributes(void)
         const WCHAR *basenames[3];
         const WCHAR *uris[3];
         const WCHAR *texts[3];
+        const WCHAR *xmls[3];
     };
     static const struct test tests[] =
     {
@@ -76,6 +77,7 @@ static void test_namespaces_as_attributes(void)
             { L"b",      L"d",      L"ns" },       /* baseName */
             { L"nshref", NULL,      L"" },         /* namespaceURI */
             { L"b attr", L"d attr", L"nshref" },   /* text */
+            { L"ns:b=\"b attr\"", L"d=\"d attr\"", L"xmlns:ns=\"nshref\"" }, /* xml */
         },
         /* property only */
         {
@@ -85,6 +87,7 @@ static void test_namespaces_as_attributes(void)
             { L"d" },                   /* baseName */
             { NULL },                   /* namespaceURI */
             { L"d attr" },              /* text */
+            { L"d=\"d attr\"" },        /* xml */
         },
         /* namespace only */
         {
@@ -94,6 +97,7 @@ static void test_namespaces_as_attributes(void)
             { L"ns" },                  /* baseName */
             { L"" },                    /* namespaceURI */
             { L"nshref" },              /* text */
+            { L"xmlns:ns=\"nshref\"" }, /* xml */
         },
         /* no properties or namespaces */
         {
@@ -185,6 +189,12 @@ static void test_namespaces_as_attributes(void)
             hr = IXMLDOMNode_get_text(item, &str);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(!lstrcmpW(str, test->texts[i]), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+
+            str = NULL;
+            hr = IXMLDOMNode_get_xml(item, &str);
+            ok(SUCCEEDED(hr), "Failed to get node xml, hr %#lx.\n", hr);
+            ok(!lstrcmpW(str, test->xmls[i]), "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);
 
             IXMLDOMNode_Release(item);
