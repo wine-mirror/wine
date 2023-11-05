@@ -193,11 +193,11 @@ struct macho64_nlist
     UINT64              n_value;
 };
 
-BOOL image_check_alternate(struct image_file_map* fmap, const struct module* module) DECLSPEC_HIDDEN;
-struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, struct module* module) DECLSPEC_HIDDEN;
+BOOL image_check_alternate(struct image_file_map* fmap, const struct module* module);
+struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, struct module* module);
 
-BOOL elf_map_handle(HANDLE handle, struct image_file_map* fmap) DECLSPEC_HIDDEN;
-BOOL pe_map_file(HANDLE file, struct image_file_map* fmap) DECLSPEC_HIDDEN;
+BOOL elf_map_handle(HANDLE handle, struct image_file_map* fmap);
+BOOL pe_map_file(HANDLE file, struct image_file_map* fmap);
 
 struct image_file_map_ops
 {

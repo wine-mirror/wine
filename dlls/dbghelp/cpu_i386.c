@@ -702,7 +702,7 @@ static BOOL i386_fetch_minidump_module(struct dump_context* dc, unsigned index, 
     return FALSE;
 }
 
-DECLSPEC_HIDDEN struct cpu cpu_i386 = {
+struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
     CV_REG_EBP,

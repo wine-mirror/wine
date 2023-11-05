@@ -278,7 +278,7 @@ static BOOL arm64_fetch_minidump_module(struct dump_context* dc, unsigned index,
     return FALSE;
 }
 
-DECLSPEC_HIDDEN struct cpu cpu_arm64 = {
+struct cpu cpu_arm64 = {
     IMAGE_FILE_MACHINE_ARM64,
     8,
     CV_ARM64_FP,

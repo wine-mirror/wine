@@ -242,7 +242,7 @@ static BOOL arm_fetch_minidump_module(struct dump_context* dc, unsigned index, u
     return FALSE;
 }
 
-DECLSPEC_HIDDEN struct cpu cpu_arm = {
+struct cpu cpu_arm = {
     IMAGE_FILE_MACHINE_ARMNT,
     4,
     CV_ARM_R0 + 11,

@@ -991,7 +991,7 @@ static BOOL x86_64_fetch_minidump_module(struct dump_context* dc, unsigned index
     return TRUE;
 }
 
-DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
+struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
     CV_AMD64_RSP,
