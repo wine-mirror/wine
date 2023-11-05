@@ -120,7 +120,7 @@ static BOOL check_info_filename(PSP_INF_INFORMATION info, LPSTR test)
     if (!SetupQueryInfFileInformationA(info, 0, NULL, 0, &size))
         return FALSE;
 
-    filename = HeapAlloc(GetProcessHeap(), 0, size);
+    filename = malloc(size);
     if (!filename)
         return FALSE;
 
@@ -129,7 +129,7 @@ static BOOL check_info_filename(PSP_INF_INFORMATION info, LPSTR test)
     if (!lstrcmpiA(test, filename))
         ret = TRUE;
 
-    HeapFree(GetProcessHeap(), 0, filename);
+    free(filename);
     return ret;
 }
 
@@ -142,7 +142,7 @@ static PSP_INF_INFORMATION alloc_inf_info(LPCSTR filename, DWORD search, PDWORD 
     if (!ret)
         return NULL;
 
-    info = HeapAlloc(GetProcessHeap(), 0, *size);
+    info = malloc(*size);
     return info;
 }
 
@@ -234,7 +234,7 @@ static void test_SetupGetInfInformation(void)
     ret = SetupGetInfInformationA(inf_filename, INFINFO_INF_NAME_IS_ABSOLUTE, NULL, size, NULL);
     ok(ret == FALSE, "Expected SetupGetInfInformation to fail\n");
 
-    info = HeapAlloc(GetProcessHeap(), 0, size);
+    info = malloc(size);
 
     /* try valid ReturnBuffer but too small size */
     SetLastError(0xbeefcafe);
@@ -248,7 +248,7 @@ static void test_SetupGetInfInformation(void)
     ok(ret == TRUE, "Expected SetupGetInfInformation to succeed\n");
     ok(check_info_filename(info, inf_filename), "Expected returned filename to be equal\n");
 
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
 
     /* try the INFINFO_INF_SPEC_IS_HINF search flag */
     hinf = SetupOpenInfFileA(inf_filename, NULL, INF_STYLE_WIN4, NULL);
@@ -269,7 +269,7 @@ static void test_SetupGetInfInformation(void)
     }
     ok(ret, "can't create inf file %lu\n", GetLastError());
 
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
     info = alloc_inf_info("test.inf", INFINFO_DEFAULT_SEARCH, &size);
 
     /* check if system32 is searched for inf */
@@ -284,7 +284,7 @@ static void test_SetupGetInfInformation(void)
     lstrcatA(inf_one, "test.inf");
     create_inf_file(inf_one, inf_data1, sizeof(inf_data1) - 1);
 
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
     info = alloc_inf_info("test.inf", INFINFO_DEFAULT_SEARCH, &size);
 
     /* test the INFINFO_DEFAULT_SEARCH search flag */
@@ -292,7 +292,7 @@ static void test_SetupGetInfInformation(void)
     ok(ret == TRUE, "Expected SetupGetInfInformation to succeed: %ld\n", GetLastError());
     ok(check_info_filename(info, inf_one), "Expected returned filename to be equal\n");
 
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
     info = alloc_inf_info("test.inf", INFINFO_REVERSE_DEFAULT_SEARCH, &size);
 
     /* test the INFINFO_REVERSE_DEFAULT_SEARCH search flag */
@@ -301,7 +301,7 @@ static void test_SetupGetInfInformation(void)
     ok(check_info_filename(info, revfile), "Expected returned filename to be equal\n");
 
 done:
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
     DeleteFileA(inf_filename);
     DeleteFileA(inf_one);
     DeleteFileA(inf_two);

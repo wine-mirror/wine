@@ -109,7 +109,7 @@ static void test_original_file_name(LPCSTR original, LPCSTR dest)
     res = SetupGetInfInformationA(hinf, INFINFO_INF_SPEC_IS_HINF, NULL, 0, &size);
     ok(res, "SetupGetInfInformation failed with error %ld\n", GetLastError());
 
-    pspii = HeapAlloc(GetProcessHeap(), 0, size);
+    pspii = malloc(size);
 
     res = SetupGetInfInformationA(hinf, INFINFO_INF_SPEC_IS_HINF, pspii, size, NULL);
     ok(res, "SetupGetInfInformation failed with error %ld\n", GetLastError());
@@ -125,7 +125,7 @@ static void test_original_file_name(LPCSTR original, LPCSTR dest)
     ok(!spofi.OriginalCatalogName[0], "spofi.OriginalCatalogName should have been \"\" instead of \"%s\"\n", spofi.OriginalCatalogName);
     ok(!strcmp(original, spofi.OriginalInfName), "spofi.OriginalInfName of %s didn't match real original name %s\n", spofi.OriginalInfName, original);
 
-    HeapFree(GetProcessHeap(), 0, pspii);
+    free(pspii);
 
     SetupCloseInfFile(hinf);
 }
@@ -371,12 +371,12 @@ static BOOL compare_file_data(LPSTR file, const BYTE *data, DWORD size)
     LPBYTE buffer;
 
     handle = CreateFileA(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = malloc(size);
     if (buffer)
     {
         ReadFile(handle, buffer, size, &read, NULL);
         if (read == size && !memcmp(data, buffer, size)) ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, buffer);
+        free(buffer);
     }
     CloseHandle(handle);
     return ret;

@@ -207,17 +207,17 @@ static BOOL CDECL get_temp_file(char *pszTempName, int cbTempName, void *pv)
 {
     LPSTR tempname;
 
-    tempname = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+    tempname = malloc(MAX_PATH);
     GetTempFileNameA(".", "xx", 0, tempname);
 
     if (tempname && (strlen(tempname) < (unsigned)cbTempName))
     {
         lstrcpyA(pszTempName, tempname);
-        HeapFree(GetProcessHeap(), 0, tempname);
+        free(tempname);
         return TRUE;
     }
 
-    HeapFree(GetProcessHeap(), 0, tempname);
+    free(tempname);
 
     return FALSE;
 }

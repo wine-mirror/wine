@@ -33,7 +33,6 @@
 #include "cfgmgr32.h"
 #include "cguid.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 /* This is a unique guid for testing purposes */
@@ -1233,7 +1232,7 @@ static void test_device_iface_detail(void)
 
     expected_size = FIELD_OFFSET(SP_DEVICE_INTERFACE_DETAIL_DATA_A, DevicePath[strlen(path) + 1]);
     ok(size == expected_size, "Expected size %lu, got %lu.\n", expected_size, size);
-    detail = heap_alloc(size * 2);
+    detail = malloc(size * 2);
 
     detail->cbSize = 0;
     SetLastError(0xdeadbeef);
@@ -1283,7 +1282,7 @@ static void test_device_iface_detail(void)
     ok(size == expected_size, "Expected size %lu, got %lu.\n", expected_size, size);
     ok(IsEqualGUID(&device.ClassGuid, &guid), "Got unexpected class %s.\n", wine_dbgstr_guid(&device.ClassGuid));
 
-    heap_free(detail);
+    free(detail);
     SetupDiDestroyDeviceInfoList(set);
 }
 
