@@ -40,6 +40,7 @@ STRINGTABLE
     STRING_STOP_SVC_SUCCESS, "The %1 service was stopped successfully.\n"
     STRING_STOP_SVC_FAIL, "The %1 service failed to stop.\n"
     STRING_RUNNING_HEADER, "The following services are running:\n"
+    STRING_CONFLICT_SWITCHES, "A command was used with conflicting switches.\n"
     STRING_NO_ENTRIES, "There are no entries in the list.\n"
     STRING_USE_HEADER, "\nStatus  Local   Remote\n---------------------------------------------------------------\n"
     STRING_USE_ENTRY,  "%1      %2      %3      Open resources: %4!u!\n"

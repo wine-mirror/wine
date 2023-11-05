@@ -291,6 +291,31 @@ static BOOL arg_is(const WCHAR* str1, const WCHAR* str2)
 
 int __cdecl wmain(int argc, const WCHAR* argv[])
 {
+    BOOL switch_yes = FALSE;
+    BOOL switch_no = FALSE;
+    int i;
+
+    for (i = 1; i < argc; i++)
+    {
+        if (arg_is(argv[i], L"/y") || arg_is(argv[i], L"/ye") || arg_is(argv[i], L"/yes"))
+            switch_yes = TRUE;
+        else if (arg_is(argv[i], L"/n") || arg_is(argv[i], L"/no"))
+            switch_no = TRUE;
+        else
+            continue;
+
+        /* remove the argument */
+        memmove( &argv[i], &argv[i + 1], (argc - i) * sizeof(*argv) );
+        i--;
+        argc--;
+    }
+
+    if (switch_yes && switch_no)
+    {
+        output_string(STRING_CONFLICT_SWITCHES);
+        return 1;
+    }
+
     if (argc < 2)
     {
         output_string(STRING_USAGE);
