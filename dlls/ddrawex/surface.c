@@ -124,7 +124,7 @@ static ULONG WINAPI ddrawex_surface4_Release(IDirectDrawSurface4 *iface)
     {
         IDirectDrawSurface4_FreePrivateData(surface->parent, &IID_DDrawexPriv);
         IDirectDrawSurface4_Release(surface->parent);
-        heap_free(surface);
+        free(surface);
     }
 
     return refcount;
@@ -1208,7 +1208,7 @@ IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner)
         struct ddrawex_surface *impl;
 
         TRACE("Creating new ddrawex surface wrapper for surface %p\n", inner);
-        impl = heap_alloc_zero(sizeof(*impl));
+        impl = calloc(1, sizeof(*impl));
         impl->ref = 1;
         impl->IDirectDrawSurface3_iface.lpVtbl = &ddrawex_surface3_vtbl;
         impl->IDirectDrawSurface4_iface.lpVtbl = &ddrawex_surface4_vtbl;
