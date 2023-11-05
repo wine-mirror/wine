@@ -17,7 +17,6 @@
  */
 
 #include "windows.h"
-#include "wine/heap.h"
 #include "wine/vulkan.h"
 #include "wine/test.h"
 
@@ -72,7 +71,7 @@ static VkBool32 find_queue_family(VkPhysicalDevice vk_physical_device,
     uint32_t i, count;
 
     vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, NULL);
-    properties = heap_calloc(count, sizeof(*properties));
+    properties = calloc(count, sizeof(*properties));
     ok(!!properties, "Failed to allocate memory.\n");
     vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, properties);
 
@@ -86,7 +85,7 @@ static VkBool32 find_queue_family(VkPhysicalDevice vk_physical_device,
         }
     }
 
-    heap_free(properties);
+    free(properties);
     return ret;
 }
 
@@ -184,7 +183,7 @@ static void test_enumerate_physical_device2(void)
         return;
     }
 
-    vk_physical_devices = heap_calloc(count, sizeof(*vk_physical_devices));
+    vk_physical_devices = calloc(count, sizeof(*vk_physical_devices));
     ok(!!vk_physical_devices, "Failed to allocate memory.\n");
     vr = vkEnumeratePhysicalDevices(vk_instance, &count, vk_physical_devices);
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
@@ -225,7 +224,7 @@ static void test_enumerate_physical_device2(void)
         }
     }
 
-    heap_free(vk_physical_devices);
+    free(vk_physical_devices);
     vkDestroyInstance(vk_instance, NULL);
 }
 
@@ -238,7 +237,7 @@ static void enumerate_device_queues(VkPhysicalDevice vk_physical_device)
     vkGetPhysicalDeviceProperties(vk_physical_device, &device_properties);
 
     vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, NULL);
-    properties = heap_calloc(count, sizeof(*properties));
+    properties = calloc(count, sizeof(*properties));
     ok(!!properties, "Failed to allocate memory.\n");
     vkGetPhysicalDeviceQueueFamilyProperties(vk_physical_device, &count, properties);
 
@@ -248,7 +247,7 @@ static void enumerate_device_queues(VkPhysicalDevice vk_physical_device)
                 device_properties.deviceName, i, properties[i].queueFlags, properties[i].queueCount);
     }
 
-    heap_free(properties);
+    free(properties);
 }
 
 static void test_physical_device_groups(void)
@@ -278,7 +277,7 @@ static void test_physical_device_groups(void)
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
     ok(count > 0, "Unexpected device group count %u.\n", count);
 
-    properties = heap_calloc(count, sizeof(*properties));
+    properties = calloc(count, sizeof(*properties));
     ok(!!properties, "Failed to allocate memory.\n");
     vr = vkEnumeratePhysicalDeviceGroupsKHR(vk_instance, &count, properties);
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
@@ -307,7 +306,7 @@ static void test_physical_device_groups(void)
     ok(vr == VK_SUCCESS, "Failed to create device, VkResult %d.\n", vr);
     vkDestroyDevice(vk_device, NULL);
 
-    heap_free(properties);
+    free(properties);
 
     vkDestroyInstance(vk_instance, NULL);
 }
@@ -488,10 +487,10 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
     vr = vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, surface, &count, NULL);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(count, "Got zero count.\n");
-    formats = heap_alloc(sizeof(*formats) * count);
+    formats = malloc(sizeof(*formats) * count);
     vr = vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, surface, &count, formats);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
-    heap_free(formats);
+    free(formats);
 
     vr = vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, queue_family_index, surface, &bval);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
@@ -503,10 +502,10 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
     vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, NULL);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(count, "Got zero count.\n");
-    modes = heap_alloc(sizeof(*modes) * count);
+    modes = malloc(sizeof(*modes) * count);
     vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, modes);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
-    heap_free(modes);
+    free(modes);
 
     if (pvkGetPhysicalDevicePresentRectanglesKHR)
     {
@@ -902,7 +901,7 @@ static void for_each_device_instance(uint32_t extension_count, const char * cons
         return;
     }
 
-    vk_physical_devices = heap_calloc(count, sizeof(*vk_physical_devices));
+    vk_physical_devices = calloc(count, sizeof(*vk_physical_devices));
     ok(!!vk_physical_devices, "Failed to allocate memory.\n");
     vr = vkEnumeratePhysicalDevices(vk_instance, &count, vk_physical_devices);
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
@@ -915,7 +914,7 @@ static void for_each_device_instance(uint32_t extension_count, const char * cons
             test_func(vk_physical_devices[i]);
     }
 
-    heap_free(vk_physical_devices);
+    free(vk_physical_devices);
 
     vkDestroyInstance(vk_instance, NULL);
 }
