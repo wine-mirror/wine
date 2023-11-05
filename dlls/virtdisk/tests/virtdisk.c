@@ -20,7 +20,6 @@
 #include "windef.h"
 #include "initguid.h"
 #include "virtdisk.h"
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static DWORD (WINAPI *pGetStorageDependencyInformation)(HANDLE,GET_STORAGE_DEPENDENCY_FLAG,ULONG,STORAGE_DEPENDENCY_INFO*,ULONG*);
@@ -37,7 +36,7 @@ static void test_GetStorageDependencyInformation(void)
     ok(handle != INVALID_HANDLE_VALUE, "Expected a handle\n");
 
     size = sizeof(STORAGE_DEPENDENCY_INFO);
-    info = heap_alloc(size);
+    info = malloc(size);
 
     ret = pGetStorageDependencyInformation(handle, GET_STORAGE_DEPENDENCY_FLAG_DISK_HANDLE, 0, info, 0);
     ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
@@ -45,7 +44,7 @@ static void test_GetStorageDependencyInformation(void)
     ret = pGetStorageDependencyInformation(handle, GET_STORAGE_DEPENDENCY_FLAG_DISK_HANDLE, size, NULL, 0);
     ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 
-    heap_free(info);
+    free(info);
     CloseHandle(handle);
 }
 
