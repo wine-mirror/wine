@@ -277,7 +277,6 @@ static void region_destroy(struct region *region)
 struct instrument
 {
     struct list entry;
-    LONG ref;
     UINT id;
 
     UINT patch;
@@ -288,30 +287,25 @@ struct instrument
     struct synth *synth;
 };
 
-static void instrument_release(struct instrument *instrument)
+static void instrument_destroy(struct instrument *instrument)
 {
-    ULONG ref = InterlockedDecrement(&instrument->ref);
+    struct articulation *articulation;
+    struct region *region;
+    void *next;
 
-    if (!ref)
+    LIST_FOR_EACH_ENTRY_SAFE(region, next, &instrument->regions, struct region, entry)
     {
-        struct articulation *articulation;
-        struct region *region;
-        void *next;
-
-        LIST_FOR_EACH_ENTRY_SAFE(region, next, &instrument->regions, struct region, entry)
-        {
-            list_remove(&region->entry);
-            region_destroy(region);
-        }
-
-        LIST_FOR_EACH_ENTRY_SAFE(articulation, next, &instrument->articulations, struct articulation, entry)
-        {
-            list_remove(&articulation->entry);
-            free(articulation);
-        }
-
-        free(instrument);
+        list_remove(&region->entry);
+        region_destroy(region);
     }
+
+    LIST_FOR_EACH_ENTRY_SAFE(articulation, next, &instrument->articulations, struct articulation, entry)
+    {
+        list_remove(&articulation->entry);
+        free(articulation);
+    }
+
+    free(instrument);
 }
 
 struct preset
@@ -424,7 +418,7 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
         LIST_FOR_EACH_ENTRY_SAFE(instrument, next, &This->instruments, struct instrument, entry)
         {
             list_remove(&instrument->entry);
-            instrument_release(instrument);
+            instrument_destroy(instrument);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(wave, next, &This->waves, struct wave, entry)
@@ -736,7 +730,6 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
     if (instrument_info->ulFirstExtCkIdx) FIXME("Instrument extensions not implemented\n");
 
     if (!(instrument = calloc(1, sizeof(*instrument)))) return E_OUTOFMEMORY;
-    instrument->ref = 1;
     instrument->id = info->dwDLId;
     instrument->patch = instrument_info->ulPatch;
     instrument->flags = instrument_info->ulFlags;
@@ -763,7 +756,7 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
         if (!(region->wave = synth_find_wave_from_id(This, region->wave_link.ulTableIndex)))
         {
             free(region);
-            instrument_release(instrument);
+            instrument_destroy(instrument);
             return DMUS_E_BADWAVELINK;
         }
 
@@ -786,7 +779,7 @@ static HRESULT synth_download_instrument(struct synth *This, DMUS_DOWNLOADINFO *
     return S_OK;
 
 error:
-    instrument_release(instrument);
+    instrument_destroy(instrument);
     return E_OUTOFMEMORY;
 }
 
@@ -930,7 +923,7 @@ static HRESULT WINAPI synth_Unload(IDirectMusicSynth8 *iface, HANDLE handle,
             list_remove(&instrument->entry);
             LeaveCriticalSection(&This->cs);
 
-            instrument_release(instrument);
+            instrument_destroy(instrument);
             return S_OK;
         }
     }
