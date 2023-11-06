@@ -822,7 +822,7 @@
 @ stub _mbsncat_s
 @ stub _mbsncat_s_l
 @ cdecl _mbsnccnt(str long)
-@ stub _mbsnccnt_l
+@ cdecl _mbsnccnt_l(str long ptr)
 @ cdecl _mbsncmp(str str long)
 @ stub _mbsncmp_l
 @ stub _mbsncoll(str str long)

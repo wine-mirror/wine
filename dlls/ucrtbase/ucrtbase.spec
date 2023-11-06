@@ -666,7 +666,7 @@
 @ stub _mbsncat_s
 @ stub _mbsncat_s_l
 @ cdecl _mbsnccnt(str long)
-@ stub _mbsnccnt_l
+@ cdecl _mbsnccnt_l(str long ptr)
 @ cdecl _mbsncmp(str str long)
 @ stub _mbsncmp_l
 @ stub _mbsncoll(str str long)
@@ -1235,7 +1235,7 @@
 @ stub _o__mbsncat_s
 @ stub _o__mbsncat_s_l
 @ cdecl _o__mbsnccnt(str long) _mbsnccnt
-@ stub _o__mbsnccnt_l
+@ cdecl _o__mbsnccnt_l(str long ptr) _mbsnccnt_l
 @ cdecl _o__mbsncmp(str str long) _mbsncmp
 @ stub _o__mbsncmp_l
 @ stub _o__mbsncoll

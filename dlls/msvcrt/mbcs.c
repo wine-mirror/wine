@@ -2273,31 +2273,52 @@ unsigned char* CDECL _mbsnset(unsigned char* str, unsigned int c, size_t len)
 }
 
 /*********************************************************************
+ *		_mbsnccnt_l(MSVCRT.@)
+ * 'c' is for 'character'.
+ */
+size_t CDECL _mbsnccnt_l(const unsigned char* str, size_t len, _locale_t locale)
+{
+    size_t ret;
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return 0;
+    if (!MSVCRT_CHECK_PMT(str))
+        return 0;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        ret = 0;
+        while (*str && len-- > 0)
+        {
+            if (_ismbblead_l(*str, locale))
+            {
+                if (!len)
+                    break;
+                len--;
+                str++;
+            }
+            str++;
+            ret++;
+        }
+        return ret;
+    }
+    ret = u_strlen(str);
+    return min(ret, len); /* ASCII CP */
+}
+
+/*********************************************************************
  *		_mbsnccnt(MSVCRT.@)
  * 'c' is for 'character'.
  */
 size_t CDECL _mbsnccnt(const unsigned char* str, size_t len)
 {
-  size_t ret;
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    ret=0;
-    while(*str && len-- > 0)
-    {
-      if(_ismbblead(*str))
-      {
-        if (!len)
-          break;
-        len--;
-        str++;
-      }
-      str++;
-      ret++;
-    }
-    return ret;
-  }
-  ret=u_strlen(str);
-  return min(ret, len); /* ASCII CP */
+    return _mbsnccnt_l(str, len, NULL);
 }
 
 /*********************************************************************
