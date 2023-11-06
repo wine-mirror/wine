@@ -993,6 +993,50 @@ int CDECL _mbscpy_s(unsigned char *dst, size_t size, const unsigned char *src)
 }
 
 /*********************************************************************
+ *              _mbsnbcpy_l(MSVCRT.@)
+ * REMARKS
+ *  Like strncpy this function doesn't enforce the string to be
+ *  NUL-terminated
+ */
+unsigned char* CDECL _mbsnbcpy_l(unsigned char* dst, const unsigned char* src, size_t n, _locale_t locale)
+{
+    unsigned char* ret = dst;
+    pthreadmbcinfo mbcinfo;
+
+    if (!n)
+        return dst;
+    if (!MSVCRT_CHECK_PMT(dst && src))
+        return NULL;
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+    if (mbcinfo->ismbcodepage)
+    {
+        BOOL is_lead = FALSE;
+        while (*src && n)
+        {
+            is_lead = (!is_lead && _ismbblead_l(*src, locale));
+            n--;
+            *dst++ = *src++;
+        }
+
+        if (is_lead) /* if string ends with a lead, remove it */
+            *(dst - 1) = 0;
+    }
+    else
+    {
+        while (n)
+        {
+            n--;
+            if (!(*dst++ = *src++)) break;
+        }
+    }
+    while (n--) *dst++ = 0;
+    return ret;
+}
+
+/*********************************************************************
  *              _mbsnbcpy(MSVCRT.@)
  * REMARKS
  *  Like strncpy this function doesn't enforce the string to be
@@ -1000,32 +1044,7 @@ int CDECL _mbscpy_s(unsigned char *dst, size_t size, const unsigned char *src)
  */
 unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, size_t n)
 {
-  unsigned char* ret = dst;
-  if(!n)
-    return dst;
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    BOOL is_lead = FALSE;
-    while (*src && n)
-    {
-      is_lead = (!is_lead && _ismbblead(*src));
-      n--;
-      *dst++ = *src++;
-    }
-
-    if (is_lead) /* if string ends with a lead, remove it */
-	*(dst - 1) = 0;
-  }
-  else
-  {
-    while (n)
-    {
-        n--;
-        if (!(*dst++ = *src++)) break;
-    }
-  }
-  while (n--) *dst++ = 0;
-  return ret;
+    return _mbsnbcpy_l(dst, src, n, NULL);
 }
 
 /*********************************************************************
