@@ -2336,20 +2336,22 @@ unsigned char* CDECL _mbsnbcat(unsigned char *dst, const unsigned char *src, siz
     return _mbsnbcat_l(dst, src, len, NULL);
 }
 
-int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src, size_t len)
+/*********************************************************************
+ *		_mbsnbcat_s_l(MSVCRT.@)
+ */
+int CDECL _mbsnbcat_s_l(unsigned char *dst, size_t size, const unsigned char *src, size_t len, _locale_t locale)
 {
     unsigned char *ptr = dst;
     size_t i;
+    pthreadmbcinfo mbcinfo;
 
-    if (!dst && !size && !src && !len)
+    if (!dst && !size && !len)
         return 0;
 
-    if (!dst || !size || !src)
+    if (!MSVCRT_CHECK_PMT(dst && size && src))
     {
         if (dst && size)
             *dst = '\0';
-
-        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -2364,9 +2366,14 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
         return EINVAL;
     }
 
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
     /* If necessary, check that the character preceding the null terminator is
      * a lead byte and move the pointer back by one for later overwrite. */
-    if (ptr != dst && get_mbcinfo()->ismbcodepage && _ismbblead(*(ptr - 1)))
+    if (ptr != dst && mbcinfo->ismbcodepage && _ismbblead_l(*(ptr - 1), locale))
         size++, ptr--;
 
     for (i = 0; *src && i < len; i++)
@@ -2384,6 +2391,14 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
 
     *ptr = '\0';
     return 0;
+}
+
+/*********************************************************************
+ *		_mbsnbcat_s(MSVCRT.@)
+ */
+int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src, size_t len)
+{
+    return _mbsnbcat_s_l(dst, size, src, len, NULL);
 }
 
 /*********************************************************************
