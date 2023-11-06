@@ -159,6 +159,7 @@ struct wayland_surface_config
 struct wayland_window_config
 {
     RECT rect;
+    RECT client_rect;
     enum wayland_surface_config_state state;
     /* The scale (i.e., normalized dpi) the window is rendering at. */
     double scale;

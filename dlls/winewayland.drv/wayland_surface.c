@@ -469,6 +469,29 @@ static void wayland_surface_reconfigure_size(struct wayland_surface *surface,
 }
 
 /**********************************************************************
+ *          wayland_surface_reconfigure_client
+ *
+ * Reconfigures the subsurface covering the client area.
+ */
+static void wayland_surface_reconfigure_client(struct wayland_surface *surface)
+{
+    struct wayland_window_config *window = &surface->window;
+    int client_x, client_y, x, y;
+
+    if (!surface->client) return;
+
+    /* The offset of the client area origin relatively to the window origin. */
+    client_x = window->client_rect.left - window->rect.left;
+    client_y = window->client_rect.top - window->rect.top;
+
+    wayland_surface_coords_from_window(surface, client_x, client_y, &x, &y);
+
+    TRACE("hwnd=%p subsurface=%d,%d\n", surface->hwnd, x, y);
+
+    wl_subsurface_set_position(surface->client->wl_subsurface, x, y);
+}
+
+/**********************************************************************
  *          wayland_surface_reconfigure
  *
  * Reconfigures the wayland surface as needed to match the latest requested
@@ -525,6 +548,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 
     wayland_surface_reconfigure_geometry(surface, width, height);
     wayland_surface_reconfigure_size(surface, width, height);
+    wayland_surface_reconfigure_client(surface);
 
     return TRUE;
 }
@@ -743,6 +767,8 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
         ERR("Failed to create client wl_subsurface\n");
         goto err;
     }
+
+    wayland_surface_reconfigure_client(surface);
 
     return surface->client;
 

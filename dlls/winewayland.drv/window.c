@@ -45,6 +45,8 @@ struct wayland_win_data
     struct window_surface *window_surface;
     /* USER window rectangle relative to win32 parent window client area */
     RECT window_rect;
+    /* USER client rectangle relative to win32 parent window client area */
+    RECT client_rect;
 };
 
 static int wayland_win_data_cmp_rb(const void *key,
@@ -68,7 +70,8 @@ static struct rb_tree win_data_rb = { wayland_win_data_cmp_rb };
  * Create a data window structure for an existing window.
  */
 static struct wayland_win_data *wayland_win_data_create(HWND hwnd,
-                                                        const RECT *window_rect)
+                                                        const RECT *window_rect,
+                                                        const RECT *client_rect)
 {
     struct wayland_win_data *data;
     struct rb_entry *rb_entry;
@@ -83,6 +86,7 @@ static struct wayland_win_data *wayland_win_data_create(HWND hwnd,
 
     data->hwnd = hwnd;
     data->window_rect = *window_rect;
+    data->client_rect = *client_rect;
 
     pthread_mutex_lock(&win_data_mutex);
 
@@ -157,6 +161,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     DWORD style;
 
     conf->rect = data->window_rect;
+    conf->client_rect = data->client_rect;
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
 
     TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
@@ -310,7 +315,8 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
 
-    if (!data && !(data = wayland_win_data_create(hwnd, window_rect))) return TRUE;
+    if (!data && !(data = wayland_win_data_create(hwnd, window_rect, client_rect)))
+        return TRUE;
 
     /* Release the dummy surface wine provides for toplevels. */
     if (*surface) window_surface_release(*surface);
@@ -361,6 +367,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!data) return;
 
     data->window_rect = *window_rect;
+    data->client_rect = *client_rect;
 
     if (surface) window_surface_add_ref(surface);
     if (data->window_surface) window_surface_release(data->window_surface);
