@@ -2612,6 +2612,13 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "fwait\n"
                    /* switch to kernel stack */
                    "4:\tmovl %ecx,%esp\n\t"
+                   /* we're now on the kernel stack, stitch unwind info with previous frame */
+                   __ASM_CFI_CFA_IS_AT1(ebp, 0x04) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset %eip,-4\n\t")
+                   __ASM_CFI(".cfi_offset %ebp,-8\n\t")
+                   __ASM_CFI(".cfi_offset %ebx,-12\n\t")
+                   __ASM_CFI(".cfi_offset %esi,-16\n\t")
+                   __ASM_CFI(".cfi_offset %edi,-20\n\t")
                    "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
                    "andl $0xfff,%edx\n\t"          /* syscall number */
                    "cmpl 8(%ebx),%edx\n\t"         /* table->ServiceLimit */
@@ -2629,12 +2636,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "leal -0x34(%ebp),%esp\n"
 
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
-                   __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
-                   __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
-                   __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
-                   __ASM_CFI_REG_IS_AT1(esi, esp, 0x30)
-                   __ASM_CFI_REG_IS_AT1(ebp, esp, 0x34)
                    "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
                    "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
                    "jz 3f\n\t"
@@ -2653,38 +2654,46 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "2:\tfrstor 0x40(%esp)\n\t"
                    "fwait\n"
                    "3:\tmovl 0x2c(%esp),%edi\n\t"
-                   __ASM_CFI(".cfi_remember_state\n\t")
-                   __ASM_CFI(".cfi_same_value %edi\n\t")
                    "movl 0x30(%esp),%esi\n\t"
-                   __ASM_CFI(".cfi_same_value %esi\n\t")
                    "movl 0x34(%esp),%ebp\n\t"
-                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   /* push ebp-based kernel stack cfi */
+                   __ASM_CFI("\t.cfi_remember_state\n")
+                   __ASM_CFI_CFA_IS_AT2(esp, 0xb8, 0x00) /* frame->syscall_cfa */
                    "testl $0x7 << 16,%ecx\n\t"     /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
                    "movl 0x20(%esp),%ebx\n\t"
-                   __ASM_CFI(".cfi_remember_state\n\t")
-                   __ASM_CFI(".cfi_same_value %ebx\n\t")
                    "movl 0x08(%esp),%ecx\n\t"      /* frame->eip */
-                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   /* push esp-based kernel stack cfi */
+                   __ASM_CFI("\t.cfi_remember_state\n")
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
+                   __ASM_CFI(".cfi_def_cfa %esp,0\n\t")
+                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
                    "pushl %ecx\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "ret\n"
+                   /* pop esp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
+
                    "1:\ttestl $0x2 << 16,%ecx\n\t" /* CONTEXT_INTEGER */
                    "jz 1f\n\t"
                    "movl 0x1c(%esp),%eax\n\t"
                    "movl 0x24(%esp),%ecx\n\t"
                    "movl 0x28(%esp),%edx\n"
                    "1:\tmovl 0x0c(%esp),%ebx\n\t"  /* frame->esp */
-                   __ASM_CFI(".cfi_register %esp, %ebx\n\t")
                    "movw 0x12(%esp),%ss\n\t"
                    /* switch to user stack */
                    "xchgl %ebx,%esp\n\t"
-                   __ASM_CFI(".cfi_def_cfa %esp, 0\n\t")
-                   __ASM_CFI_REG_IS_AT1(eip, ebx, 0x08)
-                   __ASM_CFI_REG_IS_AT1(ebx, ebx, 0x20)
+                   __ASM_CFI(".cfi_def_cfa %esp,0\n\t")
+                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
                    "pushl 0x04(%ebx)\n\t"          /* frame->eflags */
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 0x10(%ebx)\n\t"          /* frame->cs */
@@ -2702,23 +2711,16 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "popl %ds\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "iret\n"
+                   /* pop ebp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
+
                    "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
 
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
-                   __ASM_CFI(".cfi_remember_state\n\t")
-                   __ASM_CFI(".cfi_def_cfa %esp, 4\n\t")
-                   __ASM_CFI(".cfi_restore %esp\n\t")
-                   __ASM_CFI(".cfi_restore %eip\n\t")
-                   __ASM_CFI(".cfi_restore %ebx\n\t")
-                   __ASM_CFI(".cfi_restore %edi\n\t")
-                   __ASM_CFI(".cfi_restore %esi\n\t")
-                   __ASM_CFI(".cfi_restore %ebp\n\t")
                    "movl 8(%esp),%eax\n\t"
                    "movl 4(%esp),%esp\n\t"
-                   __ASM_CFI(".cfi_restore_state\n\t")
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
@@ -2756,20 +2758,26 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movl 8(%esp),%edx\n\t"     /* code */
                    /* switch to kernel stack */
                    "leal -16(%ecx),%esp\n\t"
+                   /* we're now on the kernel stack, stitch unwind info with previous frame */
+                   __ASM_CFI_CFA_IS_AT2(esp, 0xc8, 0x00) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset %eip,-4\n\t")
+                   __ASM_CFI(".cfi_offset %ebp,-8\n\t")
+                   __ASM_CFI(".cfi_offset %ebx,-12\n\t")
+                   __ASM_CFI(".cfi_offset %esi,-16\n\t")
+                   __ASM_CFI(".cfi_offset %edi,-20\n\t")
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
-                   __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
-                   __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
-                   __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
-                   __ASM_CFI_REG_IS_AT1(esi, esp, 0x30)
-                   __ASM_CFI_REG_IS_AT1(ebp, esp, 0x34)
                    "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
                    "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
-                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
+                   __ASM_CFI(".cfi_def_cfa %esp,0\n\t")
+                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   __ASM_CFI(".cfi_undefined %ebp\n\t")
+                   __ASM_CFI(".cfi_undefined %ebx\n\t")
+                   __ASM_CFI(".cfi_undefined %esi\n\t")
+                   __ASM_CFI(".cfi_undefined %edi\n\t")
                    "pushl %ecx\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "ret" )
