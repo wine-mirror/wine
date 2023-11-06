@@ -654,7 +654,7 @@
 @ cdecl _mbsnbcpy_s(ptr long str long)
 @ cdecl _mbsnbcpy_s_l(ptr long str long ptr)
 @ cdecl _mbsnbicmp(str str long)
-@ stub _mbsnbicmp_l
+@ cdecl _mbsnbicmp_l(str str long ptr)
 @ cdecl _mbsnbicoll(str str long)
 @ cdecl _mbsnbicoll_l(str str long ptr)
 @ cdecl _mbsnbset(ptr long long)
@@ -1223,7 +1223,7 @@
 @ cdecl _o__mbsnbcpy_s(ptr long str long) _mbsnbcpy_s
 @ cdecl _o__mbsnbcpy_s_l(ptr long str long ptr) _mbsnbcpy_s_l
 @ cdecl _o__mbsnbicmp(str str long) _mbsnbicmp
-@ stub _o__mbsnbicmp_l
+@ cdecl _o__mbsnbicmp_l(str str long ptr) _mbsnbicmp_l
 @ cdecl _o__mbsnbicoll(str str long) _mbsnbicoll
 @ cdecl _o__mbsnbicoll_l(str str long ptr) _mbsnbicoll_l
 @ cdecl _o__mbsnbset(ptr long long) _mbsnbset

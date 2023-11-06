@@ -1362,47 +1362,66 @@ int CDECL _mbsnicmp(const unsigned char* str, const unsigned char* cmp, size_t l
 }
 
 /*********************************************************************
+ *              _mbsnbicmp_l(MSVCRT.@)
+ */
+int CDECL _mbsnbicmp_l(const unsigned char* str, const unsigned char* cmp, size_t len, _locale_t locale)
+{
+
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return 0;
+    if (!MSVCRT_CHECK_PMT(str && cmp))
+        return _NLSCMPERROR;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned int strc, cmpc;
+        while (len)
+        {
+            int clen;
+            if (!*str)
+                return *cmp ? -1 : 0;
+            if (!*cmp)
+                return 1;
+            if (_ismbblead_l(*str, locale))
+            {
+                strc = (len >= 2) ? _mbsnextc_l(str, locale) : 0;
+                clen = 2;
+            }
+            else
+            {
+                strc = *str;
+                clen = 1;
+            }
+            if (_ismbblead_l(*cmp, locale))
+                cmpc = (len >= 2) ? _mbsnextc_l(cmp, locale) : 0;
+            else
+                cmpc = *cmp;
+            strc = _mbctolower_l(strc, locale);
+            cmpc = _mbctolower_l(cmpc, locale);
+            if (strc != cmpc)
+                return strc < cmpc ? -1 : 1;
+            len -= clen;
+            str += clen;
+            cmp += clen;
+        }
+        return 0; /* Matched len bytes */
+    }
+    return u_strncasecmp(str, cmp, len);
+}
+
+/*********************************************************************
  *              _mbsnbicmp(MSVCRT.@)
  */
 int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, size_t len)
 {
-  if (!len)
-    return 0;
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned int strc, cmpc;
-    while (len)
-    {
-      int clen;
-      if(!*str)
-        return *cmp ? -1 : 0;
-      if(!*cmp)
-        return 1;
-      if (_ismbblead(*str))
-      {
-        strc=(len>=2)?_mbsnextc(str):0;
-        clen=2;
-      }
-      else
-      {
-        strc=*str;
-        clen=1;
-      }
-      if (_ismbblead(*cmp))
-        cmpc=(len>=2)?_mbsnextc(cmp):0;
-      else
-        cmpc=*cmp;
-      strc = _mbctolower(strc);
-      cmpc = _mbctolower(cmpc);
-      if(strc != cmpc)
-        return strc < cmpc ? -1 : 1;
-      len -= clen;
-      str += clen;
-      cmp += clen;
-    }
-    return 0; /* Matched len bytes */
-  }
-  return u_strncasecmp(str,cmp,len);
+    return _mbsnbicmp_l(str, cmp, len, NULL);
 }
 
 /*********************************************************************

@@ -810,7 +810,7 @@
 @ cdecl _mbsnbcpy_s(ptr long str long)
 @ cdecl _mbsnbcpy_s_l(ptr long str long ptr)
 @ cdecl _mbsnbicmp(str str long)
-@ stub _mbsnbicmp_l
+@ cdecl _mbsnbicmp_l(str str long ptr)
 @ cdecl _mbsnbicoll(str str long)
 @ cdecl _mbsnbicoll_l(str str long ptr)
 @ cdecl _mbsnbset(ptr long long)
