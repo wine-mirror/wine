@@ -1,6 +1,6 @@
 MODULE    = dpnsvr.exe
 
-EXTRADLLFLAGS = -mconsole -municode
+EXTRADLLFLAGS = -mwindows -municode
 
 SOURCES = \
 	main.c \
