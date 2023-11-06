@@ -1602,6 +1602,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movl %esp,0x1f8(%edx)\n\t" /* x86_thread_data()->syscall_frame */
                    "movl 0x1c(%ebp),%ecx\n\t"  /* func */
                    "movl 0x0c(%ebp),%edx\n\t"  /* args */
+                   /* switch to user stack */
                    "leal -4(%edx),%esp\n\t"
                    "pushl 0x10(%ebp)\n\t"      /* len */
                    "pushl %edx\n\t"            /* args */
@@ -2491,6 +2492,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "leal -0x380(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
+                   /* switch to kernel stack */
                    "1:\tmovl %eax,%esp\n\t"
                    "pushl %ecx\n\t"             /* teb */
                    "pushl 16(%ebp)\n\t"         /* suspend */
@@ -2604,6 +2606,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jmp 4f\n"
                    "3:\tfnsave 0x40(%ecx)\n\t"
                    "fwait\n"
+                   /* switch to kernel stack */
                    "4:\tmovl %ecx,%esp\n\t"
                    "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
                    "andl $0xfff,%edx\n\t"          /* syscall number */
@@ -2660,6 +2663,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_same_value %ebx\n\t")
                    "movl 0x08(%esp),%ecx\n\t"      /* frame->eip */
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
                    __ASM_CFI(".cfi_same_value %esp\n\t")
                    "pushl %ecx\n\t"
@@ -2674,6 +2678,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "1:\tmovl 0x0c(%esp),%ebx\n\t"  /* frame->esp */
                    __ASM_CFI(".cfi_register %esp, %ebx\n\t")
                    "movw 0x12(%esp),%ss\n\t"
+                   /* switch to user stack */
                    "xchgl %ebx,%esp\n\t"
                    __ASM_CFI(".cfi_def_cfa %esp, 0\n\t")
                    __ASM_CFI(".cfi_same_value %esp\n\t")
@@ -2749,6 +2754,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movl %edx,-16(%ecx)\n\t"
                    "movl (%esp),%eax\n\t"      /* handle */
                    "movl 8(%esp),%edx\n\t"     /* code */
+                   /* switch to kernel stack */
                    "leal -16(%ecx),%esp\n\t"
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
@@ -2763,6 +2769,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
                    __ASM_CFI(".cfi_same_value %esp\n\t")
                    "pushl %ecx\n\t"

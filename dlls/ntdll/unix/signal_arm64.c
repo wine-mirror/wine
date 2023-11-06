@@ -1132,6 +1132,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
                    "str x3, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   /* switch to user stack */
                    "mov sp, x1\n\t"               /* stack */
                    "str x7, [x3, #0x110]\n\t"     /* frame->prev_frame */
                    "br x5" )
@@ -1680,6 +1681,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "cbnz x8, 1f\n\t"
                    "sub x8, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
                    "str x8, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
+                   /* switch to kernel stack */
                    "1:\tmov sp, x8\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
 
@@ -1731,6 +1733,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "stp q26, q27, [x10, #0x2d0]\n\t"
                    "stp q28, q29, [x10, #0x2f0]\n\t"
                    "stp q30, q31, [x10, #0x310]\n\t"
+                   /* switch to kernel stack */
                    "mov sp, x10\n\t"
                    "and x20, x8, #0xfff\n\t"    /* syscall number */
                    "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
@@ -1802,6 +1805,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "1:\tldp x16, x17, [sp, #0x100]\n\t"
                    "msr NZCV, x17\n\t"
                    "ldp x30, x17, [sp, #0xf0]\n\t"
+                   /* switch to user stack */
                    "mov sp, x17\n\t"
                    "ret x16\n"
                    "4:\tmov x0, #0xc0000000\n\t" /* STATUS_INVALID_PARAMETER */
@@ -1833,6 +1837,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "stp x30, x9, [x10, #0xf0]\n\t"
                    "mrs x9, NZCV\n\t"
                    "stp x30, x9, [x10, #0x100]\n\t"
+                   /* switch to kernel stack */
                    "mov sp, x10\n\t"
                    "ldr x16, [x0, x1, lsl 3]\n\t"
                    "mov x0, x2\n\t"             /* args */
@@ -1841,6 +1846,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "cbnz w16, " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    "ldr x18, [sp, #0x90]\n\t"
                    "ldp x16, x17, [sp, #0xf8]\n\t"
+                   /* switch to user stack */
                    "mov sp, x16\n\t"
                    "ret x17" )
 

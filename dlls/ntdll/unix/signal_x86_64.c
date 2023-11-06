@@ -1591,6 +1591,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq %rdi,%rcx\n\t"        /* id */
                    "movq %rdx,%r8\n\t"         /* len */
                    "movq %rsi,%rdx\n\t"        /* args */
+                   /* switch to user stack */
                    "leaq -0x20(%rsi),%rsp\n\t"
                    "push $0\n\t"
                    "jmpq *%r9" )
@@ -2541,6 +2542,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "leaq -0x400(%rsp),%rax\n\t"    /* sizeof(struct syscall_frame) */
                    "andq $~63,%rax\n\t"
                    "movq %rax,0x328(%rcx)\n"       /* amd64_thread_data()->syscall_frame */
+                   /* switch to kernel stack */
                    "1:\tmovq %rax,%rsp\n\t"
                    "call " __ASM_NAME("call_init_thunk"))
 
@@ -2665,6 +2667,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x28(%rsp),%r12\n\t"      /* 5th argument */
                    "movq 0x30(%rsp),%r13\n\t"      /* 6th argument */
                    "leaq 0x38(%rsp),%rsi\n\t"      /* 7th argument */
+                   /* switch to kernel stack */
                    "movq %rcx,%rsp\n\t"
                    "movq 0x00(%rcx),%rax\n\t"
                    "movq 0x18(%rcx),%r11\n\t"      /* 2nd argument */
@@ -2750,6 +2753,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x80(%rcx),%r11\n\t"      /* frame->eflags */
                    "pushq %r11\n\t"
                    "popfq\n\t"
+                   /* switch to user stack */
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
                    __ASM_CFI(".cfi_same_value rsp\n\t")
@@ -2867,6 +2871,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "mov %r9,%rcx\n\t"
                    "2:\n\t"
 #endif
+                   /* switch to kernel stack */
                    "movq %rcx,%rsp\n"
                    "movq %r8,%rdi\n\t"             /* args */
                    "callq *(%r10,%rdx,8)\n\t"
@@ -2894,6 +2899,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x28(%rcx),%rdi\n\t"
                    __ASM_CFI(".cfi_same_value rdi\n\t")
                    "movq 0x20(%rcx),%rsi\n\t"
+                   /* switch to user stack */
                    __ASM_CFI(".cfi_same_value rsi\n\t")
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")

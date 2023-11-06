@@ -1173,6 +1173,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr r5, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "str r5, [sp, #0x4c]\n\t"  /* frame->prev_frame */
                    "str sp, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
+                   /* switch to user stack */
                    "mov sp, r1\n\t"
                    "bx ip" )
 
@@ -1619,6 +1620,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "cbnz r6, 1f\n\t"
                    "sub r6, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) */
                    "str r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
+                   /* switch to kernel stack */
                    "1:\tmov sp, r6\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
 
@@ -1661,6 +1663,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "vstm r0, {d0-d15}\n\t"
 #endif
                    "mov r6, sp\n\t"
+                   /* switch to kernel stack */
                    "mov sp, r1\n\t"
                    "mov r8, r1\n\t"
                    "ldr r5, [r2, #0x1dc]\n\t"       /* arm_thread_data()->syscall_table */
@@ -1701,9 +1704,11 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "it ne\n\t"
                    "ldmne r8, {r0-r3}\n\t"
                    "ldr lr, [r8, #0x3c]\n\t"
+                   /* switch to user stack */
                    "ldr sp, [r8, #0x38]\n\t"
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n"
+
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
                    "add sp, sp, #0x10\n\t"
@@ -1738,12 +1743,14 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "vstm r4, {d0-d15}\n\t"
 #endif
                    "ldr ip, [r0, r2, lsl #2]\n\t"
+                   /* switch to kernel stack */
                    "mov sp, r1\n\t"
                    "mov r0, r3\n\t"                 /* args */
                    "blx ip\n"
                    "mov r8, sp\n\t"
                    "ldr r1, [r8, #0x44]\n\t"        /* frame->restore_flags */
                    "cbnz r1, 1f\n\t"
+                   /* switch to user stack */
                    "ldr sp, [r8, #0x38]\n\t"
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n\t"
