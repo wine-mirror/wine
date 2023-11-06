@@ -1739,7 +1739,6 @@ static void set_default_voice_connections(fluid_voice_t *fluid_voice)
     fluid_voice_gen_set(fluid_voice, GEN_KEYNUM, -1.);
     fluid_voice_gen_set(fluid_voice, GEN_VELOCITY, -1.);
     fluid_voice_gen_set(fluid_voice, GEN_SCALETUNE, 100.0);
-    fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, -1.);
 
     add_voice_connections(fluid_voice, &list, connections);
 }
@@ -1773,7 +1772,6 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 
         fluid_sample_set_sound_data(fluid_sample, wave->samples, NULL, wave->sample_count,
                 wave->format.nSamplesPerSec, TRUE);
-        fluid_sample_set_pitch(fluid_sample, region->wave_sample.usUnityNote, region->wave_sample.sFineTune);
 
         if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, fluid_sample, chan, key, vel)))
         {
@@ -1823,6 +1821,8 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
             fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, 8 + loop->ulStart);
             fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, 8 + loop->ulStart + loop->ulLength);
         }
+        fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, region->wave_sample.usUnityNote);
+        fluid_voice_gen_set(fluid_voice, GEN_FINETUNE, region->wave_sample.sFineTune);
         LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
             add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
         LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
