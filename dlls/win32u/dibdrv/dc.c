@@ -871,6 +871,8 @@ static BOOL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 static BOOL windrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output, const DEVMODEW *devmode )
 {
     struct windrv_physdev *physdev = calloc( 1, sizeof(*physdev) );
+    PHYSDEV dibdrv;
+    DC *dc;
 
     if (!physdev) return FALSE;
 
@@ -879,7 +881,9 @@ static BOOL windrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output, const
         free( physdev );
         return FALSE;
     }
-    physdev->dibdrv = get_dibdrv_pdev( *dev );
+    dc = get_physdev_dc( *dev );
+    dibdrv = find_dc_driver( dc, &dib_driver );
+    physdev->dibdrv = get_dibdrv_pdev( dibdrv );
     push_dc_driver( dev, &physdev->dev, &window_driver );
     return TRUE;
 }
