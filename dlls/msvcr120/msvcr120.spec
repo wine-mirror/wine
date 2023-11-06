@@ -1538,7 +1538,7 @@
 @ cdecl _mbsnlen(str long)
 @ cdecl _mbsnlen_l(str long ptr)
 @ cdecl _mbsnset(ptr long long)
-@ stub _mbsnset_l
+@ cdecl _mbsnset_l(ptr long long ptr)
 @ stub _mbsnset_s
 @ stub _mbsnset_s_l
 @ cdecl _mbspbrk(str str)

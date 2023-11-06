@@ -686,7 +686,7 @@
 @ cdecl _mbsnlen(str long)
 @ cdecl _mbsnlen_l(str long ptr)
 @ cdecl _mbsnset(ptr long long)
-@ stub _mbsnset_l
+@ cdecl _mbsnset_l(ptr long long ptr)
 @ stub _mbsnset_s
 @ stub _mbsnset_s_l
 @ cdecl _mbspbrk(str str)
@@ -1255,7 +1255,7 @@
 @ cdecl _o__mbsnlen(str long) _mbsnlen
 @ cdecl _o__mbsnlen_l(str long ptr) _mbsnlen_l
 @ cdecl _o__mbsnset(ptr long long) _mbsnset
-@ stub _o__mbsnset_l
+@ cdecl _o__mbsnset_l(ptr long long ptr) _mbsnset_l
 @ stub _o__mbsnset_s
 @ stub _o__mbsnset_s_l
 @ cdecl _o__mbspbrk(str str) _mbspbrk
