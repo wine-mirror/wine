@@ -20,7 +20,6 @@
 #define CONST_VTABLE
 
 #include <wine/test.h>
-#include <wine/heap.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -2331,7 +2330,7 @@ static ULONG WINAPI ProtocolUnk_Release(IUnknown *iface)
         if(This->outer_ref)
             trace("outer_ref %ld\n", This->outer_ref);
         CHECK_EXPECT(Protocol_destructor);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -2643,7 +2642,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
         }
     }
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     ret->IUnknown_inner.lpVtbl = &ProtocolUnkVtbl;
     ret->IInternetProtocolEx_iface.lpVtbl = &ProtocolVtbl;
     ret->IInternetPriority_iface.lpVtbl = &InternetPriorityVtbl;

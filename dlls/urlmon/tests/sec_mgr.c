@@ -32,7 +32,6 @@
 #include "urlmon.h"
 
 #include "initguid.h"
-#include <wine/heap.h>
 
 #define URLZONE_CUSTOM  URLZONE_USER_MIN+1
 #define URLZONE_CUSTOM2 URLZONE_CUSTOM+1
@@ -201,7 +200,7 @@ static LONG myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     if (dwMaxLen > ARRAY_SIZE(szNameBuf))
     {
         /* Name too big: alloc a buffer for it */
-        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(CHAR))))
+        if (!(lpszName = malloc(dwMaxLen)))
         {
             ret = ERROR_NOT_ENOUGH_MEMORY;
             goto cleanup;
@@ -235,7 +234,7 @@ static LONG myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
 cleanup:
     /* Free buffer if allocated */
     if (lpszName != szNameBuf)
-        heap_free(lpszName);
+        free(lpszName);
     if(lpszSubKey)
         RegCloseKey(hSubKey);
     return ret;
