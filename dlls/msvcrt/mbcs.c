@@ -2200,33 +2200,50 @@ unsigned char* CDECL _mbsset(unsigned char* str, unsigned int c)
 }
 
 /*********************************************************************
+ *		_mbsnbset_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsnbset_l(unsigned char *str, unsigned int c, size_t len, _locale_t locale)
+{
+    unsigned char *ret = str;
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return ret;
+    if (!MSVCRT_CHECK_PMT(str))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (!mbcinfo->ismbcodepage || c < 256)
+        return u__strnset(str, c, len); /* ASCII CP or SB char */
+
+    c &= 0xffff; /* Strip high bits */
+
+    while (str[0] && str[1] && (len > 1))
+    {
+        *str++ = c >> 8;
+        len--;
+        *str++ = c & 0xff;
+        len--;
+    }
+    if (len && str[0])
+    {
+        /* as per msdn pad with a blank character */
+        str[0] = ' ';
+    }
+
+    return ret;
+}
+
+/*********************************************************************
  *		_mbsnbset(MSVCRT.@)
  */
 unsigned char* CDECL _mbsnbset(unsigned char *str, unsigned int c, size_t len)
 {
-    unsigned char *ret = str;
-
-    if(!len)
-	return ret;
-
-    if(!get_mbcinfo()->ismbcodepage || c < 256)
-	return u__strnset(str, c, len); /* ASCII CP or SB char */
-
-    c &= 0xffff; /* Strip high bits */
-
-    while(str[0] && str[1] && (len > 1))
-    {
-	*str++ = c >> 8;
-	len--;
-	*str++ = c & 0xff;
-	len--;
-    }
-    if(len && str[0]) {
-	/* as per msdn pad with a blank character */
-	str[0] = ' ';
-    }
-
-    return ret;
+    return _mbsnbset_l(str, c, len, NULL);
 }
 
 /*********************************************************************

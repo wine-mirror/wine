@@ -658,7 +658,7 @@
 @ cdecl _mbsnbicoll(str str long)
 @ cdecl _mbsnbicoll_l(str str long ptr)
 @ cdecl _mbsnbset(ptr long long)
-@ stub _mbsnbset_l
+@ cdecl _mbsnbset_l(str long long ptr)
 @ stub _mbsnbset_s
 @ stub _mbsnbset_s_l
 @ cdecl _mbsncat(str str long)
@@ -1227,7 +1227,7 @@
 @ cdecl _o__mbsnbicoll(str str long) _mbsnbicoll
 @ cdecl _o__mbsnbicoll_l(str str long ptr) _mbsnbicoll_l
 @ cdecl _o__mbsnbset(ptr long long) _mbsnbset
-@ stub _o__mbsnbset_l
+@ cdecl _o__mbsnbset_l(str long long ptr) _mbsnbset_l
 @ stub _o__mbsnbset_s
 @ stub _o__mbsnbset_s_l
 @ cdecl _o__mbsncat(str str long) _mbsncat

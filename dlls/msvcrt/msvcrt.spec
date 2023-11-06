@@ -763,7 +763,7 @@
 @ cdecl _mbsnbicoll(str str long)
 @ cdecl _mbsnbicoll_l(str str long ptr)
 @ cdecl _mbsnbset(ptr long long)
-# stub _mbsnbset_l(str long long ptr)
+@ cdecl _mbsnbset_l(str long long ptr)
 # stub _mbsnbset_s(ptr long long long)
 # stub _mbsnbset_s_l(ptr long long long ptr)
 @ cdecl _mbsncat(str str long)
