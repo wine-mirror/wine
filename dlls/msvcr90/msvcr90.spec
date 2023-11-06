@@ -796,7 +796,7 @@
 @ stub _mbsnbset_s
 @ stub _mbsnbset_s_l
 @ cdecl _mbsncat(str str long)
-@ stub _mbsncat_l
+@ cdecl _mbsncat_l(str str long ptr)
 @ stub _mbsncat_s
 @ stub _mbsncat_s_l
 @ cdecl _mbsnccnt(str long)

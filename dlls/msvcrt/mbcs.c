@@ -2457,30 +2457,50 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
 }
 
 /*********************************************************************
+ *		_mbsncat_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsncat_l(unsigned char* dst, const unsigned char* src, size_t len, _locale_t locale)
+{
+    pthreadmbcinfo mbcinfo;
+
+    if (!len)
+        return dst;
+
+    if (!MSVCRT_CHECK_PMT(dst && src))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (mbcinfo->ismbcodepage)
+    {
+        unsigned char *res = dst;
+        while (*dst)
+        {
+            if (_ismbblead_l(*dst++, locale))
+                dst++;
+        }
+        while (*src && len--)
+        {
+            *dst++ = *src;
+            if (_ismbblead_l(*src++, locale))
+                *dst++ = *src++;
+        }
+        *dst = '\0';
+        return res;
+    }
+    return u_strncat(dst, src, len); /* ASCII CP */
+}
+
+/*********************************************************************
  *		_mbsncat(MSVCRT.@)
  */
 unsigned char* CDECL _mbsncat(unsigned char* dst, const unsigned char* src, size_t len)
 {
-  if(get_mbcinfo()->ismbcodepage)
-  {
-    unsigned char *res = dst;
-    while (*dst)
-    {
-      if (_ismbblead(*dst++))
-        dst++;
-    }
-    while (*src && len--)
-    {
-      *dst++ = *src;
-      if(_ismbblead(*src++))
-        *dst++ = *src++;
-    }
-    *dst = '\0';
-    return res;
-  }
-  return u_strncat(dst, src, len); /* ASCII CP */
+    return _mbsncat_l(dst, src, len, NULL);
 }
-
 
 /*********************************************************************
  *              _mbslwr_l(MSVCRT.@)

@@ -662,7 +662,7 @@
 @ stub _mbsnbset_s
 @ stub _mbsnbset_s_l
 @ cdecl _mbsncat(str str long)
-@ stub _mbsncat_l
+@ cdecl _mbsncat_l(str str long ptr)
 @ stub _mbsncat_s
 @ stub _mbsncat_s_l
 @ cdecl _mbsnccnt(str long)
@@ -1231,7 +1231,7 @@
 @ stub _o__mbsnbset_s
 @ stub _o__mbsnbset_s_l
 @ cdecl _o__mbsncat(str str long) _mbsncat
-@ stub _o__mbsncat_l
+@ cdecl _o__mbsncat_l(str str long ptr) _mbsncat_l
 @ stub _o__mbsncat_s
 @ stub _o__mbsncat_s_l
 @ cdecl _o__mbsnccnt(str long) _mbsnccnt
