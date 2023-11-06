@@ -26,7 +26,6 @@
 #include "wmcodecdsp.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmadec);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
