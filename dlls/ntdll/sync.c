@@ -473,9 +473,10 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
 
 struct srw_lock
 {
+    /* bit 0 - if the lock is held exclusive. bit 1.. - number of exclusive waiters. */
     short exclusive_waiters;
 
-    /* Number of shared owners, or -1 if owned exclusive.
+    /* Number of owners.
      *
      * Sadly Windows has no equivalent to FUTEX_WAIT_BITSET, so in order to wake
      * up *only* exclusive or *only* shared waiters (and thus avoid spurious
@@ -486,7 +487,7 @@ struct srw_lock
      * the latter waits only on the "owners" member. Note then that "owners"
      * must not be the first element in the structure.
      */
-    short owners;
+    unsigned short owners;
 };
 C_ASSERT( sizeof(struct srw_lock) == 4 );
 
@@ -517,7 +518,7 @@ void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {
     union { RTL_SRWLOCK *rtl; struct srw_lock *s; LONG *l; } u = { lock };
 
-    InterlockedIncrement16( &u.s->exclusive_waiters );
+    InterlockedExchangeAdd16( &u.s->exclusive_waiters, 2 );
 
     for (;;)
     {
@@ -532,8 +533,9 @@ void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
             if (!old.s.owners)
             {
                 /* Not locked exclusive or shared. We can try to grab it. */
-                new.s.owners = -1;
-                --new.s.exclusive_waiters;
+                new.s.owners = 1;
+                new.s.exclusive_waiters -= 2;
+                new.s.exclusive_waiters |= 1;
                 wait = FALSE;
             }
             else
@@ -568,7 +570,7 @@ void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
             old.s = *u.s;
             new = old;
 
-            if (old.s.owners != -1 && !old.s.exclusive_waiters)
+            if (!old.s.exclusive_waiters)
             {
                 /* Not locked exclusive, and no exclusive waiters.
                  * We can try to grab it. */
@@ -599,9 +601,10 @@ void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
         old.s = *u.s;
         new = old;
 
-        if (old.s.owners != -1) ERR("Lock %p is not owned exclusive!\n", lock);
+        if (!(old.s.exclusive_waiters & 1)) ERR("Lock %p is not owned exclusive!\n", lock);
 
         new.s.owners = 0;
+        new.s.exclusive_waiters &= ~1;
     } while (InterlockedCompareExchange( u.l, new.l, old.l ) != old.l);
 
     if (new.s.exclusive_waiters)
@@ -623,7 +626,7 @@ void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
         old.s = *u.s;
         new = old;
 
-        if (old.s.owners == -1) ERR("Lock %p is owned exclusive!\n", lock);
+        if (old.s.exclusive_waiters & 1) ERR("Lock %p is owned exclusive!\n", lock);
         else if (!old.s.owners) ERR("Lock %p is not owned shared!\n", lock);
 
         --new.s.owners;
@@ -654,7 +657,8 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
         if (!old.s.owners)
         {
             /* Not locked exclusive or shared. We can try to grab it. */
-            new.s.owners = -1;
+            new.s.owners = 1;
+            new.s.exclusive_waiters |= 1;
             ret = TRUE;
         }
         else
@@ -680,7 +684,7 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
         old.s = *u.s;
         new.s = old.s;
 
-        if (old.s.owners != -1 && !old.s.exclusive_waiters)
+        if (!old.s.exclusive_waiters)
         {
             /* Not locked exclusive, and no exclusive waiters.
              * We can try to grab it. */
