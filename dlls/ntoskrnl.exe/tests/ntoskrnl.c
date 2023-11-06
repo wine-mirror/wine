@@ -44,7 +44,6 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
 #include "wine/test.h"
-#include "wine/heap.h"
 #include "wine/mssign.h"
 
 #include "driver.h"
@@ -397,21 +396,18 @@ static ULONG64 modified_value;
 
 static void main_test(void)
 {
-    struct main_test_input *test_input;
+    struct main_test_input test_input;
     DWORD size;
     BOOL res;
 
-    test_input = heap_alloc( sizeof(*test_input) );
-    test_input->process_id = GetCurrentProcessId();
-    test_input->teststr_offset = (SIZE_T)((BYTE *)&teststr - (BYTE *)NtCurrentTeb()->Peb->ImageBaseAddress);
-    test_input->modified_value = &modified_value;
+    test_input.process_id = GetCurrentProcessId();
+    test_input.teststr_offset = (SIZE_T)((BYTE *)&teststr - (BYTE *)NtCurrentTeb()->Peb->ImageBaseAddress);
+    test_input.modified_value = &modified_value;
     modified_value = 0;
 
-    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input), NULL, 0, &size, NULL);
+    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, &test_input, sizeof(test_input), NULL, 0, &size, NULL);
     ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
     ok(!size, "got size %lu\n", size);
-
-    heap_free(test_input);
 }
 
 static void test_basic_ioctl(void)
