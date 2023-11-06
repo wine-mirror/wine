@@ -378,45 +378,45 @@ struct socket_shutdown
     BOOL complete_async;
 };
 
-struct object_header *addref_object( struct object_header * ) DECLSPEC_HIDDEN;
-struct object_header *grab_object( HINTERNET ) DECLSPEC_HIDDEN;
-void release_object( struct object_header * ) DECLSPEC_HIDDEN;
-HINTERNET alloc_handle( struct object_header * ) DECLSPEC_HIDDEN;
-BOOL free_handle( HINTERNET ) DECLSPEC_HIDDEN;
+struct object_header *addref_object( struct object_header * );
+struct object_header *grab_object( HINTERNET );
+void release_object( struct object_header * );
+HINTERNET alloc_handle( struct object_header * );
+BOOL free_handle( HINTERNET );
 
-void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
-void close_connection( struct request * ) DECLSPEC_HIDDEN;
-void init_queue( struct queue *queue ) DECLSPEC_HIDDEN;
-void stop_queue( struct queue * ) DECLSPEC_HIDDEN;
+void send_callback( struct object_header *, DWORD, LPVOID, DWORD );
+void close_connection( struct request * );
+void init_queue( struct queue *queue );
+void stop_queue( struct queue * );
 
-void netconn_addref( struct netconn * ) DECLSPEC_HIDDEN;
-void netconn_release( struct netconn * ) DECLSPEC_HIDDEN;
-DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** ) DECLSPEC_HIDDEN;
-void netconn_unload( void ) DECLSPEC_HIDDEN;
-ULONG netconn_query_data_available( struct netconn * ) DECLSPEC_HIDDEN;
-DWORD netconn_recv( struct netconn *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
-DWORD netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
-DWORD netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
-DWORD netconn_send( struct netconn *, const void *, size_t, int *, WSAOVERLAPPED * ) DECLSPEC_HIDDEN;
-BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, DWORD *len ) DECLSPEC_HIDDEN;
-void netconn_cancel_io( struct netconn *conn ) DECLSPEC_HIDDEN;
-DWORD netconn_set_timeout( struct netconn *, BOOL, int ) DECLSPEC_HIDDEN;
-BOOL netconn_is_alive( struct netconn * ) DECLSPEC_HIDDEN;
-const void *netconn_get_certificate( struct netconn * ) DECLSPEC_HIDDEN;
-int netconn_get_cipher_strength( struct netconn * ) DECLSPEC_HIDDEN;
+void netconn_addref( struct netconn * );
+void netconn_release( struct netconn * );
+DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** );
+void netconn_unload( void );
+ULONG netconn_query_data_available( struct netconn * );
+DWORD netconn_recv( struct netconn *, void *, size_t, int, int * );
+DWORD netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int );
+DWORD netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL );
+DWORD netconn_send( struct netconn *, const void *, size_t, int *, WSAOVERLAPPED * );
+BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, DWORD *len );
+void netconn_cancel_io( struct netconn *conn );
+DWORD netconn_set_timeout( struct netconn *, BOOL, int );
+BOOL netconn_is_alive( struct netconn * );
+const void *netconn_get_certificate( struct netconn * );
+int netconn_get_cipher_strength( struct netconn * );
 
-BOOL set_cookies( struct request *, const WCHAR * ) DECLSPEC_HIDDEN;
-DWORD add_cookie_headers( struct request * ) DECLSPEC_HIDDEN;
-DWORD add_request_headers( struct request *, const WCHAR *, DWORD, DWORD ) DECLSPEC_HIDDEN;
-void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
-BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT ) DECLSPEC_HIDDEN;
-void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
+BOOL set_cookies( struct request *, const WCHAR * );
+DWORD add_cookie_headers( struct request * );
+DWORD add_request_headers( struct request *, const WCHAR *, DWORD, DWORD );
+void destroy_cookies( struct session * );
+BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT );
+void destroy_authinfo( struct authinfo * );
 
-void release_host( struct hostdata * ) DECLSPEC_HIDDEN;
-DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL ) DECLSPEC_HIDDEN;
+void release_host( struct hostdata * );
+DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL );
 
-extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
-void release_typelib( void ) DECLSPEC_HIDDEN;
+extern HRESULT WinHttpRequest_create( void ** );
+void release_typelib( void );
 
 static inline WCHAR *strdupAW( const char *src )
 {
@@ -457,7 +457,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
     return dst;
 }
 
-extern HINSTANCE winhttp_instance DECLSPEC_HIDDEN;
+extern HINSTANCE winhttp_instance;
 
 #define MIN_WEBSOCKET_SEND_BUFFER_SIZE 16
 
