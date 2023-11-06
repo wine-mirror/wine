@@ -455,7 +455,7 @@ struct syscall_frame
     UINT                  edi;            /* 02c */
     UINT                  esi;            /* 030 */
     UINT                  ebp;            /* 034 */
-    void                 *unused;         /* 038 */
+    void                 *syscall_cfa;    /* 038 */
     struct syscall_frame *prev_frame;     /* 03c */
     union                                 /* 040 */
     {
@@ -1592,9 +1592,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    "movl 0x20(%ebp),%edx\n\t"  /* teb */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
-                   "subl $0x384,%esp\n\t"      /* sizeof(struct syscall_frame) + ebp */
+                   "subl $0x380,%esp\n\t"      /* sizeof(struct syscall_frame) */
                    "andl $~63,%esp\n\t"
-                   "movl %ebp,0x380(%esp)\n\t"
+                   "leal 8(%ebp),%eax\n\t"
+                   "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
                    "movl 0x1f8(%edx),%ecx\n\t" /* x86_thread_data()->syscall_frame */
                    "movl (%ecx),%eax\n\t"      /* frame->syscall_flags */
                    "movl %eax,(%esp)\n\t"
@@ -1622,7 +1623,8 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movl 0x1f8(%edx),%eax\n\t" /* x86_thread_data()->syscall_frame */
                    "movl 0x3c(%eax),%ecx\n\t"  /* frame->prev_frame */
                    "movl %ecx,0x1f8(%edx)\n\t" /* x86_thread_data()->syscall_frame */
-                   "movl 0x380(%eax),%ebp\n\t" /* call_user_mode_callback ebp */
+                   "movl 0x38(%eax),%ebp\n\t"  /* frame->syscall_cfa */
+                   "subl $8,%ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
@@ -2415,10 +2417,10 @@ void signal_init_process(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
+                      struct syscall_frame *frame, void *syscall_cfa )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
-    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
     DWORD *stack;
 
@@ -2460,6 +2462,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->eip = (DWORD)pLdrInitializeThunk;
     frame->prev_frame    = NULL;
     frame->syscall_flags = syscall_flags;
+    frame->syscall_cfa   = syscall_cfa;
     frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
@@ -2482,6 +2485,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                   "leal 8(%ebp),%edx\n\t"      /* syscall_cfa */
                    /* store exit frame */
                    "movl 20(%ebp),%ecx\n\t"     /* teb */
                    "movl %ebp,0x1f4(%ecx)\n\t"  /* x86_thread_data()->exit_frame */
@@ -2493,7 +2497,9 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
                    /* switch to kernel stack */
-                   "1:\tmovl %eax,%esp\n\t"
+                   "1:\tleal -8(%eax),%esp\n\t"
+                   "pushl %edx\n\t"             /* syscall_cfa */
+                   "pushl %eax\n\t"             /* syscall_frame */
                    "pushl %ecx\n\t"             /* teb */
                    "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
