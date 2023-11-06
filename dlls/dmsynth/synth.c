@@ -209,6 +209,8 @@ struct wave
     LONG ref;
     UINT id;
 
+    fluid_sample_t *fluid_sample;
+
     WAVEFORMATEX format;
     UINT sample_count;
     short samples[];
@@ -224,7 +226,11 @@ static void wave_addref(struct wave *wave)
 static void wave_release(struct wave *wave)
 {
     ULONG ref = InterlockedDecrement(&wave->ref);
-    if (!ref) free(wave);
+    if (!ref)
+    {
+        delete_fluid_sample(wave->fluid_sample);
+        free(wave);
+    }
 }
 
 struct articulation
@@ -824,6 +830,16 @@ static HRESULT synth_download_wave(struct synth *This, DMUS_DOWNLOADINFO *info, 
             wave->samples[sample_count] = sample;
         }
     }
+
+    if (!(wave->fluid_sample = new_fluid_sample()))
+    {
+        WARN("Failed to allocate FluidSynth sample\n");
+        free(wave);
+        return FLUID_FAILED;
+    }
+
+    fluid_sample_set_sound_data(wave->fluid_sample, wave->samples, NULL, wave->sample_count,
+            wave->format.nSamplesPerSec, TRUE);
 
     EnterCriticalSection(&This->cs);
     list_add_tail(&This->waves, &wave->entry);
@@ -1747,7 +1763,6 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 {
     struct instrument *instrument = fluid_preset_get_data(fluid_preset);
     struct synth *synth = instrument->synth;
-    fluid_sample_t *fluid_sample;
     fluid_voice_t *fluid_voice;
     struct region *region;
 
@@ -1764,19 +1779,9 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
         if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
 
-        if (!(fluid_sample = new_fluid_sample()))
-        {
-            WARN("Failed to allocate FluidSynth sample\n");
-            return FLUID_FAILED;
-        }
-
-        fluid_sample_set_sound_data(fluid_sample, wave->samples, NULL, wave->sample_count,
-                wave->format.nSamplesPerSec, TRUE);
-
-        if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, fluid_sample, chan, key, vel)))
+        if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, wave->fluid_sample, chan, key, vel)))
         {
             WARN("Failed to allocate FluidSynth voice\n");
-            delete_fluid_sample(fluid_sample);
             return FLUID_FAILED;
         }
 
@@ -1792,10 +1797,7 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
         if (&voice->entry == &synth->voices)
         {
             if (!(voice = calloc(1, sizeof(struct voice))))
-            {
-                delete_fluid_sample(fluid_sample);
                 return FLUID_FAILED;
-            }
             voice->fluid_voice = fluid_voice;
             list_add_tail(&synth->voices, &voice->entry);
         }
