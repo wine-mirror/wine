@@ -22,7 +22,6 @@
 #include <windows.h>
 #include <commctrl.h>
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
@@ -215,9 +214,9 @@ static rbsize_result_t rbsize_init(int cleft, int ctop, int cright, int cbottom,
     SetRect(&ret.rcClient, cleft, ctop, cright, cbottom);
     ret.cyBarHeight = cyBarHeight;
     ret.nRows = 0;
-    ret.cyRowHeights = heap_alloc_zero(nRows * sizeof(int));
+    ret.cyRowHeights = calloc(nRows, sizeof(int));
     ret.nBands = 0;
-    ret.bands = heap_alloc_zero(nBands * sizeof(*ret.bands));
+    ret.bands = calloc(nBands, sizeof(*ret.bands));
 
     return ret;
 }
@@ -241,7 +240,7 @@ static rbsize_result_t *rbsize_results;
 
 static void rbsize_results_init(void)
 {
-    rbsize_results = heap_alloc(rbsize_results_num * sizeof(*rbsize_results));
+    rbsize_results = malloc(rbsize_results_num * sizeof(*rbsize_results));
 
     rbsize_results[0] = rbsize_init(0, 0, 672, 0, 0, 0, 0);
 
@@ -428,10 +427,10 @@ static void rbsize_results_free(void)
     int i;
 
     for (i = 0; i < rbsize_results_num; i++) {
-        heap_free(rbsize_results[i].cyRowHeights);
-        heap_free(rbsize_results[i].bands);
+        free(rbsize_results[i].cyRowHeights);
+        free(rbsize_results[i].bands);
     }
-    heap_free(rbsize_results);
+    free(rbsize_results);
     rbsize_results = NULL;
 }
 

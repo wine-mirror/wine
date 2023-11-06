@@ -24,7 +24,6 @@
 #include "winuser.h"
 #include "commctrl.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 #include "v6util.h"
 #include "msg.h"
@@ -404,7 +403,7 @@ static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radi
     int i;
 
     /* Allocate messages to test against, plus 2 implicit and 1 empty */
-    msg_start = msg = heap_alloc_zero(sizeof(*msg) * (test_messages_len + 3));
+    msg_start = msg = calloc(test_messages_len + 3, sizeof(*msg));
 
     /* Always needed, thus made implicit */
     init_test_message(TDN_DIALOG_CONSTRUCTED, 0, 0, msg++);
@@ -425,7 +424,7 @@ static void run_test_(TASKDIALOGCONFIG *info, int expect_button, int expect_radi
     ok_(file, line)(ret_radio == expect_radio_button,
                      "Wrong radio button. Expected %d, got %d\n", expect_radio_button, ret_radio);
 
-    heap_free(msg_start);
+    free(msg_start);
 }
 
 static const LONG_PTR test_ref_data = 123456;

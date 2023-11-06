@@ -27,7 +27,6 @@
 #include "winnls.h"
 #include "commctrl.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 #include "v6util.h"
 #include "msg.h"
@@ -254,18 +253,18 @@ static void run_test(DWORD style, const struct listbox_test test)
         WCHAR *txtw;
         CHAR *txt;
 
-        txt = heap_alloc_zero(size + 1);
+        txt = calloc(1, size + 1);
         resA = SendMessageA(hLB, LB_GETTEXT, i, (LPARAM)txt);
         ok(!strcmp(txt, strings[i]), "returned string for item %d does not match %s vs %s\n", i, txt, strings[i]);
 
-        txtw = heap_alloc_zero((size + 1) * sizeof(*txtw));
+        txtw = calloc(size + 1, sizeof(*txtw));
         resW = SendMessageW(hLB, LB_GETTEXT, i, (LPARAM)txtw);
         ok(resA == resW, "Unexpected text length.\n");
         WideCharToMultiByte(CP_ACP, 0, txtw, -1, txt, size, NULL, NULL);
         ok(!strcmp (txt, strings[i]), "Unexpected string for item %d, %s vs %s.\n", i, txt, strings[i]);
 
-        heap_free(txtw);
-        heap_free(txt);
+        free(txtw);
+        free(txt);
     }
 
     /* Confirm the count of items, and that an invalid delete does not remove anything */
