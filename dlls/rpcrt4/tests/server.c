@@ -285,21 +285,13 @@ static void InitFunctionPointers(void)
 void __RPC_FAR *__RPC_USER
 midl_user_allocate(SIZE_T n)
 {
-  return HeapAlloc(GetProcessHeap(), 0, n);
+  return malloc(n);
 }
 
 void __RPC_USER
 midl_user_free(void __RPC_FAR *p)
 {
-  HeapFree(GetProcessHeap(), 0, p);
-}
-
-static char *
-xstrdup(const char *s)
-{
-  char *d = HeapAlloc(GetProcessHeap(), 0, strlen(s) + 1);
-  strcpy(d, s);
-  return d;
+  free(p);
 }
 
 int __cdecl s_int_return(void)
@@ -801,7 +793,7 @@ void __cdecl s_get_a_bstr(bstr_t *b)
 {
   bstr_t bstr;
   short str[] = {5, 'W', 'i', 'n', 'e', 0};
-  bstr = HeapAlloc(GetProcessHeap(), 0, sizeof(str));
+  bstr = malloc(sizeof(str));
   memcpy(bstr, str, sizeof(str));
   *b = bstr + 1;
 }
@@ -1490,7 +1482,7 @@ union_tests(void)
 static test_list_t *
 null_list(void)
 {
-  test_list_t *n = HeapAlloc(GetProcessHeap(), 0, sizeof *n);
+  test_list_t *n = malloc(sizeof *n);
   n->t = TL_NULL;
   n->u.x = 0;
   return n;
@@ -1499,7 +1491,7 @@ null_list(void)
 static test_list_t *
 make_list(test_list_t *tail)
 {
-  test_list_t *n = HeapAlloc(GetProcessHeap(), 0, sizeof *n);
+  test_list_t *n = malloc(sizeof *n);
   n->t = TL_LIST;
   n->u.tail = tail;
   return n;
@@ -1510,7 +1502,7 @@ free_list(test_list_t *list)
 {
   if (list->t == TL_LIST)
     free_list(list->u.tail);
-  HeapFree(GetProcessHeap(), 0, list);
+  free(list);
 }
 
 ULONG __RPC_USER
@@ -1532,7 +1524,7 @@ puint_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, puint_t *p)
 {
   int n;
   memcpy(&n, buffer, sizeof n);
-  *p = HeapAlloc(GetProcessHeap(), 0, 10);
+  *p = malloc(10);
   sprintf(*p, "%d", n);
   return buffer + sizeof n;
 }
@@ -1540,7 +1532,7 @@ puint_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, puint_t *p)
 void __RPC_USER
 puint_t_UserFree(ULONG *flags, puint_t *p)
 {
-  HeapFree(GetProcessHeap(), 0, *p);
+  free(*p);
 }
 
 ULONG __RPC_USER
@@ -1563,7 +1555,7 @@ us_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, us_t *pus)
 {
   struct wire_us wus;
   memcpy(&wus, buffer, sizeof wus);
-  pus->x = HeapAlloc(GetProcessHeap(), 0, 10);
+  pus->x = malloc(10);
   sprintf(pus->x, "%d", wus.x);
   return buffer + sizeof wus;
 }
@@ -1571,7 +1563,7 @@ us_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, us_t *pus)
 void __RPC_USER
 us_t_UserFree(ULONG *flags, us_t *pus)
 {
-  HeapFree(GetProcessHeap(), 0, pus->x);
+  free(pus->x);
 }
 
 ULONG __RPC_USER
@@ -1593,7 +1585,7 @@ unsigned char * __RPC_USER
 bstr_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, bstr_t *b)
 {
   wire_bstr_t wb = (wire_bstr_t) buffer;
-  short *data = HeapAlloc(GetProcessHeap(), 0, (wb->n + 1) * sizeof *data);
+  short *data = malloc((wb->n + 1) * sizeof *data);
   data[0] = wb->n;
   memcpy(&data[1], wb->data, wb->n * sizeof data[1]);
   *b = &data[1];
@@ -1603,7 +1595,7 @@ bstr_t_UserUnmarshal(ULONG *flags, unsigned char *buffer, bstr_t *b)
 void __RPC_USER
 bstr_t_UserFree(ULONG *flags, bstr_t *b)
 {
-  HeapFree(GetProcessHeap(), 0, &((*b)[-1]));
+  free(&((*b)[-1]));
 }
 
 static void
@@ -1627,29 +1619,29 @@ pointer_tests(void)
   ok(test_list_length(list) == 3, "RPC test_list_length\n");
   ok(square_puint(p1) == 121, "RPC square_puint\n");
   pus.n = 4;
-  pus.ps = HeapAlloc(GetProcessHeap(), 0, pus.n * sizeof pus.ps[0]);
-  pus.ps[0] = xstrdup("5");
-  pus.ps[1] = xstrdup("6");
-  pus.ps[2] = xstrdup("7");
-  pus.ps[3] = xstrdup("8");
+  pus.ps = malloc(pus.n * sizeof pus.ps[0]);
+  pus.ps[0] = strdup("5");
+  pus.ps[1] = strdup("6");
+  pus.ps[2] = strdup("7");
+  pus.ps[3] = strdup("8");
   ok(sum_puints(&pus) == 26, "RPC sum_puints\n");
-  HeapFree(GetProcessHeap(), 0, pus.ps[0]);
-  HeapFree(GetProcessHeap(), 0, pus.ps[1]);
-  HeapFree(GetProcessHeap(), 0, pus.ps[2]);
-  HeapFree(GetProcessHeap(), 0, pus.ps[3]);
-  HeapFree(GetProcessHeap(), 0, pus.ps);
+  free(pus.ps[0]);
+  free(pus.ps[1]);
+  free(pus.ps[2]);
+  free(pus.ps[3]);
+  free(pus.ps);
   cpus.n = 4;
-  cpus.ps = HeapAlloc(GetProcessHeap(), 0, cpus.n * sizeof cpus.ps[0]);
-  cpus.ps[0] = xstrdup("5");
-  cpus.ps[1] = xstrdup("6");
-  cpus.ps[2] = xstrdup("7");
-  cpus.ps[3] = xstrdup("8");
+  cpus.ps = malloc(cpus.n * sizeof cpus.ps[0]);
+  cpus.ps[0] = strdup("5");
+  cpus.ps[1] = strdup("6");
+  cpus.ps[2] = strdup("7");
+  cpus.ps[3] = strdup("8");
   ok(sum_cpuints(&cpus) == 26, "RPC sum_puints\n");
-  HeapFree(GetProcessHeap(), 0, cpus.ps[0]);
-  HeapFree(GetProcessHeap(), 0, cpus.ps[1]);
-  HeapFree(GetProcessHeap(), 0, cpus.ps[2]);
-  HeapFree(GetProcessHeap(), 0, cpus.ps[3]);
-  HeapFree(GetProcessHeap(), 0, cpus.ps);
+  free(cpus.ps[0]);
+  free(cpus.ps[1]);
+  free(cpus.ps[2]);
+  free(cpus.ps[3]);
+  free(cpus.ps);
   ok(square_test_us(&tus) == 121, "RPC square_test_us\n");
 
   pa[0] = &a[0];
@@ -1668,8 +1660,8 @@ pointer_tests(void)
   get_a_bstr(&bstr);
   s_get_a_bstr(&bstr2);
   ok(!lstrcmpW((LPCWSTR)bstr, (LPCWSTR)bstr2), "bstr mismatch\n");
-  HeapFree(GetProcessHeap(), 0, bstr - 1);
-  HeapFree(GetProcessHeap(), 0, bstr2 - 1);
+  free(bstr - 1);
+  free(bstr2 - 1);
 
   free_list(list);
 
@@ -1680,11 +1672,11 @@ pointer_tests(void)
       wstr_array_t namesw;
 
       name.size = 10;
-      name.name = buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, name.size);
+      name.name = buffer = calloc(1, name.size);
       get_name(&name);
       ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
       ok(!strcmp(name.name, "Jeremy Wh"), "name didn't unmarshall properly, expected \"Jeremy Wh\", but got \"%s\"\n", name.name);
-      HeapFree(GetProcessHeap(), 0, name.name);
+      free(name.name);
 
       if (!is_interp) { /* broken in widl */
       n = -1;
@@ -1803,7 +1795,7 @@ array_tests(void)
   ok(sum_var_array(&c[2], 0) == 0, "RPC sum_conf_array\n");
 
   ok(dot_two_vectors(vs) == -4, "RPC dot_two_vectors\n");
-  cs = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(cs_t, ca[5]));
+  cs = malloc(FIELD_OFFSET(cs_t, ca[5]));
   cs->n = 5;
   cs->ca[0] = 3;
   cs->ca[1] = 5;
@@ -1811,7 +1803,7 @@ array_tests(void)
   cs->ca[3] = -1;
   cs->ca[4] = -4;
   ok(sum_cs(cs) == 1, "RPC sum_cs\n");
-  HeapFree(GetProcessHeap(), 0, cs);
+  free(cs);
 
   n = 5;
   cps.pn = &n;
@@ -1847,21 +1839,21 @@ array_tests(void)
   ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 0) == 15, "RPC sum_toplev_conf_cond\n");
 
-  dc = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_t, a[2]));
+  dc = malloc(FIELD_OFFSET(doub_carr_t, a[2]));
   dc->n = 2;
-  dc->a[0] = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_1_t, a[3]));
+  dc->a[0] = malloc(sizeof(doub_carr_1_t) + 3);
   dc->a[0]->n = 3;
   dc->a[0]->a[0] = 5;
   dc->a[0]->a[1] = 1;
   dc->a[0]->a[2] = 8;
-  dc->a[1] = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_1_t, a[2]));
+  dc->a[1] = malloc(sizeof(doub_carr_1_t) + 2);
   dc->a[1]->n = 2;
   dc->a[1]->a[0] = 2;
   dc->a[1]->a[1] = 3;
   ok(sum_doub_carr(dc) == 19, "RPC sum_doub_carr\n");
-  HeapFree(GetProcessHeap(), 0, dc->a[0]);
-  HeapFree(GetProcessHeap(), 0, dc->a[1]);
-  HeapFree(GetProcessHeap(), 0, dc);
+  free(dc->a[0]);
+  free(dc->a[1]);
+  free(dc);
 
   dc = NULL;
   make_pyramid_doub_carr(4, &dc);
@@ -1871,7 +1863,7 @@ array_tests(void)
   ok(sum_L1_norms(2, vs) == 21, "RPC sum_L1_norms\n");
 
   memset(api, 0, sizeof(api));
-  pi = HeapAlloc(GetProcessHeap(), 0, sizeof(*pi));
+  pi = malloc(sizeof(*pi));
   *pi = -1;
   api[0].pi = pi;
   get_numbers(1, 1, api);
@@ -1880,25 +1872,25 @@ array_tests(void)
 
   if (!old_windows_version)
   {
-      ns = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(numbers_struct_t, numbers[5]));
+      ns = calloc(1, FIELD_OFFSET(numbers_struct_t, numbers[5]));
       ns->length = 5;
       ns->size = 5;
       ns->numbers[0].pi = pi;
       get_numbers_struct(&ns);
       ok(ns->numbers[0].pi == pi, "RPC conformant varying struct embedded pointer changed from %p to %p\n", pi, ns->numbers[0].pi);
       ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
-      HeapFree(GetProcessHeap(), 0, ns);
+      free(ns);
   }
-  HeapFree(GetProcessHeap(), 0, pi);
+  free(pi);
 
-  pi = HeapAlloc(GetProcessHeap(), 0, 5 * sizeof(*pi));
+  pi = malloc(5 * sizeof(*pi));
   pi[0] = 3;  rpi[0] = &pi[0];
   pi[1] = 5;  rpi[1] = &pi[1];
   pi[2] = -2; rpi[2] = &pi[2];
   pi[3] = -1; rpi[3] = &pi[3];
   pi[4] = -4; rpi[4] = &pi[4];
   ok(sum_complex_array(5, rpi) == 1, "RPC sum_complex_array\n");
-  HeapFree(GetProcessHeap(), 0, pi);
+  free(pi);
 
   ok(sum_ptr_array(ptr_array) == 3, "RPC sum_ptr_array\n");
   ok(sum_array_ptr(&array) == 7, "RPC sum_array_ptr\n");
@@ -1956,11 +1948,11 @@ void __cdecl s_authinfo_test(unsigned int protseq, int secure)
             char *spn;
 
             len = WideCharToMultiByte(CP_ACP, 0, (const WCHAR *)privs, -1, NULL, 0, NULL, NULL);
-            spn = HeapAlloc( GetProcessHeap(), 0, len );
+            spn = malloc(len);
             WideCharToMultiByte(CP_ACP, 0, (const WCHAR *)privs, -1, spn, len, NULL, NULL);
 
             ok(!strcmp(domain_and_user, spn), "expected %s got %s\n", domain_and_user, spn);
-            HeapFree( GetProcessHeap(), 0, spn );
+            free(spn);
         }
         ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "level unchanged\n");
         ok(authnsvc == RPC_C_AUTHN_WINNT, "authnsvc unchanged\n");
@@ -2709,7 +2701,7 @@ START_TEST(server)
   set_mixed_interface();
 
   ok(!GetUserNameExA(NameSamCompatible, NULL, &size), "GetUserNameExA\n");
-  domain_and_user = HeapAlloc(GetProcessHeap(), 0, size);
+  domain_and_user = malloc(size);
   ok(GetUserNameExA(NameSamCompatible, domain_and_user, &size), "GetUserNameExA\n");
 
   argc = winetest_get_mainargs(&argv);
@@ -2775,5 +2767,5 @@ START_TEST(server)
     if (firewall_disabled) set_firewall(APP_REMOVE);
   }
 
-  HeapFree(GetProcessHeap(), 0, domain_and_user);
+  free(domain_and_user);
 }

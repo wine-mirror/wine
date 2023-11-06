@@ -34,7 +34,6 @@
 #include "rpcdce.h"
 #include "rpcproxy.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "cstub.h"
@@ -1082,7 +1081,7 @@ static HRESULT WINAPI delegating_invoke_chan_get_buffer(IRpcChannelBuffer *pchan
                                                         RPCOLEMESSAGE *msg,
                                                         REFIID iid)
 {
-    msg->Buffer = HeapAlloc(GetProcessHeap(), 0, msg->cbBuffer);
+    msg->Buffer = malloc(msg->cbBuffer);
     return S_OK;
 }
 
@@ -1149,7 +1148,7 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
         ok(*((DWORD*)msg.Buffer + 1) == S_OK, "buf[1] %08lx\n", *((DWORD*)msg.Buffer + 1));
     }
     /* free the buffer allocated by delegating_invoke_chan_get_buffer */
-    HeapFree(GetProcessHeap(), 0, msg.Buffer);
+    free(msg.Buffer);
     IRpcStubBuffer_Release(pstub);
 }
 static const CInterfaceProxyVtbl *cstub_ProxyVtblList2[] =
@@ -1300,7 +1299,7 @@ static ULONG WINAPI test_cf_Release(IClassFactory *iface)
 
 static HRESULT WINAPI test_cf_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID iid, void **out)
 {
-    ITest1 *obj = heap_alloc(sizeof(*obj));
+    ITest1 *obj = malloc(sizeof(*obj));
 
     obj->lpVtbl = &test1_vtbl;
 
