@@ -64,7 +64,7 @@ static const struct vulkan_funcs vulkan_funcs;
 
 struct wine_vk_surface
 {
-    struct wl_surface *client;
+    struct wayland_client_surface *client;
     VkSurfaceKHR native;
 };
 
@@ -75,7 +75,20 @@ static struct wine_vk_surface *wine_vk_surface_from_handle(VkSurfaceKHR handle)
 
 static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
 {
-    if (wine_vk_surface->client) wl_surface_destroy(wine_vk_surface->client);
+    if (wine_vk_surface->client)
+    {
+        HWND hwnd = wl_surface_get_user_data(wine_vk_surface->client->wl_surface);
+        struct wayland_surface *wayland_surface = wayland_surface_lock_hwnd(hwnd);
+
+        if (wayland_client_surface_release(wine_vk_surface->client) &&
+            wayland_surface)
+        {
+            wayland_surface->client = NULL;
+        }
+
+        if (wayland_surface) pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+
     free(wine_vk_surface);
 }
 
@@ -166,6 +179,7 @@ static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
     VkResult res;
     VkWaylandSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *wine_vk_surface;
+    struct wayland_surface *wayland_surface;
 
     TRACE("%p %p %p %p\n", instance, create_info, allocator, vk_surface);
 
@@ -180,7 +194,18 @@ static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
-    wine_vk_surface->client = wl_compositor_create_surface(process_wayland.wl_compositor);
+    wayland_surface = wayland_surface_lock_hwnd(create_info->hwnd);
+    if (!wayland_surface)
+    {
+        ERR("Failed to find wayland surface for hwnd=%p\n", create_info->hwnd);
+        /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto err;
+    }
+
+    wine_vk_surface->client = wayland_surface_get_client(wayland_surface);
+    pthread_mutex_unlock(&wayland_surface->mutex);
+
     if (!wine_vk_surface->client)
     {
         ERR("Failed to create client surface for hwnd=%p\n", create_info->hwnd);
@@ -193,7 +218,7 @@ static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
     create_info_host.pNext = NULL;
     create_info_host.flags = 0; /* reserved */
     create_info_host.display = process_wayland.wl_display;
-    create_info_host.surface = wine_vk_surface->client;
+    create_info_host.surface = wine_vk_surface->client->wl_surface;
 
     res = pvkCreateWaylandSurfaceKHR(instance, &create_info_host,
                                      NULL /* allocator */,

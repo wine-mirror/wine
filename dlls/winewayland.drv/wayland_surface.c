@@ -687,3 +687,70 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
     *window_x = round(surface_x * surface->window.scale);
     *window_y = round(surface_y * surface->window.scale);
 }
+
+/**********************************************************************
+ *          wayland_client_surface_release
+ */
+BOOL wayland_client_surface_release(struct wayland_client_surface *client)
+{
+    if (InterlockedDecrement(&client->ref)) return FALSE;
+
+    if (client->wl_subsurface)
+        wl_subsurface_destroy(client->wl_subsurface);
+    if (client->wl_surface)
+        wl_surface_destroy(client->wl_surface);
+
+    free(client);
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *          wayland_surface_get_client
+ */
+struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
+{
+    if (surface->client)
+    {
+        InterlockedIncrement(&surface->client->ref);
+        return surface->client;
+    }
+
+    surface->client = calloc(1, sizeof(*surface->client));
+    if (!surface->client)
+    {
+        ERR("Failed to allocate space for client surface\n");
+        goto err;
+    }
+
+    surface->client->ref = 1;
+
+    surface->client->wl_surface =
+        wl_compositor_create_surface(process_wayland.wl_compositor);
+    if (!surface->client->wl_surface)
+    {
+        ERR("Failed to create client wl_surface\n");
+        goto err;
+    }
+    wl_surface_set_user_data(surface->client->wl_surface, surface->hwnd);
+
+    surface->client->wl_subsurface =
+        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
+                                        surface->client->wl_surface,
+                                        surface->wl_surface);
+    if (!surface->client->wl_subsurface)
+    {
+        ERR("Failed to create client wl_subsurface\n");
+        goto err;
+    }
+
+    return surface->client;
+
+err:
+    if (surface->client)
+    {
+        wayland_client_surface_release(surface->client);
+        surface->client = NULL;
+    }
+    return NULL;
+}
