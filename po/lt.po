@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-10-11 23:56+0300\n"
+"PO-Revision-Date: 2023-11-07 09:32+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -18539,10 +18539,8 @@ msgid "MIME types"
 msgstr "MIME tipai"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Valdyti failų susie&jimus"
+msgstr "Valdyti failų ir protokolų susie&jimus"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
