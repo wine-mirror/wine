@@ -26,7 +26,6 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
