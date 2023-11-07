@@ -938,7 +938,7 @@
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
 @ cdecl __iswcsym(long)
-@ stub __iswcsymf
+@ cdecl __iswcsymf(long)
 @ stdcall -arch=arm __jump_unwind(ptr ptr) ntdll.__jump_unwind
 # extern __lconv
 @ cdecl __lconv_init()

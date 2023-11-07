@@ -915,7 +915,7 @@
 @ cdecl __iscsym(long) msvcr120.__iscsym
 @ cdecl __iscsymf(long) msvcr120.__iscsymf
 @ cdecl __iswcsym(long) msvcr120.__iswcsym
-@ stub __iswcsymf
+@ cdecl __iswcsymf(long) msvcr120.__iswcsymf
 @ stdcall -arch=arm __jump_unwind(ptr ptr) msvcr120.__jump_unwind
 # extern __lconv
 @ cdecl __lconv_init() msvcr120.__lconv_init

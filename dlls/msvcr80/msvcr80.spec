@@ -238,7 +238,7 @@
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
 @ cdecl __iswcsym(long)
-@ stub __iswcsymf
+@ cdecl __iswcsymf(long)
 # extern __lc_clike
 @ extern __lc_codepage MSVCRT___lc_codepage
 @ extern __lc_collate_cp MSVCRT___lc_collate_cp

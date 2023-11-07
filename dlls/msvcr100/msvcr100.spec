@@ -599,7 +599,7 @@
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
 @ cdecl __iswcsym(long)
-@ stub __iswcsymf
+@ cdecl __iswcsymf(long)
 # extern __lconv
 @ cdecl __lconv_init()
 @ cdecl -arch=i386 -norelay __libm_sse2_acos()
