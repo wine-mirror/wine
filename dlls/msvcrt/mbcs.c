@@ -160,6 +160,11 @@ static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x 
   return (unsigned char*) strrchr( (const char*)s, x );
 }
 
+static inline unsigned char* u__strrev(unsigned char *str)
+{
+  return (unsigned char*)_strrev((char *)str);
+}
+
 static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
 {
   return (unsigned char*) _strset( (char*)s, c);
@@ -2848,50 +2853,71 @@ size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
 }
 
 /*********************************************************************
- *              _mbsrev (MSVCRT.@)
+ *              _mbsrev_l (MSVCRT.@)
  */
-unsigned char* CDECL _mbsrev(unsigned char* str)
+unsigned char* CDECL _mbsrev_l(unsigned char* str, _locale_t locale)
 {
-    int i, len = _mbslen(str);
-    unsigned char *p, *temp=malloc(len*2);
+    int i, len;
+    unsigned char *p, *temp;
+    pthreadmbcinfo mbcinfo;
 
-    if(!temp)
+    if (!MSVCRT_CHECK_PMT(str))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (!mbcinfo->ismbcodepage)
+        return u__strrev(str);
+
+    len = _mbslen_l(str, locale);
+    temp = malloc(len * 2);
+    if (!temp)
         return str;
 
     /* unpack multibyte string to temp buffer */
-    p=str;
-    for(i=0; i<len; i++)
+    p = str;
+    for (i = 0; i < len; i++)
     {
-        if (_ismbblead(*p))
+        if (_ismbblead_l(*p, locale))
         {
-            temp[i*2]=*p++;
-            temp[i*2+1]=*p++;
+            temp[i * 2] = *p++;
+            temp[i * 2 + 1] = *p++;
         }
         else
         {
-            temp[i*2]=*p++;
-            temp[i*2+1]=0;
+            temp[i * 2] = *p++;
+            temp[i * 2 + 1] = 0;
         }
     }
 
     /* repack it in the reverse order */
-    p=str;
-    for(i=len-1; i>=0; i--)
+    p = str;
+    for (i = len - 1; i >= 0; i--)
     {
-        if(_ismbblead(temp[i*2]))
+        if (_ismbblead_l(temp[i * 2], locale))
         {
-            *p++=temp[i*2];
-            *p++=temp[i*2+1];
+            *p++ = temp[i * 2];
+            *p++ = temp[i * 2 + 1];
         }
         else
         {
-            *p++=temp[i*2];
+            *p++ = temp[i * 2];
         }
     }
 
     free(temp);
-
     return str;
+}
+
+/*********************************************************************
+ *              _mbsrev (MSVCRT.@)
+ */
+unsigned char* CDECL _mbsrev(unsigned char* str)
+{
+    return _mbsrev_l(str, NULL);
 }
 
 /*********************************************************************

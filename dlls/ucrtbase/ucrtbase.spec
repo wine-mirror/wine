@@ -694,7 +694,7 @@
 @ cdecl _mbsrchr(str long)
 @ cdecl _mbsrchr_l(str long ptr)
 @ cdecl _mbsrev(str)
-@ stub _mbsrev_l
+@ cdecl _mbsrev_l(str ptr)
 @ cdecl _mbsset(ptr long)
 @ stub _mbsset_l
 @ stub _mbsset_s
@@ -1263,7 +1263,7 @@
 @ cdecl _o__mbsrchr(str long) _mbsrchr
 @ cdecl _o__mbsrchr_l(str long ptr) _mbsrchr_l
 @ cdecl _o__mbsrev(str) _mbsrev
-@ stub _o__mbsrev_l
+@ cdecl _o__mbsrev_l(str ptr) _mbsrev_l
 @ cdecl _o__mbsset(ptr long) _mbsset
 @ stub _o__mbsset_l
 @ stub _o__mbsset_s
