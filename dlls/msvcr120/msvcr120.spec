@@ -1548,7 +1548,7 @@
 @ cdecl _mbsrev(str)
 @ cdecl _mbsrev_l(str ptr)
 @ cdecl _mbsset(ptr long)
-@ stub _mbsset_l
+@ cdecl _mbsset_l(ptr long ptr)
 @ stub _mbsset_s
 @ stub _mbsset_s_l
 @ cdecl _mbsspn(str str)

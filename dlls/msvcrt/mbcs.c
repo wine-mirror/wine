@@ -2205,27 +2205,45 @@ int CDECL _mbsbtype(const unsigned char *str, size_t count)
     return _mbsbtype_l(str, count, NULL);
 }
 
+
+/*********************************************************************
+ *		_mbsset_l(MSVCRT.@)
+ */
+unsigned char* CDECL _mbsset_l(unsigned char* str, unsigned int c, _locale_t locale)
+{
+    unsigned char* ret = str;
+    pthreadmbcinfo mbcinfo;
+
+    if (!MSVCRT_CHECK_PMT(str))
+        return NULL;
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (!mbcinfo->ismbcodepage || c < 256)
+        return u__strset(str, c); /* ASCII CP or SB char */
+
+    c &= 0xffff; /* Strip high bits */
+
+    while (str[0] && str[1])
+    {
+        *str++ = c >> 8;
+        *str++ = c & 0xff;
+    }
+    if (str[0])
+        str[0] = '\0'; /* FIXME: OK to shorten? */
+
+    return ret;
+}
+
 /*********************************************************************
  *		_mbsset(MSVCRT.@)
  */
 unsigned char* CDECL _mbsset(unsigned char* str, unsigned int c)
 {
-  unsigned char* ret = str;
-
-  if(!get_mbcinfo()->ismbcodepage || c < 256)
-    return u__strset(str, c); /* ASCII CP or SB char */
-
-  c &= 0xffff; /* Strip high bits */
-
-  while(str[0] && str[1])
-  {
-    *str++ = c >> 8;
-    *str++ = c & 0xff;
-  }
-  if(str[0])
-    str[0] = '\0'; /* FIXME: OK to shorten? */
-
-  return ret;
+    return _mbsset_l(str, c, NULL);
 }
 
 /*********************************************************************
