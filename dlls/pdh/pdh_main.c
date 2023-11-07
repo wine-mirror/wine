@@ -97,7 +97,8 @@ static struct counter *create_counter( void )
 
 static void destroy_counter( struct counter *counter )
 {
-    counter->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &counter->magic, sizeof( counter->magic ) );
     free( counter->path );
     free( counter );
 }
@@ -130,7 +131,8 @@ static struct query *create_query( void )
 
 static void destroy_query( struct query *query )
 {
-    query->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &query->magic, sizeof( query->magic ) );
     free( query );
 }
 
