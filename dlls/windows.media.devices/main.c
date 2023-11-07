@@ -25,7 +25,6 @@
 #include "winbase.h"
 #include "winstring.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "objbase.h"
 
 #include "activation.h"
@@ -193,7 +192,7 @@ static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, 
         return hr;
     }
 
-    s = heap_alloc((sizeof(id_fmt_pre) - sizeof(WCHAR)) +
+    s = malloc((sizeof(id_fmt_pre) - sizeof(WCHAR)) +
             (sizeof(id_fmt_hash) - sizeof(WCHAR)) +
             (wcslen(devid) + GUID_STR_LEN + 1 /* nul */) * sizeof(WCHAR));
 
@@ -210,7 +209,7 @@ static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, 
     if (FAILED(hr))
         WARN("WindowsCreateString failed: %08lx\n", hr);
 
-    heap_free(s);
+    free(s);
 
     CoTaskMemFree(devid);
     IMMDevice_Release(dev);
