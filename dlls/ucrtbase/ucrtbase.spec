@@ -609,7 +609,7 @@
 @ cdecl _mbctombb_l(long ptr)
 @ cdecl _mbctoupper(long)
 @ cdecl _mbctoupper_l(long ptr)
-@ stub _mblen_l
+@ cdecl _mblen_l(str long ptr)
 @ cdecl _mbsbtype(str long)
 @ cdecl _mbsbtype_l(str long ptr)
 @ cdecl _mbscat_s(ptr long str)
@@ -1179,7 +1179,7 @@
 @ cdecl _o__mbctombb_l(long ptr) _mbctombb_l
 @ cdecl _o__mbctoupper(long) _mbctoupper
 @ cdecl _o__mbctoupper_l(long ptr) _mbctoupper_l
-@ stub _o__mblen_l
+@ cdecl _o__mblen_l(str long ptr) _mblen_l
 @ cdecl _o__mbsbtype(str long) _mbsbtype
 @ cdecl _o__mbsbtype_l(str long ptr) _mbsbtype_l
 @ cdecl _o__mbscat_s(ptr long str) _mbscat_s

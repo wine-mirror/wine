@@ -1462,7 +1462,7 @@
 @ cdecl _mbctoupper(long)
 @ cdecl _mbctoupper_l(long ptr)
 @ extern _mbctype MSVCRT_mbctype
-@ stub _mblen_l
+@ cdecl _mblen_l(str long ptr)
 @ cdecl _mbsbtype(str long)
 @ cdecl _mbsbtype_l(str long ptr)
 @ cdecl _mbscat_s(ptr long str)

@@ -1302,7 +1302,7 @@
 @ cdecl _malloc_crt(long) msvcr120._malloc_crt
 # extern _mbcasemap
 @ extern _mbctype msvcr120._mbctype
-@ stub _mblen_l
+@ cdecl _mblen_l(str long ptr) msvcr120._mblen_l
 @ cdecl _mbstowcs_l(ptr str long ptr) msvcr120._mbstowcs_l
 @ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) msvcr120._mbstowcs_s_l
 @ cdecl _mbstrlen(str) msvcr120._mbstrlen

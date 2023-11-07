@@ -2984,21 +2984,34 @@ unsigned char* CDECL _mbspbrk(const unsigned char *str, const unsigned char *acc
  */
 
 /*********************************************************************
- *		mblen(MSVCRT.@)
+ *		_mblen_l(MSVCRT.@)
  * REMARKS
  *  Unlike most of the multibyte string functions this function uses
  *  the locale codepage, not the codepage set by _setmbcp
  */
+int CDECL _mblen_l(const char* str, size_t size, _locale_t locale)
+{
+    pthreadlocinfo locinfo;
+
+    if (!str || !*str || !size)
+        return 0;
+
+    if (locale)
+        locinfo = locale->locinfo;
+    else
+        locinfo = get_locinfo();
+
+    if (locinfo->mb_cur_max == 1)
+        return 1; /* ASCII CP */
+    return !_isleadbyte_l((unsigned char)*str, locale) ? 1 : (size > 1 ? 2 : -1);
+}
+
+/*********************************************************************
+ *		mblen(MSVCRT.@)
+ */
 int CDECL mblen(const char* str, size_t size)
 {
-  if (str && *str && size)
-  {
-    if(get_locinfo()->mb_cur_max == 1)
-      return 1; /* ASCII CP */
-
-    return !isleadbyte((unsigned char)*str) ? 1 : (size>1 ? 2 : -1);
-  }
-  return 0;
+    return _mblen_l(str, size, NULL);
 }
 
 /*********************************************************************
