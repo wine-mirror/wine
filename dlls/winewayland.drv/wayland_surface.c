@@ -758,6 +758,8 @@ BOOL wayland_client_surface_release(struct wayland_client_surface *client)
  */
 struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
 {
+    struct wl_region *empty_region;
+
     if (surface->client)
     {
         InterlockedIncrement(&surface->client->ref);
@@ -781,6 +783,16 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
         goto err;
     }
     wl_surface_set_user_data(surface->client->wl_surface, surface->hwnd);
+
+    /* Let parent handle all pointer events. */
+    empty_region = wl_compositor_create_region(process_wayland.wl_compositor);
+    if (!empty_region)
+    {
+        ERR("Failed to create wl_region\n");
+        goto err;
+    }
+    wl_surface_set_input_region(surface->client->wl_surface, empty_region);
+    wl_region_destroy(empty_region);
 
     surface->client->wl_subsurface =
         wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
