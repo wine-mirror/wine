@@ -150,6 +150,11 @@ static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
   return (unsigned char*) strchr( (const char*)s, x );
 }
 
+static inline unsigned char* u_strpbrk(const unsigned char *str, const unsigned char *accept)
+{
+  return (unsigned char*)strpbrk((const char*)str, (const char*)accept);
+}
+
 static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x )
 {
   return (unsigned char*) strrchr( (const char*)s, x );
@@ -2871,25 +2876,45 @@ unsigned char* CDECL _mbsrev(unsigned char* str)
 }
 
 /*********************************************************************
- *		_mbspbrk (MSVCRT.@)
+ *		_mbspbrk_l (MSVCRT.@)
  */
-unsigned char* CDECL _mbspbrk(const unsigned char* str, const unsigned char* accept)
+unsigned char* CDECL _mbspbrk_l(const unsigned char *str,
+        const unsigned char *accept, _locale_t locale)
 {
     const unsigned char* p;
+    pthreadmbcinfo mbcinfo;
 
-    while(*str)
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (!mbcinfo->ismbcodepage)
+        return u_strpbrk(str, accept);
+
+    if (!MSVCRT_CHECK_PMT(str && accept))
+        return NULL;
+
+    while (*str)
     {
-        for(p = accept; *p; p += (_ismbblead(*p)?2:1) )
+        for (p = accept; *p; p += (_ismbblead_l(*p, locale) ? 2 : 1))
         {
             if (*p == *str)
-                if( !_ismbblead(*p) || ( *(p+1) == *(str+1) ) )
-                     return (unsigned char*)str;
+                if (!_ismbblead_l(*p, locale) || p[1] == str[1])
+                    return (unsigned char*)str;
         }
-        str += (_ismbblead(*str)?2:1);
+        str += (_ismbblead_l(*str, locale) ? 2 : 1);
     }
     return NULL;
 }
 
+/*********************************************************************
+ *		_mbspbrk (MSVCRT.@)
+ */
+unsigned char* CDECL _mbspbrk(const unsigned char *str, const unsigned char *accept)
+{
+    return _mbspbrk_l(str, accept, NULL);
+}
 
 /*
  * Functions depending on locale codepage
