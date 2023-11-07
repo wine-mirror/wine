@@ -266,6 +266,8 @@ static VkResult check_queue_present(const VkPresentInfoKHR *present_info,
             int client_height = wayland_surface->window.client_rect.bottom -
                                 wayland_surface->window.client_rect.top;
 
+            wayland_surface_ensure_contents(wayland_surface);
+
             pthread_mutex_unlock(&wayland_surface->mutex);
 
             if (client_width == wine_vk_swapchain->extent.width &&

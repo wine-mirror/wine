@@ -293,6 +293,9 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);
     wl_surface_commit(surface->wl_surface);
 
+    surface->buffer_width = 0;
+    surface->buffer_height = 0;
+
     wl_display_flush(process_wayland.wl_display);
 }
 
@@ -336,6 +339,9 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
         }
         free(surface_damage);
     }
+
+    surface->buffer_width = shm_buffer->width;
+    surface->buffer_height = shm_buffer->height;
 }
 
 /**********************************************************************
@@ -824,4 +830,66 @@ err:
         surface->client = NULL;
     }
     return NULL;
+}
+
+static void dummy_buffer_release(void *data, struct wl_buffer *buffer)
+{
+    struct wayland_shm_buffer *shm_buffer = data;
+    TRACE("shm_buffer=%p\n", shm_buffer);
+    wayland_shm_buffer_unref(shm_buffer);
+}
+
+static const struct wl_buffer_listener dummy_buffer_listener =
+{
+    dummy_buffer_release
+};
+
+/**********************************************************************
+ *          wayland_surface_ensure_contents
+ *
+ * Ensure that the wayland surface has up-to-date contents, by committing
+ * a dummy buffer if necessary.
+ */
+void wayland_surface_ensure_contents(struct wayland_surface *surface)
+{
+    struct wayland_shm_buffer *dummy_shm_buffer;
+    HRGN damage;
+    int width, height;
+    BOOL needs_contents;
+
+    width = surface->window.rect.right - surface->window.rect.left;
+    height = surface->window.rect.bottom - surface->window.rect.top;
+    needs_contents = surface->window.visible &&
+                     (surface->buffer_width != width ||
+                      surface->buffer_height != height);
+
+    TRACE("surface=%p hwnd=%p needs_contents=%d\n",
+          surface, surface->hwnd, needs_contents);
+
+    if (!needs_contents) return;
+
+    /* Create a transparent dummy buffer. */
+    dummy_shm_buffer = wayland_shm_buffer_create(width, height, WL_SHM_FORMAT_ARGB8888);
+    if (!dummy_shm_buffer)
+    {
+        ERR("Failed to create dummy buffer\n");
+        return;
+    }
+    wl_buffer_add_listener(dummy_shm_buffer->wl_buffer, &dummy_buffer_listener,
+                           dummy_shm_buffer);
+
+    if (!(damage = NtGdiCreateRectRgn(0, 0, width, height)))
+        WARN("Failed to create damage region for dummy buffer\n");
+
+    if (wayland_surface_reconfigure(surface))
+    {
+        wayland_surface_attach_shm(surface, dummy_shm_buffer, damage);
+        wl_surface_commit(surface->wl_surface);
+    }
+    else
+    {
+        wayland_shm_buffer_unref(dummy_shm_buffer);
+    }
+
+    if (damage) NtGdiDeleteObjectApp(damage);
 }

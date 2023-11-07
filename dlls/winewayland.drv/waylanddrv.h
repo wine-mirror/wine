@@ -164,6 +164,7 @@ struct wayland_window_config
     enum wayland_surface_config_state state;
     /* The scale (i.e., normalized dpi) the window is rendering at. */
     double scale;
+    BOOL visible;
 };
 
 struct wayland_client_surface
@@ -187,6 +188,7 @@ struct wayland_surface
     BOOL resizing;
     struct wayland_window_config window;
     struct wayland_client_surface *client;
+    int buffer_width, buffer_height;
 };
 
 struct wayland_shm_buffer
@@ -240,6 +242,7 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       int *window_x, int *window_y) DECLSPEC_HIDDEN;
 struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 BOOL wayland_client_surface_release(struct wayland_client_surface *client) DECLSPEC_HIDDEN;
+void wayland_surface_ensure_contents(struct wayland_surface *surface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland SHM buffer
