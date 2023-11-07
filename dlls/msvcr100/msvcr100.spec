@@ -598,7 +598,7 @@
 @ cdecl __isascii(long)
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
-@ stub __iswcsym
+@ cdecl __iswcsym(long)
 @ stub __iswcsymf
 # extern __lconv
 @ cdecl __lconv_init()
