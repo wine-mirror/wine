@@ -162,7 +162,8 @@ static void destroy_key( struct key *key )
 {
     if (!key) return;
     BCryptDestroyKey( key->handle );
-    key->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &key->magic, sizeof(key->magic) );
     free( key );
 }
 
@@ -213,7 +214,8 @@ static void destroy_container( struct container *container )
     if (!container) return;
     destroy_key( container->exch_key );
     destroy_key( container->sign_key );
-    container->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &container->magic, sizeof(container->magic) );
     free( container );
 }
 
@@ -821,7 +823,8 @@ static void destroy_hash( struct hash *hash )
 {
     if (!hash) return;
     BCryptDestroyHash( hash->handle );
-    hash->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &hash->magic, sizeof(hash->magic) );
     free( hash );
 }
 
