@@ -29,7 +29,6 @@
 #include <stdio.h>
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -73,8 +72,8 @@ static void ShowUsage(int ExitCode)
        No typo: The LPWSTR parameter must be a LPWSTR * for this mode */
     len = LoadStringW(hmsi, 10, (LPWSTR) &msi_res, 0);
 
-    msi_res = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-    msiexec_help = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) + sizeof(msiexec_version));
+    msi_res = malloc((len + 1) * sizeof(WCHAR));
+    msiexec_help = malloc((len + 1) * sizeof(WCHAR) + sizeof(msiexec_version));
     if (msi_res && msiexec_help) {
         *msi_res = 0;
         LoadStringW(hmsi, 10, msi_res, len + 1);
@@ -82,8 +81,8 @@ static void ShowUsage(int ExitCode)
         swprintf(msiexec_help, len + 1 + ARRAY_SIZE(msiexec_version), msi_res, msiexec_version);
         MsiMessageBoxW(0, msiexec_help, NULL, 0, GetUserDefaultLangID(), 0);
     }
-    HeapFree(GetProcessHeap(), 0, msi_res);
-    HeapFree(GetProcessHeap(), 0, msiexec_help);
+    free(msi_res);
+    free(msiexec_help);
     ExitProcess(ExitCode);
 }
 
@@ -101,7 +100,7 @@ static VOID StringListAppend(struct string_list **list, LPCWSTR str)
 {
 	struct string_list *entry;
 
-	entry = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(struct string_list, str[lstrlenW(str) + 1]));
+	entry = malloc(FIELD_OFFSET(struct string_list, str[wcslen(str) + 1]));
 	if(!entry)
 	{
 		WINE_ERR("Out of memory!\n");
@@ -134,7 +133,7 @@ static LPWSTR build_properties(struct string_list *property_list)
 	for(list = property_list; list; list = list->next)
 		len += lstrlenW(list->str) + 3;
 
-	ret = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+	ret = malloc(len * sizeof(WCHAR));
 
 	/* add a space before each string, and quote the value */
 	p = ret;
@@ -178,7 +177,7 @@ static LPWSTR build_transforms(struct string_list *transform_list)
 	for(list = transform_list; list; list = list->next)
 		len += lstrlenW(list->str) + 1;
 
-	ret = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+	ret = malloc(len * sizeof(WCHAR));
 
 	/* add all the transforms with a semicolon between each one */
 	p = ret;
@@ -218,10 +217,10 @@ static BOOL msi_strequal(LPCWSTR str1, LPCSTR str2)
 		return FALSE;
 	if( lstrlenW(str1) != (len-1) )
 		return FALSE;
-	strW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+	strW = malloc(sizeof(WCHAR) * len);
 	MultiByteToWideChar( CP_ACP, 0, str2, -1, strW, len);
 	ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, len, strW, len);
-	HeapFree(GetProcessHeap(), 0, strW);
+	free(strW);
 	return (ret == CSTR_EQUAL);
 }
 
@@ -246,10 +245,10 @@ static BOOL msi_strprefix(LPCWSTR str1, LPCSTR str2)
 		return FALSE;
 	if( lstrlenW(str1) < (len-1) )
 		return FALSE;
-	strW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len);
+	strW = malloc(sizeof(WCHAR) * len);
 	MultiByteToWideChar( CP_ACP, 0, str2, -1, strW, len);
 	ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, str1, len-1, strW, len-1);
-	HeapFree(GetProcessHeap(), 0, strW);
+	free(strW);
 	return (ret == CSTR_EQUAL);
 }
 
@@ -388,7 +387,7 @@ static DWORD client_pid;
 static DWORD CALLBACK custom_action_thread(void *arg)
 {
     GUID guid = *(GUID *)arg;
-    heap_free(arg);
+    free(arg);
     return __wine_msi_call_dll_function(client_pid, &guid);
 }
 
@@ -429,7 +428,7 @@ static int custom_action_server(const WCHAR *arg)
             return 0;
         }
 
-        thread_guid = heap_alloc(sizeof(GUID));
+        thread_guid = malloc(sizeof(GUID));
         memcpy(thread_guid, &guid, sizeof(GUID));
         thread = CreateThread(NULL, 0, custom_action_thread, thread_guid, 0, NULL);
 
@@ -533,13 +532,13 @@ static void process_args( WCHAR *cmdline, int *pargc, WCHAR ***pargv )
     *pargv = NULL;
 
     count = chomp( cmdline, NULL );
-    if (!(p = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(cmdline) + count + 1) * sizeof(WCHAR) )))
+    if (!(p = malloc( (wcslen(cmdline) + count + 1) * sizeof(WCHAR) )))
         return;
 
     count = chomp( cmdline, p );
-    if (!(argv = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(WCHAR *) )))
+    if (!(argv = malloc( (count + 1) * sizeof(WCHAR *) )))
     {
-        HeapFree( GetProcessHeap(), 0, p );
+        free( p );
         return;
     }
     for (i = 0; i < count; i++)
@@ -569,7 +568,7 @@ static BOOL process_args_from_reg( const WCHAR *ident, int *pargc, WCHAR ***parg
 	if(r == ERROR_SUCCESS && type == REG_SZ)
 	{
 		int len = lstrlenW( *pargv[0] );
-		if (!(buf = HeapAlloc( GetProcessHeap(), 0, sz + (len + 1) * sizeof(WCHAR) )))
+		if (!(buf = malloc( (len + 1) * sizeof(WCHAR) )))
 		{
 			RegCloseKey( hkey );
 			return FALSE;
@@ -582,7 +581,7 @@ static BOOL process_args_from_reg( const WCHAR *ident, int *pargc, WCHAR ***parg
 			process_args(buf, pargc, pargv);
 			ret = TRUE;
 		}
-		HeapFree(GetProcessHeap(), 0, buf);
+		free(buf);
 	}
 	RegCloseKey(hkey);
 	return ret;
@@ -594,7 +593,7 @@ static WCHAR *get_path_with_extension(const WCHAR *package_name)
     unsigned int p;
     WCHAR *path;
 
-    if (!(path = heap_alloc(lstrlenW(package_name) * sizeof(WCHAR) + sizeof(ext))))
+    if (!(path = malloc(wcslen(package_name) * sizeof(WCHAR) + sizeof(ext))))
     {
         WINE_ERR("No memory.\n");
         return NULL;
@@ -606,7 +605,7 @@ static WCHAR *get_path_with_extension(const WCHAR *package_name)
         --p;
     if (path[p] == '.')
     {
-        heap_free(path);
+        free(path);
         return NULL;
     }
     lstrcatW(path, ext);
@@ -1071,7 +1070,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					&& (path = get_path_with_extension(PackageName)))
 			{
 				ReturnCode = MsiInstallProductW(path, Properties);
-				heap_free(path);
+				free(path);
 			}
 		}
 	}
@@ -1085,7 +1084,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					&& (path = get_path_with_extension(PackageName)))
 			{
 				ReturnCode = MsiReinstallProductW(path, RepairMode);
-				heap_free(path);
+				free(path);
 			}
 		}
 	}
