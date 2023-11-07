@@ -54,6 +54,7 @@ typedef struct VkWaylandSurfaceCreateInfoKHR
 static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
+static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
@@ -224,6 +225,23 @@ static void wayland_vkDestroyInstance(VkInstance instance,
     pvkDestroyInstance(instance, NULL /* allocator */);
 }
 
+static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
+                                        const VkAllocationCallbacks *allocator)
+{
+    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
+
+    TRACE("%p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
+    if (!wine_vk_surface) return;
+
+    pvkDestroySurfaceKHR(instance, wine_vk_surface->native, NULL /* allocator */);
+    wine_vk_surface_destroy(wine_vk_surface);
+}
+
 static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer_name,
                                                                uint32_t *count,
                                                                VkExtensionProperties* properties)
@@ -317,6 +335,7 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkCreateInstance);
     LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
     LOAD_FUNCPTR(vkDestroyInstance);
+    LOAD_FUNCPTR(vkDestroySurfaceKHR);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
@@ -334,6 +353,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkCreateInstance = wayland_vkCreateInstance,
     .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
     .p_vkDestroyInstance = wayland_vkDestroyInstance,
+    .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
