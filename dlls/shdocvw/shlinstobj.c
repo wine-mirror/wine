@@ -105,7 +105,7 @@ static ULONG WINAPI RegistryPropertyBag_IPropertyBag_Release(IPropertyBag *iface
     if (cRef == 0) {
         TRACE("Destroying This=%p)\n", This);
         RegCloseKey(This->m_hInitPropertyBagKey);
-        heap_free(This);
+        free(This);
         SHDOCVW_UnlockModule();
     }
 
@@ -129,20 +129,20 @@ static HRESULT WINAPI RegistryPropertyBag_IPropertyBag_Read(IPropertyBag *iface,
     if (res != ERROR_SUCCESS) 
         return E_INVALIDARG;
 
-    pwszValue = heap_alloc(cbData);
+    pwszValue = malloc(cbData);
     if (!pwszValue)
         return E_OUTOFMEMORY;
- 
+
     res = RegQueryValueExW(This->m_hInitPropertyBagKey, pwszPropName, NULL, &dwType, 
                            (LPBYTE)pwszValue, &cbData);
     if (res != ERROR_SUCCESS) {
-        heap_free(pwszValue);
+        free(pwszValue);
         return E_INVALIDARG;
     }
 
     V_VT(pVar) = VT_BSTR;
     V_BSTR(pVar) = SysAllocString(pwszValue);
-    heap_free(pwszValue);
+    free(pwszValue);
 
     if (vtDst != VT_BSTR) {
         hr = VariantChangeTypeEx(pVar, pVar, LOCALE_SYSTEM_DEFAULT, 0, vtDst);
@@ -174,8 +174,8 @@ static HRESULT RegistryPropertyBag_Constructor(HKEY hInitPropertyBagKey, REFIID 
 
     TRACE("(hInitPropertyBagKey=%p, riid=%s, ppvObject=%p)\n", hInitPropertyBagKey, 
         debugstr_guid(riid), ppvObject);
-    
-    pRegistryPropertyBag = heap_alloc(sizeof(RegistryPropertyBag));
+
+    pRegistryPropertyBag = malloc(sizeof(RegistryPropertyBag));
     if (pRegistryPropertyBag) {
         pRegistryPropertyBag->IPropertyBag_iface.lpVtbl = &RegistryPropertyBag_IPropertyBagVtbl;
         pRegistryPropertyBag->m_cRef = 0;
@@ -256,7 +256,7 @@ static ULONG WINAPI InstanceObjectFactory_IClassFactory_Release(IClassFactory *i
     if (cRef == 0) {
         IClassFactory_LockServer(iface, FALSE);
         IPropertyBag_Release(This->m_pPropertyBag);
-        heap_free(This);
+        free(This);
     }
 
     return cRef;
@@ -322,7 +322,7 @@ static HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *
     TRACE("(RegistryPropertyBag=%p, riid=%s, ppvObject=%p)\n", pPropertyBag,
         debugstr_guid(riid), ppvObject);
 
-    pInstanceObjectFactory = heap_alloc(sizeof(InstanceObjectFactory));
+    pInstanceObjectFactory = malloc(sizeof(InstanceObjectFactory));
     if (pInstanceObjectFactory) {
         pInstanceObjectFactory->IClassFactory_iface.lpVtbl = &InstanceObjectFactory_IClassFactoryVtbl;
         pInstanceObjectFactory->m_cRef = 0;

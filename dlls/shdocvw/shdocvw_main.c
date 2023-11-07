@@ -104,14 +104,14 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
         ExitProcess(1);
 
     len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
-    cmdline = heap_alloc(len*sizeof(WCHAR));
+    cmdline = malloc(len * sizeof(WCHAR));
     if(!cmdline)
         ExitProcess(1);
     MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, cmdline, len);
 
     ret = pIEWinMain(cmdline, nShowWindow);
 
-    heap_free(cmdline);
+    free(cmdline);
     return ret;
 }
 
@@ -403,13 +403,13 @@ DWORD WINAPI ParseURLFromOutsideSourceA(LPCSTR url, LPSTR out, LPDWORD plen, LPD
 
     if (url) {
         len = MultiByteToWideChar(CP_ACP, 0, url, -1, NULL, 0);
-        urlW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, url, -1, urlW, len);
     }
 
     len = ARRAY_SIZE(buffer);
     ParseURLFromOutsideSourceW(urlW, buffer, &len, unknown);
-    HeapFree(GetProcessHeap(), 0, urlW);
+    free(urlW);
 
     needed = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
 
@@ -460,11 +460,11 @@ DWORD WINAPI SHRestricted2A(DWORD restriction, LPCSTR url, DWORD reserved)
     TRACE("(%ld, %s, %ld)\n", restriction, debugstr_a(url), reserved);
     if (url) {
         DWORD len = MultiByteToWideChar(CP_ACP, 0, url, -1, NULL, 0);
-        urlW = heap_alloc(len * sizeof(WCHAR));
+        urlW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, url, -1, urlW, len);
     }
     res = SHRestricted2W(restriction, urlW, reserved);
-    heap_free(urlW);
+    free(urlW);
     return res;
 }
 
@@ -547,10 +547,10 @@ BOOL WINAPI DoOrganizeFavDlg(HWND hwnd, LPCSTR initDir)
 
     if (initDir) {
         DWORD len = MultiByteToWideChar(CP_ACP, 0, initDir, -1, NULL, 0);
-        initDirW = heap_alloc(len * sizeof(WCHAR));
+        initDirW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, initDir, -1, initDirW, len);
     }
     res = DoOrganizeFavDlgW(hwnd, initDirW);
-    heap_free(initDirW);
+    free(initDirW);
     return res;
 }
