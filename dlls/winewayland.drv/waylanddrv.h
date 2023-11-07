@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "ntgdi.h"
 #include "wine/gdi_driver.h"
+#include "wine/list.h"
 #include "wine/rbtree.h"
 
 #include "unixlib.h"
