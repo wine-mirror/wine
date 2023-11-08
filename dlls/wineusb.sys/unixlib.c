@@ -362,6 +362,7 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
                 break;
             }
 
+            case URB_FUNCTION_VENDOR_DEVICE:
             case URB_FUNCTION_VENDOR_INTERFACE:
             {
                 struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
@@ -539,10 +540,11 @@ static NTSTATUS usb_submit_urb(void *args)
             return STATUS_SUCCESS;
         }
 
+        case URB_FUNCTION_VENDOR_DEVICE:
         case URB_FUNCTION_VENDOR_INTERFACE:
         {
             struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
-            uint8_t req_type = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+            uint8_t req_type = LIBUSB_REQUEST_TYPE_VENDOR;
             struct transfer_ctx *transfer_ctx;
             unsigned char *buffer;
 
@@ -550,6 +552,11 @@ static NTSTATUS usb_submit_urb(void *args)
                 return STATUS_NO_MEMORY;
             transfer_ctx->irp = irp;
             transfer_ctx->transfer_buffer = params->transfer_buffer;
+
+            if (urb->UrbHeader.Function == URB_FUNCTION_VENDOR_DEVICE)
+                req_type |= LIBUSB_RECIPIENT_DEVICE;
+            else
+                req_type |= LIBUSB_RECIPIENT_INTERFACE;
 
             if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
                 req_type |= LIBUSB_ENDPOINT_IN;
