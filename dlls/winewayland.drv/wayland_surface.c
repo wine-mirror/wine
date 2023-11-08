@@ -477,6 +477,7 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface)
 {
     struct wayland_window_config *window = &surface->window;
     int client_x, client_y, x, y;
+    int client_width, client_height, width, height;
 
     if (!surface->client) return;
 
@@ -484,11 +485,32 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface)
     client_x = window->client_rect.left - window->rect.left;
     client_y = window->client_rect.top - window->rect.top;
 
-    wayland_surface_coords_from_window(surface, client_x, client_y, &x, &y);
+    client_width = window->client_rect.right - window->client_rect.left;
+    client_height = window->client_rect.bottom - window->client_rect.top;
 
-    TRACE("hwnd=%p subsurface=%d,%d\n", surface->hwnd, x, y);
+    wayland_surface_coords_from_window(surface, client_x, client_y, &x, &y);
+    wayland_surface_coords_from_window(surface, client_width, client_height,
+                                       &width, &height);
+
+    TRACE("hwnd=%p subsurface=%d,%d+%dx%d\n", surface->hwnd, x, y, width, height);
 
     wl_subsurface_set_position(surface->client->wl_subsurface, x, y);
+
+    if (surface->client->wp_viewport)
+    {
+        if (width != 0 && height != 0)
+        {
+            wp_viewport_set_destination(surface->client->wp_viewport,
+                                        width, height);
+        }
+        else
+        {
+            /* We can't have a 0x0 destination, use 1x1 instead. */
+            wp_viewport_set_destination(surface->client->wp_viewport, 1, 1);
+        }
+    }
+
+    wl_surface_commit(surface->client->wl_surface);
 }
 
 /**********************************************************************
@@ -719,6 +741,8 @@ BOOL wayland_client_surface_release(struct wayland_client_surface *client)
 {
     if (InterlockedDecrement(&client->ref)) return FALSE;
 
+    if (client->wp_viewport)
+        wp_viewport_destroy(client->wp_viewport);
     if (client->wl_subsurface)
         wl_subsurface_destroy(client->wl_subsurface);
     if (client->wl_surface)
@@ -766,6 +790,13 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
     {
         ERR("Failed to create client wl_subsurface\n");
         goto err;
+    }
+
+    if (process_wayland.wp_viewporter)
+    {
+        surface->client->wp_viewport =
+            wp_viewporter_get_viewport(process_wayland.wp_viewporter,
+                                        surface->client->wl_surface);
     }
 
     wayland_surface_reconfigure_client(surface);

@@ -170,6 +170,7 @@ struct wayland_client_surface
     LONG ref;
     struct wl_surface *wl_surface;
     struct wl_subsurface *wl_subsurface;
+    struct wp_viewport *wp_viewport;
 };
 
 struct wayland_surface
