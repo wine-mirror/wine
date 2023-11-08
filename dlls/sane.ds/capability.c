@@ -186,7 +186,7 @@ static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH, ICAP_SUPPORTEDSIZES };
 
-    return msg_get_array(pCapability, TWTY_UINT16, supported_caps, sizeof(supported_caps) / sizeof(supported_caps[0]));
+    return msg_get_array(pCapability, TWTY_UINT16, supported_caps, ARRAY_SIZE(supported_caps));
 }
 
 
