@@ -73,7 +73,8 @@ static void free_allocation(struct memory_allocation *item)
     }
 
     list_remove(&item->entry);
-    item->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory(&item->magic, sizeof(item->magic));
     free(item);
 }
 
