@@ -2004,9 +2004,7 @@ static void test_streamselect(IAMStreamSelect *sel)
     todo_wine ok(name && !wcscmp(name, L"Stream(E0)"), "Got name %ls.\n", name ? name : L"(null)");
     todo_wine ok(object == unk_video, "Got object %p, expected %p.\n", object, unk_video);
     ok(unk == NULL, "Got unknown %p.\n", unk);
-
-    if (name)
-        CoTaskMemFree(name);
+    CoTaskMemFree(name);
     if (mt)
         DeleteMediaType(mt);
     if (object)
@@ -2023,9 +2021,7 @@ static void test_streamselect(IAMStreamSelect *sel)
     todo_wine ok(name && !wcscmp(name, L"Stream(C0)"), "Got name %ls.\n", name ? name : L"(null)");
     todo_wine ok(object == unk_audio, "Got object %p, expected %p.\n", object, unk_audio);
     ok(unk == NULL, "Got unknown %p.\n", unk);
-
-    if (name)
-        CoTaskMemFree(name);
+    CoTaskMemFree(name);
     if (mt)
         DeleteMediaType(mt);
     if (object)
