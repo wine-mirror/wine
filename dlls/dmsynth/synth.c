@@ -1607,6 +1607,7 @@ static void add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
     fluid_mod_set_amount(mod, value);
 
     fluid_voice_add_mod(fluid_voice, mod, FLUID_VOICE_OVERWRITE);
+    delete_fluid_mod(mod);
 }
 
 static void add_voice_connections(fluid_voice_t *fluid_voice, const CONNECTIONLIST *list,
