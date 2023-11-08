@@ -1202,6 +1202,7 @@ static ULONG WINAPI column_rs_Release(IColumnsRowset *iface)
 static HRESULT WINAPI column_rs_GetAvailableColumns(IColumnsRowset *iface, DBORDINAL *count, DBID **columns)
 {
     struct msdasql_rowset *rowset = impl_from_IColumnsRowset( iface );
+    const DBORDINAL extra_columns = 3;
 
     TRACE("%p, %p, %p\n", rowset, count, columns);
 
@@ -1209,7 +1210,14 @@ static HRESULT WINAPI column_rs_GetAvailableColumns(IColumnsRowset *iface, DBORD
         return E_INVALIDARG;
 
     *count = 0;
-    *columns = NULL;
+    *columns = CoTaskMemAlloc(sizeof(DBID) * extra_columns);
+    if (!*columns)
+        return E_OUTOFMEMORY;
+
+    *count = extra_columns;
+    *columns[0] = DBCOLUMN_BASETABLENAME;
+    *columns[1] = DBCOLUMN_BASECOLUMNNAME;
+    *columns[2] = DBCOLUMN_KEYCOLUMN;
 
     return S_OK;
 }
