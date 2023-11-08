@@ -18,4 +18,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-HRESULT PropertyStore_CreateInstance(IUnknown *outer, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT PropertyStore_CreateInstance(IUnknown *outer, REFIID riid, void **ppv);
