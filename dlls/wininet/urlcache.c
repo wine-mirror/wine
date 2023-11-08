@@ -3630,7 +3630,8 @@ BOOL WINAPI FindCloseUrlCache(HANDLE hEnumHandle)
         return FALSE;
     }
 
-    pEntryHandle->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory(&pEntryHandle->magic, sizeof(pEntryHandle->magic));
     free(pEntryHandle->url_search_pattern);
     free(pEntryHandle);
     return TRUE;
