@@ -19507,6 +19507,7 @@ static void add_dirty_rect_test(void)
     ULONG refcount;
     DWORD *texel;
     HWND window;
+    HDC dc;
     D3DLOCKED_RECT locked_rect;
     static const RECT part_rect = {96, 96, 160, 160};
     static const RECT oob_rect[] =
@@ -19748,6 +19749,21 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
+    /* GetDC() records a dirty rect. */
+    fill_surface(surface_src_green, 0x00000080, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DSurface9_GetDC(surface_src_green, &dc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DSurface9_ReleaseDC(surface_src_green, dc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)tex_src_green,
+            (IDirect3DBaseTexture9 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00000080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
     fill_surface(surface_src_red, 0x00ff0000, 0);
     fill_surface(surface_src_green, 0x0000ff00, 0);
 
@@ -19870,6 +19886,18 @@ static void add_dirty_rect_test(void)
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x00ffff00, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
+    /* So does GetDC(). */
+    fill_surface(surface_managed0, 0x00000080, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DSurface9_GetDC(surface_managed0, &dc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DSurface9_ReleaseDC(surface_managed0, dc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00000080, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
