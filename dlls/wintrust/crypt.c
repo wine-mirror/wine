@@ -424,7 +424,8 @@ BOOL WINAPI CryptCATAdminReleaseCatalogContext(HCATADMIN hCatAdmin,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    ci->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory(&ci->magic, sizeof(ci->magic));
     free(ci);
     return TRUE;
 }
@@ -455,7 +456,8 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
         return FALSE;
     }
     if (ca->find != INVALID_HANDLE_VALUE) FindClose(ca->find);
-    ca->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory(&ca->magic, sizeof(ca->magic));
     free(ca);
     return TRUE;
 }
@@ -555,7 +557,8 @@ BOOL WINAPI CryptCATClose(HANDLE hCatalog)
     free(cc->inner);
     CryptMsgClose(cc->msg);
 
-    cc->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory(&cc->magic, sizeof(cc->magic));
     free(cc);
     return TRUE;
 }
