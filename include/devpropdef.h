@@ -82,18 +82,16 @@ typedef struct _DEVPROPKEY {
 #ifdef INITGUID
 #ifdef __cplusplus
 #define DEFINE_DEVPROPKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-        EXTERN_C const DEVPROPKEY name DECLSPEC_HIDDEN; \
         EXTERN_C const DEVPROPKEY DECLSPEC_SELECTANY name = \
         { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
 #else
 #define DEFINE_DEVPROPKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-        extern const DEVPROPKEY name DECLSPEC_HIDDEN; \
         const DEVPROPKEY DECLSPEC_SELECTANY name = \
         { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }, pid }
 #endif
 #else
 #define DEFINE_DEVPROPKEY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8, pid) \
-    EXTERN_C const DEVPROPKEY name DECLSPEC_HIDDEN
+    EXTERN_C const DEVPROPKEY name
 #endif
 
 #ifndef IsEqualDevPropKey

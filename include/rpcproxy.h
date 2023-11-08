@@ -242,11 +242,10 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
 /* define PROXY_CLSID_IS to specify the CLSID data of the PSFactoryBuffer */
 /* define neither to use the GUID of the first interface */
 #ifdef PROXY_CLSID
-# define CLSID_PSFACTORYBUFFER extern CLSID PROXY_CLSID DECLSPEC_HIDDEN;
+# define CLSID_PSFACTORYBUFFER extern CLSID PROXY_CLSID;
 #else
 # ifdef PROXY_CLSID_IS
-#  define CLSID_PSFACTORYBUFFER const CLSID CLSID_PSFactoryBuffer DECLSPEC_HIDDEN; \
-    const CLSID CLSID_PSFactoryBuffer = PROXY_CLSID_IS;
+#  define CLSID_PSFACTORYBUFFER const CLSID CLSID_PSFactoryBuffer = PROXY_CLSID_IS;
 #  define PROXY_CLSID CLSID_PSFactoryBuffer
 # else
 #  define CLSID_PSFACTORYBUFFER

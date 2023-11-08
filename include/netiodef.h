@@ -60,18 +60,16 @@ static inline BOOLEAN NmrIsEqualNpiModuleId( const NPI_MODULEID *mod1, const NPI
 #ifdef __WINE_INIT_NPI_MODULEID
 #ifdef __cplusplus
 #define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    EXTERN_C const NPI_MODULEID name DECLSPEC_HIDDEN;                   \
-    EXTERN_C const NPI_MODULEID name =                                  \
+    EXTERN_C const NPI_MODULEID name = \
     { sizeof(NPI_MODULEID), MIT_GUID, { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } } }
 #else
 #define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    const NPI_MODULEID name DECLSPEC_HIDDEN;                            \
-    const NPI_MODULEID name =                                           \
+    const NPI_MODULEID name = \
     { sizeof(NPI_MODULEID), MIT_GUID, { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } } }
 #endif
 #else /* __WINE_INIT_MODULEID */
 #define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-    EXTERN_C const NPI_MODULEID name DECLSPEC_HIDDEN
+    EXTERN_C const NPI_MODULEID name
 #endif /* __WINE_INIT_MODULEID */
 
 #define DEFINE_NPI_MS_MODULEID(name, n) DEFINE_NPI_GUID_MODULEID(name, 0xeb004a00 + (n), 0x9b1a, 0x11d4, \
