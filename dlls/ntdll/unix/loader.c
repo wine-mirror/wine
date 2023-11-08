@@ -2305,7 +2305,7 @@ static void check_command_line( int argc, char *argv[] )
  *
  * Main entry point called by the wine loader.
  */
-void __wine_main( int argc, char *argv[], char *envp[] )
+DECLSPEC_EXPORT void __wine_main( int argc, char *argv[], char *envp[] )
 {
     init_paths( argv );
 

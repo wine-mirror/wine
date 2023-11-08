@@ -26,7 +26,7 @@ extern "C" {
 
 #ifndef WINGDIAPI
 #if defined(_GDI32_) || defined(WINE_UNIX_LIB)
-#define WINGDIAPI
+#define WINGDIAPI DECLSPEC_EXPORT
 #else
 #define WINGDIAPI DECLSPEC_IMPORT
 #endif

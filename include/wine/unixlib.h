@@ -29,8 +29,8 @@ typedef UINT64 unixlib_handle_t;
 
 typedef NTSTATUS (*unixlib_entry_t)( void *args );
 
-extern const unixlib_entry_t __wine_unix_call_funcs[];
-extern const unixlib_entry_t __wine_unix_call_wow64_funcs[];
+extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_funcs[];
+extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
 
 /* some useful helpers from ntdll */
 NTSYSAPI const char *ntdll_get_build_dir(void);

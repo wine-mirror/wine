@@ -23,7 +23,7 @@
 #if !defined(_USER32_) && !defined(WINE_UNIX_LIB)
 #define WINUSERAPI DECLSPEC_IMPORT
 #else
-#define WINUSERAPI
+#define WINUSERAPI DECLSPEC_EXPORT
 #endif
 #endif
 

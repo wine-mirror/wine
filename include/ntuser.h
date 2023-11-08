@@ -27,7 +27,7 @@
 
 #ifndef W32KAPI
 # if defined(_WIN32U_) || defined(WINE_UNIX_LIB)
-#  define W32KAPI
+#  define W32KAPI DECLSPEC_EXPORT
 # else
 #  define W32KAPI DECLSPEC_IMPORT
 # endif

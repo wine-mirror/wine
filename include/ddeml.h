@@ -28,7 +28,7 @@ extern "C" {
 
 #ifndef WINUSERAPI
 #if defined(_USER32_) || defined(WINE_UNIX_LIB)
-#define WINUSERAPI
+#define WINUSERAPI DECLSPEC_EXPORT
 #else
 #define WINUSERAPI DECLSPEC_IMPORT
 #endif

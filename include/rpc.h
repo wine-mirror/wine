@@ -43,7 +43,7 @@
 #if !defined(_RPCRT4_) && !defined(_KRPCENV_)
 #define RPCRTAPI DECLSPEC_IMPORT
 #else
-#define RPCRTAPI
+#define RPCRTAPI DECLSPEC_EXPORT
 #endif
 #endif
 

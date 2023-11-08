@@ -39,7 +39,7 @@
 extern char **environ;
 
 /* the preloader will set this variable */
-const struct wine_preload_info *wine_main_preload_info = NULL;
+const __attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = NULL;
 
 /* canonicalize path and return its directory name */
 static char *realpath_dirname( const char *name )

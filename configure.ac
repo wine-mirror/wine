@@ -1841,6 +1841,7 @@ then
   WINE_TRY_CFLAGS([-Werror=unused-command-line-argument],[CFLAGS="$CFLAGS -Werror=unused-command-line-argument"])
   WINE_TRY_CFLAGS([-Werror=ignored-optimization-argument],[CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"])
   WINE_TRY_CFLAGS([-fcf-protection=none])
+  WINE_TRY_CFLAGS([-fvisibility=hidden])
   WINE_TRY_CFLAGS([-fno-stack-protector])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
@@ -1922,7 +1923,6 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
     *) MSVCRTFLAGS="-D_WIN32"
        WINE_TRY_CFLAGS([-fno-builtin],[MSVCRTFLAGS="$MSVCRTFLAGS -fno-builtin"])
        WINE_TRY_CFLAGS([-fshort-wchar],[MSVCRTFLAGS="$MSVCRTFLAGS -fshort-wchar"])
-       WINE_TRY_CFLAGS([-fvisibility=hidden],[MSVCRTFLAGS="$MSVCRTFLAGS -fvisibility=hidden"])
        WINE_TRY_CFLAGS([-Wno-format],[MSVCRTFLAGS="$MSVCRTFLAGS -Wno-format"]) ;;
   esac
 
