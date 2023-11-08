@@ -120,6 +120,33 @@ static void test_LoadStringW(void)
             winetest_pop_context();
         }
     }
+
+    /* Test missing resource. */
+    SetLastError(0xdeadbeef);
+    memset(returnedstringw, 0xcc, sizeof(returnedstringw));
+    length1 = LoadStringW(hInst, 0xdeadbeef, returnedstringw, ARRAY_SIZE(returnedstringw));
+    ok(!length1, "got %d.\n", length1);
+    ok(GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND || broken(GetLastError() == ERROR_MUI_FILE_NOT_FOUND) /* Win7 */,
+            "got %lu.\n", GetLastError());
+    ok(!returnedstringw[0], "got %#x.\n", returnedstringw[0]);
+    ok(returnedstringw[1] == 0xcccc, "got %#x.\n", returnedstringw[1]);
+
+    SetLastError(0xdeadbeef);
+    memset(returnedstringw, 0xcc, sizeof(returnedstringw));
+    length1 = LoadStringW(hInst, 0xdeadbeef, returnedstringw, 0);
+    ok(!length1, "got %d.\n", length1);
+    ok(GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND || broken(GetLastError() == ERROR_MUI_FILE_NOT_LOADED) /* Win7 */,
+            "got %lu.\n", GetLastError());
+    ok(returnedstringw[0] == 0xcccc, "got %#x.\n", returnedstringw[1]);
+
+    SetLastError(0xdeadbeef);
+    memset(returnedstringw, 0xcc, sizeof(returnedstringw));
+    length1 = LoadStringW(hInst, 0xdeadbeef, returnedstringw, 1);
+    ok(!length1, "got %d.\n", length1);
+    ok(GetLastError() == ERROR_RESOURCE_NAME_NOT_FOUND || broken(GetLastError() == ERROR_MUI_FILE_NOT_LOADED) /* Win7 */,
+            "got %lu.\n", GetLastError());
+    ok(!returnedstringw[0], "got %#x.\n", returnedstringw[0]);
+    ok(returnedstringw[1] == 0xcccc, "got %#x.\n", returnedstringw[1]);
 }
 
 static void test_LoadStringA (void)
