@@ -420,8 +420,8 @@ WINOLE32API HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR*);
 /*****************************************************************************
  *	COM Server dll - exports
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
-HRESULT WINAPI DllCanUnloadNow(void) DECLSPEC_HIDDEN;
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
+HRESULT WINAPI DllCanUnloadNow(void);
 
 /*****************************************************************************
  *	Data Object

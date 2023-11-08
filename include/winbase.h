@@ -3048,7 +3048,7 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,int);
 
 #ifdef __WINESRC__
 /* shouldn't be here, but is nice for type checking */
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved ) DECLSPEC_HIDDEN;
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved );
 #endif
 
 #ifdef __cplusplus

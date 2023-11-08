@@ -1089,7 +1089,7 @@ typedef HRESULT (CALLBACK *DLLGETVERSIONPROC)(DLLVERSIONINFO *);
 
 #ifdef __WINESRC__
 /* shouldn't be here, but is nice for type checking */
-HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *) DECLSPEC_HIDDEN;
+HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *);
 #endif
 
 typedef struct _DLLVERSIONINFO2 {
@@ -1106,7 +1106,7 @@ typedef struct _DLLVERSIONINFO2 {
 #define MAKEDLLVERULL(mjr, mnr, bld, qfe) (((ULONGLONG)(mjr)<< 48)| \
   ((ULONGLONG)(mnr)<< 32) | ((ULONGLONG)(bld)<< 16) | (ULONGLONG)(qfe))
 
-HRESULT WINAPI DllInstall(BOOL,LPCWSTR) DECLSPEC_HIDDEN;
+HRESULT WINAPI DllInstall(BOOL,LPCWSTR);
 
 
 /* IsOS definitions */

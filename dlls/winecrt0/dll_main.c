@@ -22,7 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 
-BOOL WINAPI DECLSPEC_HIDDEN DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     if (reason == DLL_PROCESS_ATTACH) DisableThreadLibraryCalls( inst );
     return TRUE;
