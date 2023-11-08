@@ -319,6 +319,17 @@ static void instrument_release(struct instrument *instrument)
     }
 }
 
+struct preset
+{
+    struct list entry;
+    int bank;
+    int patch;
+
+    fluid_preset_t *fluid_preset;
+
+    struct instrument *instrument;
+};
+
 struct event
 {
     struct list entry;
@@ -350,6 +361,7 @@ struct synth
     struct list waves;
     struct list events;
     struct list voices;
+    struct list presets;
 
     fluid_settings_t *fluid_settings;
     fluid_sfont_t *fluid_sfont;
@@ -598,6 +610,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
 static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
+    struct preset *preset;
     struct voice *voice;
     void *next;
 
@@ -619,6 +632,14 @@ static HRESULT WINAPI synth_Close(IDirectMusicSynth8 *iface)
         list_remove(&voice->entry);
         wave_release(voice->wave);
         free(voice);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(preset, next, &This->presets, struct preset, entry)
+    {
+        list_remove(&preset->entry);
+        instrument_release(preset->instrument);
+        delete_fluid_preset(preset->fluid_preset);
+        free(preset);
     }
 
     This->open = FALSE;
@@ -1394,11 +1415,11 @@ static int synth_preset_get_bank(fluid_preset_t *fluid_preset)
 
 static int synth_preset_get_num(fluid_preset_t *fluid_preset)
 {
-    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
+    struct preset *preset = fluid_preset_get_data(fluid_preset);
 
     TRACE("(%p)\n", fluid_preset);
 
-    return instrument->patch;
+    return preset->patch;
 }
 
 static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
@@ -1760,7 +1781,8 @@ static void set_default_voice_connections(fluid_voice_t *fluid_voice)
 
 static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *fluid_synth, int chan, int key, int vel)
 {
-    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
+    struct preset *preset = fluid_preset_get_data(fluid_preset);
+    struct instrument *instrument = preset->instrument;
     struct synth *synth = instrument->synth;
     fluid_voice_t *fluid_voice;
     struct region *region;
@@ -1836,9 +1858,6 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 
 static void synth_preset_free(fluid_preset_t *fluid_preset)
 {
-    struct instrument *instrument = fluid_preset_get_data(fluid_preset);
-    fluid_preset_set_data(fluid_preset, NULL);
-    if (instrument) instrument_release(instrument);
 }
 
 static const char *synth_sfont_get_name(fluid_sfont_t *fluid_sfont)
@@ -1851,10 +1870,20 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
     struct synth *synth = fluid_sfont_get_data(fluid_sfont);
     struct instrument *instrument;
     fluid_preset_t *fluid_preset;
+    struct preset *preset;
 
     TRACE("(%p, %d, %d)\n", fluid_sfont, bank, patch);
 
     EnterCriticalSection(&synth->cs);
+
+    LIST_FOR_EACH_ENTRY(preset, &synth->presets, struct preset, entry)
+    {
+        if (preset->bank == bank && preset->patch == patch)
+        {
+            LeaveCriticalSection(&synth->cs);
+            return preset->fluid_preset;
+        }
+    }
 
     LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
     {
@@ -1864,17 +1893,34 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
 
     if (&instrument->entry == &synth->instruments)
     {
-        fluid_preset = NULL;
         WARN("Could not find instrument with patch %#x\n", patch);
+        LeaveCriticalSection(&synth->cs);
+        return NULL;
     }
-    else if ((fluid_preset = new_fluid_preset(fluid_sfont, synth_preset_get_name, synth_preset_get_bank,
+
+    if (!(fluid_preset = new_fluid_preset(fluid_sfont, synth_preset_get_name, synth_preset_get_bank,
             synth_preset_get_num, synth_preset_noteon, synth_preset_free)))
     {
-        fluid_preset_set_data(fluid_preset, instrument);
-        instrument_addref(instrument);
-
-        TRACE("Created fluid_preset %p for instrument %p\n", fluid_preset, instrument);
+        LeaveCriticalSection(&synth->cs);
+        return NULL;
     }
+
+    if (!(preset = calloc(1, sizeof(struct preset))))
+    {
+        delete_fluid_preset(fluid_preset);
+        LeaveCriticalSection(&synth->cs);
+        return NULL;
+    }
+
+    preset->bank = bank;
+    preset->patch = patch;
+    preset->fluid_preset = fluid_preset;
+    preset->instrument = instrument;
+    fluid_preset_set_data(fluid_preset, preset);
+    instrument_addref(instrument);
+    list_add_tail(&synth->presets, &preset->entry);
+
+    TRACE("Created fluid_preset %p for instrument %p\n", fluid_preset, instrument);
 
     LeaveCriticalSection(&synth->cs);
 
@@ -1925,6 +1971,7 @@ HRESULT synth_create(IUnknown **ret_iface)
     list_init(&obj->waves);
     list_init(&obj->events);
     list_init(&obj->voices);
+    list_init(&obj->presets);
 
     if (!(obj->fluid_settings = new_fluid_settings())) goto failed;
     if (!(obj->fluid_sfont = new_fluid_sfont(synth_sfont_get_name, synth_sfont_get_preset,
