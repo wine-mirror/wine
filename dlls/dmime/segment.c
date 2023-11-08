@@ -112,10 +112,7 @@ static ULONG WINAPI segment_Release(IDirectMusicSegment8 *iface)
             list_remove(&entry->entry);
             track_entry_destroy(entry);
         }
-
-        if (This->wave_data)
-            free(This->wave_data);
-
+        free(This->wave_data);
         free(This);
     }
 
