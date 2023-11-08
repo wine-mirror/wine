@@ -891,33 +891,36 @@ static void test_rtti(void)
       DEFINE_RTTI_REF(void, object_locator);
   } *obj_locator;
 
+  struct _rtti_base_descriptor
+  {
+    DEFINE_RTTI_REF(type_info, type_descriptor);
+    int num_base_classes;
+    struct {
+      int this_offset;
+      int vbase_descr;
+      int vbase_offset;
+    } this_ptr_offsets;
+    unsigned int attributes;
+  };
+
+  struct _rtti_base_array {
+    DEFINE_RTTI_REF(struct _rtti_base_descriptor, bases[4]);
+  };
+
+  struct _rtti_object_hierarchy {
+    unsigned int signature;
+    unsigned int attributes;
+    int array_len;
+    DEFINE_RTTI_REF(struct _rtti_base_array, base_classes);
+  };
+
   struct rtti_data
   {
     type_info type_info[4];
 
-    struct _rtti_base_descriptor
-    {
-      DEFINE_RTTI_REF(type_info, type_descriptor);
-      int num_base_classes;
-      struct {
-        int this_offset;
-        int vbase_descr;
-        int vbase_offset;
-      } this_ptr_offsets;
-      unsigned int attributes;
-    } base_descriptor[4];
-
-    struct _rtti_base_array {
-      DEFINE_RTTI_REF(struct _rtti_base_descriptor, bases[4]);
-    } base_array;
-
-    struct _rtti_object_hierarchy {
-      unsigned int signature;
-      unsigned int attributes;
-      int array_len;
-      DEFINE_RTTI_REF(struct _rtti_base_array, base_classes);
-    } object_hierarchy;
-
+    struct _rtti_base_descriptor base_descriptor[4];
+    struct _rtti_base_array base_array;
+    struct _rtti_object_hierarchy  object_hierarchy;
     struct _object_locator object_locator;
   } simple_class_rtti = {
     { {NULL, NULL, "simple_class"} },
