@@ -4712,7 +4712,10 @@ static ULONG WINAPI ITypeLib2_fnAddRef( ITypeLib2 *iface)
 static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 {
     ITypeLibImpl *This = impl_from_ITypeLib2(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref;
+
+    EnterCriticalSection(&cache_section);
+    ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p, refcount %lu.\n", iface, ref);
 
@@ -4728,10 +4731,8 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       if(This->path)
       {
           TRACE("removing from cache list\n");
-          EnterCriticalSection(&cache_section);
           if(This->entry.next)
               list_remove(&This->entry);
-          LeaveCriticalSection(&cache_section);
           free(This->path);
       }
       TRACE(" destroying ITypeLib(%p)\n",This);
@@ -4783,9 +4784,9 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       }
       free(This->typeinfos);
       free(This);
-      return 0;
     }
 
+    LeaveCriticalSection(&cache_section);
     return ref;
 }
 
