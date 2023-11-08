@@ -86,10 +86,6 @@ static void init_proxy(const statement_list_t *stmts)
   print_proxy( "#define __midl_proxy\n");
   print_proxy( "#include \"objbase.h\"\n");
   print_proxy( "\n");
-  print_proxy( "#ifndef DECLSPEC_HIDDEN\n");
-  print_proxy( "#define DECLSPEC_HIDDEN\n");
-  print_proxy( "#endif\n");
-  print_proxy( "\n");
 }
 
 static void clear_output_vars( const var_list_t *args )
@@ -1026,7 +1022,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
       fprintf(proxy, "\n");
   }
 
-  fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo DECLSPEC_HIDDEN =\n", file_id);
+  fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo =\n", file_id);
   fprintf(proxy, "{\n");
   fprintf(proxy, "    (const PCInterfaceProxyVtblList*)_%s_ProxyVtblList,\n", file_id);
   fprintf(proxy, "    (const PCInterfaceStubVtblList*)_%s_StubVtblList,\n", file_id);

@@ -468,10 +468,10 @@ static void write_clientinterfacedecl(type_t *iface)
     indent--;
     print_client("};\n");
     if (old_names)
-        print_client("RPC_IF_HANDLE %s_ClientIfHandle DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
+        print_client("RPC_IF_HANDLE %s_ClientIfHandle = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
                      iface->name, iface->name);
     else
-        print_client("RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
+        print_client("RPC_IF_HANDLE %s%s_v%d_%d_c_ifspec = (RPC_IF_HANDLE)& %s___RpcClientInterface;\n",
                      prefix_client, iface->name, MAJORVERSION(ver), MINORVERSION(ver), iface->name);
     fprintf(client, "\n");
 }
@@ -499,10 +499,6 @@ static void init_client(void)
     print_client("#include <string.h>\n");
     print_client( "\n");
     print_client("#include \"%s\"\n", header_name);
-    print_client( "\n");
-    print_client( "#ifndef DECLSPEC_HIDDEN\n");
-    print_client( "#define DECLSPEC_HIDDEN\n");
-    print_client( "#endif\n");
     print_client( "\n");
 }
 

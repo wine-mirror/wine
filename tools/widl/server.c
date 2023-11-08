@@ -433,10 +433,10 @@ static void write_serverinterfacedecl(type_t *iface)
     indent--;
     print_server("};\n");
     if (old_names)
-        print_server("RPC_IF_HANDLE %s_ServerIfHandle DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
+        print_server("RPC_IF_HANDLE %s_ServerIfHandle = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
                      iface->name, iface->name);
     else
-        print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec DECLSPEC_HIDDEN = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
+        print_server("RPC_IF_HANDLE %s%s_v%d_%d_s_ifspec = (RPC_IF_HANDLE)& %s___RpcServerInterface;\n",
                      prefix_server, iface->name, MAJORVERSION(ver), MINORVERSION(ver), iface->name);
     fprintf(server, "\n");
 }
@@ -453,10 +453,6 @@ static void init_server(void)
     print_server("#include <string.h>\n");
     fprintf(server, "\n");
     print_server("#include \"%s\"\n", header_name);
-    print_server("\n");
-    print_server( "#ifndef DECLSPEC_HIDDEN\n");
-    print_server( "#define DECLSPEC_HIDDEN\n");
-    print_server( "#endif\n");
     print_server( "\n");
 }
 
