@@ -24,7 +24,7 @@
 #include "wine/rbtree.h"
 #include "assert.h"
 
-extern HMODULE huia_module DECLSPEC_HIDDEN;
+extern HMODULE huia_module;
 
 enum uia_prop_type {
     PROP_TYPE_UNKNOWN,
@@ -215,74 +215,74 @@ enum provider_method_flags {
 };
 
 /* uia_client.c */
-int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
-HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val) DECLSPEC_HIDDEN;
+int get_node_provider_type_at_idx(struct uia_node *node, int idx);
+HRESULT get_focus_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val);
 HRESULT respond_to_win_event_on_node_provider(IWineUiaNode *node, int idx, DWORD win_event, HWND hwnd, LONG obj_id,
-        LONG child_id, IProxyProviderWinEventSink *sink) DECLSPEC_HIDDEN;
-HRESULT create_node_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val) DECLSPEC_HIDDEN;
-HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event) DECLSPEC_HIDDEN;
-HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node) DECLSPEC_HIDDEN;
-HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node) DECLSPEC_HIDDEN;
+        LONG child_id, IProxyProviderWinEventSink *sink);
+HRESULT create_node_from_node_provider(IWineUiaNode *node, int idx, LONG flags, VARIANT *ret_val);
+HRESULT attach_event_to_uia_node(HUIANODE node, struct uia_event *event);
+HRESULT clone_uia_node(HUIANODE in_node, HUIANODE *out_node);
+HRESULT navigate_uia_node(struct uia_node *node, int nav_dir, HUIANODE *out_node);
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
-        BOOL get_hwnd_providers, int node_flags) DECLSPEC_HIDDEN;
-HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode, int node_flags) DECLSPEC_HIDDEN;
-void uia_node_lresult_release(LRESULT lr) DECLSPEC_HIDDEN;
-HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags) DECLSPEC_HIDDEN;
-HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition) DECLSPEC_HIDDEN;
-BOOL uia_condition_matched(HRESULT hr) DECLSPEC_HIDDEN;
+        BOOL get_hwnd_providers, int node_flags);
+HRESULT uia_node_from_lresult(LRESULT lr, HUIANODE *huianode, int node_flags);
+void uia_node_lresult_release(LRESULT lr);
+HRESULT create_uia_node_from_hwnd(HWND hwnd, HUIANODE *out_node, int node_flags);
+HRESULT uia_condition_check(HUIANODE node, struct UiaCondition *condition);
+BOOL uia_condition_matched(HRESULT hr);
 
 /* uia_com_client.c */
 HRESULT uia_com_win_event_callback(DWORD event_id, HWND hwnd, LONG obj_id, LONG child_id, DWORD thread_id,
-        DWORD event_time) DECLSPEC_HIDDEN;
-HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
+        DWORD event_time);
+HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8);
 
 /* uia_event.c */
-HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd) DECLSPEC_HIDDEN;
+HRESULT uia_event_add_win_event_hwnd(struct uia_event *event, HWND hwnd);
 HRESULT uia_event_for_each(int event_id, UiaWineEventForEachCallback *callback, void *user_data,
-        BOOL clientside_only) DECLSPEC_HIDDEN;
-BOOL uia_clientside_event_start_event_thread(struct uia_event *event) DECLSPEC_HIDDEN;
-HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawElementProviderSimple **ret_elprov) DECLSPEC_HIDDEN;
-HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie) DECLSPEC_HIDDEN;
+        BOOL clientside_only);
+BOOL uia_clientside_event_start_event_thread(struct uia_event *event);
+HRESULT create_msaa_provider_from_hwnd(HWND hwnd, int in_child_id, IRawElementProviderSimple **ret_elprov);
+HRESULT create_serverside_uia_event(struct uia_event **out_event, LONG process_id, LONG event_cookie);
 HRESULT uia_event_add_provider_event_adviser(IRawElementProviderAdviseEvents *advise_events,
-        struct uia_event *event) DECLSPEC_HIDDEN;
-HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, struct uia_event *event) DECLSPEC_HIDDEN;
-HRESULT uia_event_advise_node(struct uia_event *event, HUIANODE node) DECLSPEC_HIDDEN;
+        struct uia_event *event);
+HRESULT uia_event_add_serverside_event_adviser(IWineUiaEvent *serverside_event, struct uia_event *event);
+HRESULT uia_event_advise_node(struct uia_event *event, HUIANODE node);
 HRESULT uia_add_clientside_event(HUIANODE huianode, EVENTID event_id, enum TreeScope scope, PROPERTYID *prop_ids,
         int prop_ids_count, struct UiaCacheRequest *cache_req, SAFEARRAY *rt_id, UiaWineEventCallback *cback,
-        void *cback_data, HUIAEVENT *huiaevent) DECLSPEC_HIDDEN;
+        void *cback_data, HUIAEVENT *huiaevent);
 HRESULT uia_event_invoke(HUIANODE node, HUIANODE nav_start_node, struct uia_event_args *args,
-        struct uia_event *event) DECLSPEC_HIDDEN;
+        struct uia_event *event);
 HRESULT uia_event_check_node_within_event_scope(struct uia_event *event, HUIANODE node, SAFEARRAY *rt_id,
-        HUIANODE *clientside_nav_node_out) DECLSPEC_HIDDEN;
+        HUIANODE *clientside_nav_node_out);
 
 /* uia_ids.c */
-const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
-const struct uia_event_info *uia_event_info_from_id(EVENTID event_id) DECLSPEC_HIDDEN;
-const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id) DECLSPEC_HIDDEN;
-const struct uia_control_type_info *uia_control_type_info_from_id(CONTROLTYPEID control_type_id) DECLSPEC_HIDDEN;
+const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id);
+const struct uia_event_info *uia_event_info_from_id(EVENTID event_id);
+const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id);
+const struct uia_control_type_info *uia_control_type_info_from_id(CONTROLTYPEID control_type_id);
 
 /* uia_provider.c */
-HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;
-void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;
-void uia_provider_thread_remove_node(HUIANODE node) DECLSPEC_HIDDEN;
-LRESULT uia_lresult_from_node(HUIANODE huianode) DECLSPEC_HIDDEN;
+HRESULT create_base_hwnd_provider(HWND hwnd, IRawElementProviderSimple **elprov);
+void uia_stop_provider_thread(void);
+void uia_provider_thread_remove_node(HUIANODE node);
+LRESULT uia_lresult_from_node(HUIANODE huianode);
 HRESULT create_msaa_provider(IAccessible *acc, LONG child_id, HWND hwnd, BOOL root_acc_known,
-        BOOL is_root_acc, IRawElementProviderSimple **elprov) DECLSPEC_HIDDEN;
+        BOOL is_root_acc, IRawElementProviderSimple **elprov);
 
 /* uia_utils.c */
-HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie) DECLSPEC_HIDDEN;
-HRESULT unregister_interface_in_git(DWORD git_cookie) DECLSPEC_HIDDEN;
-HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface) DECLSPEC_HIDDEN;
-HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd) DECLSPEC_HIDDEN;
-void uia_cache_request_destroy(struct UiaCacheRequest *cache_req) DECLSPEC_HIDDEN;
-HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src) DECLSPEC_HIDDEN;
-HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
-HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems) DECLSPEC_HIDDEN;
-int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
-BOOL uia_hwnd_is_visible(HWND hwnd) DECLSPEC_HIDDEN;
-BOOL uia_is_top_level_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
-BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
-HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
-void uia_hwnd_map_remove_hwnd(struct rb_tree *hwnd_map, HWND hwnd) DECLSPEC_HIDDEN;
-void uia_hwnd_map_init(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
-void uia_hwnd_map_destroy(struct rb_tree *hwnd_map) DECLSPEC_HIDDEN;
+HRESULT register_interface_in_git(IUnknown *iface, REFIID riid, DWORD *ret_cookie);
+HRESULT unregister_interface_in_git(DWORD git_cookie);
+HRESULT get_interface_in_git(REFIID riid, DWORD git_cookie, IUnknown **ret_iface);
+HRESULT write_runtime_id_base(SAFEARRAY *sa, HWND hwnd);
+void uia_cache_request_destroy(struct UiaCacheRequest *cache_req);
+HRESULT uia_cache_request_clone(struct UiaCacheRequest *dst, struct UiaCacheRequest *src);
+HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, LONG *elems);
+HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems);
+int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type);
+BOOL uia_hwnd_is_visible(HWND hwnd);
+BOOL uia_is_top_level_hwnd(HWND hwnd);
+BOOL uia_hwnd_map_check_hwnd(struct rb_tree *hwnd_map, HWND hwnd);
+HRESULT uia_hwnd_map_add_hwnd(struct rb_tree *hwnd_map, HWND hwnd);
+void uia_hwnd_map_remove_hwnd(struct rb_tree *hwnd_map, HWND hwnd);
+void uia_hwnd_map_init(struct rb_tree *hwnd_map);
+void uia_hwnd_map_destroy(struct rb_tree *hwnd_map);
