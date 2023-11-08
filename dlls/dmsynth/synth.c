@@ -1398,7 +1398,6 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
 
     TRACE("(%p)\n", fluid_preset);
 
-    if (!instrument) return 0;
     return instrument->patch;
 }
 
@@ -1768,8 +1767,6 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 
     TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
 
-    if (!instrument) return FLUID_FAILED;
-
     LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
     {
         struct articulation *articulation;
@@ -1856,8 +1853,6 @@ static fluid_preset_t *synth_sfont_get_preset(fluid_sfont_t *fluid_sfont, int ba
     fluid_preset_t *fluid_preset;
 
     TRACE("(%p, %d, %d)\n", fluid_sfont, bank, patch);
-
-    if (!synth) return NULL;
 
     EnterCriticalSection(&synth->cs);
 
