@@ -3780,9 +3780,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
 
         IWICMetadataReader_Release(reader);
     }
-
-    if (seen_text)
-        heap_free(seen_text);
+    heap_free(seen_text);
 
     png_add_unit_properties(frame, bitmap);
 
