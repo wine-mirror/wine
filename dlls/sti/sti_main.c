@@ -34,10 +34,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sti);
 
-extern HRESULT WINAPI STI_DllGetClassObject(REFCLSID, REFIID, LPVOID *) DECLSPEC_HIDDEN;
-extern BOOL WINAPI STI_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI STI_DllRegisterServer(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI STI_DllUnregisterServer(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI STI_DllGetClassObject(REFCLSID, REFIID, LPVOID *);
+extern BOOL WINAPI STI_DllMain(HINSTANCE, DWORD, LPVOID);
+extern HRESULT WINAPI STI_DllRegisterServer(void);
+extern HRESULT WINAPI STI_DllUnregisterServer(void);
 
 typedef HRESULT (*fnCreateInstance)(REFIID riid, IUnknown *pUnkOuter, LPVOID *ppObj);
 
