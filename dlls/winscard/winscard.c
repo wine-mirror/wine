@@ -205,7 +205,8 @@ LONG WINAPI SCardReleaseContext( SCARDCONTEXT context )
 
     params.handle = handle->unix_handle;
     ret = UNIX_CALL( scard_release_context, &params );
-    handle->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &handle->magic, sizeof(handle->magic) );
     free( handle );
 
     TRACE( "returning %#lx\n", ret );
@@ -794,7 +795,8 @@ LONG WINAPI SCardDisconnect( SCARDHANDLE connect, DWORD disposition )
     params.disposition = disposition;
     if (!(ret = UNIX_CALL( scard_disconnect, &params )))
     {
-        handle->magic = 0;
+        /* Ensure compiler doesn't optimize out the assignment with 0. */
+        SecureZeroMemory( &handle->magic, sizeof(handle->magic) );
         free( handle );
     }
     TRACE( "returning %#lx\n", ret );
