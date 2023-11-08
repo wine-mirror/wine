@@ -781,14 +781,24 @@ static HRESULT WINAPI test_create_from_file_handler_callback_Invoke(IMFAsyncCall
 
     hr = IMFSchemeHandler_EndCreateObject(handler, result, &obj_type, &object);
     ok(hr == S_OK, "Failed to create an object, hr %#lx.\n", hr);
+    todo_wine ok(obj_type == MF_OBJECT_BYTESTREAM, "Got object type %#x.\n", obj_type);
 
-    if (SUCCEEDED(hr))
+    hr = IMFAsyncResult_GetObject(result, (IUnknown **)&object2);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    if (obj_type == MF_OBJECT_MEDIASOURCE)
     {
-        hr = IMFAsyncResult_GetObject(result, &object2);
-        ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+        IMFMediaSource *media_source;
 
-        IUnknown_Release(object);
+        hr = IUnknown_QueryInterface(object, &IID_IMFMediaSource, (void **)&media_source);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaSource_Shutdown(media_source);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaSource_Release(media_source);
     }
+
+    IUnknown_Release(object);
 
     SetEvent(callback->event);
 
