@@ -109,34 +109,34 @@ typedef struct { int reg; } __wine_jmp_buf;
 #endif
 
 extern int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
-                                                   EXCEPTION_REGISTRATION_RECORD *frame ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval ) DECLSPEC_HIDDEN;
+                                                   EXCEPTION_REGISTRATION_RECORD *frame );
+extern void DECLSPEC_NORETURN __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval );
 extern void DECLSPEC_NORETURN __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
-                                                         void (*target)(void) ) DECLSPEC_HIDDEN;
+                                                         void (*target)(void) );
 extern DWORD __cdecl __wine_exception_handler( EXCEPTION_RECORD *record,
                                                EXCEPTION_REGISTRATION_RECORD *frame,
                                                CONTEXT *context,
-                                               EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                               EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 extern DWORD __cdecl __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
                                                    EXCEPTION_REGISTRATION_RECORD *frame,
                                                    CONTEXT *context,
-                                                   EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                                   EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 extern DWORD __cdecl __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
                                                           EXCEPTION_REGISTRATION_RECORD *frame,
                                                           CONTEXT *context,
-                                                          EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                                          EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 extern DWORD __cdecl __wine_exception_handler_all( EXCEPTION_RECORD *record,
                                                    EXCEPTION_REGISTRATION_RECORD *frame,
                                                    CONTEXT *context,
-                                                   EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                                   EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 extern DWORD __cdecl __wine_finally_handler( EXCEPTION_RECORD *record,
                                              EXCEPTION_REGISTRATION_RECORD *frame,
                                              CONTEXT *context,
-                                             EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                             EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 extern DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
                                                  EXCEPTION_REGISTRATION_RECORD *frame,
                                                  CONTEXT *context,
-                                                 EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+                                                 EXCEPTION_REGISTRATION_RECORD **pdispatcher );
 
 #define __TRY \
     do { __WINE_FRAME __f; \

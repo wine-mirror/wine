@@ -23,7 +23,7 @@
 #include "winbase.h"
 #include "wine/exception.h"
 
-void DECLSPEC_HIDDEN __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
+void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {
     ULONG_PTR args[2];
 

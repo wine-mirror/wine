@@ -28,7 +28,7 @@
 
 extern WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD show );
 
-void WINAPI DECLSPEC_HIDDEN __wine_spec_exe16_entry( CONTEXT *context )
+void WINAPI __wine_spec_exe16_entry( CONTEXT *context )
 {
     PDB16 *psp;
     WORD len;

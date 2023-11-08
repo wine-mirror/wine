@@ -29,9 +29,9 @@
 #include "windef.h"
 #include "winbase.h"
 
-extern void __wine_init_so_dll(void) DECLSPEC_HIDDEN;
+extern void __wine_init_so_dll(void);
 
-BOOL WINAPI DECLSPEC_HIDDEN __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
+BOOL WINAPI __wine_spec_dll_entry( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     if (reason == DLL_PROCESS_ATTACH) __wine_init_so_dll();
     return DllMain( inst, reason, reserved );

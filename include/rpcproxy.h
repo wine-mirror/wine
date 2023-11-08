@@ -191,8 +191,8 @@ RPCRTAPI HRESULT RPC_ENTRY
 RPCRTAPI HRESULT RPC_ENTRY
   NdrDllUnregisterProxy( HMODULE hDll, const ProxyFileInfo **pProxyFileList, const CLSID *pclsid );
 
-HRESULT __cdecl __wine_register_resources(void) DECLSPEC_HIDDEN;
-HRESULT __cdecl __wine_unregister_resources(void) DECLSPEC_HIDDEN;
+HRESULT __cdecl __wine_register_resources(void);
+HRESULT __cdecl __wine_unregister_resources(void);
 
 #define CSTDSTUBBUFFERRELEASE(pFactory) \
 ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
