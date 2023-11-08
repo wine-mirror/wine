@@ -1229,11 +1229,13 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringW(HINSTANCE instance, UINT resource_id, L
     if (!buffer)
         return 0;
 
-    /* Use loword (incremented by 1) as resourceid */
-    hrsrc = FindResourceW(instance, MAKEINTRESOURCEW((LOWORD(resource_id) >> 4) + 1), (LPWSTR)RT_STRING);
-    if (!hrsrc) return 0;
-    hmem = LoadResource(instance, hrsrc);
-    if (!hmem) return 0;
+    if (!(hrsrc = FindResourceW(instance, MAKEINTRESOURCEW((LOWORD(resource_id) >> 4) + 1), (LPWSTR)RT_STRING)) ||
+        !(hmem = LoadResource(instance, hrsrc)))
+    {
+        TRACE( "Failed to load string.\n" );
+        if (buflen > 0) buffer[0] = 0;
+        return 0;
+    }
 
     p = LockResource(hmem);
     string_num = resource_id & 0x000f;
