@@ -27,8 +27,8 @@
 #include "ole2.h"
 #include "hlink.h"
 
-extern HRESULT HLink_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-extern HRESULT HLinkBrowseContext_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+extern HRESULT HLink_Constructor(IUnknown*,REFIID,void**);
+extern HRESULT HLinkBrowseContext_Constructor(IUnknown*,REFIID,void**);
 
 static inline LPWSTR hlink_co_strdupW(LPCWSTR str)
 {
