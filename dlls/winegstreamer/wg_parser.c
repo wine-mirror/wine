@@ -1747,11 +1747,8 @@ static NTSTATUS wg_parser_disconnect(void *args)
 
     for (i = 0; i < ARRAY_SIZE(parser->input_cache_chunks); i++)
     {
-        if (parser->input_cache_chunks[i].data)
-        {
-            free(parser->input_cache_chunks[i].data);
-            parser->input_cache_chunks[i].data = NULL;
-        }
+        free(parser->input_cache_chunks[i].data);
+        parser->input_cache_chunks[i].data = NULL;
     }
 
     return S_OK;
