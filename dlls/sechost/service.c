@@ -212,32 +212,32 @@ static handle_t rpc_cstr_bind(RPC_CSTR str)
     return rpc_handle;
 }
 
-DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEA_bind( MACHINE_HANDLEA name )
+handle_t __RPC_USER MACHINE_HANDLEA_bind( MACHINE_HANDLEA name )
 {
     return rpc_cstr_bind( (RPC_CSTR)name );
 }
 
-DECLSPEC_HIDDEN void __RPC_USER MACHINE_HANDLEA_unbind( MACHINE_HANDLEA name, handle_t h )
+void __RPC_USER MACHINE_HANDLEA_unbind( MACHINE_HANDLEA name, handle_t h )
 {
     RpcBindingFree( &h );
 }
 
-DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind( MACHINE_HANDLEW name )
+handle_t __RPC_USER MACHINE_HANDLEW_bind( MACHINE_HANDLEW name )
 {
     return rpc_wstr_bind( (RPC_WSTR)name );
 }
 
-DECLSPEC_HIDDEN void __RPC_USER MACHINE_HANDLEW_unbind( MACHINE_HANDLEW name, handle_t h )
+void __RPC_USER MACHINE_HANDLEW_unbind( MACHINE_HANDLEW name, handle_t h )
 {
     RpcBindingFree( &h );
 }
 
-DECLSPEC_HIDDEN handle_t __RPC_USER SVCCTL_HANDLEW_bind( SVCCTL_HANDLEW name )
+handle_t __RPC_USER SVCCTL_HANDLEW_bind( SVCCTL_HANDLEW name )
 {
     return rpc_wstr_bind( (RPC_WSTR)name );
 }
 
-DECLSPEC_HIDDEN void __RPC_USER SVCCTL_HANDLEW_unbind( SVCCTL_HANDLEW name, handle_t h )
+void __RPC_USER SVCCTL_HANDLEW_unbind( SVCCTL_HANDLEW name, handle_t h )
 {
     RpcBindingFree( &h );
 }
