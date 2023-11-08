@@ -185,17 +185,10 @@ INT WINAPI DECLSPEC_HOTPATCH LoadStringW( HINSTANCE instance, UINT resource_id,
     }
 
     i = min(buflen - 1, *p);
-    if (i > 0) {
-	memcpy(buffer, p + 1, i * sizeof (WCHAR));
-        buffer[i] = 0;
-    } else {
-	if (buflen > 1) {
-            buffer[0] = 0;
-	    return 0;
-	}
-    }
+    memcpy(buffer, p + 1, i * sizeof(WCHAR));
+    buffer[i] = 0;
 
-    TRACE("%s loaded !\n", debugstr_w(buffer));
+    TRACE("returning %s\n", debugstr_w(buffer));
     return i;
 }
 

@@ -147,6 +147,15 @@ static void test_LoadStringW(void)
             "got %lu.\n", GetLastError());
     ok(!returnedstringw[0], "got %#x.\n", returnedstringw[0]);
     ok(returnedstringw[1] == 0xcccc, "got %#x.\n", returnedstringw[1]);
+
+    /* Test short buffer */
+    SetLastError(0xdeadbeef);
+    memset(returnedstringw, 0xcc, sizeof(returnedstringw));
+    length1 = LoadStringW(hInst, 2, returnedstringw, 1); /* get resource string */
+    ok(!length1, "got %d.\n", length1);
+    ok(GetLastError() == 0xdeadbeef, "got %lu.\n", GetLastError());
+    ok(!returnedstringw[0], "got %#x.\n", returnedstringw[0]);
+    ok(returnedstringw[1] == 0xcccc, "got %#x.\n", returnedstringw[1]);
 }
 
 static void test_LoadStringA (void)
