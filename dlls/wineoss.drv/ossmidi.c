@@ -82,8 +82,8 @@ struct midi_src
 static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs, num_synths, seq_refs;
-static struct midi_dest dests[MAX_MIDIOUTDRV];
-static struct midi_src srcs[MAX_MIDIINDRV];
+static struct midi_dest *dests;
+static struct midi_src *srcs;
 static int load_count;
 
 static unsigned int num_midi_in_started;
@@ -329,13 +329,21 @@ static UINT oss_midi_init(void)
         seq_close(fd);
         return -1;
     }
-
-    if (synth_devs > MAX_MIDIOUTDRV)
+    /* find how many MIDI devices are there in the system */
+    status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &midi_devs);
+    if (status == -1)
     {
-        ERR("MAX_MIDIOUTDRV (%d) was enough for the number of devices (%d). "
-            "Some FM devices will not be available.\n", MAX_MIDIOUTDRV, synth_devs);
-        synth_devs = MAX_MIDIOUTDRV;
+        ERR("ioctl on nr midi failed.\n");
+        midi_devs = 0;
     }
+
+    /* windows does not seem to differentiate Synth from MIDI devices */
+    num_synths = synth_devs;
+    num_dests = synth_devs + midi_devs;
+    num_srcs = midi_devs;
+
+    srcs = calloc( num_srcs, sizeof(*srcs) );
+    dests = calloc( num_dests, sizeof(*dests) );
 
     for (i = 0, dest = dests; i < synth_devs; i++, dest++)
     {
@@ -407,30 +415,6 @@ static UINT oss_midi_init(void)
               (unsigned)dest->caps.dwSupport);
     }
 
-    /* find how many MIDI devices are there in the system */
-    status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &midi_devs);
-    if (status == -1)
-    {
-        ERR("ioctl on nr midi failed.\n");
-        midi_devs = 0;
-        goto wrapup;
-    }
-
-    /* FIXME: the two restrictions below could be loosened in some cases */
-    if (synth_devs + midi_devs > MAX_MIDIOUTDRV)
-    {
-        ERR("MAX_MIDIOUTDRV was not enough for the number of devices. "
-            "Some MIDI devices will not be available.\n");
-        midi_devs = MAX_MIDIOUTDRV - synth_devs;
-    }
-
-    if (midi_devs > MAX_MIDIINDRV)
-    {
-        ERR("MAX_MIDIINDRV (%d) was not enough for the number of devices (%d). "
-            "Some MIDI devices will not be available.\n", MAX_MIDIINDRV, midi_devs);
-        midi_devs = MAX_MIDIINDRV;
-    }
-
     dest = dests + synth_devs;
     src = srcs;
     for (i = 0; i < midi_devs; i++, dest++, src++)
@@ -500,12 +484,6 @@ static UINT oss_midi_init(void)
               i, wine_dbgstr_w(src->caps.szPname), (unsigned)src->caps.dwSupport);
     }
 
-wrapup:
-    /* windows does not seem to differentiate Synth from MIDI devices */
-    num_synths = synth_devs;
-    num_dests = synth_devs + midi_devs;
-    num_srcs = midi_devs;
-
     /* close file and exit */
     seq_close(fd);
 
@@ -519,6 +497,8 @@ static UINT midi_exit(void)
     if (--load_count)
         return 1;
 
+    free( srcs );
+    free( dests );
     return 0;
 }
 
@@ -661,11 +641,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
         WARN("Invalid Parameter !\n");
         return MMSYSERR_INVALPARAM;
     }
-    if (dev_id >= num_dests)
-    {
-        TRACE("MAX_MIDIOUTDRV reached !\n");
-        return MMSYSERR_BADDEVICEID;
-    }
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
     dest = dests + dev_id;
     if (dest->midiDesc.hMidi != 0)
     {
@@ -744,11 +720,7 @@ static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
 
     TRACE("(%04X);\n", dev_id);
 
-    if (dev_id >= num_dests)
-    {
-        TRACE("MAX_MIDIOUTDRV reached !\n");
-        return MMSYSERR_BADDEVICEID;
-    }
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
     dest = dests + dev_id;
 
     if (dest->midiDesc.hMidi == 0)
