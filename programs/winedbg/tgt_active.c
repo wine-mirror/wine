@@ -608,23 +608,17 @@ void     dbg_active_wait_for_first_exception(void)
     wait_exception();
 }
 
-static BOOL dbg_active_wait_for_startup(DEBUG_EVENT* de)
+static BOOL dbg_active_wait_for_startup(DEBUG_EVENT* de, DWORD timeout)
 {
+    DWORD64 tc, tc_last = GetTickCount64() + timeout;
+
     dbg_interactiveP = FALSE;
-    while (dbg_num_processes() && WaitForDebugEvent(de, INFINITE))
+    while (dbg_num_processes() && (tc = GetTickCount64()) <= tc_last && WaitForDebugEvent(de, tc_last - tc))
     {
-        switch (de->dwDebugEventCode)
-        {
-        case CREATE_PROCESS_DEBUG_EVENT:
-        case CREATE_THREAD_DEBUG_EVENT:
-        case LOAD_DLL_DEBUG_EVENT:
-        case EXCEPTION_DEBUG_EVENT:
-            if (dbg_handle_debug_event(de)) return TRUE;
-            break;
-        default:
-            return FALSE;
-        }
+        if (de->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) return FALSE;
+        if (dbg_handle_debug_event(de)) return TRUE;
     }
+    de->dwDebugEventCode = 0;
     return FALSE;
 }
 
@@ -933,9 +927,9 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     if (input == INVALID_HANDLE_VALUE) return start_error_parse;
 
     /* debuggee can terminate before we get the first exception.
-     * so detect end of attach load sequence, and then print information.
+     * so wait either until first exception, or process detach, or timeout
      */
-    if (dbg_curr_process->active_debuggee && !(first_exception = dbg_active_wait_for_startup(&de)))
+    if (dbg_curr_process->active_debuggee && !(first_exception = dbg_active_wait_for_startup(&de, 10000)))
     {
         dbg_printf("Couldn't get first exception for process %04lx %ls%s.\n"
                    "No backtrace available\n",
@@ -948,8 +942,10 @@ enum dbg_start dbg_active_auto(int argc, char* argv[])
     if (!first_exception)
     {
         /* continue managing debug events, in case the exception event comes after current debug event */
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
-        dbg_active_wait_for_first_exception();
+        if (de.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+            dbg_handle_debug_event(&de);
+        else
+            dbg_active_wait_for_first_exception();
     }
     if (output != INVALID_HANDLE_VALUE)
     {
