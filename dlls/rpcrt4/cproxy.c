@@ -82,23 +82,13 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "addl %edx,%esp\n\t"
                   "jmp *%ecx" );
 
-#include "pshpack1.h"
-struct thunk
-{
-  BYTE mov_eax;
-  DWORD index;
-  BYTE jmp;
-  LONG handler;
-};
-#include "poppack.h"
-
-static inline void init_thunk( struct thunk *thunk, unsigned int index )
-{
-    thunk->mov_eax = 0xb8; /* movl $n,%eax */
-    thunk->index   = index;
-    thunk->jmp     = 0xe9; /* jmp */
-    thunk->handler = (char *)call_stubless_func - (char *)(&thunk->handler + 1);
-}
+#define THUNK_ENTRY_SIZE 12
+#define THUNK_ENTRY(num) \
+    ".balign 4\n\t" \
+    "movl $("#num"),%eax\n\t" \
+    ".byte 0xe9\n\t" /* jmp */ \
+    ".long " __ASM_NAME("call_stubless_func") "-1f\n" \
+    "1:\n\t"
 
 #elif defined(__x86_64__)
 
@@ -128,30 +118,13 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   __ASM_CFI(".cfi_adjust_cfa_offset -0x38\n\t")
                   "ret" );
 
-#include "pshpack1.h"
-struct thunk
-{
-    BYTE mov_r10[3];
-    DWORD index;
-    BYTE mov_rax[2];
-    void *call_stubless;
-    BYTE jmp_rax[2];
-};
-#include "poppack.h"
-
-static const struct thunk thunk_template =
-{
-    { 0x49, 0xc7, 0xc2 }, 0,  /* movq $index,%r10 */
-    { 0x48, 0xb8 }, 0,        /* movq $call_stubless_func,%rax */
-    { 0xff, 0xe0 }            /* jmp *%rax */
-};
-
-static inline void init_thunk( struct thunk *thunk, unsigned int index )
-{
-    *thunk = thunk_template;
-    thunk->index = index;
-    thunk->call_stubless = call_stubless_func;
-}
+#define THUNK_ENTRY_SIZE 12
+#define THUNK_ENTRY(num) \
+    ".balign 4\n\t" \
+    "movl $("#num"),%r10d\n\t" \
+    ".byte 0xe9\n\t" /* jmp */ \
+    ".long " __ASM_NAME("call_stubless_func") "-1f\n" \
+    "1:\n\t"
 
 #elif defined(__arm__)
 
@@ -180,21 +153,11 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "add sp, #16\n\t"
                   "bx lr" );
 
-struct thunk
-{
-    DWORD ldr_ip;         /* ldr ip,[pc] */
-    DWORD ldr_pc;         /* ldr pc,[pc] */
-    DWORD index;
-    void *func;
-};
-
-static inline void init_thunk( struct thunk *thunk, unsigned int index )
-{
-    thunk->ldr_ip = 0xe59fc000; /* ldr ip,[pc] */
-    thunk->ldr_pc = 0xe59ff000; /* ldr pc,[pc] */
-    thunk->index  = index * sizeof(unsigned short);
-    thunk->func   = call_stubless_func;
-}
+#define THUNK_ENTRY_SIZE 12
+#define THUNK_ENTRY(num) \
+    "ldr ip,1f\n\t" \
+    "b.w " __ASM_NAME("call_stubless_func") "\n" \
+    "1:\t.long "#num"\n\t"
 
 #elif defined(__aarch64__)
 
@@ -225,83 +188,37 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
                    "ldp x29, x30, [sp], #0x90\n\t"
                    "ret" )
 
-struct thunk
-{
-    DWORD ldr_index;     /* ldr w16, index */
-    DWORD ldr_func;      /* ldr x17, func */
-    DWORD br;            /* br x17 */
-    DWORD index;
-    void *func;
-};
-
-static inline void init_thunk( struct thunk *thunk, unsigned int index )
-{
-    thunk->ldr_index = 0x18000070; /* ldr w16,index */
-    thunk->ldr_func  = 0x58000071; /* ldr x17,func */
-    thunk->br        = 0xd61f0220; /* br x17 */
-    thunk->index     = index;
-    thunk->func      = call_stubless_func;
-}
+#define THUNK_ENTRY_SIZE 8
+#define THUNK_ENTRY(num) \
+    "mov w16,#("#num")\n\t" \
+    "b " __ASM_NAME("call_stubless_func") "\n\t"
 
 #else  /* __i386__ */
 
 #warning You must implement stubless proxies for your CPU
 
-struct thunk
-{
-  DWORD index;
-};
-
-static inline void init_thunk( struct thunk *thunk, unsigned int index )
-{
-    thunk->index = index;
-}
+#define THUNK_ENTRY_SIZE 0
+#define THUNK_ENTRY(num) ""
 
 #endif  /* __i386__ */
 
-#define BLOCK_SIZE 1024
-#define MAX_BLOCKS 64  /* 64k methods should be enough for anybody */
-
-static const struct thunk *method_blocks[MAX_BLOCKS];
-
-static const struct thunk *allocate_block( unsigned int num )
-{
-    unsigned int i;
-    struct thunk *prev, *block;
-    DWORD oldprot;
-
-    block = VirtualAlloc( NULL, BLOCK_SIZE * sizeof(*block),
-                          MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
-    if (!block) return NULL;
-
-    for (i = 0; i < BLOCK_SIZE; i++) init_thunk( &block[i], BLOCK_SIZE * num + i + 3 );
-    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, &oldprot );
-    prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
-    if (prev) /* someone beat us to it */
-    {
-        VirtualFree( block, 0, MEM_RELEASE );
-        block = prev;
-    }
-    return block;
-}
+extern void stubless_thunks(void);
+__ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
+#undef THUNK_ENTRY
 
 BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
 {
     const void **entry = (const void **)(vtbl + 1);
-    DWORD i, j;
+    DWORD i;
 
-    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    if (num >= NB_THUNK_ENTRIES)
     {
         FIXME( "%lu methods not supported\n", num );
         return FALSE;
     }
-    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
-    {
-        const struct thunk *block = method_blocks[i];
-        if (!block && !(block = allocate_block( i ))) return FALSE;
-        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++, entry++)
-            if (*entry == (LPVOID)-1) *entry = &block[j];
-    }
+    for (i = 0; i < num - 3; i++, entry++)
+        if (*entry == (void *)-1) *entry = (char *)stubless_thunks + i * THUNK_ENTRY_SIZE;
+
     return TRUE;
 }
 
