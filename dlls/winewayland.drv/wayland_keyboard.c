@@ -27,6 +27,7 @@
 
 #include <linux/input.h>
 #undef SW_MAX /* Also defined in winuser.rh */
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "waylanddrv.h"
@@ -140,8 +141,43 @@ static HWND wayland_keyboard_get_focused_hwnd(void)
 static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
                                    uint32_t format, int fd, uint32_t size)
 {
-    FIXME("stub!\n");
+    struct wayland_keyboard *keyboard = &process_wayland.keyboard;
+    struct xkb_keymap *xkb_keymap = NULL;
+    struct xkb_state *xkb_state;
+    char *keymap_str;
+
+    TRACE("format=%d fd=%d size=%d\n", format, fd, size);
+
+    if ((keymap_str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0)) != MAP_FAILED)
+    {
+        if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1)
+            FIXME("Unsupported keymap format %#x\n", format);
+        else
+        {
+            xkb_keymap = xkb_keymap_new_from_string(keyboard->xkb_context, keymap_str,
+                                                    XKB_KEYMAP_FORMAT_TEXT_V1, 0);
+        }
+
+        munmap(keymap_str, size);
+    }
+
     close(fd);
+
+    if (!xkb_keymap)
+    {
+        ERR("Failed to load Xkb keymap\n");
+        return;
+    }
+
+    if ((xkb_state = xkb_state_new(xkb_keymap)))
+    {
+        pthread_mutex_lock(&keyboard->mutex);
+        xkb_state_unref(keyboard->xkb_state);
+        keyboard->xkb_state = xkb_state;
+        pthread_mutex_unlock(&keyboard->mutex);
+    }
+
+    xkb_keymap_unref(xkb_keymap);
 }
 
 static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
@@ -212,8 +248,19 @@ static void keyboard_handle_modifiers(void *data, struct wl_keyboard *wl_keyboar
                                       uint32_t mods_latched, uint32_t mods_locked,
                                       uint32_t xkb_group)
 {
-    FIXME("serial=%u mods_depressed=%#x mods_latched=%#x mods_locked=%#x xkb_group=%d stub!\n",
+    struct wayland_keyboard *keyboard = &process_wayland.keyboard;
+
+    if (!wayland_keyboard_get_focused_hwnd()) return;
+
+    TRACE("serial=%u mods_depressed=%#x mods_latched=%#x mods_locked=%#x xkb_group=%d stub!\n",
           serial, mods_depressed, mods_latched, mods_locked, xkb_group);
+
+    pthread_mutex_lock(&keyboard->mutex);
+    xkb_state_update_mask(keyboard->xkb_state, mods_depressed, mods_latched,
+                          mods_locked, 0, 0, xkb_group);
+    pthread_mutex_unlock(&keyboard->mutex);
+
+    /* FIXME: Sync wine modifier state with XKB modifier state. */
 }
 
 static void keyboard_handle_repeat_info(void *data, struct wl_keyboard *wl_keyboard,
@@ -283,6 +330,11 @@ void wayland_keyboard_deinit(void)
     {
         xkb_context_unref(keyboard->xkb_context);
         keyboard->xkb_context = NULL;
+    }
+    if (keyboard->xkb_state)
+    {
+        xkb_state_unref(keyboard->xkb_state);
+        keyboard->xkb_state = NULL;
     }
     pthread_mutex_unlock(&keyboard->mutex);
 }
