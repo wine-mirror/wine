@@ -27,6 +27,7 @@
 
 #include <pthread.h>
 #include <wayland-client.h>
+#include <xkbcommon/xkbcommon.h>
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
@@ -65,6 +66,14 @@ enum wayland_surface_config_state
     WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN = (1 << 3)
 };
 
+struct wayland_keyboard
+{
+    struct wl_keyboard *wl_keyboard;
+    struct xkb_context *xkb_context;
+    HWND focused_hwnd;
+    pthread_mutex_t mutex;
+};
+
 struct wayland_cursor
 {
     struct wayland_shm_buffer *shm_buffer;
@@ -100,6 +109,7 @@ struct wayland
     struct xdg_wm_base *xdg_wm_base;
     struct wl_shm *wl_shm;
     struct wayland_seat seat;
+    struct wayland_keyboard keyboard;
     struct wayland_pointer pointer;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
@@ -222,6 +232,13 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
                                                    struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
 void wayland_window_flush(HWND hwnd) DECLSPEC_HIDDEN;
+
+/**********************************************************************
+ *          Wayland Keyboard
+ */
+
+void wayland_keyboard_init(struct wl_keyboard *wl_keyboard) DECLSPEC_HIDDEN;
+void wayland_keyboard_deinit(void) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  *          Wayland pointer

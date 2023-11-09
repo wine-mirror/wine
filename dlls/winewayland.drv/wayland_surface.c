@@ -181,6 +181,11 @@ void wayland_surface_destroy(struct wayland_surface *surface)
     }
     pthread_mutex_unlock(&process_wayland.pointer.mutex);
 
+    pthread_mutex_lock(&process_wayland.keyboard.mutex);
+    if (process_wayland.keyboard.focused_hwnd == surface->hwnd)
+        process_wayland.keyboard.focused_hwnd = NULL;
+    pthread_mutex_unlock(&process_wayland.keyboard.mutex);
+
     pthread_mutex_lock(&surface->mutex);
 
     if (surface->xdg_toplevel)

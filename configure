@@ -702,6 +702,8 @@ INOTIFY_LIBS
 INOTIFY_CFLAGS
 PCSCLITE_LIBS
 PCAP_LIBS
+XKBCOMMON_LIBS
+XKBCOMMON_CFLAGS
 WAYLAND_SCANNER
 WAYLAND_CLIENT_LIBS
 WAYLAND_CLIENT_CFLAGS
@@ -1793,6 +1795,8 @@ XMKMF
 CPP
 WAYLAND_CLIENT_CFLAGS
 WAYLAND_CLIENT_LIBS
+XKBCOMMON_CFLAGS
+XKBCOMMON_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2612,6 +2616,10 @@ Some influential environment variables:
               C compiler flags for wayland-client, overriding pkg-config
   WAYLAND_CLIENT_LIBS
               Linker flags for wayland-client, overriding pkg-config
+  XKBCOMMON_CFLAGS
+              C compiler flags for xkbcommon, overriding pkg-config
+  XKBCOMMON_LIBS
+              Linker flags for xkbcommon, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -11078,6 +11086,7 @@ CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wmicrosoft-enum-forward-reference"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -15825,8 +15834,86 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
+    rm -f conftest.err
+if ${XKBCOMMON_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  XKBCOMMON_CFLAGS=`$PKG_CONFIG --cflags xkbcommon 2>conftest.err`
 fi
-if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o "$ac_cv_header_linux_input_h" = "no"
+fi
+
+if ${XKBCOMMON_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  XKBCOMMON_LIBS=`$PKG_CONFIG --libs xkbcommon 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbcommon cflags: $XKBCOMMON_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbcommon libs: $XKBCOMMON_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: xkbcommon errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $XKBCOMMON_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "xkbcommon/xkbcommon.h" "ac_cv_header_xkbcommon_xkbcommon_h" "$ac_includes_default"
+if test "x$ac_cv_header_xkbcommon_xkbcommon_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_XKBCOMMON_XKBCOMMON_H 1" >>confdefs.h
+
+fi
+
+         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xkb_context_new in -lxkbcommon" >&5
+printf %s "checking for xkb_context_new in -lxkbcommon... " >&6; }
+if test ${ac_cv_lib_xkbcommon_xkb_context_new+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxkbcommon $XKBCOMMON_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char xkb_context_new ();
+int
+main (void)
+{
+return xkb_context_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_xkbcommon_xkb_context_new=yes
+else $as_nop
+  ac_cv_lib_xkbcommon_xkb_context_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xkbcommon_xkb_context_new" >&5
+printf "%s\n" "$ac_cv_lib_xkbcommon_xkb_context_new" >&6; }
+if test "x$ac_cv_lib_xkbcommon_xkb_context_new" = xyes
+then :
+  :
+else $as_nop
+  XKBCOMMON_LIBS=""
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+
+fi
+if test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o "$ac_cv_header_linux_input_h" = "no"
 then :
   case "x$with_wayland" in
   x)   as_fn_append wine_notices "|Wayland ${notice_platform}development files not found, the Wayland driver won't be supported." ;;
@@ -23410,6 +23497,8 @@ X_EXTRA_LIBS = $X_EXTRA_LIBS
 WAYLAND_CLIENT_CFLAGS = $WAYLAND_CLIENT_CFLAGS
 WAYLAND_CLIENT_LIBS = $WAYLAND_CLIENT_LIBS
 WAYLAND_SCANNER = $WAYLAND_SCANNER
+XKBCOMMON_CFLAGS = $XKBCOMMON_CFLAGS
+XKBCOMMON_LIBS = $XKBCOMMON_LIBS
 PCAP_LIBS = $PCAP_LIBS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
