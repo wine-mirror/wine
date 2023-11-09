@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-08-10 22:50+0200\n"
+"PO-Revision-Date: 2023-11-09 19:50+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -18582,13 +18582,11 @@ msgstr "Uiterlijk"
 
 #: programs/winecfg/winecfg.rc:293
 msgid "&Theme:"
-msgstr "Thema:"
+msgstr "&Thema:"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&WinRT app theme:"
 msgid "&WinRT theme:"
-msgstr "Thema voor &WinRT programma's:"
+msgstr "&WinRT thema:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18604,13 +18602,11 @@ msgstr "Kleur:"
 
 #: programs/winecfg/winecfg.rc:310
 msgid "MIME types"
-msgstr "Bestandassociaties"
+msgstr "Bestandsassociaties"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Toestaan dat bestandassociaties worden gemaakt"
+msgstr "&Bestands- en protocolassociaties toestaan"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
