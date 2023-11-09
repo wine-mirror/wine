@@ -2820,13 +2820,12 @@ static void wined3d_context_vk_bind_stream_output_buffers(struct wined3d_context
         if (!wined3d_context_vk_create_bo(context_vk, ARRAY_SIZE(context_vk->vk_so_counters) * sizeof(uint32_t) * 2,
                 VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
             ERR("Failed to create counter BO.\n");
+
         for (i = 0; i < ARRAY_SIZE(context_vk->vk_so_counters); ++i)
-        {
-            context_vk->vk_so_counters[i] = bo->vk_buffer;
             context_vk->vk_so_offsets[i] = bo->b.buffer_offset + i * sizeof(uint32_t) * 2;
-        }
     }
 
+    memset(context_vk->vk_so_counters, 0, sizeof(context_vk->vk_so_counters));
     first = 0;
     count = 0;
     for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
@@ -2835,6 +2834,8 @@ static void wined3d_context_vk_bind_stream_output_buffers(struct wined3d_context
 
         if ((buffer = stream->buffer))
         {
+            context_vk->vk_so_counters[i] = context_vk->vk_so_counter_bo.vk_buffer;
+
             buffer_vk = wined3d_buffer_vk(buffer);
             buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
             wined3d_context_vk_reference_bo(context_vk, wined3d_bo_vk(buffer->buffer_object));
