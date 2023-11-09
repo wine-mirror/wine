@@ -26,11 +26,11 @@
 /* Common dialogs implementation globals */
 #define COMDLG32_Atom   MAKEINTATOM(0xa000)     /* MS uses this one to identify props */
 
-extern HINSTANCE	COMDLG32_hInstance DECLSPEC_HIDDEN;
-extern HANDLE	COMDLG32_hActCtx DECLSPEC_HIDDEN;
+extern HINSTANCE COMDLG32_hInstance;
+extern HANDLE COMDLG32_hActCtx;
 
-void	COMDLG32_SetCommDlgExtendedError(DWORD err) DECLSPEC_HIDDEN;
-LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;
+void	COMDLG32_SetCommDlgExtendedError(DWORD err);
+LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1);
 
 /* Find/Replace local definitions */
 
@@ -170,18 +170,18 @@ typedef struct {
 #include "shellapi.h"
 
 /* Constructors */
-HRESULT FileOpenDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
-HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT FileOpenDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
 
 /* Shared helper functions */
-void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFile, LPWSTR lpstrPathAndFile) DECLSPEC_HIDDEN;
+void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFile, LPWSTR lpstrPathAndFile);
 int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
-                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction) DECLSPEC_HIDDEN;
-int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed) DECLSPEC_HIDDEN;
-void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText) DECLSPEC_HIDDEN;
+                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction);
+int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed);
+void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText);
 
-extern BOOL GetFileName31A( OPENFILENAMEA *lpofn, UINT dlgType ) DECLSPEC_HIDDEN;
-extern BOOL GetFileName31W( OPENFILENAMEW *lpofn, UINT dlgType ) DECLSPEC_HIDDEN;
+extern BOOL GetFileName31A( OPENFILENAMEA *lpofn, UINT dlgType );
+extern BOOL GetFileName31W( OPENFILENAMEW *lpofn, UINT dlgType );
 
 #define ONOPEN_BROWSE 1
 #define ONOPEN_OPEN   2
