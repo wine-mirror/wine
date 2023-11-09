@@ -1,3 +1,5 @@
+@ stdcall EtwRegisterClassicProvider(ptr long ptr ptr ptr)
+@ stdcall EtwUnregister(int64)
 @ stdcall -arch=!i386 ExAcquireFastMutex(ptr)
 @ stdcall -fastcall ExAcquireFastMutexUnsafe(ptr)
 @ stub ExAcquireRundownProtection
