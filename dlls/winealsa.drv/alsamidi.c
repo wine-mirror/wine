@@ -80,8 +80,8 @@ static pthread_mutex_t seq_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs;
-static struct midi_dest dests[MAX_MIDIOUTDRV];
-static struct midi_src srcs[MAX_MIDIINDRV];
+static struct midi_dest *dests;
+static struct midi_src *srcs;
 static snd_seq_t *midi_seq;
 static unsigned int seq_refs;
 static int port_in = -1;
@@ -298,12 +298,12 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
               snd_seq_port_info_get_name(pinfo),
               type);
 
-        if (num_dests >= MAX_MIDIOUTDRV)
-            return;
         if (!type)
             return;
 
+        dests = realloc( dests, (num_dests + 1) * sizeof(*dests) );
         dest = dests + num_dests;
+        memset( dest, 0, sizeof(*dest) );
         dest->addr = *snd_seq_port_info_get_addr(pinfo);
 
         /* Manufac ID. We do not have access to this with soundcard.h
@@ -373,12 +373,12 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
               snd_seq_port_info_get_name(pinfo),
               type);
 
-        if (num_srcs >= MAX_MIDIINDRV)
-            return;
         if (!type)
             return;
 
+        srcs = realloc( srcs, (num_srcs + 1) * sizeof(*srcs) );
         src = srcs + num_srcs;
+        memset( src, 0, sizeof(*src) );
         src->addr = *snd_seq_port_info_get_addr(pinfo);
 
         /* Manufac ID. We do not have access to this with soundcard.h
@@ -505,11 +505,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
         WARN("Invalid Parameter !\n");
         return MMSYSERR_INVALPARAM;
     }
-    if (dev_id >= num_dests)
-    {
-        TRACE("MAX_MIDIOUTDRV reached !\n");
-        return MMSYSERR_BADDEVICEID;
-    }
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
     dest = dests + dev_id;
     if (dest->midiDesc.hMidi != 0)
     {
