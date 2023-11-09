@@ -2813,6 +2813,20 @@ static void wined3d_context_vk_bind_stream_output_buffers(struct wined3d_context
     struct wined3d_buffer *buffer;
     unsigned int i, first, count;
 
+    if (!context_vk->vk_so_counter_bo.vk_buffer)
+    {
+        struct wined3d_bo_vk *bo = &context_vk->vk_so_counter_bo;
+
+        if (!wined3d_context_vk_create_bo(context_vk, ARRAY_SIZE(context_vk->vk_so_counters) * sizeof(uint32_t) * 2,
+                VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
+            ERR("Failed to create counter BO.\n");
+        for (i = 0; i < ARRAY_SIZE(context_vk->vk_so_counters); ++i)
+        {
+            context_vk->vk_so_counters[i] = bo->vk_buffer;
+            context_vk->vk_so_offsets[i] = bo->b.buffer_offset + i * sizeof(uint32_t) * 2;
+        }
+    }
+
     first = 0;
     count = 0;
     for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)

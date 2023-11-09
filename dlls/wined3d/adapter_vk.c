@@ -1724,7 +1724,6 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     struct wined3d_context_vk *context_vk;
     VkCommandBuffer vk_command_buffer;
     uint32_t instance_count;
-    unsigned int i;
 
     TRACE("device %p, state %p, parameters %p.\n", device, state, parameters);
 
@@ -1744,20 +1743,6 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
 
     if (context_vk->c.transform_feedback_active)
     {
-        if (!context_vk->vk_so_counter_bo.vk_buffer)
-        {
-            struct wined3d_bo_vk *bo = &context_vk->vk_so_counter_bo;
-
-            if (!wined3d_context_vk_create_bo(context_vk, ARRAY_SIZE(context_vk->vk_so_counters) * sizeof(uint32_t) * 2,
-                    VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
-                ERR("Failed to create counter BO.\n");
-            for (i = 0; i < ARRAY_SIZE(context_vk->vk_so_counters); ++i)
-            {
-                context_vk->vk_so_counters[i] = bo->vk_buffer;
-                context_vk->vk_so_offsets[i] = bo->b.buffer_offset + i * sizeof(uint32_t) * 2;
-            }
-        }
-
         wined3d_context_vk_reference_bo(context_vk, &context_vk->vk_so_counter_bo);
         if (context_vk->c.transform_feedback_paused)
             VK_CALL(vkCmdBeginTransformFeedbackEXT(vk_command_buffer, 0, ARRAY_SIZE(context_vk->vk_so_counters),
