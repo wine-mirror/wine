@@ -27,7 +27,8 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-#define FROZEN 255
+#define FROZEN '\xff'
+#define FROZENW L'\xff'
 
 /* _String_iterator<char> and _String_const_iterator<char> class */
 typedef struct {
@@ -282,7 +283,7 @@ void __thiscall basic_string_char__Tidy(basic_string_char *this, bool built)
     TRACE("(%p %d)\n", this, built);
 
     if(!built || !this->ptr);
-    else if(!this->ptr[-1] || (unsigned char)this->ptr[-1]==FROZEN)
+    else if(!this->ptr[-1] || this->ptr[-1]==FROZEN)
         MSVCP_allocator_char_deallocate(NULL, this->ptr-1, this->res+2);
     else
         this->ptr[-1]--;
@@ -301,7 +302,7 @@ bool __thiscall basic_string_char__Grow(basic_string_char *this, size_t new_size
         else if(this->ptr)
             basic_string_char__Eos(this, 0);
     } else if(this->res<new_size || trim ||
-            (this->ptr && this->ptr[-1] && (unsigned char)this->ptr[-1]!=FROZEN)) {
+            (this->ptr && this->ptr[-1] && this->ptr[-1]!=FROZEN)) {
         size_t new_res = new_size, len = this->size;
         char *ptr;
 
@@ -346,7 +347,7 @@ void __thiscall basic_string_char__Split(basic_string_char *this)
 
     TRACE("(%p)\n", this);
 
-    if(!this->ptr || !this->ptr[-1] || (unsigned char)this->ptr[-1]==FROZEN)
+    if(!this->ptr || !this->ptr[-1] || this->ptr[-1]==FROZEN)
         return;
 
     ptr = this->ptr;
@@ -1814,7 +1815,7 @@ void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, bool built)
     TRACE("(%p %d)\n", this, built);
 
     if(!built || !this->ptr);
-    else if(!this->ptr[-1] || (unsigned short)this->ptr[-1]==FROZEN)
+    else if(!this->ptr[-1] || this->ptr[-1]==FROZENW)
         MSVCP_allocator_wchar_deallocate(NULL, this->ptr-1, this->res+2);
     else
         this->ptr[-1]--;
@@ -1833,7 +1834,7 @@ bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, size_t new_si
         else if(this->ptr)
             basic_string_wchar__Eos(this, 0);
     } else if(this->res<new_size || trim ||
-            (this->ptr && this->ptr[-1] && (unsigned short)this->ptr[-1]!=FROZEN)) {
+            (this->ptr && this->ptr[-1] && this->ptr[-1]!=FROZENW)) {
         size_t new_res = new_size, len = this->size;
         wchar_t *ptr;
 
@@ -1878,7 +1879,7 @@ void __thiscall basic_string_wchar__Split(basic_string_wchar *this)
 
     TRACE("(%p)\n", this);
 
-    if(!this->ptr || !this->ptr[-1] || (unsigned short)this->ptr[-1]==FROZEN)
+    if(!this->ptr || !this->ptr[-1] || this->ptr[-1]==FROZENW)
         return;
 
     ptr = this->ptr;
@@ -1899,7 +1900,7 @@ void __thiscall basic_string_wchar__Freeze(basic_string_wchar *this)
     TRACE("(%p)\n", this);
     basic_string_wchar__Split(this);
     if(this->ptr)
-        this->ptr[-1] = FROZEN;
+        this->ptr[-1] = FROZENW;
 }
 
 /* ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEXI@Z */
