@@ -32,6 +32,7 @@
 #include "rpcproxy.h"
 
 #include "wine/debug.h"
+#include "wine/asm.h"
 #include "wine/exception.h"
 
 #include "cpsf.h"
@@ -101,26 +102,6 @@ HRESULT CStdStubBuffer_Construct(REFIID riid,
   return S_OK;
 }
 
-static CRITICAL_SECTION delegating_vtbl_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &delegating_vtbl_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": delegating_vtbl_section") }
-};
-static CRITICAL_SECTION delegating_vtbl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-struct delegating_vtbl
-{
-    DWORD ref;
-    DWORD size;
-    IUnknownVtbl vtbl;
-    const void *methods[];
-};
-
-static struct delegating_vtbl *current_vtbl;
-
-
 static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
 {
     *ppv = pUnk;
@@ -144,144 +125,78 @@ static ULONG WINAPI delegating_Release(IUnknown *pUnk)
 */
 #ifdef __i386__
 
-#include "pshpack1.h"
-typedef struct {
-    BYTE mov1[4];    /* mov 0x4(%esp),%eax     8b 44 24 04 */
-    BYTE mov2[3];    /* mov 0x10(%eax),%eax    8b 40 10 */
-    BYTE mov3[4];    /* mov %eax,0x4(%esp)     89 44 24 04 */
-    BYTE mov4[2];    /* mov (%eax),%eax        8b 00 */
-    BYTE mov5[2];    /* jmp *offset(%eax)      ff a0 offset */
-    DWORD offset;
-    BYTE pad[1];     /* nop                    90 */
-} vtbl_method_t;
-#include "poppack.h"
-
-static const BYTE opcodes[20] = { 0x8b, 0x44, 0x24, 0x04, 0x8b, 0x40, 0x10, 0x89, 0x44, 0x24, 0x04,
-                                  0x8b, 0x00, 0xff, 0xa0, 0, 0, 0, 0, 0x90 };
+#define THUNK_ENTRY_SIZE 20
+#define THUNK_ENTRY(num) \
+    ".balign 4\n\t" \
+    "mov 4(%esp),%eax\n\t" \
+    "mov 0x10(%eax),%eax\n\t" \
+    "mov %eax,4(%esp)\n\t" \
+    "mov (%eax),%eax\n\t" \
+    ".byte 0xff,0xa0\n\t" /* jmp *offset(%eax) */ \
+    ".long 4*("#num")\n\t"
 
 #elif defined(__x86_64__)
 
-#include "pshpack1.h"
-typedef struct
-{
-    BYTE mov1[4];    /* movq 0x20(%rcx),%rcx   48 8b 49 20 */
-    BYTE mov2[3];    /* movq (%rcx),%rax       48 8b 01 */
-    BYTE jmp[2];     /* jmp *offset(%rax)      ff a0 offset */
-    DWORD offset;
-    BYTE pad[3];     /* lea 0x0(%rsi),%rsi     48 8d 36 */
-} vtbl_method_t;
-#include "poppack.h"
+#define THUNK_ENTRY_SIZE 16
+#define THUNK_ENTRY(num) \
+    ".balign 4\n\t" \
+    "movq 0x20(%rcx),%rcx\n\t" \
+    "movq (%rcx),%rax\n\t" \
+    ".byte 0xff,0xa0\n\t" /* jmp *offset(%rax) */ \
+    ".long 8*("#num")\n\t"
 
-static const BYTE opcodes[16] = { 0x48, 0x8b, 0x49, 0x20, 0x48, 0x8b, 0x01,
-                                  0xff, 0xa0, 0, 0, 0, 0, 0x48, 0x8d, 0x36 };
 #elif defined(__arm__)
 
-static const DWORD opcodes[] =
-{
-    0xe52d4004,    /* push {r4} */
-    0xe5900010,    /* ldr r0, [r0, #16] */
-    0xe5904000,    /* ldr r4, [r0] */
-    0xe59fc008,    /* ldr ip, [pc, #8] */
-    0xe08cc004,    /* add ip, ip, r4 */
-    0xe49d4004,    /* pop {r4} */
-    0xe59cf000     /* ldr pc, [ip] */
-};
-
-typedef struct
-{
-    DWORD opcodes[ARRAY_SIZE(opcodes)];
-    DWORD offset;
-} vtbl_method_t;
+#define THUNK_ENTRY_SIZE 12
+#define THUNK_ENTRY(num) \
+    ".balign 4\n\t" \
+    "ldr r0, [r0, #0x10]\n\t" \
+    "ldr ip, [r0]\n\t" \
+    "ldr pc, [ip, #(4*("#num"))]\n\t"
 
 #elif defined(__aarch64__)
 
-static const DWORD opcodes[] =
-{
-    0xf9401000,   /* ldr x0, [x0,#32] */
-    0xf9400010,   /* ldr x16, [x0] */
-    0x18000071,   /* ldr w17, offset */
-    0xf8716a10,   /* ldr x16, [x16,x17] */
-    0xd61f0200    /* br x16 */
-};
-
-typedef struct
-{
-    DWORD opcodes[ARRAY_SIZE(opcodes)];
-    DWORD offset;
-} vtbl_method_t;
+#define THUNK_ENTRY_SIZE 20
+#define THUNK_ENTRY(num) \
+    "ldr x0, [x0, #0x20]\n\t" \
+    "ldr x16, [x0]\n\t" \
+    "mov x17, #("#num")\n\t" \
+    "ldr x16, [x16, x17, lsl #3]\n\t" \
+    "br x16\n\t"
 
 #else
 
 #warning You must implement delegated proxies/stubs for your CPU
-typedef struct
-{
-    DWORD offset;
-} vtbl_method_t;
-static const BYTE opcodes[1];
+#define THUNK_ENTRY_SIZE 0
+#define THUNK_ENTRY(num) ""
 
 #endif
 
-#define BLOCK_SIZE 1024
-#define MAX_BLOCKS 64  /* 64k methods should be enough for anybody */
+extern void vtbl_thunks(void);
+__ASM_GLOBAL_FUNC( vtbl_thunks, ALL_THUNK_ENTRIES )
+#undef THUNK_ENTRY
 
-static const vtbl_method_t *method_blocks[MAX_BLOCKS];
-
-static const vtbl_method_t *allocate_block( unsigned int num )
+static const struct
 {
-    unsigned int i;
-    vtbl_method_t *prev, *block;
-    DWORD oldprot;
-
-    block = VirtualAlloc( NULL, BLOCK_SIZE * sizeof(*block),
-                          MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
-    if (!block) return NULL;
-
-    for (i = 0; i < BLOCK_SIZE; i++)
-    {
-        memcpy( &block[i], opcodes, sizeof(opcodes) );
-        block[i].offset = (BLOCK_SIZE * num + i + 3) * sizeof(void *);
-    }
-    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, &oldprot );
-    prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
-    if (prev) /* someone beat us to it */
-    {
-        VirtualFree( block, 0, MEM_RELEASE );
-        block = prev;
-    }
-    return block;
-}
-
-static BOOL init_delegating_vtbl(struct delegating_vtbl *table, DWORD num)
+    IUnknownVtbl vtbl;
+    const void *methods[NB_THUNK_ENTRIES - 3];
+} delegating_vtbl =
 {
-    DWORD i, j;
-
-    table->ref = 0;
-    table->size = num;
-
-    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    { delegating_QueryInterface, delegating_AddRef, delegating_Release },
     {
-        FIXME( "%lu methods not supported\n", num );
-        return FALSE;
+#define THUNK_ENTRY(num) (char *)vtbl_thunks + ((num) - 3) * THUNK_ENTRY_SIZE,
+        ALL_THUNK_ENTRIES
+#undef THUNK_ENTRY
     }
-    table->vtbl.QueryInterface = delegating_QueryInterface;
-    table->vtbl.AddRef = delegating_AddRef;
-    table->vtbl.Release = delegating_Release;
-    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
-    {
-        const vtbl_method_t *block = method_blocks[i];
-        if (!block && !(block = allocate_block( i ))) return FALSE;
-        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++)
-            table->methods[j] = &block[j];
-    }
-    return TRUE;
-}
+};
+
 
 BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
 {
     const void **entry = (const void **)(vtbl + 1);
-    DWORD i, j;
+    DWORD i;
 
-    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    if (num > NB_THUNK_ENTRIES)
     {
         FIXME( "%lu methods not supported\n", num );
         return FALSE;
@@ -289,62 +204,19 @@ BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
     vtbl->QueryInterface = IUnknown_QueryInterface_Proxy;
     vtbl->AddRef = IUnknown_AddRef_Proxy;
     vtbl->Release = IUnknown_Release_Proxy;
-    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
-    {
-        const vtbl_method_t *block = method_blocks[i];
-        if (!block && !(block = allocate_block( i ))) return FALSE;
-        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++, entry++)
-            if (!*entry) *entry = &block[j];
-    }
+    for (i = 0; i < num - 3; i++)
+        if (!entry[i]) entry[i] = delegating_vtbl.methods[i];
     return TRUE;
 }
 
-IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
+const IUnknownVtbl *get_delegating_vtbl(DWORD num)
 {
-    IUnknownVtbl *ret;
-
-    if (num_methods < 256) num_methods = 256;  /* avoid frequent reallocations */
-
-    EnterCriticalSection(&delegating_vtbl_section);
-
-    if(!current_vtbl || num_methods > current_vtbl->size)
+    if (num > NB_THUNK_ENTRIES)
     {
-        struct delegating_vtbl *table = malloc(FIELD_OFFSET(struct delegating_vtbl, methods[num_methods]));
-        if (!table)
-        {
-            LeaveCriticalSection(&delegating_vtbl_section);
-            return NULL;
-        }
-
-        init_delegating_vtbl(table, num_methods);
-
-        if (current_vtbl && current_vtbl->ref == 0)
-        {
-            TRACE("freeing old table\n");
-            free(current_vtbl);
-        }
-        current_vtbl = table;
+        FIXME( "%lu methods not supported\n", num );
+        return NULL;
     }
-
-    current_vtbl->ref++;
-    ret = &current_vtbl->vtbl;
-    LeaveCriticalSection(&delegating_vtbl_section);
-    return ret;
-}
-
-void release_delegating_vtbl(IUnknownVtbl *vtbl)
-{
-    struct delegating_vtbl *table = CONTAINING_RECORD(vtbl, struct delegating_vtbl, vtbl);
-
-    EnterCriticalSection(&delegating_vtbl_section);
-    table->ref--;
-    TRACE("ref now %ld\n", table->ref);
-    if(table->ref == 0 && table != current_vtbl)
-    {
-        TRACE("... and we're not current so free'ing\n");
-        free(table);
-    }
-    LeaveCriticalSection(&delegating_vtbl_section);
+    return &delegating_vtbl.vtbl;
 }
 
 HRESULT CStdStubBuffer_Delegating_Construct(REFIID riid,
@@ -379,11 +251,10 @@ HRESULT CStdStubBuffer_Delegating_Construct(REFIID riid,
         return E_OUTOFMEMORY;
     }
 
-    This->base_obj = get_delegating_vtbl( vtbl->header.DispatchTableCount );
-    r = create_stub(delegating_iid, (IUnknown*)&This->base_obj, &This->base_stub);
+    This->base_obj.lpVtbl = get_delegating_vtbl( vtbl->header.DispatchTableCount );
+    r = create_stub(delegating_iid, &This->base_obj, &This->base_stub);
     if(FAILED(r))
     {
-        release_delegating_vtbl(This->base_obj);
         free(This);
         IUnknown_Release(pvServer);
         return r;
@@ -461,8 +332,6 @@ ULONG WINAPI NdrCStdStubBuffer2_Release(LPRPCSTUBBUFFER iface,
         IRpcStubBuffer_Disconnect((IRpcStubBuffer *)&This->stub_buffer);
 
         IRpcStubBuffer_Release(This->base_stub);
-        release_delegating_vtbl(This->base_obj);
-
         IPSFactoryBuffer_Release(pPSF);
         free(This);
     }

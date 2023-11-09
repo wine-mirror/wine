@@ -1465,7 +1465,6 @@ static ULONG WINAPI typelib_stub_Release(IRpcStubBuffer *iface)
         if (stub->stub.base_stub)
         {
             IRpcStubBuffer_Release(stub->stub.base_stub);
-            release_delegating_vtbl(stub->stub.base_obj);
             free(stub->dispatch_table);
         }
 
@@ -1495,11 +1494,10 @@ static HRESULT typelib_stub_init(struct typelib_stub *stub, IUnknown *server,
 
     if (!IsEqualGUID(parentiid, &IID_IUnknown))
     {
-        stub->stub.base_obj = get_delegating_vtbl(stub->stub_vtbl.header.DispatchTableCount);
-        hr = create_stub(parentiid, (IUnknown *)&stub->stub.base_obj, &stub->stub.base_stub);
+        stub->stub.base_obj.lpVtbl = get_delegating_vtbl(stub->stub_vtbl.header.DispatchTableCount);
+        hr = create_stub(parentiid, &stub->stub.base_obj, &stub->stub.base_stub);
         if (FAILED(hr))
         {
-            release_delegating_vtbl(stub->stub.base_obj);
             IUnknown_Release(stub->stub.stub_buffer.pvServerObject);
             return hr;
         }
