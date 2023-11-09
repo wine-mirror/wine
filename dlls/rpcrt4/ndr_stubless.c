@@ -849,8 +849,8 @@ static LONG_PTR do_ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORM
     return retval;
 }
 
-LONG_PTR CDECL DECLSPEC_HIDDEN ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
-                                                void **stack_top, void **fpu_stack )
+LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
+                                void **stack_top, void **fpu_stack )
 {
     /* pointer to start of stack where arguments start */
     MIDL_STUB_MESSAGE stubMsg;
@@ -1796,8 +1796,8 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
     }
 }
 
-LONG_PTR CDECL DECLSPEC_HIDDEN ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
-                                                      void **stack_top )
+LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
+                                      void **stack_top )
 {
     LONG_PTR ret = 0;
     const NDR_PROC_HEADER *pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
@@ -2218,7 +2218,7 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
 static const RPC_SYNTAX_IDENTIFIER ndr_syntax_id =
     {{0x8a885d04, 0x1ceb, 0x11c9, {0x9f, 0xe8, 0x08, 0x00, 0x2b, 0x10, 0x48, 0x60}}, {2, 0}};
 
-LONG_PTR CDECL DECLSPEC_HIDDEN ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
+LONG_PTR CDECL ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
         ULONG proc, void *retval, void **stack_top, void **fpu_stack )
 {
     ULONG_PTR i;
@@ -2280,7 +2280,7 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall3( MIDL_STUBLESS_PROXY_INFO *info, ULONG
 
 #endif
 
-LONG_PTR CDECL DECLSPEC_HIDDEN ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
+LONG_PTR CDECL ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
         ULONG proc, void *retval, void **stack_top, void **fpu_stack )
 {
     ULONG_PTR i;
