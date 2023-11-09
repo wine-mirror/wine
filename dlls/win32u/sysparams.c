@@ -2134,10 +2134,10 @@ DPI_AWARENESS get_thread_dpi_awareness(void)
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
     ULONG_PTR context = info->dpi_awareness;
 
-    if (!context) context = NtUserGetProcessDpiAwarenessContext( NULL );
-
     switch (context)
     {
+    case 0: /* process default */
+        return NtUserGetProcessDpiAwarenessContext( NULL ) & 3;
     case 0x10:
     case 0x11:
     case 0x12:
