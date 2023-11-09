@@ -273,8 +273,8 @@ static HRESULT WINAPI gamepad_GetCurrentReading( IGamepad *iface, struct Gamepad
     if (state.buttons[3]) value->Buttons |= GamepadButtons_Y;
     if (state.buttons[4]) value->Buttons |= GamepadButtons_LeftShoulder;
     if (state.buttons[5]) value->Buttons |= GamepadButtons_RightShoulder;
-    if (state.buttons[6]) value->Buttons |= GamepadButtons_Menu;
-    if (state.buttons[7]) value->Buttons |= GamepadButtons_View;
+    if (state.buttons[6]) value->Buttons |= GamepadButtons_View;
+    if (state.buttons[7]) value->Buttons |= GamepadButtons_Menu;
     if (state.buttons[8]) value->Buttons |= GamepadButtons_LeftThumbstick;
     if (state.buttons[9]) value->Buttons |= GamepadButtons_RightThumbstick;
 
