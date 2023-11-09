@@ -2006,13 +2006,14 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
                                        ULONG ord, PVOID *address)
 {
     IMAGE_EXPORT_DIRECTORY *exports;
+    WINE_MODREF *wm;
     DWORD exp_size;
     NTSTATUS ret = STATUS_PROCEDURE_NOT_FOUND;
 
     RtlEnterCriticalSection( &loader_section );
 
     /* check if the module itself is invalid to return the proper error */
-    if (!get_modref( module )) ret = STATUS_DLL_NOT_FOUND;
+    if (!(wm = get_modref( module ))) ret = STATUS_DLL_NOT_FOUND;
     else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
                                                       IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
@@ -2022,6 +2023,11 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
         {
             *address = proc;
             ret = STATUS_SUCCESS;
+        }
+        else
+        {
+            WARN( "%s (ordinal %lu) not found in %s\n", debugstr_a(name ? name->Buffer : NULL),
+                  ord, debugstr_us(&wm->ldr.FullDllName) );
         }
     }
 
