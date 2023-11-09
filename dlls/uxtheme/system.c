@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
 static const WCHAR szThemeManager[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\ThemeManager";
 
-DECLSPEC_HIDDEN ATOM atDialogThemeEnabled;
+ATOM atDialogThemeEnabled;
 
 static DWORD dwThemeAppProperties = STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS;
 static ATOM atWindowTheme;

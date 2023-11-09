@@ -81,40 +81,40 @@ typedef struct tagTHEMENAMES
 } THEMENAMES, *PTHEMENAMES;
 
 /* Declarations for undocumented functions for use internally */
-DWORD WINAPI QueryThemeServices(void) DECLSPEC_HIDDEN;
+DWORD WINAPI QueryThemeServices(void);
 HRESULT WINAPI OpenThemeFile(LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
                              LPCWSTR pszSizeName, HTHEMEFILE *hThemeFile,
-                             DWORD unknown) DECLSPEC_HIDDEN;
-HRESULT WINAPI CloseThemeFile(HTHEMEFILE hThemeFile) DECLSPEC_HIDDEN;
-HRESULT WINAPI ApplyTheme(HTHEMEFILE hThemeFile, char *unknown, HWND hWnd) DECLSPEC_HIDDEN;
+                             DWORD unknown);
+HRESULT WINAPI CloseThemeFile(HTHEMEFILE hThemeFile);
+HRESULT WINAPI ApplyTheme(HTHEMEFILE hThemeFile, char *unknown, HWND hWnd);
 HRESULT WINAPI GetThemeDefaults(LPCWSTR pszThemeFileName, LPWSTR pszColorName,
                                 DWORD dwColorNameLen, LPWSTR pszSizeName,
-                                DWORD dwSizeNameLen) DECLSPEC_HIDDEN;
+                                DWORD dwSizeNameLen);
 HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
-                          LPVOID lpData) DECLSPEC_HIDDEN;
+                          LPVOID lpData);
 HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
-                               DWORD dwColorNum, PTHEMENAMES pszColorNames) DECLSPEC_HIDDEN;
+                               DWORD dwColorNum, PTHEMENAMES pszColorNames);
 HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
-                              DWORD dwSizeNum, PTHEMENAMES pszColorNames) DECLSPEC_HIDDEN;
+                              DWORD dwSizeNum, PTHEMENAMES pszColorNames);
 HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
-                                 ParseThemeIniFileProc callback, LPVOID lpData) DECLSPEC_HIDDEN;
-BOOL WINAPI ThemeHooksInstall(void) DECLSPEC_HIDDEN;
-BOOL WINAPI ThemeHooksRemove(void) DECLSPEC_HIDDEN;
+                                 ParseThemeIniFileProc callback, LPVOID lpData);
+BOOL WINAPI ThemeHooksInstall(void);
+BOOL WINAPI ThemeHooksRemove(void);
 
-extern void UXTHEME_InitSystem(HINSTANCE hInst) DECLSPEC_HIDDEN;
-extern HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf) DECLSPEC_HIDDEN;
-extern void UXTHEME_UninitSystem(void) DECLSPEC_HIDDEN;
+extern void UXTHEME_InitSystem(HINSTANCE hInst);
+extern HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf);
+extern void UXTHEME_UninitSystem(void);
 
-extern struct user_api_hook user_api DECLSPEC_HIDDEN;
-LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode) DECLSPEC_HIDDEN;
+extern struct user_api_hook user_api;
+LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode);
 void WINAPI UXTHEME_NonClientButtonDraw(HWND hwnd, HDC hdc, enum NONCLIENT_BUTTON_TYPE type,
-                                        RECT rect, BOOL down, BOOL grayed) DECLSPEC_HIDDEN;
+                                        RECT rect, BOOL down, BOOL grayed);
 void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTEST hit_test,
                                   const struct SCROLL_TRACKING_INFO *tracking_info,
                                   BOOL draw_arrows, BOOL draw_interior, RECT *rect, UINT enable_flags,
-                                  INT arrowsize, INT thumbpos, INT thumbsize, BOOL vertical) DECLSPEC_HIDDEN;
+                                  INT arrowsize, INT thumbpos, INT thumbsize, BOOL vertical);
 LRESULT WINAPI UXTHEME_ScrollbarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                                        BOOL unicode) DECLSPEC_HIDDEN;
+                                        BOOL unicode);
 
 /* No alpha blending */
 #define ALPHABLEND_NONE             0
