@@ -2867,6 +2867,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         output_filenames( defines );
         output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
         output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
+        if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRAIDLFLAGS", arch ));
         output_filename( source->filename );
         output( "\n" );
         strarray_addall( &deps, arch_deps );
