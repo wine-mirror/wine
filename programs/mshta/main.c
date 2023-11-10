@@ -21,9 +21,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 #include <windows.h>
+#include "wine/debug.h"
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
-    printf("mshta.exe is a stub!\n");
+    MESSAGE("mshta.exe is a stub!\n");
     return 0;
 }
