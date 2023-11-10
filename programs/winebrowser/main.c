@@ -396,8 +396,7 @@ static WCHAR *convert_file_uri(IUri *uri)
 }
 
 /*****************************************************************************
- * Main entry point. This is a console application so we have a wmain() not a
- * winmain().
+ * Main entry point.
  */
 int wmain(int argc, WCHAR *argv[])
 {
