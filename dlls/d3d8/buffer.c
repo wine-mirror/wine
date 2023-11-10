@@ -193,7 +193,10 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface, UINT
             iface, offset, size, data, flags);
 
     if (buffer->discarded)
-        flags &= ~D3DLOCK_DISCARD;
+    {
+        WARN("Filtering out redundant discard of %p.\n", buffer);
+        flags = (flags & ~D3DLOCK_DISCARD) | D3DLOCK_NOOVERWRITE;
+    }
     if (flags & D3DLOCK_DISCARD)
         buffer->discarded = true;
 
@@ -514,7 +517,10 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface, UINT o
             iface, offset, size, data, flags);
 
     if (buffer->discarded)
-        flags &= ~D3DLOCK_DISCARD;
+    {
+        WARN("Filtering out redundant discard of %p.\n", buffer);
+        flags = (flags & ~D3DLOCK_DISCARD) | D3DLOCK_NOOVERWRITE;
+    }
     if (flags & D3DLOCK_DISCARD)
         buffer->discarded = true;
 
