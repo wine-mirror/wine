@@ -67,6 +67,8 @@ option can be specified multiple times.
 Generate a UUID file. The default output filename is \fIinfile\fB_i.c\fR.
 .PP
 .B Proxy/stub generation options:
+.IP "\fB--align=\fIn\fB, --packing=\fIn\fR"
+Set the structure packing to \fIn\fR. Supported values are 2, 4, and 8.
 .IP "\fB-c\fR"
 Generate a client stub file. The default output filename is \fIinfile\fB_c.c\fR.
 .IP "\fB-Os\fR"

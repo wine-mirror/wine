@@ -41,6 +41,7 @@ static const char usage[] =
 "Usage: widl [options...] infile.idl\n"
 "   or: widl [options...] --dlldata-only name1 [name2...]\n"
 "   --acf=file         Use ACF file\n"
+"   --align=n          Set structure packing to 'n'\n"
 "   -app_config        Ignored, present for midl compatibility\n"
 "   -b arch            Set the target architecture\n"
 "   -c                 Generate client stub\n"
@@ -61,6 +62,7 @@ static const char usage[] =
 "   -o, --output=NAME  Set the output file name\n"
 "   -Otype             Type of stubs to generate (-Os, -Oi, -Oif)\n"
 "   -p                 Generate proxy\n"
+"   --packing=n        Set structure packing to 'n'\n"
 "   --prefix-all=p     Prefix names of client stubs / server functions with 'p'\n"
 "   --prefix-client=p  Prefix names of client stubs with 'p'\n"
 "   --prefix-server=p  Prefix names of server functions with 'p'\n"
@@ -73,8 +75,6 @@ static const char usage[] =
 "   -V                 Print version and exit\n"
 "   -W                 Enable pedantic warnings\n"
 "   --win32, --win64   Set the target architecture (Win32 or Win64)\n"
-"   --win32-align n    Set win32 structure alignment to 'n'\n"
-"   --win64-align n    Set win64 structure alignment to 'n'\n"
 "   --winrt            Enable Windows Runtime mode\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
 "    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -106,8 +106,6 @@ int do_idfile = 0;
 int do_dlldata = 0;
 static int no_preprocess = 0;
 int old_names = 0;
-int win32_packing = 8;
-int win64_packing = 8;
 int winrt_mode = 0;
 int use_abi_namespace = 0;
 static int stdinc = 1;
@@ -142,6 +140,7 @@ static const char *sysroot = "";
 
 static FILE *idfile;
 
+unsigned int packing = 8;
 unsigned int pointer_size = 0;
 
 time_t now;
@@ -154,6 +153,7 @@ enum {
     DLLDATA_ONLY_OPTION,
     LOCAL_STUBS_OPTION,
     NOSTDINC_OPTION,
+    PACKING_OPTION,
     PREFIX_ALL_OPTION,
     PREFIX_CLIENT_OPTION,
     PREFIX_SERVER_OPTION,
@@ -164,14 +164,13 @@ enum {
     SYSROOT_OPTION,
     WIN32_OPTION,
     WIN64_OPTION,
-    WIN32_ALIGN_OPTION,
-    WIN64_ALIGN_OPTION
 };
 
 static const char short_options[] =
     "b:cC:d:D:EhH:I:L:m:No:O:pP:rsS:tT:uU:VW";
 static const struct long_option long_options[] = {
     { "acf", 1, ACF_OPTION },
+    { "align", 1, PACKING_OPTION },
     { "app_config", 0, APP_CONFIG_OPTION },
     { "dlldata", 1, DLLDATA_OPTION },
     { "dlldata-only", 0, DLLDATA_ONLY_OPTION },
@@ -181,6 +180,7 @@ static const struct long_option long_options[] = {
     { "ns_prefix", 0, RT_NS_PREFIX },
     { "oldnames", 0, OLDNAMES_OPTION },
     { "output", 0, 'o' },
+    { "packing", 1, PACKING_OPTION },
     { "prefix-all", 1, PREFIX_ALL_OPTION },
     { "prefix-client", 1, PREFIX_CLIENT_OPTION },
     { "prefix-server", 1, PREFIX_SERVER_OPTION },
@@ -190,8 +190,6 @@ static const struct long_option long_options[] = {
     { "winrt", 0, RT_OPTION },
     { "win32", 0, WIN32_OPTION },
     { "win64", 0, WIN64_OPTION },
-    { "win32-align", 1, WIN32_ALIGN_OPTION },
-    { "win64-align", 1, WIN64_ALIGN_OPTION },
     { NULL }
 };
 
@@ -532,15 +530,10 @@ static void option_callback( int optc, char *optarg )
     case WIN64_OPTION:
       pointer_size = 8;
       break;
-    case WIN32_ALIGN_OPTION:
-      win32_packing = strtol(optarg, NULL, 0);
-      if(win32_packing != 2 && win32_packing != 4 && win32_packing != 8)
-          error("Packing must be one of 2, 4 or 8\n");
-      break;
-    case WIN64_ALIGN_OPTION:
-      win64_packing = strtol(optarg, NULL, 0);
-      if(win64_packing != 2 && win64_packing != 4 && win64_packing != 8)
-          error("Packing must be one of 2, 4 or 8\n");
+    case PACKING_OPTION:
+      packing = strtol(optarg, NULL, 0);
+      if(packing != 2 && packing != 4 && packing != 8)
+          error("Structure packing must be one of 2, 4 or 8\n");
       break;
     case ACF_OPTION:
       acf_name = xstrdup(optarg);

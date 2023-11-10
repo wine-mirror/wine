@@ -46,8 +46,6 @@ extern int do_regscript;
 extern int do_idfile;
 extern int do_dlldata;
 extern int old_names;
-extern int win32_packing;
-extern int win64_packing;
 extern int winrt_mode;
 extern int use_abi_namespace;
 
@@ -69,6 +67,7 @@ extern char *regscript_name;
 extern char *regscript_token;
 extern const char *prefix_client;
 extern const char *prefix_server;
+extern unsigned int packing;
 extern unsigned int pointer_size;
 extern time_t now;
 
