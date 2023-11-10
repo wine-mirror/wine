@@ -76,8 +76,8 @@ function test_document_name_as_index() {
     ok("iframeid" in window, "iframeid is not in window");
     e = document.getElementById("iframeid");
     ok(!!e, "e is null");
-    ok(iframeid != e, "iframeid == e");
-    ok(iframeid.frameElement === e, "frameid != e.contentWindow");
+    ok(iframeid === e.contentWindow.self, "frameid != e.contentWindow.self");
+    ok(iframeid.frameElement === e, "frameid.frameElement != e");
 }
 
 function test_remove_style_attribute() {

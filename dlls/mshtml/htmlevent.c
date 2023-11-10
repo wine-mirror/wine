@@ -1338,7 +1338,7 @@ static HRESULT WINAPI DOMUIEvent_get_view(IDOMUIEvent *iface, IHTMLWindow2 **p)
         mozIDOMWindowProxy_Release(moz_window);
     }
     if(view)
-        IHTMLWindow2_AddRef((*p = &view->base.inner_window->base.IHTMLWindow2_iface));
+        IHTMLWindow2_AddRef((*p = &view->base.IHTMLWindow2_iface));
     else
         *p = NULL;
     return S_OK;

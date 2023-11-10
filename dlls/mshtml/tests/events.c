@@ -3343,6 +3343,7 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLPerformance *perf, *perf2;
     IOmHistory *history, *history2;
     IHTMLScreen *screen, *screen2;
+    IHTMLWindow2 *self, *window2;
     IEventTarget *event_target;
     DISPPARAMS dp = { 0 };
     IHTMLWindow7 *window7;
@@ -3504,6 +3505,11 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLWindow7_Release(window7);
     VariantClear(&res);
 
+    /* Test "proxy" windows as well, they're actually outer window proxies, but not the same */
+    hres = IHTMLWindow2_get_self(window, &self);
+    ok(hres == S_OK, "get_self failed: %08lx\n", hres);
+    ok(self != NULL, "self == NULL\n");
+
     /* Add props to location, since it gets lost on navigation, despite being same object */
     bstr = SysAllocString(L"wineTestProp");
     hres = IHTMLLocation_QueryInterface(location, &IID_IDispatchEx, (void**)&dispex);
@@ -3658,6 +3664,12 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLPerformance_Release(perf);
     IHTMLWindow7_Release(window7);
     VariantClear(&res);
+
+    hres = IHTMLWindow2_get_self(window, &window2);
+    ok(hres == S_OK, "get_self failed: %08lx\n", hres);
+    ok(self == window2, "self != window2\n");
+    IHTMLWindow2_Release(window2);
+    IHTMLWindow2_Release(self);
 }
 
 static void test_create_event(IHTMLDocument2 *doc)

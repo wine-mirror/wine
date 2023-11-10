@@ -7319,9 +7319,10 @@ static void test_window(IHTMLDocument2 *doc)
 
     hres = IHTMLWindow2_get_self(window, &self);
     ok(hres == S_OK, "get_self failed: %08lx\n", hres);
-    ok(window2 != NULL, "self == NULL\n");
+    ok(self != NULL, "self == NULL\n");
 
     ok(self == window2, "self != window2\n");
+    todo_wine ok(window != window2, "window == window2\n");
 
     IHTMLWindow2_Release(window2);
 
@@ -10931,7 +10932,7 @@ static void test_frames_collection(IHTMLFramesCollection2 *frames, const WCHAR *
 
 static void test_frameset(IHTMLDocument2 *doc)
 {
-    IHTMLWindow2 *window;
+    IHTMLWindow2 *window, *window2, *self;
     IHTMLFramesCollection2 *frames;
     IHTMLDocument6 *doc6;
     IHTMLElement *elem;
@@ -10945,6 +10946,16 @@ static void test_frameset(IHTMLDocument2 *doc)
     ok(hres == S_OK, "IHTMLWindow2_get_frames failed: 0x%08lx\n", hres);
     if(FAILED(hres))
         return;
+
+    hres = IHTMLFramesCollection2_QueryInterface(frames, &IID_IHTMLWindow2, (void**)&window2);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLWindow2) failed: 0x%08lx\n", hres);
+    todo_wine ok(window != window2, "window == window2\n");
+
+    hres = IHTMLWindow2_get_self(window, &self);
+    ok(hres == S_OK, "get_self failed: %08lx\n", hres);
+    ok(self == window2, "self != window2\n");
+    IHTMLWindow2_Release(window2);
+    IHTMLWindow2_Release(self);
 
     test_frames_collection(frames, L"fr1");
     IHTMLFramesCollection2_Release(frames);

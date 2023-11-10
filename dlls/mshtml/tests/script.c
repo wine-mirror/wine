@@ -4498,7 +4498,6 @@ static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHA
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
 
-    todo_wine
     ok(iface_cmp((IUnknown *)window, (IUnknown *)window_dispex), "window != dispex_window\n");
 
     code = SysAllocString(codew);

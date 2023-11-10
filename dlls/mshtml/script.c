@@ -374,11 +374,11 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     if(wcscmp(pstrName, L"window"))
         return DISP_E_MEMBERNOTFOUND;
 
-    if(!This->window)
+    if(!This->window || !This->window->base.outer_window)
         return E_FAIL;
 
     /* FIXME: Return proxy object */
-    *ppiunkItem = (IUnknown*)&This->window->base.IHTMLWindow2_iface;
+    *ppiunkItem = (IUnknown*)&This->window->base.outer_window->base.IHTMLWindow2_iface;
     IUnknown_AddRef(*ppiunkItem);
 
     return S_OK;

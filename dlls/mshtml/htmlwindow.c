@@ -504,11 +504,12 @@ static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
 static HRESULT WINAPI HTMLWindow2_get_frames(IHTMLWindow2 *iface, IHTMLFramesCollection2 **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
+
     FIXME("(%p)->(%p): semi-stub\n", This, p);
 
     /* FIXME: Should return a separate Window object */
-    *p = (IHTMLFramesCollection2*)&This->IHTMLWindow2_iface;
-    IHTMLWindow2_AddRef(iface);
+    *p = (IHTMLFramesCollection2*)&This->outer_window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(&This->outer_window->base.IHTMLWindow2_iface);
     return S_OK;
 }
 
@@ -993,8 +994,8 @@ static HRESULT WINAPI HTMLWindow2_get_self(IHTMLWindow2 *iface, IHTMLWindow2 **p
     TRACE("(%p)->(%p)\n", This, p);
 
     /* FIXME: We should return kind of proxy window here. */
-    IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
-    *p = &This->IHTMLWindow2_iface;
+    *p = &This->outer_window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(*p);
     return S_OK;
 }
 
@@ -1019,8 +1020,8 @@ static HRESULT WINAPI HTMLWindow2_get_window(IHTMLWindow2 *iface, IHTMLWindow2 *
     TRACE("(%p)->(%p)\n", This, p);
 
     /* FIXME: We should return kind of proxy window here. */
-    IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
-    *p = &This->IHTMLWindow2_iface;
+    *p = &This->outer_window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(*p);
     return S_OK;
 }
 
@@ -4132,7 +4133,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
                 return DISP_E_MEMBERNOTFOUND;
 
             V_VT(res) = VT_DISPATCH;
-            V_DISPATCH(res) = (IDispatch*)&frame->base.inner_window->base.IHTMLWindow2_iface;
+            V_DISPATCH(res) = (IDispatch*)&frame->base.IHTMLWindow2_iface;
             IDispatch_AddRef(V_DISPATCH(res));
             return S_OK;
         }
