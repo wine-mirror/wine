@@ -4382,7 +4382,7 @@ fi
 # Check whether --with-pthread was given.
 if test ${with_pthread+y}
 then :
-  withval=$with_pthread; if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi
+  withval=$with_pthread;
 fi
 
 
@@ -8083,12 +8083,6 @@ then :
   printf "%s\n" "#define HAVE_PORT_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
-if test "x$ac_cv_header_pthread_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_PTHREAD_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "pwd.h" "ac_cv_header_pwd_h" "$ac_includes_default"
 if test "x$ac_cv_header_pwd_h" = xyes
 then :
@@ -9059,9 +9053,7 @@ then :
 fi
 
 
-ac_fn_c_check_header_compile "$LINENO" "pthread_np.h" "ac_cv_header_pthread_np_h" "#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
+ac_fn_c_check_header_compile "$LINENO" "pthread_np.h" "ac_cv_header_pthread_np_h" "#include <pthread.h>
 "
 if test "x$ac_cv_header_pthread_np_h" = xyes
 then :
@@ -13437,9 +13429,11 @@ printf "%s\n" "$as_me:${as_lineno-$LINENO}: zydis libs: $ZYDIS_PE_LIBS" >&5
 
 
 
-if test "$ac_cv_header_pthread_h" = "yes"
-then
-    ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
+if test "x$with_pthread" = xno
+then :
+
+else $as_nop
+  ac_fn_c_check_func "$LINENO" "pthread_create" "ac_cv_func_pthread_create"
 if test "x$ac_cv_func_pthread_create" = xyes
 then :
 

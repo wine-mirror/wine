@@ -51,8 +51,7 @@ AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound 
 AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
 AC_ARG_WITH(pcsclite,  AS_HELP_STRING([--without-pcsclite],[do not use PCSC lite]))
-AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
-            [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
+AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]))
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
@@ -438,7 +437,6 @@ AC_CHECK_HEADERS(\
 	netinet/tcp_fsm.h \
 	pcap/pcap.h \
 	port.h \
-	pthread.h \
 	pwd.h \
 	sched.h \
 	scsi/scsi.h \
@@ -597,10 +595,7 @@ AC_CHECK_HEADERS([sys/thr.h],,,
 #include <sys/ucontext.h>
 #endif])
 
-AC_CHECK_HEADERS([pthread_np.h],,,
-[#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif])
+AC_CHECK_HEADERS([pthread_np.h],,,[#include <pthread.h>])
 
 AC_CHECK_HEADERS([linux/videodev2.h],,,
 [#include <sys/time.h>
@@ -1175,10 +1170,8 @@ WINE_EXTLIB_FLAGS(ZYDIS, zydis, zydis, "-I\$(top_srcdir)/libs/zydis/include")
 
 dnl **** Check for pthread ****
 
-if test "$ac_cv_header_pthread_h" = "yes"
-then
-    AC_CHECK_FUNC(pthread_create,,[AC_CHECK_LIB(pthread,pthread_create,[AC_SUBST(PTHREAD_LIBS,"-lpthread")])])
-fi
+AS_VAR_IF([with_pthread],[no],[],
+          [AC_CHECK_FUNC(pthread_create,,[AC_CHECK_LIB(pthread,pthread_create,[AC_SUBST(PTHREAD_LIBS,"-lpthread")])])])
 WINE_ERROR_WITH(pthread,[test "x$ac_cv_func_pthread_create" != xyes -a "x$PTHREAD_LIBS" = x],
 [pthread ${notice_platform}development files not found.
 Wine cannot support threads without libpthread.])

@@ -318,9 +318,6 @@
 /* Define to 1 if you have the `pthread_getthreadid_np' function. */
 #undef HAVE_PTHREAD_GETTHREADID_NP
 
-/* Define to 1 if you have the <pthread.h> header file. */
-#undef HAVE_PTHREAD_H
-
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
 
