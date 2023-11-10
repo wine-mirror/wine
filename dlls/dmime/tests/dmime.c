@@ -3176,6 +3176,10 @@ static void test_notification_pmsg(void)
     hr = IDirectMusicPerformance_AddNotificationType(performance, &GUID_NOTIFICATION_SEGMENT);
     ok(hr == S_FALSE, "got %#lx\n", hr);
 
+    /* avoid discarding older notifications */
+    hr = IDirectMusicPerformance_SetNotificationHandle(performance, 0, 100000000);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
     hr = IDirectMusicPerformance_PlaySegment(performance, segment, 0, 0, &state);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_GetTime(performance, NULL, &music_time);
