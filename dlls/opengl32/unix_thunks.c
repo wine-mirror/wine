@@ -22,30 +22,30 @@
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #endif
 
-extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS process_detach( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS gl_glGetIntegerv( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS gl_glGetString( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_glDebugMessageCallback( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_glDebugMessageCallbackARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_glGetStringi( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglBindTexImageARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglDestroyPbufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglQueryPbufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglReleasePbufferDCARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglReleaseTexImageARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS ext_wglSetPbufferAttribARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS thread_attach( void *args );
+extern NTSTATUS process_detach( void *args );
+extern NTSTATUS wgl_wglCopyContext( void *args );
+extern NTSTATUS wgl_wglCreateContext( void *args );
+extern NTSTATUS wgl_wglDeleteContext( void *args );
+extern NTSTATUS wgl_wglGetProcAddress( void *args );
+extern NTSTATUS wgl_wglMakeCurrent( void *args );
+extern NTSTATUS wgl_wglShareLists( void *args );
+extern NTSTATUS gl_glGetIntegerv( void *args );
+extern NTSTATUS gl_glGetString( void *args );
+extern NTSTATUS ext_glDebugMessageCallback( void *args );
+extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args );
+extern NTSTATUS ext_glDebugMessageCallbackARB( void *args );
+extern NTSTATUS ext_glGetStringi( void *args );
+extern NTSTATUS ext_wglBindTexImageARB( void *args );
+extern NTSTATUS ext_wglCreateContextAttribsARB( void *args );
+extern NTSTATUS ext_wglCreatePbufferARB( void *args );
+extern NTSTATUS ext_wglDestroyPbufferARB( void *args );
+extern NTSTATUS ext_wglGetPbufferDCARB( void *args );
+extern NTSTATUS ext_wglMakeContextCurrentARB( void *args );
+extern NTSTATUS ext_wglQueryPbufferARB( void *args );
+extern NTSTATUS ext_wglReleasePbufferDCARB( void *args );
+extern NTSTATUS ext_wglReleaseTexImageARB( void *args );
+extern NTSTATUS ext_wglSetPbufferAttribARB( void *args );
 
 static NTSTATUS wgl_wglDescribePixelFormat( void *args )
 {
@@ -27252,8 +27252,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 typedef ULONG PTR32;
 
-extern NTSTATUS wow64_thread_attach( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_thread_attach( void *args );
+extern NTSTATUS wow64_process_detach( void *args );
 
 static NTSTATUS wow64_wgl_wglCopyContext( void *args )
 {
@@ -92285,42 +92285,42 @@ static NTSTATUS wow64_ext_wglSwapIntervalEXT( void *args )
     return status;
 }
 
-extern NTSTATUS wow64_wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_gl_glGetString( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetBufferPointerv( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetBufferPointervARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetStringi( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapBuffer( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapBufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapBufferRange( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapNamedBufferRange( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glUnmapBuffer( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glUnmapBufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wgl_wglCreateContext( void *args );
+extern NTSTATUS wow64_wgl_wglDeleteContext( void *args );
+extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args );
+extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args );
+extern NTSTATUS wow64_gl_glGetString( void *args );
+extern NTSTATUS wow64_ext_glClientWaitSync( void *args );
+extern NTSTATUS wow64_ext_glDeleteSync( void *args );
+extern NTSTATUS wow64_ext_glFenceSync( void *args );
+extern NTSTATUS wow64_ext_glGetBufferPointerv( void *args );
+extern NTSTATUS wow64_ext_glGetBufferPointervARB( void *args );
+extern NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args );
+extern NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args );
+extern NTSTATUS wow64_ext_glGetStringi( void *args );
+extern NTSTATUS wow64_ext_glGetSynciv( void *args );
+extern NTSTATUS wow64_ext_glIsSync( void *args );
+extern NTSTATUS wow64_ext_glMapBuffer( void *args );
+extern NTSTATUS wow64_ext_glMapBufferARB( void *args );
+extern NTSTATUS wow64_ext_glMapBufferRange( void *args );
+extern NTSTATUS wow64_ext_glMapNamedBuffer( void *args );
+extern NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args );
+extern NTSTATUS wow64_ext_glMapNamedBufferRange( void *args );
+extern NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args );
+extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args );
+extern NTSTATUS wow64_ext_glUnmapBuffer( void *args );
+extern NTSTATUS wow64_ext_glUnmapBufferARB( void *args );
+extern NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args );
+extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args );
+extern NTSTATUS wow64_ext_glWaitSync( void *args );
+extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args );
+extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args );
+extern NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args );
+extern NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args );
+extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args );
+extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args );
+extern NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args );
+extern NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args );
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {

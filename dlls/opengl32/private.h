@@ -28,7 +28,7 @@
 #include "winternl.h"
 #include "wingdi.h"
 
-extern const void *extension_procs[] DECLSPEC_HIDDEN;
+extern const void *extension_procs[];
 
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
 

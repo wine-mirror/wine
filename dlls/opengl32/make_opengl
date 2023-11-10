@@ -1097,7 +1097,7 @@ foreach (sort keys %ext_functions)
     next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
     my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
     my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
-    printf OUT "extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $func_ret, $_, $decl_args;
+    printf OUT "extern %s WINAPI %s(%s);\n", $func_ret, $_, $decl_args;
 }
 
 print OUT "const void *extension_procs[] =\n";
@@ -1137,25 +1137,25 @@ print OUT "#ifdef _WIN64\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 print OUT "#endif\n\n";
 
-print OUT "extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
-print OUT "extern NTSTATUS process_detach( void *args ) DECLSPEC_HIDDEN;\n";
+print OUT "extern NTSTATUS thread_attach( void *args );\n";
+print OUT "extern NTSTATUS process_detach( void *args );\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless needs_wrapper( $_, $wgl_functions{$_} );
-    print OUT "extern NTSTATUS wgl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS wgl_$_( void *args );\n";
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless needs_wrapper( $_, $norm_functions{$_} );
-    print OUT "extern NTSTATUS gl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS gl_$_( void *args );\n";
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless needs_wrapper( $_, $ext_functions{$_} );
-    print OUT "extern NTSTATUS ext_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS ext_$_( void *args );\n";
 }
 print OUT "\n";
 
@@ -1205,8 +1205,8 @@ print OUT "\n";
 
 print OUT "#ifdef _WIN64\n\n";
 print OUT "typedef ULONG PTR32;\n\n";
-print OUT "extern NTSTATUS wow64_thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
-print OUT "extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;\n\n";
+print OUT "extern NTSTATUS wow64_thread_attach( void *args );\n";
+print OUT "extern NTSTATUS wow64_process_detach( void *args );\n\n";
 
 foreach (sort keys %wgl_functions)
 {
@@ -1231,19 +1231,19 @@ foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_wgl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS wow64_wgl_$_( void *args );\n";
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_gl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS wow64_gl_$_( void *args );\n";
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
     next unless defined $manual_wow64_thunks{$_};
-    print OUT "extern NTSTATUS wow64_ext_$_( void *args ) DECLSPEC_HIDDEN;\n";
+    print OUT "extern NTSTATUS wow64_ext_$_( void *args );\n";
 }
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
