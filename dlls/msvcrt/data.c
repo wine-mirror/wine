@@ -81,10 +81,7 @@ char ** msvcrt_SnapshotOfEnvironmentA(char **blk)
     if (*ptr != '=') count++;
     len += strlen(ptr) + 1;
   }
-  if (blk)
-      blk = HeapReAlloc( GetProcessHeap(), 0, blk, count* sizeof(char*) + len );
-  else
-    blk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(char*) + len );
+  blk = realloc(blk, count * sizeof(char*) + len);
 
   if (blk)
     {
@@ -115,10 +112,8 @@ wchar_t ** msvcrt_SnapshotOfEnvironmentW(wchar_t **wblk)
     if (*wptr != '=') count++;
     len += wcslen(wptr) + 1;
   }
-  if (wblk)
-      wblk = HeapReAlloc( GetProcessHeap(), 0, wblk, count* sizeof(wchar_t*) + len * sizeof(wchar_t));
-  else
-    wblk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(wchar_t*) + len * sizeof(wchar_t));
+  wblk = realloc(wblk, count * sizeof(wchar_t*) + len * sizeof(wchar_t));
+
   if (wblk)
     {
       if (count)
@@ -466,10 +461,6 @@ void msvcrt_free_args(void)
 {
   /* FIXME: more things to free */
   HeapFree(GetProcessHeap(), 0, MSVCRT___argv);
-  HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
-  HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
-  HeapFree(GetProcessHeap(), 0, MSVCRT__environ);
-  HeapFree(GetProcessHeap(), 0, MSVCRT__wenviron);
   HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
   HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
   HeapFree(GetProcessHeap(), 0, wargv_expand);
