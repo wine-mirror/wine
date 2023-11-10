@@ -42,7 +42,6 @@
  *      - get a better UI (replace the 'x' by real tick boxes in list view)
  *      - enhance visual feedback: the list is large, and it's hard to get the
  *        right line when clicking on rightmost column (trace for example)
- *      - get rid of printfs (error reporting) and use real message boxes
  *      - include the column width settings in the full column management scheme
  *      - use more global settings (like having a temporary on/off
  *        setting for a fixme:s or err:s
@@ -260,7 +259,7 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
                     ListView_SetItemTextW(hChannelLV, lhti.iItem, lhti.iSubItem, val);
                 }
                 if (user.notdone)
-                    printf("Some channel instances weren't correctly set\n");
+                    MessageBoxA(NULL, "Some channel instances weren't correctly set", "Error", MB_OK | MB_ICONHAND);
             }
             CloseHandle(hProcess);
         }
