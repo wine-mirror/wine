@@ -3969,7 +3969,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
 
     if(This->doc) {
         HTMLDocumentNode *doc = This->doc;
-        This->doc->window = NULL;
         This->doc = NULL;
         IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
     }
