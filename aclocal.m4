@@ -65,12 +65,9 @@ AC_DEFUN([WINE_PATH_PKG_CONFIG],
 [WINE_CHECK_HOST_TOOL(PKG_CONFIG,[pkg-config])])
 
 AC_DEFUN([WINE_PATH_MINGW_PKG_CONFIG],
-[case "$host_cpu" in
-  i[[3456789]]86*)
-    ac_prefix_list="m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-w64-mingw32-pkg-config ])" ;;
-  *)
-    ac_prefix_list="$host_cpu-w64-mingw32-pkg-config" ;;
-esac
+[AS_VAR_IF([HOST_ARCH],[i386],
+           [ac_prefix_list="m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-w64-mingw32-pkg-config ])"],
+           [ac_prefix_list="$host_cpu-w64-mingw32-pkg-config"])
 AC_CHECK_PROGS(MINGW_PKG_CONFIG,[$ac_prefix_list],false)])
 
 dnl **** Extract the soname of a library ****

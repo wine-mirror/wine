@@ -9440,8 +9440,9 @@ case $host_os in
     LIBEXT="dll"
     DLLEXT=""
     EXTRACFLAGS="-D__WINE_PE_BUILD"
-        case $host_cpu in
-      *i[3456]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
+        if test "x$HOST_ARCH" = xi386
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--disable-stdcall-fixup" >&5
 printf %s "checking whether the compiler supports -Wl,--disable-stdcall-fixup... " >&6; }
 if test ${ac_cv_cflags__Wl___disable_stdcall_fixup+y}
 then :
@@ -9468,8 +9469,8 @@ printf "%s\n" "$ac_cv_cflags__Wl___disable_stdcall_fixup" >&6; }
 if test "x$ac_cv_cflags__Wl___disable_stdcall_fixup" = xyes
 then :
   LDDLLFLAGS="-Wl,--disable-stdcall-fixup"
-fi ;;
-    esac
+fi
+fi
         enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
         with_x=${with_x:-no}
@@ -9504,9 +9505,9 @@ fi ;;
 
     WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
-    case $host_cpu in
-      *i[3456]86*|*x86_64*) wine_can_build_preloader=yes ;;
-      *)                      wine_can_build_preloader=no ;;
+    case $HOST_ARCH in
+      i386|x86_64) wine_can_build_preloader=yes ;;
+      *)           wine_can_build_preloader=no ;;
     esac
 
     if test "$wine_can_build_preloader" = "yes"
@@ -9540,11 +9541,11 @@ if test "x$ac_cv_cflags__Wl__no_pie" = xyes
 then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
 fi
-        case $host_cpu in
-          *i[3456]86*)
+        case $HOST_ARCH in
+          i386)
             WINEPRELOADER_LDFLAGS="-Wl,-image_base,0x7d400000 $WINEPRELOADER_LDFLAGS"
             ;;
-          *x86_64*)
+          x86_64)
             WINEPRELOADER_LDFLAGS="-Wl,-image_base,0x200000000,-segalign,0x1000,-segaddr,WINE_RESERVE,0x1000 $WINEPRELOADER_LDFLAGS"
             ;;
         esac
@@ -10056,11 +10057,11 @@ fi
 
     if test "x$exec_prefix" = xNONE
     then
-      case $host_cpu in
-        *i[3456]86*) exec_prefix='${prefix}/x86' ;;
-        *x86_64*)      exec_prefix='${prefix}/x86_64' ;;
-        *arm*)         exec_prefix='${prefix}/armeabi-v7a' ;;
-        *aarch64*)     exec_prefix='${prefix}/arm64-v8a' ;;
+      case $HOST_ARCH in
+        i386)    exec_prefix='${prefix}/x86' ;;
+        x86_64)  exec_prefix='${prefix}/x86_64' ;;
+        arm)     exec_prefix='${prefix}/armeabi-v7a' ;;
+        aarch64) exec_prefix='${prefix}/arm64-v8a' ;;
       esac
     fi
     ;;
@@ -10072,8 +10073,8 @@ printf "%s\n" "#define _GNU_SOURCE 1" >>confdefs.h
     test "$ac_cv_sys_file_offset_bits" = 64 &&
 printf "%s\n" "#define _TIME_BITS 64" >>confdefs.h
 
-    case $host_cpu in
-      *i[3456789]86*)
+    if test $HOST_ARCH = i386
+    then
         DLLFLAGS="$DLLFLAGS -fno-PIC"
         LDDLLFLAGS="-fno-PIC"
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-PIC -Wl,-z,notext" >&5
@@ -10104,11 +10105,10 @@ if test "x$ac_cv_cflags__fno_PIC__Wl__z_notext" = xyes
 then :
   LDDLLFLAGS="$LDDLLFLAGS -Wl,-z,notext"
 fi
-        ;;
-      *)
+    else
         DLLFLAGS="$DLLFLAGS -fPIC"
-        LDDLLFLAGS="-fPIC" ;;
-    esac
+        LDDLLFLAGS="-fPIC"
+    fi
 
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether -Wl,-z,defs works correctly" >&5
 printf %s "checking whether -Wl,-z,defs works correctly... " >&6; }
@@ -11702,12 +11702,12 @@ fi
 
 if test "x$with_system_dllpath" != "x" -a -n "$PE_ARCHS"
 then
-    case "$host_cpu" in
-  i[3456789]86*)
-    ac_prefix_list="i686-w64-mingw32-pkg-config i586-w64-mingw32-pkg-config i486-w64-mingw32-pkg-config i386-w64-mingw32-pkg-config " ;;
-  *)
-    ac_prefix_list="$host_cpu-w64-mingw32-pkg-config" ;;
-esac
+    if test "x$HOST_ARCH" = xi386
+then :
+  ac_prefix_list="i686-w64-mingw32-pkg-config i586-w64-mingw32-pkg-config i486-w64-mingw32-pkg-config i386-w64-mingw32-pkg-config "
+else $as_nop
+  ac_prefix_list="$host_cpu-w64-mingw32-pkg-config"
+fi
 for ac_prog in $ac_prefix_list
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -19213,10 +19213,10 @@ if ac_fn_c_try_compile "$LINENO"
 then :
   wine_cv_64bit_compare_swap="none needed"
 else $as_nop
-  case $host_cpu in
-            *i[3456]86*) wine_cv_64bit_compare_swap="-march=i586" ;;
-            *arm*)         wine_cv_64bit_compare_swap="-march=armv7-a" ;;
-            *)             wine_cv_64bit_compare_swap="unknown" ;;
+  case $HOST_ARCH in
+            i386) wine_cv_64bit_compare_swap="-march=i586" ;;
+            arm)  wine_cv_64bit_compare_swap="-march=armv7-a" ;;
+            *)    wine_cv_64bit_compare_swap="unknown" ;;
            esac
            if test "x$wine_cv_64bit_compare_swap" != xunknown
            then
@@ -19412,8 +19412,8 @@ then :
 fi ;;
   esac
 
-  case $host_cpu in
-        *i[3456789]86*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-omit-frame-pointer" >&5
+  case $HOST_ARCH in
+        i386) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-omit-frame-pointer" >&5
 printf %s "checking whether the compiler supports -fno-omit-frame-pointer... " >&6; }
 if test ${ac_cv_cflags__fno_omit_frame_pointer+y}
 then :
@@ -19441,7 +19441,7 @@ if test "x$ac_cv_cflags__fno_omit_frame_pointer" = xyes
 then :
   MSVCRTFLAGS="$MSVCRTFLAGS -fno-omit-frame-pointer"
 fi ;;
-    *x86_64*)
+    x86_64)
       case $host_os in
                 cygwin*|mingw32*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wno-format" >&5
 printf %s "checking whether the compiler supports -Wno-format... " >&6; }
@@ -19507,7 +19507,7 @@ printf "%s\n" "$ac_cv_mabi_ms" >&6; }
            fi
            MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms" ;;
       esac ;;
-    arm*)
+    arm)
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wincompatible-function-pointer-types" >&5
 printf %s "checking whether the compiler supports -Wincompatible-function-pointer-types... " >&6; }
 if test ${ac_cv_cflags__Wincompatible_function_pointer_types+y}
@@ -19689,12 +19689,11 @@ WINELOADER_PROGRAMS="$wine_binary"
 
 case $host_os in
   linux*)
-    case $host_cpu in
-      *i[3456789]86*|x86_64*|*aarch64*|arm*)
+    if test $HOST_ARCH != unknown
+    then
         test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
         WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
-        ;;
-    esac
+    fi
     ;;
   darwin*|macosx*)
     if test "$wine_can_build_preloader" = "yes"
