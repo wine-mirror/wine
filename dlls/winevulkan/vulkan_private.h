@@ -237,17 +237,17 @@ static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
     return (VkSurfaceKHR)(uintptr_t)surface;
 }
 
-BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
-BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
+BOOL wine_vk_device_extension_supported(const char *name);
+BOOL wine_vk_instance_extension_supported(const char *name);
 
-BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
+BOOL wine_vk_is_type_wrapped(VkObjectType type);
 
-NTSTATUS init_vulkan(void *args) DECLSPEC_HIDDEN;
+NTSTATUS init_vulkan(void *args);
 
-NTSTATUS vk_is_available_instance_function(void *arg) DECLSPEC_HIDDEN;
-NTSTATUS vk_is_available_device_function(void *arg) DECLSPEC_HIDDEN;
-NTSTATUS vk_is_available_instance_function32(void *arg) DECLSPEC_HIDDEN;
-NTSTATUS vk_is_available_device_function32(void *arg) DECLSPEC_HIDDEN;
+NTSTATUS vk_is_available_instance_function(void *arg);
+NTSTATUS vk_is_available_device_function(void *arg);
+NTSTATUS vk_is_available_instance_function32(void *arg);
+NTSTATUS vk_is_available_device_function32(void *arg);
 
 struct conversion_context
 {

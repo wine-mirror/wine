@@ -103,9 +103,9 @@ struct vulkan_func
     void *func;
 };
 
-void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
-void *wine_vk_get_phys_dev_proc_addr(const char *name) DECLSPEC_HIDDEN;
-void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
+void *wine_vk_get_device_proc_addr(const char *name);
+void *wine_vk_get_phys_dev_proc_addr(const char *name);
+void *wine_vk_get_instance_proc_addr(const char *name);
 
 /* debug callbacks params */
 

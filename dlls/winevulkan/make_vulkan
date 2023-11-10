@@ -733,13 +733,12 @@ class VkFunction(object):
         pfn += ")"
         return pfn
 
-    def prototype(self, call_conv=None, prefix=None, postfix=None, is_thunk=False):
+    def prototype(self, call_conv=None, prefix=None, is_thunk=False):
         """ Generate prototype for given function.
 
         Args:
             call_conv (str, optional): calling convention e.g. WINAPI
             prefix (str, optional): prefix to append prior to function name e.g. vkFoo -> wine_vkFoo
-            postfix (str, optional): text to append after function name but prior to semicolon e.g. DECLSPEC_HIDDEN
         """
 
         proto = "{0}".format(self.type)
@@ -758,11 +757,7 @@ class VkFunction(object):
         if is_thunk and self.extra_param:
             proto += ", void *" + self.extra_param
 
-        if postfix is not None:
-            proto += ") {0}".format(postfix)
-        else:
-            proto += ")"
-
+        proto += ")"
         return proto
 
     def loader_body(self):
@@ -2827,7 +2822,7 @@ class VkGenerator(object):
             if not vk_func.needs_private_thunk():
                 continue
 
-            f.write("{0};\n".format(vk_func.prototype(prefix=prefix, postfix="DECLSPEC_HIDDEN", is_thunk=True)))
+            f.write("{0};\n".format(vk_func.prototype(prefix=prefix, is_thunk=True)))
         f.write("\n")
 
         f.write("/* For use by vkDevice and children */\n")
