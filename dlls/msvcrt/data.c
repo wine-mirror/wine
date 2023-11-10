@@ -559,7 +559,7 @@ int CDECL __wgetmainargs(int *argc, wchar_t** *wargv, wchar_t** *wenvp,
         MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
     *argc = MSVCRT___argc;
     *wargv = MSVCRT___wargv;
-    *wenvp = MSVCRT___winitenv;
+    *wenvp = MSVCRT__wenviron;
     if (new_mode)
         _set_new_mode( *new_mode );
     return 0;
@@ -593,7 +593,7 @@ int CDECL __getmainargs(int *argc, char** *argv, char** *envp,
 
     *argc = MSVCRT___argc;
     *argv = MSVCRT___argv;
-    *envp = MSVCRT___initenv;
+    *envp = MSVCRT__environ;
 
     if (new_mode)
         _set_new_mode( *new_mode );

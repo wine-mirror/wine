@@ -152,7 +152,6 @@ static void test__environ(void)
 
     ok( envp != NULL,
         "Expected initial environment block pointer to be non-NULL\n" );
-    todo_wine
     ok( envp == *p_environ,
         "Expected initial environment to be equal to _environ\n" );
 
@@ -224,7 +223,6 @@ static void test__wenviron(void)
 
     __wgetmainargs(&argc, &wargv, &wenvp, 0, &mode);
     ok( wenvp != NULL, "Expected initial environment block pointer to be non-NULL\n" );
-    todo_wine
     ok( wenvp == *p_wenviron, "Expected initial environment to be _wenviron[]\n" );
 
     if (p__p___winitenv)
