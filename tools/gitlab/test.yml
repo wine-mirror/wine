@@ -67,6 +67,48 @@ test-linux-32:
     - export WINETEST_COLOR=1
     - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -n $EXCLUDE_TESTS
 
+test-win10-21h2-32:
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
+    EXCLUDE_TESTS: "d3d11:d3d11 d3d9:d3d9ex d3d9:visual"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  needs:
+    - job: build-winetest
+  tags:
+    - win10-21h2
+  script:
+    - ./winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -n $EXCLUDE_TESTS >winetest.log
+  after_script:
+    - Get-Content ./winetest.log
+  artifacts:
+    when: always
+    paths:
+      - winetest.log
+
+test-win10-21h2-64:
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
+    INCLUDE_TESTS: "dinput"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  needs:
+    - job: build-winetest
+  tags:
+    - win10-21h2
+  script:
+    - ./winetest64.exe -q -q -o - -t gitlab -u $CI_JOB_URL $INCLUDE_TESTS >winetest.log
+  after_script:
+    - Get-Content ./winetest.log
+  artifacts:
+    when: always
+    paths:
+      - winetest.log
+
 debian-32:
   extends: .wine-test
   rules:
@@ -93,7 +135,7 @@ win10-21h2-32:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
-    - job: build-winetest
+    - job: build-daily-winetest
   tags:
     - win10-21h2
   script:
@@ -107,7 +149,7 @@ win10-21h2-64:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
-    - job: build-winetest
+    - job: build-daily-winetest
   tags:
     - win10-21h2
   script:

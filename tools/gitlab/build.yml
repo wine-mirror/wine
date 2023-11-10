@@ -52,6 +52,24 @@ build-mac:
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 
+build-winetest:
+  stage: build
+  image: $CI_REGISTRY/wine/wine:debian-bookworm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  needs:
+    - job: build-linux
+  variables:
+    GIT_STRATEGY: none
+  artifacts:
+    name: winetest
+    paths:
+      - winetest.exe
+      - winetest64.exe
+  script:
+    - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
+    - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe
+
 build-daily-linux:
   extends: .wine-build
   rules:
@@ -63,7 +81,7 @@ build-daily-linux:
   script:
     - ./tools/gitlab/build-linux
 
-build-winetest:
+build-daily-winetest:
   stage: build
   image: $CI_REGISTRY/wine/wine:debian-bookworm
   rules:
