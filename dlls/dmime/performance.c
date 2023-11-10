@@ -245,8 +245,16 @@ static int channel_block_compare(const void *key, const struct wine_rb_entry *en
 
 static void channel_block_free(struct wine_rb_entry *entry, void *context)
 {
-    struct channel_block *b = WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry);
-    free(b);
+    struct channel_block *block = WINE_RB_ENTRY_VALUE(entry, struct channel_block, entry);
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(block->channels); i++)
+    {
+        struct channel *channel = block->channels + i;
+        if (channel->port) IDirectMusicPort_Release(channel->port);
+    }
+
+    free(block);
 }
 
 static struct channel *performance_get_channel(struct performance *This, DWORD channel_num)
@@ -278,7 +286,8 @@ static HRESULT channel_block_init(struct performance *This, DWORD block_num,
         struct channel *channel = block->channels + i;
         channel->midi_group = midi_group;
         channel->midi_channel = i;
-        channel->port = port;
+        if (channel->port) IDirectMusicPort_Release(channel->port);
+        if ((channel->port = port)) IDirectMusicPort_AddRef(channel->port);
     }
 
     return S_OK;
@@ -992,6 +1001,8 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
         return hr;
     }
 
+    wine_rb_destroy(&perf->channel_blocks, channel_block_free, NULL);
+
     for (i = 0; i < params->dwChannelGroups; i++)
     {
         if (FAILED(hr = channel_block_init(perf, i, port, i + 1)))
@@ -999,6 +1010,7 @@ static HRESULT perf_dmport_create(struct performance *perf, DMUS_PORTPARAMS *par
     }
 
     performance_update_latency_time(perf, port, NULL);
+    IDirectMusicPort_Release(port);
     return S_OK;
 }
 
@@ -1079,7 +1091,8 @@ static HRESULT WINAPI performance_AssignPChannel(IDirectMusicPerformance8 *iface
 
     channel->midi_group = midi_group;
     channel->midi_channel = midi_channel;
-    channel->port = port;
+    if (channel->port) IDirectMusicPort_Release(channel->port);
+    if ((channel->port = port)) IDirectMusicPort_AddRef(channel->port);
 
     return S_OK;
 }
