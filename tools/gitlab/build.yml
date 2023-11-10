@@ -36,6 +36,8 @@ build-linux:
       - usr/local/
   script:
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
+    - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
+      (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
 
 build-mac:
   extends: .wine-build
@@ -64,9 +66,11 @@ build-winetest:
   artifacts:
     name: winetest
     paths:
+      - winetest.args
       - winetest.exe
       - winetest64.exe
   script:
+    - mv usr/local/share/wine/winetest.args winetest.args
     - mv usr/local/lib/wine/i386-windows/winetest.exe winetest.exe
     - mv usr/local/lib/wine/x86_64-windows/winetest.exe winetest64.exe
 
