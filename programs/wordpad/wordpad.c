@@ -2011,12 +2011,7 @@ static LRESULT OnCreate( HWND hWnd )
       |ES_WANTRETURN|WS_VSCROLL|ES_NOHIDESEL|WS_HSCROLL,
       0, 0, 1000, 100, hWnd, (HMENU)IDC_EDITOR, hInstance, NULL);
 
-    if (!hEditorWnd)
-    {
-        fprintf(stderr, "Error code %lu\n", GetLastError());
-        return -1;
-    }
-    assert(hEditorWnd);
+    if (!hEditorWnd) return -1;
 
     setup_richedit_olecallback(hEditorWnd);
     SetFocus(hEditorWnd);
