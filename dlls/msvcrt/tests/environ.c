@@ -366,6 +366,15 @@ static void test_environment_manipulation(void)
     ok( count + 1 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
     ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
     ok( count == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+
+    /* in putenv, only changed variable is updated (no other reload of kernel info is done) */
+    ret = SetEnvironmentVariableA( "__winetest_cat", "meow" );
+    ok( ret, "SetEnvironmentVariableA failed: %lu\n", GetLastError() );
+    ok( _putenv( "__winetest_dog=bark" ) == 0, "Couldn't set env var\n" );
+    todo_wine
+    ok( getenv( "__winetest_cat" ) == NULL, "msvcrt env cache shouldn't have been updated\n" );
+    ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env var\n" );
+    ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
 }
 
 START_TEST(environ)
