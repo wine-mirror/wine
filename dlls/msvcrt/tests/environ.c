@@ -83,6 +83,15 @@ static void test_system(void)
     ok(ret == 0, "Expected system to return 0, got %d\n", ret);
 }
 
+static unsigned env_get_entry_countA( char **env )
+{
+    unsigned count;
+
+    if (!env) return 0;
+    for (count = 0; env[count] != NULL; count++) {}
+    return count;
+}
+
 static wchar_t *env_get_valueW( wchar_t **envp, const wchar_t *var )
 {
     unsigned i;
@@ -255,6 +264,9 @@ static void test_environment_manipulation(void)
     char buf[256];
     errno_t ret;
     size_t len;
+    unsigned count;
+    char* first;
+    char* second;
 
     ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
@@ -322,6 +334,38 @@ static void test_environment_manipulation(void)
         ok( !buf[0], "buf = %s\n", buf);
         ok( errno == 0xdeadbeef, "errno = %d\n", errno);
     }
+
+    /* test stability of _environ[] pointers */
+    ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env var\n" );
+    ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
+    count = env_get_entry_countA( *p_environ );
+    ok( _putenv( "__winetest_cat=mew") == 0, "Couldn't set env var\n" );
+    ok( !strcmp( (*p_environ)[count], "__winetest_cat=mew"), "Unexpected env var value\n" );
+    first = (*p_environ)[count];
+    ok( getenv("__winetest_cat") == strchr( (*p_environ)[count], '=') + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( _putenv( "__winetest_dog=bark" ) == 0, "Couldn't set env var\n" );
+    ok( !strcmp( (*p_environ)[count + 1], "__winetest_dog=bark" ), "Unexpected env var value\n" );
+    ok( getenv( "__winetest_dog" ) == strchr( (*p_environ)[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    todo_wine
+    ok( first == (*p_environ)[count], "Expected stability of _environ[count] pointer\n" );
+    second = (*p_environ)[count + 1];
+    ok( count + 2 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+
+    ok( _putenv( "__winetest_cat=purr" ) == 0, "Couldn't set env var\n" );
+    ok( !strcmp( (*p_environ)[count], "__winetest_cat=purr" ), "Unexpected env var value\n" );
+    ok( getenv( "__winetest_cat" ) == strchr( (*p_environ)[count], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    todo_wine
+    ok( second == (*p_environ)[count + 1], "Expected stability of _environ[count] pointer\n" );
+    ok( !strcmp( (*p_environ)[count + 1], "__winetest_dog=bark" ), "Couldn't get env var value\n" );
+    ok( getenv( "__winetest_dog" ) == strchr( (*p_environ)[count + 1], '=' ) + 1, "Expected getenv() to return pointer inside _environ[] entry\n" );
+    ok( count + 2 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env vat\n" );
+    todo_wine
+    ok( second == (*p_environ)[count], "Expected _environ[count] to be second\n" );
+    ok( !strcmp( (*p_environ)[count], "__winetest_dog=bark" ), "Unexpected env var value\n" );
+    ok( count + 1 == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
+    ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
+    ok( count == env_get_entry_countA( *p_environ ), "Unexpected count\n" );
 }
 
 START_TEST(environ)
