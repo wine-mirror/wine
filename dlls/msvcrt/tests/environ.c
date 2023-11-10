@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <process.h>
+#include <winnls.h>
 
 static const char *a_very_long_env_string =
  "LIBRARY_PATH="
@@ -375,6 +376,23 @@ static void test_environment_manipulation(void)
     ok( getenv( "__winetest_cat" ) == NULL, "msvcrt env cache shouldn't have been updated\n" );
     ok( _putenv( "__winetest_cat=" ) == 0, "Couldn't reset env var\n" );
     ok( _putenv( "__winetest_dog=" ) == 0, "Couldn't reset env var\n" );
+
+    /* test setting unicode bits */
+    count = env_get_entry_countA( *p_environ );
+    ret = WideCharToMultiByte( CP_ACP, 0, L"\u263a", -1, buf, ARRAY_SIZE(buf), 0, 0 );
+    ok( ret, "WideCharToMultiByte failed: %lu\n", GetLastError() );
+    ok( _wputenv( L"__winetest_cat=\u263a" ) == 0, "Couldn't set env var\n" );
+    ok( _wgetenv( L"__winetest_cat" ) && !wcscmp( _wgetenv( L"__winetest_cat" ), L"\u263a" ), "Couldn't retrieve env var\n" );
+    ok( getenv( "__winetest_cat" ) && !strcmp( getenv( "__winetest_cat" ), buf ), "Couldn't retrieve env var\n" );
+    ok( _wputenv( L"__winetest_cat=" ) == 0, "Couldn't reset env var\n" );
+
+    ret = WideCharToMultiByte( CP_ACP, 0, L"__winetest_\u263a", -1, buf, ARRAY_SIZE(buf), 0, 0 );
+    ok( ret, "WideCharToMultiByte failed: %lu\n", GetLastError() );
+    ok( _wputenv( L"__winetest_\u263a=bark" ) == 0, "Couldn't set env var\n" );
+    ok( _wgetenv( L"__winetest_\u263a" ) && !wcscmp( _wgetenv( L"__winetest_\u263a" ), L"bark"), "Couldn't retrieve env var\n" );
+    ok( getenv( buf ) && !strcmp( getenv( buf ), "bark"), "Couldn't retrieve env var %s\n", wine_dbgstr_a(buf) );
+    ok( _wputenv( L"__winetest_\u263a=" ) == 0, "Couldn't reset env var\n" );
+    ok( count == env_get_entry_countA( *p_environ ), "Unexpected modification of _environ[]\n" );
 }
 
 START_TEST(environ)
