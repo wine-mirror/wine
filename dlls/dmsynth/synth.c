@@ -977,7 +977,7 @@ static HRESULT WINAPI synth_PlayBuffer(IDirectMusicSynth8 *iface,
 
             EnterCriticalSection(&This->cs);
             LIST_FOR_EACH_ENTRY(next_event, &This->events, struct event, entry)
-                if (next_event->position >= event->position) break;
+                if (next_event->position > event->position) break;
             list_add_before(&next_event->entry, &event->entry);
             LeaveCriticalSection(&This->cs);
         }
