@@ -6811,6 +6811,7 @@ void sampler_texdim(struct wined3d_context *context, const struct wined3d_state 
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;
 
+    wined3d_context_gl_active_texture(context_gl, context_gl->gl_info, sampler);
     texture_activate_dimensions(wined3d_state_get_ffp_texture(state, sampler), context_gl->gl_info);
 }
 
