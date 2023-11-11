@@ -702,7 +702,7 @@
 @ cdecl _mbsspn(str str)
 @ cdecl _mbsspn_l(str str ptr)
 @ cdecl _mbsspnp(str str)
-@ stub _mbsspnp_l
+@ cdecl _mbsspnp_l(str str ptr)
 @ cdecl _mbsstr(str str)
 @ stub _mbsstr_l
 @ cdecl _mbstok(str str)
@@ -1271,7 +1271,7 @@
 @ cdecl _o__mbsspn(str str) _mbsspn
 @ cdecl _o__mbsspn_l(str str ptr) _mbsspn_l
 @ cdecl _o__mbsspnp(str str) _mbsspnp
-@ stub _o__mbsspnp_l
+@ cdecl _o__mbsspnp_l(str str ptr) _mbsspnp_l
 @ cdecl _o__mbsstr(str str) _mbsstr
 @ stub _o__mbsstr_l
 @ cdecl _o__mbstok(str str) _mbstok

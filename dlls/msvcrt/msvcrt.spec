@@ -807,7 +807,7 @@
 @ cdecl _mbsspn(str str)
 @ cdecl _mbsspn_l(str str ptr)
 @ cdecl _mbsspnp(str str)
-# stub _mbsspnp_l(str str ptr)
+@ cdecl _mbsspnp_l(str str ptr)
 @ cdecl _mbsstr(str str)
 # stub _mbsstr_l(str str ptr)
 @ cdecl _mbstok(str str)

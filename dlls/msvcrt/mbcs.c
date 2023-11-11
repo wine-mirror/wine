@@ -2829,12 +2829,23 @@ size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)
 }
 
 /*********************************************************************
+ *              _mbsspnp_l (MSVCRT.@)
+ */
+unsigned char* CDECL _mbsspnp_l(const unsigned char* string, const unsigned char* set, _locale_t locale)
+{
+    if (!MSVCRT_CHECK_PMT(string && set))
+        return 0;
+
+    string += _mbsspn_l(string, set, locale);
+    return *string ? (unsigned char*)string : NULL;
+}
+
+/*********************************************************************
  *              _mbsspnp (MSVCRT.@)
  */
 unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* set)
 {
-    string += _mbsspn( string, set );
-    return *string ? (unsigned char*)string : NULL;
+    return _mbsspnp_l(string, set, NULL);
 }
 
 /*********************************************************************
