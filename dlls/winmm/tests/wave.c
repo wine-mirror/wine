@@ -1586,8 +1586,7 @@ static void test_fragmentsize(void)
     memset(hdr, 0, sizeof(hdr));
     hdr[0].dwBufferLength = (fmt.nSamplesPerSec * fmt.nBlockAlign / 4) + 1;
     hdr[1].dwBufferLength = hdr[0].dwBufferLength - 2;
-    hdr[1].lpData = hdr[0].lpData =
-        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hdr[0].dwBufferLength);
+    hdr[1].lpData = hdr[0].lpData = calloc(1, hdr[0].dwBufferLength);
 
     rc = waveOutPrepareHeader(wout, &hdr[0], sizeof(hdr[0]));
     ok(rc == MMSYSERR_NOERROR, "waveOutPrepareHeader failed: %s\n", wave_out_error(rc));
@@ -1694,8 +1693,7 @@ static void test_reentrant_callback(void)
     memset(hdr, 0, sizeof(hdr));
     hdr[0].dwBufferLength = (fmt.nSamplesPerSec * fmt.nBlockAlign / 10);
     hdr[1].dwBufferLength = hdr[0].dwBufferLength;
-    hdr[1].lpData = hdr[0].lpData =
-        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hdr[0].dwBufferLength);
+    hdr[1].lpData = hdr[0].lpData = calloc(1, hdr[0].dwBufferLength);
 
     rc = waveOutPrepareHeader(wout, &hdr[0], sizeof(hdr[0]));
     ok(rc == MMSYSERR_NOERROR, "waveOutPrepareHeader failed: %s\n", wave_out_error(rc));
