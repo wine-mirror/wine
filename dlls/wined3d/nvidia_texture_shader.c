@@ -616,6 +616,7 @@ static void nvts_texdim(struct wined3d_context *context, const struct wined3d_st
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;
 
+    wined3d_context_gl_active_texture(context_gl, context_gl->gl_info, sampler);
     nvts_activate_dimensions(state, sampler, context_gl);
 }
 
