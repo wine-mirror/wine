@@ -2791,6 +2791,9 @@ size_t CDECL _mbsspn_l(const unsigned char* string,
 {
     const unsigned char *p, *q;
 
+    if (!MSVCRT_CHECK_PMT(string && set))
+        return 0;
+
     for (p = string; *p; p++)
     {
         for (q = set; *q; q++)
