@@ -246,49 +246,50 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     return TRUE;
 }
 
+static const USAGE_AND_PAGE absolute_axis_usages[] =
+{
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_SLIDER},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},
+};
+static const USAGE_AND_PAGE relative_axis_usages[] =
+{
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_SLIDER},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},
+    {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_WHEEL},
+};
+
 static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
 {
     const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_JOYSTICK};
-    static const USAGE_AND_PAGE absolute_usages[] =
-    {
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_SLIDER},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},
-    };
-    static const USAGE_AND_PAGE relative_usages[] =
-    {
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_X},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Y},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RX},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RY},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_Z},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_RZ},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_SLIDER},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_DIAL},
-        {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_WHEEL},
-    };
     struct sdl_device *impl = impl_from_unix_device(iface);
     int i, button_count, axis_count, ball_count, hat_count;
     USAGE_AND_PAGE physical_usage;
 
     axis_count = pSDL_JoystickNumAxes(impl->sdl_joystick);
     if (options.split_controllers) axis_count = min(6, axis_count - impl->axis_offset);
-    if (axis_count > ARRAY_SIZE(absolute_usages))
+    if (axis_count > ARRAY_SIZE(absolute_axis_usages))
     {
-        FIXME("More than %zu absolute axes found, ignoring.\n", ARRAY_SIZE(absolute_usages));
-        axis_count = ARRAY_SIZE(absolute_usages);
+        FIXME("More than %zu absolute axes found, ignoring.\n", ARRAY_SIZE(absolute_axis_usages));
+        axis_count = ARRAY_SIZE(absolute_axis_usages);
     }
 
     ball_count = pSDL_JoystickNumBalls(impl->sdl_joystick);
-    if (ball_count > ARRAY_SIZE(relative_usages) / 2)
+    if (ball_count > ARRAY_SIZE(relative_axis_usages) / 2)
     {
-        FIXME("More than %zu relative axes found, ignoring.\n", ARRAY_SIZE(relative_usages));
-        ball_count = ARRAY_SIZE(relative_usages) / 2;
+        FIXME("More than %zu relative axes found, ignoring.\n", ARRAY_SIZE(relative_axis_usages));
+        ball_count = ARRAY_SIZE(relative_axis_usages) / 2;
     }
 
     if (impl->axis_offset == 0)
@@ -337,15 +338,15 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
 
     for (i = 0; i < axis_count; i++)
     {
-        if (!hid_device_add_axes(iface, 1, absolute_usages[i].UsagePage,
-                                 &absolute_usages[i].Usage, FALSE, -32768, 32767))
+        if (!hid_device_add_axes(iface, 1, absolute_axis_usages[i].UsagePage,
+                                 &absolute_axis_usages[i].Usage, FALSE, -32768, 32767))
             return STATUS_NO_MEMORY;
     }
 
     for (i = 0; i < ball_count; i++)
     {
-        if (!hid_device_add_axes(iface, 2, relative_usages[2 * i].UsagePage,
-                                 &relative_usages[2 * i].Usage, TRUE, INT32_MIN, INT32_MAX))
+        if (!hid_device_add_axes(iface, 2, relative_axis_usages[2 * i].UsagePage,
+                                 &relative_axis_usages[2 * i].Usage, TRUE, INT32_MIN, INT32_MAX))
             return STATUS_NO_MEMORY;
     }
 
@@ -840,6 +841,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyAxisEvent *ie = &event->jaxis;
 
+            if (ie->axis >= ARRAY_SIZE(absolute_axis_usages)) break;
             hid_device_set_abs_axis(iface, ie->axis, ie->value);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
@@ -848,6 +850,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyBallEvent *ie = &event->jball;
 
+            if (ie->ball >= ARRAY_SIZE(relative_axis_usages) / 2) break;
             hid_device_set_rel_axis(iface, 2 * ie->ball, ie->xrel);
             hid_device_set_rel_axis(iface, 2 * ie->ball + 1, ie->yrel);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
