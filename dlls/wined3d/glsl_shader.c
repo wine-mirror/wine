@@ -1513,9 +1513,8 @@ static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps
     GL_EXTCALL(glUniform4fv(ps->color_key_location, 2, &float_key[0].r));
 }
 
-/* Context activation is done by the caller (state handler). */
-static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context *context,
-        const struct wined3d_state *state)
+static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
+        struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_shader *vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
@@ -1525,7 +1524,6 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     float position_fixup[4 * WINED3D_MAX_VIEWPORTS];
     struct wined3d_device *device = context->device;
-    struct shader_glsl_priv *priv = shader_priv;
     unsigned int constant_version;
     DWORD update_mask;
     int i;
@@ -10697,19 +10695,17 @@ static void shader_glsl_precompile(void *shader_priv, struct wined3d_shader *sha
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_select(void *shader_priv, struct wined3d_context *context,
-        const struct wined3d_state *state)
+static void shader_glsl_update_graphics_program(struct shader_glsl_priv *priv,
+        struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    struct glsl_context_data *ctx_data = context->shader_backend_data;
+    struct glsl_context_data *ctx_data = context_gl->c.shader_backend_data;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct shader_glsl_priv *priv = shader_priv;
     struct glsl_shader_prog_link *glsl_program;
     GLenum current_vertex_color_clamp;
     GLuint program_id, prev_id;
 
-    priv->vertex_pipe->vp_enable(context, !use_vs(state));
-    priv->fragment_pipe->fp_enable(context, !use_ps(state));
+    priv->vertex_pipe->vp_enable(&context_gl->c, !use_vs(state));
+    priv->fragment_pipe->fp_enable(&context_gl->c, !use_ps(state));
 
     prev_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
     set_glsl_shader_program(context_gl, state, priv, ctx_data);
@@ -10750,10 +10746,23 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
         checkGLcall("glUseProgram");
 
         if (glsl_program)
-            context->constant_update_mask |= glsl_program->constant_update_mask;
+            context_gl->c.constant_update_mask |= glsl_program->constant_update_mask;
     }
 
-    context->shader_update_mask |= (1u << WINED3D_SHADER_TYPE_COMPUTE);
+    context_gl->c.shader_update_mask |= (1u << WINED3D_SHADER_TYPE_COMPUTE);
+}
+
+static void shader_glsl_apply_draw_state(void *shader_priv, struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    struct shader_glsl_priv *priv = shader_priv;
+
+    if (context->shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
+        shader_glsl_update_graphics_program(priv, context_gl, state);
+
+    if (context->constant_update_mask)
+        shader_glsl_load_constants(priv, context, state);
 }
 
 /* Context activation is done by the caller. */
@@ -11538,12 +11547,11 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
     shader_glsl_precompile,
-    shader_glsl_select,
+    shader_glsl_apply_draw_state,
     shader_glsl_select_compute,
     shader_glsl_disable,
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,
-    shader_glsl_load_constants,
     shader_glsl_destroy,
     shader_glsl_alloc,
     shader_glsl_free,

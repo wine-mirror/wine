@@ -814,7 +814,7 @@ static void shader_spirv_precompile(void *shader_priv, struct wined3d_shader *sh
     shader_spirv_scan_shader(shader, &program_vk->descriptor_info, &program_vk->signature_info);
 }
 
-static void shader_spirv_select(void *shader_priv, struct wined3d_context *context,
+static void shader_spirv_apply_draw_state(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
@@ -922,12 +922,6 @@ static void shader_spirv_update_float_vertex_constants(struct wined3d_device *de
 }
 
 static void shader_spirv_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count)
-{
-    WARN("Not implemented.\n");
-}
-
-static void shader_spirv_load_constants(void *shader_priv, struct wined3d_context *context,
-        const struct wined3d_state *state)
 {
     WARN("Not implemented.\n");
 }
@@ -1119,12 +1113,11 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
 {
     .shader_handle_instruction = shader_spirv_handle_instruction,
     .shader_precompile = shader_spirv_precompile,
-    .shader_select = shader_spirv_select,
+    .shader_apply_draw_state = shader_spirv_apply_draw_state,
     .shader_select_compute = shader_spirv_select_compute,
     .shader_disable = shader_spirv_disable,
     .shader_update_float_vertex_constants = shader_spirv_update_float_vertex_constants,
     .shader_update_float_pixel_constants = shader_spirv_update_float_pixel_constants,
-    .shader_load_constants = shader_spirv_load_constants,
     .shader_destroy = shader_spirv_destroy,
     .shader_alloc_private = shader_spirv_alloc,
     .shader_free_private = shader_spirv_free,

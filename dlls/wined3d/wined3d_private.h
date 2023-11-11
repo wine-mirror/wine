@@ -1542,15 +1542,13 @@ struct wined3d_shader_backend_ops
 {
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_precompile)(void *shader_priv, struct wined3d_shader *shader);
-    void (*shader_select)(void *shader_priv, struct wined3d_context *context,
+    void (*shader_apply_draw_state)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
     void (*shader_select_compute)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
     void (*shader_disable)(void *shader_priv, struct wined3d_context *context);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
-    void (*shader_load_constants)(void *shader_priv, struct wined3d_context *context,
-            const struct wined3d_state *state);
     void (*shader_destroy)(struct wined3d_shader *shader);
     HRESULT (*shader_alloc_private)(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
             const struct wined3d_fragment_pipe_ops *fragment_pipe);

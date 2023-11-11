@@ -3667,7 +3667,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         context_vk->sample_count = VK_SAMPLE_COUNT_1_BIT;
     if (context_vk->c.shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
     {
-        device_vk->d.shader_backend->shader_select(device_vk->d.shader_priv, &context_vk->c, state);
+        device_vk->d.shader_backend->shader_apply_draw_state(device_vk->d.shader_priv, &context_vk->c, state);
         if (!context_vk->graphics.vk_pipeline_layout)
         {
             ERR("No pipeline layout set.\n");

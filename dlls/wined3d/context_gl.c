@@ -4386,12 +4386,6 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
 
     memset(context->dirty_graphics_states, 0, sizeof(context->dirty_graphics_states));
 
-    if (context->shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
-    {
-        device->shader_backend->shader_select(device->shader_priv, context, state);
-        context->shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
-    }
-
     if (context->update_shader_resource_bindings)
     {
         for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
@@ -4413,11 +4407,11 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         wined3d_context_gl_check_fbo_status(context_gl, GL_FRAMEBUFFER);
 
-    if (context->constant_update_mask)
-    {
-        device->shader_backend->shader_load_constants(device->shader_priv, context, state);
-        context->constant_update_mask = 0;
-    }
+    /* WINED3D_SHADER_CONST_PS_NP2_FIXUP may be set when binding shader
+     * resources, so constant loading needs to be done after that. */
+    device->shader_backend->shader_apply_draw_state(device->shader_priv, context, state);
+    context->shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
+    context->constant_update_mask = 0;
 
     context->last_was_blit = FALSE;
     context->last_was_ffp_blit = FALSE;
