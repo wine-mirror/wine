@@ -322,6 +322,7 @@ struct preset
 struct event
 {
     struct list entry;
+    REFERENCE_TIME time;
     LONGLONG position;
     BYTE midi[3];
 };
@@ -973,11 +974,12 @@ static HRESULT WINAPI synth_PlayBuffer(IDirectMusicSynth8 *iface,
         {
             if (!(event = calloc(1, sizeof(*event)))) return E_OUTOFMEMORY;
             memcpy(event->midi, data, head->cbEvent);
+            event->time = time + head->rtDelta;
             event->position = position;
 
             EnterCriticalSection(&This->cs);
             LIST_FOR_EACH_ENTRY(next_event, &This->events, struct event, entry)
-                if (next_event->position > event->position) break;
+                if (next_event->time > event->time) break;
             list_add_before(&next_event->entry, &event->entry);
             LeaveCriticalSection(&This->cs);
         }
