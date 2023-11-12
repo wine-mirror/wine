@@ -4665,6 +4665,8 @@ static void shader_arb_update_graphics_shaders(struct shader_arb_priv *priv,
 
         if (ps->load_local_constsF)
             context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
+
+        context->last_was_pshader = TRUE;
     }
     else
     {
@@ -5739,23 +5741,6 @@ struct arbfp_ffp_desc
     GLuint shader;
 };
 
-/* Context activation is done by the caller. */
-static void arbfp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
-
-    if (!use_ps(state))
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-    }
-}
-
 static void arbfp_disable(const struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
@@ -6616,66 +6601,64 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
 static void fragment_prog_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    if (use_ps(state) && !context->last_was_pshader && context->device->shader_backend == &arb_program_shader_backend)
+    {
+        /* Reload pixel shader constants since they collide with the
+         * fixed function constants. */
+        context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
+    }
+
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+}
+
+static void arbfp_update_shader(struct wined3d_context *context, const struct wined3d_state *state)
+{
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_device *device = context->device;
     struct shader_arb_priv *priv = device->fragment_priv;
-    BOOL use_pshader = use_ps(state);
     struct ffp_frag_settings settings;
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
-    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
-
-    if (!use_pshader)
+    /* Find or create a shader implementing the fixed function pipeline
+     * settings, then activate it. */
+    wined3d_ffp_get_fs_settings(context, state, &settings, FALSE);
+    desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
+    if (!desc)
     {
-        /* Find or create a shader implementing the fixed function pipeline
-         * settings, then activate it. */
-        wined3d_ffp_get_fs_settings(context, state, &settings, FALSE);
-        desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
-        if (!desc)
+        struct arbfp_ffp_desc *new_desc;
+
+        if (!(new_desc = heap_alloc(sizeof(*new_desc))))
         {
-            struct arbfp_ffp_desc *new_desc;
-
-            if (!(new_desc = heap_alloc(sizeof(*new_desc))))
-            {
-                ERR("Out of memory\n");
-                return;
-            }
-
-            new_desc->parent.settings = settings;
-            new_desc->shader = gen_arbfp_ffp_shader(&settings, gl_info);
-            add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
-            TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
-            desc = new_desc;
+            ERR("Out of memory\n");
+            return;
         }
 
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader)");
-
-        if (device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
-        {
-            /* Reload fixed function constants since they collide with the
-             * pixel shader constants. */
-            for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
-            {
-                set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
-                state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
-            }
-            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
-            state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
-            color_key_arbfp(context, state, STATE_COLOR_KEY);
-        }
-        context->last_was_pshader = FALSE;
+        new_desc->parent.settings = settings;
+        new_desc->shader = gen_arbfp_ffp_shader(&settings, gl_info);
+        add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
+        TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
+        desc = new_desc;
     }
-    else if (!context->last_was_pshader)
+
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader));
+    checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader)");
+
+    if (device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
     {
-        if (device->shader_backend == &arb_program_shader_backend)
-            context->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
-        context->last_was_pshader = TRUE;
+        /* Reload fixed function constants since they collide with the
+         * pixel shader constants. */
+        for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+        {
+            set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
+            state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
+        }
+        state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
+        state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
+        color_key_arbfp(context, state, STATE_COLOR_KEY);
     }
-
-    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+    context->last_was_pshader = FALSE;
 }
 
 /* We can't link the fog states to the fragment state directly since the
@@ -6898,6 +6881,24 @@ static BOOL arbfp_alloc_context_data(struct wined3d_context *context)
 
 static void arbfp_free_context_data(struct wined3d_context *context)
 {
+}
+
+static void arbfp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+
+    if (use_ps(state))
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        return;
+    }
+
+    gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
+
+    if (context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL))
+        arbfp_update_shader(context, state);
 }
 
 const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
