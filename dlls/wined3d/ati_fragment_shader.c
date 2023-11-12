@@ -957,12 +957,22 @@ static void atifs_update_ps_constants(struct wined3d_context_gl *context_gl, con
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_color color;
 
-    if (ctx_priv->last_shader->constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] != ATIFS_CONSTANT_TFACTOR)
-        return;
+    if (ctx_priv->last_shader->constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] == ATIFS_CONSTANT_TFACTOR)
+    {
+        wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
+        GL_EXTCALL(glSetFragmentShaderConstantATI(ATIFS_CONST_TFACTOR, &color.r));
+        checkGLcall("glSetFragmentShaderConstantATI(ATIFS_CONST_TFACTOR, &color.r)");
+    }
 
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
-    GL_EXTCALL(glSetFragmentShaderConstantATI(ATIFS_CONST_TFACTOR, &color.r));
-    checkGLcall("glSetFragmentShaderConstantATI(ATIFS_CONST_TFACTOR, &color.r)");
+    for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+    {
+        if (ctx_priv->last_shader->constants[i] == ATIFS_CONSTANT_STAGE)
+        {
+            wined3d_color_from_d3dcolor(&color, state->texture_states[i][WINED3D_TSS_CONSTANT]);
+            GL_EXTCALL(glSetFragmentShaderConstantATI(ATIFS_CONST_STAGE(i), &color.r));
+            checkGLcall("glSetFragmentShaderConstantATI(ATIFS_CONST_STAGE(i), &color.r)");
+        }
+    }
 }
 
 static void set_bumpmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -997,19 +1007,7 @@ static void set_bumpmat(struct wined3d_context *context, const struct wined3d_st
 
 static void atifs_stage_constant(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_color color;
-
-    if (!ctx_priv->last_shader
-            || ctx_priv->last_shader->constants[stage] != ATIFS_CONSTANT_STAGE)
-        return;
-
-    wined3d_color_from_d3dcolor(&color, state->texture_states[stage][WINED3D_TSS_CONSTANT]);
-    GL_EXTCALL(glSetFragmentShaderConstantATI(ATIFS_CONST_STAGE(stage), &color.r));
-    checkGLcall("glSetFragmentShaderConstantATI(ATIFS_CONST_STAGE(stage), &color.r)");
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
 }
 
 static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -1079,11 +1077,8 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
                 break;
 
             case ATIFS_CONSTANT_TFACTOR:
-                context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
-                break;
-
             case ATIFS_CONSTANT_STAGE:
-                atifs_stage_constant(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
+                context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
                 break;
 
             default:
