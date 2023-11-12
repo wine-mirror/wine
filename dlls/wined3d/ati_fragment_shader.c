@@ -948,13 +948,16 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[WINED3D_MAX_FFP_TE
 
 static void atifs_tfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
+}
+
+static void atifs_update_ps_constants(struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
+{
+    struct atifs_context_private_data *ctx_priv = context_gl->c.fragment_pipe_data;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_color color;
 
-    if (!ctx_priv->last_shader
-            || ctx_priv->last_shader->constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] != ATIFS_CONSTANT_TFACTOR)
+    if (ctx_priv->last_shader->constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] != ATIFS_CONSTANT_TFACTOR)
         return;
 
     wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
@@ -1076,7 +1079,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
                 break;
 
             case ATIFS_CONSTANT_TFACTOR:
-                atifs_tfactor(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
+                context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
                 break;
 
             case ATIFS_CONSTANT_STAGE:
@@ -1253,18 +1256,24 @@ static const struct wined3d_state_entry_template atifs_fragmentstate_template[] 
 /* Context activation is done by the caller. */
 static void atifs_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    uint32_t constant_update_mask;
 
-    if (!use_ps(state))
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_SHADER_ATI);
-        checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
-    }
-    else
+    if (use_ps(state))
     {
         gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_SHADER_ATI);
         checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
+        return;
     }
+
+    gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_SHADER_ATI);
+    checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
+
+    constant_update_mask = context->constant_update_mask;
+
+    if (constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
+        atifs_update_ps_constants(context_gl, state);
 }
 
 static void atifs_disable(const struct wined3d_context *context)
