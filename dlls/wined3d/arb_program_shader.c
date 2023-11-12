@@ -5999,25 +5999,21 @@ static void alpha_test_arbfp(struct wined3d_context *context, const struct wined
 
 static void color_key_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_COLOR_KEY;
+}
+
+static void arbfp_update_color_key(const struct wined3d_context_gl *context_gl,
+        const struct wined3d_state *state, struct shader_arb_priv *priv)
+{
     const struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, 0);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_device *device = context->device;
     struct wined3d_color float_key[2];
 
     if (!texture)
         return;
 
-    if (device->shader_backend == &arb_program_shader_backend)
+    if (context_gl->c.device->shader_backend == &arb_program_shader_backend)
     {
-        struct shader_arb_priv *priv;
-
-        /* Don't load the parameter if we're using an arbfp pixel shader,
-         * otherwise we'll overwrite application provided constants. */
-        if (use_ps(state))
-            return;
-
-        priv = device->shader_priv;
         priv->pshader_const_dirty[ARB_FFP_CONST_COLOR_KEY_LOW] = 1;
         priv->pshader_const_dirty[ARB_FFP_CONST_COLOR_KEY_HIGH] = 1;
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_COLOR_KEY_HIGH + 1);
@@ -6628,8 +6624,7 @@ static void arbfp_update_shader(struct wined3d_context *context, const struct wi
             set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
             state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
         }
-        context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
-        color_key_arbfp(context, state, STATE_COLOR_KEY);
+        context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS | WINED3D_SHADER_CONST_FFP_COLOR_KEY;
     }
     context->last_was_pshader = FALSE;
 }
@@ -6881,6 +6876,9 @@ static void arbfp_apply_draw_state(struct wined3d_context *context, const struct
 
     if (constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
         arbfp_update_ps_constants(context_gl, state, priv);
+
+    if (constant_update_mask & WINED3D_SHADER_CONST_FFP_COLOR_KEY)
+        arbfp_update_color_key(context_gl, state, priv);
 }
 
 const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
