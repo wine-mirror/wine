@@ -676,6 +676,14 @@ static void nvrc_enable(const struct wined3d_context *context, BOOL enable)
     }
 }
 
+static void nvrc_disable(const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+
+    gl_info->gl_ops.gl.p_glDisable(GL_REGISTER_COMBINERS_NV);
+    checkGLcall("glDisable(GL_REGISTER_COMBINERS_NV)");
+}
+
 /* Context activation is done by the caller. */
 static void nvts_enable(const struct wined3d_context *context, BOOL enable)
 {
@@ -692,6 +700,15 @@ static void nvts_enable(const struct wined3d_context *context, BOOL enable)
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
     }
+}
+
+static void nvts_disable(const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+
+    nvrc_disable(context);
+    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_SHADER_NV);
+    checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
 }
 
 static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
@@ -931,26 +948,28 @@ static void nvrc_context_free(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops nvts_fragment_pipeline =
 {
-    nvts_enable,
-    nvrc_fragment_get_caps,
-    nvrc_fragment_get_emul_mask,
-    nvrc_fragment_alloc,
-    nvrc_fragment_free,
-    nvrc_context_alloc,
-    nvrc_context_free,
-    nvts_color_fixup_supported,
-    nvrc_fragmentstate_template,
+    .fp_enable = nvts_enable,
+    .fp_disable = nvts_disable,
+    .get_caps = nvrc_fragment_get_caps,
+    .get_emul_mask = nvrc_fragment_get_emul_mask,
+    .alloc_private = nvrc_fragment_alloc,
+    .free_private = nvrc_fragment_free,
+    .allocate_context_data = nvrc_context_alloc,
+    .free_context_data = nvrc_context_free,
+    .color_fixup_supported = nvts_color_fixup_supported,
+    .states = nvrc_fragmentstate_template,
 };
 
 const struct wined3d_fragment_pipe_ops nvrc_fragment_pipeline =
 {
-    nvrc_enable,
-    nvrc_fragment_get_caps,
-    nvrc_fragment_get_emul_mask,
-    nvrc_fragment_alloc,
-    nvrc_fragment_free,
-    nvrc_context_alloc,
-    nvrc_context_free,
-    nvts_color_fixup_supported,
-    nvrc_fragmentstate_template,
+    .fp_enable = nvrc_enable,
+    .fp_disable = nvrc_disable,
+    .get_caps = nvrc_fragment_get_caps,
+    .get_emul_mask = nvrc_fragment_get_emul_mask,
+    .alloc_private = nvrc_fragment_alloc,
+    .free_private = nvrc_fragment_free,
+    .allocate_context_data = nvrc_context_alloc,
+    .free_context_data = nvrc_context_free,
+    .color_fixup_supported = nvts_color_fixup_supported,
+    .states = nvrc_fragmentstate_template,
 };

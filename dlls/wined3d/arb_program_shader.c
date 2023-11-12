@@ -4771,7 +4771,7 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
         gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
-    priv->fragment_pipe->fp_enable(context, FALSE);
+    priv->fragment_pipe->fp_disable(context);
 
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
@@ -5754,6 +5754,14 @@ static void arbfp_enable(const struct wined3d_context *context, BOOL enable)
         gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
+}
+
+static void arbfp_disable(const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+
+    gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
 }
 
 static void *arbfp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
@@ -6894,15 +6902,16 @@ static void arbfp_free_context_data(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
 {
-    arbfp_enable,
-    arbfp_get_caps,
-    arbfp_get_emul_mask,
-    arbfp_alloc,
-    arbfp_free,
-    arbfp_alloc_context_data,
-    arbfp_free_context_data,
-    shader_arb_color_fixup_supported,
-    arbfp_fragmentstate_template,
+    .fp_enable = arbfp_enable,
+    .fp_disable = arbfp_disable,
+    .get_caps = arbfp_get_caps,
+    .get_emul_mask = arbfp_get_emul_mask,
+    .alloc_private = arbfp_alloc,
+    .free_private = arbfp_free,
+    .allocate_context_data = arbfp_alloc_context_data,
+    .free_context_data = arbfp_free_context_data,
+    .color_fixup_supported = shader_arb_color_fixup_supported,
+    .states = arbfp_fragmentstate_template,
 };
 
 struct arbfp_blit_type

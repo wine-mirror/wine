@@ -4955,15 +4955,16 @@ static void ffp_none_context_free(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
 {
-    ffp_pipe_enable,
-    ffp_fragment_get_caps,
-    ffp_fragment_get_emul_mask,
-    ffp_alloc,
-    ffp_free,
-    ffp_none_context_alloc,
-    ffp_none_context_free,
-    ffp_color_fixup_supported,
-    ffp_fragmentstate_template,
+    .fp_enable = ffp_pipe_enable,
+    .fp_disable = ffp_pipe_disable,
+    .get_caps = ffp_fragment_get_caps,
+    .get_emul_mask = ffp_fragment_get_emul_mask,
+    .alloc_private = ffp_alloc,
+    .free_private = ffp_free,
+    .allocate_context_data = ffp_none_context_alloc,
+    .free_context_data = ffp_none_context_free,
+    .color_fixup_supported = ffp_color_fixup_supported,
+    .states = ffp_fragmentstate_template,
 };
 
 static void none_pipe_enable(const struct wined3d_context *context, BOOL enable) {}
@@ -5014,15 +5015,15 @@ static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
 
 const struct wined3d_fragment_pipe_ops none_fragment_pipe =
 {
-    none_pipe_enable,
-    fp_none_get_caps,
-    fp_none_get_emul_mask,
-    none_alloc,
-    none_free,
-    ffp_none_context_alloc,
-    ffp_none_context_free,
-    fp_none_color_fixup_supported,
-    NULL,
+    .fp_enable = none_pipe_enable,
+    .fp_disable = none_pipe_disable,
+    .get_caps = fp_none_get_caps,
+    .get_emul_mask = fp_none_get_emul_mask,
+    .alloc_private = none_alloc,
+    .free_private = none_free,
+    .allocate_context_data = ffp_none_context_alloc,
+    .free_context_data = ffp_none_context_free,
+    .color_fixup_supported = fp_none_color_fixup_supported,
 };
 
 static unsigned int num_handlers(const APPLYSTATEFUNC *funcs)

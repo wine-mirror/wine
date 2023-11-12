@@ -2002,6 +2002,7 @@ struct wined3d_state_entry_template
 struct wined3d_fragment_pipe_ops
 {
     void (*fp_enable)(const struct wined3d_context *context, BOOL enable);
+    void (*fp_disable)(const struct wined3d_context *context);
     void (*get_caps)(const struct wined3d_adapter *adapter, struct fragment_caps *caps);
     unsigned int (*get_emul_mask)(const struct wined3d_adapter *adapter);
     void *(*alloc_private)(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv);

@@ -1267,6 +1267,14 @@ static void atifs_enable(const struct wined3d_context *context, BOOL enable)
     }
 }
 
+static void atifs_disable(const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+
+    gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_SHADER_ATI);
+    checkGLcall("glDisable(GL_FRAGMENT_SHADER_ATI)");
+}
+
 static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
@@ -1382,13 +1390,14 @@ static void atifs_free_context_data(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops atifs_fragment_pipeline =
 {
-    atifs_enable,
-    atifs_get_caps,
-    atifs_get_emul_mask,
-    atifs_alloc,
-    atifs_free,
-    atifs_alloc_context_data,
-    atifs_free_context_data,
-    atifs_color_fixup_supported,
-    atifs_fragmentstate_template,
+    .fp_enable = atifs_enable,
+    .fp_disable = atifs_disable,
+    .get_caps = atifs_get_caps,
+    .get_emul_mask = atifs_get_emul_mask,
+    .alloc_private = atifs_alloc,
+    .free_private = atifs_free,
+    .allocate_context_data = atifs_alloc_context_data,
+    .free_context_data = atifs_free_context_data,
+    .color_fixup_supported = atifs_color_fixup_supported,
+    .states = atifs_fragmentstate_template,
 };

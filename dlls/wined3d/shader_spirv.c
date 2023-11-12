@@ -905,7 +905,7 @@ static void shader_spirv_disable(void *shader_priv, struct wined3d_context *cont
     struct shader_spirv_priv *priv = shader_priv;
 
     priv->vertex_pipe->vp_disable(context);
-    priv->fragment_pipe->fp_enable(context, false);
+    priv->fragment_pipe->fp_disable(context);
 
     context_vk->compute.vk_pipeline = VK_NULL_HANDLE;
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
@@ -1223,6 +1223,11 @@ static void spirv_fragment_pipe_vk_fp_enable(const struct wined3d_context *conte
     /* Nothing to do. */
 }
 
+static void spirv_fragment_pipe_vk_fp_disable(const struct wined3d_context *context)
+{
+    /* Nothing to do. */
+}
+
 static void spirv_fragment_pipe_vk_fp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
@@ -1285,6 +1290,7 @@ static const struct wined3d_state_entry_template spirv_fragment_pipe_vk_fp_state
 static const struct wined3d_fragment_pipe_ops spirv_fragment_pipe_vk =
 {
     .fp_enable = spirv_fragment_pipe_vk_fp_enable,
+    .fp_disable = spirv_fragment_pipe_vk_fp_disable,
     .get_caps = spirv_fragment_pipe_vk_fp_get_caps,
     .get_emul_mask = spirv_fragment_pipe_vk_fp_get_emul_mask,
     .alloc_private = spirv_fragment_pipe_vk_fp_alloc,

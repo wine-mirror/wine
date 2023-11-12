@@ -10821,7 +10821,7 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
     checkGLcall("glUseProgram");
 
     priv->vertex_pipe->vp_disable(context);
-    priv->fragment_pipe->fp_enable(context, FALSE);
+    priv->fragment_pipe->fp_disable(context);
 
     if (needs_legacy_glsl_syntax(gl_info) && gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
     {
@@ -12065,6 +12065,10 @@ static void glsl_fragment_pipe_enable(const struct wined3d_context *context, BOO
     /* Nothing to do. */
 }
 
+static void glsl_fragment_pipe_disable(const struct wined3d_context *context)
+{
+}
+
 static void glsl_fragment_pipe_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
@@ -12424,15 +12428,16 @@ static void glsl_fragment_pipe_free_context_data(struct wined3d_context *context
 
 const struct wined3d_fragment_pipe_ops glsl_fragment_pipe =
 {
-    glsl_fragment_pipe_enable,
-    glsl_fragment_pipe_get_caps,
-    glsl_fragment_pipe_get_emul_mask,
-    glsl_fragment_pipe_alloc,
-    glsl_fragment_pipe_free,
-    glsl_fragment_pipe_alloc_context_data,
-    glsl_fragment_pipe_free_context_data,
-    shader_glsl_color_fixup_supported,
-    glsl_fragment_pipe_state_template,
+    .fp_enable = glsl_fragment_pipe_enable,
+    .fp_disable = glsl_fragment_pipe_disable,
+    .get_caps = glsl_fragment_pipe_get_caps,
+    .get_emul_mask = glsl_fragment_pipe_get_emul_mask,
+    .alloc_private = glsl_fragment_pipe_alloc,
+    .free_private = glsl_fragment_pipe_free,
+    .allocate_context_data = glsl_fragment_pipe_alloc_context_data,
+    .free_context_data = glsl_fragment_pipe_free_context_data,
+    .color_fixup_supported = shader_glsl_color_fixup_supported,
+    .states = glsl_fragment_pipe_state_template,
 };
 
 struct glsl_blitter_args
