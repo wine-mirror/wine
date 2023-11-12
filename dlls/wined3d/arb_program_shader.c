@@ -5837,35 +5837,6 @@ static unsigned int arbfp_get_emul_mask(const struct wined3d_adapter *adapter)
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }
 
-static void state_tss_constant_arbfp(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_device *device = context->device;
-    struct wined3d_color color;
-
-    if (device->shader_backend == &arb_program_shader_backend)
-    {
-        struct shader_arb_priv *priv;
-
-        /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
-         * application provided constants.
-         */
-        if (use_ps(state))
-            return;
-
-        priv = device->shader_priv;
-        priv->pshader_const_dirty[ARB_FFP_CONST_CONSTANT(stage)] = 1;
-        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_CONSTANT(stage) + 1);
-    }
-
-    wined3d_color_from_d3dcolor(&color, state->texture_states[stage][WINED3D_TSS_CONSTANT]);
-    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_CONSTANT(stage), &color.r));
-    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_CONSTANT(stage), &color.r)");
-}
-
 static void state_arb_specularenable(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -5883,7 +5854,9 @@ static void arbfp_update_ps_constants(struct wined3d_context_gl *context_gl,
     {
         priv->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
         priv->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
-        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
+        for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+            priv->pshader_const_dirty[ARB_FFP_CONST_CONSTANT(i)] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_CONSTANT(WINED3D_MAX_FFP_TEXTURES));
     }
 
     if (state->render_states[WINED3D_RS_SPECULARENABLE])
@@ -5901,6 +5874,13 @@ static void arbfp_update_ps_constants(struct wined3d_context_gl *context_gl,
     wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR)");
+
+    for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+    {
+        wined3d_color_from_d3dcolor(&color, state->texture_states[i][WINED3D_TSS_CONSTANT]);
+        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_CONSTANT(i), &color.r));
+        checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_CONSTANT)");
+    }
 }
 
 static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -6620,10 +6600,7 @@ static void arbfp_update_shader(struct wined3d_context *context, const struct wi
         /* Reload fixed function constants since they collide with the
          * pixel shader constants. */
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
-        {
             set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
-            state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
-        }
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS | WINED3D_SHADER_CONST_FFP_COLOR_KEY;
     }
     context->last_was_pshader = FALSE;
@@ -6828,16 +6805,16 @@ static const struct wined3d_state_entry_template arbfp_fragmentstate_template[] 
     {STATE_TEXTURESTAGE(5,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(5,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), textransform}, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(6,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), textransform}, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(7,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), textransform}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),             { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            state_arb_specularenable}, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),         { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_SHADEMODE),                  { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode         }, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
