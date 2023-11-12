@@ -5896,22 +5896,17 @@ static void state_tss_constant_arbfp(struct wined3d_context *context,
 static void state_arb_specularenable(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
+}
+
+static void arbfp_update_ps_constants(struct wined3d_context_gl *context_gl,
+        const struct wined3d_state *state, struct shader_arb_priv *priv)
+{
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_device *device = context->device;
     float col[4];
 
-    if (device->shader_backend == &arb_program_shader_backend)
+    if (context_gl->c.device->shader_backend == &arb_program_shader_backend)
     {
-        struct shader_arb_priv *priv;
-
-        /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
-         * application provided constants.
-         */
-        if (use_ps(state))
-            return;
-
-        priv = device->shader_priv;
         priv->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
@@ -6655,7 +6650,7 @@ static void arbfp_update_shader(struct wined3d_context *context, const struct wi
             state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
         }
         state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
-        state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
+        context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
         color_key_arbfp(context, state, STATE_COLOR_KEY);
     }
     context->last_was_pshader = FALSE;
@@ -6885,7 +6880,10 @@ static void arbfp_free_context_data(struct wined3d_context *context)
 
 static void arbfp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct shader_arb_priv *priv = context->device->shader_priv;
+    uint32_t constant_update_mask;
 
     if (use_ps(state))
     {
@@ -6899,6 +6897,12 @@ static void arbfp_apply_draw_state(struct wined3d_context *context, const struct
 
     if (context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL))
         arbfp_update_shader(context, state);
+
+    /* Note that arbfp_update_shader() may set the constant update mask. */
+    constant_update_mask = context->constant_update_mask;
+
+    if (constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
+        arbfp_update_ps_constants(context_gl, state, priv);
 }
 
 const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
