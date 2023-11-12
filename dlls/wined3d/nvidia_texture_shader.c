@@ -651,28 +651,29 @@ static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3
 
 static void nvrc_texfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_color color;
-
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
-    GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &color.r));
+    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
 }
 
 /* Context activation is done by the caller. */
 static void nvrc_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+    struct wined3d_color color;
 
-    if (!use_ps(state))
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_REGISTER_COMBINERS_NV);
-        checkGLcall("glEnable(GL_REGISTER_COMBINERS_NV)");
-    }
-    else
+    if (use_ps(state))
     {
         gl_info->gl_ops.gl.p_glDisable(GL_REGISTER_COMBINERS_NV);
         checkGLcall("glDisable(GL_REGISTER_COMBINERS_NV)");
+        return;
+    }
+
+    gl_info->gl_ops.gl.p_glEnable(GL_REGISTER_COMBINERS_NV);
+    checkGLcall("glEnable(GL_REGISTER_COMBINERS_NV)");
+
+    if (context->constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
+    {
+        wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
+        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &color.r));
     }
 }
 
