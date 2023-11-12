@@ -1012,6 +1012,11 @@ static void atifs_stage_constant(struct wined3d_context *context, const struct w
 
 static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    context->shader_update_mask |= (1u << WINED3D_SHADER_TYPE_PIXEL);
+}
+
+static void atifs_update_shader(struct wined3d_context *context, const struct wined3d_state *state)
+{
     struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;
     const struct atifs_ffp_desc *desc, *last_shader = ctx_priv->last_shader;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
@@ -1233,6 +1238,10 @@ static void atifs_apply_draw_state(struct wined3d_context *context, const struct
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_SHADER_ATI);
     checkGLcall("glEnable(GL_FRAGMENT_SHADER_ATI)");
 
+    if (context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL))
+        atifs_update_shader(context, state);
+
+    /* Note that atifs_update_shader() may set the constant update mask. */
     constant_update_mask = context->constant_update_mask;
 
     if (constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
