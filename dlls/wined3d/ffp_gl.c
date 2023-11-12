@@ -4840,7 +4840,7 @@ static const struct wined3d_state_entry_template ffp_fragmentstate_template[] = 
 };
 
 /* Context activation is done by the caller. */
-static void ffp_pipe_enable(const struct wined3d_context *context, BOOL enable) {}
+static void ffp_pipe_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void ffp_pipe_disable(const struct wined3d_context *context) {}
 
@@ -4881,7 +4881,7 @@ static unsigned int vp_ffp_get_emul_mask(const struct wined3d_adapter *adapter)
 
 const struct wined3d_vertex_pipe_ops ffp_vertex_pipe =
 {
-    .vp_enable = ffp_pipe_enable,
+    .vp_apply_draw_state = ffp_pipe_apply_draw_state,
     .vp_disable = ffp_pipe_disable,
     .vp_get_caps = vp_ffp_get_caps,
     .vp_get_emul_mask = vp_ffp_get_emul_mask,
@@ -4955,7 +4955,7 @@ static void ffp_none_context_free(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
 {
-    .fp_enable = ffp_pipe_enable,
+    .fp_apply_draw_state = ffp_pipe_apply_draw_state,
     .fp_disable = ffp_pipe_disable,
     .get_caps = ffp_fragment_get_caps,
     .get_emul_mask = ffp_fragment_get_emul_mask,
@@ -4967,7 +4967,7 @@ const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
     .states = ffp_fragmentstate_template,
 };
 
-static void none_pipe_enable(const struct wined3d_context *context, BOOL enable) {}
+static void none_pipe_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void none_pipe_disable(const struct wined3d_context *context) {}
 
@@ -4990,7 +4990,7 @@ static unsigned int vp_none_get_emul_mask(const struct wined3d_adapter *adapter)
 
 const struct wined3d_vertex_pipe_ops none_vertex_pipe =
 {
-    .vp_enable = none_pipe_enable,
+    .vp_apply_draw_state = none_pipe_apply_draw_state,
     .vp_disable = none_pipe_disable,
     .vp_get_caps = vp_none_get_caps,
     .vp_get_emul_mask = vp_none_get_emul_mask,
@@ -5015,7 +5015,7 @@ static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
 
 const struct wined3d_fragment_pipe_ops none_fragment_pipe =
 {
-    .fp_enable = none_pipe_enable,
+    .fp_apply_draw_state = none_pipe_apply_draw_state,
     .fp_disable = none_pipe_disable,
     .get_caps = fp_none_get_caps,
     .get_emul_mask = fp_none_get_emul_mask,

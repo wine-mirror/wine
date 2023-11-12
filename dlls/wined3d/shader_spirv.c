@@ -826,8 +826,8 @@ static void shader_spirv_apply_draw_state(void *shader_priv, struct wined3d_cont
     enum wined3d_shader_type shader_type;
     struct wined3d_shader *shader;
 
-    priv->vertex_pipe->vp_enable(context, !use_vs(state));
-    priv->fragment_pipe->fp_enable(context, !use_ps(state));
+    priv->vertex_pipe->vp_apply_draw_state(context, state);
+    priv->fragment_pipe->fp_apply_draw_state(context, state);
 
     bindings = &priv->bindings;
     memcpy(binding_base, bindings->binding_base, sizeof(bindings->binding_base));
@@ -1136,7 +1136,7 @@ const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(vo
     return &spirv_shader_backend_vk;
 }
 
-static void spirv_vertex_pipe_vk_vp_enable(const struct wined3d_context *context, BOOL enable)
+static void spirv_vertex_pipe_vk_vp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }
@@ -1204,7 +1204,7 @@ static const struct wined3d_state_entry_template spirv_vertex_pipe_vk_vp_states[
 
 static const struct wined3d_vertex_pipe_ops spirv_vertex_pipe_vk =
 {
-    .vp_enable = spirv_vertex_pipe_vk_vp_enable,
+    .vp_apply_draw_state = spirv_vertex_pipe_vk_vp_apply_draw_state,
     .vp_disable = spirv_vertex_pipe_vk_vp_disable,
     .vp_get_caps = spirv_vertex_pipe_vk_vp_get_caps,
     .vp_get_emul_mask = spirv_vertex_pipe_vk_vp_get_emul_mask,
@@ -1218,7 +1218,8 @@ const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void)
     return &spirv_vertex_pipe_vk;
 }
 
-static void spirv_fragment_pipe_vk_fp_enable(const struct wined3d_context *context, BOOL enable)
+static void spirv_fragment_pipe_vk_fp_apply_draw_state(
+        const struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }
@@ -1289,7 +1290,7 @@ static const struct wined3d_state_entry_template spirv_fragment_pipe_vk_fp_state
 
 static const struct wined3d_fragment_pipe_ops spirv_fragment_pipe_vk =
 {
-    .fp_enable = spirv_fragment_pipe_vk_fp_enable,
+    .fp_apply_draw_state = spirv_fragment_pipe_vk_fp_apply_draw_state,
     .fp_disable = spirv_fragment_pipe_vk_fp_disable,
     .get_caps = spirv_fragment_pipe_vk_fp_get_caps,
     .get_emul_mask = spirv_fragment_pipe_vk_fp_get_emul_mask,

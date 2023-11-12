@@ -4630,7 +4630,7 @@ static void shader_arb_update_graphics_shaders(struct shader_arb_priv *priv,
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId);");
 
-        priv->fragment_pipe->fp_enable(context, FALSE);
+        priv->fragment_pipe->fp_apply_draw_state(context, state);
 
         /* Enable OpenGL fragment programs. Note that we may have already
          * disabled them when disabling the fragment pipeline. */
@@ -4677,7 +4677,7 @@ static void shader_arb_update_graphics_shaders(struct shader_arb_priv *priv,
             gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
             checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
         }
-        priv->fragment_pipe->fp_enable(context, TRUE);
+        priv->fragment_pipe->fp_apply_draw_state(context, state);
     }
 
     if (use_vs(state))
@@ -4706,7 +4706,7 @@ static void shader_arb_update_graphics_shaders(struct shader_arb_priv *priv,
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, compiled->prgId));
         checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, compiled->prgId);");
 
-        priv->vertex_pipe->vp_enable(context, FALSE);
+        priv->vertex_pipe->vp_apply_draw_state(context, state);
 
         /* Enable OpenGL vertex programs */
         gl_info->gl_ops.gl.p_glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -4736,7 +4736,7 @@ static void shader_arb_update_graphics_shaders(struct shader_arb_priv *priv,
             gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
             checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
         }
-        priv->vertex_pipe->vp_enable(context, TRUE);
+        priv->vertex_pipe->vp_apply_draw_state(context, state);
     }
 }
 
@@ -5740,11 +5740,11 @@ struct arbfp_ffp_desc
 };
 
 /* Context activation is done by the caller. */
-static void arbfp_enable(const struct wined3d_context *context, BOOL enable)
+static void arbfp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
 
-    if (enable)
+    if (!use_ps(state))
     {
         gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -6902,7 +6902,7 @@ static void arbfp_free_context_data(struct wined3d_context *context)
 
 const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline =
 {
-    .fp_enable = arbfp_enable,
+    .fp_apply_draw_state = arbfp_apply_draw_state,
     .fp_disable = arbfp_disable,
     .get_caps = arbfp_get_caps,
     .get_emul_mask = arbfp_get_emul_mask,

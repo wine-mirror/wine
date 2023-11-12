@@ -10704,8 +10704,8 @@ static void shader_glsl_update_graphics_program(struct shader_glsl_priv *priv,
     GLenum current_vertex_color_clamp;
     GLuint program_id, prev_id;
 
-    priv->vertex_pipe->vp_enable(&context_gl->c, !use_vs(state));
-    priv->fragment_pipe->fp_enable(&context_gl->c, !use_ps(state));
+    priv->vertex_pipe->vp_apply_draw_state(&context_gl->c, state);
+    priv->fragment_pipe->fp_apply_draw_state(&context_gl->c, state);
 
     prev_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
     set_glsl_shader_program(context_gl, state, priv, ctx_data);
@@ -11563,7 +11563,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_shader_compile,
 };
 
-static void glsl_vertex_pipe_vp_enable(const struct wined3d_context *context, BOOL enable) {}
+static void glsl_vertex_pipe_vp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void glsl_vertex_pipe_vp_disable(const struct wined3d_context *context) {}
 
@@ -12051,7 +12051,7 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
  *   - Implement vertex tweening. */
 const struct wined3d_vertex_pipe_ops glsl_vertex_pipe =
 {
-    .vp_enable = glsl_vertex_pipe_vp_enable,
+    .vp_apply_draw_state = glsl_vertex_pipe_vp_apply_draw_state,
     .vp_disable = glsl_vertex_pipe_vp_disable,
     .vp_get_caps = glsl_vertex_pipe_vp_get_caps,
     .vp_get_emul_mask = glsl_vertex_pipe_vp_get_emul_mask,
@@ -12060,7 +12060,8 @@ const struct wined3d_vertex_pipe_ops glsl_vertex_pipe =
     .vp_states = glsl_vertex_pipe_vp_states,
 };
 
-static void glsl_fragment_pipe_enable(const struct wined3d_context *context, BOOL enable)
+static void glsl_fragment_pipe_apply_draw_state(
+        const struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }
@@ -12428,7 +12429,7 @@ static void glsl_fragment_pipe_free_context_data(struct wined3d_context *context
 
 const struct wined3d_fragment_pipe_ops glsl_fragment_pipe =
 {
-    .fp_enable = glsl_fragment_pipe_enable,
+    .fp_apply_draw_state = glsl_fragment_pipe_apply_draw_state,
     .fp_disable = glsl_fragment_pipe_disable,
     .get_caps = glsl_fragment_pipe_get_caps,
     .get_emul_mask = glsl_fragment_pipe_get_emul_mask,

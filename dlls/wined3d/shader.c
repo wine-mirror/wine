@@ -1943,8 +1943,8 @@ static void shader_none_apply_draw_state(void *shader_priv, struct wined3d_conte
 {
     struct shader_none_priv *priv = shader_priv;
 
-    priv->vertex_pipe->vp_enable(context, !use_vs(state));
-    priv->fragment_pipe->fp_enable(context, !use_ps(state));
+    priv->vertex_pipe->vp_apply_draw_state(context, state);
+    priv->fragment_pipe->fp_apply_draw_state(context, state);
 }
 
 /* Context activation is done by the caller. */
