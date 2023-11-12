@@ -10820,7 +10820,7 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
     GL_EXTCALL(glUseProgram(0));
     checkGLcall("glUseProgram");
 
-    priv->vertex_pipe->vp_enable(context, FALSE);
+    priv->vertex_pipe->vp_disable(context);
     priv->fragment_pipe->fp_enable(context, FALSE);
 
     if (needs_legacy_glsl_syntax(gl_info) && gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
@@ -11565,6 +11565,8 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
 
 static void glsl_vertex_pipe_vp_enable(const struct wined3d_context *context, BOOL enable) {}
 
+static void glsl_vertex_pipe_vp_disable(const struct wined3d_context *context) {}
+
 static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
@@ -12049,12 +12051,13 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
  *   - Implement vertex tweening. */
 const struct wined3d_vertex_pipe_ops glsl_vertex_pipe =
 {
-    glsl_vertex_pipe_vp_enable,
-    glsl_vertex_pipe_vp_get_caps,
-    glsl_vertex_pipe_vp_get_emul_mask,
-    glsl_vertex_pipe_vp_alloc,
-    glsl_vertex_pipe_vp_free,
-    glsl_vertex_pipe_vp_states,
+    .vp_enable = glsl_vertex_pipe_vp_enable,
+    .vp_disable = glsl_vertex_pipe_vp_disable,
+    .vp_get_caps = glsl_vertex_pipe_vp_get_caps,
+    .vp_get_emul_mask = glsl_vertex_pipe_vp_get_emul_mask,
+    .vp_alloc = glsl_vertex_pipe_vp_alloc,
+    .vp_free = glsl_vertex_pipe_vp_free,
+    .vp_states = glsl_vertex_pipe_vp_states,
 };
 
 static void glsl_fragment_pipe_enable(const struct wined3d_context *context, BOOL enable)

@@ -4842,6 +4842,8 @@ static const struct wined3d_state_entry_template ffp_fragmentstate_template[] = 
 /* Context activation is done by the caller. */
 static void ffp_pipe_enable(const struct wined3d_context *context, BOOL enable) {}
 
+static void ffp_pipe_disable(const struct wined3d_context *context) {}
+
 static void *ffp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
 {
     return shader_priv;
@@ -4879,12 +4881,13 @@ static unsigned int vp_ffp_get_emul_mask(const struct wined3d_adapter *adapter)
 
 const struct wined3d_vertex_pipe_ops ffp_vertex_pipe =
 {
-    ffp_pipe_enable,
-    vp_ffp_get_caps,
-    vp_ffp_get_emul_mask,
-    ffp_alloc,
-    ffp_free,
-    vp_ffp_states,
+    .vp_enable = ffp_pipe_enable,
+    .vp_disable = ffp_pipe_disable,
+    .vp_get_caps = vp_ffp_get_caps,
+    .vp_get_emul_mask = vp_ffp_get_emul_mask,
+    .vp_alloc = ffp_alloc,
+    .vp_free = ffp_free,
+    .vp_states = vp_ffp_states,
 };
 
 static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
@@ -4965,6 +4968,8 @@ const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
 
 static void none_pipe_enable(const struct wined3d_context *context, BOOL enable) {}
 
+static void none_pipe_disable(const struct wined3d_context *context) {}
+
 static void *none_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
 {
     return shader_priv;
@@ -4984,12 +4989,12 @@ static unsigned int vp_none_get_emul_mask(const struct wined3d_adapter *adapter)
 
 const struct wined3d_vertex_pipe_ops none_vertex_pipe =
 {
-    none_pipe_enable,
-    vp_none_get_caps,
-    vp_none_get_emul_mask,
-    none_alloc,
-    none_free,
-    NULL,
+    .vp_enable = none_pipe_enable,
+    .vp_disable = none_pipe_disable,
+    .vp_get_caps = vp_none_get_caps,
+    .vp_get_emul_mask = vp_none_get_emul_mask,
+    .vp_alloc = none_alloc,
+    .vp_free = none_free,
 };
 
 static void fp_none_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)

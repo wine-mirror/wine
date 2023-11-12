@@ -1952,7 +1952,7 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
 {
     struct shader_none_priv *priv = shader_priv;
 
-    priv->vertex_pipe->vp_enable(context, FALSE);
+    priv->vertex_pipe->vp_disable(context);
     priv->fragment_pipe->fp_enable(context, FALSE);
 
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)

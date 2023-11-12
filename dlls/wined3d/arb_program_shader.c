@@ -4778,7 +4778,7 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
         gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
-    priv->vertex_pipe->vp_enable(context, FALSE);
+    priv->vertex_pipe->vp_disable(context);
 
     if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT] && priv->last_vs_color_unclamp)
     {
