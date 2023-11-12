@@ -616,6 +616,16 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 }
 
 
+/***********************************************************************
+ *		GetWindowDpiHostingBehavior  (USER32.@)
+ */
+DPI_HOSTING_BEHAVIOR WINAPI GetWindowDpiHostingBehavior( HWND hwnd )
+{
+    FIXME("(%p): stub\n", hwnd);
+    return DPI_HOSTING_BEHAVIOR_DEFAULT;
+}
+
+
 static LONG_PTR get_window_long_ptr( HWND hwnd, int offset, LONG_PTR ret, BOOL ansi )
 {
     if (offset == DWLP_DLGPROC && NtUserGetDialogInfo( hwnd ))
