@@ -5837,33 +5837,6 @@ static unsigned int arbfp_get_emul_mask(const struct wined3d_adapter *adapter)
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }
 
-static void state_texfactor_arbfp(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_device *device = context->device;
-    struct wined3d_color color;
-
-    if (device->shader_backend == &arb_program_shader_backend)
-    {
-        struct shader_arb_priv *priv;
-
-        /* Don't load the parameter if we're using an arbfp pixel shader,
-         * otherwise we'll overwrite application provided constants. */
-        if (use_ps(state))
-            return;
-
-        priv = device->shader_priv;
-        priv->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
-        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
-    }
-
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
-    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r));
-    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r)");
-}
-
 static void state_tss_constant_arbfp(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -5903,11 +5876,13 @@ static void arbfp_update_ps_constants(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, struct shader_arb_priv *priv)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_color color;
     float col[4];
 
     if (context_gl->c.device->shader_backend == &arb_program_shader_backend)
     {
         priv->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
+        priv->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
@@ -5922,6 +5897,10 @@ static void arbfp_update_ps_constants(struct wined3d_context_gl *context_gl,
     }
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
+
+    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR)");
 }
 
 static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -6649,7 +6628,6 @@ static void arbfp_update_shader(struct wined3d_context *context, const struct wi
             set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_BUMPENV_MAT00));
             state_tss_constant_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3D_TSS_CONSTANT));
         }
-        state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
         color_key_arbfp(context, state, STATE_COLOR_KEY);
     }
@@ -6712,7 +6690,6 @@ static void textransform(struct wined3d_context *context, const struct wined3d_s
 
 static const struct wined3d_state_entry_template arbfp_fragmentstate_template[] =
 {
-    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor_arbfp   }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),         { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG1),       { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG2),       { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                    }, WINED3D_GL_EXT_NONE             },
@@ -6865,6 +6842,7 @@ static const struct wined3d_state_entry_template arbfp_fragmentstate_template[] 
     {STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),         { STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),        state_tss_constant_arbfp}, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),             { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            state_arb_specularenable}, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_SHADEMODE),                  { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode         }, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
