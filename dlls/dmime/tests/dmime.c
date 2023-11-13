@@ -2571,7 +2571,7 @@ static void test_performance_graph(void)
     /* performance exposes a graph interface but it's not an actual toolgraph */
     hr = IDirectMusicPerformance_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
     hr = IDirectMusicGraph_GetTool(graph, 0, &tmp_tool);
     ok(hr == E_NOTIMPL, "got %#lx\n", hr);
@@ -2628,7 +2628,7 @@ static void test_performance_graph(void)
     ok(tmp_graph == graph, "got %p\n", graph);
     IDirectMusicGraph_Release(tmp_graph);
 
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     IDirectMusicGraph_Release(graph);
@@ -2830,7 +2830,7 @@ static void test_performance_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SetGraph(performance, graph);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicGraph_Release(graph);
 
@@ -3111,7 +3111,7 @@ static void test_notification_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SetGraph(performance, graph);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicGraph_Release(graph);
 
@@ -3411,7 +3411,7 @@ static void test_wave_pmsg(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SetGraph(performance, graph);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicGraph_Release(graph);
 
@@ -4286,7 +4286,7 @@ static void test_segment_state(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPerformance_SetGraph(performance, graph);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicGraph_InsertTool(graph, (IDirectMusicTool *)tool, NULL, 0, -1);
+    hr = IDirectMusicGraph_InsertTool(graph, tool, NULL, 0, -1);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicGraph_Release(graph);
 
