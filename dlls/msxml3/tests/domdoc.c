@@ -13653,14 +13653,13 @@ todo_wine {
 typedef struct _namespace_as_attribute_t {
     const GUID *guid;
     const char *clsid;
-    const char *xmlns_uri;
 } namespace_as_attribute_t;
 
 static const namespace_as_attribute_t namespace_as_attribute_test_data[] = {
-    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   "" },
-    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  "" },
-    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", "" },
-    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "" },
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument"   },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2"  },
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26" },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30" },
     { 0 }
 };
 
@@ -13788,7 +13787,7 @@ static void test_namespaces_as_attributes(void)
                 {
                     ok(hr == S_OK, "Failed to get namespace URI, hr %#lx.\n", hr);
                     if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
-                        ok(!lstrcmpW(str, _bstr_(entry->xmlns_uri)), "got %s\n", wine_dbgstr_w(str));
+                        ok(!SysStringLen(str), "got %s\n", wine_dbgstr_w(str));
                     else
                         ok(!lstrcmpW(str, _bstr_(test->uris[i])), "got %s\n", wine_dbgstr_w(str));
                     SysFreeString(str);
