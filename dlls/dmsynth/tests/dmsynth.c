@@ -1134,11 +1134,11 @@ static void test_IDirectMusicSynth(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IReferenceClock_GetTime(latency_clock, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicBuffer_GetRawBufferPtr(buffer, (BYTE **)&raw);
+    hr = IDirectMusicBuffer_GetRawBufferPtr(buffer, &raw);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicBuffer_GetUsedBytes(buffer, &len);
     ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IDirectMusicSynth_PlayBuffer(synth, time, (BYTE *)raw, len);
+    hr = IDirectMusicSynth_PlayBuffer(synth, time, raw, len);
     ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicBuffer_Release(buffer);
     IReferenceClock_Release(latency_clock);

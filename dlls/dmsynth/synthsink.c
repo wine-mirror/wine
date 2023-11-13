@@ -320,7 +320,7 @@ static HRESULT synth_sink_activate(struct synth_sink *This)
     else
     {
         synth_sink_get_format(This, &format);
-        desc.lpwfxFormat = (WAVEFORMATEX *)&format;
+        desc.lpwfxFormat = &format;
         desc.dwBufferBytes = format.nAvgBytesPerSec;
         if (FAILED(hr = IDirectMusicSynthSink_GetDesiredBufferSize(iface, &desc.dwBufferBytes)))
             ERR("Failed to get desired buffer size, hr %#lx\n", hr);
