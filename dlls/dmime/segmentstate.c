@@ -53,6 +53,7 @@ struct segment_state
     MUSIC_TIME end_point;
     MUSIC_TIME played;
     BOOL auto_download;
+    DWORD repeats;
 
     struct list tracks;
 };
@@ -234,6 +235,7 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     This->start_time = start_time;
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLength(segment, &This->end_point);
+    if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetRepeats(segment, &This->repeats);
 
     for (i = 0; SUCCEEDED(hr); i++)
     {
@@ -311,17 +313,28 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             time + duration, &next_time)))
         return hr;
 
-    if ((hr = segment_state_play_until(This, performance, next_time, track_flags)) == S_FALSE)
+    while ((hr = segment_state_play_until(This, performance, next_time, track_flags)) == S_FALSE)
     {
-        MUSIC_TIME end_time = This->start_time + This->played;
-
-        if (FAILED(hr = performance_send_segment_end(performance, end_time, iface, FALSE)))
+        if (!This->repeats)
         {
-            ERR("Failed to send segment end, hr %#lx\n", hr);
-            return hr;
+            MUSIC_TIME end_time = This->start_time + This->played;
+
+            if (FAILED(hr = performance_send_segment_end(performance, end_time, iface, FALSE)))
+            {
+                ERR("Failed to send segment end, hr %#lx\n", hr);
+                return hr;
+            }
+
+            return S_FALSE;
         }
 
-        return S_FALSE;
+        if (FAILED(hr = IDirectMusicSegment_GetLoopPoints(This->segment, &This->played,
+                &This->end_point)))
+            break;
+        This->start_time += This->end_point - This->start_point;
+        This->repeats--;
+
+        if (next_time <= This->start_time || This->end_point <= This->start_point) break;
     }
 
     return S_OK;
