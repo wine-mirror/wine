@@ -269,22 +269,15 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     return hr;
 }
 
-static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusicPerformance8 *performance,
-        REFERENCE_TIME duration, DWORD track_flags)
+static HRESULT segment_state_play_until(struct segment_state *This, IDirectMusicPerformance8 *performance,
+        MUSIC_TIME end_time, DWORD track_flags)
 {
     IDirectMusicSegmentState *iface = (IDirectMusicSegmentState *)&This->IDirectMusicSegmentState8_iface;
-    MUSIC_TIME next_time, played;
     struct track_entry *entry;
-    REFERENCE_TIME time;
     HRESULT hr = S_OK;
+    MUSIC_TIME played;
 
-    if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance,
-            This->start_time + This->played, &time)))
-        return hr;
-    if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(performance,
-            time + duration, &next_time)))
-        return hr;
-    played = min(next_time - This->start_time, This->end_point - This->start_point);
+    played = min(end_time - This->start_time, This->end_point - This->start_point);
 
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
@@ -299,7 +292,26 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
     }
 
     This->played = played;
-    if (This->start_point + This->played >= This->end_point)
+    if (This->start_point + This->played >= This->end_point) return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusicPerformance8 *performance,
+        REFERENCE_TIME duration, DWORD track_flags)
+{
+    IDirectMusicSegmentState *iface = (IDirectMusicSegmentState *)&This->IDirectMusicSegmentState8_iface;
+    MUSIC_TIME next_time;
+    REFERENCE_TIME time;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance,
+            This->start_time + This->played, &time)))
+        return hr;
+    if (FAILED(hr = IDirectMusicPerformance8_ReferenceToMusicTime(performance,
+            time + duration, &next_time)))
+        return hr;
+
+    if ((hr = segment_state_play_until(This, performance, next_time, track_flags)) == S_FALSE)
     {
         MUSIC_TIME end_time = This->start_time + This->played;
 
