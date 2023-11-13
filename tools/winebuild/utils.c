@@ -828,10 +828,24 @@ const char *asm_name( const char *sym )
     }
 }
 
+/* return the assembly name for an ARM64/ARM64EC function */
+const char *arm64_name( const char *sym )
+{
+    switch (target.platform)
+    {
+    case PLATFORM_MINGW:
+    case PLATFORM_WINDOWS:
+        if (target.cpu == CPU_ARM64EC) return strmake( "\"#%s\"", sym );
+        /* fall through */
+    default:
+        return asm_name( sym );
+    }
+}
+
 /* return an assembly function declaration for a C function name */
 void output_function_header( const char *func, int global )
 {
-    const char *name = asm_name( func );
+    const char *name = arm64_name( func );
 
     output( "\t.text\n" );
 

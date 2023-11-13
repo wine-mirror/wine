@@ -1347,7 +1347,7 @@ void output_stubs( DLLSPEC *spec )
             break;
         case CPU_ARM64:
         case CPU_ARM64EC:
-            output_seh( ".seh_proc %s", asm_name(name) );
+            output_seh( ".seh_proc %s", arm64_name(name) );
             output_seh( ".seh_endprologue" );
             output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_file_name") );
             output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_file_name") );
@@ -1360,7 +1360,7 @@ void output_stubs( DLLSPEC *spec )
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
-            output( "\tb %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tb %s\n", arm64_name("__wine_spec_unimplemented_stub") );
             output_seh( ".seh_endproc" );
             break;
         }
@@ -1476,7 +1476,7 @@ void output_syscalls( DLLSPEC *spec )
             break;
         case CPU_ARM64:
         case CPU_ARM64EC:
-            output_seh( ".seh_proc %s", asm_name(name) );
+            output_seh( ".seh_proc %s", arm64_name(name) );
             output_seh( ".seh_endprologue" );
             output( "\tmov x8, #%u\n", id );
             output( "\tmov x9, x30\n" );

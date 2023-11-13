@@ -287,6 +287,7 @@ extern int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *
 extern unsigned int get_page_size(void);
 extern unsigned int get_args_size( const ORDDEF *odp );
 extern const char *asm_name( const char *func );
+extern const char *arm64_name( const char *func );
 extern const char *asm_globl( const char *func );
 extern const char *get_asm_ptr_keyword(void);
 extern const char *get_asm_string_keyword(void);
