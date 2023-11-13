@@ -466,7 +466,7 @@ HRESULT stream_get_object(IStream *stream, DMUS_OBJECTDESC *desc, REFIID iid, vo
 
     if (SUCCEEDED(hr = stream_get_loader(stream, &loader)))
     {
-        hr = IDirectMusicLoader_GetObject(loader, desc, iid, (void **)ret_iface);
+        hr = IDirectMusicLoader_GetObject(loader, desc, iid, ret_iface);
         IDirectMusicLoader_Release(loader);
     }
 

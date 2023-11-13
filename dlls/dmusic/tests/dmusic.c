@@ -1078,7 +1078,7 @@ static void test_port_download(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     size = 0xdeadbeef;
     buffer = invalid_ptr;
-    hr = IDirectMusicDownload_GetBuffer(download, (void **)&buffer, &size);
+    hr = IDirectMusicDownload_GetBuffer(download, &buffer, &size);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(size == 1, "got %#lx\n", size);
     ok(buffer != invalid_ptr, "got %p\n", buffer);
