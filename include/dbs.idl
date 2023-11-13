@@ -587,6 +587,10 @@ cpp_quote("#define DBPROPVAL_LM_READ                  __MSABI_LONG(0x00000002)")
 cpp_quote("#define DBPROPVAL_LM_INTENT                __MSABI_LONG(0x00000004)")
 cpp_quote("#define DBPROPVAL_LM_RITE                  __MSABI_LONG(0x00000008)")
 
+cpp_quote("#define DBPROPVAL_MR_NOTSUPPORTED          __MSABI_LONG(0x00000000)")
+cpp_quote("#define DBPROPVAL_MR_SUPPORTED             __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_MR_CONCURRENT            __MSABI_LONG(0x00000002)")
+
 cpp_quote("#define DB_MODE_READ                        0x01")
 cpp_quote("#define DB_MODE_WRITE                       0x02")
 cpp_quote("#define DB_MODE_READWRITE                   0x03")
