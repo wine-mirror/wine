@@ -1545,7 +1545,7 @@ static HRESULT WINAPI performance_InitAudio(IDirectMusicPerformance8 *iface, IDi
         IDirectSound_AddRef(*dsound);
     }
     if (dmusic && !*dmusic) {
-        *dmusic = (IDirectMusic *)This->dmusic;
+        *dmusic = This->dmusic;
         IDirectMusic_AddRef(*dmusic);
     }
 
@@ -2117,7 +2117,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             msg->dwFlags &= ~DMUS_PMSGF_TOOL_IMMEDIATE;
             msg->dwFlags |= DMUS_PMSGF_TOOL_ATTIME;
 
-            if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, (DMUS_PMSG *)msg)))
+            if (FAILED(hr = IDirectMusicPerformance8_SendPMsg(performance, msg)))
             {
                 ERR("Failed to send notification message, hr %#lx\n", hr);
                 return DMUS_S_FREE;
