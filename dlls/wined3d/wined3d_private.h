@@ -56,6 +56,18 @@ static inline size_t align(size_t addr, size_t alignment)
     return (addr + (alignment - 1)) & ~(alignment - 1);
 }
 
+static inline uint32_t float_to_int(float f)
+{
+    union
+    {
+        uint32_t u;
+        float f;
+    } u;
+
+    u.f = f;
+    return u.u;
+}
+
 static inline float int_to_float(uint32_t i)
 {
     union

@@ -620,32 +620,34 @@ static void nvts_texdim(struct wined3d_context *context, const struct wined3d_st
     nvts_activate_dimensions(state, sampler, context_gl);
 }
 
-static void nvts_bumpenvmat(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+static void nvrc_update_bumpenv_constants(struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
 {
-    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    unsigned int mapped_stage = context_gl->tex_unit_map[stage + 1];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    float mat[2][2];
 
-    /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
-     * offset the destination stage(always stage + 1 in d3d). In GL_NV_texture_shader, the bump
-     * map offsetting is done in the stage reading the bump mapped texture, and the perturbation
-     * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
-     * for stage + 1. Keep the nvrc tex unit mapping in mind too
-     */
-    if (mapped_stage < gl_info->limits.ffp_textures)
+    for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
-        wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
+        unsigned int mapped_stage = context_gl->tex_unit_map[i + 1];
+        float mat[2][2];
 
-        /* We can't just pass a pointer to the state to GL due to the
-         * different matrix format (column major vs row major). */
-        mat[0][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT00]);
-        mat[1][0] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT01]);
-        mat[0][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT10]);
-        mat[1][1] = *((float *)&state->texture_states[stage][WINED3D_TSS_BUMPENV_MAT11]);
-        gl_info->gl_ops.gl.p_glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *)mat);
-        checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
+        /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
+         * offset the destination stage(always stage + 1 in d3d). In GL_NV_texture_shader, the bump
+         * map offsetting is done in the stage reading the bump mapped texture, and the perturbation
+         * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
+         * for stage + 1. Keep the nvrc tex unit mapping in mind too
+         */
+        if (mapped_stage < gl_info->limits.ffp_textures)
+        {
+            wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
+
+            /* We can't just pass a pointer to the state to GL due to the
+             * different matrix format (column major vs row major). */
+            mat[0][0] = float_to_int(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]);
+            mat[1][0] = float_to_int(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT01]);
+            mat[0][1] = float_to_int(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT10]);
+            mat[1][1] = float_to_int(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT11]);
+            gl_info->gl_ops.gl.p_glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, &mat[0][0]);
+            checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
+        }
     }
 }
 
@@ -657,7 +659,8 @@ static void nvrc_texfactor(struct wined3d_context *context, const struct wined3d
 /* Context activation is done by the caller. */
 static void nvrc_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
+    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_color color;
 
     if (use_ps(state))
@@ -675,6 +678,9 @@ static void nvrc_apply_draw_state(struct wined3d_context *context, const struct 
         wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
         GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &color.r));
     }
+
+    if (context->constant_update_mask & WINED3D_SHADER_CONST_PS_BUMP_ENV)
+        nvrc_update_bumpenv_constants(context_gl, state);
 }
 
 static void nvrc_disable(const struct wined3d_context *context)
@@ -804,10 +810,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(0, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -817,10 +819,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(1, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -830,10 +828,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(2, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -843,10 +837,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(3, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -856,10 +846,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(4, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -869,10 +855,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(5, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -882,10 +864,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(6, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
@@ -895,10 +873,6 @@ static const struct wined3d_state_entry_template nvrc_fragmentstate_template[] =
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),   { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),   nvts_bumpenvmat     }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT01),   { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT10),   { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT11),   { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),   NULL                }, NV_TEXTURE_SHADER2              },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_RESULT_ARG),      nvrc_resultarg      }, WINED3D_GL_EXT_NONE             },
