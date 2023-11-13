@@ -539,6 +539,10 @@ static const char *parse_spec_flags( DLLSPEC *spec, ORDDEF *odp, const char *tok
         token = GetToken(0);
     } while (token && *token == '-');
 
+    /* x86-64 implies arm64ec */
+    if (odp->flags & FLAG_CPU(CPU_x86_64)) odp->flags |= FLAG_CPU(CPU_ARM64EC);
+    if (cpu_mask & FLAG_CPU(CPU_x86_64)) cpu_mask |= FLAG_CPU(CPU_ARM64EC);
+
     if (cpu_mask) odp->flags |= FLAG_CPU_MASK & ~cpu_mask;
     return token;
 }
