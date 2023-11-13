@@ -1823,6 +1823,16 @@ NTSTATUS WINAPI NtCompareObjects( HANDLE first, HANDLE second )
 
 
 /**************************************************************************
+ *           NtCompareTokens   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCompareTokens( HANDLE first, HANDLE second, BOOLEAN *equal )
+{
+    FIXME( "%p,%p,%p: stub\n", first, second, equal );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/**************************************************************************
  *           NtClose
  */
 NTSTATUS WINAPI NtClose( HANDLE handle )

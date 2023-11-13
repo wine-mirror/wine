@@ -237,6 +237,18 @@ NTSTATUS WINAPI wow64_NtFilterToken( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCompareTokens
+ */
+NTSTATUS WINAPI wow64_NtCompareTokens( UINT *args )
+{
+    HANDLE first = get_handle( &args );
+    HANDLE second = get_handle( &args );
+    BOOLEAN *equal = get_ptr( &args );
+
+    return NtCompareTokens( first, second, equal );
+}
+
+/**********************************************************************
  *           wow64_NtImpersonateAnonymousToken
  */
 NTSTATUS WINAPI wow64_NtImpersonateAnonymousToken( UINT *args )
