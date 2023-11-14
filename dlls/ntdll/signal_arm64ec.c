@@ -170,6 +170,17 @@ void __attribute__((naked)) __chkstk(void)
 }
 
 
+/**************************************************************************
+ *		__chkstk_arm64ec (NTDLL.@)
+ *
+ * Supposed to touch all the stack pages, but we shouldn't need that.
+ */
+void __attribute__((naked)) __chkstk_arm64ec(void)
+{
+    asm( "ret" );
+}
+
+
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */

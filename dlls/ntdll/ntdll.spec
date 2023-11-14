@@ -1506,6 +1506,7 @@
 @ cdecl -private -arch=i386 _CIsqrt()
 @ stdcall -arch=!i386 __C_specific_handler(ptr long ptr ptr)
 @ cdecl -arch=!i386 -norelay __chkstk()
+@ cdecl -arch=arm64ec -norelay __chkstk_arm64ec()
 @ cdecl __isascii(long)
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
