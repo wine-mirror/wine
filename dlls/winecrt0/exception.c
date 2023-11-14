@@ -41,7 +41,7 @@ __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    "call " __ASM_STDCALL("RtlUnwind",16) "\n\t"
                    "call *16(%ebp)" )
 
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) && !defined(__arm64ec__)
 
 __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    "pushq %rbp\n\t"
