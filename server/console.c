@@ -796,6 +796,12 @@ static struct object *console_lookup_name( struct object *obj, struct unicode_st
     static const WCHAR connectionW[]    = {'C','o','n','n','e','c','t','i','o','n'};
     assert( obj->ops == &console_ops );
 
+    if (!name)
+    {
+        set_error( STATUS_NOT_FOUND );
+        return NULL;
+    }
+
     if (name->len == sizeof(connectionW) && !memcmp( name->str, connectionW, name->len ))
     {
         name->len = 0;

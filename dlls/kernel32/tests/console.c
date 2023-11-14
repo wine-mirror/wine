@@ -4500,6 +4500,28 @@ static void test_file_info(HANDLE input, HANDLE output)
     ok(type == FILE_TYPE_CHAR, "GetFileType returned %lu\n", type);
 }
 
+static void test_console_as_root_directory(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    UNICODE_STRING name;
+    HANDLE handle, h2;
+    NTSTATUS status;
+
+    handle = CreateFileA( "CON", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFileA error %lu\n", GetLastError() );
+
+    RtlInitUnicodeString( &name, L"" );
+    InitializeObjectAttributes( &attr, &name, 0, handle, NULL );
+    status = NtCreateFile( &h2, SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, 0, NULL, 0 );
+    ok( status == STATUS_NOT_FOUND || broken( status == STATUS_OBJECT_TYPE_MISMATCH ) /* Win7 */,
+        "NtCreateFile returned %#lx\n", status );
+
+    CloseHandle( handle );
+}
+
 static void test_AttachConsole_child(DWORD console_pid)
 {
     HANDLE pipe_in, pipe_out;
@@ -5547,6 +5569,7 @@ START_TEST(console)
     test_GetConsoleOriginalTitle();
     test_GetConsoleTitleA();
     test_GetConsoleTitleW();
+    test_console_as_root_directory();
     if (!test_current)
     {
         test_pseudo_console();
