@@ -220,7 +220,7 @@ struct ID3DXEffectCompilerImpl
     LONG ref;
 };
 
-static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
+static HRESULT d3dx9_effect_init_from_binary(struct d3dx_effect *effect,
         struct IDirect3DDevice9 *device, const char *data, SIZE_T data_size,
         unsigned int flags, struct ID3DXEffectPool *pool, const char *skip_constants_string);
 static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
@@ -4421,7 +4421,7 @@ static HRESULT WINAPI d3dx_effect_CloneEffect(ID3DXEffect *iface, IDirect3DDevic
     if (!(dst = heap_alloc_zero(sizeof(*dst))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3dx9_effect_init_from_dxbc(dst, device, src->source, src->source_size,
+    if (FAILED(hr = d3dx9_effect_init_from_binary(dst, device, src->source, src->source_size,
             src->flags, &src->pool->ID3DXEffectPool_iface, src->skip_constants_string)))
     {
         heap_free(dst);
@@ -6510,7 +6510,7 @@ static const char **parse_skip_constants_string(char *skip_constants_string, uns
     return new_alloc;
 }
 
-static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
+static HRESULT d3dx9_effect_init_from_binary(struct d3dx_effect *effect,
         struct IDirect3DDevice9 *device, const char *data, SIZE_T data_size,
         unsigned int flags, struct ID3DXEffectPool *pool, const char *skip_constants_string)
 {
@@ -6675,7 +6675,7 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     tag = read_u32(&ptr);
 
     if (tag == d3dx9_effect_version(9, 1))
-        return d3dx9_effect_init_from_dxbc(effect, device, data, data_size, flags, pool, skip_constants_string);
+        return d3dx9_effect_init_from_binary(effect, device, data, data_size, flags, pool, skip_constants_string);
 
     TRACE("HLSL ASCII effect, trying to compile it.\n");
     compile_flags |= flags & ~(D3DXFX_NOT_CLONEABLE | D3DXFX_LARGEADDRESSAWARE);
@@ -6719,7 +6719,7 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     else if (temp_errors)
         ID3D10Blob_Release(temp_errors);
 
-    hr = d3dx9_effect_init_from_dxbc(effect, device, ID3D10Blob_GetBufferPointer(bytecode),
+    hr = d3dx9_effect_init_from_binary(effect, device, ID3D10Blob_GetBufferPointer(bytecode),
             ID3D10Blob_GetBufferSize(bytecode), flags, pool, skip_constants_string);
     ID3D10Blob_Release(bytecode);
     return hr;
