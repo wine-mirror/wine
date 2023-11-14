@@ -2229,8 +2229,10 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
     int i, res;
     HWND ret, *list;
     POINT win_pt;
+    int dpi;
 
     if (!hwnd) hwnd = get_desktop_window();
+    if (!(dpi = get_thread_dpi())) dpi = get_win_monitor_dpi( hwnd );
 
     *hittest = HTNOWHERE;
 
@@ -2254,7 +2256,7 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
             *hittest = HTCLIENT;
             break;
         }
-        win_pt = map_dpi_point( pt, get_thread_dpi(), get_dpi_for_window( list[i] ));
+        win_pt = map_dpi_point( pt, dpi, get_dpi_for_window( list[i] ));
         res = send_message( list[i], WM_NCHITTEST, 0, MAKELPARAM( win_pt.x, win_pt.y ));
         if (res != HTTRANSPARENT)
         {
