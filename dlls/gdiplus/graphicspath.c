@@ -998,7 +998,7 @@ struct format_string_args
 };
 
 static GpStatus format_string_callback(GpGraphics *graphics,
-    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST WCHAR *string, INT index, INT length, struct gdip_font_link_info *font_link_info,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, INT *underlined_indexes,
     INT underlined_index_count, void *priv)
