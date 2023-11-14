@@ -4,4 +4,5 @@ IMPORTS   = advapi32
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-SOURCES = wmi.spec
+SOURCES = \
+	wmi.spec

@@ -3,4 +3,5 @@ IMPORTS   = secur32
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-SOURCES = security.spec
+SOURCES = \
+	security.spec

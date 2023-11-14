@@ -3,4 +3,5 @@ IMPORTLIB = sfc
 
 EXTRADLLFLAGS = -Wb,--data-only -Wb,--prefer-native
 
-SOURCES = sfc.spec
+SOURCES = \
+	sfc.spec

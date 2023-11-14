@@ -44,24 +44,6 @@ my %ignored_source_files = (
     "tools/makedep.c" => 1,
 );
 
-my @source_vars = (
-    "BISON_SRCS",
-    "C_SRCS",
-    "FONT_SRCS",
-    "HEADER_SRCS",
-    "IDL_SRCS",
-    "IN_SRCS",
-    "LEX_SRCS",
-    "MANPAGES",
-    "MC_SRCS",
-    "OBJC_SRCS",
-    "PO_SRCS",
-    "RC_SRCS",
-    "SOURCES",
-    "SVG_SRCS",
-    "XTEMPLATE_SRCS"
-);
-
 my (@makefiles, %makefiles);
 my @nls_files;
 
@@ -126,34 +108,19 @@ sub replace_makefile_variables($)
 {
     my $file = shift;
     my $make = $makefiles{$file};
-    my $source_vars_regexp = join "|", @source_vars;
-    my %replaced;
-    my %files;
     my $old;
     my $new;
+    my $replaced = 0;
+    my $value = "";
+
+    $value = "\\\n\t" . join(" \\\n\t", sort @{${$make}{"=SOURCES"}}) if defined ${$make}{"=SOURCES"};
 
     open OLD_FILE, $file or die "cannot open $file";
     while (<OLD_FILE>)
     {
         $old .= $_;
-        if (/^\s*($source_vars_regexp)(\s*)=/)
+        if (/^\s*SOURCES\s*=/)
         {
-            # try to preserve formatting
-            my $var = $1;
-            my $spaces = $2;
-            my $replaced = 0;
-            my @values;
-
-            if (defined ${$make}{"=$var"})
-            {
-                @values = @{${$make}{"=$var"}};
-                ${$make}{$var} = \@values;
-            }
-            else
-            {
-                undef ${$make}{$var};
-            }
-            my $multiline = /\\$/ || (@values > 1);
             my $old_str = $_;
             while (/\\$/)
             {
@@ -162,43 +129,15 @@ sub replace_makefile_variables($)
                 $old .= $_;
                 $old_str .= $_;
             }
-            my $new_str = "";
-            if (!@values)
-            {
-                # nothing
-            }
-            elsif ($multiline)
-            {
-                $new_str = "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
-                $new .= $new_str;
-            }
-            else
-            {
-                $new_str = "$var$spaces= @values\n";
-                $new .= $new_str;
-            }
-            $replaced{$var} = 1;
-            foreach my $val (@values)
-            {
-                die "$file: duplicate file $val" if defined $files{$val};
-                $files{$val} = 1;
-            }
+            $new .= "SOURCES = $value\n" if $value;
+            $replaced = 1;
             next;
         }
         $new .= $_;
     }
-    # if we are using SOURCES, ignore the other variables
-    unless ($replaced{"SOURCES"})
+    unless ($replaced)
     {
-        foreach my $var (@source_vars)
-        {
-            next if defined $replaced{$var};
-            next if $var eq "SOURCES";
-            next unless defined ${$make}{"=$var"};
-            my @values = @{${$make}{"=$var"}};
-            next unless @values;
-            $new .= "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
-        }
+        $new .= "\nSOURCES = $value\n" if $value;
     }
     close OLD_FILE;
     update_file($file, $new) if $old ne $new;
@@ -231,8 +170,7 @@ sub parse_makefile($)
             $make{$var} = $2;
             next;
         }
-        my $source_vars_regexp = join "|", @source_vars;
-        if (/^\s*($source_vars_regexp|PROGRAMS|EXTRA_TARGETS|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        if (/^\s*(SOURCES|PROGRAMS|EXTRA_TARGETS|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -303,19 +241,19 @@ sub get_parent_makefile($)
 }
 
 # preserve shared source files that are listed in the existing makefile
-sub preserve_shared_source_files($$$)
+sub preserve_shared_source_files($$)
 {
-    my ($make, $parent, $var) = @_;
+    my ($make, $parent) = @_;
     my %srcs;
 
-    return unless defined ${$parent}{"=$var"};
-    foreach my $file (@{${$parent}{"=$var"}}) { $srcs{$file} = 1; }
-    foreach my $file (@{${$make}{"=$var"}}) { $srcs{$file} = 0; }
+    return unless defined ${$parent}{"=SOURCES"};
+    foreach my $file (@{${$parent}{"=SOURCES"}}) { $srcs{$file} = 1; }
+    foreach my $file (@{${$make}{"=SOURCES"}}) { $srcs{$file} = 0; }
 
-    foreach my $file (@{${$make}{$var}})
+    foreach my $file (@{${$make}{SOURCES}})
     {
         next unless defined $srcs{$file} && $srcs{$file} == 1;
-        push @{${$make}{"=$var"}}, $file;
+        push @{${$make}{"=SOURCES"}}, $file;
     }
 }
 
@@ -338,20 +276,13 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{"$dir/Makefile.in"};
         my $name = substr( $file, length($dir) + 1 );
 
-        if ($name =~ /\.(c|in|l|m|mc|po|rc|sfd|svg|y)$/)
-        {
-            push @{${$make}{"=SOURCES"}}, $name;
-            next;
-        }
-        elsif ($name =~ /\.h$/ || $name =~ /\.rh$/ || $name =~ /\.inl$/ || $name =~ /\.x$/)
+        if ($name =~ /\.h$/)
         {
             next if $dir ne "include";
         }
         elsif ($name =~ /\.idl$/)
         {
             die "no makedep flags specified in $file" unless $dir eq "include" || get_makedep_flags($file);
-            push @{${$make}{"=SOURCES"}}, $name;
-            next;
         }
         elsif ($name =~ /\.spec$/)
         {
@@ -364,14 +295,13 @@ sub assign_sources_to_makefiles(@)
         {
             push @nls_files, $name if $dir eq "nls";
         }
-        elsif ($name =~ /\.xml$/ && $dir eq "dlls/winewayland.drv")
+        elsif ($name =~ /\.xml$/)
         {
-            push @{${$make}{"=SOURCES"}}, $name;
-            next;
+            next unless $dir eq "dlls/winewayland.drv";
         }
-        elsif ($dir ne "loader")  # loader dir contains misc files
+        elsif ($name !~ /\.(c|in|inl|l|m|mc|po|rc|rh|sfd|svg|x|y)$/)
         {
-            next;
+            next unless $dir eq "loader";  # loader dir contains misc files
         }
         push @{${$make}{"=SOURCES"}}, $name;
     }
@@ -382,7 +312,7 @@ sub assign_sources_to_makefiles(@)
         my $make = $makefiles{$file};
         my $parent = get_parent_makefile( $file );
         next unless $parent;
-        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "SOURCES" );
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent} );
     }
 }
 

@@ -3,4 +3,5 @@ IMPORTLIB = usp10
 
 EXTRADLLFLAGS = -Wb,--data-only
 
-SOURCES = usp10.spec
+SOURCES = \
+	usp10.spec

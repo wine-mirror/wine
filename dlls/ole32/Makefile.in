@@ -43,4 +43,5 @@ SOURCES = \
 	stg_stream.c \
 	storage32.c \
 	usrmarshal.c
+
 dlldata_EXTRADEFS = -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DWINE_REGISTER_DLL
