@@ -42,6 +42,7 @@
 61 stdcall OpenThemeDataEx(ptr wstr long)
 62 stub -noname ServerClearStockObjects
 63 stub -noname MarkSelection
+104 stdcall -noname RefreshImmersiveColorPolicyState()
 132 stdcall -noname ShouldAppsUseDarkMode()
 133 stdcall -noname AllowDarkModeForWindow(ptr long)
 135 stdcall -noname SetPreferredAppMode(long)

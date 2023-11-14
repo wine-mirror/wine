@@ -1254,6 +1254,15 @@ BOOL WINAPI ThemeHooksRemove(void)
 }
 
 /**********************************************************************
+ *      RefreshImmersiveColorPolicyState                  (UXTHEME.104)
+ *
+ */
+void WINAPI RefreshImmersiveColorPolicyState(void)
+{
+    FIXME("stub\n");
+}
+
+/**********************************************************************
  *      ShouldSystemUseDarkMode                           (UXTHEME.138)
  *
  * RETURNS
