@@ -13734,37 +13734,37 @@ static void test_namespaces_as_attributes(void)
         test = tests;
         while (test->xml) {
             hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
-            ok(SUCCEEDED(hr), "Failed to create document %s, hr %#lx.\n", wine_dbgstr_guid(entry->guid), hr);
+            ok(hr == S_OK, "Unexpected hr %#lx for %s.\n", hr, wine_dbgstr_guid(entry->guid));
 
             hr = IXMLDOMDocument_loadXML(doc, _bstr_(test->xml), &b);
-            ok(hr == S_OK, "Failed to load xml, hr %#lx.\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             node = NULL;
             hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("a"), &node);
-            ok(SUCCEEDED(hr), "Failed to select a node, hr %#lx.\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             hr = IXMLDOMNode_get_attributes(node, &map);
-            ok(SUCCEEDED(hr), "Failed to get attributes, hr %#lx.\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             len = -1;
             hr = IXMLDOMNamedNodeMap_get_length(map, &len);
-            ok(SUCCEEDED(hr), "Failed to get map length, hr %#lx.\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             ok(len == test->explen, "got %ld\n", len);
 
             item = NULL;
             hr = IXMLDOMNamedNodeMap_get_item(map, test->explen+1, &item);
-            ok(hr == S_FALSE, "Failed to get item, hr %#lx.\n", hr);
+            ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
             ok(!item, "Item should be NULL\n");
 
             for (i = 0; i < len; i++)
             {
                 item = NULL;
                 hr = IXMLDOMNamedNodeMap_get_item(map, i, &item);
-                ok(SUCCEEDED(hr), "Failed to get item, hr %#lx.\n", hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
                 str = NULL;
                 hr = IXMLDOMNode_get_nodeName(item, &str);
-                ok(SUCCEEDED(hr), "Failed to get node name, hr %#lx.\n", hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 ok(!lstrcmpW(str, _bstr_(test->names[i])), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
@@ -13772,7 +13772,7 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_prefix(item, &str);
                 if (test->prefixes[i])
                 {
-                    ok(hr == S_OK, "Failed to get prefix, hr %#lx.\n", hr);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     ok(!lstrcmpW(str, _bstr_(test->prefixes[i])), "got %s\n", wine_dbgstr_w(str));
                     SysFreeString(str);
                 }
@@ -13781,7 +13781,7 @@ static void test_namespaces_as_attributes(void)
 
                 str = NULL;
                 hr = IXMLDOMNode_get_baseName(item, &str);
-                ok(SUCCEEDED(hr), "Failed to get base name, hr %#lx.\n", hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 ok(!lstrcmpW(str, _bstr_(test->basenames[i])), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
@@ -13789,7 +13789,7 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_namespaceURI(item, &str);
                 if (test->uris[i])
                 {
-                    ok(hr == S_OK, "Failed to get namespace URI, hr %#lx.\n", hr);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
                         ok(!SysStringLen(str), "got %s\n", wine_dbgstr_w(str));
                     else
@@ -13801,7 +13801,7 @@ static void test_namespaces_as_attributes(void)
 
                 str = NULL;
                 hr = IXMLDOMNode_get_text(item, &str);
-                ok(SUCCEEDED(hr), "Failed to get node text, hr %#lx.\n", hr);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 ok(!lstrcmpW(str, _bstr_(test->texts[i])), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
