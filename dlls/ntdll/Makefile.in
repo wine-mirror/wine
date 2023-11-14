@@ -37,6 +37,7 @@ SOURCES = \
 	sec.c \
 	signal_arm.c \
 	signal_arm64.c \
+	signal_arm64ec.c \
 	signal_i386.c \
 	signal_x86_64.c \
 	string.c \

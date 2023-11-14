@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef __x86_64__
+#if defined(__x86_64__) && !defined(__arm64ec__)
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -711,10 +711,7 @@ void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
  */
 BOOLEAN WINAPI RtlIsEcCode( const void *ptr )
 {
-    const UINT64 *map = (const UINT64 *)NtCurrentTeb()->Peb->EcCodeBitMap;
-    ULONG_PTR page = (ULONG_PTR)ptr / page_size;
-    if (!map) return FALSE;
-    return (map[page / 64] >> (page & 63)) & 1;
+    return FALSE;
 }
 
 
