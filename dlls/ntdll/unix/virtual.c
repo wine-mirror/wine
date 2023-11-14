@@ -3329,6 +3329,15 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
         ULONG64 total = (ULONG64)sinfo.totalram * sinfo.mem_unit;
         info->MmHighestPhysicalPage = max(1, total / page_size);
     }
+#elif defined(__APPLE__)
+    /* sysconf(_SC_PHYS_PAGES) is buggy on macOS: in a 32-bit process, it
+     * returns an error on Macs with >4GB of RAM.
+     */
+    INT64 memsize;
+    size_t len = sizeof(memsize);
+
+    if (!sysctlbyname( "hw.memsize", &memsize, &len, NULL, 0 ))
+        info->MmHighestPhysicalPage = max(1, memsize / page_size);
 #elif defined(_SC_PHYS_PAGES)
     LONG64 phys_pages = sysconf( _SC_PHYS_PAGES );
 
