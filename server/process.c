@@ -1336,11 +1336,11 @@ DECL_HANDLER(new_process)
     if (!(req->flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES) && info->data->console != 1)
     {
         info->data->hstdin  = duplicate_handle( parent, info->data->hstdin, process,
-                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+                                                0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES );
         info->data->hstdout = duplicate_handle( parent, info->data->hstdout, process,
-                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+                                                0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES );
         info->data->hstderr = duplicate_handle( parent, info->data->hstderr, process,
-                                                0, OBJ_INHERIT, DUPLICATE_SAME_ACCESS );
+                                                0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES );
         /* some handles above may have been invalid; this is not an error */
         if (get_error() == STATUS_INVALID_HANDLE ||
             get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();

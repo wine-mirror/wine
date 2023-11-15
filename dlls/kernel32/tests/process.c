@@ -3319,11 +3319,11 @@ static void test_StdHandleInheritance(void)
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                                       H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-/* 5*/  {ARG_STD         |                                       H_DISK,      HATTR_TYPE | FILE_TYPE_DISK, .is_todo = 1},
+/* 5*/  {ARG_STD         |                                       H_DISK,      HATTR_TYPE | FILE_TYPE_DISK},
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK, .is_todo = 1},
+        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
     },
     nothing_gui[] =
     {
