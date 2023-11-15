@@ -1814,6 +1814,8 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     EnterCriticalSection(&synth->cs);
 
     find_region(synth, preset->bank, preset->patch, key, vel, &instrument, &region);
+    if (!region && preset->bank == 128)
+        find_region(synth, preset->bank, 0, key, vel, &instrument, &region);
 
     if (!instrument)
     {
