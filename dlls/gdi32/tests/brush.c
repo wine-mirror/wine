@@ -431,14 +431,12 @@ static void test_brush_org( void )
     ok( pt.x == 0 && pt.y == 0, "got %ld,%ld\n", pt.x, pt.y );
     pt.x = 10;
     pt.y = 20;
+    /* From Windows 2000 function don't do anything and returns FALSE */
     ret = FixBrushOrgEx( hdc, 2, 3, &pt );
-    todo_wine
     ok(!ret, "Unexpected return value %d.\n", ret);
-    todo_wine
     ok( pt.x == 10 && pt.y == 20, "got %ld,%ld\n", pt.x, pt.y );
     ret = GetBrushOrgEx( hdc, &pt );
     ok(ret, "Unexpected return value %d.\n", ret);
-    todo_wine
     ok( pt.x == 0 && pt.y == 0, "got %ld,%ld\n", pt.x, pt.y );
 
     ReleaseDC( 0, hdc );
