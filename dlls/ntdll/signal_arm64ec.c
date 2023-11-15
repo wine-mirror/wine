@@ -159,6 +159,102 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 }
 
 
+static int code_match( BYTE *code, const BYTE *seq, size_t len )
+{
+    for ( ; len; len--, code++, seq++) if (*seq && *code != *seq) return 0;
+    return 1;
+}
+
+void *check_call( void **target, void *exit_thunk, void *dest )
+{
+    static const BYTE jmp_sequence[] =
+    {
+        0xff, 0x25              /* jmp *xxx(%rip) */
+    };
+    static const BYTE fast_forward_sequence[] =
+    {
+        0x48, 0x8b, 0xc4,       /* mov  %rsp,%rax */
+        0x48, 0x89, 0x58, 0x20, /* mov  %rbx,0x20(%rax) */
+        0x55,                   /* push %rbp */
+        0x5d,                   /* pop  %rbp */
+        0xe9                    /* jmp  arm_code */
+    };
+    static const BYTE syscall_sequence[] =
+    {
+        0x4c, 0x8b, 0xd1,       /* mov  %rcx,%r10 */
+        0xb8, 0, 0, 0, 0,       /* mov  $xxx,%eax */
+        0xf6, 0x04, 0x25, 0x08, /* testb $0x1,0x7ffe0308 */
+        0x03, 0xfe, 0x7f, 0x01,
+        0x75, 0x03,             /* jne 1f */
+        0x0f, 0x05,             /* syscall */
+        0xc3,                   /* ret */
+        0xcd, 0x2e,             /* 1: int $0x2e */
+        0xc3                    /* ret */
+    };
+
+    for (;;)
+    {
+        if (dest == __wine_unix_call_dispatcher) return dest;
+        if (RtlIsEcCode( dest )) return dest;
+        if (code_match( dest, jmp_sequence, sizeof(jmp_sequence) ))
+        {
+            int *off_ptr = (int *)((char *)dest + sizeof(jmp_sequence));
+            void **addr_ptr = (void **)((char *)(off_ptr + 1) + *off_ptr);
+            dest = *addr_ptr;
+            continue;
+        }
+        if (!((ULONG_PTR)dest & 15))  /* fast-forward and syscall thunks are always aligned */
+        {
+            if (code_match( dest, fast_forward_sequence, sizeof(fast_forward_sequence) ))
+            {
+                int *off_ptr = (int *)((char *)dest + sizeof(fast_forward_sequence));
+                return (char *)(off_ptr + 1) + *off_ptr;
+            }
+            if (code_match( dest, syscall_sequence, sizeof(syscall_sequence) ))
+            {
+                ULONG id = ((ULONG *)dest)[1];
+                FIXME( "syscall %x at %p not implemented\n", id, dest );
+            }
+        }
+        *target = dest;
+        return exit_thunk;
+    }
+}
+
+static void __attribute__((naked)) arm64x_check_call(void)
+{
+    asm( "stp x29, x30, [sp,#-0xb0]!\n\t"
+         "mov x29, sp\n\t"
+         "stp x0, x1,   [sp, #0x10]\n\t"
+         "stp x2, x3,   [sp, #0x20]\n\t"
+         "stp x4, x5,   [sp, #0x30]\n\t"
+         "stp x6, x7,   [sp, #0x40]\n\t"
+         "stp x8, x9,   [sp, #0x50]\n\t"
+         "stp x10, x15, [sp, #0x60]\n\t"
+         "stp d0, d1,   [sp, #0x70]\n\t"
+         "stp d2, d3,   [sp, #0x80]\n\t"
+         "stp d4, d5,   [sp, #0x90]\n\t"
+         "stp d6, d7,   [sp, #0xa0]\n\t"
+         "add x0, sp, #0x58\n\t"  /* x9 = &target */
+         "mov x1, x10\n\t"        /* x10 = exit_thunk */
+         "mov x2, x11\n\t"        /* x11 = dest */
+         "bl " __ASM_NAME("check_call") "\n\t"
+         "mov x11, x0\n\t"
+         "ldp x0, x1,   [sp, #0x10]\n\t"
+         "ldp x2, x3,   [sp, #0x20]\n\t"
+         "ldp x4, x5,   [sp, #0x30]\n\t"
+         "ldp x6, x7,   [sp, #0x40]\n\t"
+         "ldp x8, x9,   [sp, #0x50]\n\t"
+         "ldp x10, x15, [sp, #0x60]\n\t"
+         "ldp d0, d1,   [sp, #0x70]\n\t"
+         "ldp d2, d3,   [sp, #0x80]\n\t"
+         "ldp d4, d5,   [sp, #0x90]\n\t"
+         "ldp d6, d7,   [sp, #0xa0]\n\t"
+         "ldp x29, x30, [sp], #0xb0\n\t"
+         "ret" );
+}
+
+
 /**************************************************************************
  *		__chkstk (NTDLL.@)
  *
@@ -212,6 +308,13 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
  */
 void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
 {
+    if (!__os_arm64x_check_call)
+    {
+        __os_arm64x_check_call = arm64x_check_call;
+        __os_arm64x_check_icall = arm64x_check_call;
+        __os_arm64x_check_icall_cfg = arm64x_check_call;
+    }
+
     loader_init( context, (void **)&context->Rcx );
     TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context->Rcx, (void *)context->Rdx );
     NtContinue( context, TRUE );
