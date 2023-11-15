@@ -1163,7 +1163,7 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     DWORD dwCodePages, dwManyCodePages;
     DWORD dwCmpCodePages;
     UINT CodePage;
-    static const WCHAR str[] = { 'd', 0x0436, 0xff90 };
+    static const WCHAR str[] = { 'd', 0x0436, 0xff90, 0x0160 };
     LONG processed;
     HRESULT ret;
 
@@ -1220,6 +1220,19 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
     ok(processed == 1, "expected 1, got %ld\n", processed);
 
+    /* Latin 2 */
+    dwCmpCodePages = FS_LATIN1 | FS_LATIN2 | FS_TURKISH | FS_BALTIC;
+    ret = IMLangFontLink_GetCharCodePages(iMLFL, 0x0160, &dwCodePages);
+    ok(ret == S_OK, "IMLangFontLink_GetCharCodePages error %lx\n", ret);
+    ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
+
+    dwCodePages = 0;
+    processed = 0;
+    ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[3], 1, 0, &dwCodePages, &processed);
+    ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %lx\n", ret);
+    ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
+    ok(processed == 1, "expected 1, got %ld\n", processed);
+
     /* Cyrillic */
     dwCmpCodePages = FS_CYRILLIC | FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG;
     ret = IMLangFontLink_GetCharCodePages(iMLFL, 0x0436, &dwCodePages);
@@ -1261,6 +1274,14 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %lx\n", ret);
     ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
     ok(processed == 3, "expected 3, got %ld\n", processed);
+
+    dwCmpCodePages = FS_JISJAPAN;
+    dwCodePages = 0;
+    processed = 0;
+    ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 4, 0, &dwCodePages, &processed);
+    ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %lx\n", ret);
+    todo_wine ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
+    todo_wine ok(processed == 3, "expected 3, got %ld\n", processed);
 
     dwCodePages = 0xffff;
     processed = -1;
