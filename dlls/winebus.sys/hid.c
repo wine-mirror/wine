@@ -1376,7 +1376,7 @@ BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value)
 {
     struct hid_device_state *state = &iface->hid_device_state;
     ULONG offset = state->abs_axis_start + index * 4;
-    if (index > state->abs_axis_count) return FALSE;
+    if (index >= state->abs_axis_count) return FALSE;
     *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
     return TRUE;
 }
@@ -1385,7 +1385,7 @@ BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value)
 {
     struct hid_device_state *state = &iface->hid_device_state;
     ULONG offset = state->rel_axis_start + index * 4;
-    if (index > state->rel_axis_count) return FALSE;
+    if (index >= state->rel_axis_count) return FALSE;
     *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
     return TRUE;
 }
@@ -1395,7 +1395,7 @@ BOOL hid_device_set_button(struct unix_device *iface, ULONG index, BOOL is_set)
     struct hid_device_state *state = &iface->hid_device_state;
     ULONG offset = state->button_start + (index / 8);
     BYTE mask = (1 << (index % 8));
-    if (index > state->button_count) return FALSE;
+    if (index >= state->button_count) return FALSE;
     if (is_set) state->report_buf[offset] |= mask;
     else state->report_buf[offset] &= ~mask;
     return TRUE;

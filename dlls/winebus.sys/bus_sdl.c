@@ -841,8 +841,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyAxisEvent *ie = &event->jaxis;
 
-            if (ie->axis >= ARRAY_SIZE(absolute_axis_usages)) break;
-            hid_device_set_abs_axis(iface, ie->axis, ie->value);
+            if (!hid_device_set_abs_axis(iface, ie->axis, ie->value)) break;
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
         }
@@ -850,8 +849,7 @@ static BOOL set_report_from_joystick_event(struct sdl_device *impl, SDL_Event *e
         {
             SDL_JoyBallEvent *ie = &event->jball;
 
-            if (ie->ball >= ARRAY_SIZE(relative_axis_usages) / 2) break;
-            hid_device_set_rel_axis(iface, 2 * ie->ball, ie->xrel);
+            if (!hid_device_set_rel_axis(iface, 2 * ie->ball, ie->xrel)) break;
             hid_device_set_rel_axis(iface, 2 * ie->ball + 1, ie->yrel);
             bus_event_queue_input_report(&event_queue, iface, state->report_buf, state->report_len);
             break;
