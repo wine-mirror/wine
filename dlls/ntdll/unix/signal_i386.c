@@ -566,7 +566,7 @@ struct xcontext
     ULONG64 host_compaction_mask;
 };
 
-extern BOOL xstate_compaction_enabled DECLSPEC_HIDDEN;
+extern BOOL xstate_compaction_enabled;
 
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
 {
@@ -652,7 +652,7 @@ static int solaris_sigaction( int sig, const struct sigaction *new, struct sigac
 
 #endif
 
-extern void clear_alignment_flag(void) DECLSPEC_HIDDEN;
+extern void clear_alignment_flag(void);
 __ASM_GLOBAL_FUNC( clear_alignment_flag,
                    "pushfl\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1575,7 +1575,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  *           call_user_mode_callback
  */
 extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb ) DECLSPEC_HIDDEN;
+                                         ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1615,7 +1615,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
  *           user_mode_callback_return
  */
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                         NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
+                                                         NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movl 16(%esp),%edx\n"      /* teb */
                    "movl 0x1f8(%edx),%eax\n\t" /* x86_thread_data()->syscall_frame */
@@ -1814,13 +1814,13 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
     if ((void *)EIP_sig( sigcontext ) == __wine_syscall_dispatcher)
     {
-        extern void __wine_syscall_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+        extern void __wine_syscall_dispatcher_prolog_end(void);
 
         EIP_sig( sigcontext ) = (ULONG)__wine_syscall_dispatcher_prolog_end;
     }
     else if ((void *)EIP_sig( sigcontext ) == __wine_unix_call_dispatcher)
     {
-        extern void __wine_unix_call_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+        extern void __wine_unix_call_dispatcher_prolog_end(void);
 
         EIP_sig( sigcontext ) = (ULONG)__wine_unix_call_dispatcher_prolog_end;
     }
@@ -2414,7 +2414,7 @@ void signal_init_process(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;

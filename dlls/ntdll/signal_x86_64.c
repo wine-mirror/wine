@@ -1680,7 +1680,7 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 /***********************************************************************
  *           signal_start_thread
  */
-extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx );
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %rcx,%rbx\n\t"        /* context */
                    /* clear the thread stack */

@@ -1153,7 +1153,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  *           call_user_mode_callback
  */
 extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb ) DECLSPEC_HIDDEN;
+                                         ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "push {r4-r12,lr}\n\t"
                    "ldr ip, [sp, #0x2c]\n\t"  /* func */
@@ -1181,7 +1181,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
  *           user_mode_callback_return
  */
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                         NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
+                                                         NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr r4, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "ldr r5, [r4, #0x4c]\n\t"  /* frame->prev_frame */
@@ -1570,7 +1570,7 @@ void signal_init_process(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct arm_thread_data *thread_data = (struct arm_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;

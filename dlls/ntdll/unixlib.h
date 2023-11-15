@@ -78,6 +78,6 @@ enum ntdll_unix_funcs
     unix_system_time_precise,
 };
 
-extern unixlib_handle_t __wine_unixlib_handle DECLSPEC_HIDDEN;
+extern unixlib_handle_t __wine_unixlib_handle;
 
 #endif /* __NTDLL_UNIXLIB_H */

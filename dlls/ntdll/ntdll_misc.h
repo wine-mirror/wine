@@ -44,55 +44,55 @@
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 static const UINT_PTR page_size = 0x1000;
 #else
-extern UINT_PTR page_size DECLSPEC_HIDDEN;
+extern UINT_PTR page_size;
 #endif
 
 /* exceptions */
-extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_HIDDEN;
-extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr ) DECLSPEC_HIDDEN;
+extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
+extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec );
+extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr );
 
-extern void WINAPI LdrInitializeThunk(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*) DECLSPEC_HIDDEN;
-extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) DECLSPEC_HIDDEN;
-extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG) DECLSPEC_HIDDEN;
-extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void WINAPI LdrInitializeThunk(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR);
+extern NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
+extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC);
+extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
+extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
-extern RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_TABLE_ENTRY **module ) DECLSPEC_HIDDEN;
+extern RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_TABLE_ENTRY **module );
 #endif
 
 /* debug helpers */
-extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
-extern const char *debugstr_exception_code( DWORD code ) DECLSPEC_HIDDEN;
-extern void set_native_thread_name( DWORD tid, const char *name ) DECLSPEC_HIDDEN;
+extern LPCSTR debugstr_us( const UNICODE_STRING *str );
+extern const char *debugstr_exception_code( DWORD code );
+extern void set_native_thread_name( DWORD tid, const char *name );
 
 /* init routines */
-extern void loader_init( CONTEXT *context, void **entry ) DECLSPEC_HIDDEN;
-extern void version_init(void) DECLSPEC_HIDDEN;
-extern void debug_init(void) DECLSPEC_HIDDEN;
-extern void actctx_init(void) DECLSPEC_HIDDEN;
-extern void locale_init(void) DECLSPEC_HIDDEN;
-extern void init_user_process_params(void) DECLSPEC_HIDDEN;
-extern void get_resource_lcids( LANGID *user, LANGID *user_neutral, LANGID *system ) DECLSPEC_HIDDEN;
+extern void loader_init( CONTEXT *context, void **entry );
+extern void version_init(void);
+extern void debug_init(void);
+extern void actctx_init(void);
+extern void locale_init(void);
+extern void init_user_process_params(void);
+extern void get_resource_lcids( LANGID *user, LANGID *user_neutral, LANGID *system );
 
 /* module handling */
-extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
+extern LIST_ENTRY tls_links;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                     DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
+                                     DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
-                                     FARPROC origfun, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
-extern void RELAY_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
-extern void SNOOP_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
-extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
-extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
+                                     FARPROC origfun, DWORD ordinal, const WCHAR *user );
+extern void RELAY_SetupDLL( HMODULE hmod );
+extern void SNOOP_SetupDLL( HMODULE hmod );
+extern const WCHAR windows_dir[];
+extern const WCHAR system_dir[];
 
-extern void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) DECLSPEC_HIDDEN;
+extern void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *);
 
-extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
+extern struct _KUSER_SHARED_DATA *user_shared_data;
 
-extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, va_list args ) DECLSPEC_HIDDEN;
-extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, va_list args ) DECLSPEC_HIDDEN;
+extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, va_list args );
+extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, va_list args );
 
 struct dllredirect_data
 {
@@ -128,8 +128,8 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 }
 
 /* FLS data */
-extern TEB_FLS_DATA *fls_alloc_data(void) DECLSPEC_HIDDEN;
-extern void heap_thread_detach(void) DECLSPEC_HIDDEN;
+extern TEB_FLS_DATA *fls_alloc_data(void);
+extern void heap_thread_detach(void);
 
 #ifdef __arm64ec__
 

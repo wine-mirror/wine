@@ -88,7 +88,7 @@ WINE_DECLARE_DEBUG_CHANNEL(seh);
 #include <asm/prctl.h>
 static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
 
-extern int alloc_fs_sel( int sel, void *base ) DECLSPEC_HIDDEN;
+extern int alloc_fs_sel( int sel, void *base );
 __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    /* switch to 32-bit stack */
                    "pushq %rbx\n\t"
@@ -457,7 +457,7 @@ struct xcontext
     ULONG64 host_compaction_mask;
 };
 
-extern BOOL xstate_compaction_enabled DECLSPEC_HIDDEN;
+extern BOOL xstate_compaction_enabled;
 
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
 {
@@ -1549,7 +1549,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  *           call_user_mode_callback
  */
 extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb ) DECLSPEC_HIDDEN;
+                                         ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "subq $0x48,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x48\n\t")
@@ -1602,7 +1602,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
  *           user_mode_callback_return
  */
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                         NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
+                                                         NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movq 0x328(%rcx),%r10\n\t" /* amd64_thread_data()->syscall_frame */
                    "movq 0xa0(%r10),%r11\n\t"  /* frame->prev_frame */
@@ -1857,13 +1857,13 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
     if ((void *)RIP_sig( sigcontext ) == __wine_syscall_dispatcher)
     {
-        extern void __wine_syscall_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+        extern void __wine_syscall_dispatcher_prolog_end(void);
 
         RIP_sig( sigcontext ) = (ULONG64)__wine_syscall_dispatcher_prolog_end;
     }
     else if ((void *)RIP_sig( sigcontext ) == __wine_unix_call_dispatcher)
     {
-        extern void __wine_unix_call_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+        extern void __wine_unix_call_dispatcher_prolog_end(void);
 
         RIP_sig( sigcontext ) = (ULONG64)__wine_unix_call_dispatcher_prolog_end;
         R10_sig( sigcontext ) = RCX_sig( sigcontext );
@@ -2434,7 +2434,7 @@ void signal_init_process(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;

@@ -1108,7 +1108,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  *           call_user_mode_callback
  */
 extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb ) DECLSPEC_HIDDEN;
+                                         ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp x29, x30, [sp,#-0xc0]!\n\t"
                    "mov x29, sp\n\t"
@@ -1142,7 +1142,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
  *           user_mode_callback_return
  */
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                         NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
+                                                         NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
                    "ldr x5, [x4, #0x110]\n\t"     /* prev_frame */
@@ -1596,7 +1596,7 @@ void signal_init_process(void)
 /***********************************************************************
  *           syscall_dispatcher_return_slowpath
  */
-void DECLSPEC_HIDDEN syscall_dispatcher_return_slowpath(void)
+void syscall_dispatcher_return_slowpath(void)
 {
     raise( SIGUSR2 );
 }
@@ -1604,7 +1604,7 @@ void DECLSPEC_HIDDEN syscall_dispatcher_return_slowpath(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct arm64_thread_data *thread_data = (struct arm64_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;

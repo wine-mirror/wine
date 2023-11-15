@@ -40,7 +40,7 @@ static const WORD current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
-extern WORD native_machine DECLSPEC_HIDDEN;
+extern WORD native_machine;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -62,9 +62,9 @@ typedef PEB64 WOW_PEB;
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 
-extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
-extern ULONG_PTR user_space_wow_limit DECLSPEC_HIDDEN;
-extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
+extern WOW_PEB *wow_peb;
+extern ULONG_PTR user_space_wow_limit;
+extern SECTION_IMAGE_INFORMATION main_image_info;
 
 static inline WOW_TEB *get_wow_teb( TEB *teb )
 {
@@ -132,213 +132,213 @@ static const LONG teb_offset = 0x2000;
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
 
 /* callbacks to PE ntdll from the Unix side */
-extern void *pDbgUiRemoteBreakin DECLSPEC_HIDDEN;
-extern void *pKiRaiseUserExceptionDispatcher DECLSPEC_HIDDEN;
-extern void *pKiUserExceptionDispatcher DECLSPEC_HIDDEN;
-extern void *pKiUserApcDispatcher DECLSPEC_HIDDEN;
-extern void *pKiUserCallbackDispatcher DECLSPEC_HIDDEN;
-extern void *pLdrInitializeThunk DECLSPEC_HIDDEN;
-extern void *pRtlUserThreadStart DECLSPEC_HIDDEN;
-extern void *p__wine_ctrl_routine DECLSPEC_HIDDEN;
-extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock DECLSPEC_HIDDEN;
+extern void *pDbgUiRemoteBreakin;
+extern void *pKiRaiseUserExceptionDispatcher;
+extern void *pKiUserExceptionDispatcher;
+extern void *pKiUserApcDispatcher;
+extern void *pKiUserCallbackDispatcher;
+extern void *pLdrInitializeThunk;
+extern void *pRtlUserThreadStart;
+extern void *p__wine_ctrl_routine;
+extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
 
 struct _FILE_FS_DEVICE_INFORMATION;
 
-extern const char wine_build[] DECLSPEC_HIDDEN;
+extern const char wine_build[];
 
-extern const char *home_dir DECLSPEC_HIDDEN;
-extern const char *data_dir DECLSPEC_HIDDEN;
-extern const char *build_dir DECLSPEC_HIDDEN;
-extern const char *config_dir DECLSPEC_HIDDEN;
-extern const char *user_name DECLSPEC_HIDDEN;
-extern const char **dll_paths DECLSPEC_HIDDEN;
-extern const char **system_dll_paths DECLSPEC_HIDDEN;
-extern pthread_key_t teb_key DECLSPEC_HIDDEN;
-extern PEB *peb DECLSPEC_HIDDEN;
-extern USHORT *uctable DECLSPEC_HIDDEN;
-extern USHORT *lctable DECLSPEC_HIDDEN;
-extern SIZE_T startup_info_size DECLSPEC_HIDDEN;
-extern BOOL is_prefix_bootstrap DECLSPEC_HIDDEN;
-extern int main_argc DECLSPEC_HIDDEN;
-extern char **main_argv DECLSPEC_HIDDEN;
-extern char **main_envp DECLSPEC_HIDDEN;
-extern WCHAR **main_wargv DECLSPEC_HIDDEN;
-extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
-extern unsigned int supported_machines_count DECLSPEC_HIDDEN;
-extern USHORT supported_machines[8] DECLSPEC_HIDDEN;
-extern BOOL process_exiting DECLSPEC_HIDDEN;
-extern HANDLE keyed_event DECLSPEC_HIDDEN;
-extern timeout_t server_start_time DECLSPEC_HIDDEN;
-extern sigset_t server_block_set DECLSPEC_HIDDEN;
-extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
-extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
+extern const char *home_dir;
+extern const char *data_dir;
+extern const char *build_dir;
+extern const char *config_dir;
+extern const char *user_name;
+extern const char **dll_paths;
+extern const char **system_dll_paths;
+extern pthread_key_t teb_key;
+extern PEB *peb;
+extern USHORT *uctable;
+extern USHORT *lctable;
+extern SIZE_T startup_info_size;
+extern BOOL is_prefix_bootstrap;
+extern int main_argc;
+extern char **main_argv;
+extern char **main_envp;
+extern WCHAR **main_wargv;
+extern const WCHAR system_dir[];
+extern unsigned int supported_machines_count;
+extern USHORT supported_machines[8];
+extern BOOL process_exiting;
+extern HANDLE keyed_event;
+extern timeout_t server_start_time;
+extern sigset_t server_block_set;
+extern struct _KUSER_SHARED_DATA *user_shared_data;
+extern SYSTEM_CPU_INFORMATION cpu_info;
 #ifdef __i386__
-extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
+extern struct ldt_copy __wine_ldt_copy;
 #endif
 
-extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
-extern void init_startup_info(void) DECLSPEC_HIDDEN;
+extern void init_environment( int argc, char *argv[], char *envp[] );
+extern void init_startup_info(void);
 extern void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
-                                  const pe_image_info_t *pe_info, DWORD *info_size ) DECLSPEC_HIDDEN;
-extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
-extern char *get_alternate_wineloader( WORD machine ) DECLSPEC_HIDDEN;
-extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
+                                  const pe_image_info_t *pe_info, DWORD *info_size );
+extern char **build_envp( const WCHAR *envW );
+extern char *get_alternate_wineloader( WORD machine );
+extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info );
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHORT machine,
-                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit_low, ULONG_PTR limit_high ) DECLSPEC_HIDDEN;
-extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
+                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit_low, ULONG_PTR limit_high );
+extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine );
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
-                               USHORT load_machine, WCHAR **image, void **module ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_start_exe( WCHAR **image, void **module ) DECLSPEC_HIDDEN;
-extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+                               USHORT load_machine, WCHAR **image, void **module );
+extern NTSTATUS load_start_exe( WCHAR **image, void **module );
+extern void start_server( BOOL debug );
 
-extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
-extern void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset ) DECLSPEC_HIDDEN;
-extern void server_leave_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern unsigned int server_call_unlocked( void *req_ptr );
+extern void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset );
+extern void server_leave_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset );
 extern unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                                   timeout_t abs_timeout, context_t *context, user_apc_t *user_apc ) DECLSPEC_HIDDEN;
+                                   timeout_t abs_timeout, context_t *context, user_apc_t *user_apc );
 extern unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
-                                 const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
+                                 const LARGE_INTEGER *timeout );
 extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call,
-                                              apc_result_t *result ) DECLSPEC_HIDDEN;
+                                              apc_result_t *result );
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
-                               int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
-extern void wine_server_send_fd( int fd ) DECLSPEC_HIDDEN;
-extern void process_exit_wrapper( int status ) DECLSPEC_HIDDEN;
-extern size_t server_init_process(void) DECLSPEC_HIDDEN;
-extern void server_init_process_done(void) DECLSPEC_HIDDEN;
-extern void server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
-extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
+                               int *needs_close, enum server_fd_type *type, unsigned int *options );
+extern void wine_server_send_fd( int fd );
+extern void process_exit_wrapper( int status );
+extern size_t server_init_process(void);
+extern void server_init_process_done(void);
+extern void server_init_thread( void *entry_point, BOOL *suspend );
+extern int server_pipe( int fd[2] );
 
-extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux ) DECLSPEC_HIDDEN;
-extern void fpu_to_fpux( XSAVE_FORMAT *fpux, const I386_FLOATING_SAVE_AREA *fpu ) DECLSPEC_HIDDEN;
-extern void *get_cpu_area( USHORT machine ) DECLSPEC_HIDDEN;
-extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid ) DECLSPEC_HIDDEN;
-extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN abort_process( int status ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
-extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
-extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT machine ) DECLSPEC_HIDDEN;
+extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux );
+extern void fpu_to_fpux( XSAVE_FORMAT *fpux, const I386_FLOATING_SAVE_AREA *fpu );
+extern void *get_cpu_area( USHORT machine );
+extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid );
+extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size );
+extern void DECLSPEC_NORETURN abort_thread( int status );
+extern void DECLSPEC_NORETURN abort_process( int status );
+extern void DECLSPEC_NORETURN exit_process( int status );
+extern void wait_suspend( CONTEXT *context );
+extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
+extern NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine );
+extern NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT machine );
 extern unsigned int alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
-                                             data_size_t *ret_len ) DECLSPEC_HIDDEN;
-extern NTSTATUS system_time_precise( void *args ) DECLSPEC_HIDDEN;
+                                             data_size_t *ret_len );
+extern NTSTATUS system_time_precise( void *args );
 
-extern void *anon_mmap_fixed( void *start, size_t size, int prot, int flags ) DECLSPEC_HIDDEN;
-extern void *anon_mmap_alloc( size_t size, int prot ) DECLSPEC_HIDDEN;
-extern void virtual_init(void) DECLSPEC_HIDDEN;
-extern ULONG_PTR get_system_affinity_mask(void) DECLSPEC_HIDDEN;
-extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 ) DECLSPEC_HIDDEN;
+extern void *anon_mmap_fixed( void *start, size_t size, int prot, int flags );
+extern void *anon_mmap_alloc( size_t size, int prot );
+extern void virtual_init(void);
+extern ULONG_PTR get_system_affinity_mask(void);
+extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 );
 extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
                                             SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
-                                            ULONG_PTR limit_high, WORD machine, BOOL prefer_native ) DECLSPEC_HIDDEN;
+                                            ULONG_PTR limit_high, WORD machine, BOOL prefer_native );
 extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
                                     SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
-                                    ULONG_PTR limit_high, USHORT machine ) DECLSPEC_HIDDEN;
+                                    ULONG_PTR limit_high, USHORT machine );
 extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
-                                             pe_image_info_t *info, void *so_handle ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_relocate_module( void *module ) DECLSPEC_HIDDEN;
-extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
-extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_clear_tls_index( ULONG index ) DECLSPEC_HIDDEN;
+                                             pe_image_info_t *info, void *so_handle );
+extern NTSTATUS virtual_relocate_module( void *module );
+extern TEB *virtual_alloc_first_teb(void);
+extern NTSTATUS virtual_alloc_teb( TEB **ret_teb );
+extern void virtual_free_teb( TEB *teb );
+extern NTSTATUS virtual_clear_tls_index( ULONG index );
 extern NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, ULONG_PTR limit_high,
-                                            SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page ) DECLSPEC_HIDDEN;
-extern void virtual_map_user_shared_data(void) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack ) DECLSPEC_HIDDEN;
-extern unsigned int virtual_locked_server_call( void *req_ptr ) DECLSPEC_HIDDEN;
-extern ssize_t virtual_locked_read( int fd, void *addr, size_t size ) DECLSPEC_HIDDEN;
-extern ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset ) DECLSPEC_HIDDEN;
-extern ssize_t virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags ) DECLSPEC_HIDDEN;
-extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
-extern void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec ) DECLSPEC_HIDDEN;
-extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
-extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
-extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
-extern NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
-extern void virtual_set_force_exec( BOOL enable ) DECLSPEC_HIDDEN;
-extern void virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
+                                            SIZE_T reserve_size, SIZE_T commit_size, BOOL guard_page );
+extern void virtual_map_user_shared_data(void);
+extern NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack );
+extern unsigned int virtual_locked_server_call( void *req_ptr );
+extern ssize_t virtual_locked_read( int fd, void *addr, size_t size );
+extern ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset );
+extern ssize_t virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags );
+extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size );
+extern void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec );
+extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size );
+extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size );
+extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size );
+extern NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size );
+extern void virtual_set_force_exec( BOOL enable );
+extern void virtual_set_large_address_space(void);
 extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
-                                            SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
-extern void *get_builtin_so_handle( void *module ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_builtin_unixlib( void *module, const char *name ) DECLSPEC_HIDDEN;
-extern NTSTATUS unwind_builtin_dll( void *args ) DECLSPEC_HIDDEN;
+                                            SECTION_IMAGE_INFORMATION *info );
+extern void *get_builtin_so_handle( void *module );
+extern NTSTATUS load_builtin_unixlib( void *module, const char *name );
+extern NTSTATUS unwind_builtin_dll( void *args );
 
-extern NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
-extern void *get_native_context( CONTEXT *context ) DECLSPEC_HIDDEN;
-extern void *get_wow_context( CONTEXT *context ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
+extern void *get_native_context( CONTEXT *context );
+extern void *get_wow_context( CONTEXT *context );
 extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time,
-                              LARGE_INTEGER *user_time ) DECLSPEC_HIDDEN;
-extern void signal_init_threading(void) DECLSPEC_HIDDEN;
-extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
-extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
-extern void signal_init_process(void) DECLSPEC_HIDDEN;
+                              LARGE_INTEGER *user_time );
+extern void signal_init_threading(void);
+extern NTSTATUS signal_alloc_thread( TEB *teb );
+extern void signal_free_thread( TEB *teb );
+extern void signal_init_process(void);
 extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
-                                                   BOOL suspend, TEB *teb ) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int), TEB *teb ) DECLSPEC_HIDDEN;
-extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4] DECLSPEC_HIDDEN;
-extern void __wine_syscall_dispatcher(void) DECLSPEC_HIDDEN;
-extern void DECLSPEC_NORETURN __wine_syscall_dispatcher_return( void *frame, ULONG_PTR retval ) DECLSPEC_HIDDEN;
-extern void __wine_unix_call_dispatcher(void) DECLSPEC_HIDDEN;
-extern NTSTATUS signal_set_full_context( CONTEXT *context ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size ) DECLSPEC_HIDDEN;
-extern void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid ) DECLSPEC_HIDDEN;
-extern NTSTATUS open_hkcu_key( const char *path, HANDLE *key ) DECLSPEC_HIDDEN;
+                                                   BOOL suspend, TEB *teb );
+extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int), TEB *teb );
+extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
+extern void __wine_syscall_dispatcher(void);
+extern void DECLSPEC_NORETURN __wine_syscall_dispatcher_return( void *frame, ULONG_PTR retval );
+extern void __wine_unix_call_dispatcher(void);
+extern NTSTATUS signal_set_full_context( CONTEXT *context );
+extern NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size );
+extern NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size );
+extern void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid );
+extern NTSTATUS open_hkcu_key( const char *path, HANDLE *key );
 
 extern NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                        IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
-                                       UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
+                                       UINT in_size, void *out_buffer, UINT out_size );
 extern NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                         IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
-                                        UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
-extern NTSTATUS serial_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
+                                        UINT in_size, void *out_buffer, UINT out_size );
+extern NTSTATUS serial_FlushBuffersFile( int fd );
 extern NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                            UINT code, void *in_buffer, UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
+                            UINT code, void *in_buffer, UINT in_size, void *out_buffer, UINT out_size );
 extern NTSTATUS sock_read( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                           IO_STATUS_BLOCK *io, void *buffer, ULONG length ) DECLSPEC_HIDDEN;
+                           IO_STATUS_BLOCK *io, void *buffer, ULONG length );
 extern NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                            IO_STATUS_BLOCK *io, const void *buffer, ULONG length ) DECLSPEC_HIDDEN;
+                            IO_STATUS_BLOCK *io, const void *buffer, ULONG length );
 extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                       IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
-                                      UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
+                                      UINT in_size, void *out_buffer, UINT out_size );
 
-extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle ) DECLSPEC_HIDDEN;
-extern void release_fileio( struct async_fileio *io ) DECLSPEC_HIDDEN;
-extern NTSTATUS errno_to_status( int err ) DECLSPEC_HIDDEN;
-extern BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir ) DECLSPEC_HIDDEN;
-extern NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition ) DECLSPEC_HIDDEN;
-extern NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path ) DECLSPEC_HIDDEN;
+extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle );
+extern void release_fileio( struct async_fileio *io );
+extern NTSTATUS errno_to_status( int err );
+extern BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir );
+extern NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition );
+extern NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt );
+extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path );
 extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
-                                ULONG options, void *ea_buffer, ULONG ea_length ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info ) DECLSPEC_HIDDEN;
-extern void init_files(void) DECLSPEC_HIDDEN;
-extern void init_cpu_info(void) DECLSPEC_HIDDEN;
-extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async ) DECLSPEC_HIDDEN;
-extern void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULONG_PTR information, BOOL mark_pending ) DECLSPEC_HIDDEN;
+                                ULONG options, void *ea_buffer, ULONG ea_length );
+extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info );
+extern void init_files(void);
+extern void init_cpu_info(void);
+extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async );
+extern void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULONG_PTR information, BOOL mark_pending );
 
-extern NTSTATUS unixcall_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS unixcall_wine_server_call( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS unixcall_wine_server_fd_to_handle( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS unixcall_wine_server_handle_to_fd( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS unixcall_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS unixcall_wine_dbg_write( void *args );
+extern NTSTATUS unixcall_wine_server_call( void *args );
+extern NTSTATUS unixcall_wine_server_fd_to_handle( void *args );
+extern NTSTATUS unixcall_wine_server_handle_to_fd( void *args );
+extern NTSTATUS unixcall_wine_spawnvp( void *args );
 #ifdef _WIN64
-extern NTSTATUS wow64_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wine_server_call( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wine_server_fd_to_handle( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wine_server_handle_to_fd( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS wow64_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wine_dbg_write( void *args );
+extern NTSTATUS wow64_wine_server_call( void *args );
+extern NTSTATUS wow64_wine_server_fd_to_handle( void *args );
+extern NTSTATUS wow64_wine_server_handle_to_fd( void *args );
+extern NTSTATUS wow64_wine_spawnvp( void *args );
 #endif
 
-extern void dbg_init(void) DECLSPEC_HIDDEN;
+extern void dbg_init(void);
 
 extern NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                                          PNTAPCFUNC func, NTSTATUS status ) DECLSPEC_HIDDEN;
-extern NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
-extern void call_raise_user_exception_dispatcher(void) DECLSPEC_HIDDEN;
+                                          PNTAPCFUNC func, NTSTATUS status );
+extern NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context );
+extern void call_raise_user_exception_dispatcher(void);
 
 #define IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE 0x0010 /* Wine extension */
 
@@ -489,8 +489,8 @@ enum loadorder
     LO_DEFAULT          /* nothing specified, use default strategy */
 };
 
-extern void set_load_order_app_name( const WCHAR *app_name ) DECLSPEC_HIDDEN;
-extern enum loadorder get_load_order( const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
+extern void set_load_order_app_name( const WCHAR *app_name );
+extern enum loadorder get_load_order( const UNICODE_STRING *nt_name );
 
 static inline WCHAR ntdll_towupper( WCHAR ch )
 {

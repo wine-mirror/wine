@@ -371,8 +371,8 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI DECLSPEC_HIDDEN __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
-                                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
+void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
+                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
 {
     EXCEPTION_RECORD record;
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
@@ -559,7 +559,7 @@ __ASM_GLOBAL_FUNC( call_thread_func_wrapper,
                    "movl %eax,(%esp)\n\t"
                    "call *8(%ebp)" )
 
-void DECLSPEC_HIDDEN call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *arg )
+void call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
     {
@@ -575,7 +575,7 @@ void DECLSPEC_HIDDEN call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *ar
 /***********************************************************************
  *           signal_start_thread
  */
-extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx );
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl 4(%esp),%esi\n\t"   /* context */
                    "leal -12(%esi),%edi\n\t"

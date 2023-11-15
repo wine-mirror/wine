@@ -257,7 +257,7 @@ BOOL xstate_compaction_enabled = FALSE;
 #define INEI	0x49656e69	/* "ineI" */
 #define NTEL	0x6c65746e	/* "ntel" */
 
-extern void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p ) DECLSPEC_HIDDEN;
+extern void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p );
 #ifdef __i386__
 __ASM_GLOBAL_FUNC( do_cpuid,
                    "pushl %esi\n\t"
@@ -289,7 +289,7 @@ __ASM_GLOBAL_FUNC( do_cpuid,
 #endif
 
 #ifdef __i386__
-extern int have_cpuid(void) DECLSPEC_HIDDEN;
+extern int have_cpuid(void);
 __ASM_GLOBAL_FUNC( have_cpuid,
                    "pushfl\n\t"
                    "pushfl\n\t"
