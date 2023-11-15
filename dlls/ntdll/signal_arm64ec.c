@@ -36,6 +36,96 @@ WINE_DEFAULT_DEBUG_CHANNEL(unwind);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
+static UINT64 mxcsr_to_fpcsr( UINT mxcsr )
+{
+    UINT fpcr = 0, fpsr = 0;
+
+    if (mxcsr & 0x0001) fpsr |= 0x0001;    /* invalid operation */
+    if (mxcsr & 0x0002) fpsr |= 0x0080;    /* denormal */
+    if (mxcsr & 0x0004) fpsr |= 0x0002;    /* zero-divide */
+    if (mxcsr & 0x0008) fpsr |= 0x0004;    /* overflow */
+    if (mxcsr & 0x0010) fpsr |= 0x0008;    /* underflow */
+    if (mxcsr & 0x0020) fpsr |= 0x0010;    /* precision */
+
+    if (mxcsr & 0x0040) fpcr |= 0x0001;    /* denormals are zero */
+    if (mxcsr & 0x0080) fpcr |= 0x0100;    /* invalid operation mask */
+    if (mxcsr & 0x0100) fpcr |= 0x8000;    /* denormal mask */
+    if (mxcsr & 0x0200) fpcr |= 0x0200;    /* zero-divide mask */
+    if (mxcsr & 0x0400) fpcr |= 0x0400;    /* overflow mask */
+    if (mxcsr & 0x0800) fpcr |= 0x0800;    /* underflow mask */
+    if (mxcsr & 0x1000) fpcr |= 0x1000;    /* precision mask */
+    if (mxcsr & 0x2000) fpcr |= 0x800000;  /* round down */
+    if (mxcsr & 0x4000) fpcr |= 0x400000;  /* round up */
+    if (mxcsr & 0x8000) fpcr |= 0x1000000; /* flush to zero */
+    return fpcr | ((UINT64)fpsr << 32);
+}
+
+static UINT fpcsr_to_mxcsr( UINT fpcr, UINT fpsr )
+{
+    UINT ret = 0;
+
+    if (fpsr & 0x0001) ret |= 0x0001;      /* invalid operation */
+    if (fpsr & 0x0002) ret |= 0x0004;      /* zero-divide */
+    if (fpsr & 0x0004) ret |= 0x0008;      /* overflow */
+    if (fpsr & 0x0008) ret |= 0x0010;      /* underflow */
+    if (fpsr & 0x0010) ret |= 0x0020;      /* precision */
+    if (fpsr & 0x0080) ret |= 0x0002;      /* denormal */
+
+    if (fpcr & 0x0000001) ret |= 0x0040;   /* denormals are zero */
+    if (fpcr & 0x0000100) ret |= 0x0080;   /* invalid operation mask */
+    if (fpcr & 0x0000200) ret |= 0x0200;   /* zero-divide mask */
+    if (fpcr & 0x0000400) ret |= 0x0400;   /* overflow mask */
+    if (fpcr & 0x0000800) ret |= 0x0800;   /* underflow mask */
+    if (fpcr & 0x0001000) ret |= 0x1000;   /* precision mask */
+    if (fpcr & 0x0008000) ret |= 0x0100;   /* denormal mask */
+    if (fpcr & 0x0400000) ret |= 0x4000;   /* round up */
+    if (fpcr & 0x0800000) ret |= 0x2000;   /* round down */
+    if (fpcr & 0x1000000) ret |= 0x8000;   /* flush to zero */
+    return ret;
+}
+
+
+/***********************************************************************
+ *           LdrpGetX64Information
+ */
+static NTSTATUS WINAPI LdrpGetX64Information( ULONG type, void *output, void *extra_info )
+{
+    switch (type)
+    {
+    case 0:
+    {
+        UINT64 fpcr, fpsr;
+
+        __asm__ __volatile__( "mrs %0, fpcr; mrs %1, fpsr" : "=r" (fpcr), "=r" (fpsr) );
+        *(UINT *)output = fpcsr_to_mxcsr( fpcr, fpsr );
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "not implemented type %u\n", type );
+        return STATUS_INVALID_PARAMETER;
+    }
+}
+
+/***********************************************************************
+ *           LdrpSetX64Information
+ */
+static NTSTATUS WINAPI LdrpSetX64Information( ULONG type, ULONG_PTR input, void *extra_info )
+{
+    switch (type)
+    {
+    case 0:
+    {
+        UINT64 fpcsr = mxcsr_to_fpcsr( input );
+        __asm__ __volatile__( "msr fpcr, %0; msr fpsr, %1" :: "r" (fpcsr), "r" (fpcsr >> 32) );
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "not implemented type %u\n", type );
+        return STATUS_INVALID_PARAMETER;
+    }
+}
+
+
 /*******************************************************************
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
@@ -313,6 +403,8 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3
         __os_arm64x_check_call = arm64x_check_call;
         __os_arm64x_check_icall = arm64x_check_call;
         __os_arm64x_check_icall_cfg = arm64x_check_call;
+        __os_arm64x_get_x64_information = LdrpGetX64Information;
+        __os_arm64x_set_x64_information = LdrpSetX64Information;
     }
 
     loader_init( context, (void **)&context->Rcx );
