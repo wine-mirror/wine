@@ -64,6 +64,7 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 
 extern WOW_PEB *wow_peb DECLSPEC_HIDDEN;
 extern ULONG_PTR user_space_wow_limit DECLSPEC_HIDDEN;
+extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
 
 static inline WOW_TEB *get_wow_teb( TEB *teb )
 {
@@ -79,6 +80,12 @@ static inline BOOL is_wow64(void)
 static inline BOOL is_old_wow64(void)
 {
     return !is_win64 && wow_peb;
+}
+
+static inline BOOL is_arm64ec(void)
+{
+    return (current_machine == IMAGE_FILE_MACHINE_ARM64 &&
+            main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64);
 }
 
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
@@ -152,7 +159,6 @@ extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
 extern SIZE_T startup_info_size DECLSPEC_HIDDEN;
 extern BOOL is_prefix_bootstrap DECLSPEC_HIDDEN;
-extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
 extern int main_argc DECLSPEC_HIDDEN;
 extern char **main_argv DECLSPEC_HIDDEN;
 extern char **main_envp DECLSPEC_HIDDEN;
