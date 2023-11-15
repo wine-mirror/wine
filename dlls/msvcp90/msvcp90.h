@@ -236,6 +236,20 @@ typedef struct {
     codecvt_base base;
 } codecvt_char;
 
+#if _MSVCP_VER >= 140
+typedef enum convert_mode
+{
+    consume_header = 4,
+    generate_header = 2,
+    little_endian = 1
+} codecvt_convert_mode;
+
+/* class codecvt<char32> */
+typedef struct {
+    codecvt_base base;
+} codecvt_char32;
+#endif
+
 bool __thiscall codecvt_base_always_noconv(const codecvt_base*);
 int __thiscall codecvt_char_unshift(const codecvt_char*, _Mbstatet*, char*, char*, char**);
 int __thiscall codecvt_char_out(const codecvt_char*, _Mbstatet*, const char*,
