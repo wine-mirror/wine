@@ -1532,11 +1532,22 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
     stateblock->stateblock_state.rs[state] = value;
     stateblock->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
 
-    if (state == WINED3D_RS_POINTSIZE
-            && (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE || value == WINED3D_ALPHA_TO_COVERAGE_DISABLE))
+    switch (state)
     {
-        stateblock->changed.alpha_to_coverage = 1;
-        stateblock->stateblock_state.alpha_to_coverage = (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE);
+        case WINED3D_RS_POINTSIZE:
+            if (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE || value == WINED3D_ALPHA_TO_COVERAGE_DISABLE)
+            {
+                stateblock->changed.alpha_to_coverage = 1;
+                stateblock->stateblock_state.alpha_to_coverage = (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE);
+            }
+            break;
+
+        case WINED3D_RS_TEXTUREFACTOR:
+            stateblock->changed.ffp_ps_constants = 1;
+            break;
+
+        default:
+            break;
     }
 }
 
@@ -2805,6 +2816,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     break;
 
                 case WINED3D_RS_ADAPTIVETESS_Y:
+                case WINED3D_RS_TEXTUREFACTOR:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3311,6 +3323,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
             wined3d_color_from_d3dcolor(&constants.texture_constants[i], state->texture_states[i][WINED3D_TSS_CONSTANT]);
+
+        wined3d_color_from_d3dcolor(&constants.texture_factor, state->rs[WINED3D_RS_TEXTUREFACTOR]);
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, sizeof(constants), &constants);

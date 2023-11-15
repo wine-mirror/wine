@@ -1894,16 +1894,12 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
     if (update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
         const struct wined3d_ffp_ps_constants *constants;
-        struct wined3d_color color;
 
         constants = wined3d_buffer_load_sysmem(
                 context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP], &context_gl->c);
 
         if (prog->ps.tex_factor_location != -1)
-        {
-            wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
-            GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, &color.r));
-        }
+            GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, &constants->texture_factor.r));
 
         if (state->render_states[WINED3D_RS_SPECULARENABLE])
             GL_EXTCALL(glUniform4f(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
@@ -12355,7 +12351,6 @@ static const struct wined3d_state_entry_template glsl_fragment_pipe_state_templa
 {
     {STATE_VDECL,                                               {STATE_VDECL,                                                glsl_fragment_pipe_vdecl               }, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                  {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_fragment_pipe_vs                  }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),                    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),                     glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),               {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG1),             {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG2),             {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },

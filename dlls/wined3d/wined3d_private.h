@@ -2770,6 +2770,7 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 struct wined3d_ffp_ps_constants
 {
     struct wined3d_color texture_constants[WINED3D_MAX_FFP_TEXTURES];
+    struct wined3d_color texture_factor;
 };
 
 enum wined3d_push_constants
