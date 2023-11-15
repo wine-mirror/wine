@@ -1411,6 +1411,35 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
     return preset->patch;
 }
 
+static void find_region(struct synth *synth, int bank, int patch, int key, int vel,
+        struct instrument **out_instrument, struct region **out_region)
+{
+    struct instrument *instrument;
+    struct region *region;
+
+    *out_instrument = NULL;
+    *out_region = NULL;
+
+    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
+    {
+        if (bank == 128 && instrument->patch == (0x80000000 | patch)) break;
+        else if (instrument->patch == ((bank << 8) | patch)) break;
+    }
+
+    if (&instrument->entry == &synth->instruments)
+        return;
+
+    *out_instrument = instrument;
+
+    LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
+    {
+        if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
+        if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
+        *out_region = region;
+        break;
+    }
+}
+
 static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
 {
     switch (conn->usDestination)
@@ -1773,99 +1802,93 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
 {
     struct preset *preset = fluid_preset_get_data(fluid_preset);
     struct synth *synth = preset->synth;
+    struct articulation *articulation;
     struct instrument *instrument;
     fluid_voice_t *fluid_voice;
     struct region *region;
+    struct voice *voice;
+    struct wave *wave;
 
     TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
 
     EnterCriticalSection(&synth->cs);
 
-    LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
-    {
-        if (preset->bank == 128 && instrument->patch == (0x80000000 | preset->patch)) break;
-        else if (instrument->patch == ((preset->bank << 8) | preset->patch)) break;
-    }
+    find_region(synth, preset->bank, preset->patch, key, vel, &instrument, &region);
 
-    if (&instrument->entry == &synth->instruments)
+    if (!instrument)
     {
         WARN("Could not find instrument with patch %#x\n", preset->patch);
         LeaveCriticalSection(&synth->cs);
         return FLUID_FAILED;
     }
-
-    LIST_FOR_EACH_ENTRY(region, &instrument->regions, struct region, entry)
+    if (!region)
     {
-        struct articulation *articulation;
-        struct wave *wave = region->wave;
-        struct voice *voice;
+        WARN("Failed to find instrument matching note / velocity\n");
+        LeaveCriticalSection(&synth->cs);
+        return FLUID_FAILED;
+    }
 
-        if (key < region->key_range.usLow || key > region->key_range.usHigh) continue;
-        if (vel < region->vel_range.usLow || vel > region->vel_range.usHigh) continue;
+    wave = region->wave;
 
-        if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, wave->fluid_sample, chan, key, vel)))
+    if (!(fluid_voice = fluid_synth_alloc_voice(synth->fluid_synth, wave->fluid_sample, chan, key, vel)))
+    {
+        WARN("Failed to allocate FluidSynth voice\n");
+        LeaveCriticalSection(&synth->cs);
+        return FLUID_FAILED;
+    }
+
+    LIST_FOR_EACH_ENTRY(voice, &synth->voices, struct voice, entry)
+    {
+        if (voice->fluid_voice == fluid_voice)
         {
-            WARN("Failed to allocate FluidSynth voice\n");
+            wave_release(voice->wave);
+            break;
+        }
+    }
+
+    if (&voice->entry == &synth->voices)
+    {
+        if (!(voice = calloc(1, sizeof(struct voice))))
+        {
             LeaveCriticalSection(&synth->cs);
             return FLUID_FAILED;
         }
-
-        LIST_FOR_EACH_ENTRY(voice, &synth->voices, struct voice, entry)
-        {
-            if (voice->fluid_voice == fluid_voice)
-            {
-                wave_release(voice->wave);
-                break;
-            }
-        }
-
-        if (&voice->entry == &synth->voices)
-        {
-            if (!(voice = calloc(1, sizeof(struct voice))))
-            {
-                LeaveCriticalSection(&synth->cs);
-                return FLUID_FAILED;
-            }
-            voice->fluid_voice = fluid_voice;
-            list_add_tail(&synth->voices, &voice->entry);
-        }
-
-        voice->wave = wave;
-        wave_addref(voice->wave);
-
-        set_default_voice_connections(fluid_voice);
-        if (region->wave_sample.cSampleLoops)
-        {
-            WLOOP *loop = region->wave_loops;
-
-            if (loop->ulType == WLOOP_TYPE_FORWARD)
-                fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_DURING_RELEASE);
-            else if (loop->ulType == WLOOP_TYPE_RELEASE)
-                fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_UNTIL_RELEASE);
-            else
-                FIXME("Unsupported loop type %lu\n", loop->ulType);
-
-            /* When copy_data is TRUE, fluid_sample_set_sound_data() adds
-             * 8-frame padding around the sample data. Offset the loop points
-             * to compensate for this. */
-            fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, 8 + loop->ulStart);
-            fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, 8 + loop->ulStart + loop->ulLength);
-        }
-        fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, region->wave_sample.usUnityNote);
-        fluid_voice_gen_set(fluid_voice, GEN_FINETUNE, region->wave_sample.sFineTune);
-        LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
-            add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
-        LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
-            add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
-        fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
-        LeaveCriticalSection(&synth->cs);
-        return FLUID_OK;
+        voice->fluid_voice = fluid_voice;
+        list_add_tail(&synth->voices, &voice->entry);
     }
+
+    voice->wave = wave;
+    wave_addref(voice->wave);
+
+    set_default_voice_connections(fluid_voice);
+    if (region->wave_sample.cSampleLoops)
+    {
+        WLOOP *loop = region->wave_loops;
+
+        if (loop->ulType == WLOOP_TYPE_FORWARD)
+            fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_DURING_RELEASE);
+        else if (loop->ulType == WLOOP_TYPE_RELEASE)
+            fluid_voice_gen_set(fluid_voice, GEN_SAMPLEMODE, FLUID_LOOP_UNTIL_RELEASE);
+        else
+            FIXME("Unsupported loop type %lu\n", loop->ulType);
+
+        /* When copy_data is TRUE, fluid_sample_set_sound_data() adds
+            * 8-frame padding around the sample data. Offset the loop points
+            * to compensate for this. */
+        fluid_voice_gen_set(fluid_voice, GEN_STARTLOOPADDROFS, 8 + loop->ulStart);
+        fluid_voice_gen_set(fluid_voice, GEN_ENDLOOPADDROFS, 8 + loop->ulStart + loop->ulLength);
+    }
+    fluid_voice_gen_set(fluid_voice, GEN_OVERRIDEROOTKEY, region->wave_sample.usUnityNote);
+    fluid_voice_gen_set(fluid_voice, GEN_FINETUNE, region->wave_sample.sFineTune);
+    LIST_FOR_EACH_ENTRY(articulation, &instrument->articulations, struct articulation, entry)
+        add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
+    LIST_FOR_EACH_ENTRY(articulation, &region->articulations, struct articulation, entry)
+        add_voice_connections(fluid_voice, &articulation->list, articulation->connections);
+    fluid_synth_start_voice(synth->fluid_synth, fluid_voice);
 
     LeaveCriticalSection(&synth->cs);
 
-    WARN("Failed to find instrument matching note / velocity\n");
-    return FLUID_FAILED;
+    return FLUID_OK;
 }
 
 static void synth_preset_free(fluid_preset_t *fluid_preset)
