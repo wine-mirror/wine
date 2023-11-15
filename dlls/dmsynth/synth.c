@@ -1483,17 +1483,6 @@ static BOOL set_gen_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
     {
         if (!gen_from_connection(conn, &gen)) return FALSE;
     }
-    else if (conn->usSource == CONN_SRC_KEYNUMBER)
-    {
-        switch (conn->usDestination)
-        {
-        case CONN_DST_EG2_HOLDTIME: gen = GEN_KEYTOMODENVHOLD; break;
-        case CONN_DST_EG2_DECAYTIME: gen = GEN_KEYTOMODENVDECAY; break;
-        case CONN_DST_EG1_HOLDTIME: gen = GEN_KEYTOVOLENVHOLD; break;
-        case CONN_DST_EG1_DECAYTIME: gen = GEN_KEYTOVOLENVDECAY; break;
-        default: return FALSE;
-        }
-    }
     else if (conn->usSource == CONN_SRC_LFO)
     {
         switch (conn->usDestination)
@@ -1588,10 +1577,6 @@ static void add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
     case MAKELONG(CONN_SRC_LFO, CONN_DST_FILTER_CUTOFF): gen = GEN_MODLFOTOFILTERFC; break;
     case MAKELONG(CONN_SRC_EG2, CONN_DST_FILTER_CUTOFF): gen = GEN_MODENVTOFILTERFC; break;
     case MAKELONG(CONN_SRC_LFO, CONN_DST_GAIN): gen = GEN_MODLFOTOVOL; break;
-    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG2_HOLDTIME): gen = GEN_KEYTOMODENVHOLD; break;
-    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG2_DECAYTIME): gen = GEN_KEYTOMODENVDECAY; break;
-    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG1_HOLDTIME): gen = GEN_KEYTOVOLENVHOLD; break;
-    case MAKELONG(CONN_SRC_KEYNUMBER, CONN_DST_EG1_DECAYTIME): gen = GEN_KEYTOVOLENVDECAY; break;
     }
 
     if (conn->usControl != CONN_SRC_NONE && gen != -1)
