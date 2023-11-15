@@ -1897,7 +1897,6 @@ static void test_invalid_stdin_child( void )
     ok(handle == (HANDLE)-2, "handle = %p\n", handle);
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
     handle = GetStdHandle(STD_INPUT_HANDLE);
-    todo_wine
     ok((LONG_PTR)handle > 0, "Expecting passed handle to be untouched\n");
 
     info = &__pioinfo[STDIN_FILENO/MSVCRT_FD_BLOCK_SIZE][STDIN_FILENO%MSVCRT_FD_BLOCK_SIZE];

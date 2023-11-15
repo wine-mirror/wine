@@ -3341,8 +3341,8 @@ static void test_StdHandleInheritance(void)
         {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
 
         /* all others handles type behave as H_DISK */
-        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 24, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 16},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
 
         /* all others handles type behave as H_DISK */
 /*10*/  {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
@@ -3369,8 +3369,8 @@ static void test_StdHandleInheritance(void)
         {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL},
 
         /* all others handles type behave as H_DISK */
-/*10*/  {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 24},
-        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 16},
+/*10*/  {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                                       H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},

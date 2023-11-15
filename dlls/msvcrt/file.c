@@ -560,12 +560,14 @@ static void msvcrt_set_fd(ioinfo *fdinfo, HANDLE hand, int flag)
   ioinfo_set_unicode(fdinfo, FALSE);
   ioinfo_set_textmode(fdinfo, TEXTMODE_ANSI);
 
-  if (hand == MSVCRT_NO_CONSOLE) hand = 0;
-  switch (fdinfo-MSVCRT___pioinfo[0])
+  if (hand != MSVCRT_NO_CONSOLE)
   {
-  case 0: SetStdHandle(STD_INPUT_HANDLE,  hand); break;
-  case 1: SetStdHandle(STD_OUTPUT_HANDLE, hand); break;
-  case 2: SetStdHandle(STD_ERROR_HANDLE,  hand); break;
+    switch (fdinfo-MSVCRT___pioinfo[0])
+    {
+    case 0: SetStdHandle(STD_INPUT_HANDLE,  hand); break;
+    case 1: SetStdHandle(STD_OUTPUT_HANDLE, hand); break;
+    case 2: SetStdHandle(STD_ERROR_HANDLE,  hand); break;
+    }
   }
 }
 
