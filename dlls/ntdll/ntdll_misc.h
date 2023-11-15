@@ -131,4 +131,17 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 extern TEB_FLS_DATA *fls_alloc_data(void) DECLSPEC_HIDDEN;
 extern void heap_thread_detach(void) DECLSPEC_HIDDEN;
 
+#ifdef __arm64ec__
+
+extern void *__os_arm64x_check_call;
+extern void *__os_arm64x_check_icall;
+extern void *__os_arm64x_check_icall_cfg;
+extern void *__os_arm64x_dispatch_call_no_redirect;
+extern void *__os_arm64x_dispatch_fptr;
+extern void *__os_arm64x_dispatch_ret;
+extern void *__os_arm64x_get_x64_information;
+extern void *__os_arm64x_set_x64_information;
+
+#endif
+
 #endif
