@@ -44,9 +44,10 @@ HRESULT WINAPI WldpIsDynamicCodePolicyEnabled(BOOL *is_enabled)
  */
 HRESULT WINAPI WldpGetLockdownPolicy(WLDP_HOST_INFORMATION *info, DWORD *state, DWORD flags)
 {
-    FIXME("%p %p %lu\n", info, state, flags);
+    FIXME("%p %p %lx\n", info, state, flags);
 
-    *state = 0;
+    *state = WLDP_LOCKDOWN_DEFINED_FLAG;
+    if (!info) return HRESULT_FROM_NT(0);
     return S_OK;
 }
 

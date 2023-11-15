@@ -22205,6 +22205,7 @@ wine_fn_config_makefile dlls/wlanui enable_wlanui
 wine_fn_config_makefile dlls/wldap32 enable_wldap32
 wine_fn_config_makefile dlls/wldap32/tests enable_tests
 wine_fn_config_makefile dlls/wldp enable_wldp
+wine_fn_config_makefile dlls/wldp/tests enable_tests
 wine_fn_config_makefile dlls/wmasf enable_wmasf
 wine_fn_config_makefile dlls/wmi enable_wmi
 wine_fn_config_makefile dlls/wmiutils enable_wmiutils
