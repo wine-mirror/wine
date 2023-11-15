@@ -2685,7 +2685,7 @@ static void output_source_y( struct makefile *make, struct incl_file *source, co
     if (find_include_file( make, header ))
     {
         output( "%s: %s\n", obj_dir_path( make, header ), source->filename );
-        output( "\t%s%s -o %s.tab.$$$$.c --header=$@ %s && rm -f %s.tab.$$$$.c\n",
+        output( "\t%s%s -o %s.tab.$$$$.c --defines=$@ %s && rm -f %s.tab.$$$$.c\n",
                 cmd_prefix( "BISON" ), bison, obj_dir_path( make, obj ),
                 source->filename, obj_dir_path( make, obj ));
         strarray_add( &make->clean_files, header );
