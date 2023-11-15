@@ -180,7 +180,10 @@ extern "C" {
 
 /* a couple of useful Wine extensions */
 
-#ifdef _MSC_VER
+#if defined(__WINESRC__) && !defined(WINE_UNIX_LIB)
+/* Wine uses .spec file for PE exports */
+# define DECLSPEC_EXPORT
+#elif defined(_MSC_VER)
 # define DECLSPEC_EXPORT __declspec(dllexport)
 #elif defined(__MINGW32__)
 # define DECLSPEC_EXPORT __attribute__((dllexport))
