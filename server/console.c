@@ -887,6 +887,12 @@ static struct object *console_server_lookup_name( struct object *obj, struct uni
     static const WCHAR referenceW[] = {'R','e','f','e','r','e','n','c','e'};
     assert( obj->ops == &console_server_ops );
 
+    if (!name)
+    {
+        set_error( STATUS_NOT_FOUND );
+        return NULL;
+    }
+
     if (name->len == sizeof(referenceW) && !memcmp( name->str, referenceW, name->len ))
     {
         struct screen_buffer *screen_buffer;

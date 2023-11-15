@@ -4522,6 +4522,41 @@ static void test_console_as_root_directory(void)
     CloseHandle( handle );
 }
 
+static void test_condrv_server_as_root_directory(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    UNICODE_STRING name;
+    HANDLE handle, h2;
+    NTSTATUS status;
+
+    FreeConsole();
+
+    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\Server" );
+    InitializeObjectAttributes( &attr, &name, 0, NULL, NULL );
+    status = NtCreateFile( &handle, SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN, 0, NULL, 0 );
+    ok( !status || broken( status == STATUS_OBJECT_PATH_NOT_FOUND ) /* Win7 */,
+        "NtCreateFile returned %#lx\n", status );
+
+    if (status)
+    {
+        win_skip( "cannot open \\Device\\ConDrv\\Server, skipping RootDirectory test" );
+    }
+    else
+    {
+        RtlInitUnicodeString( &name, L"" );
+        InitializeObjectAttributes( &attr, &name, 0, handle, NULL );
+        status = NtCreateFile( &h2, SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               FILE_OPEN, 0, NULL, 0 );
+        ok( status == STATUS_NOT_FOUND, "NtCreateFile returned %#lx\n", status );
+
+        CloseHandle( handle );
+    }
+}
+
 static void test_AttachConsole_child(DWORD console_pid)
 {
     HANDLE pipe_in, pipe_out;
@@ -5576,6 +5611,7 @@ START_TEST(console)
         test_AttachConsole(hConOut);
         test_AllocConsole();
         test_FreeConsole();
+        test_condrv_server_as_root_directory();
         test_CreateProcessCUI();
         test_CtrlHandlerSubsystem();
     }
