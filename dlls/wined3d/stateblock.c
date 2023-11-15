@@ -30,6 +30,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct wined3d_saved_states
 {
+    struct list changed_lights;
+
     uint32_t vs_consts_f[WINED3D_BITMAP_SIZE(WINED3D_MAX_VS_CONSTS_F)];
     uint16_t vertexShaderConstantsI;                        /* WINED3D_MAX_CONSTS_I, 16 */
     uint16_t vertexShaderConstantsB;                        /* WINED3D_MAX_CONSTS_B, 16 */
@@ -55,9 +57,10 @@ struct wined3d_saved_states
     uint32_t alpha_to_coverage : 1;
     uint32_t lights : 1;
     uint32_t transforms : 1;
-    uint32_t padding : 1;
 
-    struct list changed_lights;
+    /* Flags only consumed by wined3d_device_apply_stateblock(), concerned with
+     * translation from stateblock formats to wined3d_state formats. */
+    uint32_t ffp_ps_constants : 1;
 };
 
 struct stage_state
@@ -1574,6 +1577,9 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
 
     stateblock->stateblock_state.texture_states[stage][state] = value;
     stateblock->changed.textureState[stage] |= 1u << state;
+
+    if (state == WINED3D_TSS_CONSTANT)
+        stateblock->changed.ffp_ps_constants = 1;
 }
 
 void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
@@ -2190,6 +2196,10 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
     stateblock->changed.store_stream_offset = 1;
     list_init(&stateblock->changed.changed_lights);
 
+    /* FFP push constant buffers need to be set if used; the backend does not
+     * have a default state for them. */
+    stateblock->changed.ffp_ps_constants = 1;
+
     if (type == WINED3D_SBT_RECORDED || type == WINED3D_SBT_PRIMARY)
         return WINED3D_OK;
 
@@ -2651,6 +2661,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_stateblock *stateblock)
 {
     bool set_blend_state = false, set_depth_stencil_state = false, set_rasterizer_state = false;
+
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
@@ -3193,7 +3204,15 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         while (map)
         {
             j = wined3d_bit_scan(&map);
-            wined3d_device_set_texture_stage_state(device, i, j, state->texture_states[i][j]);
+
+            switch (j)
+            {
+                case WINED3D_TSS_CONSTANT:
+                    break;
+
+                default:
+                    wined3d_device_set_texture_stage_state(device, i, j, state->texture_states[i][j]);
+            }
         }
     }
 
@@ -3284,6 +3303,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         i = wined3d_bit_scan(&map);
         wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+    }
+
+    if (changed->ffp_ps_constants)
+    {
+        struct wined3d_ffp_ps_constants constants;
+
+        for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+            wined3d_color_from_d3dcolor(&constants.texture_constants[i], state->texture_states[i][WINED3D_TSS_CONSTANT]);
+
+        wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
+                WINED3D_SHADER_CONST_FFP_PS, 0, sizeof(constants), &constants);
     }
 
     assert(list_empty(&stateblock->changed.changed_lights));

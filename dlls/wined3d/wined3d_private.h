@@ -2755,6 +2755,23 @@ void wined3d_unregister_window(HWND window);
 
 BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 
+/* Direct3D 1-9 shader constants are submitted by internally feeding them into
+ * wined3d_buffer objects, which are updated with
+ * wined3d_device_context_emit_update_sub_resource().
+ * This allows Vulkan backend shaders to read from the buffers as they would
+ * any other uniform buffer, with no extra code needed to set up the descriptor
+ * set and bind buffers. Other renderers simply map the buffers as CPU buffers
+ * and read from them directly.
+ *
+ * The "FFP" buffer contains constants that are part of the D3D1-9 FFP pipe,
+ * i.e. only used when shaders are disabled.
+ */
+
+struct wined3d_ffp_ps_constants
+{
+    struct wined3d_color texture_constants[WINED3D_MAX_FFP_TEXTURES];
+};
+
 enum wined3d_push_constants
 {
     WINED3D_PUSH_CONSTANTS_VS_F,
@@ -2763,6 +2780,7 @@ enum wined3d_push_constants
     WINED3D_PUSH_CONSTANTS_PS_I,
     WINED3D_PUSH_CONSTANTS_VS_B,
     WINED3D_PUSH_CONSTANTS_PS_B,
+    WINED3D_PUSH_CONSTANTS_PS_FFP,
     WINED3D_PUSH_CONSTANTS_COUNT,
 };
 
