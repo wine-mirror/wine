@@ -414,6 +414,7 @@ struct wined3d_cs_push_constants
     enum wined3d_push_constants type;
     unsigned int start_idx;
     unsigned int count;
+    uint32_t update_mask;
 };
 
 struct wined3d_cs_reset_state
@@ -2140,18 +2141,17 @@ static const struct push_constant_info
 {
     size_t size;
     unsigned int max_count;
-    DWORD mask;
     enum wined3d_shader_type shader_type;
     enum vkd3d_shader_d3dbc_constant_register shader_binding;
 }
 wined3d_cs_push_constant_info[] =
 {
-    [WINED3D_PUSH_CONSTANTS_VS_F] = {sizeof(struct wined3d_vec4),  WINED3D_MAX_VS_CONSTS_F, WINED3D_SHADER_CONST_VS_F, WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_F] = {sizeof(struct wined3d_vec4),  WINED3D_MAX_PS_CONSTS_F, WINED3D_SHADER_CONST_PS_F, WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_VS_I] = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_CONST_VS_I, WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_I] = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_CONST_PS_I, WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_VS_B] = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_CONST_VS_B, WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_B] = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_CONST_PS_B, WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_VS_F] = {sizeof(struct wined3d_vec4),  WINED3D_MAX_VS_CONSTS_F, WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_PS_F] = {sizeof(struct wined3d_vec4),  WINED3D_MAX_PS_CONSTS_F, WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_VS_I] = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_PS_I] = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_VS_B] = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_PS_B] = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
 };
 
 static bool prepare_push_constant_buffer(struct wined3d_device_context *context, enum wined3d_push_constants type)
@@ -2206,11 +2206,11 @@ static void wined3d_cs_exec_push_constants(struct wined3d_cs *cs, const void *da
         device->shader_backend->shader_update_float_pixel_constants(device, op->start_idx, op->count);
 
     for (i = 0, context_count = device->context_count; i < context_count; ++i)
-        device->contexts[i]->constant_update_mask |= wined3d_cs_push_constant_info[op->type].mask;
+        device->contexts[i]->constant_update_mask |= op->update_mask;
 }
 
 static void wined3d_device_context_emit_push_constants(struct wined3d_device_context *context,
-        enum wined3d_push_constants type, unsigned int start_idx, unsigned int count)
+        enum wined3d_push_constants type, uint32_t update_mask, unsigned int start_idx, unsigned int count)
 {
     struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_cs_push_constants *op;
@@ -2218,6 +2218,7 @@ static void wined3d_device_context_emit_push_constants(struct wined3d_device_con
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_PUSH_CONSTANTS;
     op->type = type;
+    op->update_mask = update_mask;
     op->start_idx = start_idx;
     op->count = count;
 
@@ -2225,7 +2226,7 @@ static void wined3d_device_context_emit_push_constants(struct wined3d_device_con
 }
 
 void wined3d_device_context_push_constants(struct wined3d_device_context *context,
-        enum wined3d_push_constants type, unsigned int start_idx,
+        enum wined3d_push_constants type, uint32_t update_mask, unsigned int start_idx,
         unsigned int count, const void *constants)
 {
     const struct push_constant_info *info = &wined3d_cs_push_constant_info[type];
@@ -2239,7 +2240,7 @@ void wined3d_device_context_push_constants(struct wined3d_device_context *contex
     wined3d_box_set(&box, byte_offset, 0, byte_offset + byte_size, 1, 0, 1);
     wined3d_device_context_emit_update_sub_resource(context,
             &context->device->push_constants[type]->resource, 0, &box, constants, byte_size, byte_size);
-    wined3d_device_context_emit_push_constants(context, type, start_idx, count);
+    wined3d_device_context_emit_push_constants(context, type, update_mask, start_idx, count);
 }
 
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)

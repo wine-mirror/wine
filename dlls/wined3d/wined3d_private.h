@@ -3705,7 +3705,7 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
 HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx);
 void wined3d_device_context_push_constants(struct wined3d_device_context *context,
-        enum wined3d_push_constants type, unsigned int start_idx,
+        enum wined3d_push_constants type, uint32_t update_mask, unsigned int start_idx,
         unsigned int count, const void *constants);
 
 static inline void wined3d_resource_reference(struct wined3d_resource *resource)
