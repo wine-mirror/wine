@@ -6715,7 +6715,8 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
         }
         else
         {
-            if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE || context->last_was_rhw)
+            if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE
+                    || context->stream_info.position_transformed)
                 new_source = FOGSOURCE_COORD;
             else
                 new_source = FOGSOURCE_FFP;

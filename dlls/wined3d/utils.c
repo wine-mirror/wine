@@ -5644,7 +5644,7 @@ void get_identity_matrix(struct wined3d_matrix *mat)
 void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         unsigned int index, struct wined3d_matrix *mat)
 {
-    if (context->last_was_rhw)
+    if (context->stream_info.position_transformed)
         get_identity_matrix(mat);
     else
         multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(index)]);
@@ -5687,7 +5687,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
     else
         center_offset = 0.0f;
 
-    if (context->last_was_rhw)
+    if (context->stream_info.position_transformed)
     {
         /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
         float x = state->viewports[0].x;
@@ -5859,7 +5859,7 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, context->last_was_rhw,
+            generated, context->stream_info.position_transformed,
             context->stream_info.use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))
             ? context->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->id
             : WINED3DFMT_UNKNOWN,

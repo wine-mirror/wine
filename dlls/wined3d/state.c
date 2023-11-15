@@ -1230,7 +1230,7 @@ static void depth(struct wined3d_context *context, const struct wined3d_state *s
         }
     }
 
-    if (context->last_was_rhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
+    if (context->stream_info.position_transformed && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
         context_apply_state(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
 }
 
@@ -1303,7 +1303,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
     /* Otherwise use per-vertex fog in any case */
     gl_info->gl_ops.gl.p_glHint(GL_FOG_HINT, GL_FASTEST);
 
-    if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE || context->last_was_rhw)
+    if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE || context->stream_info.position_transformed)
     {
         /* No fog at all, or transformed vertices: Use fog coord */
         if (!context->fog_coord)
@@ -1436,7 +1436,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
             {
                 /* If processed vertices are used, fall through to the NONE case */
                 case WINED3D_FOG_EXP:
-                    if (!context->last_was_rhw)
+                    if (!context->stream_info.position_transformed)
                     {
                         gl_info->gl_ops.gl.p_glFogi(GL_FOG_MODE, GL_EXP);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
@@ -1446,7 +1446,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     /* drop through */
 
                 case WINED3D_FOG_EXP2:
-                    if (!context->last_was_rhw)
+                    if (!context->stream_info.position_transformed)
                     {
                         gl_info->gl_ops.gl.p_glFogi(GL_FOG_MODE, GL_EXP2);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
@@ -1456,7 +1456,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     /* drop through */
 
                 case WINED3D_FOG_LINEAR:
-                    if (!context->last_was_rhw)
+                    if (!context->stream_info.position_transformed)
                     {
                         gl_info->gl_ops.gl.p_glFogi(GL_FOG_MODE, GL_LINEAR);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
@@ -3620,7 +3620,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
             clipplane(context, state, STATE_CLIPPLANE(k));
     }
 
-    if (context->last_was_rhw)
+    if (context->stream_info.position_transformed)
     {
         gl_info->gl_ops.gl.p_glLoadIdentity();
         checkGLcall("glLoadIdentity()");
