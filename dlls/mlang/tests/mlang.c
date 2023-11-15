@@ -1280,8 +1280,8 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     processed = 0;
     ret = IMLangFontLink_GetStrCodePages(iMLFL, str, 4, 0, &dwCodePages, &processed);
     ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %lx\n", ret);
-    todo_wine ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
-    todo_wine ok(processed == 3, "expected 3, got %ld\n", processed);
+    ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
+    ok(processed == 3, "expected 3, got %ld\n", processed);
 
     dwCodePages = 0xffff;
     processed = -1;
