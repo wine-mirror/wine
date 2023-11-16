@@ -441,7 +441,8 @@ struct module
     struct module*              next;
     enum dhext_module_type	type : 16;
     unsigned short              is_virtual : 1,
-                                is_wine_builtin : 1;
+                                is_wine_builtin : 1,
+                                has_file_image : 1;
     struct cpu*                 cpu;
     DWORD64                     reloc_delta;
     WCHAR*                      real_path;

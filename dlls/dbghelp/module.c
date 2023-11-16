@@ -237,6 +237,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->type              = type;
     module->is_virtual        = !!virtual;
     module->is_wine_builtin   = !!builtin;
+    module->has_file_image    = TRUE;
+
     for (i = 0; i < DFI_LAST; i++) module->format_info[i] = NULL;
     module->sortlist_valid    = FALSE;
     module->sorttab_size      = 0;
@@ -1687,6 +1689,7 @@ BOOL WINAPI wine_get_module_information(HANDLE proc, DWORD64 base, struct dhext_
     dhmi.type = module->type;
     dhmi.is_virtual = module->is_virtual;
     dhmi.is_wine_builtin = module->is_wine_builtin;
+    dhmi.has_file_image = module->has_file_image;
     dhmi.debug_format_bitmask = module->debug_format_bitmask;
     if ((module = module_get_container(pcs, module)))
     {

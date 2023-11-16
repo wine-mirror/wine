@@ -191,9 +191,10 @@ static const char* get_machine_str(DWORD machine)
 static void module_print_info(const struct info_module *module, BOOL is_embedded, BOOL multi_machine)
 {
     char buffer[9];
-    snprintf(buffer, sizeof(buffer), "%s%s",
+    snprintf(buffer, sizeof(buffer), "%s%s%s",
              is_embedded ? "  \\-" : "",
-             get_module_type(module, is_embedded));
+             get_module_type(module, is_embedded),
+             module->ext_module_info.has_file_image ? "" : "^");
 
     if (multi_machine)
         dbg_printf("%-8s%16I64x-%16I64x       %-16s%-16s%s\n",
@@ -266,6 +267,7 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
     UINT                i, j, num_printed = 0;
     BOOL                opt;
     DWORD               machine;
+    BOOL                has_missing_filename = FALSE;
 
     if (!dbg_curr_process)
     {
@@ -308,6 +310,7 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
             (base < im.modules[i].mi.BaseOfImage || base >= im.modules[i].mi.BaseOfImage + im.modules[i].mi.ImageSize))
             continue;
         if (!multi_machine && machine != im.modules[i].mi.MachineType) continue;
+        if (!im.modules[i].ext_module_info.has_file_image) has_missing_filename = TRUE;
         if (im.modules[i].ext_module_info.type == DMT_ELF || im.modules[i].ext_module_info.type == DMT_MACHO)
         {
             module_print_info(&im.modules[i], FALSE, multi_machine);
@@ -335,6 +338,8 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
 
     if (base && !num_printed)
         dbg_printf("'0x%0*I64x' is not a valid module address\n", ADDRWIDTH, base);
+    if (has_missing_filename)
+        dbg_printf("^ denotes modules for which image file couldn't be found\n");
 }
 
 struct class_walker
