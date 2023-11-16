@@ -2963,10 +2963,10 @@ HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapper, IMFMediaType **ret)
 HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVEFORMATEX **ret_format,
         UINT32 *size, UINT32 flags)
 {
-    WAVEFORMATEXTENSIBLE *format_ext = NULL;
+    UINT32 value, extra_size = 0, user_size;
     WAVEFORMATEX *format;
     GUID major, subtype;
-    UINT32 value;
+    void *user_data;
     HRESULT hr;
 
     TRACE("%p, %p, %p, %#x.\n", mediatype, ret_format, size, flags);
@@ -2980,36 +2980,24 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
     if (!IsEqualGUID(&major, &MFMediaType_Audio))
         return E_INVALIDARG;
 
-    if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
+    if (FAILED(hr = IMFMediaType_GetBlobSize(mediatype, &MF_MT_USER_DATA, &user_size)))
     {
-        FIXME("Unsupported audio format %s.\n", debugstr_guid(&subtype));
-        return E_NOTIMPL;
+        if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
+            return hr;
+        user_size = 0;
     }
 
-    /* FIXME: probably WAVE_FORMAT_MPEG/WAVE_FORMAT_MPEGLAYER3 should be handled separately. */
     if (flags == MFWaveFormatExConvertFlag_ForceExtensible)
-    {
-        format_ext = CoTaskMemAlloc(sizeof(*format_ext));
-        *size = sizeof(*format_ext);
-        format = (WAVEFORMATEX *)format_ext;
-    }
-    else
-    {
-        format = CoTaskMemAlloc(sizeof(*format));
-        *size = sizeof(*format);
-    }
+        extra_size = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(*format);
 
-    if (!format)
+    *size = sizeof(*format) + user_size + extra_size;
+    if (!(format = CoTaskMemAlloc(*size)))
         return E_OUTOFMEMORY;
 
     memset(format, 0, *size);
-
-    if (format_ext)
-        format->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    else if (IsEqualGUID(&subtype, &MFAudioFormat_Float))
-        format->wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-    else
-        format->wFormatTag = WAVE_FORMAT_PCM;
+    format->wFormatTag = subtype.Data1;
+    format->cbSize = user_size + extra_size;
+    user_data = format + 1;
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)))
         format->nChannels = value;
@@ -3021,17 +3009,25 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
         format->nBlockAlign = value;
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
         format->wBitsPerSample = value;
-    if (format_ext)
+
+    if (flags == MFWaveFormatExConvertFlag_ForceExtensible)
     {
-        format->cbSize = sizeof(*format_ext) - sizeof(*format);
+        WAVEFORMATEXTENSIBLE *format_ext = CONTAINING_RECORD(format, WAVEFORMATEXTENSIBLE, Format);
+
+        format_ext->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        format_ext->SubFormat = subtype;
+        user_data = format_ext + 1;
 
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
             format_ext->Samples.wSamplesPerBlock = value;
 
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
             format_ext->dwChannelMask = value;
-        memcpy(&format_ext->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM, sizeof(format_ext->SubFormat));
+        else if (format_ext->Format.nChannels < ARRAY_SIZE(default_channel_mask))
+            format_ext->dwChannelMask = default_channel_mask[format_ext->Format.nChannels];
     }
+
+    IMFMediaType_GetBlob(mediatype, &MF_MT_USER_DATA, user_data, user_size, NULL);
 
     *ret_format = format;
 
