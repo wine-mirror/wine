@@ -84,7 +84,7 @@ static ULONG WINAPI spstream_Release(ISpStream *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -235,7 +235,7 @@ const static ISpStreamVtbl spstream_vtbl =
 
 HRESULT speech_stream_create(IUnknown *outer, REFIID iid, void **obj)
 {
-    struct spstream *This = heap_alloc(sizeof(*This));
+    struct spstream *This = malloc(sizeof(*This));
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;

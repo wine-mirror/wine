@@ -166,7 +166,7 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
         if (This->engine) ISpTTSEngine_Release(This->engine);
         DeleteCriticalSection(&This->cs);
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -822,7 +822,7 @@ done:
     }
     CoTaskMemFree(wfx);
     if (engine) ISpTTSEngine_Release(engine);
-    heap_free(speak_task->frag_list);
+    free(speak_task->frag_list);
     ISpTTSEngineSite_Release(speak_task->site);
 
     if (speak_task->result)
@@ -898,7 +898,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
             return hr;
     }
 
-    if (!(frag = heap_alloc(sizeof(*frag) + contents_size)))
+    if (!(frag = malloc(sizeof(*frag) + contents_size)))
         return E_OUTOFMEMORY;
     memset(frag, 0, sizeof(*frag));
     memcpy(frag + 1, contents, contents_size);
@@ -915,7 +915,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         goto fail;
     }
 
-    speak_task = heap_alloc(sizeof(*speak_task));
+    speak_task = malloc(sizeof(*speak_task));
 
     speak_task->task.proc = speak_proc;
     speak_task->result    = NULL;
@@ -926,7 +926,7 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
 
     if (!(flags & SPF_ASYNC))
     {
-        if (!(result = heap_alloc(sizeof(*result))))
+        if (!(result = malloc(sizeof(*result))))
         {
             hr = E_OUTOFMEMORY;
             goto fail;
@@ -952,18 +952,18 @@ static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWOR
         WaitForSingleObject(result->done, INFINITE);
         hr = result->hr;
         CloseHandle(result->done);
-        heap_free(result);
+        free(result);
         return hr;
     }
 
 fail:
     if (site) ISpTTSEngineSite_Release(site);
-    heap_free(frag);
-    heap_free(speak_task);
+    free(frag);
+    free(speak_task);
     if (result)
     {
         CloseHandle(result->done);
-        heap_free(result);
+        free(result);
     }
     return hr;
 }
@@ -1210,7 +1210,7 @@ static ULONG WINAPI ttsenginesite_Release(ISpTTSEngineSite *iface)
     {
         if (This->voice)
             ISpeechVoice_Release(&This->voice->ISpeechVoice_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1315,7 +1315,7 @@ const static ISpTTSEngineSiteVtbl ttsenginesite_vtbl =
 
 static HRESULT ttsenginesite_create(struct speech_voice *voice, ULONG stream_num, ISpTTSEngineSite **site)
 {
-    struct tts_engine_site *This = heap_alloc(sizeof(*This));
+    struct tts_engine_site *This = malloc(sizeof(*This));
 
     if (!This) return E_OUTOFMEMORY;
 
@@ -1387,7 +1387,7 @@ const static IConnectionPointContainerVtbl container_vtbl =
 
 HRESULT speech_voice_create(IUnknown *outer, REFIID iid, void **obj)
 {
-    struct speech_voice *This = heap_alloc(sizeof(*This));
+    struct speech_voice *This = malloc(sizeof(*This));
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;

@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "objbase.h"
 
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -58,7 +57,7 @@ void async_empty_queue(struct async_queue *queue)
     LIST_FOR_EACH_ENTRY_SAFE(task, next, &queue->tasks, struct async_task, entry)
     {
         list_remove(&task->entry);
-        heap_free(task);
+        free(task);
     }
     LeaveCriticalSection(&queue->cs);
 
@@ -87,7 +86,7 @@ static void CALLBACK async_worker(TP_CALLBACK_INSTANCE *instance, void *ctx)
             {
                 ResetEvent(queue->empty);
                 task->proc(task);
-                heap_free(task);
+                free(task);
                 if (WaitForSingleObject(queue->cancel, 0) == WAIT_OBJECT_0)
                     goto cancel;
             }

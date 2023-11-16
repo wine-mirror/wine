@@ -84,7 +84,7 @@ static ULONG WINAPI resource_manager_Release(ISpResourceManager *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -126,7 +126,7 @@ const static ISpResourceManagerVtbl resource_manager_vtbl =
 
 HRESULT resource_manager_create(IUnknown *outer, REFIID iid, void **obj)
 {
-    struct resource_manager *This = heap_alloc(sizeof(*This));
+    struct resource_manager *This = malloc(sizeof(*This));
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
