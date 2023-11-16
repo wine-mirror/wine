@@ -171,7 +171,7 @@ static void copy_context_64to32( I386_CONTEXT *ctx32, DWORD flags, AMD64_CONTEXT
  *
  * Execute a 64-bit syscall from 32-bit code, then return to 32-bit.
  */
-extern void WINAPI syscall_32to64(void) DECLSPEC_HIDDEN;
+extern void WINAPI syscall_32to64(void);
 __ASM_GLOBAL_FUNC( syscall_32to64,
                    /* cf. BTCpuSimulate prolog */
                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
@@ -234,7 +234,7 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
  *
  * Execute a 64-bit Unix call from 32-bit code, then return to 32-bit.
  */
-extern void WINAPI unix_call_32to64(void) DECLSPEC_HIDDEN;
+extern void WINAPI unix_call_32to64(void);
 __ASM_GLOBAL_FUNC( unix_call_32to64,
                    /* cf. BTCpuSimulate prolog */
                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
