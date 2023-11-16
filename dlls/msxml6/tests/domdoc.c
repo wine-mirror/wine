@@ -67,6 +67,7 @@ static void test_namespaces_as_attributes(void)
         const WCHAR *uris[3];
         const WCHAR *texts[3];
         const WCHAR *xmls[3];
+        BOOL todo;
     };
     static const struct test tests[] =
     {
@@ -99,6 +100,17 @@ static void test_namespaces_as_attributes(void)
             { L"nshref" },              /* text */
             { L"xmlns:ns=\"nshref\"" }, /* xml */
         },
+        /* default namespace */
+        {
+            L"<a xmlns=\"nshref\" />", 1,
+            { L"xmlns" },                           /* nodeName */
+            { NULL },                               /* prefix */
+            { L"xmlns" },                           /* baseName */
+            { L"http://www.w3.org/2000/xmlns/" },   /* namespaceURI */
+            { L"nshref" },                          /* text */
+            { L"xmlns=\"nshref\"" },                /* xml */
+            TRUE,                                   /* todo */
+        },
         /* no properties or namespaces */
         {
             L"<a />", 0,
@@ -125,7 +137,7 @@ static void test_namespaces_as_attributes(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         node = NULL;
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_(L"a"), &node);
+        hr = IXMLDOMDocument2_get_firstChild(doc, &node);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IXMLDOMNode_get_attributes(node, &map);
@@ -145,7 +157,9 @@ static void test_namespaces_as_attributes(void)
         {
             item = NULL;
             hr = IXMLDOMNamedNodeMap_get_item(map, i, &item);
+            todo_wine_if(test->todo)
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            if (hr != S_OK) continue;
 
             str = NULL;
             hr = IXMLDOMNode_get_nodeName(item, &str);
