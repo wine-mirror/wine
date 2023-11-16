@@ -21,14 +21,14 @@
 #ifndef __WOW64WIN_PRIVATE_H
 #define __WOW64WIN_PRIVATE_H
 
-#include "syscall.h"
+#include "../win32u/win32syscalls.h"
 
-#define SYSCALL_ENTRY(func) extern NTSTATUS WINAPI wow64_ ## func( UINT *args ) DECLSPEC_HIDDEN;
-ALL_WIN32_SYSCALLS
+#define SYSCALL_ENTRY(id,name,_args) extern NTSTATUS WINAPI wow64_ ## name( UINT *args );
+ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 
 typedef NTSTATUS (WINAPI *user_callback)( void *params, ULONG size );
-extern user_callback user_callbacks[] DECLSPEC_HIDDEN;
+extern user_callback user_callbacks[];
 
 struct object_attr64
 {

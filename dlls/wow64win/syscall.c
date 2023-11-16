@@ -30,15 +30,15 @@
 
 static void * const win32_syscalls[] =
 {
-#define SYSCALL_ENTRY(func) wow64_ ## func,
-    ALL_WIN32_SYSCALLS
+#define SYSCALL_ENTRY(id,name,args) wow64_ ## name,
+    ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 };
 
 static const char * const win32_syscall_names[] =
 {
-#define SYSCALL_ENTRY(func) #func,
-    ALL_WIN32_SYSCALLS
+#define SYSCALL_ENTRY(id,name,args) #name,
+    ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 };
 
