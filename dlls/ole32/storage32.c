@@ -9043,41 +9043,6 @@ HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
 }
 
 /***********************************************************************
- *    ReadClassStg (OLE32.@)
- *
- * This method reads the CLSID previously written to a storage object with
- * the WriteClassStg.
- *
- * PARAMS
- *  pstg    [I] IStorage pointer
- *  pclsid  [O] Pointer to where the CLSID is written
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
-
-    STATSTG pstatstg;
-    HRESULT hRes;
-
-    TRACE("(%p, %p)\n", pstg, pclsid);
-
-    if(!pstg || !pclsid)
-        return E_INVALIDARG;
-
-   /*
-    * read a STATSTG structure (contains the clsid) from the storage
-    */
-    hRes=IStorage_Stat(pstg,&pstatstg,STATFLAG_NONAME);
-
-    if(SUCCEEDED(hRes))
-        *pclsid=pstatstg.clsid;
-
-    return hRes;
-}
-
-/***********************************************************************
  *    OleLoadFromStream (OLE32.@)
  *
  * This function loads an object from stream

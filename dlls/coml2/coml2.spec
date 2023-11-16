@@ -15,7 +15,7 @@
 @ stdcall GetConvertStg(ptr)
 @ stdcall GetHGlobalFromILockBytes(ptr ptr)
 @ stub PropStgNameToFmtId
-@ stub ReadClassStg
+@ stdcall ReadClassStg(ptr ptr)
 @ stdcall ReadClassStm(ptr ptr)
 @ stub StgCreateDocfile
 @ stub StgCreateDocfileOnILockBytes

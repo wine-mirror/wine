@@ -51,6 +51,30 @@
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 /***********************************************************************
+ *    ReadClassStg (coml2.@)
+ */
+HRESULT WINAPI ReadClassStg(IStorage *pstg, CLSID *pclsid)
+{
+    STATSTG pstatstg;
+    HRESULT hRes;
+
+    TRACE("(%p, %p)\n", pstg, pclsid);
+
+    if (!pstg || !pclsid)
+        return E_INVALIDARG;
+
+   /*
+    * read a STATSTG structure (contains the clsid) from the storage
+    */
+    hRes = IStorage_Stat(pstg, &pstatstg, STATFLAG_NONAME);
+
+    if (SUCCEEDED(hRes))
+        *pclsid = pstatstg.clsid;
+
+    return hRes;
+}
+
+/***********************************************************************
  *              ReadClassStm (coml2.@)
  */
 HRESULT WINAPI ReadClassStm(IStream *pStm, CLSID *pclsid)
