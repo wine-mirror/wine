@@ -5865,7 +5865,7 @@ void get_texture_matrix(const struct wined3d_context *context, const struct wine
             : WINED3DFMT_UNKNOWN,
             device->shader_backend->shader_has_ffp_proj_control(device->shader_priv), mat);
 
-    if ((context->lastWasPow2Texture & (1u << tex)) && texture)
+    if (texture && !(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
     {
         if (generated)
             FIXME("Non-power-of-two texture being used with generated texture coords.\n");
