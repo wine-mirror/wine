@@ -401,8 +401,6 @@ enum module_type
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
     DMT_MACHO,          /* a real Mach-O shared module */
-    DMT_PDB,            /* .PDB file */
-    DMT_DBG,            /* .DBG file */
 };
 
 struct process;
@@ -775,7 +773,7 @@ extern DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW*
 
 /* path.c */
 extern BOOL         path_find_symbol_file(const struct process* pcs, const struct module* module,
-                                          PCSTR full_path, enum module_type type, const GUID* guid, DWORD dw1, DWORD dw2,
+                                          PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                                           WCHAR *buffer, BOOL* is_unmatched);
 extern WCHAR *get_dos_file_name(const WCHAR *filename) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC;
 extern BOOL         search_dll_path(const struct process* process, const WCHAR *name, WORD machine,

@@ -461,13 +461,12 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
 
 struct module_find
 {
-    enum module_type            kind;
-    /* pe:  dw1         DWORD:timestamp
-     *      dw2         size of image (from PE header)
-     * pdb: guid        PDB guid (if DS PDB file)
+    BOOL                is_pdb;
+    /* pdb: guid        PDB guid (if DS PDB file)
      *      or dw1      PDB timestamp (if JG PDB file)
      *      dw2         PDB age
-     * elf: dw1         DWORD:CRC 32 of ELF image (Wine only)
+     * dbg: dw1         DWORD:timestamp
+     *      dw2         size of image (from PE header)
      */
     const GUID*                 guid;
     DWORD                       dw1;
@@ -484,7 +483,7 @@ struct module_find
 static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 {
     struct module_find* mf = user;
-    DWORD               size, timestamp;
+    DWORD               timestamp;
     unsigned            matched = 0;
 
     /* the matching weights:
@@ -492,107 +491,60 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
      * +1 if first parameter and second parameter match
      */
 
-    /* FIXME: should check that id/two match the file pointed
-     * by buffer
-     */
-    switch (mf->kind)
+    if (mf->is_pdb)
     {
-    case DMT_PE:
+        struct pdb_lookup           pdb_lookup;
+        char                        fn[MAX_PATH];
+
+        WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
+        pdb_lookup.filename = fn;
+
+        if (mf->guid)
         {
-            HANDLE  hFile, hMap;
-            void*   mapping;
-
-            timestamp = ~mf->dw1;
-            size = ~mf->dw2;
-            hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
-                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-            if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
-            {
-                if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
-                {
-                    IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(mapping);
-                    if (!nth)
-                    {
-                        UnmapViewOfFile(mapping);
-                        CloseHandle(hMap);
-                        CloseHandle(hFile);
-                        return FALSE;
-                    }
-                    matched++;
-                    timestamp = nth->FileHeader.TimeDateStamp;
-                    size = nth->OptionalHeader.SizeOfImage;
-                    UnmapViewOfFile(mapping);
-                }
-                CloseHandle(hMap);
-            }
-            CloseHandle(hFile);
-            if (timestamp != mf->dw1)
-                WARN("Found %s, but wrong timestamp\n", debugstr_w(buffer));
-            if (size != mf->dw2)
-                WARN("Found %s, but wrong size\n", debugstr_w(buffer));
-            if (timestamp == mf->dw1 && size == mf->dw2) matched++;
+            pdb_lookup.kind = PDB_DS;
+            pdb_lookup.timestamp = 0;
+            pdb_lookup.guid = *mf->guid;
         }
-        break;
-    case DMT_PDB:
+        else
         {
-            struct pdb_lookup           pdb_lookup;
-            char                        fn[MAX_PATH];
-
-            WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
-            pdb_lookup.filename = fn;
-
-            if (mf->guid)
-            {
-                pdb_lookup.kind = PDB_DS;
-                pdb_lookup.timestamp = 0;
-                pdb_lookup.guid = *mf->guid;
-            }
-            else
-            {
-                pdb_lookup.kind = PDB_JG;
-                pdb_lookup.timestamp = mf->dw1;
-                /* pdb_loopkup.guid = */
-            }
-            pdb_lookup.age = mf->dw2;
-
-            if (!pdb_fetch_file_info(&pdb_lookup, &matched)) return FALSE;
+            pdb_lookup.kind = PDB_JG;
+            pdb_lookup.timestamp = mf->dw1;
+            /* pdb_loopkup.guid = */
         }
-        break;
-    case DMT_DBG:
-        {
-            HANDLE  hFile, hMap;
-            void*   mapping;
+        pdb_lookup.age = mf->dw2;
 
-            timestamp = ~mf->dw1;
-            hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
-                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-            if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
-            {
-                if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
-                {
-                    const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
-                    hdr = mapping;
-
-                    if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
-                    {
-                        matched++;
-                        timestamp = hdr->TimeDateStamp;
-                    }
-                    UnmapViewOfFile(mapping);
-                }
-                CloseHandle(hMap);
-            }
-            CloseHandle(hFile);
-            if (timestamp == mf->dw1) matched++;
-            else WARN("Found %s, but wrong timestamp\n", debugstr_w(buffer));
-        }
-        break;
-    default:
-        FIXME("What the heck??\n");
-        return FALSE;
+        if (!pdb_fetch_file_info(&pdb_lookup, &matched)) return FALSE;
     }
+    else
+    {
+        HANDLE  hFile, hMap;
+        void*   mapping;
+
+        timestamp = ~mf->dw1;
+        hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+        if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+        {
+            if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
+            {
+                const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
+                hdr = mapping;
+
+                if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
+                {
+                    matched++;
+                    timestamp = hdr->TimeDateStamp;
+                }
+                UnmapViewOfFile(mapping);
+            }
+            CloseHandle(hMap);
+        }
+        CloseHandle(hFile);
+        if (timestamp == mf->dw1) matched++;
+        else WARN("Found %s, but wrong timestamp\n", debugstr_w(buffer));
+    }
+
     if (matched > mf->matched)
     {
         lstrcpyW(mf->filename, buffer);
@@ -605,7 +557,7 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 }
 
 BOOL path_find_symbol_file(const struct process* pcs, const struct module* module,
-                           PCSTR full_path, enum module_type type, const GUID* guid, DWORD dw1, DWORD dw2,
+                           PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                            WCHAR *buffer, BOOL* is_unmatched)
 {
     struct module_find  mf;
@@ -624,7 +576,7 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
 
     MultiByteToWideChar(CP_ACP, 0, full_path, -1, full_pathW, MAX_PATH);
     filename = file_name(full_pathW);
-    mf.kind = type;
+    mf.is_pdb = is_pdb;
     *is_unmatched = FALSE;
 
     /* first check full path to file */
