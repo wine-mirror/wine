@@ -112,6 +112,7 @@ void*    hash_table_iter_up(struct hash_table_iter* hti);
 
 extern unsigned dbghelp_options;
 extern BOOL     dbghelp_opt_native;
+extern BOOL     dbghelp_opt_extension_api;
 extern BOOL     dbghelp_opt_real_path;
 extern BOOL     dbghelp_opt_source_actual_path;
 extern SYSTEM_INFO sysinfo;
@@ -396,13 +397,6 @@ struct symt_udt
     struct vector               vchildren;
 };
 
-enum module_type
-{
-    DMT_ELF,            /* a real ELF shared module */
-    DMT_PE,             /* a native or builtin PE module */
-    DMT_MACHO,          /* a real Mach-O shared module */
-};
-
 struct process;
 struct module;
 
@@ -445,7 +439,7 @@ struct module
     IMAGEHLP_MODULEW64          module;
     WCHAR                       modulename[64]; /* used for enumeration */
     struct module*              next;
-    enum module_type		type : 16;
+    enum dhext_module_type	type : 16;
     unsigned short              is_virtual : 1;
     struct cpu*                 cpu;
     DWORD64                     reloc_delta;
@@ -453,6 +447,7 @@ struct module
 
     /* specific information for debug types */
     struct module_format*       format_info[DFI_LAST];
+    unsigned                    debug_format_bitmask;
 
     /* memory allocation pool */
     struct pool                 pool;
@@ -742,7 +737,7 @@ extern struct module*
 extern BOOL         module_get_debug(struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const WCHAR* name,
-                               enum module_type type, BOOL virtual,
+                               enum dhext_module_type type, BOOL virtual,
                                DWORD64 addr, DWORD64 size,
                                ULONG_PTR stamp, ULONG_PTR checksum, WORD machine);
 extern struct module*

@@ -67,6 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
 BOOL       dbghelp_opt_native = FALSE;
+BOOL       dbghelp_opt_extension_api = FALSE;
 BOOL       dbghelp_opt_real_path = FALSE;
 BOOL       dbghelp_opt_source_actual_path = FALSE;
 SYSTEM_INFO sysinfo;
@@ -612,6 +613,10 @@ BOOL WINAPI SymSetExtendedOption(IMAGEHLP_EXTENDED_OPTIONS option, BOOL value)
             old = dbghelp_opt_native;
             dbghelp_opt_native = value;
             break;
+        case SYMOPT_EX_WINE_EXTENSION_API:
+            old = dbghelp_opt_extension_api;
+            dbghelp_opt_extension_api = value;
+            break;
         case SYMOPT_EX_WINE_MODULE_REAL_PATH:
             old = dbghelp_opt_real_path;
             dbghelp_opt_real_path = value;
@@ -637,6 +642,8 @@ BOOL WINAPI SymGetExtendedOption(IMAGEHLP_EXTENDED_OPTIONS option)
     {
         case SYMOPT_EX_WINE_NATIVE_MODULES:
             return dbghelp_opt_native;
+        case SYMOPT_EX_WINE_EXTENSION_API:
+            return dbghelp_opt_extension_api;
         case SYMOPT_EX_WINE_MODULE_REAL_PATH:
             return dbghelp_opt_real_path;
         case SYMOPT_EX_WINE_SOURCE_ACTUAL_PATH:

@@ -723,6 +723,7 @@ int main(int argc, char** argv)
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS |
                   SYMOPT_INCLUDE_32BIT_MODULES);
 
+    SymSetExtendedOption(SYMOPT_EX_WINE_EXTENSION_API, TRUE);
     SymSetExtendedOption(SYMOPT_EX_WINE_SOURCE_ACTUAL_PATH, TRUE);
 
     if (argc && !strcmp(argv[0], "--auto"))

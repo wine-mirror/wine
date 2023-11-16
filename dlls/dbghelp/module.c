@@ -162,7 +162,7 @@ WCHAR *get_wine_loader_name(struct process *pcs)
     return altname;
 }
 
-static const char*      get_module_type(enum module_type type, BOOL virtual)
+static const char*      get_module_type(enum dhext_module_type type, BOOL virtual)
 {
     switch (type)
     {
@@ -177,7 +177,7 @@ static const char*      get_module_type(enum module_type type, BOOL virtual)
  * Creates and links a new module to a process
  */
 struct module* module_new(struct process* pcs, const WCHAR* name,
-                          enum module_type type, BOOL virtual,
+                          enum dhext_module_type type, BOOL virtual,
                           DWORD64 mod_addr, DWORD64 size,
                           ULONG_PTR stamp, ULONG_PTR checksum, WORD machine)
 {
@@ -238,6 +238,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->cpu               = cpu_find(machine);
     if (!module->cpu)
         module->cpu = dbghelp_current_cpu;
+    module->debug_format_bitmask = 0;
 
     vector_init(&module->vsymt, sizeof(struct symt*), 128);
     vector_init(&module->vcustom_symt, sizeof(struct symt*), 16);
@@ -1653,3 +1654,35 @@ const struct loader_ops empty_loader_ops =
     empty_enum_modules,
     native_fetch_file_info,
 };
+
+BOOL WINAPI wine_get_module_information(HANDLE proc, DWORD64 base, struct dhext_module_information* wmi, unsigned len)
+{
+    struct process*     pcs;
+    struct module*      module;
+    struct dhext_module_information dhmi;
+
+    /* could be interpreted as a WinDbg extension */
+    if (!dbghelp_opt_extension_api)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    TRACE("(%p %I64x %p %u\n", proc, base, wmi, len);
+
+    if (!(pcs = process_find_by_handle(proc))) return FALSE;
+    if (len > sizeof(*wmi)) return FALSE;
+
+    module = module_find_by_addr(pcs, base);
+    if (!module) return FALSE;
+
+    dhmi.type = module->type;
+    dhmi.debug_format_bitmask = module->debug_format_bitmask;
+    if ((module = module_get_container(pcs, module)))
+    {
+        dhmi.debug_format_bitmask |= module->debug_format_bitmask;
+    }
+    memcpy(wmi, &dhmi, len);
+
+    return TRUE;
+}

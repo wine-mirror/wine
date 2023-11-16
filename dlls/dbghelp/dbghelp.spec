@@ -215,3 +215,6 @@
 #@ stub sym
 #@ stub symsrv
 #@ stub vc7fpo
+
+# wine extensions
+@ stdcall wine_get_module_information(long int64 ptr long)

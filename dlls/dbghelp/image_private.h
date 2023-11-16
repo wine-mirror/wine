@@ -102,7 +102,7 @@ struct macho_section32
  */
 struct image_file_map
 {
-    enum module_type            modtype;
+    enum dhext_module_type      modtype;
     const struct image_file_map_ops *ops;
     unsigned                    addr_size;      /* either 16 (not used), 32 or 64 */
     struct image_file_map*      alternate;      /* another file linked to this one */

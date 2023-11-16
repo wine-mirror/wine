@@ -1664,7 +1664,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
               stab_ptr->n_type, (ULONG_PTR)n_value, debugstr_a(strs + stab_ptr->n_strx));
     }
     module->module.SymType = SymDia;
-    module->module.CVSig = 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24);
+    module->debug_format_bitmask |= DHEXT_FORMAT_STABS;
     /* FIXME: we could have a finer grain here */
     module->module.LineNumbers = TRUE;
     module->module.GlobalSymbols = TRUE;

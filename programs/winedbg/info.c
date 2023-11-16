@@ -116,9 +116,23 @@ void info_help(void)
     while (infotext[i]) dbg_printf("%s\n", infotext[i++]);
 }
 
-static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
+struct info_module
 {
-    switch (mi->SymType)
+    IMAGEHLP_MODULEW64                  mi;
+    struct dhext_module_information     ext_module_info;
+    char                                name[64];
+};
+
+struct info_modules
+{
+    struct info_module *modules;
+    unsigned            num_alloc;
+    unsigned            num_used;
+};
+
+static const char* get_symtype_str(const struct info_module* im)
+{
+    switch (im->mi.SymType)
     {
     default:
     case SymNone:       return "--none--";
@@ -129,42 +143,25 @@ static const char* get_symtype_str(const IMAGEHLP_MODULE64* mi)
     case SymDeferred:   return "Deferred";
     case SymSym:        return "Sym";
     case SymDia:
-        switch (mi->CVSig)
+        if (im->ext_module_info.debug_format_bitmask)
         {
-        case 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24):
-            return "Stabs";
-        case 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24):
-            /* previous versions of dbghelp used to report this... */
-            return "Dwarf";
-        default:
-            if ((mi->CVSig & 0x00FFFFFF) == ('D' | ('W' << 8) | ('F' << 16)))
+            static char tmp[64];
+            tmp[0] = '\0';
+            if (im->ext_module_info.debug_format_bitmask & DHEXT_FORMAT_STABS) strcpy(tmp, "stabs");
+            if (im->ext_module_info.debug_format_bitmask & (DHEXT_FORMAT_DWARF2 | DHEXT_FORMAT_DWARF3 | DHEXT_FORMAT_DWARF4 | DHEXT_FORMAT_DWARF5))
             {
-                static char tmp[64];
-                DWORD versbit = mi->CVSig >> 24;
-                strcpy(tmp, "Dwarf");
-                if (versbit & 1) strcat(tmp, "-2");
-                if (versbit & 2) strcat(tmp, "-3");
-                if (versbit & 4) strcat(tmp, "-4");
-                if (versbit & 8) strcat(tmp, "-5");
-                return tmp;
+                if (tmp[0]) strcat(tmp, ", ");
+                strcat(tmp, "Dwarf");
+                if (im->ext_module_info.debug_format_bitmask & DHEXT_FORMAT_DWARF2) strcat(tmp, "-2");
+                if (im->ext_module_info.debug_format_bitmask & DHEXT_FORMAT_DWARF3) strcat(tmp, "-3");
+                if (im->ext_module_info.debug_format_bitmask & DHEXT_FORMAT_DWARF4) strcat(tmp, "-4");
+                if (im->ext_module_info.debug_format_bitmask & DHEXT_FORMAT_DWARF5) strcat(tmp, "-5");
             }
-            return "DIA";
+            return tmp;
         }
+        return "DIA";
     }
 }
-
-struct info_module
-{
-    IMAGEHLP_MODULE64 mi;
-    char              name[64];
-};
-
-struct info_modules
-{
-    struct info_module *modules;
-    unsigned            num_alloc;
-    unsigned            num_used;
-};
 
 static const char* get_machine_str(DWORD machine)
 {
@@ -187,12 +184,12 @@ static void module_print_info(const struct info_module *module, BOOL is_embedded
                    module->mi.BaseOfImage,
                    module->mi.BaseOfImage + module->mi.ImageSize,
                    get_machine_str(module->mi.MachineType),
-                   is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
+                   is_embedded ? "\\" : get_symtype_str(module), module->name);
     else
         dbg_printf("%*.*I64x-%*.*I64x\t%-16s%s\n",
                    ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
                    ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
-                   is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
+                   is_embedded ? "\\" : get_symtype_str(module), module->name);
 }
 
 static int __cdecl module_compare(const void* p1, const void* p2)
@@ -226,7 +223,9 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
         im->modules = new;
     }
     im->modules[im->num_used].mi.SizeOfStruct = sizeof(im->modules[im->num_used].mi);
-    if (SymGetModuleInfo64(dbg_curr_process->handle, base, &im->modules[im->num_used].mi))
+    if (SymGetModuleInfoW64(dbg_curr_process->handle, base, &im->modules[im->num_used].mi) &&
+        wine_get_module_information(dbg_curr_process->handle, base, &im->modules[im->num_used].ext_module_info,
+                                    sizeof(im->modules[im->num_used].ext_module_info)))
     {
         const int dst_len = sizeof(im->modules[im->num_used].name);
         lstrcpynA(im->modules[im->num_used].name, mod_name, dst_len - 1);

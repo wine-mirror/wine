@@ -2892,8 +2892,8 @@ static BOOL dwarf2_parse_compilation_unit_head(dwarf2_parse_context_t* ctx,
     TRACE("- word_size:     %u\n",  ctx->head.word_size);
     TRACE("- offset_size:   %u\n",  ctx->head.offset_size);
 
-    if (ctx->head.version >= 2)
-        ctx->module_ctx->cu_versions |= 1 << (ctx->head.version - 2);
+    if (ctx->head.version >= 2 && ctx->head.version <= 5)
+        ctx->module_ctx->cu_versions |= DHEXT_FORMAT_DWARF2 << (ctx->head.version - 2);
     if (max_supported_dwarf_version == 0)
     {
         char* env = getenv("DBGHELP_DWARF_VERSION");
@@ -4259,17 +4259,16 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
     module_ctx.dwz = dwarf2_load_dwz(fmap, module);
     dwarf2_load_CU_module(&module_ctx, module, section, load_offset, thunks, FALSE);
 
-    dwarf2_modfmt->module->module.SymType = SymDia;
-    /* hide dwarf versions in CVSig
-     * bits 24-31 will be set according to found dwarf version
-     * different CU can have different dwarf version, so use a bit per version (version 2 => b24)
-     */
-    dwarf2_modfmt->module->module.CVSig = 'D' | ('W' << 8) | ('F' << 16) | ((module_ctx.cu_versions & 0xFF) << 24);
-    /* FIXME: we could have a finer grain here */
-    dwarf2_modfmt->module->module.GlobalSymbols = TRUE;
-    dwarf2_modfmt->module->module.TypeInfo = TRUE;
-    dwarf2_modfmt->module->module.SourceIndexed = TRUE;
-    dwarf2_modfmt->module->module.Publics = TRUE;
+    if (module_ctx.cu_versions)
+    {
+        dwarf2_modfmt->module->module.SymType = SymDia;
+        module->debug_format_bitmask |= module_ctx.cu_versions;
+        /* FIXME: we could have a finer grain here */
+        dwarf2_modfmt->module->module.GlobalSymbols = TRUE;
+        dwarf2_modfmt->module->module.TypeInfo = TRUE;
+        dwarf2_modfmt->module->module.SourceIndexed = TRUE;
+        dwarf2_modfmt->module->module.Publics = TRUE;
+    }
 
     dwarf2_unload_CU_module(&module_ctx);
 leave:
