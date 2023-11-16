@@ -95,7 +95,7 @@ done:
     if (!return_error)
         message = "";
     message_size = strlen(message) + 1;
-    if (errors && (*errors = malloc(message_size)))
+    if (errors && (*errors = HeapAlloc(GetProcessHeap(), 0, message_size)))
         memcpy(*errors, message, message_size);
 
     return hr;
@@ -140,7 +140,7 @@ done:
     if (!return_error)
         message = "";
     message_size = strlen(message) + 1;
-    if (errors && (*errors = malloc(message_size)))
+    if (errors && (*errors = HeapAlloc(GetProcessHeap(), 0, message_size)))
         memcpy(*errors, message, message_size);
 
     return hr;

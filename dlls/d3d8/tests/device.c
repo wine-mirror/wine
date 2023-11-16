@@ -5051,11 +5051,11 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(NULL, NULL, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
     hr = ValidateVertexShader(NULL, NULL, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
 
     hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5064,7 +5064,7 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
 
     hr = ValidateVertexShader(vs_code, declaration_valid1, NULL, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -5101,11 +5101,11 @@ static void test_validate_vs(void)
     hr = ValidateVertexShader(vs_code, NULL, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
     hr = ValidateVertexShader(vs_code, NULL, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
 }
 
 static void test_validate_ps(void)
@@ -5149,7 +5149,7 @@ static void test_validate_ps(void)
     hr = ValidatePixelShader(ps_1_1_code, NULL, TRUE, &errors);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
 
     memset(&caps, 0, sizeof(caps));
     caps.PixelShaderVersion = D3DPS_VERSION(1, 1);
@@ -5179,11 +5179,11 @@ static void test_validate_ps(void)
     hr = ValidatePixelShader(ps_1_1_code, NULL, FALSE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!*errors, "Got unexpected string \"%s\".\n", errors);
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
     hr = ValidatePixelShader(ps_1_1_code, NULL, TRUE, &errors);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!!*errors, "Got unexpected empty string.\n");
-    free(errors);
+    HeapFree(GetProcessHeap(), 0, errors);
 }
 
 static void test_volume_get_container(void)
