@@ -6988,6 +6988,7 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     UINT8 buff[1024];
     WAVEFORMATEXTENSIBLE waveformatext;
     MPEGLAYER3WAVEFORMAT mp3format;
+    WAVEFORMATEXTENSIBLE *format;
     HEAACWAVEFORMAT aacformat;
     IMFMediaType *mediatype;
     unsigned int i, size;
@@ -7084,6 +7085,40 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(size == aacformat.wfInfo.wfx.cbSize, "Unexpected size %u.\n", size);
     ok(!memcmp(buff, (WAVEFORMATEX *)&aacformat + 1, size), "Unexpected user data.\n");
+
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format, &size, MFWaveFormatExConvertFlag_ForceExtensible);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "got wFormatTag %#x\n", format->Format.wFormatTag);
+        ok(format->Format.cbSize == aacformat.wfInfo.wfx.cbSize + sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
+                "got cbSize %u\n", format->Format.cbSize);
+        ok(IsEqualGUID(&format->SubFormat, &MFAudioFormat_AAC), "got SubFormat %s\n", debugstr_guid(&format->SubFormat));
+        ok(format->dwChannelMask == 3, "got dwChannelMask %#lx\n", format->dwChannelMask);
+        ok(format->Samples.wSamplesPerBlock == 0, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
+        ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
+        CoTaskMemFree(format);
+    }
+
+    /* test with invalid format size */
+    aacformat.wfInfo.wfx.cbSize = 1;
+    hr = IMFMediaType_SetBlob(mediatype, &MF_MT_USER_DATA, buff, aacformat.wfInfo.wfx.cbSize);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format, &size, MFWaveFormatExConvertFlag_ForceExtensible);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "got wFormatTag %#x\n", format->Format.wFormatTag);
+        ok(format->Format.cbSize == aacformat.wfInfo.wfx.cbSize + sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
+                "got cbSize %u\n", format->Format.cbSize);
+        ok(IsEqualGUID(&format->SubFormat, &MFAudioFormat_AAC), "got SubFormat %s\n", debugstr_guid(&format->SubFormat));
+        ok(format->dwChannelMask == 3, "got dwChannelMask %#lx\n", format->dwChannelMask);
+        ok(format->Samples.wSamplesPerBlock == 0, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
+        ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
+        CoTaskMemFree(format);
+    }
 
     IMFMediaType_Release(mediatype);
 }
