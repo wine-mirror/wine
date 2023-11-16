@@ -4,4 +4,5 @@ IMPORTLIB = coml2
 IMPORTS   = uuid
 
 SOURCES = \
-	memlockbytes.c
+	memlockbytes.c \
+	storage32.c

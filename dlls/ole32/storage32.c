@@ -10566,36 +10566,6 @@ HRESULT WINAPI OleConvertIStorageToOLESTREAMEx ( LPSTORAGE stg, CLIPFORMAT cf, L
 }
 
 /***********************************************************************
- *		GetConvertStg (OLE32.@)
- */
-HRESULT WINAPI GetConvertStg(IStorage *stg)
-{
-    static const DWORD version_magic = 0x02000001;
-    DWORD header[2];
-    IStream *stream;
-    HRESULT hr;
-
-    TRACE("%p\n", stg);
-
-    if (!stg) return E_INVALIDARG;
-
-    hr = IStorage_OpenStream(stg, L"\1Ole", NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
-    if (FAILED(hr)) return hr;
-
-    hr = IStream_Read(stream, header, sizeof(header), NULL);
-    IStream_Release(stream);
-    if (FAILED(hr)) return hr;
-
-    if (header[0] != version_magic)
-    {
-        ERR("got wrong version magic for 1Ole stream, %#lx.\n", header[0]);
-        return E_FAIL;
-    }
-
-    return header[1] & OleStream_Convert ? S_OK : S_FALSE;
-}
-
-/***********************************************************************
  *		SetConvertStg (OLE32.@)
  */
 HRESULT WINAPI SetConvertStg(IStorage *storage, BOOL convert)

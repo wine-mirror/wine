@@ -12,7 +12,7 @@
 @ stdcall CreateILockBytesOnHGlobal(ptr long ptr)
 @ stub DllGetClassObject
 @ stub FmtIdToPropStgName
-@ stub GetConvertStg
+@ stdcall GetConvertStg(ptr)
 @ stdcall GetHGlobalFromILockBytes(ptr ptr)
 @ stub PropStgNameToFmtId
 @ stub ReadClassStg
