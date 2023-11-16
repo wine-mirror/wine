@@ -28,16 +28,16 @@
 ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 
-extern void init_image_mapping( HMODULE module ) DECLSPEC_HIDDEN;
-extern void init_file_redirects(void) DECLSPEC_HIDDEN;
-extern BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;
+extern void init_image_mapping( HMODULE module );
+extern void init_file_redirects(void);
+extern BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr );
 
-extern USHORT native_machine DECLSPEC_HIDDEN;
-extern USHORT current_machine DECLSPEC_HIDDEN;
-extern ULONG_PTR args_alignment DECLSPEC_HIDDEN;
-extern ULONG_PTR highest_user_address DECLSPEC_HIDDEN;
-extern ULONG_PTR default_zero_bits DECLSPEC_HIDDEN;
-extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock DECLSPEC_HIDDEN;
+extern USHORT native_machine;
+extern USHORT current_machine;
+extern ULONG_PTR args_alignment;
+extern ULONG_PTR highest_user_address;
+extern ULONG_PTR default_zero_bits;
+extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
 
 extern void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T );
 extern void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * );
@@ -245,8 +245,8 @@ static inline void put_iosb( IO_STATUS_BLOCK32 *io32, const IO_STATUS_BLOCK *io 
 }
 
 extern void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32,
-                                    const SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
+                                    const SECTION_IMAGE_INFORMATION *info );
 extern void put_vm_counters( VM_COUNTERS_EX32 *info32, const VM_COUNTERS_EX *info,
-                             ULONG size ) DECLSPEC_HIDDEN;
+                             ULONG size );
 
 #endif /* __WOW64_PRIVATE_H */

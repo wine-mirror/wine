@@ -334,7 +334,7 @@ static void call_raise_user_exception_dispatcher( ULONG code )
 
 
 /* based on RtlRaiseException: call NtRaiseException with context setup to return to caller */
-void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance ) DECLSPEC_HIDDEN;
+void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
 #ifdef __x86_64__
 __ASM_GLOBAL_FUNC( raise_exception,
                    "sub $0x28,%rsp\n\t"
