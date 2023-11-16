@@ -44,15 +44,15 @@ typedef NTSTATUS (WINAPI *syscall_thunk)( UINT *args );
 
 static const syscall_thunk syscall_thunks[] =
 {
-#define SYSCALL_ENTRY(func) wow64_ ## func,
-    ALL_SYSCALLS
+#define SYSCALL_ENTRY(id,name,args) wow64_ ## name,
+    ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 };
 
 static const char *syscall_names[] =
 {
-#define SYSCALL_ENTRY(func) #func,
-    ALL_SYSCALLS
+#define SYSCALL_ENTRY(id,name,args) #name,
+    ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 };
 

@@ -21,11 +21,11 @@
 #ifndef __WOW64_PRIVATE_H
 #define __WOW64_PRIVATE_H
 
-#include "syscall.h"
+#include "../ntdll/ntsyscalls.h"
 #include "struct32.h"
 
-#define SYSCALL_ENTRY(func) extern NTSTATUS WINAPI wow64_ ## func( UINT *args ) DECLSPEC_HIDDEN;
-ALL_SYSCALLS
+#define SYSCALL_ENTRY(id,name,_args) extern NTSTATUS WINAPI wow64_ ## name( UINT *args );
+ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 
 extern void init_image_mapping( HMODULE module ) DECLSPEC_HIDDEN;
