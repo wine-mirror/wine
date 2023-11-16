@@ -29,5 +29,5 @@
 @ stub StgOpenStorageEx
 @ stub StgOpenStorageOnILockBytes
 @ stub StgSetTimes
-@ stub WriteClassStg
+@ stdcall WriteClassStg(ptr ptr)
 @ stdcall WriteClassStm(ptr ptr)

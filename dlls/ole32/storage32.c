@@ -9026,22 +9026,6 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
   return S_FALSE;
 }
 
-/******************************************************************************
- *              WriteClassStg        [OLE32.@]
- *
- * This method will store the specified CLSID in the specified storage object
- */
-HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid)
-{
-  if(!pStg)
-    return E_INVALIDARG;
-
-  if(!rclsid)
-    return STG_E_INVALIDPOINTER;
-
-  return IStorage_SetClass(pStg, rclsid);
-}
-
 /***********************************************************************
  *    OleLoadFromStream (OLE32.@)
  *
