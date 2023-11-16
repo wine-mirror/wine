@@ -209,18 +209,16 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
         params->hStdOutput = startup->hStdOutput;
         params->hStdError  = startup->hStdError;
     }
-    else if (flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE))
-    {
-        params->hStdInput  = INVALID_HANDLE_VALUE;
-        params->hStdOutput = INVALID_HANDLE_VALUE;
-        params->hStdError  = INVALID_HANDLE_VALUE;
-    }
-    else
+    else if (!(flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
     {
         params->hStdInput  = NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
         params->hStdOutput = NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
         params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
     }
+
+    if (params->hStdInput  == INVALID_HANDLE_VALUE) params->hStdInput  = NULL;
+    if (params->hStdOutput == INVALID_HANDLE_VALUE) params->hStdOutput = NULL;
+    if (params->hStdError  == INVALID_HANDLE_VALUE) params->hStdError  = NULL;
 
     params->dwX             = startup->dwX;
     params->dwY             = startup->dwY;

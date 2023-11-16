@@ -3307,7 +3307,8 @@ struct std_handle_test
     unsigned args;
     /* output */
     DWORD expected;
-    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values, 8 dangling in StartupInfoW */
+    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values,
+                         8 dangling in StartupInfoW, 16 dangling in TEB */
     DWORD is_broken; /* Win7 broken file types */
 };
 
@@ -3340,8 +3341,8 @@ static void test_StdHandleInheritance(void)
         {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
 
         /* all others handles type behave as H_DISK */
-        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 8, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 24, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 16},
 
         /* all others handles type behave as H_DISK */
 /*10*/  {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
@@ -3368,8 +3369,8 @@ static void test_StdHandleInheritance(void)
         {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL},
 
         /* all others handles type behave as H_DISK */
-/*10*/  {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 8},
-        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+/*10*/  {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 24},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 16},
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                                       H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
@@ -3467,7 +3468,7 @@ static void test_StdHandleInheritance(void)
                     okChildHexInt("StartupInfoW", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
                 }
 
-                todo_wine
+                todo_wine_if(std_tests[i].is_todo & 16)
                 {
                 okChildHexInt("TEB", "hStdInput", (DWORD_PTR)hstd[0], std_tests[i].is_broken);
                 okChildHexInt("TEB", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
