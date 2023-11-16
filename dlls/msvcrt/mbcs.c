@@ -1118,7 +1118,7 @@ int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, si
  */
 int CDECL _mbsicoll_l(const unsigned char *str1, const unsigned char *str2, _locale_t locale)
 {
-    return _mbsnbicoll_l(str1, str2, -1, locale);
+    return _mbsnbicoll_l(str1, str2, INT_MAX, locale);
 }
 
 /*********************************************************************
@@ -1138,7 +1138,7 @@ int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
     return CompareStringA(get_mbcinfo()->mblcid, NORM_IGNORECASE,
             (const char*)str, -1, (const char*)cmp, -1)-CSTR_EQUAL;
 #else
-    return _mbsnbicoll_l(str, cmp, -1, NULL);
+    return _mbsnbicoll_l(str, cmp, INT_MAX, NULL);
 #endif
 }
 
@@ -1164,7 +1164,7 @@ int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, siz
  */
 int CDECL _mbscoll_l(const unsigned char *str1, const unsigned char *str2, _locale_t locale)
 {
-    return _mbsnbcoll_l(str1, str2, -1, locale);
+    return _mbsnbcoll_l(str1, str2, INT_MAX, locale);
 }
 
 /*********************************************************************
@@ -1184,7 +1184,7 @@ int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
     return CompareStringA(get_mbcinfo()->mblcid, 0,
             (const char*)str, -1, (const char*)cmp, -1)-CSTR_EQUAL;
 #else
-    return _mbsnbcoll_l(str, cmp, -1, NULL);
+    return _mbsnbcoll_l(str, cmp, INT_MAX, NULL);
 #endif
 }
 
