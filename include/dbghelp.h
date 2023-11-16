@@ -1266,6 +1266,8 @@ enum dhext_debug_format
 struct dhext_module_information
 {
     enum dhext_module_type      type;
+    unsigned                    is_wine_builtin : 1,
+                                is_virtual : 1;
     unsigned                    debug_format_bitmask;
 };
 

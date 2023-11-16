@@ -235,7 +235,7 @@ static BOOL WINAPI fetch_pe_module_info_cb(PCWSTR name, DWORD64 base, ULONG size
 
     if (!validate_addr64(base)) return FALSE;
 
-    if (pe_load_nt_header(dc->process->handle, base, &nth))
+    if (pe_load_nt_header(dc->process->handle, base, &nth, NULL))
         add_module(user, name, base, size,
                    nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum,
                    FALSE);

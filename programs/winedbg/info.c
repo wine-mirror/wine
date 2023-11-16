@@ -130,13 +130,13 @@ struct info_modules
     unsigned            num_used;
 };
 
-static const char* get_module_type(const struct info_module* im)
+static const char* get_module_type(const struct info_module* im, BOOL is_embedded)
 {
     switch (im->ext_module_info.type)
     {
     case DMT_ELF:       return "ELF";
     case DMT_MACHO:     return "Mach-O";
-    case DMT_PE:        return "PE";
+    case DMT_PE:        return !is_embedded && im->ext_module_info.is_wine_builtin ? "PE-Wine" : "PE";
     default:            return "----";
     }
 }
@@ -190,18 +190,23 @@ static const char* get_machine_str(DWORD machine)
 
 static void module_print_info(const struct info_module *module, BOOL is_embedded, BOOL multi_machine)
 {
+    char buffer[9];
+    snprintf(buffer, sizeof(buffer), "%s%s",
+             is_embedded ? "  \\-" : "",
+             get_module_type(module, is_embedded));
+
     if (multi_machine)
-        dbg_printf("%s%s\t%16I64x-%16I64x\t%s\t%-16s%s\n",
-                   is_embedded ? "  \\-" : "", get_module_type(module),
+        dbg_printf("%-8s%16I64x-%16I64x       %-16s%-16s%s\n",
+                   buffer,
                    module->mi.BaseOfImage,
                    module->mi.BaseOfImage + module->mi.ImageSize,
                    get_machine_str(module->mi.MachineType),
                    is_embedded ? "\\" : get_symtype_str(module), module->name);
     else
-        dbg_printf("%s%s\t%*.*I64x-%*.*I64x\t%-16s%s\n",
-                   is_embedded ? "  \\-" : "", get_module_type(module),
-                   ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
-                   ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
+        dbg_printf("%-8s%*I64x-%*I64x       %-16s%s\n",
+                   buffer,
+                   ADDRWIDTH, module->mi.BaseOfImage,
+                   ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
                    is_embedded ? "\\" : get_symtype_str(module), module->name);
 }
 
@@ -284,14 +289,14 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
     machine = im.modules[0].mi.MachineType;
 
     if (multi_machine)
-        dbg_printf("Module\tAddress\t\t\t\t\tMachine\tDebug info\tName (%d modules)\n", im.num_used);
+        dbg_printf("%-8s%-40s%-16s%-16sName (%d modules)\n", "Module", "Address", "Machine", "Debug info", im.num_used);
     else
     {
         unsigned same_machine = 0;
         for (i = 0; i < im.num_used; i++)
             if (machine == im.modules[i].mi.MachineType) same_machine++;
-        dbg_printf("Module\tAddress\t\t\t%sDebug info\tName (%d modules",
-                   ADDRWIDTH == 16 ? "\t\t" : "", same_machine);
+        dbg_printf("%-8s%-*s%-16sName (%d modules",
+                   "Module", ADDRWIDTH == 16 ? 40 : 24, "Address", "Debug info", same_machine);
         if (same_machine != im.num_used)
             dbg_printf(", %u for wow64 not listed", im.num_used - same_machine);
         dbg_printf(")\n");

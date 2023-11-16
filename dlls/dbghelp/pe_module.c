@@ -821,7 +821,8 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             if (!base) base = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
             if (!size) size = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, SizeOfImage);
 
-            module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
+            module = module_new(pcs, loaded_name, DMT_PE, modfmt->u.pe_info->fmap.u.pe.builtin, FALSE,
+                                base, size,
                                 modfmt->u.pe_info->fmap.u.pe.file_header.TimeDateStamp,
                                 PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, CheckSum),
                                 modfmt->u.pe_info->fmap.u.pe.file_header.Machine);
@@ -852,15 +853,27 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
  *		pe_load_nt_header
  *
  */
-BOOL pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth)
+BOOL pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth, BOOL* is_builtin)
 {
     IMAGE_DOS_HEADER    dos;
 
-    return ReadProcessMemory(hProc, (char*)(DWORD_PTR)base, &dos, sizeof(dos), NULL) &&
-        dos.e_magic == IMAGE_DOS_SIGNATURE &&
-        ReadProcessMemory(hProc, (char*)(DWORD_PTR)(base + dos.e_lfanew),
-                          nth, sizeof(*nth), NULL) &&
-        nth->Signature == IMAGE_NT_SIGNATURE;
+    if (!ReadProcessMemory(hProc, (char*)(DWORD_PTR)base, &dos, sizeof(dos), NULL) ||
+        dos.e_magic != IMAGE_DOS_SIGNATURE ||
+        !ReadProcessMemory(hProc, (char*)(DWORD_PTR)(base + dos.e_lfanew),
+                           nth, sizeof(*nth), NULL) ||
+        nth->Signature != IMAGE_NT_SIGNATURE)
+        return FALSE;
+    if (is_builtin)
+    {
+        if (dos.e_lfanew >= sizeof(dos) + sizeof(builtin_signature))
+        {
+            char sig[sizeof(builtin_signature)];
+            *is_builtin = ReadProcessMemory(hProc, (char*)(DWORD_PTR)base + sizeof(dos), sig, sizeof(sig), NULL) &&
+                !memcmp(sig, builtin_signature, sizeof(builtin_signature));
+        }
+        else *is_builtin = FALSE;
+    }
+    return TRUE;
 }
 
 /******************************************************************
@@ -875,11 +888,12 @@ struct module* pe_load_builtin_module(struct process* pcs, const WCHAR* name,
     if (base && pcs->dbg_hdr_addr)
     {
         IMAGE_NT_HEADERS    nth;
+        BOOL is_builtin;
 
-        if (pe_load_nt_header(pcs->handle, base, &nth))
+        if (pe_load_nt_header(pcs->handle, base, &nth, &is_builtin))
         {
             if (!size) size = nth.OptionalHeader.SizeOfImage;
-            module = module_new(pcs, name, DMT_PE, FALSE, base, size,
+            module = module_new(pcs, name, DMT_PE, is_builtin, FALSE, base, size,
                                 nth.FileHeader.TimeDateStamp,
                                 nth.OptionalHeader.CheckSum,
                                 nth.FileHeader.Machine);

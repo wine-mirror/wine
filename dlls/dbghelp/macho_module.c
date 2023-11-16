@@ -1509,7 +1509,8 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
         if (!modfmt) goto leave;
         if (!load_addr)
             load_addr = fmap.u.macho.segs_start;
-        macho_info->module = module_new(pcs, filename, DMT_MACHO, FALSE, load_addr,
+        macho_info->module = module_new(pcs, filename, DMT_MACHO, module_is_wine_host(filename, L".so"),
+                                        FALSE, load_addr,
                                         fmap.u.macho.segs_size, 0, calc_crc32(fmap.u.macho.handle),
                                         image_get_machine(pcs, load_addr));
         if (!macho_info->module)

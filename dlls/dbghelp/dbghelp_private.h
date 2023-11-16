@@ -440,7 +440,8 @@ struct module
     WCHAR                       modulename[64]; /* used for enumeration */
     struct module*              next;
     enum dhext_module_type	type : 16;
-    unsigned short              is_virtual : 1;
+    unsigned short              is_virtual : 1,
+                                is_wine_builtin : 1;
     struct cpu*                 cpu;
     DWORD64                     reloc_delta;
     WCHAR*                      real_path;
@@ -736,7 +737,7 @@ extern struct module*
 extern BOOL         module_get_debug(struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const WCHAR* name,
-                               enum dhext_module_type type, BOOL virtual,
+                               enum dhext_module_type type, BOOL builtin, BOOL virtual,
                                DWORD64 addr, DWORD64 size,
                                ULONG_PTR stamp, ULONG_PTR checksum, WORD machine);
 extern struct module*
@@ -778,7 +779,7 @@ extern const WCHAR* file_name(const WCHAR* str);
 extern const char* file_nameA(const char* str);
 
 /* pe_module.c */
-extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth);
+extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth, BOOL* is_builtin);
 extern struct module*
                     pe_load_native_module(struct process* pcs, const WCHAR* name,
                                           HANDLE hFile, DWORD64 base, DWORD size);

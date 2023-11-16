@@ -169,13 +169,13 @@ WCHAR *get_wine_loader_name(struct process *pcs)
     return altname;
 }
 
-static const char*      get_module_type(enum dhext_module_type type, BOOL virtual)
+static const char*      get_module_type(struct module* module)
 {
-    switch (type)
+    switch (module->type)
     {
-    case DMT_ELF: return virtual ? "Virtual ELF" : "ELF";
-    case DMT_PE: return virtual ? "Virtual PE" : "PE";
-    case DMT_MACHO: return virtual ? "Virtual Mach-O" : "Mach-O";
+    case DMT_ELF: return "ELF";
+    case DMT_MACHO: return "Mach-O";
+    case DMT_PE: return module->is_wine_builtin ? "PE (builtin)" : "PE";
     default: return "---";
     }
 }
@@ -184,7 +184,7 @@ static const char*      get_module_type(enum dhext_module_type type, BOOL virtua
  * Creates and links a new module to a process
  */
 struct module* module_new(struct process* pcs, const WCHAR* name,
-                          enum dhext_module_type type, BOOL virtual,
+                          enum dhext_module_type type, BOOL builtin, BOOL virtual,
                           DWORD64 mod_addr, DWORD64 size,
                           ULONG_PTR stamp, ULONG_PTR checksum, WORD machine)
 {
@@ -200,8 +200,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->next = NULL;
     *pmodule = module;
 
-    TRACE("=> %s %I64x-%I64x %s\n",
-          get_module_type(type, virtual), mod_addr, mod_addr + size, debugstr_w(name));
+    TRACE("=> %s%s%s %I64x-%I64x %s\n", virtual ? "virtual " : "", builtin ? "built-in " : "",
+          get_module_type(module), mod_addr, mod_addr + size, debugstr_w(name));
 
     pool_init(&module->pool, 65536);
 
@@ -235,7 +235,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
 
     module->reloc_delta       = 0;
     module->type              = type;
-    module->is_virtual        = virtual;
+    module->is_virtual        = !!virtual;
+    module->is_wine_builtin   = !!builtin;
     for (i = 0; i < DFI_LAST; i++) module->format_info[i] = NULL;
     module->sortlist_valid    = FALSE;
     module->sorttab_size      = 0;
@@ -948,7 +949,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Flags & SLMFLAG_VIRTUAL)
     {
         if (!wImageName) return 0;
-        module = module_new(pcs, wImageName, DMT_PE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
+        module = module_new(pcs, wImageName, DMT_PE, FALSE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
         if (!module) return 0;
         module->module.SymType = SymVirtual;
     }
@@ -1684,6 +1685,8 @@ BOOL WINAPI wine_get_module_information(HANDLE proc, DWORD64 base, struct dhext_
     if (!module) return FALSE;
 
     dhmi.type = module->type;
+    dhmi.is_virtual = module->is_virtual;
+    dhmi.is_wine_builtin = module->is_wine_builtin;
     dhmi.debug_format_bitmask = module->debug_format_bitmask;
     if ((module = module_get_container(pcs, module)))
     {

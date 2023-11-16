@@ -1083,7 +1083,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         lret = dwarf2_parse(module, module->reloc_delta, thunks, fmap);
         ret = ret || lret;
         /* add the thunks for native libraries */
-        if (module_is_wine_host(module->modulename, L".so"))
+        if (module->is_wine_builtin)
             elf_new_wine_thunks(module, ht_symtab, thunks);
     }
     /* add all the public symbols from symtab */
@@ -1238,7 +1238,8 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
         modfmt = HeapAlloc(GetProcessHeap(), 0,
                           sizeof(struct module_format) + sizeof(struct elf_module_info));
         if (!modfmt) return FALSE;
-        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE, modbase,
+        elf_info->module = module_new(pcs, filename, DMT_ELF,
+                                      module_is_wine_host(filename, L".so"), FALSE, modbase,
                                       fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle),
                                       elf_get_machine(fmap->u.elf.elfhdr.e_machine));
         if (!elf_info->module)
