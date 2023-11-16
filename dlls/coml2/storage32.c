@@ -50,6 +50,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
+/***********************************************************************
+ *              ReadClassStm (coml2.@)
+ */
+HRESULT WINAPI ReadClassStm(IStream *pStm, CLSID *pclsid)
+{
+    ULONG nbByte;
+    HRESULT res;
+
+    TRACE("(%p,%p)\n", pStm, pclsid);
+
+    if (!pStm || !pclsid)
+        return E_INVALIDARG;
+
+    /* clear the output args */
+    *pclsid = CLSID_NULL;
+
+    res = IStream_Read(pStm, pclsid, sizeof(CLSID), &nbByte);
+
+    if (FAILED(res))
+        return res;
+
+    if (nbByte != sizeof(CLSID))
+        return STG_E_READFAULT;
+    else
+        return S_OK;
+}
+
 enum stream_1ole_flags {
     OleStream_LinkedObject = 0x00000001,
     OleStream_Convert      = 0x00000004
