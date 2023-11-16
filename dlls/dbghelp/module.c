@@ -35,7 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 #define NOTE_GNU_BUILD_ID  3
 
-const WCHAR S_ElfW[] = L"<elf>";
 const WCHAR S_WineLoaderW[] = L"<wine-loader>";
 static const WCHAR * const ext[] = {L".acm", L".dll", L".drv", L".exe", L".ocx", L".vxd", NULL};
 
@@ -52,6 +51,20 @@ static int match_ext(const WCHAR* ptr, size_t len)
         return l;
     }
     return 0;
+}
+
+/* FIXME: implemented from checking on modulename (ie foo.dll.so)
+ * and Wine loader, but fails to identify unixlib.
+ * Would require a stronger tagging of ELF modules.
+ */
+BOOL module_is_wine_host(const WCHAR* module_name, const WCHAR* ext)
+{
+    size_t len, extlen;
+    if (!wcscmp(module_name, S_WineLoaderW)) return TRUE;
+    len = wcslen(module_name);
+    extlen = wcslen(ext);
+    return len > extlen && !wcsicmp(&module_name[len - extlen], ext) &&
+        match_ext(module_name, len - extlen);
 }
 
 static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
@@ -101,7 +114,7 @@ static BOOL is_wine_loader(const WCHAR *module)
 static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 {
     const WCHAR *ptr, *endptr;
-    size_t      len, l;
+    size_t      len;
 
     endptr = in + lstrlenW(in);
     endptr -= match_ext(in, endptr - in);
@@ -111,12 +124,6 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
     out[len] = '\0';
     if (is_wine_loader(out))
         lstrcpynW(out, S_WineLoaderW, size);
-    else
-    {
-        if (len > 3 && !wcsicmp(&out[len - 3], L".so") &&
-            (l = match_ext(out, len - 3)))
-            lstrcpyW(&out[len - l - 3], L"<elf>");
-    }
     while ((*out = towlower(*out))) out++;
 }
 

@@ -1082,11 +1082,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         }
         lret = dwarf2_parse(module, module->reloc_delta, thunks, fmap);
         ret = ret || lret;
-    }
-    if (wcsstr(module->modulename, S_ElfW) || !wcscmp(module->modulename, S_WineLoaderW))
-    {
         /* add the thunks for native libraries */
-        if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
+        if (module_is_wine_host(module->modulename, L".so"))
             elf_new_wine_thunks(module, ht_symtab, thunks);
     }
     /* add all the public symbols from symtab */

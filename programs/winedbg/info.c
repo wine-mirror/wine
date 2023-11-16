@@ -130,6 +130,17 @@ struct info_modules
     unsigned            num_used;
 };
 
+static const char* get_module_type(const struct info_module* im)
+{
+    switch (im->ext_module_info.type)
+    {
+    case DMT_ELF:       return "ELF";
+    case DMT_MACHO:     return "Mach-O";
+    case DMT_PE:        return "PE";
+    default:            return "----";
+    }
+}
+
 static const char* get_symtype_str(const struct info_module* im)
 {
     switch (im->mi.SymType)
@@ -180,13 +191,15 @@ static const char* get_machine_str(DWORD machine)
 static void module_print_info(const struct info_module *module, BOOL is_embedded, BOOL multi_machine)
 {
     if (multi_machine)
-        dbg_printf("%16I64x-%16I64x\t%s\t%-16s%s\n",
+        dbg_printf("%s%s\t%16I64x-%16I64x\t%s\t%-16s%s\n",
+                   is_embedded ? "  \\-" : "", get_module_type(module),
                    module->mi.BaseOfImage,
                    module->mi.BaseOfImage + module->mi.ImageSize,
                    get_machine_str(module->mi.MachineType),
                    is_embedded ? "\\" : get_symtype_str(module), module->name);
     else
-        dbg_printf("%*.*I64x-%*.*I64x\t%-16s%s\n",
+        dbg_printf("%s%s\t%*.*I64x-%*.*I64x\t%-16s%s\n",
+                   is_embedded ? "  \\-" : "", get_module_type(module),
                    ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
                    ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
                    is_embedded ? "\\" : get_symtype_str(module), module->name);
@@ -206,7 +219,9 @@ static int __cdecl module_compare(const void* p1, const void* p2)
 static inline BOOL module_is_container(const struct info_module *wmod_cntnr,
         const struct info_module *wmod_child)
 {
-    return wmod_cntnr->mi.BaseOfImage <= wmod_child->mi.BaseOfImage &&
+    return (wmod_cntnr->ext_module_info.type == DMT_ELF || wmod_cntnr->ext_module_info.type == DMT_MACHO) &&
+        (wmod_child->ext_module_info.type == DMT_PE) &&
+        wmod_cntnr->mi.BaseOfImage <= wmod_child->mi.BaseOfImage &&
         wmod_cntnr->mi.BaseOfImage + wmod_cntnr->mi.ImageSize >=
         wmod_child->mi.BaseOfImage + wmod_child->mi.ImageSize;
 }
@@ -288,33 +303,25 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
             (base < im.modules[i].mi.BaseOfImage || base >= im.modules[i].mi.BaseOfImage + im.modules[i].mi.ImageSize))
             continue;
         if (!multi_machine && machine != im.modules[i].mi.MachineType) continue;
-        if (strstr(im.modules[i].name, "<elf>"))
+        if (im.modules[i].ext_module_info.type == DMT_ELF || im.modules[i].ext_module_info.type == DMT_MACHO)
         {
-            dbg_printf("ELF\t");
             module_print_info(&im.modules[i], FALSE, multi_machine);
             /* print all modules embedded in this one */
             for (j = 0; j < im.num_used; j++)
             {
-                if (!strstr(im.modules[j].name, "<elf>") && module_is_container(&im.modules[i], &im.modules[j]))
-                {
-                    dbg_printf("  \\-PE\t");
+                if (module_is_container(&im.modules[i], &im.modules[j]))
                     module_print_info(&im.modules[j], TRUE, multi_machine);
-                }
             }
         }
         else
         {
             /* check module is not embedded in another module */
-            for (j = 0; j < im.num_used; j++) 
+            for (j = 0; j < im.num_used; j++)
             {
-                if (strstr(im.modules[j].name, "<elf>") && module_is_container(&im.modules[j], &im.modules[i]))
+                if (module_is_container(&im.modules[j], &im.modules[i]))
                     break;
             }
             if (j < im.num_used) continue;
-            if (strstr(im.modules[i].name, ".so") || strchr(im.modules[i].name, '<'))
-                dbg_printf("ELF\t");
-            else
-                dbg_printf("PE\t");
             module_print_info(&im.modules[i], FALSE, multi_machine);
         }
         num_printed++;
