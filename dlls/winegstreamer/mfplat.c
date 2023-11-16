@@ -25,6 +25,7 @@
 #include "initguid.h"
 #include "d3d9types.h"
 #include "mfapi.h"
+#include "mmreg.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -633,23 +634,6 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *sub
 
 static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
-    /* Audio specific config is stored at after HEAACWAVEINFO in MF_MT_USER_DATA
-     * https://docs.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-heaacwaveformat
-     */
-    typedef struct
-    {
-        WORD wPayloadType;
-        WORD wAudioProfileLevelIndication;
-        WORD wStructType;
-        WORD wReserved1;
-        DWORD dwReserved2;
-    } HEAACWAVEINFO;
-    typedef struct
-    {
-        HEAACWAVEINFO wfInfo;
-        BYTE pbAudioSpecificConfig[1];
-    } HEAACWAVEFORMAT;
-
     BYTE buffer[64];
     HEAACWAVEFORMAT *user_data = (HEAACWAVEFORMAT *)buffer;
     UINT32 codec_data_size;

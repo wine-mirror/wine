@@ -645,6 +645,22 @@ typedef struct mpeg1waveformat_tag {
 typedef MPEG1WAVEFORMAT *PMPEG1WAVEFORMAT,
 	*NPMPEG1WAVEFORMAT, *LPMPEG1WAVEFORMAT;
 
+typedef struct heaacwaveinfo_tag
+{
+    WAVEFORMATEX wfx;
+    WORD wPayloadType;
+    WORD wAudioProfileLevelIndication;
+    WORD wStructType;
+    WORD wReserved1;
+    DWORD dwReserved2;
+} HEAACWAVEINFO, *PHEAACWAVEINFO;
+
+typedef struct heaacwaveformat_tag
+{
+    HEAACWAVEINFO wfInfo;
+    BYTE pbAudioSpecificConfig[1];
+} HEAACWAVEFORMAT, *PHEAACWAVEFORMAT;
+
 #define	ACM_MPEG_LAYER1		0x0001
 #define	ACM_MPEG_LAYER2		0x0002
 #define	ACM_MPEG_LAYER3		0x0004
