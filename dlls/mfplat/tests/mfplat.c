@@ -6985,11 +6985,13 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
         { WAVE_FORMAT_WMASPDIF },
     };
 
-    UINT8 buff[MPEGLAYER3_WFX_EXTRA_BYTES];
+    UINT8 buff[1024];
     WAVEFORMATEXTENSIBLE waveformatext;
     MPEGLAYER3WAVEFORMAT mp3format;
+    HEAACWAVEFORMAT aacformat;
     IMFMediaType *mediatype;
     unsigned int i, size;
+    UINT32 value;
     HRESULT hr;
 
     hr = MFCreateMediaType(&mediatype);
@@ -7041,6 +7043,47 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(size == mp3format.wfx.cbSize, "Unexpected size %u.\n", size);
     ok(!memcmp(buff, (WAVEFORMATEX *)&mp3format + 1, size), "Unexpected user data.\n");
+
+    /* HEAACWAVEFORMAT */
+    aacformat.wfInfo.wfx.wFormatTag = WAVE_FORMAT_MPEG_HEAAC;
+    aacformat.wfInfo.wfx.nChannels = 2;
+    aacformat.wfInfo.wfx.nSamplesPerSec = 44100;
+    aacformat.wfInfo.wfx.nAvgBytesPerSec = 16000;
+    aacformat.wfInfo.wfx.nBlockAlign = 1;
+    aacformat.wfInfo.wfx.wBitsPerSample = 0;
+    aacformat.wfInfo.wPayloadType = 2;
+    aacformat.wfInfo.wAudioProfileLevelIndication = 1;
+    aacformat.pbAudioSpecificConfig[0] = 0xcd;
+
+    /* test with invalid format size */
+    aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - 2 - sizeof(WAVEFORMATEX);
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&aacformat, sizeof(aacformat) - 2);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - sizeof(WAVEFORMATEX);
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&aacformat, sizeof(aacformat));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    validate_media_type(mediatype, &aacformat.wfInfo.wfx);
+
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, &value);
+    todo_wine
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    todo_wine
+    ok(value == aacformat.wfInfo.wAudioProfileLevelIndication, "Unexpected AAC_AUDIO_PROFILE_LEVEL_INDICATION %u.\n", value);
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, &value);
+    todo_wine
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    todo_wine
+    ok(value == aacformat.wfInfo.wPayloadType, "Unexpected AAC_PAYLOAD_TYPE %u.\n", value);
+
+    hr = IMFMediaType_GetBlob(mediatype, &MF_MT_USER_DATA, buff, sizeof(buff), &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(size == aacformat.wfInfo.wfx.cbSize, "Unexpected size %u.\n", size);
+    ok(!memcmp(buff, (WAVEFORMATEX *)&aacformat + 1, size), "Unexpected user data.\n");
 
     IMFMediaType_Release(mediatype);
 }
