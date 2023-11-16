@@ -6947,6 +6947,11 @@ static void validate_media_type(IMFMediaType *mediatype, const WAVEFORMATEX *for
     }
     else
         ok(FAILED(hr), "Unexpected ALL_SAMPLES_INDEPENDENT.\n");
+
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_FIXED_SIZE_SAMPLES, &value);
+    ok(FAILED(hr), "Unexpected FIXED_SIZE_SAMPLES.\n");
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_COMPRESSED, &value);
+    ok(FAILED(hr), "Unexpected COMPRESSED.\n");
 }
 
 static void test_MFInitMediaTypeFromWaveFormatEx(void)
