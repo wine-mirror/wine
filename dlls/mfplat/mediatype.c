@@ -3124,6 +3124,15 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
         mediatype_set_uint32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
     }
 
+    if (IsEqualGUID(&subtype, &MFAudioFormat_AAC))
+    {
+        HEAACWAVEINFO *info = CONTAINING_RECORD(format, HEAACWAVEINFO, wfx);
+        if (format->cbSize < sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX))
+            return E_INVALIDARG;
+        mediatype_set_uint32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, info->wAudioProfileLevelIndication, &hr);
+        mediatype_set_uint32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, info->wPayloadType, &hr);
+    }
+
     if (format->cbSize && format->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
         mediatype_set_blob(mediatype, &MF_MT_USER_DATA, (const UINT8 *)(format + 1), format->cbSize, &hr);
 

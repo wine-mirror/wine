@@ -7059,7 +7059,6 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     /* test with invalid format size */
     aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - 2 - sizeof(WAVEFORMATEX);
     hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&aacformat, sizeof(aacformat) - 2);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - sizeof(WAVEFORMATEX);
@@ -7070,15 +7069,11 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
 
     value = 0xdeadbeef;
     hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, &value);
-    todo_wine
     ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-    todo_wine
     ok(value == aacformat.wfInfo.wAudioProfileLevelIndication, "Unexpected AAC_AUDIO_PROFILE_LEVEL_INDICATION %u.\n", value);
     value = 0xdeadbeef;
     hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, &value);
-    todo_wine
     ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-    todo_wine
     ok(value == aacformat.wfInfo.wPayloadType, "Unexpected AAC_PAYLOAD_TYPE %u.\n", value);
 
     hr = IMFMediaType_GetBlob(mediatype, &MF_MT_USER_DATA, buff, sizeof(buff), &size);
