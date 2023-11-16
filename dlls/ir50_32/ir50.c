@@ -252,7 +252,7 @@ static LRESULT IV50_Decompress( IMFTransform *decoder, ICDECOMPRESS *icd, DWORD 
     mft_buf.pSample = out_sample;
 
     hr = IMFTransform_ProcessOutput( decoder, 0, 1, &mft_buf, &mft_status );
-    if ( SUCCEEDED(hr) && (mft_status & MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE) )
+    if ( hr == MF_E_TRANSFORM_STREAM_CHANGE )
         hr = IMFTransform_ProcessOutput( decoder, 0, 1, &mft_buf, &mft_status );
 
     if ( SUCCEEDED(hr) )
