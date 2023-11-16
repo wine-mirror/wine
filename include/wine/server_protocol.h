@@ -844,6 +844,7 @@ typedef struct
     unsigned char  contains_code : 1;
     unsigned char  wine_builtin : 1;
     unsigned char  wine_fakedll : 1;
+    unsigned char  padding : 5;
     unsigned char  image_flags;
     unsigned int   loader_flags;
     unsigned int   header_size;
@@ -6506,7 +6507,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 785
+#define SERVER_PROTOCOL_VERSION 786
 
 /* ### protocol_version end ### */
 

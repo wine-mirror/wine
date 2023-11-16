@@ -842,6 +842,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
+    mapping->image.padding       = 0;
     mapping->image.map_addr      = get_fd_map_address( mapping->fd );
     mapping->image.image_charact = nt.FileHeader.Characteristics;
     mapping->image.machine       = nt.FileHeader.Machine;
