@@ -2889,9 +2889,8 @@ size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
  */
 unsigned char* CDECL _mbsrev_l(unsigned char* str, _locale_t locale)
 {
-    int i, len;
-    unsigned char *p, *temp;
     pthreadmbcinfo mbcinfo;
+    unsigned char *p, tmp;
 
     if (!MSVCRT_CHECK_PMT(str))
         return NULL;
@@ -2904,44 +2903,25 @@ unsigned char* CDECL _mbsrev_l(unsigned char* str, _locale_t locale)
     if (!mbcinfo->ismbcodepage)
         return u__strrev(str);
 
-    len = _mbslen_l(str, locale);
-    temp = malloc(len * 2);
-    if (!temp)
-        return str;
-
-    /* unpack multibyte string to temp buffer */
-    p = str;
-    for (i = 0; i < len; i++)
+    for (p = str; *p; p++)
     {
         if (_ismbblead_l(*p, locale))
         {
-            temp[i * 2] = *p++;
-            temp[i * 2 + 1] = *p++;
-        }
-        else
-        {
-            temp[i * 2] = *p++;
-            temp[i * 2 + 1] = 0;
-        }
-    }
-
-    /* repack it in the reverse order */
-    p = str;
-    for (i = len - 1; i >= 0; i--)
-    {
-        if (_ismbblead_l(temp[i * 2], locale))
-        {
-            *p++ = temp[i * 2];
-            *p++ = temp[i * 2 + 1];
-        }
-        else
-        {
-            *p++ = temp[i * 2];
+            if (p[1])
+            {
+                tmp = p[0];
+                p[0] = p[1];
+                p[1] = tmp;
+                p++;
+            }
+            else
+            {
+                /* drop trailing lead char */
+                p[0] = 0;
+            }
         }
     }
-
-    free(temp);
-    return str;
+    return u__strrev(str);
 }
 
 /*********************************************************************
