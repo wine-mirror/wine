@@ -530,12 +530,9 @@ static void video_presenter_sample_present(struct video_presenter *presenter, IM
             WARN("Failed to get a backbuffer, hr %#lx.\n", hr);
     }
 
-    EnterCriticalSection(&queue->cs);
-    if (queue->last_presented)
-        IMFSample_Release(queue->last_presented);
-    queue->last_presented = sample;
-    IMFSample_AddRef(queue->last_presented);
-    LeaveCriticalSection(&queue->cs);
+    IMFSample_AddRef(sample);
+    if ((sample = InterlockedExchangePointer((void **)&queue->last_presented, sample)))
+        IMFSample_Release(sample);
 
     IDirect3DSurface9_Release(surface);
 }
@@ -752,6 +749,9 @@ static HRESULT video_presenter_start_streaming(struct video_presenter *presenter
 
 static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
 {
+    struct sample_queue *queue = &presenter->thread.queue;
+    IMFSample *sample;
+
     if (!presenter->thread.hthread)
         return S_OK;
 
@@ -762,8 +762,9 @@ static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
 
     TRACE("Terminated streaming thread tid %#lx.\n", presenter->thread.tid);
 
-    if (presenter->thread.queue.last_presented)
-        IMFSample_Release(presenter->thread.queue.last_presented);
+    if ((sample = InterlockedExchangePointer((void **)&queue->last_presented, NULL)))
+        IMFSample_Release(sample);
+
     video_presenter_sample_queue_free(presenter);
     memset(&presenter->thread, 0, sizeof(presenter->thread));
     video_presenter_set_allocator_callback(presenter, NULL);
@@ -1488,6 +1489,7 @@ static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayCon
         BYTE **dib, DWORD *dib_size, LONGLONG *timestamp)
 {
     struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    struct sample_queue *queue = &presenter->thread.queue;
     IDirect3DSurface9 *readback = NULL, *surface;
     D3DSURFACE_DESC surface_desc;
     D3DLOCKED_RECT mapped_rect;
@@ -1500,10 +1502,7 @@ static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayCon
 
     EnterCriticalSection(&presenter->cs);
 
-    sample = presenter->thread.queue.last_presented;
-    presenter->thread.queue.last_presented = NULL;
-
-    if (!sample)
+    if (!(sample = InterlockedExchangePointer((void **)&queue->last_presented, NULL)))
     {
         hr = MF_E_INVALIDREQUEST;
     }
