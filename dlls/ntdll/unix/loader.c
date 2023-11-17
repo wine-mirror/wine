@@ -945,7 +945,6 @@ NTSTATUS ntdll_init_syscalls( SYSTEM_SERVICE_TABLE *table, void **dispatcher )
         NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
     }
     info->dispatcher = __wine_syscall_dispatcher;
-    memcpy( table->ArgumentTable, (USHORT *)(info + 1) + info->limit, table->ServiceLimit );
     KeServiceDescriptorTable[info->id] = *table;
     return STATUS_SUCCESS;
 }

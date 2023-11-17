@@ -47,7 +47,16 @@ static void * const syscalls[] =
 #undef SYSCALL_ENTRY
 };
 
-static BYTE arguments[ARRAY_SIZE(syscalls)];
+static BYTE arguments[ARRAY_SIZE(syscalls)] =
+{
+#define SYSCALL_ENTRY(id,name,args) args,
+#ifdef _WIN64
+    ALL_SYSCALLS64
+#else
+    ALL_SYSCALLS32
+#endif
+#undef SYSCALL_ENTRY
+};
 
 static SYSTEM_SERVICE_TABLE syscall_table =
 {
