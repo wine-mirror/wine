@@ -5240,20 +5240,15 @@ static void test_startupinfo( void )
     startup_afterW.hStdInput = (HANDLE)0x43210000;
     GetStartupInfoW(&startup_afterW);
 
-    todo_wine
     ok(~startup_beforeW.dwX == startup_afterW.dwX, "Unexpected field value\n");
     if (startup_beforeW.dwFlags & STARTF_USESTDHANDLES)
     {
-        todo_wine
         ok(params->hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
-        todo_wine
         ok((HANDLE)~(DWORD_PTR)startup_beforeW.hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
     }
     else
     {
-        todo_wine
         ok(startup_beforeW.hStdInput == (HANDLE)0x12340000, "Unexpected field value\n");
-        todo_wine
         ok(startup_afterW.hStdInput == (HANDLE)0x43210000, "Unexpected field value\n");
     }
 
@@ -5263,11 +5258,9 @@ static void test_startupinfo( void )
     startup_afterW.hStdInput = (HANDLE)0x43210000;
     GetStartupInfoW(&startup_afterW);
 
-    todo_wine
     ok((startup_beforeW.dwFlags ^ STARTF_USESTDHANDLES) == startup_afterW.dwFlags, "Unexpected field value\n");
     if (startup_afterW.dwFlags & STARTF_USESTDHANDLES)
     {
-        todo_wine
         ok(params->hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
         ok(startup_afterW.hStdInput != (HANDLE)0x43210000, "Unexpected field value\n");
     }
