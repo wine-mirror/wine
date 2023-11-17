@@ -29,7 +29,7 @@
 #include "macdrv.h"
 #include "winuser.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
+WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 
 
 /* only for use on sanitized BITMAPINFO structures */
