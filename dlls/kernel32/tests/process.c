@@ -5197,6 +5197,96 @@ static void test_services_exe(void)
     ok(services_session_id == 0, "got services.exe SessionId %lu\n", services_session_id);
 }
 
+static void test_startupinfo( void )
+{
+    STARTUPINFOA startup_beforeA, startup_afterA;
+    STARTUPINFOW startup_beforeW, startup_afterW;
+    RTL_USER_PROCESS_PARAMETERS *params;
+
+    params = RtlGetCurrentPeb()->ProcessParameters;
+
+    startup_beforeA.hStdInput = (HANDLE)0x56780000;
+    GetStartupInfoA(&startup_beforeA);
+
+    startup_beforeW.hStdInput = (HANDLE)0x12340000;
+    GetStartupInfoW(&startup_beforeW);
+
+    /* change a couple of fields in PEB */
+    params->dwX = ~params->dwX;
+    params->hStdInput = (HANDLE)~(DWORD_PTR)params->hStdInput;
+
+    startup_afterA.hStdInput = (HANDLE)0x87650000;
+    GetStartupInfoA(&startup_afterA);
+
+    /* wharf... ansi version is cached... */
+    ok(startup_beforeA.dwX == startup_afterA.dwX, "Unexpected field value\n");
+    ok(startup_beforeA.dwFlags == startup_afterA.dwFlags, "Unexpected field value\n");
+    ok(startup_beforeA.hStdInput == startup_afterA.hStdInput, "Unexpected field value\n");
+
+    if (startup_beforeW.dwFlags & STARTF_USESTDHANDLES)
+    {
+        ok(startup_beforeA.hStdInput != NULL && startup_beforeA.hStdInput != INVALID_HANDLE_VALUE,
+           "Unexpected field value\n");
+        ok(startup_afterA.hStdInput != NULL && startup_afterA.hStdInput != INVALID_HANDLE_VALUE,
+           "Unexpected field value\n");
+    }
+    else
+    {
+        ok(startup_beforeA.hStdInput == INVALID_HANDLE_VALUE, "Unexpected field value %p\n", startup_beforeA.hStdInput);
+        ok(startup_afterA.hStdInput == INVALID_HANDLE_VALUE, "Unexpected field value %p\n", startup_afterA.hStdInput);
+    }
+
+    /* ... while unicode is not */
+    startup_afterW.hStdInput = (HANDLE)0x43210000;
+    GetStartupInfoW(&startup_afterW);
+
+    todo_wine
+    ok(~startup_beforeW.dwX == startup_afterW.dwX, "Unexpected field value\n");
+    if (startup_beforeW.dwFlags & STARTF_USESTDHANDLES)
+    {
+        todo_wine
+        ok(params->hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
+        todo_wine
+        ok((HANDLE)~(DWORD_PTR)startup_beforeW.hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
+    }
+    else
+    {
+        todo_wine
+        ok(startup_beforeW.hStdInput == (HANDLE)0x12340000, "Unexpected field value\n");
+        todo_wine
+        ok(startup_afterW.hStdInput == (HANDLE)0x43210000, "Unexpected field value\n");
+    }
+
+    /* check impact of STARTF_USESTDHANDLES bit */
+    params->dwFlags ^= STARTF_USESTDHANDLES;
+
+    startup_afterW.hStdInput = (HANDLE)0x43210000;
+    GetStartupInfoW(&startup_afterW);
+
+    todo_wine
+    ok((startup_beforeW.dwFlags ^ STARTF_USESTDHANDLES) == startup_afterW.dwFlags, "Unexpected field value\n");
+    if (startup_afterW.dwFlags & STARTF_USESTDHANDLES)
+    {
+        todo_wine
+        ok(params->hStdInput == startup_afterW.hStdInput, "Unexpected field value\n");
+        ok(startup_afterW.hStdInput != (HANDLE)0x43210000, "Unexpected field value\n");
+    }
+    else
+    {
+        todo_wine
+        ok(startup_afterW.hStdInput == (HANDLE)0x43210000, "Unexpected field value\n");
+    }
+
+    /* FIXME add more tests to check whether the dwFlags controls the returned
+     * values (as done for STARTF_USESTDHANDLES) in unicode case.
+     */
+
+    /* reset the modified fields in PEB */
+    params->dwX = ~params->dwX;
+    params->hStdInput = (HANDLE)~(DWORD_PTR)params->hStdInput;
+    params->dwFlags ^= STARTF_USESTDHANDLES;
+}
+
 START_TEST(process)
 {
     HANDLE job, hproc, h, h2;
@@ -5325,6 +5415,7 @@ START_TEST(process)
     test_handle_list_attribute(FALSE, NULL, NULL);
     test_dead_process();
     test_services_exe();
+    test_startupinfo();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
