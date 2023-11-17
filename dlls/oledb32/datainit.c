@@ -780,18 +780,30 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 /* returns character length of string representation */
 static int get_propvalue_length(DBPROP *prop)
 {
+    VARIANT *v = &prop->vValue;
     VARIANT str;
     HRESULT hr;
+    int length;
 
-    if (V_VT(&prop->vValue) == VT_BSTR) return SysStringLen(V_BSTR(&prop->vValue));
+    if (V_VT(v) == VT_BSTR)
+    {
+        length = SysStringLen(V_BSTR(v));
+        /* Quotes values with '\"' if the value contains semicolons */
+        if (wcsstr(V_BSTR(v), L";"))
+            length += 2;
+        return length;
+    }
 
     VariantInit(&str);
-    hr = VariantChangeType(&str, &prop->vValue, 0, VT_BSTR);
+    hr = VariantChangeType(&str, v, 0, VT_BSTR);
     if (hr == S_OK)
     {
-        int len = SysStringLen(V_BSTR(&str));
+        length = SysStringLen(V_BSTR(&str));
+        /* Quotes values with '\"' if the value contains semicolons */
+        if (wcsstr(V_BSTR(&str), L";"))
+            length += 2;
         VariantClear(&str);
-        return len;
+        return length;
     }
 
     return 0;
@@ -805,7 +817,16 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
 
     if (V_VT(v) == VT_BSTR)
     {
-        lstrcatW(str, V_BSTR(v));
+        if (wcsstr(V_BSTR(v), L";"))
+        {
+            lstrcatW(str, L"\"");
+            lstrcatW(str, V_BSTR(v));
+            lstrcatW(str, L"\"");
+        }
+        else
+        {
+            lstrcatW(str, V_BSTR(v));
+        }
         return;
     }
 
@@ -813,7 +834,16 @@ static void write_propvalue_str(WCHAR *str, DBPROP *prop)
     hr = VariantChangeType(&vstr, v, VARIANT_ALPHABOOL, VT_BSTR);
     if (hr == S_OK)
     {
-        lstrcatW(str, V_BSTR(&vstr));
+        if (wcsstr(V_BSTR(&vstr), L";"))
+        {
+            lstrcatW(str, L"\"");
+            lstrcatW(str, V_BSTR(&vstr));
+            lstrcatW(str, L"\"");
+        }
+        else
+        {
+            lstrcatW(str, V_BSTR(&vstr));
+        }
         VariantClear(&vstr);
     }
 }
