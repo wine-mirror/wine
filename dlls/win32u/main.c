@@ -47,11 +47,18 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
+    HMODULE ntdll;
+    void **dispatcher_ptr;
+    const UNICODE_STRING ntdll_name = RTL_CONSTANT_STRING( L"ntdll.dll" );
+
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
         LdrDisableThreadCalloutsForDll( inst );
         if (__wine_syscall_dispatcher) break;  /* already set through Wow64Transition */
+        LdrGetDllHandle( NULL, 0, &ntdll_name, &ntdll );
+        dispatcher_ptr = RtlFindExportedRoutineByName( ntdll, "__wine_syscall_dispatcher" );
+        __wine_syscall_dispatcher = *dispatcher_ptr;
         if (!NtQueryVirtualMemory( GetCurrentProcess(), inst, MemoryWineUnixFuncs,
                                    &win32u_handle, sizeof(win32u_handle), NULL ))
             __wine_unix_call( win32u_handle, 0, &__wine_syscall_dispatcher );
