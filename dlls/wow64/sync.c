@@ -786,21 +786,63 @@ NTSTATUS WINAPI wow64_NtQueryDirectoryObject( UINT *args )
     DIRECTORY_BASIC_INFORMATION *info;
     ULONG size = size32 + 2 * sizeof(*info) - 2 * sizeof(*info32);
 
-    if (!single_entry) FIXME( "not implemented\n" );
     info = Wow64AllocateTemp( size );
     status = NtQueryDirectoryObject( handle, info, size, single_entry, restart, context, &retsize );
-    if (!status)
+    if (NT_SUCCESS(status))
     {
-        info32->ObjectName.Buffer            = PtrToUlong( info32 + 2 );
-        info32->ObjectName.Length            = info->ObjectName.Length;
-        info32->ObjectName.MaximumLength     = info->ObjectName.MaximumLength;
-        info32->ObjectTypeName.Buffer        = info32->ObjectName.Buffer + info->ObjectName.MaximumLength;
-        info32->ObjectTypeName.Length        = info->ObjectTypeName.Length;
-        info32->ObjectTypeName.MaximumLength = info->ObjectTypeName.MaximumLength;
-        memset( info32 + 1, 0, sizeof(*info32) );
-        size = info->ObjectName.MaximumLength + info->ObjectTypeName.MaximumLength;
-        memcpy( info32 + 2, info + 2, size );
-        if (retlen) *retlen = 2 * sizeof(*info32) + size;
+        unsigned int i, count, used_size, used_count, strpool_head, validsize = min( size, retsize );
+
+        used_count = 0;
+        used_size = sizeof(*info32);  /* "null terminator" entry */
+        for (count = 0;
+             sizeof(*info) * (count + 1) <= validsize && info[count].ObjectName.MaximumLength;
+             count++)
+        {
+            unsigned int entry_size = sizeof(*info32) +
+                                      info[count].ObjectName.MaximumLength +
+                                      info[count].ObjectTypeName.MaximumLength;
+
+            if (used_size + entry_size <= size32)
+            {
+                used_count++;
+                used_size += entry_size;
+            }
+        }
+
+        if (used_count != count)
+        {
+            ERR( "64bit dir list (%u+%lu bytes, %u entries) truncated for 32bit buffer (%u+%lu bytes, %u entries)\n",
+                 validsize, size - validsize, count, used_size, size32 - min( size32, used_size ), used_count );
+
+            if (!status) status = STATUS_MORE_ENTRIES;
+            *context -= count - used_count;
+        }
+
+        /*
+         * Avoid making strpool_head a pointer, since it can point beyond end
+         * of the buffer.  Out-of-bounds pointers trigger undefined behavior
+         * just by existing, even when they are never dereferenced.
+         */
+        strpool_head = sizeof(*info32) * (used_count + 1);  /* after the "null terminator" entry */
+        for (i = 0; i < used_count; i++)
+        {
+            info32[i].ObjectName.Buffer = PtrToUlong( (char *)info32 + strpool_head );
+            info32[i].ObjectName.Length = info[i].ObjectName.Length;
+            info32[i].ObjectName.MaximumLength = info[i].ObjectName.MaximumLength;
+            memcpy( (char *)info32 + strpool_head, info[i].ObjectName.Buffer, info[i].ObjectName.MaximumLength );
+            strpool_head += info[i].ObjectName.MaximumLength;
+
+            info32[i].ObjectTypeName.Buffer = PtrToUlong( (char *)info32 + strpool_head );
+            info32[i].ObjectTypeName.Length = info[i].ObjectTypeName.Length;
+            info32[i].ObjectTypeName.MaximumLength = info[i].ObjectTypeName.MaximumLength;
+            memcpy( (char *)info32 + strpool_head, info[i].ObjectTypeName.Buffer, info[i].ObjectTypeName.MaximumLength );
+            strpool_head += info[i].ObjectTypeName.MaximumLength;
+        }
+
+        if (size32 >= sizeof(*info32))
+            memset( &info32[used_count], 0, sizeof(info32[used_count]) );
+
+        if (retlen) *retlen = strpool_head;
     }
     else if (retlen && status == STATUS_BUFFER_TOO_SMALL)
         *retlen = retsize - 2 * sizeof(*info) + 2 * sizeof(*info32);
