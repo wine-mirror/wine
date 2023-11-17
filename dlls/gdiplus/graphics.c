@@ -5179,8 +5179,8 @@ GpStatus gdip_format_string(HDC hdc,
     if (!format)
         format = &default_drawstring_format;
 
-    nwidth = rect->Width;
-    nheight = rect->Height;
+    nwidth = (int)(rect->Width + 0.005f);
+    nheight = (int)(rect->Height + 0.005f);
     if (ignore_empty_clip)
     {
         if (!nwidth) nwidth = INT_MAX;

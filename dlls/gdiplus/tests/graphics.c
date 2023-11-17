@@ -4770,7 +4770,7 @@ static void test_measure_string(void)
 
     set_rect_empty(&rect);
     rect.Height = height;
-    rect.Width = width_2 - 0.05;
+    rect.Width = width_2 - 0.006;
     set_rect_empty(&bounds);
     status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
     expect(Ok, status);
@@ -4779,6 +4779,19 @@ static void test_measure_string(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     expectf_(width_1, bounds.Width, 0.01);
+    expectf(height, bounds.Height);
+
+    set_rect_empty(&rect);
+    rect.Height = height;
+    rect.Width = width_2 - 0.004;
+    set_rect_empty(&bounds);
+    status = GdipMeasureString(graphics, string, -1, font, &rect, format, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(2, glyphs);
+    expect(1, lines);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(width_2, bounds.Width, 0.01);
     expectf(height, bounds.Height);
 
     /* Default (Near) alignment */
