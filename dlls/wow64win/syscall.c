@@ -35,19 +35,19 @@ static void * const win32_syscalls[] =
 #undef SYSCALL_ENTRY
 };
 
-static const char * const win32_syscall_names[] =
+static BYTE arguments[ARRAY_SIZE(win32_syscalls)] =
 {
-#define SYSCALL_ENTRY(id,name,args) #name,
+#define SYSCALL_ENTRY(id,name,args) args,
     ALL_SYSCALLS32
 #undef SYSCALL_ENTRY
 };
 
-SYSTEM_SERVICE_TABLE sdwhwin32 =
+const SYSTEM_SERVICE_TABLE sdwhwin32 =
 {
     (ULONG_PTR *)win32_syscalls,
-    (ULONG_PTR *)win32_syscall_names,
+    NULL,
     ARRAY_SIZE(win32_syscalls),
-    NULL
+    arguments
 };
 
 
