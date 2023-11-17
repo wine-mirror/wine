@@ -1396,6 +1396,9 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
     wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
     wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
 
+    if (main_image_info.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        return;
+
     /* mark tty handles for kernelbase, see init_console */
     if (params->hStdInput && isatty(0))
     {
@@ -1414,7 +1417,7 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
         params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput | 1);
         output_fd = 1;
     }
-    if (!params->ConsoleHandle && main_image_info.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    if (!params->ConsoleHandle)
         params->ConsoleHandle = CONSOLE_HANDLE_SHELL_NO_WINDOW;
 
     if (output_fd != -1)

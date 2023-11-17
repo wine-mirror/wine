@@ -401,6 +401,7 @@ static struct
     WCHAR            *title;
     DWORD             creation_flags;
     USHORT            machine;
+    BOOL              cp_inherit;
 } opts;
 
 static void parse_command_line( int argc, WCHAR *argv[] )
@@ -416,6 +417,7 @@ static void parse_command_line( int argc, WCHAR *argv[] )
     /* Dunno what these mean, but it looks like winMe's start uses them */
     opts.sei.fMask = SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI;
     opts.creation_flags = CREATE_NEW_CONSOLE;
+    opts.cp_inherit = FALSE;
 
     /* Canonical Microsoft commandline flag processing:
      * flags start with / and are case insensitive.
@@ -490,6 +492,7 @@ static void parse_command_line( int argc, WCHAR *argv[] )
         else if (is_option(argv[i], L"/exec")) {
             opts.creation_flags = 0;
             opts.sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE | SEE_MASK_FLAG_NO_UI;
+            opts.cp_inherit = TRUE;
             i++;
             break;
         }
@@ -581,7 +584,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                     si.StartupInfo.dwFlags |= STARTF_USESHOWWINDOW;
                     si.StartupInfo.lpTitle = opts.title;
 
-                    if (!CreateProcessW( opts.sei.lpFile, commandline, NULL, NULL, FALSE,
+                    if (!CreateProcessW( opts.sei.lpFile, commandline, NULL, NULL, opts.cp_inherit,
                                          opts.creation_flags, NULL, opts.sei.lpDirectory,
                                          &si.StartupInfo, &process_information ))
                     {
