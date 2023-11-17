@@ -54,10 +54,7 @@ static const struct bmp_pixelformat formats[] = {
     {&GUID_WICPixelFormat16bppBGR555, 16, 0, BI_RGB},
     {&GUID_WICPixelFormat16bppBGR565, 16, 0, BI_BITFIELDS, 0xf800, 0x7e0, 0x1f, 0},
     {&GUID_WICPixelFormat32bppBGR, 32, 0, BI_RGB},
-#if 0
-    /* Windows doesn't seem to support this one. */
     {&GUID_WICPixelFormat32bppBGRA, 32, 0, BI_BITFIELDS, 0xff0000, 0xff00, 0xff, 0xff000000},
-#endif
     {NULL}
 };
 

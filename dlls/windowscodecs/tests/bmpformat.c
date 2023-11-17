@@ -1263,6 +1263,74 @@ static void test_writesource_palette(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_encoder_formats(void)
+{
+    static const struct
+    {
+        const GUID *format;
+        BOOL supported;
+        const char *name;
+    }
+    tests[] =
+    {
+        {&GUID_WICPixelFormat24bppBGR, TRUE, "WICPixelFormat24bppBGR"},
+        {&GUID_WICPixelFormatBlackWhite, FALSE, "WICPixelFormatBlackWhite"},
+        {&GUID_WICPixelFormat1bppIndexed, TRUE, "WICPixelFormat1bppIndexed"},
+        {&GUID_WICPixelFormat2bppIndexed, FALSE, "WICPixelFormat2bppIndexed"},
+        {&GUID_WICPixelFormat4bppIndexed, TRUE, "WICPixelFormat4bppIndexed"},
+        {&GUID_WICPixelFormat8bppIndexed, TRUE, "WICPixelFormat8bppIndexed"},
+        {&GUID_WICPixelFormat16bppBGR555, TRUE, "WICPixelFormat16bppBGR555"},
+        {&GUID_WICPixelFormat16bppBGR565, TRUE, "WICPixelFormat16bppBGR565"},
+        {&GUID_WICPixelFormat32bppBGR, TRUE, "WICPixelFormat32bppBGR"},
+        {&GUID_WICPixelFormat32bppBGRA, TRUE, "WICPixelFormat32bppBGRA"},
+        {&GUID_WICPixelFormat8bppGray, FALSE, "WICPixelFormat8bppGray"},
+    };
+
+    IWICImagingFactory *factory;
+    HRESULT hr;
+    IStream *stream;
+    IWICBitmapEncoder *encoder;
+    IWICBitmapFrameEncode *frame_encode;
+    GUID pixelformat;
+    LONG refcount;
+    unsigned int i;
+    BOOL supported;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IWICImagingFactory_CreateEncoder(factory, &GUID_ContainerFormatBmp, &GUID_VendorMicrosoft, &encoder);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame_encode, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IWICBitmapFrameEncode_Initialize(frame_encode, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context(tests[i].name);
+        pixelformat = *tests[i].format;
+        hr = IWICBitmapFrameEncode_SetPixelFormat(frame_encode, &pixelformat);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        supported = !memcmp(&pixelformat, tests[i].format, sizeof(pixelformat));
+        ok(supported == tests[i].supported, "got %d.\n", supported);
+        winetest_pop_context();
+    }
+
+    IWICBitmapFrameEncode_Release(frame_encode);
+    refcount = IWICBitmapEncoder_Release(encoder);
+    ok(!refcount, "got %ld.\n", refcount);
+    IStream_Release(stream);
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(bmpformat)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1276,6 +1344,7 @@ START_TEST(bmpformat)
     test_createfromstream();
     test_create_decoder();
     test_writesource_palette();
+    test_encoder_formats();
 
     CoUninitialize();
 }
