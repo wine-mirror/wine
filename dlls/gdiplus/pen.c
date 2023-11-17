@@ -629,7 +629,6 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
     INT count)
 {
     INT i;
-    REAL sum = 0;
 
     TRACE("(%p, %p, %d)\n", pen, dash, count);
 
@@ -640,7 +639,6 @@ GpStatus WINGDIPAPI GdipSetPenDashArray(GpPen *pen, GDIPCONST REAL *dash,
         return OutOfMemory;
 
     for(i = 0; i < count; i++){
-        sum += dash[i];
         if(dash[i] <= 0.0)
             return InvalidParameter;
     }
