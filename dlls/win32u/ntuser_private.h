@@ -207,56 +207,56 @@ struct scroll_bar_win_data
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
-extern const char *debugstr_msg_name( UINT msg, HWND hwnd ) DECLSPEC_HIDDEN;
-extern const char *debugstr_vkey_name( WPARAM wParam ) DECLSPEC_HIDDEN;
-extern void spy_enter_message( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
+extern const char *debugstr_msg_name( UINT msg, HWND hwnd );
+extern const char *debugstr_vkey_name( WPARAM wParam );
+extern void spy_enter_message( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 extern void spy_exit_message( INT flag, HWND hwnd, UINT msg,
-                              LRESULT lreturn, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
+                              LRESULT lreturn, WPARAM wparam, LPARAM lparam );
 
 /* class.c */
-extern HINSTANCE user32_module DECLSPEC_HIDDEN;
-WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
-BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
-DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
-WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
-ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
-WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
-DLGPROC get_dialog_proc( DLGPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
-ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
-WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
-void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst ) DECLSPEC_HIDDEN;
-struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
-struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
-BOOL needs_ime_window( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
-extern void register_desktop_class(void) DECLSPEC_HIDDEN;
+extern HINSTANCE user32_module;
+WNDPROC alloc_winproc( WNDPROC func, BOOL ansi );
+BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val );
+DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi );
+WNDPROC get_class_winproc( struct tagCLASS *class );
+ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi );
+WORD get_class_word( HWND hwnd, INT offset );
+DLGPROC get_dialog_proc( DLGPROC proc, BOOL ansi );
+ATOM get_int_atom_value( UNICODE_STRING *name );
+WNDPROC get_winproc( WNDPROC proc, BOOL ansi );
+void get_winproc_params( struct win_proc_params *params, BOOL fixup_ansi_dst );
+struct dce *get_class_dce( struct tagCLASS *class );
+struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce );
+BOOL needs_ime_window( HWND hwnd );
+extern void register_builtin_classes(void);
+extern void register_desktop_class(void);
 
 /* imm.c */
 extern LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPARAM lparam,
-                                struct ime_driver_call_params *params ) DECLSPEC_HIDDEN;
+                                struct ime_driver_call_params *params );
 
 /* cursoricon.c */
-HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
+HICON alloc_cursoricon_handle( BOOL is_icon );
 
 /* dce.c */
-extern void free_dce( struct dce *dce, HWND hwnd ) DECLSPEC_HIDDEN;
-extern void invalidate_dce( WND *win, const RECT *extra_rect ) DECLSPEC_HIDDEN;
+extern void free_dce( struct dce *dce, HWND hwnd );
+extern void invalidate_dce( WND *win, const RECT *extra_rect );
 
 /* window.c */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_HIDDEN;
-void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
-void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
-void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type ) DECLSPEC_HIDDEN;
-UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask ) DECLSPEC_HIDDEN;
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );
+void *free_user_handle( HANDLE handle, unsigned int type );
+void *get_user_handle_ptr( HANDLE handle, unsigned int type );
+void release_user_handle_ptr( void *ptr );
+void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type );
+UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask );
 
 static inline UINT win_get_flags( HWND hwnd )
 {
     return win_set_flags( hwnd, 0, 0 );
 }
 
-WND *get_win_ptr( HWND hwnd ) DECLSPEC_HIDDEN;
-BOOL is_child( HWND parent, HWND child ) DECLSPEC_HIDDEN;
-BOOL is_window( HWND hwnd ) DECLSPEC_HIDDEN;
+WND *get_win_ptr( HWND hwnd );
+BOOL is_child( HWND parent, HWND child );
+BOOL is_window( HWND hwnd );
 
 #endif /* __WINE_NTUSER_PRIVATE_H */
