@@ -58,7 +58,7 @@ static BYTE arguments[ARRAY_SIZE(syscalls)] =
 #undef SYSCALL_ENTRY
 };
 
-static SYSTEM_SERVICE_TABLE syscall_table =
+static const SYSTEM_SERVICE_TABLE syscall_table =
 {
     (ULONG_PTR *)syscalls,
     0,
@@ -66,7 +66,7 @@ static SYSTEM_SERVICE_TABLE syscall_table =
     arguments
 };
 
-static NTSTATUS init( void *dispatcher )
+static NTSTATUS init( void *args )
 {
 #ifdef _WIN64
     if (NtCurrentTeb()->WowTebOffset)
@@ -78,7 +78,8 @@ static NTSTATUS init( void *dispatcher )
     }
 #endif
 
-    return ntdll_init_syscalls( &syscall_table, dispatcher );
+    KeServiceDescriptorTable[1] = syscall_table;
+    return STATUS_SUCCESS;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =

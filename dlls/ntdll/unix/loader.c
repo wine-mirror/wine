@@ -920,37 +920,6 @@ static NTSTATUS dlopen_dll( const char *so_name, UNICODE_STRING *nt_name, void *
 
 
 /***********************************************************************
- *           ntdll_init_syscalls
- */
-NTSTATUS ntdll_init_syscalls( SYSTEM_SERVICE_TABLE *table, void **dispatcher )
-{
-    struct syscall_info
-    {
-        void  *dispatcher;
-        UINT   version;
-        USHORT id;
-        USHORT limit;
-     /* USHORT names[limit]; */
-     /* BYTE   args[limit]; */
-    } *info = (struct syscall_info *)dispatcher;
-
-    if (info->version != 0xca110001)
-    {
-        ERR( "invalid syscall table version %x\n", info->version );
-        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
-    }
-    if (info->limit != table->ServiceLimit)
-    {
-        ERR( "syscall count mismatch %u / %lu\n", info->limit, table->ServiceLimit );
-        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_PARAMETER );
-    }
-    info->dispatcher = __wine_syscall_dispatcher;
-    KeServiceDescriptorTable[info->id] = *table;
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           load_so_dll
  */
 static NTSTATUS load_so_dll( void *args )

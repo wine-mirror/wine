@@ -31,6 +31,7 @@ typedef NTSTATUS (*unixlib_entry_t)( void *args );
 
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_funcs[];
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
+extern DECLSPEC_EXPORT SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 
 /* some useful helpers from ntdll */
 NTSYSAPI const char *ntdll_get_build_dir(void);
@@ -39,7 +40,6 @@ NTSYSAPI DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD
 NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict );
 NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
 NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
-NTSYSAPI NTSTATUS ntdll_init_syscalls( SYSTEM_SERVICE_TABLE *table, void **dispatcher );
 
 /* exception handling */
 

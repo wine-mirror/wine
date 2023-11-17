@@ -61,7 +61,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
         __wine_syscall_dispatcher = *dispatcher_ptr;
         if (!NtQueryVirtualMemory( GetCurrentProcess(), inst, MemoryWineUnixFuncs,
                                    &win32u_handle, sizeof(win32u_handle), NULL ))
-            __wine_unix_call( win32u_handle, 0, &__wine_syscall_dispatcher );
+            __wine_unix_call( win32u_handle, 0, NULL );
         break;
     }
     return TRUE;
