@@ -32,21 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-static HEAACWAVEINFO aac_decoder_input_types[] =
-{
-#define MAKE_HEAACWAVEINFO(format, payload) \
-    {.wfx = {.wFormatTag = format, .nChannels = 6, .nSamplesPerSec = 48000, .nAvgBytesPerSec = 1152000, \
-             .nBlockAlign = 24, .wBitsPerSample = 32, .cbSize = sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX)}, \
-     .wPayloadType = payload}
-
-    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 0),
-    MAKE_HEAACWAVEINFO(WAVE_FORMAT_RAW_AAC1, 0),
-    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 1),
-    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 3),
-    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_ADTS_AAC, 0),
-
-#undef MAKE_HEAACWAVEINFO
-};
+#define NEXT_WAVEFORMATEXTENSIBLE(format) (WAVEFORMATEXTENSIBLE *)((BYTE *)(&(format)->Format + 1) + (format)->Format.cbSize)
 
 static WAVEFORMATEXTENSIBLE const aac_decoder_output_types[] =
 {
@@ -69,6 +55,10 @@ struct aac_decoder
 {
     IMFTransform IMFTransform_iface;
     LONG refcount;
+
+    UINT input_type_count;
+    WAVEFORMATEXTENSIBLE *input_types;
+
     IMFMediaType *input_type;
     IMFMediaType *output_type;
 
@@ -238,14 +228,18 @@ static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD strea
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
+    struct aac_decoder *decoder = impl_from_IMFTransform(iface);
+    const WAVEFORMATEXTENSIBLE *format = decoder->input_types;
+    UINT count = decoder->input_type_count;
+
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
 
     *type = NULL;
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
-    if (index >= ARRAY_SIZE(aac_decoder_input_types))
-        return MF_E_NO_MORE_TYPES;
-    return MFCreateAudioMediaType(&aac_decoder_input_types[index].wfx, (IMFAudioMediaType **)type);
+    for (format = decoder->input_types; index > 0 && count > 0; index--, count--)
+        format = NEXT_WAVEFORMATEXTENSIBLE(format);
+    return count ? MFCreateAudioMediaType(&format->Format, (IMFAudioMediaType **)type) : MF_E_NO_MORE_TYPES;
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
@@ -328,10 +322,9 @@ static BOOL matches_format(const WAVEFORMATEXTENSIBLE *a, const WAVEFORMATEXTENS
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
     struct aac_decoder *decoder = impl_from_IMFTransform(iface);
+    UINT32 size, count = decoder->input_type_count;
     WAVEFORMATEXTENSIBLE *format, wfx;
-    UINT32 size;
     HRESULT hr;
-    ULONG i;
 
     TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
 
@@ -344,10 +337,9 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     wfx = *format;
     CoTaskMemFree(format);
 
-    for (i = 0; i < ARRAY_SIZE(aac_decoder_input_types); ++i)
-        if (matches_format((WAVEFORMATEXTENSIBLE *)&aac_decoder_input_types[i], &wfx))
-            break;
-    if (i == ARRAY_SIZE(aac_decoder_input_types))
+    for (format = decoder->input_types; count > 0 && !matches_format(format, &wfx); count--)
+        format = NEXT_WAVEFORMATEXTENSIBLE(format);
+    if (!count)
         return MF_E_INVALIDMEDIATYPE;
 
     if (wfx.Format.nChannels >= ARRAY_SIZE(default_channel_mask) || !wfx.Format.nSamplesPerSec || !wfx.Format.cbSize)
@@ -574,6 +566,22 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
+static HEAACWAVEINFO aac_decoder_input_types[] =
+{
+#define MAKE_HEAACWAVEINFO(format, payload) \
+    {.wfx = {.wFormatTag = format, .nChannels = 6, .nSamplesPerSec = 48000, .nAvgBytesPerSec = 1152000, \
+             .nBlockAlign = 24, .wBitsPerSample = 32, .cbSize = sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX)}, \
+     .wPayloadType = payload}
+
+    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 0),
+    MAKE_HEAACWAVEINFO(WAVE_FORMAT_RAW_AAC1, 0),
+    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 1),
+    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_HEAAC, 3),
+    MAKE_HEAACWAVEINFO(WAVE_FORMAT_MPEG_ADTS_AAC, 0),
+
+#undef MAKE_HEAACWAVEINFO
+};
+
 HRESULT aac_decoder_create(REFIID riid, void **ret)
 {
     static const struct wg_format output_format =
@@ -604,6 +612,8 @@ HRESULT aac_decoder_create(REFIID riid, void **ret)
 
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
+    decoder->input_types = (WAVEFORMATEXTENSIBLE *)aac_decoder_input_types;
+    decoder->input_type_count = ARRAY_SIZE(aac_decoder_input_types);
 
     if (FAILED(hr = wg_sample_queue_create(&decoder->wg_sample_queue)))
     {
