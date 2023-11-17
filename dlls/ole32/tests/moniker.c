@@ -1144,13 +1144,12 @@ static IParseDisplayName ParseDisplayName = { &ParseDisplayName_Vtbl };
 static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
 {
     IMoniker * spMoniker;
-    int monCnt=0, matchCnt=0;
+    int matchCnt = 0;
 
     while ((IEnumMoniker_Next(spEM, 1, &spMoniker, NULL)==S_OK))
     {
         HRESULT hr;
         WCHAR * szDisplayn;
-        monCnt++;
         hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL, &szDisplayn);
         if (SUCCEEDED(hr))
         {
