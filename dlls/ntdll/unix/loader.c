@@ -115,8 +115,6 @@ void *pRtlUserThreadStart = NULL;
 void *p__wine_ctrl_routine = NULL;
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
-static void *p__wine_syscall_dispatcher;
-
 static void * const syscalls[] =
 {
 #define SYSCALL_ENTRY(id,name,args) name,
@@ -128,9 +126,21 @@ static void * const syscalls[] =
 #undef SYSCALL_ENTRY
 };
 
-static BYTE syscall_args[ARRAY_SIZE(syscalls)];
+static BYTE syscall_args[ARRAY_SIZE(syscalls)] =
+{
+#define SYSCALL_ENTRY(id,name,args) args,
+#ifdef _WIN64
+    ALL_SYSCALLS64
+#else
+    ALL_SYSCALLS32
+#endif
+#undef SYSCALL_ENTRY
+};
 
-SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
+SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4] =
+{
+    { (ULONG_PTR *)syscalls, NULL, ARRAY_SIZE(syscalls), syscall_args }
+};
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -1518,6 +1528,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
  */
 static void load_ntdll_functions( HMODULE module )
 {
+    void **p__wine_syscall_dispatcher;
     void **p__wine_unix_call_dispatcher;
     unixlib_handle_t *p__wine_unixlib_handle;
     const IMAGE_EXPORT_DIRECTORY *exports;
@@ -1541,6 +1552,7 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( __wine_syscall_dispatcher );
     GET_FUNC( __wine_unix_call_dispatcher );
     GET_FUNC( __wine_unixlib_handle );
+    *p__wine_syscall_dispatcher = __wine_syscall_dispatcher;
     *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
     *p__wine_unixlib_handle = (UINT_PTR)unix_call_funcs;
 #undef GET_FUNC
@@ -1804,7 +1816,6 @@ static ULONG_PTR get_image_address(void)
  */
 static void start_main_thread(void)
 {
-    SYSTEM_SERVICE_TABLE syscall_table = { (ULONG_PTR *)syscalls, NULL, ARRAY_SIZE(syscalls), syscall_args };
     TEB *teb = virtual_alloc_first_teb();
 
     signal_init_threading();
@@ -1822,7 +1833,6 @@ static void start_main_thread(void)
     load_ntdll();
     load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
-    ntdll_init_syscalls( &syscall_table, p__wine_syscall_dispatcher );
     server_init_process_done();
 }
 
