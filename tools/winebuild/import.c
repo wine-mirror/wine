@@ -1519,15 +1519,6 @@ void output_syscalls( DLLSPEC *spec )
     default:
         break;
     }
-    output( "\t.data\n" );
-    output( "\t.balign %u\n", get_ptr_size() );
-    output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
-    output( "\t%s 0\n", get_asm_ptr_keyword() );    /* dispatcher */
-    output( "\t.long 0xca110001\n" );               /* version */
-    output( "\t.short %u\n", spec->syscall_table ); /* id */
-    output( "\t.short %u\n", count );               /* limit */
-    for (i = 0; i < count; i++) output( "\t.short %u\n", syscalls[i]->hint );
-    for (i = 0; i < count; i++) output( "\t.byte %u\n", get_args_size( syscalls[i] ));
 }
 
 

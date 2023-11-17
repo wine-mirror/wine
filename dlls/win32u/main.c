@@ -27,7 +27,7 @@
 #include "ntgdi.h"
 #include "wine/unixlib.h"
 
-extern void *__wine_syscall_dispatcher DECLSPEC_HIDDEN;
+void *__wine_syscall_dispatcher = NULL;
 
 static unixlib_handle_t win32u_handle;
 
