@@ -853,7 +853,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     DBPROPINFOSET *propinfoset;
     IDBProperties *props;
     DBPROPIDSET propidset;
-    ULONG count, infocount;
+    ULONG propset_count, infocount;
     WCHAR *progid, *desc;
     DBPROPSET *propset;
     IPersist *persist;
@@ -889,8 +889,8 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     propidset.cPropertyIDs = 0;
     propidset.guidPropertySet = DBPROPSET_DBINIT;
     propset = NULL;
-    count = 0;
-    hr = IDBProperties_GetProperties(props, 1, &propidset, &count, &propset);
+    propset_count = 0;
+    hr = IDBProperties_GetProperties(props, 1, &propidset, &propset_count, &propset);
     if (FAILED(hr))
     {
         WARN("failed to get data source properties, 0x%08lx\n", hr);
@@ -904,7 +904,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
 
     /* check if we need to skip password */
     len = lstrlenW(progid) + lstrlenW(providerW) + 1; /* including '\0' */
-    for (i = 0; i < count; i++)
+    for (i = 0; i < propset->cProperties; i++)
     {
         WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
@@ -928,7 +928,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     lstrcatW(*init_string, progid);
     CoTaskMemFree(progid);
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < propset->cProperties; i++)
     {
         WCHAR *descr;
 
@@ -944,7 +944,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
         }
     }
 
-    free_dbpropset(count, propset);
+    free_dbpropset(propset_count, propset);
     free_dbpropinfoset(infocount, propinfoset);
     CoTaskMemFree(desc);
 
