@@ -2119,6 +2119,11 @@ static HRESULT video_presenter_init_d3d(struct video_presenter *presenter)
     HRESULT hr;
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        WARN("Failed to initialize d3d9.\n");
+        return E_FAIL;
+    }
 
     present_params.BackBufferCount = 1;
     present_params.SwapEffect = D3DSWAPEFFECT_COPY;
