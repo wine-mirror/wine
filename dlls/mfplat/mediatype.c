@@ -2625,7 +2625,7 @@ HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor *
 struct uncompressed_video_format
 {
     const GUID *subtype;
-    unsigned char bytes_per_pixel;
+    unsigned char bpp;
     unsigned char alignment;
     unsigned char bottom_up;
     unsigned char yuv;
@@ -2640,36 +2640,36 @@ static int __cdecl uncompressed_video_format_compare(const void *a, const void *
 
 static const struct uncompressed_video_format video_formats[] =
 {
-    { &MFVideoFormat_RGB24,         3, 3, 1, 0 },
-    { &MFVideoFormat_ARGB32,        4, 3, 1, 0 },
-    { &MFVideoFormat_RGB32,         4, 3, 1, 0 },
-    { &MFVideoFormat_RGB565,        2, 3, 1, 0 },
-    { &MFVideoFormat_RGB555,        2, 3, 1, 0 },
-    { &MFVideoFormat_A2R10G10B10,   4, 3, 1, 0 },
-    { &MFVideoFormat_A2B10G10R10,   4, 3, 1, 0 },
-    { &MFVideoFormat_RGB8,          1, 3, 1, 0 },
-    { &MFVideoFormat_L8,            1, 3, 1, 0 },
-    { &MFVideoFormat_AYUV,          4, 3, 0, 1 },
-    { &MFVideoFormat_I420,          1, 0, 0, 1 },
-    { &MFVideoFormat_IMC1,          2, 3, 0, 1 },
-    { &MFVideoFormat_IMC2,          1, 0, 0, 1 },
-    { &MFVideoFormat_IMC3,          2, 3, 0, 1 },
-    { &MFVideoFormat_IMC4,          1, 0, 0, 1 },
-    { &MFVideoFormat_IYUV,          1, 0, 0, 1 },
-    { &MFVideoFormat_NV11,          1, 0, 0, 1 },
-    { &MFVideoFormat_NV12,          1, 0, 0, 1 },
-    { &MFVideoFormat_D16,           2, 3, 0, 0 },
-    { &MFVideoFormat_L16,           2, 3, 0, 0 },
-    { &MFVideoFormat_UYVY,          2, 0, 0, 1 },
-    { &MFVideoFormat_YUY2,          2, 0, 0, 1 },
-    { &MFVideoFormat_YV12,          1, 0, 0, 1 },
-    { &MFVideoFormat_YVYU,          2, 0, 0, 1 },
-    { &MFVideoFormat_A16B16G16R16F, 8, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB8,           1, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB565,         2, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB555,         2, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB24,          3, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB32,          4, 3, 1, 0 },
+    { &MFVideoFormat_RGB24,         24, 3, 1, 0 },
+    { &MFVideoFormat_ARGB32,        32, 3, 1, 0 },
+    { &MFVideoFormat_RGB32,         32, 3, 1, 0 },
+    { &MFVideoFormat_RGB565,        16, 3, 1, 0 },
+    { &MFVideoFormat_RGB555,        16, 3, 1, 0 },
+    { &MFVideoFormat_A2R10G10B10,   32, 3, 1, 0 },
+    { &MFVideoFormat_A2B10G10R10,   32, 3, 1, 0 },
+    { &MFVideoFormat_RGB8,          8, 3, 1, 0 },
+    { &MFVideoFormat_L8,            8, 3, 1, 0 },
+    { &MFVideoFormat_AYUV,          32, 3, 0, 1 },
+    { &MFVideoFormat_I420,          12, 0, 0, 1 },
+    { &MFVideoFormat_IMC1,          16, 3, 0, 1 },
+    { &MFVideoFormat_IMC2,          12, 0, 0, 1 },
+    { &MFVideoFormat_IMC3,          16, 3, 0, 1 },
+    { &MFVideoFormat_IMC4,          12, 0, 0, 1 },
+    { &MFVideoFormat_IYUV,          12, 0, 0, 1 },
+    { &MFVideoFormat_NV11,          12, 0, 0, 1 },
+    { &MFVideoFormat_NV12,          12, 0, 0, 1 },
+    { &MFVideoFormat_D16,           16, 3, 0, 0 },
+    { &MFVideoFormat_L16,           16, 3, 0, 0 },
+    { &MFVideoFormat_UYVY,          16, 0, 0, 1 },
+    { &MFVideoFormat_YUY2,          16, 0, 0, 1 },
+    { &MFVideoFormat_YV12,          12, 0, 0, 1 },
+    { &MFVideoFormat_YVYU,          16, 0, 0, 1 },
+    { &MFVideoFormat_A16B16G16R16F, 64, 3, 1, 0 },
+    { &MEDIASUBTYPE_RGB8,           8, 3, 1, 0 },
+    { &MEDIASUBTYPE_RGB565,         16, 3, 1, 0 },
+    { &MEDIASUBTYPE_RGB555,         16, 3, 1, 0 },
+    { &MEDIASUBTYPE_RGB24,          24, 3, 1, 0 },
+    { &MEDIASUBTYPE_RGB32,          32, 3, 1, 0 },
 };
 
 static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype)
@@ -2680,7 +2680,7 @@ static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype
 
 static unsigned int mf_get_stride_for_format(const struct uncompressed_video_format *format, unsigned int width)
 {
-    return (width * format->bytes_per_pixel + format->alignment) & ~format->alignment;
+    return (width * (format->bpp / 8) + format->alignment) & ~format->alignment;
 }
 
 unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv)
@@ -2755,7 +2755,7 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
         case D3DFMT_L8:
         case D3DFMT_L16:
         case D3DFMT_D16:
-            *size = width * format->bytes_per_pixel * height;
+            *size = width * (format->bpp / 8) * height;
             break;
         default:
             stride = mf_get_stride_for_format(format, width);
