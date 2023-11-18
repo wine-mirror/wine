@@ -147,7 +147,7 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
     return hr;
 }
 
-static HRESULT performance_queue_message(struct performance *This, struct message *message, struct list *hint)
+static HRESULT performance_queue_message(struct performance *This, struct message *message)
 {
     static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
     struct message *prev;
@@ -160,7 +160,7 @@ static HRESULT performance_queue_message(struct performance *This, struct messag
             return hr;
     }
 
-    LIST_FOR_EACH_ENTRY_REV(prev, hint ? hint : &This->messages, struct message, entry)
+    LIST_FOR_EACH_ENTRY_REV(prev, &This->messages, struct message, entry)
     {
         if (&prev->entry == &This->messages) break;
         if (prev->msg.rtTime <= message->msg.rtTime) break;
@@ -185,20 +185,18 @@ static DWORD WINAPI message_thread_proc(void *args)
     {
         DWORD timeout = INFINITE;
         struct message *message;
-        struct list *next;
 
         if (!(message = performance_get_message(This, &timeout)))
         {
             SleepConditionVariableCS(&This->cond, &This->safe, timeout);
             continue;
         }
-        next = message->entry.next;
 
         list_remove(&message->entry);
         list_init(&message->entry);
 
         hr = performance_process_message(This, &message->msg);
-        if (hr == DMUS_S_REQUEUE) performance_queue_message(This, message, next);
+        if (hr == DMUS_S_REQUEUE) performance_queue_message(This, message);
     }
 
     LeaveCriticalSection(&This->safe);
@@ -841,7 +839,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
             msg->dwFlags |= DMUS_PMSGF_REFTIME;
         }
 
-        hr = performance_queue_message(This, message, NULL);
+        hr = performance_queue_message(This, message);
     }
 
 done:
