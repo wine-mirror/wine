@@ -2057,12 +2057,25 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         DMUS_NOTE_PMSG *note = (DMUS_NOTE_PMSG *)msg;
 
         msg->mtTime += note->nOffset;
-        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
-                MIDI_NOTE_ON, note->bMidiValue, note->bVelocity)))
-            WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
-        msg->mtTime += note->mtDuration;
-        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_QUEUE,
+        if (note->bFlags & DMUS_NOTEF_NOTEON)
+        {
+            if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
+                    MIDI_NOTE_ON, note->bMidiValue, note->bVelocity)))
+                WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
+
+            if (note->mtDuration)
+            {
+                msg->mtTime -= note->nOffset;
+                msg->mtTime += max(1, note->mtDuration - 1);
+                if (FAILED(hr = IDirectMusicPerformance8_MusicToReferenceTime(performance, msg->mtTime, &msg->rtTime)))
+                    return hr;
+                note->bFlags &= ~DMUS_NOTEF_NOTEON;
+                return DMUS_S_REQUEUE;
+            }
+        }
+
+        if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
                 MIDI_NOTE_OFF, note->bMidiValue, 0)))
             WARN("Failed to translate message to MIDI, hr %#lx\n", hr);
 
