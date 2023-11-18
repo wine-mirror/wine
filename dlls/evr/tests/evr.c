@@ -3642,7 +3642,16 @@ done:
 START_TEST(evr)
 {
     IMFVideoPresenter *presenter;
+    IDirect3D9 *d3d9;
     HRESULT hr;
+
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d9)
+    {
+        skip("Failed to initialize D3D9. Skipping EVR tests.\n");
+        return;
+    }
+    IDirect3D9_Release(d3d9);
 
     CoInitialize(NULL);
 
