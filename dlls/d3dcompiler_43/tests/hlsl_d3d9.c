@@ -134,7 +134,11 @@ static IDirect3DDevice9 *create_device(HWND window)
     HRESULT hr;
 
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!d3d)
+    {
+        skip("Failed to create a D3D object.\n");
+        return NULL;
+    }
 
     hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
