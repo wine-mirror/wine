@@ -5367,6 +5367,7 @@ typedef struct _QUOTA_LIMITS_EX {
 
 #define DUPLICATE_CLOSE_SOURCE     0x00000001
 #define DUPLICATE_SAME_ACCESS      0x00000002
+#define DUPLICATE_SAME_ATTRIBUTES  0x00000004
 #ifdef __WINESRC__
 #define DUPLICATE_MAKE_GLOBAL      0x80000000  /* Not a Windows flag */
 #endif

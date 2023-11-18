@@ -2549,6 +2549,50 @@ static void test_DuplicateHandle(void)
     ok(r, "DuplicateHandle error %lu\n", GetLastError());
     ok(f == out || broken(/* Win7 */ (((ULONG_PTR)f & 3) == 3) && (f != out)), "f != out\n");
     CloseHandle(out);
+
+    /* Test DUPLICATE_SAME_ATTRIBUTES */
+    f = CreateFileA("NUL", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(f != INVALID_HANDLE_VALUE, "Failed to open NUL %lu\n", GetLastError());
+    r = GetHandleInformation(f, &info);
+    ok(r && info == 0, "Unexpected info %lx\n", info);
+
+    r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
+                        0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
+    r = GetHandleInformation(out, &info);
+    todo_wine
+    ok(r && info == 0, "Unexpected info %lx\n", info);
+    CloseHandle(out);
+
+    r = SetHandleInformation(f, HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE,
+                             HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE);
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
+    info = 0xdeabeef;
+    r = GetHandleInformation(f, &info);
+    ok(r && info == (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE), "Unexpected info %lx\n", info);
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
+    r = DuplicateHandle(GetCurrentProcess(), f, GetCurrentProcess(), &out,
+                        0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
+    info = 0xdeabeef;
+    r = GetHandleInformation(out, &info);
+    todo_wine
+    ok(r && info == (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE), "Unexpected info %lx\n", info);
+    r = SetHandleInformation(out, HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
+    CloseHandle(out);
+    r = SetHandleInformation(f, HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
+    ok(r, "SetHandleInformation error %lu\n", GetLastError());
+    CloseHandle(f);
+
+    r = DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(), &out,
+                        0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+    ok(r, "DuplicateHandle error %lu\n", GetLastError());
+    info = 0xdeabeef;
+    r = GetHandleInformation(out, &info);
+    todo_wine
+    ok(r && info == 0, "Unexpected info %lx\n", info);
+    CloseHandle(out);
 }
 
 #define test_completion(a, b, c, d, e) _test_completion(__LINE__, a, b, c, d, e)
