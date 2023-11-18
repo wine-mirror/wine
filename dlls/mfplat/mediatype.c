@@ -3126,6 +3126,15 @@ static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, DWO
 }
 
 /***********************************************************************
+ *      MFCreateAMMediaTypeFromMFMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFCreateAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID format, AM_MEDIA_TYPE **am_type)
+{
+    FIXME("%p, %s, %p stub!\n", media_type, debugstr_mf_guid(&format), am_type);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *      MFCreateMFVideoFormatFromMFMediaType (mfplat.@)
  */
 HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size)

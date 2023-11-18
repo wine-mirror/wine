@@ -39,7 +39,7 @@
 @ stub MFConvertToFP16Array
 @ stdcall MFCopyImage(ptr long ptr long long long)
 @ stdcall MFCreate2DMediaBuffer(long long long long ptr)
-@ stub MFCreateAMMediaTypeFromMFMediaType
+@ stdcall MFCreateAMMediaTypeFromMFMediaType(ptr int128 ptr)
 @ stdcall MFCreateAlignedMemoryBuffer(long long ptr)
 @ stdcall MFCreateAsyncResult(ptr ptr ptr ptr) rtworkq.RtwqCreateAsyncResult
 @ stdcall MFCreateAttributes(ptr long)
