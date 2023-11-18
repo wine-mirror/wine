@@ -2560,7 +2560,6 @@ static void test_DuplicateHandle(void)
                         0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
     ok(r, "DuplicateHandle error %lu\n", GetLastError());
     r = GetHandleInformation(out, &info);
-    todo_wine
     ok(r && info == 0, "Unexpected info %lx\n", info);
     CloseHandle(out);
 
@@ -2576,7 +2575,6 @@ static void test_DuplicateHandle(void)
     ok(r, "DuplicateHandle error %lu\n", GetLastError());
     info = 0xdeabeef;
     r = GetHandleInformation(out, &info);
-    todo_wine
     ok(r && info == (HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE), "Unexpected info %lx\n", info);
     r = SetHandleInformation(out, HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
     ok(r, "SetHandleInformation error %lu\n", GetLastError());
@@ -2590,7 +2588,6 @@ static void test_DuplicateHandle(void)
     ok(r, "DuplicateHandle error %lu\n", GetLastError());
     info = 0xdeabeef;
     r = GetHandleInformation(out, &info);
-    todo_wine
     ok(r && info == 0, "Unexpected info %lx\n", info);
     CloseHandle(out);
 }
