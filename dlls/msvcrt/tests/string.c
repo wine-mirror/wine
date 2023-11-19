@@ -4671,6 +4671,27 @@ static void test_wcsncpy(void)
             wine_dbgstr_wn(dst, ARRAY_SIZE(dst)));
 }
 
+static void test_mbsrev(void)
+{
+    unsigned char buf[64], *ret;
+    int cp = _getmbcp();
+
+    _setmbcp(932);
+
+    strcpy((char *)buf, "\x36\x8c\x8e");
+    ret = _mbsrev(buf);
+    ok(ret == buf, "ret = %p, expected %p\n", ret, buf);
+    ok(!memcmp(buf, "\x8c\x8e\x36", 4), "buf = %s\n", wine_dbgstr_a((char *)buf));
+
+    /* test string that ends with leading byte */
+    strcpy((char *)buf, "\x36\x8c");
+    ret = _mbsrev(buf);
+    ok(ret == buf, "ret = %p, expected %p\n", ret, buf);
+    ok(!memcmp(buf, "\x36", 2), "buf = %s\n", wine_dbgstr_a((char *)buf));
+
+    _setmbcp(cp);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4831,4 +4852,5 @@ START_TEST(string)
     test_SpecialCasing();
     test__mbbtype();
     test_wcsncpy();
+    test_mbsrev();
 }
