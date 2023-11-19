@@ -72,7 +72,9 @@ BOOL is_dualshock4_gamepad(WORD vid, WORD pid)
 
 BOOL is_dualsense_gamepad(WORD vid, WORD pid)
 {
-    if (vid == 0x054c && pid == 0x0ce6) return TRUE;
+    if (vid != 0x054c) return FALSE;
+    if (pid == 0x0ce6) return TRUE; /* DualSense */
+    if (pid == 0x0df2) return TRUE; /* DualSense Edge */
     return FALSE;
 }
 
