@@ -294,6 +294,7 @@ static const struct product_name_overrides product_name_overrides[] =
 {
     /* Sony controllers */
     { .id = L"VID_054C&PID_0CE6", .product = L"Wireless Controller" },
+    { .id = L"VID_054C&PID_0DF2", .product = L"Wireless Controller" },
 };
 
 static const WCHAR *find_product_name_override(const WCHAR *device_id)
