@@ -695,6 +695,16 @@ done:
 
 START_TEST(dxva2)
 {
+    IDirect3D9 *d3d;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Failed to initialize D3D9. Skipping tests.\n");
+        return;
+    }
+    IDirect3D9_Release(d3d);
+
     test_device_manager();
     test_video_processor();
     test_progressive_device();
