@@ -203,7 +203,10 @@ static nsISelection *get_ns_selection(HTMLDocumentNode *doc)
     nsISelection *nsselection = NULL;
     nsresult nsres;
 
-    nsres = nsIDOMWindow_GetSelection(doc->outer_window->nswindow, &nsselection);
+    if(!doc->window)
+        return NULL;
+
+    nsres = nsIDOMWindow_GetSelection(doc->window->dom_window, &nsselection);
     if(NS_FAILED(nsres))
         ERR("GetSelection failed %08lx\n", nsres);
 
