@@ -1455,7 +1455,7 @@ static void check_audio_type(const WM_MEDIA_TYPE *mt)
 }
 
 static void test_stream_media_props(IWMStreamConfig *config,
-        const GUID *majortype, const GUID *subtype, const GUID *formattype, BOOL todo_subtype)
+        const GUID *majortype, const GUID *subtype, const GUID *formattype)
 {
     char mt_buffer[2000];
     WM_MEDIA_TYPE *mt = (WM_MEDIA_TYPE *)mt_buffer;
@@ -1484,7 +1484,6 @@ static void test_stream_media_props(IWMStreamConfig *config,
     ok(size == sizeof(WM_MEDIA_TYPE) + mt->cbFormat, "got %lu.\n", size);
     ok(IsEqualGUID(&mt->majortype, majortype), "Expected major type %s, got %s.\n",
             debugstr_guid(majortype), debugstr_guid(&mt->majortype));
-    todo_wine_if(todo_subtype)
     ok(IsEqualGUID(&mt->subtype, subtype), "Expected sub type %s, got %s.\n",
             debugstr_guid(subtype), debugstr_guid(&mt->subtype));
     ok(IsEqualGUID(&mt->formattype, formattype), "Expected format type %s, got %s.\n",
@@ -1546,9 +1545,9 @@ static void test_sync_reader_types(void)
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
-            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx, TRUE);
+            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx);
         else
-            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo, FALSE);
+            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -3425,9 +3424,9 @@ static void test_async_reader_types(void)
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
         if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
-            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx, TRUE);
+            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx);
         else
-            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo, FALSE);
+            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
