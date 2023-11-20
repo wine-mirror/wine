@@ -194,7 +194,7 @@ struct syscall_frame
     UINT                  restore_flags;  /* 044 */
     UINT                  fpscr;          /* 048 */
     struct syscall_frame *prev_frame;     /* 04c */
-    void                 *unused;         /* 050 */
+    void                 *syscall_cfa;    /* 050 */
     UINT                  align[3];       /* 054 */
     ULONGLONG             d[32];          /* 060 */
 };
@@ -1161,6 +1161,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr ip, [sp, #0x2c]\n\t"  /* func */
                    "ldr r4, [sp, #0x30]\n\t"  /* teb */
                    "ldr r5, [r4]\n\t"         /* teb->Tib.ExceptionList */
+                   "add r7, sp, #0x28\n\t"    /* syscall_cfa */
                    "push {r3, r5}\n\t"
 #ifndef __SOFTFP__
                    "sub sp, sp, #0x90\n\t"
@@ -1172,6 +1173,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "sub sp, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) + registers */
                    "ldr r5, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "str r5, [sp, #0x4c]\n\t"  /* frame->prev_frame */
+                   "str r7, [sp, #0x50]\n\t"  /* frame->syscall_cfa */
                    "str sp, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    /* switch to user stack */
                    "mov sp, r1\n\t"
@@ -1571,13 +1573,11 @@ void signal_init_process(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
+                      struct syscall_frame *frame, void *syscall_cfa )
 {
     struct arm_thread_data *thread_data = (struct arm_thread_data *)&teb->GdiTebBatch;
-    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
-
-    __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
 
     thread_data->syscall_table = KeServiceDescriptorTable;
 
@@ -1599,8 +1599,8 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->sp = (DWORD)ctx;
     frame->pc = (DWORD)pLdrInitializeThunk;
     frame->r0 = (DWORD)ctx;
-    frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_cfa    = syscall_cfa;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -1613,6 +1613,8 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_EHABI(".cantunwind\n\t")
                    "push {r4-r12,lr}\n\t"
+                   "add r7, sp, #0x28\n\t"    /* syscall_cfa */
+                   "mcr p15, 0, r3, c13, c0, 2\n\t" /* set teb register */
                    /* store exit frame */
                    "str sp, [r3, #0x1d4]\n\t" /* arm_thread_data()->exit_frame */
                    /* set syscall frame */
@@ -1622,6 +1624,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "str r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    /* switch to kernel stack */
                    "1:\tmov sp, r6\n\t"
+                   "push {r6,r7}\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
 
 
