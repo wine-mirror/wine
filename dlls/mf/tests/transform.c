@@ -3534,7 +3534,7 @@ static void test_wma_decoder_dmo_output_type(void)
 
     char buffer_good_output[1024], buffer_bad_output[1024], buffer_input[1024];
     DMO_MEDIA_TYPE *good_output_type, *bad_output_type, *input_type, type;
-    DWORD count, i, ret;
+    DWORD count, i, ret, size, alignment;
     IMediaObject *dmo;
     HRESULT hr;
 
@@ -3710,6 +3710,20 @@ static void test_wma_decoder_dmo_output_type(void)
         check_dmo_media_type(&type, good_output_type);
         MoFreeMediaType(&type);
     }
+
+    /* Test GetOutputSizeInfo. */
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 1, NULL, NULL);
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, NULL, NULL);
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, NULL);
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, NULL, &alignment);
+    ok(hr == E_POINTER, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+    ok(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
+    ok(size == 8192, "Unexpected size %lu.\n", size);
+    ok(alignment == 1, "Unexpected alignment %lu.\n", alignment);
 
     hr = IMediaObject_GetInputCurrentType(dmo, 0, input_type);
     todo_wine
