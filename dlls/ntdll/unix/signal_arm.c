@@ -194,7 +194,7 @@ struct syscall_frame
     UINT                  restore_flags;  /* 044 */
     UINT                  fpscr;          /* 048 */
     struct syscall_frame *prev_frame;     /* 04c */
-    SYSTEM_SERVICE_TABLE *syscall_table;  /* 050 */
+    void                 *unused;         /* 050 */
     UINT                  align[3];       /* 054 */
     ULONGLONG             d[32];          /* 060 */
 };
@@ -205,11 +205,13 @@ struct arm_thread_data
 {
     void                 *exit_frame;    /* 1d4 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 1d8 frame pointer on syscall entry */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 1dc syscall table */
 };
 
 C_ASSERT( sizeof(struct arm_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, exit_frame ) == 0x1d4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_frame ) == 0x1d8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_table ) == 0x1dc );
 
 static inline struct arm_thread_data *arm_thread_data(void)
 {
@@ -1171,8 +1173,6 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr r5, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "str r5, [sp, #0x4c]\n\t"  /* frame->prev_frame */
                    "str sp, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
-                   "ldr r6, [r5, #0x50]\n\t"  /* prev_frame->syscall_table */
-                   "str r6, [sp, #0x50]\n\t"  /* frame->syscall_table */
                    "mov sp, r1\n\t"
                    "bx ip" )
 
@@ -1578,6 +1578,8 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
 
     __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
 
+    thread_data->syscall_table = KeServiceDescriptorTable;
+
     context.R0 = (DWORD)entry;
     context.R1 = (DWORD)arg;
     context.Sp = (DWORD)teb->Tib.StackBase;
@@ -1598,7 +1600,6 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->r0 = (DWORD)ctx;
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
-    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -1641,12 +1642,12 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_EHABI(".cantunwind\n\t")
-                   "mrc p15, 0, r1, c13, c0, 2\n\t" /* NtCurrentTeb() */
-                   "ldr r1, [r1, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
+                   "mrc p15, 0, r2, c13, c0, 2\n\t" /* NtCurrentTeb() */
+                   "ldr r1, [r2, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
                    "add r0, r1, #0x10\n\t"
                    "stm r0, {r4-r12,lr}\n\t"
-                   "add r2, sp, #0x10\n\t"
-                   "str r2, [r1, #0x38]\n\t"
+                   "add r0, sp, #0x10\n\t"
+                   "str r0, [r1, #0x38]\n\t"
                    "str r3, [r1, #0x3c]\n\t"
                    "mrs r0, CPSR\n\t"
                    "bfi r0, lr, #5, #1\n\t"         /* set thumb bit */
@@ -1662,7 +1663,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mov r6, sp\n\t"
                    "mov sp, r1\n\t"
                    "mov r8, r1\n\t"
-                   "ldr r5, [r1, #0x50]\n\t"        /* frame->syscall_table */
+                   "ldr r5, [r2, #0x1dc]\n\t"       /* arm_thread_data()->syscall_table */
                    "ubfx r4, ip, #12, #2\n\t"       /* syscall table number */
                    "bfc ip, #12, #20\n\t"           /* syscall number */
                    "add r4, r5, r4, lsl #4\n\t"
