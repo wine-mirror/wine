@@ -400,7 +400,7 @@ struct syscall_frame
     ULONG64               ss;            /* 0090 */
     ULONG64               rbp;           /* 0098 */
     struct syscall_frame *prev_frame;    /* 00a0 */
-    SYSTEM_SERVICE_TABLE *syscall_table; /* 00a8 */
+    void                 *unused;        /* 00a8 */
     DWORD                 syscall_flags; /* 00b0 */
     DWORD                 restore_flags; /* 00b4 */
     DWORD                 align[2];      /* 00b8 */
@@ -1578,8 +1578,6 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq 0x328(%r11),%r10\n\t" /* amd64_thread_data()->syscall_frame */
                    "movq (%r11),%rax\n\t"      /* NtCurrentTeb()->Tib.ExceptionList */
                    "movq %rax,0x408(%rsp)\n\t"
-                   "movq 0xa8(%r10),%rax\n\t"  /* prev_frame->syscall_table */
-                   "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_table */
                    "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
                    "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
@@ -2510,7 +2508,6 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
     frame->syscall_flags = syscall_flags;
-    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -2674,7 +2671,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-                   "movq 0xa8(%rcx),%rcx\n\t"      /* frame->syscall_table */
+                   "leaq " __ASM_NAME("KeServiceDescriptorTable") "(%rip),%rcx\n\t"
                    "leaq (%rcx,%rbx,2),%rbx\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "cmpq 16(%rbx),%rax\n\t"        /* table->ServiceLimit */
