@@ -3966,6 +3966,7 @@ void context_state_drawbuf(struct wined3d_context *context, const struct wined3d
 static void wined3d_context_gl_bind_shader_resources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, enum wined3d_shader_type shader_type)
 {
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int bind_idx, shader_sampler_count, base, count, i;
     const struct wined3d_device *device = context_gl->c.device;
     struct wined3d_shader_sampler_map_entry *entry;
@@ -3993,18 +3994,23 @@ static void wined3d_context_gl_bind_shader_resources(struct wined3d_context_gl *
         if (tex_unit_map)
             bind_idx = tex_unit_map[bind_idx];
 
-        if (!(view = state->shader_resource_view[shader_type][entry->resource_idx]))
+        if ((view = state->shader_resource_view[shader_type][entry->resource_idx]))
+        {
+            if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
+                sampler = device->default_sampler;
+            else if (!(sampler = state->sampler[shader_type][entry->sampler_idx]))
+                sampler = device->null_sampler;
+            wined3d_shader_resource_view_gl_bind(wined3d_shader_resource_view_gl(view),
+                    bind_idx, wined3d_sampler_gl(sampler), context_gl);
+        }
+        else
         {
             WARN("No resource view bound at index %u, %u.\n", shader_type, entry->resource_idx);
-            continue;
+            wined3d_context_gl_active_texture(context_gl, gl_info, bind_idx);
+            wined3d_context_gl_bind_texture(context_gl, GL_NONE, 0);
+            if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+                GL_EXTCALL(glBindSampler(bind_idx, 0));
         }
-
-        if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
-            sampler = device->default_sampler;
-        else if (!(sampler = state->sampler[shader_type][entry->sampler_idx]))
-            sampler = device->null_sampler;
-        wined3d_shader_resource_view_gl_bind(wined3d_shader_resource_view_gl(view),
-                bind_idx, wined3d_sampler_gl(sampler), context_gl);
     }
 }
 
