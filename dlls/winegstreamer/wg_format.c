@@ -893,7 +893,6 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
-        case WG_MAJOR_TYPE_VIDEO_WMV:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
             GST_FIXME("Format %u not implemented!", a->major_type);
@@ -917,6 +916,12 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
             /* Do not compare FPS. */
             return a->u.video_cinepak.width == b->u.video_cinepak.width
                     && a->u.video_cinepak.height == b->u.video_cinepak.height;
+
+        case WG_MAJOR_TYPE_VIDEO_WMV:
+            /* Do not compare FPS. */
+            return a->u.video_wmv.format == b->u.video_wmv.format
+                    && a->u.video_wmv.width == b->u.video_wmv.width
+                    && a->u.video_wmv.height == b->u.video_wmv.height;
     }
 
     assert(0);

@@ -400,6 +400,10 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             return wg_format_get_max_size_video_raw(WG_VIDEO_FORMAT_YV12,
                     format->u.video_mpeg1.width, format->u.video_mpeg1.height);
 
+        case WG_MAJOR_TYPE_VIDEO_WMV:
+            return wg_format_get_max_size_video_raw(WG_VIDEO_FORMAT_YV12,
+                    format->u.video_wmv.width, format->u.video_wmv.height);
+
         case WG_MAJOR_TYPE_AUDIO:
         {
             unsigned int rate = format->u.audio.rate, channels = format->u.audio.channels;
@@ -454,7 +458,6 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_VIDEO_H264:
-        case WG_MAJOR_TYPE_VIDEO_WMV:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
             FIXME("Format %u not implemented!\n", format->major_type);
             return 0;
@@ -664,11 +667,13 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     video_format->rcTarget = video_format->rcSource;
     if ((frame_time = MulDiv(10000000, format->u.video_wmv.fps_d, format->u.video_wmv.fps_n)) != -1)
         video_format->AvgTimePerFrame = frame_time;
-    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER) + format->u.video_wmv.codec_data_len;
     video_format->bmiHeader.biWidth = format->u.video_wmv.width;
     video_format->bmiHeader.biHeight = format->u.video_wmv.height;
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biCompression = mt->subtype.Data1;
+    video_format->bmiHeader.biBitCount = 24;
+    video_format->dwBitRate = 0;
     memcpy(video_format+1, format->u.video_wmv.codec_data, format->u.video_wmv.codec_data_len);
 
     return true;
