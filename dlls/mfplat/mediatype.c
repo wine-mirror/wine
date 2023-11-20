@@ -3685,6 +3685,15 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
 }
 
 /***********************************************************************
+ *      MFInitAMMediaTypeFromMFMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID format, AM_MEDIA_TYPE *am_type)
+{
+    FIXME("%p, %s, %p\n", media_type, debugstr_guid(&format), am_type);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *      MFInitMediaTypeFromAMMediaType (mfplat.@)
  */
 HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM_MEDIA_TYPE *am_type)
