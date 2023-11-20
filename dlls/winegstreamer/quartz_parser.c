@@ -594,7 +594,7 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
 
 static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_format *format)
 {
-    VIDEOINFO *video_format;
+    VIDEOINFOHEADER *video_format;
     uint32_t frame_time;
 
     if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
@@ -605,7 +605,7 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
     mt->bTemporalCompression = TRUE;
     mt->lSampleSize = 1;
     mt->formattype = FORMAT_VideoInfo;
-    mt->cbFormat = sizeof(VIDEOINFOHEADER);
+    mt->cbFormat = sizeof(*video_format);
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
