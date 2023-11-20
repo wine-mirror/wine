@@ -69,7 +69,10 @@ static nsIClipboardCommands *get_clipboard_commands(HTMLDocumentNode *doc)
     nsIDocShell *doc_shell;
     nsresult nsres;
 
-    nsres = get_nsinterface((nsISupports*)doc->outer_window->nswindow, &IID_nsIDocShell, (void**)&doc_shell);
+    if(!doc->window)
+        return NULL;
+
+    nsres = get_nsinterface((nsISupports*)doc->window->dom_window, &IID_nsIDocShell, (void**)&doc_shell);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDocShell interface\n");
         return NULL;
