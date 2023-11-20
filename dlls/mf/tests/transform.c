@@ -1384,7 +1384,9 @@ static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DM
             "Got unexpected formattype %s.\n",
             debugstr_guid(&media_type->formattype));
     ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
-    todo_wine_if(expected->cbFormat && expected->cbFormat != sizeof(VIDEOINFOHEADER))
+    todo_wine_if(expected->cbFormat
+        && expected->cbFormat != sizeof(VIDEOINFOHEADER)
+        && IsEqualGUID(&expected->majortype, &MEDIATYPE_Video))
     check_member_(__FILE__, line, *media_type, *expected, "%lu", cbFormat);
 
     if (expected->pbFormat)
@@ -3385,8 +3387,6 @@ static void test_wma_decoder_dmo_input_type(void)
     bad_input_type = (void *)buffer_bad;
 
     /* Test GetInputType. */
-    todo_wine
-    {
     count = ARRAY_SIZE(expected_input_types);
     hr = IMediaObject_GetInputType(dmo, 1, 0, NULL);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned %#lx.\n", hr);
@@ -3402,7 +3402,6 @@ static void test_wma_decoder_dmo_input_type(void)
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(dmo, 0, count - 1, NULL);
     ok(hr == S_OK, "GetInputType returned %#lx.\n", hr);
-    }
 
     i = -1;
     while (SUCCEEDED(hr = IMediaObject_GetInputType(dmo, 0, ++i, &type)))
@@ -3412,17 +3411,13 @@ static void test_wma_decoder_dmo_input_type(void)
         MoFreeMediaType(&type);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
-    todo_wine
     ok(i == count, "%lu types.\n", i);
 
     /* Test SetInputType. */
     init_dmo_media_type_audio(good_input_type, &MEDIASUBTYPE_WMAUDIO2, 2, 22050, 32);
     memset(bad_input_type, 0, sizeof(buffer_bad));
 
-    todo_wine
-    {
     hr = IMediaObject_SetInputType(dmo, 1, NULL, 0);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 1, bad_input_type, 0);
@@ -3478,11 +3473,9 @@ static void test_wma_decoder_dmo_input_type(void)
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, 0x4);
     ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
-    }
 
     /* Test GetInputCurrentType. */
     hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, NULL);
     todo_wine
@@ -3498,7 +3491,6 @@ static void test_wma_decoder_dmo_input_type(void)
     ok(hr == DMO_E_TYPE_NOT_SET, "GetInputCurrentType returned %#lx.\n", hr);
 
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, NULL);
     todo_wine
@@ -3562,24 +3554,19 @@ static void test_wma_decoder_dmo_output_type(void)
     input_type = (void *)buffer_input;
     good_output_type = (void *)buffer_good_output;
     bad_output_type = (void *)buffer_bad_output;
-    init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate, 32);
+    init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate, 16);
     init_dmo_media_type_audio(good_output_type, &MEDIASUBTYPE_PCM, channel_count, rate, bits_per_sample);
     memset(bad_output_type, 0, sizeof(buffer_bad_output));
 
     /* Test GetOutputType. */
     hr = IMediaObject_GetOutputType(dmo, 1, 0, NULL);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(dmo, 0, 0, NULL);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
 
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    todo_wine
-    {
     count = 1;
     hr = IMediaObject_GetOutputType(dmo, 1, 0, NULL);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
@@ -3595,7 +3582,6 @@ static void test_wma_decoder_dmo_output_type(void)
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(dmo, 0, count - 1, NULL);
     ok(hr == S_OK, "GetOutputType returned %#lx.\n", hr);
-    }
 
     i = -1;
     while (SUCCEEDED(hr = IMediaObject_GetOutputType(dmo, 0, ++i, &type)))
@@ -3605,17 +3591,12 @@ static void test_wma_decoder_dmo_output_type(void)
         MoFreeMediaType(&type);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
-    todo_wine
     ok(i == count, "%lu types.\n", i);
 
     /* Test SetOutputType. */
     hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    todo_wine
-    {
     hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 1, good_output_type, 0);
@@ -3636,14 +3617,10 @@ static void test_wma_decoder_dmo_output_type(void)
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0x4);
     ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-    }
 
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    todo_wine
-    {
     hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 1, bad_output_type, 0);
@@ -3699,11 +3676,9 @@ static void test_wma_decoder_dmo_output_type(void)
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0x4);
     ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
-    }
 
     /* Test GetOutputCurrentType. */
     hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-    todo_wine
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     todo_wine
     {
@@ -3718,7 +3693,6 @@ static void test_wma_decoder_dmo_output_type(void)
     }
 
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     todo_wine
     {
@@ -3741,7 +3715,6 @@ static void test_wma_decoder_dmo_output_type(void)
     todo_wine
     ok(hr == S_OK, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
     todo_wine
@@ -3749,7 +3722,6 @@ static void test_wma_decoder_dmo_output_type(void)
 
     init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate * 2, 32);
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
-    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
     todo_wine
