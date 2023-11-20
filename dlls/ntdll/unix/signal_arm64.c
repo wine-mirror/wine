@@ -1790,8 +1790,23 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "stp q26, q27, [x10, #0x2d0]\n\t"
                    "stp q28, q29, [x10, #0x2f0]\n\t"
                    "stp q30, q31, [x10, #0x310]\n\t"
+                   "mov x22, x10\n\t"
                    /* switch to kernel stack */
                    "mov sp, x10\n\t"
+                   /* we're now on the kernel stack, stitch unwind info with previous frame */
+                   __ASM_CFI_CFA_IS_AT2(x22, 0x98, 0x02) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset 29, -0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 30, -0xb8\n\t")
+                   __ASM_CFI(".cfi_offset 19, -0xb0\n\t")
+                   __ASM_CFI(".cfi_offset 20, -0xa8\n\t")
+                   __ASM_CFI(".cfi_offset 21, -0xa0\n\t")
+                   __ASM_CFI(".cfi_offset 22, -0x98\n\t")
+                   __ASM_CFI(".cfi_offset 23, -0x90\n\t")
+                   __ASM_CFI(".cfi_offset 24, -0x88\n\t")
+                   __ASM_CFI(".cfi_offset 25, -0x80\n\t")
+                   __ASM_CFI(".cfi_offset 26, -0x78\n\t")
+                   __ASM_CFI(".cfi_offset 27, -0x70\n\t")
+                   __ASM_CFI(".cfi_offset 28, -0x68\n\t")
                    "and x20, x8, #0xfff\n\t"    /* syscall number */
                    "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
                    "adr x16, " __ASM_NAME("KeServiceDescriptorTable") "\n\t"
@@ -1799,7 +1814,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr x16, [x21, #16]\n\t"    /* table->ServiceLimit */
                    "cmp x20, x16\n\t"
                    "bcs 4f\n\t"
-                   "mov x22, sp\n\t"
                    "ldr x16, [x21, #24]\n\t"    /* table->ArgumentTable */
                    "ldrb w9, [x16, x20]\n\t"
                    "subs x9, x9, #64\n\t"
@@ -1815,6 +1829,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr x16, [x16, x20, lsl 3]\n\t"
                    "blr x16\n\t"
                    "mov sp, x22\n"
+                   __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
                    "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "tbz x16, #1, 2f\n\t"        /* CONTEXT_INTEGER */
@@ -1894,14 +1909,30 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "stp x30, x9, [x10, #0xf0]\n\t"
                    "mrs x9, NZCV\n\t"
                    "stp x30, x9, [x10, #0x100]\n\t"
+                   "mov x19, x10\n\t"
                    /* switch to kernel stack */
                    "mov sp, x10\n\t"
+                   /* we're now on the kernel stack, stitch unwind info with previous frame */
+                   __ASM_CFI_CFA_IS_AT2(x19, 0x98, 0x02) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset 29, -0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 30, -0xb8\n\t")
+                   __ASM_CFI(".cfi_offset 19, -0xb0\n\t")
+                   __ASM_CFI(".cfi_offset 20, -0xa8\n\t")
+                   __ASM_CFI(".cfi_offset 21, -0xa0\n\t")
+                   __ASM_CFI(".cfi_offset 22, -0x98\n\t")
+                   __ASM_CFI(".cfi_offset 23, -0x90\n\t")
+                   __ASM_CFI(".cfi_offset 24, -0x88\n\t")
+                   __ASM_CFI(".cfi_offset 25, -0x80\n\t")
+                   __ASM_CFI(".cfi_offset 26, -0x78\n\t")
+                   __ASM_CFI(".cfi_offset 27, -0x70\n\t")
+                   __ASM_CFI(".cfi_offset 28, -0x68\n\t")
                    "ldr x16, [x0, x1, lsl 3]\n\t"
                    "mov x0, x2\n\t"             /* args */
                    "blr x16\n\t"
                    "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
                    "cbnz w16, " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
-                   "ldr x18, [sp, #0x90]\n\t"
+                   __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
+                   "ldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x16, x17, [sp, #0xf8]\n\t"
                    /* switch to user stack */
                    "mov sp, x16\n\t"
