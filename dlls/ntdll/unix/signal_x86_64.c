@@ -418,16 +418,15 @@ struct amd64_thread_data
     DWORD_PTR             dr3;           /* 0308 */
     DWORD_PTR             dr6;           /* 0310 */
     DWORD_PTR             dr7;           /* 0318 */
-    void                 *exit_frame;    /* 0320 exit frame pointer */
+    void                 *pthread_teb;   /* 0320 thread data for pthread */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
-    void                 *pthread_teb;   /* 0330 thread data for pthread */
-    DWORD                 fs;            /* 0338 WOW TEB selector */
+    DWORD                 fs;            /* 0330 WOW TEB selector */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x320 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x320 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x330 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x330 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -1586,7 +1585,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"       /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw 0x338(%r11),%fs\n"    /* amd64_thread_data()->fs */
+                   "movw 0x330(%r11),%fs\n"    /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "movq %rdi,%rcx\n\t"        /* id */
@@ -2561,8 +2560,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %r15,-0x28(%rbp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
                    "leaq 0x10(%rbp),%r9\n\t"       /* syscall_cfa */
-                   /* store exit frame */
-                   "movq %rsp,0x320(%rcx)\n\t"     /* amd64_thread_data()->exit_frame */
                    /* set syscall frame */
                    "movq 0x328(%rcx),%r8\n\t"      /* amd64_thread_data()->syscall_frame */
                    "orq %r8,%r8\n\t"
@@ -2578,23 +2575,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 /***********************************************************************
  *           signal_exit_thread
  */
-__ASM_GLOBAL_FUNC( signal_exit_thread,
-                   /* fetch exit frame */
-                   "xorl %ecx,%ecx\n\t"
-                   "xchgq %rcx,0x320(%rdx)\n\t"      /* amd64_thread_data()->exit_frame */
-                   "testq %rcx,%rcx\n\t"
-                   "jnz 1f\n\t"
-                   "jmp *%rsi\n"
-                   /* switch to exit frame stack */
-                   "1:\tmovq %rcx,%rsp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbx,40\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r12,32\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r13,24\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
-                   "call *%rsi" )
+__ASM_GLOBAL_FUNC( signal_exit_thread, "jmp *%rsi" )
+
 
 /***********************************************************************
  *           __wine_syscall_dispatcher
@@ -2677,7 +2659,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 2f\n\t"
-                   "movq %gs:0x330,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
+                   "movq %gs:0x320,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
@@ -2738,7 +2720,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
+                   "movw %gs:0x330,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "testl $0x48,%edx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
@@ -2880,7 +2862,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 2f\n\t"
-                   "movq %gs:0x330,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
+                   "movq %gs:0x320,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
@@ -2923,7 +2905,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
+                   "movw %gs:0x330,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "movq 0x60(%rcx),%r14\n\t"
