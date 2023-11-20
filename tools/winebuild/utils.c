@@ -628,7 +628,6 @@ DLLSPEC *alloc_dll_spec(void)
     spec->subsystem          = IMAGE_SUBSYSTEM_WINDOWS_CUI;
     spec->subsystem_major    = 4;
     spec->subsystem_minor    = 0;
-    spec->syscall_table      = 0;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
     return spec;
 }

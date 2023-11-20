@@ -151,7 +151,6 @@ typedef struct
     int              subsystem;          /* subsystem id */
     int              subsystem_major;    /* subsystem version major number */
     int              subsystem_minor;    /* subsystem version minor number */
-    int              syscall_table;      /* syscall table id */
     int              unicode_app;        /* default to unicode entry point */
     ORDDEF          *entry_points;       /* dll entry points */
     ORDDEF         **names;              /* array of entry point names (points into entry_points) */
@@ -313,7 +312,6 @@ extern int has_delay_imports(void);
 extern void output_get_pc_thunk(void);
 extern void output_module( DLLSPEC *spec );
 extern void output_stubs( DLLSPEC *spec );
-extern void output_syscalls( DLLSPEC *spec );
 extern void output_imports( DLLSPEC *spec );
 extern void output_import_lib( DLLSPEC *spec, struct strarray files );
 extern void output_static_lib( const char *output_name, struct strarray files, int create );
