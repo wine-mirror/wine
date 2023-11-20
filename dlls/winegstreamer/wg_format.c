@@ -300,6 +300,9 @@ static void wg_format_from_caps_video_wmv(struct wg_format *format, const GstCap
     gchar format_buffer[5] = {'W','M','V','0',0};
     enum wg_wmv_video_format wmv_format;
     const gchar *wmv_format_str = NULL;
+    const GValue *codec_data_value;
+    GstBuffer *codec_data;
+    GstMapInfo map;
 
     if (!gst_structure_get_int(structure, "width", &width))
     {
@@ -344,6 +347,19 @@ static void wg_format_from_caps_video_wmv(struct wg_format *format, const GstCap
     format->u.video_wmv.format = wmv_format;
     format->u.video_wmv.fps_n = fps_n;
     format->u.video_wmv.fps_d = fps_d;
+
+    if ((codec_data_value = gst_structure_get_value(structure, "codec_data")) && (codec_data = gst_value_get_buffer(codec_data_value)))
+    {
+        gst_buffer_map(codec_data, &map, GST_MAP_READ);
+        if (map.size <= sizeof(format->u.video_wmv.codec_data))
+        {
+            format->u.video_wmv.codec_data_len = map.size;
+            memcpy(format->u.video_wmv.codec_data, map.data, map.size);
+        }
+        else
+            GST_WARNING("Too big codec_data value (%u) in %" GST_PTR_FORMAT ".", (UINT)map.size, caps);
+        gst_buffer_unmap(codec_data, &map);
+    }
 }
 
 static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstCaps *caps)
@@ -733,6 +749,7 @@ static GstCaps *wg_format_to_caps_video_wmv(const struct wg_format *format)
 {
     unsigned int wmv_version;
     const char *wmv_format;
+    GstBuffer *buffer;
     GstCaps *caps;
 
     if (!(caps = gst_caps_new_empty_simple("video/x-wmv")))
@@ -779,6 +796,19 @@ static GstCaps *wg_format_to_caps_video_wmv(const struct wg_format *format)
         gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_wmv.height, NULL);
     if (format->u.video_wmv.fps_d || format->u.video_wmv.fps_n)
         gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_wmv.fps_n, format->u.video_wmv.fps_d, NULL);
+
+    if (format->u.video_wmv.codec_data_len)
+    {
+        if (!(buffer = gst_buffer_new_and_alloc(format->u.video_wmv.codec_data_len)))
+        {
+            gst_caps_unref(caps);
+            return NULL;
+        }
+
+        gst_buffer_fill(buffer, 0, format->u.video_wmv.codec_data, format->u.video_wmv.codec_data_len);
+        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
 
     return caps;
 }

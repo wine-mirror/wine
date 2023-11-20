@@ -621,7 +621,7 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
 
 static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_format *format)
 {
-    VIDEOINFO *video_format;
+    VIDEOINFOHEADER *video_format;
     uint32_t frame_time;
     const GUID *subtype;
 
@@ -647,7 +647,7 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
             return false;
     }
 
-    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
+    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format) + format->u.video_wmv.codec_data_len)))
         return false;
 
     mt->majortype = MEDIATYPE_Video;
@@ -656,7 +656,7 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     mt->bTemporalCompression = TRUE;
     mt->lSampleSize = 0;
     mt->formattype = FORMAT_VideoInfo;
-    mt->cbFormat = sizeof(VIDEOINFOHEADER);
+    mt->cbFormat = sizeof(*video_format) + format->u.video_wmv.codec_data_len;
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
@@ -669,6 +669,7 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     video_format->bmiHeader.biHeight = format->u.video_wmv.height;
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biCompression = mt->subtype.Data1;
+    memcpy(video_format+1, format->u.video_wmv.codec_data, format->u.video_wmv.codec_data_len);
 
     return true;
 }
@@ -997,6 +998,13 @@ static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format
     else
         format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_UNKNOWN;
 
+    format->u.video_wmv.codec_data_len = mt->cbFormat - sizeof(VIDEOINFOHEADER);
+    if (format->u.video_wmv.codec_data_len > sizeof(format->u.video_wmv.codec_data))
+    {
+        ERR("Too big codec_data value (%u).\n", format->u.video_wmv.codec_data_len);
+        format->u.video_wmv.codec_data_len = 0;
+    }
+    memcpy(format->u.video_wmv.codec_data, video_format+1, format->u.video_wmv.codec_data_len);
     return true;
 }
 

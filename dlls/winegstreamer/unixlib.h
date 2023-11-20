@@ -157,6 +157,8 @@ struct wg_format
             wg_wmv_video_format format;
             int32_t width, height;
             uint32_t fps_n, fps_d;
+            uint32_t codec_data_len;
+            unsigned char codec_data[64];
         } video_wmv;
         struct
         {
