@@ -137,7 +137,7 @@ struct syscall_frame
     ULONG                 cpsr;           /* 108 */
     ULONG                 restore_flags;  /* 10c */
     struct syscall_frame *prev_frame;     /* 110 */
-    void                 *unused;         /* 118 */
+    void                 *syscall_cfa;    /* 118 */
     ULONG64               align;          /* 120 */
     ULONG                 fpcr;           /* 128 */
     ULONG                 fpsr;           /* 12c */
@@ -1111,12 +1111,26 @@ extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void *
                                          ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp x29, x30, [sp,#-0xc0]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 29,-0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 30,-0xb8\n\t")
                    "mov x29, sp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
                    "stp x19, x20, [x29, #0x10]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 19,0x10\n\t")
+                   __ASM_CFI(".cfi_rel_offset 20,0x18\n\t")
                    "stp x21, x22, [x29, #0x20]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 21,0x20\n\t")
+                   __ASM_CFI(".cfi_rel_offset 22,0x28\n\t")
                    "stp x23, x24, [x29, #0x30]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 23,0x30\n\t")
+                   __ASM_CFI(".cfi_rel_offset 24,0x38\n\t")
                    "stp x25, x26, [x29, #0x40]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 25,0x40\n\t")
+                   __ASM_CFI(".cfi_rel_offset 26,0x48\n\t")
                    "stp x27, x28, [x29, #0x50]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 27,0x50\n\t")
+                   __ASM_CFI(".cfi_rel_offset 28,0x58\n\t")
                    "stp d8,  d9,  [x29, #0x60]\n\t"
                    "stp d10, d11, [x29, #0x70]\n\t"
                    "stp d12, d13, [x29, #0x80]\n\t"
@@ -1132,9 +1146,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
                    "str x3, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "add x8, x29, #0xc0\n\t"
+                   "stp x7, x8, [x3, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
                    /* switch to user stack */
                    "mov sp, x1\n\t"               /* stack */
-                   "str x7, [x3, #0x110]\n\t"     /* frame->prev_frame */
                    "br x5" )
 
 
@@ -1145,19 +1160,42 @@ extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG re
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
-                   "ldr x5, [x4, #0x110]\n\t"     /* prev_frame */
+                   "ldp x5, x29, [x4,#0x110]\n\t" /* prev_frame,syscall_cfa */
                    "str x5, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
-                   "add x29, x4, #0x330\n\t"      /* sizeof(struct syscall_frame) */
+                   "sub x29, x29, #0xc0\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
+                   __ASM_CFI(".cfi_rel_offset 29,0x00\n\t")
+                   __ASM_CFI(".cfi_rel_offset 30,0x08\n\t")
+                   __ASM_CFI(".cfi_rel_offset 19,0x10\n\t")
+                   __ASM_CFI(".cfi_rel_offset 20,0x18\n\t")
+                   __ASM_CFI(".cfi_rel_offset 21,0x20\n\t")
+                   __ASM_CFI(".cfi_rel_offset 22,0x28\n\t")
+                   __ASM_CFI(".cfi_rel_offset 23,0x30\n\t")
+                   __ASM_CFI(".cfi_rel_offset 24,0x38\n\t")
+                   __ASM_CFI(".cfi_rel_offset 25,0x40\n\t")
+                   __ASM_CFI(".cfi_rel_offset 26,0x48\n\t")
+                   __ASM_CFI(".cfi_rel_offset 27,0x50\n\t")
+                   __ASM_CFI(".cfi_rel_offset 28,0x58\n\t")
                    "ldp x5, x6, [x29, #0xb0]\n\t"
                    "str x6, [x3]\n\t"             /* teb->Tib.ExceptionList */
                    "msr fpcr, x5\n\t"
                    "lsr x5, x5, #32\n\t"
                    "msr fpsr, x5\n\t"
                    "ldp x19, x20, [x29, #0x10]\n\t"
+                   __ASM_CFI(".cfi_same_value 19\n\t")
+                   __ASM_CFI(".cfi_same_value 20\n\t")
                    "ldp x21, x22, [x29, #0x20]\n\t"
+                   __ASM_CFI(".cfi_same_value 21\n\t")
+                   __ASM_CFI(".cfi_same_value 22\n\t")
                    "ldp x23, x24, [x29, #0x30]\n\t"
+                   __ASM_CFI(".cfi_same_value 23\n\t")
+                   __ASM_CFI(".cfi_same_value 24\n\t")
                    "ldp x25, x26, [x29, #0x40]\n\t"
+                   __ASM_CFI(".cfi_same_value 25\n\t")
+                   __ASM_CFI(".cfi_same_value 26\n\t")
                    "ldp x27, x28, [x29, #0x50]\n\t"
+                   __ASM_CFI(".cfi_same_value 27\n\t")
+                   __ASM_CFI(".cfi_same_value 28\n\t")
                    "ldp d8,  d9,  [x29, #0x60]\n\t"
                    "ldp d10, d11, [x29, #0x70]\n\t"
                    "ldp d12, d13, [x29, #0x80]\n\t"
@@ -1604,10 +1642,9 @@ void syscall_dispatcher_return_slowpath(void)
 /***********************************************************************
  *           call_init_thunk
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
+                      struct syscall_frame *frame, void *syscall_cfa )
 {
-    struct arm64_thread_data *thread_data = (struct arm64_thread_data *)&teb->GdiTebBatch;
-    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
     I386_CONTEXT *i386_context;
     ARM_CONTEXT *arm_context;
@@ -1659,8 +1696,8 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->pc    = (ULONG64)pLdrInitializeThunk;
     frame->x[0]  = (ULONG64)ctx;
     frame->x[18] = (ULONG64)teb;
-    frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
+    frame->syscall_cfa    = syscall_cfa;
     syscall_frame_fixup_for_fastpath( frame );
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
@@ -1672,29 +1709,49 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
  *           signal_start_thread
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
-                   "stp x29, x30, [sp,#-16]!\n\t"
-                   /* store exit frame */
+                   "stp x29, x30, [sp,#-0xc0]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 29,-0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 30,-0xb8\n\t")
                    "mov x29, sp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
+                   "stp x19, x20, [x29, #0x10]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 19,0x10\n\t")
+                   __ASM_CFI(".cfi_rel_offset 20,0x18\n\t")
+                   "stp x21, x22, [x29, #0x20]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 21,0x20\n\t")
+                   __ASM_CFI(".cfi_rel_offset 22,0x28\n\t")
+                   "stp x23, x24, [x29, #0x30]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 23,0x30\n\t")
+                   __ASM_CFI(".cfi_rel_offset 24,0x38\n\t")
+                   "stp x25, x26, [x29, #0x40]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 25,0x40\n\t")
+                   __ASM_CFI(".cfi_rel_offset 26,0x48\n\t")
+                   "stp x27, x28, [x29, #0x50]\n\t"
+                   __ASM_CFI(".cfi_rel_offset 27,0x50\n\t")
+                   __ASM_CFI(".cfi_rel_offset 28,0x58\n\t")
+                   "add x5, x29, #0xc0\n\t"     /* syscall_cfa */
+                   /* store exit frame */
                    "str x29, [x3, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "ldr x8, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
-                   "cbnz x8, 1f\n\t"
-                   "sub x8, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
-                   "str x8, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
+                   "ldr x4, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
+                   "cbnz x4, 1f\n\t"
+                   "sub x4, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
+                   "str x4, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
                    /* switch to kernel stack */
-                   "1:\tmov sp, x8\n\t"
+                   "1:\tmov sp, x4\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
 
 /***********************************************************************
  *           signal_exit_thread
  */
 __ASM_GLOBAL_FUNC( signal_exit_thread,
-                   "stp x29, x30, [sp,#-16]!\n\t"
+                   "stp x29, x30, [sp,#-0xc0]!\n\t"
                    "ldr x3, [x2, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    "str xzr, [x2, #0x2f0]\n\t"
                    "cbz x3, 1f\n\t"
                    "mov sp, x3\n"
-                   "1:\tldp x29, x30, [sp], #16\n\t"
+                   "1:\tldp x29, x30, [sp], #0xc0\n\t"
                    "br x1" )
 
 
