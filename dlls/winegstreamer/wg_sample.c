@@ -484,7 +484,7 @@ HRESULT wg_transform_push_dmo(wg_transform_t transform, IMediaBuffer *media_buff
     if (flags & DMO_INPUT_DATA_BUFFERF_TIMELENGTH)
     {
         wg_sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
-        wg_sample->pts = time_length;
+        wg_sample->duration = time_length;
     }
 
     wg_sample_queue_begin_append(queue, wg_sample);
