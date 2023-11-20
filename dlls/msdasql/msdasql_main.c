@@ -357,18 +357,19 @@ static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropert
     struct msdasql *provider = impl_from_IDBProperties(iface);
     int i, j, k;
     DBPROPSET *propset;
+    BOOL no_prop_id;
 
     TRACE("(%p)->(%ld %p %p %p)\n", provider, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
 
     *pcPropertySets = 1;
 
-    if (cPropertyIDSets != 1)
+    if (cPropertyIDSets > 1)
     {
-        FIXME("Currently only 1 property set supported.\n");
+        FIXME("Currently only 0 or 1 property set are supported.\n");
         cPropertyIDSets = 1;
     }
 
-    propset = CoTaskMemAlloc(cPropertyIDSets * sizeof(DBPROPSET));
+    propset = CoTaskMemAlloc(max(cPropertyIDSets, 1) * sizeof(DBPROPSET));
 
     if (IsEqualGUID(&rgPropertyIDSets[0].guidPropertySet, &DBPROPSET_DATASOURCEINFO))
     {
@@ -391,6 +392,33 @@ static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG cPropert
 
     propset->guidPropertySet = DBPROPSET_DBINIT;
 
+    no_prop_id = TRUE;
+    for (i = 0; i < cPropertyIDSets; i++)
+    {
+        if (rgPropertyIDSets[i].cPropertyIDs)
+        {
+            no_prop_id = FALSE;
+            break;
+        }
+    }
+
+    /* If no property ID is specified then return all currently set properties */
+    if (no_prop_id)
+    {
+        propset->cProperties = ARRAY_SIZE(provider->properties);
+        propset->rgProperties = CoTaskMemAlloc(propset->cProperties * sizeof(DBPROP));
+        for(i = 0; i < ARRAY_SIZE(provider->properties); i++)
+        {
+            propset->rgProperties[i].dwPropertyID = provider->properties[i].id;
+            V_VT(&propset->rgProperties[i].vValue) = VT_EMPTY;
+            VariantCopy(&propset->rgProperties[i].vValue, &provider->properties[i].value);
+        }
+
+        *prgPropertySets = propset;
+        return S_OK;
+    }
+
+    /* Return property info for properties in the specified property ID sets */
     for (i=0; i < cPropertyIDSets; i++)
     {
         TRACE("Property id %d (count %ld, set %s)\n", i, rgPropertyIDSets[i].cPropertyIDs,

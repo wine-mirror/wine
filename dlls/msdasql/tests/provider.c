@@ -201,10 +201,8 @@ static void test_Properties(void)
         /* Test when cPropertyIDSets is zero, all initialization properties should be returned */
         hr = IDBProperties_GetProperties(props, 0, &propidlist, &propcnt, &propset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
-        todo_wine
         ok(propset->cProperties == ARRAY_SIZE(properties), "got %lu\n", propset->cProperties);
         for (i = 0; i < propset->cProperties; i++)
-             todo_wine_if(i > 0)
              ok(propset->rgProperties[i].dwPropertyID == properties[i],
                 "%ld %ld, got %ld\n", i, properties[i], propset->rgProperties[i].dwPropertyID);
         free_dbpropset(propcnt, propset);
@@ -217,9 +215,7 @@ static void test_Properties(void)
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
-        todo_wine
         ok(propset->cProperties == ARRAY_SIZE(properties), "got %lu\n", propset->cProperties);
-        todo_wine
         for (i = 0; i < propset->cProperties; i++)
             ok(propset->rgProperties[i].dwPropertyID == properties[i],
                "%ld %ld, got %ld\n", i, properties[i], propset->rgProperties[i].dwPropertyID);
