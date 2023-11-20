@@ -580,6 +580,7 @@ struct HTMLInnerWindow {
     EventTarget event_target;
 
     HTMLDocumentNode *doc;
+    nsIDOMWindow *dom_window;
 
     struct list children;
     struct list script_hosts;

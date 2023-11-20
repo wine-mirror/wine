@@ -3955,6 +3955,8 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
         note_cc_edge((nsISupports*)This->session_storage, "session_storage", cb);
     if(This->local_storage)
         note_cc_edge((nsISupports*)This->local_storage, "local_storage", cb);
+    if(This->dom_window)
+        note_cc_edge((nsISupports*)This->dom_window, "dom_window", cb);
     traverse_variant(&This->performance, "performance", cb);
 }
 
@@ -4009,6 +4011,7 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         IHTMLStorage_Release(local_storage);
     }
     unlink_variant(&This->performance);
+    unlink_ref(&This->dom_window);
 }
 
 static void HTMLWindow_destructor(DispatchEx *dispex)
@@ -4523,11 +4526,12 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 {
     HTMLOuterWindow *outer_window = window->base.outer_window;
     compat_mode_t parent_mode = COMPAT_MODE_QUIRKS;
+    mozIDOMWindow *gecko_inner_window;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
     HRESULT hres;
 
-    assert(!window->doc);
+    assert(!window->doc && !window->dom_window);
 
     if(!outer_window)
         return E_UNEXPECTED;
@@ -4537,6 +4541,12 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         ERR("GetDocument failed: %08lx\n", nsres);
         return E_FAIL;
     }
+
+    nsres = nsIDOMWindow_GetInnerWindow(outer_window->nswindow, &gecko_inner_window);
+    assert(nsres == NS_OK);
+    nsres = mozIDOMWindow_QueryInterface(gecko_inner_window, &IID_nsIDOMWindow, (void **)&window->dom_window);
+    assert(nsres == NS_OK);
+    mozIDOMWindow_Release(gecko_inner_window);
 
     if(outer_window->parent)
         parent_mode = outer_window->parent->base.inner_window->doc->document_mode;

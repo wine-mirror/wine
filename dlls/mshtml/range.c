@@ -1287,7 +1287,12 @@ static HRESULT WINAPI HTMLTxtRange_select(IHTMLTxtRange *iface)
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMWindow_GetSelection(This->doc->outer_window->nswindow, &nsselection);
+    if(!This->doc->window) {
+        FIXME("no window\n");
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMWindow_GetSelection(This->doc->window->dom_window, &nsselection);
     if(NS_FAILED(nsres)) {
         ERR("GetSelection failed: %08lx\n", nsres);
         return E_FAIL;
