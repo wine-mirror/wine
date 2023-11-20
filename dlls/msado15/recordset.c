@@ -299,7 +299,7 @@ static HRESULT WINAPI field_put_Value( Field *iface, VARIANT val )
 
     field->recordset->data[row * col_count + col] = copy;
 
-    if (field->recordset->editmode != adEditNone)
+    if (field->recordset->editmode == adEditNone)
         field->recordset->editmode = adEditInProgress;
 
     return S_OK;
