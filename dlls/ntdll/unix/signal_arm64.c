@@ -148,13 +148,11 @@ C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 
 struct arm64_thread_data
 {
-    void                 *exit_frame;    /* 02f0 exit frame pointer */
-    struct syscall_frame *syscall_frame; /* 02f8 frame pointer on syscall entry */
+    struct syscall_frame *syscall_frame; /* 02f0 frame pointer on syscall entry */
 };
 
 C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x2f0 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, syscall_frame ) == 0x2f8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, syscall_frame ) == 0x2f0 );
 
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
@@ -1143,9 +1141,9 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr x4, [x18]\n\t"            /* teb->Tib.ExceptionList */
                    "stp x3, x4, [x29, #0xb0]\n\t"
 
-                   "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "ldr x7, [x18, #0x2f0]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
-                   "str x3, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "str x3, [x18, #0x2f0]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "add x8, x29, #0xc0\n\t"
                    "stp x7, x8, [x3, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
                    /* switch to user stack */
@@ -1159,9 +1157,9 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
-                   "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
+                   "ldr x4, [x3, #0x2f0]\n\t"     /* arm64_thread_data()->syscall_frame */
                    "ldp x5, x29, [x4,#0x110]\n\t" /* prev_frame,syscall_cfa */
-                   "str x5, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
+                   "str x5, [x3, #0x2f0]\n\t"     /* arm64_thread_data()->syscall_frame */
                    "sub x29, x29, #0xc0\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
                    __ASM_CFI(".cfi_rel_offset 29,0x00\n\t")
@@ -1757,13 +1755,11 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset 27,0x50\n\t")
                    __ASM_CFI(".cfi_rel_offset 28,0x58\n\t")
                    "add x5, x29, #0xc0\n\t"     /* syscall_cfa */
-                   /* store exit frame */
-                   "str x29, [x3, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "ldr x4, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
+                   "ldr x4, [x3, #0x2f0]\n\t"   /* arm64_thread_data()->syscall_frame */
                    "cbnz x4, 1f\n\t"
                    "sub x4, sp, #0x330\n\t"     /* sizeof(struct syscall_frame) */
-                   "str x4, [x3, #0x2f8]\n\t"   /* arm64_thread_data()->syscall_frame */
+                   "str x4, [x3, #0x2f0]\n\t"   /* arm64_thread_data()->syscall_frame */
                    /* switch to kernel stack */
                    "1:\tmov sp, x4\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
@@ -1771,21 +1767,14 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 /***********************************************************************
  *           signal_exit_thread
  */
-__ASM_GLOBAL_FUNC( signal_exit_thread,
-                   "stp x29, x30, [sp,#-0xc0]!\n\t"
-                   "ldr x3, [x2, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
-                   "str xzr, [x2, #0x2f0]\n\t"
-                   "cbz x3, 1f\n\t"
-                   "mov sp, x3\n"
-                   "1:\tldp x29, x30, [sp], #0xc0\n\t"
-                   "br x1" )
+__ASM_GLOBAL_FUNC( signal_exit_thread, "br x1" )
 
 
 /***********************************************************************
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
-                   "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
+                   "ldr x10, [x18, #0x2f0]\n\t" /* arm64_thread_data()->syscall_frame */
                    "stp x18, x19, [x10, #0x90]\n\t"
                    "stp x20, x21, [x10, #0xa0]\n\t"
                    "stp x22, x23, [x10, #0xb0]\n\t"
@@ -1920,7 +1909,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
  *           __wine_unix_call_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
-                   "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
+                   "ldr x10, [x18, #0x2f0]\n\t" /* arm64_thread_data()->syscall_frame */
                    "stp x18, x19, [x10, #0x90]\n\t"
                    "stp x20, x21, [x10, #0xa0]\n\t"
                    "stp x22, x23, [x10, #0xb0]\n\t"
