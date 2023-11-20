@@ -631,7 +631,7 @@ static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
     return r;
 }
 
-HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid, IUnknown **datasource)
+HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPCOLESTR initstring, REFIID riid, IUnknown **datasource)
 {
     static const WCHAR providerW[] = L"Provider=";
     BOOL datasource_created = FALSE;
@@ -768,7 +768,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
 }
 
 static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *outer, DWORD clsctx,
-                                LPWSTR initstring, REFIID riid, IUnknown **datasource)
+                                LPCOLESTR initstring, REFIID riid, IUnknown **datasource)
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
@@ -977,7 +977,7 @@ static HRESULT WINAPI datainit_CreateDBInstanceEx(IDataInitialize *iface, REFCLS
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainit_LoadStringFromStorage(IDataInitialize *iface, LPWSTR pwszFileName,
+static HRESULT WINAPI datainit_LoadStringFromStorage(IDataInitialize *iface, LPCOLESTR pwszFileName,
                                 LPWSTR *ppwszInitializationString)
 {
     datainit *This = impl_from_IDataInitialize(iface);
@@ -987,8 +987,8 @@ static HRESULT WINAPI datainit_LoadStringFromStorage(IDataInitialize *iface, LPW
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainit_WriteStringToStorage(IDataInitialize *iface, LPWSTR pwszFileName,
-                                LPWSTR pwszInitializationString, DWORD dwCreationDisposition)
+static HRESULT WINAPI datainit_WriteStringToStorage(IDataInitialize *iface, LPCOLESTR pwszFileName,
+                                LPCOLESTR pwszInitializationString, DWORD dwCreationDisposition)
 {
     datainit *This = impl_from_IDataInitialize(iface);
 

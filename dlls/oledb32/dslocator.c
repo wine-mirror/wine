@@ -707,7 +707,7 @@ static ULONG WINAPI datainitialize_Release(IDataInitialize *iface)
 }
 
 static HRESULT WINAPI datainitialize_GetDataSource(IDataInitialize *iface,
-    IUnknown *outer, DWORD context, LPWSTR initstring, REFIID riid, IUnknown **datasource)
+    IUnknown *outer, DWORD context, LPCOLESTR initstring, REFIID riid, IUnknown **datasource)
 {
     TRACE("(%p)->(%p %#lx %s %s %p)\n", iface, outer, context, debugstr_w(initstring), debugstr_guid(riid),
         datasource);
@@ -738,13 +738,13 @@ static HRESULT WINAPI datainitialize_CreateDBInstanceEx(IDataInitialize *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainitialize_LoadStringFromStorage(IDataInitialize *iface, LPWSTR filename, LPWSTR *initstring)
+static HRESULT WINAPI datainitialize_LoadStringFromStorage(IDataInitialize *iface, LPCOLESTR filename, LPWSTR *initstring)
 {
     FIXME("(%p)->(%s %p): stub\n", iface, debugstr_w(filename), initstring);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI datainitialize_WriteStringToStorage(IDataInitialize *iface, LPWSTR filename, LPWSTR initstring,
+static HRESULT WINAPI datainitialize_WriteStringToStorage(IDataInitialize *iface, LPCOLESTR filename, LPCOLESTR initstring,
     DWORD disposition)
 {
     FIXME("(%p)->(%s %s %#lx): stub\n", iface, debugstr_w(filename), debugstr_w(initstring), disposition);

@@ -92,7 +92,7 @@ library MSDASC
     interface IDataInitialize : IUnknown
     {
         HRESULT GetDataSource([in] IUnknown* pUnkOuter, [in]  DWORD dwClsCtx,
-                        [in] LPWSTR pwszInitializationString, [in] REFIID riid,
+                        [in] LPCOLESTR pwszInitializationString, [in] REFIID riid,
                         [in, out] IUnknown** ppDataSource);
 
         HRESULT GetInitializationString([in] IUnknown* pDataSource, [in] boolean fIncludePassword,
@@ -113,9 +113,9 @@ library MSDASC
                         [in] DWORD cmq,  [in, size_is(cmq)] const IID **iids, [out, size_is(cmq)] IUnknown **ifs,
                         [out, size_is(cmq)] HRESULT *hr);
 
-        HRESULT LoadStringFromStorage([in] LPWSTR pwszFileName, [out] LPWSTR* ppwszInitializationString);
+        HRESULT LoadStringFromStorage([in] LPCOLESTR pwszFileName, [out] LPOLESTR *ppwszInitializationString);
 
-        HRESULT WriteStringToStorage([in] LPWSTR pwszFileName,  [in] LPWSTR pwszInitializationString,
+        HRESULT WriteStringToStorage([in] LPCOLESTR pwszFileName, [in] LPCOLESTR pwszInitializationString,
                         [in] DWORD dwCreationDisposition);
     }
 

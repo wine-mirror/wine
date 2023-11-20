@@ -23,7 +23,7 @@ HRESULT create_error_info(IUnknown *outer, void **obj);
 HRESULT create_oledb_rowpos(IUnknown *outer, void **obj);
 HRESULT create_dslocator(IUnknown *outer, void **obj);
 
-HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid,
+HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPCOLESTR initstring, REFIID riid,
     IUnknown **datasource);
 
 extern HINSTANCE instance;
