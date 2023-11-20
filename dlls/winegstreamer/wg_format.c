@@ -201,6 +201,70 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
     format->u.audio_mpeg1.rate = rate;
 }
 
+static void wg_format_from_caps_audio_wma(struct wg_format *format, const GstCaps *caps)
+{
+    const GstStructure *structure = gst_caps_get_structure(caps, 0);
+    gint version, bitrate, rate, depth, channels, block_align;
+    const GValue *codec_data_value;
+    GstBuffer *codec_data;
+    GstMapInfo map;
+
+    if (!gst_structure_get_int(structure, "wmaversion", &version))
+    {
+        GST_WARNING("Missing \"wmaversion\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "bitrate", &bitrate))
+    {
+        GST_WARNING("Missing \"bitrate\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "rate", &rate))
+    {
+        GST_WARNING("Missing \"rate\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "depth", &depth))
+    {
+        GST_WARNING("Missing \"depth\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "channels", &channels))
+    {
+        GST_WARNING("Missing \"channels\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "block_align", &block_align))
+    {
+        GST_WARNING("Missing \"block_align\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!(codec_data_value = gst_structure_get_value(structure, "codec_data"))
+            || !(codec_data = gst_value_get_buffer(codec_data_value)))
+    {
+        GST_WARNING("Missing \"codec_data\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO_WMA;
+    format->u.audio_wma.version = version;
+    format->u.audio_wma.bitrate = bitrate;
+    format->u.audio_wma.rate = rate;
+    format->u.audio_wma.depth = depth;
+    format->u.audio_wma.channels = channels;
+    format->u.audio_wma.block_align = block_align;
+
+    gst_buffer_map(codec_data, &map, GST_MAP_READ);
+    if (map.size <= sizeof(format->u.audio_wma.codec_data))
+    {
+        format->u.audio_wma.codec_data_len = map.size;
+        memcpy(format->u.audio_wma.codec_data, map.data, map.size);
+    }
+    else
+        GST_WARNING("Too big codec_data value (%u) in %" GST_PTR_FORMAT ".", (UINT)map.size, caps);
+    gst_buffer_unmap(codec_data, &map);
+}
+
 static void wg_format_from_caps_video_cinepak(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -335,6 +399,10 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     else if (!strcmp(name, "audio/mpeg") && gst_structure_get_boolean(structure, "parsed", &parsed) && parsed)
     {
         wg_format_from_caps_audio_mpeg1(format, caps);
+    }
+    else if (!strcmp(name, "audio/x-wma"))
+    {
+        wg_format_from_caps_audio_wma(format, caps);
     }
     else if (!strcmp(name, "video/x-cinepak"))
     {
