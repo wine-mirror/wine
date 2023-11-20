@@ -455,7 +455,7 @@ struct syscall_frame
     UINT                  edi;            /* 02c */
     UINT                  esi;            /* 030 */
     UINT                  ebp;            /* 034 */
-    SYSTEM_SERVICE_TABLE *syscall_table;  /* 038 */
+    void                 *unused;         /* 038 */
     struct syscall_frame *prev_frame;     /* 03c */
     union                                 /* 040 */
     {
@@ -482,12 +482,14 @@ struct x86_thread_data
     UINT               dr7;           /* 1f0 */
     void              *exit_frame;    /* 1f4 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 1fc syscall table */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_table ) == 0x1fc );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
@@ -1596,8 +1598,6 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movl 0x1f8(%edx),%ecx\n\t" /* x86_thread_data()->syscall_frame */
                    "movl (%ecx),%eax\n\t"      /* frame->syscall_flags */
                    "movl %eax,(%esp)\n\t"
-                   "movl 0x38(%ecx),%eax\n\t"  /* frame->syscall_table */
-                   "movl %eax,0x38(%esp)\n\t"
                    "movl %ecx,0x3c(%esp)\n\t"  /* frame->prev_frame */
                    "movl %esp,0x1f8(%edx)\n\t" /* x86_thread_data()->syscall_frame */
                    "movl 0x1c(%ebp),%ecx\n\t"  /* func */
@@ -2423,6 +2423,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
 
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();
+    thread_data->syscall_table = KeServiceDescriptorTable;
 
     context.SegCs  = get_cs();
     context.SegDs  = get_ds();
@@ -2458,7 +2459,6 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->eip = (DWORD)pLdrInitializeThunk;
     frame->prev_frame    = NULL;
     frame->syscall_flags = syscall_flags;
-    frame->syscall_table = KeServiceDescriptorTable;
     frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
@@ -2569,7 +2569,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-                   "addl 0x38(%ecx),%ebx\n\t"      /* frame->syscall_table */
+                   "addl %fs:0x1fc,%ebx\n\t"       /* x86_thread_data()->syscall_table */
                    "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
                    "jz 2f\n\t"
                    "movl $7,%eax\n\t"
