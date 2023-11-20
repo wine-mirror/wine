@@ -875,6 +875,36 @@ static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
     CoTaskMemFree(propinfoset);
 }
 
+/* Whether a property should be skipped in datainit_GetInitializationString() */
+static BOOL skip_property(const DBPROPSET *propset, unsigned int prop_index, boolean include_pass)
+{
+    DWORD prop_id = propset->rgProperties[prop_index].dwPropertyID;
+    unsigned int i;
+
+    /* Skip password if include_pass is FALSE */
+    if (!include_pass && prop_id == DBPROP_AUTH_PASSWORD)
+        return TRUE;
+
+    /* Skip these properties according to the function spec */
+    if (prop_id == DBPROP_INIT_ASYNCH
+        || prop_id == DBPROP_INIT_HWND
+        || prop_id == DBPROP_INIT_PROMPT
+        || prop_id == DBPROP_INIT_TIMEOUT
+        || prop_id == DBPROP_INIT_GENERALTIMEOUT
+        || prop_id == DBPROP_INIT_OLEDBSERVICES
+        || prop_id == DBPROP_INIT_LCID) /* DBPROP_INIT_LCID should also be ignored according to tests */
+        return TRUE;
+
+    /* Skip duplicate properties */
+    for (i = prop_index + 1; i < propset->cProperties; i++)
+    {
+        if (propset->rgProperties[i].dwPropertyID == prop_id)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,
                                 boolean include_pass, LPWSTR *init_string)
 {
@@ -884,12 +914,12 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     IDBProperties *props;
     DBPROPIDSET propidset;
     ULONG propset_count, infocount;
+    ULONG i, len, propvalue_length;
     WCHAR *progid, *desc;
     DBPROPSET *propset;
     IPersist *persist;
     HRESULT hr;
     CLSID clsid;
-    ULONG i, len;
 
     TRACE("(%p)->(%p %d %p)\n", This, datasource, include_pass, init_string);
 
@@ -936,12 +966,17 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     len = lstrlenW(progid) + lstrlenW(providerW) + 1; /* including '\0' */
     for (i = 0; i < propset->cProperties; i++)
     {
-        WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
+        WCHAR *descr;
+
+        if (skip_property(propset, i, TRUE))
+            continue;
+
+        descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
         {
-            /* include '=' and ';' */
-            len += lstrlenW(descr) + 2;
-            len += get_propvalue_length(&propset->rgProperties[i]);
+            propvalue_length = get_propvalue_length(&propset->rgProperties[i]);
+            if (propvalue_length)
+                len += lstrlenW(descr) + propvalue_length + 2; /* include ';' and '=' */
         }
 
         if ((propset->rgProperties[i].dwPropertyID == DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO) &&
@@ -962,11 +997,15 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     {
         WCHAR *descr;
 
-        if (!include_pass && propset->rgProperties[i].dwPropertyID == DBPROP_AUTH_PASSWORD) continue;
+        if (skip_property(propset, i, include_pass))
+            continue;
 
         descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
         {
+            if (!get_propvalue_length(&propset->rgProperties[i]))
+                continue;
+
             lstrcatW(*init_string, L";");
             lstrcatW(*init_string, descr);
             lstrcatW(*init_string, L"=");

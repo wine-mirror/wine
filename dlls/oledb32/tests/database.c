@@ -542,7 +542,6 @@ static void _expect_initstring(int line, IDataInitialize *datainit, const WCHAR 
     ok_(__FILE__, line)(hr == S_OK, "got %08lx\n", hr);
     hr = IDataInitialize_GetInitializationString(datainit, (IUnknown*)dbinit, 0, &result);
     ok_(__FILE__, line)(hr == S_OK, "got %08lx\n", hr);
-    todo_wine
     ok_(__FILE__, line)(!lstrcmpW(expected, result), "expected %s, got %s\n",
                         wine_dbgstr_w(expected), wine_dbgstr_w(result));
     CoTaskMemFree(result);
@@ -596,8 +595,8 @@ static void test_initializationstring(void)
             if(hr == S_OK)
             {
                 trace("Init String: %s\n", wine_dbgstr_w(initstring));
-                todo_wine ok(!lstrcmpW(initstring_msdasql, initstring) ||
-                             !lstrcmpW(initstring_sqloledb, initstring), "got %s\n", wine_dbgstr_w(initstring));
+                ok(!lstrcmpW(initstring_msdasql, initstring) ||
+                   !lstrcmpW(initstring_sqloledb, initstring), "got %s\n", wine_dbgstr_w(initstring));
                 CoTaskMemFree(initstring);
             }
 
