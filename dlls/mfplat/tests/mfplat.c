@@ -66,13 +66,37 @@ DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,
 
 extern const CLSID CLSID_FileSchemePlugin;
 
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_Base,0);
+
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB1, D3DFMT_A1);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB4, MAKEFOURCC('4','P','x','x'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB4444, D3DFMT_A4R4G4B4);
 /* SDK MFVideoFormat_A2R10G10B10 uses D3DFMT_A2B10G10R10, let's name it the other way */
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_A2B10G10R10, D3DFMT_A2R10G10B10);
+
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_h264,MAKEFOURCC('h','2','6','4'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_MP3,WAVE_FORMAT_MPEGLAYER3);
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC3, MAKEFOURCC('I','M','C','3'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC4, MAKEFOURCC('I','M','C','4'));
+
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_AVC1,MAKEFOURCC('A','V','C','1'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_MP42,MAKEFOURCC('M','P','4','2'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_mp42,MAKEFOURCC('m','p','4','2'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_MPG4,MAKEFOURCC('M','P','G','4'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_mpg4,MAKEFOURCC('m','p','g','4'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_P422,MAKEFOURCC('P','4','2','2'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_wmva,MAKEFOURCC('w','m','v','a'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_WMVB,MAKEFOURCC('W','M','V','B'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_wmvb,MAKEFOURCC('w','m','v','b'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_wmvp,MAKEFOURCC('w','m','v','p'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_wmvr,MAKEFOURCC('w','m','v','r'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_wvp2,MAKEFOURCC('w','v','p','2'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_X264,MAKEFOURCC('X','2','6','4'));
+DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_x264,MAKEFOURCC('x','2','6','4'));
 
 static BOOL is_win8_plus;
 
@@ -9868,6 +9892,22 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         const GUID *mf_type;
     } guid_types[] =
     {
+        /* these RGB formats are converted, MEDIASUBTYPE variant isn't
+         * defined using DEFINE_MEDIATYPE_GUID */
+        { &MEDIASUBTYPE_RGB1, &MFVideoFormat_RGB1 },
+        { &MEDIASUBTYPE_RGB4, &MFVideoFormat_RGB4 },
+        { &MEDIASUBTYPE_RGB8, &MFVideoFormat_RGB8 },
+        { &MEDIASUBTYPE_RGB555, &MFVideoFormat_RGB555 },
+        { &MEDIASUBTYPE_RGB565, &MFVideoFormat_RGB565 },
+        { &MEDIASUBTYPE_RGB24, &MFVideoFormat_RGB24 },
+        { &MEDIASUBTYPE_RGB32, &MFVideoFormat_RGB32 },
+        { &MEDIASUBTYPE_ARGB1555, &MFVideoFormat_ARGB1555 },
+        { &MEDIASUBTYPE_ARGB4444, &MFVideoFormat_ARGB4444 },
+        { &MEDIASUBTYPE_ARGB32, &MFVideoFormat_ARGB32 },
+        { &MEDIASUBTYPE_A2R10G10B10, &MFVideoFormat_A2B10G10R10 },
+        { &MEDIASUBTYPE_A2B10G10R10, &MFVideoFormat_A2R10G10B10 },
+
+        /* any other GUID is passed through */
         { &MEDIASUBTYPE_I420, &MFVideoFormat_I420 },
         { &MEDIASUBTYPE_AYUV, &MFVideoFormat_AYUV },
         { &MEDIASUBTYPE_YV12, &MFVideoFormat_YV12 },
@@ -9875,7 +9915,15 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         { &MEDIASUBTYPE_UYVY, &MFVideoFormat_UYVY },
         { &MEDIASUBTYPE_YVYU, &MFVideoFormat_YVYU },
         { &MEDIASUBTYPE_NV12, &MFVideoFormat_NV12 },
-        { &MEDIASUBTYPE_ARGB32, &MFVideoFormat_ARGB32 },
+
+        /* even formats that don't exist in MF */
+        { &DUMMY_GUID3, &DUMMY_GUID3 },
+        { &MEDIASUBTYPE_NV24, &MEDIASUBTYPE_NV24 },
+        { &MEDIASUBTYPE_P208, &MEDIASUBTYPE_P208 },
+
+        /* if the mapping is ambiguous, it is not corrected */
+        { &MEDIASUBTYPE_h264, &MEDIASUBTYPE_h264 },
+        { &MEDIASUBTYPE_H264, &MFVideoFormat_H264 },
     };
     unsigned int i;
 
@@ -9999,6 +10047,7 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     vih.bmiHeader.biHeight = 24;
     for (i = 0; i < ARRAY_SIZE(guid_types); ++i)
     {
+        winetest_push_context("%s", debugstr_guid(guid_types[i].am_type));
         memcpy(&mt.subtype, guid_types[i].am_type, sizeof(GUID));
 
         hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
@@ -10010,6 +10059,7 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(IsEqualGUID(&guid, guid_types[i].mf_type), "Unexpected guid %s.\n", debugstr_guid(&guid));
+        winetest_pop_context();
     }
 
     IMFMediaType_Release(media_type);

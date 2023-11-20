@@ -31,6 +31,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB1, D3DFMT_A1);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB4, MAKEFOURCC('4','P','x','x'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB4444, D3DFMT_A4R4G4B4);
 /* SDK MFVideoFormat_A2R10G10B10 uses D3DFMT_A2B10G10R10, let's name it the other way */
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_A2B10G10R10, D3DFMT_A2R10G10B10);
 
@@ -3605,31 +3609,31 @@ static HRESULT mf_get_stride_for_bitmap_info_header(DWORD fourcc, const BITMAPIN
 
 static const GUID * get_mf_subtype_for_am_subtype(const GUID *subtype)
 {
-    static const GUID null;
-
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB1))
+        return &MFVideoFormat_RGB1;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB4))
+        return &MFVideoFormat_RGB4;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+        return &MFVideoFormat_RGB8;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB555))
+        return &MFVideoFormat_RGB555;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565))
+        return &MFVideoFormat_RGB565;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB24))
+        return &MFVideoFormat_RGB24;
     if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32))
         return &MFVideoFormat_RGB32;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_ARGB32))
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_ARGB1555))
+        return &MFVideoFormat_ARGB1555;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_ARGB4444))
+        return &MFVideoFormat_ARGB4444;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_ARGB32))
         return &MFVideoFormat_ARGB32;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_I420))
-        return &MFVideoFormat_I420;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_AYUV))
-        return &MFVideoFormat_AYUV;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YV12))
-        return &MFVideoFormat_YV12;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YUY2))
-        return &MFVideoFormat_YUY2;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_UYVY))
-        return &MFVideoFormat_UYVY;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YVYU))
-        return &MFVideoFormat_YVYU;
-    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_NV12))
-        return &MFVideoFormat_NV12;
-    else
-    {
-        FIXME("Unknown subtype %s.\n", debugstr_guid(subtype));
-        return &null;
-    }
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_A2R10G10B10))
+        return &MFVideoFormat_A2B10G10R10;
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_A2B10G10R10))
+        return &MFVideoFormat_A2R10G10B10;
+    return subtype;
 }
 
 /***********************************************************************
