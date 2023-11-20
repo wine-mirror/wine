@@ -280,9 +280,9 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
 
         size = sizeof(DWORD);
         if(RegQueryValueExW(hkey, value_iPointSize, 0, &type, (LPBYTE)&point_size, &size) == ERROR_SUCCESS)
-            if(type == REG_DWORD)
+            if(type == REG_DWORD && point_size)
                 /* The value is stored as 10 * twips */
-                Globals.lfFont.lfHeight = -MulDiv(abs(point_size), GetDpiForWindow(Globals.hMainWnd), 720);
+                Globals.lfFont.lfHeight = -MulDiv(abs(point_size), GetDpiForWindow(GetDesktopWindow()), 720);
 
         size = sizeof(Globals.lfFont.lfFaceName);
         if(RegQueryValueExW(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
