@@ -137,7 +137,7 @@ struct syscall_frame
     ULONG                 cpsr;           /* 108 */
     ULONG                 restore_flags;  /* 10c */
     struct syscall_frame *prev_frame;     /* 110 */
-    SYSTEM_SERVICE_TABLE *syscall_table;  /* 118 */
+    void                 *unused;         /* 118 */
     ULONG64               align;          /* 120 */
     ULONG                 fpcr;           /* 128 */
     ULONG                 fpsr;           /* 12c */
@@ -1132,9 +1132,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
                    "str x3, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
-                   "ldr x8, [x7, #0x118]\n\t"     /* prev_frame->syscall_table */
                    "mov sp, x1\n\t"               /* stack */
-                   "stp x7, x8, [x3, #0x110]\n\t" /* frame->prev_frame, frame->syscall_table */
+                   "str x7, [x3, #0x110]\n\t"     /* frame->prev_frame */
                    "br x5" )
 
 
@@ -1662,7 +1661,6 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->prev_frame = NULL;
     frame->restore_flags |= CONTEXT_INTEGER;
     syscall_frame_fixup_for_fastpath( frame );
-    frame->syscall_table = KeServiceDescriptorTable;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     __wine_syscall_dispatcher_return( frame, 0 );
@@ -1736,7 +1734,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "mov sp, x10\n\t"
                    "and x20, x8, #0xfff\n\t"    /* syscall number */
                    "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
-                   "ldr x16, [x10, #0x118]\n\t" /* frame->syscall_table */
+                   "adr x16, " __ASM_NAME("KeServiceDescriptorTable") "\n\t"
                    "add x21, x16, x21, lsl #5\n\t"
                    "ldr x16, [x21, #16]\n\t"    /* table->ServiceLimit */
                    "cmp x20, x16\n\t"
