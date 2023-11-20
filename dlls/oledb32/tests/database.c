@@ -38,8 +38,6 @@
 
 DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44,0x77,0x3d);
 
-static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
-
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
@@ -49,7 +47,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__, line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
-static void test_GetDataSource(WCHAR *initstring)
+static void test_GetDataSource(const WCHAR *initstring)
 {
     IDataInitialize *datainit = NULL;
     IDBInitialize *dbinit = NULL;
@@ -223,8 +221,7 @@ static ULONG WINAPI dbpersist_Release(IPersist *iface)
 
 static HRESULT WINAPI dbpersist_GetClassID(IPersist *iface, CLSID *clsid)
 {
-    static const WCHAR msdasqlW[] = {'M','S','D','A','S','Q','L',0};
-    return CLSIDFromProgID(msdasqlW, clsid);
+    return CLSIDFromProgID(L"MSDASQL", clsid);
 }
 
 static const IPersistVtbl dbpersistvtbl = {
@@ -289,7 +286,7 @@ static const IDBInitializeVtbl dbinitvtbl = {
 
 static IDBInitialize dbinittest = { &dbinitvtbl };
 
-static void test_GetDataSource2(WCHAR *initstring)
+static void test_GetDataSource2(const WCHAR *initstring)
 {
     IDataInitialize *datainit = NULL;
     IDBInitialize *dbinit = NULL;
@@ -307,24 +304,14 @@ static void test_GetDataSource2(WCHAR *initstring)
 
 static void test_database(void)
 {
-    static WCHAR initstring_jet[] = {'P','r','o','v','i','d','e','r','=','M','i','c','r','o','s','o','f','t','.',
-         'J','e','t','.','O','L','E','D','B','.','4','.','0',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
-         'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o','=','F','a','l','s','e',';',0};
-    static WCHAR initstring_lower[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',0};
-    static WCHAR customprop[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',
-        'c','u','s','t','o','m','p','r','o','p','=','1','2','3','.','4',';',0};
-    static WCHAR initial_catalog_prop[] = {'D','a','t','a',' ','S','o','u','r','c','e','=',
-        'i','n','i','t','i','a','l','_','c','a','t','a','l','o','g','_','t','e','s','t',';',
-        'I','n','i','t','i','a','l',' ','C','a','t','a','l','o','g','=','d','u','m','m','y','_','c','a','t','a','l','o','g',0};
-    static WCHAR extended_prop[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',
-        'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s','=','\"','D','R','I','V','E','R','=','A',
-        ' ','W','i','n','e',' ','O','D','B','C',' ','d','r','i','v','e','r',';','U','I','D','=','w','i','n','e',';','\"',';',0};
-    static WCHAR extended_prop2[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','\'','d','u','m','m','y','\'',';',
-        'c','u','s','t','o','m','p','r','o','p','=','\'','1','2','3','.','4','\'',';',0};
-    static WCHAR multi_provider_prop_test[] = {'D','a','t','a',' ','S','o','u','r','c','e','=',
-        'p','r','o','v','i','d','e','r','_','p','r','o','p','_','t','e','s','t',';',
-        'a','=','1',';','b','=','2',';','c','=','3',';',0};
+    static const WCHAR *initstring_default = L"Data Source=dummy;";
+    static const WCHAR *initstring_jet = L"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=dummy;Persist Security Info=False;";
+    static const WCHAR *initstring_lower = L"data source=dummy;";
+    static const WCHAR *customprop = L"data source=dummy;customprop=123.4;";
+    static const WCHAR *initial_catalog_prop = L"Data Source=initial_catalog_test;Initial Catalog=dummy_catalog";
+    static const WCHAR *extended_prop = L"data source=dummy;Extended Properties=\"DRIVER=A Wine ODBC driver;UID=wine;\";";
+    static const WCHAR *extended_prop2 = L"data source=\'dummy\';customprop=\'123.4\';";
+    static const WCHAR *multi_provider_prop_test = L"Data Source=provider_prop_test;a=1;b=2;c=3;";
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
@@ -532,21 +519,13 @@ static void test_errorinfo(void)
 
 static void test_initializationstring(void)
 {
-    static const WCHAR initstring_msdasql[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
-    static const WCHAR initstring_msdasql2[] = {'p','R','o','V','i','D','e','R','=','M','S','D','A','S','Q','L','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
-    static const WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
-    static const WCHAR initstring_mode[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
-         'M','o','d','e','=','i','n','v','a','l','i','d',0};
-    static const WCHAR initstring_mode2[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
-         'M','o','d','e','=','W','r','i','t','e','R','e','a','d',0};
-    static const WCHAR initstring_mode3[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
-         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
-         'M','o','d','e','=','R','e','a','d','W','R','I','T','E',0};
+    static const WCHAR *initstring_default = L"Data Source=dummy;";
+    static const WCHAR *initstring_msdasql = L"Provider=MSDASQL.1;Data Source=dummy";
+    static const WCHAR *initstring_msdasql2 = L"pRoViDeR=MSDASQL.1;Data Source=dummy";
+    static const WCHAR *initstring_sqloledb = L"Provider=SQLOLEDB.1;Data Source=dummy";
+    static const WCHAR *initstring_mode = L"Provider=MSDASQL.1;Data Source=dummy;Mode=invalid";
+    static const WCHAR *initstring_mode2 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=WriteRead";
+    static const WCHAR *initstring_mode3 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=ReadWRITE";
     IDataInitialize *datainit = NULL;
     IDBInitialize *dbinit;
     HRESULT hr;
