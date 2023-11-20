@@ -1686,10 +1686,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->window->base.outer_window)
-        return E_FAIL;
-
-    nsxhr = create_nsxhr(This->window->base.outer_window->nswindow);
+    nsxhr = create_nsxhr(This->window->dom_window);
     if(!nsxhr)
         return E_FAIL;
 
