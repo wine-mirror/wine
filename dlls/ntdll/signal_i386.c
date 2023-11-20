@@ -33,6 +33,7 @@
 #include "ntdll_misc.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
+#include "ntsyscalls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -70,6 +71,16 @@ typedef struct
 extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler );
+
+
+/*******************************************************************
+ *         syscalls
+ */
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name, args )
+ALL_SYSCALLS32
+DEFINE_SYSCALL_HELPER32()
+#undef SYSCALL_ENTRY
+
 
 /*******************************************************************
  *         is_valid_frame

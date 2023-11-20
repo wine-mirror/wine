@@ -33,7 +33,7 @@
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
-#include "winnt.h"
+#include "ntsyscalls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -98,6 +98,14 @@ static inline BOOL is_valid_frame( ULONG_PTR frame )
     return ((void *)frame >= NtCurrentTeb()->Tib.StackLimit &&
             (void *)frame <= NtCurrentTeb()->Tib.StackBase);
 }
+
+
+/*******************************************************************
+ *         syscalls
+ */
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
+ALL_SYSCALLS64
+#undef SYSCALL_ENTRY
 
 
 /**************************************************************************

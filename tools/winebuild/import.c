@@ -1399,6 +1399,8 @@ void output_syscalls( DLLSPEC *spec )
     int i, count;
     ORDDEF **syscalls = NULL;
 
+    if (!spec->syscall_table) return;
+
     for (i = count = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];

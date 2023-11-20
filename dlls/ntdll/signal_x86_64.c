@@ -31,6 +31,7 @@
 #include "wine/list.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
+#include "ntsyscalls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(unwind);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
@@ -78,6 +79,15 @@ struct MSVCRT_JUMP_BUFFER
     M128A   Xmm14;
     M128A   Xmm15;
 };
+
+
+/*******************************************************************
+ *         syscalls
+ */
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
+ALL_SYSCALLS64
+#undef SYSCALL_ENTRY
+
 
 /***********************************************************************
  * Definitions for Win32 unwind tables
