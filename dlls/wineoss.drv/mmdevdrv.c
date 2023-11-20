@@ -144,18 +144,11 @@ exit:
 
 void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 {
+    OSSDevice *oss_dev;
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
     WCHAR key_name[256];
     const unsigned int dev_size = strlen(device) + 1;
-    OSSDevice *oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
-
-    if(oss_dev){
-        oss_dev->flow = flow;
-        oss_dev->guid = *guid;
-        memcpy(oss_dev->devnode, device, dev_size);
-        device_add(oss_dev);
-    }
 
     if(flow == eCapture)
         key_name[0] = '1';
@@ -171,7 +164,7 @@ void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
                 if(type == REG_BINARY){
                     RegCloseKey(dev_key);
                     RegCloseKey(key);
-                    return;
+                    goto exit;
                 }
                 ERR("Invalid type for device %s GUID: %lu; ignoring and overwriting\n",
                         wine_dbgstr_w(key_name), type);
@@ -183,9 +176,17 @@ void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
     CoCreateGuid(guid);
 
     set_device_guid(flow, key, key_name, guid);
-
+exit:
     if(key)
         RegCloseKey(key);
+
+    oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
+    if(oss_dev){
+        oss_dev->flow = flow;
+        oss_dev->guid = *guid;
+        memcpy(oss_dev->devnode, device, dev_size);
+        device_add(oss_dev);
+    }
 }
 
 BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
