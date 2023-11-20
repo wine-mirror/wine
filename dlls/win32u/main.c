@@ -26,10 +26,26 @@
 #include "winbase.h"
 #include "ntgdi.h"
 #include "wine/unixlib.h"
+#include "wine/asm.h"
+#include "win32syscalls.h"
 
 void *__wine_syscall_dispatcher = NULL;
 
 static unixlib_handle_t win32u_handle;
+
+/*******************************************************************
+ *         syscalls
+ */
+#ifdef _WIN64
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id + 0x1000, name )
+ALL_SYSCALLS64
+#else
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id + 0x1000, name, args )
+DEFINE_SYSCALL_HELPER32()
+ALL_SYSCALLS32
+#endif
+#undef SYSCALL_ENTRY
+
 
 void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *function )
 {

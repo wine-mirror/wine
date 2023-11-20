@@ -6,7 +6,7 @@ IMPORTS   = ntdll winecrt0
 UNIX_CFLAGS  = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
 UNIX_LIBS    = $(CARBON_LIBS) $(APPKIT_LIBS) $(PTHREAD_LIBS) -lm
 
-EXTRADLLFLAGS = -nodefaultlibs -Wb,--syscall-table,1
+EXTRADLLFLAGS = -nodefaultlibs
 
 SOURCES = \
 	bitblt.c \
