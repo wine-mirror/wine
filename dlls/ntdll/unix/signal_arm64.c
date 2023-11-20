@@ -1210,6 +1210,31 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
 
 
 /***********************************************************************
+ *           user_mode_abort_thread
+ */
+extern void DECLSPEC_NORETURN user_mode_abort_thread( NTSTATUS status, struct syscall_frame *frame );
+__ASM_GLOBAL_FUNC( user_mode_abort_thread,
+                   "ldr x1, [x1, #0x110]\n\t"    /* frame->syscall_cfa */
+                   "sub x29, x1, #0xc0\n\t"
+                   /* switch to kernel stack */
+                   "mov sp, x29\n\t"
+                   __ASM_CFI(".cfi_def_cfa 29,0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 29,-0xc0\n\t")
+                   __ASM_CFI(".cfi_offset 30,-0xb8\n\t")
+                   __ASM_CFI(".cfi_offset 19,-0xb0\n\t")
+                   __ASM_CFI(".cfi_offset 20,-0xa8\n\t")
+                   __ASM_CFI(".cfi_offset 21,-0xa0\n\t")
+                   __ASM_CFI(".cfi_offset 22,-0x98\n\t")
+                   __ASM_CFI(".cfi_offset 23,-0x90\n\t")
+                   __ASM_CFI(".cfi_offset 24,-0x88\n\t")
+                   __ASM_CFI(".cfi_offset 25,-0x80\n\t")
+                   __ASM_CFI(".cfi_offset 26,-0x78\n\t")
+                   __ASM_CFI(".cfi_offset 27,-0x70\n\t")
+                   __ASM_CFI(".cfi_offset 28,-0x68\n\t")
+                   "bl " __ASM_NAME("abort_thread") )
+
+
+/***********************************************************************
  *           KeUserModeCallback
  */
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
@@ -1479,6 +1504,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
+    if (!is_inside_syscall( sigcontext )) user_mode_abort_thread( 0, arm64_thread_data()->syscall_frame );
     abort_thread(0);
 }
 
