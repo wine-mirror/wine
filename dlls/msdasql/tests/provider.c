@@ -154,6 +154,7 @@ static void test_Properties(void)
         free_dbpropinfoset(infocount, propinfoset);
         CoTaskMemFree(desc);
 
+        /* Test specifying all supported properties */
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
         ok(propidlist.cPropertyIDs == 14, "got %lu\n", propidlist.cPropertyIDs);
@@ -184,7 +185,44 @@ static void test_Properties(void)
             ok(V_VT(&propset->rgProperties[i].vValue) == vartype, "%lu wrong type %d\n", i, V_VT(&propset->rgProperties[i].vValue));
         }
 
+        for (i = 0; i < propset->cProperties; i++)
+            ok(propset->rgProperties[i].dwPropertyID == properties[i],
+               "%ld %ld, got %ld\n", i, properties[i], propset->rgProperties[i].dwPropertyID);
+
+        free_dbpropset(propcnt, propset);
+
+        /* Test specifying only one supported properties */
+        propidlist.cPropertyIDs = 1;
+        hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        ok(propset->cProperties == 1, "expected 1, got %lu\n", propset->cProperties);
+        free_dbpropset(propcnt, propset);
+
+        /* Test when cPropertyIDSets is zero, all initialization properties should be returned */
+        hr = IDBProperties_GetProperties(props, 0, &propidlist, &propcnt, &propset);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        todo_wine
+        ok(propset->cProperties == ARRAY_SIZE(properties), "got %lu\n", propset->cProperties);
+        for (i = 0; i < propset->cProperties; i++)
+             todo_wine_if(i > 0)
+             ok(propset->rgProperties[i].dwPropertyID == properties[i],
+                "%ld %ld, got %ld\n", i, properties[i], propset->rgProperties[i].dwPropertyID);
+        free_dbpropset(propcnt, propset);
+
+        /* Test when propidlist.cPropertyIDs is zero, all initialization properties should be returned */
         CoTaskMemFree(propidlist.rgPropertyIDs);
+        propidlist.guidPropertySet = DBPROPSET_DBINIT;
+        propidlist.cPropertyIDs = 0;
+        propidlist.rgPropertyIDs = NULL;
+
+        hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
+        ok(hr == S_OK, "got 0x%08lx\n", hr);
+        todo_wine
+        ok(propset->cProperties == ARRAY_SIZE(properties), "got %lu\n", propset->cProperties);
+        todo_wine
+        for (i = 0; i < propset->cProperties; i++)
+            ok(propset->rgProperties[i].dwPropertyID == properties[i],
+               "%ld %ld, got %ld\n", i, properties[i], propset->rgProperties[i].dwPropertyID);
         free_dbpropset(propcnt, propset);
     }
 
