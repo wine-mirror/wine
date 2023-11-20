@@ -1078,7 +1078,7 @@ static void contexts_from_server( CONTEXT *context, context_t server_contexts[2]
 /***********************************************************************
  *           pthread_exit_wrapper
  */
-static void pthread_exit_wrapper( int status )
+static DECLSPEC_NORETURN void pthread_exit_wrapper( int status )
 {
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
@@ -1404,7 +1404,7 @@ void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     if (InterlockedDecrement( &nb_threads ) <= 0) abort_process( status );
-    signal_exit_thread( status, pthread_exit_wrapper, NtCurrentTeb() );
+    pthread_exit_wrapper( status );
 }
 
 
@@ -1439,7 +1439,7 @@ static DECLSPEC_NORETURN void exit_thread( int status )
             virtual_free_teb( teb );
         }
     }
-    signal_exit_thread( status, pthread_exit_wrapper, NtCurrentTeb() );
+    pthread_exit_wrapper( status );
 }
 
 
@@ -1449,7 +1449,7 @@ static DECLSPEC_NORETURN void exit_thread( int status )
 void exit_process( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    signal_exit_thread( get_unix_exit_code( status ), process_exit_wrapper, NtCurrentTeb() );
+    process_exit_wrapper( get_unix_exit_code( status ));
 }
 
 

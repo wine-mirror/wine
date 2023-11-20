@@ -1764,11 +1764,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "1:\tmov sp, x4\n\t"
                    "bl " __ASM_NAME("call_init_thunk") )
 
-/***********************************************************************
- *           signal_exit_thread
- */
-__ASM_GLOBAL_FUNC( signal_exit_thread, "br x1" )
-
 
 /***********************************************************************
  *           __wine_syscall_dispatcher

@@ -2573,12 +2573,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 
 
 /***********************************************************************
- *           signal_exit_thread
- */
-__ASM_GLOBAL_FUNC( signal_exit_thread, "jmp *%rsi" )
-
-
-/***********************************************************************
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,

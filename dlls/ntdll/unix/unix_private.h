@@ -203,7 +203,7 @@ extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options );
 extern void wine_server_send_fd( int fd );
-extern void process_exit_wrapper( int status );
+extern void process_exit_wrapper( int status ) DECLSPEC_NORETURN;
 extern size_t server_init_process(void);
 extern void server_init_process_done(void);
 extern void server_init_thread( void *entry_point, BOOL *suspend );
@@ -276,7 +276,6 @@ extern void signal_free_thread( TEB *teb );
 extern void signal_init_process(void);
 extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
                                                    BOOL suspend, TEB *teb );
-extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int), TEB *teb );
 extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 extern void __wine_syscall_dispatcher(void);
 extern void DECLSPEC_NORETURN __wine_syscall_dispatcher_return( void *frame, ULONG_PTR retval );
