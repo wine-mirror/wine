@@ -820,6 +820,8 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
     }
 
     wayland_surface_reconfigure_client(surface);
+    /* Commit to apply subsurface positioning. */
+    wl_surface_commit(surface->wl_surface);
 
     return surface->client;
 
