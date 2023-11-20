@@ -414,6 +414,7 @@ BOOL query_ime_char_rect(macdrv_query* query)
         NtUserMapWindowPoints(info.hwndCaret, 0, (POINT*)&info.rcCaret, 2);
         if (range->length && info.rcCaret.left == info.rcCaret.right) info.rcCaret.right++;
         query->ime_char_rect.rect = cgrect_from_rect(info.rcCaret);
+        ret = TRUE;
     }
 
     TRACE_(imm)(" -> %s range %ld-%ld rect %s\n", ret ? "TRUE" : "FALSE", range->location,
