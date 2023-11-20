@@ -205,15 +205,13 @@ C_ASSERT( sizeof( struct syscall_frame ) == 0x160);
 
 struct arm_thread_data
 {
-    void                 *exit_frame;    /* 1d4 exit frame pointer */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 1d4 syscall table */
     struct syscall_frame *syscall_frame; /* 1d8 frame pointer on syscall entry */
-    SYSTEM_SERVICE_TABLE *syscall_table; /* 1dc syscall table */
 };
 
 C_ASSERT( sizeof(struct arm_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, exit_frame ) == 0x1d4 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_table ) == 0x1d4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_frame ) == 0x1d8 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_table ) == 0x1dc );
 
 static inline struct arm_thread_data *arm_thread_data(void)
 {
@@ -1653,8 +1651,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "push {r4-r12,lr}\n\t"
                    "add r7, sp, #0x28\n\t"    /* syscall_cfa */
                    "mcr p15, 0, r3, c13, c0, 2\n\t" /* set teb register */
-                   /* store exit frame */
-                   "str sp, [r3, #0x1d4]\n\t" /* arm_thread_data()->exit_frame */
                    /* set syscall frame */
                    "ldr r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "cbnz r6, 1f\n\t"
@@ -1669,15 +1665,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 /***********************************************************************
  *           signal_exit_thread
  */
-__ASM_GLOBAL_FUNC( signal_exit_thread,
-                   __ASM_EHABI(".cantunwind\n\t")
-                   "ldr r3, [r2, #0x1d4]\n\t"  /* arm_thread_data()->exit_frame */
-                   "mov ip, #0\n\t"
-                   "str ip, [r2, #0x1d4]\n\t"
-                   "cmp r3, ip\n\t"
-                   "it ne\n\t"
-                   "movne sp, r3\n\t"
-                   "blx r1" )
+__ASM_GLOBAL_FUNC( signal_exit_thread, "bx r1" )
 
 
 /***********************************************************************
@@ -1718,7 +1706,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_offset r11,-0x0c\n\t")
                    __ASM_CFI(".cfi_offset r12,-0x08\n\t")
                    __ASM_CFI(".cfi_offset lr,-0x04\n\t")
-                   "ldr r5, [r2, #0x1dc]\n\t"       /* arm_thread_data()->syscall_table */
+                   "ldr r5, [r2, #0x1d4]\n\t"       /* arm_thread_data()->syscall_table */
                    "ubfx r4, ip, #12, #2\n\t"       /* syscall table number */
                    "bfc ip, #12, #20\n\t"           /* syscall number */
                    "add r4, r5, r4, lsl #4\n\t"
