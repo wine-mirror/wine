@@ -903,7 +903,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     IDBProperties_Release(props);
 
     /* check if we need to skip password */
-    len = lstrlenW(progid) + lstrlenW(providerW) + 1; /* including ';' */
+    len = lstrlenW(progid) + lstrlenW(providerW) + 1; /* including '\0' */
     for (i = 0; i < count; i++)
     {
         WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
@@ -926,7 +926,6 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     /* provider name */
     lstrcatW(*init_string, providerW);
     lstrcatW(*init_string, progid);
-    lstrcatW(*init_string, L";");
     CoTaskMemFree(progid);
 
     for (i = 0; i < count; i++)
@@ -938,10 +937,10 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
         descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
         {
+            lstrcatW(*init_string, L";");
             lstrcatW(*init_string, descr);
             lstrcatW(*init_string, L"=");
             write_propvalue_str(*init_string, &propset->rgProperties[i]);
-            lstrcatW(*init_string, L";");
         }
     }
 
