@@ -3178,8 +3178,22 @@ static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, DWO
  */
 HRESULT WINAPI MFCreateAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID format, AM_MEDIA_TYPE **am_type)
 {
-    FIXME("%p, %s, %p stub!\n", media_type, debugstr_mf_guid(&format), am_type);
-    return E_NOTIMPL;
+    AM_MEDIA_TYPE *mt;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", media_type, debugstr_mf_guid(&format), am_type);
+
+    *am_type = NULL;
+    if (!(mt = CoTaskMemAlloc(sizeof(*mt))))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = MFInitAMMediaTypeFromMFMediaType(media_type, format, mt)))
+    {
+        CoTaskMemFree(mt);
+        return hr;
+    }
+
+    *am_type = mt;
+    return hr;
 }
 
 /***********************************************************************
