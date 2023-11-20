@@ -1794,7 +1794,7 @@
 @ cdecl ?_XLgamma@std@@YANN@Z(double) msvcp120.?_XLgamma@std@@YANN@Z
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) msvcp120.?_XLgamma@std@@YAOO@Z
 @ cdecl ?_Xbad_alloc@std@@YAXXZ() msvcp120.?_Xbad_alloc@std@@YAXXZ
-@ stub ?_Xbad_function_call@std@@YAXXZ
+@ cdecl ?_Xbad_function_call@std@@YAXXZ() msvcp120.?_Xbad_function_call@std@@YAXXZ
 @ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) msvcp120.?_Xinvalid_argument@std@@YAXPBD@Z
 @ cdecl -arch=win64 ?_Xinvalid_argument@std@@YAXPEBD@Z(str) msvcp120.?_Xinvalid_argument@std@@YAXPEBD@Z
 @ cdecl -arch=win32 ?_Xlength_error@std@@YAXPBD@Z(str) msvcp120.?_Xlength_error@std@@YAXPBD@Z

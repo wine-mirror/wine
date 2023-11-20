@@ -68,6 +68,8 @@ extern const vtable_ptr failure_vtable;
 extern const vtable_ptr bad_cast_vtable;
 /* ??_7range_error@std@@6B@ */
 extern const vtable_ptr range_error_vtable;
+/* ??_7bad_function_call@std@@6B@ */
+extern const vtable_ptr bad_function_call_vtable;
 
 /* ??0exception@@QAE@ABQBD@Z */
 /* ??0exception@@QEAA@AEBQEBD@Z */
@@ -875,6 +877,33 @@ range_error* __thiscall MSVCP_range_error_assign(range_error *this, const range_
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVrange_error@std@@")
 DEFINE_CXX_DATA2(range_error, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
 
+#if _MSVCP_VER > 90
+/* bad_function_call class data */
+typedef exception bad_function_call;
+
+static bad_function_call* MSVCP_bad_function_call_ctor(bad_function_call *this)
+{
+    static const char *name = "bad function call";
+
+    TRACE("%p\n", this);
+    MSVCP_exception_ctor(this, EXCEPTION_NAME(name));
+    this->vtable = &bad_function_call_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(bad_function_call_copy_ctor, 8)
+bad_function_call* __thiscall bad_function_call_copy_ctor(bad_function_call *this, const bad_function_call *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    exception_copy_ctor(this, rhs);
+    this->vtable = &bad_function_call_vtable;
+    return this;
+}
+
+DEFINE_RTTI_DATA1(bad_function_call, 0, &exception_rtti_base_descriptor, ".?AVbad_function_call@std@@")
+DEFINE_CXX_DATA1(bad_function_call, &exception_cxx_type_info, MSVCP_exception_dtor)
+#endif
+
 /* ?_Nomemory@std@@YAXXZ */
 void __cdecl DECLSPEC_NORETURN _Nomemory(void)
 {
@@ -948,6 +977,19 @@ void __cdecl DECLSPEC_NORETURN _Xruntime_error(const char *str)
     MSVCP_runtime_error_ctor(&e, name);
     _CxxThrowException(&e, &runtime_error_cxx_type);
 }
+
+#if _MSVCP_VER > 90
+/* ?_Xbad_function_call@std@@YAXXZ() */
+void __cdecl _Xbad_function_call(void)
+{
+    exception e;
+
+    TRACE("()\n");
+
+    MSVCP_bad_function_call_ctor(&e);
+    _CxxThrowException(&e, &bad_function_call_cxx_type);
+}
+#endif
 
 /* ?uncaught_exception@std@@YA_NXZ */
 bool __cdecl MSVCP__uncaught_exception(void)
@@ -1476,6 +1518,9 @@ __ASM_BLOCK_BEGIN(exception_vtables)
     EXCEPTION_VTABLE(system_error,
             VTABLE_ADD_FUNC(MSVCP_failure_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_failure_what));
+    EXCEPTION_VTABLE(bad_function_call,
+            VTABLE_ADD_FUNC(MSVCP_exception_vector_dtor)
+            VTABLE_ADD_FUNC(MSVCP_exception_what));
 #endif
     EXCEPTION_VTABLE(failure,
             VTABLE_ADD_FUNC(MSVCP_failure_vector_dtor)
@@ -1486,6 +1531,7 @@ __ASM_BLOCK_BEGIN(exception_vtables)
     EXCEPTION_VTABLE(range_error,
             VTABLE_ADD_FUNC(MSVCP_runtime_error_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_runtime_error_what));
+
 __ASM_BLOCK_END
 
 /* Internal: throws exception */
@@ -1537,6 +1583,7 @@ void init_exception(void *base)
 #endif
 #if _MSVCP_VER > 90
     init_system_error_rtti(base);
+    init_bad_function_call_rtti(base);
 #endif
     init_failure_rtti(base);
     init_bad_cast_rtti(base);
@@ -1559,6 +1606,9 @@ void init_exception(void *base)
     init_system_error_cxx_type_info(base);
 #elif _MSVCP_VER > 100
     init_system_error_cxx(base);
+#endif
+#if _MSVCP_VER > 90
+    init_bad_function_call_cxx(base);
 #endif
     init_failure_cxx(base);
     init_range_error_cxx(base);
