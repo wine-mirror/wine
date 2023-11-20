@@ -1642,6 +1642,26 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
 
 
 /***********************************************************************
+ *           user_mode_abort_thread
+ */
+extern void DECLSPEC_NORETURN user_mode_abort_thread( NTSTATUS status, struct syscall_frame *frame );
+__ASM_GLOBAL_FUNC( user_mode_abort_thread,
+                   "movq 0xa8(%rsi),%rbp\n\t"  /* frame->syscall_cfa */
+                   "subq $0x10,%rbp\n\t"
+                   /* switch to kernel stack */
+                   "movq %rbp,%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %rbp,0x10\n\t")
+                   __ASM_CFI(".cfi_offset %rip,-0x08\n\t")
+                   __ASM_CFI(".cfi_offset %rbp,-0x10\n\t")
+                   __ASM_CFI(".cfi_offset %rbx,-0x18\n\t")
+                   __ASM_CFI(".cfi_offset %r12,-0x20\n\t")
+                   __ASM_CFI(".cfi_offset %r13,-0x28\n\t")
+                   __ASM_CFI(".cfi_offset %r14,-0x30\n\t")
+                   __ASM_CFI(".cfi_offset %r15,-0x38\n\t")
+                   "call " __ASM_NAME("abort_thread") )
+
+
+/***********************************************************************
  *           KeUserModeCallback
  */
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
@@ -2098,10 +2118,12 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  *
  * Handler for SIGQUIT.
  */
-static void quit_handler( int signal, siginfo_t *siginfo, void *ucontext )
+static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    init_handler( ucontext );
-    abort_thread(0);
+    ucontext_t *ucontext = init_handler( sigcontext );
+
+    if (!is_inside_syscall( ucontext )) user_mode_abort_thread( 0, amd64_thread_data()->syscall_frame );
+    abort_thread( 0 );
 }
 
 
