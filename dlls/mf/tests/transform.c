@@ -3042,6 +3042,7 @@ static void test_wma_decoder(void)
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050, .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2, .required = TRUE),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003), /* not required by SetInputType, but needed for the transform to work */
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
         {0},
     };
     static const struct attribute_desc output_type_desc[] =
@@ -3065,6 +3066,7 @@ static void test_wma_decoder(void)
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
         ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
         {0},
     };
     static const struct attribute_desc expect_output_type_desc[] =
