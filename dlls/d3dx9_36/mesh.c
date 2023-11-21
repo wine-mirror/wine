@@ -3830,7 +3830,8 @@ static HRESULT filedata_get_name(ID3DXFileData *filedata, char **name)
 }
 
 static HRESULT load_mesh_container(struct ID3DXFileData *filedata, DWORD options, struct IDirect3DDevice9 *device,
-        struct ID3DXAllocateHierarchy *alloc_hier, D3DXMESHCONTAINER **mesh_container)
+        struct ID3DXAllocateHierarchy *alloc_hier, D3DXMESHCONTAINER **mesh_container,
+        struct ID3DXLoadUserData *load_user_data)
 {
     HRESULT hr;
     ID3DXBuffer *adjacency = NULL;
@@ -3840,6 +3841,10 @@ static HRESULT load_mesh_container(struct ID3DXFileData *filedata, DWORD options
     D3DXMESHDATA mesh_data;
     DWORD num_materials = 0;
     char *name = NULL;
+    SIZE_T child_count;
+    ID3DXFileData *child = NULL;
+    GUID type;
+    unsigned int i;
 
     mesh_data.Type = D3DXMESHTYPE_MESH;
     mesh_data.pMesh = NULL;
@@ -3852,17 +3857,38 @@ static HRESULT load_mesh_container(struct ID3DXFileData *filedata, DWORD options
     hr = filedata_get_name(filedata, &name);
     if (FAILED(hr)) goto cleanup;
 
-    if (mesh_data.pMesh)
+    if (!mesh_data.pMesh)
+        goto cleanup;
+    hr = alloc_hier->lpVtbl->CreateMeshContainer(alloc_hier, name, &mesh_data,
+            materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL,
+            effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL,
+            num_materials,
+            adjacency ? ID3DXBuffer_GetBufferPointer(adjacency) : NULL,
+            skin_info, mesh_container);
+    if (FAILED(hr) || !load_user_data)
+        goto cleanup;
+
+    hr = filedata->lpVtbl->GetChildren(filedata, &child_count);
+    if (FAILED(hr))
+        goto cleanup;
+
+    for (i = 0; i < child_count; i++)
     {
-        hr = alloc_hier->lpVtbl->CreateMeshContainer(alloc_hier, name, &mesh_data,
-                materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL,
-                effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL,
-                num_materials,
-                adjacency ? ID3DXBuffer_GetBufferPointer(adjacency) : NULL,
-                skin_info, mesh_container);
+        if (FAILED(hr = filedata->lpVtbl->GetChild(filedata, i, &child)))
+            goto cleanup;
+        if (FAILED(hr = child->lpVtbl->GetType(child, &type)))
+            goto cleanup;
+
+        if (!mesh_get_parse_func(&type)
+                && FAILED(hr = load_user_data->lpVtbl->LoadMeshChildData(load_user_data, *mesh_container, child)))
+            goto cleanup;
+
+        IUnknown_Release(child);
+        child = NULL;
     }
 
 cleanup:
+    if (child) IUnknown_Release(child);
     if (materials) ID3DXBuffer_Release(materials);
     if (effects) ID3DXBuffer_Release(effects);
     if (adjacency) ID3DXBuffer_Release(adjacency);
@@ -3941,7 +3967,7 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
             goto err;
 
         if (IsEqualGUID(&type, &TID_D3DRMMesh)) {
-            hr = load_mesh_container(child, options, device, alloc_hier, next_container);
+            hr = load_mesh_container(child, options, device, alloc_hier, next_container, load_user_data);
             if (SUCCEEDED(hr))
                 next_container = &(*next_container)->pNextMeshContainer;
         } else if (IsEqualGUID(&type, &TID_D3DRMFrameTransformMatrix)) {
@@ -3987,8 +4013,6 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
 
     if (!memory || !memory_size || !device || !frame_hierarchy || !alloc_hier)
         return D3DERR_INVALIDCALL;
-    if (load_user_data)
-        FIXME("Loading mesh user data not implemented for mesh.\n");
 
     hr = D3DXFileCreate(&d3dxfile);
     if (FAILED(hr)) goto cleanup;
@@ -4022,7 +4046,8 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
 
                 D3DXMatrixIdentity(&(*next_frame)->TransformationMatrix);
 
-                hr = load_mesh_container(filedata, options, device, alloc_hier, &(*next_frame)->pMeshContainer);
+                hr = load_mesh_container(filedata, options, device, alloc_hier, &(*next_frame)->pMeshContainer,
+                        load_user_data);
                 if (FAILED(hr)) goto cleanup;
             } else if (IsEqualGUID(&guid, &TID_D3DRMFrame)) {
                 hr = load_frame(filedata, options, device, alloc_hier, next_frame, load_user_data);

@@ -2136,20 +2136,19 @@ static void check_user_data(struct test_load_user_data *user_data, unsigned int 
 {
     unsigned int i;
 
-    todo_wine ok(user_data->data_count == expected_count, "got %u, expected %u.\n", user_data->data_count, expected_count);
-    expected_count = min(expected_count, user_data->data_count);
+    ok(user_data->data_count == expected_count, "got %u, expected %u.\n", user_data->data_count, expected_count);
     for (i = 0; i < expected_count; ++i)
     {
         winetest_push_context("i %u", i);
-        todo_wine_if(i == 3) ok(user_data->data[i].data_type == expected[i].data_type, "got %u, expected %u.\n",
+        ok(user_data->data[i].data_type == expected[i].data_type, "got %u, expected %u.\n",
                 user_data->data[i].data_type, expected[i].data_type);
         ok(IsEqualGUID(&user_data->guids[i], expected[i].type), "got %s, expected %s.\n",
                 debugstr_guid(&user_data->guids[i]), debugstr_guid(expected[i].type));
         ok(user_data->data[i].size == expected[i].size, "got %Iu, expected %Iu.\n",
                 user_data->data[i].size, expected[i].size);
-        todo_wine_if(i == 3) ok(user_data->data[i].value == expected[i].value, "got %u, expected %u.\n",
+        ok(user_data->data[i].value == expected[i].value, "got %u, expected %u.\n",
                 user_data->data[i].value, expected[i].value);
-        todo_wine_if(i == 3) ok(user_data->data[i].mesh_container == expected[i].mesh_container, "got %u, expected %u.\n",
+        ok(user_data->data[i].mesh_container == expected[i].mesh_container, "got %u, expected %u.\n",
                 user_data->data[i].mesh_container, expected[i].mesh_container);
         ok(user_data->data[i].num_materials == expected[i].num_materials, "got %u, expected %u.\n",
                 user_data->data[i].num_materials, expected[i].num_materials);
