@@ -393,12 +393,61 @@ static void test_environment_manipulation(void)
     ok( count == env_get_entry_countA( *p_environ ), "Unexpected modification of _environ[]\n" );
 }
 
+static void test_child_env(char** argv)
+{
+    STARTUPINFOA si = {sizeof(si)};
+    WCHAR *cur_env, *env, *p, *q;
+    PROCESS_INFORMATION pi;
+    char tmp[1024];
+    BOOL ret;
+    int len;
+
+    cur_env = GetEnvironmentStringsW();
+    ok( cur_env != NULL, "GetEnvironemntStrings failed\n" );
+
+    p = cur_env;
+    while (*p) p += wcslen( p ) + 1;
+    len = p - cur_env;
+    env = malloc( (len + 1024) * sizeof(*env) );
+    memcpy(env, cur_env, len * sizeof(*env) );
+    q = env + len;
+    FreeEnvironmentStringsW( cur_env );
+
+    wcscpy( q, L"__winetest_dog=bark" );
+    q += wcslen( L"__winetest_dog=bark" ) + 1;
+    wcscpy( q, L"__winetest_\u263a=\u03b2" );
+    q += wcslen( L"__winetest_\u263a=\u03b2" ) + 1;
+    *q = 0;
+
+    snprintf( tmp, sizeof(tmp), "%s %s create", argv[0], argv[1] );
+    ret = CreateProcessA( NULL, tmp, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, env, NULL, &si, &pi );
+    ok( ret, "Couldn't create child process %s\n", tmp );
+    winetest_wait_child_process( pi.hProcess );
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+    free( env );
+}
+
 START_TEST(environ)
 {
+    char **argv;
+    int argc;
+
     init();
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc == 3 && !strcmp( argv[2], "create" ))
+    {
+        ok( getenv( "__winetest_dog" ) && !strcmp( getenv( "__winetest_dog" ), "bark" ),
+                "Couldn't find env var\n" );
+        ok( _wgetenv( L"__winetest_\u263a" ) && !wcscmp( _wgetenv( L"__winetest_\u263a" ), L"\u03b2" ),
+                "Couldn't find unicode env var\n" );
+        return;
+    }
 
     test__environ();
     test__wenviron();
     test_environment_manipulation();
+    test_child_env(argv);
     test_system();
 }
