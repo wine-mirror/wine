@@ -22,7 +22,7 @@
 #define EXP_BITS 11
 #define MANT_BITS 53
 
-static const int p10s[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
+static const int p10s[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
 
 #define LIMB_DIGITS 9           /* each DWORD stores up to 9 digits */
 #define LIMB_MAX 1000000000     /* 10^9 */
