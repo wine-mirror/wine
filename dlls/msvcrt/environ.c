@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include "msvcrt.h"
+#include "mtdll.h"
 #include <winnls.h>
 #include "wine/debug.h"
 
@@ -220,9 +221,14 @@ static char * getenv_helper(const char *name)
  */
 char * CDECL getenv(const char *name)
 {
+    char *ret;
+
     if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
 
-    return getenv_helper(name);
+    _lock(_ENV_LOCK);
+    ret = getenv_helper(name);
+    _unlock(_ENV_LOCK);
+    return ret;
 }
 
 static wchar_t * wgetenv_helper(const wchar_t *name)
@@ -242,9 +248,14 @@ static wchar_t * wgetenv_helper(const wchar_t *name)
  */
 wchar_t * CDECL _wgetenv(const wchar_t *name)
 {
+    wchar_t *ret;
+
     if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
 
-    return wgetenv_helper(name);
+    _lock(_ENV_LOCK);
+    ret = wgetenv_helper(name);
+    _unlock(_ENV_LOCK);
+    return ret;
 }
 
 static int putenv_helper(const char *name, const char *val, const char *eq)
@@ -253,7 +264,10 @@ static int putenv_helper(const char *name, const char *val, const char *eq)
     char *env;
     int r;
 
-    if (env_init(FALSE, TRUE)) return -1;
+    _lock(_ENV_LOCK);
+    r = env_init(FALSE, TRUE);
+    _unlock(_ENV_LOCK);
+    if (r) return -1;
 
     if (eq)
     {
@@ -279,7 +293,9 @@ static int putenv_helper(const char *name, const char *val, const char *eq)
         return -1;
     }
 
+    _lock(_ENV_LOCK);
     r = env_set(&env, &wenv);
+    _unlock(_ENV_LOCK);
     free(env);
     free(wenv);
     return r;
@@ -303,7 +319,10 @@ static int wputenv_helper(const wchar_t *name, const wchar_t *val, const wchar_t
     char *env;
     int r;
 
-    if (env_init(TRUE, TRUE)) return -1;
+    _lock(_ENV_LOCK);
+    r = env_init(TRUE, TRUE);
+    _unlock(_ENV_LOCK);
+    if (r) return -1;
 
     if (eq)
     {
@@ -329,7 +348,9 @@ static int wputenv_helper(const wchar_t *name, const wchar_t *val, const wchar_t
         return -1;
     }
 
+    _lock(_ENV_LOCK);
     r = env_set(&env, &wenv);
+    _unlock(_ENV_LOCK);
     free(env);
     free(wenv);
     return r;
@@ -420,20 +441,25 @@ int CDECL _dupenv_s(char **buffer, size_t *numberOfElements, const char *varname
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
+    _lock(_ENV_LOCK);
     if (!(e = getenv(varname)))
     {
+        _unlock(_ENV_LOCK);
         *buffer = NULL;
         if (numberOfElements) *numberOfElements = 0;
         return 0;
     }
 
     sz = strlen(e) + 1;
-    if (!(*buffer = malloc(sz)))
+    *buffer = malloc(sz);
+    if (*buffer) strcpy(*buffer, e);
+    _unlock(_ENV_LOCK);
+
+    if (!*buffer)
     {
         if (numberOfElements) *numberOfElements = 0;
         return *_errno() = ENOMEM;
     }
-    strcpy(*buffer, e);
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
@@ -450,20 +476,25 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
+    _lock(_ENV_LOCK);
     if (!(e = _wgetenv(varname)))
     {
+        _unlock(_ENV_LOCK);
         *buffer = NULL;
         if (numberOfElements) *numberOfElements = 0;
         return 0;
     }
 
     sz = wcslen(e) + 1;
-    if (!(*buffer = malloc(sz * sizeof(wchar_t))))
+    *buffer = malloc(sz * sizeof(wchar_t));
+    if (*buffer) wcscpy(*buffer, e);
+    _unlock(_ENV_LOCK);
+
+    if (!*buffer)
     {
         if (numberOfElements) *numberOfElements = 0;
         return *_errno() = ENOMEM;
     }
-    wcscpy(*buffer, e);
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
@@ -482,12 +513,17 @@ int CDECL getenv_s(size_t *ret_len, char* buffer, size_t len, const char *varnam
     if (!MSVCRT_CHECK_PMT((buffer && len > 0) || (!buffer && !len))) return EINVAL;
     if (buffer) buffer[0] = 0;
 
-    if (!(e = getenv_helper(varname))) return 0;
-    *ret_len = strlen(e) + 1;
-    if (!len) return 0;
-    if (len < *ret_len) return ERANGE;
+    _lock(_ENV_LOCK);
+    e = getenv_helper(varname);
+    if (e)
+    {
+        *ret_len = strlen(e) + 1;
+        if (len >= *ret_len) strcpy(buffer, e);
+    }
+    _unlock(_ENV_LOCK);
 
-    strcpy(buffer, e);
+    if (!e || !len) return 0;
+    if (len < *ret_len) return ERANGE;
     return 0;
 }
 
@@ -504,12 +540,17 @@ int CDECL _wgetenv_s(size_t *ret_len, wchar_t *buffer, size_t len,
     if (!MSVCRT_CHECK_PMT((buffer && len > 0) || (!buffer && !len))) return EINVAL;
     if (buffer) buffer[0] = 0;
 
-    if (!(e = wgetenv_helper(varname))) return 0;
-    *ret_len = wcslen(e) + 1;
-    if (!len) return 0;
-    if (len < *ret_len) return ERANGE;
+    _lock(_ENV_LOCK);
+    e = wgetenv_helper(varname);
+    if (e)
+    {
+        *ret_len = wcslen(e) + 1;
+        if (len >= *ret_len) wcscpy(buffer, e);
+    }
+    _unlock(_ENV_LOCK);
 
-    wcscpy(buffer, e);
+    if (!e || !len) return 0;
+    if (len < *ret_len) return ERANGE;
     return 0;
 }
 
