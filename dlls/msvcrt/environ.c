@@ -25,25 +25,28 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+static int env_get_index(const char *name)
+{
+    int i, len;
+
+    len = strlen(name);
+    for (i = 0; MSVCRT__environ[i]; i++)
+    {
+        if (!strncmp(name, MSVCRT__environ[i], len) && MSVCRT__environ[i][len] == '=')
+            return i;
+    }
+    return i;
+}
+
 static char * getenv_helper(const char *name)
 {
-    char **env;
-    size_t len;
+    int idx;
 
     if (!name) return NULL;
-    len = strlen(name);
 
-    for (env = MSVCRT__environ; *env; env++)
-    {
-        char *str = *env;
-        char *pos = strchr(str,'=');
-        if (pos && ((pos - str) == len) && !_strnicmp(str, name, len))
-        {
-            TRACE("(%s): got %s\n", debugstr_a(name), debugstr_a(pos + 1));
-            return pos + 1;
-        }
-    }
-    return NULL;
+    idx = env_get_index(name);
+    if (!MSVCRT__environ[idx]) return NULL;
+    return strchr(MSVCRT__environ[idx], '=') + 1;
 }
 
 /*********************************************************************
