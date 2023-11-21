@@ -10784,6 +10784,24 @@ static void test_mt_factory(BOOL d3d11)
 
     ID2D1Multithread_Release(multithread);
     release_test_context(&ctx);
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    hr = ID2D1Factory_QueryInterface(ctx.factory, &IID_ID2D1Multithread, (void **)&multithread);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1Multithread_Enter(multithread);
+    thread = CreateThread(NULL, 0, mt_factory_test_thread_draw_func, ctx.rt, 0, NULL);
+    ok(!!thread, "Failed to create a thread.\n");
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "Didn't expect timeout.\n");
+    ID2D1Multithread_Leave(multithread);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    ID2D1Multithread_Release(multithread);
+    release_test_context(&ctx);
 }
 
 #define check_system_properties(effect, is_builtin) check_system_properties_(__LINE__, effect, is_builtin)
