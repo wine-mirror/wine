@@ -920,12 +920,21 @@ BOOL WINAPI GetAutoRotationState( AR_STATE *state )
 }
 
 /**********************************************************************
- *              GetDisplayAutoRotationPreferences [USER32.@]
+ *              GetDisplayAutoRotationPreferences (USER32.@)
  */
 BOOL WINAPI GetDisplayAutoRotationPreferences( ORIENTATION_PREFERENCE *orientation )
 {
     FIXME("(%p): stub\n", orientation);
     *orientation = ORIENTATION_PREFERENCE_NONE;
+    return TRUE;
+}
+
+/**********************************************************************
+ *              SetDisplayAutoRotationPreferences (USER32.@)
+ */
+BOOL WINAPI SetDisplayAutoRotationPreferences( ORIENTATION_PREFERENCE orientation )
+{
+    FIXME("(%d): stub\n", orientation);
     return TRUE;
 }
 
