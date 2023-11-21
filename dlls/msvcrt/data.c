@@ -593,14 +593,6 @@ void CDECL __set_app_type(int app_type)
 #if _MSVCR_VER>=140
 
 /*********************************************************************
- *		_get_initial_narrow_environment (UCRTBASE.@)
- */
-char** CDECL _get_initial_narrow_environment(void)
-{
-  return MSVCRT___initenv;
-}
-
-/*********************************************************************
  *		_configure_narrow_argv (UCRTBASE.@)
  */
 int CDECL _configure_narrow_argv(int mode)
@@ -614,16 +606,18 @@ int CDECL _configure_narrow_argv(int mode)
  */
 int CDECL _initialize_narrow_environment(void)
 {
-  TRACE("\n");
-  return 0;
+    TRACE("\n");
+    return env_init(FALSE, FALSE);
 }
 
 /*********************************************************************
- *		_get_initial_wide_environment (UCRTBASE.@)
+ *		_get_initial_narrow_environment (UCRTBASE.@)
  */
-wchar_t** CDECL _get_initial_wide_environment(void)
+char** CDECL _get_initial_narrow_environment(void)
 {
-  return MSVCRT___winitenv;
+    TRACE("\n");
+    _initialize_narrow_environment();
+    return MSVCRT___initenv;
 }
 
 /*********************************************************************
@@ -640,8 +634,18 @@ int CDECL _configure_wide_argv(int mode)
  */
 int CDECL _initialize_wide_environment(void)
 {
-  WARN("stub\n");
-  return 0;
+    TRACE("\n");
+    return env_init(TRUE, FALSE);
+}
+
+/*********************************************************************
+ *		_get_initial_wide_environment (UCRTBASE.@)
+ */
+wchar_t** CDECL _get_initial_wide_environment(void)
+{
+    TRACE("\n");
+    _initialize_wide_environment();
+    return MSVCRT___winitenv;
 }
 
 /*********************************************************************
