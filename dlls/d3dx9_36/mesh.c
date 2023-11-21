@@ -3880,7 +3880,7 @@ static HRESULT parse_transform_matrix(ID3DXFileData *filedata, D3DXMATRIX *trans
 }
 
 static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct IDirect3DDevice9 *device,
-        struct ID3DXAllocateHierarchy *alloc_hier, D3DXFRAME **frame_out)
+        struct ID3DXAllocateHierarchy *alloc_hier, D3DXFRAME **frame_out, struct ID3DXLoadUserData *load_user_data)
 {
     HRESULT hr;
     GUID type;
@@ -3923,9 +3923,12 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
         } else if (IsEqualGUID(&type, &TID_D3DRMFrameTransformMatrix)) {
             hr = parse_transform_matrix(child, &frame->TransformationMatrix);
         } else if (IsEqualGUID(&type, &TID_D3DRMFrame)) {
-            hr = load_frame(child, options, device, alloc_hier, next_child);
+            hr = load_frame(child, options, device, alloc_hier, next_child, load_user_data);
             if (SUCCEEDED(hr))
                 next_child = &(*next_child)->pFrameSibling;
+        } else if (load_user_data) {
+            TRACE("Loading %s as user data.\n", debugstr_guid(&type));
+            hr = load_user_data->lpVtbl->LoadFrameChildData(load_user_data, frame, child);
         }
         if (FAILED(hr))
             goto err;
@@ -3961,10 +3964,7 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
     if (!memory || !memory_size || !device || !frame_hierarchy || !alloc_hier)
         return D3DERR_INVALIDCALL;
     if (load_user_data)
-    {
-        FIXME("Loading user data not implemented.\n");
-        return E_NOTIMPL;
-    }
+        FIXME("Loading mesh user data not implemented for mesh.\n");
 
     hr = D3DXFileCreate(&d3dxfile);
     if (FAILED(hr)) goto cleanup;
@@ -4001,8 +4001,11 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
                 hr = load_mesh_container(filedata, options, device, alloc_hier, &(*next_frame)->pMeshContainer);
                 if (FAILED(hr)) goto cleanup;
             } else if (IsEqualGUID(&guid, &TID_D3DRMFrame)) {
-                hr = load_frame(filedata, options, device, alloc_hier, next_frame);
+                hr = load_frame(filedata, options, device, alloc_hier, next_frame, load_user_data);
                 if (FAILED(hr)) goto cleanup;
+            } else if (load_user_data) {
+                TRACE("Loading %s as user data.\n", debugstr_guid(&guid));
+                hr = load_user_data->lpVtbl->LoadTopLevelData(load_user_data, filedata);
             }
             while (*next_frame)
                 next_frame = &(*next_frame)->pFrameSibling;

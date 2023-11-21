@@ -2136,20 +2136,20 @@ static void check_user_data(struct test_load_user_data *user_data, unsigned int 
 {
     unsigned int i;
 
-    ok(user_data->data_count == expected_count, "got %u, expected %u.\n", user_data->data_count, expected_count);
+    todo_wine ok(user_data->data_count == expected_count, "got %u, expected %u.\n", user_data->data_count, expected_count);
     expected_count = min(expected_count, user_data->data_count);
     for (i = 0; i < expected_count; ++i)
     {
         winetest_push_context("i %u", i);
-        ok(user_data->data[i].data_type == expected[i].data_type, "got %u, expected %u.\n",
+        todo_wine_if(i == 3) ok(user_data->data[i].data_type == expected[i].data_type, "got %u, expected %u.\n",
                 user_data->data[i].data_type, expected[i].data_type);
         ok(IsEqualGUID(&user_data->guids[i], expected[i].type), "got %s, expected %s.\n",
                 debugstr_guid(&user_data->guids[i]), debugstr_guid(expected[i].type));
         ok(user_data->data[i].size == expected[i].size, "got %Iu, expected %Iu.\n",
                 user_data->data[i].size, expected[i].size);
-        ok(user_data->data[i].value == expected[i].value, "got %u, expected %u.\n",
+        todo_wine_if(i == 3) ok(user_data->data[i].value == expected[i].value, "got %u, expected %u.\n",
                 user_data->data[i].value, expected[i].value);
-        ok(user_data->data[i].mesh_container == expected[i].mesh_container, "got %u, expected %u.\n",
+        todo_wine_if(i == 3) ok(user_data->data[i].mesh_container == expected[i].mesh_container, "got %u, expected %u.\n",
                 user_data->data[i].mesh_container, expected[i].mesh_container);
         ok(user_data->data[i].num_materials == expected[i].num_materials, "got %u, expected %u.\n",
                 user_data->data[i].num_materials, expected[i].num_materials);
@@ -2675,15 +2675,12 @@ static void D3DXLoadMeshTest(void)
     init_load_user_data(&load_user_data);
     hr = D3DXLoadMeshHierarchyFromXInMemory(box_xfile, sizeof(box_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, &load_user_data.iface, &frame_hier, &controller);
-    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        winetest_push_context("box_xfile");
-        check_user_data(&load_user_data, ARRAY_SIZE(box_xfile_expected_user_data), box_xfile_expected_user_data);
-        winetest_pop_context();
-        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
-    }
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    winetest_push_context("box_xfile");
+    check_user_data(&load_user_data, ARRAY_SIZE(box_xfile_expected_user_data), box_xfile_expected_user_data);
+    winetest_pop_context();
+    hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     frame_hier = NULL;
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
@@ -2718,15 +2715,12 @@ static void D3DXLoadMeshTest(void)
     init_load_user_data(&load_user_data);
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, &load_user_data.iface, &frame_hier, NULL);
-    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
-        winetest_push_context("framed_xfile");
-        check_user_data(&load_user_data, ARRAY_SIZE(framed_xfile_expected_user_data), framed_xfile_expected_user_data);
-        winetest_pop_context();
-    }
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    winetest_push_context("framed_xfile");
+    check_user_data(&load_user_data, ARRAY_SIZE(framed_xfile_expected_user_data), framed_xfile_expected_user_data);
+    winetest_pop_context();
     frame_hier = NULL;
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile_empty, sizeof(framed_xfile_empty) - 1,
