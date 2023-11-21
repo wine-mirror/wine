@@ -37,6 +37,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
+/* for provide_flags parameters */
+#define PROVIDE_MATERIALS 0x1
+#define PROVIDE_SKININFO  0x2
+#define PROVIDE_ADJACENCY 0x4
+
 struct d3dx9_mesh
 {
     ID3DXMesh ID3DXMesh_iface;
@@ -2611,6 +2616,7 @@ struct mesh_data {
 
     struct ID3DXSkinInfo *skin_info;
     unsigned int bone_count;
+    unsigned int skin_weights_info_count;
 };
 
 static HRESULT parse_texture_filename(ID3DXFileData *filedata, char **filename_out)
@@ -2752,7 +2758,7 @@ static void destroy_materials(struct mesh_data *mesh)
     mesh->material_indices = NULL;
 }
 
-static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *mesh)
+static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *mesh, DWORD flags)
 {
     ID3DXFileData *child = NULL;
     unsigned int material_count;
@@ -2763,6 +2769,9 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
     unsigned int i;
     HRESULT hr;
     GUID type;
+
+    if (!(flags & PROVIDE_MATERIALS))
+        return S_OK;
 
     destroy_materials(mesh);
 
@@ -2867,7 +2876,7 @@ end:
     return hr;
 }
 
-static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *mesh)
+static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *mesh, DWORD flags)
 {
     const uint32_t *data;
     SIZE_T data_size;
@@ -2925,7 +2934,7 @@ end:
     return hr;
 }
 
-static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *mesh)
+static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *mesh, DWORD flags)
 {
     unsigned int color_count, i;
     const uint32_t *data;
@@ -3004,7 +3013,7 @@ end:
     return hr;
 }
 
-static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh)
+static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh, DWORD flags)
 {
     unsigned int num_face_indices = mesh->num_poly_faces * 2 + mesh->num_tri_faces;
     DWORD *index_out_ptr;
@@ -3110,13 +3119,22 @@ end:
     return hr;
 }
 
-static HRESULT parse_skin_mesh_header(ID3DXFileData *filedata, struct mesh_data *mesh_data)
+static HRESULT parse_skin_mesh_header(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD flags)
 {
     const BYTE *data;
     SIZE_T data_size;
     HRESULT hr;
 
     TRACE("filedata %p, mesh_data %p.\n", filedata, mesh_data);
+
+    if (!(flags & PROVIDE_SKININFO))
+        return S_OK;
+
+    if (mesh_data->skin_info)
+    {
+        WARN("Skin mesh header already encountered\n");
+        return E_FAIL;
+    }
 
     if (FAILED(hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data)))
         return hr;
@@ -3136,8 +3154,9 @@ static HRESULT parse_skin_mesh_header(ID3DXFileData *filedata, struct mesh_data 
     return hr;
 }
 
-static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, unsigned int index)
+static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD flags)
 {
+    unsigned int index = mesh_data->skin_weights_info_count;
     unsigned int influence_count;
     const char *name;
     const BYTE *data;
@@ -3145,6 +3164,15 @@ static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data
     HRESULT hr;
 
     TRACE("filedata %p, mesh_data %p, index %u.\n", filedata, mesh_data, index);
+
+    if (!(flags & PROVIDE_SKININFO))
+        return S_OK;
+
+    if (!mesh_data->skin_info)
+    {
+        WARN("Skin weights found but skin mesh header not encountered yet.\n");
+        return E_FAIL;
+    }
 
     if (FAILED(hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data)))
         return hr;
@@ -3173,17 +3201,13 @@ static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data
         hr = mesh_data->skin_info->lpVtbl->SetBoneOffsetMatrix(mesh_data->skin_info, index,
                 (const D3DMATRIX *)(data + influence_count * (sizeof(uint32_t) + sizeof(float))));
 
+    if (SUCCEEDED(hr))
+        ++mesh_data->skin_weights_info_count;
     return hr;
 }
 
-/* for provide_flags parameters */
-#define PROVIDE_MATERIALS 0x1
-#define PROVIDE_SKININFO  0x2
-#define PROVIDE_ADJACENCY 0x4
-
 static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD provide_flags)
 {
-    unsigned int skin_weights_info_count = 0;
     ID3DXFileData *child = NULL;
     const BYTE *data, *in_ptr;
     DWORD *index_out_ptr;
@@ -3202,6 +3226,8 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
      *     [ ... ]
      * }
      */
+
+    mesh_data->skin_weights_info_count = 0;
 
     hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
     if (FAILED(hr)) return hr;
@@ -3308,37 +3334,19 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
             goto end;
 
         if (IsEqualGUID(&type, &TID_D3DRMMeshNormals)) {
-            hr = parse_normals(child, mesh_data);
+            hr = parse_normals(child, mesh_data, provide_flags);
         } else if (IsEqualGUID(&type, &TID_D3DRMMeshVertexColors)) {
-            hr = parse_vertex_colors(child, mesh_data);
+            hr = parse_vertex_colors(child, mesh_data, provide_flags);
         } else if (IsEqualGUID(&type, &TID_D3DRMMeshTextureCoords)) {
-            hr = parse_texture_coords(child, mesh_data);
-        } else if (IsEqualGUID(&type, &TID_D3DRMMeshMaterialList) &&
-                   (provide_flags & PROVIDE_MATERIALS))
-        {
-            hr = parse_material_list(child, mesh_data);
-        } else if (provide_flags & PROVIDE_SKININFO) {
-            if (IsEqualGUID(&type, &DXFILEOBJ_XSkinMeshHeader)) {
-                if (mesh_data->skin_info) {
-                    WARN("Skin mesh header already encountered\n");
-                    hr = E_FAIL;
-                    goto end;
-                }
-                hr = parse_skin_mesh_header(child, mesh_data);
-                if (FAILED(hr))
-                    goto end;
-            } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
-                if (!mesh_data->skin_info) {
-                    WARN("Skin weights found but skin mesh header not encountered yet\n");
-                    hr = E_FAIL;
-                    goto end;
-                }
-                hr = parse_skin_weights_info(child, mesh_data, skin_weights_info_count);
-                if (FAILED(hr))
-                    goto end;
-                skin_weights_info_count++;
-            }
+            hr = parse_texture_coords(child, mesh_data, provide_flags);
+        } else if (IsEqualGUID(&type, &TID_D3DRMMeshMaterialList)) {
+            hr = parse_material_list(child, mesh_data, provide_flags);
+        } else if (IsEqualGUID(&type, &DXFILEOBJ_XSkinMeshHeader)) {
+            hr = parse_skin_mesh_header(child, mesh_data, provide_flags);
+        } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
+            hr = parse_skin_weights_info(child, mesh_data, provide_flags);
         }
+
         if (FAILED(hr))
             goto end;
 
@@ -3346,10 +3354,10 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         child = NULL;
     }
 
-    if (mesh_data->skin_info && (skin_weights_info_count != mesh_data->bone_count))
+    if (mesh_data->skin_info && (mesh_data->skin_weights_info_count != mesh_data->bone_count))
     {
         WARN("Mismatch between skin weights info count %u and bones count %u from skin mesh header.\n",
-                skin_weights_info_count, mesh_data->bone_count);
+                mesh_data->skin_weights_info_count, mesh_data->bone_count);
         hr = E_FAIL;
         goto end;
     }
