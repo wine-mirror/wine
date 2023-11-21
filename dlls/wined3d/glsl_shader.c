@@ -1299,7 +1299,7 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
 
     for (i = 0; fixup; fixup >>= 1, ++i)
     {
-        const struct wined3d_texture *tex = wined3d_state_get_ffp_texture(state, i);
+        const struct wined3d_texture *tex = state->textures[i];
         unsigned char idx = ps->np2_fixup_info->idx[i];
 
         if (!tex)
