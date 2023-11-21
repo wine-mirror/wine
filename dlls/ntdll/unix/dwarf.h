@@ -1048,6 +1048,42 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
 #define DW_REG_r15 0x0f
 #define DW_REG_rip 0x10
 
+#elif defined(__arm__)
+
+#define DW_OP_r0  DW_OP_breg0
+#define DW_OP_r1  DW_OP_breg1
+#define DW_OP_r2  DW_OP_breg2
+#define DW_OP_r3  DW_OP_breg3
+#define DW_OP_r4  DW_OP_breg4
+#define DW_OP_r5  DW_OP_breg5
+#define DW_OP_r6  DW_OP_breg6
+#define DW_OP_r7  DW_OP_breg7
+#define DW_OP_r8  DW_OP_breg8
+#define DW_OP_r9  DW_OP_breg9
+#define DW_OP_r10 DW_OP_breg10
+#define DW_OP_r11 DW_OP_breg11
+#define DW_OP_r12 DW_OP_breg12
+#define DW_OP_sp  DW_OP_breg13
+#define DW_OP_lr  DW_OP_breg14
+#define DW_OP_pc  DW_OP_breg15
+
+#define DW_REG_r0  0
+#define DW_REG_r1  1
+#define DW_REG_r2  2
+#define DW_REG_r3  3
+#define DW_REG_r4  4
+#define DW_REG_r5  5
+#define DW_REG_r6  6
+#define DW_REG_r7  7
+#define DW_REG_r8  8
+#define DW_REG_r9  9
+#define DW_REG_r10 10
+#define DW_REG_r11 11
+#define DW_REG_r12 12
+#define DW_REG_sp  13
+#define DW_REG_lr  14
+#define DW_REG_pc  15
+
 #elif defined(__aarch64__)
 
 #define DW_OP_x19 DW_OP_breg19

@@ -70,6 +70,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+#define NTDLL_DWARF_H_NO_UNWINDER
+#include "dwarf.h"
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -1023,8 +1025,8 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
                    "push {r12,lr}\n\t" /* (Padding +) Pc in the original frame */
                    "ldr r3, [r1, #0x38]\n\t" /* context->Sp */
                    "push {r3}\n\t" /* Original Sp */
-                   __ASM_CFI(".cfi_escape 0x0f,0x03,0x7D,0x04,0x06\n\t") /* CFA, DW_OP_breg13 + 0x04, DW_OP_deref */
-                   __ASM_CFI(".cfi_escape 0x10,0x0e,0x02,0x7D,0x0c\n\t") /* LR, DW_OP_breg13 + 0x0c */
+                   __ASM_CFI_CFA_IS_AT1(sp, 0x04)
+                   __ASM_CFI_REG_IS_AT1(lr, sp, 0x0c)
                    __ASM_EHABI(".save {sp}\n\t")
                    __ASM_EHABI(".pad #-12\n\t")
                    __ASM_EHABI(".save {pc}\n\t")
@@ -1158,10 +1160,21 @@ extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void *
                                          ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "push {r4-r12,lr}\n\t"
+                   "add r7, sp, #0x28\n\t"    /* syscall_cfa */
+                   __ASM_CFI(".cfi_def_cfa 7,0\n\t")
+                   __ASM_CFI(".cfi_offset r4,-0x28\n\t")
+                   __ASM_CFI(".cfi_offset r5,-0x24\n\t")
+                   __ASM_CFI(".cfi_offset r6,-0x20\n\t")
+                   __ASM_CFI(".cfi_offset r7,-0x1c\n\t")
+                   __ASM_CFI(".cfi_offset r8,-0x18\n\t")
+                   __ASM_CFI(".cfi_offset r9,-0x14\n\t")
+                   __ASM_CFI(".cfi_offset r10,-0x10\n\t")
+                   __ASM_CFI(".cfi_offset r11,-0x0c\n\t")
+                   __ASM_CFI(".cfi_offset r12,-0x08\n\t")
+                   __ASM_CFI(".cfi_offset lr,-0x04\n\t")
                    "ldr ip, [sp, #0x2c]\n\t"  /* func */
                    "ldr r4, [sp, #0x30]\n\t"  /* teb */
                    "ldr r5, [r4]\n\t"         /* teb->Tib.ExceptionList */
-                   "add r7, sp, #0x28\n\t"    /* syscall_cfa */
                    "push {r3, r5}\n\t"
 #ifndef __SOFTFP__
                    "sub sp, sp, #0x90\n\t"
@@ -1666,9 +1679,20 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "vstm r0, {d0-d15}\n\t"
 #endif
                    "mov r6, sp\n\t"
+                   "mov r8, r1\n\t"
                    /* switch to kernel stack */
                    "mov sp, r1\n\t"
-                   "mov r8, r1\n\t"
+                   __ASM_CFI_CFA_IS_AT2(r8, 0xd0, 0x00) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset r4,-0x28\n\t")
+                   __ASM_CFI(".cfi_offset r5,-0x24\n\t")
+                   __ASM_CFI(".cfi_offset r6,-0x20\n\t")
+                   __ASM_CFI(".cfi_offset r7,-0x1c\n\t")
+                   __ASM_CFI(".cfi_offset r8,-0x18\n\t")
+                   __ASM_CFI(".cfi_offset r9,-0x14\n\t")
+                   __ASM_CFI(".cfi_offset r10,-0x10\n\t")
+                   __ASM_CFI(".cfi_offset r11,-0x0c\n\t")
+                   __ASM_CFI(".cfi_offset r12,-0x08\n\t")
+                   __ASM_CFI(".cfi_offset lr,-0x04\n\t")
                    "ldr r5, [r2, #0x1dc]\n\t"       /* arm_thread_data()->syscall_table */
                    "ubfx r4, ip, #12, #2\n\t"       /* syscall table number */
                    "bfc ip, #12, #20\n\t"           /* syscall number */
@@ -1746,11 +1770,22 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "vstm r4, {d0-d15}\n\t"
 #endif
                    "ldr ip, [r0, r2, lsl #2]\n\t"
+                   "mov r8, r1\n\t"
                    /* switch to kernel stack */
                    "mov sp, r1\n\t"
+                   __ASM_CFI_CFA_IS_AT2(r8, 0xd0, 0x00) /* frame->syscall_cfa */
+                   __ASM_CFI(".cfi_offset r4,-0x28\n\t")
+                   __ASM_CFI(".cfi_offset r5,-0x24\n\t")
+                   __ASM_CFI(".cfi_offset r6,-0x20\n\t")
+                   __ASM_CFI(".cfi_offset r7,-0x1c\n\t")
+                   __ASM_CFI(".cfi_offset r8,-0x18\n\t")
+                   __ASM_CFI(".cfi_offset r9,-0x14\n\t")
+                   __ASM_CFI(".cfi_offset r10,-0x10\n\t")
+                   __ASM_CFI(".cfi_offset r11,-0x0c\n\t")
+                   __ASM_CFI(".cfi_offset r12,-0x08\n\t")
+                   __ASM_CFI(".cfi_offset lr,-0x04\n\t")
                    "mov r0, r3\n\t"                 /* args */
                    "blx ip\n"
-                   "mov r8, sp\n\t"
                    "ldr r1, [r8, #0x44]\n\t"        /* frame->restore_flags */
                    "cbnz r1, 1f\n\t"
                    /* switch to user stack */
