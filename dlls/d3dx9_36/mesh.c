@@ -3206,9 +3206,37 @@ static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data
     return hr;
 }
 
+typedef HRESULT (*mesh_parse_func)(ID3DXFileData *, struct mesh_data *, DWORD);
+
+static mesh_parse_func mesh_get_parse_func(const GUID *type)
+{
+    static const struct
+    {
+        const GUID *type;
+        mesh_parse_func func;
+    }
+    funcs[] =
+    {
+        {&TID_D3DRMMeshNormals, parse_normals},
+        {&TID_D3DRMMeshVertexColors, parse_vertex_colors},
+        {&TID_D3DRMMeshTextureCoords, parse_texture_coords},
+        {&TID_D3DRMMeshMaterialList, parse_material_list},
+        {&DXFILEOBJ_XSkinMeshHeader, parse_skin_mesh_header},
+        {&DXFILEOBJ_SkinWeights, parse_skin_weights_info},
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(funcs); ++i)
+        if (IsEqualGUID(type, funcs[i].type))
+            return funcs[i].func;
+
+    return NULL;
+}
+
 static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD provide_flags)
 {
     ID3DXFileData *child = NULL;
+    mesh_parse_func parse_func;
     const BYTE *data, *in_ptr;
     DWORD *index_out_ptr;
     SIZE_T child_count;
@@ -3333,20 +3361,8 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         if (FAILED(hr))
             goto end;
 
-        if (IsEqualGUID(&type, &TID_D3DRMMeshNormals)) {
-            hr = parse_normals(child, mesh_data, provide_flags);
-        } else if (IsEqualGUID(&type, &TID_D3DRMMeshVertexColors)) {
-            hr = parse_vertex_colors(child, mesh_data, provide_flags);
-        } else if (IsEqualGUID(&type, &TID_D3DRMMeshTextureCoords)) {
-            hr = parse_texture_coords(child, mesh_data, provide_flags);
-        } else if (IsEqualGUID(&type, &TID_D3DRMMeshMaterialList)) {
-            hr = parse_material_list(child, mesh_data, provide_flags);
-        } else if (IsEqualGUID(&type, &DXFILEOBJ_XSkinMeshHeader)) {
-            hr = parse_skin_mesh_header(child, mesh_data, provide_flags);
-        } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
-            hr = parse_skin_weights_info(child, mesh_data, provide_flags);
-        }
-
+        if ((parse_func = mesh_get_parse_func(&type)))
+            hr = parse_func(child, mesh_data, provide_flags);
         if (FAILED(hr))
             goto end;
 
