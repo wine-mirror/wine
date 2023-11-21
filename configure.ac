@@ -1380,8 +1380,11 @@ then
     WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
         [AC_CHECK_HEADERS([xkbcommon/xkbcommon.h])
          AC_CHECK_LIB(xkbcommon,xkb_context_new,[:],[XKBCOMMON_LIBS=""],[$XKBCOMMON_LIBS])])
+    WINE_PACKAGE_FLAGS(XKBREGISTRY,[xkbregistry],,,,
+        [AC_CHECK_HEADERS([xkbcommon/xkbregistry.h])
+         AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
 fi
-WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
                  [Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.],
                  [enable_winewayland_drv])
 

@@ -24,6 +24,7 @@
 #endif
 
 #include "config.h"
+#include <stdlib.h>
 
 #include <linux/input.h>
 #undef SW_MAX /* Also defined in winuser.rh */
@@ -35,6 +36,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
+
+struct layout
+{
+    struct list entry;
+    char *xkb_layout;
+
+    int xkb_group;
+    LANGID lang;
+    WORD index;
+    /* "Layout Id", used by NtUserGetKeyboardLayoutName / LoadKeyboardLayoutW */
+    WORD layout_id;
+};
+
+/* These are only used from the wayland event thread and don't need locking */
+static struct list xkb_layouts = LIST_INIT(xkb_layouts);
+static struct rxkb_context *rxkb_context;
+static HKL keyboard_hkl; /* the HKL matching the currently active xkb group */
 
 static WORD key2scan(UINT key)
 {
@@ -122,6 +140,198 @@ static WORD key2scan(UINT key)
     return 0x200 | (key & 0x7f);
 }
 
+static inline LANGID langid_from_xkb_layout(const char *layout, size_t layout_len)
+{
+#define MAKEINDEX(c0, c1) (MAKEWORD(c0, c1) - MAKEWORD('a', 'a'))
+    static const LANGID langids[] =
+    {
+        [MAKEINDEX('a','f')] = MAKELANGID(LANG_DARI, SUBLANG_DEFAULT),
+        [MAKEINDEX('a','l')] = MAKELANGID(LANG_ALBANIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('a','m')] = MAKELANGID(LANG_ARMENIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('a','t')] = MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN),
+        [MAKEINDEX('a','z')] = MAKELANGID(LANG_AZERBAIJANI, SUBLANG_DEFAULT),
+        [MAKEINDEX('a','u')] = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_AUS),
+        [MAKEINDEX('b','a')] = MAKELANGID(LANG_BOSNIAN, SUBLANG_BOSNIAN_BOSNIA_HERZEGOVINA_CYRILLIC),
+        [MAKEINDEX('b','d')] = MAKELANGID(LANG_BANGLA, SUBLANG_DEFAULT),
+        [MAKEINDEX('b','e')] = MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH_BELGIAN),
+        [MAKEINDEX('b','g')] = MAKELANGID(LANG_BULGARIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('b','r')] = MAKELANGID(LANG_PORTUGUESE, 2),
+        [MAKEINDEX('b','t')] = MAKELANGID(LANG_TIBETAN, 3),
+        [MAKEINDEX('b','w')] = MAKELANGID(LANG_TSWANA, SUBLANG_TSWANA_BOTSWANA),
+        [MAKEINDEX('b','y')] = MAKELANGID(LANG_BELARUSIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('c','a')] = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),
+        [MAKEINDEX('c','d')] = MAKELANGID(LANG_FRENCH, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('c','h')] = MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),
+        [MAKEINDEX('c','m')] = MAKELANGID(LANG_FRENCH, 11),
+        [MAKEINDEX('c','n')] = MAKELANGID(LANG_CHINESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('c','z')] = MAKELANGID(LANG_CZECH, SUBLANG_DEFAULT),
+        [MAKEINDEX('d','e')] = MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('d','k')] = MAKELANGID(LANG_DANISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('d','z')] = MAKELANGID(LANG_TAMAZIGHT, SUBLANG_TAMAZIGHT_ALGERIA_LATIN),
+        [MAKEINDEX('e','e')] = MAKELANGID(LANG_ESTONIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('e','s')] = MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('e','t')] = MAKELANGID(LANG_AMHARIC, SUBLANG_DEFAULT),
+        [MAKEINDEX('f','i')] = MAKELANGID(LANG_FINNISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('f','o')] = MAKELANGID(LANG_FAEROESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('f','r')] = MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+        [MAKEINDEX('g','b')] = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),
+        [MAKEINDEX('g','e')] = MAKELANGID(LANG_GEORGIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('g','h')] = MAKELANGID(LANG_ENGLISH, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('g','n')] = MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_DEFAULT),
+        [MAKEINDEX('g','r')] = MAKELANGID(LANG_GREEK, SUBLANG_DEFAULT),
+        [MAKEINDEX('h','r')] = MAKELANGID(LANG_CROATIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('h','u')] = MAKELANGID(LANG_HUNGARIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','d')] = MAKELANGID(LANG_INDONESIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','e')] = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_EIRE),
+        [MAKEINDEX('i','l')] = MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','n')] = MAKELANGID(LANG_HINDI, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','q')] = MAKELANGID(LANG_ARABIC, SUBLANG_ARABIC_IRAQ),
+        [MAKEINDEX('i','r')] = MAKELANGID(LANG_PERSIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','s')] = MAKELANGID(LANG_ICELANDIC, SUBLANG_DEFAULT),
+        [MAKEINDEX('i','t')] = MAKELANGID(LANG_ITALIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('j','p')] = MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('k','e')] = MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_DEFAULT),
+        [MAKEINDEX('k','g')] = MAKELANGID(LANG_KYRGYZ, SUBLANG_DEFAULT),
+        [MAKEINDEX('k','h')] = MAKELANGID(LANG_KHMER, SUBLANG_DEFAULT),
+        [MAKEINDEX('k','r')] = MAKELANGID(LANG_KOREAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('k','z')] = MAKELANGID(LANG_KAZAK, SUBLANG_DEFAULT),
+        [MAKEINDEX('l','a')] = MAKELANGID(LANG_LAO, SUBLANG_DEFAULT),
+        [MAKEINDEX('l','k')] = MAKELANGID(LANG_SINHALESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('l','t')] = MAKELANGID(LANG_LITHUANIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('l','v')] = MAKELANGID(LANG_LATVIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','a')] = MAKELANGID(LANG_ARABIC, SUBLANG_ARABIC_MOROCCO),
+        [MAKEINDEX('m','d')] = MAKELANGID(LANG_ROMANIAN, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('m','e')] = MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_MONTENEGRO_LATIN),
+        [MAKEINDEX('m','k')] = MAKELANGID(LANG_MACEDONIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','l')] = MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_DEFAULT),
+        [MAKEINDEX('m','m')] = MAKELANGID(0x55 /*LANG_BURMESE*/, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','n')] = MAKELANGID(LANG_MONGOLIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','t')] = MAKELANGID(LANG_MALTESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','v')] = MAKELANGID(LANG_DIVEHI, SUBLANG_DEFAULT),
+        [MAKEINDEX('m','y')] = MAKELANGID(LANG_MALAY, SUBLANG_DEFAULT),
+        [MAKEINDEX('n','g')] = MAKELANGID(LANG_ENGLISH, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('n','l')] = MAKELANGID(LANG_DUTCH, SUBLANG_DEFAULT),
+        [MAKEINDEX('n','o')] = MAKELANGID(LANG_NORWEGIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('n','p')] = MAKELANGID(LANG_NEPALI, SUBLANG_DEFAULT),
+        [MAKEINDEX('p','h')] = MAKELANGID(LANG_FILIPINO, SUBLANG_DEFAULT),
+        [MAKEINDEX('p','k')] = MAKELANGID(LANG_URDU, SUBLANG_DEFAULT),
+        [MAKEINDEX('p','l')] = MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('p','t')] = MAKELANGID(LANG_PORTUGUESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('r','o')] = MAKELANGID(LANG_ROMANIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('r','s')] = MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_LATIN),
+        [MAKEINDEX('r','u')] = MAKELANGID(LANG_RUSSIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('s','e')] = MAKELANGID(LANG_SWEDISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('s','i')] = MAKELANGID(LANG_SLOVENIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('s','k')] = MAKELANGID(LANG_SLOVAK, SUBLANG_DEFAULT),
+        [MAKEINDEX('s','n')] = MAKELANGID(LANG_WOLOF, SUBLANG_DEFAULT),
+        [MAKEINDEX('s','y')] = MAKELANGID(LANG_SYRIAC, SUBLANG_DEFAULT),
+        [MAKEINDEX('t','g')] = MAKELANGID(LANG_FRENCH, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('t','h')] = MAKELANGID(LANG_THAI, SUBLANG_DEFAULT),
+        [MAKEINDEX('t','j')] = MAKELANGID(LANG_TAJIK, SUBLANG_DEFAULT),
+        [MAKEINDEX('t','m')] = MAKELANGID(LANG_TURKMEN, SUBLANG_DEFAULT),
+        [MAKEINDEX('t','r')] = MAKELANGID(LANG_TURKISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('t','w')] = MAKELANGID(LANG_CHINESE, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('t','z')] = MAKELANGID(LANG_SWAHILI, SUBLANG_CUSTOM_UNSPECIFIED),
+        [MAKEINDEX('u','a')] = MAKELANGID(LANG_UKRAINIAN, SUBLANG_DEFAULT),
+        [MAKEINDEX('u','s')] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+        [MAKEINDEX('u','z')] = MAKELANGID(LANG_UZBEK, 2),
+        [MAKEINDEX('v','n')] = MAKELANGID(LANG_VIETNAMESE, SUBLANG_DEFAULT),
+        [MAKEINDEX('z','a')] = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_SOUTH_AFRICA),
+    };
+    LANGID langid;
+
+    if (layout_len == 2 && (langid = langids[MAKEINDEX(layout[0], layout[1])])) return langid;
+    if (layout_len == 3 && !memcmp(layout, "ara", layout_len)) return MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT);
+    if (layout_len == 3 && !memcmp(layout, "epo", layout_len)) return MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_DEFAULT);
+    if (layout_len == 3 && !memcmp(layout, "mao", layout_len)) return MAKELANGID(LANG_MAORI, SUBLANG_DEFAULT);
+    if (layout_len == 4 && !memcmp(layout, "brai", layout_len)) return MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_DEFAULT);
+    if (layout_len == 5 && !memcmp(layout, "latam", layout_len)) return MAKELANGID(LANG_SPANISH, SUBLANG_CUSTOM_UNSPECIFIED);
+#undef MAKEINDEX
+
+    FIXME("Unknown layout language %s\n", debugstr_a(layout));
+    return MAKELANGID(LANG_NEUTRAL, SUBLANG_CUSTOM_UNSPECIFIED);
+};
+
+static HKL get_layout_hkl(struct layout *layout, LCID locale)
+{
+    if (!layout->layout_id) return (HKL)(UINT_PTR)MAKELONG(locale, layout->lang);
+    else return (HKL)(UINT_PTR)MAKELONG(locale, 0xf000 | layout->layout_id);
+}
+
+static void add_xkb_layout(const char *xkb_layout, xkb_layout_index_t xkb_group, LANGID lang)
+{
+    static WORD next_layout_id = 1;
+
+    struct layout *layout;
+    unsigned int len;
+    WORD index = 0;
+    char *ptr;
+
+    TRACE("xkb_layout=%s xkb_group=%u lang=%04x\n", xkb_layout, xkb_group, lang);
+
+    LIST_FOR_EACH_ENTRY(layout, &xkb_layouts, struct layout, entry)
+        if (layout->lang == lang) index++;
+
+    len = strlen(xkb_layout) + 1;
+    if (!(layout = calloc(1, sizeof(*layout) + len)))
+    {
+        ERR("Failed to allocate memory for Xkb layout entry\n");
+        return;
+    }
+    ptr = (char *)(layout + 1);
+
+    layout->xkb_layout = strcpy(ptr, xkb_layout);
+    layout->xkb_group = xkb_group;
+    layout->lang = lang;
+    layout->index = index;
+    if (index) layout->layout_id = next_layout_id++;
+
+    TRACE("Created layout entry=%p index=%04x lang=%04x id=%04x\n", layout, layout->index, layout->lang, layout->layout_id);
+    list_add_tail(&xkb_layouts, &layout->entry);
+}
+
+static void set_current_xkb_group(xkb_layout_index_t xkb_group)
+{
+    struct wayland_keyboard *keyboard = &process_wayland.keyboard;
+    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
+    struct layout *layout;
+    HKL hkl;
+
+    LIST_FOR_EACH_ENTRY(layout, &xkb_layouts, struct layout, entry)
+        if (layout->xkb_group == xkb_group) break;
+    if (&layout->entry != &xkb_layouts)
+        hkl = get_layout_hkl(layout, locale);
+    else
+    {
+        ERR("Failed to find Xkb Layout for group %d\n", xkb_group);
+        hkl = keyboard_hkl;
+    }
+
+    if (hkl == keyboard_hkl) return;
+    keyboard_hkl = hkl;
+
+    TRACE("Changing keyboard layout to %p\n", hkl);
+    NtUserPostMessage(keyboard->focused_hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/,
+                      (LPARAM)keyboard_hkl);
+}
+
+static BOOL find_xkb_layout_variant(const char *name, const char **layout, const char **variant)
+{
+    struct rxkb_layout *iter;
+
+    for (iter = rxkb_layout_first(rxkb_context); iter; iter = rxkb_layout_next(iter))
+    {
+        if (!strcmp(name, rxkb_layout_get_description(iter)))
+        {
+            *layout = rxkb_layout_get_name(iter);
+            *variant = rxkb_layout_get_variant(iter);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 /**********************************************************************
  *          Keyboard handling
  */
@@ -143,7 +353,9 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
 {
     struct wayland_keyboard *keyboard = &process_wayland.keyboard;
     struct xkb_keymap *xkb_keymap = NULL;
+    xkb_layout_index_t xkb_group;
     struct xkb_state *xkb_state;
+    struct layout *entry, *next;
     char *keymap_str;
 
     TRACE("format=%d fd=%d size=%d\n", format, fd, size);
@@ -169,12 +381,39 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
         return;
     }
 
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &xkb_layouts, struct layout, entry)
+    {
+        list_remove(&entry->entry);
+        free(entry);
+    }
+
+    for (xkb_group = 0; xkb_group < xkb_keymap_num_layouts(xkb_keymap); xkb_group++)
+    {
+        const char *layout_name = xkb_keymap_layout_get_name(xkb_keymap, xkb_group);
+        const char *layout, *variant = NULL;
+        int layout_len, variant_len = 0;
+        char buffer[1024];
+        LANGID lang;
+
+        if (!find_xkb_layout_variant(layout_name, &layout, &variant)) layout = "us";
+        if (variant) variant_len = strlen(variant);
+        layout_len = strlen(layout);
+
+        TRACE("Found layout %u name %s -> %s:%s\n", xkb_group, layout_name, layout, variant);
+
+        lang = langid_from_xkb_layout(layout, layout_len);
+        snprintf(buffer, ARRAY_SIZE(buffer), "%.*s:%.*s", layout_len, layout, variant_len, variant);
+        add_xkb_layout(buffer, xkb_group, lang);
+    }
+
     if ((xkb_state = xkb_state_new(xkb_keymap)))
     {
         pthread_mutex_lock(&keyboard->mutex);
         xkb_state_unref(keyboard->xkb_state);
         keyboard->xkb_state = xkb_state;
         pthread_mutex_unlock(&keyboard->mutex);
+
+        set_current_xkb_group(0);
     }
 
     xkb_keymap_unref(xkb_keymap);
@@ -198,7 +437,8 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
     keyboard->focused_hwnd = hwnd;
     pthread_mutex_unlock(&keyboard->mutex);
 
-    /* FIXME: update foreground window as well */
+    NtUserPostMessage(keyboard->focused_hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/,
+                      (LPARAM)keyboard_hkl);
 }
 
 static void keyboard_handle_leave(void *data, struct wl_keyboard *wl_keyboard,
@@ -236,7 +476,7 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
 
     input.type = INPUT_KEYBOARD;
     input.ki.wScan = scan & 0xff;
-    input.ki.wVk = NtUserMapVirtualKeyEx(scan, MAPVK_VSC_TO_VK_EX, NtUserGetKeyboardLayout(0));
+    input.ki.wVk = NtUserMapVirtualKeyEx(scan, MAPVK_VSC_TO_VK_EX, keyboard_hkl);
     if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
     if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;
@@ -259,6 +499,8 @@ static void keyboard_handle_modifiers(void *data, struct wl_keyboard *wl_keyboar
     xkb_state_update_mask(keyboard->xkb_state, mods_depressed, mods_latched,
                           mods_locked, 0, 0, xkb_group);
     pthread_mutex_unlock(&keyboard->mutex);
+
+    set_current_xkb_group(xkb_group);
 
     /* FIXME: Sync wine modifier state with XKB modifier state. */
 }
@@ -299,6 +541,13 @@ void wayland_keyboard_init(struct wl_keyboard *wl_keyboard)
     struct wayland_keyboard *keyboard = &process_wayland.keyboard;
     struct xkb_context *xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
+    if (!(rxkb_context = rxkb_context_new(RXKB_CONTEXT_NO_FLAGS))
+            || !rxkb_context_parse_default_ruleset(rxkb_context))
+    {
+        ERR("Failed to parse default Xkb ruleset\n");
+        return;
+    }
+
     if (!xkb_context)
     {
         ERR("Failed to create XKB context\n");
@@ -337,4 +586,10 @@ void wayland_keyboard_deinit(void)
         keyboard->xkb_state = NULL;
     }
     pthread_mutex_unlock(&keyboard->mutex);
+
+    if (rxkb_context)
+    {
+        rxkb_context_unref(rxkb_context);
+        rxkb_context = NULL;
+    }
 }
