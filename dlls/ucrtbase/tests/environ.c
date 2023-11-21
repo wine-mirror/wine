@@ -132,13 +132,12 @@ static void test_initial_environ( void )
     ok( p__p__environ() != NULL, "Unexpected NULL _environ[]\n" );
     ok( *p__p__environ() != NULL, "Unexpected empty _environ[]\n" );
     ok( p_get_initial_narrow_environment() != NULL, "Unexpected empty narrow initial environment\n" );
-    todo_wine
     ok( p_get_initial_narrow_environment() == *p__p__environ(), "Expecting _environ[] to match initial narrow environment\n" );
 
     ok( p__p__wenviron() != NULL, "Unexpected NULL _wenviron[]\n" );
     ok( *p__p__wenviron() == NULL, "Unexpected non empty _wenviron[]\n" );
-    ok( p_get_initial_wide_environment() != NULL, "Unexpected empty wide initial environment\n" );
     todo_wine
+    ok( p_get_initial_wide_environment() != NULL, "Unexpected empty wide initial environment\n" );
     ok( p_get_initial_wide_environment() == *p__p__wenviron(), "Expecting _wenviron[] to match initial wide environment\n" );
 }
 

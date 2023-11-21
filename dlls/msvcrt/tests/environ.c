@@ -139,7 +139,6 @@ static void test__environ(void)
     {
         initenv = *p__p___initenv();
 
-        todo_wine
         ok( initenv == *p_environ,
             "Expected _environ to be equal to initial env\n" );
     }
@@ -195,7 +194,6 @@ static void test__wenviron(void)
     if (p__p___winitenv)
     {
         wchar_t ***retptr = p__p___winitenv();
-        todo_wine
         ok( !*retptr, "Expected initial env to be NULL\n" );
     }
     else
@@ -235,7 +233,6 @@ static void test__wenviron(void)
             "Expected _wenviron to be different from __p___winitenv() %p %p\n", *retptr, *p_wenviron );
         /* test that w-initial env is derived from current _environ[] and not from ansi initial env */
         value = env_get_valueW( *retptr, L"cat" );
-        todo_wine
         ok( value && !wcscmp( value, L"dog" ),
                 "Expecting initial env to be derived from current env (got %ls)\n", value );
     }

@@ -205,9 +205,10 @@ void __cdecl _amsg_exit(int errnum);
 
 extern char **MSVCRT__environ;
 extern wchar_t **MSVCRT__wenviron;
+extern char **MSVCRT___initenv;
+extern wchar_t **MSVCRT___winitenv;
 
-extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
-extern wchar_t ** msvcrt_SnapshotOfEnvironmentW(wchar_t **);
+int env_init(BOOL, BOOL);
 
 wchar_t *msvcrt_wstrdupa(const char *);
 
