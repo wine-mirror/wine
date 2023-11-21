@@ -226,6 +226,14 @@
                        "blr x16\n\t" \
                        "ret\n" \
                        "1:\t.quad " __ASM_NAME("__wine_syscall_dispatcher") )
+#elif defined __arm64ec__
+# define __ASM_SYSCALL_FUNC(id) \
+    asm( "mov x8, #%0\n\t" \
+         "mov x9, x30\n\t" \
+         "adr x16, " __ASM_NAME("__wine_syscall_dispatcher") "\n\t" \
+         "ldr x16, [x16]\n\t" \
+         "blr x16\n\t" \
+         "ret" :: "i" (id) )
 #elif defined __x86_64__
 /* Chromium depends on syscall thunks having the same form as on
  * Windows. For 64-bit systems the only viable form we can emulate is
