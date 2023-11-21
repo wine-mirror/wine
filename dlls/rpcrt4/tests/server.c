@@ -30,6 +30,7 @@
 #define SKIP_TYPE_DECLS
 #include "server_interp.h"
 #include "server_defines.h"
+#include "explicit_handle.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -1202,6 +1203,30 @@ void __cdecl s_test_I_RpcBindingInqLocalClientPID(unsigned int protseq, RPC_BIND
     winetest_pop_context();
 }
 
+int __cdecl s_add(handle_t binding, int a, int b)
+{
+  ok(binding != NULL, "explicit handle is NULL\n");
+  return a + b;
+}
+
+int __cdecl s_getNum(int a, handle_t binding)
+{
+  ok(binding != NULL, "explicit handle is NULL\n");
+  return a + 2;
+}
+
+void __cdecl s_Shutdown(handle_t binding)
+{
+    RPC_STATUS status;
+    ULONG pid = 0;
+    ok(binding != NULL, "explicit handle is NULL\n");
+
+    status = I_RpcBindingInqLocalClientPID(binding, &pid);
+    ok(status == RPC_S_OK, "Got unexpected %ld.\n", status);
+    ok(pid == client_info.dwProcessId, "Got unexpected pid: %ld client pid: %ld.\n", pid, client_info.dwProcessId);
+    ok(SetEvent(stop_event), "SetEvent\n");
+}
+
 void __RPC_USER ctx_handle_t_rundown(ctx_handle_t ctx_handle)
 {
     ok(ctx_handle == (ctx_handle_t)0xdeadbeef, "Unexpected ctx_handle %p\n", ctx_handle);
@@ -2034,6 +2059,7 @@ client(const char *test)
   static unsigned char port[] = PORT;
   static unsigned char pipe[] = PIPE;
   static unsigned char guid[] = "00000000-4114-0704-2301-000000000000";
+  static unsigned char explicit_handle_guid[] = "00000000-4114-0704-2301-000000000002";
 
   unsigned char *binding;
 
@@ -2138,6 +2164,21 @@ client(const char *test)
     ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IInterpServer_IfHandle), "RpcBindingFree\n");
   }
+  else if (strcmp(test, "explicit_handle") == 0)
+  {
+    IMixedServer_IfHandle = NULL;
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, ncalrpc, NULL, explicit_handle_guid, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IMixedServer_IfHandle), "RpcBindingFromStringBinding\n");
+
+    test_is_server_listening(IMixedServer_IfHandle, RPC_S_OK);
+
+    ok(add(IMixedServer_IfHandle, 2, 3) == 5, "RPC add\n");
+    ok(getNum(7, IMixedServer_IfHandle) == 9, "RPC getNum\n");
+    Shutdown(IMixedServer_IfHandle);
+
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcBindingFree(&IMixedServer_IfHandle), "RpcBindingFree\n");
+  }
 }
 
 static void
@@ -2149,6 +2190,7 @@ server(void)
   static unsigned char pipe[] = PIPE;
   static unsigned char ncalrpc[] = "ncalrpc";
   static unsigned char guid[] = "00000000-4114-0704-2301-000000000000";
+  static unsigned char explicit_handle_guid[] = "00000000-4114-0704-2301-000000000002";
   RPC_STATUS status, iptcp_status, np_status, ncalrpc_status;
   DWORD ret;
 
@@ -2246,6 +2288,51 @@ server(void)
     status = RpcServerUnregisterIf(s_IMixedServer_v0_0_s_ifspec, NULL, TRUE);
     ok(status == RPC_S_OK, "RpcServerUnregisterIf() failed: %lu\n", status);
   }
+
+  /* explicit handle */
+  stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+  ok(stop_event != NULL, "CreateEvent failed with error %ld\n", GetLastError());
+
+  ncalrpc_status = RpcServerUseProtseqEpA(ncalrpc, 0, explicit_handle_guid, NULL);
+  if (ncalrpc_status == RPC_S_PROTSEQ_NOT_SUPPORTED)
+    skip("Protocol sequence ncacn_np is not supported\n");
+  else
+    ok(ncalrpc_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_np) failed with status %ld\n", ncalrpc_status);
+
+  if (pRpcServerRegisterIfEx)
+  {
+    trace("Using RpcServerRegisterIfEx\n");
+    status = pRpcServerRegisterIfEx(s_RPCExplicitHandle_v0_0_s_ifspec, NULL, NULL,
+                                    RPC_IF_ALLOW_CALLBACKS_WITH_NO_AUTH,
+                                    RPC_C_LISTEN_MAX_CALLS_DEFAULT, NULL);
+    ok(status == RPC_S_OK, "RpcServerRegisterIfEx failed with status %ld\n", status);
+    test_is_server_listening(NULL, RPC_S_NOT_LISTENING);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
+    ok(status == RPC_S_OK, "RpcServerListen failed with status %ld\n", status);
+  }
+  else
+  {
+    status = RpcServerRegisterIf(s_RPCExplicitHandle_v0_0_s_ifspec, NULL, NULL);
+    ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %ld\n", status);
+    status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
+    ok(status == RPC_S_OK, "RpcServerListen failed with status %ld\n", status);
+  }
+
+  test_is_server_listening(NULL, RPC_S_OK);
+
+  run_client("explicit_handle");
+
+  ret = WaitForSingleObject(stop_event, 1000);
+  ok(WAIT_OBJECT_0 == ret, "WaitForSingleObject\n");
+
+  if (pRpcServerRegisterIfEx)
+  {
+    status = RpcServerUnregisterIf(s_RPCExplicitHandle_v0_0_s_ifspec, NULL, TRUE);
+    ok(status == RPC_S_OK, "RpcServerUnregisterIf() failed: %lu\n", status);
+  }
+
+  CloseHandle(stop_event);
+  stop_event = NULL;
 
   CoUninitialize();
 }
