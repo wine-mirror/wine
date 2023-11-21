@@ -47,6 +47,19 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__, line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
+static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
+{
+    ULONG i, j;
+
+    for (i = 0; i < count; i++)
+    {
+        for (j = 0; j < propinfoset[i].cPropertyInfos; j++)
+            VariantClear(&propinfoset[i].rgPropertyInfos[j].vValues);
+        CoTaskMemFree(propinfoset[i].rgPropertyInfos);
+    }
+    CoTaskMemFree(propinfoset);
+}
+
 static void test_GetDataSource(const WCHAR *initstring)
 {
     IDataInitialize *datainit = NULL;
@@ -90,7 +103,7 @@ static void test_GetDataSource(const WCHAR *initstring)
                                              pInfoset->rgPropertyInfos[i].vtType);
                 }
 
-                CoTaskMemFree(pInfoset);
+                free_dbpropinfoset(cnt, pInfoset);
                 CoTaskMemFree(ary);
             }
 
