@@ -2607,7 +2607,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movw %cs,0x78(%rcx)\n\t"
                    "movq %rsp,0x88(%rcx)\n\t"
                    __ASM_CFI_CFA_IS_AT2(rcx, 0x88, 0x01)
-                   __ASM_CFI_REG_IS_AT2(rsp, rcx, 0x88, 0x01)
                    "movw %ss,0x90(%rcx)\n\t"
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
@@ -2640,7 +2639,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_remember_state\n\t")
                    "3:\tleaq 0x98(%rcx),%rbp\n\t"
                    __ASM_CFI_CFA_IS_AT1(rbp, 0x70)
-                   __ASM_CFI_REG_IS_AT1(rsp, rbp, 0x70)
                    __ASM_CFI_REG_IS_AT1(rip, rbp, 0x58)
                    __ASM_CFI_REG_IS_AT2(rbx, rbp, 0xf0, 0x7e)
                    __ASM_CFI_REG_IS_AT2(rsi, rbp, 0x88, 0x7f)
@@ -2756,7 +2754,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* switch to user stack */
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
-                   __ASM_CFI(".cfi_same_value rsp\n\t")
                    "movq 0x70(%rcx),%rcx\n\t"      /* frame->rip */
                    __ASM_CFI(".cfi_register rip, rcx\n\t")
                    "pushq %rcx\n\t"
@@ -2768,7 +2765,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_remember_state\n\t")
                    "1:\tleaq 0x70(%rcx),%rsp\n\t"
                    __ASM_CFI_CFA_IS_AT1(rsp, 0x18)
-                   __ASM_CFI_REG_IS_AT1(rsp, rsp, 0x18)
                    __ASM_CFI_REG_IS_AT1(rip, rsp, 0x00)
                    "testl $0x2,%edx\n\t"           /* CONTEXT_INTEGER */
                    "jnz 1f\n\t"
@@ -2786,7 +2782,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x10(%rcx),%rcx\n"
                    "iretq\n"
                    __ASM_CFI_CFA_IS_AT1(rbp, 0x70)
-                   __ASM_CFI_REG_IS_AT1(rsp, rbp, 0x70)
                    __ASM_CFI_REG_IS_AT1(rip, rbp, 0x58)
                    __ASM_CFI_REG_IS_AT2(rbx, rbp, 0xf0, 0x7e)
                    __ASM_CFI_REG_IS_AT2(rsi, rbp, 0x88, 0x7f)
@@ -2842,7 +2837,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_REG_IS_AT2(r15, rcx, 0xe8, 0x00)
                    "movq %rsp,0x88(%rcx)\n\t"
                    __ASM_CFI_CFA_IS_AT2(rcx, 0x88, 0x01)
-                   __ASM_CFI_REG_IS_AT2(rsp, rcx, 0x88, 0x01)
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    "movdqa %xmm6,0x1c0(%rcx)\n\t"
@@ -2903,7 +2897,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_same_value rsi\n\t")
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
-                   __ASM_CFI(".cfi_same_value rsp\n\t")
                    "pushq 0x70(%rcx)\n\t"          /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
                    "ret" )

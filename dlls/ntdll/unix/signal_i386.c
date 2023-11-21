@@ -2543,7 +2543,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movl %esp,0x0c(%ecx)\n\t"      /* frame->esp */
                    __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(esp, ecx, 0x0c)
                    "movw %cs,0x10(%ecx)\n\t"
                    "movw %ss,0x12(%ecx)\n\t"
                    "movw %ds,0x14(%ecx)\n\t"
@@ -2561,7 +2560,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI_REG_IS_AT1(ebp, ecx, 0x34)
                    "leal 0x34(%ecx),%ebp\n\t"
                    __ASM_CFI_CFA_IS_AT1(ebp, 0x58)
-                   __ASM_CFI_REG_IS_AT1(esp, ebp, 0x58)
                    __ASM_CFI_REG_IS_AT1(eip, ebp, 0x54)
                    __ASM_CFI_REG_IS_AT1(ebx, ebp, 0x6c)
                    __ASM_CFI_REG_IS_AT1(edi, ebp, 0x78)
@@ -2626,7 +2624,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
                    __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
                    __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
                    __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
@@ -2665,7 +2662,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
-                   __ASM_CFI(".cfi_same_value %esp\n\t")
                    "pushl %ecx\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "ret\n"
@@ -2681,7 +2677,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* switch to user stack */
                    "xchgl %ebx,%esp\n\t"
                    __ASM_CFI(".cfi_def_cfa %esp, 0\n\t")
-                   __ASM_CFI(".cfi_same_value %esp\n\t")
                    __ASM_CFI_REG_IS_AT1(eip, ebx, 0x08)
                    __ASM_CFI_REG_IS_AT1(ebx, ebx, 0x20)
                    "pushl 0x04(%ebx)\n\t"          /* frame->eflags */
@@ -2735,7 +2730,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "leal 0x10(%esp),%edx\n\t"
                    "movl %edx,0x0c(%ecx)\n\t"  /* frame->esp */
                    __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(esp, ecx, 0x0c)
                    "movw %cs,0x10(%ecx)\n\t"
                    "movw %ss,0x12(%ecx)\n\t"
                    "movw %ds,0x14(%ecx)\n\t"
@@ -2759,7 +2753,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
                    __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
-                   __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
                    __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
                    __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
@@ -2771,7 +2764,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
-                   __ASM_CFI(".cfi_same_value %esp\n\t")
                    "pushl %ecx\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "ret" )
