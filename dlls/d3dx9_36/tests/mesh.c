@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <limits.h>
+#include <assert.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 #include "initguid.h"
@@ -2030,6 +2031,134 @@ static void test_LoadMeshFromX_(int line, IDirect3DDevice9 *device, const char *
     }
 }
 
+#define MAX_USER_DATA_COUNT 32
+enum user_data_type
+{
+    USER_DATA_TYPE_TOP,
+    USER_DATA_TYPE_FRAME_CHILD,
+    USER_DATA_TYPE_MESH_CHILD,
+};
+
+struct test_user_data
+{
+    enum user_data_type data_type;
+    const GUID *type;
+    SIZE_T size;
+    unsigned int value;
+    BOOL mesh_container;
+    unsigned int num_materials;
+};
+
+struct test_load_user_data
+{
+    ID3DXLoadUserData iface;
+
+    unsigned int data_count;
+    struct test_user_data data[MAX_USER_DATA_COUNT];
+    GUID guids[MAX_USER_DATA_COUNT];
+};
+
+static void record_common_user_data(struct test_load_user_data *data, ID3DXFileData *filedata,
+        enum user_data_type data_type)
+{
+    struct test_user_data *d = &data->data[data->data_count];
+    const void *ptr;
+    HRESULT hr;
+    SIZE_T sz;
+
+    assert(data->data_count < MAX_USER_DATA_COUNT);
+
+    d->data_type = data_type;
+    hr = filedata->lpVtbl->GetType(filedata, &data->guids[data->data_count]);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = filedata->lpVtbl->Lock(filedata, &sz, &ptr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    d->size = sz;
+    ok(sz >= sizeof(int), "got %Iu.\n", sz);
+    d->value = *(unsigned int *)ptr;
+    hr = filedata->lpVtbl->Unlock(filedata);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ++data->data_count;
+}
+
+static struct test_load_user_data *impl_from_ID3DXLoadUserData(ID3DXLoadUserData *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_load_user_data, iface);
+}
+
+static HRESULT STDMETHODCALLTYPE load_top_level_data(ID3DXLoadUserData *iface, ID3DXFileData *filedata)
+{
+    struct test_load_user_data *user_data = impl_from_ID3DXLoadUserData(iface);
+
+    record_common_user_data(user_data, filedata, USER_DATA_TYPE_TOP);
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE load_frame_child_data(ID3DXLoadUserData *iface, D3DXFRAME *frame,
+        ID3DXFileData *filedata)
+{
+    struct test_load_user_data *user_data = impl_from_ID3DXLoadUserData(iface);
+
+    ok(!frame->pFrameSibling, "got %p.\n", frame->pFrameSibling);
+    ok(!frame->pFrameFirstChild, "got %p.\n", frame->pFrameFirstChild);
+
+    user_data->data[user_data->data_count].mesh_container = !!frame->pMeshContainer;
+    record_common_user_data(user_data, filedata, USER_DATA_TYPE_FRAME_CHILD);
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE load_mesh_child_data(ID3DXLoadUserData *iface, D3DXMESHCONTAINER *mesh_container,
+        ID3DXFileData *filedata)
+{
+    struct test_load_user_data *user_data = impl_from_ID3DXLoadUserData(iface);
+
+    user_data->data[user_data->data_count].num_materials = mesh_container->NumMaterials;
+
+    record_common_user_data(user_data, filedata, USER_DATA_TYPE_MESH_CHILD);
+    return S_OK;
+}
+
+static const struct ID3DXLoadUserDataVtbl load_user_data_vtbl =
+{
+    load_top_level_data,
+    load_frame_child_data,
+    load_mesh_child_data,
+};
+
+static void init_load_user_data(struct test_load_user_data *data)
+{
+    memset(data, 0, sizeof(*data));
+    data->iface.lpVtbl = &load_user_data_vtbl;
+}
+
+static void check_user_data(struct test_load_user_data *user_data, unsigned int expected_count,
+        const struct test_user_data *expected)
+{
+    unsigned int i;
+
+    ok(user_data->data_count == expected_count, "got %u, expected %u.\n", user_data->data_count, expected_count);
+    expected_count = min(expected_count, user_data->data_count);
+    for (i = 0; i < expected_count; ++i)
+    {
+        winetest_push_context("i %u", i);
+        ok(user_data->data[i].data_type == expected[i].data_type, "got %u, expected %u.\n",
+                user_data->data[i].data_type, expected[i].data_type);
+        ok(IsEqualGUID(&user_data->guids[i], expected[i].type), "got %s, expected %s.\n",
+                debugstr_guid(&user_data->guids[i]), debugstr_guid(expected[i].type));
+        ok(user_data->data[i].size == expected[i].size, "got %Iu, expected %Iu.\n",
+                user_data->data[i].size, expected[i].size);
+        ok(user_data->data[i].value == expected[i].value, "got %u, expected %u.\n",
+                user_data->data[i].value, expected[i].value);
+        ok(user_data->data[i].mesh_container == expected[i].mesh_container, "got %u, expected %u.\n",
+                user_data->data[i].mesh_container, expected[i].mesh_container);
+        ok(user_data->data[i].num_materials == expected[i].num_materials, "got %u, expected %u.\n",
+                user_data->data[i].num_materials, expected[i].num_materials);
+        winetest_pop_context();
+    }
+}
+
+DEFINE_GUID(TID_TestDataGuid, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11);
+
 static void D3DXLoadMeshTest(void)
 {
     static const char empty_xfile[] = "xof 0303txt 0032";
@@ -2051,13 +2180,41 @@ static void D3DXLoadMeshTest(void)
     const DWORD simple_fvf = D3DFVF_XYZ;
     static const char framed_xfile[] =
         "xof 0303txt 0032"
+        "template TestData {"
+            "<12345678-1234-1234-1234-111111111111>"
+            "DWORD value;"
+        "}"
+        "TestData {"
+            "1;;"
+        "}"
+        "Material {"
+            /* ColorRGBA faceColor; */
+            "0.0; 0.0; 1.0; 1.0;;"
+            /* FLOAT power; */
+            "0.5;"
+            /* ColorRGB specularColor; */
+            "1.0; 1.0; 1.0;;"
+            /* ColorRGB emissiveColor; */
+            "0.0; 0.0; 0.0;;"
+        "}"
+
         "Frame {"
-            "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 1.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
+            "TestData {"
+                "2;;"
+            "}"
+            "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 1.0; 1.0; 0.0;; 1; 3; 0, 1, 2;;"
+                "TestData {"
+                    "3;;"
+                "}"
+            "}"
             "FrameTransformMatrix {" /* translation (0.0, 0.0, 2.0) */
               "1.0, 0.0, 0.0, 0.0,"
               "0.0, 1.0, 0.0, 0.0,"
               "0.0, 0.0, 1.0, 0.0,"
               "0.0, 0.0, 2.0, 1.0;;"
+            "}"
+            "TestData {"
+                "4;;"
             "}"
             "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 2.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
             "FrameTransformMatrix {" /* translation (0.0, 0.0, 3.0) */
@@ -2068,6 +2225,16 @@ static void D3DXLoadMeshTest(void)
             "}"
             "Mesh { 3; 0.0; 0.0; 0.0;, 0.0; 1.0; 0.0;, 3.0; 1.0; 0.0;; 1; 3; 0, 1, 2;; }"
         "}";
+
+    static const struct test_user_data framed_xfile_expected_user_data[] =
+    {
+        { USER_DATA_TYPE_TOP, &TID_TestDataGuid, 4, 1, 0, 0},
+        { USER_DATA_TYPE_TOP, &TID_D3DRMMaterial, 44, 0, 0, 0},
+        { USER_DATA_TYPE_FRAME_CHILD, &TID_TestDataGuid, 4, 2, 0, 0},
+        { USER_DATA_TYPE_MESH_CHILD, &TID_TestDataGuid, 4, 3, 0, 0},
+        { USER_DATA_TYPE_FRAME_CHILD, &TID_TestDataGuid, 4, 4, 1, 0},
+    };
+
     static const char framed_xfile_empty[] =
             "xof 0303txt 0032"
             "Frame Box01 {"
@@ -2093,6 +2260,10 @@ static void D3DXLoadMeshTest(void)
     /*________________________*/
     static const char box_xfile[] =
         "xof 0303txt 0032"
+        "template TestData {"
+            "<12345678-1234-1234-1234-111111111111>"
+            "DWORD value;"
+        "}"
         "Mesh {"
             "8;" /* DWORD nVertices; */
             /* array Vector vertices[nVertices]; */
@@ -2130,6 +2301,9 @@ static void D3DXLoadMeshTest(void)
               "4; 4, 4, 4, 4;,"
               "4; 5, 5, 5, 5;;"
             "}"
+            "TestData {"
+                "1;;"
+            "}"
             "MeshMaterialList materials {"
               "2;" /* DWORD nMaterials; */
               "6;" /* DWORD nFaceIndexes; */
@@ -2157,6 +2331,10 @@ static void D3DXLoadMeshTest(void)
                 "TextureFilename { \"texture.jpg\"; }"
               "}"
             "}"
+            "TestData {"
+                "2;;"
+            "}"
+
             "MeshVertexColors {"
               "8;" /* DWORD nVertexColors; */
               /* array IndexedColor vertexColors[nVertexColors]; */
@@ -2182,6 +2360,12 @@ static void D3DXLoadMeshTest(void)
               "0.0; 0.0;;"
             "}"
           "}";
+    static const struct test_user_data box_xfile_expected_user_data[] =
+    {
+        { USER_DATA_TYPE_MESH_CHILD, &TID_TestDataGuid, 4, 1, 0, 2},
+        { USER_DATA_TYPE_MESH_CHILD, &TID_TestDataGuid, 4, 2, 0, 2},
+    };
+
     static const WORD box_index_buffer[] = {
         0, 1, 3,
         0, 3, 2,
@@ -2393,6 +2577,7 @@ static void D3DXLoadMeshTest(void)
     ID3DXAnimationController *controller;
     D3DXMESHCONTAINER *container;
     unsigned int i;
+    struct test_load_user_data load_user_data;
 
     if (!(test_context = new_test_context()))
     {
@@ -2487,6 +2672,20 @@ static void D3DXLoadMeshTest(void)
     ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     frame_hier = NULL;
 
+    init_load_user_data(&load_user_data);
+    hr = D3DXLoadMeshHierarchyFromXInMemory(box_xfile, sizeof(box_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, &load_user_data.iface, &frame_hier, &controller);
+    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        winetest_push_context("box_xfile");
+        check_user_data(&load_user_data, ARRAY_SIZE(box_xfile_expected_user_data), box_xfile_expected_user_data);
+        winetest_pop_context();
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    }
+    frame_hier = NULL;
+
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
     ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
@@ -2514,6 +2713,20 @@ static void D3DXLoadMeshTest(void)
     ok(container == NULL, "Expected NULL, got %p\n", container);
     hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
     ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    frame_hier = NULL;
+
+    init_load_user_data(&load_user_data);
+    hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, &load_user_data.iface, &frame_hier, NULL);
+    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+        winetest_push_context("framed_xfile");
+        check_user_data(&load_user_data, ARRAY_SIZE(framed_xfile_expected_user_data), framed_xfile_expected_user_data);
+        winetest_pop_context();
+    }
     frame_hier = NULL;
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile_empty, sizeof(framed_xfile_empty) - 1,
