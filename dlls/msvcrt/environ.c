@@ -38,6 +38,19 @@ static int env_get_index(const char *name)
     return i;
 }
 
+static int wenv_get_index(const wchar_t *name)
+{
+    int i, len;
+
+    len = wcslen(name);
+    for (i = 0; MSVCRT__wenviron[i]; i++)
+    {
+        if (!wcsncmp(name, MSVCRT__wenviron[i], len) && MSVCRT__wenviron[i][len] == '=')
+            return i;
+    }
+    return i;
+}
+
 static char * getenv_helper(const char *name)
 {
     int idx;
@@ -61,27 +74,17 @@ char * CDECL getenv(const char *name)
 
 static wchar_t * wgetenv_helper(const wchar_t *name)
 {
-    wchar_t **env;
-    size_t len;
+    int idx;
 
     if (!name) return NULL;
-    len = wcslen(name);
 
     /* Initialize the _wenviron array if it's not already created. */
     if (!MSVCRT__wenviron)
         MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
 
-    for (env = MSVCRT__wenviron; *env; env++)
-    {
-        wchar_t *str = *env;
-        wchar_t *pos = wcschr(str,'=');
-        if (pos && ((pos - str) == len) && !_wcsnicmp(str, name, len))
-        {
-            TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
-            return pos + 1;
-        }
-    }
-    return NULL;
+    idx = wenv_get_index(name);
+    if (!MSVCRT__wenviron[idx]) return NULL;
+    return wcschr(MSVCRT__wenviron[idx], '=') + 1;
 }
 
 /*********************************************************************
