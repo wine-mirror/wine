@@ -10695,7 +10695,8 @@ static DWORD WINAPI mt_factory_test_thread_func(void *param)
     return 0;
 }
 
-static DWORD WINAPI mt_factory_test_thread_draw_func(void *param) {
+static DWORD WINAPI mt_factory_test_thread_draw_func(void *param)
+{
     ID2D1RenderTarget *rt = param;
     D2D1_COLOR_F color;
     HRESULT hr;
@@ -10777,7 +10778,7 @@ static void test_mt_factory(BOOL d3d11)
     thread = CreateThread(NULL, 0, mt_factory_test_thread_draw_func, ctx.rt, 0, NULL);
     ok(!!thread, "Failed to create a thread.\n");
     ret = WaitForSingleObject(thread, 1000);
-    todo_wine ok(ret == WAIT_TIMEOUT, "Expected timeout.\n");
+    ok(ret == WAIT_TIMEOUT, "Expected timeout.\n");
     ID2D1Multithread_Leave(multithread);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);

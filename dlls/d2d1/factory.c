@@ -36,29 +36,7 @@ static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
     free(reg);
 }
 
-struct d2d_factory
-{
-    ID2D1Factory3 ID2D1Factory3_iface;
-    ID2D1Multithread ID2D1Multithread_iface;
-    LONG refcount;
-
-    ID3D10Device1 *device;
-
-    float dpi_x;
-    float dpi_y;
-
-    struct list effects;
-    INIT_ONCE init_builtins;
-
-    CRITICAL_SECTION cs;
-};
-
 static inline struct d2d_factory *impl_from_ID2D1Factory3(ID2D1Factory3 *iface)
-{
-    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
-}
-
-static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
 }
@@ -1215,6 +1193,7 @@ static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE fact
     factory->ID2D1Factory3_iface.lpVtbl = &d2d_factory_vtbl;
     factory->ID2D1Multithread_iface.lpVtbl = factory_type == D2D1_FACTORY_TYPE_SINGLE_THREADED ?
             &d2d_factory_multithread_noop_vtbl : &d2d_factory_multithread_vtbl;
+    factory->factory_type = factory_type;
     factory->refcount = 1;
     d2d_factory_reload_sysmetrics(factory);
     list_init(&factory->effects);

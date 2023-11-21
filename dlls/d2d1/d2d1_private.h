@@ -171,6 +171,7 @@ struct d2d_device_context
     const struct d2d_device_context_ops *ops;
 
     ID2D1Factory *factory;
+    CRITICAL_SECTION *cs;
     struct d2d_device *device;
     ID3D11Device1 *d3d_device;
     ID3DDeviceContextState *d3d_state;
@@ -678,7 +679,29 @@ struct d2d_effect_registration
     struct d2d_effect_properties properties;
 };
 
-struct d2d_factory;
+struct d2d_factory
+{
+    ID2D1Factory3 ID2D1Factory3_iface;
+    ID2D1Multithread ID2D1Multithread_iface;
+    LONG refcount;
+
+    ID3D10Device1 *device;
+
+    float dpi_x;
+    float dpi_y;
+
+    struct list effects;
+    INIT_ONCE init_builtins;
+
+    CRITICAL_SECTION cs;
+    D2D1_FACTORY_TYPE factory_type;
+};
+
+static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory);
 struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *factory,
         const GUID *effect_id);
