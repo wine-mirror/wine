@@ -256,6 +256,7 @@ static void test_namespaces(void)
     {
         {L"ROOT\\CIMV2"},
         {L"ROOT\\Microsoft\\Windows\\Storage", TRUE /* Before Win8. */},
+        {L"ROOT\\StandardCimv2", TRUE /* Before Win8. */},
         {L"ROOT\\WMI"},
     };
     IWbemLocator *locator;
