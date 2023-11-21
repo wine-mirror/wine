@@ -58,6 +58,8 @@ static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocation
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
+static VkResult (*pvkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
+static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
 
 static void *vulkan_handle;
@@ -363,6 +365,75 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
     return pvkGetInstanceProcAddr(instance, name);
 }
 
+static VkResult wayland_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice phys_dev,
+                                                              const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
+                                                              uint32_t *count,
+                                                              VkSurfaceFormat2KHR *formats)
+{
+    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface_info->surface);
+    VkPhysicalDeviceSurfaceInfo2KHR surface_info_host;
+    VkSurfaceFormatKHR *formats_host;
+    uint32_t i;
+    VkResult result;
+
+    TRACE("%p, %p, %p, %p\n", phys_dev, surface_info, count, formats);
+
+    if (!wine_vk_surface_is_valid(wine_vk_surface))
+        return VK_ERROR_SURFACE_LOST_KHR;
+
+    surface_info_host = *surface_info;
+    surface_info_host.surface = wine_vk_surface->native;
+
+    if (pvkGetPhysicalDeviceSurfaceFormats2KHR)
+    {
+        return pvkGetPhysicalDeviceSurfaceFormats2KHR(phys_dev, &surface_info_host,
+                                                      count, formats);
+    }
+
+    /* Until the loader version exporting this function is common, emulate it
+     * using the older non-2 version. */
+    if (surface_info->pNext)
+    {
+        FIXME("Emulating vkGetPhysicalDeviceSurfaceFormats2KHR with "
+              "vkGetPhysicalDeviceSurfaceFormatsKHR, pNext is ignored.\n");
+    }
+
+    if (!formats)
+    {
+        return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface,
+                                                     count, NULL);
+    }
+
+    formats_host = calloc(*count, sizeof(*formats_host));
+    if (!formats_host) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    result = pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface,
+                                                   count, formats_host);
+    if (result == VK_SUCCESS || result == VK_INCOMPLETE)
+    {
+        for (i = 0; i < *count; i++)
+            formats[i].surfaceFormat = formats_host[i];
+    }
+
+    free(formats_host);
+    return result;
+}
+
+static VkResult wayland_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice phys_dev,
+                                                             VkSurfaceKHR surface,
+                                                             uint32_t *count,
+                                                             VkSurfaceFormatKHR *formats)
+{
+    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
+
+    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, formats);
+
+    if (!wine_vk_surface_is_valid(wine_vk_surface))
+        return VK_ERROR_SURFACE_LOST_KHR;
+
+    return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, wine_vk_surface->native,
+                                                 count, formats);
+}
+
 static VkResult wayland_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice phys_dev,
                                                              uint32_t index,
                                                              VkSurfaceKHR surface,
@@ -393,6 +464,7 @@ static void wine_vk_init(void)
     }
 
 #define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = dlsym(vulkan_handle, #f)
     LOAD_FUNCPTR(vkCreateInstance);
     LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
     LOAD_FUNCPTR(vkDestroyInstance);
@@ -400,8 +472,11 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
+    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceFormats2KHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
 #undef LOAD_FUNCPTR
+#undef LOAD_OPTIONAL_FUNCPTR
 
     return;
 
@@ -419,6 +494,8 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
+    .p_vkGetPhysicalDeviceSurfaceFormats2KHR = wayland_vkGetPhysicalDeviceSurfaceFormats2KHR,
+    .p_vkGetPhysicalDeviceSurfaceFormatsKHR = wayland_vkGetPhysicalDeviceSurfaceFormatsKHR,
     .p_vkGetPhysicalDeviceSurfaceSupportKHR = wayland_vkGetPhysicalDeviceSurfaceSupportKHR,
     .p_wine_get_native_surface = wayland_wine_get_native_surface,
 };
