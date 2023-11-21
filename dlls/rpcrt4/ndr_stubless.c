@@ -1365,37 +1365,6 @@ LONG WINAPI NdrStubCall2(
 
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
 
-    /* binding */
-    switch (pProcHeader->handle_type)
-    {
-    /* explicit binding: parse additional section */
-    case 0:
-        switch (*pFormat) /* handle_type */
-        {
-        case FC_BIND_PRIMITIVE: /* explicit primitive */
-            pFormat += sizeof(NDR_EHD_PRIMITIVE);
-            break;
-        case FC_BIND_GENERIC: /* explicit generic */
-            pFormat += sizeof(NDR_EHD_GENERIC);
-            break;
-        case FC_BIND_CONTEXT: /* explicit context */
-            pFormat += sizeof(NDR_EHD_CONTEXT);
-            break;
-        default:
-            ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
-            RpcRaiseException(RPC_X_BAD_STUB_DATA);
-        }
-        break;
-    case FC_BIND_GENERIC: /* implicit generic */
-    case FC_BIND_PRIMITIVE: /* implicit primitive */
-    case FC_CALLBACK_HANDLE: /* implicit callback */
-    case FC_AUTO_HANDLE: /* implicit auto handle */
-        break;
-    default:
-        ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
-        RpcRaiseException(RPC_X_BAD_STUB_DATA);
-    }
-
     if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
         NdrStubInitialize(pRpcMsg, &stubMsg, pStubDesc, pChannel);
     else
@@ -1421,6 +1390,44 @@ LONG WINAPI NdrStubCall2(
 
     args = calloc(1, stack_size);
     stubMsg.StackTop = args; /* used by conformance of top-level objects */
+
+    /* binding */
+    switch (pProcHeader->handle_type)
+    {
+    /* explicit binding: parse additional section */
+    case 0:
+        switch (*pFormat) /* handle_type */
+        {
+        case FC_BIND_PRIMITIVE: /* explicit primitive */
+            {
+                const NDR_EHD_PRIMITIVE *pDesc = (const NDR_EHD_PRIMITIVE *)pFormat;
+                if (pDesc->flag)
+                    **(handle_t **)ARG_FROM_OFFSET(stubMsg.StackTop, pDesc->offset) = pRpcMsg->Handle;
+                else
+                    *(handle_t *)ARG_FROM_OFFSET(stubMsg.StackTop, pDesc->offset) = pRpcMsg->Handle;
+                pFormat += sizeof(NDR_EHD_PRIMITIVE);
+                break;
+            }
+        case FC_BIND_GENERIC: /* explicit generic */
+            pFormat += sizeof(NDR_EHD_GENERIC);
+            break;
+        case FC_BIND_CONTEXT: /* explicit context */
+            pFormat += sizeof(NDR_EHD_CONTEXT);
+            break;
+        default:
+            ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+            RpcRaiseException(RPC_X_BAD_STUB_DATA);
+        }
+        break;
+    case FC_BIND_GENERIC: /* implicit generic */
+    case FC_BIND_PRIMITIVE: /* implicit primitive */
+    case FC_CALLBACK_HANDLE: /* implicit callback */
+    case FC_AUTO_HANDLE: /* implicit auto handle */
+        break;
+    default:
+        ERR("bad implicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
+        RpcRaiseException(RPC_X_BAD_STUB_DATA);
+    }
 
     /* add the implicit This pointer as the first arg to the function if we
      * are calling an object method */
