@@ -43,6 +43,32 @@ static char mdbpath[MAX_PATH];
 
 static const VARTYPE intptr_vartype = (sizeof(void *) == 8 ? VT_I8 : VT_I4);
 
+static void free_dbpropset(ULONG count, DBPROPSET *propset)
+{
+    ULONG i, j;
+
+    for (i = 0; i < count; i++)
+    {
+        for (j = 0; j < propset[i].cProperties; j++)
+            VariantClear(&propset[i].rgProperties[j].vValue);
+        CoTaskMemFree(propset[i].rgProperties);
+    }
+    CoTaskMemFree(propset);
+}
+
+static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
+{
+    ULONG i, j;
+
+    for (i = 0; i < count; i++)
+    {
+        for (j = 0; j < propinfoset[i].cPropertyInfos; j++)
+            VariantClear(&propinfoset[i].rgPropertyInfos[j].vValues);
+        CoTaskMemFree(propinfoset[i].rgPropertyInfos);
+    }
+    CoTaskMemFree(propinfoset);
+}
+
 static void test_msdasql(void)
 {
     HRESULT hr;
@@ -125,11 +151,8 @@ static void test_Properties(void)
             propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
         }
 
-        for (i = 0; i < propinfoset->cPropertyInfos; i++)
-            VariantClear(&propinfoset->rgPropertyInfos[i].vValues);
-
-        CoTaskMemFree(propinfoset->rgPropertyInfos);
-        CoTaskMemFree(propinfoset);
+        free_dbpropinfoset(infocount, propinfoset);
+        CoTaskMemFree(desc);
 
         hr = IDBProperties_GetProperties(props, 1, &propidlist, &propcnt, &propset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
@@ -162,7 +185,7 @@ static void test_Properties(void)
         }
 
         CoTaskMemFree(propidlist.rgPropertyIDs);
-        CoTaskMemFree(propset);
+        free_dbpropset(propcnt, propset);
     }
 
     propid = DBPROP_MULTIPLERESULTS;
@@ -179,7 +202,7 @@ static void test_Properties(void)
     ok(propset->rgProperties[0].dwPropertyID == DBPROP_MULTIPLERESULTS, "got %ld\n", propset->rgProperties[0].dwPropertyID);
     ok(propset->rgProperties[0].dwStatus == DBPROPSTATUS_NOTSUPPORTED, "got %ld\n", propset->rgProperties[0].dwStatus);
 
-    CoTaskMemFree(propset);
+    free_dbpropset(propcnt, propset);
 
     IDBProperties_Release(props);
 }
@@ -324,7 +347,7 @@ static void test_command_properties(ICommandProperties *props)
         }
     }
 
-    CoTaskMemFree(propset);
+    free_dbpropset(count, propset);
 }
 
 static void test_command_interfaces(IUnknown *cmd)
@@ -528,8 +551,7 @@ static void test_rowset_info(IRowset *rowset)
                 propset->rgProperties[i].dwPropertyID, row_props[i]);
     }
 
-    CoTaskMemFree(propset);
-
+    free_dbpropset(propcnt, propset);
     IRowsetInfo_Release(info);
 }
 
