@@ -25,7 +25,6 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
-#include "wine/heap.h"
 
 #define COBJMACROS
 #include "windef.h"
@@ -152,23 +151,6 @@ struct bwriter_shader
     struct instruction      **instr;
     unsigned int            num_instrs, instr_alloc_size;
 };
-
-static inline void *d3dcompiler_alloc(SIZE_T size)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-}
-
-static inline void *d3dcompiler_realloc(void *ptr, SIZE_T size)
-{
-    if (!ptr)
-        return d3dcompiler_alloc(size);
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-static inline BOOL d3dcompiler_free(void *ptr)
-{
-    return HeapFree(GetProcessHeap(), 0, ptr);
-}
 
 struct asm_parser;
 

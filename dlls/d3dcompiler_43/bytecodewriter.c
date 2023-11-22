@@ -45,7 +45,7 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
     if (new_capacity < count)
         new_capacity = count;
 
-    if (!(new_elements = d3dcompiler_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
     {
         ERR("Failed to allocate memory.\n");
         return FALSE;
@@ -71,17 +71,17 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
  *  NULL in case of an allocation failure
  */
 struct instruction *alloc_instr(unsigned int srcs) {
-    struct instruction *ret = d3dcompiler_alloc(sizeof(*ret));
+    struct instruction *ret = calloc(1, sizeof(*ret));
     if(!ret) {
         ERR("Failed to allocate memory for an instruction structure\n");
         return NULL;
     }
 
     if(srcs) {
-        ret->src = d3dcompiler_alloc(srcs * sizeof(*ret->src));
+        ret->src = calloc(1, srcs * sizeof(*ret->src));
         if(!ret->src) {
             ERR("Failed to allocate memory for instruction registers\n");
-            d3dcompiler_free(ret);
+            free(ret);
             return NULL;
         }
         ret->num_srcs = srcs;
@@ -120,7 +120,7 @@ BOOL add_constF(struct bwriter_shader *shader, uint32_t reg, float x, float y, f
     if (shader->num_cf)
     {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constF, sizeof(*shader->constF) * (shader->num_cf + 1));
+        newarray = realloc(shader->constF, sizeof(*shader->constF) * (shader->num_cf + 1));
         if (!newarray)
         {
             ERR("Failed to grow the constants array\n");
@@ -130,7 +130,7 @@ BOOL add_constF(struct bwriter_shader *shader, uint32_t reg, float x, float y, f
     }
     else
     {
-        shader->constF = d3dcompiler_alloc(sizeof(*shader->constF));
+        shader->constF = calloc(1, sizeof(*shader->constF));
         if (!shader->constF)
         {
             ERR("Failed to allocate the constants array\n");
@@ -138,7 +138,7 @@ BOOL add_constF(struct bwriter_shader *shader, uint32_t reg, float x, float y, f
         }
     }
 
-    newconst = d3dcompiler_alloc(sizeof(*newconst));
+    newconst = calloc(1, sizeof(*newconst));
     if (!newconst)
     {
         ERR("Failed to allocate a new constant\n");
@@ -162,7 +162,7 @@ BOOL add_constI(struct bwriter_shader *shader, uint32_t reg, int x, int y, int z
     if (shader->num_ci)
     {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constI, sizeof(*shader->constI) * (shader->num_ci + 1));
+        newarray = realloc(shader->constI, sizeof(*shader->constI) * (shader->num_ci + 1));
         if (!newarray)
         {
             ERR("Failed to grow the constants array\n");
@@ -172,7 +172,7 @@ BOOL add_constI(struct bwriter_shader *shader, uint32_t reg, int x, int y, int z
     }
     else
     {
-        shader->constI = d3dcompiler_alloc(sizeof(*shader->constI));
+        shader->constI = calloc(1, sizeof(*shader->constI));
         if (!shader->constI)
         {
             ERR("Failed to allocate the constants array\n");
@@ -180,7 +180,7 @@ BOOL add_constI(struct bwriter_shader *shader, uint32_t reg, int x, int y, int z
         }
     }
 
-    newconst = d3dcompiler_alloc(sizeof(*newconst));
+    newconst = calloc(1, sizeof(*newconst));
     if (!newconst)
     {
         ERR("Failed to allocate a new constant\n");
@@ -204,7 +204,7 @@ BOOL add_constB(struct bwriter_shader *shader, uint32_t reg, BOOL x)
     if (shader->num_cb)
     {
         struct constant **newarray;
-        newarray = d3dcompiler_realloc(shader->constB, sizeof(*shader->constB) * (shader->num_cb + 1));
+        newarray = realloc(shader->constB, sizeof(*shader->constB) * (shader->num_cb + 1));
         if (!newarray)
         {
             ERR("Failed to grow the constants array\n");
@@ -214,7 +214,7 @@ BOOL add_constB(struct bwriter_shader *shader, uint32_t reg, BOOL x)
     }
     else
     {
-        shader->constB = d3dcompiler_alloc(sizeof(*shader->constB));
+        shader->constB = calloc(1, sizeof(*shader->constB));
         if (!shader->constB)
         {
             ERR("Failed to allocate the constants array\n");
@@ -222,7 +222,7 @@ BOOL add_constB(struct bwriter_shader *shader, uint32_t reg, BOOL x)
         }
     }
 
-    newconst = d3dcompiler_alloc(sizeof(*newconst));
+    newconst = calloc(1, sizeof(*newconst));
     if (!newconst)
     {
         ERR("Failed to allocate a new constant\n");
@@ -258,7 +258,7 @@ BOOL record_declaration(struct bwriter_shader *shader, uint32_t usage, uint32_t 
 
     if (*num == 0)
     {
-        *decl = d3dcompiler_alloc(sizeof(**decl));
+        *decl = calloc(1, sizeof(**decl));
         if (!*decl)
         {
             ERR("Error allocating declarations array\n");
@@ -276,8 +276,7 @@ BOOL record_declaration(struct bwriter_shader *shader, uint32_t usage, uint32_t 
                       regnum, (*decl)[i].writemask & writemask);
         }
 
-        newdecl = d3dcompiler_realloc(*decl,
-                              sizeof(**decl) * ((*num) + 1));
+        newdecl = realloc(*decl, sizeof(**decl) * ((*num) + 1));
         if (!newdecl)
         {
             ERR("Error reallocating declarations array\n");
@@ -304,7 +303,7 @@ BOOL record_sampler(struct bwriter_shader *shader, uint32_t samptype, uint32_t m
 
     if (shader->num_samplers == 0)
     {
-        shader->samplers = d3dcompiler_alloc(sizeof(*shader->samplers));
+        shader->samplers = calloc(1, sizeof(*shader->samplers));
         if (!shader->samplers)
         {
             ERR("Error allocating samplers array\n");
@@ -325,7 +324,7 @@ BOOL record_sampler(struct bwriter_shader *shader, uint32_t samptype, uint32_t m
             }
         }
 
-        newarray = d3dcompiler_realloc(shader->samplers, sizeof(*shader->samplers) * (shader->num_samplers + 1));
+        newarray = realloc(shader->samplers, sizeof(*shader->samplers) * (shader->num_samplers + 1));
         if (!newarray)
         {
             ERR("Error reallocating samplers array\n");
@@ -397,7 +396,7 @@ struct bc_writer
 static struct bytecode_buffer *allocate_buffer(void) {
     struct bytecode_buffer *ret;
 
-    ret = d3dcompiler_alloc(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret) return NULL;
     ret->state = S_OK;
     return ret;
@@ -2489,7 +2488,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **re
         return E_FAIL;
     }
 
-    if (!(writer = d3dcompiler_alloc(sizeof(*writer))))
+    if (!(writer = calloc(1, sizeof(*writer))))
         return E_OUTOFMEMORY;
 
     for (i = 0; i < ARRAY_SIZE(shader_backends); ++i)
@@ -2507,7 +2506,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **re
     {
         FIXME("Unsupported shader type %#x, version %u.%u.\n",
                 shader->type, shader->major_version, shader->minor_version);
-        d3dcompiler_free(writer);
+        free(writer);
         return E_NOTIMPL;
     }
 
@@ -2556,10 +2555,10 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, uint32_t **re
 
 error:
     if(buffer) {
-        d3dcompiler_free(buffer->data);
-        d3dcompiler_free(buffer);
+        free(buffer->data);
+        free(buffer);
     }
-    d3dcompiler_free(writer);
+    free(writer);
     return hr;
 }
 
@@ -2569,31 +2568,31 @@ void SlDeleteShader(struct bwriter_shader *shader) {
     TRACE("Deleting shader %p\n", shader);
 
     for(i = 0; i < shader->num_cf; i++) {
-        d3dcompiler_free(shader->constF[i]);
+        free(shader->constF[i]);
     }
-    d3dcompiler_free(shader->constF);
+    free(shader->constF);
     for(i = 0; i < shader->num_ci; i++) {
-        d3dcompiler_free(shader->constI[i]);
+        free(shader->constI[i]);
     }
-    d3dcompiler_free(shader->constI);
+    free(shader->constI);
     for(i = 0; i < shader->num_cb; i++) {
-        d3dcompiler_free(shader->constB[i]);
+        free(shader->constB[i]);
     }
-    d3dcompiler_free(shader->constB);
+    free(shader->constB);
 
-    d3dcompiler_free(shader->inputs);
-    d3dcompiler_free(shader->outputs);
-    d3dcompiler_free(shader->samplers);
+    free(shader->inputs);
+    free(shader->outputs);
+    free(shader->samplers);
 
     for(i = 0; i < shader->num_instrs; i++) {
         for(j = 0; j < shader->instr[i]->num_srcs; j++) {
-            d3dcompiler_free(shader->instr[i]->src[j].rel_reg);
+            free(shader->instr[i]->src[j].rel_reg);
         }
-        d3dcompiler_free(shader->instr[i]->src);
-        d3dcompiler_free(shader->instr[i]->dst.rel_reg);
-        d3dcompiler_free(shader->instr[i]);
+        free(shader->instr[i]->src);
+        free(shader->instr[i]->dst.rel_reg);
+        free(shader->instr[i]);
     }
-    d3dcompiler_free(shader->instr);
+    free(shader->instr);
 
-    d3dcompiler_free(shader);
+    free(shader);
 }

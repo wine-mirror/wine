@@ -1432,7 +1432,7 @@ static void gen_oldps_input(struct bwriter_shader *shader, uint32_t texcoords)
 void create_vs10_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_1_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1449,7 +1449,7 @@ void create_vs10_parser(struct asm_parser *ret) {
 void create_vs11_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_1_1\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1466,7 +1466,7 @@ void create_vs11_parser(struct asm_parser *ret) {
 void create_vs20_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_2_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1483,7 +1483,7 @@ void create_vs20_parser(struct asm_parser *ret) {
 void create_vs2x_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_2_x\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1500,7 +1500,7 @@ void create_vs2x_parser(struct asm_parser *ret) {
 void create_vs30_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("vs_3_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1516,7 +1516,7 @@ void create_vs30_parser(struct asm_parser *ret) {
 void create_ps10_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_1_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1533,7 +1533,7 @@ void create_ps10_parser(struct asm_parser *ret) {
 void create_ps11_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_1_1\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1550,7 +1550,7 @@ void create_ps11_parser(struct asm_parser *ret) {
 void create_ps12_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_1_2\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1567,7 +1567,7 @@ void create_ps12_parser(struct asm_parser *ret) {
 void create_ps13_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_1_3\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1584,7 +1584,7 @@ void create_ps13_parser(struct asm_parser *ret) {
 void create_ps14_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_1_4\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1601,7 +1601,7 @@ void create_ps14_parser(struct asm_parser *ret) {
 void create_ps20_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_2_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1618,7 +1618,7 @@ void create_ps20_parser(struct asm_parser *ret) {
 void create_ps2x_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_2_x\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);
@@ -1635,7 +1635,7 @@ void create_ps2x_parser(struct asm_parser *ret) {
 void create_ps30_parser(struct asm_parser *ret) {
     TRACE_(parsed_shader)("ps_3_0\n");
 
-    ret->shader = d3dcompiler_alloc(sizeof(*ret->shader));
+    ret->shader = calloc(1, sizeof(*ret->shader));
     if(!ret->shader) {
         ERR("Failed to allocate memory for the shader\n");
         set_parse_status(&ret->status, PARSE_ERR);

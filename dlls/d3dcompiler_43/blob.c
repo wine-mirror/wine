@@ -76,8 +76,8 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_blob_Release(ID3DBlob *iface)
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, blob->data);
-        HeapFree(GetProcessHeap(), 0, blob);
+        free(blob->data);
+        free(blob);
     }
 
     return refcount;
@@ -120,7 +120,7 @@ static HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_
     blob->refcount = 1;
     blob->size = data_size;
 
-    blob->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data_size);
+    blob->data = calloc(1, data_size);
     if (!blob->data)
     {
         ERR("Failed to allocate D3D blob data memory\n");
@@ -143,7 +143,7 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
         return D3DERR_INVALIDCALL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -151,7 +151,7 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
     if (FAILED(hr))
     {
         WARN("Failed to initialize blob, hr %#lx.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         return hr;
     }
 
@@ -474,7 +474,7 @@ HRESULT WINAPI D3DReadFileToBlob(const WCHAR *filename, ID3DBlob **contents)
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         CloseHandle(file);
         return E_OUTOFMEMORY;
@@ -484,7 +484,7 @@ HRESULT WINAPI D3DReadFileToBlob(const WCHAR *filename, ID3DBlob **contents)
     {
         WARN("Failed to initialise blob, hr %#lx.\n", hr);
         CloseHandle(file);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -492,8 +492,8 @@ HRESULT WINAPI D3DReadFileToBlob(const WCHAR *filename, ID3DBlob **contents)
     {
         WARN("Failed to read file contents.\n");
         CloseHandle(file);
-        heap_free(object->data);
-        heap_free(object);
+        free(object->data);
+        free(object);
         return E_FAIL;
     }
     CloseHandle(file);

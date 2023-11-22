@@ -533,7 +533,7 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, va_l
 
     if (msg->capacity == 0)
     {
-        msg->string = d3dcompiler_alloc(MESSAGEBUFFER_INITIAL_SIZE);
+        msg->string = calloc(1, MESSAGEBUFFER_INITIAL_SIZE);
         if (msg->string == NULL)
         {
             ERR("Error allocating memory for parser messages\n");
@@ -550,7 +550,7 @@ void compilation_message(struct compilation_messages *msg, const char *fmt, va_l
         if (rc < 0 || rc >= msg->capacity - msg->size)
         {
             size = msg->capacity * 2;
-            buffer = d3dcompiler_realloc(msg->string, size);
+            buffer = realloc(msg->string, size);
             if (buffer == NULL)
             {
                 ERR("Error reallocating memory for parser messages\n");

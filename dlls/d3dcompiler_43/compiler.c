@@ -98,7 +98,7 @@ static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D
         len++;
         initial_dir = current_dir;
     }
-    fullpath = heap_alloc(len + strlen(filename) + 1);
+    fullpath = malloc(len + strlen(filename) + 1);
     if (!fullpath)
         return E_OUTOFMEMORY;
     memcpy(fullpath, initial_dir, len);
@@ -113,7 +113,7 @@ static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D
     size = GetFileSize(file, NULL);
     if (size == INVALID_FILE_SIZE)
         goto error;
-    buffer = heap_alloc(size);
+    buffer = malloc(size);
     if (!buffer)
         goto error;
     if (!ReadFile(file, buffer, size, &read, NULL) || read != size)
@@ -122,13 +122,13 @@ static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D
     *bytes = size;
     *data = buffer;
 
-    heap_free(fullpath);
+    free(fullpath);
     CloseHandle(file);
     return S_OK;
 
 error:
-    heap_free(fullpath);
-    heap_free(buffer);
+    free(fullpath);
+    free(buffer);
     CloseHandle(file);
     WARN("Returning E_FAIL.\n");
     return E_FAIL;
@@ -136,7 +136,7 @@ error:
 
 static HRESULT WINAPI d3dcompiler_include_from_file_close(ID3DInclude *iface, const void *data)
 {
-    heap_free((void *)data);
+    free((void *)data);
     return S_OK;
 }
 
@@ -309,7 +309,7 @@ static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blo
             hr = D3DCreateBlob(size, &buffer);
             if (FAILED(hr))
             {
-                HeapFree(GetProcessHeap(), 0, messages);
+                free(messages);
                 if (shader) SlDeleteShader(shader);
                 return hr;
             }
@@ -324,7 +324,7 @@ static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blo
             if (*error_messages) ID3D10Blob_Release(*error_messages);
             *error_messages = buffer;
         }
-        HeapFree(GetProcessHeap(), 0, messages);
+        free(messages);
     }
 
     if (shader == NULL)
@@ -346,14 +346,14 @@ static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blo
         hr = D3DCreateBlob(size, &buffer);
         if (FAILED(hr))
         {
-            HeapFree(GetProcessHeap(), 0, res);
+            free(res);
             return hr;
         }
         CopyMemory(ID3D10Blob_GetBufferPointer(buffer), res, size);
         *shader_blob = buffer;
     }
 
-    HeapFree(GetProcessHeap(), 0, res);
+    free(res);
 
     return S_OK;
 }
@@ -711,7 +711,7 @@ HRESULT WINAPI D3DCompileFromFile(const WCHAR *filename, const D3D_SHADER_MACRO 
         goto end;
     }
 
-    if (!(source = heap_alloc(source_size)))
+    if (!(source = malloc(source_size)))
     {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -730,7 +730,7 @@ HRESULT WINAPI D3DCompileFromFile(const WCHAR *filename, const D3D_SHADER_MACRO 
             flags1, flags2, code, errors);
 
 end:
-    heap_free(source);
+    free(source);
     CloseHandle(file);
     return hr;
 }
