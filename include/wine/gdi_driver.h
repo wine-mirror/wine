@@ -251,6 +251,7 @@ struct gdi_gpu
     UINT subsys_id;
     UINT revision_id;
     GUID vulkan_uuid;     /* Vulkan device UUID */
+    ULONGLONG memory_size;
 };
 
 struct gdi_adapter
