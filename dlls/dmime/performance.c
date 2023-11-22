@@ -134,37 +134,13 @@ static struct message *performance_get_message(struct performance *This, DWORD *
 
 static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *msg)
 {
-    static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
     IDirectMusicPerformance *performance = (IDirectMusicPerformance *)&This->IDirectMusicPerformance8_iface;
+    IDirectMusicTool *tool;
     HRESULT hr;
 
-    do
-    {
-        REFERENCE_TIME latency, offset = 0;
-        IDirectMusicTool *tool;
+    if (!(tool = msg->pTool)) tool = &This->IDirectMusicTool_iface;
 
-        if (FAILED(hr = IDirectMusicPerformance_GetLatencyTime(performance, &latency))) return hr;
-        if (!(tool = msg->pTool)) tool = &This->IDirectMusicTool_iface;
-
-        switch (msg->dwFlags & delivery_flags)
-        {
-        default:
-            WARN("No delivery flag found for message %p\n", msg);
-            /* fallthrough */
-        case DMUS_PMSGF_TOOL_IMMEDIATE:
-            hr = IDirectMusicTool_ProcessPMsg(tool, performance, msg);
-            break;
-        case DMUS_PMSGF_TOOL_QUEUE:
-            offset = This->dwBumperLength * 10000;
-            /* fallthrough */
-        case DMUS_PMSGF_TOOL_ATTIME:
-            if (msg->rtTime >= offset && msg->rtTime - offset >= latency)
-                return DMUS_S_REQUEUE;
-
-            hr = IDirectMusicTool_ProcessPMsg(tool, performance, msg);
-            break;
-        }
-    } while (hr == DMUS_S_REQUEUE);
+    hr = IDirectMusicTool_ProcessPMsg(tool, performance, msg);
 
     if (hr == DMUS_S_FREE) hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     if (FAILED(hr)) WARN("Failed to process message, hr %#lx\n", hr);
