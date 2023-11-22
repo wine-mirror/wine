@@ -97,19 +97,6 @@ static inline struct message *message_from_DMUS_PMSG(DMUS_PMSG *msg)
     return msg ? CONTAINING_RECORD(msg, struct message, msg) : NULL;
 }
 
-static void performance_queue_message(struct performance *This, struct message *message, struct list *hint)
-{
-    struct message *prev;
-
-    LIST_FOR_EACH_ENTRY_REV(prev, hint ? hint : &This->messages, struct message, entry)
-    {
-        if (&prev->entry == &This->messages) break;
-        if (prev->msg.rtTime <= message->msg.rtTime) break;
-    }
-
-    list_add_after(&prev->entry, &message->entry);
-}
-
 static struct message *performance_get_message(struct performance *This, DWORD *timeout)
 {
     static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
@@ -129,8 +116,6 @@ static struct message *performance_get_message(struct performance *This, DWORD *
     {
     default:
         WARN("No delivery flag found for message %p\n", &message->msg);
-        /* fallthrough */
-    case DMUS_PMSGF_TOOL_IMMEDIATE:
         break;
     case DMUS_PMSGF_TOOL_QUEUE:
         offset = This->dwBumperLength * 10000;
@@ -184,6 +169,30 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
     if (hr == DMUS_S_FREE) hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     if (FAILED(hr)) WARN("Failed to process message, hr %#lx\n", hr);
     return hr;
+}
+
+static HRESULT performance_queue_message(struct performance *This, struct message *message, struct list *hint)
+{
+    static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
+    struct message *prev;
+    HRESULT hr;
+
+    while ((message->msg.dwFlags & delivery_flags) == DMUS_PMSGF_TOOL_IMMEDIATE)
+    {
+        hr = performance_process_message(This, &message->msg);
+        if (hr != DMUS_S_REQUEUE)
+            return hr;
+    }
+
+    LIST_FOR_EACH_ENTRY_REV(prev, hint ? hint : &This->messages, struct message, entry)
+    {
+        if (&prev->entry == &This->messages) break;
+        if (prev->msg.rtTime <= message->msg.rtTime) break;
+    }
+
+    list_add_after(&prev->entry, &message->entry);
+
+    return S_OK;
 }
 
 static DWORD WINAPI message_thread_proc(void *args)
@@ -856,14 +865,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
             msg->dwFlags |= DMUS_PMSGF_REFTIME;
         }
 
-        if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE)
-        {
-            hr = performance_process_message(This, &message->msg);
-            if (hr != DMUS_S_REQUEUE) goto done;
-        }
-
-        performance_queue_message(This, message, NULL);
-        hr = S_OK;
+        hr = performance_queue_message(This, message, NULL);
     }
 
 done:
