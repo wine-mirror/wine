@@ -13327,6 +13327,7 @@ static struct attrtest_t attrtests[] = {
     { 0 }
 };
 
+/* see dlls/msxml[46]/tests/domdoc.c */
 static void test_create_attribute(void)
 {
     struct attrtest_t *ptr = attrtests;
