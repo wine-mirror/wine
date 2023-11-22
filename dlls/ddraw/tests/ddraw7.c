@@ -641,6 +641,29 @@ static bool init_3d_test_context_guid(struct ddraw_test_context *context, const 
     return true;
 }
 
+static bool init_3d_test_context(struct ddraw_test_context *context)
+{
+    HRESULT hr;
+
+    memset(context, 0, sizeof(*context));
+
+    context->window = create_window();
+    if (!(context->device = create_device(context->window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        DestroyWindow(context->window);
+        return false;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(context->device, &context->d3d);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3D7_QueryInterface(context->d3d, &IID_IDirectDraw7, (void **)&context->ddraw);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_GetRenderTarget(context->device, &context->backbuffer);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    return true;
+}
+
 #define release_test_context(a) release_test_context_(__LINE__, a)
 static void release_test_context_(unsigned int line, struct ddraw_test_context *context)
 {
@@ -662,6 +685,36 @@ static void clear_surface(IDirectDrawSurface7 *surface, unsigned int colour)
 
     fx.dwFillColor = colour;
     hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
+
+static void draw_color_quad(struct ddraw_test_context *context, unsigned int colour)
+{
+    IDirect3DDevice7 *device = context->device;
+    HRESULT hr;
+
+    struct
+    {
+        struct vec3 position;
+        unsigned int colour;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, colour},
+        {{-1.0f,  1.0f, 0.0f}, colour},
+        {{ 1.0f, -1.0f, 0.0f}, colour},
+        {{ 1.0f,  1.0f, 0.0f}, colour},
+    };
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, 4, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice7_EndScene(device);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
@@ -19889,6 +19942,55 @@ static void test_user_memory(const GUID *device_guid)
     release_test_context(&context);
 }
 
+/* Test that we handle flipping correctly when drawing to a flippable surface. */
+static void test_flip_3d(void)
+{
+    struct ddraw_test_context context;
+    IDirectDrawSurface7 *buffers[4];
+    DDSURFACEDESC2 desc;
+    unsigned int color;
+    HRESULT hr;
+
+    if (!init_3d_test_context(&context))
+        return;
+
+    reset_ddsd(&desc);
+    desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+    desc.dwBackBufferCount = ARRAY_SIZE(buffers) - 1;
+    desc.dwWidth = 16;
+    desc.dwHeight = 16;
+    hr = IDirectDraw7_CreateSurface(context.ddraw, &desc, &buffers[0], NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(buffers) - 1; ++i)
+    {
+        DDSCAPS2 backbuffer_caps = {DDSCAPS_FLIP};
+
+        hr = IDirectDrawSurface7_GetAttachedSurface(buffers[i], &backbuffer_caps, &buffers[i + 1]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    hr = IDirect3DDevice7_SetRenderTarget(context.device, buffers[0], 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    draw_color_quad(&context, 0x0000ff00);
+
+    hr = IDirectDrawSurface7_Flip(buffers[0], NULL, DDFLIP_WAIT);
+
+    draw_color_quad(&context, 0x000000ff);
+
+    color = get_surface_color(buffers[0], 0, 0);
+    todo_wine ok(color == 0x000000ff, "Got unexpected colour 0x%08x.\n", color);
+
+    color = get_surface_color(buffers[3], 0, 0);
+    todo_wine ok(color == 0x0000ff00, "Got unexpected colour 0x%08x.\n", color);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(buffers); ++i)
+        IDirectDrawSurface7_Release(buffers[ARRAY_SIZE(buffers) - 1 - i]);
+    release_test_context(&context);
+}
+
 static void run_for_each_device_type(void (*test_func)(const GUID *))
 {
     winetest_push_context("Hardware device");
@@ -20073,4 +20175,5 @@ START_TEST(ddraw7)
     test_filling_convention();
     test_enum_devices();
     run_for_each_device_type(test_user_memory);
+    test_flip_3d();
 }
