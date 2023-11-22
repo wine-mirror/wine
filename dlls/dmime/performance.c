@@ -110,7 +110,44 @@ static void performance_queue_message(struct performance *This, struct message *
     list_add_after(&prev->entry, &message->entry);
 }
 
-static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *msg, DWORD *timeout)
+static struct message *performance_get_message(struct performance *This, DWORD *timeout)
+{
+    static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
+    IDirectMusicPerformance *performance = (IDirectMusicPerformance *)&This->IDirectMusicPerformance8_iface;
+    REFERENCE_TIME latency, offset = 0;
+    struct message *message;
+    struct list *ptr;
+
+    if (!(ptr = list_head(&This->messages)))
+        return NULL;
+    message = LIST_ENTRY(ptr, struct message, entry);
+
+    if (FAILED(IDirectMusicPerformance_GetLatencyTime(performance, &latency)))
+        return NULL;
+
+    switch (message->msg.dwFlags & delivery_flags)
+    {
+    default:
+        WARN("No delivery flag found for message %p\n", &message->msg);
+        /* fallthrough */
+    case DMUS_PMSGF_TOOL_IMMEDIATE:
+        break;
+    case DMUS_PMSGF_TOOL_QUEUE:
+        offset = This->dwBumperLength * 10000;
+        /* fallthrough */
+    case DMUS_PMSGF_TOOL_ATTIME:
+        if (message->msg.rtTime >= offset && message->msg.rtTime - offset >= latency)
+        {
+            *timeout = (message->msg.rtTime - offset - latency) / 10000;
+            return NULL;
+        }
+        break;
+    }
+
+    return message;
+}
+
+static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *msg)
 {
     static const DWORD delivery_flags = DMUS_PMSGF_TOOL_IMMEDIATE | DMUS_PMSGF_TOOL_QUEUE | DMUS_PMSGF_TOOL_ATTIME;
     IDirectMusicPerformance *performance = (IDirectMusicPerformance *)&This->IDirectMusicPerformance8_iface;
@@ -137,10 +174,7 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
             /* fallthrough */
         case DMUS_PMSGF_TOOL_ATTIME:
             if (msg->rtTime >= offset && msg->rtTime - offset >= latency)
-            {
-                if (timeout) *timeout = (msg->rtTime - offset - latency) / 10000;
                 return DMUS_S_REQUEUE;
-            }
 
             hr = IDirectMusicTool_ProcessPMsg(tool, performance, msg);
             break;
@@ -155,8 +189,7 @@ static HRESULT performance_process_message(struct performance *This, DMUS_PMSG *
 static DWORD WINAPI message_thread_proc(void *args)
 {
     struct performance *This = args;
-    HRESULT hr = DMUS_S_REQUEUE;
-    struct list *ptr;
+    HRESULT hr;
 
     TRACE("performance %p message thread\n", This);
     SetThreadDescription(GetCurrentThread(), L"wine_dmime_message");
@@ -166,20 +199,21 @@ static DWORD WINAPI message_thread_proc(void *args)
     while (This->message_thread)
     {
         DWORD timeout = INFINITE;
+        struct message *message;
+        struct list *next;
 
-        while ((ptr = list_head(&This->messages)))
+        if (!(message = performance_get_message(This, &timeout)))
         {
-            struct message *message = LIST_ENTRY(ptr, struct message, entry);
-            struct list *next = ptr->next;
-            list_remove(&message->entry);
-            list_init(&message->entry);
-
-            hr = performance_process_message(This, &message->msg, &timeout);
-            if (hr == DMUS_S_REQUEUE) performance_queue_message(This, message, next);
-            if (hr != S_OK) break;
+            SleepConditionVariableCS(&This->cond, &This->safe, timeout);
+            continue;
         }
+        next = message->entry.next;
 
-        SleepConditionVariableCS(&This->cond, &This->safe, timeout);
+        list_remove(&message->entry);
+        list_init(&message->entry);
+
+        hr = performance_process_message(This, &message->msg);
+        if (hr == DMUS_S_REQUEUE) performance_queue_message(This, message, next);
     }
 
     LeaveCriticalSection(&This->safe);
@@ -824,7 +858,7 @@ static HRESULT WINAPI performance_SendPMsg(IDirectMusicPerformance8 *iface, DMUS
 
         if (msg->dwFlags & DMUS_PMSGF_TOOL_IMMEDIATE)
         {
-            hr = performance_process_message(This, &message->msg, NULL);
+            hr = performance_process_message(This, &message->msg);
             if (hr != DMUS_S_REQUEUE) goto done;
         }
 
