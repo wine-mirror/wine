@@ -19981,10 +19981,10 @@ static void test_flip_3d(void)
     draw_color_quad(&context, 0x000000ff);
 
     color = get_surface_color(buffers[0], 0, 0);
-    todo_wine ok(color == 0x000000ff, "Got unexpected colour 0x%08x.\n", color);
+    ok(color == 0x000000ff, "Got unexpected colour 0x%08x.\n", color);
 
     color = get_surface_color(buffers[3], 0, 0);
-    todo_wine ok(color == 0x0000ff00, "Got unexpected colour 0x%08x.\n", color);
+    ok(color == 0x0000ff00, "Got unexpected colour 0x%08x.\n", color);
 
     for (unsigned int i = 0; i < ARRAY_SIZE(buffers); ++i)
         IDirectDrawSurface7_Release(buffers[ARRAY_SIZE(buffers) - 1 - i]);

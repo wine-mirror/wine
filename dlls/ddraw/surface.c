@@ -1330,15 +1330,14 @@ static unsigned int ddraw_swap_interval_from_flags(DWORD flags)
 }
 
 static void ddraw_texture_rename_to(struct ddraw_texture *dst_texture, struct wined3d_texture *wined3d_texture,
-        struct wined3d_texture *draw_texture, struct wined3d_rendertarget_view *rtv, void *texture_memory)
+        struct wined3d_texture *draw_texture, struct wined3d_rendertarget_view *rtv, void *texture_memory,
+        struct wined3d_rendertarget_view *current_rtv)
 {
     struct ddraw_surface *dst_surface = dst_texture->root;
-    struct wined3d_rendertarget_view *current_rtv;
 
     /* We don't have to worry about potential texture bindings, since
      * flippable surfaces can never be textures. */
 
-    current_rtv = wined3d_device_context_get_rendertarget_view(dst_surface->ddraw->immediate_context, 0);
     if (current_rtv == dst_surface->wined3d_rtv)
         wined3d_device_context_set_rendertarget_views(dst_surface->ddraw->immediate_context, 0, 1, &rtv, FALSE);
     wined3d_rendertarget_view_set_parent(rtv, dst_surface, &ddraw_view_wined3d_parent_ops);
@@ -1377,8 +1376,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     struct ddraw_texture *dst_ddraw_texture, *src_ddraw_texture;
+    struct wined3d_rendertarget_view *tmp_rtv, *current_rtv;
     struct wined3d_texture *texture, *draw_texture;
-    struct wined3d_rendertarget_view *tmp_rtv;
     DDSCAPS caps = {DDSCAPS_FLIP};
     IDirectDrawSurface *current;
     void *texture_memory;
@@ -1407,6 +1406,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     dst_ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
     texture_memory = dst_ddraw_texture->texture_memory;
     draw_texture = dst_impl->draw_texture;
+    current_rtv = wined3d_device_context_get_rendertarget_view(dst_impl->ddraw->immediate_context, 0);
 
     if (src_impl)
     {
@@ -1430,7 +1430,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
         src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
 
         ddraw_texture_rename_to(dst_ddraw_texture, src_impl->wined3d_texture, src_impl->draw_texture,
-                ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory);
+                ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory, current_rtv);
 
         dst_ddraw_texture = src_ddraw_texture;
     }
@@ -1455,14 +1455,14 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
             src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
 
             ddraw_texture_rename_to(dst_ddraw_texture, src_impl->wined3d_texture, src_impl->draw_texture,
-                    ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory);
+                    ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory, current_rtv);
 
             dst_ddraw_texture = src_ddraw_texture;
             dst_impl = src_impl;
         }
     }
 
-    ddraw_texture_rename_to(dst_ddraw_texture, texture, draw_texture, tmp_rtv, texture_memory);
+    ddraw_texture_rename_to(dst_ddraw_texture, texture, draw_texture, tmp_rtv, texture_memory, current_rtv);
 
     if (flags & ~(DDFLIP_NOVSYNC | DDFLIP_INTERVAL2 | DDFLIP_INTERVAL3 | DDFLIP_INTERVAL4))
     {
