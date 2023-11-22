@@ -1263,7 +1263,8 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
         return E_FAIL;
     }
 
-    *rowset = NULL;
+    if (rowset)
+        *rowset = NULL;
     if (!wcsnicmp( command->query, L"select ", 7 ))
     {
         msrowset = malloc(sizeof(*msrowset));
