@@ -54,6 +54,105 @@ static void free_bstrs(void)
     alloced_bstrs_count = 0;
 }
 
+struct attrtest_t {
+    const WCHAR *name;
+    const WCHAR *uri;
+    const WCHAR *prefix;
+    const WCHAR *href;
+};
+
+static struct attrtest_t attrtests[] = {
+    { L"xmlns", L"http://www.w3.org/2000/xmlns/", L"xmlns", L"xmlns" },
+    { L"xmlns", L"nondefaulturi", L"xmlns", L"xmlns" },
+    { L"c", L"http://www.w3.org/2000/xmlns/", NULL, L"http://www.w3.org/2000/xmlns/" },
+    { L"c", L"nsref1", NULL, L"nsref1" },
+    { L"ns:c", L"nsref1", L"ns", L"nsref1" },
+    { L"xmlns:c", L"http://www.w3.org/2000/xmlns/", L"xmlns", L"" },
+    { L"xmlns:c", L"nondefaulturi", L"xmlns", L"" },
+    { 0 }
+};
+
+/* see dlls/msxml[36]/tests/domdoc.c */
+static void test_create_attribute(void)
+{
+    struct attrtest_t *ptr = attrtests;
+    IXMLDOMElement *el;
+    IXMLDOMDocument2 *doc;
+    IXMLDOMNode *node;
+    VARIANT var;
+    HRESULT hr;
+    int i = 0;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument40, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Failed to create DOMDocument40, hr %#lx.\n", hr);
+
+    while (ptr->name)
+    {
+        V_VT(&var) = VT_I1;
+        V_I1(&var) = NODE_ATTRIBUTE;
+        hr = IXMLDOMDocument2_createNode(doc, var, _bstr_(ptr->name), _bstr_(ptr->uri), &node);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        str = NULL;
+        hr = IXMLDOMNode_get_prefix(node, &str);
+        if (ptr->prefix)
+        {
+            /* MSXML4 can report different results with different service packs */
+            ok(hr == S_OK || broken(hr == S_FALSE), "Failed to get prefix, hr %#lx.\n", hr);
+            ok(!lstrcmpW(str, _bstr_(ptr->prefix)) || broken(!str), "got %s\n", wine_dbgstr_w(str));
+        }
+        else
+        {
+            ok(hr == S_FALSE, "%d: unexpected hr %#lx\n", i, hr);
+            ok(str == NULL, "%d: got prefix %s\n", i, wine_dbgstr_w(str));
+        }
+        SysFreeString(str);
+
+        str = NULL;
+        hr = IXMLDOMNode_get_namespaceURI(node, &str);
+        ok(hr == S_OK, "%d: unexpected hr %#lx\n", i, hr);
+        ok(!lstrcmpW(str, _bstr_(ptr->href)), "%d: got uri %s, expected %s\n",
+            i, wine_dbgstr_w(str), wine_dbgstr_w(ptr->href));
+        SysFreeString(str);
+
+        IXMLDOMNode_Release(node);
+        free_bstrs();
+
+        i++;
+        ptr++;
+    }
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ELEMENT;
+    hr = IXMLDOMDocument2_createNode(doc, var, _bstr_(L"e"), NULL, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&el);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    hr = IXMLDOMDocument2_createNode(doc, var, _bstr_(L"xmlns:a"),
+        _bstr_(L"http://www.w3.org/2000/xmlns/"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_setAttributeNode(el, (IXMLDOMAttribute*)node, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* for some reason default namespace uri is not reported */
+    hr = IXMLDOMNode_get_namespaceURI(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L""), "got uri %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNode_Release(node);
+    IXMLDOMElement_Release(el);
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 /* see dlls/msxml[36]/tests/domdoc.c */
 static void test_namespaces_as_attributes(void)
 {
@@ -243,6 +342,7 @@ START_TEST(domdoc)
     IXMLDOMDocument2_Release(doc);
 
     test_namespaces_as_attributes();
+    test_create_attribute();
 
     CoUninitialize();
 }
