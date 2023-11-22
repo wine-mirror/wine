@@ -67,9 +67,11 @@ DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,
 extern const CLSID CLSID_FileSchemePlugin;
 
 DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_Base,0);
+DEFINE_GUID(MEDIASUBTYPE_ABGR32,D3DFMT_A8B8G8R8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB1, D3DFMT_A1);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB4, MAKEFOURCC('4','P','x','x'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB4444, D3DFMT_A4R4G4B4);
 /* SDK MFVideoFormat_A2R10G10B10 uses D3DFMT_A2B10G10R10, let's name it the other way */
@@ -4748,6 +4750,9 @@ image_size_tests[] =
     { &MFVideoFormat_ARGB32, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_ARGB32, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_ARGB32, 320, 240, 307200, 0, 307200, 307200, 1280 },
+    { &MFVideoFormat_ABGR32, 3, 5, 60, 0, 320, 60, 64 },
+    { &MFVideoFormat_ABGR32, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_ABGR32, 320, 240, 307200, 0, 307200, 307200, 1280 },
     { &MFVideoFormat_A2R10G10B10, 3, 5, 60, 0, 320, 60, 64 },
     { &MFVideoFormat_A2R10G10B10, 1, 1, 4, 0, 64, 4, 64 },
     { &MFVideoFormat_A2R10G10B10, 320, 240, 307200, 0, 307200, 307200, 1280 },
@@ -4910,12 +4915,16 @@ static void test_MFCalculateImageSize(void)
 
         /* Those are supported since Win10. */
         BOOL is_broken = IsEqualGUID(ptr->subtype, &MFVideoFormat_A16B16G16R16F) ||
-                IsEqualGUID(ptr->subtype, &MFVideoFormat_A2R10G10B10);
+                IsEqualGUID(ptr->subtype, &MFVideoFormat_A2R10G10B10) ||
+                IsEqualGUID(ptr->subtype, &MFVideoFormat_ABGR32);
 
         hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
-        ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
-        ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
-                ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->subtype->Data1, 4));
+        ok(hr == S_OK || broken(is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
+        if (hr == S_OK)
+        {
+            ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
+                    ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->subtype->Data1, 4));
+        }
     }
 }
 
@@ -6224,6 +6233,8 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
         { &MFVideoFormat_RGB32, 1, -4 },
         { &MFVideoFormat_ARGB32, 3, -12 },
         { &MFVideoFormat_ARGB32, 1, -4 },
+        { &MFVideoFormat_ABGR32, 3, -12 },
+        { &MFVideoFormat_ABGR32, 1, -4 },
         { &MFVideoFormat_A2R10G10B10, 3, -12 },
         { &MFVideoFormat_A2R10G10B10, 1, -4 },
         { &MFVideoFormat_A2B10G10R10, 3, -12 },
@@ -9272,6 +9283,7 @@ static void test_MFMapDXGIFormatToDX9Format(void)
     {
         DXGI_FORMAT dxgi_format;
         DWORD d3d9_format;
+        BOOL broken;
     }
     formats_map[] =
     {
@@ -9304,6 +9316,7 @@ static void test_MFMapDXGIFormatToDX9Format(void)
         { DXGI_FORMAT_B8G8R8X8_UNORM, D3DFMT_X8R8G8B8 },
         { DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D3DFMT_A8R8G8B8 },
         { DXGI_FORMAT_B8G8R8X8_UNORM_SRGB, D3DFMT_X8R8G8B8 },
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D3DFMT_A8B8G8R8, .broken = TRUE /* <= w1064v1507 */ },
         { DXGI_FORMAT_AYUV, MAKEFOURCC('A','Y','U','V') },
         { DXGI_FORMAT_Y410, MAKEFOURCC('Y','4','1','0') },
         { DXGI_FORMAT_Y416, MAKEFOURCC('Y','4','1','6') },
@@ -9332,7 +9345,8 @@ static void test_MFMapDXGIFormatToDX9Format(void)
     for (i = 0; i < ARRAY_SIZE(formats_map); ++i)
     {
         format = pMFMapDXGIFormatToDX9Format(formats_map[i].dxgi_format);
-        ok(format == formats_map[i].d3d9_format, "Unexpected d3d9 format %#lx, dxgi format %#x.\n", format, formats_map[i].dxgi_format);
+        ok(format == formats_map[i].d3d9_format || broken(formats_map[i].broken && format == 0),
+                "Unexpected d3d9 format %#lx, dxgi format %#x.\n", format, formats_map[i].dxgi_format);
     }
 }
 
@@ -9342,6 +9356,7 @@ static void test_MFMapDX9FormatToDXGIFormat(void)
     {
         DXGI_FORMAT dxgi_format;
         DWORD d3d9_format;
+        BOOL broken;
     }
     formats_map[] =
     {
@@ -9369,6 +9384,7 @@ static void test_MFMapDX9FormatToDXGIFormat(void)
         { DXGI_FORMAT_BC3_UNORM, D3DFMT_DXT4 },
         { DXGI_FORMAT_B8G8R8A8_UNORM, D3DFMT_A8R8G8B8 },
         { DXGI_FORMAT_B8G8R8X8_UNORM, D3DFMT_X8R8G8B8 },
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D3DFMT_A8B8G8R8, .broken = TRUE },
         { DXGI_FORMAT_AYUV, MAKEFOURCC('A','Y','U','V') },
         { DXGI_FORMAT_Y410, MAKEFOURCC('Y','4','1','0') },
         { DXGI_FORMAT_Y416, MAKEFOURCC('Y','4','1','6') },
@@ -9397,8 +9413,8 @@ static void test_MFMapDX9FormatToDXGIFormat(void)
     for (i = 0; i < ARRAY_SIZE(formats_map); ++i)
     {
         format = pMFMapDX9FormatToDXGIFormat(formats_map[i].d3d9_format);
-        ok(format == formats_map[i].dxgi_format, "Unexpected DXGI format %#x, d3d9 format %#lx.\n",
-                format, formats_map[i].d3d9_format);
+        ok(format == formats_map[i].dxgi_format || broken(formats_map[i].broken && format == 0),
+                "Unexpected DXGI format %#x, d3d9 format %#lx.\n", format, formats_map[i].d3d9_format);
     }
 }
 

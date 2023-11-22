@@ -39,6 +39,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB1, D3DFMT_A1);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB4, MAKEFOURCC('4','P','x','x'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB4444, D3DFMT_A4R4G4B4);
 /* SDK MFVideoFormat_A2R10G10B10 uses D3DFMT_A2B10G10R10, let's name it the other way */
@@ -2713,6 +2714,7 @@ static struct uncompressed_video_format video_formats[] =
     { &MFVideoFormat_RGB32,         32, 3, 1, 0, BI_RGB },
     { &MFVideoFormat_RGB565,        16, 3, 1, 0, BI_BITFIELDS },
     { &MFVideoFormat_RGB555,        16, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_ABGR32,        32, 3, 1, 0, BI_RGB },
     { &MFVideoFormat_A2R10G10B10,   32, 3, 1, 0, -1 },
     { &MFVideoFormat_A2B10G10R10,   32, 3, 1, 0, -1 },
     { &MFVideoFormat_RGB8,          8, 3, 1, 0, BI_RGB },
@@ -3632,6 +3634,8 @@ DXGI_FORMAT WINAPI MFMapDX9FormatToDXGIFormat(DWORD format)
             return DXGI_FORMAT_B8G8R8A8_UNORM;
         case D3DFMT_X8R8G8B8:
             return DXGI_FORMAT_B8G8R8X8_UNORM;
+        case D3DFMT_A8B8G8R8:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
         case MAKEFOURCC('A','Y','U','V'):
             return DXGI_FORMAT_AYUV;
         case MAKEFOURCC('Y','4','1','0'):
