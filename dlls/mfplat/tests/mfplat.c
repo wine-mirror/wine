@@ -7077,25 +7077,24 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     /* test basic media type attributes mapping and valid formats */
 
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_VideoInfo, &am_type);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr != S_OK) goto skip_tests;
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Audio), "got %s.\n", debugstr_guid(&am_type.majortype));
     ok(IsEqualGUID(&am_type.subtype, &MFAudioFormat_PCM), "got %s.\n", debugstr_guid(&am_type.subtype));
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_WaveFormatEx), "got %s.\n", debugstr_guid(&am_type.formattype));
@@ -7138,11 +7137,11 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_VideoInfo2, &am_type);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
-    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
-    ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo2), "got %s.\n", debugstr_guid(&am_type.formattype));
-    ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER2), "got %lu\n", am_type.cbFormat);
+    todo_wine ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    todo_wine ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo2), "got %s.\n", debugstr_guid(&am_type.formattype));
+    todo_wine ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER2), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7554,7 +7553,6 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
 
-skip_tests:
     IMFMediaType_Release(media_type);
 }
 

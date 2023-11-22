@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "mfplat_private.h"
+#include <math.h>
 
 #include "dxva2api.h"
 #include "uuids.h"
@@ -31,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB1, D3DFMT_A1);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_RGB4, MAKEFOURCC('4','P','x','x'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
@@ -42,6 +45,46 @@ DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC3, MAKEFOURCC('I','M','C','3'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC4, MAKEFOURCC('I','M','C','4'));
+
+static const UINT32 default_channel_mask[7] =
+{
+    0,
+    SPEAKER_FRONT_LEFT,
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
+    SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER,
+    KSAUDIO_SPEAKER_QUAD,
+    KSAUDIO_SPEAKER_QUAD | SPEAKER_FRONT_CENTER,
+    KSAUDIO_SPEAKER_5POINT1,
+};
+
+static GUID get_am_subtype_for_mf_subtype(GUID subtype)
+{
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB1))
+        return MEDIASUBTYPE_RGB1;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB4))
+        return MEDIASUBTYPE_RGB4;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB8))
+        return MEDIASUBTYPE_RGB8;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB555))
+        return MEDIASUBTYPE_RGB555;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB565))
+        return MEDIASUBTYPE_RGB565;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB24))
+        return MEDIASUBTYPE_RGB24;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+        return MEDIASUBTYPE_RGB32;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB1555))
+        return MEDIASUBTYPE_ARGB1555;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB4444))
+        return MEDIASUBTYPE_ARGB4444;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB32))
+        return MEDIASUBTYPE_ARGB32;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_A2B10G10R10))
+        return MEDIASUBTYPE_A2R10G10B10;
+    if (IsEqualGUID(&subtype, &MFVideoFormat_A2R10G10B10))
+        return MEDIASUBTYPE_A2B10G10R10;
+    return subtype;
+}
 
 struct media_type
 {
@@ -2629,6 +2672,7 @@ struct uncompressed_video_format
     unsigned char alignment;
     unsigned char bottom_up;
     unsigned char yuv;
+    int compression;
 };
 
 static int __cdecl uncompressed_video_format_compare(const void *a, const void *b)
@@ -2640,36 +2684,36 @@ static int __cdecl uncompressed_video_format_compare(const void *a, const void *
 
 static const struct uncompressed_video_format video_formats[] =
 {
-    { &MFVideoFormat_RGB24,         24, 3, 1, 0 },
-    { &MFVideoFormat_ARGB32,        32, 3, 1, 0 },
-    { &MFVideoFormat_RGB32,         32, 3, 1, 0 },
-    { &MFVideoFormat_RGB565,        16, 3, 1, 0 },
-    { &MFVideoFormat_RGB555,        16, 3, 1, 0 },
-    { &MFVideoFormat_A2R10G10B10,   32, 3, 1, 0 },
-    { &MFVideoFormat_A2B10G10R10,   32, 3, 1, 0 },
-    { &MFVideoFormat_RGB8,          8, 3, 1, 0 },
-    { &MFVideoFormat_L8,            8, 3, 1, 0 },
-    { &MFVideoFormat_AYUV,          32, 3, 0, 1 },
-    { &MFVideoFormat_I420,          12, 0, 0, 1 },
-    { &MFVideoFormat_IMC1,          16, 3, 0, 1 },
-    { &MFVideoFormat_IMC2,          12, 0, 0, 1 },
-    { &MFVideoFormat_IMC3,          16, 3, 0, 1 },
-    { &MFVideoFormat_IMC4,          12, 0, 0, 1 },
-    { &MFVideoFormat_IYUV,          12, 0, 0, 1 },
-    { &MFVideoFormat_NV11,          12, 0, 0, 1 },
-    { &MFVideoFormat_NV12,          12, 0, 0, 1 },
-    { &MFVideoFormat_D16,           16, 3, 0, 0 },
-    { &MFVideoFormat_L16,           16, 3, 0, 0 },
-    { &MFVideoFormat_UYVY,          16, 0, 0, 1 },
-    { &MFVideoFormat_YUY2,          16, 0, 0, 1 },
-    { &MFVideoFormat_YV12,          12, 0, 0, 1 },
-    { &MFVideoFormat_YVYU,          16, 0, 0, 1 },
-    { &MFVideoFormat_A16B16G16R16F, 64, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB8,           8, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB565,         16, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB555,         16, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB24,          24, 3, 1, 0 },
-    { &MEDIASUBTYPE_RGB32,          32, 3, 1, 0 },
+    { &MFVideoFormat_RGB24,         24, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_ARGB32,        32, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_RGB32,         32, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_RGB565,        16, 3, 1, 0, BI_BITFIELDS },
+    { &MFVideoFormat_RGB555,        16, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_A2R10G10B10,   32, 3, 1, 0, -1 },
+    { &MFVideoFormat_A2B10G10R10,   32, 3, 1, 0, -1 },
+    { &MFVideoFormat_RGB8,          8, 3, 1, 0, BI_RGB },
+    { &MFVideoFormat_L8,            8, 3, 1, 0, -1 },
+    { &MFVideoFormat_AYUV,          32, 3, 0, 1, -1 },
+    { &MFVideoFormat_I420,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_IMC1,          16, 3, 0, 1, -1 },
+    { &MFVideoFormat_IMC2,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_IMC3,          16, 3, 0, 1, -1 },
+    { &MFVideoFormat_IMC4,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_IYUV,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_NV11,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_NV12,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_D16,           16, 3, 0, 0, -1 },
+    { &MFVideoFormat_L16,           16, 3, 0, 0, -1 },
+    { &MFVideoFormat_UYVY,          16, 0, 0, 1, -1 },
+    { &MFVideoFormat_YUY2,          16, 0, 0, 1, -1 },
+    { &MFVideoFormat_YV12,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_YVYU,          16, 0, 0, 1, -1 },
+    { &MFVideoFormat_A16B16G16R16F, 64, 3, 1, 0, -1 },
+    { &MEDIASUBTYPE_RGB8,           8, 3, 1, 0, BI_RGB },
+    { &MEDIASUBTYPE_RGB565,         16, 3, 1, 0, BI_BITFIELDS },
+    { &MEDIASUBTYPE_RGB555,         16, 3, 1, 0, BI_RGB },
+    { &MEDIASUBTYPE_RGB24,          24, 3, 1, 0, BI_RGB },
+    { &MEDIASUBTYPE_RGB32,          32, 3, 1, 0, BI_RGB },
 };
 
 static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype)
@@ -3688,13 +3732,222 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
     return hr;
 }
 
+static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+{
+    UINT32 num_channels, value;
+    HRESULT hr;
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
+            || IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2)
+            || IsEqualGUID(&am_type->formattype, &FORMAT_MFVideoFormat))
+        return E_INVALIDARG;
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx)
+            || IsEqualGUID(&am_type->formattype, &GUID_NULL))
+    {
+        WAVEFORMATEX *format;
+
+        if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, &num_channels)))
+            num_channels = 0;
+
+        if (SUCCEEDED(IMFMediaType_GetItem(media_type, &MF_MT_AUDIO_CHANNEL_MASK, NULL))
+                || SUCCEEDED(IMFMediaType_GetItem(media_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, NULL))
+                || SUCCEEDED(IMFMediaType_GetItem(media_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, NULL))
+                || num_channels > 2)
+        {
+            WAVEFORMATEXTENSIBLE *format_ext;
+
+            am_type->cbFormat = sizeof(*format_ext) + user_size;
+            if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
+                return E_OUTOFMEMORY;
+            format_ext = (WAVEFORMATEXTENSIBLE *)am_type->pbFormat;
+            memset(format_ext, 0, sizeof(*format_ext));
+
+            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
+                format_ext->dwChannelMask = value;
+            else if (num_channels < ARRAY_SIZE(default_channel_mask))
+                format_ext->dwChannelMask = default_channel_mask[num_channels];
+
+            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
+                format_ext->Samples.wValidBitsPerSample = value;
+            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &value)))
+                format_ext->Samples.wSamplesPerBlock = value;
+            format_ext->SubFormat = am_type->subtype;
+
+            format = &format_ext->Format;
+            format->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+            format->cbSize = sizeof(*format_ext) - sizeof(*format) + user_size;
+
+            if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                    (BYTE *)(format_ext + 1), user_size, NULL)))
+                return hr;
+        }
+        else
+        {
+            am_type->cbFormat = sizeof(*format) + user_size;
+            if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
+                return E_OUTOFMEMORY;
+            format = (WAVEFORMATEX *)am_type->pbFormat;
+            memset(format, 0, sizeof(*format));
+
+            format->wFormatTag = am_type->subtype.Data1;
+            format->cbSize = user_size;
+
+            if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                    (BYTE *)(format + 1), user_size, NULL)))
+                return hr;
+        }
+
+        format->nChannels = num_channels;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &value)))
+            format->nSamplesPerSec = value;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value)))
+            format->nAvgBytesPerSec = value;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value)))
+            format->nBlockAlign = value;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
+            format->wBitsPerSample = value;
+
+        am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+        am_type->formattype = FORMAT_WaveFormatEx;
+    }
+    else
+    {
+        WARN("Unknown format %s\n", debugstr_mf_guid(&am_type->formattype));
+        am_type->formattype = GUID_NULL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+{
+    UINT32 image_size, bitrate, sample_size;
+    UINT64 frame_size, frame_rate;
+    INT32 width, height;
+    HRESULT hr;
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx))
+        return E_INVALIDARG;
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_MFVideoFormat))
+        return MFCreateMFVideoFormatFromMFMediaType(media_type, (MFVIDEOFORMAT **)&am_type->pbFormat,
+                (UINT32 *)&am_type->cbFormat);
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
+            || IsEqualGUID(&am_type->formattype, &GUID_NULL))
+    {
+        struct uncompressed_video_format *video_format = mf_get_video_format(&am_type->subtype);
+        VIDEOINFOHEADER *format;
+
+        am_type->cbFormat = sizeof(*format) + user_size;
+        if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
+            return E_OUTOFMEMORY;
+        format = (VIDEOINFOHEADER *)am_type->pbFormat;
+        memset(format, 0, sizeof(*format));
+
+        format->bmiHeader.biSize = sizeof(format->bmiHeader) + user_size;
+        format->bmiHeader.biPlanes = 1;
+        format->bmiHeader.biBitCount = video_format ? video_format->bpp : 0;
+
+        if (video_format && video_format->compression != -1)
+            format->bmiHeader.biCompression = video_format->compression;
+        else
+            format->bmiHeader.biCompression = am_type->subtype.Data1;
+
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &bitrate)))
+            format->dwBitRate = bitrate;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &bitrate)))
+            format->dwBitErrorRate = bitrate;
+        if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &frame_rate)) && (frame_rate >> 32))
+            format->AvgTimePerFrame = round(10000000. * (UINT32)frame_rate / (frame_rate >> 32));
+        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &sample_size)))
+            format->bmiHeader.biSizeImage = sample_size;
+
+        if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+        {
+            BOOL bottom_up = format->bmiHeader.biCompression == BI_RGB || format->bmiHeader.biCompression == BI_BITFIELDS;
+
+            if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&width)))
+                width = (frame_size >> 32) * (bottom_up ? -1 : 1);
+            else if (video_format)
+                width /= video_format->bpp / 8;
+            height = (UINT32)frame_size;
+
+            format->bmiHeader.biWidth = abs(width);
+            format->bmiHeader.biHeight = height * (bottom_up && width >= 0 ? -1 : 1);
+
+            if (SUCCEEDED(MFCalculateImageSize(&am_type->subtype, abs(width), height, &image_size)))
+                format->bmiHeader.biSizeImage = image_size;
+        }
+
+        if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                (BYTE *)(format + 1), user_size, NULL)))
+            return hr;
+
+        am_type->formattype = FORMAT_VideoInfo;
+        am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+    }
+    else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
+    {
+        FIXME("Not implemented!\n");
+        am_type->formattype = GUID_NULL;
+        return E_NOTIMPL;
+    }
+    else
+    {
+        WARN("Unknown format %s\n", debugstr_mf_guid(&am_type->formattype));
+        am_type->formattype = GUID_NULL;
+    }
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      MFInitAMMediaTypeFromMFMediaType (mfplat.@)
  */
 HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID format, AM_MEDIA_TYPE *am_type)
 {
-    FIXME("%p, %s, %p\n", media_type, debugstr_guid(&format), am_type);
-    return E_NOTIMPL;
+    UINT32 value, user_size;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", media_type, debugstr_mf_guid(&format), am_type);
+
+    memset(am_type, 0, sizeof(*am_type));
+    am_type->formattype = format;
+
+    if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &am_type->majortype))
+            || FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &am_type->subtype)))
+        goto done;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value)))
+        am_type->bFixedSizeSamples = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value)))
+        am_type->lSampleSize = value;
+
+    if (FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, NULL, 0, &user_size))
+            && hr != E_NOT_SUFFICIENT_BUFFER)
+        user_size = 0;
+
+    if (IsEqualGUID(&am_type->majortype, &MFMediaType_Audio))
+        hr = init_am_media_type_audio_format(am_type, user_size, media_type);
+    else if (IsEqualGUID(&am_type->majortype, &MFMediaType_Video))
+        hr = init_am_media_type_video_format(am_type, user_size, media_type);
+    else
+    {
+        FIXME("Not implemented!\n");
+        hr = E_NOTIMPL;
+    }
+
+done:
+    if (FAILED(hr))
+    {
+        CoTaskMemFree(am_type->pbFormat);
+        am_type->pbFormat = NULL;
+        am_type->cbFormat = 0;
+    }
+
+    return hr;
 }
 
 /***********************************************************************
