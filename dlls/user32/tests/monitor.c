@@ -1791,7 +1791,7 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         /* Check corresponding modes */
         if (pi[i].sourceInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
         {
-            skip("Path doesn't contain source modeInfoIdx");
+            skip("Path doesn't contain source modeInfoIdx\n");
             continue;
         }
         ok(pi[i].sourceInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].sourceInfo.modeInfoIdx);
@@ -1814,7 +1814,7 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
 
         if (pi[i].targetInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
         {
-            skip("Path doesn't contain target modeInfoIdx");
+            skip("Path doesn't contain target modeInfoIdx\n");
             continue;
         }
         ok(pi[i].targetInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].targetInfo.modeInfoIdx);
