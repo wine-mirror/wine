@@ -244,6 +244,11 @@ typedef enum convert_mode
     little_endian = 1
 } codecvt_convert_mode;
 
+/* class codecvt<char16> */
+typedef struct {
+    codecvt_base base;
+} codecvt_char16;
+
 /* class codecvt<char32> */
 typedef struct {
     codecvt_base base;

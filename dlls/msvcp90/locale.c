@@ -3997,6 +3997,242 @@ int __thiscall codecvt_wchar_length(const codecvt_wchar *this, const _Mbstatet *
 
 #if _MSVCP_VER >= 140
 
+/* ??_7?$codecvt@_SDU_Mbstatet@@@std@@6B@ */
+extern const vtable_ptr codecvt_char16_vtable;
+
+/* ?_Init@?$codecvt@_SDU_Mbstatet@@@std@@IAAXABV_Locinfo@2@@Z */
+/* ?_Init@?$codecvt@_SDU_Mbstatet@@@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$codecvt@_SDU_Mbstatet@@@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16__Init, 8)
+void __thiscall codecvt_char16__Init(codecvt_char16 *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_locinfo, 12)
+codecvt_char16* __thiscall codecvt_char16_ctor_locinfo(codecvt_char16 *this,
+        const _Locinfo *locinfo, size_t refs)
+{
+    FIXME("(%p %p %Iu) stub\n", this, locinfo, refs);
+    return NULL;
+}
+
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_refs, 8)
+codecvt_char* __thiscall codecvt_char16_ctor_refs(codecvt_char16 *this, size_t refs)
+{
+    FIXME("(%p %Iu) stub\n", this, refs);
+    return NULL;
+}
+
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_mode, 16)
+codecvt_char16* __thiscall codecvt_char16_ctor_mode(codecvt_char16 *this,
+        ULONG max_code, codecvt_convert_mode mode, size_t refs)
+{
+    FIXME("(%p %ld %d %Iu) stub\n", this, max_code, mode, refs);
+    return NULL;
+}
+
+/* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAAXXZ */
+/* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAEXXZ */
+/* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor, 4)
+codecvt_char* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ */
+/* ??1?$codecvt@_SDU_Mbstatet@@@std@@MAE@XZ */
+/* ??1?$codecvt@_SDU_Mbstatet@@@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_dtor, 4)
+void __thiscall codecvt_char16_dtor(codecvt_char16 *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(codecvt_char16_vector_dtor, 8)
+codecvt_char16* __thiscall codecvt_char16_vector_dtor(
+        codecvt_char16 *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            codecvt_char16_dtor(this+i);
+        operator_delete(ptr);
+    } else {
+        codecvt_char16_dtor(this);
+        if(flags & 1)
+            operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$codecvt@_SDU_Mbstatet@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$codecvt@_SDU_Mbstatet@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+size_t __cdecl codecvt_char16__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?do_always_noconv@?$codecvt@_SDU_Mbstatet@@@std@@MBA_NXZ */
+/* ?do_always_noconv@?$codecvt@_SDU_Mbstatet@@@std@@MBE_NXZ */
+/* ?do_always_noconv@?$codecvt@_SDU_Mbstatet@@@std@@MEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_always_noconv, 4)
+bool __thiscall codecvt_char16_do_always_noconv(const codecvt_char16 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?do_encoding@?$codecvt@_SDU_Mbstatet@@@std@@MBAHXZ */
+/* ?do_encoding@?$codecvt@_SDU_Mbstatet@@@std@@MBEHXZ */
+/* ?do_encoding@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_encoding, 4)
+int __thiscall codecvt_char16_do_encoding(const codecvt_char16 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
+/* ?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
+/* ?do_in@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEBD1AEAPEBDPEA_S3AEAPEA_S@Z */
+#define call_codecvt_char16_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 24, int, \
+            (const codecvt_char16*, _Mbstatet*, const char*, const char*, const char**, \
+                    char16_t*, char16_t*, char16_t**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_in, 32)
+int __thiscall codecvt_char16_do_in(const codecvt_char16 *this, _Mbstatet *state,
+        const char *from, const char *from_end, const char **from_next,
+        char16_t *to, char16_t *to_end, char16_t **to_next)
+{
+    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+            from_end, from_next, to, to_end, to_next);
+    return 0;
+}
+
+/* ?in@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
+/* ?in@?$codecvt@_SDU_Mbstatet@@@std@@QBEHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
+/* ?in@?$codecvt@_SDU_Mbstatet@@@std@@QEBAHAEAU_Mbstatet@@PEBD1AEAPEBDPEA_S3AEAPEA_S@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_in, 32)
+int __thiscall codecvt_char16_in(const codecvt_char16 *this, _Mbstatet *state,
+        const char *from, const char *from_end, const char **from_next,
+        char16_t *to, char16_t *to_end, char16_t **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from, from_end,
+            from_next, to, to_end, to_next);
+    return call_codecvt_char16_do_in(this, state, from, from_end, from_next,
+            to, to_end, to_next);
+}
+
+/* ?do_length@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PBD1I@Z */
+/* ?do_length@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PBD1I@Z */
+/* ?do_length@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEBD1_K@Z */
+#define call_codecvt_char16_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 36, \
+        int, (const codecvt_char16*, const _Mbstatet*, const char*, const char*, size_t), \
+        (this, state, from, from_end, max))
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_length, 20)
+int __thiscall codecvt_char16_do_length(const codecvt_char16 *this, const _Mbstatet *state,
+        const char *from, const char *from_end, size_t max)
+{
+    FIXME("(%p %p %p %p %Iu) stub\n", this, state, from, from_end, max);
+    return 0;
+}
+
+
+/* ?length@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PBD1I@Z */
+/* ?length@?$codecvt@_SDU_Mbstatet@@@std@@QBEHAAU_Mbstatet@@PBD1I@Z */
+/* ?length@?$codecvt@_SDU_Mbstatet@@@std@@QEBAHAEAU_Mbstatet@@PEBD1_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_length, 20)
+int __thiscall codecvt_char16_length(const codecvt_char16 *this, const _Mbstatet *state,
+        const char *from, const char *from_end, size_t max)
+{
+    TRACE("(%p %p %p %p %Iu)\n", this, state, from, from_end, max);
+    return call_codecvt_char16_do_length(this, state, from, from_end, max);
+}
+
+/* ?do_max_length@?$codecvt@_SDU_Mbstatet@@@std@@MBAHXZ */
+/* ?do_max_length@?$codecvt@_SDU_Mbstatet@@@std@@MBEHXZ */
+/* ?do_max_length@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_max_length, 4)
+int __thiscall codecvt_char16_do_max_length(const codecvt_char16 *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
+/* ?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
+/* ?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEB_S1AEAPEB_SPEAD3AEAPEAD@Z */
+#define call_codecvt_char16_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 28, int, \
+            (const codecvt_char16*, _Mbstatet*, const char16_t*, const char16_t*, const char16_t**, \
+                    char*, char*, char**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_out, 32)
+int __thiscall codecvt_char16_do_out(const codecvt_char16 *this, _Mbstatet *state,
+        const char16_t *from, const char16_t *from_end, const char16_t **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+            from_end, from_next, to, to_end, to_next);
+    return 0;
+}
+
+/* ?out@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
+/* ?out@?$codecvt@_SDU_Mbstatet@@@std@@QBEHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
+/* ?out@?$codecvt@_SDU_Mbstatet@@@std@@QEBAHAEAU_Mbstatet@@PEB_S1AEAPEB_SPEAD3AEAPEAD@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_out, 32)
+int __thiscall codecvt_char16_out(const codecvt_char16 *this, _Mbstatet *state,
+        const char16_t *from, const char16_t *from_end, const char16_t **from_next,
+        char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
+            from_end, from_next, to, to_end, to_next);
+    return call_codecvt_char16_do_out(this, state, from,
+            from_end, from_next, to, to_end, to_next);
+}
+
+/* ?do_unshift@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PAD1AAPAD@Z */
+/* ?do_unshift@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PAD1AAPAD@Z */
+/* ?do_unshift@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEAD1AEAPEAD@Z */
+#define call_codecvt_char16_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 32, \
+        int, (const codecvt_char16*, _Mbstatet*, char*, char*, char**), (this, state, to, to_end, to_next))
+DEFINE_THISCALL_WRAPPER(codecvt_char16_do_unshift, 20)
+int __thiscall codecvt_char16_do_unshift(const codecvt_char16 *this,
+        _Mbstatet *state, char *to, char *to_end, char **to_next)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, state, to, to_end, to_next);
+    return 0;
+}
+
+/* ?unshift@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PAD1AAPAD@Z */
+/* ?unshift@?$codecvt@_SDU_Mbstatet@@@std@@QBEHAAU_Mbstatet@@PAD1AAPAD@Z */
+/* ?unshift@?$codecvt@_SDU_Mbstatet@@@std@@QEBAHAEAU_Mbstatet@@PEAD1AEAPEAD@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_unshift, 20)
+int __thiscall codecvt_char16_unshift(const codecvt_char16 *this,
+        _Mbstatet *state, char *to, char *to_end, char **to_next)
+{
+    TRACE("(%p %p %p %p %p)\n", this, state, to, to_end, to_next);
+    return call_codecvt_char16_do_unshift(this, state, to, to_end, to_next);
+}
+
 /* ??_7?$codecvt@_UDU_Mbstatet@@@std@@6B@ */
 extern const vtable_ptr codecvt_char32_vtable;
 
@@ -12682,6 +12918,7 @@ DEFINE_RTTI_DATA2(ctype_short, 0, &ctype_base_rtti_base_descriptor, &locale_face
 DEFINE_RTTI_DATA1(codecvt_base, 0, &locale_facet_rtti_base_descriptor, ".?AVcodecvt_base@std@@")
 #if _MSVCP_VER >= 140
 DEFINE_RTTI_DATA2(codecvt_char, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@DDU_Mbstatet@@@std@@")
+DEFINE_RTTI_DATA2(codecvt_char16, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@_SDU@std@@")
 DEFINE_RTTI_DATA2(codecvt_char32, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@_UDU@std@@")
 DEFINE_RTTI_DATA2(codecvt_wchar, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@_WDU_Mbstatet@@@std@@")
 DEFINE_RTTI_DATA2(codecvt_short, 0, &codecvt_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$codecvt@GDU_Mbstatet@@@std@@")
@@ -12859,6 +13096,17 @@ __ASM_BLOCK_BEGIN(locale_vtables)
             VTABLE_ADD_FUNC(codecvt_char_do_unshift)
             VTABLE_ADD_FUNC(codecvt_char_do_length));
 #if _MSVCP_VER >= 140
+    __ASM_VTABLE(codecvt_char16,
+            VTABLE_ADD_FUNC(codecvt_char16_vector_dtor)
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+            VTABLE_ADD_FUNC(codecvt_char16_do_always_noconv)
+            VTABLE_ADD_FUNC(codecvt_char16_do_max_length)
+            VTABLE_ADD_FUNC(codecvt_char16_do_encoding)
+            VTABLE_ADD_FUNC(codecvt_char16_do_in)
+            VTABLE_ADD_FUNC(codecvt_char16_do_out)
+            VTABLE_ADD_FUNC(codecvt_char16_do_unshift)
+            VTABLE_ADD_FUNC(codecvt_char16_do_length));
     __ASM_VTABLE(codecvt_char32,
             VTABLE_ADD_FUNC(codecvt_char32_vector_dtor)
             VTABLE_ADD_FUNC(locale_facet__Incref)
@@ -13102,6 +13350,7 @@ void init_locale(void *base)
     init_codecvt_base_rtti(base);
     init_codecvt_char_rtti(base);
 #if _MSVCP_VER >= 140
+    init_codecvt_char16_rtti(base);
     init_codecvt_char32_rtti(base);
 #endif
     init_codecvt_wchar_rtti(base);
