@@ -676,16 +676,39 @@ static void test_tab(INT nMinTabWidth)
 
 static void test_width(void)
 {
-    trace ("Testing with default MinWidth\n");
-    test_tab(-1);
-    trace ("Testing with MinWidth set to -3\n");
-    test_tab(-3);
-    trace ("Testing with MinWidth set to 24\n");
-    test_tab(24);
-    trace ("Testing with MinWidth set to 54\n");
-    test_tab(54);
-    trace ("Testing with MinWidth set to 94\n");
-    test_tab(94);
+    HFONT oldFont = hFont;
+    const char *fonts[] = {
+        "System",
+        "Arial",
+        "Tahoma",
+        "Courier New",
+        "MS Shell Dlg",
+    };
+
+    LOGFONTA logfont = {
+        .lfHeight = -12,
+        .lfWeight = FW_NORMAL,
+        .lfCharSet = ANSI_CHARSET
+    };
+
+    for(int i = 0; i < sizeof(fonts)/sizeof(fonts[0]); i++) {
+        trace ("Testing with the '%s' font\n", fonts[i]);
+        lstrcpyA(logfont.lfFaceName, fonts[i]);
+        hFont = CreateFontIndirectA(&logfont);
+
+        trace ("Testing with default MinWidth\n");
+        test_tab(-1);
+        trace ("Testing with MinWidth set to -3\n");
+        test_tab(-3);
+        trace ("Testing with MinWidth set to 24\n");
+        test_tab(24);
+        trace ("Testing with MinWidth set to 54\n");
+        test_tab(54);
+        trace ("Testing with MinWidth set to 94\n");
+        test_tab(94);
+    }
+
+    hFont = oldFont;
 }
 
 static void test_setitemsize(void)
