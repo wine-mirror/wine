@@ -31,5 +31,6 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 
 #define DO_NO_IMPORTS
+#define _WINDOWS_GLOBALIZATION
 #include "windows.globalization.idl"
 #include "windows.system.userprofile.idl"

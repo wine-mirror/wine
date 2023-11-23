@@ -64,6 +64,7 @@ namespace Windows.System.UserProfile {
         [propget] HRESULT AdvertisingId([out, retval] HSTRING *value);
     }
 
+#ifndef _TWINAPI_APPCORE
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -74,7 +75,9 @@ namespace Windows.System.UserProfile {
     runtimeclass GlobalizationPreferences
     {
     }
+#endif
 
+#ifndef _WINDOWS_GLOBALIZATION
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(standard),
@@ -84,5 +87,6 @@ namespace Windows.System.UserProfile {
     runtimeclass AdvertisingManager
     {
     }
+#endif
 
 }

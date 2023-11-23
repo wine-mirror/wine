@@ -30,5 +30,7 @@ import "windows.foundation.idl";
 import "windows.globalization.idl";
 
 #define DO_NO_IMPORTS
+#define _TWINAPI_APPCORE
 #include "windows.security.exchangeactivesyncprovisioning.idl"
 #include "windows.system.profile.idl"
+#include "windows.system.userprofile.idl"

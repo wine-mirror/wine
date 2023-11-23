@@ -40,16 +40,18 @@
 
 #include "wine/test.h"
 
-#define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c )
-static void check_interface_( unsigned int line, void *iface_ptr, REFIID iid, BOOL supported )
+#define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c, FALSE )
+static void check_interface_( unsigned int line, void *iface_ptr, REFIID iid, BOOL supported, BOOL is_broken )
 {
+    HRESULT hr, expected_hr, broken_hr;
     IUnknown *iface = iface_ptr;
-    HRESULT hr, expected;
     IUnknown *unk;
 
-    expected = supported ? S_OK : E_NOINTERFACE;
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+    broken_hr = supported ? E_NOINTERFACE : S_OK;
     hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
-    ok_ (__FILE__, line)( hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected );
+    ok_(__FILE__, line)( hr == expected_hr || broken( is_broken && hr == broken_hr ),
+                         "got hr %#lx, expected %#lx.\n", hr, expected_hr );
     if (SUCCEEDED(hr)) IUnknown_Release( unk );
 }
 
@@ -190,6 +192,40 @@ static void test_AnalyticsVersionInfo(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_AdvertisingManager(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_System_UserProfile_AdvertisingManager;
+    IAdvertisingManagerStatics *advertising_manager_statics;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE );
+    check_interface( factory, &IID_IInspectable, TRUE );
+    check_interface_( __LINE__, factory, &IID_IAgileObject, TRUE, TRUE );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IAdvertisingManagerStatics, (void **)&advertising_manager_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IAdvertisingManagerStatics_Release( advertising_manager_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(twinapi)
 {
     HRESULT hr;
@@ -199,6 +235,7 @@ START_TEST(twinapi)
 
     test_EasClientDeviceInformation();
     test_AnalyticsVersionInfo();
+    test_AdvertisingManager();
 
     RoUninitialize();
 }
