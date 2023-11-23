@@ -59,7 +59,7 @@ struct layout
     VSC_VK vsc2vk_e1[0x100];
 
     VK_TO_WCHAR_TABLE vk_to_wchar_table[2];
-    VK_TO_WCHARS8 vk_to_wchars8[0x100];
+    VK_TO_WCHARS8 vk_to_wchars8[0x100 * 2 /* SGCAPS */];
     VK_TO_BIT vk2bit[4];
     union
     {
@@ -357,7 +357,7 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
 
     unsigned int mod, keyc, len, names_len, min_keycode, max_keycode;
     struct xkb_state *xkb_state = xkb_state_new(xkb_keymap);
-    xkb_mod_mask_t shift_mask, control_mask, altgr_mask;
+    xkb_mod_mask_t shift_mask, control_mask, altgr_mask, capslock_mask;
     VSC_LPWSTR *names_entry, *names_ext_entry;
     VSC_VK *vsc2vk_e0_entry, *vsc2vk_e1_entry;
     VK_TO_WCHARS8 *vk2wchars_entry;
@@ -490,13 +490,15 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
 
     shift_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_SHIFT);
     control_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_CTRL);
+    capslock_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_CAPS);
     altgr_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, "Mod5");
 
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
         WORD scan = key2scan(keyc - 8), vkey = scan2vk[scan];
-        VK_TO_WCHARS8 vkey2wch = {.VirtualKey = vkey};
-        BOOL found = FALSE;
+        VK_TO_WCHARS8 vkey2wch = {.VirtualKey = vkey}, caps_vkey2wch = vkey2wch;
+        BOOL found = FALSE, caps_found = FALSE;
+        uint32_t caps_ret, shift_ret;
         unsigned int mod;
 
         for (mod = 0; mod < 8; ++mod)
@@ -516,9 +518,33 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
             else vkey2wch.wch[mod] = ret;
 
             if (vkey2wch.wch[mod] != WCH_NONE) found = TRUE;
+
+            xkb_state_update_mask(xkb_state, 0, 0, mod_mask | capslock_mask, 0, 0, xkb_group);
+
+            if (mod_mask & control_mask) caps_vkey2wch.wch[mod] = WCH_NONE; /* on Windows CTRL+key behave specifically */
+            else if (!(ret = xkb_state_key_get_utf32(xkb_state, keyc))) caps_vkey2wch.wch[mod] = WCH_NONE;
+            else if (ret == vkey2wch.wch[mod]) caps_vkey2wch.wch[mod] = WCH_NONE;
+            else caps_vkey2wch.wch[mod] = ret;
+
+            if (caps_vkey2wch.wch[mod] != WCH_NONE) caps_found = TRUE;
         }
 
         if (!found) continue;
+
+        if (caps_found)
+        {
+            TRACE("vkey %#06x + CAPS -> %s\n", caps_vkey2wch.VirtualKey, debugstr_wn(caps_vkey2wch.wch, 8));
+            caps_vkey2wch.Attributes = SGCAPS;
+            *vk2wchars_entry++ = caps_vkey2wch;
+        }
+        else
+        {
+            xkb_state_update_mask(xkb_state, 0, 0, capslock_mask, 0, 0, xkb_group);
+            caps_ret = xkb_state_key_get_utf32(xkb_state, keyc);
+            xkb_state_update_mask(xkb_state, 0, 0, shift_mask, 0, 0, xkb_group);
+            shift_ret = xkb_state_key_get_utf32(xkb_state, keyc);
+            if (caps_ret && caps_ret == shift_ret) vkey2wch.Attributes |= CAPLOK;
+        }
 
         TRACE("vkey %#06x -> %s\n", vkey2wch.VirtualKey, debugstr_wn(vkey2wch.wch, 8));
         *vk2wchars_entry++ = vkey2wch;
