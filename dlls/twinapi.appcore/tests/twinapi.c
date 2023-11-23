@@ -32,6 +32,10 @@
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Security_ExchangeActiveSyncProvisioning
 #include "windows.security.exchangeactivesyncprovisioning.h"
+#define WIDL_using_Windows_System_Profile
+#include "windows.system.profile.h"
+#define WIDL_using_Windows_System_UserProfile
+#include "windows.system.userprofile.h"
 
 #include "wine/test.h"
 
@@ -107,6 +111,40 @@ static void test_EasClientDeviceInformation(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_AnalyticsVersionInfo(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_System_Profile_AnalyticsInfo;
+    IAnalyticsInfoStatics *analytics_info_statics;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE );
+    check_interface( factory, &IID_IInspectable, TRUE );
+    check_interface( factory, &IID_IAgileObject, TRUE );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IAnalyticsInfoStatics, (void **)&analytics_info_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IAnalyticsInfoStatics_Release( analytics_info_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(twinapi)
 {
     HRESULT hr;
@@ -115,6 +153,7 @@ START_TEST(twinapi)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_EasClientDeviceInformation();
+    test_AnalyticsVersionInfo();
 
     RoUninitialize();
 }

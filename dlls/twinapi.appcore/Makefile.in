@@ -3,6 +3,7 @@ MODULE    = twinapi.appcore.dll
 IMPORTS   = combase
 
 SOURCES = \
+	analytics_info.c \
 	classes.idl \
 	client_device_information.c \
 	main.c
