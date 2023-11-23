@@ -52,33 +52,33 @@ typedef struct _SecurePackage
  * Returns a pointer to the stored provider entry, for use adding packages.
  */
 SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
- const SecurityFunctionTableW *fnTableW, PCWSTR moduleName) DECLSPEC_HIDDEN;
+ const SecurityFunctionTableW *fnTableW, PCWSTR moduleName);
 
 /* Allocates space for and adds toAdd packages with the given provider.
  * provider must not be NULL, and either infoA or infoW may be NULL, but not
  * both.
  */
 void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
- const SecPkgInfoA *infoA, const SecPkgInfoW *infoW) DECLSPEC_HIDDEN;
+ const SecPkgInfoA *infoA, const SecPkgInfoW *infoW);
 
 /* Tries to find the package named packageName.  If it finds it, implicitly
  * loads the package if it isn't already loaded.
  */
-SecurePackage *SECUR32_findPackageW(PCWSTR packageName) DECLSPEC_HIDDEN;
+SecurePackage *SECUR32_findPackageW(PCWSTR packageName);
 
 /* Tries to find the package named packageName.  (Thunks to _findPackageW)
  */
-SecurePackage *SECUR32_findPackageA(PCSTR packageName) DECLSPEC_HIDDEN;
+SecurePackage *SECUR32_findPackageA(PCSTR packageName);
 
 /* Initialization functions for built-in providers */
-void SECUR32_initSchannelSP(void) DECLSPEC_HIDDEN;
-void load_auth_packages(void) DECLSPEC_HIDDEN;
-NTSTATUS NTAPI nego_SpLsaModeInitialize(ULONG, PULONG, PSECPKG_FUNCTION_TABLE *, PULONG) DECLSPEC_HIDDEN;
-NTSTATUS NTAPI nego_SpUserModeInitialize(ULONG, PULONG, PSECPKG_USER_FUNCTION_TABLE *, PULONG) DECLSPEC_HIDDEN;
-SECPKG_FUNCTION_TABLE *lsa_find_package(const char *name, SECPKG_USER_FUNCTION_TABLE **user_api) DECLSPEC_HIDDEN;
+void SECUR32_initSchannelSP(void);
+void load_auth_packages(void);
+NTSTATUS NTAPI nego_SpLsaModeInitialize(ULONG, PULONG, PSECPKG_FUNCTION_TABLE *, PULONG);
+NTSTATUS NTAPI nego_SpUserModeInitialize(ULONG, PULONG, PSECPKG_USER_FUNCTION_TABLE *, PULONG);
+SECPKG_FUNCTION_TABLE *lsa_find_package(const char *name, SECPKG_USER_FUNCTION_TABLE **user_api);
 
 /* Cleanup functions for built-in providers */
-void SECUR32_deinitSchannelSP(void) DECLSPEC_HIDDEN;
+void SECUR32_deinitSchannelSP(void);
 
 /* schannel internal interface */
 typedef UINT64 schan_session;
