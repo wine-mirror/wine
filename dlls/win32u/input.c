@@ -531,6 +531,11 @@ static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const
         for (entry = table->pVkToWchars; entry->VirtualKey; entry = NEXT_ENTRY(table, entry))
         {
             if (entry->VirtualKey != vkey) continue;
+            /* SGCAPS attribute may be set on entries where VK_CAPITAL and VK_SHIFT behave differently.
+             * The entry corresponds to the mapping when Caps Lock is on, and a second entry follows it
+             * with the mapping when Caps Lock is off.
+             */
+            if ((entry->Attributes & SGCAPS) && !caps) entry = NEXT_ENTRY(table, entry);
             if ((entry->Attributes & CAPLOK) && table->nModifications > caps_mod) return entry->wch[caps_mod];
             return entry->wch[mod];
         }
