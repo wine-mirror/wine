@@ -55,6 +55,7 @@ struct wm_reader
 
     CRITICAL_SECTION cs;
     QWORD start_time;
+    QWORD file_size;
 
     IStream *source_stream;
     HANDLE file;
@@ -592,26 +593,11 @@ static DWORD CALLBACK read_thread(void *arg)
     IStream *stream = reader->source_stream;
     HANDLE file = reader->file;
     size_t buffer_size = 4096;
-    uint64_t file_size;
+    uint64_t file_size = reader->file_size;
     void *data;
 
     if (!(data = malloc(buffer_size)))
         return 0;
-
-    if (file)
-    {
-        LARGE_INTEGER size;
-
-        GetFileSizeEx(file, &size);
-        file_size = size.QuadPart;
-    }
-    else
-    {
-        STATSTG stat;
-
-        IStream_Stat(stream, &stat, STATFLAG_NONAME);
-        file_size = stat.cbSize.QuadPart;
-    }
 
     TRACE("Starting read thread for reader %p.\n", reader);
 
@@ -1453,7 +1439,7 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
     timecode_GetTimecodeRangeBounds,
 };
 
-static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
+static HRESULT init_stream(struct wm_reader *reader)
 {
     wg_parser_t wg_parser;
     HRESULT hr;
@@ -1470,7 +1456,7 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
         goto out_destroy_parser;
     }
 
-    if (FAILED(hr = wg_parser_connect(reader->wg_parser, file_size)))
+    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size)))
     {
         ERR("Failed to connect parser, hr %#lx.\n", hr);
         goto out_shutdown_thread;
@@ -2134,8 +2120,9 @@ static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
     }
 
     reader->file = file;
+    reader->file_size = size.QuadPart;
 
-    if (FAILED(hr = init_stream(reader, size.QuadPart)))
+    if (FAILED(hr = init_stream(reader)))
         reader->file = NULL;
 
     LeaveCriticalSection(&reader->cs);
@@ -2166,7 +2153,9 @@ static HRESULT WINAPI reader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
     }
 
     IStream_AddRef(reader->source_stream = stream);
-    if (FAILED(hr = init_stream(reader, stat.cbSize.QuadPart)))
+    reader->file_size = stat.cbSize.QuadPart;
+
+    if (FAILED(hr = init_stream(reader)))
     {
         IStream_Release(stream);
         reader->source_stream = NULL;
