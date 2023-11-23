@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "appnotify.h"
-#include "wine/debug.h"
+#include "initguid.h"
+#include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twinapi);
 
@@ -53,4 +53,25 @@ void WINAPI UnregisterAppConstrainedChangeNotification( PAPPCONSTRAIN_REGISTRATI
 void WINAPI UnregisterAppStateChangeNotification( PAPPSTATE_REGISTRATION reg )
 {
     FIXME( "reg %p - stub.\n", reg );
+}
+
+HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID riid, void **out )
+{
+    FIXME( "clsid %s, riid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(riid), out );
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
+{
+    const WCHAR *buffer = WindowsGetStringRawBuffer( classid, NULL );
+
+    TRACE( "class %s, factory %p.\n", debugstr_hstring(classid), factory );
+
+    *factory = NULL;
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_Security_ExchangeActiveSyncProvisioning_EasClientDeviceInformation ))
+        IActivationFactory_QueryInterface( client_device_information_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }

@@ -61,8 +61,8 @@
 @ stub BiUpdateBackgroundAccessApplicationsForUser
 @ stub BiUpdateLockScreenApplications
 @ stdcall -private DllCanUnloadNow()
-@ stub DllGetActivationFactory
-@ stub DllGetClassObject
+@ stdcall -private DllGetActivationFactory(ptr ptr)
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub PsmApplyTaskCompletion
 @ stub PsmBlockAppStateChangeCompletion
 @ stub PsmDisconnect

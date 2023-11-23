@@ -1,5 +1,8 @@
 EXTRADEFS = -D_CONTRACT_GEN
 MODULE    = twinapi.appcore.dll
+IMPORTS   = combase
 
 SOURCES = \
+	classes.idl \
+	client_device_information.c \
 	main.c
