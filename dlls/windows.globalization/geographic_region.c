@@ -95,8 +95,12 @@ static HRESULT WINAPI geographic_region_get_Code( IGeographicRegion *iface, HSTR
 
 static HRESULT WINAPI geographic_region_get_CodeTwoLetter( IGeographicRegion *iface, HSTRING *value )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+
+    FIXME( "iface %p semi-stub!\n", iface );
+
+    if (!GetLocaleInfoEx( LOCALE_NAME_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buffer, ARRAY_SIZE(buffer) )) return E_INVALIDARG;
+    return WindowsCreateString( buffer, wcslen( buffer ), value );
 }
 
 static HRESULT WINAPI geographic_region_get_CodeThreeLetter( IGeographicRegion *iface, HSTRING *value )

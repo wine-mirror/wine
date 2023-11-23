@@ -317,8 +317,9 @@ static void test_GeographicRegion(void)
     IGeographicRegionFactory *geographic_region_factory;
     IGeographicRegion *geographic_region;
     IActivationFactory *factory;
-    HSTRING str;
+    HSTRING str, expect_str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
@@ -344,6 +345,10 @@ static void test_GeographicRegion(void)
     check_interface( geographic_region, &IID_IInspectable );
     check_interface( geographic_region, &IID_IAgileObject );
 
+    hr = IGeographicRegion_get_CodeTwoLetter( geographic_region, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
     ref = IGeographicRegion_Release( geographic_region );
     ok( ref == 0, "got ref %ld.\n", ref );
 
@@ -358,6 +363,16 @@ static void test_GeographicRegion(void)
 
     if (hr == S_OK)
     {
+    hr = WindowsCreateString( L"US", wcslen( L"US" ), &expect_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IGeographicRegion_get_CodeTwoLetter( geographic_region, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, expect_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( expect_str );
+
     ref = IGeographicRegion_Release( geographic_region );
     ok( ref == 0, "got ref %ld.\n", ref );
     }
