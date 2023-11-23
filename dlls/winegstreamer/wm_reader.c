@@ -555,16 +555,18 @@ static HRESULT WINAPI stream_props_GetMediaType(IWMMediaProps *iface, WM_MEDIA_T
         return E_OUTOFMEMORY;
 
     *size = sizeof(stream_mt) + stream_mt.cbFormat;
-    if (!mt)
-        return S_OK;
-    if (req_size < *size)
+    if (mt && req_size >= *size)
+    {
+        strmbase_dump_media_type(&stream_mt);
+
+        memcpy(mt, &stream_mt, sizeof(*mt));
+        memcpy(mt + 1, stream_mt.pbFormat, stream_mt.cbFormat);
+        mt->pbFormat = (BYTE *)(mt + 1);
+    }
+    FreeMediaType(&stream_mt);
+
+    if (mt && req_size < *size)
         return ASF_E_BUFFERTOOSMALL;
-
-    strmbase_dump_media_type(&stream_mt);
-
-    memcpy(mt, &stream_mt, sizeof(*mt));
-    memcpy(mt + 1, stream_mt.pbFormat, stream_mt.cbFormat);
-    mt->pbFormat = (BYTE *)(mt + 1);
     return S_OK;
 }
 
