@@ -78,30 +78,30 @@ extern void g_clear_error( GError **error );
 extern int g_file_test( const char *path, int test );
 
 #define g_new( type, count ) calloc( (count), sizeof(type) )
-static void g_free( void *ptr ) { free( ptr ); }
+static inline void g_free( void *ptr ) { free( ptr ); }
 
 typedef SRWLOCK GMutex;
-static void g_mutex_init( GMutex *mutex ) {}
-static void g_mutex_clear( GMutex *mutex ) {}
-static void g_mutex_lock( GMutex *mutex ) { AcquireSRWLockExclusive( mutex ); }
-static void g_mutex_unlock( GMutex *mutex ) { ReleaseSRWLockExclusive( mutex ); }
+static inline void g_mutex_init( GMutex *mutex ) {}
+static inline void g_mutex_clear( GMutex *mutex ) {}
+static inline void g_mutex_lock( GMutex *mutex ) { AcquireSRWLockExclusive( mutex ); }
+static inline void g_mutex_unlock( GMutex *mutex ) { ReleaseSRWLockExclusive( mutex ); }
 
 typedef CRITICAL_SECTION GRecMutex;
-static void g_rec_mutex_init( GRecMutex *mutex ) { InitializeCriticalSection( mutex ); }
-static void g_rec_mutex_clear( GRecMutex *mutex ) { DeleteCriticalSection( mutex ); }
-static void g_rec_mutex_lock( GRecMutex *mutex ) { EnterCriticalSection( mutex ); }
-static void g_rec_mutex_unlock( GRecMutex *mutex ) { LeaveCriticalSection( mutex ); }
+static inline void g_rec_mutex_init( GRecMutex *mutex ) { InitializeCriticalSection( mutex ); }
+static inline void g_rec_mutex_clear( GRecMutex *mutex ) { DeleteCriticalSection( mutex ); }
+static inline void g_rec_mutex_lock( GRecMutex *mutex ) { EnterCriticalSection( mutex ); }
+static inline void g_rec_mutex_unlock( GRecMutex *mutex ) { LeaveCriticalSection( mutex ); }
 
 typedef CONDITION_VARIABLE GCond;
-static void g_cond_init( GCond *cond ) {}
-static void g_cond_clear( GCond *cond ) {}
-static void g_cond_signal( GCond *cond ) { WakeConditionVariable( cond ); }
-static void g_cond_broadcast( GCond *cond ) { WakeAllConditionVariable( cond ); }
-static void g_cond_wait( GCond *cond, GMutex *mutex ) { SleepConditionVariableSRW( cond, mutex, INFINITE, 0 ); }
+static inline void g_cond_init( GCond *cond ) {}
+static inline void g_cond_clear( GCond *cond ) {}
+static inline void g_cond_signal( GCond *cond ) { WakeConditionVariable( cond ); }
+static inline void g_cond_broadcast( GCond *cond ) { WakeAllConditionVariable( cond ); }
+static inline void g_cond_wait( GCond *cond, GMutex *mutex ) { SleepConditionVariableSRW( cond, mutex, INFINITE, 0 ); }
 
-static void g_atomic_int_inc( int *ptr ) { InterlockedIncrement( (LONG *)ptr ); }
-static int g_atomic_int_add( int *ptr, int val ) { return InterlockedAdd( (LONG *)ptr, val ) - 1; }
-static int g_atomic_int_get( int *ptr ) { return ReadAcquire( (LONG *)ptr ); }
-static void g_atomic_int_set( int *ptr, int val ) { InterlockedExchange( (LONG *)ptr, val ); }
-static int g_atomic_int_dec_and_test( int *ptr, int val ) { return !InterlockedAdd( (LONG *)ptr, -val ); }
-static int g_atomic_int_compare_and_exchange( int *ptr, int cmp, int val ) { return InterlockedCompareExchange( (LONG *)ptr, val, cmp ) == cmp; }
+static inline void g_atomic_int_inc( int *ptr ) { InterlockedIncrement( (LONG *)ptr ); }
+static inline int g_atomic_int_add( int *ptr, int val ) { return InterlockedAdd( (LONG *)ptr, val ) - 1; }
+static inline int g_atomic_int_get( int *ptr ) { return ReadAcquire( (LONG *)ptr ); }
+static inline void g_atomic_int_set( int *ptr, int val ) { InterlockedExchange( (LONG *)ptr, val ); }
+static inline int g_atomic_int_dec_and_test( int *ptr, int val ) { return !InterlockedAdd( (LONG *)ptr, -val ); }
+static inline int g_atomic_int_compare_and_exchange( int *ptr, int cmp, int val ) { return InterlockedCompareExchange( (LONG *)ptr, val, cmp ) == cmp; }
