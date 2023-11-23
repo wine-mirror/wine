@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "15.1.0";
-my $CLDRVERSION = "43";
+my $CLDRVERSION = "44";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2023c";
 
@@ -39,7 +39,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "402cbd285f1f952fcd0834b63541d54f69d3d8f1b8f8599bf71a1a14935f82c4" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "132cdd24e479abb6e86db1429931cec3dada485fd41da39ece3c08e531c477df" },
+                sha  => "38d04cf28ccfee8b86d2feecebf99d5dc6d3317f53f87ba53b1e774f6395573c" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -533,12 +533,16 @@ my @locales =
  { name => "be-BY", lcid => 0x00000423 },
  { name => "bem" },
  { name => "bem-ZM" },
+ { name => "bew" },
+ { name => "bew-ID" },
  { name => "bez" },
  { name => "bez-TZ" },
  { name => "bg", lcid => 0x00000002, oemcp => 866, ebcdiccp => 21025, group => 5, sabbrevlangname => "BGR", sopentypelang => "BGR" },
  { name => "bg-BG", lcid => 0x00000402 },
  { name => "bin", lcid => 0x00000066, oemcp => 850, dir => "exemplars", sabbrevlangname => "ZZZ", sopentypelang => "EDO" },
  { name => "bin-NG", lcid => 0x00000466, file => "bin", dir => "exemplars" },
+ { name => "blo" },
+ { name => "blo-BJ" },
  { name => "bm", sopentypelang => "BMB" },
  { name => "bm-Latn", file => "bm" },
  { name => "bm-Latn-ML", file => "bm_ML" },
@@ -598,6 +602,8 @@ my @locales =
  { name => "co-Latn-FR", alias => "co-FR" },
  { name => "cs", lcid => 0x00000005, oemcp => 852, group => 2, sabbrevlangname => "CSY", sopentypelang => "CSY" },
  { name => "cs-CZ", lcid => 0x00000405 },
+ { name => "csw" },
+ { name => "csw-CA" },
  { name => "cu", sopentypelang => "CSL" },
  { name => "cu-RU" },
  { name => "cy", lcid => 0x00000052, oemcp => 850, ebcdiccp => 20285, sabbrevlangname => "CYM", sopentypelang => "WEL" },
@@ -683,7 +689,7 @@ my @locales =
  { name => "en-GU", oemcp => 850 },
  { name => "en-GY", oemcp => 850 },
  { name => "en-HK", lcid => 0x00003c09, oemcp => 850, sabbrevlangname => "ENH" },
- { name => "en-ID", lcid => 0x00003809, file => "en", oemcp => 850, sabbrevlangname => "ZZZ" },
+ { name => "en-ID", lcid => 0x00003809, oemcp => 850, sabbrevlangname => "ZZZ" },
  { name => "en-IE", lcid => 0x00001809, oemcp => 850, sabbrevlangname => "ENI" },
  { name => "en-IL", oemcp => 65001 },
  { name => "en-IM", oemcp => 850 },
@@ -938,6 +944,8 @@ my @locales =
 ## name => "ibb-NG", lcid => 0x00000469 },
  { name => "id", lcid => 0x00000021, oemcp => 850 },
  { name => "id-ID", lcid => 0x00000421 },
+ { name => "ie" },
+ { name => "ie-EE" },
  { name => "ig", lcid => 0x00000070, oemcp => 437 },
  { name => "ig-Latn", alias => "ig" },
  { name => "ig-Latn-NG", alias => "ig-NG" },
@@ -1084,6 +1092,8 @@ my @locales =
  { name => "mi-Latn", alias => "mi" },
  { name => "mi-Latn-NZ", alias => "mi-NZ" },
  { name => "mi-NZ", lcid => 0x00000481 },
+ { name => "mic" },
+ { name => "mic-CA" },
  { name => "mk", lcid => 0x0000002f, oemcp => 866, ebcdiccp => 500, group => 5, sabbrevlangname => "MKI" },
  { name => "mk-MK", lcid => 0x0000042f },
  { name => "ml", lcid => 0x0000004c, group => 15, sabbrevlangname => "MYM", sopentypelang => "MLR" },
@@ -1188,7 +1198,8 @@ my @locales =
  { name => "pl", lcid => 0x00000015, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "PLK", sopentypelang => "PLK" },
  { name => "pl-PL", lcid => 0x00000415 },
  { name => "prg" },
- { name => "prg-001" },
+ { name => "prg-001", file => "prg" },
+ { name => "prg-PL" },
  { name => "prs", lcid => 0x0000008c, file => "fa", inegnumber => 3, oemcp => 720, group => 13, sopentypelang => "DRI" },
  { name => "prs-AF", lcid => 0x0000048c, file => "fa_AF" },
  { name => "prs-Arab", alias => "prs" },
@@ -1296,6 +1307,8 @@ my @locales =
  { name => "si-LK", lcid => 0x0000045b },
  { name => "sk", lcid => 0x0000001b, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "SKY", sopentypelang => "SKY" },
  { name => "sk-SK", lcid => 0x0000041b },
+ { name => "skr" },
+ { name => "skr-PK" },
  { name => "sl", lcid => 0x00000024, oemcp => 852, ebcdiccp => 20880, group => 2 },
  { name => "sl-SI", lcid => 0x00000424 },
  { name => "sma", lcid => 0x0000783b, sparent => "se", ebcdiccp => 20278, sabbrevlangname => "SMB", sopentypelang => "SSM" },
@@ -1411,6 +1424,8 @@ my @locales =
  { name => "tt-RU", lcid => 0x00000444 },
  { name => "twq" },
  { name => "twq-NE" },
+ { name => "tyv" },
+ { name => "tyv-RU" },
  { name => "tzm", lcid => 0x0000005f, sortlocale => "tzm-Latn-DZ", oemcp => 850, ebcdiccp => 20297, sabbrevlangname => "TZA" },
  { name => "tzm-Latn", lcid => 0x00007c5f, territory => "DZ", file => "tzm" },
  { name => "tzm-Latn-MA", file => "tzm_MA", oemcp => 65001 },
@@ -1446,6 +1461,8 @@ my @locales =
  { name => "ve-ZA", lcid => 0x00000433 },
  { name => "vi", lcid => 0x0000002a, oemcp => 1258, slist => ",", group => 14, sabbrevlangname => "VIT", sopentypelang => "VIT" },
  { name => "vi-VN", lcid => 0x0000042a },
+ { name => "vmw" },
+ { name => "vmw-MZ" },
  { name => "vo" },
  { name => "vo-001" },
  { name => "vun" },
@@ -1463,12 +1480,15 @@ my @locales =
  { name => "x-IV_mathan", lcid => 0x0001007f, alias => "" },
  { name => "xh", lcid => 0x00000034, oemcp => 850, sopentypelang => "XHS" },
  { name => "xh-ZA", lcid => 0x00000434 },
+ { name => "xnr" },
+ { name => "xnr-IN" },
  { name => "xog" },
  { name => "xog-UG" },
  { name => "yav" },
  { name => "yav-CM" },
  { name => "yi", lcid => 0x0000003d, sabbrevlangname => "ZZZ", sopentypelang => "JII" },
- { name => "yi-001", lcid => 0x0000043d },
+ { name => "yi-001", lcid => 0x0000043d, file => "yi" },
+ { name => "yi-UA" },
  { name => "yo", lcid => 0x0000006a, oemcp => 437, sopentypelang => "YBA" },
  { name => "yo-BJ", ebcdiccp => 500 },
  { name => "yo-Latn", alias => "yo" },
@@ -1487,6 +1507,8 @@ my @locales =
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
  { name => "zgh-Tfng", file => "zgh" },
  { name => "zgh-Tfng-MA", file => "zgh_MA" },
+ { name => "za" },
+ { name => "za-CN" },
  { name => "zh", lcid => 0x00007804, ireadinglayout => 2, oemcp => 936, slist => ",", sscripts => "Hani Hans", sabbrevlangname => "CHS", sopentypelang => "ZHS", nativedigits => "0123456789" },
  { name => "zh-CN", lcid => 0x00000804, file => "zh_Hans_CN", sparent => "zh-Hans" },
  { name => "zh-CN_phoneb", lcid => 0x00050804, alias => "zh-CN" },
@@ -4743,8 +4765,8 @@ sub build_locale_data()
         my $sintlsymbol = $geo->{sintlsymbol} || "XDR";
         my $scurrency = $geo->{scurrency} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[\@alt='narrow']" );
         $scurrency ||= loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[not(\@alt)]" );
+        $scurrency ||= $geo->{sintlsymbol};
         $geo->{scurrency} = $scurrency if $scurrency;
-        $scurrency ||= $sintlsymbol;
         my $sengcurrname = $loc->{sengcurrname} || loc_query( $lcnames{en}, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" );
         my $snativecurrname = $loc->{sengcurrname} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" ) || $sengcurrname;
         my $icurrdigits = xml_query( $suppl, "/supplementalData/currencyData/fractions/info[\@iso4217='$sintlsymbol']/\@digits" );
