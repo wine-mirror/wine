@@ -34,10 +34,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-extern void sessions_lock(void) DECLSPEC_HIDDEN;
-extern void sessions_unlock(void) DECLSPEC_HIDDEN;
+extern void sessions_lock(void);
+extern void sessions_unlock(void);
 
-extern void set_stream_volumes(struct audio_client *This) DECLSPEC_HIDDEN;
+extern void set_stream_volumes(struct audio_client *This);
 
 static struct list sessions = LIST_INIT(sessions);
 

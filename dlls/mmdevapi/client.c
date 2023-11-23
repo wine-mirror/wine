@@ -40,12 +40,12 @@ typedef struct tagLANGANDCODEPAGE
     WORD wCodePage;
 } LANGANDCODEPAGE;
 
-extern void sessions_lock(void) DECLSPEC_HIDDEN;
-extern void sessions_unlock(void) DECLSPEC_HIDDEN;
+extern void sessions_lock(void);
+extern void sessions_unlock(void);
 
 extern HRESULT get_audio_session(const GUID *sessionguid, IMMDevice *device, UINT channels,
-                                 struct audio_session **out) DECLSPEC_HIDDEN;
-extern struct audio_session_wrapper *session_wrapper_create(struct audio_client *client) DECLSPEC_HIDDEN;
+                                 struct audio_session **out);
+extern struct audio_session_wrapper *session_wrapper_create(struct audio_client *client);
 
 static HANDLE main_loop_thread;
 
