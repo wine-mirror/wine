@@ -54,6 +54,7 @@ struct wm_reader
     LONG refcount;
 
     CRITICAL_SECTION cs;
+    CRITICAL_SECTION shutdown_cs;
     QWORD start_time;
     QWORD file_size;
 
@@ -601,13 +602,21 @@ static DWORD CALLBACK read_thread(void *arg)
 
     TRACE("Starting read thread for reader %p.\n", reader);
 
-    while (!reader->read_thread_shutdown)
+    while (true)
     {
         LARGE_INTEGER large_offset;
         uint64_t offset;
         ULONG ret_size;
         uint32_t size;
         HRESULT hr;
+
+        EnterCriticalSection(&reader->shutdown_cs);
+        if (reader->read_thread_shutdown)
+        {
+            LeaveCriticalSection(&reader->shutdown_cs);
+            break;
+        }
+        LeaveCriticalSection(&reader->shutdown_cs);
 
         if (!wg_parser_get_next_read_offset(reader->wg_parser, &offset, &size))
             continue;
@@ -1450,6 +1459,7 @@ static HRESULT init_stream(struct wm_reader *reader)
 
     reader->wg_parser = wg_parser;
     reader->read_thread_shutdown = false;
+
     if (!(reader->read_thread = CreateThread(NULL, 0, read_thread, reader, 0, NULL)))
     {
         hr = E_OUTOFMEMORY;
@@ -1517,7 +1527,9 @@ out_disconnect_parser:
     wg_parser_disconnect(reader->wg_parser);
 
 out_shutdown_thread:
+    EnterCriticalSection(&reader->shutdown_cs);
     reader->read_thread_shutdown = true;
+    LeaveCriticalSection(&reader->shutdown_cs);
     WaitForSingleObject(reader->read_thread, INFINITE);
     CloseHandle(reader->read_thread);
     reader->read_thread = NULL;
@@ -1728,6 +1740,8 @@ static ULONG WINAPI unknown_inner_Release(IUnknown *iface)
 
         reader->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&reader->cs);
+        reader->shutdown_cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&reader->shutdown_cs);
 
         free(reader);
     }
@@ -1781,7 +1795,9 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
 
     wg_parser_disconnect(reader->wg_parser);
 
+    EnterCriticalSection(&reader->shutdown_cs);
     reader->read_thread_shutdown = true;
+    LeaveCriticalSection(&reader->shutdown_cs);
     WaitForSingleObject(reader->read_thread, INFINITE);
     CloseHandle(reader->read_thread);
     reader->read_thread = NULL;
@@ -2557,6 +2573,8 @@ HRESULT WINAPI winegstreamer_create_wm_sync_reader(IUnknown *outer, void **out)
 
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": reader.cs");
+    InitializeCriticalSection(&object->shutdown_cs);
+    object->shutdown_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": reader.shutdown_cs");
 
     TRACE("Created reader %p.\n", object);
     *out = outer ? (void *)&object->IUnknown_inner : (void *)&object->IWMSyncReader2_iface;
