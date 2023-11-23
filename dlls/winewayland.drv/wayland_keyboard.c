@@ -119,6 +119,33 @@ static const USHORT scan2vk_qwerty[0x280] =
     EXTRA_SCAN2VK
 };
 
+static const USHORT scan2vk_azerty[0x280] =
+{
+    T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T0A, T0B, VK_OEM_4, T0D, T0E,
+    T0F, 'A', 'Z', T12, T13, T14, T15, T16, T17, T18, T19, VK_OEM_6, VK_OEM_1, T1C,
+    T1D, 'Q', T1F, T20, T21, T22, T23, T24, T25, T26, 'M', VK_OEM_3, VK_OEM_7,
+    T2A, T2B, 'W', T2D, T2E, T2F, T30, T31, VK_OEM_COMMA, VK_OEM_PERIOD, VK_OEM_2, VK_OEM_8,
+    EXTRA_SCAN2VK
+};
+
+static const USHORT scan2vk_qwertz[0x280] =
+{
+    T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T0A, T0B, VK_OEM_4, VK_OEM_6, T0E,
+    T0F, T10, T11, T12, T13, T14, 'Z', T16, T17, T18, T19, VK_OEM_1, VK_OEM_3, T1C,
+    T1D, T1E, T1F, T20, T21, T22, T23, T24, T25, T26, VK_OEM_7, VK_OEM_5, VK_OEM_2,
+    T2A, VK_OEM_8, 'Y', T2D, T2E, T2F, T30, T31, T32, T33, T34, VK_OEM_MINUS,
+    EXTRA_SCAN2VK
+};
+
+static const USHORT scan2vk_dvorak[0x280] =
+{
+    T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T0A, T0B, VK_OEM_4, VK_OEM_6, T0E,
+    T0F, VK_OEM_7, VK_OEM_COMMA, VK_OEM_PERIOD, 'P', 'Y', 'F', 'G', 'C', 'R', 'L', VK_OEM_2, VK_OEM_PLUS, T1C,
+    T1D, T1E, 'O', 'E', 'U', 'I', 'D', 'H', 'T', 'N', 'S', VK_OEM_MINUS, T29,
+    T2A, T2B, VK_OEM_1, 'Q', 'J', 'K', 'X', 'B', 'M', 'W', 'V', 'Z',
+    EXTRA_SCAN2VK
+};
+
 static WORD key2scan(UINT key)
 {
     /* base keys can be mapped directly */
@@ -373,7 +400,15 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
     layout->index = index;
     if (index) layout->layout_id = next_layout_id++;
     layout->key_names_str = names_str = (void *)ptr;
-    scan2vk = scan2vk_qwerty;
+
+    switch (lang)
+    {
+    case MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT): scan2vk = scan2vk_azerty;
+    case MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT): scan2vk = scan2vk_qwertz;
+    case MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS): scan2vk = scan2vk_qwertz;
+    default: scan2vk = scan2vk_qwerty;
+    }
+    if (strstr(xkb_layout, "dvorak")) scan2vk = scan2vk_dvorak;
 
     layout->tables.pKeyNames = layout->key_names;
     layout->tables.pKeyNamesExt = layout->key_names_ext;
