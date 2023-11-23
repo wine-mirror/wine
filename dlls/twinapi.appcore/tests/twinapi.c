@@ -115,6 +115,7 @@ static void test_AnalyticsVersionInfo(void)
 {
     static const WCHAR *class_name = RuntimeClass_Windows_System_Profile_AnalyticsInfo;
     IAnalyticsInfoStatics *analytics_info_statics;
+    IAnalyticsVersionInfo *analytics_version_info;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -138,6 +139,16 @@ static void test_AnalyticsVersionInfo(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IAnalyticsInfoStatics, (void **)&analytics_info_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IAnalyticsInfoStatics_get_VersionInfo( analytics_info_statics, &analytics_version_info );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( analytics_version_info, &IID_IUnknown, TRUE );
+    check_interface( analytics_version_info, &IID_IInspectable, TRUE );
+    check_interface( analytics_version_info, &IID_IAgileObject, TRUE );
+
+    ref = IAnalyticsVersionInfo_Release( analytics_version_info );
+    ok( ref == 0, "got ref %ld.\n", ref );
 
     ref = IAnalyticsInfoStatics_Release( analytics_info_statics );
     ok( ref == 2, "got ref %ld.\n", ref );

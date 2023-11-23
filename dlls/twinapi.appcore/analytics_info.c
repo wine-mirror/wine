@@ -21,6 +21,98 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twinapi);
 
+struct analytics_version_info
+{
+    IAnalyticsVersionInfo IAnalyticsVersionInfo_iface;
+    LONG ref;
+};
+
+static inline struct analytics_version_info *impl_from_IAnalyticsVersionInfo( IAnalyticsVersionInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct analytics_version_info, IAnalyticsVersionInfo_iface );
+}
+
+static HRESULT WINAPI analytics_version_info_QueryInterface( IAnalyticsVersionInfo *iface, REFIID iid, void **out )
+{
+    struct analytics_version_info *impl = impl_from_IAnalyticsVersionInfo( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IAnalyticsVersionInfo ))
+    {
+        IAnalyticsVersionInfo_AddRef( (*out = &impl->IAnalyticsVersionInfo_iface) );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI analytics_version_info_AddRef( IAnalyticsVersionInfo *iface )
+{
+    struct analytics_version_info *impl = impl_from_IAnalyticsVersionInfo( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI analytics_version_info_Release( IAnalyticsVersionInfo *iface )
+{
+    struct analytics_version_info *impl = impl_from_IAnalyticsVersionInfo( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI analytics_version_info_GetIids( IAnalyticsVersionInfo *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analytics_version_info_GetRuntimeClassName( IAnalyticsVersionInfo *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analytics_version_info_GetTrustLevel( IAnalyticsVersionInfo *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analytics_version_info_get_DeviceFamily( IAnalyticsVersionInfo *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI analytics_version_info_get_DeviceFamilyVersion( IAnalyticsVersionInfo *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static IAnalyticsVersionInfoVtbl analytics_version_info_vtbl =
+{
+    analytics_version_info_QueryInterface,
+    analytics_version_info_AddRef,
+    analytics_version_info_Release,
+    /* IInspectable methods */
+    analytics_version_info_GetIids,
+    analytics_version_info_GetRuntimeClassName,
+    analytics_version_info_GetTrustLevel,
+    /* IAnalyticsVersionInfo methods */
+    analytics_version_info_get_DeviceFamily,
+    analytics_version_info_get_DeviceFamilyVersion,
+};
+
 struct analytics_info_factory
 {
     IActivationFactory IActivationFactory_iface;
@@ -116,8 +208,16 @@ DEFINE_IINSPECTABLE( statics, IAnalyticsInfoStatics, struct analytics_info_facto
 
 static HRESULT WINAPI statics_get_VersionInfo( IAnalyticsInfoStatics *iface, IAnalyticsVersionInfo **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct analytics_version_info *info;
+
+    TRACE( "iface %p, out %p.\n", iface, value );
+
+    if (!(info = calloc( 1, sizeof(*info) ))) return E_OUTOFMEMORY;
+    info->IAnalyticsVersionInfo_iface.lpVtbl = &analytics_version_info_vtbl;
+    info->ref = 1;
+
+    *value = &info->IAnalyticsVersionInfo_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI statics_get_DeviceForm( IAnalyticsInfoStatics *iface, HSTRING *value )
