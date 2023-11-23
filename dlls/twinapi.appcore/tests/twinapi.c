@@ -80,6 +80,26 @@ static void test_EasClientDeviceInformation(void)
     check_interface( client_device_information, &IID_IInspectable, TRUE );
     check_interface( client_device_information, &IID_IAgileObject, FALSE );
 
+    hr = IEasClientDeviceInformation_get_OperatingSystem( client_device_information, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IEasClientDeviceInformation_get_FriendlyName( client_device_information, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IEasClientDeviceInformation_get_SystemManufacturer( client_device_information, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IEasClientDeviceInformation_get_SystemProductName( client_device_information, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IEasClientDeviceInformation_get_SystemSku( client_device_information, &str );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+
     ref = IEasClientDeviceInformation_Release( client_device_information );
     ok( ref == 0, "got ref %ld.\n", ref );
 

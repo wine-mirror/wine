@@ -96,31 +96,31 @@ static HRESULT WINAPI client_device_information_get_Id( IEasClientDeviceInformat
 static HRESULT WINAPI client_device_information_get_OperatingSystem( IEasClientDeviceInformation *iface, HSTRING *value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, value );
 }
 
 static HRESULT WINAPI client_device_information_get_FriendlyName( IEasClientDeviceInformation *iface, HSTRING *value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, value );
 }
 
 static HRESULT WINAPI client_device_information_get_SystemManufacturer( IEasClientDeviceInformation *iface, HSTRING *value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, value );
 }
 
 static HRESULT WINAPI client_device_information_get_SystemProductName( IEasClientDeviceInformation *iface, HSTRING *value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, value );
 }
 
 static HRESULT WINAPI client_device_information_get_SystemSku( IEasClientDeviceInformation *iface, HSTRING *value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, value );
 }
 
 static IEasClientDeviceInformationVtbl client_device_information_vtbl =
