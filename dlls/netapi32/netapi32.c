@@ -2774,17 +2774,17 @@ DWORD WINAPI DsEnumerateDomainTrustsW(LPWSTR server, ULONG flags, PDS_DOMAIN_TRU
     return ERROR_NO_LOGON_SERVERS;
 }
 
-DECLSPEC_HIDDEN void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
+void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
 {
     return HeapAlloc(GetProcessHeap(), 0, n);
 }
 
-DECLSPEC_HIDDEN void __RPC_USER MIDL_user_free(void __RPC_FAR *p)
+void __RPC_USER MIDL_user_free(void __RPC_FAR *p)
 {
     HeapFree(GetProcessHeap(), 0, p);
 }
 
-DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
+handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
     unsigned char *binding_str;
@@ -2798,7 +2798,7 @@ DECLSPEC_HIDDEN handle_t __RPC_USER ATSVC_HANDLE_bind(ATSVC_HANDLE str)
     return rpc_handle;
 }
 
-DECLSPEC_HIDDEN void __RPC_USER ATSVC_HANDLE_unbind(ATSVC_HANDLE ServerName, handle_t rpc_handle)
+void __RPC_USER ATSVC_HANDLE_unbind(ATSVC_HANDLE ServerName, handle_t rpc_handle)
 {
     RpcBindingFree(&rpc_handle);
 }

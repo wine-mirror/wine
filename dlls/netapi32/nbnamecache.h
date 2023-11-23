@@ -51,7 +51,7 @@ typedef struct _NBNameCacheEntry
 /* Allocates a new name cache from heap, and sets the expire time on new
  * entries to entryExpireTimeMS after a cache entry is added.
  */
-struct NBNameCache *NBNameCacheCreate(HANDLE heap, DWORD entryExpireTimeMS) DECLSPEC_HIDDEN;
+struct NBNameCache *NBNameCacheCreate(HANDLE heap, DWORD entryExpireTimeMS);
 
 /* Adds an entry to the cache.  The entry is assumed to have been allocated
  * from the same heap as the name cache; the name cache will own the entry
@@ -60,14 +60,14 @@ struct NBNameCache *NBNameCacheCreate(HANDLE heap, DWORD entryExpireTimeMS) DECL
  * same name was in the cache, the entry is replaced.  Returns TRUE on success
  * or FALSE on failure.
  */
-BOOL NBNameCacheAddEntry(struct NBNameCache *cache, NBNameCacheEntry *entry) DECLSPEC_HIDDEN;
+BOOL NBNameCacheAddEntry(struct NBNameCache *cache, NBNameCacheEntry *entry);
 
 /* Finds the entry with name name in the cache and returns a pointer to it, or
  * NULL if it isn't found.
  */
 const NBNameCacheEntry *NBNameCacheFindEntry(struct NBNameCache *cache,
- const UCHAR name[NCBNAMSZ]) DECLSPEC_HIDDEN;
+ const UCHAR name[NCBNAMSZ]);
 
-void NBNameCacheDestroy(struct NBNameCache *cache) DECLSPEC_HIDDEN;
+void NBNameCacheDestroy(struct NBNameCache *cache);
 
 #endif /* ndef __WINE_NBNAMECACHE_H */
