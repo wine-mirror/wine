@@ -220,6 +220,10 @@ static void test_AdvertisingManager(void)
     hr = IActivationFactory_QueryInterface( factory, &IID_IAdvertisingManagerStatics, (void **)&advertising_manager_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = IAdvertisingManagerStatics_get_AdvertisingId( advertising_manager_statics, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
     ref = IAdvertisingManagerStatics_Release( advertising_manager_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );

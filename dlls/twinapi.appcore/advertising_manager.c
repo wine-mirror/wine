@@ -117,7 +117,7 @@ DEFINE_IINSPECTABLE( statics, IAdvertisingManagerStatics, struct factory, IActiv
 static HRESULT WINAPI statics_get_AdvertisingId( IAdvertisingManagerStatics *iface, HSTRING *out )
 {
     FIXME( "iface %p, out %p stub!\n", iface, out );
-    return E_NOTIMPL;
+    return WindowsCreateString( NULL, 0, out );
 }
 
 static const struct IAdvertisingManagerStaticsVtbl statics_vtbl =
