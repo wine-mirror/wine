@@ -36,10 +36,10 @@
 #define PACKETLENGTH (1U<<12)   // 4kB
 
 #define readIS_L1(pSC, pIO) readIS(pSC, pIO)
-#define readIS_L2(pSC, pIO) (void)(pSC, pIO)
+#define readIS_L2(pSC, pIO) ((void)(pSC), (void)(pIO))
 
 #define writeIS_L1(pSC, pIO) writeIS(pSC, pIO)
-#define writeIS_L2(pSC, pIO) (void)(pSC, pIO)
+#define writeIS_L2(pSC, pIO) ((void)(pSC), (void)(pIO))
 
 
 //================================
@@ -54,5 +54,3 @@
 // quantization optimization
 //================================
 #define RECIP_QUANT_OPT
-
-

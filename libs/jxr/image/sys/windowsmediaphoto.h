@@ -257,20 +257,22 @@ typedef long ERR;
 #define Report(err, szExp, szFile, lLine) err = err
 #endif
 
-#define Call(exp) \
+#define Call(exp) do { \
     if (Failed(err = (exp))) \
     { \
         Report(err, #exp, __FILE__, (long)__LINE__); \
         goto Cleanup; \
     } \
-    else err = err
+    else err = err; \
+    } while(0)
 
-#define CallIgnoreError(errTmp, exp) \
+#define CallIgnoreError(errTmp, exp) do { \
     if (Failed(errTmp = (exp))) \
     { \
         Report(errTmp, #exp, __FILE__, (long)__LINE__); \
     } \
-    else errTmp = errTmp
+    else errTmp = errTmp; \
+    } while(0)
 
 
 #define Test(exp, err) Call((exp) ? WMP_errSuccess : (err))
@@ -512,4 +514,3 @@ EXTERN_C Int WMPhotoDetile(
 );
 
 #endif // WMI_WINDOWSMEDIAPHOTO_H
-

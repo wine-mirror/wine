@@ -818,20 +818,20 @@ Void freeTileInfo(CWMImageStrCodec * pSC)
     else
         freeQuantizer(pSC->pTile[0].pQuantizerDC);
 
-    if(pSC->WMISCP.sbSubband != SB_DC_ONLY)
+    if(pSC->WMISCP.sbSubband != SB_DC_ONLY) {
         if((pSC->m_param.uQPMode & 2) != 0) // not LP uniform
             for(iTile = 0; iTile <= pSC->WMISCP.cNumOfSliceMinus1V; iTile ++)
                 freeQuantizer(pSC->pTile[iTile].pQuantizerLP);
         else
             freeQuantizer(pSC->pTile[0].pQuantizerLP);
-
-    if(pSC->WMISCP.sbSubband != SB_DC_ONLY && pSC->WMISCP.sbSubband != SB_NO_HIGHPASS)
+    }
+    if(pSC->WMISCP.sbSubband != SB_DC_ONLY && pSC->WMISCP.sbSubband != SB_NO_HIGHPASS) {
         if((pSC->m_param.uQPMode & 4) != 0) // not HP uniform
             for(iTile = 0; iTile <= pSC->WMISCP.cNumOfSliceMinus1V; iTile ++)
                 freeQuantizer(pSC->pTile[iTile].pQuantizerHP);
         else
             freeQuantizer(pSC->pTile[0].pQuantizerHP);
-
+    }
     if(pSC->pTile != NULL)
         free(pSC->pTile);
 }
@@ -864,11 +864,12 @@ Void formatQuantizer(CWMIQuantizer * pQuantizer[MAX_CHANNELS], U8 cChMode, size_
     size_t iCh;
     
     for(iCh = 0; iCh < cCh; iCh ++){
-        if(iCh > 0)
+        if(iCh > 0) {
             if(cChMode == 0) // uniform
                 pQuantizer[iCh][iPos] = pQuantizer[0][iPos];
             else if(cChMode == 1) // mixed
                 pQuantizer[iCh][iPos] = pQuantizer[1][iPos];
+        }
         remapQP(pQuantizer[iCh] + iPos, (iCh > 0 && bShiftedUV == TRUE) ? SHIFTZERO - 1 : SHIFTZERO, bScaledArith);
     }
 }

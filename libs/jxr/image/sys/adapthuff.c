@@ -459,7 +459,7 @@ Void AdaptDiscriminant (CAdaptiveHuffman *pAdHuff)
     assert (t < gMaxTables[iSym]);
 
     //pAdHuff->m_iDiscriminant >>= 1;
-    pAdHuff->m_iLowerBound = (t == 0) ? (-1 << 31) : -THRESHOLD;
+    pAdHuff->m_iLowerBound = (t == 0) ? (1u << 31) : -THRESHOLD;
     pAdHuff->m_iUpperBound = (t == gMaxTables[iSym] - 1) ? (1 << 30) : THRESHOLD;
 
     switch (iSym) {
@@ -508,4 +508,3 @@ Void AdaptDiscriminant (CAdaptiveHuffman *pAdHuff)
     pAdHuff->m_pTable = pCodes;
     pAdHuff->m_pDelta = pDelta;
 }
-
