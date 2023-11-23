@@ -89,8 +89,8 @@ static HRESULT WINAPI analytics_version_info_GetTrustLevel( IAnalyticsVersionInf
 
 static HRESULT WINAPI analytics_version_info_get_DeviceFamily( IAnalyticsVersionInfo *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p\n", iface, value );
+    return WindowsCreateString( L"Windows.Desktop", wcslen( L"Windows.Desktop" ), value );
 }
 
 static HRESULT WINAPI analytics_version_info_get_DeviceFamilyVersion( IAnalyticsVersionInfo *iface, HSTRING *value )

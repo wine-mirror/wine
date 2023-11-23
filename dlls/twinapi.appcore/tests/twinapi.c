@@ -117,8 +117,9 @@ static void test_AnalyticsVersionInfo(void)
     IAnalyticsInfoStatics *analytics_info_statics;
     IAnalyticsVersionInfo *analytics_version_info;
     IActivationFactory *factory;
-    HSTRING str;
+    HSTRING str, expect_str;
     HRESULT hr;
+    INT32 res;
     LONG ref;
 
     hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
@@ -146,6 +147,16 @@ static void test_AnalyticsVersionInfo(void)
     check_interface( analytics_version_info, &IID_IUnknown, TRUE );
     check_interface( analytics_version_info, &IID_IInspectable, TRUE );
     check_interface( analytics_version_info, &IID_IAgileObject, TRUE );
+
+    hr = WindowsCreateString( L"Windows.Desktop", wcslen( L"Windows.Desktop" ), &expect_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IAnalyticsVersionInfo_get_DeviceFamily( analytics_version_info, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, expect_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( expect_str );
 
     ref = IAnalyticsVersionInfo_Release( analytics_version_info );
     ok( ref == 0, "got ref %ld.\n", ref );
