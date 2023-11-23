@@ -1091,11 +1091,15 @@ void delete_registry_key(WCHAR *reg_key_name)
     if (!(key_class = parse_key_name(reg_key_name, &key_name)))
     {
         if (key_name) *(key_name - 1) = 0;
-        error_exit(STRING_INVALID_SYSTEM_KEY, reg_key_name);
+        output_message(STRING_INVALID_SYSTEM_KEY, reg_key_name);
+        error_exit();
     }
 
     if (!key_name || !*key_name)
-        error_exit(STRING_DELETE_FAILED, reg_key_name);
+    {
+        output_message(STRING_DELETE_FAILED, reg_key_name);
+        error_exit();
+    }
 
     RegDeleteTreeW(key_class, key_name);
 }
@@ -1411,7 +1415,8 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
         if (!file)
         {
             _wperror(L"regedit");
-            error_exit(STRING_CANNOT_OPEN_FILE, file_name);
+            output_message(STRING_CANNOT_OPEN_FILE, file_name);
+            error_exit();
         }
     }
 

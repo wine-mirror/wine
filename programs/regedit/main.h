@@ -154,7 +154,7 @@ BOOL IsDefaultValue(HWND hwndLV, int i);
 
 /* regedit.c */
 void WINAPIV output_message(unsigned int id, ...);
-void WINAPIV error_exit(unsigned int id, ...);
+void WINAPIV error_exit(void);
 
 /* regproc.c */
 char *GetMultiByteString(const WCHAR *strW);
