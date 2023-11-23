@@ -270,6 +270,8 @@ void wayland_window_flush(HWND hwnd);
 
 void wayland_keyboard_init(struct wl_keyboard *wl_keyboard);
 void wayland_keyboard_deinit(void);
+const KBDTABLES *WAYLAND_KbdLayerDescriptor(HKL hkl);
+void WAYLAND_ReleaseKbdTables(const KBDTABLES *);
 
 /**********************************************************************
  *          Wayland pointer

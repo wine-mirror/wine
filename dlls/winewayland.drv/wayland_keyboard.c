@@ -41,18 +41,83 @@ struct layout
 {
     struct list entry;
     char *xkb_layout;
+    LONG ref;
 
     int xkb_group;
     LANGID lang;
     WORD index;
     /* "Layout Id", used by NtUserGetKeyboardLayoutName / LoadKeyboardLayoutW */
     WORD layout_id;
+
+    KBDTABLES tables;
+    VSC_LPWSTR key_names[0x100];
+    VSC_LPWSTR key_names_ext[0x200];
+    WCHAR *key_names_str;
+
+    USHORT vsc2vk[0x100];
+    VSC_VK vsc2vk_e0[0x100];
+    VSC_VK vsc2vk_e1[0x100];
+
+    VK_TO_WCHAR_TABLE vk_to_wchar_table[2];
+    VK_TO_WCHARS8 vk_to_wchars8[0x100];
+    VK_TO_BIT vk2bit[4];
+    union
+    {
+        MODIFIERS modifiers;
+        char modifiers_buf[offsetof(MODIFIERS, ModNumber[8])];
+    };
 };
 
-/* These are only used from the wayland event thread and don't need locking */
+static pthread_mutex_t xkb_layouts_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list xkb_layouts = LIST_INIT(xkb_layouts);
+
+/* These are only used from the wayland event thread and don't need locking */
 static struct rxkb_context *rxkb_context;
 static HKL keyboard_hkl; /* the HKL matching the currently active xkb group */
+
+static void xkb_layout_addref(struct layout *layout)
+{
+    InterlockedIncrement(&layout->ref);
+}
+
+static void xkb_layout_release(struct layout *layout)
+{
+    if (!InterlockedDecrement(&layout->ref))
+        free(layout);
+}
+
+#define EXTRA_SCAN2VK \
+    T36 | KBDEXT, T37 | KBDMULTIVK, \
+    T38, T39, T3A, T3B, T3C, T3D, T3E, T3F, \
+    T40, T41, T42, T43, T44, T45 | KBDEXT | KBDMULTIVK, T46 | KBDMULTIVK, T47 | KBDNUMPAD | KBDSPECIAL, \
+    T48 | KBDNUMPAD | KBDSPECIAL, T49 | KBDNUMPAD | KBDSPECIAL, T4A, T4B | KBDNUMPAD | KBDSPECIAL, \
+    T4C | KBDNUMPAD | KBDSPECIAL, T4D | KBDNUMPAD | KBDSPECIAL, T4E, T4F | KBDNUMPAD | KBDSPECIAL, \
+    T50 | KBDNUMPAD | KBDSPECIAL, T51 | KBDNUMPAD | KBDSPECIAL, T52 | KBDNUMPAD | KBDSPECIAL, \
+    T53 | KBDNUMPAD | KBDSPECIAL, T54, T55, T56, T57, \
+    T58, T59, T5A, T5B, T5C, T5D, T5E, T5F, \
+    T60, T61, T62, T63, T64, T65, T66, T67, \
+    T68, T69, T6A, T6B, T6C, T6D, T6E, T6F, \
+    T70, T71, T72, T73, T74, T75, T76, T77, \
+    T78, T79, T7A, T7B, T7C, T7D, T7E, \
+    [0x110] = X10 | KBDEXT, [0x119] = X19 | KBDEXT, [0x11d] = X1D | KBDEXT, [0x120] = X20 | KBDEXT, \
+    [0x121] = X21 | KBDEXT, [0x122] = X22 | KBDEXT, [0x124] = X24 | KBDEXT, [0x12e] = X2E | KBDEXT, \
+    [0x130] = X30 | KBDEXT, [0x132] = X32 | KBDEXT, [0x135] = X35 | KBDEXT, [0x137] = X37 | KBDEXT, \
+    [0x138] = X38 | KBDEXT, [0x147] = X47 | KBDEXT, [0x148] = X48 | KBDEXT, [0x149] = X49 | KBDEXT, \
+    [0x14b] = X4B | KBDEXT, [0x14d] = X4D | KBDEXT, [0x14f] = X4F | KBDEXT, [0x150] = X50 | KBDEXT, \
+    [0x151] = X51 | KBDEXT, [0x152] = X52 | KBDEXT, [0x153] = X53 | KBDEXT, [0x15b] = X5B | KBDEXT, \
+    [0x15c] = X5C | KBDEXT, [0x15d] = X5D | KBDEXT, [0x15f] = X5F | KBDEXT, [0x165] = X65 | KBDEXT, \
+    [0x166] = X66 | KBDEXT, [0x167] = X67 | KBDEXT, [0x168] = X68 | KBDEXT, [0x169] = X69 | KBDEXT, \
+    [0x16a] = X6A | KBDEXT, [0x16b] = X6B | KBDEXT, [0x16c] = X6C | KBDEXT, [0x16d] = X6D | KBDEXT, \
+    [0x11c] = X1C | KBDEXT, [0x146] = X46 | KBDEXT, [0x21d] = Y1D,
+
+static const USHORT scan2vk_qwerty[0x280] =
+{
+    T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T0A, T0B, T0C, T0D, T0E,
+    T0F, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T1A, T1B, T1C,
+    T1D, T1E, T1F, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29,
+    T2A, T2B, T2C, T2D, T2E, T2F, T30, T31, T32, T33, T34, T35,
+    EXTRA_SCAN2VK
+};
 
 static WORD key2scan(UINT key)
 {
@@ -258,33 +323,173 @@ static HKL get_layout_hkl(struct layout *layout, LCID locale)
     else return (HKL)(UINT_PTR)MAKELONG(locale, 0xf000 | layout->layout_id);
 }
 
-static void add_xkb_layout(const char *xkb_layout, xkb_layout_index_t xkb_group, LANGID lang)
+static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap,
+                            xkb_layout_index_t xkb_group, LANGID lang)
 {
     static WORD next_layout_id = 1;
 
+    unsigned int mod, keyc, len, names_len, min_keycode, max_keycode;
+    struct xkb_state *xkb_state = xkb_state_new(xkb_keymap);
+    xkb_mod_mask_t shift_mask, control_mask, altgr_mask;
+    VSC_LPWSTR *names_entry, *names_ext_entry;
+    VSC_VK *vsc2vk_e0_entry, *vsc2vk_e1_entry;
+    VK_TO_WCHARS8 *vk2wchars_entry;
     struct layout *layout;
-    unsigned int len;
+    const USHORT *scan2vk;
+    WCHAR *names_str;
     WORD index = 0;
     char *ptr;
 
-    TRACE("xkb_layout=%s xkb_group=%u lang=%04x\n", xkb_layout, xkb_group, lang);
+    min_keycode = xkb_keymap_min_keycode(xkb_keymap);
+    max_keycode = xkb_keymap_max_keycode(xkb_keymap);
+
+    TRACE("xkb_layout=%s xkb_keymap=%p xkb_group=%u lang=%04x\n", xkb_layout, xkb_keymap, xkb_group, lang);
 
     LIST_FOR_EACH_ENTRY(layout, &xkb_layouts, struct layout, entry)
         if (layout->lang == lang) index++;
 
+    for (names_len = 0, keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        const xkb_keysym_t *keysym;
+        if (!xkb_keymap_key_get_syms_by_level(xkb_keymap, keyc, xkb_group, 0, &keysym)) continue;
+        names_len += xkb_keysym_get_name(*keysym, NULL, 0) + 1;
+    }
+
+    names_len *= sizeof(WCHAR);
     len = strlen(xkb_layout) + 1;
-    if (!(layout = calloc(1, sizeof(*layout) + len)))
+    if (!(layout = calloc(1, sizeof(*layout) + names_len + len)))
     {
         ERR("Failed to allocate memory for Xkb layout entry\n");
         return;
     }
-    ptr = (char *)(layout + 1);
+    layout->ref = 1;
 
+    ptr = (char *)(layout + 1);
     layout->xkb_layout = strcpy(ptr, xkb_layout);
+    ptr += len;
+
     layout->xkb_group = xkb_group;
     layout->lang = lang;
     layout->index = index;
     if (index) layout->layout_id = next_layout_id++;
+    layout->key_names_str = names_str = (void *)ptr;
+    scan2vk = scan2vk_qwerty;
+
+    layout->tables.pKeyNames = layout->key_names;
+    layout->tables.pKeyNamesExt = layout->key_names_ext;
+    layout->tables.bMaxVSCtoVK = 0xff;
+    layout->tables.pusVSCtoVK = layout->vsc2vk;
+    layout->tables.pVSCtoVK_E0 = layout->vsc2vk_e0;
+    layout->tables.pVSCtoVK_E1 = layout->vsc2vk_e1;
+    layout->tables.pCharModifiers = &layout->modifiers;
+    layout->tables.pVkToWcharTable = layout->vk_to_wchar_table;
+    layout->tables.fLocaleFlags = MAKELONG(KLLF_ALTGR, KBD_VERSION);
+
+    layout->vk_to_wchar_table[0].pVkToWchars = (VK_TO_WCHARS1 *)layout->vk_to_wchars8;
+    layout->vk_to_wchar_table[0].cbSize = sizeof(*layout->vk_to_wchars8);
+    layout->vk_to_wchar_table[0].nModifications = 8;
+
+    layout->vk2bit[0].Vk = VK_SHIFT;
+    layout->vk2bit[0].ModBits = KBDSHIFT;
+    layout->vk2bit[1].Vk = VK_CONTROL;
+    layout->vk2bit[1].ModBits = KBDCTRL;
+    layout->vk2bit[2].Vk = VK_MENU;
+    layout->vk2bit[2].ModBits = KBDALT;
+
+    layout->modifiers.pVkToBit = layout->vk2bit;
+    for (mod = 0; mod <= (KBDSHIFT | KBDCTRL | KBDALT); ++mod)
+    {
+        BYTE num = 0;
+        if (mod & KBDSHIFT) num |= 1 << 0;
+        if (mod & KBDCTRL)  num |= 1 << 1;
+        if (mod & KBDALT)   num |= 1 << 2;
+        layout->modifiers.ModNumber[mod] = num;
+    }
+    layout->modifiers.wMaxModBits = 7;
+
+    names_entry = layout->tables.pKeyNames;
+    names_ext_entry = layout->tables.pKeyNamesExt;
+    vsc2vk_e0_entry = layout->tables.pVSCtoVK_E0;
+    vsc2vk_e1_entry = layout->tables.pVSCtoVK_E1;
+    vk2wchars_entry = layout->vk_to_wchars8;
+
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        WORD scan = key2scan(keyc - 8);
+        const xkb_keysym_t *keysym;
+        VSC_LPWSTR *entry;
+        char name[256];
+
+        if (!xkb_keymap_key_get_syms_by_level(xkb_keymap, keyc, xkb_group, 0, &keysym)) continue;
+        len = xkb_keysym_get_name(*keysym, name, sizeof(name));
+
+        if (!(scan & 0xff) || !len) continue;
+        if (!(scan & 0x300)) entry = names_entry++;
+        else entry = names_ext_entry++;
+
+        entry->vsc = (BYTE)scan;
+        entry->pwsz = names_str;
+        names_str += ntdll_umbstowcs(name, len + 1, entry->pwsz, len + 1);
+
+        TRACE("keyc %#04x, scan %#04x -> name %s\n", keyc, scan, debugstr_w(entry->pwsz));
+    }
+
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        WORD scan = key2scan(keyc - 8), vkey = scan2vk[scan];
+        VSC_VK *entry = NULL;
+
+        if (!(scan & 0xff) || !vkey) continue;
+        if (scan & 0x100) entry = vsc2vk_e0_entry++;
+        else if (scan & 0x200) entry = vsc2vk_e1_entry++;
+        else layout->tables.pusVSCtoVK[scan & 0xff] = vkey;
+
+        if (entry)
+        {
+            entry->Vsc = scan & 0xff;
+            entry->Vk = vkey;
+        }
+
+        TRACE("keyc %#04x, scan %#05x -> vkey %#06x\n", keyc, scan, vkey);
+    }
+
+    shift_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_SHIFT);
+    control_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_CTRL);
+    altgr_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, "Mod5");
+
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        WORD scan = key2scan(keyc - 8), vkey = scan2vk[scan];
+        VK_TO_WCHARS8 vkey2wch = {.VirtualKey = vkey};
+        BOOL found = FALSE;
+        unsigned int mod;
+
+        for (mod = 0; mod < 8; ++mod)
+        {
+            xkb_mod_mask_t mod_mask = 0;
+            uint32_t ret;
+
+            if (mod & (1 << 0)) mod_mask |= shift_mask;
+            if (mod & (1 << 1)) mod_mask |= control_mask;
+            /* Windows uses VK_CTRL + VK_MENU for AltGr, we cannot combine Ctrl and Alt */
+            if (mod & (1 << 2)) mod_mask = (mod_mask & ~control_mask) | altgr_mask;
+
+            xkb_state_update_mask(xkb_state, 0, 0, mod_mask, 0, 0, xkb_group);
+
+            if (mod_mask & control_mask) vkey2wch.wch[mod] = WCH_NONE; /* on Windows CTRL+key behave specifically */
+            else if (!(ret = xkb_state_key_get_utf32(xkb_state, keyc))) vkey2wch.wch[mod] = WCH_NONE;
+            else vkey2wch.wch[mod] = ret;
+
+            if (vkey2wch.wch[mod] != WCH_NONE) found = TRUE;
+        }
+
+        if (!found) continue;
+
+        TRACE("vkey %#06x -> %s\n", vkey2wch.VirtualKey, debugstr_wn(vkey2wch.wch, 8));
+        *vk2wchars_entry++ = vkey2wch;
+    }
+
+    xkb_state_unref(xkb_state);
 
     TRACE("Created layout entry=%p index=%04x lang=%04x id=%04x\n", layout, layout->index, layout->lang, layout->layout_id);
     list_add_tail(&xkb_layouts, &layout->entry);
@@ -297,6 +502,8 @@ static void set_current_xkb_group(xkb_layout_index_t xkb_group)
     struct layout *layout;
     HKL hkl;
 
+    pthread_mutex_lock(&xkb_layouts_mutex);
+
     LIST_FOR_EACH_ENTRY(layout, &xkb_layouts, struct layout, entry)
         if (layout->xkb_group == xkb_group) break;
     if (&layout->entry != &xkb_layouts)
@@ -306,6 +513,8 @@ static void set_current_xkb_group(xkb_layout_index_t xkb_group)
         ERR("Failed to find Xkb Layout for group %d\n", xkb_group);
         hkl = keyboard_hkl;
     }
+
+    pthread_mutex_unlock(&xkb_layouts_mutex);
 
     if (hkl == keyboard_hkl) return;
     keyboard_hkl = hkl;
@@ -381,10 +590,12 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
         return;
     }
 
+    pthread_mutex_lock(&xkb_layouts_mutex);
+
     LIST_FOR_EACH_ENTRY_SAFE(entry, next, &xkb_layouts, struct layout, entry)
     {
         list_remove(&entry->entry);
-        free(entry);
+        xkb_layout_release(entry);
     }
 
     for (xkb_group = 0; xkb_group < xkb_keymap_num_layouts(xkb_keymap); xkb_group++)
@@ -403,8 +614,10 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
 
         lang = langid_from_xkb_layout(layout, layout_len);
         snprintf(buffer, ARRAY_SIZE(buffer), "%.*s:%.*s", layout_len, layout, variant_len, variant);
-        add_xkb_layout(buffer, xkb_group, lang);
+        add_xkb_layout(buffer, xkb_keymap, xkb_group, lang);
     }
+
+    pthread_mutex_unlock(&xkb_layouts_mutex);
 
     if ((xkb_state = xkb_state_new(xkb_keymap)))
     {
@@ -462,6 +675,17 @@ static void keyboard_handle_leave(void *data, struct wl_keyboard *wl_keyboard,
     /* FIXME: update foreground window as well */
 }
 
+static void send_right_control(HWND hwnd, uint32_t state)
+{
+    INPUT input = {0};
+    input.type = INPUT_KEYBOARD;
+    input.ki.wScan = key2scan(KEY_RIGHTCTRL);
+    input.ki.wVk = VK_RCONTROL;
+    input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;
+    __wine_send_input(hwnd, &input, NULL);
+}
+
 static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
                                 uint32_t serial, uint32_t time, uint32_t key,
                                 uint32_t state)
@@ -473,6 +697,9 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
     if (!(hwnd = wayland_keyboard_get_focused_hwnd())) return;
 
     TRACE_(key)("serial=%u hwnd=%p key=%d scan=%#x state=%#x\n", serial, hwnd, key, scan, state);
+
+    /* NOTE: Windows normally sends VK_CONTROL + VK_MENU only if the layout has KLLF_ALTGR */
+    if (key == KEY_RIGHTALT) send_right_control(hwnd, state);
 
     input.type = INPUT_KEYBOARD;
     input.ki.wScan = scan & 0xff;
@@ -592,4 +819,42 @@ void wayland_keyboard_deinit(void)
         rxkb_context_unref(rxkb_context);
         rxkb_context = NULL;
     }
+}
+
+/***********************************************************************
+ *    KbdLayerDescriptor (WAYLANDDRV.@)
+ */
+const KBDTABLES *WAYLAND_KbdLayerDescriptor(HKL hkl)
+{
+    struct layout *layout;
+
+    TRACE("hkl=%p\n", hkl);
+
+    pthread_mutex_lock(&xkb_layouts_mutex);
+
+    LIST_FOR_EACH_ENTRY(layout, &xkb_layouts, struct layout, entry)
+        if (hkl == get_layout_hkl(layout, LOWORD(hkl))) break;
+    if (&layout->entry == &xkb_layouts) layout = NULL;
+    else xkb_layout_addref(layout);
+
+    pthread_mutex_unlock(&xkb_layouts_mutex);
+
+    if (!layout)
+    {
+        WARN("Failed to find Xkb layout for HKL %p\n", hkl);
+        return NULL;
+    }
+
+    TRACE("Found layout entry %p, hkl %04x%04x id %04x\n",
+           layout, layout->index, layout->lang, layout->layout_id);
+    return &layout->tables;
+}
+
+/***********************************************************************
+ *    ReleaseKbdTables (WAYLANDDRV.@)
+ */
+void WAYLAND_ReleaseKbdTables(const KBDTABLES *tables)
+{
+    struct layout *layout = CONTAINING_RECORD(tables, struct layout, tables);
+    xkb_layout_release(layout);
 }
