@@ -25,6 +25,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "winstring.h"
+#include "winternl.h"
 #include "roapi.h"
 
 #define WIDL_using_Windows_Foundation
@@ -118,6 +119,9 @@ static void test_AnalyticsVersionInfo(void)
     IAnalyticsVersionInfo *analytics_version_info;
     IActivationFactory *factory;
     HSTRING str, expect_str;
+    DWORD revision, size;
+    WCHAR buffer[32];
+    UINT64 version;
     HRESULT hr;
     INT32 res;
     LONG ref;
@@ -155,6 +159,25 @@ static void test_AnalyticsVersionInfo(void)
     hr = WindowsCompareStringOrdinal( str, expect_str, &res );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( !res, "got unexpected string %s.\n", debugstr_hstring(str) );
+    WindowsDeleteString( str );
+    WindowsDeleteString( expect_str );
+
+    if (RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"UBR",
+                      RRF_RT_REG_DWORD, NULL, &revision, &size ))
+        revision = 0;
+    version = NtCurrentTeb()->Peb->OSMajorVersion & 0xffff;
+    version = (version << 16) | (NtCurrentTeb()->Peb->OSMinorVersion & 0xffff);
+    version = (version << 16) | (NtCurrentTeb()->Peb->OSBuildNumber & 0xffff);
+    version = (version << 16) | revision;
+
+    res = swprintf( buffer, ARRAY_SIZE(buffer), L"%I64u", version );
+    hr = WindowsCreateString( buffer, res, &expect_str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IAnalyticsVersionInfo_get_DeviceFamilyVersion( analytics_version_info, &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = WindowsCompareStringOrdinal( str, expect_str, &res );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !res || broken(revision == 0) /* Win11 */, "got unexpected string %s.\n", debugstr_hstring(str) );
     WindowsDeleteString( str );
     WindowsDeleteString( expect_str );
 

@@ -1,6 +1,6 @@
 EXTRADEFS = -D_CONTRACT_GEN
 MODULE    = twinapi.appcore.dll
-IMPORTS   = combase
+IMPORTS   = combase advapi32
 
 SOURCES = \
 	analytics_info.c \

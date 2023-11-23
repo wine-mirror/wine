@@ -19,6 +19,8 @@
 
 #include "private.h"
 
+#include "winternl.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(twinapi);
 
 struct analytics_version_info
@@ -95,8 +97,23 @@ static HRESULT WINAPI analytics_version_info_get_DeviceFamily( IAnalyticsVersion
 
 static HRESULT WINAPI analytics_version_info_get_DeviceFamilyVersion( IAnalyticsVersionInfo *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    DWORD revision, size;
+    WCHAR buffer[32];
+    UINT64 version;
+    UINT len;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"UBR",
+                      RRF_RT_REG_DWORD, NULL, &revision, &size ))
+        revision = 0;
+    version = NtCurrentTeb()->Peb->OSMajorVersion & 0xffff;
+    version = (version << 16) | (NtCurrentTeb()->Peb->OSMinorVersion & 0xffff);
+    version = (version << 16) | (NtCurrentTeb()->Peb->OSBuildNumber & 0xffff);
+    version = (version << 16) | revision;
+
+    len = swprintf( buffer, ARRAY_SIZE(buffer), L"%I64u", version );
+    return WindowsCreateString( buffer, len, value );
 }
 
 static IAnalyticsVersionInfoVtbl analytics_version_info_vtbl =
