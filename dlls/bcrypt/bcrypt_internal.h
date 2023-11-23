@@ -39,9 +39,9 @@ typedef struct
     UCHAR buf[64];
 } SHA256_CTX;
 
-void sha256_init(SHA256_CTX *ctx) DECLSPEC_HIDDEN;
-void sha256_update(SHA256_CTX *ctx, const UCHAR *buffer, ULONG len) DECLSPEC_HIDDEN;
-void sha256_finalize(SHA256_CTX *ctx, UCHAR *buffer) DECLSPEC_HIDDEN;
+void sha256_init(SHA256_CTX *ctx);
+void sha256_update(SHA256_CTX *ctx, const UCHAR *buffer, ULONG len);
+void sha256_finalize(SHA256_CTX *ctx, UCHAR *buffer);
 
 typedef struct
 {
@@ -50,22 +50,22 @@ typedef struct
   UCHAR buf[128];
 } SHA512_CTX;
 
-void sha512_init(SHA512_CTX *ctx) DECLSPEC_HIDDEN;
-void sha512_update(SHA512_CTX *ctx, const UCHAR *buffer, ULONG len) DECLSPEC_HIDDEN;
-void sha512_finalize(SHA512_CTX *ctx, UCHAR *buffer) DECLSPEC_HIDDEN;
+void sha512_init(SHA512_CTX *ctx);
+void sha512_update(SHA512_CTX *ctx, const UCHAR *buffer, ULONG len);
+void sha512_finalize(SHA512_CTX *ctx, UCHAR *buffer);
 
-void sha384_init(SHA512_CTX *ctx) DECLSPEC_HIDDEN;
+void sha384_init(SHA512_CTX *ctx);
 #define sha384_update sha512_update
-void sha384_finalize(SHA512_CTX *ctx, UCHAR *buffer) DECLSPEC_HIDDEN;
+void sha384_finalize(SHA512_CTX *ctx, UCHAR *buffer);
 
 typedef struct {
     unsigned char chksum[16], X[48], buf[16];
     unsigned long curlen;
 } MD2_CTX;
 
-void md2_init(MD2_CTX *ctx) DECLSPEC_HIDDEN;
-void md2_update(MD2_CTX *ctx, const unsigned char *buf, ULONG len) DECLSPEC_HIDDEN;
-void md2_finalize(MD2_CTX *ctx, unsigned char *hash) DECLSPEC_HIDDEN;
+void md2_init(MD2_CTX *ctx);
+void md2_update(MD2_CTX *ctx, const unsigned char *buf, ULONG len);
+void md2_finalize(MD2_CTX *ctx, unsigned char *hash);
 
 /* Definitions from advapi32 */
 typedef struct tagMD4_CTX {
