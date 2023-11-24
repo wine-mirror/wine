@@ -37,6 +37,50 @@ WINE_DEFAULT_DEBUG_CHANNEL(unwind);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
+static ULONG ctx_flags_x64_to_arm( ULONG flags )
+{
+    ULONG ret = CONTEXT_ARM64;
+
+    flags &= ~CONTEXT_AMD64;
+    if (flags & CONTEXT_AMD64_CONTROL) ret |= CONTEXT_ARM64_CONTROL;
+    if (flags & CONTEXT_AMD64_INTEGER) ret |= CONTEXT_ARM64_INTEGER;
+    if (flags & CONTEXT_AMD64_FLOATING_POINT) ret |= CONTEXT_ARM64_FLOATING_POINT;
+    return ret;
+}
+
+static ULONG ctx_flags_arm_to_x64( ULONG flags )
+{
+    ULONG ret = CONTEXT_AMD64;
+
+    flags &= ~CONTEXT_ARM64;
+    if (flags & CONTEXT_ARM64_CONTROL) ret |= CONTEXT_AMD64_CONTROL;
+    if (flags & CONTEXT_ARM64_INTEGER) ret |= CONTEXT_AMD64_INTEGER;
+    if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= CONTEXT_AMD64_FLOATING_POINT;
+    return ret;
+}
+
+static UINT eflags_to_cpsr( UINT eflags )
+{
+    UINT ret = 0;
+
+    if (eflags & 0x0001) ret |= 0x20000000;  /* carry */
+    if (eflags & 0x0040) ret |= 0x40000000;  /* zero */
+    if (eflags & 0x0080) ret |= 0x80000000;  /* negative */
+    if (eflags & 0x0800) ret |= 0x10000000;  /* overflow */
+    return ret;
+}
+
+static UINT cpsr_to_eflags( UINT cpsr )
+{
+    UINT ret = 0;
+
+    if (cpsr & 0x10000000) ret |= 0x0800;  /* overflow */
+    if (cpsr & 0x20000000) ret |= 0x0001;  /* carry */
+    if (cpsr & 0x40000000) ret |= 0x0040;  /* zero */
+    if (cpsr & 0x80000000) ret |= 0x0080;  /* negative */
+    return ret;
+}
+
 static UINT64 mxcsr_to_fpcsr( UINT mxcsr )
 {
     UINT fpcr = 0, fpsr = 0;
@@ -83,6 +127,105 @@ static UINT fpcsr_to_mxcsr( UINT fpcr, UINT fpsr )
     if (fpcr & 0x0800000) ret |= 0x2000;   /* round down */
     if (fpcr & 0x1000000) ret |= 0x8000;   /* flush to zero */
     return ret;
+}
+
+static void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const CONTEXT *ctx )
+{
+    ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)ctx;
+    UINT64 fpcsr;
+
+    arm_ctx->ContextFlags = ctx_flags_x64_to_arm( ec_ctx->ContextFlags );
+    arm_ctx->Cpsr = eflags_to_cpsr( ec_ctx->AMD64_EFlags );
+    arm_ctx->X0   = ec_ctx->X0;
+    arm_ctx->X1   = ec_ctx->X1;
+    arm_ctx->X2   = ec_ctx->X2;
+    arm_ctx->X3   = ec_ctx->X3;
+    arm_ctx->X4   = ec_ctx->X4;
+    arm_ctx->X5   = ec_ctx->X5;
+    arm_ctx->X6   = ec_ctx->X6;
+    arm_ctx->X7   = ec_ctx->X7;
+    arm_ctx->X8   = ec_ctx->X8;
+    arm_ctx->X9   = ec_ctx->X9;
+    arm_ctx->X10  = ec_ctx->X10;
+    arm_ctx->X11  = ec_ctx->X11;
+    arm_ctx->X12  = ec_ctx->X12;
+    arm_ctx->X13  = 0;
+    arm_ctx->X14  = 0;
+    arm_ctx->X15  = ec_ctx->X15;
+    arm_ctx->X16  = ec_ctx->X16_0 | ((DWORD64)ec_ctx->X16_1 << 16) | ((DWORD64)ec_ctx->X16_2 << 32) | ((DWORD64)ec_ctx->X16_3 << 48);
+    arm_ctx->X17  = ec_ctx->X17_0 | ((DWORD64)ec_ctx->X17_1 << 16) | ((DWORD64)ec_ctx->X17_2 << 32) | ((DWORD64)ec_ctx->X17_3 << 48);
+    arm_ctx->X18  = 0;
+    arm_ctx->X19  = ec_ctx->X19;
+    arm_ctx->X20  = ec_ctx->X20;
+    arm_ctx->X21  = ec_ctx->X21;
+    arm_ctx->X22  = ec_ctx->X22;
+    arm_ctx->X23  = 0;
+    arm_ctx->X24  = 0;
+    arm_ctx->X25  = ec_ctx->X25;
+    arm_ctx->X26  = ec_ctx->X26;
+    arm_ctx->X27  = ec_ctx->X27;
+    arm_ctx->X28  = 0;
+    arm_ctx->Fp   = ec_ctx->Fp;
+    arm_ctx->Lr   = ec_ctx->Lr;
+    arm_ctx->Sp   = ec_ctx->Sp;
+    arm_ctx->Pc   = ec_ctx->Pc;
+    memcpy( arm_ctx->V, ec_ctx->V, 16 * sizeof(arm_ctx->V[0]) );
+    memset( arm_ctx->V + 16, 0, sizeof(*arm_ctx) - offsetof( ARM64_NT_CONTEXT, V[16] ));
+    fpcsr = mxcsr_to_fpcsr( ec_ctx->AMD64_MxCsr );
+    arm_ctx->Fpcr = fpcsr;
+    arm_ctx->Fpsr = fpcsr >> 32;
+}
+
+static void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx )
+{
+    ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)ctx;
+
+    memset( ec_ctx, 0, sizeof(*ec_ctx) );
+    ec_ctx->ContextFlags = ctx_flags_arm_to_x64( arm_ctx->ContextFlags );
+    ec_ctx->AMD64_SegCs  = 0x33;
+    ec_ctx->AMD64_SegDs  = 0x2b;
+    ec_ctx->AMD64_SegEs  = 0x2b;
+    ec_ctx->AMD64_SegFs  = 0x53;
+    ec_ctx->AMD64_SegGs  = 0x2b;
+    ec_ctx->AMD64_SegSs  = 0x2b;
+    ec_ctx->AMD64_EFlags = cpsr_to_eflags( arm_ctx->Cpsr );
+    ec_ctx->AMD64_MxCsr  = ec_ctx->AMD64_MxCsr_copy = fpcsr_to_mxcsr( arm_ctx->Fpcr, arm_ctx->Fpsr );
+
+    ec_ctx->X8    = arm_ctx->X8;
+    ec_ctx->X0    = arm_ctx->X0;
+    ec_ctx->X1    = arm_ctx->X1;
+    ec_ctx->X27   = arm_ctx->X27;
+    ec_ctx->Sp    = arm_ctx->Sp;
+    ec_ctx->Fp    = arm_ctx->Fp;
+    ec_ctx->X25   = arm_ctx->X25;
+    ec_ctx->X26   = arm_ctx->X26;
+    ec_ctx->X2    = arm_ctx->X2;
+    ec_ctx->X3    = arm_ctx->X3;
+    ec_ctx->X4    = arm_ctx->X4;
+    ec_ctx->X5    = arm_ctx->X5;
+    ec_ctx->X19   = arm_ctx->X19;
+    ec_ctx->X20   = arm_ctx->X20;
+    ec_ctx->X21   = arm_ctx->X21;
+    ec_ctx->X22   = arm_ctx->X22;
+    ec_ctx->Pc    = arm_ctx->Pc;
+    ec_ctx->Lr    = arm_ctx->Lr;
+    ec_ctx->X6    = arm_ctx->X6;
+    ec_ctx->X7    = arm_ctx->X7;
+    ec_ctx->X9    = arm_ctx->X9;
+    ec_ctx->X10   = arm_ctx->X10;
+    ec_ctx->X11   = arm_ctx->X11;
+    ec_ctx->X12   = arm_ctx->X12;
+    ec_ctx->X15   = arm_ctx->X15;
+    ec_ctx->X16_0 = arm_ctx->X16;
+    ec_ctx->X16_1 = arm_ctx->X16 >> 16;
+    ec_ctx->X16_2 = arm_ctx->X16 >> 32;
+    ec_ctx->X16_3 = arm_ctx->X16 >> 48;
+    ec_ctx->X17_0 = arm_ctx->X17;
+    ec_ctx->X17_1 = arm_ctx->X17 >> 16;
+    ec_ctx->X17_2 = arm_ctx->X17 >> 32;
+    ec_ctx->X17_3 = arm_ctx->X17 >> 48;
+
+    memcpy( ec_ctx->V, arm_ctx->V, sizeof(ec_ctx->V) );
 }
 
 
@@ -244,9 +387,17 @@ NTSTATUS SYSCALL_API NtConnectPort( HANDLE *handle, UNICODE_STRING *name, SECURI
     __ASM_SYSCALL_FUNC( __id_NtConnectPort );
 }
 
-NTSTATUS SYSCALL_API NtContinue( CONTEXT *context, BOOLEAN alertable )
+static NTSTATUS SYSCALL_API syscall_NtContinue( ARM64_NT_CONTEXT *context, BOOLEAN alertable )
 {
     __ASM_SYSCALL_FUNC( __id_NtContinue );
+}
+
+NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
+{
+    ARM64_NT_CONTEXT arm_ctx;
+
+    context_x64_to_arm( &arm_ctx, context );
+    return syscall_NtContinue( &arm_ctx, alertable );
 }
 
 NTSTATUS SYSCALL_API NtCreateDebugObject( HANDLE *handle, ACCESS_MASK access,
@@ -535,9 +686,18 @@ NTSTATUS SYSCALL_API NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     __ASM_SYSCALL_FUNC( __id_NtFsControlFile );
 }
 
-NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
+static NTSTATUS SYSCALL_API syscall_NtGetContextThread( HANDLE handle, ARM64_NT_CONTEXT *context )
 {
     __ASM_SYSCALL_FUNC( __id_NtGetContextThread );
+}
+
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    ARM64_NT_CONTEXT arm_ctx = { .ContextFlags = ctx_flags_x64_to_arm( context->ContextFlags ) };
+    NTSTATUS status = syscall_NtGetContextThread( handle, &arm_ctx );
+
+    if (!status) context_arm_to_x64( context, &arm_ctx );
+    return status;
 }
 
 ULONG SYSCALL_API NtGetCurrentProcessorNumber(void)
@@ -1019,9 +1179,17 @@ NTSTATUS SYSCALL_API NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR
     __ASM_SYSCALL_FUNC( __id_NtQueueApcThread );
 }
 
-NTSTATUS SYSCALL_API NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+static NTSTATUS SYSCALL_API syscall_NtRaiseException( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *context, BOOL first_chance )
 {
     __ASM_SYSCALL_FUNC( __id_NtRaiseException );
+}
+
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    ARM64_NT_CONTEXT arm_ctx;
+
+    context_x64_to_arm( &arm_ctx, context );
+    return syscall_NtRaiseException( rec, &arm_ctx, first_chance );
 }
 
 NTSTATUS SYSCALL_API NtRaiseHardError( NTSTATUS status, ULONG count, UNICODE_STRING *params_mask,
@@ -1153,9 +1321,17 @@ NTSTATUS SYSCALL_API NtSecureConnectPort( HANDLE *handle, UNICODE_STRING *name,
     __ASM_SYSCALL_FUNC( __id_NtSecureConnectPort );
 }
 
-NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
+static NTSTATUS SYSCALL_API syscall_NtSetContextThread( HANDLE handle, const ARM64_NT_CONTEXT *context )
 {
     __ASM_SYSCALL_FUNC( __id_NtSetContextThread );
+}
+
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    ARM64_NT_CONTEXT arm_ctx;
+
+    context_x64_to_arm( &arm_ctx, context );
+    return syscall_NtSetContextThread( handle, &arm_ctx );
 }
 
 NTSTATUS SYSCALL_API NtSetDebugFilterState( ULONG component_id, ULONG level, BOOLEAN state )
@@ -1765,8 +1941,10 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
  */
-void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
+void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
 {
+    CONTEXT context;
+
     if (!__os_arm64x_check_call)
     {
         __os_arm64x_check_call = arm64x_check_call;
@@ -1776,9 +1954,10 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3
         __os_arm64x_set_x64_information = LdrpSetX64Information;
     }
 
-    loader_init( context, (void **)&context->Rcx );
-    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context->Rcx, (void *)context->Rdx );
-    NtContinue( context, TRUE );
+    context_arm_to_x64( &context, (ARM64_NT_CONTEXT *)arm_context );
+    loader_init( &context, (void **)&context.Rcx );
+    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.Rcx, (void *)context.Rdx );
+    NtContinue( &context, TRUE );
 }
 
 
