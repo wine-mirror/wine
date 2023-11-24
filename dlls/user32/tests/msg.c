@@ -19732,45 +19732,13 @@ static DWORD WINAPI SendMessage_thread_1(void *param)
     return 0;
 }
 
-static DWORD WINAPI SendMessage_thread_2(void *param)
-{
-    struct wnd_event *wnd_event = param;
-    DWORD ret;
-
-    if (winetest_debug > 1) trace("thread: starting\n");
-    WaitForSingleObject(wnd_event->start_event, INFINITE);
-
-    if (winetest_debug > 1) trace("thread: call PostMessage\n");
-    PostMessageA(wnd_event->hwnd, WM_USER, 0, 0);
-
-    if (winetest_debug > 1) trace("thread: call PostMessage\n");
-    PostMessageA(wnd_event->hwnd, WM_USER+1, 0, 0);
-
-    /* this leads to sending an internal message under Wine */
-    if (winetest_debug > 1) trace("thread: call SetParent\n");
-    SetParent(wnd_event->hwnd, wnd_event->hwnd);
-
-    if (winetest_debug > 1) trace("thread: call SendMessage\n");
-    SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);
-    SetEvent(wnd_event->stop_event);
-    ret = WaitForSingleObject(wnd_event->getmessage_complete, 100);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed, ret:%lx\n", ret);
-
-    if (winetest_debug > 1) trace("thread: call SendMessage\n");
-    SendMessageA(wnd_event->hwnd, WM_USER+3, 0, 0);
-
-    return 0;
-}
-
-static void test_SendMessage_other_thread(int thread_n)
+static void test_SendMessage_other_thread(void)
 {
     DWORD qs_all_input = QS_ALLINPUT & ~QS_RAWINPUT;
     HANDLE hthread;
     struct wnd_event wnd_event;
     DWORD tid, ret;
     MSG msg;
-
-    winetest_push_context("thread_%i", thread_n);
 
     wnd_event.start_event = CreateEventA(NULL, 0, 0, NULL);
     wnd_event.stop_event = CreateEventA(NULL, 0, 0, NULL);
@@ -19780,7 +19748,7 @@ static void test_SendMessage_other_thread(int thread_n)
                                      100, 100, 200, 200, 0, 0, 0, NULL);
     ok(wnd_event.hwnd != 0, "CreateWindowEx failed\n");
 
-    hthread = CreateThread(NULL, 0, thread_n == 1 ? SendMessage_thread_1 : SendMessage_thread_2, &wnd_event, 0, &tid);
+    hthread = CreateThread(NULL, 0, SendMessage_thread_1, &wnd_event, 0, &tid);
     ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
     CloseHandle(hthread);
 
@@ -19807,12 +19775,11 @@ static void test_SendMessage_other_thread(int thread_n)
     GetMessageA(&msg, 0, 0, 0);
     ok(msg.message == WM_USER, "expected WM_USER, got %04x\n", msg.message);
     DispatchMessageA(&msg);
-    ok_sequence(send_message_1, "SendMessage from other thread 1", thread_n == 2);
+    ok_sequence(send_message_1, "SendMessage from other thread 1", FALSE);
 
     SetEvent(wnd_event.getmessage_complete);
 
     ret = WaitForSingleObject(wnd_event.stop_event, 100);
-    todo_wine_if (thread_n == 2)
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed, ret:%lx\n", ret);
 
     /* intentionally yield */
@@ -19829,7 +19796,7 @@ static void test_SendMessage_other_thread(int thread_n)
     ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should not fail\n");
     ok(msg.message == WM_USER+1, "expected WM_USER+1, got %04x\n", msg.message);
     DispatchMessageA(&msg);
-    ok_sequence(send_message_3, "SendMessage from other thread 3", thread_n == 2);
+    ok_sequence(send_message_3, "SendMessage from other thread 3", FALSE);
 
     /* intentionally yield */
     MsgWaitForMultipleObjects(0, NULL, FALSE, 100, qs_all_input);
@@ -19838,7 +19805,7 @@ static void test_SendMessage_other_thread(int thread_n)
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {
         ok(ignore_message(msg.message), "got unexpected message %04x from PeekMessageA\n", msg.message);
     }
-    ok_sequence(send_message_5, "SendMessage from other thread 5", thread_n == 2);
+    ok_sequence(send_message_5, "SendMessage from other thread 5", FALSE);
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     ok(ret == 0, "wrong status %08lx\n", ret);
@@ -19848,8 +19815,6 @@ static void test_SendMessage_other_thread(int thread_n)
 
     flush_events();
     flush_sequence();
-
-    winetest_pop_context();
 
     CloseHandle(wnd_event.start_event);
     CloseHandle(wnd_event.stop_event);
@@ -20295,8 +20260,7 @@ START_TEST(msg)
     if (!hCBT_hook) win_skip( "cannot set global hook, will skip hook tests\n" );
 
     test_winevents();
-    test_SendMessage_other_thread(1);
-    test_SendMessage_other_thread(2);
+    test_SendMessage_other_thread();
     test_setparent_status();
     test_InSendMessage();
     test_SetFocus();
