@@ -539,7 +539,8 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
 
         if (globals.do_dump_rawdata)
         {
-            dump_data((const unsigned char *)base + sectHead->PointerToRawData, sectHead->SizeOfRawData, "    " );
+            dump_data_offset((const unsigned char *)base + sectHead->PointerToRawData,
+                             sectHead->SizeOfRawData, sectHead->VirtualAddress, "    " );
             printf("\n");
         }
     }

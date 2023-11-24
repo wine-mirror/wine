@@ -33,11 +33,11 @@
 void *dump_base = NULL;
 size_t dump_total_len = 0;
 
-void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
+void dump_data_offset( const unsigned char *ptr, unsigned int size, unsigned int offset, const char *prefix )
 {
     unsigned int i, j;
 
-    printf( "%s%08x: ", prefix, 0 );
+    printf( "%s%08x: ", prefix, offset );
     if (!ptr)
     {
         printf("NULL\n");
@@ -51,7 +51,7 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
             printf( " " );
             for (j = 0; j < 16; j++)
                 printf( "%c", isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.' );
-            if (i < size-1) printf( "\n%s%08x: ", prefix, i + 1 );
+            if (i < size-1) printf( "\n%s%08x: ", prefix, offset + i + 1 );
         }
     }
     if (i % 16)
@@ -61,6 +61,11 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
             printf( "%c", isprint(ptr[i-(i%16)+j]) ? ptr[i-(i%16)+j] : '.' );
     }
     printf( "\n" );
+}
+
+void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
+{
+    dump_data_offset( ptr, size, 0, prefix );
 }
 
 static char* dump_want_n(unsigned sz)
