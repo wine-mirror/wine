@@ -23,7 +23,6 @@ import argparse
 import logging
 import os
 import re
-import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -2124,7 +2123,6 @@ class VkStruct(Sequence):
         if self.name in ["VkOpticalFlowSessionCreateInfoNV",
                          "VkDescriptorBufferBindingInfoEXT"]:
             is_const = True
-        needs_output_copy = False
 
         for e in self.struct_extensions:
             if not e.required:
@@ -2574,7 +2572,7 @@ class ArrayConversionFunction(object):
                         body += "        else\n"
                         body += "            out[i] = NULL;\n"
                     else:
-                        body += "        out[i] = UlongToPtr(in[i]);\n".format(win_type)
+                        body += "        out[i] = UlongToPtr(in[i]);\n"
             elif self.array.is_handle():
                 if self.array.pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
@@ -3701,7 +3699,7 @@ class VkRegistry(object):
                 # Since we already parsed the enum before, just link it in.
                 try:
                     type_info["data"] = self.enums[name]
-                except KeyError as e:
+                except KeyError:
                     # Not all enums seem to be defined yet, typically that's for
                     # ones ending in 'FlagBits' where future extensions may add
                     # definitions.
