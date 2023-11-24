@@ -773,7 +773,7 @@ static inline struct strarray parse_options( int argc, char **argv, const char *
     char *start, *end;
     int i;
 
-#define OPT_ERR(fmt) { callback( '?', strmake( fmt, argv[1] )); continue; }
+#define OPT_ERR(fmt) { callback( '?', strmake( fmt, argv[i] )); continue; }
 
     for (i = 1; i < argc; i++)
     {
