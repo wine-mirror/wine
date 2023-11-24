@@ -4268,8 +4268,6 @@ void loader_init( CONTEXT *context, void **entry )
     if (!imports_fixup_done)
     {
         MEMORY_BASIC_INFORMATION meminfo;
-        ANSI_STRING base_thread_init_thunk = RTL_CONSTANT_STRING( "BaseThreadInitThunk" );
-        ANSI_STRING ctrl_routine = RTL_CONSTANT_STRING( "CtrlRoutine" );
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
 
@@ -4305,13 +4303,8 @@ void loader_init( CONTEXT *context, void **entry )
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         node_kernel32 = kernel32->ldr.DdagNode;
-        if ((status = LdrGetProcedureAddress( kernel32->ldr.DllBase, &base_thread_init_thunk,
-                                              0, (void **)&pBaseThreadInitThunk )) != STATUS_SUCCESS)
-        {
-            MESSAGE( "wine: could not find BaseThreadInitThunk in kernel32.dll, status %lx\n", status );
-            NtTerminateProcess( GetCurrentProcess(), status );
-        }
-        LdrGetProcedureAddress( kernel32->ldr.DllBase, &ctrl_routine, 0, (void **)&pCtrlRoutine );
+        pBaseThreadInitThunk = RtlFindExportedRoutineByName( kernel32->ldr.DllBase, "BaseThreadInitThunk" );
+        pCtrlRoutine = RtlFindExportedRoutineByName( kernel32->ldr.DllBase, "CtrlRoutine" );
 
         actctx_init();
         locale_init();
