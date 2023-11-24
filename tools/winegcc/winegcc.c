@@ -177,6 +177,7 @@ struct options
     int unwind_tables;
     int strip;
     int pic;
+    int no_default_config;
     const char* wine_objdir;
     const char* winebuild;
     const char* output_name;
@@ -299,6 +300,7 @@ static struct strarray build_tool_name( struct options *opts, enum tool tool )
         }
         strarray_add( &ret, "-Wno-unused-command-line-argument" );
         strarray_add( &ret, "-fuse-ld=lld" );
+        if (opts->no_default_config) strarray_add( &ret, "--no-default-config" );
     }
     return ret;
 }
@@ -1851,6 +1853,11 @@ int main(int argc, char **argv)
                 case '-':
                     if (strcmp("-static", opts.args.str[i]+1) == 0)
                         linking = -1;
+                    else if (!strcmp( "-no-default-config", opts.args.str[i] + 1 ))
+                    {
+                        opts.no_default_config = 1;
+                        raw_compiler_arg = raw_linker_arg = 1;
+                    }
                     else if (is_option( &opts, i, "--sysroot", &option_arg ))
                     {
                         opts.sysroot = option_arg;
