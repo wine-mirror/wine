@@ -201,7 +201,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          *     x0(y2 - y1) + y0(x1 - x2) + (x2*y1 - x1*y2)
          */
         area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
-        distance_start_end = sqrtf(powf(pt.Y - pt_st.Y, 2.0) + powf(pt_st.X - pt.X, 2.0));
+        distance_start_end = hypotf(pt.Y - pt_st.Y, pt_st.X - pt.X);
         if(fabs(area_triangle) <= (0.5 * flatness * distance_start_end)){
             continue;
         }
@@ -1867,7 +1867,7 @@ static void add_bevel_point(const GpPointF *endpoint, const GpPointF *nextpoint,
 {
     REAL segment_dy = nextpoint->Y-endpoint->Y;
     REAL segment_dx = nextpoint->X-endpoint->X;
-    REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+    REAL segment_length = hypotf(segment_dy, segment_dx);
     REAL distance = pen_width / 2.0;
     REAL bevel_dx, bevel_dy;
 
@@ -1903,8 +1903,8 @@ static void widen_joint(const GpPointF *p1, const GpPointF *p2, const GpPointF *
         if ((p2->X - p1->X) * (p3->Y - p1->Y) > (p2->Y - p1->Y) * (p3->X - p1->X))
         {
             float distance = pen_width / 2.0;
-            float length_0 = sqrtf((p2->X-p1->X)*(p2->X-p1->X)+(p2->Y-p1->Y)*(p2->Y-p1->Y));
-            float length_1 = sqrtf((p3->X-p2->X)*(p3->X-p2->X)+(p3->Y-p2->Y)*(p3->Y-p2->Y));
+            float length_0 = hypotf(p2->X - p1->X, p2->Y - p1->Y);
+            float length_1 = hypotf(p3->X - p2->X, p3->Y - p2->Y);
             float dx0 = distance * (p2->X - p1->X) / length_0;
             float dy0 = distance * (p2->Y - p1->Y) / length_0;
             float dx1 = distance * (p3->X - p2->X) / length_1;
@@ -1954,7 +1954,7 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL distance = pen_width / 2.0;
         REAL bevel_dx, bevel_dy;
         REAL extend_dx, extend_dy;
@@ -1989,7 +1989,7 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL distance = pen_width / 2.0;
         REAL dx, dy, dx2, dy2;
         const REAL control_point_distance = 0.5522847498307935; /* 4/3 * (sqrt(2) - 1) */
@@ -2034,7 +2034,7 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL distance = pen_width / 2.0;
         REAL dx, dy;
 
@@ -2074,7 +2074,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL distance = pen_width / sqrtf(2.0);
         REAL par_dx, par_dy;
         REAL perp_dx, perp_dy;
@@ -2099,7 +2099,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL dx, dy, dx2, dy2;
         const REAL control_point_distance = 0.55228475; /* 4/3 * (sqrt(2) - 1) */
 
@@ -2151,7 +2151,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
-        REAL segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL par_dx, par_dy;
         REAL perp_dx, perp_dy;
 
@@ -2175,7 +2175,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
     {
         REAL segment_dy = nextpoint->Y - endpoint->Y;
         REAL segment_dx = nextpoint->X - endpoint->X;
-        REAL segment_length = sqrtf(segment_dy * segment_dy + segment_dx * segment_dx);
+        REAL segment_length = hypotf(segment_dy, segment_dx);
         REAL par_dx = pen_width * segment_dx / segment_length;
         REAL par_dy = pen_width * segment_dy / segment_length;
         REAL perp_dx = -par_dy;
@@ -2407,7 +2407,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
 
         segment_dy = path->pathdata.Points[j].Y - path->pathdata.Points[i].Y;
         segment_dx = path->pathdata.Points[j].X - path->pathdata.Points[i].X;
-        segment_length = sqrtf(segment_dy*segment_dy + segment_dx*segment_dx);
+        segment_length = hypotf(segment_dy, segment_dx);
         segment_pos = 0.0;
 
         while (1)
