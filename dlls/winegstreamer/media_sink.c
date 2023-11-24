@@ -344,8 +344,9 @@ static HRESULT WINAPI stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample 
     IMFSample_AddRef((command->u.process.sample = sample));
     command->u.process.stream_id = stream_sink->id;
 
-    if (FAILED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &media_sink->async_callback, &command->IUnknown_iface)))
-        IUnknown_Release(&command->IUnknown_iface);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD,
+            &media_sink->async_callback, &command->IUnknown_iface);
+    IUnknown_Release(&command->IUnknown_iface);
 
     LeaveCriticalSection(&media_sink->cs);
 
@@ -525,7 +526,11 @@ static HRESULT media_sink_queue_command(struct media_sink *media_sink, enum asyn
     if (FAILED(hr = async_command_create(op, &command)))
         return hr;
 
-    return MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &media_sink->async_callback, &command->IUnknown_iface);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD,
+            &media_sink->async_callback, &command->IUnknown_iface);
+    IUnknown_Release(&command->IUnknown_iface);
+
+    return hr;
 }
 
 static HRESULT media_sink_queue_stream_event(struct media_sink *media_sink, MediaEventType type)
