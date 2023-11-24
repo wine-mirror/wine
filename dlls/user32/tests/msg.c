@@ -19856,6 +19856,55 @@ static void test_SendMessage_other_thread(int thread_n)
     CloseHandle(wnd_event.getmessage_complete);
 }
 
+static DWORD WINAPI SetParent_thread(void *param)
+{
+    struct wnd_event *wnd_event = param;
+
+    if (winetest_debug > 1) trace("thread: started\n");
+    SetEvent(wnd_event->start_event);
+
+    /* this leads to sending an internal message under Wine */
+    if (winetest_debug > 1) trace("thread: call SetParent\n");
+    SetParent(wnd_event->hwnd, wnd_event->hwnd);
+
+    return 0;
+}
+
+static void test_setparent_status(void)
+{
+    HANDLE hthread;
+    struct wnd_event wnd_event;
+    DWORD ret;
+
+    wnd_event.start_event = CreateEventA(NULL, 0, 0, NULL);
+
+    wnd_event.hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(wnd_event.hwnd != 0, "CreateWindowEx failed\n");
+
+    ret = GetQueueStatus(QS_SENDMESSAGE);
+    ok(ret == 0, "wrong status %08lx\n", ret);
+
+    hthread = CreateThread(NULL, 0, SetParent_thread, &wnd_event, 0, NULL);
+    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    WaitForSingleObject(wnd_event.start_event, INFINITE);
+
+    /* background thread's SetParent should complete allowing the thread to exit */
+    ret = MsgWaitForMultipleObjects(1, &hthread, FALSE, 1000, QS_SENDMESSAGE);
+    todo_wine ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %08lx\n", ret);
+
+    /* QS_SENDMESSAGE status should not have been set by SetParent */
+    ret = GetQueueStatus(QS_SENDMESSAGE);
+    todo_wine ok(ret == 0, "wrong status %08lx\n", ret);
+
+    DestroyWindow(wnd_event.hwnd);
+
+    WaitForSingleObject(hthread, INFINITE);
+    CloseHandle(hthread);
+    CloseHandle(wnd_event.start_event);
+}
+
 static LRESULT CALLBACK insendmessage_wnd_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     DWORD flags = InSendMessageEx( NULL );
@@ -20248,6 +20297,7 @@ START_TEST(msg)
     test_winevents();
     test_SendMessage_other_thread(1);
     test_SendMessage_other_thread(2);
+    test_setparent_status();
     test_InSendMessage();
     test_SetFocus();
     test_SetParent();
