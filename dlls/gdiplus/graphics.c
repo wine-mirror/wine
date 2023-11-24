@@ -274,7 +274,7 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         scale_x = graphics->worldtrans.matrix[0] + graphics->worldtrans.matrix[2];
         scale_y = graphics->worldtrans.matrix[1] + graphics->worldtrans.matrix[3];
 
-        width = sqrt(scale_x * scale_x + scale_y * scale_y) / sqrt(2.0);
+        width = hypotf(scale_x, scale_y) / sqrt(2.0);
 
         width *= units_to_pixels(pen->width, pen->unit == UnitWorld ? graphics->unit : pen->unit,
                                  graphics->xres, graphics->printer_display);
@@ -285,8 +285,7 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         pt[1].X = 1.0;
         pt[1].Y = 1.0;
         gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, pt, 2);
-        width *= sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
-                      (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
+        width *= hypotf(pt[1].X - pt[0].X, pt[1].Y - pt[0].Y) / sqrt(2.0);
     }
 
     if(pen->dash == DashStyleCustom){
@@ -1844,7 +1843,7 @@ static void shorten_line_percent(REAL x1, REAL  y1, REAL *x2, REAL *y2, REAL per
     if((y1 == *y2) && (x1 == *x2))
         return;
 
-    dist = sqrt((*x2 - x1) * (*x2 - x1) + (*y2 - y1) * (*y2 - y1)) * -percent;
+    dist = hypotf(*x2 - x1, *y2 - y1) * -percent;
     theta = gdiplus_atan2((*y2 - y1), (*x2 - x1));
     dx = cos(theta) * dist;
     dy = sin(theta) * dist;
@@ -1865,7 +1864,7 @@ static void shorten_line_amt(REAL x1, REAL y1, REAL *x2, REAL *y2, REAL amt)
     if(dx == 0 && dy == 0)
         return;
 
-    percent = amt / sqrt(dx * dx + dy * dy);
+    percent = amt / hypotf(dx, dy);
     if(percent >= 1.0){
         *x2 = x1;
         *y2 = y1;
@@ -1913,7 +1912,7 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
         dx = pt[fourth].X - origx;
         dy = pt[fourth].Y - origy;
 
-        diff = sqrt(dx * dx + dy * dy);
+        diff = hypotf(dx, dy);
         percent += 0.0005 * amt;
     }
 }
@@ -5372,11 +5371,9 @@ void transform_properties(GpGraphics *graphics, GDIPCONST GpMatrix *matrix, BOOL
         gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
 
     if (rel_width)
-        *rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                         (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+        *rel_width = hypotf(pt[1].Y - pt[0].Y, pt[1].X - pt[0].X);
     if (rel_height)
-        *rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                          (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+        *rel_height = hypotf(pt[2].Y - pt[0].Y, pt[2].X - pt[0].X);
     if (angle)
         *angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
 }
@@ -7110,10 +7107,8 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         GdipTransformMatrixPoints(&xform, pt, 3);
     }
     gdip_transform_points(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, pt, 3);
-    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+    rel_width = hypotf(pt[1].Y - pt[0].Y, pt[1].X - pt[0].X);
+    rel_height = hypotf(pt[2].Y - pt[0].Y, pt[2].X - pt[0].X);
 
     if (flags & DriverStringOptionsCmapLookup)
     {
