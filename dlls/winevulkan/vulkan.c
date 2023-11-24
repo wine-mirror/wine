@@ -512,9 +512,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         debug_utils_messenger->pUserData = &object->utils_messengers[i];
     }
 
-    debug_report_callback = find_next_struct(header->pNext,
-                                             VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT);
-    if (debug_report_callback)
+    if ((debug_report_callback = find_next_struct(dst->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
     {
         object->default_callback.instance = object;
         object->default_callback.debug_callback = VK_NULL_HANDLE;
