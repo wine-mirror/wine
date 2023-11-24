@@ -217,57 +217,57 @@ struct unix_device
     struct hid_physical hid_physical;
 };
 
-extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
-extern void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size) DECLSPEC_HIDDEN;
+extern void *raw_device_create(const struct raw_device_vtbl *vtbl, SIZE_T size);
+extern void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size);
 
-extern NTSTATUS sdl_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS sdl_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS sdl_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS sdl_bus_init(void *);
+extern NTSTATUS sdl_bus_wait(void *);
+extern NTSTATUS sdl_bus_stop(void *);
 
-extern NTSTATUS udev_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS udev_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS udev_bus_init(void *);
+extern NTSTATUS udev_bus_wait(void *);
+extern NTSTATUS udev_bus_stop(void *);
 
-extern NTSTATUS iohid_bus_init(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS iohid_bus_wait(void *) DECLSPEC_HIDDEN;
-extern NTSTATUS iohid_bus_stop(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS iohid_bus_init(void *);
+extern NTSTATUS iohid_bus_wait(void *);
+extern NTSTATUS iohid_bus_stop(void *);
 
-extern void bus_event_cleanup(struct bus_event *event) DECLSPEC_HIDDEN;
-extern void bus_event_queue_destroy(struct list *queue) DECLSPEC_HIDDEN;
-extern BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *device) DECLSPEC_HIDDEN;
-extern BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *device, struct device_desc *desc) DECLSPEC_HIDDEN;
+extern void bus_event_cleanup(struct bus_event *event);
+extern void bus_event_queue_destroy(struct list *queue);
+extern BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *device);
+extern BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *device, struct device_desc *desc);
 extern BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device,
-                                         BYTE *report, USHORT length) DECLSPEC_HIDDEN;
-extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event) DECLSPEC_HIDDEN;
+                                         BYTE *report, USHORT length);
+extern BOOL bus_event_queue_pop(struct list *queue, struct bus_event *event);
 
-extern BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage) DECLSPEC_HIDDEN;
-extern BOOL hid_device_end_report_descriptor(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_begin_report_descriptor(struct unix_device *iface, const USAGE_AND_PAGE *device_usage);
+extern BOOL hid_device_end_report_descriptor(struct unix_device *iface);
 
-extern BOOL hid_device_begin_input_report(struct unix_device *iface, const USAGE_AND_PAGE *physical_usage) DECLSPEC_HIDDEN;
-extern BOOL hid_device_end_input_report(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_begin_input_report(struct unix_device *iface, const USAGE_AND_PAGE *physical_usage);
+extern BOOL hid_device_end_input_report(struct unix_device *iface);
 extern BOOL hid_device_add_buttons(struct unix_device *iface, USAGE usage_page,
-                                   USAGE usage_min, USAGE usage_max) DECLSPEC_HIDDEN;
-extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count) DECLSPEC_HIDDEN;
+                                   USAGE usage_min, USAGE usage_max);
+extern BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count);
 extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page,
-                                const USAGE *usages, BOOL rel, LONG min, LONG max) DECLSPEC_HIDDEN;
+                                const USAGE *usages, BOOL rel, LONG min, LONG max);
 
-extern BOOL hid_device_add_haptics(struct unix_device *iface) DECLSPEC_HIDDEN;
-extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count) DECLSPEC_HIDDEN;
+extern BOOL hid_device_add_haptics(struct unix_device *iface);
+extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count);
 
-extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
-extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value) DECLSPEC_HIDDEN;
-extern BOOL hid_device_set_button(struct unix_device *iface, ULONG index, BOOL is_set) DECLSPEC_HIDDEN;
-extern BOOL hid_device_set_hatswitch_x(struct unix_device *iface, ULONG index, LONG new_x) DECLSPEC_HIDDEN;
-extern BOOL hid_device_set_hatswitch_y(struct unix_device *iface, ULONG index, LONG new_y) DECLSPEC_HIDDEN;
-extern BOOL hid_device_move_hatswitch(struct unix_device *iface, ULONG index, LONG x, LONG y) DECLSPEC_HIDDEN;
+extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value);
+extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value);
+extern BOOL hid_device_set_button(struct unix_device *iface, ULONG index, BOOL is_set);
+extern BOOL hid_device_set_hatswitch_x(struct unix_device *iface, ULONG index, LONG new_x);
+extern BOOL hid_device_set_hatswitch_y(struct unix_device *iface, ULONG index, LONG new_y);
+extern BOOL hid_device_move_hatswitch(struct unix_device *iface, ULONG index, LONG x, LONG y);
 
-extern BOOL hid_device_sync_report(struct unix_device *iface) DECLSPEC_HIDDEN;
-extern void hid_device_drop_report(struct unix_device *iface) DECLSPEC_HIDDEN;
+extern BOOL hid_device_sync_report(struct unix_device *iface);
+extern void hid_device_drop_report(struct unix_device *iface);
 
-extern void hid_device_set_effect_state(struct unix_device *iface, BYTE index, BYTE flags) DECLSPEC_HIDDEN;
+extern void hid_device_set_effect_state(struct unix_device *iface, BYTE index, BYTE flags);
 
-BOOL is_xbox_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
-BOOL is_dualshock4_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
-BOOL is_dualsense_gamepad(WORD vid, WORD pid) DECLSPEC_HIDDEN;
+BOOL is_xbox_gamepad(WORD vid, WORD pid);
+BOOL is_dualshock4_gamepad(WORD vid, WORD pid);
+BOOL is_dualsense_gamepad(WORD vid, WORD pid);
 
 #endif /* __WINEBUS_UNIX_PRIVATE_H */
