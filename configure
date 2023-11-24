@@ -10654,10 +10654,46 @@ then :
             esac
         fi
         llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
+        llvm_extra_ldflags=""
         case $llvm_target in
           *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
         esac
-        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | $as_tr_sh`
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags --no-default-config" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config" >&5
+printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags --no-default-config"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
+                            llvm_extra_ldflags="--no-default-config"
+else $as_nop
+  { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags" >&5
 printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags... " >&6; }
 if eval test \${$as_ac_var+y}
@@ -10689,11 +10725,19 @@ eval ac_res=\$$as_ac_var
 printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  target=$llvm_target
-                            eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
-                            as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
-                            CFLAGS="$llvm_extra_cflags $llvm_cflags"
+  as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags $llvm_cflags"
+else $as_nop
+  llvm_extra_cflags=""
 fi }
+fi }
+        if test -n "$llvm_extra_cflags"
+        then
+            target=$llvm_target
+            eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
+            as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
+            as_fn_append ${wine_arch}_LDFLAGS " $llvm_extra_ldflags"
+            CFLAGS="$llvm_extra_cflags $llvm_cflags"
+        fi
         eval "${wine_arch}_TARGET=\$target"
 fi
 

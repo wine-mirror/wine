@@ -893,14 +893,23 @@ do
             esac
         fi
         llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
+        llvm_extra_ldflags=""
         case $llvm_target in
           *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
         esac
-        WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],
-                           [target=$llvm_target
-                            AS_VAR_SET([${wine_arch}_DELAYLOADFLAG],["-Wl,-delayload,"])
-                            AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $llvm_extra_cflags"])
-                            CFLAGS="$llvm_extra_cflags $llvm_cflags"])
+        WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags --no-default-config],
+                           [llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
+                            llvm_extra_ldflags="--no-default-config"],
+                           [WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],[],
+                                               [llvm_extra_cflags=""])])
+        if test -n "$llvm_extra_cflags"
+        then
+            target=$llvm_target
+            AS_VAR_SET([${wine_arch}_DELAYLOADFLAG],["-Wl,-delayload,"])
+            AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $llvm_extra_cflags"])
+            AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" $llvm_extra_ldflags"])
+            CFLAGS="$llvm_extra_cflags $llvm_cflags"
+        fi
         AS_VAR_SET([${wine_arch}_TARGET],[$target])])
     AS_VAR_POPDEF([wine_cv_crosscc])
 
