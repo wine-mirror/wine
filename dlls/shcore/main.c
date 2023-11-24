@@ -2520,3 +2520,12 @@ FEATURE_ENABLED_STATE WINAPI GetFeatureEnabledState(UINT32 feature, FEATURE_CHAN
     FIXME("(%u, %u) stub\n", feature, change_time);
     return FEATURE_ENABLED_STATE_DEFAULT;
 }
+
+/*************************************************************************
+ * RegisterScaleChangeEvent        [SHCORE.@]
+ */
+HRESULT WINAPI RegisterScaleChangeEvent(HANDLE handle, DWORD_PTR *cookie)
+{
+    FIXME("(%p, %p) stub\n", handle, cookie);
+    return E_NOTIMPL;
+}

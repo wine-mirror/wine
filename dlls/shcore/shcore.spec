@@ -32,7 +32,7 @@
 # @ stub IsProcessInWDAGContainer
 # @ stub RecordFeatureError
 # @ stub RecordFeatureUsage
-@ stub RegisterScaleChangeEvent
+@ stdcall RegisterScaleChangeEvent(ptr ptr)
 @ stub RegisterScaleChangeNotifications
 @ stub RevokeScaleChangeNotifications
 @ stdcall SHAnsiToAnsi(str ptr long)
