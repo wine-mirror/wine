@@ -4480,9 +4480,14 @@ static void test_D3DXSHProjectCubeMap(void)
             {-1.10743945e+3f, -9.43649292e+2f,  5.48424316e+2f,  1.65352710e+3f}},
     };
 
-    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!d3d)
+    {
+        skip("Failed to create a D3D object.\n");
+        return;
+    }
+
+    window = create_window();
     if (!(device = create_device(d3d, window)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
