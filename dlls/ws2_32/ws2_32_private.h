@@ -73,7 +73,7 @@ static inline char *strdupWtoA( const WCHAR *str )
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
-const char *debugstr_sockaddr( const struct sockaddr *addr ) DECLSPEC_HIDDEN;
+const char *debugstr_sockaddr( const struct sockaddr *addr );
 
 struct per_thread_data
 {
@@ -88,9 +88,9 @@ struct per_thread_data
     char ntoa_buffer[16]; /* 4*3 digits + 3 '.' + 1 '\0' */
 };
 
-extern int num_startup DECLSPEC_HIDDEN;
+extern int num_startup;
 
-struct per_thread_data *get_per_thread_data(void) DECLSPEC_HIDDEN;
+struct per_thread_data *get_per_thread_data(void);
 
 struct getaddrinfo_params
 {
