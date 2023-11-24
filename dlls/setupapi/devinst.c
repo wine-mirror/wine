@@ -5288,3 +5288,23 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 
     return TRUE;
 }
+
+BOOL WINAPI SetupDiGetCustomDevicePropertyA(HDEVINFO devinfo, SP_DEVINFO_DATA *data, const char *name, DWORD flags,
+        DWORD *reg_type, BYTE *buffer, DWORD bufsize, DWORD *required)
+{
+    FIXME("devinfo %p, data %p, name %s, flags %#lx, reg_type %p, buffer %p, bufsize %lu, required %p stub.\n",
+            devinfo, data, debugstr_a(name), flags, reg_type, buffer, bufsize, required);
+
+    SetLastError(ERROR_INVALID_DATA);
+    return FALSE;
+}
+
+BOOL WINAPI SetupDiGetCustomDevicePropertyW(HDEVINFO devinfo, SP_DEVINFO_DATA *data, const WCHAR *name, DWORD flags,
+        DWORD *reg_type, BYTE *buffer, DWORD bufsize, DWORD *required)
+{
+    FIXME("devinfo %p, data %p, name %s, flags %#lx, reg_type %p, buffer %p, bufsize %lu, required %p stub.\n",
+            devinfo, data, debugstr_w(name), flags, reg_type, buffer, bufsize, required);
+
+    SetLastError(ERROR_INVALID_DATA);
+    return FALSE;
+}
