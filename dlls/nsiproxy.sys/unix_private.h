@@ -24,9 +24,9 @@
 #define IPV4_ADDR(b1, b2, b3, b4) (((unsigned int)b4 << 24) | (b3 << 16) | (b2 << 8) | b1)
 #endif
 
-NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HIDDEN;
-NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params ) DECLSPEC_HIDDEN;
-NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params ) DECLSPEC_HIDDEN;
+NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params );
+NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params );
+NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params );
 
 static inline NTSTATUS nsi_enumerate_all( UINT unk, UINT unk2, const NPI_MODULEID *module, UINT table,
                                           void *key_data, UINT key_size, void *rw_data, UINT rw_size,
@@ -57,8 +57,8 @@ static inline NTSTATUS nsi_enumerate_all( UINT unk, UINT unk2, const NPI_MODULEI
     return status;
 }
 
-BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name ) DECLSPEC_HIDDEN;
-BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid ) DECLSPEC_HIDDEN;
+BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name );
+BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid );
 
 static inline BOOL convert_luid_to_index( const NET_LUID *luid, UINT *index )
 {
@@ -104,8 +104,8 @@ struct ipv6_addr_scope
     UINT scope;
 };
 
-struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size ) DECLSPEC_HIDDEN;
-UINT find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size ) DECLSPEC_HIDDEN;
+struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size );
+UINT find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size );
 
 struct pid_map
 {
@@ -113,8 +113,8 @@ struct pid_map
     unsigned int unix_pid;
 };
 
-struct pid_map *get_pid_map( unsigned int *num_entries ) DECLSPEC_HIDDEN;
-unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UINT_PTR inode ) DECLSPEC_HIDDEN;
+struct pid_map *get_pid_map( unsigned int *num_entries );
+unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UINT_PTR inode );
 
 struct module_table
 {
@@ -136,11 +136,11 @@ struct module
     const struct module_table *tables;
 };
 
-extern const struct module ndis_module DECLSPEC_HIDDEN;
-extern const struct module ipv4_module DECLSPEC_HIDDEN;
-extern const struct module ipv6_module DECLSPEC_HIDDEN;
-extern const struct module tcp_module DECLSPEC_HIDDEN;
-extern const struct module udp_module DECLSPEC_HIDDEN;
+extern const struct module ndis_module;
+extern const struct module ipv4_module;
+extern const struct module ipv6_module;
+extern const struct module tcp_module;
+extern const struct module udp_module;
 
 static inline int ascii_strncasecmp( const char *s1, const char *s2, size_t n )
 {
@@ -163,7 +163,7 @@ static inline int ascii_strcasecmp( const char *s1, const char *s2 )
     return ascii_strncasecmp( s1, s2, -1 );
 }
 
-NTSTATUS icmp_cancel_listen( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS icmp_close( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS icmp_listen( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS icmp_send_echo( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS icmp_cancel_listen( void *args );
+NTSTATUS icmp_close( void *args );
+NTSTATUS icmp_listen( void *args );
+NTSTATUS icmp_send_echo( void *args );
