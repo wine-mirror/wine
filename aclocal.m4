@@ -218,7 +218,7 @@ int __cdecl mainCRTStartup(void) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved
 ac_exeext=$ac_wine_try_cflags_saved_exeext])
-AS_VAR_IF([ac_var],[yes],[m4_default([$2], [AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $1"])], [$3])])dnl
+AS_VAR_IF([ac_var],[yes],[m4_default([$2], [AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $1"])])], [$3])dnl
 AS_VAR_POPDEF([ac_var]) }])
 
 dnl **** Check whether the given MinGW header is available ****
