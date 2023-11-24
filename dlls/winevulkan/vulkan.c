@@ -526,11 +526,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
     /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
      * filter this data out as well.
      */
-    if (object->quirks & WINEVULKAN_QUIRK_IGNORE_EXPLICIT_LAYERS) {
-        dst->enabledLayerCount = 0;
-        dst->ppEnabledLayerNames = NULL;
-        WARN("Ignoring explicit layers!\n");
-    } else if (dst->enabledLayerCount) {
+    if (dst->enabledLayerCount)
+    {
         FIXME("Loading explicit layers is not supported by winevulkan!\n");
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
