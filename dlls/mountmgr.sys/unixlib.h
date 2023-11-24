@@ -179,13 +179,13 @@ enum mountmgr_funcs
 
 extern void queue_device_op( enum device_op op, const char *udi, const char *device,
                              const char *mount_point, enum device_type type, const GUID *guid,
-                             const char *disk_serial, const struct scsi_info *info ) DECLSPEC_HIDDEN;
-extern void run_dbus_loop(void) DECLSPEC_HIDDEN;
-extern void run_diskarbitration_loop(void) DECLSPEC_HIDDEN;
+                             const char *disk_serial, const struct scsi_info *info );
+extern void run_dbus_loop(void);
+extern void run_diskarbitration_loop(void);
 
-extern NTSTATUS dhcp_request( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS query_symbol_file( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS read_credential( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS write_credential( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS delete_credential( void *args ) DECLSPEC_HIDDEN;
-extern NTSTATUS enumerate_credentials( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS dhcp_request( void *args );
+extern NTSTATUS query_symbol_file( void *args );
+extern NTSTATUS read_credential( void *args );
+extern NTSTATUS write_credential( void *args );
+extern NTSTATUS delete_credential( void *args );
+extern NTSTATUS enumerate_credentials( void *args );

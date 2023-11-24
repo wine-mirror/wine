@@ -50,9 +50,9 @@ enum device_type
     DEVICE_RAMDISK
 };
 
-extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
+extern NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
+extern NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
 
 enum scsi_device_type
 {
@@ -90,24 +90,24 @@ struct scsi_info
 
 extern NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
                             enum device_type type, const GUID *guid, const char *disk_serial,
-                            const struct scsi_info *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS remove_volume( const char *udi ) DECLSPEC_HIDDEN;
+                            const struct scsi_info *info );
+extern NTSTATUS remove_volume( const char *udi );
 extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                                 const char *mount_point, enum device_type type, const GUID *guid,
-                                const struct scsi_info *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS remove_dos_device( int letter, const char *udi ) DECLSPEC_HIDDEN;
+                                const struct scsi_info *info );
+extern NTSTATUS remove_dos_device( int letter, const char *udi );
 extern NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize,
-                                  IO_STATUS_BLOCK *iosb ) DECLSPEC_HIDDEN;
+                                  IO_STATUS_BLOCK *iosb );
 
 /* mount point functions */
 
 struct mount_point;
 
 extern struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   int drive ) DECLSPEC_HIDDEN;
+                                                   int drive );
 extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   const GUID *guid ) DECLSPEC_HIDDEN;
-extern void delete_mount_point( struct mount_point *mount ) DECLSPEC_HIDDEN;
-extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len ) DECLSPEC_HIDDEN;
+                                                   const GUID *guid );
+extern void delete_mount_point( struct mount_point *mount );
+extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len );
 
 #endif /* __WINE_MOUNTMGR_H */
