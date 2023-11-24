@@ -81,13 +81,13 @@ static struct list wine_vk_swapchain_list = LIST_INIT(wine_vk_swapchain_list);
 struct wine_vk_surface
 {
     struct wayland_client_surface *client;
-    VkSurfaceKHR native;
+    VkSurfaceKHR host_surface;
 };
 
 struct wine_vk_swapchain
 {
     struct list entry;
-    VkSwapchainKHR native;
+    VkSwapchainKHR host_swapchain;
     HWND hwnd;
     VkExtent2D extent;
 };
@@ -143,7 +143,7 @@ static struct wine_vk_swapchain *wine_vk_swapchain_from_handle(VkSwapchainKHR ha
     LIST_FOR_EACH_ENTRY(wine_vk_swapchain, &wine_vk_swapchain_list,
                         struct wine_vk_swapchain, entry)
     {
-        if (wine_vk_swapchain->native == handle)
+        if (wine_vk_swapchain->host_swapchain == handle)
         {
             pthread_mutex_unlock(&wine_vk_swapchain_mutex);
             return wine_vk_swapchain;
@@ -197,7 +197,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     return VK_SUCCESS;
 }
 
-static const char *wine_vk_native_fn_name(const char *name)
+static const char *wine_vk_host_fn_name(const char *name)
 {
     if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
         return "vkCreateWaylandSurfaceKHR";
@@ -347,7 +347,7 @@ static VkResult wayland_vkCreateSwapchainKHR(VkDevice device,
     wine_vk_swapchain->extent = create_info->imageExtent;
 
     create_info_host = *create_info;
-    create_info_host.surface = wine_vk_surface->native;
+    create_info_host.surface = wine_vk_surface->host_surface;
 
     /* Some apps do not properly handle a 0x0 image extent in capabilities,
      * and erroneously try to create a swapchain with it, so use the minimum
@@ -368,7 +368,7 @@ static VkResult wayland_vkCreateSwapchainKHR(VkDevice device,
         return res;
     }
 
-    wine_vk_swapchain->native = *swapchain;
+    wine_vk_swapchain->host_swapchain = *swapchain;
 
     pthread_mutex_lock(&wine_vk_swapchain_mutex);
     list_add_head(&wine_vk_swapchain_list, &wine_vk_swapchain->entry);
@@ -429,7 +429,7 @@ static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
 
     res = pvkCreateWaylandSurfaceKHR(instance, &create_info_host,
                                      NULL /* allocator */,
-                                     &wine_vk_surface->native);
+                                     &wine_vk_surface->host_surface);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create vulkan wayland surface, res=%d\n", res);
@@ -470,7 +470,7 @@ static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surfac
     /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
     if (!wine_vk_surface) return;
 
-    pvkDestroySurfaceKHR(instance, wine_vk_surface->native, NULL /* allocator */);
+    pvkDestroySurfaceKHR(instance, wine_vk_surface->host_surface, NULL /* allocator */);
     wine_vk_surface_destroy(wine_vk_surface);
 }
 
@@ -549,7 +549,7 @@ static VkResult wayland_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device,
     if (!wine_vk_surface_is_valid(wine_vk_surface))
         return VK_ERROR_SURFACE_LOST_KHR;
 
-    return pvkGetDeviceGroupSurfacePresentModesKHR(device, wine_vk_surface->native, flags);
+    return pvkGetDeviceGroupSurfacePresentModesKHR(device, wine_vk_surface->host_surface, flags);
 }
 
 static void *wayland_vkGetDeviceProcAddr(VkDevice device, const char *name)
@@ -558,9 +558,9 @@ static void *wayland_vkGetDeviceProcAddr(VkDevice device, const char *name)
 
     TRACE("%p, %s\n", device, debugstr_a(name));
 
-    /* Do not return the driver function if the corresponding native function
+    /* Do not return the driver function if the corresponding host function
      * is not available. */
-    if (!pvkGetDeviceProcAddr(device, wine_vk_native_fn_name(name)))
+    if (!pvkGetDeviceProcAddr(device, wine_vk_host_fn_name(name)))
         return NULL;
 
     if ((proc_addr = get_vulkan_driver_device_proc_addr(&vulkan_funcs, name)))
@@ -575,9 +575,9 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
 
     TRACE("%p, %s\n", instance, debugstr_a(name));
 
-    /* Do not return the driver function if the corresponding native function
+    /* Do not return the driver function if the corresponding host function
      * is not available. */
-    if (!pvkGetInstanceProcAddr(instance, wine_vk_native_fn_name(name)))
+    if (!pvkGetInstanceProcAddr(instance, wine_vk_host_fn_name(name)))
         return NULL;
 
     if ((proc_addr = get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name)))
@@ -594,7 +594,7 @@ static VkResult wayland_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice
 
     TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, rects);
 
-    return pvkGetPhysicalDevicePresentRectanglesKHR(phys_dev, wine_vk_surface->native,
+    return pvkGetPhysicalDevicePresentRectanglesKHR(phys_dev, wine_vk_surface->host_surface,
                                                     count, rects);
 }
 
@@ -609,7 +609,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDev
     TRACE("%p, %p, %p\n", phys_dev, surface_info, capabilities);
 
     surface_info_host = *surface_info;
-    surface_info_host.surface = wine_vk_surface->native;
+    surface_info_host.surface = wine_vk_surface->host_surface;
 
     if (pvkGetPhysicalDeviceSurfaceCapabilities2KHR)
     {
@@ -645,7 +645,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevi
 
     TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
 
-    res = pvkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev, wine_vk_surface->native,
+    res = pvkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev, wine_vk_surface->host_surface,
                                                      capabilities);
     if (res == VK_SUCCESS)
         res = wine_vk_surface_update_caps(wine_vk_surface, capabilities);
@@ -670,7 +670,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice p
         return VK_ERROR_SURFACE_LOST_KHR;
 
     surface_info_host = *surface_info;
-    surface_info_host.surface = wine_vk_surface->native;
+    surface_info_host.surface = wine_vk_surface->host_surface;
 
     if (pvkGetPhysicalDeviceSurfaceFormats2KHR)
     {
@@ -718,7 +718,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice ph
     if (!wine_vk_surface_is_valid(wine_vk_surface))
         return VK_ERROR_SURFACE_LOST_KHR;
 
-    return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, wine_vk_surface->native,
+    return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, wine_vk_surface->host_surface,
                                                  count, formats);
 }
 
@@ -734,7 +734,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevi
     if (!wine_vk_surface_is_valid(wine_vk_surface))
         return VK_ERROR_SURFACE_LOST_KHR;
 
-    return pvkGetPhysicalDeviceSurfacePresentModesKHR(phys_dev, wine_vk_surface->native,
+    return pvkGetPhysicalDeviceSurfacePresentModesKHR(phys_dev, wine_vk_surface->host_surface,
                                                       count, modes);
 }
 
@@ -750,7 +750,7 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice ph
     if (!wine_vk_surface_is_valid(wine_vk_surface))
         return VK_ERROR_SURFACE_LOST_KHR;
 
-    return pvkGetPhysicalDeviceSurfaceSupportKHR(phys_dev, index, wine_vk_surface->native,
+    return pvkGetPhysicalDeviceSurfaceSupportKHR(phys_dev, index, wine_vk_surface->host_surface,
                                                  supported);
 }
 
@@ -782,9 +782,9 @@ static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR 
     return check_queue_present(present_info, res);
 }
 
-static VkSurfaceKHR wayland_wine_get_native_surface(VkSurfaceKHR surface)
+static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
 {
-    return wine_vk_surface_from_handle(surface)->native;
+    return wine_vk_surface_from_handle(surface)->host_surface;
 }
 
 static void wine_vk_init(void)
@@ -849,7 +849,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
     .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
-    .p_wine_get_host_surface = wayland_wine_get_native_surface,
+    .p_wine_get_host_surface = wayland_wine_get_host_surface,
 };
 
 /**********************************************************************
