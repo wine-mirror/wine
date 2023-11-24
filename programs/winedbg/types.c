@@ -978,16 +978,13 @@ static const struct data_model* get_data_model(DWORD64 modaddr)
     else if (ADDRSIZE == 4) model = ilp32_data_model;
     else
     {
-        IMAGEHLP_MODULEW64 mi;
-        DWORD opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+        struct dhext_module_information wmi;
 
-        mi.SizeOfStruct = sizeof(mi);
-        if (SymGetModuleInfoW64(dbg_curr_process->handle, modaddr, &mi) &&
-            (wcsstr(mi.ModuleName, L".so") || wcsstr(mi.ModuleName, L"<")))
+        if (wine_get_module_information(dbg_curr_process->handle, modaddr, &wmi, sizeof(wmi)) &&
+            wmi.type != DMT_PE)
             model = lp64_data_model;
         else
             model = llp64_data_model;
-        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
     }
     return model;
 }
