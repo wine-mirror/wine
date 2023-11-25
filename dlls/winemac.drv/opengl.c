@@ -4326,6 +4326,7 @@ static int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMA
     descr->dwFlags          = PFD_SUPPORT_OPENGL;
     if (pf->window)         descr->dwFlags |= PFD_DRAW_TO_WINDOW;
     if (!pf->accelerated)   descr->dwFlags |= PFD_GENERIC_FORMAT;
+    else                    descr->dwFlags |= PFD_SUPPORT_COMPOSITION;
     if (pf->double_buffer)  descr->dwFlags |= PFD_DOUBLEBUFFER;
     if (pf->stereo)         descr->dwFlags |= PFD_STEREO;
     if (pf->backing_store)  descr->dwFlags |= PFD_SWAP_COPY;
