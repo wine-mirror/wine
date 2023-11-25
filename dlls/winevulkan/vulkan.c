@@ -1559,7 +1559,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
 
     /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
-                                                                      surface->driver_surface, &capabilities);
+                                                                      surface->host_surface, &capabilities);
     if (res != VK_SUCCESS) return res;
 
     create_info_host.imageExtent.width = max(create_info_host.imageExtent.width, capabilities.minImageExtent.width);
@@ -1867,7 +1867,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice device_
 
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
-                                                                      surface->driver_surface, capabilities);
+                                                                      surface->host_surface, capabilities);
     if (res == VK_SUCCESS) adjust_surface_capabilities(instance, surface, capabilities);
     return res;
 }
