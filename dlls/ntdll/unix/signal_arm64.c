@@ -149,10 +149,12 @@ C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 struct arm64_thread_data
 {
     struct syscall_frame *syscall_frame; /* 02f0 frame pointer on syscall entry */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 02f8 syscall table */
 };
 
 C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, syscall_frame ) == 0x2f0 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, syscall_table ) == 0x2f8 );
 
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
@@ -1669,9 +1671,12 @@ void syscall_dispatcher_return_slowpath(void)
 void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
                       struct syscall_frame *frame, void *syscall_cfa )
 {
+    struct arm64_thread_data *thread_data = (struct arm64_thread_data *)&teb->GdiTebBatch;
     CONTEXT *ctx, context = { CONTEXT_ALL };
     I386_CONTEXT *i386_context;
     ARM_CONTEXT *arm_context;
+
+    thread_data->syscall_table = KeServiceDescriptorTable;
 
     context.X0  = (DWORD64)entry;
     context.X1  = (DWORD64)arg;
@@ -1819,7 +1824,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_offset 28, -0x68\n\t")
                    "and x20, x8, #0xfff\n\t"    /* syscall number */
                    "ubfx x21, x8, #12, #2\n\t"  /* syscall table number */
-                   "adr x16, " __ASM_NAME("KeServiceDescriptorTable") "\n\t"
+                   "ldr x16, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_table */
                    "add x21, x16, x21, lsl #5\n\t"
                    "ldr x16, [x21, #16]\n\t"    /* table->ServiceLimit */
                    "cmp x20, x16\n\t"
