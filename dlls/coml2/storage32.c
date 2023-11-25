@@ -75,6 +75,19 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg, CLSID *pclsid)
 }
 
 /***********************************************************************
+ *              WriteClassStm (coml2.@)
+ */
+HRESULT WINAPI WriteClassStm(IStream *pStm, REFCLSID rclsid)
+{
+    TRACE("(%p,%p)\n", pStm, rclsid);
+
+    if (!pStm || !rclsid)
+        return E_INVALIDARG;
+
+    return IStream_Write(pStm, rclsid, sizeof(CLSID), NULL);
+}
+
+/***********************************************************************
  *              ReadClassStm (coml2.@)
  */
 HRESULT WINAPI ReadClassStm(IStream *pStm, CLSID *pclsid)

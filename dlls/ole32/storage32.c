@@ -9426,29 +9426,6 @@ StgIsStorageFile(LPCOLESTR fn)
 	return S_FALSE;
 }
 
-/***********************************************************************
- *		WriteClassStm (OLE32.@)
- *
- * Writes a CLSID to a stream.
- *
- * PARAMS
- *  pStm   [I] Stream to write to.
- *  rclsid [I] CLSID to write.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
-{
-    TRACE("(%p,%p)\n",pStm,rclsid);
-
-    if (!pStm || !rclsid)
-        return E_INVALIDARG;
-
-    return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
-}
-
 /************************************************************************
  * OleConvert Functions
  ***********************************************************************/

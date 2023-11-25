@@ -30,4 +30,4 @@
 @ stub StgOpenStorageOnILockBytes
 @ stub StgSetTimes
 @ stub WriteClassStg
-@ stub WriteClassStm
+@ stdcall WriteClassStm(ptr ptr)
