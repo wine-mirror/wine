@@ -1889,7 +1889,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice device
                                                               &capabilities->surfaceCapabilities);
     }
 
-    surface_info_host.surface = surface->driver_surface;
+    surface_info_host.surface = surface->host_surface;
 
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physical_device->host_physical_device,
