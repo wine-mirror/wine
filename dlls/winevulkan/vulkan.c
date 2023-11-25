@@ -1881,6 +1881,14 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice device
     struct wine_instance *instance = physical_device->instance;
     VkResult res;
 
+    if (!instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR)
+    {
+        /* Until the loader version exporting this function is common, emulate it using the older non-2 version. */
+        if (surface_info->pNext || capabilities->pNext) FIXME("Emulating vkGetPhysicalDeviceSurfaceCapabilities2KHR, ignoring pNext.\n");
+        return wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_handle, surface_info->surface,
+                                                              &capabilities->surfaceCapabilities);
+    }
+
     surface_info_host.surface = surface->driver_surface;
 
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
