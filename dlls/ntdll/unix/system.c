@@ -874,7 +874,7 @@ static void fill_performance_core_info(void)
 
         for(i = beg; i <= end; i++)
         {
-            if (i / 32 > performance_cores_capacity)
+            if (i / 32 >= performance_cores_capacity)
             {
                 p = realloc(performance_cores, performance_cores_capacity * 2 * sizeof(ULONG));
                 if (!p) goto done;
