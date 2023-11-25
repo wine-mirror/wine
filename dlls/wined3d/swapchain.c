@@ -2199,8 +2199,6 @@ static void set_window_state(struct wined3d_window_state *s)
      * messages. */
     if (window_tid == tid)
     {
-        set_window_state_thread(s);
-
         /* Deus Ex: Game of the Year Edition removes WS_EX_TOPMOST after changing resolutions in
          * exclusive fullscreen mode. Tests show that WS_EX_TOPMOST will be restored when a ~1.5s
          * timer times out */
@@ -2211,6 +2209,8 @@ static void set_window_state(struct wined3d_window_state *s)
             else
                 KillTimer(s->window, WINED3D_WINDOW_TOPMOST_TIMER_ID);
         }
+
+        set_window_state_thread(s);
     }
     else if ((thread = CreateThread(NULL, 0, set_window_state_thread, s, 0, NULL)))
     {
