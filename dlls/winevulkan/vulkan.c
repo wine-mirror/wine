@@ -1570,6 +1570,12 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
     VkSurfaceCapabilitiesKHR capabilities;
     VkResult res;
 
+    if (!NtUserIsWindow(surface->hwnd))
+    {
+        ERR("surface %p, hwnd %p is invalid!\n", surface, surface->hwnd);
+        return VK_ERROR_INITIALIZATION_FAILED;
+    }
+
     if (surface) create_info_host.surface = surface->driver_surface;
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
 

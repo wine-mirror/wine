@@ -858,7 +858,6 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
     swapchain = 0xdeadbeef;
     vr = create_swapchain(physical_device, surface, device, NULL, &swapchain);
-    todo_wine
     ok(vr == VK_ERROR_INITIALIZATION_FAILED /* Nvidia */ || vr == VK_SUCCESS /* AMD */,
             "Got unexpected vr %d.\n", vr);
     if (vr == VK_SUCCESS)
@@ -928,7 +927,6 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
     swapchain = 0xdeadbeef;
     vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
-    todo_wine
     ok(vr == VK_ERROR_INITIALIZATION_FAILED /* Nvidia */ || vr == VK_SUCCESS /* AMD */,
             "Got unexpected vr %d.\n", vr);
     if (vr == VK_SUCCESS)
