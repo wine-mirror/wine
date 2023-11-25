@@ -1503,24 +1503,40 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCre
                                       const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
+    VkWin32SurfaceCreateInfoKHR create_info_host = *create_info;
     struct wine_surface *object;
+    HWND dummy = NULL;
     VkResult res;
 
     if (allocator) FIXME("Support for allocation callbacks not implemented yet\n");
 
     if (!(object = calloc(1, sizeof(*object)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    object->hwnd = create_info->hwnd;
 
-    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->host_instance, create_info,
+    /* Windows allows surfaces to be created with no HWND, they return VK_ERROR_SURFACE_LOST_KHR later */
+    if (!(object->hwnd = create_info->hwnd))
+    {
+        static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
+        UNICODE_STRING static_us = RTL_CONSTANT_STRING(staticW);
+        dummy = NtUserCreateWindowEx(0, &static_us, &static_us, &static_us, WS_POPUP,
+                                     0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, NULL, 0, FALSE);
+        WARN("Created dummy window %p for null surface window\n", dummy);
+        create_info_host.hwnd = object->hwnd = dummy;
+    }
+
+    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->host_instance, &create_info_host,
                                                     NULL /* allocator */, &object->driver_surface);
     if (res != VK_SUCCESS)
     {
+        if (dummy) NtUserDestroyWindow(dummy);
         free(object);
         return res;
     }
 
     object->host_surface = vk_funcs->p_wine_get_host_surface(object->driver_surface);
     WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->host_surface, object);
+
+    *surface = wine_surface_to_handle(object);
+    if (dummy) NtUserDestroyWindow(dummy);
 
     *surface = wine_surface_to_handle(object);
 
