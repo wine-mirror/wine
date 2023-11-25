@@ -735,6 +735,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
                              void *client_ptr)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
+    struct wine_instance *instance = phys_dev->instance;
     VkDevice device_handle = client_ptr;
     VkDeviceCreateInfo create_info_host;
     struct VkQueue_T *queue_handles;
@@ -751,7 +752,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     {
         VkPhysicalDeviceProperties properties;
 
-        phys_dev->instance->funcs.p_vkGetPhysicalDeviceProperties(phys_dev->phys_dev, &properties);
+        instance->funcs.p_vkGetPhysicalDeviceProperties(phys_dev->phys_dev, &properties);
 
         TRACE("Device name: %s.\n", debugstr_a(properties.deviceName));
         TRACE("Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID);
@@ -766,10 +767,10 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     init_conversion_context(&ctx);
     res = wine_vk_device_convert_create_info(phys_dev, &ctx, create_info, &create_info_host);
     if (res == VK_SUCCESS)
-        res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
-                &create_info_host, NULL /* allocator */, &object->device);
+        res = instance->funcs.p_vkCreateDevice(phys_dev->phys_dev, &create_info_host,
+                                               NULL /* allocator */, &object->device);
     free_conversion_context(&ctx);
-    WINE_VK_ADD_DISPATCHABLE_MAPPING(phys_dev->instance, device_handle, object->device, object);
+    WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, device_handle, object->device, object);
     if (res != VK_SUCCESS)
     {
         WARN("Failed to create device, res=%d.\n", res);
@@ -815,7 +816,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
         next_queue += queue_count;
     }
 
-    device_handle->quirks = phys_dev->instance->quirks;
+    device_handle->quirks = instance->quirks;
     device_handle->base.unix_handle = (uintptr_t)object;
     *ret_device = device_handle;
     TRACE("Created device %p (native device %p).\n", object, object->device);
