@@ -4198,6 +4198,7 @@ static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
   if( FAILED(hr) )
   {
     ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+    free( *lplpAddrBuf );
     return FALSE;
   }
 
