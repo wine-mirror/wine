@@ -3982,6 +3982,7 @@ static enum fill_status fill_sid( struct table *table, const struct expr *cond )
     const WCHAR *str;
     struct record_sid *rec;
     UINT len;
+    NTSTATUS status;
 
     if (!(str = find_sid_str( cond ))) return FILL_STATUS_FAILED;
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
@@ -3996,10 +3997,12 @@ static enum fill_status fill_sid( struct table *table, const struct expr *cond )
         LocalFree( sid );
         return FILL_STATUS_FAILED;
     }
-    if (LsaLookupSids( handle, 1, &sid, &domain, &name ))
+    if ((status = LsaLookupSids( handle, 1, &sid, &domain, &name )))
     {
         LocalFree( sid );
         LsaClose( handle );
+        if (status == STATUS_NONE_MAPPED || status == STATUS_SOME_NOT_MAPPED)
+            LsaFreeMemory( domain );
         return FILL_STATUS_FAILED;
     }
 
