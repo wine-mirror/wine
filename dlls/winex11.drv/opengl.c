@@ -1589,6 +1589,9 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd,
    * We only set PFD_GENERIC_FORMAT on bitmap formats (see get_formats) as that's what ATI and Nvidia Windows drivers do  */
   ppfd->dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
 
+  if (!(ppfd->dwFlags & PFD_GENERIC_FORMAT))
+    ppfd->dwFlags |= PFD_SUPPORT_COMPOSITION;
+
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
   if (value) {
       ppfd->dwFlags |= PFD_DOUBLEBUFFER;
