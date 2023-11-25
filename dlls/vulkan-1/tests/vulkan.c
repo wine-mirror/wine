@@ -595,10 +595,8 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
         ok(surf_caps.maxImageCount > 2, "Got minImageCount %u\n", surf_caps.maxImageCount);
         ok(surf_caps.minImageCount <= surf_caps.maxImageCount, "Got maxImageCount %u\n", surf_caps.maxImageCount);
 
-        todo_wine_if(IsRectEmpty(&client_rect))
         ok(surf_caps.currentExtent.width == client_rect.right - client_rect.left,
                 "Got currentExtent.width %d\n", surf_caps.currentExtent.width);
-        todo_wine_if(IsRectEmpty(&client_rect))
         ok(surf_caps.currentExtent.height == client_rect.bottom - client_rect.top,
                 "Got currentExtent.height %d\n", surf_caps.currentExtent.height);
 

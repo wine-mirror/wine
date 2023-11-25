@@ -1548,11 +1548,22 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
     struct wine_swapchain *object, *old_swapchain = wine_swapchain_from_handle(create_info->oldSwapchain);
     struct wine_surface *surface = wine_surface_from_handle(create_info->surface);
     struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_phys_dev *physical_device = device->phys_dev;
+    struct wine_instance *instance = physical_device->instance;
     VkSwapchainCreateInfoKHR create_info_host = *create_info;
+    VkSurfaceCapabilitiesKHR capabilities;
     VkResult res;
 
     if (surface) create_info_host.surface = surface->driver_surface;
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
+
+    /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */
+    res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
+                                                                      surface->driver_surface, &capabilities);
+    if (res != VK_SUCCESS) return res;
+
+    create_info_host.imageExtent.width = max(create_info_host.imageExtent.width, capabilities.minImageExtent.width);
+    create_info_host.imageExtent.height = max(create_info_host.imageExtent.height, capabilities.minImageExtent.height);
 
     if (!(object = calloc(1, sizeof(*object)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
     res = device->funcs.p_vkCreateSwapchainKHR(device->host_device, &create_info_host, NULL, &object->host_swapchain);
@@ -1821,8 +1832,11 @@ VkResult wine_vkCreateImage(VkDevice handle, const VkImageCreateInfo *create_inf
     return device->funcs.p_vkCreateImage(device->host_device, &info, NULL, image);
 }
 
-static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
+static void adjust_surface_capabilities(struct wine_instance *instance, struct wine_surface *surface,
+                                        VkSurfaceCapabilitiesKHR *capabilities)
 {
+    RECT client_rect;
+
     /* Many Windows games, for example Strange Brigade, No Man's Sky, Path of Exile
      * and World War Z, do not expect that maxImageCount can be set to 0.
      * A value of 0 means that there is no limit on the number of images.
@@ -1830,10 +1844,17 @@ static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurf
      * https://vulkan.gpuinfo.org/displayreport.php?id=9122#surface
      * https://vulkan.gpuinfo.org/displayreport.php?id=9121#surface
      */
-    if ((phys_dev->instance->quirks & WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT) && !capabilities->maxImageCount)
-    {
+    if ((instance->quirks & WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT) && !capabilities->maxImageCount)
         capabilities->maxImageCount = max(capabilities->minImageCount, 16);
-    }
+
+    /* Update the image extents to match what the Win32 WSI would provide. */
+    NtUserGetClientRect(surface->hwnd, &client_rect);
+    capabilities->minImageExtent.width = client_rect.right - client_rect.left;
+    capabilities->minImageExtent.height = client_rect.bottom - client_rect.top;
+    capabilities->maxImageExtent.width = client_rect.right - client_rect.left;
+    capabilities->maxImageExtent.height = client_rect.bottom - client_rect.top;
+    capabilities->currentExtent.width = client_rect.right - client_rect.left;
+    capabilities->currentExtent.height = client_rect.bottom - client_rect.top;
 }
 
 VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice device_handle, VkSurfaceKHR surface_handle,
@@ -1847,7 +1868,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice device_
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
                                                                       surface->driver_surface, capabilities);
-    if (res == VK_SUCCESS) adjust_max_image_count(physical_device, capabilities);
+    if (res == VK_SUCCESS) adjust_surface_capabilities(instance, surface, capabilities);
     return res;
 }
 
@@ -1865,7 +1886,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice device
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physical_device->host_physical_device,
                                                                        &surface_info_host, capabilities);
-    if (res == VK_SUCCESS) adjust_max_image_count(physical_device, &capabilities->surfaceCapabilities);
+    if (res == VK_SUCCESS) adjust_surface_capabilities(instance, surface, &capabilities->surfaceCapabilities);
     return res;
 }
 
