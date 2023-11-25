@@ -547,7 +547,6 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkEnumerateInstanceExtensionProperties,
     macdrv_vkGetDeviceProcAddr,
     macdrv_vkGetInstanceProcAddr,
-    NULL,
     macdrv_vkGetPhysicalDeviceSurfaceFormats2KHR,
     macdrv_vkGetPhysicalDeviceSurfaceFormatsKHR,
     macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,

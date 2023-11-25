@@ -83,7 +83,6 @@ static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocati
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
-static VkResult (*pvkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkRect2D *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
@@ -126,7 +125,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR);
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
     LOAD_FUNCPTR(vkQueuePresentKHR);
-    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDevicePresentRectanglesKHR);
 #undef LOAD_FUNCPTR
 #undef LOAD_OPTIONAL_FUNCPTR
 
@@ -477,25 +475,6 @@ static void *X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
     return pvkGetInstanceProcAddr(instance, name);
 }
 
-static VkResult X11DRV_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice phys_dev,
-        VkSurfaceKHR surface, uint32_t *count, VkRect2D *rects)
-{
-    struct wine_vk_surface *x11_surface = surface_from_handle(surface);
-
-    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, rects);
-
-    if (!x11_surface->hwnd)
-    {
-        if (rects)
-            return VK_ERROR_SURFACE_LOST_KHR;
-
-        *count = 1;
-        return VK_SUCCESS;
-    }
-
-    return pvkGetPhysicalDevicePresentRectanglesKHR( phys_dev, x11_surface->host_surface, count, rects );
-}
-
 static VkResult X11DRV_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice phys_dev,
         const VkPhysicalDeviceSurfaceInfo2KHR *surface_info, uint32_t *count, VkSurfaceFormat2KHR *formats)
 {
@@ -609,7 +588,6 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkEnumerateInstanceExtensionProperties,
     X11DRV_vkGetDeviceProcAddr,
     X11DRV_vkGetInstanceProcAddr,
-    X11DRV_vkGetPhysicalDevicePresentRectanglesKHR,
     X11DRV_vkGetPhysicalDeviceSurfaceFormats2KHR,
     X11DRV_vkGetPhysicalDeviceSurfaceFormatsKHR,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,

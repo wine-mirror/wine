@@ -1936,7 +1936,7 @@ VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice device_ha
     }
 
     return instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(physical_device->host_physical_device,
-                                                                     surface->driver_surface, rect_count, rects);
+                                                                     surface->host_surface, rect_count, rects);
 }
 
 VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
