@@ -304,7 +304,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         FIXME("Support for allocation callbacks not implemented yet\n");
 
     /* TODO: support child window rendering. */
-    if (create_info->hwnd && NtUserGetAncestor(create_info->hwnd, GA_PARENT) != NtUserGetDesktopWindow())
+    if (NtUserGetAncestor( create_info->hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
     {
         FIXME("Application requires child window rendering, which is not implemented yet!\n");
         return VK_ERROR_INCOMPATIBLE_DRIVER;
@@ -316,15 +316,8 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
 
     x11_surface->ref = 1;
     x11_surface->hwnd = create_info->hwnd;
-    if (x11_surface->hwnd)
-    {
-        x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
-        x11_surface->hwnd_thread_id = NtUserGetWindowThread(x11_surface->hwnd, NULL);
-    }
-    else
-    {
-        x11_surface->window = create_dummy_client_window();
-    }
+    x11_surface->window = create_client_window( create_info->hwnd, &default_visual );
+    x11_surface->hwnd_thread_id = NtUserGetWindowThread( x11_surface->hwnd, NULL );
 
     if (!x11_surface->window)
     {
@@ -349,11 +342,9 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     }
 
     pthread_mutex_lock(&vulkan_mutex);
-    if (x11_surface->hwnd)
-    {
-        wine_vk_surface_destroy( x11_surface->hwnd );
-        XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
-    }
+    wine_vk_surface_destroy( x11_surface->hwnd );
+    XSaveContext( gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context,
+                  (char *)wine_vk_surface_grab( x11_surface ) );
     list_add_tail(&surface_list, &x11_surface->entry);
     pthread_mutex_unlock(&vulkan_mutex);
 
