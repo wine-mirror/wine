@@ -555,9 +555,6 @@ static VkResult wayland_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device,
 
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(surface), flags);
 
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
-
     return pvkGetDeviceGroupSurfacePresentModesKHR(device, wine_vk_surface->host_surface, flags);
 }
 
@@ -675,9 +672,6 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice p
 
     TRACE("%p, %p, %p, %p\n", phys_dev, surface_info, count, formats);
 
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
-
     surface_info_host = *surface_info;
     surface_info_host.surface = wine_vk_surface->host_surface;
 
@@ -724,9 +718,6 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice ph
 
     TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, formats);
 
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
-
     return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, wine_vk_surface->host_surface,
                                                  count, formats);
 }
@@ -740,9 +731,6 @@ static VkResult wayland_vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevi
 
     TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, modes);
 
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
-
     return pvkGetPhysicalDeviceSurfacePresentModesKHR(phys_dev, wine_vk_surface->host_surface,
                                                       count, modes);
 }
@@ -755,9 +743,6 @@ static VkResult wayland_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice ph
     struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
 
     TRACE("%p, %u, 0x%s, %p\n", phys_dev, index, wine_dbgstr_longlong(surface), supported);
-
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
 
     return pvkGetPhysicalDeviceSurfaceSupportKHR(phys_dev, index, wine_vk_surface->host_surface,
                                                  supported);
