@@ -420,13 +420,15 @@ struct amd64_thread_data
     DWORD_PTR             dr7;           /* 0318 */
     void                 *pthread_teb;   /* 0320 thread data for pthread */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
-    DWORD                 fs;            /* 0330 WOW TEB selector */
+    SYSTEM_SERVICE_TABLE *syscall_table; /* 0330 syscall table */
+    DWORD                 fs;            /* 0338 WOW TEB selector */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x320 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x330 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_table ) == 0x330 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -1585,7 +1587,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"       /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw 0x330(%r11),%fs\n"    /* amd64_thread_data()->fs */
+                   "movw 0x338(%r11),%fs\n"    /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "movq %rdi,%rcx\n\t"        /* id */
@@ -2463,9 +2465,11 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     CONTEXT *ctx, context = { 0 };
     I386_CONTEXT *wow_context;
 
+    thread_data->syscall_table = KeServiceDescriptorTable;
+
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
-    arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
+    arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
     if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
@@ -2474,11 +2478,11 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
 #elif defined (__APPLE__)
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1" :: "r" (teb->Tib.Self), "n" (FIELD_OFFSET(TEB, Tib.Self)));
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1" :: "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
-    amd64_thread_data()->pthread_teb = mac_thread_gsbase();
+    thread_data->pthread_teb = mac_thread_gsbase();
     /* alloc_tls_slot() needs to poke a value to an address relative to each
        thread's gsbase.  Have each thread record its gsbase pointer into its
        TEB so alloc_tls_slot() can find it. */
-    teb->Instrumentation[0] = amd64_thread_data()->pthread_teb;
+    teb->Instrumentation[0] = thread_data->pthread_teb;
 #else
 # error Please define setting %gs for your architecture
 #endif
@@ -2685,7 +2689,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-                   "leaq " __ASM_NAME("KeServiceDescriptorTable") "(%rip),%rcx\n\t"
+#ifdef __APPLE__
+                   "movq %gs:0x30,%rcx\n\t"
+                   "movq 0x330(%rcx),%rcx\n\t"
+#else
+                   "movq %gs:0x330,%rcx\n\t"       /* amd64_thread_data()->syscall_table */
+#endif
                    "leaq (%rcx,%rbx,2),%rbx\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "cmpq 16(%rbx),%rax\n\t"        /* table->ServiceLimit */
@@ -2714,7 +2723,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw %gs:0x330,%fs\n"          /* amd64_thread_data()->fs */
+                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "testl $0x48,%edx\n\t"          /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
@@ -2899,7 +2908,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw %gs:0x330,%fs\n"          /* amd64_thread_data()->fs */
+                   "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
                    "movq 0x60(%rcx),%r14\n\t"
