@@ -747,6 +747,15 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
 }
 
 /**********************************************************************
+ *              GetThreadDpiHostingBehavior   (USER32.@)
+ */
+DPI_HOSTING_BEHAVIOR WINAPI GetThreadDpiHostingBehavior( void )
+{
+    FIXME("(): stub\n");
+    return DPI_HOSTING_BEHAVIOR_DEFAULT;
+}
+
+/**********************************************************************
  *              SetThreadDpiHostingBehavior   (USER32.@)
  */
 DPI_HOSTING_BEHAVIOR WINAPI SetThreadDpiHostingBehavior( DPI_HOSTING_BEHAVIOR value )
