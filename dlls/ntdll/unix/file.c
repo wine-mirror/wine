@@ -4264,7 +4264,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
 NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                                         void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
 {
-    static const size_t info_sizes[] =
+    static const size_t info_sizes[FileMaximumInformation] =
     {
         0,
         sizeof(FILE_DIRECTORY_INFORMATION),            /* FileDirectoryInformation */
@@ -4331,6 +4331,18 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         0,                                             /* FileHardLinkFullIdInformation */
         0,                                             /* FileIdExtdBothDirectoryInformation */
         0,                                             /* FileDispositionInformationEx */
+        0,                                             /* FileRenameInformationEx */
+        0,                                             /* FileRenameInformationExBypassAccessCheck */
+        0,                                             /* FileDesiredStorageClassInformation */
+        0,                                             /* FileStatInformation */
+        0,                                             /* FileMemoryPartitionInformation */
+        0,                                             /* FileStatLxInformation */
+        0,                                             /* FileCaseSensitiveInformation */
+        0,                                             /* FileLinkInformationEx */
+        0,                                             /* FileLinkInformationExBypassAccessCheck */
+        0,                                             /* FileStorageReserveIdInformation */
+        0,                                             /* FileCaseSensitiveInformationForceAccessCheck */
+        0,                                             /* FileKnownFolderInformation */
     };
 
     struct stat st;
