@@ -721,7 +721,7 @@
 @ stdcall SetTaskmanWindow (long)
 @ stdcall SetThreadDesktop(long) NtUserSetThreadDesktop
 @ stdcall SetThreadDpiAwarenessContext(ptr)
-@ stdcall SetThreadDpiHostingBehavior(ptr)
+@ stdcall SetThreadDpiHostingBehavior(long)
 @ stdcall SetTimer(long long long ptr)
 @ stdcall SetUserObjectInformationA(long long ptr long)
 @ stdcall SetUserObjectInformationW(long long ptr long) NtUserSetObjectInformation
