@@ -87,7 +87,10 @@ NTSTATUS WINAPI NtCreateToken( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIB
     }
 
     if (primary_group == -1)
+    {
+        free( objattr );
         return STATUS_INVALID_PRIMARY_GROUP;
+    }
 
     groups_info = malloc( groups_size );
     if (!groups_info)
