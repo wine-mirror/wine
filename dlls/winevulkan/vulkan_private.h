@@ -222,7 +222,8 @@ static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
 struct wine_surface
 {
     VkSurfaceKHR host_surface;
-    VkSurfaceKHR driver_surface; /* wine driver surface */
+    VkSurfaceKHR driver_surface;
+    HWND hwnd;
 
     struct wine_vk_mapping mapping;
 };

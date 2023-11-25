@@ -1450,24 +1450,20 @@ void wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice phy
     properties->externalSemaphoreFeatures = 0;
 }
 
-VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCreateInfoKHR *createInfo,
+VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCreateInfoKHR *create_info,
                                       const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
     struct wine_surface *object;
     VkResult res;
 
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    if (allocator) FIXME("Support for allocation callbacks not implemented yet\n");
 
-    object = calloc(1, sizeof(*object));
+    if (!(object = calloc(1, sizeof(*object)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    object->hwnd = create_info->hwnd;
 
-    if (!object)
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->host_instance, createInfo, NULL,
-                                                    &object->driver_surface);
-
+    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->host_instance, create_info,
+                                                    NULL /* allocator */, &object->driver_surface);
     if (res != VK_SUCCESS)
     {
         free(object);
