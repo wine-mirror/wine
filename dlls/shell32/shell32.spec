@@ -349,6 +349,7 @@
 @ stdcall SHCreateItemFromParsingName(wstr ptr ptr ptr)
 @ stdcall SHCreateItemInKnownFolder(ptr long wstr ptr ptr)
 @ stdcall SHCreateItemFromRelativeName(ptr wstr ptr ptr ptr)
+@ stdcall SHCreateItemWithParent(ptr ptr ptr ptr ptr)
 @ stub SHCreateProcessAsUserW
 @ stdcall SHCreateQueryCancelAutoPlayMoniker(ptr)
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)

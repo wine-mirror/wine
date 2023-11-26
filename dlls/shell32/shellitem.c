@@ -769,6 +769,14 @@ HRESULT WINAPI SHCreateItemFromIDList(PCIDLIST_ABSOLUTE pidl, REFIID riid, void 
     return ret;
 }
 
+HRESULT WINAPI SHCreateItemWithParent(PCIDLIST_ABSOLUTE pidl_parent, IShellFolder *psf,
+                                PCUITEMID_CHILD pidl, REFIID riid, void **ppv)
+{
+    FIXME("(%p, %p, %p, %s, %p)\n", pidl_parent, psf, pidl, debugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI SHCreateItemInKnownFolder(REFKNOWNFOLDERID rfid, DWORD flags,
                                          PCWSTR filename, REFIID riid, void **ppv)
 {
