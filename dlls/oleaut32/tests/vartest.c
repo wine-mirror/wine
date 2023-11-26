@@ -3513,7 +3513,8 @@ static void test_Mod( int line, VARIANT *left, VARIANT *right, VARIANT *expected
     VARIANT result;
     HRESULT hres;
 
-    memset( &result, 0, sizeof(result) );
+    V_VT(&result) = 15;
+    V_I4(&result) = 0x12345;
     hres = pVarMod( left, right, &result );
     ok_(__FILE__,line)( hres == expres, "wrong result %lx/%lx\n", hres, expres );
     if (hres == S_OK)
