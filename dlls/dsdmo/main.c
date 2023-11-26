@@ -399,8 +399,19 @@ static ULONG WINAPI effect_inplace_Release(IMediaObjectInPlace *iface)
 static HRESULT WINAPI effect_inplace_Process(IMediaObjectInPlace *iface, ULONG size,
         BYTE *data, REFERENCE_TIME start, DWORD flags)
 {
-    FIXME("iface %p, size %lu, data %p, start %s, flags %#lx, stub!\n",
-            iface, size, data, wine_dbgstr_longlong(start), flags);
+    static unsigned int once;
+
+    if (!once++)
+    {
+        FIXME("iface %p, size %lu, data %p, start %s, flags %#lx, stub!\n",
+                iface, size, data, wine_dbgstr_longlong(start), flags);
+    }
+    else
+    {
+        WARN("iface %p, size %lu, data %p, start %s, flags %#lx, stub!\n",
+               iface, size, data, wine_dbgstr_longlong(start), flags);
+    }
+
     return E_NOTIMPL;
 }
 
