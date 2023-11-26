@@ -23,12 +23,15 @@
 static VkResult create_instance(uint32_t extension_count,
         const char * const *enabled_extensions, VkInstance *vk_instance)
 {
+    VkApplicationInfo app_info = {.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO};
     VkInstanceCreateInfo create_info;
+
+    app_info.apiVersion = VK_API_VERSION_1_1;
 
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pNext = NULL;
     create_info.flags = 0;
-    create_info.pApplicationInfo = NULL;
+    create_info.pApplicationInfo = &app_info;
     create_info.enabledLayerCount = 0;
     create_info.ppEnabledLayerNames = NULL;
     create_info.enabledExtensionCount = extension_count;
