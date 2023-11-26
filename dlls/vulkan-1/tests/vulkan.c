@@ -497,7 +497,11 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
 
     vr = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, surface, &surf_caps);
-    ok(vr, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR succeeded.\n");
+    if (!IsWindow(hwnd))
+        ok(vr == VK_ERROR_SURFACE_LOST_KHR /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */,
+                "Got unexpected vr %d.\n", vr);
+    else
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
 
     count = 0;
     vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, NULL);
@@ -515,7 +519,7 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
 
     memset(&rect, 0xcc, sizeof(rect));
     vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, &rect);
-    todo_wine
+    todo_wine_if(!IsWindow(hwnd))
     ok(vr == VK_SUCCESS /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */, "Got unexpected vr %d.\n", vr);
     if (vr == VK_SUCCESS)
     {
@@ -544,6 +548,7 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     VkSurfaceKHR surface;
     VkDevice device;
     VkResult vr;
+    HWND hwnd;
 
     vr = create_device(physical_device, ARRAY_SIZE(device_extensions), device_extensions, NULL, &device);
     if (vr != VK_SUCCESS) /* Wine testbot is missing VK_KHR_device_group */
@@ -563,6 +568,134 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     winetest_pop_context();
+
+    /* test normal window */
+
+    winetest_push_context("created");
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    DestroyWindow(hwnd);
+    winetest_pop_context();
+
+    /* test destroyed window */
+
+    winetest_push_context("destroyed");
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    DestroyWindow(hwnd);
+
+    test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    winetest_pop_context();
+
+    /* test resized window */
+
+    winetest_push_context("resized");
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    SetWindowPos(hwnd, 0, 0, 0, 50, 50, SWP_NOMOVE);
+
+    test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    DestroyWindow(hwnd);
+    winetest_pop_context();
+
+    /* test hidden window */
+
+    winetest_push_context("hidden");
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    ShowWindow(hwnd, SW_HIDE);
+
+    test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    DestroyWindow(hwnd);
+    winetest_pop_context();
+
+    /* tests minimized window */
+
+    winetest_push_context("minimized");
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200,
+            0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExW failed, error %lu\n", GetLastError());
+
+    surface = 0xdeadbeef;
+    create_info.hwnd = hwnd;
+    vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    ShowWindow(hwnd, SW_MINIMIZE);
+
+    test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    vkDestroySurfaceKHR(instance, surface, NULL);
+    DestroyWindow(hwnd);
+    winetest_pop_context();
+
+    /* works on Windows, crashes on Wine */
+    if (0)
+    {
+        /* test desktop window */
+
+        winetest_push_context("desktop");
+
+        hwnd = GetDesktopWindow();
+
+        surface = 0xdeadbeef;
+        create_info.hwnd = hwnd;
+        vr = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+        test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+        vkDestroySurfaceKHR(instance, surface, NULL);
+        winetest_pop_context();
+    }
 
     vkDestroyDevice(device, NULL);
 }
