@@ -3518,8 +3518,15 @@ static void test_Mod( int line, VARIANT *left, VARIANT *right, VARIANT *expected
     hres = pVarMod( left, right, &result );
     ok_(__FILE__,line)( hres == expres, "wrong result %lx/%lx\n", hres, expres );
     if (hres == S_OK)
+    {
         ok_(__FILE__,line)( is_expected_variant( &result, expected ),
                             "got %s expected %s\n", variantstr(&result), variantstr(expected) );
+    }
+    else
+    {
+        ok_(__FILE__,line)( V_VT(&result) == VT_EMPTY, "Unexpected type %d.\n", V_VT(&result) );
+        ok_(__FILE__,line)( V_I4(&result) == 0x12345, "Unexpected value %ld.\n", V_I4(&result) );
+    }
 }
 
 #define VARMOD(vt1,vt2,val1,val2,rvt,rval)               \
