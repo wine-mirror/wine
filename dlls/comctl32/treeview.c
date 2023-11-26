@@ -4116,9 +4116,11 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 static LRESULT
 TREEVIEW_HandleTimer(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 {
+    static unsigned int once;
+
     if (wParam != TV_EDIT_TIMER)
     {
-	ERR("got unknown timer\n");
+	if (!once++) ERR("got unknown timer %Id\n", wParam);
 	return 1;
     }
 
