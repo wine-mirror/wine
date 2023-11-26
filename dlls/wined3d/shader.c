@@ -638,9 +638,10 @@ static void shader_set_limits(struct wined3d_shader *shader)
     }
     if (!shader->limits)
     {
-        FIXME("Unexpected shader version \"%u.%u\".\n",
+        FIXME("Unexpected shader version \"%u.%u\" (shader type %u).\n",
                 shader->reg_maps.shader_version.major,
-                shader->reg_maps.shader_version.minor);
+                shader->reg_maps.shader_version.minor,
+                shader->reg_maps.shader_version.type);
         shader->limits = &limits_array[max(0, i - 1)].limits;
     }
 }
