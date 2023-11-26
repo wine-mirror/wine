@@ -1895,7 +1895,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     EnterCriticalSection(&filter->streaming_cs);
     filter->flushing = false;
     LeaveCriticalSection(&filter->streaming_cs);
-    WakeConditionVariable(&filter->flushing_cv);
+    WakeAllConditionVariable(&filter->flushing_cv);
 
     return S_OK;
 }
