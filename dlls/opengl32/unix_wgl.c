@@ -1855,10 +1855,15 @@ static void unmap_named_buffer( TEB *teb, GLint buffer )
 static NTSTATUS wow64_map_buffer( TEB *teb, GLint buffer, GLenum target, void *ptr, SIZE_T size,
                                   GLbitfield access, PTR32 *ret )
 {
+    static unsigned int once;
+
     if (*ret)  /* wow64 pointer provided, map buffer to it */
     {
         if (!(access & (GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)))
         {
+            if (!once++)
+                FIXME( "Doing a copy of a mapped buffer (expect performance issues)\n" );
+
             TRACE( "Copying %#zx from buffer at %p to wow64 buffer %p\n", size, ptr, UlongToPtr(*ret) );
             memcpy( UlongToPtr(*ret), ptr, size );
         }
