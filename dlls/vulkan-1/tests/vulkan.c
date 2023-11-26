@@ -125,6 +125,41 @@ static VkResult create_device(VkPhysicalDevice vk_physical_device,
     return vkCreateDevice(vk_physical_device, &create_info, NULL, vk_device);
 }
 
+static VkResult create_swapchain(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
+        VkDevice device, HWND hwnd, VkSwapchainKHR *swapchain)
+{
+    VkSwapchainCreateInfoKHR create_info = {.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+    VkSurfaceCapabilitiesKHR capabilities;
+    RECT client_rect;
+    VkResult vr;
+
+    if (!GetClientRect(hwnd, &client_rect))
+        SetRect(&client_rect, 0, 0, 0, 0);
+
+    vr = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities);
+    if (!IsWindow(hwnd))
+    {
+        ok(vr == VK_ERROR_SURFACE_LOST_KHR || vr == VK_ERROR_UNKNOWN, "Got unexpected vr %d.\n", vr);
+        memset(&capabilities, 0, sizeof(capabilities));
+    }
+
+    create_info.surface = surface;
+    create_info.minImageCount = max(1, capabilities.minImageCount);
+    create_info.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+    create_info.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    create_info.imageExtent.width = max(client_rect.right - client_rect.left, capabilities.minImageExtent.width);
+    create_info.imageExtent.height = max(client_rect.bottom - client_rect.top, capabilities.minImageExtent.height);
+    create_info.imageArrayLayers = 1;
+    create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    create_info.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+    create_info.clipped = VK_TRUE;
+
+    return vkCreateSwapchainKHR(device, &create_info, NULL, swapchain);
+}
+
 static void test_instance_version(void)
 {
     PFN_vkEnumerateInstanceVersion pfn_vkEnumerateInstanceVersion;
@@ -654,19 +689,165 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
 }
 
+static void test_win32_surface_swapchain_hwnd(VkDevice device, VkSwapchainKHR swapchain,
+        VkQueue queue, VkCommandBuffer cmd, HWND hwnd, BOOL expect_suboptimal)
+{
+    VkAcquireNextImageInfoKHR acquire_info = {.sType = VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR};
+    VkCommandBufferBeginInfo begin_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    VkImageMemoryBarrier image_barrier = {.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+    VkFenceCreateInfo fence_info = {.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    VkPresentInfoKHR present_info = {.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+    VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    uint32_t image_count, image_index;
+    VkResult vr, present_result;
+    VkImage *images;
+    VkFence fence;
+
+    vr = vkGetSwapchainImagesKHR(device, swapchain, &image_count, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    images = malloc(image_count * sizeof(*images));
+    vr = vkGetSwapchainImagesKHR(device, swapchain, &image_count, images);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    vr = vkCreateFence(device, &fence_info, NULL, &fence);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vr = vkResetFences(device, 1, &fence);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    image_index = 0xdeadbeef;
+    vr = vkAcquireNextImageKHR(device, swapchain, -1, VK_NULL_HANDLE, fence, &image_index);
+    if (expect_suboptimal)
+    {
+        todo_wine_if(vr == VK_SUCCESS)
+        ok(vr == VK_SUBOPTIMAL_KHR || broken(vr == VK_SUCCESS) /* Nvidia */, "Got unexpected vr %d.\n", vr);
+    }
+    else
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(image_index != 0xdeadbeef, "Got image_index %d.\n", image_index);
+
+    vr = vkWaitForFences(device, 1, &fence, VK_FALSE, -1);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vr = vkResetFences(device, 1, &fence);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    /* transition swapchain image from whatever to PRESENT_SRC */
+    image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    image_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    image_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    image_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    image_barrier.image = images[image_index];
+    image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_barrier.subresourceRange.baseMipLevel = 0;
+    image_barrier.subresourceRange.levelCount = 1;
+    image_barrier.subresourceRange.baseArrayLayer = 0;
+    image_barrier.subresourceRange.layerCount = 1;
+    image_barrier.srcAccessMask = 0;
+    image_barrier.dstAccessMask = 0;
+
+    vr = vkResetCommandBuffer(cmd, 0);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vr = vkBeginCommandBuffer(cmd, &begin_info);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &image_barrier);
+    vr = vkEndCommandBuffer(cmd);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd;
+
+    vr = vkQueueSubmit(queue, 1, &submit_info, fence);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vr = vkWaitForFences(device, 1, &fence, VK_FALSE, -1);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    vr = vkResetFences(device, 1, &fence);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &swapchain;
+    present_info.pImageIndices = &image_index;
+    present_info.pResults = &present_result;
+
+    vr = vkQueuePresentKHR(queue, &present_info);
+    if (expect_suboptimal)
+    {
+        todo_wine
+        ok(vr == VK_SUBOPTIMAL_KHR || broken(vr == VK_ERROR_OUT_OF_DATE_KHR) /* Nvidia */,
+                "Got unexpected vr %d.\n", vr);
+    }
+    else if (IsWindow(hwnd))
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    else
+    {
+        ok(vr == VK_SUCCESS /* AMD */ || vr == VK_ERROR_DEVICE_LOST /* AMD */ ||
+                        vr == VK_ERROR_OUT_OF_DATE_KHR /* Nvidia */,
+                "Got unexpected vr %d.\n", vr);
+    }
+
+    image_index = 0xdeadbeef;
+    acquire_info.swapchain = swapchain;
+    acquire_info.timeout = -1;
+    acquire_info.fence = fence;
+    acquire_info.deviceMask = 1;
+    vr = vkAcquireNextImage2KHR(device, &acquire_info, &image_index);
+    if (expect_suboptimal)
+    {
+        todo_wine_if(vr == VK_SUCCESS)
+        ok(vr == VK_SUBOPTIMAL_KHR || broken(vr == VK_ERROR_OUT_OF_DATE_KHR) /* Nvidia */,
+                "Got unexpected vr %d.\n", vr);
+    }
+    else if (IsWindow(hwnd))
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    else
+        ok(vr == VK_SUCCESS /* AMD */ || vr == VK_ERROR_OUT_OF_DATE_KHR /* Nvidia */,
+                "Got unexpected vr %d.\n", vr);
+
+    if (vr >= VK_SUCCESS)
+    {
+        vr = vkWaitForFences(device, 1, &fence, VK_FALSE, -1);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    }
+
+    vkDestroyFence(device, fence, NULL);
+
+    free(images);
+}
+
 static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_device)
 {
     static const char *const device_extensions[] = {"VK_KHR_swapchain", "VK_KHR_device_group"};
 
+    VkCommandBufferAllocateInfo allocate_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
     VkWin32SurfaceCreateInfoKHR create_info = {.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
+    VkCommandPoolCreateInfo pool_create_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    VkCommandBuffer command_buffer;
+    uint32_t queue_family_index;
+    VkCommandPool command_pool;
+    VkSwapchainKHR swapchain;
     VkSurfaceKHR surface;
     VkDevice device;
+    VkQueue queue;
     VkResult vr;
     HWND hwnd;
 
     vr = create_device(physical_device, ARRAY_SIZE(device_extensions), device_extensions, NULL, &device);
     if (vr != VK_SUCCESS) /* Wine testbot is missing VK_KHR_device_group */
         vr = create_device(physical_device, ARRAY_SIZE(device_extensions) - 1, device_extensions, NULL, &device);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    find_queue_family(physical_device, VK_QUEUE_GRAPHICS_BIT, &queue_family_index);
+    vkGetDeviceQueue(device, queue_family_index, 0, &queue);
+
+    pool_create_info.queueFamilyIndex = queue_family_index;
+    pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    vr = vkCreateCommandPool(device, &pool_create_info, NULL, &command_pool);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    allocate_info.commandPool = command_pool;
+    allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocate_info.commandBufferCount = 1;
+    vr = vkAllocateCommandBuffers(device, &allocate_info, &command_buffer);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
 
     /* test NULL window */
@@ -679,6 +860,18 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     ok(surface != 0xdeadbeef, "Surface not created.\n");
 
     test_win32_surface_hwnd(instance, physical_device, device, surface, NULL);
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, NULL, &swapchain);
+    todo_wine
+    ok(vr == VK_ERROR_INITIALIZATION_FAILED /* Nvidia */ || vr == VK_SUCCESS /* AMD */,
+            "Got unexpected vr %d.\n", vr);
+    if (vr == VK_SUCCESS)
+    {
+        ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+        test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, NULL, FALSE);
+        vkDestroySwapchainKHR(device, swapchain, NULL);
+    }
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     winetest_pop_context();
@@ -699,6 +892,13 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
     test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
 
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
     vkDestroySurfaceKHR(instance, surface, NULL);
     DestroyWindow(hwnd);
     winetest_pop_context();
@@ -717,9 +917,31 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(surface != 0xdeadbeef, "Surface not created.\n");
 
+    /* test a swapchain outliving the window */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+
     DestroyWindow(hwnd);
 
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
     test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    todo_wine
+    ok(vr == VK_ERROR_INITIALIZATION_FAILED /* Nvidia */ || vr == VK_SUCCESS /* AMD */,
+            "Got unexpected vr %d.\n", vr);
+    if (vr == VK_SUCCESS)
+    {
+        ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+        test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+        vkDestroySwapchainKHR(device, swapchain, NULL);
+    }
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     winetest_pop_context();
@@ -738,9 +960,28 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(surface != 0xdeadbeef, "Surface not created.\n");
 
+    /* test a swapchain created before the window is resized */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+
     SetWindowPos(hwnd, 0, 0, 0, 50, 50, SWP_NOMOVE);
 
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, TRUE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
     test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    /* test a swapchain created after the window has been resized */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     DestroyWindow(hwnd);
@@ -760,9 +1001,28 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(surface != 0xdeadbeef, "Surface not created.\n");
 
+    /* test a swapchain created before the window is hidden */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+
     ShowWindow(hwnd, SW_HIDE);
 
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
     test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    /* test a swapchain created after the window has been hidden */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     DestroyWindow(hwnd);
@@ -782,9 +1042,28 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(surface != 0xdeadbeef, "Surface not created.\n");
 
+    /* test a swapchain created before the window is minimized */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+
     ShowWindow(hwnd, SW_MINIMIZE);
 
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, TRUE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
+
     test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
+
+    /* test a swapchain created after the window has been minimized */
+
+    swapchain = 0xdeadbeef;
+    vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+    test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+    vkDestroySwapchainKHR(device, swapchain, NULL);
 
     vkDestroySurfaceKHR(instance, surface, NULL);
     DestroyWindow(hwnd);
@@ -807,10 +1086,18 @@ static void test_win32_surface(VkInstance instance, VkPhysicalDevice physical_de
 
         test_win32_surface_hwnd(instance, physical_device, device, surface, hwnd);
 
+        swapchain = 0xdeadbeef;
+        vr = create_swapchain(physical_device, surface, device, hwnd, &swapchain);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        ok(swapchain != 0xdeadbeef, "Swapchain not created.\n");
+        test_win32_surface_swapchain_hwnd(device, swapchain, queue, command_buffer, hwnd, FALSE);
+        vkDestroySwapchainKHR(device, swapchain, NULL);
+
         vkDestroySurfaceKHR(instance, surface, NULL);
         winetest_pop_context();
     }
 
+    vkDestroyCommandPool(device, command_pool, NULL);
     vkDestroyDevice(device, NULL);
 }
 
