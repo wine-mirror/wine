@@ -18,15 +18,15 @@
 
 #include "../mmdevapi/unixlib.h"
 
-NTSTATUS alsa_midi_release(void *args) DECLSPEC_HIDDEN;
-NTSTATUS alsa_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS alsa_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS alsa_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_midi_release(void *args);
+NTSTATUS alsa_midi_out_message(void *args);
+NTSTATUS alsa_midi_in_message(void *args);
+NTSTATUS alsa_midi_notify_wait(void *args);
 
 #ifdef _WIN64
-NTSTATUS alsa_wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS alsa_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS alsa_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS alsa_wow64_midi_out_message(void *args);
+NTSTATUS alsa_wow64_midi_in_message(void *args);
+NTSTATUS alsa_wow64_midi_notify_wait(void *args);
 #endif
 
 #define ALSA_CALL(func, params) WINE_UNIX_CALL(func, params)
