@@ -2638,6 +2638,7 @@ static struct emf *emf_create( HDC hdc, const RECT *rect, const WCHAR *descripti
     DWORD size = 0, length = 0;
     DC_ATTR *dc_attr;
     struct emf *emf;
+    void *ptr;
 
     if (!(dc_attr = get_dc_attr( hdc )) || !(emf = HeapAlloc( GetProcessHeap(), 0, sizeof(*emf) )))
         return NULL;
@@ -2649,7 +2650,7 @@ static struct emf *emf_create( HDC hdc, const RECT *rect, const WCHAR *descripti
         length += 3;
         length *= 2;
     }
-    size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
+    size = sizeof(ENHMETAHEADER) + aligned_size(length);
 
     if (!(emf->emh = HeapAlloc( GetProcessHeap(), 0, size )) ||
         !(emf->handles = HeapAlloc( GetProcessHeap(), 0,
@@ -2674,7 +2675,8 @@ static struct emf *emf_create( HDC hdc, const RECT *rect, const WCHAR *descripti
     emf->emh->nDescription = length / 2;
     emf->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
 
-    memcpy( (char *)emf->emh + sizeof(ENHMETAHEADER), description, length );
+    ptr = memcpy( (char *)emf->emh + sizeof(ENHMETAHEADER), description, length );
+    pad_record( ptr, length );
 
     emf_reset( dc_attr, rect );
     return emf;
