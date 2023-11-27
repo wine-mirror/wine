@@ -2514,20 +2514,19 @@ BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
 {
     DC_ATTR *dc_attr;
     EMRGDICOMMENT *emr;
-    UINT total, rounded_size;
+    UINT total;
     BOOL ret;
 
     if (!(dc_attr = get_dc_attr( hdc )) || !get_dc_emf( dc_attr )) return FALSE;
 
-    rounded_size = aligned_size(bytes);
-    total = offsetof(EMRGDICOMMENT,Data) + rounded_size;
+    total = offsetof(EMRGDICOMMENT,Data) + aligned_size(bytes);
 
     emr = HeapAlloc(GetProcessHeap(), 0, total);
     emr->emr.iType = EMR_GDICOMMENT;
     emr->emr.nSize = total;
     emr->cbData = bytes;
-    memset(&emr->Data[bytes], 0, rounded_size - bytes);
     memcpy(&emr->Data[0], buffer, bytes);
+    pad_record(&emr->Data[0], bytes);
 
     ret = emfdc_record( get_dc_emf( dc_attr ), &emr->emr );
 
