@@ -373,7 +373,10 @@ static HRESULT WINAPI segment_GetParam(IDirectMusicSegment8 *iface, REFGUID type
     for (i = 0, count = 0; i < DMUS_SEG_ANYTRACK && count <= index; i++) {
         if (FAILED(segment_GetTrack(iface, &GUID_NULL, group, i, &track))) break;
         if (FAILED(IDirectMusicTrack_IsParamSupported(track, type)))
+        {
+            IDirectMusicTrack_Release(track);
             continue;
+        }
         if (index == count || index == DMUS_SEG_ANYTRACK)
             hr = IDirectMusicTrack_GetParam(track, type, time, next, param);
         IDirectMusicTrack_Release(track);
