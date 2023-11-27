@@ -1839,10 +1839,10 @@ static void test_media_streams(void)
 static void test_enum_pins(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStream *stream0, *stream1;
+    IPin *pins[3], *pin0, *pin1;
     IMediaStreamFilter *filter;
     IEnumPins *enum1, *enum2;
-    IMediaStream *stream;
-    IPin *pins[3], *pin;
     ULONG ref, count;
     HRESULT hr;
 
@@ -1877,9 +1877,13 @@ static void test_enum_pins(void)
     hr = IEnumPins_Skip(enum1, 1);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
-    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream0, &IID_IPin, (void **)&pin0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream1, &IID_IPin, (void **)&pin1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Reset() isn't enough; we have to call EnumPins() again to see the updated
@@ -1899,18 +1903,31 @@ static void test_enum_pins(void)
     ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
-    ref = get_refcount(pin);
+    ref = get_refcount(pin0);
+    ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pin1);
     ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    ok(pins[0] == pin0, "Expected pin %p, got %p.\n", pin0, pins[0]);
     ref = get_refcount(filter);
     ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
-    ref = get_refcount(pin);
+    ref = get_refcount(pin0);
     ok(ref == 5, "Got unexpected refcount %ld.\n", ref);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
+    ref = get_refcount(filter);
+    ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(enum1);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ref = get_refcount(pin1);
+    todo_wine ok(ref == 5, "Got unexpected refcount %ld.\n", ref);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
@@ -1922,20 +1939,28 @@ static void test_enum_pins(void)
     hr = IEnumPins_Next(enum1, 1, pins, &count);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(count == 1, "Got count %lu.\n", count);
-    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    ok(pins[0] == pin0, "Expected pin %p, got %p.\n", pin0, pins[0]);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum1, 1, pins, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Reset(enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IEnumPins_Next(enum1, 2, pins, NULL);
+    hr = IEnumPins_Next(enum1, 3, pins, NULL);
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
-    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    hr = IEnumPins_Next(enum1, 3, pins, &count);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %lu.\n", count);
-    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    ok(count == 2, "Got count %lu.\n", count);
+    ok(pins[0] == pin0, "Expected pin %p, got %p.\n", pin0, pins[0]);
+    ok(pins[1] == pin1, "Expected pin %p, got %p.\n", pin1, pins[1]);
     IPin_Release(pins[0]);
+    IPin_Release(pins[1]);
 
     hr = IEnumPins_Reset(enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1946,7 +1971,7 @@ static void test_enum_pins(void)
     hr = IEnumPins_Skip(enum1, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IEnumPins_Skip(enum1, 1);
+    hr = IEnumPins_Skip(enum1, 2);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
@@ -1954,7 +1979,12 @@ static void test_enum_pins(void)
 
     hr = IEnumPins_Next(enum2, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
+    ok(pins[0] == pin0, "Expected pin %p, got %p.\n", pin0, pins[0]);
+    IPin_Release(pins[0]);
+
+    hr = IEnumPins_Next(enum2, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
     IPin_Release(pins[0]);
 
     IEnumPins_Release(enum2);
@@ -1963,8 +1993,11 @@ static void test_enum_pins(void)
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    IMediaStream_Release(stream);
-    ref = IPin_Release(pin);
+    IMediaStream_Release(stream1);
+    IMediaStream_Release(stream0);
+    ref = IPin_Release(pin1);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IPin_Release(pin0);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
