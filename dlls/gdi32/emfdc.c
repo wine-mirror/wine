@@ -1899,13 +1899,14 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     UINT bmi_size, img_size, payload_size, emr_size;
     BITMAPINFOHEADER bih;
     BITMAPINFO *bi;
+    void *ptr;
 
     /* calculate the size of the colour table and the image */
     if (!emf_parse_user_bitmapinfo( &bih, &info->bmiHeader, usage, TRUE,
                                     &bmi_size, &img_size )) return 0;
 
     /* check for overflows */
-    payload_size = bmi_size + img_size;
+    payload_size = aligned_size(bmi_size) + aligned_size(img_size);
     if (payload_size < bmi_size) return 0;
 
     emr_size = sizeof (EMRSTRETCHDIBITS) + payload_size;
@@ -1913,14 +1914,6 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
 
     /* allocate record */
     if (!(emr = HeapAlloc(GetProcessHeap(), 0, emr_size ))) return 0;
-
-    /* write a bitmap info header (with colours) to the record */
-    bi = (BITMAPINFO *)&emr[1];
-    bi->bmiHeader = bih;
-    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
-
-    /* write bitmap bits to the record */
-    memcpy ( (BYTE *)&emr[1] + bmi_size, bits, img_size );
 
     /* fill in the EMR header at the front of our piece of memory */
     emr->emr.iType = EMR_STRETCHDIBITS;
@@ -1937,7 +1930,7 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     emr->iUsageSrc    = usage;
     emr->offBmiSrc    = sizeof (EMRSTRETCHDIBITS);
     emr->cbBmiSrc     = bmi_size;
-    emr->offBitsSrc   = emr->offBmiSrc + bmi_size;
+    emr->offBitsSrc   = emr->offBmiSrc + aligned_size(bmi_size);
     emr->cbBitsSrc    = img_size;
 
     emr->cxSrc = width_src;
@@ -1947,6 +1940,16 @@ BOOL EMFDC_StretchDIBits( DC_ATTR *dc_attr, INT x_dst, INT y_dst, INT width_dst,
     emr->rclBounds.top    = y_dst;
     emr->rclBounds.right  = x_dst + width_dst - 1;
     emr->rclBounds.bottom = y_dst + height_dst - 1;
+
+    /* write a bitmap info header (with colours) to the record */
+    bi = (BITMAPINFO *)((BYTE *)emr + emr->offBmiSrc);
+    bi->bmiHeader = bih;
+    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
+    pad_record( bi, emr->cbBmiSrc );
+
+    /* write bitmap bits to the record */
+    ptr = memcpy ( (BYTE *)emr + emr->offBitsSrc, bits, img_size );
+    pad_record( ptr, emr->cbBitsSrc );
 
     /* save the record we just created */
     ret = emfdc_record( get_dc_emf( dc_attr ), &emr->emr );
