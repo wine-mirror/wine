@@ -849,7 +849,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
     .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
-    .p_wine_get_native_surface = wayland_wine_get_native_surface,
+    .p_wine_get_host_surface = wayland_wine_get_native_surface,
 };
 
 /**********************************************************************

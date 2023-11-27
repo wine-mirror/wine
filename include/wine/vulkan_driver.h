@@ -43,7 +43,7 @@ struct vulkan_funcs
     VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
     /* winevulkan specific functions */
-    VkSurfaceKHR (*p_wine_get_native_surface)(VkSurfaceKHR);
+    VkSurfaceKHR (*p_wine_get_host_surface)(VkSurfaceKHR);
 };
 
 static inline void *get_vulkan_driver_device_proc_addr(

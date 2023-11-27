@@ -844,7 +844,7 @@ class VkFunction(object):
         else:
             func_prefix = "wine_"
 
-        # Call the native Vulkan function.
+        # Call the host Vulkan function.
         if self.type == "void":
             body += "    {0}{1}({2});\n".format(func_prefix, self.name, params)
         else:
@@ -1112,33 +1112,33 @@ class VkHandle(object):
     def is_required(self):
         return self.required
 
-    def native_handle(self, name):
-        """ Provide access to the native handle of a wrapped object. """
+    def host_handle(self, name):
+        """ Provide access to the host handle of a wrapped object. """
 
         if self.name == "VkCommandBuffer":
-            return "wine_cmd_buffer_from_handle({0})->command_buffer".format(name)
+            return "wine_cmd_buffer_from_handle({0})->host_command_buffer".format(name)
         if self.name == "VkCommandPool":
-            return "wine_cmd_pool_from_handle({0})->command_pool".format(name)
+            return "wine_cmd_pool_from_handle({0})->host_command_pool".format(name)
         if self.name == "VkDebugUtilsMessengerEXT":
-            return "wine_debug_utils_messenger_from_handle({0})->debug_messenger".format(name)
+            return "wine_debug_utils_messenger_from_handle({0})->host_debug_messenger".format(name)
         if self.name == "VkDebugReportCallbackEXT":
-            return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
+            return "wine_debug_report_callback_from_handle({0})->host_debug_callback".format(name)
         if self.name == "VkDeferredOperationKHR":
-            return "wine_deferred_operation_from_handle({0})->deferred_operation".format(name)
+            return "wine_deferred_operation_from_handle({0})->host_deferred_operation".format(name)
         if self.name == "VkDevice":
-            return "wine_device_from_handle({0})->device".format(name)
+            return "wine_device_from_handle({0})->host_device".format(name)
         if self.name == "VkInstance":
-            return "wine_instance_from_handle({0})->instance".format(name)
+            return "wine_instance_from_handle({0})->host_instance".format(name)
         if self.name == "VkDeviceMemory":
-            return "wine_device_memory_from_handle({0})->memory".format(name)
+            return "wine_device_memory_from_handle({0})->host_memory".format(name)
         if self.name == "VkPhysicalDevice":
-            return "wine_phys_dev_from_handle({0})->phys_dev".format(name)
+            return "wine_phys_dev_from_handle({0})->host_physical_device".format(name)
         if self.name == "VkQueue":
-            return "wine_queue_from_handle({0})->queue".format(name)
+            return "wine_queue_from_handle({0})->host_queue".format(name)
         if self.name == "VkSurfaceKHR":
-            return "wine_surface_from_handle({0})->surface".format(name)
+            return "wine_surface_from_handle({0})->host_surface".format(name)
         if self.is_dispatchable():
-            LOGGER.error("Unhandled native handle for: {0}".format(self.name))
+            LOGGER.error("Unhandled host handle for: {0}".format(self.name))
         return None
 
     def driver_handle(self, name):
@@ -1147,10 +1147,10 @@ class VkHandle(object):
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->driver_surface".format(name)
 
-        return self.native_handle(name)
+        return self.host_handle(name)
 
     def is_wrapped(self):
-        return self.native_handle("test") is not None
+        return self.host_handle("test") is not None
 
     def needs_unwrapping(self):
         return self.is_wrapped()
@@ -1916,7 +1916,7 @@ class VkParam(VkVariable):
                     params_prefix, self.object_type, self.name)
 
             elif self.is_handle():
-                # We need to pass the native handle to the native Vulkan calls and
+                # We need to pass the host handle to the host Vulkan calls and
                 # the wine driver's handle to calls which are wrapped by the driver.
                 unwrap_handle = self.handle.driver_handle(p)
             if unwrap_handle:
@@ -2682,10 +2682,10 @@ class VkGenerator(object):
             f.write("    case {}:\n".format(handle.object_type))
             if handle.is_dispatchable():
                 f.write("        return (uint64_t) (uintptr_t) ")
-                f.write(handle.native_handle("(({}) (uintptr_t) handle)".format(handle.name)))
+                f.write(handle.host_handle("(({}) (uintptr_t) handle)".format(handle.name)))
             else:
                 f.write("        return (uint64_t) ")
-                f.write(handle.native_handle("handle"))
+                f.write(handle.host_handle("handle"))
             f.write(";\n");
         f.write("    default:\n")
         f.write("       return handle;\n")
@@ -3126,7 +3126,7 @@ class VkGenerator(object):
 
         f.write("\n")
         f.write("    /* winevulkan specific functions */\n")
-        f.write("    VkSurfaceKHR (*p_wine_get_native_surface)(VkSurfaceKHR);\n")
+        f.write("    VkSurfaceKHR (*p_wine_get_host_surface)(VkSurfaceKHR);\n")
         f.write("};\n\n")
 
         f.write("static inline void *get_vulkan_driver_device_proc_addr(\n")

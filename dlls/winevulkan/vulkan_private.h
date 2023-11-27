@@ -29,12 +29,12 @@
 #include "vulkan_thunks.h"
 
 /* Some extensions have callbacks for those we need to be able to
- * get the wine wrapper for a native handle
+ * get the wine wrapper for a host handle
  */
 struct wine_vk_mapping
 {
     struct list link;
-    uint64_t native_handle;
+    uint64_t host_handle;
     uint64_t wine_wrapped_handle;
 };
 
@@ -43,7 +43,7 @@ struct wine_cmd_buffer
     struct wine_device *device; /* parent */
 
     VkCommandBuffer handle; /* client command buffer */
-    VkCommandBuffer command_buffer; /* native command buffer */
+    VkCommandBuffer host_command_buffer;
 
     struct wine_vk_mapping mapping;
 };
@@ -59,7 +59,7 @@ struct wine_device
     struct wine_phys_dev *phys_dev; /* parent */
 
     VkDevice handle; /* client device */
-    VkDevice device; /* native device */
+    VkDevice host_device;
 
     struct wine_queue *queues;
     uint32_t queue_count;
@@ -77,7 +77,7 @@ struct wine_debug_utils_messenger;
 struct wine_debug_report_callback
 {
     struct wine_instance *instance; /* parent */
-    VkDebugReportCallbackEXT debug_callback; /* native callback object */
+    VkDebugReportCallbackEXT host_debug_callback;
 
     /* application callback + data */
     PFN_vkDebugReportCallbackEXT user_callback;
@@ -91,7 +91,7 @@ struct wine_instance
     struct vulkan_instance_funcs funcs;
 
     VkInstance handle; /* client instance */
-    VkInstance instance; /* native instance */
+    VkInstance host_instance;
 
     /* We cache devices as we need to wrap them as they are
      * dispatchable objects.
@@ -123,7 +123,7 @@ struct wine_phys_dev
     struct wine_instance *instance; /* parent */
 
     VkPhysicalDevice handle; /* client physical device */
-    VkPhysicalDevice phys_dev; /* native physical device */
+    VkPhysicalDevice host_physical_device;
 
     VkPhysicalDeviceMemoryProperties memory_properties;
     VkExtensionProperties *extensions;
@@ -144,7 +144,7 @@ struct wine_queue
     struct wine_device *device; /* parent */
 
     VkQueue handle; /* client queue */
-    VkQueue queue; /* native queue */
+    VkQueue host_queue;
 
     uint32_t family_index;
     uint32_t queue_index;
@@ -161,7 +161,7 @@ static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 struct wine_cmd_pool
 {
     VkCommandPool handle;
-    VkCommandPool command_pool;
+    VkCommandPool host_command_pool;
 
     struct wine_vk_mapping mapping;
 };
@@ -174,7 +174,7 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
 
 struct wine_device_memory
 {
-    VkDeviceMemory memory;
+    VkDeviceMemory host_memory;
     void *mapping;
 };
 
@@ -186,7 +186,7 @@ static inline struct wine_device_memory *wine_device_memory_from_handle(VkDevice
 struct wine_debug_utils_messenger
 {
     struct wine_instance *instance; /* parent */
-    VkDebugUtilsMessengerEXT debug_messenger; /* native messenger */
+    VkDebugUtilsMessengerEXT host_debug_messenger;
 
     /* application callback + data */
     PFN_vkDebugUtilsMessengerCallbackEXT user_callback;
@@ -221,7 +221,7 @@ static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
 
 struct wine_surface
 {
-    VkSurfaceKHR surface; /* native surface */
+    VkSurfaceKHR host_surface;
     VkSurfaceKHR driver_surface; /* wine driver surface */
 
     struct wine_vk_mapping mapping;
@@ -289,10 +289,8 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
 
 struct wine_deferred_operation
 {
-    VkDeferredOperationKHR deferred_operation; /* native handle */
-
+    VkDeferredOperationKHR host_deferred_operation;
     struct conversion_context ctx; /* to keep params alive. */
-
     struct wine_vk_mapping mapping;
 };
 
