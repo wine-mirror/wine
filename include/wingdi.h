@@ -2341,6 +2341,14 @@ typedef struct {
     EXTLOGPEN elp;
 } EMREXTCREATEPEN, *PEMREXTCREATEPEN;
 
+typedef struct tagEMREXTESCAPE
+{
+    EMR  emr;
+    INT  iEscape;
+    INT  cbEscData;
+    BYTE EscData[1];
+} EMREXTESCAPE, *PEMREXTESCAPE, EMRDRAWESCAPE, *PEMRDRAWESCAPE;
+
 typedef struct {
     EMR      emr;
     POINTL   ptlStart;

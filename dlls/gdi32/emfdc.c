@@ -1194,26 +1194,20 @@ BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWOR
 INT EMFDC_ExtEscape( DC_ATTR *dc_attr, INT escape, INT input_size, const char *input,
                       INT output_size, char *output)
 {
-    struct EMREXTESCAPE
-    {
-        EMR emr;
-        DWORD escape;
-        DWORD size;
-        BYTE data[1];
-    } *emr;
+    EMREXTESCAPE *emr;
     size_t size;
 
     if (escape == QUERYESCSUPPORT) return 0;
 
-    size = FIELD_OFFSET( struct EMREXTESCAPE, data[input_size] );
+    size = FIELD_OFFSET( EMREXTESCAPE, EscData[input_size] );
     size = (size + 3) & ~3;
     if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
 
     emr->emr.iType = EMR_EXTESCAPE;
     emr->emr.nSize = size;
-    emr->escape = escape;
-    emr->size = input_size;
-    memcpy(emr->data, input, input_size);
+    emr->iEscape = escape;
+    emr->cbEscData = input_size;
+    memcpy(emr->EscData, input, input_size);
     emfdc_record( get_dc_emf( dc_attr ), &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     if (output_size && output) return 0;
