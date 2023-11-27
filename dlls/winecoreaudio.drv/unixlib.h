@@ -20,17 +20,17 @@
 
 #include "../mmdevapi/unixlib.h"
 
-NTSTATUS unix_midi_init( void * ) DECLSPEC_HIDDEN;
-NTSTATUS unix_midi_release( void * ) DECLSPEC_HIDDEN;
-NTSTATUS unix_midi_out_message( void * ) DECLSPEC_HIDDEN;
-NTSTATUS unix_midi_in_message( void * ) DECLSPEC_HIDDEN;
-NTSTATUS unix_midi_notify_wait( void * ) DECLSPEC_HIDDEN;
+NTSTATUS unix_midi_init( void * );
+NTSTATUS unix_midi_release( void * );
+NTSTATUS unix_midi_out_message( void * );
+NTSTATUS unix_midi_in_message( void * );
+NTSTATUS unix_midi_notify_wait( void * );
 
 #ifdef _WIN64
-NTSTATUS unix_wow64_midi_init(void *args) DECLSPEC_HIDDEN;
-NTSTATUS unix_wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS unix_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
-NTSTATUS unix_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+NTSTATUS unix_wow64_midi_init(void *args);
+NTSTATUS unix_wow64_midi_out_message(void *args);
+NTSTATUS unix_wow64_midi_in_message(void *args);
+NTSTATUS unix_wow64_midi_notify_wait(void *args);
 #endif
 
 #define UNIX_CALL( func, params ) WINE_UNIX_CALL( func, params )
