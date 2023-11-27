@@ -2773,15 +2773,9 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     }
     case EMR_EXTESCAPE:
     {
-        const struct EMREXTESCAPE
-        {
-            EMR emr;
-            DWORD escape;
-            DWORD size;
-            BYTE data[1];
-        } *p = (const struct EMREXTESCAPE *)rec;
+        const EMREXTESCAPE *p = (const EMREXTESCAPE *)rec;
 
-        PSDRV_ExtEscape(data->ctx, p->escape, p->size, p->data, 0, NULL);
+        PSDRV_ExtEscape(data->ctx, p->iEscape, p->cbEscData, p->EscData, 0, NULL);
         return 1;
     }
     case EMR_GRADIENTFILL:
