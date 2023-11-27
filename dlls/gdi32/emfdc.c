@@ -2522,6 +2522,9 @@ BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
     total = offsetof(EMRGDICOMMENT,Data) + aligned_size(bytes);
 
     emr = HeapAlloc(GetProcessHeap(), 0, total);
+    if (!emr)
+        return FALSE;
+
     emr->emr.iType = EMR_GDICOMMENT;
     emr->emr.nSize = total;
     emr->cbData = bytes;
