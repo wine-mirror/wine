@@ -1921,13 +1921,13 @@ static void test_enum_pins(void)
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
+    ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
     ref = get_refcount(filter);
     ok(ref == 4, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
     ref = get_refcount(pin1);
-    todo_wine ok(ref == 5, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 5, "Got unexpected refcount %ld.\n", ref);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
@@ -1945,7 +1945,7 @@ static void test_enum_pins(void)
     hr = IEnumPins_Next(enum1, 1, pins, &count);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(count == 1, "Got count %lu.\n", count);
-    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
+    ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Reset(enum1);
@@ -1984,7 +1984,7 @@ static void test_enum_pins(void)
 
     hr = IEnumPins_Next(enum2, 1, pins, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
+    ok(pins[0] == pin1, "Expected pin %p, got %p.\n", pin1, pins[0]);
     IPin_Release(pins[0]);
 
     IEnumPins_Release(enum2);

@@ -94,7 +94,7 @@ static HRESULT WINAPI enum_pins_Next(IEnumPins *iface, ULONG count, IPin **pins,
 
     for (i = 0; i < count && enum_pins->index < enum_pins->count; ++i)
     {
-        IPin_AddRef(pins[i] = enum_pins->pins[i]);
+        IPin_AddRef(pins[i] = enum_pins->pins[enum_pins->index]);
         enum_pins->index++;
     }
 
