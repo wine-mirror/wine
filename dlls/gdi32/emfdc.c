@@ -30,6 +30,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
+static inline UINT aligned_size(UINT size)
+{
+    return (size + 3) & ~3;
+}
+
+static inline void pad_record(void *record, UINT size)
+{
+    if (size & 3) memset((char *)record + size, 0, 4 - (size & 3));
+}
 
 struct emf
 {
@@ -1159,7 +1168,7 @@ BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWOR
 
     size = use_small_emr ? offsetof( EMRPOLYDRAW16, apts[count] )
         : offsetof( EMRPOLYDRAW, aptl[count] );
-    size += (count + 3) & ~3;
+    size += aligned_size(count);
 
     if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
 
@@ -1169,7 +1178,7 @@ BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWOR
 
     types_dest = store_points( emr->aptl, pts, count, use_small_emr );
     memcpy( types_dest, types, count );
-    if (count & 3) memset( types_dest + count, 0, 4 - (count & 3) );
+    pad_record( types_dest, count );
 
     if (!emf->path)
         get_points_bounds( &emr->rclBounds, pts, count, 0 );
@@ -2510,7 +2519,7 @@ BOOL WINAPI GdiComment( HDC hdc, UINT bytes, const BYTE *buffer )
 
     if (!(dc_attr = get_dc_attr( hdc )) || !get_dc_emf( dc_attr )) return FALSE;
 
-    rounded_size = (bytes+3) & ~3;
+    rounded_size = aligned_size(bytes);
     total = offsetof(EMRGDICOMMENT,Data) + rounded_size;
 
     emr = HeapAlloc(GetProcessHeap(), 0, total);
