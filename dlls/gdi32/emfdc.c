@@ -1968,6 +1968,7 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     UINT src_height, stride;
     BITMAPINFOHEADER bih;
     BITMAPINFO *bi;
+    void *ptr;
 
     /* calculate the size of the colour table and the image */
     if (!emf_parse_user_bitmapinfo( &bih, &info->bmiHeader, usage, TRUE,
@@ -1993,7 +1994,7 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     }
 
     /* check for overflows */
-    payload_size = bmi_size + img_size;
+    payload_size = aligned_size(bmi_size) + aligned_size(img_size);
     if (payload_size < bmi_size) return 0;
 
     emr_size = sizeof (EMRSETDIBITSTODEVICE) + payload_size;
@@ -2001,14 +2002,6 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
 
     /* allocate record */
     if (!(emr = HeapAlloc( GetProcessHeap(), 0, emr_size ))) return FALSE;
-
-    /* write a bitmap info header (with colours) to the record */
-    bi = (BITMAPINFO *)&emr[1];
-    bi->bmiHeader = bih;
-    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
-
-    /* write bitmap bits to the record */
-    memcpy ( (BYTE *)&emr[1] + bmi_size, bits, img_size );
 
     emr->emr.iType = EMR_SETDIBITSTODEVICE;
     emr->emr.nSize = emr_size;
@@ -2024,11 +2017,21 @@ BOOL EMFDC_SetDIBitsToDevice( DC_ATTR *dc_attr, INT x_dst, INT y_dst, DWORD widt
     emr->cySrc = height;
     emr->offBmiSrc = sizeof(EMRSETDIBITSTODEVICE);
     emr->cbBmiSrc = bmi_size;
-    emr->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + bmi_size;
+    emr->offBitsSrc = sizeof(EMRSETDIBITSTODEVICE) + aligned_size(bmi_size);
     emr->cbBitsSrc = img_size;
     emr->iUsageSrc = usage;
     emr->iStartScan = startscan;
     emr->cScans = lines;
+
+    /* write a bitmap info header (with colours) to the record */
+    bi = (BITMAPINFO *)((BYTE *)emr + emr->offBmiSrc);
+    bi->bmiHeader = bih;
+    emf_copy_colours_from_user_bitmapinfo( bi, info, usage );
+    pad_record( bi, bmi_size );
+
+    /* write bitmap bits to the record */
+    ptr = memcpy ( (BYTE *)emr + emr->offBitsSrc, bits, img_size );
+    pad_record( ptr, img_size );
 
     if ((ret = emfdc_record( get_dc_emf( dc_attr ), (EMR*)emr )))
         emfdc_update_bounds( get_dc_emf( dc_attr ), &emr->rclBounds );
