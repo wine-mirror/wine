@@ -4268,6 +4268,7 @@ void loader_init( CONTEXT *context, void **entry )
     if (!imports_fixup_done)
     {
         MEMORY_BASIC_INFORMATION meminfo;
+        ANSI_STRING ctrl_routine = RTL_CONSTANT_STRING( "CtrlRoutine" );
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
 
@@ -4304,7 +4305,7 @@ void loader_init( CONTEXT *context, void **entry )
         }
         node_kernel32 = kernel32->ldr.DdagNode;
         pBaseThreadInitThunk = RtlFindExportedRoutineByName( kernel32->ldr.DllBase, "BaseThreadInitThunk" );
-        pCtrlRoutine = RtlFindExportedRoutineByName( kernel32->ldr.DllBase, "CtrlRoutine" );
+        LdrGetProcedureAddress( kernel32->ldr.DllBase, &ctrl_routine, 0, (void **)&pCtrlRoutine );
 
         actctx_init();
         locale_init();
