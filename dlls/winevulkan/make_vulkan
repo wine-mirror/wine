@@ -160,7 +160,7 @@ PERF_CRITICAL_FUNCTIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 13
+DRIVER_VERSION = 14
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -201,7 +201,6 @@ USER_DRIVER_FUNCS = {
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
     "vkEnumerateInstanceExtensionProperties",
-    "vkGetDeviceGroupSurfacePresentModesKHR",
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDevicePresentRectanglesKHR",

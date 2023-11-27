@@ -58,7 +58,6 @@ static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
-static VkResult (*pvkGetDeviceGroupSurfacePresentModesKHR)(VkDevice, VkSurfaceKHR, VkDeviceGroupPresentModeFlagsKHR *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 static VkResult (*pvkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkRect2D *);
@@ -545,17 +544,6 @@ static VkResult wayland_vkEnumerateInstanceExtensionProperties(const char *layer
     return res;
 }
 
-static VkResult wayland_vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device,
-                                                               VkSurfaceKHR surface,
-                                                               VkDeviceGroupPresentModeFlagsKHR *flags)
-{
-    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
-
-    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(surface), flags);
-
-    return pvkGetDeviceGroupSurfacePresentModesKHR(device, wine_vk_surface->host_surface, flags);
-}
-
 static void *wayland_vkGetDeviceProcAddr(VkDevice device, const char *name)
 {
     void *proc_addr;
@@ -770,7 +758,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkDestroySurfaceKHR);
     LOAD_FUNCPTR(vkDestroySwapchainKHR);
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
-    LOAD_OPTIONAL_FUNCPTR(vkGetDeviceGroupSurfacePresentModesKHR);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
     LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDevicePresentRectanglesKHR);
@@ -800,7 +787,6 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
     .p_vkDestroySwapchainKHR = wayland_vkDestroySwapchainKHR,
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
-    .p_vkGetDeviceGroupSurfacePresentModesKHR = wayland_vkGetDeviceGroupSurfacePresentModesKHR,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
     .p_vkGetPhysicalDevicePresentRectanglesKHR = wayland_vkGetPhysicalDevicePresentRectanglesKHR,

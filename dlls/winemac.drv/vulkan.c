@@ -572,7 +572,6 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkDestroySurfaceKHR,
     macdrv_vkDestroySwapchainKHR,
     macdrv_vkEnumerateInstanceExtensionProperties,
-    NULL,
     macdrv_vkGetDeviceProcAddr,
     macdrv_vkGetInstanceProcAddr,
     NULL,
