@@ -134,6 +134,8 @@ extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 extern BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset);
+extern LRESULT macdrv_NotifyIcon(HWND hwnd, UINT msg, NOTIFYICONDATAW *data);
+extern void macdrv_CleanupIcons(HWND hwnd);
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 extern void macdrv_DestroyWindow(HWND hwnd);
 extern void macdrv_SetDesktopWindow(HWND hwnd);
@@ -281,7 +283,6 @@ extern NTSTATUS macdrv_dnd_get_formats(void *arg);
 extern NTSTATUS macdrv_dnd_have_format(void *arg);
 extern NTSTATUS macdrv_dnd_release(void *arg);
 extern NTSTATUS macdrv_dnd_retain(void *arg);
-extern NTSTATUS macdrv_notify_icon(void *arg);
 
 extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,
                                    ULONG size);

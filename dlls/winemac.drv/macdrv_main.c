@@ -623,7 +623,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     macdrv_dnd_release,
     macdrv_dnd_retain,
     macdrv_init,
-    macdrv_notify_icon,
     macdrv_quit_result,
 };
 
@@ -661,61 +660,6 @@ static NTSTATUS wow64_init(void *arg)
     return macdrv_init(&params);
 }
 
-static NTSTATUS wow64_notify_icon(void *arg)
-{
-    struct
-    {
-        DWORD msg;
-        ULONG data;
-    } *params32 = arg;
-    struct
-    {
-        DWORD cbSize;
-        ULONG hWnd;
-        UINT uID;
-        UINT uFlags;
-        UINT uCallbackMessage;
-        ULONG hIcon;
-        WCHAR szTip[128];
-        DWORD dwState;
-        DWORD dwStateMask;
-        WCHAR szInfo[256];
-        UINT uTimeout;
-        WCHAR szInfoTitle[64];
-        DWORD dwInfoFlags;
-        GUID guidItem;
-        ULONG hBalloonIcon;
-    } *data32 = UlongToPtr(params32->data);
-
-    struct notify_icon_params params;
-    NOTIFYICONDATAW data;
-
-    params.msg = params32->msg;
-    params.data = &data;
-
-    data.cbSize = sizeof(data);
-    data.hWnd = UlongToHandle(data32->hWnd);
-    data.uID = data32->uID;
-    data.uFlags = data32->uFlags;
-    data.uCallbackMessage = data32->uCallbackMessage;
-    data.hIcon = UlongToHandle(data32->hIcon);
-    if (data.uFlags & NIF_TIP)
-        wcscpy(data.szTip, data32->szTip);
-    data.dwState = data32->dwState;
-    data.dwStateMask = data32->dwStateMask;
-    if (data.uFlags & NIF_INFO)
-    {
-        wcscpy(data.szInfoTitle, data32->szInfoTitle);
-        wcscpy(data.szInfo, data32->szInfo);
-        data.uTimeout = data32->uTimeout;
-        data.dwInfoFlags = data32->dwInfoFlags;
-    }
-    data.guidItem = data32->guidItem;
-    data.hBalloonIcon = UlongToHandle(data32->hBalloonIcon);
-
-    return macdrv_notify_icon(&params);
-}
-
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_dnd_get_data,
@@ -724,7 +668,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     macdrv_dnd_release,
     macdrv_dnd_retain,
     wow64_init,
-    wow64_notify_icon,
     macdrv_quit_result,
 };
 

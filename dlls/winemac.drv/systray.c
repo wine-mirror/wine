@@ -59,12 +59,11 @@ static struct list icon_list = LIST_INIT(icon_list);
 static BOOL delete_icon(struct tray_icon *icon);
 
 
+
 /***********************************************************************
- *              cleanup_icons
- *
- * Delete all systray icons owned by a given window.
+ *              CleanupIcons   (MACDRV.@)
  */
-static void cleanup_icons(HWND hwnd)
+void macdrv_CleanupIcons(HWND hwnd)
 {
     struct tray_icon *icon, *next;
 
@@ -245,18 +244,14 @@ static BOOL delete_icon(struct tray_icon *icon)
 
 
 /***********************************************************************
- *              wine_notify_icon   (MACDRV.@)
- *
- * Driver-side implementation of Shell_NotifyIcon.
+ *              NotifyIcon   (MACDRV.@)
  */
-NTSTATUS macdrv_notify_icon(void *arg)
+LRESULT macdrv_NotifyIcon(HWND hwnd, UINT msg, NOTIFYICONDATAW *data)
 {
-    struct notify_icon_params *params = arg;
-    NOTIFYICONDATAW *data = params->data;
     BOOL ret = FALSE;
     struct tray_icon *icon;
 
-    switch (params->msg)
+    switch (msg)
     {
     case NIM_ADD:
         ret = add_icon(data);
@@ -267,9 +262,6 @@ NTSTATUS macdrv_notify_icon(void *arg)
     case NIM_MODIFY:
         if ((icon = get_icon(data->hWnd, data->uID))) ret = modify_icon(icon, data);
         break;
-    case 0xdead:  /* Wine extension: owner window has died */
-        cleanup_icons(data->hWnd);
-        break;
     case NIM_SETVERSION:
         if ((icon = get_icon(data->hWnd, data->uID)))
         {
@@ -278,8 +270,8 @@ NTSTATUS macdrv_notify_icon(void *arg)
         }
         break;
     default:
-        FIXME("unhandled tray message: %u\n", params->msg);
-        break;
+        ERR("Unexpected NotifyIconProc call\n");
+        return -1;
     }
     return ret;
 }

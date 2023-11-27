@@ -424,9 +424,3 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     macdrv_module = instance;
     return process_attach();
 }
-
-int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
-{
-    struct notify_icon_params params = { .msg = msg, .data = data };
-    return MACDRV_CALL(notify_icon, &params);
-}
