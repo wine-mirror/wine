@@ -1199,8 +1199,7 @@ INT EMFDC_ExtEscape( DC_ATTR *dc_attr, INT escape, INT input_size, const char *i
 
     if (escape == QUERYESCSUPPORT) return 0;
 
-    size = FIELD_OFFSET( EMREXTESCAPE, EscData[input_size] );
-    size = (size + 3) & ~3;
+    size = aligned_size(FIELD_OFFSET( EMREXTESCAPE, EscData[input_size] ));
     if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
 
     emr->emr.iType = EMR_EXTESCAPE;
@@ -1208,6 +1207,7 @@ INT EMFDC_ExtEscape( DC_ATTR *dc_attr, INT escape, INT input_size, const char *i
     emr->iEscape = escape;
     emr->cbEscData = input_size;
     memcpy(emr->EscData, input, input_size);
+    pad_record(emr->EscData, input_size);
     emfdc_record( get_dc_emf( dc_attr ), &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     if (output_size && output) return 0;
