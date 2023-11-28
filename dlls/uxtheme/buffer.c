@@ -30,7 +30,6 @@
 #include "uxtheme.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
@@ -47,7 +46,7 @@ static void free_paintbuffer(struct paintbuffer *buffer)
 {
     DeleteObject(buffer->bitmap);
     DeleteDC(buffer->memorydc);
-    heap_free(buffer);
+    free(buffer);
 }
 
 static struct paintbuffer *get_buffer_obj(HPAINTBUFFER handle)
@@ -95,7 +94,7 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
     if (params)
         FIXME("painting parameters are ignored\n");
 
-    buffer = heap_alloc(sizeof(*buffer));
+    buffer = malloc(sizeof(*buffer));
     buffer->targetdc = targetdc;
     buffer->rect = *rect;
     buffer->memorydc = CreateCompatibleDC(targetdc);

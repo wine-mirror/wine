@@ -34,7 +34,6 @@
 
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
@@ -162,7 +161,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
         goto invalid_theme;
     }
 
-    *tf = heap_alloc_zero(sizeof(THEME_FILE));
+    *tf = calloc(1, sizeof(THEME_FILE));
     (*tf)->hTheme = hTheme;
     
     GetFullPathNameW(lpThemeFile, MAX_PATH, (*tf)->szThemeFile, NULL);
@@ -204,14 +203,14 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
                         while(ps->properties) {
                             PTHEME_PROPERTY prop = ps->properties;
                             ps->properties = prop->next;
-                            heap_free(prop);
+                            free(prop);
                         }
 
                         pcls->partstate = ps->next;
-                        heap_free(ps);
+                        free(ps);
                     }
                     pcls->signature = 0;
-                    heap_free(pcls);
+                    free(pcls);
                 }
             }
             while (tf->images)
@@ -219,9 +218,9 @@ void MSSTYLES_CloseThemeFile(PTHEME_FILE tf)
                 PTHEME_IMAGE img = tf->images;
                 tf->images = img->next;
                 DeleteObject (img->image);
-                heap_free(img);
+                free(img);
             }
-            heap_free(tf);
+            free(tf);
         }
     }
 }
@@ -448,7 +447,7 @@ static PTHEME_CLASS MSSTYLES_AddClass(PTHEME_FILE tf, LPCWSTR pszAppName, LPCWST
     PTHEME_CLASS cur = MSSTYLES_FindClass(tf, pszAppName, pszClassName);
     if(cur) return cur;
 
-    cur = heap_alloc(sizeof(*cur));
+    cur = malloc(sizeof(*cur));
     cur->signature = THEME_CLASS_SIGNATURE;
     cur->refcount = 0;
     cur->hTheme = tf->hTheme;
@@ -537,7 +536,7 @@ static PTHEME_PARTSTATE MSSTYLES_AddPartState(PTHEME_CLASS tc, int iPartId, int 
     PTHEME_PARTSTATE cur = MSSTYLES_FindPartState(tc, iPartId, iStateId, NULL);
     if(cur) return cur;
 
-    cur = heap_alloc(sizeof(*cur));
+    cur = malloc(sizeof(*cur));
     cur->iPartId = iPartId;
     cur->iStateId = iStateId;
     cur->properties = NULL;
@@ -654,7 +653,7 @@ static PTHEME_PROPERTY MSSTYLES_AddProperty(PTHEME_PARTSTATE ps, int iPropertyPr
     /* Should duplicate properties overwrite the original, or be ignored? */
     if(cur) return cur;
 
-    cur = heap_alloc(sizeof(*cur));
+    cur = malloc(sizeof(*cur));
     cur->iPrimitiveType = iPropertyPrimitive;
     cur->iPropertyId = iPropertyId;
     cur->lpValue = lpValue;
@@ -695,7 +694,7 @@ static PTHEME_PROPERTY MSSTYLES_AddMetric(PTHEME_FILE tf, int iPropertyPrimitive
     /* Should duplicate properties overwrite the original, or be ignored? */
     if(cur) return cur;
 
-    cur = heap_alloc(sizeof(*cur));
+    cur = malloc(sizeof(*cur));
     cur->iPrimitiveType = iPropertyPrimitive;
     cur->iPropertyId = iPropertyId;
     cur->lpValue = lpValue;
@@ -1246,7 +1245,7 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
         img = img->next;
     }
     /* Not found? Load from resources */
-    img = heap_alloc(sizeof(*img));
+    img = malloc(sizeof(*img));
     img->image = LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
     prepare_alpha (img->image, hasAlpha);
     img->hasAlpha = *hasAlpha;
