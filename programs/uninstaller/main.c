@@ -21,6 +21,7 @@
  *
  */
 
+#include <locale.h>
 #include <string.h>
 #include <windows.h>
 #include <commctrl.h>
@@ -44,70 +45,48 @@ static uninst_entry *entries = NULL;
 static unsigned int numentries = 0;
 static int oldsel = -1;
 static WCHAR *sFilter;
+static BOOL silent;
 
 static int FetchUninstallInformation(void);
 static void UninstallProgram(void);
 static const WCHAR PathUninstallW[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
-static void output_writeconsole(const WCHAR *str, DWORD len)
+
+static void WINAPIV output_message(BOOL with_usage, unsigned int id, ...)
 {
-    DWORD written, lenA;
-    char *strA;
+    WCHAR fmt[2048];
+    LCID current_lcid;
 
-    if (WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &written, NULL))
-        return;
+    current_lcid = GetThreadLocale();
+    if (silent) /* force en-US not to have localized strings */
+        SetThreadLocale(MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT));
 
-    /* WriteConsole fails if its output is redirected to a file.
-     * If this occurs, we should use an OEM codepage and call WriteFile.
-     */
-    lenA = WideCharToMultiByte(GetOEMCP(), 0, str, len, NULL, 0, NULL, NULL);
-    strA = malloc(lenA);
-    if (strA)
+    if (LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)) &&
+        (!with_usage || LoadStringW(GetModuleHandleW(NULL), STRING_USAGE, fmt + wcslen(fmt), ARRAY_SIZE(fmt) - wcslen(fmt))))
     {
-        WideCharToMultiByte(GetOEMCP(), 0, str, len, strA, lenA, NULL, NULL);
-        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &written, FALSE);
-        free(strA);
+        va_list va_args;
+        WCHAR *str;
+        DWORD len;
+
+        va_start(va_args, id);
+        len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                             fmt, 0, 0, (LPWSTR)&str, 0, &va_args);
+        if (len > 0 || GetLastError() == ERROR_NO_WORK_DONE)
+        {
+            if (silent)
+                MESSAGE("%ls", str);
+            else
+                MessageBoxW(NULL, str, MAKEINTRESOURCEW(IDS_APPNAME), MB_OK | MB_ICONSTOP);
+            LocalFree(str);
+        }
+        else
+            WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        va_end(va_args);
     }
-}
-
-static void output_formatstring(const WCHAR *fmt, va_list va_args)
-{
-    WCHAR *str;
-    DWORD len;
-
-    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         fmt, 0, 0, (LPWSTR)&str, 0, &va_args);
-    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE)
-    {
-        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
-        return;
-    }
-    output_writeconsole(str, len);
-    LocalFree(str);
-}
-
-static void WINAPIV output_message(unsigned int id, ...)
-{
-    WCHAR fmt[1024];
-    va_list va_args;
-
-    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
-    {
+    else
         WINE_FIXME("LoadString failed with %ld\n", GetLastError());
-        return;
-    }
-    va_start(va_args, id);
-    output_formatstring(fmt, va_args);
-    va_end(va_args);
-}
 
-static void WINAPIV output_array(const WCHAR *fmt, ...)
-{
-    va_list va_args;
-
-    va_start(va_args, fmt);
-    output_formatstring(fmt, va_args);
-    va_end(va_args);
+    SetThreadLocale(current_lcid);
 }
 
 /**
@@ -119,8 +98,9 @@ static void ListUninstallPrograms(void)
 
     FetchUninstallInformation();
 
+    setlocale(LC_ALL, "en-US");
     for (i=0; i < numentries; i++)
-        output_array(L"%1|||%2\n", entries[i].key, entries[i].descr);
+        MESSAGE("%ls|||%ls\n", entries[i].key, entries[i].descr);
 }
 
 
@@ -142,7 +122,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
     if (i < numentries)
         UninstallProgram();
     else
-        output_message(STRING_NO_APP_MATCH, nameW);
+        output_message(FALSE, STRING_NO_APP_MATCH, nameW);
 }
 
 
@@ -185,9 +165,12 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
         if( !lstrcmpW( token, L"--help" ) )
         {
-            output_message(STRING_HEADER);
-            output_message(STRING_USAGE);
+            output_message(TRUE, STRING_HEADER);
             return 0;
+        }
+        else if( !lstrcmpW( token, L"--silent" ) )
+        {
+            silent = TRUE;
         }
         else if( !lstrcmpW( token, L"--list" ) )
         {
@@ -198,16 +181,16 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         {
             if( i >= argc )
             {
-                output_message(STRING_PARAMETER_REQUIRED);
+                output_message(FALSE, STRING_PARAMETER_REQUIRED);
                 return 1;
             }
 
             RemoveSpecificProgram( argv[i++] );
             return 0;
         }
-        else 
+        else
         {
-            output_message(STRING_INVALID_OPTION, token);
+            output_message(FALSE, STRING_INVALID_OPTION, token);
             return 1;
         }
     }
