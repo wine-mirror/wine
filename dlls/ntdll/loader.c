@@ -1066,6 +1066,7 @@ void * WINAPI RtlFindExportedRoutineByName( HMODULE module, const char *name )
     const DWORD *functions;
     DWORD exp_size;
     int ordinal;
+    void *proc;
 
     exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
     if (!exports || exp_size < sizeof(*exports)) return NULL;
@@ -1074,7 +1075,12 @@ void * WINAPI RtlFindExportedRoutineByName( HMODULE module, const char *name )
     if (ordinal >= exports->NumberOfFunctions) return NULL;
     functions = get_rva( module, exports->AddressOfFunctions );
     if (!functions[ordinal]) return NULL;
-    return get_rva( module, functions[ordinal] );
+    proc = get_rva( module, functions[ordinal] );
+    /* if the address falls into the export dir, it's a forward */
+    if (((const char *)proc >= (const char *)exports) &&
+        ((const char *)proc < (const char *)exports + exp_size))
+        return NULL;
+    return proc;
 }
 
 

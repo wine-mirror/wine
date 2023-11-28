@@ -95,6 +95,7 @@ static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExW)(PCWSTR, struct in6_addr *,
 static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(CRITICAL_SECTION *);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(CRITICAL_SECTION *);
 static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, ULONG, ULONG);
+static void *    (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char *);
 static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
 static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
@@ -137,6 +138,7 @@ static void InitFunctionPtrs(void)
         pRtlIsCriticalSectionLocked = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLocked");
         pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
         pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
+        pRtlFindExportedRoutineByName = (void *)GetProcAddress(hntdll, "RtlFindExportedRoutineByName");
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
@@ -3651,6 +3653,21 @@ static void test_RtlValidSecurityDescriptor(void)
     free(sd);
 }
 
+static void test_RtlFindExportedRoutineByName(void)
+{
+    void *proc;
+
+    if (!pRtlFindExportedRoutineByName)
+    {
+        win_skip( "RtlFindExportedRoutineByName is not present\n" );
+        return;
+    }
+    proc = pRtlFindExportedRoutineByName( GetModuleHandleW( L"kernelbase" ), "CtrlRoutine" );
+    ok( proc != NULL, "Expected non NULL address\n" );
+    proc = pRtlFindExportedRoutineByName( GetModuleHandleW( L"kernel32" ), "CtrlRoutine" );
+    ok( proc == NULL, "Shouldn't find forwarded function\n" );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3697,4 +3714,5 @@ START_TEST(rtl)
     test_RtlFirstFreeAce();
     test_RtlInitializeSid();
     test_RtlValidSecurityDescriptor();
+    test_RtlFindExportedRoutineByName();
 }
