@@ -51,8 +51,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
-extern const unsigned short bidi_bracket_table[] DECLSPEC_HIDDEN;
-extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
+extern const unsigned short bidi_bracket_table[];
+extern const unsigned short bidi_direction_table[];
 
 #define ASSERT(x) do { if (!(x)) FIXME("assert failed: %s\n", #x); } while(0)
 #define MAX_DEPTH 125

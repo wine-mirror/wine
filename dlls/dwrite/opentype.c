@@ -5936,7 +5936,7 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
 
 static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
 {
-    extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
+    extern const WCHAR wine_mirror_map[];
     WCHAR mirror;
     /* TODO: check if mirroring for higher planes makes sense at all */
     if (codepoint > 0xffff) return codepoint;

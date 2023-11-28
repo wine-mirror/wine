@@ -120,7 +120,7 @@ arabic_state_table[][JOINING_TYPES] =
     { {NONE,NONE,0}, {NONE,ISOL,2}, {NONE,ISOL,1}, {NONE,ISOL,2}, {NONE,FIN3,5}, {NONE,ISOL,6}, }
 };
 
-extern const unsigned short arabic_shaping_table[] DECLSPEC_HIDDEN;
+extern const unsigned short arabic_shaping_table[];
 
 static unsigned short arabic_get_joining_type(UINT ch)
 {

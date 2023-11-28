@@ -28,9 +28,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-extern const unsigned short wine_linebreak_table[] DECLSPEC_HIDDEN;
-extern const unsigned short wine_scripts_table[] DECLSPEC_HIDDEN;
-extern const unsigned short bidi_direction_table[] DECLSPEC_HIDDEN;
+extern const unsigned short wine_linebreak_table[];
+extern const unsigned short wine_scripts_table[];
+extern const unsigned short bidi_direction_table[];
 
 /* Number of characters needed for LOCALE_SNATIVEDIGITS */
 #define NATIVE_DIGITS_LEN 11
