@@ -524,7 +524,7 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
     };
 
-    dds = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dds));
+    dds = calloc(1, sizeof(*dds));
     if (!dds)
     {
         skip("Failed to allocate memory.\n");
@@ -555,7 +555,7 @@ static void test_dds_header_handling(void)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, dds);
+    free(dds);
 }
 
 static void test_D3DXGetImageInfo(void)
