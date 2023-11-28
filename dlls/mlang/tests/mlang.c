@@ -1324,6 +1324,14 @@ static void IMLangFontLink_Test(IMLangFontLink* iMLFL)
     ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
     ok(processed == 2, "expected 2, got %ld\n", processed);
 
+    dwCmpCodePages = FS_JISJAPAN;
+    dwCodePages = 0;
+    processed = 0;
+    ret = IMLangFontLink_GetStrCodePages(iMLFL, L"\uff90a", 2, FS_LATIN1, &dwCodePages, &processed);
+    ok(ret == S_OK, "IMLangFontLink_GetStrCodePages error %lx\n", ret);
+    ok(dwCodePages == dwCmpCodePages, "expected %lx, got %lx\n", dwCmpCodePages, dwCodePages);
+    todo_wine ok(processed == 1, "expected 1, got %ld\n", processed);
+
     dwCodePages = 0xffff;
     processed = -1;
     ret = IMLangFontLink_GetStrCodePages(iMLFL, &str[2], 1, 0, &dwCodePages, &processed);
