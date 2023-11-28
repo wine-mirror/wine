@@ -26,9 +26,9 @@
 #include <msi.h>
 #include <winsvc.h>
 #include <objbase.h>
-#include <stdio.h>
 
 #include "wine/debug.h"
+#include "msiexec_internal.h"
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -39,12 +39,28 @@ typedef HRESULT (WINAPI *DLLREGISTERSERVER)(void);
 typedef HRESULT (WINAPI *DLLUNREGISTERSERVER)(void);
 
 DWORD DoService(void);
+static BOOL silent;
 
 struct string_list
 {
 	struct string_list *next;
 	WCHAR str[1];
 };
+
+void report_error(const char* msg, ...)
+{
+    char buffer[2048];
+    va_list va_args;
+
+    va_start(va_args, msg);
+    vsnprintf(buffer, sizeof(buffer), msg, va_args);
+    va_end(va_args);
+
+    if (silent)
+        MESSAGE("%s", buffer);
+    else
+        MsiMessageBoxA(NULL, buffer, "MsiExec", 0, GetUserDefaultLangID(), 0);
+}
 
 static void ShowUsage(int ExitCode)
 {
@@ -269,14 +285,14 @@ static VOID *LoadProc(LPCWSTR DllName, LPCSTR ProcName, HMODULE* DllHandle)
 	*DllHandle = LoadLibraryExW(DllName, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if(!*DllHandle)
 	{
-		fprintf(stderr, "Unable to load dll %s\n", wine_dbgstr_w(DllName));
+		report_error("Unable to load dll %s\n", wine_dbgstr_w(DllName));
 		ExitProcess(1);
 	}
 	proc = (VOID *) GetProcAddress(*DllHandle, ProcName);
 	if(!proc)
 	{
-		fprintf(stderr, "Dll %s does not implement function %s\n",
-			wine_dbgstr_w(DllName), ProcName);
+		report_error("Dll %s does not implement function %s\n",
+			     wine_dbgstr_w(DllName), ProcName);
 		FreeLibrary(*DllHandle);
 		ExitProcess(1);
 	}
@@ -295,10 +311,10 @@ static DWORD DoDllRegisterServer(LPCWSTR DllName)
 	hr = pfDllRegisterServer();
 	if(FAILED(hr))
 	{
-		fprintf(stderr, "Failed to register dll %s\n", wine_dbgstr_w(DllName));
+		report_error("Failed to register dll %s\n", wine_dbgstr_w(DllName));
 		return 1;
 	}
-	printf("Successfully registered dll %s\n", wine_dbgstr_w(DllName));
+	MESSAGE("Successfully registered dll %s\n", wine_dbgstr_w(DllName));
 	if(DllHandle)
 		FreeLibrary(DllHandle);
 	return 0;
@@ -315,10 +331,10 @@ static DWORD DoDllUnregisterServer(LPCWSTR DllName)
 	hr = pfDllUnregisterServer();
 	if(FAILED(hr))
 	{
-		fprintf(stderr, "Failed to unregister dll %s\n", wine_dbgstr_w(DllName));
+		report_error("Failed to unregister dll %s\n", wine_dbgstr_w(DllName));
 		return 1;
 	}
-	printf("Successfully unregistered dll %s\n", wine_dbgstr_w(DllName));
+	MESSAGE("Successfully unregistered dll %s\n", wine_dbgstr_w(DllName));
 	if(DllHandle)
 		FreeLibrary(DllHandle);
 	return 0;
@@ -332,7 +348,7 @@ static DWORD DoRegServer(void)
 
     if (!(scm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, SC_MANAGER_CREATE_SERVICE)))
     {
-        fprintf(stderr, "Failed to open the service control manager.\n");
+        report_error("Failed to open the service control manager.\n");
         return 1;
     }
     len = GetSystemDirectoryW(path, MAX_PATH);
@@ -345,7 +361,7 @@ static DWORD DoRegServer(void)
     }
     else if (GetLastError() != ERROR_SERVICE_EXISTS)
     {
-        fprintf(stderr, "Failed to create MSI service\n");
+        report_error("Failed to create MSI service\n");
         ret = 1;
     }
     CloseServiceHandle(scm);
@@ -359,21 +375,21 @@ static DWORD DoUnregServer(void)
 
     if (!(scm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, SC_MANAGER_CONNECT)))
     {
-        fprintf(stderr, "Failed to open service control manager\n");
+        report_error("Failed to open service control manager\n");
         return 1;
     }
     if ((service = OpenServiceW(scm, L"MSIServer", DELETE)))
     {
         if (!DeleteService(service))
         {
-            fprintf(stderr, "Failed to delete MSI service\n");
+            report_error("Failed to delete MSI service\n");
             ret = 1;
         }
         CloseServiceHandle(service);
     }
     else if (GetLastError() != ERROR_SERVICE_DOES_NOT_EXIST)
     {
-        fprintf(stderr, "Failed to open MSI service\n");
+        report_error("Failed to open MSI service\n");
         ret = 1;
     }
     CloseServiceHandle(scm);
@@ -765,7 +781,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						RepairMode |= REINSTALLMODE_PACKAGE;
 						break;
 					default:
-						fprintf(stderr, "Unknown option \"%c\" in Repair mode\n", argvW[i][j]);
+						report_error("Unknown option \"%c\" in Repair mode\n", argvW[i][j]);
 						break;
 				}
 			}
@@ -815,7 +831,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						AdvertiseMode = ADVERTISEFLAGS_MACHINEASSIGN;
 						break;
 					default:
-						fprintf(stderr, "Unknown option \"%c\" in Advertise mode\n", argvW[i][j]);
+						report_error("Unknown option \"%c\" in Advertise mode\n", argvW[i][j]);
 						break;
 				}
 			}
@@ -947,8 +963,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			LogFileName = argvW[i];
 			if(MsiEnableLogW(LogMode, LogFileName, LogAttributes) != ERROR_SUCCESS)
 			{
-				fprintf(stderr, "Logging in %s (0x%08lx, %lu) failed\n",
-					 wine_dbgstr_w(LogFileName), LogMode, LogAttributes);
+				report_error("Logging in %s (0x%08lx, %lu) failed\n",
+					     wine_dbgstr_w(LogFileName), LogMode, LogAttributes);
 				ExitProcess(1);
 			}
 		}
@@ -966,6 +982,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if(lstrlenW(argvW[i]) == 2 || msi_strequal(argvW[i]+2, "n") ||
 			   msi_strequal(argvW[i] + 2, "uiet"))
 			{
+				silent = TRUE;
 				InstallUILevel = INSTALLUILEVEL_NONE;
 			}
 			else if(msi_strequal(argvW[i]+2, "r"))
@@ -1002,8 +1019,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else
 			{
-				fprintf(stderr, "Unknown option \"%s\" for UI level\n",
-					 wine_dbgstr_w(argvW[i]+2));
+				report_error("Unknown option \"%s\" for UI level\n",
+					     wine_dbgstr_w(argvW[i]+2));
 			}
 		}
                 else if(msi_option_equal(argvW[i], "passive"))
