@@ -31,7 +31,7 @@
 #include "wine/unixlib.h"
 #include "wine/debug.h"
 
-BOOL extension_is_supported( const char *name, size_t len ) DECLSPEC_HIDDEN;
+BOOL extension_is_supported( const char *name, size_t len );
 
 #define OPENCL_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 

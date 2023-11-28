@@ -44,13 +44,13 @@
 
 #include "unixlib.h"
 
-NTSTATUS wrap_clBuildProgram( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clCreateContext( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clCreateContextFromType( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clEnqueueNativeKernel( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clSetEventCallback( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clSetMemObjectDestructorCallback( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clCompileProgram( void *args ) DECLSPEC_HIDDEN;
-NTSTATUS wrap_clLinkProgram( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wrap_clBuildProgram( void *args );
+NTSTATUS wrap_clCreateContext( void *args );
+NTSTATUS wrap_clCreateContextFromType( void *args );
+NTSTATUS wrap_clEnqueueNativeKernel( void *args );
+NTSTATUS wrap_clSetEventCallback( void *args );
+NTSTATUS wrap_clSetMemObjectDestructorCallback( void *args );
+NTSTATUS wrap_clCompileProgram( void *args );
+NTSTATUS wrap_clLinkProgram( void *args );
 
 #endif
