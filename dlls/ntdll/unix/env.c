@@ -807,9 +807,9 @@ static void init_locale(void)
 #ifdef __APPLE__
     if (!system_locale[0])
     {
-        CFLocaleRef locale = CFLocaleCopyCurrent();
-        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
-        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+        CFLocaleRef mac_sys_locale = CFLocaleCopyCurrent();
+        CFStringRef lang = CFLocaleGetValue( mac_sys_locale, kCFLocaleLanguageCode );
+        CFStringRef country = CFLocaleGetValue( mac_sys_locale, kCFLocaleCountryCode );
         CFStringRef locale_string;
 
         if (country)
@@ -818,7 +818,7 @@ static void init_locale(void)
             locale_string = CFStringCreateCopy(NULL, lang);
 
         CFStringGetCString(locale_string, system_locale, sizeof(system_locale), kCFStringEncodingUTF8);
-        CFRelease(locale);
+        CFRelease(mac_sys_locale);
         CFRelease(locale_string);
     }
     if (!user_locale[0])
@@ -833,13 +833,13 @@ static void init_locale(void)
             {
                 CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
                 CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
-                CFLocaleRef locale = NULL;
+                CFLocaleRef mac_user_locale = NULL;
                 CFStringRef locale_string;
 
                 if (!country)
                 {
-                    locale = CFLocaleCopyCurrent();
-                    country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+                    mac_user_locale = CFLocaleCopyCurrent();
+                    country = CFLocaleGetValue( mac_user_locale, kCFLocaleCountryCode );
                 }
                 if (country)
                     locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@"), lang, country );
@@ -847,7 +847,7 @@ static void init_locale(void)
                     locale_string = CFStringCreateCopy( NULL, lang );
                 CFStringGetCString( locale_string, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
                 CFRelease( locale_string );
-                if (locale) CFRelease( locale );
+                if (mac_user_locale) CFRelease( mac_user_locale );
                 CFRelease( components );
             }
         }
