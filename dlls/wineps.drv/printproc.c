@@ -301,7 +301,7 @@ static void clip_visrect(HDC hdc, RECT *dst, const RECT *src)
     DeleteObject(hrgn);
 }
 
-static void get_vis_rectangles(HDC hdc, struct ps_bitblt_coords *dst,
+static BOOL get_vis_rectangles(HDC hdc, struct ps_bitblt_coords *dst,
         const XFORM *xform, DWORD width, DWORD height, struct ps_bitblt_coords *src)
 {
     RECT rect;
@@ -323,7 +323,8 @@ static void get_vis_rectangles(HDC hdc, struct ps_bitblt_coords *dst,
     get_bounding_rect(&rect, dst->x, dst->y, dst->width, dst->height);
     clip_visrect(hdc, &dst->visrect, &rect);
 
-    if (!src) return;
+    if (IsRectEmpty(&dst->visrect)) return FALSE;
+    if (!src) return TRUE;
 
     rect.left   = src->log_x;
     rect.top    = src->log_y;
@@ -341,7 +342,7 @@ static void get_vis_rectangles(HDC hdc, struct ps_bitblt_coords *dst,
     if (rect.bottom > height) rect.bottom = height;
     src->visrect = rect;
 
-    intersect_vis_rectangles(dst, src);
+    return intersect_vis_rectangles(dst, src);
 }
 
 static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
@@ -363,7 +364,8 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
 
     if (!blt->cbBmiSrc)
     {
-        get_vis_rectangles(ctx->hdc, &dst, NULL, 0, 0, NULL);
+        if (!get_vis_rectangles(ctx->hdc, &dst, NULL, 0, 0, NULL))
+            return TRUE;
         return PSDRV_PatBlt(ctx, &dst, blt->dwRop);
     }
 
@@ -373,8 +375,9 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
     src.log_height = blt->cySrc;
     src.layout = 0;
 
-    get_vis_rectangles(ctx->hdc, &dst, &blt->xformSrc,
-            bi->bmiHeader.biWidth, abs(bi->bmiHeader.biHeight), &src);
+    if (!get_vis_rectangles(ctx->hdc, &dst, &blt->xformSrc,
+                bi->bmiHeader.biWidth, abs(bi->bmiHeader.biHeight), &src))
+        return TRUE;
 
     memcpy(dst_info, bi, blt->cbBmiSrc);
     memset(&bits, 0, sizeof(bits));
