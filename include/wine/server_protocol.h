@@ -1162,10 +1162,12 @@ struct get_thread_info_reply
     int          priority;
     int          last;
     int          suspend_count;
-    int          dbg_hidden;
+    unsigned int flags;
     data_size_t  desc_len;
     /* VARARG(desc,unicode_str); */
 };
+#define GET_THREAD_INFO_FLAG_DBG_HIDDEN 0x01
+#define GET_THREAD_INFO_FLAG_TERMINATED 0x02
 
 
 
@@ -6504,7 +6506,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 784
+#define SERVER_PROTOCOL_VERSION 785
 
 /* ### protocol_version end ### */
 

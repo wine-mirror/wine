@@ -1496,8 +1496,12 @@ DECL_HANDLER(get_thread_info)
         reply->affinity       = thread->affinity;
         reply->last           = thread->process->running_threads == 1;
         reply->suspend_count  = thread->suspend;
-        reply->dbg_hidden     = thread->dbg_hidden;
         reply->desc_len       = thread->desc_len;
+        reply->flags          = 0;
+        if (thread->dbg_hidden)
+            reply->flags |= GET_THREAD_INFO_FLAG_DBG_HIDDEN;
+        if (thread->state == TERMINATED)
+            reply->flags |= GET_THREAD_INFO_FLAG_TERMINATED;
 
         if (thread->desc && get_reply_max_size())
         {

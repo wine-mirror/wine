@@ -2143,6 +2143,25 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (ret_len) *ret_len = sizeof(BOOL);
         return STATUS_SUCCESS;
 
+    case ThreadIsTerminated:
+    {
+        ULONG terminated;
+
+        if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (!(status = wine_server_call( req ))) terminated = !!(reply->flags & GET_THREAD_INFO_FLAG_TERMINATED);
+        }
+        SERVER_END_REQ;
+        if (!status)
+        {
+            *(ULONG *)data = terminated;
+            if (ret_len) *ret_len = sizeof(ULONG);
+        }
+        return status;
+    }
+
     case ThreadSuspendCount:
         if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!data) return STATUS_ACCESS_VIOLATION;
@@ -2196,7 +2215,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             req->handle = wine_server_obj_handle( handle );
             req->access = THREAD_QUERY_INFORMATION;
             if ((status = wine_server_call( req ))) return status;
-            *(BOOLEAN*)data = reply->dbg_hidden;
+            *(BOOLEAN*)data = !!(reply->flags & GET_THREAD_INFO_FLAG_DBG_HIDDEN);
         }
         SERVER_END_REQ;
         if (ret_len) *ret_len = sizeof(BOOLEAN);

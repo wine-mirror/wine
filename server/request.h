@@ -860,7 +860,7 @@ C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, exit_code) == 40 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, priority) == 44 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, last) == 48 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, suspend_count) == 52 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, dbg_hidden) == 56 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, flags) == 56 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_info_reply, desc_len) == 60 );
 C_ASSERT( sizeof(struct get_thread_info_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_times_request, handle) == 12 );

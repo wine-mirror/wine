@@ -688,6 +688,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationThread( UINT *args )
     case ThreadEnableAlignmentFaultFixup:  /* set only */
     case ThreadAmILastThread:  /* ULONG */
     case ThreadIsIoPending:  /* ULONG */
+    case ThreadIsTerminated: /* ULONG */
     case ThreadHideFromDebugger:  /* BOOLEAN */
     case ThreadSuspendCount:  /* ULONG */
     case ThreadPriorityBoost:   /* ULONG */

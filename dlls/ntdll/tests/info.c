@@ -3697,6 +3697,44 @@ static void test_debuggee_dbgport(int argc, char **argv)
     winetest_pop_context();
 }
 
+static DWORD WINAPI test_ThreadIsTerminated_thread( void *stop_event )
+{
+    WaitForSingleObject( stop_event, INFINITE );
+    return STATUS_PENDING;
+}
+
+static void test_ThreadIsTerminated(void)
+{
+    HANDLE thread, stop_event;
+    ULONG terminated;
+    NTSTATUS status;
+
+    stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    thread = CreateThread( NULL, 0, test_ThreadIsTerminated_thread, stop_event, 0, NULL );
+    ok( thread != INVALID_HANDLE_VALUE, "failed, error %ld\n", GetLastError() );
+
+    status = pNtQueryInformationThread( thread, ThreadIsTerminated, &terminated, sizeof(terminated) * 2, NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status );
+
+    terminated = 0xdeadbeef;
+    status = pNtQueryInformationThread( thread, ThreadIsTerminated, &terminated, sizeof(terminated), NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( !terminated, "got %lu.\n", terminated );
+
+    SetEvent( stop_event );
+    WaitForSingleObject( thread, INFINITE );
+
+    status = pNtQueryInformationThread( thread, ThreadIsTerminated, &terminated, sizeof(terminated), NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( terminated == 1, "got %lu.\n", terminated );
+
+    CloseHandle(stop_event);
+    CloseHandle(thread);
+
+    status = pNtQueryInformationThread( thread, ThreadIsTerminated, &terminated, sizeof(terminated), NULL );
+    ok( status == STATUS_INVALID_HANDLE, "got %#lx.\n", status );
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -3760,6 +3798,7 @@ START_TEST(info)
     test_thread_start_address();
     test_thread_lookup();
     test_thread_ideal_processor();
+    test_ThreadIsTerminated();
 
     test_affinity();
     test_debug_object();
