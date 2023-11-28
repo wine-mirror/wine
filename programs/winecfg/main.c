@@ -23,6 +23,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+#include <locale.h>
 #include <windows.h>
 #include <commctrl.h>
 #include <objbase.h>
@@ -186,6 +187,9 @@ ProcessCmdLine(LPWSTR lpCmdLine)
     {
         return -1;
     }
+
+    setlocale(LC_ALL, "en-US");
+
     if (lpCmdLine[1] == 'V' || lpCmdLine[1] == 'v')
     {
         if (wcslen(lpCmdLine) > 4)
@@ -194,22 +198,19 @@ ProcessCmdLine(LPWSTR lpCmdLine)
         print_current_winver();
         return 0;
     }
+    if (lpCmdLine[1] != '?')
+        MESSAGE("Unsupported option '%ls'\n", lpCmdLine);
 
-    if (lpCmdLine[1] == '?')
-    {
-        printf("Usage: winecfg [options]\n\n");
-        printf("Options:\n");
-        printf("  [no option] Launch the graphical version of this program.\n");
-        printf("  /v          Display the current global Windows version.\n");
-        printf("  /v version  Set global Windows version to 'version'.\n");
-        printf("  /?          Display this information and exit.\n\n");
-        printf("Valid versions for 'version':\n\n");
-        print_windows_versions();
+    MESSAGE("Usage: winecfg [options]\n\n");
+    MESSAGE("Options:\n");
+    MESSAGE("  [no option] Launch the graphical version of this program.\n");
+    MESSAGE("  /v          Display the current global Windows version.\n");
+    MESSAGE("  /v version  Set global Windows version to 'version'.\n");
+    MESSAGE("  /?          Display this information and exit.\n\n");
+    MESSAGE("Valid versions for 'version':\n\n");
+    print_windows_versions();
 
-        return 0;
-    }
-
-    return -1;
+    return 0;
 }
 
 /*****************************************************************************

@@ -25,7 +25,6 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <wine/debug.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "winecfg.h"
@@ -516,7 +515,7 @@ void print_windows_versions(void)
 
     for (i = 0; i < ARRAY_SIZE(win_versions); i++)
     {
-        wprintf(L"  %10s  %s\n", win_versions[i].szVersion, win_versions[i].szDescription);
+        MESSAGE("  %10ls  %ls\n", win_versions[i].szVersion, win_versions[i].szDescription);
     }
 }
 
@@ -527,10 +526,10 @@ void print_current_winver(void)
     if (!winver || !winver[0])
     {
         int ver = get_registry_version();
-        wprintf(L"%s\n", ver == -1 ? DEFAULT_WIN_VERSION : win_versions[ver].szVersion);
+        MESSAGE("%ls\n", ver == -1 ? DEFAULT_WIN_VERSION : win_versions[ver].szVersion);
     }
     else
-        wprintf(L"%s\n", winver);
+        MESSAGE("%ls\n", winver);
 
     free(winver);
 }
