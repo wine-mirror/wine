@@ -799,6 +799,7 @@ static void init_locale(void)
     struct locale_nls_header *header;
     const NLS_LOCALE_HEADER *locale_table;
     const NLS_LOCALE_DATA *locale;
+    char *p;
 
     setlocale( LC_ALL, "" );
     if (!unix_to_win_locale( setlocale( LC_CTYPE, NULL ), system_locale )) system_locale[0] = 0;
@@ -863,10 +864,21 @@ static void init_locale(void)
     if ((header = read_nls_file( "locale.nls" )))
     {
         locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
-        if ((locale =  get_win_locale( locale_table, system_locale )) && locale->idefaultlanguage != LOCALE_CUSTOM_UNSPECIFIED)
+        while (!(locale = get_win_locale( locale_table, system_locale )))
+        {
+            if (!(p = strrchr( system_locale, '-' ))) break;
+            *p = 0;
+        }
+        if (locale && locale->idefaultlanguage != LOCALE_CUSTOM_UNSPECIFIED)
             system_lcid = locale->idefaultlanguage;
-        if ((locale =  get_win_locale( locale_table, user_locale )))
-            user_lcid = locale->idefaultlanguage;
+
+        while (!(locale = get_win_locale( locale_table, user_locale )))
+        {
+            if (!(p = strrchr( user_locale, '-' ))) break;
+            *p = 0;
+        }
+        if (locale) user_lcid = locale->idefaultlanguage;
+
         free( header );
     }
     if (!system_lcid) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
