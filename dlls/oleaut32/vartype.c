@@ -3379,7 +3379,7 @@ HRESULT WINAPI VarR8Round(double dblIn, int nDig, double *pDblOut)
   else if (fract >= 0.0)
     dblIn = whole;
   else if (fract == -0.5)
-    dblIn = whole - fmod(whole, 2.0);
+    dblIn = whole + fmod(whole, 2.0);
   else if (fract > -0.5)
     dblIn = whole;
   else
