@@ -833,6 +833,7 @@ static void init_locale(void)
             {
                 CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
                 CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
+                CFStringRef script = CFDictionaryGetValue( components, kCFLocaleScriptCode );
                 CFLocaleRef mac_user_locale = NULL;
                 CFStringRef locale_string;
 
@@ -841,7 +842,11 @@ static void init_locale(void)
                     mac_user_locale = CFLocaleCopyCurrent();
                     country = CFLocaleGetValue( mac_user_locale, kCFLocaleCountryCode );
                 }
-                if (country)
+                if (country && script)
+                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@-%@"), lang, script, country );
+                else if (script)
+                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@"), lang, script );
+                else if (country)
                     locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@"), lang, country );
                 else
                     locale_string = CFStringCreateCopy( NULL, lang );
