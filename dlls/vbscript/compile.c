@@ -425,6 +425,30 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
     return NULL;
 }
 
+static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
+{
+    unsigned i;
+
+    for(i = 0; i < ctx->func->arg_cnt; i++) {
+        if(!wcsicmp(ctx->func->args[i].name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
+{
+    dim_decl_t *dim_decl;
+
+    for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
+        if(!wcsicmp(dim_decl->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
 {
     unsigned arg_cnt = 0;
@@ -479,10 +503,11 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
     if (expr->obj_expr) /* FIXME: we should probably have a dedicated opcode as well */
         return compile_member_call_expression(ctx, expr, 0, TRUE);
 
-    const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
-    if(const_expr)
-        return compile_expression(ctx, const_expr);
-
+    if (!lookup_dim_decls(ctx, expr->identifier) && !lookup_args_name(ctx, expr->identifier)) {
+        const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
+        if(const_expr)
+            return compile_expression(ctx, const_expr);
+    }
     return push_instr_bstr(ctx, OP_ident, expr->identifier);
 }
 
@@ -1102,30 +1127,6 @@ static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat
         return E_OUTOFMEMORY;
 
     return S_OK;
-}
-
-static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
-{
-    dim_decl_t *dim_decl;
-
-    for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
-        if(!wcsicmp(dim_decl->name, name))
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
-static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
-{
-    unsigned i;
-
-    for(i = 0; i < ctx->func->arg_cnt; i++) {
-        if(!wcsicmp(ctx->func->args[i].name, name))
-            return TRUE;
-    }
-
-    return FALSE;
 }
 
 static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)

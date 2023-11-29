@@ -967,6 +967,19 @@ x = false
 Call TestFuncArgVal(x)
 Call ok(not x, "x is true after TestFuncArgVal call?")
 
+const c10 = 10
+Sub TestParamvsConst(c10)
+    Call ok( c10 = 42, "precedence between const and parameter wrong!")
+End Sub
+Call TestParamvsConst(42)
+
+Sub TestDimVsConst
+    dim c10
+    c10 = 42
+    Call ok( c10 = 42, "precedence between const and dim is wrong")
+End Sub
+Call TestDimVsConst
+
 Function TestFuncMultiArgs(a,b,c,d,e)
     Call ok(a=1, "a = " & a)
     Call ok(b=2, "b = " & b)
