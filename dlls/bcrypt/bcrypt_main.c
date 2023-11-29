@@ -17,6 +17,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -1134,24 +1135,13 @@ NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULON
     return hash_finalize( hash, output );
 }
 
-NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secret_len,
-                            UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
+static NTSTATUS hash_single( struct algorithm *alg, UCHAR *secret, ULONG secret_len, UCHAR *input, ULONG input_len,
+                             UCHAR *output, ULONG output_len )
 {
-    struct algorithm *alg = get_alg_object( handle );
     struct hash *hash;
     NTSTATUS status;
 
-    TRACE( "%p, %p, %lu, %p, %lu, %p, %lu\n", handle, secret, secret_len, input, input_len, output, output_len );
-
-    if (!alg) return STATUS_INVALID_HANDLE;
-    if (!output) return STATUS_INVALID_PARAMETER;
-
     if ((status = hash_create( alg, secret, secret_len, 0, &hash ))) return status;
-    if (output_len != builtin_algorithms[hash->alg_id].hash_length)
-    {
-        hash_destroy( hash );
-        return STATUS_INVALID_PARAMETER;
-    }
     if ((status = hash_update( &hash->inner, hash->alg_id, input, input_len )))
     {
         hash_destroy( hash );
@@ -1160,6 +1150,19 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secre
     status = hash_finalize( hash, output );
     hash_destroy( hash );
     return status;
+}
+
+NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secret_len, UCHAR *input, ULONG input_len,
+                            UCHAR *output, ULONG output_len )
+{
+    struct algorithm *alg = get_alg_object( handle );
+
+    TRACE( "%p, %p, %lu, %p, %lu, %p, %lu\n", handle, secret, secret_len, input, input_len, output, output_len );
+
+    if (!alg) return STATUS_INVALID_HANDLE;
+    if (!output || output_len != builtin_algorithms[alg->id].hash_length) return STATUS_INVALID_PARAMETER;
+
+    return hash_single(alg, secret, secret_len, input, input_len, output, output_len );
 }
 
 static NTSTATUS key_asymmetric_create( enum alg_id alg_id, ULONG bitlen, struct key **ret_key )
@@ -2471,17 +2474,118 @@ NTSTATUS WINAPI BCryptDestroySecret( BCRYPT_SECRET_HANDLE handle )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptDeriveKey( BCRYPT_SECRET_HANDLE handle, const WCHAR *kdf, BCryptBufferDesc *parameter,
-                                 UCHAR *derived, ULONG derived_size, ULONG *result, ULONG flags )
+static void reverse_bytes( UCHAR *buf, ULONG len )
+{
+    ULONG i;
+    for (i = 0; i < len / 2; i++)
+    {
+        UCHAR tmp = buf[i];
+        buf[i] = buf[len - i - 1];
+        buf[len - i - 1] = tmp;
+    }
+}
+
+static NTSTATUS derive_key_raw( struct secret *secret, UCHAR *output, ULONG output_len, ULONG *ret_len )
+{
+    struct key_asymmetric_derive_key_params params;
+    NTSTATUS status;
+
+    params.privkey    = secret->privkey;
+    params.pubkey     = secret->pubkey;
+    params.output     = output;
+    params.output_len = output_len;
+    params.ret_len    = ret_len;
+    if (!(status = UNIX_CALL( key_asymmetric_derive_key, &params )) && output) reverse_bytes( output, *ret_len );
+    return status;
+}
+
+static BCRYPT_ALG_HANDLE hash_handle_from_desc( BCryptBufferDesc *desc )
+{
+    ULONG i;
+    if (!desc) return BCRYPT_SHA1_ALG_HANDLE;
+    for (i = 0; i < desc->cBuffers; i++)
+    {
+        if (desc->pBuffers[i].BufferType == KDF_HASH_ALGORITHM)
+        {
+            const WCHAR *str = desc->pBuffers[i].pvBuffer;
+            if (!wcscmp( str, BCRYPT_SHA1_ALGORITHM )) return BCRYPT_SHA1_ALG_HANDLE;
+            else if (!wcscmp( str, BCRYPT_SHA256_ALGORITHM )) return BCRYPT_SHA256_ALG_HANDLE;
+            else if (!wcscmp( str, BCRYPT_SHA384_ALGORITHM )) return BCRYPT_SHA384_ALG_HANDLE;
+            else if (!wcscmp( str, BCRYPT_SHA512_ALGORITHM )) return BCRYPT_SHA512_ALG_HANDLE;
+            else
+            {
+                FIXME( "hash algorithm %s not supported\n", debugstr_w(str) );
+                return NULL;
+            }
+        }
+        else FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
+    }
+
+    return BCRYPT_SHA1_ALG_HANDLE;
+}
+
+static NTSTATUS derive_key_hash( struct secret *secret, BCryptBufferDesc *desc, UCHAR *output, ULONG output_len,
+                                 ULONG *ret_len )
+{
+    struct key_asymmetric_derive_key_params params;
+    struct algorithm *alg = get_alg_object( hash_handle_from_desc(desc) );
+    ULONG hash_len, derived_key_len = secret->privkey->u.a.bitlen / 8;
+    UCHAR hash_buf[MAX_HASH_OUTPUT_BYTES];
+    UCHAR *derived_key;
+    NTSTATUS status;
+
+    if (!alg) return STATUS_NOT_SUPPORTED;
+    if (!(derived_key = malloc( derived_key_len ))) return STATUS_NO_MEMORY;
+
+    params.privkey    = secret->privkey;
+    params.pubkey     = secret->pubkey;
+    params.output     = derived_key;
+    params.output_len = derived_key_len;
+    params.ret_len    = ret_len;
+    if ((status = UNIX_CALL( key_asymmetric_derive_key, &params )))
+    {
+        free( derived_key );
+        return status;
+    }
+
+    hash_len = builtin_algorithms[alg->id].hash_length;
+    assert( hash_len <= sizeof(hash_buf) );
+    if (!(status = hash_single( alg, NULL, 0, derived_key, *params.ret_len, hash_buf, hash_len )))
+    {
+        if (!output) *ret_len = hash_len;
+        else
+        {
+            *ret_len = min( hash_len, output_len );
+            memcpy( output, hash_buf, *ret_len );
+        }
+    }
+
+    free( derived_key );
+    return status;
+}
+
+NTSTATUS WINAPI BCryptDeriveKey( BCRYPT_SECRET_HANDLE handle, const WCHAR *kdf, BCryptBufferDesc *desc,
+                                 UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     struct secret *secret = get_secret_object( handle );
 
-    FIXME( "%p, %s, %p, %p, %lu, %p, %#lx\n", secret, debugstr_w(kdf), parameter, derived, derived_size, result, flags );
+    TRACE( "%p, %s, %p, %p, %lu, %p, %#lx\n", secret, debugstr_w(kdf), desc, output, output_len,
+           ret_len, flags );
 
     if (!secret) return STATUS_INVALID_HANDLE;
-    if (!kdf) return STATUS_INVALID_PARAMETER;
+    if (!kdf || !ret_len) return STATUS_INVALID_PARAMETER;
 
-    return STATUS_INTERNAL_ERROR;
+    if (!wcscmp(kdf, BCRYPT_KDF_RAW_SECRET))
+    {
+        return derive_key_raw( secret, output, output_len, ret_len );
+    }
+    else if (!wcscmp(kdf, BCRYPT_KDF_HASH))
+    {
+        return derive_key_hash( secret, desc, output, output_len, ret_len );
+    }
+
+    FIXME( "kdf %s not supportedi\n", debugstr_w(kdf) );
+    return STATUS_NOT_SUPPORTED;
 }
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )

@@ -302,6 +302,15 @@ struct key_asymmetric_import_params
     ULONG        len;
 };
 
+struct key_asymmetric_derive_key_params
+{
+    struct key *privkey;
+    struct key *pubkey;
+    UCHAR      *output;
+    ULONG       output_len;
+    ULONG      *ret_len;
+};
+
 enum key_funcs
 {
     unix_process_attach,
@@ -321,6 +330,7 @@ enum key_funcs
     unix_key_asymmetric_destroy,
     unix_key_asymmetric_export,
     unix_key_asymmetric_import,
+    unix_key_asymmetric_derive_key,
     unix_funcs_count,
 };
 

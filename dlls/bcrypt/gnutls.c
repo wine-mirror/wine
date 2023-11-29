@@ -144,6 +144,10 @@ static void (*pgnutls_x509_spki_set_rsa_pss_params)(gnutls_x509_spki_t, gnutls_d
 static int (*pgnutls_pubkey_set_spki)(gnutls_pubkey_t, const gnutls_x509_spki_t, unsigned int);
 static int (*pgnutls_privkey_set_spki)(gnutls_privkey_t, const gnutls_x509_spki_t, unsigned int);
 
+/* Not present in gnutls version < 3.8.2 */
+static int (*pgnutls_privkey_derive_secret)(gnutls_privkey_t, gnutls_pubkey_t, const gnutls_datum_t *,
+                                            gnutls_datum_t *, unsigned int);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_cipher_decrypt2);
@@ -302,6 +306,12 @@ static int compat_gnutls_privkey_set_spki(gnutls_privkey_t key, const gnutls_x50
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_privkey_derive_secret(gnutls_privkey_t privkey, gnutls_pubkey_t pubkey, const gnutls_datum_t *nonce,
+                                               gnutls_datum_t *secret, unsigned int flags)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -365,6 +375,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_decode_rs_value)
     LOAD_FUNCPTR_OPT(gnutls_pk_to_sign)
     LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_derive_secret)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
@@ -2250,6 +2261,30 @@ static NTSTATUS key_asymmetric_encrypt( void *args )
     return status;
 }
 
+static NTSTATUS key_asymmetric_derive_key( void *args )
+{
+    const struct key_asymmetric_derive_key_params *params = args;
+    gnutls_datum_t s;
+    int ret;
+
+    if ((ret = pgnutls_privkey_derive_secret( key_data(params->privkey)->a.privkey,
+                                              key_data(params->pubkey)->a.pubkey, NULL, &s, 0 )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (!params->output) *params->ret_len = s.size;
+    else
+    {
+        *params->ret_len = min( params->output_len, s.size );
+        memcpy( params->output, s.data, *params->ret_len );
+    }
+
+    free( s.data );
+    return STATUS_SUCCESS;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     gnutls_process_attach,
@@ -2268,7 +2303,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     key_asymmetric_verify,
     key_asymmetric_destroy,
     key_asymmetric_export,
-    key_asymmetric_import
+    key_asymmetric_import,
+    key_asymmetric_derive_key,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
@@ -2733,6 +2769,36 @@ static NTSTATUS wow64_key_asymmetric_import( void *args )
     return ret;
 }
 
+static NTSTATUS wow64_key_asymmetric_derive_key( void *args )
+{
+    struct
+    {
+        PTR32 privkey;
+        PTR32 pubkey;
+        PTR32 output;
+        ULONG output_len;
+        PTR32 ret_len;
+    } const *params32 = args;
+
+    NTSTATUS ret;
+    struct key privkey, pubkey;
+    struct key32 *privkey32 = ULongToPtr( params32->privkey );
+    struct key32 *pubkey32 = ULongToPtr( params32->pubkey );
+    struct key_asymmetric_derive_key_params params =
+    {
+        get_asymmetric_key( privkey32, &privkey ),
+        get_asymmetric_key( pubkey32, &pubkey ),
+        ULongToPtr(params32->output),
+        params32->output_len,
+        ULongToPtr(params32->ret_len),
+    };
+
+    ret = key_asymmetric_derive_key( &params );
+    put_asymmetric_key32( &privkey, privkey32 );
+    put_asymmetric_key32( &pubkey, pubkey32 );
+    return ret;
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     gnutls_process_attach,
@@ -2751,7 +2817,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_key_asymmetric_verify,
     wow64_key_asymmetric_destroy,
     wow64_key_asymmetric_export,
-    wow64_key_asymmetric_import
+    wow64_key_asymmetric_import,
+    wow64_key_asymmetric_derive_key,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
