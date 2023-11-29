@@ -746,6 +746,33 @@ static BOOL CRYPT_ConstructBlobArray(DWORD *outCBlobs,
     return ret;
 }
 
+static BOOL CRYPT_AddBlobArray(DWORD *outCBlobs,
+ PCRYPT_DATA_BLOB *outPBlobs, DWORD cBlobs, const CRYPT_DATA_BLOB *pBlobs)
+{
+    BOOL ret = TRUE;
+
+    if (cBlobs)
+    {
+        CRYPT_DATA_BLOB *new_blobs = CryptMemRealloc(*outPBlobs, (*outCBlobs + cBlobs) * sizeof(CRYPT_DATA_BLOB));
+        if (new_blobs)
+        {
+            DWORD i;
+
+            *outPBlobs = new_blobs;
+
+            memset(*outPBlobs + *outCBlobs, 0, cBlobs * sizeof(CRYPT_DATA_BLOB));
+            for (i = *outCBlobs; ret && i < *outCBlobs + cBlobs; i++)
+                ret = CRYPT_ConstructBlob(&(*outPBlobs)[i], &pBlobs[i]);
+
+            if (ret)
+                *outCBlobs += cBlobs;
+        }
+        else
+            ret = FALSE;
+    }
+    return ret;
+}
+
 static void CRYPT_FreeBlobArray(DWORD cBlobs, PCRYPT_DATA_BLOB blobs)
 {
     DWORD i;
@@ -3620,6 +3647,23 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
             break;
         default:
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        }
+        break;
+    case CMSG_CTRL_ADD_CERT:
+        switch (msg->type)
+        {
+        case CMSG_SIGNED:
+            if (!msg->u.signed_data.info)
+            {
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+                break;
+            }
+            ret = CRYPT_AddBlobArray(&msg->u.signed_data.info->cCertEncoded,
+                 &msg->u.signed_data.info->rgCertEncoded, 1, (const CRYPT_DATA_BLOB *)pvCtrlPara);
+            break;
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+            break;
         }
         break;
     default:
