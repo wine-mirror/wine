@@ -261,6 +261,7 @@ static void test_namespaces_as_attributes(void)
             str = NULL;
             hr = IXMLDOMNode_get_nodeName(item, &str);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            todo_wine_if(test->todo)
             ok(!lstrcmpW(str, test->names[i]), "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);
 
@@ -283,7 +284,6 @@ static void test_namespaces_as_attributes(void)
             hr = IXMLDOMNode_get_baseName(item, &str);
             /* MSXML4 can report different results with different service packs */
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            todo_wine_if(test->todo)
             ok(!lstrcmpW(str, test->basenames[i]) || broken(!lstrcmpW(str, L"xmlns")),
                 "got %s\n", wine_dbgstr_w(str));
             SysFreeString(str);

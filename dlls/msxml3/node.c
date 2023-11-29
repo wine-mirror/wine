@@ -1609,7 +1609,11 @@ HRESULT node_get_base_name(xmlnode *This, BSTR *name)
 {
     if (!name) return E_INVALIDARG;
 
-    *name = bstr_from_xmlChar(This->node->name);
+    if (xmldoc_version(This->node->doc) != MSXML6 &&
+        xmlStrEqual(This->node->name, BAD_CAST "xmlns"))
+        *name = SysAllocString(L"");
+    else
+        *name = bstr_from_xmlChar(This->node->name);
     if (!*name) return E_OUTOFMEMORY;
 
     TRACE("returning %s\n", debugstr_w(*name));
