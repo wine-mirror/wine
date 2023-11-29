@@ -1658,3 +1658,10 @@ HRESULT WINAPI CustomDestinationList_Constructor(IUnknown *outer, REFIID riid, v
     ICustomDestinationList_Release(&list->ICustomDestinationList_iface);
     return hr;
 }
+
+HRESULT WINAPI SHSetTemporaryPropertyForItem(IShellItem *psi, REFPROPERTYKEY propkey, REFPROPVARIANT propvar)
+{
+    FIXME("%p %p %p: stub\n", psi, propkey, propvar);
+
+    return E_NOTIMPL;
+}

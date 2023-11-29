@@ -425,6 +425,7 @@
 @ stdcall SHQueryUserNotificationState(ptr)
 @ stdcall SHRemoveLocalizedName(wstr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
+@ stdcall SHSetTemporaryPropertyForItem(ptr ptr ptr)
 @ stdcall SHSetUnreadMailCountW(wstr long wstr)
 @ stdcall SHUpdateRecycleBinIcon()
 @ stdcall SheChangeDirA(str)
