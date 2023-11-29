@@ -2250,7 +2250,7 @@ static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
     }
     case EMR_SAVEDC:
     {
-        int ret = PlayEnhMetaFileRecord(hdc, htable, rec, handle_count);
+        int ret = PlayEnhMetaFileRecord(data->ctx->hdc, htable, rec, handle_count);
 
         if (!data->saved_dc_size)
         {
