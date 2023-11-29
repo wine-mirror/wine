@@ -350,7 +350,6 @@ static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
 
 static UINT64 read_tsc_frequency(void)
 {
-    FIXME( "TSC frequency calibration not implemented\n" );
     return 0;
 }
 
