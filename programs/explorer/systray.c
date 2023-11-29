@@ -938,6 +938,8 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     case WM_CLOSE:
         /* don't destroy the tray window, just hide it */
         ShowWindow( hwnd, SW_HIDE );
+        hide_balloon( balloon_icon );
+        show_systray = FALSE;
         return 0;
 
     case WM_DRAWITEM:
