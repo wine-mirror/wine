@@ -2320,37 +2320,22 @@ static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
     case ALG_ID_RSA_SIGN:
     {
         gnutls_datum_t m, e, d, p, q, u, e1, e2;
+
         if ((ret = pgnutls_privkey_export_rsa_raw( key_data(key_orig)->a.privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+            break;
         ret = pgnutls_privkey_import_rsa_raw( privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 );
         free( m.data ); free( e.data ); free( d.data ); free( p.data ); free( q.data ); free( u.data );
         free( e1.data ); free( e2.data );
-        if (ret)
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
         break;
     }
     case ALG_ID_DSA:
     {
         gnutls_datum_t p, q, g, y, x;
-        if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key_orig)->a.privkey, &p, &q, &g, &y, &x )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+
+        if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key_orig)->a.privkey, &p, &q, &g, &y, &x ))) break;
         ret = pgnutls_privkey_import_dsa_raw( privkey, &p, &q, &g, &y, &x );
         free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
-        if (ret)
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
-        key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
+        if (!ret) key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
         break;
     }
     case ALG_ID_ECDH_P256:
@@ -2360,22 +2345,38 @@ static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
     {
         gnutls_ecc_curve_t curve;
         gnutls_datum_t x, y, k;
-        if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key_orig)->a.privkey, &curve, &x, &y, &k )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+
+        if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key_orig)->a.privkey, &curve, &x, &y, &k ))) break;
         ret = pgnutls_privkey_import_ecc_raw( privkey, curve, &x, &y, &k );
         free( x.data ); free( y.data ); free( k.data );
-        if (ret)
+        break;
+    }
+    case ALG_ID_DH:
+    {
+        gnutls_dh_params_t params;
+        gnutls_datum_t y, x;
+
+        if ((ret = pgnutls_dh_params_init( &params )) < 0) break;
+        if ((ret = pgnutls_privkey_export_dh_raw( key_data(key_orig)->a.privkey, params, &y, &x, 0 )) < 0)
         {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
+            pgnutls_dh_params_deinit( params );
+            break;
         }
+        ret = pgnutls_privkey_import_dh_raw( privkey, params, &y, &x );
+        pgnutls_dh_params_deinit( params );
+        free( x.data ); free( y.data );
         break;
     }
     default:
         ERR( "unhandled algorithm %u\n", key_orig->alg_id );
+        pgnutls_privkey_deinit( privkey );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( privkey );
         return STATUS_INTERNAL_ERROR;
     }
 
@@ -2400,36 +2401,20 @@ static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
     case ALG_ID_RSA_SIGN:
     {
         gnutls_datum_t m, e;
-        if ((ret = pgnutls_pubkey_export_rsa_raw( key_data(key_orig)->a.pubkey, &m, &e )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+
+        if ((ret = pgnutls_pubkey_export_rsa_raw( key_data(key_orig)->a.pubkey, &m, &e ))) break;
         ret = pgnutls_pubkey_import_rsa_raw( pubkey, &m, &e );
         free( m.data ); free( e.data );
-        if (ret)
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
         break;
     }
     case ALG_ID_DSA:
     {
         gnutls_datum_t p, q, g, y;
-        if ((ret = pgnutls_pubkey_export_dsa_raw( key_data(key_orig)->a.pubkey, &p, &q, &g, &y )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+
+        if ((ret = pgnutls_pubkey_export_dsa_raw( key_data(key_orig)->a.pubkey, &p, &q, &g, &y ))) break;
         ret = pgnutls_pubkey_import_dsa_raw( pubkey, &p, &q, &g, &y );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
-        if (ret)
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
-        key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
+        if (!ret) key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
         break;
     }
     case ALG_ID_ECDH_P256:
@@ -2439,22 +2424,38 @@ static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
     {
         gnutls_ecc_curve_t curve;
         gnutls_datum_t x, y;
-        if ((ret = pgnutls_pubkey_export_ecc_raw( key_data(key_orig)->a.pubkey, &curve, &x, &y )))
-        {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
-        }
+
+        if ((ret = pgnutls_pubkey_export_ecc_raw( key_data(key_orig)->a.pubkey, &curve, &x, &y ))) break;
         ret = pgnutls_pubkey_import_ecc_raw( pubkey, curve, &x, &y );
         free( x.data ); free( y.data );
-        if (ret)
+        break;
+    }
+    case ALG_ID_DH:
+    {
+        gnutls_dh_params_t params;
+        gnutls_datum_t y;
+
+        if ((ret = pgnutls_dh_params_init( &params )) < 0) break;
+        if ((ret = pgnutls_pubkey_export_dh_raw( key_data(key_orig)->a.pubkey, params, &y, 0 )) < 0)
         {
-            pgnutls_perror( ret );
-            return STATUS_INTERNAL_ERROR;
+            pgnutls_dh_params_deinit( params );
+            break;
         }
+        ret = pgnutls_pubkey_import_dh_raw( pubkey, params, &y );
+        pgnutls_dh_params_deinit( params );
+        free( y.data );
         break;
     }
     default:
         ERR( "unhandled algorithm %u\n", key_orig->alg_id );
+        pgnutls_pubkey_deinit( pubkey );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_pubkey_deinit( pubkey );
         return STATUS_INTERNAL_ERROR;
     }
 
