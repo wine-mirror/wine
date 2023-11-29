@@ -1110,7 +1110,9 @@ int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, si
 
     if(!mbcinfo->ismbcodepage)
         return _strnicoll_l((const char*)str1, (const char*)str2, len, locale);
-    return CompareStringA(mbcinfo->mblcid, NORM_IGNORECASE, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
+    return CompareStringA(mbcinfo->mblcid, NORM_IGNORECASE,
+            (const char*)str1, strnlen((const char*)str1, len),
+            (const char*)str2, strnlen((const char*)str2, len)) - CSTR_EQUAL;
 }
 
 /*********************************************************************
@@ -1156,7 +1158,9 @@ int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, siz
 
     if(!mbcinfo->ismbcodepage)
         return _strncoll_l((const char*)str1, (const char*)str2, len, locale);
-    return CompareStringA(mbcinfo->mblcid, 0, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
+    return CompareStringA(mbcinfo->mblcid, 0,
+            (const char*)str1, strnlen((const char*)str1, len),
+            (const char*)str2, strnlen((const char*)str2, len)) - CSTR_EQUAL;
 }
 
 /*********************************************************************
