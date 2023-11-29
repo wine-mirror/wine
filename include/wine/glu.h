@@ -92,7 +92,7 @@ void APIENTRY gluLoadSamplingMatrices(GLUnurbs *nobj,const GLfloat modelMatrix[1
 void APIENTRY gluNurbsProperty(GLUnurbs *nobj,GLenum property,GLfloat value);
 void APIENTRY gluGetNurbsProperty(GLUnurbs *nobj,GLenum property,GLfloat *value);
 
-#ifdef WINE_STRICT_PROTOTYPES
+#ifndef WINE_NO_STRICT_PROTOTYPES
 void APIENTRY gluQuadricCallback(GLUquadric *qobj,GLenum which,void (CALLBACK *fn)(void));
 void APIENTRY gluTessCallback(GLUtesselator *tess,GLenum which,void (CALLBACK *fn)(void));
 void APIENTRY gluNurbsCallback(GLUnurbs *nobj,GLenum which,void (CALLBACK *fn)(void));

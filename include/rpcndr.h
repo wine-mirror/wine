@@ -356,7 +356,7 @@ typedef struct _MIDL_SYNTAX_INFO
 
 typedef void (__RPC_API *STUB_THUNK)( PMIDL_STUB_MESSAGE );
 
-#ifdef WINE_STRICT_PROTOTYPES
+#ifndef WINE_NO_STRICT_PROTOTYPES
 typedef LONG (__RPC_API *SERVER_ROUTINE)(void);
 #else
 typedef LONG (__RPC_API *SERVER_ROUTINE)();

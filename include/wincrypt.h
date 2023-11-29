@@ -793,7 +793,7 @@ typedef struct _CRYPT_SMIME_CAPABILITIES {
 
 typedef struct _VTableProvStruc {
     DWORD    Version;
-#ifdef WINE_STRICT_PROTOTYPES
+#ifndef WINE_NO_STRICT_PROTOTYPES
     BOOL     (WINAPI *FuncVerifyImage)(LPCSTR,BYTE*);
     void     (WINAPI *FuncReturnhWnd)(HWND*);
 #else
