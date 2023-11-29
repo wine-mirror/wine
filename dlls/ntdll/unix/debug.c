@@ -129,7 +129,7 @@ static void add_option( const char *name, unsigned char set, unsigned char clear
 }
 
 /* parse a set of debugging option specifications and add them to the option list */
-static void parse_options( const char *str )
+static void parse_options( const char *str, const char *app_name )
 {
     char *opt, *next, *options;
     unsigned int i;
@@ -137,10 +137,17 @@ static void parse_options( const char *str )
     if (!(options = strdup(str))) return;
     for (opt = options; opt; opt = next)
     {
-        const char *p;
+        char *p;
         unsigned char set = 0, clear = 0;
 
         if ((next = strchr( opt, ',' ))) *next++ = 0;
+
+        if ((p = strchr( opt, ':' )))
+        {
+            *p = 0;
+            if (strcasecmp( opt, app_name )) continue;
+            opt = p + 1;
+        }
 
         p = opt + strcspn( opt, "+-" );
         if (!p[0]) p = opt;  /* assume it's a debug channel name */
@@ -182,7 +189,7 @@ static void debug_usage(void)
 {
     static const char usage[] =
         "Syntax of the WINEDEBUG variable:\n"
-        "  WINEDEBUG=[class]+xxx,[class]-yyy,...\n\n"
+        "  WINEDEBUG=[[process:]class]+xxx,[[process:]class]-yyy,...\n\n"
         "Example: WINEDEBUG=+relay,warn-heap\n"
         "    turns on relay traces, disable heap warnings\n"
         "Available message classes: err, warn, fixme, trace\n";
@@ -194,6 +201,7 @@ static void debug_usage(void)
 static void init_options(void)
 {
     char *wine_debug = getenv("WINEDEBUG");
+    const char *app_name, *p;
     struct stat st1, st2;
 
     nb_debug_options = 0;
@@ -208,7 +216,11 @@ static void init_options(void)
     }
     if (!wine_debug) return;
     if (!strcmp( wine_debug, "help" )) debug_usage();
-    parse_options( wine_debug );
+
+    app_name = main_argv[1];
+    while ((p = strpbrk( app_name, "/\\" ))) app_name = p + 1;
+
+    parse_options( wine_debug, app_name );
 }
 
 /***********************************************************************
