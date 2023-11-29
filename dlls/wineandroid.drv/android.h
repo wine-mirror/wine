@@ -42,7 +42,7 @@
  * Android interface
  */
 
-#define DECL_FUNCPTR(f) extern typeof(f) * p##f DECLSPEC_HIDDEN
+#define DECL_FUNCPTR(f) extern typeof(f) * p##f
 DECL_FUNCPTR( __android_log_print );
 DECL_FUNCPTR( ANativeWindow_fromSurface );
 DECL_FUNCPTR( ANativeWindow_release );
@@ -53,96 +53,96 @@ DECL_FUNCPTR( ANativeWindow_release );
  * OpenGL driver
  */
 
-extern pthread_mutex_t drawable_mutex DECLSPEC_HIDDEN;
-extern void update_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
-extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;
+extern pthread_mutex_t drawable_mutex;
+extern void update_gl_drawable( HWND hwnd );
+extern void destroy_gl_drawable( HWND hwnd );
+extern struct opengl_funcs *get_wgl_driver( UINT version );
 
 
 /**************************************************************************
  * Android pseudo-device
  */
 
-extern void start_android_device(void) DECLSPEC_HIDDEN;
-extern void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL client ) DECLSPEC_HIDDEN;
-extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale ) DECLSPEC_HIDDEN;
-extern struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window ) DECLSPEC_HIDDEN;
-extern void release_ioctl_window( struct ANativeWindow *window ) DECLSPEC_HIDDEN;
-extern void destroy_ioctl_window( HWND hwnd, BOOL opengl ) DECLSPEC_HIDDEN;
+extern void start_android_device(void);
+extern void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL client );
+extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale );
+extern struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window );
+extern void release_ioctl_window( struct ANativeWindow *window );
+extern void destroy_ioctl_window( HWND hwnd, BOOL opengl );
 extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
                                      const RECT *visible_rect, UINT style, UINT flags,
-                                     HWND after, HWND owner ) DECLSPEC_HIDDEN;
-extern int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale ) DECLSPEC_HIDDEN;
-extern int ioctl_set_capture( HWND hwnd ) DECLSPEC_HIDDEN;
+                                     HWND after, HWND owner );
+extern int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale );
+extern int ioctl_set_capture( HWND hwnd );
 extern int ioctl_set_cursor( int id, int width, int height,
-                             int hotspotx, int hotspoty, const unsigned int *bits ) DECLSPEC_HIDDEN;
+                             int hotspotx, int hotspoty, const unsigned int *bits );
 
 
 /**************************************************************************
  * USER driver
  */
 
-extern pthread_mutex_t win_data_mutex DECLSPEC_HIDDEN;
-extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSPEC_HIDDEN;
-extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
-extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetCursor( HWND hwnd, HCURSOR handle ) DECLSPEC_HIDDEN;
-extern BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height ) DECLSPEC_HIDDEN;
-extern BOOL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-extern BOOL ANDROID_ProcessEvents( DWORD mask ) DECLSPEC_HIDDEN;
-extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
+extern pthread_mutex_t win_data_mutex;
+extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size );
+extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl );
+extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl );
+extern void ANDROID_SetCursor( HWND hwnd, HCURSOR handle );
+extern BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height );
+extern BOOL ANDROID_CreateWindow( HWND hwnd );
+extern void ANDROID_DestroyWindow( HWND hwnd );
+extern BOOL ANDROID_ProcessEvents( DWORD mask );
+extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
-                                                DWORD flags ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetCapture( HWND hwnd, UINT flags ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style ) DECLSPEC_HIDDEN;
-extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp ) DECLSPEC_HIDDEN;
+                                                DWORD flags );
+extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent );
+extern void ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw );
+extern void ANDROID_SetCapture( HWND hwnd, UINT flags );
+extern void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style );
+extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );
 extern BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                         const RECT *window_rect ) DECLSPEC_HIDDEN;
-extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
+                                         const RECT *window_rect );
+extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                        const RECT *window_rect, const RECT *client_rect,
-                                       RECT *visible_rect, struct window_surface **surface ) DECLSPEC_HIDDEN;
+                                       RECT *visible_rect, struct window_surface **surface );
 extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                       const RECT *window_rect, const RECT *client_rect,
                                       const RECT *visible_rect, const RECT *valid_rects,
-                                      struct window_surface *surface ) DECLSPEC_HIDDEN;
+                                      struct window_surface *surface );
 
 /* unixlib interface */
 
-extern NTSTATUS android_dispatch_ioctl( void *arg ) DECLSPEC_HIDDEN;
-extern NTSTATUS android_java_init( void *arg ) DECLSPEC_HIDDEN;
-extern NTSTATUS android_java_uninit( void *arg ) DECLSPEC_HIDDEN;
-extern NTSTATUS android_register_window( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS android_dispatch_ioctl( void *arg );
+extern NTSTATUS android_java_init( void *arg );
+extern NTSTATUS android_java_uninit( void *arg );
+extern NTSTATUS android_register_window( void *arg );
 extern PNTAPCFUNC register_window_callback;
 
-extern unsigned int screen_width DECLSPEC_HIDDEN;
-extern unsigned int screen_height DECLSPEC_HIDDEN;
-extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
-extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
+extern unsigned int screen_width;
+extern unsigned int screen_height;
+extern RECT virtual_screen_rect;
+extern MONITORINFOEXW default_monitor;
 
 enum android_window_messages
 {
     WM_ANDROID_REFRESH = 0x80001000,
 };
 
-extern void init_gralloc( const struct hw_module_t *module ) DECLSPEC_HIDDEN;
-extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
-extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
-extern void set_screen_dpi( DWORD dpi ) DECLSPEC_HIDDEN;
-extern void update_keyboard_lock_state( WORD vkey, UINT state ) DECLSPEC_HIDDEN;
+extern void init_gralloc( const struct hw_module_t *module );
+extern HWND get_capture_window(void);
+extern void init_monitors( int width, int height );
+extern void set_screen_dpi( DWORD dpi );
+extern void update_keyboard_lock_state( WORD vkey, UINT state );
 
 /* JNI entry points */
-extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
-extern void config_changed( JNIEnv *env, jobject obj, jint dpi ) DECLSPEC_HIDDEN;
+extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height );
+extern void config_changed( JNIEnv *env, jobject obj, jint dpi );
 extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface,
-                             jboolean client ) DECLSPEC_HIDDEN;
+                             jboolean client );
 extern jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action,
-                              jint x, jint y, jint state, jint vscroll ) DECLSPEC_HIDDEN;
+                              jint x, jint y, jint state, jint vscroll );
 extern jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action,
-                                jint keycode, jint state ) DECLSPEC_HIDDEN;
+                                jint keycode, jint state );
 
 enum event_type
 {
@@ -191,7 +191,7 @@ union event_data
     } kbd;
 };
 
-int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
+int send_event( const union event_data *data );
 
 extern JavaVM **p_java_vm;
 extern jobject *p_java_object;
