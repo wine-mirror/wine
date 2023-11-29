@@ -69,6 +69,7 @@ struct icon
     HICON          image;    /* the image to render */
     HWND           owner;    /* the HWND passed in to the Shell_NotifyIcon call */
     HWND           window;   /* the adaptor window */
+    BOOL           layered;  /* whether we are using a layered window */
     HWND           tooltip;  /* Icon tooltip */
     UINT           state;    /* state flags */
     UINT           id;       /* the unique id given by the app */
@@ -363,6 +364,80 @@ static void update_tooltip_position( struct icon *icon )
     if (balloon_icon == icon) set_balloon_position( icon );
 }
 
+static void paint_layered_icon( struct icon *icon )
+{
+    BLENDFUNCTION blend = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+    int width = GetSystemMetrics( SM_CXSMICON );
+    int height = GetSystemMetrics( SM_CYSMICON );
+    BITMAPINFO *info;
+    HBITMAP dib, mask;
+    HDC hdc;
+    RECT rc;
+    SIZE size;
+    POINT pos;
+    int i, x, y;
+    void *color_bits, *mask_bits;
+    DWORD *ptr;
+    BOOL has_alpha = FALSE;
+
+    GetWindowRect( icon->window, &rc );
+    size.cx = rc.right - rc.left;
+    size.cy = rc.bottom - rc.top;
+    pos.x = (size.cx - width) / 2;
+    pos.y = (size.cy - height) / 2;
+
+    if (!(info = calloc( 1, FIELD_OFFSET( BITMAPINFO, bmiColors[2] ) ))) return;
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth = size.cx;
+    info->bmiHeader.biHeight = size.cy;
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    hdc = CreateCompatibleDC( 0 );
+    if (!(dib = CreateDIBSection( 0, info, DIB_RGB_COLORS, &color_bits, NULL, 0 ))) goto done;
+    SelectObject( hdc, dib );
+    DrawIconEx( hdc, pos.x, pos.y, icon->image, width, height, 0, 0, DI_DEFAULTSIZE | DI_NORMAL );
+
+    /* check if the icon was drawn with an alpha channel */
+    for (i = 0, ptr = color_bits; i < size.cx * size.cy; i++)
+        if ((has_alpha = (ptr[i] & 0xff000000) != 0)) break;
+
+    if (!has_alpha)
+    {
+        unsigned int width_bytes = (size.cx + 31) / 32 * 4;
+
+        info->bmiHeader.biBitCount = 1;
+        info->bmiColors[0].rgbRed = 0;
+        info->bmiColors[0].rgbGreen = 0;
+        info->bmiColors[0].rgbBlue = 0;
+        info->bmiColors[0].rgbReserved = 0;
+        info->bmiColors[1].rgbRed = 0xff;
+        info->bmiColors[1].rgbGreen = 0xff;
+        info->bmiColors[1].rgbBlue = 0xff;
+        info->bmiColors[1].rgbReserved = 0;
+
+        if (!(mask = CreateDIBSection( 0, info, DIB_RGB_COLORS, &mask_bits, NULL, 0 ))) goto done;
+        memset( mask_bits, 0xff, width_bytes * size.cy );
+        SelectObject( hdc, mask );
+        DrawIconEx( hdc, pos.x, pos.y, icon->image, width, height, 0, 0, DI_DEFAULTSIZE | DI_MASK );
+
+        for (y = 0, ptr = color_bits; y < size.cy; y++)
+            for (x = 0; x < size.cx; x++, ptr++)
+                if (!((((BYTE *)mask_bits)[y * width_bytes + x / 8] << (x % 8)) & 0x80))
+                    *ptr |= 0xff000000;
+
+        SelectObject( hdc, dib );
+        DeleteObject( mask );
+    }
+
+    UpdateLayeredWindow( icon->window, 0, NULL, NULL, hdc, NULL, 0, &blend, ULW_ALPHA );
+done:
+    free( info );
+    if (hdc) DeleteDC( hdc );
+    if (dib) DeleteObject( dib );
+}
+
 static BOOL notify_owner( struct icon *icon, UINT msg, LPARAM lparam )
 {
     WPARAM wp = icon->id;
@@ -410,14 +485,22 @@ static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         create_tooltip( icon );
         break;
 
+    case WM_SIZE:
+    case WM_MOVE:
+        if (icon->layered) paint_layered_icon( icon );
+        break;
+
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
         RECT rc;
         HDC hdc;
-        int cx = GetSystemMetrics( SM_CXSMICON );
-        int cy = GetSystemMetrics( SM_CYSMICON );
+        int cx, cy;
 
+        if (icon->layered) break;
+
+        cx = GetSystemMetrics( SM_CXSMICON );
+        cy = GetSystemMetrics( SM_CYSMICON );
         hdc = BeginPaint( hwnd, &ps );
         GetClientRect( hwnd, &rc );
         TRACE( "painting rect %s\n", wine_dbgstr_rect( &rc ) );
@@ -516,9 +599,13 @@ static BOOL show_icon(struct icon *icon)
 
     if (icon->display != ICON_DISPLAY_HIDDEN) return TRUE;  /* already displayed */
 
-    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_INSERT, icon_cx,
-                                              icon_cy, icon, NtUserSystemTrayCall, FALSE ))
+    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_INSERT, icon_cx, icon_cy,
+                                              icon, NtUserSystemTrayCall, FALSE ))
+    {
         icon->display = ICON_DISPLAY_DOCKED;
+        icon->layered = TRUE;
+        SendMessageW( icon->window, WM_SIZE, SIZE_RESTORED, MAKELONG( icon_cx, icon_cy ) );
+    }
     systray_add_icon( icon );
 
     update_tooltip_position( icon );
@@ -535,7 +622,10 @@ static BOOL hide_icon(struct icon *icon)
 
     if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_REMOVE, 0, 0,
                                               NULL, NtUserSystemTrayCall, FALSE ))
+    {
         icon->display = ICON_DISPLAY_HIDDEN;
+        icon->layered = FALSE;
+    }
     ShowWindow( icon->window, SW_HIDE );
     systray_remove_icon( icon );
 
@@ -568,6 +658,8 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
 
         if (icon->display >= 0)
             InvalidateRect( icon->window, NULL, TRUE );
+        else if (icon->layered)
+            paint_layered_icon( icon );
         else if (!enable_taskbar)
             NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_CLEAR, 0, 0,
                                NULL, NtUserSystemTrayCall, FALSE );
@@ -620,7 +712,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = ICON_DISPLAY_HIDDEN;
 
-    CreateWindowExW( 0, tray_icon_class.lpszClassName, NULL, WS_CLIPSIBLINGS | WS_POPUP,
+    CreateWindowExW( WS_EX_LAYERED, tray_icon_class.lpszClassName, NULL, WS_CLIPSIBLINGS | WS_POPUP,
                      0, 0, icon_cx, icon_cy, 0, NULL, NULL, icon );
     if (!icon->window) ERR( "Failed to create systray icon window\n" );
 
