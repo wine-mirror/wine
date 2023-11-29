@@ -1819,7 +1819,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)input;
 
         if (input_len < sizeof(*dsa_blob)) return STATUS_INVALID_PARAMETER;
-        if ((alg->id != ALG_ID_DSA) || dsa_blob->dwMagic != BCRYPT_DSA_PUBLIC_MAGIC)
+        if (alg->id != ALG_ID_DSA || dsa_blob->dwMagic != BCRYPT_DSA_PUBLIC_MAGIC)
             return STATUS_NOT_SUPPORTED;
 
         if ((status = key_asymmetric_create( alg->id, dsa_blob->cbKey * 8, &key ))) return status;
@@ -1899,6 +1899,50 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         if ((status = key_asymmetric_create( alg->id, pubkey->bitlen, &key ))) return status;
         key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_PUBLIC;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!wcscmp( type, BCRYPT_DH_PRIVATE_BLOB ))
+    {
+        BCRYPT_DH_KEY_BLOB *dh_blob = (BCRYPT_DH_KEY_BLOB *)input;
+
+        if (input_len < sizeof(*dh_blob)) return STATUS_INVALID_PARAMETER;
+        if (alg->id != ALG_ID_DH || dh_blob->dwMagic != BCRYPT_DH_PRIVATE_MAGIC)
+            return STATUS_NOT_SUPPORTED;
+
+        if ((status = key_asymmetric_create( alg->id, dh_blob->cbKey * 8, &key ))) return status;
+        params.key   = key;
+        params.flags = 0;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!wcscmp( type, BCRYPT_DH_PUBLIC_BLOB ))
+    {
+        BCRYPT_DH_KEY_BLOB *dh_blob = (BCRYPT_DH_KEY_BLOB *)input;
+
+        if (input_len < sizeof(*dh_blob)) return STATUS_INVALID_PARAMETER;
+        if (alg->id != ALG_ID_DH || dh_blob->dwMagic != BCRYPT_DH_PUBLIC_MAGIC)
+            return STATUS_NOT_SUPPORTED;
+
+        if ((status = key_asymmetric_create( alg->id, dh_blob->cbKey * 8, &key ))) return status;
         params.key   = key;
         params.flags = KEY_IMPORT_FLAG_PUBLIC;
         params.buf   = input;

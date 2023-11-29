@@ -150,6 +150,9 @@ static int (*pgnutls_privkey_derive_secret)(gnutls_privkey_t, gnutls_pubkey_t, c
 static int (*pgnutls_privkey_export_dh_raw)(gnutls_privkey_t, gnutls_dh_params_t, gnutls_datum_t *, gnutls_datum_t *,
                                             unsigned int);
 static int (*pgnutls_pubkey_export_dh_raw)(gnutls_pubkey_t, gnutls_dh_params_t, gnutls_datum_t *, unsigned);
+static int (*pgnutls_privkey_import_dh_raw)(gnutls_privkey_t, const gnutls_dh_params_t, const gnutls_datum_t *,
+                                            const gnutls_datum_t *);
+static int (*pgnutls_pubkey_import_dh_raw)(gnutls_pubkey_t, const gnutls_dh_params_t, const gnutls_datum_t *);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -159,6 +162,7 @@ MAKE_FUNCPTR(gnutls_cipher_encrypt2);
 MAKE_FUNCPTR(gnutls_cipher_init);
 MAKE_FUNCPTR(gnutls_dh_params_deinit);
 MAKE_FUNCPTR(gnutls_dh_params_export_raw);
+MAKE_FUNCPTR(gnutls_dh_params_import_raw);
 MAKE_FUNCPTR(gnutls_dh_params_init);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
@@ -330,6 +334,18 @@ static int compat_gnutls_pubkey_export_dh_raw(gnutls_pubkey_t pubkey, gnutls_dh_
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_privkey_import_dh_raw(gnutls_privkey_t privkey, const gnutls_dh_params_t params,
+                                               const gnutls_datum_t *y, const gnutls_datum_t *x)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_pubkey_import_dh_raw(gnutls_pubkey_t pubkey, const gnutls_dh_params_t params,
+                                              const gnutls_datum_t *y)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -369,6 +385,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR(gnutls_cipher_init)
     LOAD_FUNCPTR(gnutls_dh_params_deinit)
     LOAD_FUNCPTR(gnutls_dh_params_export_raw)
+    LOAD_FUNCPTR(gnutls_dh_params_import_raw)
     LOAD_FUNCPTR(gnutls_dh_params_init)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
@@ -402,6 +419,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_generate)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_import_dh_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_set_spki)
@@ -410,6 +428,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_dh_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_import_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_import_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_import_rsa_raw)
@@ -1710,6 +1729,110 @@ static NTSTATUS key_asymmetric_export( void *args )
     }
 }
 
+static NTSTATUS key_import_dh_public( struct key *key, UCHAR *buf, ULONG len )
+{
+    BCRYPT_DH_KEY_BLOB *dh_blob;
+    gnutls_dh_params_t params;
+    gnutls_datum_t p, g, y;
+    gnutls_pubkey_t handle;
+    int ret;
+
+    if ((ret = pgnutls_pubkey_init( &handle )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if ((ret = pgnutls_dh_params_init( &params )) < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_pubkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    dh_blob = (BCRYPT_DH_KEY_BLOB *)buf;
+    p.data = buf + sizeof(*dh_blob);
+    p.size = dh_blob->cbKey;
+    g.data = buf + sizeof(*dh_blob) + dh_blob->cbKey;
+    g.size = dh_blob->cbKey;
+    y.data = buf + sizeof(*dh_blob) + dh_blob->cbKey * 2;
+    y.size = dh_blob->cbKey;
+
+    if ((ret = pgnutls_dh_params_import_raw( params, &p, &g )) < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        pgnutls_pubkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    ret = pgnutls_pubkey_import_dh_raw( handle, params, &y );
+    pgnutls_dh_params_deinit( params );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_pubkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key_data(key)->a.pubkey) pgnutls_pubkey_deinit( key_data(key)->a.pubkey );
+    key_data(key)->a.pubkey = handle;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_import_dh( struct key *key, UCHAR *buf, ULONG len )
+{
+    BCRYPT_DH_KEY_BLOB *dh_blob;
+    gnutls_dh_params_t params;
+    gnutls_datum_t p, g, y, x;
+    gnutls_privkey_t handle;
+    int ret;
+
+    if ((ret = pgnutls_privkey_init( &handle )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if ((ret = pgnutls_dh_params_init( &params )) < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    dh_blob = (BCRYPT_DH_KEY_BLOB *)buf;
+    p.data = buf + sizeof(*dh_blob);
+    p.size = dh_blob->cbKey;
+    g.data = buf + sizeof(*dh_blob) + dh_blob->cbKey;
+    g.size = dh_blob->cbKey;
+    y.data = buf + sizeof(*dh_blob) + dh_blob->cbKey * 2;
+    y.size = dh_blob->cbKey;
+    x.data = buf + sizeof(*dh_blob) + dh_blob->cbKey * 3;
+    x.size = dh_blob->cbKey;
+
+    if ((ret = pgnutls_dh_params_import_raw( params, &p, &g )) < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    ret = pgnutls_privkey_import_dh_raw( handle, params, &y, &x );
+    pgnutls_dh_params_deinit( params );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key_data(key)->a.privkey) pgnutls_privkey_deinit( key_data(key)->a.privkey );
+    key_data(key)->a.privkey = handle;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_import( void *args )
 {
     const struct key_asymmetric_import_params *params = args;
@@ -1750,6 +1873,11 @@ static NTSTATUS key_asymmetric_import( void *args )
         }
         FIXME( "DSA private key not supported\n" );
         return STATUS_NOT_IMPLEMENTED;
+
+    case ALG_ID_DH:
+        if (flags & KEY_IMPORT_FLAG_PUBLIC)
+            return key_import_dh_public( key, params->buf, params->len );
+        return key_import_dh( key, params->buf, params->len );
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
