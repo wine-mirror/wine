@@ -141,10 +141,23 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(emr_ExtTextOutW->rclBounds.bottom != -1, "emr_ExtTextOutW->rclBounds.bottom = %ld\n",
                 emr_ExtTextOutW->rclBounds.bottom);
 
-        for(i = 0; i < emr_ExtTextOutW->emrtext.nChars; i++)
+        if(emr_ExtTextOutW->emrtext.fOptions & ETO_PDY)
         {
-            ok(orig_dx[i] == dx[i], "pass %d: dx[%ld] (%d) didn't match %d\n",
-                                     n_record, i, dx[i], orig_dx[i]);
+            ok(emr_ExtTextOutW->rclBounds.top < 0, "emr_ExtTextOutW->rclBounds.top = %ld\n",
+                    emr_ExtTextOutW->rclBounds.top);
+            for(i = 0; i < emr_ExtTextOutW->emrtext.nChars * 2; i++)
+            {
+                ok(orig_dx[i] == dx[i], "pass %d: dx[%ld] (%d) didn't match %d\n",
+                        n_record, i, dx[i], orig_dx[i]);
+            }
+        }
+        else
+        {
+            for(i = 0; i < emr_ExtTextOutW->emrtext.nChars; i++)
+            {
+                ok(orig_dx[2 * i] == dx[i], "pass %d: dx[%ld] (%d) didn't match %d\n",
+                        n_record, i, dx[i], orig_dx[i]);
+            }
         }
         n_record++;
         emr_processed = TRUE;
@@ -214,8 +227,19 @@ static void test_ExtTextOut(void)
     ret = ExtTextOutA(hdcMetafile, 0, 0, 0, &rc, text, lstrlenA(text), NULL);
     ok( ret, "ExtTextOutA error %ld\n", GetLastError());
 
+    ret = ExtTextOutA(hdcMetafile, 0, 0, ETO_PDY, &rc, text, len, NULL);
+    ok( !ret, "ExtTextOutA succeeded\n");
+
     /* 2. pass custom lpDx */
     ret = ExtTextOutA(hdcMetafile, 0, 20, 0, &rc, text, lstrlenA(text), dx);
+    ok( ret, "ExtTextOutA error %ld\n", GetLastError());
+
+    for (i = len - 1; i >= 0; i--)
+    {
+        dx[2 * i] = dx[i];
+        dx[2 * i + 1] = 1;
+    }
+    ret = ExtTextOutA(hdcMetafile, 0, 20, ETO_PDY, &rc, text, len, dx);
     ok( ret, "ExtTextOutA error %ld\n", GetLastError());
 
     /* 3. pass NULL lprc */

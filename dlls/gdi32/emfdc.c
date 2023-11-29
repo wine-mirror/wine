@@ -1336,13 +1336,15 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *r
     HDC hdc = dc_attr_handle( dc_attr );
     FLOAT ex_scale, ey_scale;
     EMREXTTEXTOUTW *emr;
-    int text_height = 0;
+    int text_height = 0, top = y, bottom = y;
     int text_width = 0;
     TEXTMETRICW tm;
-    DWORD size;
+    DWORD dx_len, size;
     BOOL ret;
 
-    size = sizeof(*emr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
+    if (!dx && flags & ETO_PDY) return FALSE;
+    dx_len = flags & ETO_PDY ? count * 2 : count;
+    size = sizeof(*emr) + ((count+1) & ~1) * sizeof(WCHAR) + dx_len * sizeof(INT);
 
     TRACE( "%s %s count %d size = %ld\n", debugstr_wn(str, count),
            wine_dbgstr_rect(rect), count, size );
@@ -1399,10 +1401,24 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *r
     {
         UINT i;
         SIZE str_size;
-        memcpy( (char*)emr + emr->emrtext.offDx, dx, count * sizeof(INT) );
-        for (i = 0; i < count; i++) text_width += dx[i];
+        memcpy( (char*)emr + emr->emrtext.offDx, dx, dx_len * sizeof(INT) );
         if (GetTextExtentPoint32W( hdc, str, count, &str_size ))
             text_height = str_size.cy;
+        if (flags & ETO_PDY)
+        {
+            int cur_y = y;
+            for (i = 0; i < count; i++)
+            {
+                top = min( top, cur_y );
+                bottom = max( bottom, cur_y );
+                text_width += dx[2 * i];
+                cur_y -= dx[2 * i + 1];
+            }
+        }
+        else
+        {
+            for (i = 0; i < count; i++) text_width += dx[i];
+        }
     }
     else
     {
@@ -1451,18 +1467,18 @@ BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *r
         if (!GetTextMetricsW( hdc, &tm )) tm.tmDescent = 0;
         /* Play safe here... it's better to have a bounding box */
         /* that is too big than too small. */
-        emr->rclBounds.top    = y - text_height - 1;
-        emr->rclBounds.bottom = y + tm.tmDescent + 1;
+        emr->rclBounds.top    = top - text_height - 1;
+        emr->rclBounds.bottom = bottom + tm.tmDescent + 1;
         break;
 
     case TA_BOTTOM:
-        emr->rclBounds.top    = y - text_height - 1;
-        emr->rclBounds.bottom = y;
+        emr->rclBounds.top    = top - text_height - 1;
+        emr->rclBounds.bottom = bottom;
         break;
 
     default: /* TA_TOP */
-        emr->rclBounds.top    = y;
-        emr->rclBounds.bottom = y + text_height + 1;
+        emr->rclBounds.top    = top;
+        emr->rclBounds.bottom = bottom + text_height + 1;
     }
     emfdc_update_bounds( emf, &emr->rclBounds );
 
