@@ -1996,18 +1996,24 @@ NTSTATUS WINAPI BCryptExportKey( BCRYPT_KEY_HANDLE export_key_handle, BCRYPT_KEY
     return key_export( key, type, output, output_len, size );
 }
 
-static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
+static NTSTATUS key_duplicate( struct key *key_orig, struct key **ret_key )
 {
-    UCHAR *buffer;
+    struct key_asymmetric_duplicate_params params;
+    struct key *key_copy;
     NTSTATUS status;
+    UCHAR *buffer;
 
-    memset( key_copy, 0, sizeof(*key_copy) );
+    if (!(key_copy = calloc( 1, sizeof(*key_copy) ))) return STATUS_NO_MEMORY;
     key_copy->hdr    = key_orig->hdr;
     key_copy->alg_id = key_orig->alg_id;
 
     if (is_symmetric_key( key_orig ))
     {
-        if (!(buffer = malloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
+        if (!(buffer = malloc( key_orig->u.s.secret_len )))
+        {
+            free( key_copy );
+            return STATUS_NO_MEMORY;
+        }
         memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
 
         key_copy->u.s.mode       = key_orig->u.s.mode;
@@ -2015,25 +2021,23 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
         key_copy->u.s.secret     = buffer;
         key_copy->u.s.secret_len = key_orig->u.s.secret_len;
         InitializeCriticalSection( &key_copy->u.s.cs );
-    }
-    else
-    {
-        struct key_asymmetric_duplicate_params params;
-
-        key_copy->u.a.bitlen   = key_orig->u.a.bitlen;
-        key_copy->u.a.flags    = key_orig->u.a.flags;
-        key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
-
-        params.key_orig = key_orig;
-        params.key_copy = key_copy;
-        if ((status = UNIX_CALL( key_asymmetric_duplicate, &params ))) return status;
+        *ret_key = key_copy;
+        return STATUS_SUCCESS;
     }
 
-    return STATUS_SUCCESS;
+    key_copy->u.a.bitlen   = key_orig->u.a.bitlen;
+    key_copy->u.a.flags    = key_orig->u.a.flags;
+    key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
+
+    params.key_orig = key_orig;
+    params.key_copy = key_copy;
+    if (!(status = UNIX_CALL( key_asymmetric_duplicate, &params ))) *ret_key = key_copy;
+    else free( key_copy );
+    return status;
 }
 
-NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy,
-                                    UCHAR *object, ULONG object_len, ULONG flags )
+NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy, UCHAR *object,
+                                    ULONG object_len, ULONG flags )
 {
     struct key *key_orig = get_key_object( handle );
     struct key *key_copy;
@@ -2044,13 +2048,8 @@ NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE 
 
     if (!key_orig) return STATUS_INVALID_HANDLE;
     if (!handle_copy) return STATUS_INVALID_PARAMETER;
-    if (!(key_copy = malloc( sizeof(*key_copy) ))) return STATUS_NO_MEMORY;
 
-    if ((status = key_duplicate( key_orig, key_copy )))
-    {
-        key_destroy( key_copy );
-        return status;
-    }
+    if ((status = key_duplicate( key_orig, &key_copy ))) return status;
 
     *handle_copy = key_copy;
     return STATUS_SUCCESS;
@@ -2433,8 +2432,9 @@ NTSTATUS WINAPI BCryptSecretAgreement( BCRYPT_KEY_HANDLE privkey_handle, BCRYPT_
     struct key *privkey = get_key_object( privkey_handle );
     struct key *pubkey = get_key_object( pubkey_handle );
     struct secret *secret;
+    NTSTATUS status;
 
-    FIXME( "%p, %p, %p, %#lx\n", privkey_handle, pubkey_handle, ret_handle, flags );
+    TRACE( "%p, %p, %p, %#lx\n", privkey_handle, pubkey_handle, ret_handle, flags );
 
     if (!privkey || !pubkey) return STATUS_INVALID_HANDLE;
     if (!is_agreement_key( privkey ) || !is_agreement_key( pubkey )) return STATUS_NOT_SUPPORTED;
@@ -2442,6 +2442,17 @@ NTSTATUS WINAPI BCryptSecretAgreement( BCRYPT_KEY_HANDLE privkey_handle, BCRYPT_
 
     if (!(secret = calloc( 1, sizeof(*secret) ))) return STATUS_NO_MEMORY;
     secret->hdr.magic = MAGIC_SECRET;
+    if ((status = key_duplicate( privkey, &secret->privkey )))
+    {
+        free( secret );
+        return status;
+    }
+    if ((status = key_duplicate( pubkey, &secret->pubkey )))
+    {
+        key_destroy( secret->privkey );
+        free( secret );
+        return status;
+    }
 
     *ret_handle = secret;
     return STATUS_SUCCESS;
@@ -2451,9 +2462,11 @@ NTSTATUS WINAPI BCryptDestroySecret( BCRYPT_SECRET_HANDLE handle )
 {
     struct secret *secret = get_secret_object( handle );
 
-    FIXME( "%p\n", handle );
+    TRACE( "%p\n", handle );
 
     if (!secret) return STATUS_INVALID_HANDLE;
+    key_destroy( secret->privkey );
+    key_destroy( secret->pubkey );
     destroy_object( &secret->hdr );
     return STATUS_SUCCESS;
 }

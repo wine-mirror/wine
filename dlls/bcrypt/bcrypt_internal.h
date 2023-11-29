@@ -197,6 +197,8 @@ struct key
 struct secret
 {
     struct object hdr;
+    struct key *privkey;
+    struct key *pubkey;
 };
 
 struct key_symmetric_set_auth_data_params
@@ -253,8 +255,8 @@ struct key_asymmetric_encrypt_params
 
 struct key_asymmetric_duplicate_params
 {
-    struct key  *key_orig;
-    struct key  *key_copy;
+    struct key *key_orig;
+    struct key *key_copy;
 };
 
 struct key_asymmetric_sign_params
