@@ -563,7 +563,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
     if (nid->uFlags & NIF_TIP)
     {
         lstrcpynW( icon->tiptext, nid->szTip, ARRAY_SIZE( icon->tiptext ));
-        if (icon->display != ICON_DISPLAY_HIDDEN) update_tooltip_text(icon);
+        update_tooltip_text( icon );
     }
     if (nid->uFlags & NIF_INFO && nid->cbSize >= NOTIFYICONDATAA_V2_SIZE)
     {
