@@ -3137,6 +3137,22 @@ derive_end:
     BCryptCloseAlgorithmProvider(alg, 0);
 }
 
+static void test_DH(void)
+{
+    BCRYPT_KEY_HANDLE key;
+    NTSTATUS status;
+
+    key = NULL;
+    status = BCryptGenerateKeyPair(BCRYPT_DH_ALG_HANDLE, &key, 512, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(key != NULL, "key not set\n");
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    BCryptDestroyKey(key);
+}
+
 static void test_BCryptEnumContextFunctions(void)
 {
     CRYPT_CONTEXT_FUNCTIONS *buffer;
@@ -3724,6 +3740,7 @@ START_TEST(bcrypt)
     test_RSA();
     test_RSA_SIGN();
     test_ECDH();
+    test_DH();
     test_BCryptEnumContextFunctions();
     test_BCryptSignHash();
     test_BCryptEnumAlgorithms();

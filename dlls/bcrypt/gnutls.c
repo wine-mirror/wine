@@ -982,6 +982,11 @@ static NTSTATUS key_asymmetric_generate( void *args )
         bitlen = key->u.a.bitlen;
         break;
 
+    case ALG_ID_DH:
+        pk_alg = GNUTLS_PK_DH;
+        bitlen = key->u.a.bitlen;
+        break;
+
     case ALG_ID_DSA:
         pk_alg = GNUTLS_PK_DSA;
         bitlen = key->u.a.bitlen;

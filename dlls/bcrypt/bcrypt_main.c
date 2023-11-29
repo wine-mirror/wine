@@ -114,6 +114,7 @@ builtin_algorithms[] =
     {  BCRYPT_MD4_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  270,   16,  512 },
     {  BCRYPT_MD2_ALGORITHM,        BCRYPT_HASH_INTERFACE,                  270,   16,  128 },
     {  BCRYPT_RSA_ALGORITHM,        BCRYPT_ASYMMETRIC_ENCRYPTION_INTERFACE, 0,      0,    0 },
+    {  BCRYPT_DH_ALGORITHM,         BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_ECDH_P256_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_ECDH_P384_ALGORITHM,  BCRYPT_SECRET_AGREEMENT_INTERFACE,      0,      0,    0 },
     {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
@@ -237,7 +238,7 @@ static const struct algorithm pseudo_algorithms[] =
     {{ 0 }}, /* RC2_CBC */
     {{ 0 }}, /* RC2_ECB */
     {{ 0 }}, /* RC2_CFB */
-    {{ 0 }}, /* DH */
+    {{ MAGIC_ALG }, ALG_ID_DH },
     {{ 0 }}, /* ECDH */
     {{ MAGIC_ALG }, ALG_ID_ECDH_P256 },
     {{ MAGIC_ALG }, ALG_ID_ECDH_P384 },
