@@ -166,7 +166,6 @@ static void test_namespaces_as_attributes(void)
         const WCHAR *uris[3];
         const WCHAR *texts[3];
         const WCHAR *xmls[3];
-        BOOL todo;
     };
     static const struct test tests[] =
     {
@@ -208,7 +207,6 @@ static void test_namespaces_as_attributes(void)
             { L"" },                    /* namespaceURI */
             { L"nshref" },              /* text */
             { L"xmlns=\"nshref\"" },    /* xml */
-            TRUE,                       /* todo */
         },
         /* no properties or namespaces */
         {
@@ -289,13 +287,11 @@ static void test_namespaces_as_attributes(void)
             hr = IXMLDOMNode_get_namespaceURI(item, &str);
             if (test->uris[i])
             {
-                todo_wine_if(test->todo) {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 if (test->prefixes[i] && !lstrcmpW(test->prefixes[i], L"xmlns"))
                     ok(!lstrcmpW(str, L""), "got %s\n", wine_dbgstr_w(str));
                 else
                     ok(!lstrcmpW(str, test->uris[i]), "got %s\n", wine_dbgstr_w(str));
-                }
                 SysFreeString(str);
             }
             else

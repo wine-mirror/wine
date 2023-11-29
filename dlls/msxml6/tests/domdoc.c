@@ -59,12 +59,11 @@ struct attrtest_t {
     const WCHAR *uri;
     const WCHAR *prefix;
     const WCHAR *href;
-    BOOL todo;
 };
 
 static struct attrtest_t attrtests[] = {
-    { L"xmlns", L"http://www.w3.org/2000/xmlns/", NULL, L"http://www.w3.org/2000/xmlns/", TRUE },
-    { L"xmlns", L"nondefaulturi", NULL, L"http://www.w3.org/2000/xmlns/", TRUE },
+    { L"xmlns", L"http://www.w3.org/2000/xmlns/", NULL, L"http://www.w3.org/2000/xmlns/" },
+    { L"xmlns", L"nondefaulturi", NULL, L"http://www.w3.org/2000/xmlns/" },
     { L"c", L"http://www.w3.org/2000/xmlns/", NULL, L"http://www.w3.org/2000/xmlns/" },
     { L"c", L"nsref1", NULL, L"nsref1" },
     { L"ns:c", L"nsref1", L"ns", L"nsref1" },
@@ -113,7 +112,6 @@ static void test_create_attribute(void)
         str = NULL;
         hr = IXMLDOMNode_get_namespaceURI(node, &str);
         ok(hr == S_OK, "%d: unexpected hr %#lx\n", i, hr);
-        todo_wine_if(ptr->todo)
         ok(!lstrcmpW(str, _bstr_(ptr->href)) ||
             broken(!ptr->prefix && !lstrcmpW(str, L"xmlns")), /* win7 msxml6 */
             "%d: got uri %s, expected %s\n", i, wine_dbgstr_w(str), wine_dbgstr_w(ptr->href));
@@ -171,7 +169,6 @@ static void test_namespaces_as_attributes(void)
         const WCHAR *uris[3];
         const WCHAR *texts[3];
         const WCHAR *xmls[3];
-        BOOL todo;
     };
     static const struct test tests[] =
     {
@@ -213,7 +210,6 @@ static void test_namespaces_as_attributes(void)
             { L"http://www.w3.org/2000/xmlns/" },   /* namespaceURI */
             { L"nshref" },                          /* text */
             { L"xmlns=\"nshref\"" },                /* xml */
-            TRUE,                                   /* todo */
         },
         /* no properties or namespaces */
         {
@@ -273,10 +269,8 @@ static void test_namespaces_as_attributes(void)
             hr = IXMLDOMNode_get_prefix(item, &str);
             if (test->prefixes[i])
             {
-                todo_wine_if(test->todo) {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 ok(!lstrcmpW(str, test->prefixes[i]), "got %s\n", wine_dbgstr_w(str));
-                }
                 SysFreeString(str);
             }
             else
@@ -292,14 +286,12 @@ static void test_namespaces_as_attributes(void)
             hr = IXMLDOMNode_get_namespaceURI(item, &str);
             if (test->uris[i])
             {
-                todo_wine_if(test->todo) {
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                 if (test->prefixes[i] && !lstrcmpW(test->prefixes[i], L"xmlns"))
                     ok(!lstrcmpW(str, L"http://www.w3.org/2000/xmlns/"),
                                  "got %s\n", wine_dbgstr_w(str));
                 else
                     ok(!lstrcmpW(str, test->uris[i]), "got %s\n", wine_dbgstr_w(str));
-                }
                 SysFreeString(str);
             }
             else

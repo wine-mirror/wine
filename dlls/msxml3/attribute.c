@@ -543,10 +543,11 @@ static HRESULT WINAPI domattr_get_namespaceURI(
     IXMLDOMAttribute *iface,
     BSTR* p)
 {
-    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
-        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
     domattr *This = impl_from_IXMLDOMAttribute( iface );
     xmlNsPtr ns = This->node.node->ns;
+    BSTR nodename, pfx;
+    BOOL is6, isdefault;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -554,22 +555,35 @@ static HRESULT WINAPI domattr_get_namespaceURI(
         return E_INVALIDARG;
 
     *p = NULL;
+    nodename = NULL;
+    hr = IXMLDOMAttribute_get_nodeName(iface, &nodename);
+    if (FAILED(hr))
+        return hr;
 
-    if (ns)
+    pfx = NULL;
+    hr = IXMLDOMAttribute_get_prefix(iface, &pfx);
+    if (FAILED(hr))
     {
-        /* special case for default namespace definition */
-        if (xmlStrEqual(This->node.node->name, xmlns))
-            *p = bstr_from_xmlChar(xmlns);
-        else if (xmlStrEqual(ns->prefix, xmlns))
-        {
-            if (xmldoc_version(This->node.node->doc) == MSXML6)
-                *p = SysAllocString(w3xmlns);
-            else
-                *p = SysAllocStringLen(NULL, 0);
-        }
-        else if (ns->href)
-            *p = bstr_from_xmlChar(ns->href);
+        SysFreeString(nodename);
+        return hr;
     }
+
+    is6 = xmldoc_version(This->node.node->doc) == MSXML6;
+    isdefault = !wcscmp(nodename, L"xmlns");
+    if (isdefault || (pfx && !wcscmp(L"xmlns", pfx)))
+    {
+        if (is6)
+            *p = SysAllocString(L"http://www.w3.org/2000/xmlns/");
+        else if (!ns || !isdefault)
+            *p = SysAllocStringLen(NULL, 0);
+        else
+            *p = SysAllocString(L"xmlns");
+    }
+    else if (ns && ns->href)
+        *p = bstr_from_xmlChar(ns->href);
+
+    SysFreeString(nodename);
+    SysFreeString(pfx);
 
     TRACE("uri: %s\n", debugstr_w(*p));
 
