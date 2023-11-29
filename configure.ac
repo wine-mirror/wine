@@ -900,7 +900,7 @@ do
         WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags --no-default-config],
                            [llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
                             llvm_extra_ldflags="--no-default-config"],
-                           [WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],[],
+                           [WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],[:],
                                                [llvm_extra_cflags=""])])
         if test -n "$llvm_extra_cflags"
         then

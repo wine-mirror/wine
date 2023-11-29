@@ -10733,7 +10733,7 @@ eval ac_res=\$$as_ac_var
 printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags $llvm_cflags"
+  :
 else $as_nop
   llvm_extra_cflags=""
 fi }
