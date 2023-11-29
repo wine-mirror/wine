@@ -1827,11 +1827,16 @@ static HRESULT domelem_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode *
     if (attrIndex < index)
         return S_FALSE;
 
-    xmlns = xmlNewNs(NULL, BAD_CAST "http://www.w3.org/2000/xmlns/", BAD_CAST "xmlns");
-    if (!xmlns)
-        return E_OUTOFMEMORY;
+    if (!ns->prefix) {
+        xmlns = NULL;
+        curr = xmlNewProp(NULL, BAD_CAST "xmlns", ns->href);
+    } else {
+        xmlns = xmlNewNs(NULL, BAD_CAST "http://www.w3.org/2000/xmlns/", BAD_CAST "xmlns");
+        if (!xmlns)
+            return E_OUTOFMEMORY;
 
-    curr = xmlNewNsProp(NULL, xmlns, ns->prefix, ns->href);
+        curr = xmlNewNsProp(NULL, xmlns, ns->prefix, ns->href);
+    }
     if (!curr) {
         xmlFreeNs(xmlns);
         return E_OUTOFMEMORY;

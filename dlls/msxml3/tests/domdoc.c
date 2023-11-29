@@ -13773,9 +13773,7 @@ static void test_namespaces_as_attributes(void)
             {
                 item = NULL;
                 hr = IXMLDOMNamedNodeMap_get_item(map, i, &item);
-                todo_wine_if(test->todo)
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                if (hr != S_OK) continue;
 
                 str = NULL;
                 hr = IXMLDOMNode_get_nodeName(item, &str);
@@ -13787,8 +13785,10 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_prefix(item, &str);
                 if (test->prefixes[i])
                 {
+                    todo_wine_if(test->todo) {
                     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     ok(!lstrcmpW(str, _bstr_(test->prefixes[i])), "got %s\n", wine_dbgstr_w(str));
+                    }
                     SysFreeString(str);
                 }
                 else
@@ -13797,6 +13797,7 @@ static void test_namespaces_as_attributes(void)
                 str = NULL;
                 hr = IXMLDOMNode_get_baseName(item, &str);
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                todo_wine_if(test->todo)
                 ok(!lstrcmpW(str, _bstr_(test->basenames[i])), "got %s\n", wine_dbgstr_w(str));
                 SysFreeString(str);
 
@@ -13804,6 +13805,7 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_namespaceURI(item, &str);
                 if (test->uris[i])
                 {
+                    todo_wine_if(test->todo)
                     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     if (test->prefixes[i] && !strcmp(test->prefixes[i], "xmlns"))
                         ok(!SysStringLen(str), "got %s\n", wine_dbgstr_w(str));
