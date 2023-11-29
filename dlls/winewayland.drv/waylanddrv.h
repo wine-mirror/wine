@@ -48,7 +48,7 @@
  *          Globals
  */
 
-extern struct wayland process_wayland DECLSPEC_HIDDEN;
+extern struct wayland process_wayland;
 
 /**********************************************************************
  *          Definitions for wayland types
@@ -207,74 +207,74 @@ struct wayland_shm_buffer
  *          Wayland initialization
  */
 
-BOOL wayland_process_init(void) DECLSPEC_HIDDEN;
-void wayland_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
+BOOL wayland_process_init(void);
+void wayland_init_display_devices(BOOL force);
 
 /**********************************************************************
  *          Wayland output
  */
 
-BOOL wayland_output_create(uint32_t id, uint32_t version) DECLSPEC_HIDDEN;
-void wayland_output_destroy(struct wayland_output *output) DECLSPEC_HIDDEN;
-void wayland_output_use_xdg_extension(struct wayland_output *output) DECLSPEC_HIDDEN;
+BOOL wayland_output_create(uint32_t id, uint32_t version);
+void wayland_output_destroy(struct wayland_output *output);
+void wayland_output_use_xdg_extension(struct wayland_output *output);
 
 /**********************************************************************
  *          Wayland surface
  */
 
-struct wayland_surface *wayland_surface_create(HWND hwnd) DECLSPEC_HIDDEN;
-void wayland_surface_destroy(struct wayland_surface *surface) DECLSPEC_HIDDEN;
-void wayland_surface_make_toplevel(struct wayland_surface *surface) DECLSPEC_HIDDEN;
-void wayland_surface_clear_role(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+struct wayland_surface *wayland_surface_create(HWND hwnd);
+void wayland_surface_destroy(struct wayland_surface *surface);
+void wayland_surface_make_toplevel(struct wayland_surface *surface);
+void wayland_surface_clear_role(struct wayland_surface *surface);
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,
-                                HRGN surface_damage_region) DECLSPEC_HIDDEN;
-struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd) DECLSPEC_HIDDEN;
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+                                HRGN surface_damage_region);
+struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd);
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface);
 BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
                                           int width, int height,
-                                          enum wayland_surface_config_state state) DECLSPEC_HIDDEN;
+                                          enum wayland_surface_config_state state);
 void wayland_surface_coords_from_window(struct wayland_surface *surface,
                                         int window_x, int window_y,
-                                        int *surface_x, int *surface_y) DECLSPEC_HIDDEN;
+                                        int *surface_x, int *surface_y);
 void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       double surface_x, double surface_y,
-                                      int *window_x, int *window_y) DECLSPEC_HIDDEN;
-struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface) DECLSPEC_HIDDEN;
-BOOL wayland_client_surface_release(struct wayland_client_surface *client) DECLSPEC_HIDDEN;
-void wayland_surface_ensure_contents(struct wayland_surface *surface) DECLSPEC_HIDDEN;
+                                      int *window_x, int *window_y);
+struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface);
+BOOL wayland_client_surface_release(struct wayland_client_surface *client);
+void wayland_surface_ensure_contents(struct wayland_surface *surface);
 
 /**********************************************************************
  *          Wayland SHM buffer
  */
 
 struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
-                                                     enum wl_shm_format format) DECLSPEC_HIDDEN;
-void wayland_shm_buffer_ref(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
-void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer) DECLSPEC_HIDDEN;
+                                                     enum wl_shm_format format);
+void wayland_shm_buffer_ref(struct wayland_shm_buffer *shm_buffer);
+void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer);
 
 /**********************************************************************
  *          Wayland window surface
  */
 
-struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect) DECLSPEC_HIDDEN;
+struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect);
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
-                                                   struct wayland_surface *wayland_surface) DECLSPEC_HIDDEN;
-void wayland_window_flush(HWND hwnd) DECLSPEC_HIDDEN;
+                                                   struct wayland_surface *wayland_surface);
+void wayland_window_flush(HWND hwnd);
 
 /**********************************************************************
  *          Wayland Keyboard
  */
 
-void wayland_keyboard_init(struct wl_keyboard *wl_keyboard) DECLSPEC_HIDDEN;
-void wayland_keyboard_deinit(void) DECLSPEC_HIDDEN;
+void wayland_keyboard_init(struct wl_keyboard *wl_keyboard);
+void wayland_keyboard_deinit(void);
 
 /**********************************************************************
  *          Wayland pointer
  */
 
-void wayland_pointer_init(struct wl_pointer *wl_pointer) DECLSPEC_HIDDEN;
-void wayland_pointer_deinit(void) DECLSPEC_HIDDEN;
+void wayland_pointer_init(struct wl_pointer *wl_pointer);
+void wayland_pointer_deinit(void);
 
 /**********************************************************************
  *          Helpers
@@ -294,26 +294,26 @@ static inline LRESULT send_message(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     return NtUserMessageCall(hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE);
 }
 
-RGNDATA *get_region_data(HRGN region) DECLSPEC_HIDDEN;
+RGNDATA *get_region_data(HRGN region);
 
 /**********************************************************************
  *          USER driver functions
  */
 
-LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
-void WAYLAND_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
-void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor) DECLSPEC_HIDDEN;
-LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
+LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+void WAYLAND_DestroyWindow(HWND hwnd);
+void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);
+LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
-                                  BOOL force, void *param) DECLSPEC_HIDDEN;
-LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+                                  BOOL force, void *param);
+LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
                               const RECT *window_rect, const RECT *client_rect,
                               const RECT *visible_rect, const RECT *valid_rects,
-                              struct window_surface *surface) DECLSPEC_HIDDEN;
+                              struct window_surface *surface);
 BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
                                const RECT *window_rect, const RECT *client_rect,
-                               RECT *visible_rect, struct window_surface **surface) DECLSPEC_HIDDEN;
-const struct vulkan_funcs *WAYLAND_wine_get_vulkan_driver(UINT version) DECLSPEC_HIDDEN;
+                               RECT *visible_rect, struct window_surface **surface);
+const struct vulkan_funcs *WAYLAND_wine_get_vulkan_driver(UINT version);
 
 #endif /* __WINE_WAYLANDDRV_H */
