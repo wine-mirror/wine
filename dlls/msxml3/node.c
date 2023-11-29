@@ -186,6 +186,13 @@ HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
     hr = node_get_base_name(This, &base);
     if (hr != S_OK) return hr;
 
+    if (!base[0] && xmldoc_version(This->node->doc) != MSXML6)
+    {
+        SysFreeString(base);
+        *name = SysAllocString(L"xmlns");
+        return S_OK;
+    }
+
     hr = node_get_prefix(This, &prefix);
     if (hr == S_OK)
     {
@@ -194,10 +201,17 @@ HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
 
         /* +1 for ':' */
         ptr = *name = SysAllocStringLen(NULL, SysStringLen(base) + SysStringLen(prefix) + 1);
-        memcpy(ptr, prefix, SysStringByteLen(prefix));
-        ptr += SysStringLen(prefix);
-        memcpy(ptr++, &colW, sizeof(WCHAR));
-        memcpy(ptr, base, SysStringByteLen(base));
+        if (SysStringByteLen(prefix))
+        {
+            memcpy(ptr, prefix, SysStringByteLen(prefix));
+            ptr += SysStringLen(prefix);
+        }
+        if (SysStringByteLen(base))
+        {
+            if (SysStringByteLen(prefix))
+                memcpy(ptr++, &colW, sizeof(WCHAR));
+            memcpy(ptr, base, SysStringByteLen(base));
+        }
 
         SysFreeString(base);
         SysFreeString(prefix);
