@@ -48,7 +48,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     switch(brush->bt){
         case BrushTypeSolidColor:
         {
-            *clone = heap_alloc_zero(sizeof(GpSolidFill));
+            *clone = malloc(sizeof(GpSolidFill));
             if (!*clone) return OutOfMemory;
             memcpy(*clone, brush, sizeof(GpSolidFill));
             break;
@@ -64,7 +64,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             INT count, pcount;
             GpStatus stat;
 
-            *clone = heap_alloc_zero(sizeof(GpPathGradient));
+            *clone = malloc(sizeof(GpPathGradient));
             if (!*clone) return OutOfMemory;
 
             src = (GpPathGradient*) brush;
@@ -75,7 +75,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             stat = GdipClonePath(src->path, &dest->path);
 
             if(stat != Ok){
-                heap_free(dest);
+                free(dest);
                 return stat;
             }
 
@@ -84,25 +84,25 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             /* blending */
             count = src->blendcount;
             dest->blendcount = count;
-            dest->blendfac = heap_alloc_zero(count * sizeof(REAL));
-            dest->blendpos = heap_alloc_zero(count * sizeof(REAL));
-            dest->surroundcolors = heap_alloc_zero(dest->surroundcolorcount * sizeof(ARGB));
+            dest->blendfac = malloc(count * sizeof(REAL));
+            dest->blendpos = malloc(count * sizeof(REAL));
+            dest->surroundcolors = malloc(dest->surroundcolorcount * sizeof(ARGB));
             pcount = dest->pblendcount;
             if (pcount)
             {
-                dest->pblendcolor = heap_alloc_zero(pcount * sizeof(ARGB));
-                dest->pblendpos = heap_alloc_zero(pcount * sizeof(REAL));
+                dest->pblendcolor = malloc(pcount * sizeof(ARGB));
+                dest->pblendpos = malloc(pcount * sizeof(REAL));
             }
 
             if(!dest->blendfac || !dest->blendpos || !dest->surroundcolors ||
                (pcount && (!dest->pblendcolor || !dest->pblendpos))){
                 GdipDeletePath(dest->path);
-                heap_free(dest->blendfac);
-                heap_free(dest->blendpos);
-                heap_free(dest->surroundcolors);
-                heap_free(dest->pblendcolor);
-                heap_free(dest->pblendpos);
-                heap_free(dest);
+                free(dest->blendfac);
+                free(dest->blendpos);
+                free(dest->surroundcolors);
+                free(dest->pblendcolor);
+                free(dest->pblendpos);
+                free(dest);
                 return OutOfMemory;
             }
 
@@ -122,31 +122,31 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             GpLineGradient *dest, *src;
             INT count, pcount;
 
-            dest = heap_alloc_zero(sizeof(GpLineGradient));
-            if(!dest)    return OutOfMemory;
+            dest = malloc(sizeof(GpLineGradient));
+            if(!dest) return OutOfMemory;
 
             src = (GpLineGradient*)brush;
 
             memcpy(dest, src, sizeof(GpLineGradient));
 
             count = dest->blendcount;
-            dest->blendfac = heap_alloc_zero(count * sizeof(REAL));
-            dest->blendpos = heap_alloc_zero(count * sizeof(REAL));
+            dest->blendfac = malloc(count * sizeof(REAL));
+            dest->blendpos = malloc(count * sizeof(REAL));
             pcount = dest->pblendcount;
             if (pcount)
             {
-                dest->pblendcolor = heap_alloc_zero(pcount * sizeof(ARGB));
-                dest->pblendpos = heap_alloc_zero(pcount * sizeof(REAL));
+                dest->pblendcolor = malloc(pcount * sizeof(ARGB));
+                dest->pblendpos = malloc(pcount * sizeof(REAL));
             }
 
             if (!dest->blendfac || !dest->blendpos ||
                 (pcount && (!dest->pblendcolor || !dest->pblendpos)))
             {
-                heap_free(dest->blendfac);
-                heap_free(dest->blendpos);
-                heap_free(dest->pblendcolor);
-                heap_free(dest->pblendpos);
-                heap_free(dest);
+                free(dest->blendfac);
+                free(dest->blendpos);
+                free(dest->pblendcolor);
+                free(dest->pblendpos);
+                free(dest);
                 return OutOfMemory;
             }
 
@@ -278,7 +278,7 @@ GpStatus WINGDIPAPI GdipCreateHatchBrush(GpHatchStyle hatchstyle, ARGB forecol, 
     if(hatchstyle < HatchStyleMin || hatchstyle > HatchStyleMax)
         return InvalidParameter;
 
-    *brush = heap_alloc_zero(sizeof(GpHatch));
+    *brush = calloc(1, sizeof(GpHatch));
     if (!*brush) return OutOfMemory;
 
     (*brush)->brush.bt = BrushTypeHatchFill;
@@ -293,7 +293,7 @@ GpStatus WINGDIPAPI GdipCreateHatchBrush(GpHatchStyle hatchstyle, ARGB forecol, 
 static GpStatus create_line_brush(const GpRectF *rect, ARGB startcolor, ARGB endcolor,
     GpWrapMode wrap, GpLineGradient **line)
 {
-    *line = heap_alloc_zero(sizeof(GpLineGradient));
+    *line = calloc(1, sizeof(GpLineGradient));
     if(!*line)  return OutOfMemory;
 
     (*line)->brush.bt = BrushTypeLinearGradient;
@@ -303,14 +303,14 @@ static GpStatus create_line_brush(const GpRectF *rect, ARGB startcolor, ARGB end
     (*line)->gamma = FALSE;
     (*line)->rect = *rect;
     (*line)->blendcount = 1;
-    (*line)->blendfac = heap_alloc_zero(sizeof(REAL));
-    (*line)->blendpos = heap_alloc_zero(sizeof(REAL));
+    (*line)->blendfac = malloc(sizeof(REAL));
+    (*line)->blendpos = malloc(sizeof(REAL));
 
     if (!(*line)->blendfac || !(*line)->blendpos)
     {
-        heap_free((*line)->blendfac);
-        heap_free((*line)->blendpos);
-        heap_free(*line);
+        free((*line)->blendfac);
+        free((*line)->blendpos);
+        free(*line);
         *line = NULL;
         return OutOfMemory;
     }
@@ -604,7 +604,7 @@ static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradi
     if (path->pathdata.Count < 2)
         return OutOfMemory;
 
-    *grad = heap_alloc_zero(sizeof(GpPathGradient));
+    *grad = calloc(1, sizeof(GpPathGradient));
     if (!*grad)
     {
         return OutOfMemory;
@@ -612,14 +612,14 @@ static GpStatus create_path_gradient(GpPath *path, ARGB centercolor, GpPathGradi
 
     GdipSetMatrixElements(&(*grad)->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
-    (*grad)->blendfac = heap_alloc_zero(sizeof(REAL));
-    (*grad)->blendpos = heap_alloc_zero(sizeof(REAL));
-    (*grad)->surroundcolors = heap_alloc_zero(sizeof(ARGB));
+    (*grad)->blendfac = malloc(sizeof(REAL));
+    (*grad)->blendpos = malloc(sizeof(REAL));
+    (*grad)->surroundcolors = malloc(sizeof(ARGB));
     if(!(*grad)->blendfac || !(*grad)->blendpos || !(*grad)->surroundcolors){
-        heap_free((*grad)->blendfac);
-        heap_free((*grad)->blendpos);
-        heap_free((*grad)->surroundcolors);
-        heap_free(*grad);
+        free((*grad)->blendfac);
+        free((*grad)->blendpos);
+        free((*grad)->surroundcolors);
+        free(*grad);
         *grad = NULL;
         return OutOfMemory;
     }
@@ -756,7 +756,7 @@ GpStatus WINGDIPAPI GdipCreateSolidFill(ARGB color, GpSolidFill **sf)
 
     if(!sf)  return InvalidParameter;
 
-    *sf = heap_alloc_zero(sizeof(GpSolidFill));
+    *sf = calloc(1, sizeof(GpSolidFill));
     if (!*sf) return OutOfMemory;
 
     (*sf)->brush.bt = BrushTypeSolidColor;
@@ -865,7 +865,7 @@ GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     if (status != Ok)
         return status;
 
-    *texture = heap_alloc_zero(sizeof(GpTexture));
+    *texture = calloc(1, sizeof(GpTexture));
     if (!*texture){
         status = OutOfMemory;
         goto exit;
@@ -899,7 +899,7 @@ exit:
         if (*texture)
         {
             GdipDisposeImageAttributes((*texture)->imageattributes);
-            heap_free(*texture);
+            free(*texture);
             *texture = NULL;
         }
         GdipDisposeImage(new_image);
@@ -996,29 +996,29 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
     switch(brush->bt)
     {
         case BrushTypePathGradient:
-            GdipDeletePath(((GpPathGradient*) brush)->path);
-            heap_free(((GpPathGradient*) brush)->blendfac);
-            heap_free(((GpPathGradient*) brush)->blendpos);
-            heap_free(((GpPathGradient*) brush)->surroundcolors);
-            heap_free(((GpPathGradient*) brush)->pblendcolor);
-            heap_free(((GpPathGradient*) brush)->pblendpos);
+            GdipDeletePath(((GpPathGradient*)brush)->path);
+            free(((GpPathGradient*)brush)->blendfac);
+            free(((GpPathGradient*)brush)->blendpos);
+            free(((GpPathGradient*)brush)->surroundcolors);
+            free(((GpPathGradient*)brush)->pblendcolor);
+            free(((GpPathGradient*)brush)->pblendpos);
             break;
         case BrushTypeLinearGradient:
-            heap_free(((GpLineGradient*)brush)->blendfac);
-            heap_free(((GpLineGradient*)brush)->blendpos);
-            heap_free(((GpLineGradient*)brush)->pblendcolor);
-            heap_free(((GpLineGradient*)brush)->pblendpos);
+            free(((GpLineGradient*)brush)->blendfac);
+            free(((GpLineGradient*)brush)->blendpos);
+            free(((GpLineGradient*)brush)->pblendcolor);
+            free(((GpLineGradient*)brush)->pblendpos);
             break;
         case BrushTypeTextureFill:
             GdipDisposeImage(((GpTexture*)brush)->image);
             GdipDisposeImageAttributes(((GpTexture*)brush)->imageattributes);
-            heap_free(((GpTexture*)brush)->bitmap_bits);
+            free(((GpTexture*)brush)->bitmap_bits);
             break;
         default:
             break;
     }
 
-    heap_free(brush);
+    free(brush);
 
     return Ok;
 }
@@ -1373,21 +1373,21 @@ GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
        (count >= 2 && (positions[0] != 0.0f || positions[count-1] != 1.0f)))
         return InvalidParameter;
 
-    new_blendfac = heap_alloc_zero(count * sizeof(REAL));
-    new_blendpos = heap_alloc_zero(count * sizeof(REAL));
+    new_blendfac = malloc(count * sizeof(REAL));
+    new_blendpos = malloc(count * sizeof(REAL));
 
     if (!new_blendfac || !new_blendpos)
     {
-        heap_free(new_blendfac);
-        heap_free(new_blendpos);
+        free(new_blendfac);
+        free(new_blendpos);
         return OutOfMemory;
     }
 
     memcpy(new_blendfac, factors, count * sizeof(REAL));
     memcpy(new_blendpos, positions, count * sizeof(REAL));
 
-    heap_free(brush->blendfac);
-    heap_free(brush->blendpos);
+    free(brush->blendfac);
+    free(brush->blendpos);
 
     brush->blendcount = count;
     brush->blendfac = new_blendfac;
@@ -1518,21 +1518,21 @@ GpStatus WINGDIPAPI GdipSetPathGradientBlend(GpPathGradient *brush, GDIPCONST RE
        (count >= 2 && (pos[0] != 0.0f || pos[count-1] != 1.0f)))
         return InvalidParameter;
 
-    new_blendfac = heap_alloc_zero(count * sizeof(REAL));
-    new_blendpos = heap_alloc_zero(count * sizeof(REAL));
+    new_blendfac = malloc(count * sizeof(REAL));
+    new_blendpos = malloc(count * sizeof(REAL));
 
     if (!new_blendfac || !new_blendpos)
     {
-        heap_free(new_blendfac);
-        heap_free(new_blendpos);
+        free(new_blendfac);
+        free(new_blendpos);
         return OutOfMemory;
     }
 
     memcpy(new_blendfac, blend, count * sizeof(REAL));
     memcpy(new_blendpos, pos, count * sizeof(REAL));
 
-    heap_free(brush->blendfac);
-    heap_free(brush->blendpos);
+    free(brush->blendfac);
+    free(brush->blendpos);
 
     brush->blendcount = count;
     brush->blendfac = new_blendfac;
@@ -1587,20 +1587,20 @@ GpStatus WINGDIPAPI GdipSetPathGradientPresetBlend(GpPathGradient *brush,
         return InvalidParameter;
     }
 
-    new_color = heap_alloc_zero(count * sizeof(ARGB));
-    new_pos = heap_alloc_zero(count * sizeof(REAL));
+    new_color = malloc(count * sizeof(ARGB));
+    new_pos = malloc(count * sizeof(REAL));
     if (!new_color || !new_pos)
     {
-        heap_free(new_color);
-        heap_free(new_pos);
+        free(new_color);
+        free(new_pos);
         return OutOfMemory;
     }
 
     memcpy(new_color, blend, sizeof(ARGB) * count);
     memcpy(new_pos, pos, sizeof(REAL) * count);
 
-    heap_free(brush->pblendcolor);
-    heap_free(brush->pblendpos);
+    free(brush->pblendcolor);
+    free(brush->pblendpos);
 
     brush->pblendcolor = new_color;
     brush->pblendpos = new_pos;
@@ -1811,13 +1811,13 @@ GpStatus WINGDIPAPI GdipSetPathGradientSurroundColorsWithCount(GpPathGradient
             num_colors = 1;
     }
 
-    new_surroundcolors = heap_alloc_zero(num_colors * sizeof(ARGB));
+    new_surroundcolors = malloc(num_colors * sizeof(ARGB));
     if (!new_surroundcolors)
         return OutOfMemory;
 
     memcpy(new_surroundcolors, argb, num_colors * sizeof(ARGB));
 
-    heap_free(grad->surroundcolors);
+    free(grad->surroundcolors);
 
     grad->surroundcolors = new_surroundcolors;
     grad->surroundcolorcount = num_colors;
@@ -2048,20 +2048,20 @@ GpStatus WINGDIPAPI GdipSetLinePresetBlend(GpLineGradient *brush,
         return InvalidParameter;
     }
 
-    new_color = heap_alloc_zero(count * sizeof(ARGB));
-    new_pos = heap_alloc_zero(count * sizeof(REAL));
+    new_color = malloc(count * sizeof(ARGB));
+    new_pos = malloc(count * sizeof(REAL));
     if (!new_color || !new_pos)
     {
-        heap_free(new_color);
-        heap_free(new_pos);
+        free(new_color);
+        free(new_pos);
         return OutOfMemory;
     }
 
     memcpy(new_color, blend, sizeof(ARGB) * count);
     memcpy(new_pos, positions, sizeof(REAL) * count);
 
-    heap_free(brush->pblendcolor);
-    heap_free(brush->pblendpos);
+    free(brush->pblendcolor);
+    free(brush->pblendpos);
 
     brush->pblendcolor = new_color;
     brush->pblendpos = new_pos;

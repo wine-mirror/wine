@@ -45,7 +45,7 @@ struct path_list_node_t {
 /* init list */
 static BOOL init_path_list(path_list_node_t **node, REAL x, REAL y)
 {
-    *node = heap_alloc_zero(sizeof(path_list_node_t));
+    *node = calloc(1, sizeof(path_list_node_t));
     if(!*node)
         return FALSE;
 
@@ -64,7 +64,7 @@ static void free_path_list(path_list_node_t *node)
 
     while(n){
         n = n->next;
-        heap_free(node);
+        free(node);
         node = n;
     }
 }
@@ -79,7 +79,7 @@ static path_list_node_t* add_path_list_node(path_list_node_t *node, REAL x, REAL
 {
     path_list_node_t *new;
 
-    new = heap_alloc_zero(sizeof(path_list_node_t));
+    new = calloc(1, sizeof(path_list_node_t));
     if(!new)
         return NULL;
 
@@ -319,7 +319,7 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x, REAL y, REAL width,
     if(count == 0)
         return Ok;
 
-    points = heap_alloc_zero(sizeof(GpPointF)*count);
+    points = malloc(sizeof(GpPointF) * count);
     if(!points)
         return OutOfMemory;
 
@@ -327,7 +327,7 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x, REAL y, REAL width,
 
     status = extend_current_figure(path, points, count, PathPointTypeBezier);
 
-    heap_free(points);
+    free(points);
     return status;
 }
 
@@ -401,7 +401,7 @@ GpStatus WINGDIPAPI GdipAddPathBeziersI(GpPath *path, GDIPCONST GpPoint *points,
     if(!points || ((count - 1) % 3))
         return InvalidParameter;
 
-    ptsF = heap_alloc_zero(sizeof(GpPointF) * count);
+    ptsF = malloc(sizeof(GpPointF) * count);
     if(!ptsF)
         return OutOfMemory;
 
@@ -411,7 +411,7 @@ GpStatus WINGDIPAPI GdipAddPathBeziersI(GpPath *path, GDIPCONST GpPoint *points,
     }
 
     ret = GdipAddPathBeziers(path, ptsF, count);
-    heap_free(ptsF);
+    free(ptsF);
 
     return ret;
 }
@@ -446,11 +446,11 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
     if(!path || !points || count <= 1)
         return InvalidParameter;
 
-    pt = heap_alloc_zero(len_pt * sizeof(GpPointF));
-    pts = heap_alloc_zero((count + 1)*sizeof(GpPointF));
+    pt = malloc(len_pt * sizeof(GpPointF));
+    pts = malloc((count + 1) * sizeof(GpPointF));
     if(!pt || !pts){
-        heap_free(pt);
-        heap_free(pts);
+        free(pt);
+        free(pts);
         return OutOfMemory;
     }
 
@@ -496,8 +496,8 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
         path->newfigure = TRUE;
     }
 
-    heap_free(pts);
-    heap_free(pt);
+    free(pts);
+    free(pt);
 
     return stat;
 }
@@ -514,7 +514,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2I(GpPath *path, GDIPCONST GpPoint *po
     if(!path || !points || count <= 1)
         return InvalidParameter;
 
-    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
+    ptf = malloc(sizeof(GpPointF) * count);
     if(!ptf)
         return OutOfMemory;
 
@@ -525,7 +525,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2I(GpPath *path, GDIPCONST GpPoint *po
 
     stat = GdipAddPathClosedCurve2(path, ptf, count, tension);
 
-    heap_free(ptf);
+    free(ptf);
 
     return stat;
 }
@@ -556,7 +556,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
     if(!path || !points || offset + 1 >= count || count - offset < nseg + 1 || nseg < 1)
         return InvalidParameter;
 
-    pt = heap_alloc_zero(len_pt * sizeof(GpPointF));
+    pt = calloc(len_pt, sizeof(GpPointF));
     if(!pt)
         return OutOfMemory;
 
@@ -603,7 +603,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve3(GpPath *path, GDIPCONST GpPointF *points,
 
     stat = extend_current_figure(path, pt, len_pt, PathPointTypeBezier);
 
-    heap_free(pt);
+    free(pt);
 
     return stat;
 }
@@ -636,7 +636,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve3I(GpPath *path, GDIPCONST GpPoint *points,
     if(!path || !points || offset + 1 >= count || count - offset < nseg + 1 || nseg < 1)
         return InvalidParameter;
 
-    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
+    ptf = malloc(sizeof(GpPointF) * count);
     if(!ptf)
         return OutOfMemory;
 
@@ -647,7 +647,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve3I(GpPath *path, GDIPCONST GpPoint *points,
 
     stat = GdipAddPathCurve3(path, ptf, count, offset, nseg, tension);
 
-    heap_free(ptf);
+    free(ptf);
 
     return stat;
 }
@@ -714,8 +714,8 @@ GpStatus WINGDIPAPI GdipAddPathLine2I(GpPath *path, GDIPCONST GpPoint *points, I
     if(count <= 0)
         return InvalidParameter;
 
-    pointsF = heap_alloc_zero(sizeof(GpPointF) * count);
-    if(!pointsF)    return OutOfMemory;
+    pointsF = malloc(sizeof(GpPointF) * count);
+    if(!pointsF) return OutOfMemory;
 
     for(i = 0;i < count; i++){
         pointsF[i].X = (REAL)points[i].X;
@@ -724,7 +724,7 @@ GpStatus WINGDIPAPI GdipAddPathLine2I(GpPath *path, GDIPCONST GpPoint *points, I
 
     stat = GdipAddPathLine2(path, pointsF, count);
 
-    heap_free(pointsF);
+    free(pointsF);
 
     return stat;
 }
@@ -842,7 +842,7 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
     if(count == 0)
         return Ok;
 
-    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
+    ptf = malloc(sizeof(GpPointF) * count);
     if(!ptf)
         return OutOfMemory;
 
@@ -850,12 +850,12 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
 
     status = GdipAddPathLine(path, x + width/2, y + height/2, ptf[0].X, ptf[0].Y);
     if(status != Ok){
-        heap_free(ptf);
+        free(ptf);
         return status;
     }
     /* one spline is already added as a line endpoint */
     if(!lengthen_path(path, count - 1)){
-        heap_free(ptf);
+        free(ptf);
         return OutOfMemory;
     }
 
@@ -867,7 +867,7 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
 
     GdipClosePathFigure(path);
 
-    heap_free(ptf);
+    free(ptf);
 
     return status;
 }
@@ -918,7 +918,7 @@ GpStatus WINGDIPAPI GdipAddPathPolygonI(GpPath *path, GDIPCONST GpPoint *points,
     if(!points || count < 3)
         return InvalidParameter;
 
-    ptf = heap_alloc_zero(sizeof(GpPointF) * count);
+    ptf = malloc(sizeof(GpPointF) * count);
     if(!ptf)
         return OutOfMemory;
 
@@ -929,7 +929,7 @@ GpStatus WINGDIPAPI GdipAddPathPolygonI(GpPath *path, GDIPCONST GpPoint *points,
 
     status = GdipAddPathPolygon(path, ptf, count);
 
-    heap_free(ptf);
+    free(ptf);
 
     return status;
 }
@@ -981,11 +981,11 @@ static GpStatus format_string_callback(HDC dc,
             status = GenericError;
             break;
         }
-        origph = ph = heap_alloc_zero(len);
+        origph = ph = calloc(1, len);
         start = (char *)ph;
         if (!ph || !lengthen_path(path, len / sizeof(POINTFX)))
         {
-            heap_free(ph);
+            free(ph);
             status = OutOfMemory;
             break;
         }
@@ -1036,7 +1036,7 @@ static GpStatus format_string_callback(HDC dc,
         x += gm.gmCellIncX * args->scale;
         y += gm.gmCellIncY * args->scale;
 
-        heap_free(origph);
+        free(origph);
         if (status != Ok)
             break;
     }
@@ -1125,10 +1125,10 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
 
     if (status != Ok) /* free backup */
     {
-        heap_free(path->pathdata.Points);
-        heap_free(path->pathdata.Types);
+        free(path->pathdata.Points);
+        free(path->pathdata.Types);
         *path = *backup;
-        heap_free(backup);
+        free(backup);
         return status;
     }
     if (format->line_align == StringAlignmentCenter && layoutRect->Y + args.maxY < layoutRect->Height)
@@ -1179,17 +1179,17 @@ GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
     if(!path || !clone)
         return InvalidParameter;
 
-    *clone = heap_alloc_zero(sizeof(GpPath));
+    *clone = malloc(sizeof(GpPath));
     if(!*clone) return OutOfMemory;
 
     **clone = *path;
 
-    (*clone)->pathdata.Points = heap_alloc_zero(path->datalen * sizeof(PointF));
-    (*clone)->pathdata.Types = heap_alloc_zero(path->datalen);
+    (*clone)->pathdata.Points = malloc(path->datalen * sizeof(PointF));
+    (*clone)->pathdata.Types = malloc(path->datalen);
     if(!(*clone)->pathdata.Points || !(*clone)->pathdata.Types){
-        heap_free((*clone)->pathdata.Points);
-        heap_free((*clone)->pathdata.Types);
-        heap_free(*clone);
+        free((*clone)->pathdata.Points);
+        free((*clone)->pathdata.Types);
+        free(*clone);
         return OutOfMemory;
     }
 
@@ -1241,7 +1241,7 @@ GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
     if(!path)
         return InvalidParameter;
 
-    *path = heap_alloc_zero(sizeof(GpPath));
+    *path = calloc(1, sizeof(GpPath));
     if(!*path)  return OutOfMemory;
 
     (*path)->fill = fill;
@@ -1265,8 +1265,8 @@ GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
         return OutOfMemory;
     }
 
-    *path = heap_alloc_zero(sizeof(GpPath));
-    if(!*path)  return OutOfMemory;
+    *path = calloc(1, sizeof(GpPath));
+    if(!*path) return OutOfMemory;
 
     if(count > 1 && (types[count-1] & PathPointTypePathTypeMask) == PathPointTypeStart)
         count = 0;
@@ -1284,13 +1284,13 @@ GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
         }
     }
 
-    (*path)->pathdata.Points = heap_alloc_zero(count * sizeof(PointF));
-    (*path)->pathdata.Types = heap_alloc_zero(count);
+    (*path)->pathdata.Points = malloc(count * sizeof(PointF));
+    (*path)->pathdata.Types = malloc(count);
 
     if(!(*path)->pathdata.Points || !(*path)->pathdata.Types){
-        heap_free((*path)->pathdata.Points);
-        heap_free((*path)->pathdata.Types);
-        heap_free(*path);
+        free((*path)->pathdata.Points);
+        free((*path)->pathdata.Types);
+        free(*path);
         return OutOfMemory;
     }
 
@@ -1316,7 +1316,7 @@ GpStatus WINGDIPAPI GdipCreatePath2I(GDIPCONST GpPoint* points,
 
     TRACE("(%p, %p, %d, %d, %p)\n", points, types, count, fill, path);
 
-    ptF = heap_alloc_zero(sizeof(GpPointF)*count);
+    ptF = malloc(sizeof(GpPointF) * count);
 
     for(i = 0;i < count; i++){
         ptF[i].X = (REAL)points[i].X;
@@ -1325,7 +1325,7 @@ GpStatus WINGDIPAPI GdipCreatePath2I(GDIPCONST GpPoint* points,
 
     ret = GdipCreatePath2(ptF, types, count, fill, path);
 
-    heap_free(ptF);
+    free(ptF);
 
     return ret;
 }
@@ -1337,9 +1337,9 @@ GpStatus WINGDIPAPI GdipDeletePath(GpPath *path)
     if(!path)
         return InvalidParameter;
 
-    heap_free(path->pathdata.Points);
-    heap_free(path->pathdata.Types);
-    heap_free(path);
+    free(path->pathdata.Points);
+    free(path->pathdata.Types);
+    free(path);
 
     return Ok;
 }
@@ -1510,8 +1510,8 @@ GpStatus WINGDIPAPI GdipGetPathPointsI(GpPath *path, GpPoint* points, INT count)
     if(count <= 0)
         return InvalidParameter;
 
-    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
-    if(!ptf)    return OutOfMemory;
+    ptf = malloc(sizeof(GpPointF) * count);
+    if(!ptf) return OutOfMemory;
 
     ret = GdipGetPathPoints(path,ptf,count);
     if(ret == Ok)
@@ -1519,7 +1519,7 @@ GpStatus WINGDIPAPI GdipGetPathPointsI(GpPath *path, GpPoint* points, INT count)
             points[i].X = gdip_round(ptf[i].X);
             points[i].Y = gdip_round(ptf[i].Y);
         };
-    heap_free(ptf);
+    free(ptf);
 
     return ret;
 }
@@ -1673,12 +1673,12 @@ GpStatus WINGDIPAPI GdipReversePath(GpPath* path)
 
     if(count == 0) return Ok;
 
-    revpath.Points = heap_alloc_zero(sizeof(GpPointF)*count);
-    revpath.Types  = heap_alloc_zero(sizeof(BYTE)*count);
+    revpath.Points = calloc(count, sizeof(GpPointF));
+    revpath.Types  = calloc(count, sizeof(BYTE));
     revpath.Count  = count;
     if(!revpath.Points || !revpath.Types){
-        heap_free(revpath.Points);
-        heap_free(revpath.Types);
+        free(revpath.Points);
+        free(revpath.Types);
         return OutOfMemory;
     }
 
@@ -1708,8 +1708,8 @@ GpStatus WINGDIPAPI GdipReversePath(GpPath* path)
     memcpy(path->pathdata.Points, revpath.Points, sizeof(GpPointF)*count);
     memcpy(path->pathdata.Types,  revpath.Types,  sizeof(BYTE)*count);
 
-    heap_free(revpath.Points);
-    heap_free(revpath.Types);
+    free(revpath.Points);
+    free(revpath.Types);
 
     return Ok;
 }
@@ -2221,7 +2221,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
 
         if (!custom->fill)
         {
-            tmp_points = heap_alloc_zero(custom->pathdata.Count * sizeof(GpPoint));
+            tmp_points = malloc(custom->pathdata.Count * sizeof(GpPoint));
             if (!tmp_points) {
                 ERR("Out of memory\n");
                 return;
@@ -2378,15 +2378,15 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
         break;
     }
 
-    dash_pattern_scaled = heap_alloc(dash_count * sizeof(REAL));
+    dash_pattern_scaled = malloc(dash_count * sizeof(REAL));
     if (!dash_pattern_scaled) return;
 
     for (i = 0; i < dash_count; i++)
         dash_pattern_scaled[i] = dash_pattern_scaling * dash_pattern[i];
 
-    tmp_points = heap_alloc_zero((end - start + 2) * sizeof(GpPoint));
+    tmp_points = calloc(end - start + 2, sizeof(GpPoint));
     if (!tmp_points) {
-        heap_free(dash_pattern_scaled);
+        free(dash_pattern_scaled);
         return; /* FIXME */
     }
 
@@ -2466,8 +2466,8 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
             closed ? LineCapFlat : pen->endcap, pen->customend, last_point);
     }
 
-    heap_free(dash_pattern_scaled);
-    heap_free(tmp_points);
+    free(dash_pattern_scaled);
+    free(tmp_points);
 }
 
 GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
@@ -2632,10 +2632,10 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
 
 fail:
     /* reverting */
-    heap_free(path->pathdata.Points);
-    heap_free(path->pathdata.Types);
+    free(path->pathdata.Points);
+    free(path->pathdata.Types);
     memcpy(path, backup, sizeof(*path));
-    heap_free(backup);
+    free(backup);
 
     return retstat;
 }
@@ -2678,10 +2678,10 @@ GpStatus WINGDIPAPI GdipAddPathRectangles(GpPath *path, GDIPCONST GpRectF *rects
 
 fail:
     /* reverting */
-    heap_free(path->pathdata.Points);
-    heap_free(path->pathdata.Types);
+    free(path->pathdata.Points);
+    free(path->pathdata.Types);
     memcpy(path, backup, sizeof(*path));
-    heap_free(backup);
+    free(backup);
 
     return retstat;
 }
@@ -2700,13 +2700,13 @@ GpStatus WINGDIPAPI GdipAddPathRectanglesI(GpPath *path, GDIPCONST GpRect *rects
     if(count < 0)
         return OutOfMemory;
 
-    rectsF = heap_alloc_zero(sizeof(GpRectF)*count);
+    rectsF = malloc(sizeof(GpRectF) * count);
 
     for(i = 0;i < count;i++)
         set_rect(&rectsF[i], rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
 
     retstat = GdipAddPathRectangles(path, rectsF, count);
-    heap_free(rectsF);
+    free(rectsF);
 
     return retstat;
 }

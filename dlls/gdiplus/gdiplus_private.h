@@ -30,7 +30,6 @@
 #include "objbase.h"
 #include "ocidl.h"
 #include "wincodecsdk.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "gdiplus.h"

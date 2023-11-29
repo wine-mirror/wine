@@ -40,9 +40,9 @@ GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
         return InvalidParameter;
 
     if (from->type == CustomLineCapTypeDefault)
-        *to = heap_alloc_zero(sizeof(GpCustomLineCap));
+        *to = malloc(sizeof(GpCustomLineCap));
     else
-        *to = heap_alloc_zero(sizeof(GpAdjustableArrowCap));
+        *to = malloc(sizeof(GpAdjustableArrowCap));
 
     if (!*to)
         return OutOfMemory;
@@ -53,13 +53,13 @@ GpStatus WINGDIPAPI GdipCloneCustomLineCap(GpCustomLineCap* from,
         *(GpAdjustableArrowCap *)*to = *(GpAdjustableArrowCap *)from;
 
     /* Duplicate path data */
-    (*to)->pathdata.Points = heap_alloc_zero(from->pathdata.Count * sizeof(PointF));
-    (*to)->pathdata.Types = heap_alloc_zero(from->pathdata.Count);
+    (*to)->pathdata.Points = malloc(from->pathdata.Count * sizeof(PointF));
+    (*to)->pathdata.Types = malloc(from->pathdata.Count);
 
     if((!(*to)->pathdata.Types  || !(*to)->pathdata.Points) && (*to)->pathdata.Count){
-        heap_free((*to)->pathdata.Points);
-        heap_free((*to)->pathdata.Types);
-        heap_free(*to);
+        free((*to)->pathdata.Points);
+        free((*to)->pathdata.Types);
+        free(*to);
         return OutOfMemory;
     }
 
@@ -77,13 +77,13 @@ static GpStatus init_custom_linecap(GpCustomLineCap *cap, GpPathData *pathdata, 
 {
     cap->fill = fill;
 
-    cap->pathdata.Points = heap_alloc_zero(pathdata->Count * sizeof(PointF));
-    cap->pathdata.Types = heap_alloc_zero(pathdata->Count);
+    cap->pathdata.Points = malloc(pathdata->Count * sizeof(PointF));
+    cap->pathdata.Types = malloc(pathdata->Count);
 
     if ((!cap->pathdata.Types || !cap->pathdata.Points) && pathdata->Count)
     {
-        heap_free(cap->pathdata.Points);
-        heap_free(cap->pathdata.Types);
+        free(cap->pathdata.Points);
+        free(cap->pathdata.Types);
         cap->pathdata.Points = NULL;
         cap->pathdata.Types = NULL;
         return OutOfMemory;
@@ -119,8 +119,8 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
     if(!customCap || !(fillPath || strokePath))
         return InvalidParameter;
 
-    *customCap = heap_alloc_zero(sizeof(GpCustomLineCap));
-    if(!*customCap)    return OutOfMemory;
+    *customCap = calloc(1, sizeof(GpCustomLineCap));
+    if(!*customCap) return OutOfMemory;
 
     if (strokePath)
         pathdata = &strokePath->pathdata;
@@ -130,7 +130,7 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
     stat = init_custom_linecap(*customCap, pathdata, fillPath != NULL, baseCap, baseInset);
     if (stat != Ok)
     {
-        heap_free(*customCap);
+        free(*customCap);
         return stat;
     }
 
@@ -146,9 +146,9 @@ GpStatus WINGDIPAPI GdipDeleteCustomLineCap(GpCustomLineCap *customCap)
     if(!customCap)
         return InvalidParameter;
 
-    heap_free(customCap->pathdata.Points);
-    heap_free(customCap->pathdata.Types);
-    heap_free(customCap);
+    free(customCap->pathdata.Points);
+    free(customCap->pathdata.Types);
+    free(customCap);
 
     return Ok;
 }
@@ -337,7 +337,7 @@ GpStatus WINGDIPAPI GdipCreateAdjustableArrowCap(REAL height, REAL width, BOOL f
     if (!cap)
         return InvalidParameter;
 
-    *cap = heap_alloc_zero(sizeof(**cap));
+    *cap = calloc(1, sizeof(**cap));
     if (!*cap)
         return OutOfMemory;
 
@@ -348,7 +348,7 @@ GpStatus WINGDIPAPI GdipCreateAdjustableArrowCap(REAL height, REAL width, BOOL f
     stat = init_custom_linecap(&(*cap)->cap, &pathdata, fill, LineCapTriangle, width != 0.0 ? height / width : 0.0);
     if (stat != Ok)
     {
-        heap_free(*cap);
+        free(*cap);
         return stat;
     }
 

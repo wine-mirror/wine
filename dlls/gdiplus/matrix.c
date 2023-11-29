@@ -64,8 +64,8 @@ GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
     if(!matrix)
         return InvalidParameter;
 
-    *matrix = heap_alloc_zero(sizeof(GpMatrix));
-    if(!*matrix)    return OutOfMemory;
+    *matrix = malloc(sizeof(GpMatrix));
+    if(!*matrix) return OutOfMemory;
 
     /* first row */
     (*matrix)->matrix[0] = m11;
@@ -125,8 +125,8 @@ GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix *matrix, GpMatrix **clone)
     if(!matrix || !clone)
         return InvalidParameter;
 
-    *clone = heap_alloc_zero(sizeof(GpMatrix));
-    if(!*clone)    return OutOfMemory;
+    *clone = malloc(sizeof(GpMatrix));
+    if(!*clone) return OutOfMemory;
 
     **clone = *matrix;
 
@@ -140,8 +140,8 @@ GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix **matrix)
     if(!matrix)
         return InvalidParameter;
 
-    *matrix = heap_alloc_zero(sizeof(GpMatrix));
-    if(!*matrix)    return OutOfMemory;
+    *matrix = malloc(sizeof(GpMatrix));
+    if(!*matrix) return OutOfMemory;
 
     (*matrix)->matrix[0] = 1.0;
     (*matrix)->matrix[1] = 0.0;
@@ -160,7 +160,7 @@ GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix *matrix)
     if(!matrix)
         return InvalidParameter;
 
-    heap_free(matrix);
+    free(matrix);
 
     return Ok;
 }
@@ -396,7 +396,7 @@ GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, I
     if(count <= 0)
         return InvalidParameter;
 
-    ptsF = heap_alloc_zero(sizeof(GpPointF) * count);
+    ptsF = malloc(sizeof(GpPointF) * count);
     if(!ptsF)
         return OutOfMemory;
 
@@ -412,7 +412,7 @@ GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, I
             pts[i].X = gdip_round(ptsF[i].X);
             pts[i].Y = gdip_round(ptsF[i].Y);
         }
-    heap_free(ptsF);
+    free(ptsF);
 
     return ret;
 }
@@ -476,7 +476,7 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
     if(count <= 0)
         return InvalidParameter;
 
-    ptsF = heap_alloc_zero(sizeof(GpPointF) * count);
+    ptsF = malloc(sizeof(GpPointF) * count);
     if(!ptsF)
         return OutOfMemory;
 
@@ -492,7 +492,7 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
             pts[i].X = gdip_round(ptsF[i].X);
             pts[i].Y = gdip_round(ptsF[i].Y);
         }
-    heap_free(ptsF);
+    free(ptsF);
 
     return ret;
 }

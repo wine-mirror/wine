@@ -143,7 +143,7 @@ ULONG WINAPI GdiplusShutdown_wrapper(ULONG_PTR token)
  */
 void* WINGDIPAPI GdipAlloc(SIZE_T size)
 {
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    return calloc(1, size);
 }
 
 /*****************************************************
@@ -151,7 +151,7 @@ void* WINGDIPAPI GdipAlloc(SIZE_T size)
  */
 void WINGDIPAPI GdipFree(void* ptr)
 {
-    HeapFree(GetProcessHeap(), 0, ptr);
+    free(ptr);
 }
 
 /* Calculates the bezier points needed to fill in the arc portion starting at
@@ -418,12 +418,12 @@ BOOL lengthen_path(GpPath *path, INT len)
     if(path->datalen == 0){
         path->datalen = len * 2;
 
-        path->pathdata.Points = heap_alloc_zero(path->datalen * sizeof(PointF));
-        if(!path->pathdata.Points)   return FALSE;
+        path->pathdata.Points = calloc(path->datalen, sizeof(PointF));
+        if(!path->pathdata.Points) return FALSE;
 
-        path->pathdata.Types = heap_alloc_zero(path->datalen);
+        path->pathdata.Types = calloc(1, path->datalen);
         if(!path->pathdata.Types){
-            heap_free(path->pathdata.Points);
+            free(path->pathdata.Points);
             return FALSE;
         }
     }
@@ -432,11 +432,11 @@ BOOL lengthen_path(GpPath *path, INT len)
         while(path->datalen - path->pathdata.Count < len)
             path->datalen *= 2;
 
-        path->pathdata.Points = heap_realloc(path->pathdata.Points, path->datalen * sizeof(PointF));
-        if(!path->pathdata.Points)  return FALSE;
+        path->pathdata.Points = realloc(path->pathdata.Points, path->datalen * sizeof(PointF));
+        if(!path->pathdata.Points) return FALSE;
 
-        path->pathdata.Types = heap_realloc(path->pathdata.Types, path->datalen);
-        if(!path->pathdata.Types)   return FALSE;
+        path->pathdata.Types = realloc(path->pathdata.Types, path->datalen);
+        if(!path->pathdata.Types) return FALSE;
     }
 
     return TRUE;
@@ -477,8 +477,8 @@ void delete_element(region_element* element)
         default:
             delete_element(element->elementdata.combine.left);
             delete_element(element->elementdata.combine.right);
-            heap_free(element->elementdata.combine.left);
-            heap_free(element->elementdata.combine.right);
+            free(element->elementdata.combine.left);
+            free(element->elementdata.combine.right);
             break;
     }
 }

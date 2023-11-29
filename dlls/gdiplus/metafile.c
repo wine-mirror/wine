@@ -688,7 +688,7 @@ void METAFILE_Free(GpMetafile *metafile)
 {
     unsigned int i;
 
-    heap_free(metafile->comment_data);
+    free(metafile->comment_data);
     DeleteEnhMetaFile(CloseEnhMetaFile(metafile->record_dc));
     if (!metafile->preserve_hemf)
         DeleteEnhMetaFile(metafile->hemf);
@@ -721,7 +721,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, EmfPlusRecordType 
     if (!metafile->comment_data_size)
     {
         DWORD data_size = max(256, size * 2 + 4);
-        metafile->comment_data = heap_alloc_zero(data_size);
+        metafile->comment_data = calloc(1, data_size);
 
         if (!metafile->comment_data)
             return OutOfMemory;
@@ -737,7 +737,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, EmfPlusRecordType 
     if (size_needed > metafile->comment_data_size)
     {
         DWORD data_size = size_needed * 2;
-        BYTE *new_data = heap_alloc_zero(data_size);
+        BYTE *new_data = calloc(1, data_size);
 
         if (!new_data)
             return OutOfMemory;
@@ -745,7 +745,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, EmfPlusRecordType 
         memcpy(new_data, metafile->comment_data, metafile->comment_data_length);
 
         metafile->comment_data_size = data_size;
-        heap_free(metafile->comment_data);
+        free(metafile->comment_data);
         metafile->comment_data = new_data;
     }
 
@@ -1682,7 +1682,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
     metafile->hemf = CloseEnhMetaFile(metafile->record_dc);
     metafile->record_dc = NULL;
 
-    heap_free(metafile->comment_data);
+    free(metafile->comment_data);
     metafile->comment_data = NULL;
     metafile->comment_data_size = 0;
 
@@ -1719,7 +1719,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
             bounds_rc.bottom = ceilf(metafile->auto_frame_max.Y * y_scale);
 
             buffer_size = GetEnhMetaFileBits(metafile->hemf, 0, NULL);
-            buffer = heap_alloc(buffer_size);
+            buffer = malloc(buffer_size);
             if (buffer)
             {
                 HENHMETAFILE new_hemf;
@@ -1738,7 +1738,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
                 else
                     stat = OutOfMemory;
 
-                heap_free(buffer);
+                free(buffer);
             }
             else
                 stat = OutOfMemory;
@@ -1762,7 +1762,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
 
         buffer_size = GetEnhMetaFileBits(metafile->hemf, 0, NULL);
 
-        buffer = heap_alloc(buffer_size);
+        buffer = malloc(buffer_size);
         if (buffer)
         {
             HRESULT hr;
@@ -1774,7 +1774,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
             if (FAILED(hr))
                 stat = hresult_to_status(hr);
 
-            heap_free(buffer);
+            free(buffer);
         }
         else
             stat = OutOfMemory;
@@ -2040,8 +2040,8 @@ static GpStatus metafile_deserialize_path(const BYTE *record_data, UINT data_siz
         return status;
 
     (*path)->pathdata.Count = data->PathPointCount;
-    (*path)->pathdata.Points = GdipAlloc(data->PathPointCount * sizeof(*(*path)->pathdata.Points));
-    (*path)->pathdata.Types = GdipAlloc(data->PathPointCount * sizeof(*(*path)->pathdata.Types));
+    (*path)->pathdata.Points = malloc(data->PathPointCount * sizeof(*(*path)->pathdata.Points));
+    (*path)->pathdata.Types = malloc(data->PathPointCount * sizeof(*(*path)->pathdata.Types));
     (*path)->datalen = (*path)->pathdata.Count;
 
     if (!(*path)->pathdata.Points || !(*path)->pathdata.Types)
@@ -2093,14 +2093,14 @@ static GpStatus metafile_read_region_node(struct memory_buffer *mbuf, GpRegion *
     {
         region_element *left, *right;
 
-        left = heap_alloc_zero(sizeof(*left));
+        left = calloc(1, sizeof(*left));
         if (!left)
             return OutOfMemory;
 
-        right = heap_alloc_zero(sizeof(*right));
+        right = calloc(1, sizeof(*right));
         if (!right)
         {
-            heap_free(left);
+            free(left);
             return OutOfMemory;
         }
 
@@ -2117,8 +2117,8 @@ static GpStatus metafile_read_region_node(struct memory_buffer *mbuf, GpRegion *
             }
         }
 
-        heap_free(left);
-        heap_free(right);
+        free(left);
+        free(right);
         return status;
     }
     case RegionDataRect:
@@ -2707,14 +2707,14 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
         if (data_size < data->Length * sizeof(WCHAR))
             return InvalidParameter;
 
-        if (!(familyname = GdipAlloc((data->Length + 1) * sizeof(*familyname))))
+        if (!(familyname = malloc((data->Length + 1) * sizeof(*familyname))))
             return OutOfMemory;
 
         memcpy(familyname, data->FamilyName, data->Length * sizeof(*familyname));
         familyname[data->Length] = 0;
 
         status = GdipCreateFontFamilyFromName(familyname, NULL, &family);
-        GdipFree(familyname);
+        free(familyname);
 
         /* If a font family cannot be created from family name, native
            falls back to a sans serif font. */
@@ -2785,7 +2785,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         /* regular EMF record */
         if (metafile->playback_dc)
         {
-            ENHMETARECORD *record = heap_alloc_zero(dataSize + 8);
+            ENHMETARECORD *record = calloc(1, dataSize + 8);
 
             if (record)
             {
@@ -2800,7 +2800,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                         record, metafile->handle_count) == 0)
                     ERR("PlayEnhMetaFileRecord failed\n");
 
-                heap_free(record);
+                free(record);
             }
             else
                 return OutOfMemory;
@@ -2871,7 +2871,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                     EmfPlusRect *int_rects = (EmfPlusRect*)(record+1);
                     int i;
 
-                    rects = temp_rects = heap_alloc_zero(sizeof(GpRectF) * record->Count);
+                    rects = temp_rects = calloc(record->Count, sizeof(GpRectF));
                     if (rects)
                     {
                         for (i=0; i<record->Count; i++)
@@ -2895,7 +2895,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             }
 
             GdipDeleteBrush(temp_brush);
-            heap_free(temp_rects);
+            free(temp_rects);
 
             return stat;
         }
@@ -3050,14 +3050,14 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             GpRectF scaled_srcrect;
             GpMatrix transform;
 
-            cont = heap_alloc_zero(sizeof(*cont));
+            cont = calloc(1, sizeof(*cont));
             if (!cont)
                 return OutOfMemory;
 
             stat = GdipCloneRegion(metafile->clip, &cont->clip);
             if (stat != Ok)
             {
-                heap_free(cont);
+                free(cont);
                 return stat;
             }
 
@@ -3066,7 +3066,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             if (stat != Ok)
             {
                 GdipDeleteRegion(cont->clip);
-                heap_free(cont);
+                free(cont);
                 return stat;
             }
 
@@ -3104,14 +3104,14 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             EmfPlusContainerRecord *record = (EmfPlusContainerRecord*)header;
             container* cont;
 
-            cont = heap_alloc_zero(sizeof(*cont));
+            cont = calloc(1, sizeof(*cont));
             if (!cont)
                 return OutOfMemory;
 
             stat = GdipCloneRegion(metafile->clip, &cont->clip);
             if (stat != Ok)
             {
-                heap_free(cont);
+                free(cont);
                 return stat;
             }
 
@@ -3123,7 +3123,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             if (stat != Ok)
             {
                 GdipDeleteRegion(cont->clip);
-                heap_free(cont);
+                free(cont);
                 return stat;
             }
 
@@ -3170,7 +3170,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 {
                     list_remove(&cont2->entry);
                     GdipDeleteRegion(cont2->clip);
-                    heap_free(cont2);
+                    free(cont2);
                 }
 
                 if (type == BEGIN_CONTAINER)
@@ -3185,7 +3185,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
                 list_remove(&cont->entry);
                 GdipDeleteRegion(cont->clip);
-                heap_free(cont);
+                free(cont);
             }
 
             break;
@@ -3399,7 +3399,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & (0x800 | 0x4000))
             {
-                GpPointF *points = GdipAlloc(fill->Count * sizeof(*points));
+                GpPointF *points = malloc(fill->Count * sizeof(*points));
                 if (points)
                 {
                     if (flags & 0x800) /* P */
@@ -3421,7 +3421,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
                     stat = GdipFillClosedCurve2(real_metafile->playback_graphics, brush,
                         points, fill->Count, fill->Tension, mode);
-                    GdipFree(points);
+                    free(points);
                 }
                 else
                     stat = OutOfMemory;
@@ -3613,7 +3613,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             {
                 DWORD i;
 
-                rects = GdipAlloc(draw->Count * sizeof(*rects));
+                rects = malloc(draw->Count * sizeof(*rects));
                 if (!rects)
                     return OutOfMemory;
 
@@ -3628,7 +3628,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             stat = GdipDrawRectangles(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
                     rects ? rects : (GpRectF *)draw->RectData.rectF, draw->Count);
-            GdipFree(rects);
+            free(rects);
             return stat;
         }
         case EmfPlusRecordTypeDrawDriverString:
@@ -3692,7 +3692,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 if (draw->MatrixPresent)
                     alloc_size += sizeof(*matrix);
 
-                positions = alignedmem = heap_alloc(alloc_size);
+                positions = alignedmem = malloc(alloc_size);
                 if (!positions)
                 {
                     GdipDeleteBrush((GpBrush*)solidfill);
@@ -3712,7 +3712,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                     draw->DriverStringOptionsFlags, matrix);
 
             GdipDeleteBrush((GpBrush*)solidfill);
-            heap_free(alignedmem);
+            free(alignedmem);
 
             return stat;
         }
@@ -3948,7 +3948,7 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
             container* cont = LIST_ENTRY(list_head(&real_metafile->containers), container, entry);
             list_remove(&cont->entry);
             GdipDeleteRegion(cont->clip);
-            heap_free(cont);
+            free(cont);
         }
 
         GdipEndContainer(graphics, state);
@@ -4248,7 +4248,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     if (stat != Ok)
         return stat;
 
-    *metafile = heap_alloc_zero(sizeof(GpMetafile));
+    *metafile = calloc(1, sizeof(GpMetafile));
     if (!*metafile)
         return OutOfMemory;
 
@@ -4296,11 +4296,11 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     read = GetMetaFileBitsEx(hwmf, 0, NULL);
     if(!read)
         return GenericError;
-    copy = heap_alloc_zero(read);
+    copy = malloc(read);
     GetMetaFileBitsEx(hwmf, read, copy);
 
     hemf = SetWinMetaFileBits(read, copy, NULL, NULL);
-    heap_free(copy);
+    free(copy);
 
     /* FIXME: We should store and use hwmf instead of converting to hemf */
     retval = GdipCreateMetafileFromEmf(hemf, TRUE, metafile);
@@ -4516,7 +4516,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
     if (!record_dc)
         return GenericError;
 
-    *metafile = heap_alloc_zero(sizeof(GpMetafile));
+    *metafile = calloc(1, sizeof(GpMetafile));
     if(!*metafile)
     {
         DeleteEnhMetaFile(CloseEnhMetaFile(record_dc));
@@ -4557,7 +4557,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
     if (stat != Ok)
     {
         DeleteEnhMetaFile(CloseEnhMetaFile(record_dc));
-        heap_free(*metafile);
+        free(*metafile);
         *metafile = NULL;
         return OutOfMemory;
     }
