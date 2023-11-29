@@ -13785,10 +13785,8 @@ static void test_namespaces_as_attributes(void)
                 hr = IXMLDOMNode_get_prefix(item, &str);
                 if (test->prefixes[i])
                 {
-                    todo_wine_if(test->todo) {
                     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
                     ok(!lstrcmpW(str, _bstr_(test->prefixes[i])), "got %s\n", wine_dbgstr_w(str));
-                    }
                     SysFreeString(str);
                 }
                 else

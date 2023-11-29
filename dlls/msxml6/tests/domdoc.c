@@ -105,10 +105,8 @@ static void test_create_attribute(void)
         }
         else
         {
-            todo_wine_if(ptr->todo) {
             ok(hr == S_FALSE, "%d: unexpected hr %#lx\n", i, hr);
             ok(str == NULL, "%d: got prefix %s\n", i, wine_dbgstr_w(str));
-            }
         }
         SysFreeString(str);
 

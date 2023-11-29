@@ -269,11 +269,9 @@ static void test_namespaces_as_attributes(void)
             if (test->prefixes[i])
             {
                 /* MSXML4 can report different results with different service packs */
-                todo_wine_if(test->todo) {
                 ok(hr == S_OK || broken(hr == S_FALSE), "Unexpected hr %#lx.\n", hr);
                 ok(!lstrcmpW(str, test->prefixes[i]) || broken(!str),
                    "got %s\n", wine_dbgstr_w(str));
-                }
                 SysFreeString(str);
             }
             else
