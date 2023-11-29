@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "Building $(git log -1)"
+echo "---"
+
+set -Eeuxo pipefail
+
+./tools/make_requests
+./tools/make_makefiles
+autoreconf -f
+
+./configure -q --enable-archs=i386,x86_64,aarch64 --with-mingw=clang
+make -s -j$(nproc)

@@ -13,6 +13,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y gcc gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 gcc-multilib \
+                       llvm clang lld \
                        git autoconf flex bison perl gettext \
                        libasound2-dev:amd64 libasound2-dev:i386 \
                        libcapi20-dev:amd64 libcapi20-dev:i386 \
