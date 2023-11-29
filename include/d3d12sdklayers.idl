@@ -903,6 +903,68 @@ typedef enum D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE
     NUM_D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODES = 0x4,
 } D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE;
 
+typedef enum D3D12_GPU_BASED_VALIDATION_FLAGS
+{
+    D3D12_GPU_BASED_VALIDATION_FLAGS_NONE = 0x00,
+    D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING = 0x01,
+} D3D12_GPU_BASED_VALIDATION_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_GPU_BASED_VALIDATION_FLAGS)")
+
+typedef enum D3D12_RLDO_FLAGS
+{
+    D3D12_RLDO_NONE = 0x0,
+    D3D12_RLDO_SUMMARY = 0x1,
+    D3D12_RLDO_DETAIL = 0x2,
+    D3D12_RLDO_IGNORE_INTERNAL = 0x4,
+} D3D12_RLDO_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_RLDO_FLAGS)")
+
+typedef enum D3D12_DEBUG_DEVICE_PARAMETER_TYPE
+{
+    D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS,
+    D3D12_DEBUG_DEVICE_PARAMETER_GPU_BASED_VALIDATION_SETTINGS,
+    D3D12_DEBUG_DEVICE_PARAMETER_GPU_SLOWDOWN_PERFORMANCE_FACTOR,
+} D3D12_DEBUG_DEVICE_PARAMETER_TYPE;
+
+typedef enum D3D12_DEBUG_FEATURE
+{
+    D3D12_DEBUG_FEATURE_NONE = 0x00,
+    D3D12_DEBUG_FEATURE_ALLOW_BEHAVIOR_CHANGING_DEBUG_AIDS = 0x01,
+    D3D12_DEBUG_FEATURE_CONSERVATIVE_RESOURCE_STATE_TRACKING = 0x02,
+    D3D12_DEBUG_FEATURE_DISABLE_VIRTUALIZED_BUNDLES_VALIDATION = 0x04,
+    D3D12_DEBUG_FEATURE_EMULATE_WINDOWS7 = 0x08,
+} D3D12_DEBUG_FEATURE;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_DEBUG_FEATURE)")
+
+typedef enum D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAGS
+{
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_NONE = 0x00,
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_FRONT_LOAD_CREATE_TRACKING_ONLY_SHADERS = 0x01,
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_FRONT_LOAD_CREATE_UNGUARDED_VALIDATION_SHADERS = 0x02,
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAG_FRONT_LOAD_CREATE_GUARDED_VALIDATION_SHADERS = 0x04,
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAGS_VALID_MASK = 0x07
+} D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAGS)")
+
+typedef enum D3D12_MESSAGE_CALLBACK_FLAGS
+{
+    D3D12_MESSAGE_CALLBACK_FLAG_NONE = 0x00,
+    D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS = 0x01,
+} D3D12_MESSAGE_CALLBACK_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_MESSAGE_CALLBACK_FLAGS)")
+
+typedef struct D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS
+{
+    UINT MaxMessagesPerCommandList;
+    D3D12_GPU_BASED_VALIDATION_SHADER_PATCH_MODE DefaultShaderPatchMode;
+    D3D12_GPU_BASED_VALIDATION_PIPELINE_STATE_CREATE_FLAGS PipelineStateCreateFlags;
+} D3D12_DEBUG_DEVICE_GPU_BASED_VALIDATION_SETTINGS;
+
+typedef struct D3D12_DEBUG_DEVICE_GPU_SLOWDOWN_PERFORMANCE_FACTOR
+{
+    FLOAT SlowdownFactor;
+} D3D12_DEBUG_DEVICE_GPU_SLOWDOWN_PERFORMANCE_FACTOR;
+
 typedef struct D3D12_MESSAGE
 {
     D3D12_MESSAGE_CATEGORY Category;
@@ -953,6 +1015,104 @@ interface ID3D12Debug1 : IUnknown
 }
 
 [
+    uuid(93a665c4-a3b2-4e5d-b692-a26ae14e3374),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Debug2 : IUnknown
+{
+    void SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS flags);
+}
+
+[
+    uuid(5cf4e58f-f671-4ff1-a542-3686e3d153d1),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Debug3 : ID3D12Debug
+{
+    void SetEnableGPUBasedValidation(BOOL enable);
+    void SetEnableSynchronizedCommandQueueValidation(BOOL enable);
+    void SetGPUBasedValidationFlags(D3D12_GPU_BASED_VALIDATION_FLAGS flags);
+}
+
+[
+    uuid(014b816e-9ec5-4a2f-a845-ffbe441ce13a),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Debug4 : ID3D12Debug3
+{
+    void DisableDebugLayer();
+}
+
+[
+    uuid(548d6b12-09fa-40e0-9069-5dcd589a52c9),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Debug5 : ID3D12Debug4
+{
+    void SetEnableAutoName(BOOL enable);
+}
+
+[
+    uuid(3febd6dd-4973-4787-8194-e45f9e28923e),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12DebugDevice : IUnknown
+{
+    HRESULT SetFeatureMask(D3D12_DEBUG_FEATURE mask);
+    D3D12_DEBUG_FEATURE GetFeatureMask();
+    HRESULT ReportLiveDeviceObjects(D3D12_RLDO_FLAGS flags);
+}
+
+[
+    uuid(a9b71770-d099-4a65-a698-3dee10020f88),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12DebugDevice1 : IUnknown
+{
+    HRESULT SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_TYPE type, const void *data, UINT size);
+    HRESULT GetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_TYPE type, void *data, UINT size);
+    HRESULT ReportLiveDeviceObjects(D3D12_RLDO_FLAGS flags);
+}
+
+[
+    uuid(60eccbc1-378d-4df1-894c-f8ac5ce4d7dd),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12DebugDevice2 : ID3D12DebugDevice
+{
+    HRESULT SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_TYPE type, const void *data, UINT size);
+    HRESULT GetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_TYPE type, void *data, UINT size);
+}
+
+[
+    uuid(0adf7d52-929c-4e61-addb-ffed30de66ef),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12SharingContract : IUnknown
+{
+    void Present(ID3D12Resource *resource, UINT sub_resource, HWND window);
+    void SharedFenceSignal(ID3D12Fence *fence, UINT64 fence_value);
+    void BeginCapturableWork(REFGUID guid);
+    void EndCapturableWork(REFGUID guid);
+}
+
+[
     uuid(0742a90b-c387-483f-b946-30a7e4e61458),
     object,
     local,
@@ -996,4 +1156,20 @@ interface ID3D12InfoQueue : IUnknown
     BOOL GetBreakOnID([in] D3D12_MESSAGE_ID id);
     void SetMuteDebugOutput([in] BOOL mute);
     BOOL GetMuteDebugOutput();
+}
+
+typedef void (__stdcall *D3D12MessageFunc)(D3D12_MESSAGE_CATEGORY category,
+    D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, const char *description, void *context);
+
+[
+    uuid(2852dd88-b484-4c0c-b6b1-67168500e600),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12InfoQueue1 : ID3D12InfoQueue
+{
+    HRESULT RegisterMessageCallback([in] D3D12MessageFunc func,
+        [in] D3D12_MESSAGE_CALLBACK_FLAGS flags, [in] void *context, [in, out] DWORD *cookie);
+    HRESULT UnregisterMessageCallback([in] DWORD cookie);
 }
