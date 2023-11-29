@@ -326,6 +326,7 @@ static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fm
 #define HATTR_UNTOUCHED 0x10               /* Identify fields untouched by GetStartupInfoW */
 #define HATTR_INHERIT   0x20               /* inheritance flag set */
 #define HATTR_PROTECT   0x40               /* protect from close flag set */
+#define HATTR_DANGLING  0x80               /* a pseudo value to show that the handle value has been copied but not inherited */
 
 #define HANDLE_UNTOUCHEDW (HANDLE)(DWORD_PTR)(0x5050505050505050ull)
 
@@ -3188,6 +3189,9 @@ static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst
 #define H_DISK     1
 #define H_CHAR     2
 #define H_PIPE     3
+#define H_NULL     4
+#define H_INVALID  5
+#define H_DEVIL    6 /* unassigned handle */
 
 #define ARG_STD                 0x80000000
 #define ARG_STARTUPINFO         0x00000000
@@ -3261,6 +3265,16 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
         ok(ret, "Couldn't create anon pipe\n");
         needs_close = TRUE;
         break;
+    case H_NULL:
+        hstd[0] = hstd[1] = NULL;
+        break;
+    case H_INVALID:
+        hstd[0] = hstd[1] = INVALID_HANDLE_VALUE;
+        break;
+    case H_DEVIL:
+        hstd[0] = (HANDLE)(ULONG_PTR)0x066600;
+        hstd[1] = (HANDLE)(ULONG_PTR)0x066610;
+        break;
     default:
         ok(0, "Unsupported handle type %x\n", args & ARG_HANDLE_MASK);
         return FALSE;
@@ -3293,7 +3307,7 @@ struct std_handle_test
     unsigned args;
     /* output */
     DWORD expected;
-    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values */
+    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values, 8 dangling in StartupInfoW */
     DWORD is_broken; /* Win7 broken file types */
 };
 
@@ -3324,6 +3338,18 @@ static void test_StdHandleInheritance(void)
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 8, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+
+        /* all others handles type behave as H_DISK */
+/*10*/  {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                                       H_DEVIL,     HATTR_NULL},
+        {ARG_STARTUPINFO |                                       H_INVALID,   HATTR_NULL, .is_broken = HATTR_INVALID},
+        {ARG_STD         |                                       H_INVALID,   HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STARTUPINFO |                                       H_NULL,      HATTR_NULL, .is_broken = HATTR_INVALID},
+/*15*/  {ARG_STD         |                                       H_NULL,      HATTR_NULL, .is_broken = HATTR_INVALID},
     },
     nothing_gui[] =
     {
@@ -3340,6 +3366,21 @@ static void test_StdHandleInheritance(void)
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL},
+
+        /* all others handles type behave as H_DISK */
+/*10*/  {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_todo = 8},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO |                                       H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                                       H_DISK,      HATTR_NULL},
+
+        {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+/*15*/  {ARG_STD         |                                       H_DEVIL,     HATTR_NULL},
+        {ARG_STARTUPINFO |                                       H_INVALID,   HATTR_NULL, .is_broken = HATTR_INVALID},
+        {ARG_STD         |                                       H_INVALID,   HATTR_NULL},
+        {ARG_STARTUPINFO |                                       H_NULL,      HATTR_NULL},
+        {ARG_STD         |                                       H_NULL,      HATTR_NULL},
     },
     detached_cui[] =
     {
@@ -3398,7 +3439,6 @@ static void test_StdHandleInheritance(void)
             STARTUPINFOA startup;
             HANDLE hstd[2] = {};
             BOOL needs_close;
-            unsigned startup_expected;
 
             winetest_push_context("%s[%u] ", tests[j].descr, i);
             needs_close = build_startupinfo( &startup, std_tests[i].args, hstd );
@@ -3409,26 +3449,53 @@ static void test_StdHandleInheritance(void)
             ok(ret, "Couldn't run child\n");
             reload_child_info(resfile);
 
-            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
-
-            todo_wine_if(std_tests[i].is_todo & 2)
+            if (std_tests[i].expected & HATTR_DANGLING)
             {
-            okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
-            okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+                /* The value of the handle (in parent) has been copied in STARTUPINFO fields (in child),
+                 * but the object hasn't been inherited from parent to child.
+                 * There's no reliable way to test that the object hasn't been inherited, as the
+                 * entry in the child's handle table is free and could have been reused before
+                 * this test occurs.
+                 * So simply test that the value is passed untouched.
+                 */
+                okChildHexInt("StartupInfoA", "hStdInput", (DWORD_PTR)((std_tests[i].args & ARG_STD) ? INVALID_HANDLE_VALUE : hstd[0]), std_tests[i].is_broken);
+                okChildHexInt("StartupInfoA", "hStdOutput", (DWORD_PTR)((std_tests[i].args & ARG_STD) ? INVALID_HANDLE_VALUE : hstd[1]), std_tests[i].is_broken);
+                todo_wine_if(std_tests[i].is_todo & 8)
+                if (!(std_tests[i].args & ARG_STD))
+                {
+                    okChildHexInt("StartupInfoW", "hStdInput", (DWORD_PTR)hstd[0], std_tests[i].is_broken);
+                    okChildHexInt("StartupInfoW", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
+                }
+
+                todo_wine
+                {
+                okChildHexInt("TEB", "hStdInput", (DWORD_PTR)hstd[0], std_tests[i].is_broken);
+                okChildHexInt("TEB", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
+                }
             }
-
-            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
-
-            todo_wine_if(std_tests[i].is_todo & 4)
+            else
             {
-            okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
-            okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
-            }
+                unsigned startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
 
-            todo_wine_if(std_tests[i].is_todo & 1)
-            {
-            okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
-            okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
+                todo_wine_if(std_tests[i].is_todo & 2)
+                {
+                okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
+                okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+                }
+
+                startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
+
+                todo_wine_if(std_tests[i].is_todo & 4)
+                {
+                okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
+                okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+                }
+
+                todo_wine_if(std_tests[i].is_todo & 1)
+                {
+                okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
+                okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
+                }
             }
 
             release_memory();
