@@ -27,10 +27,10 @@
 #include "ntgdi.h"
 #include "unixlib.h"
 
-extern NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size);
+extern NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size);
+extern NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size);
 
-extern HMODULE macdrv_module DECLSPEC_HIDDEN;
+extern HMODULE macdrv_module;
 
 #endif /* __WINE_MACDRV_DLL_H */

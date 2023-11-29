@@ -39,13 +39,13 @@
 #include "unixlib.h"
 
 
-extern BOOL skip_single_buffer_flushes DECLSPEC_HIDDEN;
-extern BOOL allow_vsync DECLSPEC_HIDDEN;
-extern BOOL allow_set_gamma DECLSPEC_HIDDEN;
-extern BOOL allow_software_rendering DECLSPEC_HIDDEN;
-extern BOOL disable_window_decorations DECLSPEC_HIDDEN;
+extern BOOL skip_single_buffer_flushes;
+extern BOOL allow_vsync;
+extern BOOL allow_set_gamma;
+extern BOOL allow_software_rendering;
+extern BOOL disable_window_decorations;
 
-extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
+extern const char* debugstr_cf(CFTypeRef t);
 
 static inline CGRect cgrect_from_rect(RECT rect)
 {
@@ -74,17 +74,17 @@ static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
                             CGRectGetMaxX(cgrect), CGRectGetMaxY(cgrect));
 }
 
-extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
+extern const char* debugstr_cf(CFTypeRef t);
 
 
 /**************************************************************************
  * Mac GDI driver
  */
 
-extern CGRect macdrv_get_desktop_rect(void) DECLSPEC_HIDDEN;
-extern void macdrv_reset_device_metrics(void) DECLSPEC_HIDDEN;
-extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
-extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
+extern CGRect macdrv_get_desktop_rect(void);
+extern void macdrv_reset_device_metrics(void);
+extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
+extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 
 
 /**************************************************************************
@@ -115,7 +115,7 @@ struct macdrv_thread_data
     WORD                        keyc2scan[128];
 };
 
-extern struct macdrv_thread_data *macdrv_init_thread_data(void) DECLSPEC_HIDDEN;
+extern struct macdrv_thread_data *macdrv_init_thread_data(void);
 
 static inline struct macdrv_thread_data *macdrv_thread_data(void)
 {
@@ -123,59 +123,59 @@ static inline struct macdrv_thread_data *macdrv_thread_data(void)
 }
 
 
-extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags) DECLSPEC_HIDDEN;
-extern void macdrv_Beep(void) DECLSPEC_HIDDEN;
-extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
-extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode) DECLSPEC_HIDDEN;
-extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary) DECLSPEC_HIDDEN;
-extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags);
+extern void macdrv_Beep(void);
+extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid);
+extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode);
+extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary);
+extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                         BOOL force, void *param ) DECLSPEC_HIDDEN;
-extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
-extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
-extern BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset) DECLSPEC_HIDDEN;
-extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
-extern void macdrv_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_SetDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_SetFocus(HWND hwnd) DECLSPEC_HIDDEN;
+                                         BOOL force, void *param );
+extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
+extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
+extern BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset);
+extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+extern void macdrv_DestroyWindow(HWND hwnd);
+extern void macdrv_SetDesktopWindow(HWND hwnd);
+extern void macdrv_SetFocus(HWND hwnd);
 extern void macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha,
-                                              DWORD flags) DECLSPEC_HIDDEN;
-extern void macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent) DECLSPEC_HIDDEN;
-extern void macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw) DECLSPEC_HIDDEN;
-extern void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style) DECLSPEC_HIDDEN;
-extern void macdrv_SetWindowText(HWND hwnd, LPCWSTR text) DECLSPEC_HIDDEN;
-extern UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp) DECLSPEC_HIDDEN;
-extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
+                                              DWORD flags);
+extern void macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent);
+extern void macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw);
+extern void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style);
+extern void macdrv_SetWindowText(HWND hwnd, LPCWSTR text);
+extern UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp);
+extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
 extern BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                       const RECT *window_rect) DECLSPEC_HIDDEN;
-extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
+                                       const RECT *window_rect);
+extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
                                      const RECT *window_rect, const RECT *client_rect,
-                                     RECT *visible_rect, struct window_surface **surface) DECLSPEC_HIDDEN;
+                                     RECT *visible_rect, struct window_surface **surface);
 extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
                                     const RECT *window_rect, const RECT *client_rect,
                                     const RECT *visible_rect, const RECT *valid_rects,
-                                    struct window_surface *surface) DECLSPEC_HIDDEN;
-extern void macdrv_DestroyCursorIcon(HCURSOR cursor) DECLSPEC_HIDDEN;
-extern BOOL macdrv_GetCursorPos(LPPOINT pos) DECLSPEC_HIDDEN;
-extern void macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
-extern void macdrv_SetCursor(HWND hwnd, HCURSOR cursor) DECLSPEC_HIDDEN;
-extern BOOL macdrv_SetCursorPos(INT x, INT y) DECLSPEC_HIDDEN;
-extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey) DECLSPEC_HIDDEN;
-extern void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey) DECLSPEC_HIDDEN;
-extern SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl) DECLSPEC_HIDDEN;
-extern UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *state) DECLSPEC_HIDDEN;
-extern UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc) DECLSPEC_HIDDEN;
-extern UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl) DECLSPEC_HIDDEN;
+                                    struct window_surface *surface);
+extern void macdrv_DestroyCursorIcon(HCURSOR cursor);
+extern BOOL macdrv_GetCursorPos(LPPOINT pos);
+extern void macdrv_SetCapture(HWND hwnd, UINT flags);
+extern void macdrv_SetCursor(HWND hwnd, HCURSOR cursor);
+extern BOOL macdrv_SetCursorPos(INT x, INT y);
+extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey);
+extern void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey);
+extern SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl);
+extern UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *state);
+extern UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc);
+extern UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl);
 extern INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
-                              LPWSTR bufW, int bufW_size, UINT flags, HKL hkl) DECLSPEC_HIDDEN;
-extern UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list) DECLSPEC_HIDDEN;
-extern INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size) DECLSPEC_HIDDEN;
-extern void macdrv_NotifyIMEStatus( HWND hwnd, UINT status ) DECLSPEC_HIDDEN;
+                              LPWSTR bufW, int bufW_size, UINT flags, HKL hkl);
+extern UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list);
+extern INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size);
+extern void macdrv_NotifyIMEStatus( HWND hwnd, UINT status );
 extern BOOL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_param,
-                                        UINT flags) DECLSPEC_HIDDEN;
-extern BOOL macdrv_ProcessEvents(DWORD mask) DECLSPEC_HIDDEN;
-extern void macdrv_ThreadDetach(void) DECLSPEC_HIDDEN;
+                                        UINT flags);
+extern BOOL macdrv_ProcessEvents(DWORD mask);
+extern void macdrv_ThreadDetach(void);
 
 
 /* macdrv private window data */
@@ -202,89 +202,89 @@ struct macdrv_win_data
     struct window_surface *unminimized_surface;
 };
 
-extern struct macdrv_win_data *get_win_data(HWND hwnd) DECLSPEC_HIDDEN;
-extern void release_win_data(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
-extern void init_win_context(void) DECLSPEC_HIDDEN;
-extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen) DECLSPEC_HIDDEN;
-extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp) DECLSPEC_HIDDEN;
-extern void activate_on_following_focus(void) DECLSPEC_HIDDEN;
+extern struct macdrv_win_data *get_win_data(HWND hwnd);
+extern void release_win_data(struct macdrv_win_data *data);
+extern void init_win_context(void);
+extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
+extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
+extern void activate_on_following_focus(void);
 extern struct window_surface *create_surface(macdrv_window window, const RECT *rect,
-                                             struct window_surface *old_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
-extern void set_window_surface(macdrv_window window, struct window_surface *window_surface) DECLSPEC_HIDDEN;
-extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha) DECLSPEC_HIDDEN;
-extern void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect) DECLSPEC_HIDDEN;
+                                             struct window_surface *old_surface, BOOL use_alpha);
+extern void set_window_surface(macdrv_window window, struct window_surface *window_surface);
+extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha);
+extern void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect);
 
-extern void macdrv_handle_event(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_handle_event(const macdrv_event *event);
 
-extern void macdrv_window_close_requested(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_app_activated(void) DECLSPEC_HIDDEN;
-extern void macdrv_app_deactivated(void) DECLSPEC_HIDDEN;
-extern void macdrv_app_quit_requested(const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_window_maximize_requested(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_minimize_requested(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_did_minimize(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_brought_forward(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_resize_ended(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_window_drag_end(HWND hwnd) DECLSPEC_HIDDEN;
-extern void macdrv_reassert_window_position(HWND hwnd) DECLSPEC_HIDDEN;
-extern BOOL query_resize_size(HWND hwnd, macdrv_query *query) DECLSPEC_HIDDEN;
-extern BOOL query_resize_start(HWND hwnd) DECLSPEC_HIDDEN;
-extern BOOL query_min_max_info(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_window_close_requested(HWND hwnd);
+extern void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event);
+extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event);
+extern void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event);
+extern void macdrv_app_activated(void);
+extern void macdrv_app_deactivated(void);
+extern void macdrv_app_quit_requested(const macdrv_event *event);
+extern void macdrv_window_maximize_requested(HWND hwnd);
+extern void macdrv_window_minimize_requested(HWND hwnd);
+extern void macdrv_window_did_minimize(HWND hwnd);
+extern void macdrv_window_did_unminimize(HWND hwnd);
+extern void macdrv_window_brought_forward(HWND hwnd);
+extern void macdrv_window_resize_ended(HWND hwnd);
+extern void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event);
+extern void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event);
+extern void macdrv_window_drag_end(HWND hwnd);
+extern void macdrv_reassert_window_position(HWND hwnd);
+extern BOOL query_resize_size(HWND hwnd, macdrv_query *query);
+extern BOOL query_resize_start(HWND hwnd);
+extern BOOL query_min_max_info(HWND hwnd);
 
-extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
+extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event);
+extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event);
+extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event);
+extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event);
+extern void macdrv_SetCapture(HWND hwnd, UINT flags);
 
-extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
-extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_key_event(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_hotkey_press(const macdrv_event *event) DECLSPEC_HIDDEN;
-extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source) DECLSPEC_HIDDEN;
+extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data);
+extern void macdrv_keyboard_changed(const macdrv_event *event);
+extern void macdrv_key_event(HWND hwnd, const macdrv_event *event);
+extern void macdrv_hotkey_press(const macdrv_event *event);
+extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source);
 
-extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_displays_changed(const macdrv_event *event);
 
-extern void macdrv_UpdateClipboard(void) DECLSPEC_HIDDEN;
-extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
-extern void macdrv_lost_pasteboard_ownership(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_UpdateClipboard(void);
+extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type);
+extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
-extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version) DECLSPEC_HIDDEN;
-extern const struct vulkan_funcs *macdrv_wine_get_vulkan_driver(UINT version) DECLSPEC_HIDDEN;
-extern void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect) DECLSPEC_HIDDEN;
+extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version);
+extern const struct vulkan_funcs *macdrv_wine_get_vulkan_driver(UINT version);
+extern void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect);
 
 extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
                                                    unsigned char *color_bits, int color_size, HBITMAP hbmMask,
                                                    unsigned char *mask_bits, int mask_size, int width,
-                                                   int height, int istep) DECLSPEC_HIDDEN;
-extern CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height) DECLSPEC_HIDDEN;
-extern CFArrayRef create_app_icon_images(void) DECLSPEC_HIDDEN;
+                                                   int height, int istep);
+extern CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height);
+extern CFArrayRef create_app_icon_images(void);
 
-extern void macdrv_status_item_mouse_button(const macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_status_item_mouse_move(const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_status_item_mouse_button(const macdrv_event *event);
+extern void macdrv_status_item_mouse_move(const macdrv_event *event);
 
-extern void check_retina_status(void) DECLSPEC_HIDDEN;
-extern void macdrv_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
-extern void macdrv_resize_desktop(void) DECLSPEC_HIDDEN;
-extern void init_user_driver(void) DECLSPEC_HIDDEN;
+extern void check_retina_status(void);
+extern void macdrv_init_display_devices(BOOL force);
+extern void macdrv_resize_desktop(void);
+extern void init_user_driver(void);
 
 /* unixlib interface */
 
-extern NTSTATUS macdrv_dnd_get_data(void *arg) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_dnd_get_formats(void *arg) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_dnd_have_format(void *arg) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_dnd_release(void *arg) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_dnd_retain(void *arg) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_notify_icon(void *arg) DECLSPEC_HIDDEN;
+extern NTSTATUS macdrv_dnd_get_data(void *arg);
+extern NTSTATUS macdrv_dnd_get_formats(void *arg);
+extern NTSTATUS macdrv_dnd_have_format(void *arg);
+extern NTSTATUS macdrv_dnd_release(void *arg);
+extern NTSTATUS macdrv_dnd_retain(void *arg);
+extern NTSTATUS macdrv_notify_icon(void *arg);
 
 extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,
-                                   ULONG size) DECLSPEC_HIDDEN;
+                                   ULONG size);
 
 /* user helpers */
 
@@ -335,15 +335,15 @@ static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2
 
 /* registry helpers */
 
-extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
+extern HKEY open_hkcu_key( const char *name );
 extern ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info,
-                             ULONG size) DECLSPEC_HIDDEN;
+                             ULONG size);
 extern HKEY reg_create_ascii_key(HKEY root, const char *name, DWORD options,
-                                 DWORD *disposition) DECLSPEC_HIDDEN;
+                                 DWORD *disposition);
 extern HKEY reg_create_key(HKEY root, const WCHAR *name, ULONG name_len,
-                           DWORD options, DWORD *disposition) DECLSPEC_HIDDEN;
-extern BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len) DECLSPEC_HIDDEN;
-extern HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len) DECLSPEC_HIDDEN;
+                           DWORD options, DWORD *disposition);
+extern BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len);
+extern HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len);
 
 /* string helpers */
 

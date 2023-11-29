@@ -86,18 +86,6 @@
 
 #include <pthread.h>
 
-
-#ifndef DECLSPEC_HIDDEN
-# if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
-#  define DECLSPEC_HIDDEN
-# elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
-#  define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
-# else
-#  define DECLSPEC_HIDDEN
-# endif
-#endif
-
-
 #include "macdrv_res.h"
 
 
@@ -153,21 +141,21 @@ struct macdrv_display {
 
 /* main */
 extern int macdrv_err_on;
-extern int topmost_float_inactive DECLSPEC_HIDDEN;
-extern int capture_displays_for_fullscreen DECLSPEC_HIDDEN;
-extern int left_option_is_alt DECLSPEC_HIDDEN;
-extern int right_option_is_alt DECLSPEC_HIDDEN;
-extern int left_command_is_ctrl DECLSPEC_HIDDEN;
-extern int right_command_is_ctrl DECLSPEC_HIDDEN;
-extern int allow_immovable_windows DECLSPEC_HIDDEN;
-extern int use_confinement_cursor_clipping DECLSPEC_HIDDEN;
-extern int cursor_clipping_locks_windows DECLSPEC_HIDDEN;
-extern int use_precise_scrolling DECLSPEC_HIDDEN;
-extern int gl_surface_mode DECLSPEC_HIDDEN;
-extern CFDictionaryRef localized_strings DECLSPEC_HIDDEN;
-extern int retina_enabled DECLSPEC_HIDDEN;  /* Whether Retina mode is enabled via registry setting. */
-extern int retina_on DECLSPEC_HIDDEN;       /* Whether Retina mode is currently active (enabled and display is in default mode). */
-extern int enable_app_nap DECLSPEC_HIDDEN;
+extern int topmost_float_inactive;
+extern int capture_displays_for_fullscreen;
+extern int left_option_is_alt;
+extern int right_option_is_alt;
+extern int left_command_is_ctrl;
+extern int right_command_is_ctrl;
+extern int allow_immovable_windows;
+extern int use_confinement_cursor_clipping;
+extern int cursor_clipping_locks_windows;
+extern int use_precise_scrolling;
+extern int gl_surface_mode;
+extern CFDictionaryRef localized_strings;
+extern int retina_enabled;  /* Whether Retina mode is enabled via registry setting. */
+extern int retina_on;       /* Whether Retina mode is currently active (enabled and display is in default mode). */
+extern int enable_app_nap;
 
 static inline CGRect cgrect_mac_from_win(CGRect rect)
 {
@@ -239,21 +227,21 @@ static inline CGPoint cgpoint_win_from_mac(CGPoint point)
     return point;
 }
 
-extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
-extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;
-extern void macdrv_beep(void) DECLSPEC_HIDDEN;
-extern void macdrv_set_application_icon(CFArrayRef images) DECLSPEC_HIDDEN;
-extern void macdrv_quit_reply(int reply) DECLSPEC_HIDDEN;
-extern int macdrv_using_input_method(void) DECLSPEC_HIDDEN;
-extern void macdrv_set_mouse_capture_window(macdrv_window window) DECLSPEC_HIDDEN;
-extern void macdrv_set_cocoa_retina_mode(int new_mode) DECLSPEC_HIDDEN;
+extern int macdrv_start_cocoa_app(unsigned long long tickcount);
+extern void macdrv_window_rejected_focus(const struct macdrv_event *event);
+extern void macdrv_beep(void);
+extern void macdrv_set_application_icon(CFArrayRef images);
+extern void macdrv_quit_reply(int reply);
+extern int macdrv_using_input_method(void);
+extern void macdrv_set_mouse_capture_window(macdrv_window window);
+extern void macdrv_set_cocoa_retina_mode(int new_mode);
 
 
 /* cursor */
-extern void macdrv_set_cursor(CFStringRef name, CFArrayRef frames) DECLSPEC_HIDDEN;
-extern int macdrv_get_cursor_position(CGPoint *pos) DECLSPEC_HIDDEN;
-extern int macdrv_set_cursor_position(CGPoint pos) DECLSPEC_HIDDEN;
-extern int macdrv_clip_cursor(CGRect rect) DECLSPEC_HIDDEN;
+extern void macdrv_set_cursor(CFStringRef name, CFArrayRef frames);
+extern int macdrv_get_cursor_position(CGPoint *pos);
+extern int macdrv_set_cursor_position(CGPoint pos);
+extern int macdrv_clip_cursor(CGRect rect);
 
 
 /* display */
@@ -299,16 +287,16 @@ struct macdrv_monitor
     uint32_t state_flags;
 };
 
-extern int macdrv_get_displays(struct macdrv_display** displays, int* count) DECLSPEC_HIDDEN;
-extern void macdrv_free_displays(struct macdrv_display* displays) DECLSPEC_HIDDEN;
+extern int macdrv_get_displays(struct macdrv_display** displays, int* count);
+extern void macdrv_free_displays(struct macdrv_display* displays);
 extern int macdrv_set_display_mode(const struct macdrv_display* display,
-                                   CGDisplayModeRef display_mode) DECLSPEC_HIDDEN;
-extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count) DECLSPEC_HIDDEN;
-extern void macdrv_free_gpus(struct macdrv_gpu* gpus) DECLSPEC_HIDDEN;
-extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count) DECLSPEC_HIDDEN;
-extern void macdrv_free_adapters(struct macdrv_adapter* adapters) DECLSPEC_HIDDEN;
-extern int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** monitors, int* count) DECLSPEC_HIDDEN;
-extern void macdrv_free_monitors(struct macdrv_monitor* monitors) DECLSPEC_HIDDEN;
+                                   CGDisplayModeRef display_mode);
+extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count);
+extern void macdrv_free_gpus(struct macdrv_gpu* gpus);
+extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count);
+extern void macdrv_free_adapters(struct macdrv_adapter* adapters);
+extern int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** monitors, int* count);
+extern void macdrv_free_monitors(struct macdrv_monitor* monitors);
 
 
 /* event */
@@ -509,21 +497,21 @@ static inline macdrv_event_mask event_mask_for_type(int type)
 
 typedef void (*macdrv_event_handler)(const macdrv_event *event);
 
-extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler) DECLSPEC_HIDDEN;
-extern void macdrv_destroy_event_queue(macdrv_event_queue queue) DECLSPEC_HIDDEN;
-extern int macdrv_get_event_queue_fd(macdrv_event_queue queue) DECLSPEC_HIDDEN;
+extern macdrv_event_queue macdrv_create_event_queue(macdrv_event_handler handler);
+extern void macdrv_destroy_event_queue(macdrv_event_queue queue);
+extern int macdrv_get_event_queue_fd(macdrv_event_queue queue);
 
 extern int macdrv_copy_event_from_queue(macdrv_event_queue queue,
-        macdrv_event_mask mask, macdrv_event **event) DECLSPEC_HIDDEN;
-extern void macdrv_release_event(macdrv_event *event) DECLSPEC_HIDDEN;
+        macdrv_event_mask mask, macdrv_event **event);
+extern void macdrv_release_event(macdrv_event *event);
 
-extern macdrv_query* macdrv_create_query(void) DECLSPEC_HIDDEN;
-extern macdrv_query* macdrv_retain_query(macdrv_query *query) DECLSPEC_HIDDEN;
-extern void macdrv_release_query(macdrv_query *query) DECLSPEC_HIDDEN;
-extern void macdrv_set_query_done(macdrv_query *query) DECLSPEC_HIDDEN;
+extern macdrv_query* macdrv_create_query(void);
+extern macdrv_query* macdrv_retain_query(macdrv_query *query);
+extern void macdrv_release_query(macdrv_query *query);
+extern void macdrv_set_query_done(macdrv_query *query);
 extern int macdrv_register_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags,
-                                   unsigned int keycode, unsigned int modifiers) DECLSPEC_HIDDEN;
-extern void macdrv_unregister_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags) DECLSPEC_HIDDEN;
+                                   unsigned int keycode, unsigned int modifiers);
+extern void macdrv_unregister_hot_key(macdrv_event_queue q, unsigned int vkey, unsigned int mod_flags);
 
 
 /* window */
@@ -550,88 +538,88 @@ struct macdrv_window_state {
 };
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,
-        CGRect frame, void* hwnd, macdrv_event_queue queue) DECLSPEC_HIDDEN;
-extern void macdrv_destroy_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
-extern void* macdrv_get_window_hwnd(macdrv_window w) DECLSPEC_HIDDEN;
+        CGRect frame, void* hwnd, macdrv_event_queue queue);
+extern void macdrv_destroy_cocoa_window(macdrv_window w);
+extern void* macdrv_get_window_hwnd(macdrv_window w);
 extern void macdrv_set_cocoa_window_features(macdrv_window w,
-        const struct macdrv_window_features* wf) DECLSPEC_HIDDEN;
+        const struct macdrv_window_features* wf);
 extern void macdrv_set_cocoa_window_state(macdrv_window w,
-        const struct macdrv_window_state* state) DECLSPEC_HIDDEN;
+        const struct macdrv_window_state* state);
 extern void macdrv_set_cocoa_window_title(macdrv_window w, const UniChar* title,
-        size_t length) DECLSPEC_HIDDEN;
+        size_t length);
 extern void macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
-        macdrv_window next, int activate) DECLSPEC_HIDDEN;
-extern void macdrv_hide_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
-extern void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
-extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame) DECLSPEC_HIDDEN;
-extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent) DECLSPEC_HIDDEN;
-extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex) DECLSPEC_HIDDEN;
+        macdrv_window next, int activate);
+extern void macdrv_hide_cocoa_window(macdrv_window w);
+extern void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame);
+extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame);
+extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent);
+extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex);
 extern CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_data, int color_keyed,
-        CGFloat key_red, CGFloat key_green, CGFloat key_blue) DECLSPEC_HIDDEN;
-extern int get_surface_blit_rects(void *window_surface, const CGRect **rects, int *count) DECLSPEC_HIDDEN;
-extern void macdrv_window_needs_display(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
-extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count) DECLSPEC_HIDDEN;
-extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha) DECLSPEC_HIDDEN;
+        CGFloat key_red, CGFloat key_green, CGFloat key_blue);
+extern int get_surface_blit_rects(void *window_surface, const CGRect **rects, int *count);
+extern void macdrv_window_needs_display(macdrv_window w, CGRect rect);
+extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count);
+extern void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha);
 extern void macdrv_set_window_color_key(macdrv_window w, CGFloat keyRed, CGFloat keyGreen,
-                                        CGFloat keyBlue) DECLSPEC_HIDDEN;
-extern void macdrv_clear_window_color_key(macdrv_window w) DECLSPEC_HIDDEN;
-extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha) DECLSPEC_HIDDEN;
-extern void macdrv_give_cocoa_window_focus(macdrv_window w, int activate) DECLSPEC_HIDDEN;
-extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size) DECLSPEC_HIDDEN;
-extern macdrv_view macdrv_create_view(CGRect rect) DECLSPEC_HIDDEN;
-extern void macdrv_dispose_view(macdrv_view v) DECLSPEC_HIDDEN;
-extern void macdrv_set_view_frame(macdrv_view v, CGRect rect) DECLSPEC_HIDDEN;
-extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n) DECLSPEC_HIDDEN;
-extern void macdrv_set_view_hidden(macdrv_view v, int hidden) DECLSPEC_HIDDEN;
-extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
-extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
-extern macdrv_metal_device macdrv_create_metal_device(void) DECLSPEC_HIDDEN;
-extern void macdrv_release_metal_device(macdrv_metal_device d) DECLSPEC_HIDDEN;
-extern macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d) DECLSPEC_HIDDEN;
-extern macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v) DECLSPEC_HIDDEN;
-extern void macdrv_view_release_metal_view(macdrv_metal_view v) DECLSPEC_HIDDEN;
-extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]) DECLSPEC_HIDDEN;
-extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2]) DECLSPEC_HIDDEN;
-extern uint32_t macdrv_window_background_color(void) DECLSPEC_HIDDEN;
+                                        CGFloat keyBlue);
+extern void macdrv_clear_window_color_key(macdrv_window w);
+extern void macdrv_window_use_per_pixel_alpha(macdrv_window w, int use_per_pixel_alpha);
+extern void macdrv_give_cocoa_window_focus(macdrv_window w, int activate);
+extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize max_size);
+extern macdrv_view macdrv_create_view(CGRect rect);
+extern void macdrv_dispose_view(macdrv_view v);
+extern void macdrv_set_view_frame(macdrv_view v, CGRect rect);
+extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n);
+extern void macdrv_set_view_hidden(macdrv_view v, int hidden);
+extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c);
+extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c);
+extern macdrv_metal_device macdrv_create_metal_device(void);
+extern void macdrv_release_metal_device(macdrv_metal_device d);
+extern macdrv_metal_view macdrv_view_create_metal_view(macdrv_view v, macdrv_metal_device d);
+extern macdrv_metal_layer macdrv_view_get_metal_layer(macdrv_metal_view v);
+extern void macdrv_view_release_metal_view(macdrv_metal_view v);
+extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]);
+extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2]);
+extern uint32_t macdrv_window_background_color(void);
 extern void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
-                                         void* data, int* done) DECLSPEC_HIDDEN;
-extern int macdrv_is_any_wine_window_visible(void) DECLSPEC_HIDDEN;
+                                         void* data, int* done);
+extern int macdrv_is_any_wine_window_visible(void);
 
 
 /* keyboard */
 extern void macdrv_get_input_source_info(CFDataRef* uchr,CGEventSourceKeyboardType* keyboard_type, int* is_iso,
-                                         TISInputSourceRef* input_source) DECLSPEC_HIDDEN;
-extern CFArrayRef macdrv_create_input_source_list(void) DECLSPEC_HIDDEN;
-extern int macdrv_select_input_source(TISInputSourceRef input_source) DECLSPEC_HIDDEN;
-extern const CFStringRef macdrv_input_source_input_key DECLSPEC_HIDDEN;
-extern const CFStringRef macdrv_input_source_type_key DECLSPEC_HIDDEN;
-extern const CFStringRef macdrv_input_source_lang_key DECLSPEC_HIDDEN;
-extern int macdrv_layout_list_needs_update DECLSPEC_HIDDEN;
+                                         TISInputSourceRef* input_source);
+extern CFArrayRef macdrv_create_input_source_list(void);
+extern int macdrv_select_input_source(TISInputSourceRef input_source);
+extern const CFStringRef macdrv_input_source_input_key;
+extern const CFStringRef macdrv_input_source_type_key;
+extern const CFStringRef macdrv_input_source_lang_key;
+extern int macdrv_layout_list_needs_update;
 
 
 /* clipboard */
-extern CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard) DECLSPEC_HIDDEN;
-extern CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type) DECLSPEC_HIDDEN;
-extern int macdrv_is_pasteboard_owner(macdrv_window w) DECLSPEC_HIDDEN;
-extern int macdrv_has_pasteboard_changed(void) DECLSPEC_HIDDEN;
-extern void macdrv_clear_pasteboard(macdrv_window w) DECLSPEC_HIDDEN;
-extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w) DECLSPEC_HIDDEN;
+extern CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard);
+extern CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type);
+extern int macdrv_is_pasteboard_owner(macdrv_window w);
+extern int macdrv_has_pasteboard_changed(void);
+extern void macdrv_clear_pasteboard(macdrv_window w);
+extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w);
 
 
 /* opengl */
-extern macdrv_opengl_context macdrv_create_opengl_context(void* cglctx) DECLSPEC_HIDDEN;
-extern void macdrv_dispose_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
-extern void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v, CGRect r) DECLSPEC_HIDDEN;
-extern void macdrv_update_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
-extern void macdrv_flush_opengl_context(macdrv_opengl_context c) DECLSPEC_HIDDEN;
+extern macdrv_opengl_context macdrv_create_opengl_context(void* cglctx);
+extern void macdrv_dispose_opengl_context(macdrv_opengl_context c);
+extern void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v, CGRect r);
+extern void macdrv_update_opengl_context(macdrv_opengl_context c);
+extern void macdrv_flush_opengl_context(macdrv_opengl_context c);
 
 
 /* systray / status item */
-extern macdrv_status_item macdrv_create_status_item(macdrv_event_queue q) DECLSPEC_HIDDEN;
-extern void macdrv_destroy_status_item(macdrv_status_item s) DECLSPEC_HIDDEN;
-extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage) DECLSPEC_HIDDEN;
-extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip) DECLSPEC_HIDDEN;
+extern macdrv_status_item macdrv_create_status_item(macdrv_event_queue q);
+extern void macdrv_destroy_status_item(macdrv_status_item s);
+extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage);
+extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip);
 
-extern void macdrv_clear_ime_text(void) DECLSPEC_HIDDEN;
+extern void macdrv_clear_ime_text(void);
 
 #endif  /* __WINE_MACDRV_COCOA_H */
