@@ -247,7 +247,7 @@ extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *extra_rect );
 
 /* message.c */
-extern BOOL set_keyboard_auto_repeat( BOOL enable ) DECLSPEC_HIDDEN;
+extern BOOL set_keyboard_auto_repeat( BOOL enable );
 
 /* window.c */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );

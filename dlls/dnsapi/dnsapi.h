@@ -97,7 +97,7 @@ static inline char *strdup_ua( const char *src )
     return dst;
 }
 
-extern const char *debugstr_type( unsigned short ) DECLSPEC_HIDDEN;
+extern const char *debugstr_type( unsigned short );
 
 struct get_searchlist_params
 {

@@ -51,16 +51,16 @@ extern "C" {
 #define NTAPI __stdcall
 #define FASTCALL __fastcall
 
-#ifndef MIDL_PASS
+#ifndef DECLSPEC_IMPORT
 # if defined(_MSC_VER)
 #  define DECLSPEC_IMPORT __declspec(dllimport)
 # elif defined(__MINGW32__) || defined(__CYGWIN__)
 #  define DECLSPEC_IMPORT __attribute__((dllimport))
+# elif defined(__GNUC__)
+#  define DECLSPEC_IMPORT __attribute__((visibility ("hidden")))
 # else
-#  define DECLSPEC_IMPORT DECLSPEC_HIDDEN
+#  define DECLSPEC_IMPORT
 # endif
-#else
-# define DECLSPEC_IMPORT
 #endif
 
 #ifndef DECLSPEC_NORETURN
@@ -191,16 +191,6 @@ extern "C" {
 # define DECLSPEC_EXPORT __attribute__((visibility ("default")))
 #else
 # define DECLSPEC_EXPORT
-#endif
-
-#ifndef DECLSPEC_HIDDEN
-# if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__) || defined(__sun)
-#  define DECLSPEC_HIDDEN
-# elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
-#  define DECLSPEC_HIDDEN __attribute__((visibility ("hidden")))
-# else
-#  define DECLSPEC_HIDDEN
-# endif
 #endif
 
 #ifndef __has_attribute
