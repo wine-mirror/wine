@@ -153,7 +153,8 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
     image->green_mask = 0xff;
     image->blue_mask = 0xff;
     image->palette_size = colour_count;
-    if (!(image->palette = realloc(palette, colour_count * sizeof(*palette))))
+    image->palette = palette;
+    if ((palette = realloc(palette, colour_count * sizeof(*palette))))
         image->palette = palette;
 
     return TRUE;
