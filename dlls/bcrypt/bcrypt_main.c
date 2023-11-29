@@ -1346,7 +1346,7 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_DSA_PRIVATE_BLOB ) || !wcscmp( type, LEGACY_DSA_V2_PRIVATE_BLOB ) ||
-             !wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
+             !wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ) || !wcscmp( type, BCRYPT_DH_PRIVATE_BLOB ))
     {
         params.key     = key;
         params.flags   = 0;
@@ -1365,7 +1365,8 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         return UNIX_CALL( key_asymmetric_export, &params );
     }
     else if (!wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ) || !wcscmp( type, LEGACY_DSA_V2_PUBLIC_BLOB ) ||
-             !wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ) || !wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ))
+             !wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ) || !wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ) ||
+             !wcscmp( type, BCRYPT_DH_PUBLIC_BLOB ))
     {
         params.key     = key;
         params.flags   = KEY_EXPORT_FLAG_PUBLIC;

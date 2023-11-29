@@ -147,6 +147,9 @@ static int (*pgnutls_privkey_set_spki)(gnutls_privkey_t, const gnutls_x509_spki_
 /* Not present in gnutls version < 3.8.2 */
 static int (*pgnutls_privkey_derive_secret)(gnutls_privkey_t, gnutls_pubkey_t, const gnutls_datum_t *,
                                             gnutls_datum_t *, unsigned int);
+static int (*pgnutls_privkey_export_dh_raw)(gnutls_privkey_t, gnutls_dh_params_t, gnutls_datum_t *, gnutls_datum_t *,
+                                            unsigned int);
+static int (*pgnutls_pubkey_export_dh_raw)(gnutls_pubkey_t, gnutls_dh_params_t, gnutls_datum_t *, unsigned);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -154,6 +157,9 @@ MAKE_FUNCPTR(gnutls_cipher_decrypt2);
 MAKE_FUNCPTR(gnutls_cipher_deinit);
 MAKE_FUNCPTR(gnutls_cipher_encrypt2);
 MAKE_FUNCPTR(gnutls_cipher_init);
+MAKE_FUNCPTR(gnutls_dh_params_deinit);
+MAKE_FUNCPTR(gnutls_dh_params_export_raw);
+MAKE_FUNCPTR(gnutls_dh_params_init);
 MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
@@ -312,6 +318,18 @@ static int compat_gnutls_privkey_derive_secret(gnutls_privkey_t privkey, gnutls_
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_privkey_export_dh_raw(gnutls_privkey_t privkey, gnutls_dh_params_t params, gnutls_datum_t *y,
+                                               gnutls_datum_t *x, unsigned int flags )
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_pubkey_export_dh_raw(gnutls_pubkey_t pubkey, gnutls_dh_params_t params, gnutls_datum_t *y,
+                                              unsigned flags)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -349,6 +367,9 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR(gnutls_cipher_deinit)
     LOAD_FUNCPTR(gnutls_cipher_encrypt2)
     LOAD_FUNCPTR(gnutls_cipher_init)
+    LOAD_FUNCPTR(gnutls_dh_params_deinit)
+    LOAD_FUNCPTR(gnutls_dh_params_export_raw)
+    LOAD_FUNCPTR(gnutls_dh_params_init)
     LOAD_FUNCPTR(gnutls_global_deinit)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
@@ -376,6 +397,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_pk_to_sign)
     LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
     LOAD_FUNCPTR_OPT(gnutls_privkey_derive_secret)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_dh_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
@@ -384,6 +406,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_set_spki)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_encrypt_data)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_export_dh_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_rsa_raw)
@@ -1540,6 +1563,109 @@ static NTSTATUS key_import_dsa_capi_public( struct key *key, UCHAR *buf, ULONG l
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_export_dh_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_DH_KEY_BLOB *dh_blob = (BCRYPT_DH_KEY_BLOB *)buf;
+    ULONG size = key->u.a.bitlen / 8;
+    gnutls_dh_params_t params;
+    gnutls_datum_t p, g, y, x = {0};
+    UCHAR *dst;
+    int ret = GNUTLS_E_INVALID_REQUEST;
+
+    if ((ret = pgnutls_dh_params_init( &params )) < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key_data(key)->a.pubkey)
+        ret = pgnutls_pubkey_export_dh_raw( key_data(key)->a.pubkey, params, &y, 0 );
+    else if (key_data(key)->a.privkey)
+        ret = pgnutls_privkey_export_dh_raw( key_data(key)->a.privkey, params, &y, &x, 0 );
+
+    if (ret)
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if ((ret = pgnutls_dh_params_export_raw( params, &p, &g, NULL )) < 0)
+    {
+        pgnutls_perror( ret );
+        free( y.data ); free( x.data );
+        pgnutls_dh_params_deinit( params );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *ret_len = sizeof(*dh_blob) + EXPORT_SIZE(p, size, 1) + EXPORT_SIZE(g, size, 1) + EXPORT_SIZE(y, size, 1);
+    if (len >= *ret_len && buf)
+    {
+        dst = (UCHAR *)(dh_blob + 1);
+        dst += export_gnutls_datum( dst, size, &p, 1 );
+        dst += export_gnutls_datum( dst, size, &g, 1 );
+        dst += export_gnutls_datum( dst, size, &y, 1 );
+
+        dh_blob->dwMagic = BCRYPT_DH_PUBLIC_MAGIC;
+        dh_blob->cbKey   = size;
+    }
+
+    free( p.data ); free( g.data ); free( y.data ); free( x.data );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_export_dh( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_DH_KEY_BLOB *dh_blob = (BCRYPT_DH_KEY_BLOB *)buf;
+    gnutls_datum_t p, g, y, x;
+    gnutls_dh_params_t params;
+    ULONG size = key->u.a.bitlen / 8;
+    UCHAR *dst;
+    int ret;
+
+    if (!key_data(key)->a.privkey) return STATUS_INVALID_PARAMETER;
+
+    if ((ret = pgnutls_dh_params_init( &params )) < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    ret = pgnutls_privkey_export_dh_raw( key_data(key)->a.privkey, params, &y, &x, 0 );
+    if (ret)
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if ((ret = pgnutls_dh_params_export_raw( params, &p, &g, NULL )) < 0)
+    {
+        pgnutls_perror( ret );
+        free( y.data ); free( x.data );
+        pgnutls_dh_params_deinit( params );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *ret_len = sizeof(*dh_blob) + EXPORT_SIZE(p, size, 1) + EXPORT_SIZE(g, size, 1) +
+                                  EXPORT_SIZE(y, size, 1) + EXPORT_SIZE(x, size, 1);
+    if (len >= *ret_len && buf)
+    {
+        dst = (UCHAR *)(dh_blob + 1);
+        dst += export_gnutls_datum( dst, size, &p, 1 );
+        dst += export_gnutls_datum( dst, size, &g, 1 );
+        dst += export_gnutls_datum( dst, size, &y, 1 );
+        dst += export_gnutls_datum( dst, size, &x, 1 );
+
+        dh_blob->dwMagic = BCRYPT_DH_PRIVATE_MAGIC;
+        dh_blob->cbKey   = size;
+    }
+
+    free( p.data ); free( g.data ); free( y.data ); free( x.data );
+    pgnutls_dh_params_deinit( params );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_export( void *args )
 {
     const struct key_asymmetric_export_params *params = args;
@@ -1572,6 +1698,11 @@ static NTSTATUS key_asymmetric_export( void *args )
         if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
             return key_export_dsa_capi( key, params->buf, params->len, params->ret_len );
         return STATUS_NOT_IMPLEMENTED;
+
+    case ALG_ID_DH:
+       if (flags & KEY_EXPORT_FLAG_PUBLIC)
+            return key_export_dh_public( key, params->buf, params->len, params->ret_len );
+        return key_export_dh( key, params->buf, params->len, params->ret_len );
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );

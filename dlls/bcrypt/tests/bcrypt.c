@@ -3140,7 +3140,10 @@ derive_end:
 static void test_DH(void)
 {
     BCRYPT_KEY_HANDLE key;
+    BCRYPT_DH_KEY_BLOB *dhkey;
     NTSTATUS status;
+    UCHAR *buf;
+    ULONG size;
 
     key = NULL;
     status = BCryptGenerateKeyPair(BCRYPT_DH_ALG_HANDLE, &key, 512, 0);
@@ -3149,7 +3152,26 @@ static void test_DH(void)
 
     status = BCryptFinalizeKeyPair(key, 0);
     todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    if (status != STATUS_SUCCESS)
+    {
+        BCryptDestroyKey(key);
+        return;
+    }
 
+    size = 0;
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PUBLIC_BLOB, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    ok(size, "size not set\n");
+
+    buf = malloc(size);
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PUBLIC_BLOB, buf, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    dhkey = (BCRYPT_DH_KEY_BLOB *)buf;
+    ok(dhkey->dwMagic == BCRYPT_DH_PUBLIC_MAGIC, "got %#lx\n", dhkey->dwMagic);
+    ok(dhkey->cbKey == 64, "got %lu\n", dhkey->cbKey);
+    ok(size == sizeof(*dhkey) + dhkey->cbKey * 3, "got %lu\n", size);
+
+    free(buf);
     BCryptDestroyKey(key);
 }
 
