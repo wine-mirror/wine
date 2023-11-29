@@ -225,7 +225,12 @@ static int nice_limit;
 void init_threading(void)
 {
     struct rlimit rlimit;
-    if (!getrlimit( RLIMIT_NICE, &rlimit ))
+
+    /* if wineserver has cap_sys_nice we are unlimited, but leave -20 to the user */
+    if (!setpriority( PRIO_PROCESS, getpid(), -20 )) nice_limit = -19;
+    setpriority( PRIO_PROCESS, getpid(), 0 );
+
+    if (!nice_limit && !getrlimit( RLIMIT_NICE, &rlimit ))
     {
         rlimit.rlim_cur = rlimit.rlim_max;
         setrlimit( RLIMIT_NICE, &rlimit );
