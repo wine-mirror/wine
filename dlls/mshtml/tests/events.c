@@ -3589,7 +3589,14 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
     ok(doc_node != doc_node2, "doc_node == doc_node2\n");
     IHTMLDocument2_Release(doc_node2);
+
+    hres = IHTMLDocument2_get_parentWindow(doc_node, &window2);
+    todo_wine
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    todo_wine
+    ok(window == window2, "window != window2\n");
     IHTMLDocument2_Release(doc_node);
+    if(hres == S_OK) IHTMLWindow2_Release(window2);
 
     hres = IHTMLWindow2_get_location(window, &location2);
     ok(hres == S_OK, "get_location failed: %08lx\n", hres);

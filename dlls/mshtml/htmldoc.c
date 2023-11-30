@@ -5707,12 +5707,6 @@ void detach_document_node(HTMLDocumentNode *doc)
 {
     unsigned i;
 
-    if(doc->window) {
-        HTMLInnerWindow *window = doc->window;
-        doc->window = NULL;
-        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
-    }
-
     while(!list_empty(&doc->plugin_hosts))
         detach_plugin_host(LIST_ENTRY(list_head(&doc->plugin_hosts), PluginHost, entry));
 
@@ -5884,14 +5878,20 @@ static void HTMLDocumentNode_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 static void HTMLDocumentNode_unlink(DispatchEx *dispex)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    HTMLInnerWindow *window = This->window;
     HTMLDOMNode_unlink(dispex);
+
+    if(window) {
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
 
     if(This->dom_document) {
         release_document_mutation(This);
         detach_document_node(This);
         This->dom_document = NULL;
         This->html_document = NULL;
-    }else if(This->window) {
+    }else if(window) {
         detach_document_node(This);
     }
 }
