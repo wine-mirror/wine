@@ -3509,7 +3509,10 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
             req->sockets[i].flags |= AFD_POLL_CONNECT_ERR;
             req->sockets[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
         }
+    }
 
+    for (i = 0; i < count; ++i)
+    {
         if (req->sockets[i].flags)
             signaled = TRUE;
     }
