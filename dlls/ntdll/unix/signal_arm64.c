@@ -127,6 +127,17 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 
 #endif /* linux */
 
+/* stack layout when calling KiUserExceptionDispatcher */
+struct exc_stack_layout
+{
+    CONTEXT              context;        /* 000 */
+    EXCEPTION_RECORD     rec;            /* 390 */
+    ULONG64              align;          /* 428 */
+    ULONG64              redzone[2];     /* 430 */
+};
+C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x390 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x440 );
+
 struct syscall_frame
 {
     ULONG64               x[29];          /* 000 */
@@ -167,8 +178,6 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
             (char *)SP_sig(sigcontext) <= (char *)arm64_thread_data()->syscall_frame);
 }
 
-extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
-
 /***********************************************************************
  *           dwarf_virtual_unwind
  *
@@ -185,7 +194,6 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
     struct frame_state state_stack[MAX_SAVED_STATES];
     int aug_z_format = 0;
     unsigned char lsda_encoding = DW_EH_PE_omit;
-    DWORD64 prev_x28 = context->X28;
 
     memset( &info, 0, sizeof(info) );
     info.state_stack = state_stack;
@@ -274,17 +282,6 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
     /* Set Pc based on Lr; libunwind also does this as part of unw_step. */
     context->Pc = context->Lr;
 
-    if (bases->func == (void *)raise_func_trampoline) {
-        /* raise_func_trampoline has a pointer to a full CONTEXT stored in x28;
-         * restore the original Lr value from there. The function we unwind to
-         * might be a leaf function that hasn't backed up its own original Lr
-         * value on the stack.
-         * We could also just restore the full context here without doing
-         * unw_step at all. */
-        const CONTEXT *next_ctx = (const CONTEXT *)prev_x28;
-        context->Lr = next_ctx->Lr;
-    }
-
     TRACE( "next function pc=%016lx\n", context->Pc );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
           context->X0, context->X1, context->X2, context->X3 );
@@ -315,7 +312,6 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     unw_cursor_t cursor;
     unw_proc_info_t info;
     int rc;
-    DWORD64 prev_x28 = context->X28;
 
 #ifdef __APPLE__
     rc = unw_getcontext( &unw_context );
@@ -420,17 +416,6 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
 #endif
     unw_get_reg( &cursor, UNW_REG_IP,      (unw_word_t *)&context->Pc );
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-
-    if (info.start_ip == (unw_word_t)raise_func_trampoline) {
-        /* raise_func_trampoline has a pointer to a full CONTEXT stored in x28;
-         * restore the original Lr value from there. The function we unwind to
-         * might be a leaf function that hasn't backed up its own original Lr
-         * value on the stack.
-         * We could also just restore the full context here without doing
-         * unw_step at all. */
-        const CONTEXT *next_ctx = (const CONTEXT *)prev_x28;
-        context->Lr = next_ctx->Lr;
-    }
 
     TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
@@ -951,45 +936,6 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
-/* Note, unwind_builtin_dll above has hardcoded assumptions on how this
- * function stores a CONTEXT pointer in x28; if modified, modify that one in
- * sync as well. */
-__ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   "stp x29, x30, [sp, #-0x20]!\n\t"
-                   "str x28, [sp, #0x10]\n\t"
-                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
-                   __ASM_CFI(".cfi_offset 29, -32\n\t")
-                   __ASM_CFI(".cfi_offset 30, -24\n\t")
-                   __ASM_CFI(".cfi_offset 28, -16\n\t")
-                   "mov x29, sp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
-                   __ASM_CFI(".cfi_remember_state\n\t")
-                   "mov x28, x1\n\t"
-                   __ASM_CFI_REG_IS_AT2(x19, x28, 0xa0, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x20, x28, 0xa8, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x21, x28, 0xb0, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x22, x28, 0xb8, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x23, x28, 0xc0, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x24, x28, 0xc8, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x25, x28, 0xd0, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x26, x28, 0xd8, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x27, x28, 0xe0, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x28, x28, 0xe8, 0x01)
-                   __ASM_CFI_REG_IS_AT2(x29, x28, 0xf0, 0x01)
-                   __ASM_CFI_CFA_IS_AT2(x28, 0x80, 0x02)
-                   __ASM_CFI_REG_IS_AT2(x30, x28, 0x88, 0x02)
-                   __ASM_CFI_REG_IS_AT2(v8, x28, 0x90, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v9, x28, 0x98, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v10, x28, 0xa0, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v11, x28, 0xa8, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v12, x28, 0xb0, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v13, x28, 0xb8, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v14, x28, 0xc8, 0x03)
-                   __ASM_CFI_REG_IS_AT2(v15, x28, 0xc8, 0x03)
-                   "blr x2\n\t"
-                   __ASM_CFI(".cfi_restore_state\n\t")
-                   "brk #1")
-
 /***********************************************************************
  *           setup_exception
  *
@@ -997,13 +943,7 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
  */
 static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    struct
-    {
-        CONTEXT           context;
-        EXCEPTION_RECORD  rec;
-        void             *redzone[3];
-    } *stack;
-
+    struct exc_stack_layout *stack;
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~15);
     CONTEXT context;
     NTSTATUS status;
@@ -1021,16 +961,12 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc -= 4;
 
-    stack = virtual_setup_exception( stack_ptr, (sizeof(*stack) + 15) & ~15, rec );
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
     stack->rec = *rec;
     stack->context = context;
 
     SP_sig(sigcontext) = (ULONG_PTR)stack;
-    LR_sig(sigcontext) = PC_sig(sigcontext);
-    PC_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
-    REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for KiUserExceptionDispatcher */
-    REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for KiUserExceptionDispatcher */
-    REGn_sig(2, sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher; /* dispatcher arg for raise_func_trampoline */
+    PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
     REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
 }
 
@@ -1086,19 +1022,16 @@ void call_raise_user_exception_dispatcher(void)
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
-    ULONG64 fp = frame->fp;
-    ULONG64 lr = frame->lr;
-    ULONG64 sp = frame->sp;
+    struct exc_stack_layout *stack;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (status) return status;
-    frame->x[0] = (ULONG64)rec;
-    frame->x[1] = (ULONG64)context;
-    frame->pc   = (ULONG64)pKiUserExceptionDispatcher;
-    frame->fp   = fp;
-    frame->lr   = lr;
-    frame->sp   = sp;
-    frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;
+    stack = (struct exc_stack_layout *)(context->Sp & ~15) - 1;
+    memmove( &stack->context, context, sizeof(*context) );
+    memmove( &stack->rec, rec, sizeof(*rec) );
+    frame->pc = (ULONG64)pKiUserExceptionDispatcher;
+    frame->sp = (ULONG64)stack;
+    frame->restore_flags |= CONTEXT_CONTROL;
     syscall_frame_fixup_for_fastpath( frame );
     return status;
 }

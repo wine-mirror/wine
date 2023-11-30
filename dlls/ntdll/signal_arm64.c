@@ -491,15 +491,10 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
 }
 
 
-/*******************************************************************
- *		KiUserExceptionDispatcher (NTDLL.@)
- */
-NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     NTSTATUS status;
     DWORD c;
-
-    if (pWow64PrepareForException) pWow64PrepareForException( rec, context );
 
     TRACE( "code=%lx flags=%lx addr=%p pc=%016I64x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Pc );
@@ -569,6 +564,24 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
     return NtRaiseException( rec, context, FALSE );
 }
+
+
+/*******************************************************************
+ *		KiUserExceptionDispatcher (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
+                   __ASM_SEH(".seh_context\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "adr x16, " __ASM_NAME("pWow64PrepareForException") "\n\t"
+                   "ldr x16, [x16]\n\t"
+                   "cbz x16, 1f\n\t"
+                   "add x0, sp, #0x390\n\t"     /* rec (context + 1) */
+                   "mov x1, sp\n\t"             /* context */
+                   "blr x16\n"
+                   "1:\tadd x0, sp, #0x390\n\t" /* rec (context + 1) */
+                   "mov x1, sp\n\t"             /* context */
+                   "bl " __ASM_NAME("dispatch_exception") "\n\t"
+                   "brk #1" )
 
 
 /*******************************************************************
