@@ -173,16 +173,16 @@ static const char iframe_doc_str[] =
 
 static void navigate(IHTMLDocument2*,const WCHAR*);
 
-static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+static BOOL iface_cmp(void *iface1, void *iface2)
 {
     IUnknown *unk1, *unk2;
 
     if(iface1 == iface2)
         return TRUE;
 
-    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_QueryInterface((IUnknown *)iface1, &IID_IUnknown, (void**)&unk1);
     IUnknown_Release(unk1);
-    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    IUnknown_QueryInterface((IUnknown *)iface2, &IID_IUnknown, (void**)&unk2);
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
@@ -3170,8 +3170,8 @@ static IHTMLDocument2 *get_iframe_doc(IHTMLIFrameElement *iframe)
 
 static void test_iframe_connections(IHTMLDocument2 *doc)
 {
+    IHTMLDocument2 *iframes_doc, *new_doc;
     IHTMLIFrameElement *iframe;
-    IHTMLDocument2 *iframes_doc;
     DWORD cookie;
     IConnectionPoint *cp;
     IHTMLElement *element;
@@ -3185,7 +3185,6 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
     IHTMLElement_Release(element);
 
     iframes_doc = get_iframe_doc(iframe);
-    IHTMLIFrameElement_Release(iframe);
 
     cookie = register_cp((IUnknown*)iframes_doc, &IID_IDispatch, (IUnknown*)&div_onclick_disp);
 
@@ -3215,23 +3214,38 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
         ok(hres == S_OK, "put_URL failed: %08lx\n", hres);
         SysFreeString(str);
 
+        new_doc = get_iframe_doc(iframe);
+        ok(iface_cmp(new_doc, iframes_doc), "new_doc != iframes_doc\n");
+        IHTMLDocument2_Release(new_doc);
+
         SET_EXPECT(iframe_onload);
         pump_msgs(&called_iframe_onload);
         CHECK_CALLED(iframe_onload);
 
+        new_doc = get_iframe_doc(iframe);
+        todo_wine
+        ok(iface_cmp(new_doc, iframes_doc), "new_doc != iframes_doc\n");
+
         str = SysAllocString(L"about:test");
-        hres = IHTMLDocument2_put_URL(iframes_doc, str);
+        hres = IHTMLDocument2_put_URL(new_doc, str);
         ok(hres == S_OK, "put_URL failed: %08lx\n", hres);
+        IHTMLDocument2_Release(new_doc);
         SysFreeString(str);
 
         SET_EXPECT(iframe_onload);
         pump_msgs(&called_iframe_onload);
         CHECK_CALLED(iframe_onload);
+
+        new_doc = get_iframe_doc(iframe);
+        todo_wine
+        ok(iface_cmp(new_doc, iframes_doc), "new_doc != iframes_doc\n");
+        IHTMLDocument2_Release(new_doc);
     }else {
         win_skip("Skipping iframe onload tests on IE older than 9.\n");
     }
 
     IHTMLDocument2_Release(iframes_doc);
+    IHTMLIFrameElement_Release(iframe);
 }
 
 static void test_window_refs(IHTMLDocument2 *doc)
