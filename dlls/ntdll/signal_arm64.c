@@ -587,13 +587,19 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                                 PNTAPCFUNC apc )
-{
-    void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*) = (void *)apc;
-    func( arg1, arg2, arg3, context );
-    NtContinue( context, TRUE );
-}
+__ASM_GLOBAL_FUNC( KiUserApcDispatcher,
+                   __ASM_SEH(".seh_context\n\t")
+                   "nop\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x30\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "ldp x16, x0, [sp]\n\t"        /* func, arg1 */
+                   "ldp x1, x2, [sp, #0x10]\n\t"  /* arg2, arg3 */
+                   "add x3, sp, #0x30\n\t"        /* context (FIXME) */
+                   "blr x16\n\t"
+                   "add x0, sp, #0x30\n\t"        /* context */
+                   "ldr w1, [sp, #0x20]\n\t"      /* alertable */
+                   "bl " __ASM_NAME("NtContinue") "\n\t"
+                   "brk #1" )
 
 
 /*******************************************************************
