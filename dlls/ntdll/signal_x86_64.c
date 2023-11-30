@@ -546,8 +546,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    if (pWow64PrepareForException) pWow64PrepareForException( rec, context );
-
     TRACE_(seh)( "code=%lx flags=%lx addr=%p ip=%Ix\n",
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Rip );
     for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
@@ -610,34 +608,20 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 }
 
 
-NTSTATUS WINAPI dispatch_wow_exception( EXCEPTION_RECORD *rec_ptr, CONTEXT *context_ptr )
-{
-    char buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 128];
-    CONTEXT *context;
-    CONTEXT_EX *context_ex;
-    EXCEPTION_RECORD rec = *rec_ptr;
-
-    RtlInitializeExtendedContext( buffer, context_ptr->ContextFlags, &context_ex );
-    context = RtlLocateLegacyContext( context_ex, NULL );
-    RtlCopyContext( context, context_ptr->ContextFlags, context_ptr );
-    return dispatch_exception( &rec, context );
-}
-
-
 /*******************************************************************
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
-                  "mov 0x98(%rsp),%rcx\n\t" /* context->Rsp */
-                  "movw %cs,%ax\n\t"
-                  "cmpw %ax,0x38(%rsp)\n\t" /* context->SegCs */
-                  "je 1f\n\t"
-                  "mov %rsp,%rdx\n\t" /* context */
-                  "lea 0x4f0(%rsp),%rcx\n\t" /* rec */
-                  "movq %r14,%rsp\n\t"  /* switch to 64-bit stack */
-                  "call " __ASM_NAME("dispatch_wow_exception") "\n\t"
-                  "int3\n"
+                   "cld\n\t"
+                   /* some anticheats need this exact instruction here */
+                   "mov " __ASM_NAME("pWow64PrepareForException") "(%rip),%rax\n\t"
+                   "test %rax,%rax\n\t"
+                   "jz 1f\n\t"
+                   "mov %rsp,%rdx\n\t"           /* context */
+                   "lea 0x4f0(%rsp),%rcx\n\t"    /* rec */
+                   "call *%rax\n"
                   "1:\tmov 0xf8(%rsp),%rdx\n\t" /* context->Rip */
+                  "mov 0x98(%rsp),%rcx\n\t" /* context->Rsp */
                   "mov %rdx,-0x8(%rcx)\n\t"
                   "mov %rbp,-0x10(%rcx)\n\t"
                   "mov %rdi,-0x18(%rcx)\n\t"

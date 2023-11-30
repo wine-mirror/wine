@@ -15,7 +15,7 @@
 @ stub Wow64NotifyUnsimulateComplete
 @ stdcall Wow64PassExceptionToGuest(ptr)
 @ stub Wow64PrepareForDebuggerAttach
-@ stdcall Wow64PrepareForException(ptr ptr)
+@ stdcall -norelay Wow64PrepareForException(ptr ptr)
 @ stdcall Wow64ProcessPendingCrossProcessItems()
 @ stdcall Wow64RaiseException(long ptr)
 @ stub Wow64ShallowThunkAllocObjectAttributes32TO64_FNC

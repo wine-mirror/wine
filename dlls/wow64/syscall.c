@@ -101,7 +101,6 @@ static void     (WINAPI *pBTCpuProcessInit)(void);
 static NTSTATUS (WINAPI *pBTCpuSetContext)(HANDLE,HANDLE,void *,void *);
 static void     (WINAPI *pBTCpuThreadInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void);
-static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
 void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
@@ -111,6 +110,7 @@ void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG ) = NULL;
 void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void * ) = NULL;
+NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * ) = NULL;
 void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) = NULL;
 void (WINAPI *pBTCpuThreadTerm)( HANDLE ) = NULL;
 
@@ -1154,12 +1154,45 @@ void WINAPI Wow64LdrpInitialize( CONTEXT *context )
 /**********************************************************************
  *           Wow64PrepareForException  (wow64.@)
  */
+#ifdef __x86_64__
+__ASM_GLOBAL_FUNC( Wow64PrepareForException,
+                   "sub $0x38,%rsp\n\t"
+                   "mov %rcx,%r10\n\t"           /* rec */
+                   "movw %cs,%ax\n\t"
+                   "cmpw %ax,0x38(%rdx)\n\t"     /* context->SegCs */
+                   "je 1f\n\t"                   /* already in 64-bit mode? */
+                   /* copy arguments to 64-bit stack */
+                   "mov %rsp,%rsi\n\t"
+                   "mov 0x98(%rdx),%rcx\n\t"     /* context->Rsp */
+                   "sub %rsi,%rcx\n\t"           /* stack size */
+                   "sub %rcx,%r14\n\t"           /* reserve same size on 64-bit stack */
+                   "and $~0x0f,%r14\n\t"
+                   "mov %r14,%rdi\n\t"
+                   "shr $3,%rcx\n\t"
+                   "rep; movsq\n\t"
+                   /* update arguments to point to the new stack */
+                   "mov %r14,%rax\n\t"
+                   "sub %rsp,%rax\n\t"
+                   "add %rax,%r10\n\t"           /* rec */
+                   "add %rax,%rdx\n\t"           /* context */
+                   /* switch to 64-bit stack */
+                   "mov %r14,%rsp\n"
+                   /* build EXCEPTION_POINTERS structure and call BTCpuResetToConsistentState */
+                   "1:\tlea 0x20(%rsp),%rcx\n\t" /* pointers */
+                   "mov %r10,(%rcx)\n\t"         /* rec */
+                   "mov %rdx,8(%rcx)\n\t"        /* context */
+                   "mov " __ASM_NAME("pBTCpuResetToConsistentState") "(%rip),%rax\n\t"
+                   "call *%rax\n\t"
+                   "add $0x38,%rsp\n\t"
+                   "ret" )
+#else
 void WINAPI Wow64PrepareForException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     EXCEPTION_POINTERS ptrs = { rec, context };
 
     pBTCpuResetToConsistentState( &ptrs );
 }
+#endif
 
 
 /**********************************************************************

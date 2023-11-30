@@ -35,6 +35,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
 #ifdef _WIN64
+static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
 static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopAllCrossProcessWorkFromWorkList)(CROSS_PROCESS_WORK_HDR*,BOOLEAN*);
@@ -100,6 +101,7 @@ static void init(void)
     GET_PROC( RtlWow64GetThreadContext );
     GET_PROC( RtlWow64IsWowGuestMachineSupported );
 #ifdef _WIN64
+    GET_PROC( KiUserExceptionDispatcher );
     GET_PROC( RtlWow64GetCpuAreaInfo );
     GET_PROC( RtlWow64GetThreadSelectorEntry );
     GET_PROC( RtlWow64PopAllCrossProcessWorkFromWorkList );
@@ -909,6 +911,7 @@ static void test_peb_teb(void)
 
 static void test_selectors(void)
 {
+#ifndef __arm__
     THREAD_DESCRIPTOR_INFORMATION info;
     NTSTATUS status;
     ULONG base, limit, sel, retlen;
@@ -1043,6 +1046,7 @@ static void test_selectors(void)
         }
     }
 #undef GET_ENTRY
+#endif /* __arm__ */
 }
 
 static void test_image_mappings(void)
@@ -1382,6 +1386,20 @@ static void test_cpu_area(void)
 #undef ALIGN
     }
     else win_skip( "RtlWow64GetCpuAreaInfo not supported\n" );
+}
+
+static void test_exception_dispatcher(void)
+{
+#ifdef __x86_64__
+    BYTE *code = (BYTE *)pKiUserExceptionDispatcher;
+    void **hook;
+
+    /* cld; mov xxx(%rip),%rax */
+    ok( code[0] == 0xfc && code[1] == 0x48 && code[2] == 0x8b && code[3] == 0x05,
+        "wrong opcodes %02x %02x %02x %02x\n", code[0], code[1], code[2], code[3] );
+    hook = (void **)(code + 8 + *(int *)(code + 4));
+    ok( !*hook, "hook %p set to %p\n", hook, *hook );
+#endif
 }
 
 #else  /* _WIN64 */
@@ -2122,6 +2140,40 @@ static void test_cpu_area(void)
 
 }
 
+static void test_exception_dispatcher(void)
+{
+    ULONG64 ptr, hook_ptr, hook, expect, res;
+    NTSTATUS status;
+    BYTE code[8];
+
+    if (!is_wow64) return;
+    if (!code_mem) return;
+    if (!ntdll_module) return;
+
+    ptr = get_proc_address64( ntdll_module, "KiUserExceptionDispatcher" );
+    ok( ptr, "KiUserExceptionDispatcher not found\n" );
+
+    if (pNtWow64ReadVirtualMemory64)
+    {
+        HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+
+        ok( process != 0, "failed to open current process %lu\n", GetLastError() );
+        status = pNtWow64ReadVirtualMemory64( process, ptr, &code, sizeof(code), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %lx\n", status );
+
+        /* cld; mov xxx(%rip),%rax */
+        ok( code[0] == 0xfc && code[1] == 0x48 && code[2] == 0x8b && code[3] == 0x05,
+            "wrong opcodes %02x %02x %02x %02x\n", code[0], code[1], code[2], code[3] );
+        hook_ptr = ptr + 8 + *(int *)(code + 4);
+        status = pNtWow64ReadVirtualMemory64( process, hook_ptr, &hook, sizeof(hook), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %lx\n", status );
+
+        expect = get_proc_address64( wow64_module, "Wow64PrepareForException" );
+        ok( hook == expect, "hook %I64x set to %I64x / %I64x\n", hook_ptr, hook, expect );
+        NtClose( process );
+    }
+}
+
 #endif  /* _WIN64 */
 
 
@@ -2142,4 +2194,5 @@ START_TEST(wow64)
     test_syscalls();
 #endif
     test_cpu_area();
+    test_exception_dispatcher();
 }
