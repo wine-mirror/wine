@@ -3134,6 +3134,8 @@ static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst
 
 #define H_CONSOLE  0
 #define H_DISK     1
+#define H_CHAR     2
+#define H_PIPE     3
 
 #define ARG_STD                 0x80000000
 #define ARG_STARTUPINFO         0x00000000
@@ -3171,7 +3173,7 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
 {
     SECURITY_ATTRIBUTES inherit_sa = { sizeof(inherit_sa), NULL, TRUE };
     SECURITY_ATTRIBUTES *psa;
-    BOOL needs_close = FALSE;
+    BOOL ret, needs_close = FALSE;
 
     psa = (args & ARG_HANDLE_INHERIT) ? &inherit_sa : NULL;
 
@@ -3192,6 +3194,18 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
         ok(hstd[0] != INVALID_HANDLE_VALUE, "Couldn't create input to file %s\n", std_handle_file);
         hstd[1] = CreateFileA(std_handle_file, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, psa, OPEN_EXISTING, 0, 0);
         ok(hstd[1] != INVALID_HANDLE_VALUE, "Couldn't create input to file %s\n", std_handle_file);
+        needs_close = TRUE;
+        break;
+    case H_CHAR:
+        hstd[0] = CreateFileA("NUL", GENERIC_READ, 0, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[0] != INVALID_HANDLE_VALUE, "Couldn't create input to NUL\n");
+        hstd[1] = CreateFileA("NUL", GENERIC_READ|GENERIC_WRITE, 0, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[1] != INVALID_HANDLE_VALUE, "Couldn't create input to NUL\n");
+        needs_close = TRUE;
+        break;
+    case H_PIPE:
+        ret = CreatePipe(&hstd[0], &hstd[1], psa, 0);
+        ok(ret, "Couldn't create anon pipe\n");
         needs_close = TRUE;
         break;
     default:
@@ -3233,6 +3247,32 @@ static void test_StdHandleInheritance(void)
     int i, j;
 
     static const struct std_handle_test
+    nothing_cui[] =
+    {
+        /* all others handles type behave as H_DISK */
+/* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+    },
+    nothing_gui[] =
+    {
+        /* testing all types because of discrepancies */
+/* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE, .is_todo = 6},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+/* 5*/  {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_todo = 6},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 7},
+    },
     detached_cui[] =
     {
         {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
@@ -3260,6 +3300,8 @@ static void test_StdHandleInheritance(void)
     tests[] =
     {
 #define X(d, cg, s) {(d), (cg), s, ARRAY_SIZE(s), #s}
+        X(0,                TRUE,  nothing_cui),
+        X(0,                FALSE, nothing_gui),
         X(DETACHED_PROCESS, TRUE,  detached_cui),
         X(DETACHED_PROCESS, FALSE, detached_gui),
 #undef X
