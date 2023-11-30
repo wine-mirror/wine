@@ -255,12 +255,14 @@ __ASM_STDCALL_FUNC( KiUserExceptionDispatcher, 8,
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
-                                 PNTAPCFUNC func )
-{
-    func( ctx, arg1, arg2 );
-    NtContinue( context, TRUE );
-}
+__ASM_STDCALL_FUNC( KiUserApcDispatcher, 20,
+                    "leal 0x14(%esp),%ebx\n\t"  /* context */
+                    "pop %eax\n\t"              /* func */
+                    "call *%eax\n\t"
+                    "pushl -4(%ebx)\n\t"        /* alertable */
+                    "pushl %ebx\n\t"            /* context */
+                    "call " __ASM_STDCALL("NtContinue", 8) "\n\t"
+                    "int3" )
 
 
 /*******************************************************************

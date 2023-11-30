@@ -450,6 +450,21 @@ C_ASSERT( offsetof(struct exc_stack_layout, context) == 0x58 );
 C_ASSERT( offsetof(struct exc_stack_layout, xstate) == 0x33c );
 C_ASSERT( sizeof(struct exc_stack_layout) == 0x4c0 );
 
+/* stack layout when calling KiUserApcDispatcher */
+struct apc_stack_layout
+{
+    PNTAPCFUNC        func;          /* 000 */
+    UINT              arg1;          /* 004 */
+    UINT              arg2;          /* 008 */
+    UINT              arg3;          /* 00c */
+    UINT              alertable;     /* 010 */
+    CONTEXT           context;       /* 014 */
+    CONTEXT_EX        xctx;          /* 2e0 */
+    UINT              unk2[4];       /* 2f8 */
+};
+C_ASSERT( offsetof(struct apc_stack_layout, context) == 0x14 );
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x308 );
+
 struct syscall_frame
 {
     WORD                  syscall_flags;  /* 000 */
@@ -1495,17 +1510,6 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     setup_raise_exception( sigcontext, stack, rec, &xcontext );
 }
 
-/* stack layout when calling an user apc function.
- * FIXME: match Windows ABI. */
-struct apc_stack_layout
-{
-    CONTEXT      *context_ptr;
-    ULONG_PTR     arg1;
-    ULONG_PTR     arg2;
-    ULONG_PTR     arg3;
-    PNTAPCFUNC    func;
-    CONTEXT       context;
-};
 
 /***********************************************************************
  *           call_user_apc_dispatcher
@@ -1525,13 +1529,14 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
     }
     else memmove( &stack->context, context, sizeof(stack->context) );
 
-    stack->context_ptr = &stack->context;
-    stack->arg1 = arg1;
-    stack->arg2 = arg2;
-    stack->arg3 = arg3;
-    stack->func = func;
+    context_init_xstate( &stack->context, NULL );
+    stack->func      = func;
+    stack->arg1      = arg1;
+    stack->arg2      = arg2;
+    stack->arg3      = arg3;
+    stack->alertable = TRUE;
     frame->ebp = stack->context.Ebp;
-    frame->esp = (ULONG)stack - 4;
+    frame->esp = (ULONG)stack;
     frame->eip = (ULONG)pKiUserApcDispatcher;
     return status;
 }

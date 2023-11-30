@@ -1000,26 +1000,39 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
     {
     case IMAGE_FILE_MACHINE_I386:
         {
-            struct apc_stack_layout
+            /* stack layout when calling 32-bit KiUserApcDispatcher */
+            struct apc_stack_layout32
             {
-                ULONG         ret;
-                ULONG         context_ptr;
-                ULONG         arg1;
-                ULONG         arg2;
-                ULONG         arg3;
-                ULONG         func;
-                I386_CONTEXT  context;
+                ULONG             func;          /* 000 */
+                UINT              arg1;          /* 004 */
+                UINT              arg2;          /* 008 */
+                UINT              arg3;          /* 00c */
+                UINT              alertable;     /* 010 */
+                I386_CONTEXT      context;       /* 014 */
+                CONTEXT_EX32      xctx;          /* 2e0 */
+                UINT              unk2[4];       /* 2f8 */
             } *stack;
             I386_CONTEXT ctx = { CONTEXT_I386_FULL };
 
+            C_ASSERT( offsetof(struct apc_stack_layout32, context) == 0x14 );
+            C_ASSERT( sizeof(struct apc_stack_layout32) == 0x308 );
+
             pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
-            stack = (struct apc_stack_layout *)ULongToPtr( ctx.Esp & ~3 ) - 1;
-            stack->context_ptr = PtrToUlong( &stack->context );
-            stack->func = arg1 >> 32;
-            stack->arg1 = arg1;
-            stack->arg2 = arg2;
-            stack->arg3 = arg3;
-            stack->context = ctx;
+
+            stack = (struct apc_stack_layout32 *)ULongToPtr( ctx.Esp & ~3 ) - 1;
+            stack->func      = arg1 >> 32;
+            stack->arg1      = arg1;
+            stack->arg2      = arg2;
+            stack->arg3      = arg3;
+            stack->alertable = TRUE;
+            stack->context   = ctx;
+            stack->xctx.Legacy.Offset = -(LONG)sizeof(stack->context);
+            stack->xctx.Legacy.Length = sizeof(stack->context);
+            stack->xctx.All.Offset    = -(LONG)sizeof(stack->context);
+            stack->xctx.All.Length    = sizeof(stack->context) + sizeof(stack->xctx);
+            stack->xctx.XState.Offset = 25;
+            stack->xctx.XState.Length = 0;
+
             ctx.Esp = PtrToUlong( stack );
             ctx.Eip = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
             frame.wow_context = &stack->context;

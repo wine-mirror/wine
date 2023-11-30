@@ -2070,6 +2070,111 @@ static void test_KiUserExceptionDispatcher(void)
     ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 }
 
+static BYTE saved_KiUserApcDispatcher[7];
+static UINT apc_count;
+
+static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
+    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
+    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
+    apc_count++;
+}
+
+static void * CDECL hook_KiUserApcDispatcher( void *func, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    CONTEXT *context = (CONTEXT *)((ULONG_PTR)&arg3 + sizeof(ULONG));
+
+    ok( func == apc_func, "wrong function %p / %p\n", func, apc_func );
+    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
+    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
+    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
+
+    if (context->ContextFlags != 1)
+    {
+        trace( "context %p eip %lx ebp %lx esp %lx (%x)\n",
+               context, context->Eip, context->Ebp, context->Esp, (char *)context->Esp - (char *)&func );
+    }
+    else  /* new style with alertable arg and CONTEXT_EX */
+    {
+        CONTEXT_EX *xctx;
+        ULONG *alertable = (ULONG *)context;
+
+        context = (CONTEXT *)(alertable + 1);
+        xctx = (CONTEXT_EX *)(context + 1);
+
+        trace( "alertable %lx context %p eip %lx ebp %lx esp %lx (%x)\n", *alertable,
+               context, context->Eip, context->Ebp, context->Esp, (char *)context->Esp - (char *)&func );
+        if ((void *)(xctx + 1) < (void *)context->Esp)
+        {
+            ok( xctx->All.Offset == -sizeof(CONTEXT), "wrong All.Offset %lx\n", xctx->All.Offset );
+            ok( xctx->All.Length >= sizeof(CONTEXT) + sizeof(CONTEXT_EX), "wrong All.Length %lx\n", xctx->All.Length );
+            ok( xctx->Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", xctx->All.Offset );
+            ok( xctx->Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", xctx->All.Length );
+        }
+
+        if (apc_count) *alertable = 0;
+        pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count + 1, 0x5678, 0xdeadbeef );
+    }
+
+    hook_called = TRUE;
+    memcpy( pKiUserApcDispatcher, saved_KiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher));
+    return pKiUserApcDispatcher;
+}
+
+static void test_KiUserApcDispatcher(void)
+{
+    BYTE hook_trampoline[] =
+    {
+        0xff, 0x15,
+        /* offset: 2 bytes */
+        0x00, 0x00, 0x00, 0x00,     /* call *addr */ /* call hook implementation. */
+        0xff, 0xe0,                 /* jmp *%eax */
+    };
+
+    BYTE patched_KiUserApcDispatcher[7];
+    void *phook_KiUserApcDispatcher = hook_KiUserApcDispatcher;
+    DWORD old_protect;
+    BYTE *ptr;
+    BOOL ret;
+
+    *(ULONG_PTR *)(hook_trampoline + 2) = (ULONG_PTR)&phook_KiUserApcDispatcher;
+    memcpy(code_mem, hook_trampoline, sizeof(hook_trampoline));
+
+    ret = VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_KiUserApcDispatcher, pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher) );
+    ptr = patched_KiUserApcDispatcher;
+    /* mov $hook_trampoline, %eax */
+    *ptr++ = 0xb8;
+    *(void **)ptr = code_mem;
+    ptr += sizeof(void *);
+    /* jmp *eax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xe0;
+    memcpy( pKiUserApcDispatcher, patched_KiUserApcDispatcher, sizeof(patched_KiUserApcDispatcher) );
+
+    apc_count = 0;
+    hook_called = FALSE;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    SleepEx( 0, TRUE );
+    ok( apc_count == 1 || apc_count == 2, "APC count %u\n", apc_count );
+    ok( hook_called, "hook was not called\n" );
+
+    if (apc_count == 2)
+    {
+        memcpy( pKiUserApcDispatcher, patched_KiUserApcDispatcher, sizeof(patched_KiUserApcDispatcher) );
+        pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count, 0x5678, 0xdeadbeef );
+        SleepEx( 0, TRUE );
+        ok( apc_count == 3, "APC count %u\n", apc_count );
+        SleepEx( 0, TRUE );
+        ok( apc_count == 4, "APC count %u\n", apc_count );
+    }
+    VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
+}
+
 #elif defined(__x86_64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12015,6 +12120,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_prot_fault();
     test_KiUserExceptionDispatcher();
+    test_KiUserApcDispatcher();
     test_extended_context();
     test_copy_context();
     test_set_live_context();
