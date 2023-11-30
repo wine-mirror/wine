@@ -1660,13 +1660,20 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
 
     wg_parser_stream_release_buffer(stream->wg_stream);
 
-    if (!buffer->has_pts)
-        FIXME("Missing PTS.\n");
-    if (!buffer->has_duration)
-        FIXME("Missing duration.\n");
-
     *pts = buffer->pts;
     *duration = buffer->duration;
+
+    if (!buffer->has_pts)
+    {
+        FIXME("Missing PTS.\n");
+        *pts = 0;
+    }
+    if (!buffer->has_duration)
+    {
+        FIXME("Missing duration.\n");
+        *duration = 0;
+    }
+
     *flags = 0;
     if (buffer->discontinuity)
         *flags |= WM_SF_DISCONTINUITY;
