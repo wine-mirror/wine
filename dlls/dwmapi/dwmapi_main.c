@@ -196,9 +196,46 @@ BOOL WINAPI DwmDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, 
  */
 HRESULT WINAPI DwmGetWindowAttribute(HWND hwnd, DWORD attribute, PVOID pv_attribute, DWORD size)
 {
-    FIXME("(%p %ld %p %ld) stub\n", hwnd, attribute, pv_attribute, size);
+    BOOL enabled = FALSE;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p %ld %p %ld)\n", hwnd, attribute, pv_attribute, size);
+
+    if (DwmIsCompositionEnabled(&enabled) == S_OK && !enabled)
+        return E_HANDLE;
+    if (!IsWindow(hwnd))
+        return E_HANDLE;
+
+    switch (attribute) {
+    case DWMWA_EXTENDED_FRAME_BOUNDS:
+    {
+        RECT *rect = (RECT *)pv_attribute;
+        DPI_AWARENESS_CONTEXT context;
+
+        if (!rect)
+            return E_INVALIDARG;
+        if (size < sizeof(*rect))
+            return E_NOT_SUFFICIENT_BUFFER;
+        if (GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD)
+            return E_HANDLE;
+
+        /* DWM frame bounds are always in physical coords */
+        context = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+        if (GetWindowRect(hwnd, rect))
+            hr = S_OK;
+        else
+            hr = HRESULT_FROM_WIN32(GetLastError());
+
+        SetThreadDpiAwarenessContext(context);
+        break;
+    }
+    default:
+        FIXME("attribute %ld not implemented.\n", attribute);
+        hr = E_NOTIMPL;
+        break;
+    }
+
+    return hr;
 }
 
 /**********************************************************************

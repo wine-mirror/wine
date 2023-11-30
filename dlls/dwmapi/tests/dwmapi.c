@@ -83,8 +83,66 @@ static void test_DwmGetCompositionTimingInfo(void)
             "Got wrong monitor refresh period %s.\n", wine_dbgstr_longlong(timing_info.qpcRefreshPeriod));
 }
 
+static void test_DWMWA_EXTENDED_FRAME_BOUNDS(void)
+{
+    DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+    DPI_AWARENESS_CONTEXT old_context = NULL;
+    BOOL enabled;
+    HRESULT hr;
+    RECT rect, window_rect, intersection;
+    HWND hwnd, child;
+
+    pSetThreadDpiAwarenessContext = (void *)GetProcAddress(GetModuleHandleA("user32.dll"),
+            "SetThreadDpiAwarenessContext");
+    if (pSetThreadDpiAwarenessContext)
+        old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+
+    hwnd = CreateWindowW(L"static", L"static", WS_OVERLAPPEDWINDOW | WS_POPUP | WS_VISIBLE, 10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    child = CreateWindowW(L"edit", L"edit", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hwnd, NULL, NULL, NULL);
+
+    DwmIsCompositionEnabled(&enabled);
+    hr = DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rect, sizeof(rect));
+    if (!enabled) {
+        ok(hr == E_HANDLE, "Got hr %#lx.\n", hr);
+        skip("DWM is disabled.\n");
+        goto cleanup;
+    }
+
+    hr = DwmGetWindowAttribute(NULL, DWMWA_EXTENDED_FRAME_BOUNDS, &rect, sizeof(rect));
+    ok(hr == E_HANDLE, "Got hr %#lx.\n", hr);
+    hr = DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &enabled, sizeof(enabled));
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Got hr %#lx.\n", hr);
+    hr = DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = DwmGetWindowAttribute(child, DWMWA_EXTENDED_FRAME_BOUNDS, &rect, sizeof(rect));
+    ok(hr == E_HANDLE, "Got hr %#lx.\n", hr);
+    hr = DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rect, sizeof(rect));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Window rectangle covers extended frame */
+    GetWindowRect(hwnd, &window_rect);
+    IntersectRect(&intersection, &window_rect, &rect);
+    ok(EqualRect(&intersection, &rect), "Got wrong frame %s, window %s.\n", wine_dbgstr_rect(&rect), wine_dbgstr_rect(&window_rect));
+
+    /* Extended frame bounds aren't adjusted for DPI */
+    if (pSetThreadDpiAwarenessContext) {
+        RECT unaware_rect;
+        pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+        hr = DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &unaware_rect, sizeof(unaware_rect));
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(EqualRect(&rect, &unaware_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&rect), wine_dbgstr_rect(&unaware_rect));
+    }
+
+cleanup:
+    if (pSetThreadDpiAwarenessContext)
+        pSetThreadDpiAwarenessContext(old_context);
+    DestroyWindow(child);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(dwmapi)
 {
     test_DwmIsCompositionEnabled();
     test_DwmGetCompositionTimingInfo();
+    test_DWMWA_EXTENDED_FRAME_BOUNDS();
 }
