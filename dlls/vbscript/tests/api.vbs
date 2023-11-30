@@ -1090,6 +1090,29 @@ TestRound "2", 2, "VT_R8"
 TestRound true, true, "VT_BOOL"
 TestRound false, false, "VT_BOOL"
 
+Sub TestRound2(val, decnum, exval, vt)
+    Call ok(Round(val, decnum) = exval, "Round(" & val & " , " & decnum & ") = " & Round(val, decnum))
+    Call ok(getVT(Round(val, decnum)) = vt, "getVT(Round(" & val & " , " & decnum & ")) = " & getVT(Round(val, decnum)))
+End Sub
+
+TestRound2 3, 0, 3, "VT_I2"
+TestRound2 3, 1, 3, "VT_I2"
+TestRound2 3.3, 0, 3, "VT_R8"
+TestRound2 3.8, 0, 4, "VT_R8"
+TestRound2 3.5, 0, 4, "VT_R8"
+TestRound2 -3.3, 0, -3, "VT_R8"
+TestRound2 -3.5, 0, -4, "VT_R8"
+TestRound2 3.3, 1, 3.3, "VT_R8"
+TestRound2 3.8, 1, 3.8, "VT_R8"
+TestRound2 3.5, 1, 3.5, "VT_R8"
+TestRound2 -3.3, 1, -3.3, "VT_R8"
+TestRound2 -3.5, 1, -3.5, "VT_R8"
+TestRound2 "2", 1, 2, "VT_R8"
+TestRound2 true, 0, true, "VT_BOOL"
+TestRound2 false, 0, false, "VT_BOOL"
+TestRound2 true, 1, true, "VT_BOOL"
+TestRound2 false, 1, false, "VT_BOOL"
+
 if isEnglishLang then
     Call ok(WeekDayName(1) = "Sunday", "WeekDayName(1) = " & WeekDayName(1))
     Call ok(WeekDayName(3) = "Tuesday", "WeekDayName(3) = " & WeekDayName(3))
