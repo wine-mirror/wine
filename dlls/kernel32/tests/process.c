@@ -636,13 +636,11 @@ static void ok_child_int( int line, const char *sect, const char *key, UINT expe
     ok_(__FILE__, line)( result == expect, "%s:%s expected %u, but got %u\n", sect, key, expect, result );
 }
 
-#ifndef _WIN64
 static void ok_child_hexint( int line, const char *sect, const char *key, UINT expect, UINT is_broken )
 {
     UINT result = GetPrivateProfileIntA( sect, key, !expect, resfile );
     ok_(__FILE__, line)( result == expect || broken( is_broken && result == is_broken ), "%s:%s expected %#x, but got %#x\n", sect, key, expect, result );
 }
-#endif
 
 #define okChildString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 1 )
 #define okChildIString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 0 )
@@ -3107,7 +3105,6 @@ static void test_BreakawayOk(HANDLE parent_job)
     ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 }
 
-#ifndef _WIN64
 /* copy an executable, but changing its subsystem */
 static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst)
 {
@@ -3215,7 +3212,6 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
     }
     return needs_close;
 }
-#endif
 
 struct std_handle_test
 {
@@ -3229,7 +3225,6 @@ struct std_handle_test
 
 static void test_StdHandleInheritance(void)
 {
-#ifndef _WIN64
     HANDLE hsavestd[3];
     static char guiexec[MAX_PATH];
     static char cuiexec[MAX_PATH];
@@ -3344,7 +3339,6 @@ static void test_StdHandleInheritance(void)
     SetStdHandle(STD_INPUT_HANDLE,  hsavestd[0]);
     SetStdHandle(STD_OUTPUT_HANDLE, hsavestd[1]);
     SetStdHandle(STD_ERROR_HANDLE,  hsavestd[2]);
-#endif
 }
 
 #if defined(__i386__) || defined(__x86_64__)
