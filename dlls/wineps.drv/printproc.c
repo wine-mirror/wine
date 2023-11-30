@@ -390,7 +390,7 @@ static int stretch_blt(print_ctx *ctx, const EMRSTRETCHBLT *blt,
 
         bits.is_copy = TRUE;
         bitmap = CreateDIBSection(hdc, dst_info, DIB_RGB_COLORS, &bits.ptr, NULL, 0);
-        SetDIBits(hdc, bitmap, 0, bi->bmiHeader.biHeight, src_bits, bi, blt->iUsageSrc);
+        SetDIBits(hdc, bitmap, 0, abs(bi->bmiHeader.biHeight), src_bits, bi, blt->iUsageSrc);
 
         err = PSDRV_PutImage(ctx, 0, dst_info, &bits, &src, &dst, blt->dwRop);
         DeleteObject(bitmap);
