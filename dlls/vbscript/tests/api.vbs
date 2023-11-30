@@ -1566,7 +1566,9 @@ MyObject.myval = 0
 Call ok(CSng(MyObject) = 0, "CSng(MyObject) = " & CSng(MyObject))
 Call ok(getVT(CSng(MyObject)) = "VT_R4", "getVT(CSng(MyObject)) = " & getVT(CSng(MyObject)))
 
-Call ok(TypeName(Empty) = "Empty", "TypeName(MyEmpty) = " & TypeName(Empty))
+Call ok(TypeName(Nothing) = "Nothing", "TypeName(Nothing) = " & TypeName(Nothing))
+Call ok(getVT(TypeName(Nothing)) = "VT_BSTR", "getVT(TypeName(Nothing)) = " & getVT(TypeName(Nothing)))
+Call ok(TypeName(Empty) = "Empty", "TypeName(Empty) = " & TypeName(Empty))
 Call ok(getVT(TypeName(Empty)) = "VT_BSTR", "getVT(TypeName(Empty)) = " & getVT(TypeName(Empty)))
 Call ok(TypeName(Null) = "Null", "TypeName(Null) = " & TypeName(Null))
 Call ok(getVT(TypeName(Null)) = "VT_BSTR", "getVT(TypeName(Null)) = " & getVT(TypeName(Null)))

@@ -2505,6 +2505,8 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
         case VT_NULL:
             return return_string(res, L"Null");
         case VT_DISPATCH:
+            if (!V_DISPATCH(arg))
+                return return_string(res, L"Nothing");
             if (SUCCEEDED(IDispatch_GetTypeInfo(V_DISPATCH(arg), 0, GetUserDefaultLCID(), &typeinfo)))
             {
                 hres = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &name, NULL, NULL, NULL);
