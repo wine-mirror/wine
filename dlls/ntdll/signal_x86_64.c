@@ -652,30 +652,40 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI dispatch_apc( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                          void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*) )
-{
-    func( arg1, arg2, arg3, context );
-    NtContinue( context, TRUE );
-}
-
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
-                  "addq $0x8,%rsp\n\t"
-                  "mov 0x98(%rcx),%r10\n\t" /* context->Rsp */
-                  "mov 0xf8(%rcx),%r11\n\t" /* context->Rip */
-                  "mov %r11,-0x8(%r10)\n\t"
-                  "mov %rbp,-0x10(%r10)\n\t"
-                  "lea -0x10(%r10),%rbp\n\t"
-                  __ASM_SEH(".seh_pushreg %rbp\n\t")
-                  __ASM_SEH(".seh_setframe %rbp,0\n\t")
-                  __ASM_SEH(".seh_endprologue\n\t")
-                  __ASM_CFI(".cfi_signal_frame\n\t")
-                  __ASM_CFI(".cfi_adjust_cfa_offset 0x10\n\t")
-                  __ASM_CFI(".cfi_def_cfa %rbp,0x10\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rip,0x8\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
-                   "call " __ASM_NAME("dispatch_apc") "\n\t"
-                   "int3")
+                   __ASM_SEH(".seh_pushframe\n\t")
+                   __ASM_SEH(".seh_stackalloc 0x4d0\n\t")  /* sizeof(CONTEXT) */
+                   __ASM_SEH(".seh_savereg %rbx,0x90\n\t")
+                   __ASM_SEH(".seh_savereg %rbp,0xa0\n\t")
+                   __ASM_SEH(".seh_savereg %rsi,0xa8\n\t")
+                   __ASM_SEH(".seh_savereg %rdi,0xb0\n\t")
+                   __ASM_SEH(".seh_savereg %r12,0xd8\n\t")
+                   __ASM_SEH(".seh_savereg %r13,0xe0\n\t")
+                   __ASM_SEH(".seh_savereg %r14,0xe8\n\t")
+                   __ASM_SEH(".seh_savereg %r15,0xf0\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
+                   __ASM_CFI(".cfi_offset %rbx,0x90\n\t")
+                   __ASM_CFI(".cfi_offset %rbp,0xa0\n\t")
+                   __ASM_CFI(".cfi_offset %rsi,0xa8\n\t")
+                   __ASM_CFI(".cfi_offset %rdi,0xb0\n\t")
+                   __ASM_CFI(".cfi_offset %r12,0xd8\n\t")
+                   __ASM_CFI(".cfi_offset %r13,0xe0\n\t")
+                   __ASM_CFI(".cfi_offset %r14,0xe8\n\t")
+                   __ASM_CFI(".cfi_offset %r15,0xf0\n\t")
+                   __ASM_CFI(".cfi_offset %rip,0x4d0\n\t")
+                   __ASM_CFI(".cfi_offset %rsp,0x4e8\n\t")
+                   "movq 0x00(%rsp),%rcx\n\t"  /* context->P1Home = arg1 */
+                   "movq 0x08(%rsp),%rdx\n\t"  /* context->P2Home = arg2 */
+                   "movq 0x10(%rsp),%r8\n\t"   /* context->P3Home = arg3 */
+                   "movq 0x18(%rsp),%rax\n\t"  /* context->P4Home = func */
+                   "movq %rsp,%r9\n\t"         /* context */
+                   "callq *%rax\n\t"
+                   "movq %rsp,%rcx\n\t"        /* context */
+                   "movl $1,%edx\n\t"          /* alertable */
+                   "call " __ASM_NAME("NtContinue") "\n\t"
+                   "int3" )
 
 
 /*******************************************************************

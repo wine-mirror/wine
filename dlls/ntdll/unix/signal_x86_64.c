@@ -365,6 +365,16 @@ C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x4f0 );
 C_ASSERT( offsetof(struct exc_stack_layout, machine_frame) == 0x590 );
 C_ASSERT( sizeof(struct exc_stack_layout) == 0x700 );
 
+/* stack layout when calling KiUserApcDispatcher */
+struct apc_stack_layout
+{
+    CONTEXT              context;        /* 000 */
+    struct machine_frame machine_frame;  /* 4d0 */
+    ULONG64              align;          /* 4f8 */
+};
+C_ASSERT( offsetof(struct apc_stack_layout, machine_frame) == 0x4d0 );
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x500 );
+
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
 #define SYSCALL_HAVE_XSAVEC      2
@@ -372,18 +382,6 @@ C_ASSERT( sizeof(struct exc_stack_layout) == 0x700 );
 #define SYSCALL_HAVE_WRFSGSBASE  8
 
 static unsigned int syscall_flags;
-
-/* stack layout when calling an user apc function.
- * FIXME: match Windows ABI. */
-struct apc_stack_layout
-{
-    ULONG64  save_regs[4];
-    void            *func;
-    ULONG64         align;
-    CONTEXT       context;
-    ULONG64           rbp;
-    ULONG64           rip;
-};
 
 struct syscall_frame
 {
@@ -1492,15 +1490,16 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
         NtGetContextThread( GetCurrentThread(), &stack->context );
         stack->context.Rax = status;
     }
+    stack->context.P1Home    = arg1;
+    stack->context.P2Home    = arg2;
+    stack->context.P3Home    = arg3;
+    stack->context.P4Home    = (ULONG64)func;
+    stack->machine_frame.rip = stack->context.Rip;
+    stack->machine_frame.rsp = stack->context.Rsp;
     frame->rbp = stack->context.Rbp;
-    frame->rsp = (ULONG64)stack - 8;
+    frame->rsp = (ULONG64)stack;
     frame->rip = (ULONG64)pKiUserApcDispatcher;
-    frame->rcx = (ULONG64)&stack->context;
-    frame->rdx = arg1;
-    frame->r8  = arg2;
-    frame->r9  = arg3;
-    stack->func = func;
-    frame->restore_flags |= CONTEXT_CONTROL | CONTEXT_INTEGER;
+    frame->restore_flags |= CONTEXT_CONTROL;
     return status;
 }
 

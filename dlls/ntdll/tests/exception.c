@@ -79,6 +79,7 @@ static BOOL      (WINAPI *pSetXStateFeaturesMask)(CONTEXT *context, DWORD64 feat
 static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *feature_mask);
 static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
 
+static void *pKiUserApcDispatcher;
 static void *pKiUserExceptionDispatcher;
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
@@ -4928,6 +4929,94 @@ static void test_KiUserExceptionDispatcher(void)
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             old_protect, &old_protect);
     ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+}
+
+
+static BYTE saved_KiUserApcDispatcher[12];
+static BOOL apc_called;
+
+static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    ok( arg1 == 0x1234, "wrong arg1 %Ix\n", arg1 );
+    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
+    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
+    apc_called = TRUE;
+}
+
+static void * WINAPI hook_KiUserApcDispatcher(CONTEXT *context)
+{
+    struct machine_frame *frame = (struct machine_frame *)(context + 1);
+    UINT i;
+
+    trace( "context %p, context->Rip %#Ix, context->Rsp %#Ix (%#Ix), ContextFlags %#lx.\n",
+           context, context->Rip, context->Rsp,
+           (char *)context->Rsp - (char *)context, context->ContextFlags );
+
+    ok( context->P1Home == 0x1234, "wrong p1 %#Ix\n", context->P1Home );
+    ok( context->P2Home == 0x5678, "wrong p2 %#Ix\n", context->P2Home );
+    ok( context->P3Home == 0xdeadbeef, "wrong p3 %#Ix\n", context->P3Home );
+    ok( context->P4Home == (ULONG_PTR)apc_func, "wrong p4 %#Ix / %p\n", context->P4Home, apc_func );
+
+    /* machine frame offset varies between Windows versions */
+    for (i = 0; i < 16; i++)
+    {
+        if (frame->rip == context->Rip) break;
+        frame = (struct machine_frame *)((ULONG64 *)frame + 2);
+    }
+    trace( "machine frame %p (%#Ix): rip=%#Ix cs=%#Ix eflags=%#Ix rsp=%#Ix ss=%#Ix\n",
+           frame, (char *)frame - (char *)context,
+           frame->rip, frame->cs, frame->eflags, frame->rsp, frame->ss );
+    ok( frame->rip == context->Rip, "wrong rip %#Ix / %#Ix\n", frame->rip, context->Rip );
+    ok( frame->rsp == context->Rsp, "wrong rsp %#Ix / %#Ix\n", frame->rsp, context->Rsp );
+
+    hook_called = TRUE;
+    memcpy( pKiUserApcDispatcher, saved_KiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher));
+    return pKiUserApcDispatcher;
+}
+
+static void test_KiUserApcDispatcher(void)
+{
+    BYTE hook_trampoline[] =
+    {
+        0x48, 0x89, 0xe1,           /* mov %rsp,%rcx */
+        0x48, 0xb8,                 /* movabs hook_KiUserApcDispatcher,%rax */
+        0,0,0,0,0,0,0,0,            /* offset 5 */
+        0xff, 0xd0,                 /* callq *rax */
+        0xff, 0xe0,                 /* jmpq *rax */
+    };
+
+    BYTE patched_KiUserApcDispatcher[12];
+    DWORD old_protect;
+    BYTE *ptr;
+    BOOL ret;
+
+    *(ULONG_PTR *)(hook_trampoline + 5) = (ULONG_PTR)hook_KiUserApcDispatcher;
+    memcpy(code_mem, hook_trampoline, sizeof(hook_trampoline));
+
+    ret = VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_KiUserApcDispatcher, pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher) );
+    ptr = patched_KiUserApcDispatcher;
+    /* mov $code_mem, %rax */
+    *ptr++ = 0x48;
+    *ptr++ = 0xb8;
+    *(void **)ptr = code_mem;
+    ptr += sizeof(ULONG64);
+    /* jmp *rax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xe0;
+    memcpy( pKiUserApcDispatcher, patched_KiUserApcDispatcher, sizeof(patched_KiUserApcDispatcher) );
+
+    hook_called = FALSE;
+    apc_called = FALSE;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    SleepEx( 0, TRUE );
+    ok( apc_called, "APC was not called\n" );
+    ok( hook_called, "hook was not called\n" );
+
+    VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
 }
 
 static BOOL got_nested_exception, got_prev_frame_exception;
@@ -11476,6 +11565,7 @@ START_TEST(exception)
     X(RtlGetExtendedFeaturesMask);
     X(RtlCopyContext);
     X(RtlCopyExtendedContext);
+    X(KiUserApcDispatcher);
     X(KiUserExceptionDispatcher);
 #undef X
 
@@ -11637,6 +11727,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_wow64_context();
     test_KiUserExceptionDispatcher();
+    test_KiUserApcDispatcher();
     test_nested_exception();
     test_collided_unwind();
 
