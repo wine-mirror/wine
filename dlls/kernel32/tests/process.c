@@ -317,6 +317,37 @@ static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fm
     WriteFile(h, buffer, strlen(buffer), &w, NULL);
 }
 
+/* bits 0..1 contains FILE_TYPE_{UNKNOWN, CHAR, PIPE, DISK} */
+#define HATTR_NULL     0x08                /* NULL handle value */
+#define HATTR_INVALID  0x04                /* INVALID_HANDLE_VALUE */
+#define HATTR_TYPE     0x0c                /* valid handle, with type set */
+#define HATTR_INHERIT  0x10                /* inheritance flag set */
+
+static unsigned encode_handle_attributes(HANDLE h)
+{
+    DWORD dw;
+    unsigned result;
+
+    if (h == NULL)
+        result = HATTR_NULL;
+    else if (h == INVALID_HANDLE_VALUE)
+        result = HATTR_INVALID;
+    else
+    {
+        result = HATTR_TYPE;
+        dw = GetFileType(h);
+        if (dw == FILE_TYPE_CHAR || dw == FILE_TYPE_DISK || dw == FILE_TYPE_PIPE)
+        {
+            DWORD info;
+            if (GetHandleInformation(h, &info) && (info & HANDLE_FLAG_INHERIT))
+                result |= HATTR_INHERIT;
+        }
+        else
+            dw = FILE_TYPE_UNKNOWN;
+        result |= dw;
+    }
+    return result;
+}
 
 /******************************************************************
  *		doChild
@@ -347,17 +378,24 @@ static void     doChild(const char* file, const char* option)
                 "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
                 "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
                 "dwFlags=%lu\nwShowWindow=%u\n"
-                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
+                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n"
+                "hStdInputEncode=%u\nhStdOutputEncode=%u\nhStdErrorEncode=%u\n\n",
                 siA.cb, encodeA(siA.lpDesktop), encodeA(siA.lpTitle),
                 siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize,
                 siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute,
                 siA.dwFlags, siA.wShowWindow,
-                (DWORD_PTR)siA.hStdInput, (DWORD_PTR)siA.hStdOutput, (DWORD_PTR)siA.hStdError);
+                (DWORD_PTR)siA.hStdInput, (DWORD_PTR)siA.hStdOutput, (DWORD_PTR)siA.hStdError,
+                encode_handle_attributes(siA.hStdInput), encode_handle_attributes(siA.hStdOutput),
+                encode_handle_attributes(siA.hStdError));
 
     /* check the console handles in the TEB */
-    childPrintf(hFile, "[TEB]\nhStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
+    childPrintf(hFile,
+                "[TEB]\nhStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n"
+                "hStdInputEncode=%u\nhStdOutputEncode=%u\nhStdErrorEncode=%u\n\n",
                 (DWORD_PTR)params->hStdInput, (DWORD_PTR)params->hStdOutput,
-                (DWORD_PTR)params->hStdError);
+                (DWORD_PTR)params->hStdError,
+                encode_handle_attributes(params->hStdInput), encode_handle_attributes(params->hStdOutput),
+                encode_handle_attributes(params->hStdError));
 
     /* since GetStartupInfoW is only implemented in win2k,
      * zero out before calling so we can notice the difference
@@ -369,12 +407,15 @@ static void     doChild(const char* file, const char* option)
                 "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
                 "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
                 "dwFlags=%lu\nwShowWindow=%u\n"
-                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n\n",
+                "hStdInput=%Iu\nhStdOutput=%Iu\nhStdError=%Iu\n"
+                "hStdInputEncode=%u\nhStdOutputEncode=%u\nhStdErrorEncode=%u\n\n",
                 siW.cb, encodeW(siW.lpDesktop), encodeW(siW.lpTitle),
                 siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize,
                 siW.dwXCountChars, siW.dwYCountChars, siW.dwFillAttribute,
                 siW.dwFlags, siW.wShowWindow,
-                (DWORD_PTR)siW.hStdInput, (DWORD_PTR)siW.hStdOutput, (DWORD_PTR)siW.hStdError);
+                (DWORD_PTR)siW.hStdInput, (DWORD_PTR)siW.hStdOutput, (DWORD_PTR)siW.hStdError,
+                encode_handle_attributes(siW.hStdInput), encode_handle_attributes(siW.hStdOutput),
+                encode_handle_attributes(siW.hStdError));
 
     /* Arguments */
     childPrintf(hFile, "[Arguments]\nargcA=%d\n", myARGC);
@@ -595,10 +636,19 @@ static void ok_child_int( int line, const char *sect, const char *key, UINT expe
     ok_(__FILE__, line)( result == expect, "%s:%s expected %u, but got %u\n", sect, key, expect, result );
 }
 
+#ifndef _WIN64
+static void ok_child_hexint( int line, const char *sect, const char *key, UINT expect, UINT is_broken )
+{
+    UINT result = GetPrivateProfileIntA( sect, key, !expect, resfile );
+    ok_(__FILE__, line)( result == expect || broken( is_broken && result == is_broken ), "%s:%s expected %#x, but got %#x\n", sect, key, expect, result );
+}
+#endif
+
 #define okChildString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 1 )
 #define okChildIString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 0 )
 #define okChildStringWA(sect, key, expect) ok_child_stringWA(__LINE__, (sect), (key), (expect), 1 )
 #define okChildInt(sect, key, expect) ok_child_int(__LINE__, (sect), (key), (expect))
+#define okChildHexInt(sect, key, expect, is_broken) ok_child_hexint(__LINE__, (sect), (key), (expect), (is_broken))
 
 static void test_Startup(void)
 {
@@ -3057,72 +3107,243 @@ static void test_BreakawayOk(HANDLE parent_job)
     ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 }
 
-static void test_StartupNoConsole(void)
-{
 #ifndef _WIN64
-    char                buffer[2 * MAX_PATH + 25];
-    STARTUPINFOA        startup;
-    PROCESS_INFORMATION info;
+/* copy an executable, but changing its subsystem */
+static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst)
+{
+    BOOL ret;
+    HANDLE hFile, hMap;
+    void* mapping;
+    IMAGE_NT_HEADERS *nthdr;
 
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
-    get_file_name(resfile);
-    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
-    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
-                      &info), "CreateProcess\n");
-    wait_and_close_child_process(&info);
+    ret = CopyFileA(in, out, FALSE);
+    ok(ret, "Failed to copy executable %s in %s (%lu)\n", in, out, GetLastError());
 
-    reload_child_info(resfile);
-    okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("TEB", "hStdInput", 0);
-    okChildInt("TEB", "hStdOutput", 0);
-    okChildInt("TEB", "hStdError", 0);
-    release_memory();
-    DeleteFileA(resfile);
-#endif
+    hFile = CreateFileA(out, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't open file %s (%lu)\n", out, GetLastError());
+    hMap = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
+    ok(hMap != NULL, "Couldn't create map (%lu)\n", GetLastError());
+    mapping = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    ok(mapping != NULL, "Couldn't map (%lu)\n", GetLastError());
+    nthdr = RtlImageNtHeader(mapping);
+    ok(nthdr != NULL, "Cannot get NT headers out of %s\n", out);
+    if (nthdr) nthdr->OptionalHeader.Subsystem = subsyst;
+    ret = UnmapViewOfFile(mapping);
+    ok(ret, "Couldn't unmap (%lu)\n", GetLastError());
+    CloseHandle(hMap);
+    CloseHandle(hFile);
 }
 
-static void test_DetachConsoleHandles(void)
+#define H_CONSOLE  0
+#define H_DISK     1
+
+#define ARG_STD                 0x80000000
+#define ARG_STARTUPINFO         0x00000000
+#define ARG_CP_INHERIT          0x40000000
+#define ARG_HANDLE_INHERIT      0x20000000
+#define ARG_HANDLE_MASK         (~0xff000000)
+
+static  BOOL check_run_child(const char *exec, DWORD flags, BOOL cp_inherit,
+                             STARTUPINFOA *si)
+{
+    PROCESS_INFORMATION info;
+    char buffer[2 * MAX_PATH + 64];
+    DWORD exit_code;
+    BOOL res;
+    DWORD ret;
+
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" process dump \"%s\"", exec, resfile);
+
+    res = CreateProcessA(NULL, buffer, NULL, NULL, cp_inherit, flags, NULL, NULL, si, &info);
+    ok(res, "CreateProcess failed: %lu %s\n", GetLastError(), buffer);
+    CloseHandle(info.hThread);
+    ret = WaitForSingleObject(info.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "Could not wait for the child process: %ld le=%lu\n",
+        ret, GetLastError());
+    res = GetExitCodeProcess(info.hProcess, &exit_code);
+    ok(res && exit_code == 0, "Couldn't get exit_code\n");
+    CloseHandle(info.hProcess);
+    return res;
+}
+
+static char std_handle_file[MAX_PATH];
+
+static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd[2] )
+{
+    SECURITY_ATTRIBUTES inherit_sa = { sizeof(inherit_sa), NULL, TRUE };
+    SECURITY_ATTRIBUTES *psa;
+    BOOL needs_close = FALSE;
+
+    psa = (args & ARG_HANDLE_INHERIT) ? &inherit_sa : NULL;
+
+    memset(startup, 0, sizeof(*startup));
+    startup->cb = sizeof(*startup);
+
+    switch (args & ARG_HANDLE_MASK)
+    {
+    case H_CONSOLE:
+        hstd[0] = CreateFileA("CONIN$", GENERIC_READ, 0, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[0] != INVALID_HANDLE_VALUE, "Couldn't create input to console\n");
+        hstd[1] = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[1] != INVALID_HANDLE_VALUE, "Couldn't create input to console\n");
+        needs_close = TRUE;
+        break;
+    case H_DISK:
+        hstd[0] = CreateFileA(std_handle_file, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[0] != INVALID_HANDLE_VALUE, "Couldn't create input to file %s\n", std_handle_file);
+        hstd[1] = CreateFileA(std_handle_file, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, psa, OPEN_EXISTING, 0, 0);
+        ok(hstd[1] != INVALID_HANDLE_VALUE, "Couldn't create input to file %s\n", std_handle_file);
+        needs_close = TRUE;
+        break;
+    default:
+        ok(0, "Unsupported handle type %x\n", args & ARG_HANDLE_MASK);
+        return FALSE;
+    }
+
+    if (args & ARG_STD)
+    {
+        SetStdHandle(STD_INPUT_HANDLE,  hstd[0]);
+        SetStdHandle(STD_OUTPUT_HANDLE, hstd[1]);
+    }
+    else /* through startup info */
+    {
+        startup->dwFlags |= STARTF_USESTDHANDLES;
+        startup->hStdInput  = hstd[0];
+        startup->hStdOutput = hstd[1];
+    }
+    return needs_close;
+}
+#endif
+
+struct std_handle_test
+{
+    /* input */
+    unsigned args;
+    /* output */
+    DWORD expected;
+    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values */
+    DWORD is_broken; /* Win7 broken file types */
+};
+
+static void test_StdHandleInheritance(void)
 {
 #ifndef _WIN64
-    char                buffer[2 * MAX_PATH + 25];
-    STARTUPINFOA        startup;
-    PROCESS_INFORMATION info;
-    UINT                result;
+    HANDLE hsavestd[3];
+    static char guiexec[MAX_PATH];
+    static char cuiexec[MAX_PATH];
+    char **argv;
+    BOOL ret;
+    int i, j;
 
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
-    startup.wShowWindow = SW_SHOWNORMAL;
-    startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-    startup.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    startup.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-    get_file_name(resfile);
-    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
-    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
-                      &info), "CreateProcess\n");
-    wait_and_close_child_process(&info);
+    static const struct std_handle_test
+    detached_cui[] =
+    {
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        /* all others handles type behave as H_DISK */
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+    },
+    detached_gui[] =
+    {
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        /* all others handles type behave as H_DISK */
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+    };
+    static const struct
+    {
+        DWORD cp_flags;
+        BOOL use_cui;
+        const struct std_handle_test* tests;
+        size_t count;
+        const char* descr;
+    }
+    tests[] =
+    {
+#define X(d, cg, s) {(d), (cg), s, ARRAY_SIZE(s), #s}
+        X(DETACHED_PROCESS, TRUE,  detached_cui),
+        X(DETACHED_PROCESS, FALSE, detached_gui),
+#undef X
+    };
 
-    reload_child_info(resfile);
-    result = GetPrivateProfileIntA("StartupInfoA", "hStdInput", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
-    result = GetPrivateProfileIntA("StartupInfoA", "hStdOutput", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
-    result = GetPrivateProfileIntA("StartupInfoA", "hStdError", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
-    result = GetPrivateProfileIntA("TEB", "hStdInput", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
-    result = GetPrivateProfileIntA("TEB", "hStdOutput", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
-    result = GetPrivateProfileIntA("TEB", "hStdError", 0, resfile);
-    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    hsavestd[0] = GetStdHandle(STD_INPUT_HANDLE);
+    hsavestd[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+    hsavestd[2] = GetStdHandle(STD_ERROR_HANDLE);
 
-    release_memory();
-    DeleteFileA(resfile);
+    winetest_get_mainargs(&argv);
+
+    GetTempPathA(ARRAY_SIZE(guiexec), guiexec);
+    strcat(guiexec, "process_gui.exe");
+    copy_change_subsystem(argv[0], guiexec, IMAGE_SUBSYSTEM_WINDOWS_GUI);
+    GetTempPathA(ARRAY_SIZE(cuiexec), cuiexec);
+    strcat(cuiexec, "process_cui.exe");
+    copy_change_subsystem(argv[0], cuiexec, IMAGE_SUBSYSTEM_WINDOWS_CUI);
+    get_file_name(std_handle_file);
+
+    for (j = 0; j < ARRAY_SIZE(tests); j++)
+    {
+        const struct std_handle_test* std_tests = tests[j].tests;
+
+        for (i = 0; i < tests[j].count; i++)
+        {
+            STARTUPINFOA startup;
+            HANDLE hstd[2] = {};
+            BOOL needs_close;
+            unsigned startup_expected;
+
+            winetest_push_context("%s[%u] ", tests[j].descr, i);
+            needs_close = build_startupinfo( &startup, std_tests[i].args, hstd );
+
+            ret = check_run_child(tests[j].use_cui ? cuiexec : guiexec,
+                                  tests[j].cp_flags, !!(std_tests[i].args & ARG_CP_INHERIT),
+                                  &startup);
+            ok(ret, "Couldn't run child\n");
+            reload_child_info(resfile);
+
+            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
+
+            todo_wine_if(std_tests[i].is_todo & 2)
+            {
+            okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
+            okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+            }
+
+            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_NULL : std_tests[i].expected;
+
+            todo_wine_if(std_tests[i].is_todo & 4)
+            {
+            okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
+            okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+            }
+
+            todo_wine_if(std_tests[i].is_todo & 1)
+            {
+            okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
+            okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
+            }
+
+            release_memory();
+            DeleteFileA(resfile);
+            if (needs_close)
+            {
+                CloseHandle(hstd[0]);
+                CloseHandle(hstd[1]);
+            }
+            winetest_pop_context();
+        }
+    }
+
+    DeleteFileA(guiexec);
+    DeleteFileA(cuiexec);
+    DeleteFileA(std_handle_file);
+
+    SetStdHandle(STD_INPUT_HANDLE,  hsavestd[0]);
+    SetStdHandle(STD_OUTPUT_HANDLE, hsavestd[1]);
+    SetStdHandle(STD_ERROR_HANDLE,  hsavestd[2]);
 #endif
 }
 
@@ -3567,59 +3788,6 @@ static void test_SuspendProcessState(void)
 {
 }
 #endif
-
-static void test_DetachStdHandles(void)
-{
-#ifndef _WIN64
-    char                buffer[2 * MAX_PATH + 25], tempfile[MAX_PATH];
-    STARTUPINFOA        startup;
-    PROCESS_INFORMATION info;
-    HANDLE              hstdin, hstdout, hstderr, htemp;
-    BOOL                res;
-
-    hstdin = GetStdHandle(STD_INPUT_HANDLE);
-    hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    hstderr = GetStdHandle(STD_ERROR_HANDLE);
-
-    get_file_name(tempfile);
-    htemp = CreateFileA(tempfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(htemp != INVALID_HANDLE_VALUE, "failed opening temporary file\n");
-
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
-    get_file_name(resfile);
-    sprintf(buffer, "\"%s\" process dump \"%s\"", selfname, resfile);
-
-    SetStdHandle(STD_INPUT_HANDLE, htemp);
-    SetStdHandle(STD_OUTPUT_HANDLE, htemp);
-    SetStdHandle(STD_ERROR_HANDLE, htemp);
-
-    res = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
-                      &info);
-
-    SetStdHandle(STD_INPUT_HANDLE, hstdin);
-    SetStdHandle(STD_OUTPUT_HANDLE, hstdout);
-    SetStdHandle(STD_ERROR_HANDLE, hstderr);
-
-    ok(res, "CreateProcess failed\n");
-    wait_and_close_child_process(&info);
-
-    reload_child_info(resfile);
-    okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
-    okChildInt("TEB", "hStdInput", 0);
-    okChildInt("TEB", "hStdOutput", 0);
-    okChildInt("TEB", "hStdError", 0);
-    release_memory();
-    DeleteFileA(resfile);
-
-    CloseHandle(htemp);
-    DeleteFileA(tempfile);
-#endif
-}
 
 static void test_GetNumaProcessorNode(void)
 {
@@ -5105,9 +5273,7 @@ START_TEST(process)
     test_ProcessorCount();
     test_RegistryQuota();
     test_DuplicateHandle();
-    test_StartupNoConsole();
-    test_DetachConsoleHandles();
-    test_DetachStdHandles();
+    test_StdHandleInheritance();
     test_GetNumaProcessorNode();
     test_session_info();
     test_GetLogicalProcessorInformationEx();
