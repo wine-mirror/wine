@@ -980,6 +980,12 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
     }
     if (!cfa) return;
 
+#ifdef __x86_64__
+    new_context.Rsp = cfa;
+#elif defined(__aarch64__)
+    new_context.Sp = cfa;
+#endif
+
     for (i = 0; i < NB_FRAME_REGS; i++)
     {
         switch (state->rules[i])
@@ -1004,11 +1010,6 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state,
             break;
         }
     }
-#ifdef __x86_64__
-    new_context.Rsp = cfa;
-#elif defined(__aarch64__)
-    new_context.Sp = cfa;
-#endif
     *context = new_context;
 }
 
