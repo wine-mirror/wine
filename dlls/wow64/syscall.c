@@ -1095,20 +1095,31 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
     {
     case IMAGE_FILE_MACHINE_I386:
         {
+            /* stack layout when calling 32-bit KiUserCallbackDispatcher */
+            struct callback_stack_layout32
+            {
+                ULONG             eip;           /* 000 */
+                ULONG             id;            /* 004 */
+                ULONG             args;          /* 008 */
+                ULONG             len;           /* 00c */
+                ULONG             unk[2];        /* 010 */
+                ULONG             esp;           /* 018 */
+                BYTE              args_data[0];  /* 01c */
+            } *stack;
             I386_CONTEXT orig_ctx, ctx = { CONTEXT_I386_FULL };
-            void *args_data;
-            ULONG *stack;
+
+            C_ASSERT( sizeof(struct callback_stack_layout32) == 0x1c );
 
             pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
             orig_ctx = ctx;
 
-            stack = args_data = ULongToPtr( (ctx.Esp - len) & ~15 );
-            memcpy( args_data, args, len );
-            *(--stack) = 0;
-            *(--stack) = len;
-            *(--stack) = PtrToUlong( args_data );
-            *(--stack) = id;
-            *(--stack) = 0xdeadbabe;
+            stack = ULongToPtr( (ctx.Esp - offsetof(struct callback_stack_layout32,args_data[len])) & ~15 );
+            stack->eip  = ctx.Eip;
+            stack->id   = id;
+            stack->args = PtrToUlong( stack->args_data );
+            stack->len  = len;
+            stack->esp  = ctx.Esp;
+            memcpy( stack->args_data, args, len );
 
             ctx.Esp = PtrToUlong( stack );
             ctx.Eip = pLdrSystemDllInitBlock->pKiUserCallbackDispatcher;

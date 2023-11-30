@@ -2175,6 +2175,61 @@ static void test_KiUserApcDispatcher(void)
     VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
 }
 
+static void CDECL hook_KiUserCallbackDispatcher( void *eip, ULONG id, ULONG *args, ULONG len,
+                                                 ULONG unk1, ULONG unk2, ULONG arg0, ULONG arg1 )
+{
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+
+    trace( "eip %p id %lx args %p (%x) len %lx unk1 %lx unk2 %lx args %lx,%lx\n",
+           eip, id, args, (char *)args - (char *)&eip, len, unk1, unk2, arg0, arg1 );
+
+    if (args[0] != arg0)  /* new style with extra esp */
+    {
+        void *esp = (void *)arg0;
+
+        ok( args[0] == arg1, "wrong arg1 %lx / %lx\n", args[0], arg1 );
+        ok( (char *)esp - ((char *)args + len) < 0x10, "wrong esp offset %p / %p\n", esp, args );
+    }
+
+    if (eip && pRtlPcToFileHeader)
+    {
+        void *mod, *win32u = GetModuleHandleA("win32u.dll");
+
+        pRtlPcToFileHeader( eip, &mod );
+        if (win32u) ok( mod == win32u, "ret address %p not in win32u %p\n", eip, win32u );
+        else trace( "ret address %p in %p\n", eip, mod );
+    }
+    NtCallbackReturn( NULL, 0, func( args, len ));
+}
+
+static void test_KiUserCallbackDispatcher(void)
+{
+    BYTE saved_code[7], patched_code[7];
+    DWORD old_protect;
+    BYTE *ptr;
+    BOOL ret;
+
+    ret = VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_code),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_code, pKiUserCallbackDispatcher, sizeof(saved_code) );
+    ptr = patched_code;
+    /* mov $hook_trampoline, %eax */
+    *ptr++ = 0xb8;
+    *(void **)ptr = hook_KiUserCallbackDispatcher;
+    ptr += sizeof(void *);
+    /* call *eax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xd0;
+    memcpy( pKiUserCallbackDispatcher, patched_code, sizeof(patched_code) );
+
+    DestroyWindow( CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 ));
+
+    memcpy( pKiUserCallbackDispatcher, saved_code, sizeof(saved_code));
+    VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_code), old_protect, &old_protect );
+}
+
 #elif defined(__x86_64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12121,6 +12176,7 @@ START_TEST(exception)
     test_prot_fault();
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
+    test_KiUserCallbackDispatcher();
     test_extended_context();
     test_copy_context();
     test_set_live_context();
