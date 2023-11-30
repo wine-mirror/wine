@@ -1550,7 +1550,11 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "stp x4, x5, [x1, #0xf0]\n\t" /* context->Fp, Lr */
                    "str  x5, [x1, #0x108]\n\t"   /* context->Pc */
                    "str  x5, [x0, #0x10]\n\t"    /* rec->ExceptionAddress */
-                   "mov  x2, #1\n\t"
+                   "ldr x3, [x18, #0x60]\n\t"    /* peb */
+                   "ldrb w2, [x3, #2]\n\t"       /* peb->BeingDebugged */
+                   "cbnz w2, 1f\n\t"
+                   "bl " __ASM_NAME("dispatch_exception") "\n"
+                   "1:\tmov  x2, #1\n\t"
                    "bl " __ASM_NAME("NtRaiseException") "\n\t"
                    "bl " __ASM_NAME("RtlRaiseStatus") /* does not return */ );
 
