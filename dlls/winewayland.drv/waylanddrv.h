@@ -29,6 +29,7 @@
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
 #include <xkbcommon/xkbregistry.h>
+#include "pointer-constraints-unstable-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -89,7 +90,9 @@ struct wayland_cursor
 struct wayland_pointer
 {
     struct wl_pointer *wl_pointer;
+    struct zwp_confined_pointer_v1 *zwp_confined_pointer_v1;
     HWND focused_hwnd;
+    HWND constraint_hwnd;
     uint32_t enter_serial;
     uint32_t button_serial;
     struct wayland_cursor cursor;
@@ -115,6 +118,7 @@ struct wayland
     struct wl_shm *wl_shm;
     struct wp_viewporter *wp_viewporter;
     struct wl_subcompositor *wl_subcompositor;
+    struct zwp_pointer_constraints_v1 *zwp_pointer_constraints_v1;
     struct wayland_seat seat;
     struct wayland_keyboard keyboard;
     struct wayland_pointer pointer;
@@ -280,6 +284,7 @@ void WAYLAND_ReleaseKbdTables(const KBDTABLES *);
 
 void wayland_pointer_init(struct wl_pointer *wl_pointer);
 void wayland_pointer_deinit(void);
+void wayland_pointer_clear_constraint(void);
 
 /**********************************************************************
  *          Helpers
@@ -305,6 +310,7 @@ RGNDATA *get_region_data(HRGN region);
  *          USER driver functions
  */
 
+BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset);
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 void WAYLAND_DestroyWindow(HWND hwnd);
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);

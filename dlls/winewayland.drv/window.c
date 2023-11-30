@@ -194,6 +194,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     struct wayland_surface *surface = data->wayland_surface;
     HWND parent = NtUserGetAncestor(data->hwnd, GA_PARENT);
     BOOL visible, xdg_visible;
+    RECT clip;
 
     TRACE("hwnd=%p\n", data->hwnd);
 
@@ -231,6 +232,11 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
 
     if (data->window_surface)
         wayland_window_surface_update_wayland_surface(data->window_surface, surface);
+
+    /* Size/position changes affect the effective pointer constraint, so update
+     * it as needed. */
+    if (data->hwnd == NtUserGetForegroundWindow() && NtUserGetClipCursor(&clip))
+        NtUserClipCursor(&clip);
 
 out:
     TRACE("hwnd=%p surface=%p=>%p\n", data->hwnd, data->wayland_surface, surface);

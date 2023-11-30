@@ -6,6 +6,7 @@ UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS) $(XKBCOMMON_LIBS) $(XKBREGISTRY_LIBS
 SOURCES = \
 	display.c \
 	dllmain.c \
+	pointer-constraints-unstable-v1.xml \
 	version.rc \
 	viewporter.xml \
 	vulkan.c \

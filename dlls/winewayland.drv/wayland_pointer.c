@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <linux/input.h>
 #undef SW_MAX /* Also defined in winuser.rh */
 #include <math.h>
@@ -245,6 +246,11 @@ void wayland_pointer_deinit(void)
     struct wayland_pointer *pointer = &process_wayland.pointer;
 
     pthread_mutex_lock(&pointer->mutex);
+    if (pointer->zwp_confined_pointer_v1)
+    {
+        zwp_confined_pointer_v1_destroy(pointer->zwp_confined_pointer_v1);
+        pointer->zwp_confined_pointer_v1 = NULL;
+    }
     wl_pointer_release(pointer->wl_pointer);
     pointer->wl_pointer = NULL;
     pointer->focused_hwnd = NULL;
@@ -578,6 +584,106 @@ static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
     pthread_mutex_unlock(&pointer->mutex);
 }
 
+/**********************************************************************
+ *          wayland_surface_calc_confine
+ *
+ * Calculates the pointer confine rect (in surface-local coords)
+ * for the specified clip rectangle (in screen coords using thread dpi).
+ */
+static void wayland_surface_calc_confine(struct wayland_surface *surface,
+                                         const RECT *clip, RECT *confine)
+{
+    RECT window_clip;
+
+    TRACE("hwnd=%p clip=%s window=%s\n",
+          surface->hwnd, wine_dbgstr_rect(clip),
+          wine_dbgstr_rect(&surface->window.rect));
+
+    /* FIXME: surface->window.(client_)rect is in window dpi, whereas
+     * clip is in thread dpi. */
+
+    if (!intersect_rect(&window_clip, clip, &surface->window.rect))
+    {
+        SetRectEmpty(confine);
+        return;
+    }
+
+    OffsetRect(&window_clip,
+               -surface->window.rect.left,
+               -surface->window.rect.top);
+    wayland_surface_coords_from_window(surface,
+                                       window_clip.left, window_clip.top,
+                                       (int *)&confine->left, (int *)&confine->top);
+    wayland_surface_coords_from_window(surface,
+                                       window_clip.right, window_clip.bottom,
+                                       (int *)&confine->right, (int *)&confine->bottom);
+}
+
+/***********************************************************************
+ *           wayland_pointer_update_constraint
+ *
+ *  Enables/disables pointer confinement.
+ *
+ *  Passing a NULL confine_rect disables all constraints.
+ */
+static void wayland_pointer_update_constraint(RECT *confine_rect,
+                                              struct wl_surface *wl_surface)
+{
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+
+    assert(!confine_rect || wl_surface);
+
+    if (confine_rect)
+    {
+        HWND hwnd = wl_surface_get_user_data(wl_surface);
+        struct wl_region *region;
+
+        region = wl_compositor_create_region(process_wayland.wl_compositor);
+        wl_region_add(region, confine_rect->left, confine_rect->top,
+                      confine_rect->right - confine_rect->left,
+                      confine_rect->bottom - confine_rect->top);
+
+        if (!pointer->zwp_confined_pointer_v1 || pointer->constraint_hwnd != hwnd)
+        {
+            if (pointer->zwp_confined_pointer_v1)
+                zwp_confined_pointer_v1_destroy(pointer->zwp_confined_pointer_v1);
+            pointer->zwp_confined_pointer_v1 =
+                zwp_pointer_constraints_v1_confine_pointer(
+                    process_wayland.zwp_pointer_constraints_v1,
+                    wl_surface,
+                    pointer->wl_pointer,
+                    region,
+                    ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT);
+            pointer->constraint_hwnd = hwnd;
+        }
+        else
+        {
+            zwp_confined_pointer_v1_set_region(pointer->zwp_confined_pointer_v1,
+                                               region);
+        }
+
+        TRACE("Confining to hwnd=%p wayland=%d,%d+%d,%d\n",
+              pointer->constraint_hwnd,
+              (int)confine_rect->left, (int)confine_rect->top,
+              (int)(confine_rect->right - confine_rect->left),
+              (int)(confine_rect->bottom - confine_rect->top));
+
+        wl_region_destroy(region);
+    }
+    else if (pointer->zwp_confined_pointer_v1)
+    {
+        TRACE("Unconfining from hwnd=%p\n", pointer->constraint_hwnd);
+        zwp_confined_pointer_v1_destroy(pointer->zwp_confined_pointer_v1);
+        pointer->zwp_confined_pointer_v1 = NULL;
+        pointer->constraint_hwnd = NULL;
+    }
+}
+
+void wayland_pointer_clear_constraint(void)
+{
+    wayland_pointer_update_constraint(NULL, NULL);
+}
+
 /***********************************************************************
  *           WAYLAND_SetCursor
  */
@@ -586,4 +692,39 @@ void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor)
     TRACE("hwnd=%p hcursor=%p\n", hwnd, hcursor);
 
     wayland_set_cursor(hwnd, hcursor, TRUE);
+}
+
+/***********************************************************************
+ *	     WAYLAND_ClipCursor
+ */
+BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
+{
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+    struct wl_surface *wl_surface = NULL;
+    RECT confine_rect;
+
+    TRACE("clip=%s reset=%d\n", wine_dbgstr_rect(clip), reset);
+
+    if (clip)
+    {
+        struct wayland_surface *surface = NULL;
+
+        if ((surface = wayland_surface_lock_hwnd(NtUserGetForegroundWindow())))
+        {
+            wl_surface = surface->wl_surface;
+            wayland_surface_calc_confine(surface, clip, &confine_rect);
+            pthread_mutex_unlock(&surface->mutex);
+        }
+    }
+
+   /* Since we are running in the context of the foreground thread we know
+    * that the wl_surface of the foreground HWND will not be invalidated,
+    * so we can access it without having the surface lock. */
+    pthread_mutex_lock(&pointer->mutex);
+    wayland_pointer_update_constraint(wl_surface ? &confine_rect : NULL, wl_surface);
+    pthread_mutex_unlock(&pointer->mutex);
+
+    wl_display_flush(process_wayland.wl_display);
+
+    return TRUE;
 }
