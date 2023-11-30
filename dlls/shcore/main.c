@@ -29,6 +29,7 @@
 #include "ocidl.h"
 #include "featurestagingapi.h"
 #include "shellscalingapi.h"
+#include "shcore.h"
 #define WINSHLWAPI
 #include "shlwapi.h"
 
@@ -2527,5 +2528,14 @@ FEATURE_ENABLED_STATE WINAPI GetFeatureEnabledState(UINT32 feature, FEATURE_CHAN
 HRESULT WINAPI RegisterScaleChangeEvent(HANDLE handle, DWORD_PTR *cookie)
 {
     FIXME("(%p, %p) stub\n", handle, cookie);
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
+ * CreateRandomAccessStreamOverStream        [SHCORE.@]
+ */
+HRESULT WINAPI CreateRandomAccessStreamOverStream(IStream *stream, BSOS_OPTIONS options, REFIID riid, void **ppv)
+{
+    FIXME("(%p, %d, %s, %p) stub\n", stream, options, debugstr_guid(riid), ppv);
     return E_NOTIMPL;
 }

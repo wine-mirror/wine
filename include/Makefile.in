@@ -695,6 +695,7 @@ SOURCES = \
 	sesprp.idl \
 	setupapi.h \
 	sfc.h \
+	shcore.h \
 	shdeprecated.idl \
 	shdispid.h \
 	shellapi.h \
