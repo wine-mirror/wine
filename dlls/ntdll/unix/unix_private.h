@@ -178,7 +178,8 @@ extern struct ldt_copy __wine_ldt_copy;
 
 extern void init_environment( int argc, char *argv[], char *envp[] );
 extern void init_startup_info(void);
-extern void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
+extern void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
+                                  const RTL_USER_PROCESS_PARAMETERS *params,
                                   const pe_image_info_t *pe_info, DWORD *info_size );
 extern char **build_envp( const WCHAR *envW );
 extern char *get_alternate_wineloader( WORD machine );

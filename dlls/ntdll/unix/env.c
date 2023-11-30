@@ -2146,7 +2146,8 @@ void init_startup_info(void)
 /***********************************************************************
  *           create_startup_info
  */
-void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
+void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
+                           const RTL_USER_PROCESS_PARAMETERS *params,
                            const pe_image_info_t *pe_info, DWORD *info_size )
 {
     startup_info_t *info;
@@ -2175,9 +2176,13 @@ void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCES
     info->console_flags = params->ConsoleFlags;
     if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
         info->console   = wine_server_obj_handle( params->ConsoleHandle );
-    info->hstdin        = wine_server_obj_handle( params->hStdInput );
-    info->hstdout       = wine_server_obj_handle( params->hStdOutput );
-    info->hstderr       = wine_server_obj_handle( params->hStdError );
+    if ((process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES) ||
+        (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI && !(params->dwFlags & STARTF_USESTDHANDLES)))
+    {
+        info->hstdin    = wine_server_obj_handle( params->hStdInput );
+        info->hstdout   = wine_server_obj_handle( params->hStdOutput );
+        info->hstderr   = wine_server_obj_handle( params->hStdError );
+    }
     info->x             = params->dwX;
     info->y             = params->dwY;
     info->xsize         = params->dwXSize;
