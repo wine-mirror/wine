@@ -8750,6 +8750,60 @@ static void test_KiUserApcDispatcher(void)
     VirtualProtect( pKiUserApcDispatcher, sizeof(saved_code), old_protect, &old_protect );
 }
 
+static void WINAPI hook_KiUserCallbackDispatcher(void *sp)
+{
+    struct
+    {
+        void *args;
+        ULONG len;
+        ULONG id;
+        ULONG64 unknown;
+        ULONG64 lr;
+        ULONG64 sp;
+        ULONG64 pc;
+        BYTE args_data[0];
+    } *stack = sp;
+    ULONG_PTR redzone = (BYTE *)stack->sp - &stack->args_data[stack->len];
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+
+    trace( "stack=%p len=%lx id=%lx unk=%Ix lr=%Ix sp=%Ix pc=%Ix\n",
+           stack, stack->len, stack->id, stack->unknown, stack->lr, stack->sp, stack->pc );
+
+    ok( stack->args == stack->args_data, "wrong args %p / %p\n", stack->args, stack->args_data );
+    ok( redzone >= 16 && redzone <= 32, "wrong sp %p / %p (%Iu)\n",
+        (void *)stack->sp, stack->args_data, redzone );
+
+    if (pRtlPcToFileHeader)
+    {
+        void *mod, *win32u = GetModuleHandleA("win32u.dll");
+
+        pRtlPcToFileHeader( (void *)stack->pc, &mod );
+        ok( mod == win32u, "pc %Ix not in win32u %p\n", stack->pc, win32u );
+    }
+    NtCallbackReturn( NULL, 0, func( stack->args, stack->len ));
+}
+
+ void test_KiUserCallbackDispatcher(void)
+{
+    DWORD old_protect;
+    BOOL ret;
+
+    ret = VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_code),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_code, pKiUserCallbackDispatcher, sizeof(saved_code));
+    *(void **)&patched_code[3] = hook_KiUserCallbackDispatcher;
+    memcpy( pKiUserCallbackDispatcher, patched_code, sizeof(patched_code));
+    FlushInstructionCache(GetCurrentProcess(), pKiUserCallbackDispatcher, sizeof(patched_code));
+
+    DestroyWindow( CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 ));
+
+    memcpy( pKiUserCallbackDispatcher, saved_code, sizeof(saved_code));
+    FlushInstructionCache(GetCurrentProcess(), pKiUserCallbackDispatcher, sizeof(saved_code));
+    VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_code), old_protect, &old_protect );
+}
+
 #endif  /* __aarch64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -12014,6 +12068,7 @@ START_TEST(exception)
     test_virtual_unwind();
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
+    test_KiUserCallbackDispatcher();
 
 #elif defined(__arm__)
 

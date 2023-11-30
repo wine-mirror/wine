@@ -605,7 +605,7 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
 /*******************************************************************
  *		KiUserCallbackDispatcher (NTDLL.@)
  */
-void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
+void WINAPI dispatch_callback( void *args, ULONG len, ULONG id )
 {
     NTSTATUS status;
 
@@ -623,6 +623,17 @@ void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
 
     RtlRaiseStatus( status );
 }
+__ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
+                   __ASM_SEH(".seh_pushframe\n\t")
+                   "nop\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x20\n\t")
+                   "nop\n\t"
+                   __ASM_SEH(".seh_save_reg lr, 0x18\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "ldr x0, [sp]\n\t"             /* args */
+                   "ldp w1, w2, [sp, #0x08]\n\t"  /* len, id */
+                   "bl " __ASM_NAME("dispatch_callback") "\n\t"
+                   "brk #1" )
 
 
 /***********************************************************************

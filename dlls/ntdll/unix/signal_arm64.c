@@ -151,6 +151,21 @@ struct apc_stack_layout
 C_ASSERT( offsetof(struct apc_stack_layout, context) == 0x30 );
 C_ASSERT( sizeof(struct apc_stack_layout) == 0x3d0 );
 
+/* stack layout when calling KiUserCallbackDispatcher */
+struct callback_stack_layout
+{
+    void                *args;           /* 000 arguments */
+    ULONG                len;            /* 008 arguments len */
+    ULONG                id;             /* 00c function id */
+    ULONG64              unknown;        /* 010 */
+    ULONG64              lr;             /* 018 */
+    ULONG64              sp;             /* 020 sp+pc (machine frame) */
+    ULONG64              pc;             /* 028 */
+    BYTE                 args_data[0];   /* 030 copied argument data*/
+};
+C_ASSERT( offsetof(struct callback_stack_layout, sp) == 0x20 );
+C_ASSERT( sizeof(struct callback_stack_layout) == 0x30 );
+
 struct syscall_frame
 {
     ULONG64               x[29];          /* 000 */
@@ -1053,8 +1068,8 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 /***********************************************************************
  *           call_user_mode_callback
  */
-extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb );
+extern NTSTATUS call_user_mode_callback( ULONG64 user_sp, void **ret_ptr, ULONG *ret_len,
+                                         void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp x29, x30, [sp,#-0xc0]!\n\t"
                    __ASM_CFI(".cfi_def_cfa_offset 0xc0\n\t")
@@ -1081,22 +1096,22 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "stp d10, d11, [x29, #0x70]\n\t"
                    "stp d12, d13, [x29, #0x80]\n\t"
                    "stp d14, d15, [x29, #0x90]\n\t"
-                   "stp x3, x4, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
-                   "mov x18, x6\n\t"              /* teb */
-                   "mrs x3, fpcr\n\t"
-                   "mrs x4, fpsr\n\t"
-                   "bfi x3, x4, #0, #32\n\t"
-                   "ldr x4, [x18]\n\t"            /* teb->Tib.ExceptionList */
-                   "stp x3, x4, [x29, #0xb0]\n\t"
+                   "stp x1, x2, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+                   "mov x18, x4\n\t"              /* teb */
+                   "mrs x1, fpcr\n\t"
+                   "mrs x2, fpsr\n\t"
+                   "bfi x1, x2, #0, #32\n\t"
+                   "ldr x2, [x18]\n\t"            /* teb->Tib.ExceptionList */
+                   "stp x1, x2, [x29, #0xb0]\n\t"
 
                    "ldr x7, [x18, #0x2f0]\n\t"    /* arm64_thread_data()->syscall_frame */
-                   "sub x3, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
-                   "str x3, [x18, #0x2f0]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "sub x1, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
+                   "str x1, [x18, #0x2f0]\n\t"    /* arm64_thread_data()->syscall_frame */
                    "add x8, x29, #0xc0\n\t"
-                   "stp x7, x8, [x3, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
+                   "stp x7, x8, [x1, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
                    /* switch to user stack */
-                   "mov sp, x1\n\t"               /* stack */
-                   "br x5" )
+                   "mov sp, x0\n\t"               /* user_sp */
+                   "br x3" )
 
 
 /***********************************************************************
@@ -1186,14 +1201,20 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
-    void *args_data = (void *)((frame->sp - len) & ~15);
+    ULONG64 sp = (frame->sp - offsetof( struct callback_stack_layout, args_data[len] ) - 16) & ~15;
+    struct callback_stack_layout *stack = (struct callback_stack_layout *)sp;
 
     if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
-    memcpy( args_data, args, len );
-    return call_user_mode_callback( id, args_data, len, ret_ptr, ret_len,
-                                    pKiUserCallbackDispatcher, NtCurrentTeb() );
+    stack->args = stack->args_data;
+    stack->len  = len;
+    stack->id   = id;
+    stack->lr   = frame->lr;
+    stack->sp   = frame->sp;
+    stack->pc   = frame->pc;
+    memcpy( stack->args_data, args, len );
+    return call_user_mode_callback( sp, ret_ptr, ret_len, pKiUserCallbackDispatcher, NtCurrentTeb() );
 }
 
 
