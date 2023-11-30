@@ -612,6 +612,29 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
+                   __ASM_SEH(".seh_pushframe\n\t")
+                   __ASM_SEH(".seh_stackalloc 0x590\n\t")
+                   __ASM_SEH(".seh_savereg %rbx,0x90\n\t")
+                   __ASM_SEH(".seh_savereg %rbp,0xa0\n\t")
+                   __ASM_SEH(".seh_savereg %rsi,0xa8\n\t")
+                   __ASM_SEH(".seh_savereg %rdi,0xb0\n\t")
+                   __ASM_SEH(".seh_savereg %r12,0xd8\n\t")
+                   __ASM_SEH(".seh_savereg %r13,0xe0\n\t")
+                   __ASM_SEH(".seh_savereg %r14,0xe8\n\t")
+                   __ASM_SEH(".seh_savereg %r15,0xf0\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   __ASM_CFI(".cfi_def_cfa_offset 0\n\t")
+                   __ASM_CFI(".cfi_offset %rbx,0x90\n\t")
+                   __ASM_CFI(".cfi_offset %rbp,0xa0\n\t")
+                   __ASM_CFI(".cfi_offset %rsi,0xa8\n\t")
+                   __ASM_CFI(".cfi_offset %rdi,0xb0\n\t")
+                   __ASM_CFI(".cfi_offset %r12,0xd8\n\t")
+                   __ASM_CFI(".cfi_offset %r13,0xe0\n\t")
+                   __ASM_CFI(".cfi_offset %r14,0xe8\n\t")
+                   __ASM_CFI(".cfi_offset %r15,0xf0\n\t")
+                   __ASM_CFI(".cfi_offset %rip,0x590\n\t")
+                   __ASM_CFI(".cfi_offset %rsp,0x5a8\n\t")
                    "cld\n\t"
                    /* some anticheats need this exact instruction here */
                    "mov " __ASM_NAME("pWow64PrepareForException") "(%rip),%rax\n\t"
@@ -620,30 +643,10 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                    "mov %rsp,%rdx\n\t"           /* context */
                    "lea 0x4f0(%rsp),%rcx\n\t"    /* rec */
                    "call *%rax\n"
-                  "1:\tmov 0xf8(%rsp),%rdx\n\t" /* context->Rip */
-                  "mov 0x98(%rsp),%rcx\n\t" /* context->Rsp */
-                  "mov %rdx,-0x8(%rcx)\n\t"
-                  "mov %rbp,-0x10(%rcx)\n\t"
-                  "mov %rdi,-0x18(%rcx)\n\t"
-                  "mov %rsi,-0x20(%rcx)\n\t"
-                  "lea -0x20(%rcx),%rbp\n\t"
-                  "mov %rsp,%rdx\n\t" /* context */
-                  "lea 0x4f0(%rsp),%rcx\n\t" /* rec */
-                  __ASM_SEH(".seh_pushreg %rbp\n\t")
-                  __ASM_SEH(".seh_pushreg %rdi\n\t")
-                  __ASM_SEH(".seh_pushreg %rsi\n\t")
-                  __ASM_SEH(".seh_setframe %rbp,0\n\t")
-                  __ASM_SEH(".seh_endprologue\n\t")
-
-                  __ASM_CFI(".cfi_signal_frame\n\t")
-                  __ASM_CFI(".cfi_adjust_cfa_offset 0x20\n\t")
-                  __ASM_CFI(".cfi_def_cfa %rbp,0x20\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rip,0x18\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rbp,0x10\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rdi,0x8\n\t")
-                  __ASM_CFI(".cfi_rel_offset %rsi,0\n\t")
+                   "1:\tmov %rsp,%rdx\n\t" /* context */
+                   "lea 0x4f0(%rsp),%rcx\n\t" /* rec */
                    "call " __ASM_NAME("dispatch_exception") "\n\t"
-                  "int3")
+                   "int3" )
 
 
 /*******************************************************************

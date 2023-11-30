@@ -4644,6 +4644,15 @@ test_kiuserexceptiondispatcher_regs;
 
 static ULONG64 test_kiuserexceptiondispatcher_saved_r12;
 
+struct machine_frame
+{
+    ULONG64 rip;
+    ULONG64 cs;
+    ULONG64 eflags;
+    ULONG64 rsp;
+    ULONG64 ss;
+};
+
 static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
@@ -4689,14 +4698,28 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 
 static void * WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
+    struct machine_frame *frame = (struct machine_frame *)(((ULONG_PTR)(rec + 1) + 0x0f) & ~0x0f);
+    CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
+
     trace("rec %p, context %p.\n", rec, context);
     trace("context->Rip %#Ix, context->Rsp %#Ix, ContextFlags %#lx.\n",
             context->Rip, context->Rsp, context->ContextFlags);
+    trace("machine frame %p: rip=%Ix cs=%Ix eflags=%Ix rsp=%Ix ss=%Ix\n",
+          frame, frame->rip, frame->cs, frame->eflags, frame->rsp, frame->ss);
 
     hook_called = TRUE;
     /* Broken on Win2008, probably rec offset in stack is different. */
     ok(rec->ExceptionCode == 0x80000003 || rec->ExceptionCode == 0xceadbeef || broken(!rec->ExceptionCode),
             "Got unexpected ExceptionCode %#lx.\n", rec->ExceptionCode);
+
+    ok( !((ULONG_PTR)context & 15), "unaligned context %p\n", context );
+    ok( xctx->All.Offset == -sizeof(CONTEXT), "wrong All.Offset %lx\n", xctx->All.Offset );
+    ok( xctx->All.Length >= sizeof(CONTEXT) + offsetof(CONTEXT_EX, align), "wrong All.Length %lx\n", xctx->All.Length );
+    ok( xctx->Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", xctx->All.Offset );
+    ok( xctx->Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", xctx->All.Length );
+    ok( (void *)(xctx + 1) == (void *)rec, "wrong ptrs %p / %p\n", xctx, rec );
+    ok( frame->rip == context->Rip, "wrong rip %Ix / %Ix\n", frame->rip, context->Rip );
+    ok( frame->rsp == context->Rsp, "wrong rsp %Ix / %Ix\n", frame->rsp, context->Rsp );
 
     hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
     hook_exception_address = rec->ExceptionAddress;

@@ -341,21 +341,29 @@ enum i386_trap_code
 #endif
 };
 
-/* stack layout when calling an exception raise function */
-struct stack_layout
+struct machine_frame
 {
-    CONTEXT           context;
-    CONTEXT_EX        context_ex;
-    EXCEPTION_RECORD  rec;
-    ULONG64           align;
-    char              xstate[0]; /* If xstate is present it is allocated
-                                  * dynamically to provide 64 byte alignment. */
+    ULONG64 rip;
+    ULONG64 cs;
+    ULONG64 eflags;
+    ULONG64 rsp;
+    ULONG64 ss;
 };
 
-C_ASSERT((offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout)));
-
-C_ASSERT( sizeof(XSTATE) == 0x140 );
-C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
+/* stack layout when calling KiUserExceptionDispatcher */
+struct exc_stack_layout
+{
+    CONTEXT              context;        /* 000 */
+    CONTEXT_EX           context_ex;     /* 4d0 */
+    EXCEPTION_RECORD     rec;            /* 4f0 */
+    ULONG64              align;          /* 588 */
+    struct machine_frame machine_frame;  /* 590 */
+    ULONG64              align2;         /* 5b8 */
+    XSTATE               xstate;         /* 5c0 */
+};
+C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x4f0 );
+C_ASSERT( offsetof(struct exc_stack_layout, machine_frame) == 0x590 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x700 );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
@@ -1379,7 +1387,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
 {
     void *stack_ptr = (void *)(RSP_sig(sigcontext) & ~15);
     CONTEXT *context = &xcontext->c;
-    struct stack_layout *stack;
+    struct exc_stack_layout *stack;
     size_t stack_size;
     NTSTATUS status;
     XSTATE *src_xs;
@@ -1411,28 +1419,23 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
-    stack_size = sizeof(*stack) + 0x20;
+    stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack)) & ~(ULONG_PTR)63);
+    stack = virtual_setup_exception( stack_ptr, stack_size, rec );
+    stack->rec               = *rec;
+    stack->context           = *context;
+    stack->machine_frame.rip = context->Rip;
+    stack->machine_frame.rsp = context->Rsp;
+
     if ((src_xs = xstate_from_context( context )))
     {
-        stack_size += (ULONG_PTR)stack_ptr - 0x20 - (((ULONG_PTR)stack_ptr - 0x20
-                - sizeof(XSTATE)) & ~(ULONG_PTR)63);
-    }
-
-    stack = virtual_setup_exception( stack_ptr, stack_size, rec );
-    stack->rec          = *rec;
-    stack->context      = *context;
-    if (src_xs)
-    {
-        XSTATE *dst_xs = (XSTATE *)stack->xstate;
-
-        assert( !((ULONG_PTR)dst_xs & 63) );
-        context_init_xstate( &stack->context, stack->xstate );
-        memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
+        assert( !((ULONG_PTR)&stack->xstate & 63) );
+        context_init_xstate( &stack->context, &stack->xstate );
+        memset( &stack->xstate, 0, offsetof(XSTATE, YmmContext) );
+        stack->xstate.CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
         if (src_xs->Mask & 4)
         {
-            dst_xs->Mask = 4;
-            memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
+            stack->xstate.Mask = 4;
+            memcpy( &stack->xstate.YmmContext, &src_xs->YmmContext, sizeof(stack->xstate.YmmContext) );
         }
     }
     else
@@ -1517,27 +1520,26 @@ void call_raise_user_exception_dispatcher(void)
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
-    struct stack_layout *stack;
-    ULONG64 rsp;
+    struct exc_stack_layout *stack;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (status) return status;
-    rsp = (context->Rsp - 0x20) & ~15;
-    stack = (struct stack_layout *)rsp - 1;
+    stack = (struct exc_stack_layout *)((context->Rsp - sizeof(*stack)) & ~(ULONG_PTR)63);
+    memmove( &stack->context, context, sizeof(*context) );
 
     if ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
     {
-        rsp = (rsp - sizeof(XSTATE)) & ~63;
-        stack = (struct stack_layout *)rsp - 1;
-        assert( !((ULONG_PTR)stack->xstate & 63) );
-        memmove( &stack->context, context, sizeof(*context) );
-        context_init_xstate( &stack->context, stack->xstate );
-        memcpy( stack->xstate, &frame->xstate, sizeof(frame->xstate) );
+        assert( !((ULONG_PTR)&stack->xstate & 63) );
+        context_init_xstate( &stack->context, &stack->xstate );
+        memcpy( &stack->xstate, &frame->xstate, sizeof(frame->xstate) );
     }
-    else memmove( &stack->context, context, sizeof(*context) );
+    else context_init_xstate( &stack->context, NULL );
+
     stack->rec = *rec;
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT) stack->context.Rip--;
+    stack->machine_frame.rip = stack->context.Rip;
+    stack->machine_frame.rsp = stack->context.Rsp;
     frame->rbp = stack->context.Rbp;
     frame->rsp = (ULONG64)stack;
     frame->rip = (ULONG64)pKiUserExceptionDispatcher;
