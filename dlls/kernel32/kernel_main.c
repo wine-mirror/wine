@@ -108,10 +108,18 @@ static void copy_startup_info(void)
     startup_infoA.wShowWindow          = rupp->wShowWindow;
     startup_infoA.cbReserved2          = rupp->RuntimeInfo.MaximumLength;
     startup_infoA.lpReserved2          = rupp->RuntimeInfo.MaximumLength ? (void*)rupp->RuntimeInfo.Buffer : NULL;
-    startup_infoA.hStdInput            = rupp->hStdInput ? rupp->hStdInput : INVALID_HANDLE_VALUE;
-    startup_infoA.hStdOutput           = rupp->hStdOutput ? rupp->hStdOutput : INVALID_HANDLE_VALUE;
-    startup_infoA.hStdError            = rupp->hStdError ? rupp->hStdError : INVALID_HANDLE_VALUE;
-
+    if (rupp->dwFlags & STARTF_USESTDHANDLES)
+    {
+        startup_infoA.hStdInput        = rupp->hStdInput;
+        startup_infoA.hStdOutput       = rupp->hStdOutput;
+        startup_infoA.hStdError        = rupp->hStdError;
+    }
+    else
+    {
+        startup_infoA.hStdInput        = INVALID_HANDLE_VALUE;
+        startup_infoA.hStdOutput       = INVALID_HANDLE_VALUE;
+        startup_infoA.hStdError        = INVALID_HANDLE_VALUE;
+    }
     RtlReleasePebLock();
 }
 

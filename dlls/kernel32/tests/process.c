@@ -3251,42 +3251,42 @@ static void test_StdHandleInheritance(void)
     {
         /* all others handles type behave as H_DISK */
 /* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
 
         /* all others handles type behave as H_DISK */
-        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 6, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
     },
     nothing_gui[] =
     {
         /* testing all types because of discrepancies */
 /* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 6},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE, .is_todo = 6},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
-/* 5*/  {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_todo = 6},
+/* 5*/  {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 1, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
 
         /* all others handles type behave as H_DISK */
-        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 6, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 4},
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL},
     },
     detached_cui[] =
     {
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         /* all others handles type behave as H_DISK */
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
     },
     detached_gui[] =
     {
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         /* all others handles type behave as H_DISK */
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
     };
     static const struct

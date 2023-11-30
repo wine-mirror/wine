@@ -1280,9 +1280,18 @@ void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params )
     startup_infoW.wShowWindow     = params->wShowWindow;
     startup_infoW.cbReserved2     = params->RuntimeInfo.MaximumLength;
     startup_infoW.lpReserved2     = params->RuntimeInfo.MaximumLength ? (void *)params->RuntimeInfo.Buffer : NULL;
-    startup_infoW.hStdInput       = params->hStdInput ? params->hStdInput : INVALID_HANDLE_VALUE;
-    startup_infoW.hStdOutput      = params->hStdOutput ? params->hStdOutput : INVALID_HANDLE_VALUE;
-    startup_infoW.hStdError       = params->hStdError ? params->hStdError : INVALID_HANDLE_VALUE;
+    if (params->dwFlags & STARTF_USESTDHANDLES)
+    {
+        startup_infoW.hStdInput   = params->hStdInput;
+        startup_infoW.hStdOutput  = params->hStdOutput;
+        startup_infoW.hStdError   = params->hStdError;
+    }
+    else
+    {
+        startup_infoW.hStdInput   = NULL;
+        startup_infoW.hStdOutput  = NULL;
+        startup_infoW.hStdError   = NULL;
+    }
 
     command_lineW = params->CommandLine.Buffer;
     if (!RtlUnicodeStringToAnsiString( &ansi, &params->CommandLine, TRUE )) command_lineA = ansi.Buffer;
