@@ -101,9 +101,7 @@ static void wine_vk_surface_release( struct wine_vk_surface *surface )
         pthread_mutex_unlock(&vulkan_mutex);
     }
 
-    if (surface->window)
-        XDestroyWindow(gdi_display, surface->window);
-
+    destroy_client_window( surface->hwnd, surface->window );
     free(surface);
 }
 
@@ -193,8 +191,8 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         ERR("Failed to allocate client window for hwnd=%p\n", create_info->hwnd);
 
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
-        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-        goto err;
+        free(x11_surface);
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     create_info_host.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
@@ -207,7 +205,9 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create Xlib surface, res=%d\n", res);
-        goto err;
+        destroy_client_window( x11_surface->hwnd, x11_surface->window );
+        free(x11_surface);
+        return res;
     }
 
     pthread_mutex_lock(&vulkan_mutex);
@@ -218,10 +218,6 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
 
     TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
     return VK_SUCCESS;
-
-err:
-    wine_vk_surface_release(x11_surface);
-    return res;
 }
 
 static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,

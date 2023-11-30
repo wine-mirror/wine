@@ -221,6 +221,7 @@ struct gl_drawable
 {
     LONG                           ref;          /* reference count */
     enum dc_gl_type                type;         /* type of GL surface */
+    HWND                           hwnd;
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
@@ -1158,7 +1159,7 @@ static void release_gl_drawable( struct gl_drawable *gl )
     case DC_GL_CHILD_WIN:
         TRACE( "destroying %lx drawable %lx\n", gl->window, gl->drawable );
         pglXDestroyWindow( gdi_display, gl->drawable );
-        XDestroyWindow( gdi_display, gl->window );
+        destroy_client_window( gl->hwnd, gl->window );
         XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_PIXMAP_WIN:
@@ -1328,6 +1329,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
     gl->refresh_swap_interval = TRUE;
     gl->format = format;
     gl->ref = 1;
+    gl->hwnd = hwnd;
     gl->mutable_pf = mutable_pf;
 
     if (!known_child && !NtUserGetWindowRelative( hwnd, GW_CHILD ) &&

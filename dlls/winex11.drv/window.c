@@ -1614,6 +1614,29 @@ static void detach_client_window( struct x11drv_win_data *data, Window client_wi
 
 
 /**********************************************************************
+ *      destroy_client_window
+ */
+void destroy_client_window( HWND hwnd, Window client_window )
+{
+    struct x11drv_win_data *data;
+
+    TRACE( "%p destroying client window %lx\n", hwnd, client_window );
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->client_window == client_window)
+        {
+            if (data->whole_window) client_window_events_disable( data, client_window );
+            data->client_window = 0;
+        }
+        release_win_data( data );
+    }
+
+    XDestroyWindow( gdi_display, client_window );
+}
+
+
+/**********************************************************************
  *		create_client_window
  */
 Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colormap )
