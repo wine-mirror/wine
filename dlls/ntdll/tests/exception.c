@@ -1908,15 +1908,22 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 /* Use CDECL to leave arguments on stack. */
 static void * CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
-    trace("rec %p, context %p.\n", rec, context);
-    trace("context->Eip %#lx, context->Esp %#lx, ContextFlags %#lx.\n",
-            context->Eip, context->Esp, context->ContextFlags);
+    CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
+
+    trace( "rec %p context %p context->Eip %#lx, context->Esp %#lx (%x), ContextFlags %#lx.\n",
+           rec, context, context->Eip, context->Esp,
+           (char *)context->Esp - (char *)&rec, context->ContextFlags);
+    trace( "xstate %lx = %p (%x) %lx\n", xctx->XState.Offset, (char *)xctx + xctx->XState.Offset,
+           (char *)xctx + xctx->XState.Offset - (char *)&rec, xctx->XState.Length );
+
+    ok( (char *)rec->ExceptionInformation <= (char *)context &&
+        (char *)(rec + 1) >= (char *)context, "wrong ptrs %p / %p\n", rec, context );
+    ok( xctx->All.Offset == -sizeof(CONTEXT), "wrong All.Offset %lx\n", xctx->All.Offset );
+    ok( xctx->All.Length >= sizeof(CONTEXT) + sizeof(CONTEXT_EX), "wrong All.Length %lx\n", xctx->All.Length );
+    ok( xctx->Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", xctx->All.Offset );
+    ok( xctx->Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", xctx->All.Length );
 
     hook_called = TRUE;
-    /* Broken on Win2008, probably rec offset in stack is different. */
-    ok(rec->ExceptionCode == 0x80000003 || broken(!rec->ExceptionCode),
-            "Got unexpected ExceptionCode %#lx.\n", rec->ExceptionCode);
-
     hook_KiUserExceptionDispatcher_eip = (void *)context->Eip;
     hook_exception_address = rec->ExceptionAddress;
     memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,

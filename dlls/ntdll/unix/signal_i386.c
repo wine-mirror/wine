@@ -435,6 +435,21 @@ enum i386_trap_code
 #endif
 };
 
+/* stack layout when calling KiUserExceptionDispatcher */
+struct exc_stack_layout
+{
+    EXCEPTION_RECORD *rec_ptr;       /* 000 first arg for KiUserExceptionDispatcher */
+    CONTEXT          *context_ptr;   /* 004 second arg for KiUserExceptionDispatcher */
+    EXCEPTION_RECORD  rec;           /* 008 */
+    CONTEXT           context;       /* 058 */
+    CONTEXT_EX        context_ex;    /* 324 */
+    BYTE xstate[sizeof(XSTATE)+64];  /* 33c extra space to allow for 64-byte alignment */
+    DWORD             align;         /* 4bc */
+};
+C_ASSERT( offsetof(struct exc_stack_layout, context) == 0x58 );
+C_ASSERT( offsetof(struct exc_stack_layout, xstate) == 0x33c );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x4c0 );
+
 struct syscall_frame
 {
     WORD                  syscall_flags;  /* 000 */
@@ -1417,23 +1432,8 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
                                    EXCEPTION_RECORD *rec, struct xcontext *xcontext )
 {
     CONTEXT *context = &xcontext->c;
-    size_t stack_size;
     XSTATE *src_xs;
-
-    struct stack_layout
-    {
-        EXCEPTION_RECORD *rec_ptr;       /* first arg for KiUserExceptionDispatcher */
-        CONTEXT          *context_ptr;   /* second arg for KiUserExceptionDispatcher */
-        CONTEXT           context;
-        CONTEXT_EX        context_ex;
-        EXCEPTION_RECORD  rec;
-        DWORD             ebp;
-        DWORD             eip;
-        char              xstate[0];
-    } *stack;
-
-C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout)) );
-
+    struct exc_stack_layout *stack;
     NTSTATUS status = send_debug_event( rec, context, TRUE );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
@@ -1445,23 +1445,17 @@ C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout))
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    stack_size = sizeof(*stack);
-    if ((src_xs = xstate_from_context( context )))
-    {
-        stack_size += (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr
-                - sizeof(XSTATE)) & ~(ULONG_PTR)63);
-    }
-
-    stack = virtual_setup_exception( stack_ptr, stack_size, rec );
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+    stack->rec_ptr      = &stack->rec;
+    stack->context_ptr  = &stack->context;
     stack->rec          = *rec;
     stack->context      = *context;
 
-    if (src_xs)
+    if ((src_xs = xstate_from_context( context )))
     {
-        XSTATE *dst_xs = (XSTATE *)stack->xstate;
+        XSTATE *dst_xs = (XSTATE *)(((ULONG_PTR)stack->xstate + 63) & ~63);
 
-        assert(!((ULONG_PTR)dst_xs & 63));
-        context_init_xstate( &stack->context, stack->xstate );
+        context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
         dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
         if (src_xs->Mask & 4)
@@ -1475,8 +1469,6 @@ C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout))
         context_init_xstate( &stack->context, NULL );
     }
 
-    stack->rec_ptr      = &stack->rec;
-    stack->context_ptr  = &stack->context;
     ESP_sig(sigcontext) = (DWORD)stack;
     EIP_sig(sigcontext) = (DWORD)pKiUserExceptionDispatcher;
     /* clear single-step, direction, and align check flag */
@@ -1560,11 +1552,35 @@ void call_raise_user_exception_dispatcher(void)
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
-    void **stack = (void **)frame->esp;
+    ULONG esp = (frame->esp - sizeof(struct exc_stack_layout)) & ~3;
+    struct exc_stack_layout *stack = (struct exc_stack_layout *)esp;
+    XSTATE *src_xs;
 
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
-    *(--stack) = context;
-    *(--stack) = rec;
+
+    stack->rec_ptr      = &stack->rec;
+    stack->context_ptr  = &stack->context;
+    stack->rec          = *rec;
+    stack->context      = *context;
+
+    if ((src_xs = xstate_from_context( context )))
+    {
+        XSTATE *dst_xs = (XSTATE *)(((ULONG_PTR)stack->xstate + 63) & ~63);
+
+        context_init_xstate( &stack->context, dst_xs );
+        memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
+        if (src_xs->Mask & 4)
+        {
+            dst_xs->Mask = 4;
+            memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
+        }
+    }
+    else
+    {
+        context_init_xstate( &stack->context, NULL );
+    }
+
     frame->esp = (ULONG)stack;
     frame->eip = (ULONG)pKiUserExceptionDispatcher;
     return STATUS_SUCCESS;

@@ -75,6 +75,13 @@ typedef struct
 
 typedef struct
 {
+    CONTEXT_CHUNK All;
+    CONTEXT_CHUNK Legacy;
+    CONTEXT_CHUNK XState;
+} CONTEXT_EX32;
+
+typedef struct
+{
     UNICODE_STRING32 ObjectName;
     UNICODE_STRING32 ObjectTypeName;
 } DIRECTORY_BASIC_INFORMATION32;

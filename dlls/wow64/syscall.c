@@ -190,16 +190,24 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
     {
     case IMAGE_FILE_MACHINE_I386:
         {
-            struct stack_layout
+            /* stack layout when calling 32-bit KiUserExceptionDispatcher */
+            struct exc_stack_layout32
             {
-                ULONG               rec_ptr;       /* first arg for KiUserExceptionDispatcher */
-                ULONG               context_ptr;   /* second arg for KiUserExceptionDispatcher */
-                EXCEPTION_RECORD32  rec;
-                I386_CONTEXT        context;
+                ULONG              rec_ptr;       /* 000 */
+                ULONG              context_ptr;   /* 004 */
+                EXCEPTION_RECORD32 rec;           /* 008 */
+                I386_CONTEXT       context;       /* 058 */
+                CONTEXT_EX32       context_ex;    /* 324 */
+                BYTE xstate[sizeof(XSTATE)+64];   /* 33c */
+                DWORD             align;          /* 4bc */
             } *stack;
-            I386_CONTEXT *context, ctx = { CONTEXT_I386_ALL };
+            I386_CONTEXT ctx = { CONTEXT_I386_ALL };
             CONTEXT_EX *context_ex, *src_ex = NULL;
-            ULONG size, flags;
+            ULONG flags;
+
+            C_ASSERT( offsetof(struct exc_stack_layout32, context) == 0x58 );
+            C_ASSERT( offsetof(struct exc_stack_layout32, xstate) == 0x33c );
+            C_ASSERT( sizeof(struct exc_stack_layout32) == 0x4c0 );
 
             pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
 
@@ -222,20 +230,16 @@ static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32
 
             flags = ctx.ContextFlags;
             if (src_ex) flags |= CONTEXT_I386_XSTATE;
-            RtlGetExtendedContextLength( flags, &size );
-            size = ((size + 15) & ~15) + offsetof(struct stack_layout,context);
 
-            stack = (struct stack_layout *)(ULONG_PTR)(ctx.Esp - size);
-            stack->rec_ptr = PtrToUlong( &stack->rec );
-            stack->rec = *rec;
+            stack = (struct exc_stack_layout32 *)ULongToPtr( ctx.Esp & ~3 ) - 1;
+            stack->rec_ptr     = PtrToUlong( &stack->rec );
+            stack->context_ptr = PtrToUlong( &stack->context );
+            stack->rec         = *rec;
+            stack->context     = ctx;
             RtlInitializeExtendedContext( &stack->context, flags, &context_ex );
-            context = RtlLocateLegacyContext( context_ex, NULL );
-            *context = ctx;
-            context->ContextFlags = flags;
             /* adjust Eip for breakpoints in software emulation (hardware exceptions already adjust Rip) */
             if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && (wow64info->CpuFlags & WOW64_CPUFLAGS_SOFTWARE))
-                context->Eip--;
-            stack->context_ptr = PtrToUlong( context );
+                stack->context.Eip--;
 
             if (src_ex)
             {
