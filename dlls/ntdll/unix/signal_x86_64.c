@@ -375,6 +375,19 @@ struct apc_stack_layout
 C_ASSERT( offsetof(struct apc_stack_layout, machine_frame) == 0x4d0 );
 C_ASSERT( sizeof(struct apc_stack_layout) == 0x500 );
 
+/* stack layout when calling KiUserCallbackDispatcher */
+struct callback_stack_layout
+{
+    ULONG64              padding[4];     /* 000 parameter space for called function */
+    void                *args;           /* 020 arguments */
+    ULONG                len;            /* 028 arguments len */
+    ULONG                id;             /* 02c function id */
+    struct machine_frame machine_frame;  /* 030 machine frame */
+    BYTE                 args_data[0];   /* 058 copied argument data */
+};
+C_ASSERT( offsetof(struct callback_stack_layout, machine_frame) == 0x30 );
+C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
+
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
 #define SYSCALL_HAVE_XSAVEC      2
@@ -1550,8 +1563,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 /***********************************************************************
  *           call_user_mode_callback
  */
-extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb );
+extern NTSTATUS call_user_mode_callback( ULONG64 user_rsp, void **ret_ptr, ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "subq $0x48,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x48\n\t")
@@ -1571,33 +1583,28 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
                    "stmxcsr -0x30(%rbp)\n\t"
                    "fnstcw -0x2c(%rbp)\n\t"
-                   "movq %rcx,-0x38(%rbp)\n\t" /* ret_ptr */
-                   "movq %r8,-0x40(%rbp)\n\t"  /* ret_len */
-                   "mov 0x10(%rbp),%r11\n\t"   /* teb */
+                   "movq %rsi,-0x38(%rbp)\n\t" /* ret_ptr */
+                   "movq %rdx,-0x40(%rbp)\n\t" /* ret_len */
                    "subq $0x408,%rsp\n\t"      /* sizeof(struct syscall_frame) + exception */
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
-                   "movq 0x328(%r11),%r10\n\t" /* amd64_thread_data()->syscall_frame */
-                   "movq (%r11),%rax\n\t"      /* NtCurrentTeb()->Tib.ExceptionList */
+                   "movq 0x328(%r8),%r10\n\t"  /* amd64_thread_data()->syscall_frame */
+                   "movq (%r8),%rax\n\t"       /* NtCurrentTeb()->Tib.ExceptionList */
                    "movq %rax,0x408(%rsp)\n\t"
                    "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
                    "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
-                   "movq %rsp,0x328(%r11)\n\t" /* amd64_thread_data()->syscall_frame */
+                   "movq %rsp,0x328(%r8)\n\t"  /* amd64_thread_data()->syscall_frame */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"       /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
-                   "movw 0x338(%r11),%fs\n"    /* amd64_thread_data()->fs */
+                   "movw 0x338(%r8),%fs\n"     /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
-                   "movq %rdi,%rcx\n\t"        /* id */
-                   "movq %rdx,%r8\n\t"         /* len */
-                   "movq %rsi,%rdx\n\t"        /* args */
                    /* switch to user stack */
-                   "leaq -0x20(%rsi),%rsp\n\t"
-                   "push $0\n\t"
-                   "jmpq *%r9" )
+                   "movq %rdi,%rsp\n\t"        /* user_rsp */
+                   "jmpq *%rcx" )              /* func */
 
 
 /***********************************************************************
@@ -1669,14 +1676,19 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
-    void *args_data = (void *)((frame->rsp - len) & ~15);
+    ULONG64 rsp = (frame->rsp - offsetof( struct callback_stack_layout, args_data[len] )) & ~15;
+    struct callback_stack_layout *stack = (struct callback_stack_layout *)rsp;
 
     if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
-    memcpy( args_data, args, len );
-    return call_user_mode_callback( id, args_data, len, ret_ptr, ret_len,
-                                    pKiUserCallbackDispatcher, NtCurrentTeb() );
+    stack->args              = stack->args_data;
+    stack->len               = len;
+    stack->id                = id;
+    stack->machine_frame.rip = frame->rip;
+    stack->machine_frame.rsp = frame->rsp;
+    memcpy( stack->args_data, args, len );
+    return call_user_mode_callback( rsp, ret_ptr, ret_len, pKiUserCallbackDispatcher, NtCurrentTeb() );
 }
 
 

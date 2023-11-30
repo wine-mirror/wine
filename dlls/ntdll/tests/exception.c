@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winreg.h"
+#include "winuser.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "excpt.h"
@@ -61,6 +62,7 @@ static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULO
 static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
 static void      (WINAPI *pRtlSetExtendedFeaturesMask)(CONTEXT_EX *context_ex, ULONG64 feature_mask);
 static ULONG64   (WINAPI *pRtlGetExtendedFeaturesMask)(CONTEXT_EX *context_ex);
+static void *    (WINAPI *pRtlPcToFileHeader)(PVOID pc, PVOID *address);
 static NTSTATUS  (WINAPI *pNtRaiseException)(EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
@@ -80,6 +82,7 @@ static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *fea
 static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
 
 static void *pKiUserApcDispatcher;
+static void *pKiUserCallbackDispatcher;
 static void *pKiUserExceptionDispatcher;
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
@@ -5017,6 +5020,82 @@ static void test_KiUserApcDispatcher(void)
     ok( hook_called, "hook was not called\n" );
 
     VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
+}
+
+static void WINAPI hook_KiUserCallbackDispatcher(void *rsp)
+{
+    struct
+    {
+        ULONG64              padding[4];
+        void                *args;
+        ULONG                len;
+        ULONG                id;
+        struct machine_frame frame;
+        BYTE                 args_data[0];
+    } *stack = rsp;
+
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+
+    trace( "rsp %p args %p (%#Ix) len %lu id %lu\n", stack, stack->args,
+           (char *)stack->args - (char *)stack, stack->len, stack->id );
+    trace( "machine frame rip=%#Ix cs=%#Ix eflags=%#Ix rsp=%#Ix (%Ix) ss=%#Ix\n",
+           stack->frame.rip, stack->frame.cs, stack->frame.eflags, stack->frame.rsp, stack->frame.rsp - (ULONG64)rsp, stack->frame.ss );
+
+    ok( !((ULONG_PTR)stack & 15), "unaligned stack %p\n", stack );
+    ok( stack->args == stack->args_data, "wrong args %p / %p\n", stack->args, stack->args_data );
+    ok( (BYTE *)stack->frame.rsp - &stack->args_data[stack->len] <= 16, "wrong rsp %p / %p\n",
+        (void *)stack->frame.rsp, &stack->args_data[stack->len] );
+
+    if (stack->frame.rip && pRtlPcToFileHeader)
+    {
+        void *mod, *win32u = GetModuleHandleA("win32u.dll");
+
+        pRtlPcToFileHeader( (void *)stack->frame.rip, &mod );
+        if (win32u) ok( mod == win32u, "ret address %Ix not in win32u %p\n", stack->frame.rip, win32u );
+        else trace( "ret address %Ix in %p\n", stack->frame.rip, mod );
+    }
+    NtCallbackReturn( NULL, 0, func( stack->args, stack->len ));
+}
+
+static void test_KiUserCallbackDispatcher(void)
+{
+    BYTE hook_trampoline[] =
+    {
+        0x48, 0x89, 0xe1,           /* mov %rsp,%rcx */
+        0x48, 0xb8,                 /* movabs hook_KiUserCallbackDispatcher,%rax */
+        0,0,0,0,0,0,0,0,            /* offset 5 */
+        0xff, 0xd0,                 /* callq *rax */
+    };
+
+    BYTE saved_KiUserCallbackDispatcher[12];
+    BYTE patched_KiUserCallbackDispatcher[12];
+    DWORD old_protect;
+    BYTE *ptr;
+    BOOL ret;
+
+    *(ULONG_PTR *)(hook_trampoline + 5) = (ULONG_PTR)hook_KiUserCallbackDispatcher;
+    memcpy(code_mem, hook_trampoline, sizeof(hook_trampoline));
+
+    ret = VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_KiUserCallbackDispatcher),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_KiUserCallbackDispatcher, pKiUserCallbackDispatcher, sizeof(saved_KiUserCallbackDispatcher) );
+    ptr = patched_KiUserCallbackDispatcher;
+    /* mov $code_mem, %rax */
+    *ptr++ = 0x48;
+    *ptr++ = 0xb8;
+    *(void **)ptr = code_mem;
+    ptr += sizeof(ULONG64);
+    /* jmp *rax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xe0;
+    memcpy( pKiUserCallbackDispatcher, patched_KiUserCallbackDispatcher, sizeof(patched_KiUserCallbackDispatcher) );
+
+    DestroyWindow( CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 ));
+
+    memcpy( pKiUserCallbackDispatcher, saved_KiUserCallbackDispatcher, sizeof(saved_KiUserCallbackDispatcher));
+    VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_KiUserCallbackDispatcher), old_protect, &old_protect );
 }
 
 static BOOL got_nested_exception, got_prev_frame_exception;
@@ -11563,9 +11642,11 @@ START_TEST(exception)
     X(RtlLocateLegacyContext);
     X(RtlSetExtendedFeaturesMask);
     X(RtlGetExtendedFeaturesMask);
+    X(RtlPcToFileHeader);
     X(RtlCopyContext);
     X(RtlCopyExtendedContext);
     X(KiUserApcDispatcher);
+    X(KiUserCallbackDispatcher);
     X(KiUserExceptionDispatcher);
 #undef X
 
@@ -11728,6 +11809,7 @@ START_TEST(exception)
     test_wow64_context();
     test_KiUserExceptionDispatcher();
     test_KiUserApcDispatcher();
+    test_KiUserCallbackDispatcher();
     test_nested_exception();
     test_collided_unwind();
 
