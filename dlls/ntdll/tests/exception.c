@@ -34,6 +34,7 @@
 #include "intrin.h"
 
 static void *code_mem;
+static HMODULE hntdll;
 
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
@@ -77,6 +78,8 @@ static void *    (WINAPI *pLocateXStateFeature)(CONTEXT *context, DWORD feature_
 static BOOL      (WINAPI *pSetXStateFeaturesMask)(CONTEXT *context, DWORD64 feature_mask);
 static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *feature_mask);
 static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
+
+static void *pKiUserExceptionDispatcher;
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -1833,7 +1836,6 @@ static void test_thread_context(void)
 }
 
 static BYTE saved_KiUserExceptionDispatcher_bytes[7];
-static void *pKiUserExceptionDispatcher;
 static BOOL hook_called;
 static void *hook_KiUserExceptionDispatcher_eip;
 static void *dbg_except_continue_handler_eip;
@@ -1891,7 +1893,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
         /* XP and Vista+ have ExceptionAddress == Eip + 1, Eip is adjusted even
          * for software raised breakpoint exception.
          * Win2003 has Eip not adjusted and matching ExceptionAddress.
-         * Win2008 has Eip not adjuated and ExceptionAddress not filled for
+         * Win2008 has Eip not adjusted and ExceptionAddress not filled for
          * software raised exception. */
         context->Eip = (ULONG_PTR)rec->ExceptionAddress;
     }
@@ -1900,7 +1902,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 }
 
 /* Use CDECL to leave arguments on stack. */
-static void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+static void * CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
     trace("rec %p, context %p.\n", rec, context);
     trace("context->Eip %#lx, context->Esp %#lx, ContextFlags %#lx.\n",
@@ -1915,12 +1917,12 @@ static void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT 
     hook_exception_address = rec->ExceptionAddress;
     memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
             sizeof(saved_KiUserExceptionDispatcher_bytes));
+    return pKiUserExceptionDispatcher;
 }
 
-static void test_kiuserexceptiondispatcher(void)
+static void test_KiUserExceptionDispatcher(void)
 {
     PVOID vectored_handler;
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     static BYTE except_code[] =
     {
         0xb9, /* mov imm32, %ecx */
@@ -1959,27 +1961,16 @@ static void test_kiuserexceptiondispatcher(void)
     {
         0xff, 0x15,
         /* offset: 2 bytes */
-        0x00, 0x00, 0x00, 0x00,     /* callq *addr */ /* call hook implementation. */
-
-        0xff, 0x25,
-        /* offset: 8 bytes */
-        0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
+        0x00, 0x00, 0x00, 0x00,     /* call *addr */ /* call hook implementation. */
+        0xff, 0xe0,                 /* jmp *%eax */
     };
     void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
     BYTE patched_KiUserExceptionDispatcher_bytes[7];
-    void *phook_trampoline = hook_trampoline;
     DWORD old_protect1, old_protect2;
     EXCEPTION_RECORD record;
     void *bpt_address;
     BYTE *ptr;
     BOOL ret;
-
-    pKiUserExceptionDispatcher = (void *)GetProcAddress(hntdll, "KiUserExceptionDispatcher");
-    if (!pKiUserExceptionDispatcher)
-    {
-        win_skip("KiUserExceptionDispatcher is not available.\n");
-        return;
-    }
 
     if (!pRtlUnwind)
     {
@@ -1991,7 +1982,6 @@ static void test_kiuserexceptiondispatcher(void)
     *(DWORD *)(except_code + 0x1d) = (DWORD)&test_kiuserexceptiondispatcher_regs.new_eax;
 
     *(unsigned int *)(hook_trampoline + 2) = (ULONG_PTR)&phook_KiUserExceptionDispatcher;
-    *(unsigned int *)(hook_trampoline + 8) = (ULONG_PTR)&pKiUserExceptionDispatcher;
 
     ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
     ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
@@ -2004,9 +1994,9 @@ static void test_kiuserexceptiondispatcher(void)
             sizeof(saved_KiUserExceptionDispatcher_bytes));
 
     ptr = patched_KiUserExceptionDispatcher_bytes;
-    /* mov hook_trampoline, %eax */
-    *ptr++ = 0xa1;
-    *(void **)ptr = &phook_trampoline;
+    /* mov $hook_trampoline, %eax */
+    *ptr++ = 0xb8;
+    *(void **)ptr = hook_trampoline;
     ptr += sizeof(void *);
     /* jmp *eax */
     *ptr++ = 0xff;
@@ -4631,7 +4621,6 @@ done:
 }
 
 static BYTE saved_KiUserExceptionDispatcher_bytes[12];
-static void *pKiUserExceptionDispatcher;
 static BOOL hook_called;
 static void *hook_KiUserExceptionDispatcher_rip;
 static void *dbg_except_continue_handler_rip;
@@ -4698,7 +4687,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
-static void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+static void * WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
     trace("rec %p, context %p.\n", rec, context);
     trace("context->Rip %#Ix, context->Rsp %#Ix, ContextFlags %#lx.\n",
@@ -4713,12 +4702,12 @@ static void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT
     hook_exception_address = rec->ExceptionAddress;
     memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
             sizeof(saved_KiUserExceptionDispatcher_bytes));
+    return pKiUserExceptionDispatcher;
 }
 
-static void test_kiuserexceptiondispatcher(void)
+static void test_KiUserExceptionDispatcher(void)
 {
     LPVOID vectored_handler;
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     static BYTE except_code[] =
     {
         0x48, 0xb9, /* mov imm64, %rcx */
@@ -4762,8 +4751,6 @@ static void test_kiuserexceptiondispatcher(void)
         0xff, 0xd0,                 /* callq *rax */
         0x48, 0x31, 0xc9,           /* xor %rcx, %rcx */
         0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
-        0x48, 0xb8,                 /* movabs pKiUserExceptionDispatcher,%rax */
-        0,0,0,0,0,0,0,0,            /* offset 34 */
         0xff, 0xe0,                 /* jmpq *rax */
     };
 
@@ -4776,18 +4763,10 @@ static void test_kiuserexceptiondispatcher(void)
     BYTE *ptr;
     BOOL ret;
 
-    pKiUserExceptionDispatcher = (void *)GetProcAddress(hntdll, "KiUserExceptionDispatcher");
-    if (!pKiUserExceptionDispatcher)
-    {
-        win_skip("KiUserExceptionDispatcher is not available.\n");
-        return;
-    }
-
     *(ULONG64 *)(except_code + 2) = (ULONG64)&test_kiuserexceptiondispatcher_regs;
     *(ULONG64 *)(except_code + 0x2a) = (ULONG64)&test_kiuserexceptiondispatcher_regs.new_rax;
 
     *(ULONG_PTR *)(hook_trampoline + 16) = (ULONG_PTR)hook_KiUserExceptionDispatcher;
-    *(ULONG_PTR *)(hook_trampoline + 34) = (ULONG_PTR)pKiUserExceptionDispatcher;
     trampoline_ptr = (char *)code_mem + 1024;
     memcpy(trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
 
@@ -5144,7 +5123,6 @@ static void test_syscall_clobbered_regs(void)
 
     NTSTATUS (WINAPI *func)(void *arg1, void *arg2, struct regs *, void *call_addr);
     NTSTATUS (WINAPI *pNtCancelTimer)(HANDLE, BOOLEAN *);
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     struct regs regs;
     CONTEXT context;
     NTSTATUS status;
@@ -11421,11 +11399,11 @@ static void test_set_live_context(void)
 
 START_TEST(exception)
 {
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
 #if defined(__x86_64__)
     HMODULE hmsvcrt = LoadLibraryA("msvcrt.dll");
 #endif
+    hntdll = GetModuleHandleA("ntdll.dll");
 
     my_argc = winetest_get_mainargs( &my_argv );
 
@@ -11475,6 +11453,7 @@ START_TEST(exception)
     X(RtlGetExtendedFeaturesMask);
     X(RtlCopyContext);
     X(RtlCopyExtendedContext);
+    X(KiUserExceptionDispatcher);
 #undef X
 
 #define X(f) p##f = (void*)GetProcAddress(hkernel32, #f)
@@ -11597,7 +11576,7 @@ START_TEST(exception)
     test_fpu_exceptions();
     test_dpe_exceptions();
     test_prot_fault();
-    test_kiuserexceptiondispatcher();
+    test_KiUserExceptionDispatcher();
     test_extended_context();
     test_copy_context();
     test_set_live_context();
@@ -11634,7 +11613,7 @@ START_TEST(exception)
     test_prot_fault();
     test_dpe_exceptions();
     test_wow64_context();
-    test_kiuserexceptiondispatcher();
+    test_KiUserExceptionDispatcher();
     test_nested_exception();
     test_collided_unwind();
 
