@@ -9851,7 +9851,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr ""
 
-#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:49
+#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:52
 #: programs/winecfg/winecfg.rc:188
 msgctxt "unit: dots/inch"
 msgid "dpi"
@@ -13520,6 +13520,12 @@ msgstr "&Velikost papíru:"
 #: dlls/wineps.drv/wineps.rc:39
 msgid "Duplex:"
 msgstr "Oboustranně:"
+
+#: dlls/wineps.drv/wineps.rc:45
+#, fuzzy
+#| msgid "&Tray:"
+msgid "Paper &Tray:"
+msgstr "&Zásobník:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"

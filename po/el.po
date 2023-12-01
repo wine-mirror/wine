@@ -9613,7 +9613,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr ""
 
-#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:49
+#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:52
 #: programs/winecfg/winecfg.rc:188
 msgctxt "unit: dots/inch"
 msgid "dpi"
@@ -12738,6 +12738,10 @@ msgstr ""
 
 #: dlls/wineps.drv/wineps.rc:39
 msgid "Duplex:"
+msgstr ""
+
+#: dlls/wineps.drv/wineps.rc:45
+msgid "Paper &Tray:"
 msgstr ""
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73

@@ -9510,7 +9510,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "bayt"
 
-#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:49
+#: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:52
 #: programs/winecfg/winecfg.rc:188
 msgctxt "unit: dots/inch"
 msgid "dpi"
@@ -12628,6 +12628,12 @@ msgstr "Kağıt &Boyutu:"
 #: dlls/wineps.drv/wineps.rc:39
 msgid "Duplex:"
 msgstr "Çift Yönlü:"
+
+#: dlls/wineps.drv/wineps.rc:45
+#, fuzzy
+#| msgid "&Tray:"
+msgid "Paper &Tray:"
+msgstr "&Tepsi:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"

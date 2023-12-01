@@ -30,6 +30,8 @@
 #define IDD_DUPLEX 110
 #define IDD_DUPLEX_NAME 111
 #define IDD_QUALITY 112
+#define IDD_TRAY_NAME 113
+#define IDD_TRAY 114
 
 #define IDS_DPI 1000
 
