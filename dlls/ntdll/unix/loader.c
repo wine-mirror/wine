@@ -2178,6 +2178,9 @@ DECLSPEC_EXPORT void __wine_main( int argc, char *argv[] )
 #ifdef RLIMIT_AS
     set_max_limit( RLIMIT_AS );
 #endif
+#ifdef RLIMIT_NICE
+    set_max_limit( RLIMIT_NICE );
+#endif
 
     virtual_init();
     init_environment();
