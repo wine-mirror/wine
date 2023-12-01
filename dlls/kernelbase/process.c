@@ -1330,12 +1330,6 @@ void WINAPI DECLSPEC_HOTPATCH GetStartupInfoW( STARTUPINFOW *info )
         info->hStdOutput  = params->hStdOutput;
         info->hStdError   = params->hStdError;
     }
-    else
-    {
-        info->hStdInput   = NULL;
-        info->hStdOutput  = NULL;
-        info->hStdError   = NULL;
-    }
     RtlReleasePebLock();
 }
 
