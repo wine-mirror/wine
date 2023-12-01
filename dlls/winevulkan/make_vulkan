@@ -1165,8 +1165,6 @@ class VkHandle(object):
     def is_wrapped(self):
         return self.host_handle("test") is not None
 
-    def needs_unwrapping(self):
-        return self.is_wrapped()
 
 class VkVariable(object):
     def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
@@ -1312,14 +1310,14 @@ class VkVariable(object):
             return not self.handle.is_dispatchable()
         return False
 
-    def needs_unwrapping(self):
+    def is_wrapped(self):
         """ Returns if variable needs unwrapping of handle. """
 
         if self.is_struct():
-            return self.struct.needs_unwrapping()
+            return self.struct.is_wrapped()
 
         if self.is_handle():
-            return self.handle.needs_unwrapping()
+            return self.handle.is_wrapped()
 
         if self.is_generic_handle():
             return True
@@ -1519,7 +1517,7 @@ class VkMember(VkVariable):
                 else:
                     # Nothing needed this yet.
                     LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type, self.name))
-            elif self.is_handle() and self.needs_unwrapping():
+            elif self.is_handle() and self.is_wrapped():
                 handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
@@ -1749,7 +1747,7 @@ class VkParam(VkVariable):
 
     def copy(self, direction, conv, unwrap, prefix=""):
         win_type = "win32" if conv else "win64"
-        wrap_part = "" if unwrap or not self.needs_unwrapping() else "unwrapped_"
+        wrap_part = "" if unwrap or not self.is_wrapped() else "unwrapped_"
         if direction == Direction.INPUT:
             ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
             if self.is_dynamic_array():
@@ -2113,13 +2111,13 @@ class VkStruct(Sequence):
                 return True
         return False
 
-    def needs_unwrapping(self):
+    def is_wrapped(self):
         """ Returns if struct members need unwrapping of handle. """
 
         for m in self.members:
             if self.name == m.type:
                 continue
-            if m.needs_unwrapping():
+            if m.is_wrapped():
                 return True
         return False
 
@@ -2270,7 +2268,7 @@ class StructConversionFunction(object):
         self.operand = struct
         self.type = struct.name
         self.conv = conv
-        self.unwrap = unwrap or not self.operand.needs_unwrapping()
+        self.unwrap = unwrap or not self.operand.is_wrapped()
         self.const = const
 
         name = "convert_{0}_".format(self.type)
@@ -2472,7 +2470,7 @@ class ArrayConversionFunction(object):
         self.direction = direction
         self.type = array.type
         self.conv = conv
-        self.unwrap = unwrap or not array.needs_unwrapping()
+        self.unwrap = unwrap or not array.is_wrapped()
 
         if array.is_static_array() and direction == Direction.INPUT:
             LOGGER.error("Static array input conversion is not supported")
