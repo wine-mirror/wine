@@ -2947,6 +2947,15 @@ GpStatus WINGDIPAPI GdipDrawImage(GpGraphics *graphics, GpImage *image, REAL x, 
                                   0.0, 0.0, (REAL)width, (REAL)height, UnitPixel);
 }
 
+GpStatus WINGDIPAPI GdipDrawImageFX(GpGraphics *graphics, GpImage *image, GpRectF *src,
+    GpMatrix *transform, CGpEffect *effect, GpImageAttributes *imageattr,
+    GpUnit srcUnit)
+{
+    FIXME("(%p, %p, %p, %p, %p, %p, %d): stub\n", graphics, image, src, transform, effect, imageattr, srcUnit);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDrawImageI(GpGraphics *graphics, GpImage *image, INT x,
     INT y)
 {

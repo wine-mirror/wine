@@ -623,7 +623,7 @@
 623 stdcall GdipBitmapConvertFormat(ptr long long long ptr float)
 624 stdcall GdipImageSetAbort(ptr ptr)
 625 stdcall GdipGraphicsSetAbort(ptr ptr)
-626 stub GdipDrawImageFX
+626 stdcall GdipDrawImageFX(ptr ptr ptr ptr ptr ptr long)
 627 stdcall GdipConvertToEmfPlus(ptr ptr ptr long wstr ptr)
 628 stdcall GdipConvertToEmfPlusToFile(ptr ptr ptr wstr long wstr ptr)
 629 stub GdipConvertToEmfPlusToStream
