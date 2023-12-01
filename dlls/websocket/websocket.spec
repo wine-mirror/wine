@@ -4,7 +4,7 @@
 @ stub WebSocketCompleteAction
 @ stdcall WebSocketCreateClientHandle(ptr long ptr)
 @ stub WebSocketCreateServerHandle
-@ stub WebSocketDeleteHandle
+@ stdcall WebSocketDeleteHandle(long)
 @ stub WebSocketEndClientHandshake
 @ stub WebSocketEndServerHandshake
 @ stub WebSocketGetAction

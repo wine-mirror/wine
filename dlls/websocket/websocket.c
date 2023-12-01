@@ -34,3 +34,8 @@ VOID WINAPI WebSocketAbortHandle(WEB_SOCKET_HANDLE handle)
 {
     FIXME("(%p): stub\n", handle);
 }
+
+VOID WINAPI WebSocketDeleteHandle(WEB_SOCKET_HANDLE handle)
+{
+    FIXME("(%p): stub\n", handle);
+}
