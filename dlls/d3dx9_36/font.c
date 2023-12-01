@@ -656,6 +656,7 @@ static INT WINAPI ID3DXFontImpl_DrawTextW(ID3DXFont *iface, ID3DXSprite *sprite,
     unsigned int count;
     RECT r = {0};
     WCHAR *line;
+    HRESULT hr;
     SIZE size;
 
     TRACE("iface %p, sprite %p, string %s, in_count %d, rect %s, format %#lx, color 0x%08lx.\n",
@@ -775,8 +776,14 @@ static INT WINAPI ID3DXFontImpl_DrawTextW(ID3DXFont *iface, ID3DXSprite *sprite,
                     black_box.bottom = black_box.top + rect->bottom - pos.y;
             }
 
-            ID3DXSprite_Draw(target, texture, &black_box, NULL, &pos, color);
+            hr = ID3DXSprite_Draw(target, texture, &black_box, NULL, &pos, color);
             IDirect3DTexture9_Release(texture);
+            if (FAILED(hr))
+            {
+                free(results.lpCaretPos);
+                free(results.lpGlyphs);
+                goto cleanup;
+            }
         }
 
         free(results.lpCaretPos);
