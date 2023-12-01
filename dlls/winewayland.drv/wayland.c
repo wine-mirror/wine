@@ -159,6 +159,11 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.zwp_pointer_constraints_v1 =
             wl_registry_bind(registry, id, &zwp_pointer_constraints_v1_interface, 1);
     }
+    else if (strcmp(interface, "zwp_relative_pointer_manager_v1") == 0)
+    {
+        process_wayland.zwp_relative_pointer_manager_v1 =
+            wl_registry_bind(registry, id, &zwp_relative_pointer_manager_v1_interface, 1);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -267,6 +272,11 @@ BOOL wayland_process_init(void)
     if (!process_wayland.zwp_pointer_constraints_v1)
     {
         ERR("Wayland compositor doesn't support zwp_pointer_constraints_v1\n");
+        return FALSE;
+    }
+    if (!process_wayland.zwp_relative_pointer_manager_v1)
+    {
+        ERR("Wayland compositor doesn't support zwp_relative_pointer_manager_v1\n");
         return FALSE;
     }
 

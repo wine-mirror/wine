@@ -30,6 +30,7 @@
 #include <xkbcommon/xkbcommon.h>
 #include <xkbcommon/xkbregistry.h>
 #include "pointer-constraints-unstable-v1-client-protocol.h"
+#include "relative-pointer-unstable-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -91,6 +92,7 @@ struct wayland_pointer
 {
     struct wl_pointer *wl_pointer;
     struct zwp_confined_pointer_v1 *zwp_confined_pointer_v1;
+    struct zwp_relative_pointer_v1 *zwp_relative_pointer_v1;
     HWND focused_hwnd;
     HWND constraint_hwnd;
     uint32_t enter_serial;
@@ -119,6 +121,7 @@ struct wayland
     struct wp_viewporter *wp_viewporter;
     struct wl_subcompositor *wl_subcompositor;
     struct zwp_pointer_constraints_v1 *zwp_pointer_constraints_v1;
+    struct zwp_relative_pointer_manager_v1 *zwp_relative_pointer_manager_v1;
     struct wayland_seat seat;
     struct wayland_keyboard keyboard;
     struct wayland_pointer pointer;
