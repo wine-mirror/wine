@@ -27,6 +27,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include "waylanddrv.h"
 
 #include "wine/debug.h"
@@ -47,6 +50,7 @@ struct wayland_win_data
     RECT window_rect;
     /* USER client rectangle relative to win32 parent window client area */
     RECT client_rect;
+    BOOL managed;
 };
 
 static int wayland_win_data_cmp_rb(const void *key,
@@ -182,6 +186,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     conf->state = window_state;
     conf->scale = NtUserGetDpiForWindow(data->hwnd) / 96.0;
     conf->visible = (style & WS_VISIBLE) == WS_VISIBLE;
+    conf->managed = data->managed;
 }
 
 static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
@@ -287,6 +292,99 @@ out:
     wl_display_flush(process_wayland.wl_display);
 }
 
+static BOOL is_managed(HWND hwnd)
+{
+    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+    BOOL ret = data && data->managed;
+    if (data) wayland_win_data_release(data);
+    return ret;
+}
+
+static HWND *build_hwnd_list(void)
+{
+    NTSTATUS status;
+    HWND *list;
+    ULONG count = 128;
+
+    for (;;)
+    {
+        if (!(list = malloc(count * sizeof(*list)))) return NULL;
+        status = NtUserBuildHwndList(0, 0, 0, 0, 0, count, list, &count);
+        if (!status) return list;
+        free(list);
+        if (status != STATUS_BUFFER_TOO_SMALL) return NULL;
+    }
+}
+
+static BOOL has_owned_popups(HWND hwnd)
+{
+    HWND *list;
+    UINT i;
+    BOOL ret = FALSE;
+
+    if (!(list = build_hwnd_list())) return FALSE;
+
+    for (i = 0; list[i] != HWND_BOTTOM; i++)
+    {
+        if (list[i] == hwnd) break;  /* popups are always above owner */
+        if (NtUserGetWindowRelative(list[i], GW_OWNER) != hwnd) continue;
+        if ((ret = is_managed(list[i]))) break;
+    }
+
+    free(list);
+    return ret;
+}
+
+static inline HWND get_active_window(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndActive : 0;
+}
+
+/***********************************************************************
+ *		is_window_managed
+ *
+ * Check if a given window should be managed
+ */
+static BOOL is_window_managed(HWND hwnd, UINT swp_flags, const RECT *window_rect)
+{
+    DWORD style, ex_style;
+
+    /* child windows are not managed */
+    style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+    if ((style & (WS_CHILD|WS_POPUP)) == WS_CHILD) return FALSE;
+    /* activated windows are managed */
+    if (!(swp_flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW))) return TRUE;
+    if (hwnd == get_active_window()) return TRUE;
+    /* windows with caption are managed */
+    if ((style & WS_CAPTION) == WS_CAPTION) return TRUE;
+    /* windows with thick frame are managed */
+    if (style & WS_THICKFRAME) return TRUE;
+    if (style & WS_POPUP)
+    {
+        HMONITOR hmon;
+        MONITORINFO mi;
+
+        /* popup with sysmenu == caption are managed */
+        if (style & WS_SYSMENU) return TRUE;
+        /* full-screen popup windows are managed */
+        hmon = NtUserMonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+        mi.cbSize = sizeof(mi);
+        NtUserGetMonitorInfo(hmon, &mi);
+        if (window_rect->left <= mi.rcWork.left && window_rect->right >= mi.rcWork.right &&
+            window_rect->top <= mi.rcWork.top && window_rect->bottom >= mi.rcWork.bottom)
+            return TRUE;
+    }
+    /* application windows are managed */
+    ex_style = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
+    if (ex_style & WS_EX_APPWINDOW) return TRUE;
+    /* windows that own popups are managed */
+    if (has_owned_popups(hwnd)) return TRUE;
+    /* default: not managed */
+    return FALSE;
+}
+
 /***********************************************************************
  *           WAYLAND_DestroyWindow
  */
@@ -369,6 +467,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
 
     data->window_rect = *window_rect;
     data->client_rect = *client_rect;
+    data->managed = is_window_managed(hwnd, swp_flags, window_rect);
 
     if (surface) window_surface_add_ref(surface);
     if (data->window_surface) window_surface_release(data->window_surface);

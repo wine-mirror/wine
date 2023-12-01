@@ -698,6 +698,7 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
                                   struct wl_array *keys)
 {
     struct wayland_keyboard *keyboard = &process_wayland.keyboard;
+    struct wayland_surface *surface;
     HWND hwnd;
 
     if (!wl_surface) return;
@@ -713,6 +714,12 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
 
     NtUserPostMessage(keyboard->focused_hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/,
                       (LPARAM)keyboard_hkl);
+
+    if ((surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        if (surface->window.managed) NtUserSetForegroundWindow(hwnd);
+        pthread_mutex_unlock(&surface->mutex);
+    }
 }
 
 static void keyboard_handle_leave(void *data, struct wl_keyboard *wl_keyboard,

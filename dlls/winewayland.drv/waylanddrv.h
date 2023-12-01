@@ -167,6 +167,7 @@ struct wayland_window_config
     /* The scale (i.e., normalized dpi) the window is rendering at. */
     double scale;
     BOOL visible;
+    BOOL managed;
 };
 
 struct wayland_client_surface
