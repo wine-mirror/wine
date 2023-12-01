@@ -1,4 +1,4 @@
-@ stub WebSocketAbortHandle
+@ stdcall WebSocketAbortHandle(long)
 @ stub WebSocketBeginClientHandshake
 @ stub WebSocketBeginServerHandshake
 @ stub WebSocketCompleteAction

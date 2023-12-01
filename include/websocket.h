@@ -43,6 +43,7 @@ typedef struct _WEB_SOCKET_PROPERTY
     ULONG                    ulValueSize;
 } WEB_SOCKET_PROPERTY, *PWEB_SOCKET_PROPERTY;
 
+VOID WINAPI WebSocketAbortHandle(WEB_SOCKET_HANDLE);
 HRESULT WINAPI WebSocketCreateClientHandle(const PWEB_SOCKET_PROPERTY, ULONG, WEB_SOCKET_HANDLE*);
 
 #ifdef __cplusplus

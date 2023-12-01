@@ -29,3 +29,8 @@ HRESULT WINAPI WebSocketCreateClientHandle(const PWEB_SOCKET_PROPERTY properties
 
     return E_NOTIMPL;
 }
+
+VOID WINAPI WebSocketAbortHandle(WEB_SOCKET_HANDLE handle)
+{
+    FIXME("(%p): stub\n", handle);
+}
