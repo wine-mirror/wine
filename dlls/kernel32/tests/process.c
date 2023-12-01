@@ -318,10 +318,13 @@ static void WINAPIV __WINE_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fm
 }
 
 /* bits 0..1 contains FILE_TYPE_{UNKNOWN, CHAR, PIPE, DISK} */
-#define HATTR_NULL     0x08                /* NULL handle value */
-#define HATTR_INVALID  0x04                /* INVALID_HANDLE_VALUE */
-#define HATTR_TYPE     0x0c                /* valid handle, with type set */
-#define HATTR_INHERIT  0x10                /* inheritance flag set */
+#define HATTR_NULL      0x08               /* NULL handle value */
+#define HATTR_INVALID   0x04               /* INVALID_HANDLE_VALUE */
+#define HATTR_TYPE      0x0c               /* valid handle, with type set */
+#define HATTR_INHERIT   0x10               /* inheritance flag set */
+#define HATTR_UNTOUCHED 0x20               /* Identify fields untouched by GetStartupInfoW */
+
+#define HANDLE_UNTOUCHEDW (HANDLE)(DWORD_PTR)(0x5050505050505050ull)
 
 static unsigned encode_handle_attributes(HANDLE h)
 {
@@ -332,6 +335,8 @@ static unsigned encode_handle_attributes(HANDLE h)
         result = HATTR_NULL;
     else if (h == INVALID_HANDLE_VALUE)
         result = HATTR_INVALID;
+    else if (h == HANDLE_UNTOUCHEDW)
+        result = HATTR_UNTOUCHED;
     else
     {
         result = HATTR_TYPE;
@@ -372,6 +377,7 @@ static void     doChild(const char* file, const char* option)
     if (hFile == INVALID_HANDLE_VALUE) return;
 
     /* output of startup info (Ansi) */
+    memset(&siA, 0xA0, sizeof(siA));
     GetStartupInfoA(&siA);
     childPrintf(hFile,
                 "[StartupInfoA]\ncb=%08lu\nlpDesktop=%s\nlpTitle=%s\n"
@@ -397,10 +403,7 @@ static void     doChild(const char* file, const char* option)
                 encode_handle_attributes(params->hStdInput), encode_handle_attributes(params->hStdOutput),
                 encode_handle_attributes(params->hStdError));
 
-    /* since GetStartupInfoW is only implemented in win2k,
-     * zero out before calling so we can notice the difference
-     */
-    memset(&siW, 0, sizeof(siW));
+    memset(&siW, 0x50, sizeof(siW));
     GetStartupInfoW(&siW);
     childPrintf(hFile,
                 "[StartupInfoW]\ncb=%08lu\nlpDesktop=%s\nlpTitle=%s\n"
@@ -3251,42 +3254,42 @@ static void test_StdHandleInheritance(void)
     {
         /* all others handles type behave as H_DISK */
 /* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 4},
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 4},
     },
     nothing_gui[] =
     {
         /* testing all types because of discrepancies */
 /* 0*/  {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_PIPE,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_PIPE, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
-/* 5*/  {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+/* 5*/  {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CHAR,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 1, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,   HATTR_NULL, .is_todo = 5, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
 
         /* all others handles type behave as H_DISK */
         {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
-        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_NULL, .is_todo = 4},
     },
     detached_cui[] =
     {
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         /* all others handles type behave as H_DISK */
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
     },
     detached_gui[] =
     {
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_CONSOLE,  HATTR_NULL, .is_todo = 7, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
         /* all others handles type behave as H_DISK */
-        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL, .is_todo = 4},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
     };
     static const struct
@@ -3349,7 +3352,7 @@ static void test_StdHandleInheritance(void)
             okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
             }
 
-            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_NULL : std_tests[i].expected;
+            startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
 
             todo_wine_if(std_tests[i].is_todo & 4)
             {
