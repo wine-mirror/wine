@@ -2139,6 +2139,16 @@ void init_startup_info(void)
 }
 
 
+/* helper for create_startup_info */
+static BOOL is_console_handle( HANDLE handle )
+{
+    IO_STATUS_BLOCK io;
+    DWORD mode;
+
+    return NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, IOCTL_CONDRV_GET_MODE, NULL, 0,
+                                  &mode, sizeof(mode) ) == STATUS_SUCCESS;
+}
+
 /***********************************************************************
  *           create_startup_info
  */
@@ -2175,9 +2185,12 @@ void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
     if ((process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES) ||
         (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI && !(params->dwFlags & STARTF_USESTDHANDLES)))
     {
-        info->hstdin    = wine_server_obj_handle( params->hStdInput );
-        info->hstdout   = wine_server_obj_handle( params->hStdOutput );
-        info->hstderr   = wine_server_obj_handle( params->hStdError );
+        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdInput ))
+            info->hstdin    = wine_server_obj_handle( params->hStdInput );
+        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdOutput ))
+            info->hstdout   = wine_server_obj_handle( params->hStdOutput );
+        if (pe_info->subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || !is_console_handle( params->hStdError ))
+            info->hstderr   = wine_server_obj_handle( params->hStdError );
     }
     info->x             = params->dwX;
     info->y             = params->dwY;

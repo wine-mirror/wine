@@ -4986,7 +4986,6 @@ static void test_CreateProcessCUI(void)
         DWORD cp_flags;
         enum inheritance_model inherit;
         DWORD expected;
-        BOOL is_todo;
         DWORD is_broken;
     }
     no_console_tests[] =
@@ -5021,12 +5020,12 @@ static void test_CreateProcessCUI(void)
 /*10*/  {FALSE, DETACHED_PROCESS | CREATE_NO_WINDOW,   CONSOLE_STD,     0},
         {FALSE, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW, CONSOLE_STD,     0},
 
-        {FALSE, 0,                                     STARTUPINFO_STD, 0, TRUE},
-        {FALSE, DETACHED_PROCESS,                      STARTUPINFO_STD, 0, TRUE},
-        {FALSE, CREATE_NEW_CONSOLE,                    STARTUPINFO_STD, 0, TRUE},
-/*15*/  {FALSE, CREATE_NO_WINDOW,                      STARTUPINFO_STD, 0, TRUE},
-        {FALSE, DETACHED_PROCESS | CREATE_NO_WINDOW,   STARTUPINFO_STD, 0, TRUE},
-        {FALSE, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW, STARTUPINFO_STD, 0, TRUE},
+        {FALSE, 0,                                     STARTUPINFO_STD, 0},
+        {FALSE, DETACHED_PROCESS,                      STARTUPINFO_STD, 0},
+        {FALSE, CREATE_NEW_CONSOLE,                    STARTUPINFO_STD, 0},
+/*15*/  {FALSE, CREATE_NO_WINDOW,                      STARTUPINFO_STD, 0},
+        {FALSE, DETACHED_PROCESS | CREATE_NO_WINDOW,   STARTUPINFO_STD, 0},
+        {FALSE, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW, STARTUPINFO_STD, 0},
 
         {TRUE,  0,                                     NULL_STD,        CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW},
         {TRUE,  DETACHED_PROCESS,                      NULL_STD,        0},
@@ -5058,7 +5057,6 @@ static void test_CreateProcessCUI(void)
         BOOL noctrl_flag;
         /* output */
         DWORD expected;
-        BOOL is_todo;
     }
     group_flags_tests[] =
     {
@@ -5074,10 +5072,10 @@ static void test_CreateProcessCUI(void)
          {FALSE, CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     TRUE,   CP_GROUP_LEADER},
 /* 10 */ {FALSE, 0,                        CONSOLE_STD,     FALSE,  CP_ENABLED_CTRLC},
          {FALSE, CREATE_NEW_PROCESS_GROUP, CONSOLE_STD,     FALSE,  CP_GROUP_LEADER},
-         {FALSE, 0,                        STARTUPINFO_STD, TRUE,   0, .is_todo = TRUE},
-         {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, TRUE,   CP_GROUP_LEADER, .is_todo = TRUE},
-         {FALSE, 0,                        STARTUPINFO_STD, FALSE,  CP_ENABLED_CTRLC, .is_todo = TRUE},
-/* 15 */ {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, FALSE,  CP_GROUP_LEADER, .is_todo = TRUE},
+         {FALSE, 0,                        STARTUPINFO_STD, TRUE,   0},
+         {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, TRUE,   CP_GROUP_LEADER},
+         {FALSE, 0,                        STARTUPINFO_STD, FALSE,  CP_ENABLED_CTRLC},
+/* 15 */ {FALSE, CREATE_NEW_PROCESS_GROUP, STARTUPINFO_STD, FALSE,  CP_GROUP_LEADER},
          {TRUE,  CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE, CONSOLE_STD, TRUE,   CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER | CP_ALONE},
          {FALSE, CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE, CONSOLE_STD, TRUE,   CP_GROUP_LEADER},
          {TRUE,  CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE, CONSOLE_STD, FALSE,  CP_INH_CONSOLE | CP_WITH_WINDOW | CP_GROUP_LEADER | CP_ALONE | CP_ENABLED_CTRLC},
@@ -5107,7 +5105,6 @@ static void test_CreateProcessCUI(void)
         res = check_child_console_bits(no_console_tests[i].use_cui ? cuiexec : guiexec,
                                        no_console_tests[i].cp_flags,
                                        no_console_tests[i].inherit);
-        todo_wine_if(no_console_tests[i].is_todo)
         ok(res == no_console_tests[i].expected, "[%d] Unexpected result %x (%lx)\n",
            i, res, no_console_tests[i].expected);
     }
@@ -5119,7 +5116,6 @@ static void test_CreateProcessCUI(void)
         res = check_child_console_bits(with_console_tests[i].use_cui ? cuiexec : guiexec,
                                        with_console_tests[i].cp_flags,
                                        with_console_tests[i].inherit);
-        todo_wine_if(with_console_tests[i].is_todo)
         ok(res == with_console_tests[i].expected ||
            broken(with_console_tests[i].is_broken && res == (with_console_tests[i].is_broken & 0xff)),
            "[%d] Unexpected result %x (%lx)\n",
@@ -5135,7 +5131,6 @@ static void test_CreateProcessCUI(void)
         res = check_child_console_bits(group_flags_tests[i].use_cui ? cuiexec : guiexec,
                                        group_flags_tests[i].cp_flags,
                                        group_flags_tests[i].inherit);
-        todo_wine_if(group_flags_tests[i].is_todo)
         ok(res == group_flags_tests[i].expected ||
            /* Win7 doesn't report group id */
            broken(res == (group_flags_tests[i].expected & ~CP_GROUP_LEADER)),
