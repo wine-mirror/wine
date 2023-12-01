@@ -608,25 +608,36 @@ affinity_t get_thread_affinity( struct thread *thread )
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
 #define THREAD_PRIORITY_REALTIME_LOWEST -7
 
+unsigned int set_thread_priority( struct thread *thread, int priority_class, int priority )
+{
+    int max = THREAD_PRIORITY_HIGHEST;
+    int min = THREAD_PRIORITY_LOWEST;
+
+    if (priority_class == PROCESS_PRIOCLASS_REALTIME)
+    {
+        max = THREAD_PRIORITY_REALTIME_HIGHEST;
+        min = THREAD_PRIORITY_REALTIME_LOWEST;
+    }
+    if ((priority < min || priority > max) &&
+        priority != THREAD_PRIORITY_IDLE &&
+        priority != THREAD_PRIORITY_TIME_CRITICAL)
+        return STATUS_INVALID_PARAMETER;
+
+    if (thread->state == TERMINATED)
+        return STATUS_THREAD_IS_TERMINATING;
+
+    thread->priority = priority;
+    return STATUS_SUCCESS;
+}
+
 /* set all information about a thread */
 static void set_thread_info( struct thread *thread,
                              const struct set_thread_info_request *req )
 {
     if (req->mask & SET_THREAD_INFO_PRIORITY)
     {
-        int max = THREAD_PRIORITY_HIGHEST;
-        int min = THREAD_PRIORITY_LOWEST;
-        if (thread->process->priority == PROCESS_PRIOCLASS_REALTIME)
-        {
-            max = THREAD_PRIORITY_REALTIME_HIGHEST;
-            min = THREAD_PRIORITY_REALTIME_LOWEST;
-        }
-        if ((req->priority >= min && req->priority <= max) ||
-            req->priority == THREAD_PRIORITY_IDLE ||
-            req->priority == THREAD_PRIORITY_TIME_CRITICAL)
-            thread->priority = req->priority;
-        else
-            set_error( STATUS_INVALID_PARAMETER );
+        unsigned int status = set_thread_priority( thread, thread->process->priority, req->priority );
+        if (status) set_error( status );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
     {
@@ -1422,6 +1433,8 @@ DECL_HANDLER(init_first_thread)
     else
         set_thread_affinity( current, current->affinity );
 
+    set_thread_priority( current, process->priority, current->priority );
+
     debug_level = max( debug_level, req->debug_level );
 
     reply->pid          = get_process_id( process );
@@ -1451,6 +1464,7 @@ DECL_HANDLER(init_thread)
 
     init_thread_context( current );
     generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
+    set_thread_priority( current, current->process->priority, current->priority );
     set_thread_affinity( current, current->affinity );
 
     reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
