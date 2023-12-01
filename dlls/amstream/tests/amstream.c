@@ -8400,15 +8400,15 @@ static void test_ddrawstream_qc(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample, 0, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    todo_wine ok(source.qc_notify_sender == (IBaseFilter *)filter, "Got sender %p.\n",
+    ok(source.qc_notify_sender == (IBaseFilter *)filter, "Got sender %p.\n",
             source.qc_notify_sender);
-    todo_wine ok(source.qc_notify_quality.Type == Famine, "Got type %d.\n",
+    ok(source.qc_notify_quality.Type == Famine, "Got type %d.\n",
             source.qc_notify_quality.Type);
-    todo_wine ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
+    ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
-    todo_wine ok(source.qc_notify_quality.Late == 0, "Got late %s.\n",
+    ok(source.qc_notify_quality.Late == 0, "Got late %s.\n",
             wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    todo_wine ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
+    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
             wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
 
     /* Test Update() after Reveive(). */
@@ -8451,15 +8451,15 @@ static void test_ddrawstream_qc(void)
     ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
     CloseHandle(thread);
 
-    todo_wine ok(source.qc_notify_sender == (IBaseFilter *)filter, "Got sender %p.\n",
+    ok(source.qc_notify_sender == (IBaseFilter *)filter, "Got sender %p.\n",
             source.qc_notify_sender);
-    todo_wine ok(source.qc_notify_quality.Type == Famine, "Got type %d.\n",
+    ok(source.qc_notify_quality.Type == Famine, "Got type %d.\n",
             source.qc_notify_quality.Type);
-    todo_wine ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
+    ok(source.qc_notify_quality.Proportion == 1000, "Got proportion %ld.\n",
             source.qc_notify_quality.Proportion);
-    todo_wine ok(source.qc_notify_quality.Late == 100000, "Got late %s.\n",
+    ok(source.qc_notify_quality.Late == 100000, "Got late %s.\n",
             wine_dbgstr_longlong(source.qc_notify_quality.Late));
-    todo_wine ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
+    ok(source.qc_notify_quality.TimeStamp == start_time, "Got time stamp %s.\n",
             wine_dbgstr_longlong(source.qc_notify_quality.TimeStamp));
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);

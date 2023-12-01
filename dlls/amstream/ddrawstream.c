@@ -1409,6 +1409,7 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
         if (!list_empty(&stream->update_queue))
         {
             struct ddraw_sample *sample = LIST_ENTRY(list_head(&stream->update_queue), struct ddraw_sample, entry);
+            IQualityControl *qc;
 
             sample->update_hr = process_update(sample, top_down_stride, top_down_pointer,
                     start_stream_time, end_stream_time);
@@ -1422,6 +1423,19 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
             {
                 remove_queued_update(sample);
             }
+
+            if (S_OK == IMediaStreamFilter_GetCurrentStreamTime(filter, &current_time)
+                    && SUCCEEDED(IPin_QueryInterface(stream->peer, &IID_IQualityControl, (void **)&qc)))
+            {
+                Quality q;
+                q.Type = Famine;
+                q.Proportion = 1000;
+                q.Late = current_time - start_time;
+                q.TimeStamp = start_time;
+                IQualityControl_Notify(qc, (IBaseFilter *)stream->filter, q);
+                IQualityControl_Release(qc);
+            }
+
             LeaveCriticalSection(&stream->cs);
             return S_OK;
         }
