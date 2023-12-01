@@ -480,8 +480,6 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
 {
     PCONTEXT context = ExceptionInfo->ContextRecord;
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p context.Eip:%lx\n", rec->ExceptionCode,
-          rec->ExceptionAddress, context->Eip);
 
     ok(rec->ExceptionAddress == (char *)code_mem + 0xb
             || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress) /* 2008 */,
@@ -3248,38 +3246,35 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     USHORT ds, es, fs, gs, ss;
 
     got_exception++;
-    trace( "exception %u: %lx flags:%lx addr:%p\n",
-           entry, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+    winetest_push_context( "%u: %lx", entry, rec->ExceptionCode );
 
     ok( rec->ExceptionCode == except->status ||
         (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
-        "%u: Wrong exception code %lx/%lx\n", entry, rec->ExceptionCode, except->status );
+        "Wrong exception code %lx/%lx\n", rec->ExceptionCode, except->status );
     ok( context->Rip == (DWORD_PTR)code_mem + except->offset,
-        "%u: Unexpected eip %#Ix/%#Ix\n", entry,
-        context->Rip, (DWORD_PTR)code_mem + except->offset );
+        "Unexpected eip %#Ix/%#Ix\n", context->Rip, (DWORD_PTR)code_mem + except->offset );
     ok( rec->ExceptionAddress == (char*)context->Rip ||
         (rec->ExceptionCode == STATUS_BREAKPOINT && rec->ExceptionAddress == (char*)context->Rip + 1),
-        "%u: Unexpected exception address %p/%p\n", entry,
-        rec->ExceptionAddress, (char*)context->Rip );
+        "Unexpected exception address %p/%p\n", rec->ExceptionAddress, (char*)context->Rip );
 
     __asm__ volatile( "movw %%ds,%0" : "=g" (ds) );
     __asm__ volatile( "movw %%es,%0" : "=g" (es) );
     __asm__ volatile( "movw %%fs,%0" : "=g" (fs) );
     __asm__ volatile( "movw %%gs,%0" : "=g" (gs) );
     __asm__ volatile( "movw %%ss,%0" : "=g" (ss) );
-    ok( context->SegDs == ds || !ds, "%u: ds %#x does not match %#x\n", entry, context->SegDs, ds );
-    ok( context->SegEs == es || !es, "%u: es %#x does not match %#x\n", entry, context->SegEs, es );
-    ok( context->SegFs == fs || !fs, "%u: fs %#x does not match %#x\n", entry, context->SegFs, fs );
-    ok( context->SegGs == gs || !gs, "%u: gs %#x does not match %#x\n", entry, context->SegGs, gs );
-    ok( context->SegSs == ss, "%u: ss %#x does not match %#x\n", entry, context->SegSs, ss );
+    ok( context->SegDs == ds || !ds, "ds %#x does not match %#x\n", context->SegDs, ds );
+    ok( context->SegEs == es || !es, "es %#x does not match %#x\n", context->SegEs, es );
+    ok( context->SegFs == fs || !fs, "fs %#x does not match %#x\n", context->SegFs, fs );
+    ok( context->SegGs == gs || !gs, "gs %#x does not match %#x\n", context->SegGs, gs );
+    ok( context->SegSs == ss, "ss %#x does not match %#x\n", context->SegSs, ss );
     ok( context->SegDs == context->SegSs,
-        "%u: ds %#x does not match ss %#x\n", entry, context->SegDs, context->SegSs );
+        "ds %#x does not match ss %#x\n", context->SegDs, context->SegSs );
     ok( context->SegEs == context->SegSs,
-        "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
+        "es %#x does not match ss %#x\n", context->SegEs, context->SegSs );
     ok( context->SegGs == context->SegSs,
-        "%u: gs %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
+        "gs %#x does not match ss %#x\n", context->SegGs, context->SegSs );
     todo_wine ok( context->SegFs && context->SegFs != context->SegSs,
-        "%u: got fs %#x\n", entry, context->SegFs );
+        "got fs %#x\n", context->SegFs );
 
     if (except->status == STATUS_BREAKPOINT && is_wow64)
         parameter_count = 1;
@@ -3289,7 +3284,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
         parameter_count = except->alt_nb_params;
 
     ok( rec->NumberParameters == parameter_count,
-        "%u: Unexpected parameter count %lu/%u\n", entry, rec->NumberParameters, parameter_count );
+        "Unexpected parameter count %lu/%u\n", rec->NumberParameters, parameter_count );
 
     /* Most CPUs (except Intel Core apparently) report a segment limit violation */
     /* instead of page faults for accesses beyond 0xffffffffffffffff */
@@ -3311,18 +3306,20 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     {
         for (i = 0; i < rec->NumberParameters; i++)
             ok( rec->ExceptionInformation[i] == except->params[i],
-                "%u: Wrong parameter %d: %Ix/%Ix\n",
-                entry, i, rec->ExceptionInformation[i], except->params[i] );
+                "Wrong parameter %d: %Ix/%Ix\n",
+                i, rec->ExceptionInformation[i], except->params[i] );
     }
     else
     {
         for (i = 0; i < rec->NumberParameters; i++)
             ok( rec->ExceptionInformation[i] == except->alt_params[i],
-                "%u: Wrong parameter %d: %Ix/%Ix\n",
-                entry, i, rec->ExceptionInformation[i], except->alt_params[i] );
+                "Wrong parameter %d: %Ix/%Ix\n",
+                i, rec->ExceptionInformation[i], except->alt_params[i] );
     }
 
 skip_params:
+    winetest_pop_context();
+
     /* don't handle exception if it's not the address we expected */
     if (context->Rip != (DWORD_PTR)code_mem + except->offset) return ExceptionContinueSearch;
 
@@ -3761,8 +3758,6 @@ static LONG CALLBACK dpe_handler(EXCEPTION_POINTERS *info)
     EXCEPTION_RECORD *rec = info->ExceptionRecord;
     DWORD old_prot;
 
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
-
     got_exception++;
 
     ok(rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION,
@@ -3907,8 +3902,6 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
 {
     PCONTEXT context = ExceptionInfo->ContextRecord;
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-
-    trace( "vect. handler %08lx addr:%p Rip:%p\n", rec->ExceptionCode, rec->ExceptionAddress, (void *)context->Rip );
 
     ok( rec->ExceptionAddress == (char *)code_mem + 0x10
         || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress ) /* 2008 */,
@@ -4342,24 +4335,6 @@ static void test_thread_context(void)
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
     func_ptr( &context, 0, &expect, pRtlCaptureContext );
-    trace( "expect: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
-           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08I64x prev=%p\n",
-           (void *)expect.Rax, (void *)expect.Rbx, (void *)expect.Rcx, (void *)expect.Rdx,
-           (void *)expect.Rsi, (void *)expect.Rdi, (void *)expect.R8, (void *)expect.R9,
-           (void *)expect.R10, (void *)expect.R11, (void *)expect.R12, (void *)expect.R13,
-           (void *)expect.R14, (void *)expect.R15, (void *)expect.Rbp, (void *)expect.Rsp,
-           (void *)expect.Rip, expect.SegCs, expect.SegDs, expect.SegEs,
-           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, (void*)expect.prev_frame );
-    trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
-           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08lx\n",
-           (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
-           (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
-           (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
-           (void *)context.R14, (void *)context.R15, (void *)context.Rbp, (void *)context.Rsp,
-           (void *)context.Rip, context.SegCs, context.SegDs, context.SegEs,
-           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
 
     ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT),
         "wrong flags %08lx\n", context.ContextFlags );
@@ -4402,24 +4377,6 @@ static void test_thread_context(void)
 
     status = func_ptr( GetCurrentThread(), &context, &expect, pNtGetContextThread );
     ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08lx\n", status );
-    trace( "expect: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
-           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08I64x prev=%p\n",
-           (void *)expect.Rax, (void *)expect.Rbx, (void *)expect.Rcx, (void *)expect.Rdx,
-           (void *)expect.Rsi, (void *)expect.Rdi, (void *)expect.R8, (void *)expect.R9,
-           (void *)expect.R10, (void *)expect.R11, (void *)expect.R12, (void *)expect.R13,
-           (void *)expect.R14, (void *)expect.R15, (void *)expect.Rbp, (void *)expect.Rsp,
-           (void *)expect.Rip, expect.SegCs, expect.SegDs, expect.SegEs,
-           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, (void*)expect.prev_frame );
-    trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
-           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
-           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08lx\n",
-           (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
-           (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
-           (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
-           (void *)context.R14, (void *)context.R15, (void *)context.Rbp, (void *)context.Rsp,
-           (void *)context.Rip, context.SegCs, context.SegDs, context.SegEs,
-           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
     /* other registers are not preserved */
     COMPARE( Rbx );
     COMPARE( Rsi );
@@ -4872,11 +4829,8 @@ static void * WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTE
     struct machine_frame *frame = (struct machine_frame *)(((ULONG_PTR)(rec + 1) + 0x0f) & ~0x0f);
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
 
-    trace("rec %p, context %p.\n", rec, context);
-    trace("context->Rip %#Ix, context->Rsp %#Ix, ContextFlags %#lx.\n",
-            context->Rip, context->Rsp, context->ContextFlags);
-    trace("machine frame %p: rip=%Ix cs=%Ix eflags=%Ix rsp=%Ix ss=%Ix\n",
-          frame, frame->rip, frame->cs, frame->eflags, frame->rsp, frame->ss);
+    trace("rec %p context %p context->Rip %#Ix, context->Rsp %#Ix, ContextFlags %#lx.\n",
+          rec, context, context->Rip, context->Rsp, context->ContextFlags);
 
     hook_called = TRUE;
     /* Broken on Win2008, probably rec offset in stack is different. */
@@ -5133,9 +5087,6 @@ static void * WINAPI hook_KiUserApcDispatcher(CONTEXT *context)
         if (frame->rip == context->Rip) break;
         frame = (struct machine_frame *)((ULONG64 *)frame + 2);
     }
-    trace( "machine frame %p (%#Ix): rip=%#Ix cs=%#Ix eflags=%#Ix rsp=%#Ix ss=%#Ix\n",
-           frame, (char *)frame - (char *)context,
-           frame->rip, frame->cs, frame->eflags, frame->rsp, frame->ss );
     ok( frame->rip == context->Rip, "wrong rip %#Ix / %#Ix\n", frame->rip, context->Rip );
     ok( frame->rsp == context->Rsp, "wrong rsp %#Ix / %#Ix\n", frame->rsp, context->Rsp );
 
@@ -5205,8 +5156,6 @@ static void WINAPI hook_KiUserCallbackDispatcher(void *rsp)
 
     trace( "rsp %p args %p (%#Ix) len %lu id %lu\n", stack, stack->args,
            (char *)stack->args - (char *)stack, stack->len, stack->id );
-    trace( "machine frame rip=%#Ix cs=%#Ix eflags=%#Ix rsp=%#Ix (%Ix) ss=%#Ix\n",
-           stack->frame.rip, stack->frame.cs, stack->frame.eflags, stack->frame.rsp, stack->frame.rsp - (ULONG64)rsp, stack->frame.ss );
 
     ok( !((ULONG_PTR)stack & 15), "unaligned stack %p\n", stack );
     ok( stack->args == stack->args_data, "wrong args %p / %p\n", stack->args, stack->args_data );
@@ -9176,7 +9125,6 @@ static DWORD debug_service_exceptions;
 static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, EXCEPTION_BREAKPOINT);
@@ -9353,7 +9301,6 @@ static DWORD outputdebugstring_exceptions_unicode;
 static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     switch (rec->ExceptionCode)
     {
@@ -9422,7 +9369,6 @@ static DWORD outputdebugstring_newmodel_return;
 static LONG CALLBACK outputdebugstring_new_model_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     switch (rec->ExceptionCode)
     {
@@ -9506,7 +9452,6 @@ static DWORD ripevent_exceptions;
 static LONG CALLBACK ripevent_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     ok(rec->ExceptionCode == DBG_RIPEXCEPTION, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, DBG_RIPEXCEPTION);
@@ -9639,7 +9584,6 @@ static DWORD breakpoint_exceptions;
 static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, EXCEPTION_BREAKPOINT);
@@ -9801,7 +9745,6 @@ static DWORD invalid_handle_exceptions;
 static LONG CALLBACK invalid_handle_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08lx addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
 
     ok(rec->ExceptionCode == EXCEPTION_INVALID_HANDLE, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, EXCEPTION_INVALID_HANDLE);
