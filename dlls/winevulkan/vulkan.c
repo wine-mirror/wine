@@ -1939,6 +1939,56 @@ VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice device_ha
                                                                      surface->host_surface, rect_count, rects);
 }
 
+VkResult wine_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice device_handle, VkSurfaceKHR surface_handle,
+                                                   uint32_t *format_count, VkSurfaceFormatKHR *formats)
+{
+    struct wine_phys_dev *physical_device = wine_phys_dev_from_handle(device_handle);
+    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_instance *instance = physical_device->instance;
+
+    return instance->funcs.p_vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device->host_physical_device, surface->driver_surface,
+                                                                  format_count, formats);
+}
+
+VkResult wine_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice device_handle, const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
+                                                    uint32_t *format_count, VkSurfaceFormat2KHR *formats)
+{
+    struct wine_phys_dev *physical_device = wine_phys_dev_from_handle(device_handle);
+    struct wine_surface *surface = wine_surface_from_handle(surface_info->surface);
+    VkPhysicalDeviceSurfaceInfo2KHR surface_info_host = *surface_info;
+    struct wine_instance *instance = physical_device->instance;
+    VkResult res;
+
+    if (!physical_device->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR)
+    {
+        VkSurfaceFormatKHR *surface_formats;
+        UINT i;
+
+        /* Until the loader version exporting this function is common, emulate it using the older non-2 version. */
+        if (surface_info->pNext) FIXME("Emulating vkGetPhysicalDeviceSurfaceFormats2KHR, ignoring pNext.\n");
+
+        if (!formats) return wine_vkGetPhysicalDeviceSurfaceFormatsKHR(device_handle, surface_info->surface, format_count, NULL);
+
+        surface_formats = calloc(*format_count, sizeof(*surface_formats));
+        if (!surface_formats) return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+        res = wine_vkGetPhysicalDeviceSurfaceFormatsKHR(device_handle, surface_info->surface, format_count, surface_formats);
+        if (res == VK_SUCCESS || res == VK_INCOMPLETE)
+        {
+            for (i = 0; i < *format_count; i++)
+                formats[i].surfaceFormat = surface_formats[i];
+        }
+
+        free(surface_formats);
+        return res;
+    }
+
+    surface_info_host.surface = surface->driver_surface;
+
+    return instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(physical_device->host_physical_device,
+                                                                   &surface_info_host, format_count, formats);
+}
+
 VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
                                              const VkDebugUtilsMessengerCreateInfoEXT *create_info,
                                              const VkAllocationCallbacks *allocator,
