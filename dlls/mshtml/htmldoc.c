@@ -1108,7 +1108,15 @@ static HRESULT WINAPI HTMLDocument_get_URL(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", iface, p);
 
-    *p = SysAllocString(This->outer_window && This->outer_window->url ? This->outer_window->url : L"about:blank");
+    if(This->window && !This->window->base.outer_window) {
+        WARN("detached document\n");
+        return E_FAIL;
+    }
+
+    if(This->window && This->window->base.outer_window->url)
+        *p = SysAllocString(This->window->base.outer_window->url);
+    else
+        *p = SysAllocString(L"about:blank");
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
