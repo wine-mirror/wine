@@ -85,6 +85,51 @@ function detached_src_test() {
     ok(onload_called === false, "called onload too early?");
 }
 
+function detached_iframe_doc() {
+    document.body.innerHTML = "";
+
+    var iframe = document.createElement("iframe");
+    var origDoc;
+
+    function expect_exception(f, is_todo) {
+        try {
+            f();
+            todo_wine_if(is_todo).ok(false, "expected exception");
+        } catch(e) {}
+    }
+
+    iframe.onload = guard(function() {
+        origDoc = iframe.contentWindow.document;
+        iframe.onload = guard(function () {
+            var doc = iframe.contentWindow.document;
+
+            ok(/.*blank2.html/.test(doc.URL), "Unexpected iframe doc URL " + doc.URL);
+
+            if (doc.documentMode >= 9) {
+                try {
+                    origDoc != null; // it's not allowed to even compare detached document
+                    todo_wine.
+                    ok(false, "expected exception");
+                } catch(e) {}
+            } else {
+                todo_wine.
+                ok(doc === origDoc, "doc != origDoc");
+            }
+
+            expect_exception(function() { origDoc.onclick; }, true);
+            expect_exception(function() { origDoc.toString; }, true);
+            expect_exception(function() { origDoc.toString(); }, true);
+            expect_exception(function() { origDoc.URL; }, true);
+
+            next_test();
+        });
+        iframe.src = "blank2.html";
+    });
+
+    iframe.src = "blank.html";
+    document.body.appendChild(iframe);
+}
+
 function init_test_iframe() {
     var iframe = document.createElement("iframe");
 
@@ -99,5 +144,6 @@ var tests = [
     nav_parent_test,
     window_navigate_test,
     window_open_self_test,
-    detached_src_test
+    detached_src_test,
+    detached_iframe_doc
 ];
