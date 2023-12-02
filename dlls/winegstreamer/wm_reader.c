@@ -30,10 +30,6 @@ struct wm_stream
     WMT_STREAM_SELECTION selection;
     WORD index;
     bool eos;
-    /* Note that we only pretend to read compressed samples, and instead output
-     * uncompressed samples regardless of whether we are configured to read
-     * compressed samples. Rather, the behaviour of the reader objects differs
-     * in nontrivial ways depending on this field. */
     bool read_compressed;
 
     IWMReaderAllocatorEx *output_allocator;
@@ -1541,6 +1537,78 @@ out_destroy_parser:
     return hr;
 }
 
+static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
+{
+    wg_parser_t wg_parser;
+    HRESULT hr;
+    WORD i;
+
+    wg_parser_disconnect(reader->wg_parser);
+
+    EnterCriticalSection(&reader->shutdown_cs);
+    reader->read_thread_shutdown = true;
+    LeaveCriticalSection(&reader->shutdown_cs);
+    WaitForSingleObject(reader->read_thread, INFINITE);
+    CloseHandle(reader->read_thread);
+    reader->read_thread = NULL;
+
+    wg_parser_destroy(reader->wg_parser);
+    reader->wg_parser = 0;
+
+    if (!(wg_parser = wg_parser_create(WG_PARSER_DECODEBIN, read_compressed)))
+        return E_OUTOFMEMORY;
+
+    reader->wg_parser = wg_parser;
+    reader->read_thread_shutdown = false;
+
+    if (!(reader->read_thread = CreateThread(NULL, 0, read_thread, reader, 0, NULL)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto out_destroy_parser;
+    }
+
+    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size)))
+    {
+        ERR("Failed to connect parser, hr %#lx.\n", hr);
+        goto out_shutdown_thread;
+    }
+
+    assert(reader->stream_count == wg_parser_get_stream_count(reader->wg_parser));
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        struct wm_stream *stream = &reader->streams[i];
+        struct wg_format format;
+
+        stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
+        stream->reader = reader;
+        wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+        if (stream->selection == WMT_ON)
+            wg_parser_stream_enable(stream->wg_stream, read_compressed ? &format : &stream->format);
+    }
+
+    /* We probably discarded events because streams weren't enabled yet.
+     * Now that they're all enabled seek back to the start again. */
+    wg_parser_stream_seek(reader->streams[0].wg_stream, 1.0, 0, 0,
+            AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
+
+    return S_OK;
+
+out_shutdown_thread:
+    EnterCriticalSection(&reader->shutdown_cs);
+    reader->read_thread_shutdown = true;
+    LeaveCriticalSection(&reader->shutdown_cs);
+    WaitForSingleObject(reader->read_thread, INFINITE);
+    CloseHandle(reader->read_thread);
+    reader->read_thread = NULL;
+
+out_destroy_parser:
+    wg_parser_destroy(reader->wg_parser);
+    reader->wg_parser = 0;
+
+    return hr;
+}
+
 static struct wm_stream *wm_reader_get_stream_by_stream_number(struct wm_reader *reader, WORD stream_number)
 {
     if (stream_number && stream_number <= reader->stream_count)
@@ -2352,6 +2420,7 @@ static HRESULT WINAPI reader_SetReadStreamSamples(IWMSyncReader2 *iface, WORD st
     }
 
     stream->read_compressed = compressed;
+    reinit_stream(reader, compressed);
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
@@ -2397,7 +2466,16 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
                 FIXME("Ignoring selection %#x for stream %u; treating as enabled.\n",
                         selections[i], stream_numbers[i]);
             TRACE("Enabling stream %u.\n", stream_numbers[i]);
-            wg_parser_stream_enable(stream->wg_stream, &stream->format);
+            if (stream->read_compressed)
+            {
+                struct wg_format format;
+                wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+                wg_parser_stream_enable(stream->wg_stream, &format);
+            }
+            else
+            {
+                wg_parser_stream_enable(stream->wg_stream, &stream->format);
+            }
         }
     }
 
