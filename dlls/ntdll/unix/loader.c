@@ -438,7 +438,12 @@ static void init_paths( char *argv[] )
         data_dir = build_path( bin_dir, BIN_TO_DATADIR );
         wineloader = build_path( bin_dir, basename );
     }
-    else wineloader = build_path( build_path( build_dir, "loader" ), basename );
+    else
+    {
+        char *dirname = build_path( build_dir, "loader" );
+        wineloader = build_path( dirname, basename );
+        free(dirname);
+    }
 
     asprintf( &env, "WINELOADER=%s", wineloader );
     putenv( env );
