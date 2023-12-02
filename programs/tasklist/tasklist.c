@@ -176,7 +176,7 @@ static BOOL tasklist_get_process_info(const PROCESSENTRY32W *process_entry, stru
     info->pid_value = process_entry->th32ProcessID;
     info->memory_usage_value = memory_counters.WorkingSetSize / 1024;
     info->session_id_value = session_id;
-    wcscpy(info->image_name, process_entry->szExeFile);
+    lstrcpynW(info->image_name, process_entry->szExeFile, ARRAY_SIZE(info->image_name));
     swprintf(info->pid, ARRAY_SIZE(info->pid), L"%u", process_entry->th32ProcessID);
     wcscpy(info->session_name, session_id == 0 ? L"Services" : L"Console");
     swprintf(info->session_number, ARRAY_SIZE(info->session_number), L"%u", session_id);
