@@ -446,12 +446,14 @@ static void test_gargle_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_GARGLE, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXGargle, (void **)&gargle);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr != S_OK)
         return;
 
     hr = IDirectSoundFXGargle_GetAllParameters(gargle, &params);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        return;
     ok(params.dwRateHz == 20, "Got rate %lu Hz.\n", params.dwRateHz);
     ok(params.dwWaveShape == DSFXGARGLE_WAVE_TRIANGLE, "Got wave shape %lu.\n", params.dwWaveShape);
 
@@ -548,7 +550,6 @@ START_TEST(dsdmo)
     {
         const GUID *clsid;
         const GUID *iid;
-        BOOL todo;
     }
     tests[] =
     {
@@ -557,7 +558,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion},
         {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho},
         {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger},
-        {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
+        {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle},
         {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
         {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq},
         {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb},
@@ -572,8 +573,7 @@ START_TEST(dsdmo)
         HRESULT hr;
 
         hr = CoCreateInstance(tests[i].clsid, NULL, CLSCTX_INPROC_SERVER, tests[i].iid, (void **)&unk);
-        todo_wine_if(tests[i].todo) ok(hr == S_OK, "Failed to create %s, hr %#lx.\n",
-                debugstr_guid(tests[i].clsid), hr);
+        ok(hr == S_OK, "For clsid %s, got hr %#lx.\n", debugstr_guid(tests[i].clsid), hr);
         if (hr == S_OK)
             IUnknown_Release(unk);
         else

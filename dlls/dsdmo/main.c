@@ -1433,6 +1433,100 @@ static HRESULT distortion_create(IUnknown *outer, IUnknown **out)
     return S_OK;
 }
 
+struct gargle
+{
+    struct effect effect;
+    IDirectSoundFXGargle IDirectSoundFXGargle_iface;
+};
+
+static inline struct gargle *impl_from_IDirectSoundFXGargle(IDirectSoundFXGargle *iface)
+{
+    return CONTAINING_RECORD(iface, struct gargle, IDirectSoundFXGargle_iface);
+}
+
+static HRESULT WINAPI gargle_QueryInterface(IDirectSoundFXGargle *iface, REFIID iid, void **out)
+{
+    struct gargle *effect = impl_from_IDirectSoundFXGargle(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI gargle_AddRef(IDirectSoundFXGargle *iface)
+{
+    struct gargle *effect = impl_from_IDirectSoundFXGargle(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI gargle_Release(IDirectSoundFXGargle *iface)
+{
+    struct gargle *effect = impl_from_IDirectSoundFXGargle(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI gargle_SetAllParameters(IDirectSoundFXGargle *iface, const DSFXGargle *params)
+{
+    struct gargle *This = impl_from_IDirectSoundFXGargle(iface);
+    FIXME("(%p) %p\n", This, params);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI gargle_GetAllParameters(IDirectSoundFXGargle *iface, DSFXGargle *params)
+{
+    struct gargle *This = impl_from_IDirectSoundFXGargle(iface);
+    FIXME("(%p) %p\n", This, params);
+    return E_NOTIMPL;
+}
+
+static const struct IDirectSoundFXGargleVtbl gargle_vtbl =
+{
+    gargle_QueryInterface,
+    gargle_AddRef,
+    gargle_Release,
+    gargle_SetAllParameters,
+    gargle_GetAllParameters
+};
+
+static struct gargle *impl_gargle_from_effect(struct effect *iface)
+{
+    return CONTAINING_RECORD(iface, struct gargle, effect);
+}
+
+static void *gargle_query_interface(struct effect *iface, REFIID iid)
+{
+    struct gargle *effect = impl_gargle_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXGargle))
+        return &effect->IDirectSoundFXGargle_iface;
+    return NULL;
+}
+
+static void gargle_destroy(struct effect *iface)
+{
+    struct gargle *effect = impl_gargle_from_effect(iface);
+
+    free(effect);
+}
+
+static const struct effect_ops gargle_ops =
+{
+    .destroy = gargle_destroy,
+    .query_interface = gargle_query_interface,
+};
+
+static HRESULT gargle_create(IUnknown *outer, IUnknown **out)
+{
+    struct gargle *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    effect_init(&object->effect, outer, &gargle_ops);
+    object->IDirectSoundFXGargle_iface.lpVtbl = &gargle_vtbl;
+
+    TRACE("Created gargle effect %p.\n", object);
+    *out = &object->effect.IUnknown_inner;
+    return S_OK;
+}
+
 struct class_factory
 {
     IClassFactory IClassFactory_iface;
@@ -1522,6 +1616,7 @@ class_factories[] =
     {&GUID_DSFX_STANDARD_CHORUS,        {{&class_factory_vtbl}, chorus_create}},
     {&GUID_DSFX_STANDARD_FLANGER,       {{&class_factory_vtbl}, flanger_create}},
     {&GUID_DSFX_STANDARD_DISTORTION,    {{&class_factory_vtbl}, distortion_create}},
+    {&GUID_DSFX_STANDARD_GARGLE,        {{&class_factory_vtbl}, gargle_create}},
 };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
