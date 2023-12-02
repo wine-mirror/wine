@@ -930,3 +930,33 @@ NTSTATUS wg_transform_flush(void *args)
 
     return STATUS_SUCCESS;
 }
+
+NTSTATUS wg_transform_notify_qos(void *args)
+{
+    const struct wg_transform_notify_qos_params *params = args;
+    struct wg_transform *transform = get_transform(params->transform);
+    GstClockTimeDiff diff = params->diff * 100;
+    GstClockTime stream_time;
+    GstEvent *event;
+
+    /* We return timestamps in stream time, i.e. relative to the start of the
+     * file (or other medium), but gst_event_new_qos() expects the timestamp in
+     * running time. */
+    stream_time = gst_segment_to_running_time(&transform->segment, GST_FORMAT_TIME, params->timestamp * 100);
+    if (diff < (GstClockTimeDiff)-stream_time)
+        diff = -stream_time;
+    if (stream_time == -1)
+    {
+        /* This can happen legitimately if the sample falls outside of the
+         * segment bounds. GStreamer elements shouldn't present the sample in
+         * that case, but DirectShow doesn't care. */
+        GST_LOG("Ignoring QoS event.");
+        return S_OK;
+    }
+    if (!(event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
+            params->proportion, diff, stream_time)))
+        GST_ERROR("Failed to create QOS event.");
+    push_event(transform->my_sink, event);
+
+    return S_OK;
+}

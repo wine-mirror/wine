@@ -457,6 +457,24 @@ HRESULT wg_transform_flush(wg_transform_t transform)
     return S_OK;
 }
 
+void wg_transform_notify_qos(wg_transform_t transform,
+        bool underflow, double proportion, int64_t diff, uint64_t timestamp)
+{
+    struct wg_transform_notify_qos_params params =
+    {
+        .transform = transform,
+        .underflow = underflow,
+        .proportion = proportion,
+        .diff = diff,
+        .timestamp = timestamp,
+    };
+
+    TRACE("transform %#I64x, underflow %d, proportion %.16e, diff %I64d, timestamp %I64u.\n",
+            transform, underflow, proportion, diff, timestamp);
+
+    WINE_UNIX_CALL(unix_wg_transform_notify_qos, &params);
+}
+
 HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer)
 {
     struct wg_muxer_create_params params =

@@ -1170,14 +1170,14 @@ static void test_quality_control(IFilterGraph2 *graph, IBaseFilter *filter,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &mpeg_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testsource_qc.notify_sender = (IBaseFilter *)0xdeadbeef;
     hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(testsource_qc.notify_sender == (IBaseFilter *)0xdeadbeef, "Got sender %p.\n",
             testsource_qc.notify_sender);
 
@@ -1186,11 +1186,11 @@ static void test_quality_control(IFilterGraph2 *graph, IBaseFilter *filter,
     qc.notify_sender = (IBaseFilter *)0xdeadbeef;
     hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(qc.notify_sender == (IBaseFilter *)0xdeadbeef, "Got sender %p.\n", qc.notify_sender);
+    ok(qc.notify_sender == (IBaseFilter *)0xdeadbeef, "Got sender %p.\n", qc.notify_sender);
 
     qc.notify_hr = E_FAIL;
     hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     qc.notify_hr = S_OK;
 
     IFilterGraph2_Disconnect(graph, sink);

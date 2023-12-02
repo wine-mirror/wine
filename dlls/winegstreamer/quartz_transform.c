@@ -52,6 +52,7 @@ struct transform_ops
     HRESULT (*source_query_accept)(struct transform *filter, const AM_MEDIA_TYPE *mt);
     HRESULT (*source_get_media_type)(struct transform *filter, unsigned int index, AM_MEDIA_TYPE *mt);
     HRESULT (*source_decide_buffer_size)(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props);
+    HRESULT (*source_qc_notify)(struct transform *filter, IBaseFilter *sender, Quality q);
 };
 
 static inline struct transform *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -505,23 +506,8 @@ static ULONG WINAPI source_quality_control_Release(IQualityControl *iface)
 static HRESULT WINAPI source_quality_control_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
 {
     struct transform *filter = impl_from_source_IQualityControl(iface);
-    IQualityControl *peer;
-    HRESULT hr = VFW_E_NOT_FOUND;
 
-    TRACE("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s.\n",
-            filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
-
-    if (filter->qc_sink)
-        return IQualityControl_Notify(filter->qc_sink, &filter->filter.IBaseFilter_iface, q);
-
-    if (filter->sink.pin.peer
-            && SUCCEEDED(IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&peer)))
-    {
-        hr = IQualityControl_Notify(peer, &filter->filter.IBaseFilter_iface, q);
-        IQualityControl_Release(peer);
-    }
-
-    return hr;
+    return filter->ops->source_qc_notify(filter, sender, q);
 }
 
 static HRESULT WINAPI source_quality_control_SetSink(IQualityControl *iface, IQualityControl *sink)
@@ -564,6 +550,73 @@ static HRESULT transform_create(IUnknown *outer, const CLSID *clsid, const struc
     object->ops = ops;
 
     *out = object;
+    return S_OK;
+}
+
+static HRESULT passthrough_source_qc_notify(struct transform *filter, IBaseFilter *sender, Quality q)
+{
+    IQualityControl *peer;
+    HRESULT hr = VFW_E_NOT_FOUND;
+
+    TRACE("filter %p, sender %p, type %s, proportion %ld, late %s, timestamp %s.\n",
+            filter, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
+            debugstr_time(q.Late), debugstr_time(q.TimeStamp));
+
+    if (filter->qc_sink)
+        return IQualityControl_Notify(filter->qc_sink, &filter->filter.IBaseFilter_iface, q);
+
+    if (filter->sink.pin.peer
+            && SUCCEEDED(IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&peer)))
+    {
+        hr = IQualityControl_Notify(peer, &filter->filter.IBaseFilter_iface, q);
+        IQualityControl_Release(peer);
+    }
+
+    return hr;
+}
+
+static HRESULT handle_source_qc_notify(struct transform *filter, IBaseFilter *sender, Quality q)
+{
+    uint64_t timestamp;
+    int64_t diff;
+
+    TRACE("filter %p, sender %p, type %s, proportion %ld, late %s, timestamp %s.\n",
+            filter, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
+            debugstr_time(q.Late), debugstr_time(q.TimeStamp));
+
+    /* DirectShow filters sometimes pass negative timestamps (Audiosurf uses the
+     * current time instead of the time of the last buffer). GstClockTime is
+     * unsigned, so clamp it to 0. */
+    timestamp = max(q.TimeStamp, 0);
+
+    /* The documentation specifies that timestamp + diff must be nonnegative. */
+    diff = q.Late;
+    if (diff < 0 && timestamp < (uint64_t)-diff)
+        diff = -timestamp;
+
+    /* DirectShow "Proportion" describes what percentage of buffers the upstream
+     * filter should keep (i.e. dropping the rest). If frames are late, the
+     * proportion will be less than 1. For example, a proportion of 500 means
+     * that the element should drop half of its frames, essentially because
+     * frames are taking twice as long as they should to arrive.
+     *
+     * GStreamer "proportion" is the inverse of this; it describes how much
+     * faster the upstream element should produce frames. I.e. if frames are
+     * taking twice as long as they should to arrive, we want the frames to be
+     * decoded twice as fast, and so we pass 2.0 to GStreamer. */
+
+    if (!q.Proportion)
+    {
+        WARN("Ignoring quality message with zero proportion.\n");
+        return S_OK;
+    }
+
+    /* GST_QOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
+     * DirectShow filters might use Famine, so check that there actually is an
+     * underrun. */
+    wg_transform_notify_qos(filter->transform, q.Type == Famine && q.Proportion < 1000,
+            1000.0 / q.Proportion, diff, timestamp);
+
     return S_OK;
 }
 
@@ -686,6 +739,7 @@ static const struct transform_ops mpeg_audio_codec_transform_ops =
     mpeg_audio_codec_source_query_accept,
     mpeg_audio_codec_source_get_media_type,
     mpeg_audio_codec_source_decide_buffer_size,
+    passthrough_source_qc_notify,
 };
 
 HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
@@ -837,6 +891,7 @@ static const struct transform_ops mpeg_video_codec_transform_ops =
     mpeg_video_codec_source_query_accept,
     mpeg_video_codec_source_get_media_type,
     mpeg_video_codec_source_decide_buffer_size,
+    handle_source_qc_notify,
 };
 
 HRESULT mpeg_video_codec_create(IUnknown *outer, IUnknown **out)
@@ -962,6 +1017,7 @@ static const struct transform_ops mpeg_layer3_decoder_transform_ops =
     mpeg_layer3_decoder_source_query_accept,
     mpeg_layer3_decoder_source_get_media_type,
     mpeg_layer3_decoder_source_decide_buffer_size,
+    passthrough_source_qc_notify,
 };
 
 HRESULT mpeg_layer3_decoder_create(IUnknown *outer, IUnknown **out)

@@ -1921,6 +1921,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X(wg_transform_get_status),
     X(wg_transform_drain),
     X(wg_transform_flush),
+    X(wg_transform_notify_qos),
 
     X(wg_muxer_create),
     X(wg_muxer_destroy),
@@ -2253,6 +2254,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X(wg_transform_get_status),
     X(wg_transform_drain),
     X(wg_transform_flush),
+    X(wg_transform_notify_qos),
 
     X64(wg_muxer_create),
     X(wg_muxer_destroy),

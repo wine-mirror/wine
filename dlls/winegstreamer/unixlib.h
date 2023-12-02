@@ -372,6 +372,15 @@ struct wg_transform_get_status_params
     UINT32 accepts_input;
 };
 
+struct wg_transform_notify_qos_params
+{
+    wg_transform_t transform;
+    UINT8 underflow;
+    DOUBLE proportion;
+    INT64 diff;
+    UINT64 timestamp;
+};
+
 struct wg_muxer_create_params
 {
     wg_muxer_t muxer;
@@ -439,6 +448,7 @@ enum unix_funcs
     unix_wg_transform_get_status,
     unix_wg_transform_drain,
     unix_wg_transform_flush,
+    unix_wg_transform_notify_qos,
 
     unix_wg_muxer_create,
     unix_wg_muxer_destroy,
