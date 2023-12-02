@@ -1339,6 +1339,100 @@ static HRESULT flanger_create(IUnknown *outer, IUnknown **out)
     return S_OK;
 }
 
+struct distortion
+{
+    struct effect effect;
+    IDirectSoundFXDistortion IDirectSoundFXDistortion_iface;
+};
+
+static inline struct distortion *impl_from_IDirectSoundFXDistortion(IDirectSoundFXDistortion *iface)
+{
+    return CONTAINING_RECORD(iface, struct distortion, IDirectSoundFXDistortion_iface);
+}
+
+static HRESULT WINAPI distortion_QueryInterface(IDirectSoundFXDistortion *iface, REFIID iid, void **out)
+{
+    struct distortion *effect = impl_from_IDirectSoundFXDistortion(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI distortion_AddRef(IDirectSoundFXDistortion *iface)
+{
+    struct distortion *effect = impl_from_IDirectSoundFXDistortion(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI distortion_Release(IDirectSoundFXDistortion *iface)
+{
+    struct distortion *effect = impl_from_IDirectSoundFXDistortion(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI distortion_SetAllParameters(IDirectSoundFXDistortion *iface, const DSFXDistortion *params)
+{
+    struct distortion *This = impl_from_IDirectSoundFXDistortion(iface);
+    FIXME("(%p) %p\n", This, params);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI distortion_GetAllParameters(IDirectSoundFXDistortion *iface, DSFXDistortion *params)
+{
+    struct distortion *This = impl_from_IDirectSoundFXDistortion(iface);
+    FIXME("(%p) %p\n", This, params);
+    return E_NOTIMPL;
+}
+
+static const struct IDirectSoundFXDistortionVtbl distortion_vtbl =
+{
+    distortion_QueryInterface,
+    distortion_AddRef,
+    distortion_Release,
+    distortion_SetAllParameters,
+    distortion_GetAllParameters
+};
+
+static struct distortion *impl_distortion_from_effect(struct effect *iface)
+{
+    return CONTAINING_RECORD(iface, struct distortion, effect);
+}
+
+static void *distortion_query_interface(struct effect *iface, REFIID iid)
+{
+    struct distortion *effect = impl_distortion_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXDistortion))
+        return &effect->IDirectSoundFXDistortion_iface;
+    return NULL;
+}
+
+static void distortion_destroy(struct effect *iface)
+{
+    struct distortion *effect = impl_distortion_from_effect(iface);
+
+    free(effect);
+}
+
+static const struct effect_ops distortion_ops =
+{
+    .destroy = distortion_destroy,
+    .query_interface = distortion_query_interface,
+};
+
+static HRESULT distortion_create(IUnknown *outer, IUnknown **out)
+{
+    struct distortion *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    effect_init(&object->effect, outer, &distortion_ops);
+    object->IDirectSoundFXDistortion_iface.lpVtbl = &distortion_vtbl;
+
+    TRACE("Created distortion effect %p.\n", object);
+    *out = &object->effect.IUnknown_inner;
+    return S_OK;
+}
+
 struct class_factory
 {
     IClassFactory IClassFactory_iface;
@@ -1427,6 +1521,7 @@ class_factories[] =
     {&GUID_DSFX_STANDARD_COMPRESSOR,    {{&class_factory_vtbl}, compressor_create}},
     {&GUID_DSFX_STANDARD_CHORUS,        {{&class_factory_vtbl}, chorus_create}},
     {&GUID_DSFX_STANDARD_FLANGER,       {{&class_factory_vtbl}, flanger_create}},
+    {&GUID_DSFX_STANDARD_DISTORTION,    {{&class_factory_vtbl}, distortion_create}},
 };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)

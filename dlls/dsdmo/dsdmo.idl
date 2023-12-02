@@ -73,3 +73,11 @@ coclass DirectSoundChorusDMO {}
     vi_progid("Microsoft.DirectSoundFlangerDMO")
 ]
 coclass DirectSoundFlangerDMO {}
+
+[
+    uuid(ef114c90-cd1d-484e-96e5-09cfaf912a21),
+    threading(both),
+    progid("Microsoft.DirectSoundDistortionDMO.1"),
+    vi_progid("Microsoft.DirectSoundDistortionDMO")
+]
+coclass DirectSoundDistortionDMO {}
