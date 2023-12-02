@@ -432,9 +432,7 @@ static DWORD create_tmp_file(HMMIO* hFile, LPWSTR* pszTmpFileName)
         return MCIERR_FILE_NOT_FOUND;
     }
 
-    *pszTmpFileName = HeapAlloc(GetProcessHeap(),
-                                HEAP_ZERO_MEMORY,
-                                MAX_PATH * sizeof(WCHAR));
+    *pszTmpFileName = calloc(1, MAX_PATH * sizeof(WCHAR));
     if (!GetTempFileNameW(szTmpPath, szPrefix, 0, *pszTmpFileName)) {
         WARN("can't retrieve temp file name!\n");
         free(*pszTmpFileName);
