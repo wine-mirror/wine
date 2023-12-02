@@ -892,7 +892,7 @@ static void init_locale(void)
 /***********************************************************************
  *              init_environment
  */
-void init_environment( int argc, char *argv[], char *envp[] )
+void init_environment(void)
 {
     USHORT *case_table;
 
@@ -904,10 +904,6 @@ void init_environment( int argc, char *argv[], char *envp[] )
         uctable = case_table + 2;
         lctable = case_table + case_table[1] + 2;
     }
-
-    main_argc = argc;
-    main_argv = argv;
-    main_envp = envp;
 }
 
 

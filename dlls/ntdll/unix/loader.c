@@ -1890,9 +1890,13 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
 
     java_object = (*env)->NewGlobalRef( env, obj );
 
+    main_argc = argc;
+    main_argv = argv;
+    main_envp = environ;
+
     init_paths( argv );
     virtual_init();
-    init_environment( argc, argv, environ );
+    init_environment();
 
 #ifdef __i386__
     {
@@ -2107,6 +2111,10 @@ static void check_command_line( int argc, char *argv[] )
  */
 DECLSPEC_EXPORT void __wine_main( int argc, char *argv[], char *envp[] )
 {
+    main_argc = argc;
+    main_argv = argv;
+    main_envp = envp;
+
     init_paths( argv );
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
@@ -2132,7 +2140,7 @@ DECLSPEC_EXPORT void __wine_main( int argc, char *argv[], char *envp[] )
 #endif
 
     virtual_init();
-    init_environment( argc, argv, envp );
+    init_environment();
 
 #ifdef __APPLE__
     apple_main_thread();
