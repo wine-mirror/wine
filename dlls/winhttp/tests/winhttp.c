@@ -2541,9 +2541,21 @@ static DWORD CALLBACK server_thread(LPVOID param)
             ok(!!strstr(buffer, "Cookie: 111\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             send(c, okmsg, sizeof(okmsg) - 1, 0);
         }
-        if (strstr(buffer, "PUT /test"))
+
+        if (strstr(buffer, "PUT /test") || strstr(buffer, "POST /test"))
         {
-            ok(!!strstr(buffer, "Content-Length: 0\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            if (strstr(buffer, "Transfer-Encoding: chunked\r\n"))
+            {
+                ok(!strstr(buffer, "Content-Length:"), "Unexpected Content-Length in request %s.\n", debugstr_a(buffer));
+                r = recv(c, buffer, sizeof(buffer), 0);
+                ok(r == 4, "got %d.\n", r);
+                buffer[r] = 0;
+                ok(!strcmp(buffer, "post"), "got %s.\n", debugstr_a(buffer));
+            }
+            else
+            {
+                ok(!!strstr(buffer, "Content-Length: 0\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
+            }
             send(c, okmsg, sizeof(okmsg) - 1, 0);
         }
         shutdown(c, 2);
@@ -2649,6 +2661,44 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     }
 
     WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_chunked_request(int port)
+{
+    static const WCHAR *methods[] = {L"POST", L"PUT"};
+    HINTERNET ses, con, req;
+    char buffer[0x100];
+    unsigned int i;
+    DWORD count;
+    BOOL ret;
+
+    ses = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %lu\n", GetLastError());
+
+    con = WinHttpConnect(ses, L"localhost", port, 0);
+    ok(con != NULL, "failed to open a connection %lu\n", GetLastError());
+    for (i = 0; i < ARRAY_SIZE(methods); ++i)
+    {
+        req = WinHttpOpenRequest(con, methods[i], L"/test", NULL, NULL, NULL, 0);
+        ok(req != NULL, "failed to open a request %lu\n", GetLastError());
+
+        ret = WinHttpAddRequestHeaders(req, L"Transfer-Encoding: chunked", -1, WINHTTP_ADDREQ_FLAG_ADD);
+        ok(ret, "failed to add header %lu\n", GetLastError());
+
+        strcpy(buffer, "post");
+        ret = WinHttpSendRequest(req, NULL, 0, buffer, 4, 4, 0);
+        ok(ret, "failed to send request %lu\n", GetLastError());
+        ret = WinHttpReceiveResponse(req, NULL);
+        ok(ret, "failed to receive response %lu\n", GetLastError());
+        count = 0;
+        memset(buffer, 0, sizeof(buffer));
+        ret = WinHttpReadData(req, buffer, sizeof buffer, &count);
+        ok(ret, "failed to read data %lu\n", GetLastError());
+        ok(!count, "got count %ld\n", count);
+        WinHttpCloseHandle(req);
+    }
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
 }
@@ -5824,6 +5874,7 @@ START_TEST (winhttp)
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, L"/basic");
     test_basic_request(si.port, L"PUT", L"/test");
+    test_chunked_request(si.port);
     test_no_headers(si.port);
     test_no_content(si.port);
     test_head_request(si.port);
