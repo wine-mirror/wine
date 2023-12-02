@@ -3307,8 +3307,6 @@ struct std_handle_test
     unsigned args;
     /* output */
     DWORD expected;
-    unsigned is_todo; /* bitmask: 1 on TEB values, 2 on StartupInfoA values, 4 on StartupInfoW values,
-                         8 dangling in StartupInfoW, 16 dangling in TEB */
     DWORD is_broken; /* Win7 broken file types */
 };
 
@@ -3461,42 +3459,29 @@ static void test_StdHandleInheritance(void)
                  */
                 okChildHexInt("StartupInfoA", "hStdInput", (DWORD_PTR)((std_tests[i].args & ARG_STD) ? INVALID_HANDLE_VALUE : hstd[0]), std_tests[i].is_broken);
                 okChildHexInt("StartupInfoA", "hStdOutput", (DWORD_PTR)((std_tests[i].args & ARG_STD) ? INVALID_HANDLE_VALUE : hstd[1]), std_tests[i].is_broken);
-                todo_wine_if(std_tests[i].is_todo & 8)
                 if (!(std_tests[i].args & ARG_STD))
                 {
                     okChildHexInt("StartupInfoW", "hStdInput", (DWORD_PTR)hstd[0], std_tests[i].is_broken);
                     okChildHexInt("StartupInfoW", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
                 }
 
-                todo_wine_if(std_tests[i].is_todo & 16)
-                {
                 okChildHexInt("TEB", "hStdInput", (DWORD_PTR)hstd[0], std_tests[i].is_broken);
                 okChildHexInt("TEB", "hStdOutput", (DWORD_PTR)hstd[1], std_tests[i].is_broken);
-                }
             }
             else
             {
                 unsigned startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
 
-                todo_wine_if(std_tests[i].is_todo & 2)
-                {
                 okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
-                }
 
                 startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
 
-                todo_wine_if(std_tests[i].is_todo & 4)
-                {
                 okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
-                }
 
-                todo_wine_if(std_tests[i].is_todo & 1)
-                {
                 okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
                 okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
-                }
             }
 
             release_memory();
