@@ -535,15 +535,14 @@ static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DW
 {
     struct aac_decoder *decoder = impl_from_IMFTransform(iface);
     bool accepts_input;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, flags %p.\n", iface, id, flags);
 
     if (!decoder->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = wg_transform_get_status(decoder->wg_transform, &accepts_input)))
-        return hr;
+    if (!wg_transform_get_status(decoder->wg_transform, &accepts_input))
+        return E_FAIL;
 
     *flags = accepts_input ? MFT_INPUT_STATUS_ACCEPT_DATA : 0;
     return S_OK;
