@@ -26720,7 +26720,6 @@ static void test_draw_mapped_buffer(void)
     unsigned int color, i;
     IDirect3D9 *d3d;
     ULONG refcount;
-    BOOL test_pass;
     HWND window;
     HRESULT hr;
     void *data;
@@ -26741,11 +26740,10 @@ static void test_draw_mapped_buffer(void)
     {
         D3DPOOL pool;
         DWORD usage;
-        BOOL ignore_wine_result;
     }
     tests[] =
     {
-        {D3DPOOL_DEFAULT, D3DUSAGE_DYNAMIC, TRUE},
+        {D3DPOOL_DEFAULT, D3DUSAGE_DYNAMIC},
         {D3DPOOL_MANAGED, 0},
         {D3DPOOL_SYSTEMMEM, 0},
     };
@@ -26825,11 +26823,7 @@ static void test_draw_mapped_buffer(void)
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         color = getPixelColor(device, 160, 120);
-
-        test_pass = color_match(color, 0x00ff0000, 1);
-        todo_wine_if(tests[i].ignore_wine_result && !test_pass)
-        ok(test_pass, "Got unexpected color 0x%08x, test %u.\n", color, i);
-
+        ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x, test %u.\n", color, i);
         color = getPixelColor(device, 480, 360);
         ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x, test %u.\n", color, i);
 
@@ -27458,7 +27452,7 @@ static void test_dynamic_map_synchronization(void)
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
     ok(hr == S_OK, "Failed to get render target, hr %#lx.\n", hr);
-    check_rt_color_todo(rt, 0x0000ff00);
+    check_rt_color(rt, 0x0000ff00);
     IDirect3DSurface9_Release(rt);
 
     IDirect3DVertexBuffer9_Release(buffer);

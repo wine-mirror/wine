@@ -3459,6 +3459,34 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     FreeLibraryAndExitThread(wined3d_module, 0);
 }
 
+void CDECL wined3d_device_context_flush_mapped_buffer(struct wined3d_device_context *context,
+        struct wined3d_buffer *buffer)
+{
+    struct wined3d_client_resource *client = &buffer->resource.client;
+
+    /* d3d9 applications can draw from a mapped dynamic buffer.
+     * Castlevania 2 depends on this behaviour.
+     * This means that we need to upload a pending discard bo, without actually
+     * unmapping it. */
+
+    assert(context == &context->device->cs->c);
+
+    if (wined3d_bo_address_is_null(&client->mapped_upload.addr))
+        return;
+
+    if (client->mapped_upload.flags & UPLOAD_BO_UPLOAD_ON_UNMAP)
+        wined3d_device_context_upload_bo(context, &buffer->resource, 0,
+                &client->mapped_box, &client->mapped_upload, buffer->resource.size, buffer->resource.size);
+
+    if (client->mapped_upload.flags & UPLOAD_BO_RENAME_ON_UNMAP)
+    {
+        client->mapped_upload.flags &= ~UPLOAD_BO_RENAME_ON_UNMAP;
+        /* This logic matches wined3d_cs_map_upload_bo(). */
+        if (client->mapped_upload.addr.buffer_object->coherent && wined3d_map_persistent())
+            client->mapped_upload.flags &= ~UPLOAD_BO_UPLOAD_ON_UNMAP;
+    }
+}
+
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         const enum wined3d_feature_level *levels, unsigned int level_count)
 {

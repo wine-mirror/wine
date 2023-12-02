@@ -3120,6 +3120,17 @@ static HRESULT d3d9_device_upload_sysmem_index_buffer(struct d3d9_device *device
     return S_OK;
 }
 
+static void d3d9_device_flush_mapped_vertex_buffers(struct d3d9_device *device)
+{
+    for (unsigned int i = 0; i < WINED3D_MAX_STREAMS; ++i)
+    {
+        struct wined3d_buffer *buffer = device->stateblock_state->streams[i].buffer;
+
+        if (buffer)
+            wined3d_device_context_flush_mapped_buffer(device->immediate_context, buffer);
+    }
+}
+
 static void d3d9_device_upload_managed_textures(struct d3d9_device *device)
 {
     const struct wined3d_stateblock_state *state = device->stateblock_state;
@@ -3159,6 +3170,7 @@ static HRESULT WINAPI d3d9_device_DrawPrimitive(IDirect3DDevice9Ex *iface,
     vertex_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     d3d9_device_upload_managed_textures(device);
     d3d9_device_upload_sysmem_vertex_buffers(device, 0, start_vertex, vertex_count);
+    d3d9_device_flush_mapped_vertex_buffers(device);
     d3d9_generate_auto_mipmaps(device);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
@@ -3200,11 +3212,13 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
     index_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     d3d9_device_upload_managed_textures(device);
     d3d9_device_upload_sysmem_vertex_buffers(device, base_vertex_idx, min_vertex_idx, vertex_count);
+    d3d9_device_flush_mapped_vertex_buffers(device);
     d3d9_generate_auto_mipmaps(device);
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     d3d9_device_upload_sysmem_index_buffer(device, &start_idx, index_count);
+    wined3d_device_context_flush_mapped_buffer(device->immediate_context, device->stateblock_state->index_buffer);
     wined3d_device_context_draw_indexed(device->immediate_context, base_vertex_idx, start_idx, index_count, 0,
             device->stateblock_state->streams[0].frequency);
     d3d9_rts_flag_auto_gen_mipmap(device);
