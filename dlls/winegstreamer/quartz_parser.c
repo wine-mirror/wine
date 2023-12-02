@@ -625,9 +625,6 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     uint32_t frame_time;
     const GUID *subtype;
 
-    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
-        return false;
-
     switch (format->u.video_wmv.format)
     {
         case WG_WMV_VIDEO_FORMAT_WMV1:
@@ -649,6 +646,9 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
             WARN("Invalid WMV format %u.\n", format->u.video_wmv.format);
             return false;
     }
+
+    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
+        return false;
 
     mt->majortype = MEDIATYPE_Video;
     mt->subtype = *subtype;
