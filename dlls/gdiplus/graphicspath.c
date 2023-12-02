@@ -2236,6 +2236,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
                 widen_closed_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, last_point);
             else
                 widen_open_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, custom->strokeEndCap, NULL, custom->strokeStartCap, NULL, last_point);
+            free(tmp_points);
         }
         else
         {
