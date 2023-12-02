@@ -165,6 +165,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
                     {
                         free(groups_data);
                         free(programs);
+                        FindClose(hfind);
                         return NULL;
                     }
                     groups_data = new_groups_data;
