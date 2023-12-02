@@ -718,11 +718,118 @@ static void test_media_types(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+struct testqc
+{
+    IQualityControl IQualityControl_iface;
+    IUnknown IUnknown_inner;
+    IUnknown *outer_unk;
+    LONG refcount;
+    IBaseFilter *notify_sender;
+    Quality notify_quality;
+    HRESULT notify_hr;
+};
+
+static struct testqc *impl_from_IQualityControl(IQualityControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct testqc, IQualityControl_iface);
+}
+
+static HRESULT WINAPI testqc_QueryInterface(IQualityControl *iface, REFIID iid, void **out)
+{
+    struct testqc *qc = impl_from_IQualityControl(iface);
+    return IUnknown_QueryInterface(qc->outer_unk, iid, out);
+}
+
+static ULONG WINAPI testqc_AddRef(IQualityControl *iface)
+{
+    struct testqc *qc = impl_from_IQualityControl(iface);
+    return IUnknown_AddRef(qc->outer_unk);
+}
+
+static ULONG WINAPI testqc_Release(IQualityControl *iface)
+{
+    struct testqc *qc = impl_from_IQualityControl(iface);
+    return IUnknown_Release(qc->outer_unk);
+}
+
+static HRESULT WINAPI testqc_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
+{
+    struct testqc *qc = impl_from_IQualityControl(iface);
+
+    qc->notify_sender = sender;
+    qc->notify_quality = q;
+
+    return qc->notify_hr;
+}
+
+static HRESULT WINAPI testqc_SetSink(IQualityControl *iface, IQualityControl *sink)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IQualityControlVtbl testqc_vtbl =
+{
+    testqc_QueryInterface,
+    testqc_AddRef,
+    testqc_Release,
+    testqc_Notify,
+    testqc_SetSink,
+};
+
+static struct testqc *impl_from_qc_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct testqc, IUnknown_inner);
+}
+
+static HRESULT WINAPI testqc_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    struct testqc *qc = impl_from_qc_IUnknown(iface);
+
+    if (IsEqualIID(iid, &IID_IUnknown))
+        *out = iface;
+    else if (IsEqualIID(iid, &IID_IQualityControl))
+        *out = &qc->IQualityControl_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI testqc_inner_AddRef(IUnknown *iface)
+{
+    struct testqc *qc = impl_from_qc_IUnknown(iface);
+    return InterlockedIncrement(&qc->refcount);
+}
+
+static ULONG WINAPI testqc_inner_Release(IUnknown *iface)
+{
+    struct testqc *qc = impl_from_qc_IUnknown(iface);
+    return InterlockedDecrement(&qc->refcount);
+}
+
+static const IUnknownVtbl testqc_inner_vtbl =
+{
+    testqc_inner_QueryInterface,
+    testqc_inner_AddRef,
+    testqc_inner_Release,
+};
+
+static void testqc_init(struct testqc *qc, IUnknown *outer)
+{
+    memset(qc, 0, sizeof(*qc));
+    qc->IQualityControl_iface.lpVtbl = &testqc_vtbl;
+    qc->IUnknown_inner.lpVtbl = &testqc_inner_vtbl;
+    qc->outer_unk = outer ? outer : &qc->IUnknown_inner;
+}
+
 struct testfilter
 {
     struct strmbase_filter filter;
     struct strmbase_source source;
     struct strmbase_sink sink;
+    struct testqc *qc;
     const AM_MEDIA_TYPE *mt;
     unsigned int got_sample, got_new_segment, got_eos, got_begin_flush, got_end_flush;
     REFERENCE_TIME expected_start_time;
@@ -1042,6 +1149,59 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     IFilterGraph2_Disconnect(graph, &testsource->source.pin.IPin_iface);
 }
 
+static void test_quality_control(IFilterGraph2 *graph, IBaseFilter *filter,
+        IPin *sink, IPin *source, struct testfilter *testsource, struct testfilter *testsink)
+{
+    struct testqc testsource_qc;
+    IQualityControl *source_qc;
+    IQualityControl *sink_qc;
+    Quality quality = {0};
+    struct testqc qc;
+    HRESULT hr;
+
+    testqc_init(&testsource_qc, testsource->filter.outer_unk);
+    testqc_init(&qc, NULL);
+
+    testsource->qc = &testsource_qc;
+
+    hr = IPin_QueryInterface(sink, &IID_IQualityControl, (void **)&sink_qc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_QueryInterface(source, &IID_IQualityControl, (void **)&source_qc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &mpeg_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testsource_qc.notify_sender = (IBaseFilter *)0xdeadbeef;
+    hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(testsource_qc.notify_sender == (IBaseFilter *)0xdeadbeef, "Got sender %p.\n",
+            testsource_qc.notify_sender);
+
+    hr = IQualityControl_SetSink(sink_qc, &qc.IQualityControl_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    qc.notify_sender = (IBaseFilter *)0xdeadbeef;
+    hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(qc.notify_sender == (IBaseFilter *)0xdeadbeef, "Got sender %p.\n", qc.notify_sender);
+
+    qc.notify_hr = E_FAIL;
+    hr = IQualityControl_Notify(source_qc, &testsink->filter.IBaseFilter_iface, quality);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    qc.notify_hr = S_OK;
+
+    IFilterGraph2_Disconnect(graph, sink);
+    IFilterGraph2_Disconnect(graph, &testsource->source.pin.IPin_iface);
+
+    IQualityControl_Release(source_qc);
+    IQualityControl_Release(sink_qc);
+
+    testsource->qc = NULL;
+}
+
 static void test_send_sample(IMemInputPin *input, IMediaSample *sample, const BYTE *data, LONG len, BOOL todo)
 {
     BYTE *target_data;
@@ -1321,6 +1481,8 @@ static void test_connect_pin(void)
     IBaseFilter_FindPin(filter, L"Out", &source);
     IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&meminput);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    test_quality_control(graph, filter, sink, source, &testsource, &testsink);
 
     for (i=0;i<ARRAY_SIZE(video_types);++i)
     {
