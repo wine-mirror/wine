@@ -2550,8 +2550,8 @@ BOOL WINAPI UnlockUrlCacheEntryFileA(LPCSTR lpszUrlName, DWORD dwReserved)
     pEntry = (entry_header*)((LPBYTE)pHeader + pHashEntry->offset);
     if (pEntry->signature != URL_SIGNATURE)
     {
-        cache_container_unlock_index(pContainer, pHeader);
         FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPSTR)&pEntry->signature, sizeof(DWORD)));
+        cache_container_unlock_index(pContainer, pHeader);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
