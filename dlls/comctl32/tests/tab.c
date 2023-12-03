@@ -540,6 +540,7 @@ static void test_tab(INT nMinTabWidth)
     SelectObject(hdc, hOldFont);
     ReleaseDC(hwTab, hdc);
 
+    trace ("default_min_tab_width: %d\n", default_min_tab_width);
     trace ("  TCS_FIXEDWIDTH tabs no icon...\n");
     CHECKSIZE(hwTab, dpi, -1, "default width");
     TABCHECKSETSIZE(hwTab, 50, 20, 50, 20, "set size");
@@ -609,6 +610,7 @@ static void test_tab(INT nMinTabWidth)
     ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == default_min_tab_width),
         "no icon, default width: Expected width [%d] got [%ld]\n", exp, rTab.right - rTab.left );
 
+    CHECKSIZE(hwTab, max(size.cx + TAB_PADDING_X*2, nMinTabWidth < 0 ? default_min_tab_width : nMinTabWidth), size.cy + 5, "Initial values");
     for (i=0; i<8; i++)
     {
         INT nTabWidth = (nMinTabWidth < 0) ? TabWidthPadded(default_min_tab_width, i, 2) : nMinTabWidth;
@@ -625,6 +627,11 @@ static void test_tab(INT nMinTabWidth)
         TABCHECKSETSIZE(hwTab, 50, 30, max(size.cx + 21 + i*3, nTabWidth), 30, "with icon, set size > icon");
         TABCHECKSETSIZE(hwTab, 20, 20, max(size.cx + 21 + i*3, nTabWidth), 20, "with icon, set size < icon");
         TABCHECKSETSIZE(hwTab, 0, 1, max(size.cx + 21 + i*3, nTabWidth), 1, "with icon, min size");
+
+        /* tests that a change to padding only doesn't impact reported size */
+        SendMessageA(hwTab, TCM_SETPADDING, 0, MAKELPARAM(i + 1, i + 1));
+        CHECKSIZE(hwTab, max(size.cx + 21 + i*3, nTabWidth), 1, "with icon, min size, padding only change");
+        TABCHECKSETSIZE(hwTab, 0, 1, max(size.cx + 21 + i*3, nTabWidth), 1, "with icon, min size, same size");
     }
     DestroyWindow (hwTab);
 
@@ -637,6 +644,7 @@ static void test_tab(INT nMinTabWidth)
     ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == default_min_tab_width),
         "no icon, default width: Expected width [%d] got [%ld]\n", exp, rTab.right - rTab.left );
 
+    CHECKSIZE(hwTab, nMinTabWidth < 0 ? default_min_tab_width : nMinTabWidth, size.cy + 5, "Initial values");
     for (i=0; i<8; i++)
     {
         INT nTabWidth = (nMinTabWidth < 0) ? TabWidthPadded(default_min_tab_width, i, 2) : nMinTabWidth;
@@ -654,6 +662,11 @@ static void test_tab(INT nMinTabWidth)
         TABCHECKSETSIZE(hwTab, 50, 30, nTabWidth, 30, "with icon, set size > icon");
         TABCHECKSETSIZE(hwTab, 20, 20, nTabWidth, 20, "with icon, set size < icon");
         TABCHECKSETSIZE(hwTab, 0, 1, nTabWidth, 1, "with icon, min size");
+
+        /* tests that a change to padding only doesn't impact reported size */
+        SendMessageA(hwTab, TCM_SETPADDING, 0, MAKELPARAM(i + 1, i + 1));
+        CHECKSIZE(hwTab, nTabWidth, 1, "with icon, min size, padding only change");
+        TABCHECKSETSIZE(hwTab, 0, 1, nTabWidth, 1, "with icon, min size, same size");
     }
 
     DestroyWindow (hwTab);
