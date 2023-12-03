@@ -197,6 +197,19 @@ struct apc_stack_layout
 C_ASSERT( offsetof(struct apc_stack_layout, context) == 0x18 );
 C_ASSERT( sizeof(struct apc_stack_layout) == 0x1c0 );
 
+/* stack layout when calling KiUserCallbackDispatcher */
+struct callback_stack_layout
+{
+    void                *args;           /* 000 arguments */
+    ULONG                len;            /* 004 arguments len */
+    ULONG                id;             /* 008 function id */
+    ULONG                lr;             /* 00c */
+    ULONG                sp;             /* 010 */
+    ULONG                pc;             /* 014 */
+    BYTE                 args_data[0];   /* 018 copied argument data*/
+};
+C_ASSERT( sizeof(struct callback_stack_layout) == 0x18 );
+
 struct syscall_frame
 {
     UINT                  r0;             /* 000 */
@@ -1143,8 +1156,8 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 /***********************************************************************
  *           call_user_mode_callback
  */
-extern NTSTATUS call_user_mode_callback( ULONG id, void *args, ULONG len, void **ret_ptr,
-                                         ULONG *ret_len, void *func, TEB *teb );
+extern NTSTATUS call_user_mode_callback( ULONG user_sp, void **ret_ptr, ULONG *ret_len,
+                                         void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "push {r4-r12,lr}\n\t"
                    "add r7, sp, #0x28\n\t"    /* syscall_cfa */
@@ -1159,10 +1172,9 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_offset r11,-0x0c\n\t")
                    __ASM_CFI(".cfi_offset r12,-0x08\n\t")
                    __ASM_CFI(".cfi_offset lr,-0x04\n\t")
-                   "ldr ip, [sp, #0x2c]\n\t"  /* func */
-                   "ldr r4, [sp, #0x30]\n\t"  /* teb */
+                   "ldr r4, [sp, #0x28]\n\t"  /* teb */
                    "ldr r5, [r4]\n\t"         /* teb->Tib.ExceptionList */
-                   "push {r3, r5}\n\t"
+                   "push {r1,r2,r4,r5}\n\t"   /* ret_ptr, ret_len, teb, exception_list */
 #ifndef __SOFTFP__
                    "sub sp, sp, #0x90\n\t"
                    "mov r5, sp\n\t"
@@ -1176,8 +1188,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "str r7, [sp, #0x50]\n\t"  /* frame->syscall_cfa */
                    "str sp, [r4, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    /* switch to user stack */
-                   "mov sp, r1\n\t"
-                   "bx ip" )
+                   "mov sp, r0\n\t"
+                   "bx r3" )
 
 
 /***********************************************************************
@@ -1197,11 +1209,10 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "add r5, r5, #0x90\n\t"
 #endif
                    "mov sp, r5\n\t"
-                   "pop {r5, r7}\n\t"
-                   "ldr r6, [sp, #0x28]\n\t"  /* ret_len */
+                   "pop {r4-r7}\n\t"          /* ret_ptr, ret_len, teb, exception_list */
                    "str r7, [r3]\n\t"         /* teb->Tib.ExceptionList */
-                   "str r0, [r5]\n\t"         /* ret_ptr */
-                   "str r1, [r6]\n\t"         /* ret_len */
+                   "str r0, [r4]\n\t"         /* ret_ptr */
+                   "str r1, [r5]\n\t"         /* ret_len */
                    "mov r0, r2\n\t"           /* status */
                    "pop {r4-r12,pc}" )
 
@@ -1236,14 +1247,20 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
-    void *args_data = (void *)((frame->sp - len) & ~15);
+    ULONG sp = (frame->sp - offsetof( struct callback_stack_layout, args_data[len] ) - 8) & ~7;
+    struct callback_stack_layout *stack = (struct callback_stack_layout *)sp;
 
     if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
-    memcpy( args_data, args, len );
-    return call_user_mode_callback( id, args_data, len, ret_ptr, ret_len,
-                                    pKiUserCallbackDispatcher, NtCurrentTeb() );
+    stack->args = stack->args_data;
+    stack->len  = len;
+    stack->id   = id;
+    stack->lr   = frame->lr;
+    stack->sp   = frame->sp;
+    stack->pc   = frame->pc;
+    memcpy( stack->args_data, args, len );
+    return call_user_mode_callback( sp, ret_ptr, ret_len, pKiUserCallbackDispatcher, NtCurrentTeb() );
 }
 
 

@@ -7537,6 +7537,61 @@ static void test_KiUserApcDispatcher(void)
     VirtualProtect( code_ptr, sizeof(saved_code), old_protect, &old_protect );
 }
 
+static void WINAPI hook_KiUserCallbackDispatcher(void *sp)
+{
+    struct
+    {
+        void *args;
+        ULONG len;
+        ULONG id;
+        ULONG lr;
+        ULONG sp;
+        ULONG pc;
+        BYTE args_data[0];
+    } *stack = sp;
+    ULONG_PTR redzone = (BYTE *)stack->sp - &stack->args_data[stack->len];
+    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+
+    trace( "stack=%p len=%lx id=%lx lr=%lx sp=%lx pc=%lx\n",
+           stack, stack->len, stack->id, stack->lr, stack->sp, stack->pc );
+    NtCallbackReturn( NULL, 0, 0 );
+
+    ok( stack->args == stack->args_data, "wrong args %p / %p\n", stack->args, stack->args_data );
+    ok( redzone >= 8 && redzone <= 16, "wrong sp %p / %p (%Iu)\n",
+        (void *)stack->sp, stack->args_data, redzone );
+
+    if (pRtlPcToFileHeader)
+    {
+        void *mod, *win32u = GetModuleHandleA("win32u.dll");
+
+        pRtlPcToFileHeader( (void *)stack->pc, &mod );
+        ok( mod == win32u, "pc %lx not in win32u %p\n", stack->pc, win32u );
+    }
+    NtCallbackReturn( NULL, 0, func( stack->args, stack->len ));
+}
+
+void test_KiUserCallbackDispatcher(void)
+{
+    DWORD old_protect;
+    BOOL ret;
+
+    code_ptr = (void *)(((ULONG_PTR)pKiUserCallbackDispatcher) & ~1); /* mask thumb bit */
+    ret = VirtualProtect( code_ptr, sizeof(saved_code),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_code, code_ptr, sizeof(saved_code));
+    *(void **)&patched_code[4] = hook_KiUserCallbackDispatcher;
+    memcpy( code_ptr, patched_code, sizeof(patched_code));
+    FlushInstructionCache(GetCurrentProcess(), code_ptr, sizeof(patched_code));
+
+    DestroyWindow( CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 ));
+
+    memcpy( code_ptr, saved_code, sizeof(saved_code));
+    FlushInstructionCache(GetCurrentProcess(), code_ptr, sizeof(saved_code));
+    VirtualProtect( code_ptr, sizeof(saved_code), old_protect, &old_protect );
+}
+
 #elif defined(__aarch64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12372,9 +12427,6 @@ START_TEST(exception)
     test_fpu_exceptions();
     test_dpe_exceptions();
     test_prot_fault();
-    test_KiUserExceptionDispatcher();
-    test_KiUserApcDispatcher();
-    test_KiUserCallbackDispatcher();
     test_extended_context();
     test_copy_context();
     test_set_live_context();
@@ -12411,9 +12463,6 @@ START_TEST(exception)
     test_prot_fault();
     test_dpe_exceptions();
     test_wow64_context();
-    test_KiUserExceptionDispatcher();
-    test_KiUserApcDispatcher();
-    test_KiUserCallbackDispatcher();
     test_nested_exception();
     test_collided_unwind();
 
@@ -12432,18 +12481,16 @@ START_TEST(exception)
 
     test_continue();
     test_virtual_unwind();
-    test_KiUserExceptionDispatcher();
-    test_KiUserApcDispatcher();
-    test_KiUserCallbackDispatcher();
 
 #elif defined(__arm__)
 
     test_virtual_unwind();
-    test_KiUserExceptionDispatcher();
-    test_KiUserApcDispatcher();
 
 #endif
 
+    test_KiUserExceptionDispatcher();
+    test_KiUserApcDispatcher();
+    test_KiUserCallbackDispatcher();
     test_debugger(DBG_EXCEPTION_HANDLED, FALSE);
     test_debugger(DBG_CONTINUE, FALSE);
     test_debugger(DBG_EXCEPTION_HANDLED, TRUE);
