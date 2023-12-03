@@ -3267,8 +3267,8 @@ static void test_VarSub(void)
 
     CHECKPTR(VarSub);
 
-    lbstr = SysAllocString(sz12);
-    rbstr = SysAllocString(sz12);
+    lbstr = SysAllocString(L"12");
+    rbstr = SysAllocString(L"12");
 
     VariantInit(&left);
     VariantInit(&right);
@@ -3519,8 +3519,6 @@ static void test_VarMod(void)
   VARIANT v1, v2, vDst, left, right, exp;
   HRESULT hres;
   HRESULT hexpected = 0;
-  static const WCHAR szNum0[] = {'1','2','5','\0'};
-  static const WCHAR szNum1[] = {'1','0','\0'};
   int l, r;
   BOOL lFound, rFound;
   BOOL lValid;
@@ -3620,8 +3618,8 @@ static void test_VarMod(void)
   VARMOD(DATE,R8,100,10,I4,0);
   VARMOD(DATE,DATE,100,10,I4,0);
 
-  strNum0 = SysAllocString(szNum0);
-  strNum1 = SysAllocString(szNum1);
+  strNum0 = SysAllocString(L"125");
+  strNum1 = SysAllocString(L"10");
   VARMOD(BSTR,BSTR,strNum0,strNum1,I4,5);
   VARMOD(BSTR,I1,strNum0,10,I4,5);
   VARMOD(BSTR,I2,strNum0,10,I4,5);
@@ -4004,7 +4002,6 @@ static HRESULT (WINAPI *pVarFix)(LPVARIANT,LPVARIANT);
 
 static void test_VarFix(void)
 {
-    static const WCHAR szNumMinus1[] = {'-','1','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     DECIMAL *pdec = &V_DECIMAL(&v);
@@ -4071,7 +4068,7 @@ static void test_VarFix(void)
     /* DATE & R8 round as for R4 */
     VARFIX(DATE,-1,DATE,-1);
     VARFIX(R8,-1,R8,-1);
-    VARFIX(BSTR,(BSTR)szNumMinus1,R8,-1);
+    VARFIX(BSTR,(BSTR)L"-1",R8,-1);
 
     V_VT(&v) = VT_EMPTY;
     hres = pVarFix(&v,&vDst);
@@ -4119,7 +4116,6 @@ static HRESULT (WINAPI *pVarInt)(LPVARIANT,LPVARIANT);
 
 static void test_VarInt(void)
 {
-    static const WCHAR szNumMinus1[] = {'-','1','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     DECIMAL *pdec = &V_DECIMAL(&v);
@@ -4186,7 +4182,7 @@ static void test_VarInt(void)
     /* DATE & R8 round as for R4 */
     VARINT(DATE,-1,DATE,-1);
     VARINT(R8,-1,R8,-1);
-    VARINT(BSTR,(BSTR)szNumMinus1,R8,-1);
+    VARINT(BSTR,(BSTR)L"-1",R8,-1);
 
     V_VT(&v) = VT_EMPTY;
     hres = pVarInt(&v,&vDst);
@@ -4235,8 +4231,6 @@ static HRESULT (WINAPI *pVarNeg)(LPVARIANT,LPVARIANT);
 
 static void test_VarNeg(void)
 {
-    static const WCHAR szNumMinus1[] = {'-','1','\0' };
-    static const WCHAR szNum1[] = {'1','\0' };
     HRESULT hres;
     VARIANT v, exp, vDst;
     DECIMAL *pdec = &V_DECIMAL(&v);
@@ -4310,8 +4304,8 @@ static void test_VarNeg(void)
     VARNEG(DATE,-1,DATE,1);
     VARNEG(R8,1,R8,-1);
     VARNEG(R8,-1,R8,1);
-    VARNEG(BSTR,(BSTR)szNumMinus1,R8,1);
-    VARNEG(BSTR,(BSTR)szNum1,R8,-1);
+    VARNEG(BSTR,(BSTR)L"-1",R8,1);
+    VARNEG(BSTR,(BSTR)L"1",R8,-1);
 
     V_VT(&v) = VT_EMPTY;
     hres = pVarNeg(&v,&vDst);
@@ -6147,8 +6141,8 @@ static void test_VarMul(void)
 
     CHECKPTR(VarMul);
 
-    lbstr = SysAllocString(sz12);
-    rbstr = SysAllocString(sz12);
+    lbstr = SysAllocString(L"12");
+    rbstr = SysAllocString(L"12");
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < ARRAY_SIZE(ExtraFlags); i++)
@@ -6318,8 +6312,8 @@ static void test_VarAdd(void)
 
     CHECKPTR(VarAdd);
 
-    lbstr = SysAllocString(sz12);
-    rbstr = SysAllocString(sz12);
+    lbstr = SysAllocString(L"12");
+    rbstr = SysAllocString(L"12");
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < ARRAY_SIZE(ExtraFlags); i++)
@@ -6496,13 +6490,6 @@ static void test_VarCat(void)
 {
     LCID lcid;
     VARIANT left, right, result, expected, expected_broken;
-    static const WCHAR sz34[] = {'3','4','\0'};
-    static const WCHAR sz1234[] = {'1','2','3','4','\0'};
-    static const WCHAR date_sz12[] = {'9','/','3','0','/','1','9','8','0','1','2','\0'};
-    static const WCHAR date_sz12_broken[] = {'9','/','3','0','/','8','0','1','2','\0'};
-    static const WCHAR sz12_date[] = {'1','2','9','/','3','0','/','1','9','8','0','\0'};
-    static const WCHAR sz12_date_broken[] = {'1','2','9','/','3','0','/','8','0','\0'};
-    static const WCHAR sz_empty[] = {'\0'};
     CHAR orig_date_format[128];
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
@@ -6606,7 +6593,7 @@ static void test_VarCat(void)
 
             switch (leftvt) {
             case VT_BSTR:
-                V_BSTR(&left) = SysAllocString(sz_empty); break;
+                V_BSTR(&left) = SysAllocString(L""); break;
             case VT_DATE:
                 V_DATE(&left) = 0.0; break;
             case VT_DECIMAL:
@@ -6617,7 +6604,7 @@ static void test_VarCat(void)
 
             switch (rightvt) {
             case VT_BSTR:
-                V_BSTR(&right) = SysAllocString(sz_empty); break;
+                V_BSTR(&right) = SysAllocString(L""); break;
             case VT_DATE:
                 V_DATE(&right) = 0.0; break;
             case VT_DECIMAL:
@@ -6650,9 +6637,9 @@ static void test_VarCat(void)
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_BSTR;
     V_VT(&expected) = VT_BSTR;
-    V_BSTR(&left) = SysAllocString(sz12);
-    V_BSTR(&right) = SysAllocString(sz34);
-    V_BSTR(&expected) = SysAllocString(sz1234);
+    V_BSTR(&left) = SysAllocString(L"12");
+    V_BSTR(&right) = SysAllocString(L"34");
+    V_BSTR(&expected) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
@@ -6665,7 +6652,7 @@ static void test_VarCat(void)
     /* Test if expression is VT_ERROR */
     V_VT(&left) = VT_ERROR;
     V_VT(&right) = VT_BSTR;
-    V_BSTR(&right) = SysAllocString(sz1234);
+    V_BSTR(&right) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08lx\n", hres);
     ok(V_VT(&result) == VT_EMPTY,
@@ -6677,7 +6664,7 @@ static void test_VarCat(void)
 
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_ERROR;
-    V_BSTR(&left) = SysAllocString(sz1234);
+    V_BSTR(&left) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08lx\n", hres);
     ok(V_VT(&result) == VT_EMPTY,
@@ -6729,7 +6716,7 @@ static void test_VarCat(void)
     V_VT(&expected) = VT_BSTR;
     V_INT(&left)  = 12;
     V_INT(&right) = 34;
-    V_BSTR(&expected) = SysAllocString(sz1234);
+    V_BSTR(&expected) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result, &expected, lcid, 0) == VARCMP_EQ,
@@ -6743,7 +6730,7 @@ static void test_VarCat(void)
     V_VT(&left) = VT_INT;
     V_VT(&right) = VT_BSTR;
     V_INT(&left) = 12;
-    V_BSTR(&right) = SysAllocString(sz34);
+    V_BSTR(&right) = SysAllocString(L"34");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
@@ -6755,7 +6742,7 @@ static void test_VarCat(void)
 
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_INT;
-    V_BSTR(&left) = SysAllocString(sz12);
+    V_BSTR(&left) = SysAllocString(L"12");
     V_INT(&right) = 34;
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
@@ -6772,10 +6759,10 @@ static void test_VarCat(void)
     V_VT(&right) = VT_DATE;
     V_VT(&expected) = VT_BSTR;
     V_VT(&expected_broken) = VT_BSTR;
-    V_BSTR(&left) = SysAllocString(sz12);
+    V_BSTR(&left) = SysAllocString(L"12");
     V_DATE(&right) = 29494.0;
-    V_BSTR(&expected)= SysAllocString(sz12_date);
-    V_BSTR(&expected_broken)= SysAllocString(sz12_date_broken);
+    V_BSTR(&expected)= SysAllocString(L"129/30/1980");
+    V_BSTR(&expected_broken)= SysAllocString(L"129/30/80");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
@@ -6793,9 +6780,9 @@ static void test_VarCat(void)
     V_VT(&expected) = VT_BSTR;
     V_VT(&expected_broken) = VT_BSTR;
     V_DATE(&left) = 29494.0;
-    V_BSTR(&right) = SysAllocString(sz12);
-    V_BSTR(&expected)= SysAllocString(date_sz12);
-    V_BSTR(&expected_broken)= SysAllocString(date_sz12_broken);
+    V_BSTR(&right) = SysAllocString(L"12");
+    V_BSTR(&expected) = SysAllocString(L"9/30/198012");
+    V_BSTR(&expected_broken) = SysAllocString(L"9/30/8012");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
@@ -6812,9 +6799,9 @@ static void test_VarCat(void)
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_BSTR;
     V_VT(&expected) = VT_BSTR;
-    V_BSTR(&left) = SysAllocString(sz_empty);
-    V_BSTR(&right) = SysAllocString(sz_empty);
-    V_BSTR(&expected)= SysAllocString(sz_empty);
+    V_BSTR(&left) = SysAllocString(L"");
+    V_BSTR(&right) = SysAllocString(L"");
+    V_BSTR(&expected)= SysAllocString(L"");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
     ok(VarCmp(&result,&left,lcid,0) == VARCMP_EQ,
@@ -6864,7 +6851,7 @@ static void test_VarCat(void)
     V_DISPATCH(&right) = &dispatch.IDispatch_iface;
 
     V_VT(&left) = VT_BSTR;
-    V_BSTR(&left) = SysAllocString(sz12);
+    V_BSTR(&left) = SysAllocString(L"12");
     SET_EXPECT(dispatch_invoke);
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
@@ -7654,30 +7641,20 @@ static void test_VarCmp(void)
     LCID lcid;
     HRESULT hres;
     DECIMAL dec;
-    static const WCHAR szhuh[] = {'h','u','h','?','\0'};
-    static const WCHAR sz2cents[] = {'2','c','e','n','t','s','\0'};
-    static const WCHAR szempty[] = {'\0'};
-    static const WCHAR sz0[] = {'0','\0'};
-    static const WCHAR sz1[] = {'1','\0'};
-    static const WCHAR sz7[] = {'7','\0'};
-    static const WCHAR sz42[] = {'4','2','\0'};
-    static const WCHAR sz1neg[] = {'-','1','\0'};
-    static const WCHAR sz666neg[] = {'-','6','6','6','\0'};
-    static const WCHAR sz1few[] = {'1','.','0','0','0','0','0','0','0','1','\0'};
     BSTR bstrhuh, bstrempty, bstr0, bstr1, bstr7, bstr42, bstr1neg, bstr666neg;
     BSTR bstr2cents, bstr1few;
 
     lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
-    bstrempty = SysAllocString(szempty);
-    bstrhuh = SysAllocString(szhuh);
-    bstr2cents = SysAllocString(sz2cents);
-    bstr0 = SysAllocString(sz0);
-    bstr1 = SysAllocString(sz1);
-    bstr7 = SysAllocString(sz7);
-    bstr42 = SysAllocString(sz42);
-    bstr1neg = SysAllocString(sz1neg);
-    bstr666neg = SysAllocString(sz666neg);
-    bstr1few = SysAllocString(sz1few);
+    bstrempty = SysAllocString(L"");
+    bstrhuh = SysAllocString(L"huh?");
+    bstr2cents = SysAllocString(L"2cents");
+    bstr0 = SysAllocString(L"0");
+    bstr1 = SysAllocString(L"1");
+    bstr7 = SysAllocString(L"7");
+    bstr42 = SysAllocString(L"42");
+    bstr1neg = SysAllocString(L"-1");
+    bstr666neg = SysAllocString(L"-666");
+    bstr1few = SysAllocString(L"1.00000001");
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < ARRAY_SIZE(ExtraFlags); i++)
@@ -7903,8 +7880,6 @@ static HRESULT (WINAPI *pVarPow)(LPVARIANT,LPVARIANT,LPVARIANT);
 
 static void test_VarPow(void)
 {
-    static const WCHAR str2[] = { '2','\0' };
-    static const WCHAR str3[] = { '3','\0' };
     VARIANT left, right, exp, result, cy, dec;
     BSTR num2_str, num3_str;
     VARTYPE i;
@@ -7912,8 +7887,8 @@ static void test_VarPow(void)
 
     CHECKPTR(VarPow);
 
-    num2_str = SysAllocString(str2);
-    num3_str = SysAllocString(str3);
+    num2_str = SysAllocString(L"2");
+    num3_str = SysAllocString(L"3");
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < ARRAY_SIZE(ExtraFlags); i++)
@@ -8799,8 +8774,6 @@ static HRESULT (WINAPI *pVarIdiv)(LPVARIANT,LPVARIANT,LPVARIANT);
 
 static void test_VarIdiv(void)
 {
-    static const WCHAR str1[] = { '1','\0' };
-    static const WCHAR str2[] = { '2','\0' };
     VARIANT left, right, exp, result, cy, dec;
     BSTR num1_str, num2_str;
     VARTYPE i;
@@ -8808,8 +8781,8 @@ static void test_VarIdiv(void)
 
     CHECKPTR(VarIdiv);
 
-    num1_str = SysAllocString(str1);
-    num2_str = SysAllocString(str2);
+    num1_str = SysAllocString(L"1");
+    num2_str = SysAllocString(L"2");
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < ARRAY_SIZE(ExtraFlags); i++)
