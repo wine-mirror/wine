@@ -6383,7 +6383,7 @@ static void test_VarAdd(void)
 static void test_VarCat(void)
 {
     LCID lcid;
-    VARIANT left, right, result, expected, expected_broken;
+    VARIANT left, right, result;
     CHAR orig_date_format[128];
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
@@ -6399,7 +6399,6 @@ static void test_VarCat(void)
     VariantInit(&left);
     VariantInit(&right);
     VariantInit(&result);
-    VariantInit(&expected);
 
     /* Check expected types for all combinations */
     for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
@@ -6530,14 +6529,12 @@ static void test_VarCat(void)
     /* Test concat strings */
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_BSTR;
-    V_VT(&expected) = VT_BSTR;
     V_BSTR(&left) = SysAllocString(L"12");
     V_BSTR(&right) = SysAllocString(L"34");
-    V_BSTR(&expected) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with VT_BSTR failed to return correct result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"1234"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
@@ -6567,54 +6564,43 @@ static void test_VarCat(void)
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
 
     /* Test combining boolean with number */
     V_VT(&left) = VT_INT;
     V_VT(&right) = VT_BOOL;
-    V_VT(&expected) = VT_BSTR;
     V_INT(&left) = 12;
     V_BOOL(&right) = TRUE;
-    V_BSTR(&expected) = SysAllocString(sz12_true);
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    hres = VarCmp(&result, &expected, lcid, 0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08lx for %s, %s\n",
-       hres, wine_dbgstr_variant(&result), wine_dbgstr_variant(&expected));
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), sz12_true), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
 
     V_VT(&left) = VT_INT;
     V_VT(&right) = VT_BOOL;
-    V_VT(&expected) = VT_BSTR;
     V_INT(&left) = 12;
     V_BOOL(&right) = FALSE;
-    V_BSTR(&expected) = SysAllocString(sz12_false);
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    hres = VarCmp(&result, &expected, lcid, 0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08lx for %s, %s\n",
-       hres, wine_dbgstr_variant(&result), wine_dbgstr_variant(&expected));
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), sz12_false), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
 
     /* Test when both expressions are numeric */
     V_VT(&left) = VT_INT;
     V_VT(&right) = VT_INT;
-    V_VT(&expected) = VT_BSTR;
     V_INT(&left)  = 12;
     V_INT(&right) = 34;
-    V_BSTR(&expected) = SysAllocString(L"1234");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result, &expected, lcid, 0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with NUMBER returned incorrect result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"1234"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
@@ -6627,8 +6613,8 @@ static void test_VarCat(void)
     V_BSTR(&right) = SysAllocString(L"34");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with VT_BSTR, incorrect result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"1234"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
@@ -6640,66 +6626,49 @@ static void test_VarCat(void)
     V_INT(&right) = 34;
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with NUMBER, incorrect result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"1234"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
 
     /* Test concat dates with strings */
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_DATE;
-    V_VT(&expected) = VT_BSTR;
-    V_VT(&expected_broken) = VT_BSTR;
     V_BSTR(&left) = SysAllocString(L"12");
     V_DATE(&right) = 29494.0;
-    V_BSTR(&expected)= SysAllocString(L"129/30/1980");
-    V_BSTR(&expected_broken)= SysAllocString(L"129/30/80");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
-        broken(VarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
-           "VarCat: VT_BSTR concat with VT_DATE returned incorrect result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"129/30/1980"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
-    VariantClear(&expected_broken);
 
     V_VT(&left) = VT_DATE;
     V_VT(&right) = VT_BSTR;
-    V_VT(&expected) = VT_BSTR;
-    V_VT(&expected_broken) = VT_BSTR;
     V_DATE(&left) = 29494.0;
     V_BSTR(&right) = SysAllocString(L"12");
-    V_BSTR(&expected) = SysAllocString(L"9/30/198012");
-    V_BSTR(&expected_broken) = SysAllocString(L"9/30/8012");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
-        broken(VarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
-        "VarCat: VT_DATE concat with VT_BSTR returned incorrect result\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L"9/30/198012"), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
-    VariantClear(&expected_broken);
 
     /* Test of both expressions are empty */
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_BSTR;
-    V_VT(&expected) = VT_BSTR;
     V_BSTR(&left) = SysAllocString(L"");
     V_BSTR(&right) = SysAllocString(L"");
-    V_BSTR(&expected)= SysAllocString(L"");
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08lx\n", hres);
-    ok(VarCmp(&result,&left,lcid,0) == VARCMP_EQ,
-        "VarCat: EMPTY concat with EMPTY did not return empty VT_BSTR\n");
+    ok(V_VT(&result) == VT_BSTR, "Unexpected return type %d.\n", V_VT(&result));
+    ok(!wcscmp(V_BSTR(&result), L""), "Unexpected return value %s.\n", wine_dbgstr_w(V_BSTR(&result)));
 
     /* Restore original date format settings */
     SetLocaleInfoA(lcid,LOCALE_SSHORTDATE,orig_date_format);
@@ -6707,7 +6676,6 @@ static void test_VarCat(void)
     VariantClear(&left);
     VariantClear(&right);
     VariantClear(&result);
-    VariantClear(&expected);
 
     /* Dispatch conversion */
     init_test_dispatch(VT_NULL, &dispatch);
@@ -9808,7 +9776,7 @@ START_TEST(vartest)
   test_VarEqv();
   test_VarMul();
   test_VarAdd();
-  test_VarCmp(); /* Before test_VarCat() which needs VarCmp() */
+  test_VarCmp();
   test_VarCat();
   test_VarAnd();
   test_VarDiv();
