@@ -833,6 +833,7 @@ struct unwind_info_epilogue_armnt
 #define UWOP_SET_FPREG       3
 #define UWOP_SAVE_NONVOL     4
 #define UWOP_SAVE_NONVOL_FAR 5
+#define UWOP_EPILOG          6
 #define UWOP_SAVE_XMM128     8
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME  10
@@ -861,7 +862,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
     info = RVA( function->UnwindData, sizeof(*info) );
 
     printf( "  unwind info at %08x\n", function->UnwindData );
-    if (info->version != 1)
+    if (info->version > 2)
     {
         printf( "    *** unknown version %u\n", info->version );
         return;
@@ -878,6 +879,11 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
 
     for (i = 0; i < info->count; i++)
     {
+        if (info->opcodes[i].code == UWOP_EPILOG)
+        {
+            i++;
+            continue;
+        }
         printf( "      0x%02x: ", info->opcodes[i].offset );
         switch (info->opcodes[i].code)
         {
@@ -931,6 +937,21 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
         default:
             printf( "*** unknown code %u\n", info->opcodes[i].code );
             break;
+        }
+    }
+
+    if (info->version == 2 && info->opcodes[0].code == UWOP_EPILOG)  /* print the epilogs */
+    {
+        unsigned int end = function->EndAddress;
+        unsigned int size = info->opcodes[0].offset;
+
+        printf( "    epilog 0x%x bytes\n", size );
+        if (info->opcodes[0].info) printf( "      at %08x-%08x\n", end - size, end );
+        for (i = 1; i < info->count && info->opcodes[i].code == UWOP_EPILOG; i++)
+        {
+            unsigned int offset = (info->opcodes[i].info << 8) + info->opcodes[i].offset;
+            if (!offset) break;
+            printf( "      at %08x-%08x\n", end - offset, end - offset + size );
         }
     }
 
