@@ -176,6 +176,7 @@ static const void *get_hybrid_metadata(void)
         if (!cfg) return 0;
         size = min( size, cfg->Size );
         if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer )) return 0;
+        if (!cfg->CHPEMetadataPointer) return 0;
         return RVA( cfg->CHPEMetadataPointer - ((const IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader)->ImageBase, 1 );
     }
     else
@@ -184,6 +185,7 @@ static const void *get_hybrid_metadata(void)
         if (!cfg) return 0;
         size = min( size, cfg->Size );
         if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer )) return 0;
+        if (!cfg->CHPEMetadataPointer) return 0;
         return RVA( cfg->CHPEMetadataPointer - PE_nt_headers->OptionalHeader.ImageBase, 1 );
     }
 }
@@ -1274,7 +1276,15 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
                 printf( "}\n" );
             }
             else if (code == 0xee)
-                printf( "unknown 16\n" );
+            {
+                BYTE excodes = bytes[++b];
+                if (excodes == 0x01)
+                    printf( "MSFT_OP_MACHINE_FRAME\n");
+                else if (excodes == 0x02)
+                    printf( "MSFT_OP_CONTEXT\n");
+                else
+                    printf( "MSFT opcode %u\n", excodes );
+            }
             else if (code == 0xef)
             {
                 WORD excode;
@@ -1550,9 +1560,17 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
         {
             printf( "MSFT_OP_CONTEXT\n" );
         }
+        else if (ptr[i] == 0xeb)  /* MSFT_OP_EC_CONTEXT */
+        {
+            printf( "MSFT_OP_EC_CONTEXT\n" );
+        }
         else if (ptr[i] == 0xec)  /* MSFT_OP_CLEAR_UNWOUND_TO_CALL */
         {
             printf( "MSFT_OP_CLEAR_UNWOUND_TO_CALL\n" );
+        }
+        else if (ptr[i] == 0xfc)  /* pac_sign_lr */
+        {
+            printf( "pac_sign_lr\n" );
         }
         else printf( "??\n");
     }
