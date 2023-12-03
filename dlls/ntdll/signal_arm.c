@@ -547,12 +547,29 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
-                                 PNTAPCFUNC func )
-{
-    func( ctx, arg1, arg2 );
-    NtContinue( context, TRUE );
-}
+__ASM_GLOBAL_FUNC( KiUserApcDispatcher,
+                   __ASM_SEH(".seh_custom 0xee,0x02\n\t")  /* MSFT_OP_CONTEXT */
+                   "nop\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x18\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_EHABI(".save {sp}\n\t") /* Restore Sp last */
+                   __ASM_EHABI(".pad #-(0x80 + 0x0c + 0x0c)\n\t") /* Move back across D0-D15, Cpsr, Fpscr, Padding, Pc, Lr and Sp */
+                   __ASM_EHABI(".vsave {d8-d15}\n\t")
+                   __ASM_EHABI(".pad #0x40\n\t") /* Skip past D0-D7 */
+                   __ASM_EHABI(".pad #0x0c\n\t") /* Skip past Cpsr, Fpscr and Padding */
+                   __ASM_EHABI(".save {lr, pc}\n\t")
+                   __ASM_EHABI(".pad #0x08\n\t") /* Skip past R12 and Sp - Sp is restored last */
+                   __ASM_EHABI(".save {r4-r11}\n\t")
+                   __ASM_EHABI(".pad #0x2c\n\t") /* Skip past args, ContextFlags and R0-R3 */
+                   "ldr r0, [sp, #0x04]\n\t"      /* arg1 */
+                   "ldr r1, [sp, #0x08]\n\t"      /* arg2 */
+                   "ldr r2, [sp, #0x0c]\n\t"      /* arg3 */
+                   "ldr ip, [sp]\n\t"             /* func */
+                   "blx ip\n\t"
+                   "add r0, sp, #0x18\n\t"        /* context */
+                   "ldr r1, [sp, #0x10]\n\t"      /* alertable */
+                   "bl " __ASM_NAME("NtContinue") "\n\t"
+                   "udf #1" )
 
 
 /*******************************************************************

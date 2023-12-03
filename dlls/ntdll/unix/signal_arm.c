@@ -184,6 +184,19 @@ struct exc_stack_layout
 C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x1a0 );
 C_ASSERT( sizeof(struct exc_stack_layout) == 0x1f8 );
 
+/* stack layout when calling KiUserApcDispatcher */
+struct apc_stack_layout
+{
+    void                *func;           /* 000 APC to call*/
+    ULONG                args[3];        /* 004 function arguments */
+    ULONG                alertable;      /* 010 */
+    ULONG                align;          /* 014 */
+    CONTEXT              context;        /* 018 */
+    ULONG                redzone[2];     /* 1b8 */
+};
+C_ASSERT( offsetof(struct apc_stack_layout, context) == 0x18 );
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x1c0 );
+
 struct syscall_frame
 {
     UINT                  r0;             /* 000 */
@@ -1071,14 +1084,9 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
     ULONG sp = context ? context->Sp : frame->sp;
-    struct apc_stack_layout
-    {
-        void   *func;
-        void   *align;
-        CONTEXT context;
-    } *stack;
+    struct apc_stack_layout *stack;
 
-    sp &= ~15;
+    sp &= ~7;
     stack = (struct apc_stack_layout *)sp - 1;
     if (context)
     {
@@ -1091,14 +1099,14 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
         NtGetContextThread( GetCurrentThread(), &stack->context );
         stack->context.R0 = status;
     }
+    stack->func    = func;
+    stack->args[0] = arg1;
+    stack->args[1] = arg2;
+    stack->args[2] = arg3;
+
     frame->sp = (DWORD)stack;
     frame->pc = (DWORD)pKiUserApcDispatcher;
-    frame->r0 = (DWORD)&stack->context;
-    frame->r1 = arg1;
-    frame->r2 = arg2;
-    frame->r3 = arg3;
-    stack->func = func;
-    frame->restore_flags |= CONTEXT_CONTROL | CONTEXT_INTEGER;
+    frame->restore_flags |= CONTEXT_CONTROL;
     return status;
 }
 

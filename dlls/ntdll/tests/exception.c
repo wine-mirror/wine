@@ -7445,6 +7445,98 @@ static void test_KiUserExceptionDispatcher(void)
     VirtualProtect(code_ptr, sizeof(saved_code), old_protect, &old_protect);
 }
 
+static UINT apc_count;
+static UINT alertable_supported;
+
+static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
+    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
+    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
+    apc_count++;
+}
+
+static void * WINAPI hook_KiUserApcDispatcher(void *stack)
+{
+    struct
+    {
+        void *func;
+        ULONG args[3];
+        ULONG alertable;
+        ULONG align;
+        CONTEXT context;
+    } *args = stack;
+    CONTEXT *context = &args->context;
+
+    if (args->alertable == 1) alertable_supported = TRUE;
+    else context = (CONTEXT *)&args->alertable;
+
+    trace( "stack=%p func=%p args=%lx,%lx,%lx alertable=%lx context=%p pc=%lx sp=%lx (%lx)\n",
+           args, args->func, args->args[0], args->args[1], args->args[2],
+           args->alertable, context, context->Pc, context->Sp,
+           context->Sp - (ULONG_PTR)stack );
+
+    ok( args->func == apc_func, "wrong func %p / %p\n", args->func, apc_func );
+    ok( args->args[0] == 0x1234 + apc_count, "wrong arg1 %lx\n", args->args[0] );
+    ok( args->args[1] == 0x5678, "wrong arg2 %lx\n", args->args[1] );
+    ok( args->args[2] == 0xdeadbeef, "wrong arg3 %lx\n", args->args[2] );
+
+    if (apc_count && alertable_supported) args->alertable = FALSE;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count + 1, 0x5678, 0xdeadbeef );
+
+    hook_called = TRUE;
+    memcpy( code_ptr, saved_code, sizeof(saved_code));
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(saved_code));
+    return pKiUserApcDispatcher;
+}
+
+static void test_KiUserApcDispatcher(void)
+{
+    WORD hook_trampoline[] =
+    {
+        0x4668,         /* mov r0, sp */
+        0xf8df, 0xc006, /* ldr.w r12, [pc, #0x6] */
+        0x47e0,         /* blx r12 */
+        0x4700,         /* bx r0 */
+        0, 0,           /* 1: hook_KiUserApcDispatcher */
+    };
+    DWORD old_protect;
+    BOOL ret;
+
+    code_ptr = (void *)(((ULONG_PTR)pKiUserApcDispatcher) & ~1); /* mask thumb bit */
+    *(void **)&hook_trampoline[5] = hook_KiUserApcDispatcher;
+    memcpy(code_mem, hook_trampoline, sizeof(hook_trampoline));
+
+    ret = VirtualProtect( code_ptr, sizeof(saved_code),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_code, code_ptr, sizeof(saved_code) );
+    *(void **)&patched_code[4] = (char *)code_mem + 1; /* thumb */
+    memcpy( code_ptr, patched_code, sizeof(patched_code) );
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(patched_code));
+
+    hook_called = FALSE;
+    apc_count = 0;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    SleepEx( 0, TRUE );
+    ok( apc_count == 2, "APC count %u\n", apc_count );
+    ok( hook_called, "hook was not called\n" );
+
+    memcpy( code_ptr, patched_code, sizeof(patched_code) );
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(patched_code));
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count, 0x5678, 0xdeadbeef );
+    SleepEx( 0, TRUE );
+    if (alertable_supported)
+    {
+        ok( apc_count == 3, "APC count %u\n", apc_count );
+        SleepEx( 0, TRUE );
+    }
+    ok( apc_count == 4, "APC count %u\n", apc_count );
+
+    VirtualProtect( code_ptr, sizeof(saved_code), old_protect, &old_protect );
+}
+
 #elif defined(__aarch64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12348,6 +12440,7 @@ START_TEST(exception)
 
     test_virtual_unwind();
     test_KiUserExceptionDispatcher();
+    test_KiUserApcDispatcher();
 
 #endif
 
