@@ -5600,9 +5600,9 @@ static void test_raiseexception_regs(void)
 #define UWOP_SAVE_D0_RANGE(first,last) UWOP_TWOBYTES((0xF5 << 8) | (first << 4) | (last))
 #define UWOP_SAVE_D16_RANGE(first,last)UWOP_TWOBYTES((0xF6 << 8) | ((first - 16) << 4) | (last - 16))
 #define UWOP_ALLOC_LARGE(size)         UWOP_THREEBYTES((0xF7 << 16) | (size/4))
-#define UWOP_ALLOC_HUGE(size)          UWOP_FOURBYTES((0xF8 << 24) | (size/4))
+#define UWOP_ALLOC_HUGE(size)          UWOP_FOURBYTES((0xF8u << 24) | (size/4))
 #define UWOP_ALLOC_LARGEW(size)        UWOP_THREEBYTES((0xF9 << 16) | (size/4))
-#define UWOP_ALLOC_HUGEW(size)         UWOP_FOURBYTES((0xFA << 24) | (size/4))
+#define UWOP_ALLOC_HUGEW(size)         UWOP_FOURBYTES((0xFAu << 24) | (size/4))
 #define UWOP_NOP16                     0xFB
 #define UWOP_NOP32                     0xFC
 #define UWOP_END_NOP16                 0xFD
@@ -5690,7 +5690,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         context.Lr = (ULONG_PTR)ORIG_LR;
         context.R11 = (ULONG_PTR)fake_stack + test->results[i].fp_offset;
         orig_fp = context.R11;
-        orig_pc = (ULONG64)code_mem + code_offset + test->results[i].pc_offset;
+        orig_pc = (ULONG_PTR)code_mem + code_offset + test->results[i].pc_offset;
 
         trace( "%u/%u: pc=%p (%02x) fp=%p sp=%p\n", testnum, i,
                (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
@@ -6544,7 +6544,7 @@ static void test_virtual_unwind(void)
         (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (1 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3fc << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3fcu << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_18[] = { DW(unwind_info_18_packed) };
 
@@ -6575,7 +6575,7 @@ static void test_virtual_unwind(void)
         (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (0 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3ff << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3ffu << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_19[] = { DW(unwind_info_19_packed) };
 
@@ -6610,7 +6610,7 @@ static void test_virtual_unwind(void)
         (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (0 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3f7 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3f7u << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_20[] = { DW(unwind_info_20_packed) };
 
@@ -6646,7 +6646,7 @@ static void test_virtual_unwind(void)
         (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (0 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3fb << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3fbu << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_21[] = { DW(unwind_info_21_packed) };
 
@@ -6744,7 +6744,7 @@ static void test_virtual_unwind(void)
         (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (1 << 20) | /* L, push LR */
         (1 << 21) | /* C - hook up r11 */
-        (0x3f5 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3f5u << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_24[] = { DW(unwind_info_24_packed) };
 
@@ -6776,7 +6776,7 @@ static void test_virtual_unwind(void)
         (0 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (1 << 20) | /* L, push LR */
         (1 << 21) | /* C - hook up r11 */
-        (0x3f9 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3f9u << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_25[] = { DW(unwind_info_25_packed) };
 
@@ -6844,7 +6844,7 @@ static void test_virtual_unwind(void)
         (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (0 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3f6 << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3f6u << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_27[] = { DW(unwind_info_27_packed) };
 
@@ -6874,7 +6874,7 @@ static void test_virtual_unwind(void)
         (1 << 19) | /* R (0 integer registers, 1 float registers, R=1, Reg=7 no registers */
         (0 << 20) | /* L, push LR */
         (0 << 21) | /* C - hook up r11 */
-        (0x3fa << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
+        (0x3fau << 22);  /* StackAdjust, stack/4. 0x3F4 special, + (0-3) stack adjustment, 4 PF (prologue folding), 8 EF (epilogue folding) */
 
     static const BYTE unwind_info_28[] = { DW(unwind_info_28_packed) };
 
