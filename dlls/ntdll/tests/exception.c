@@ -7343,6 +7343,108 @@ static void test_debug_service(DWORD numexc)
     /* not supported */
 }
 
+
+static BOOL hook_called;
+static BOOL got_exception;
+static void *code_ptr;
+
+static WORD patched_code[] =
+{
+    0x4668,         /* mov r0, sp */
+    0xf8df, 0xc004, /* ldr.w ip, [pc, #0x4] */
+    0x4760,         /* bx ip */
+    0, 0,           /* 1: hook_trampoline */
+};
+static WORD saved_code[ARRAY_SIZE(patched_code)];
+
+static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTERS *ptrs)
+{
+    EXCEPTION_RECORD *rec = ptrs->ExceptionRecord;
+    CONTEXT *context = ptrs->ContextRecord;
+
+    trace("dbg_except_continue_vectored_handler, code %#lx, pc %#lx.\n", rec->ExceptionCode, context->Pc);
+    got_exception = TRUE;
+
+    ok(rec->ExceptionCode == 0x80000003, "Got unexpected exception code %#lx.\n", rec->ExceptionCode);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
+{
+    CONTEXT *context = stack;
+    EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)(context + 1);
+
+    trace( "rec %p context %p pc %#lx sp %#lx flags %#lx\n",
+           rec, context, context->Pc, context->Sp, context->ContextFlags );
+
+    ok( !((ULONG_PTR)stack & 7), "unaligned stack %p\n", stack );
+    ok( rec->ExceptionCode == 0x80000003, "Got unexpected ExceptionCode %#lx.\n", rec->ExceptionCode );
+
+    hook_called = TRUE;
+    memcpy(code_ptr, saved_code, sizeof(saved_code));
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(saved_code));
+    return pKiUserExceptionDispatcher;
+}
+
+static void test_KiUserExceptionDispatcher(void)
+{
+    WORD hook_trampoline[] =
+    {
+        0x4668,         /* mov r0, sp */
+        0xf8df, 0xc006, /* ldr.w r12, [pc, #0x6] */
+        0x47e0,         /* blx r12 */
+        0x4700,         /* bx r0 */
+        0, 0,           /* 1: hook_KiUserExceptionDispatcher */
+    };
+
+    EXCEPTION_RECORD record = { EXCEPTION_BREAKPOINT };
+    void *trampoline_ptr, *vectored_handler;
+    DWORD old_protect;
+    BOOL ret;
+
+    code_ptr = (void *)(((ULONG_PTR)pKiUserExceptionDispatcher) & ~1); /* mask thumb bit */
+    *(void **)&hook_trampoline[5] = hook_KiUserExceptionDispatcher;
+    trampoline_ptr = (char *)code_mem + 1024;
+    memcpy( trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
+
+    ret = VirtualProtect( code_ptr, sizeof(saved_code),
+                          PAGE_EXECUTE_READWRITE, &old_protect );
+    ok( ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError() );
+
+    memcpy( saved_code, code_ptr, sizeof(saved_code) );
+    *(void **)&patched_code[4] = (char *)trampoline_ptr + 1;  /* thumb */
+
+    vectored_handler = AddVectoredExceptionHandler(TRUE, dbg_except_continue_vectored_handler);
+
+    memcpy( code_ptr, patched_code, sizeof(patched_code) );
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(patched_code));
+
+    got_exception = FALSE;
+    hook_called = FALSE;
+
+    pRtlRaiseException(&record);
+
+    ok(got_exception, "Handler was not called.\n");
+    todo_wine
+    ok(!hook_called, "Hook was called.\n");
+
+    memcpy( code_ptr, patched_code, sizeof(patched_code) );
+    FlushInstructionCache( GetCurrentProcess(), code_ptr, sizeof(patched_code));
+
+    got_exception = 0;
+    hook_called = FALSE;
+    NtCurrentTeb()->Peb->BeingDebugged = 1;
+
+    pRtlRaiseException(&record);
+
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+    NtCurrentTeb()->Peb->BeingDebugged = 0;
+
+    RemoveVectoredExceptionHandler(vectored_handler);
+    VirtualProtect(code_ptr, sizeof(saved_code), old_protect, &old_protect);
+}
+
 #elif defined(__aarch64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12245,6 +12347,7 @@ START_TEST(exception)
 #elif defined(__arm__)
 
     test_virtual_unwind();
+    test_KiUserExceptionDispatcher();
 
 #endif
 

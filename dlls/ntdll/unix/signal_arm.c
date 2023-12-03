@@ -174,6 +174,16 @@ enum arm_trap_code
     TRAP_ARM_ALIGNFLT   = 17,  /* Alignment check exception */
 };
 
+/* stack layout when calling KiUserExceptionDispatcher */
+struct exc_stack_layout
+{
+    CONTEXT              context;        /* 000 */
+    EXCEPTION_RECORD     rec;            /* 1a0 */
+    ULONG                redzone[2];     /* 1f0 */
+};
+C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x1a0 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x1f8 );
+
 struct syscall_frame
 {
     UINT                  r0;             /* 000 */
@@ -1019,25 +1029,6 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
-__ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   "push {r12,lr}\n\t" /* (Padding +) Pc in the original frame */
-                   "ldr r3, [r1, #0x38]\n\t" /* context->Sp */
-                   "push {r3}\n\t" /* Original Sp */
-                   __ASM_CFI_CFA_IS_AT1(sp, 0x04)
-                   __ASM_CFI_REG_IS_AT1(lr, sp, 0x0c)
-                   __ASM_EHABI(".save {sp}\n\t")
-                   __ASM_EHABI(".pad #-12\n\t")
-                   __ASM_EHABI(".save {pc}\n\t")
-                   __ASM_EHABI(".pad #8\n\t")
-                   __ASM_EHABI(".save {lr}\n\t")
-                   /* We can't express restoring both Pc and Lr with CFI
-                    * directives, but we manually load Lr from the stack
-                    * in unwind_builtin_dll above. */
-                   "ldr r3, [r1, #0x3c]\n\t" /* context->Lr */
-                   "push {r3}\n\t" /* Original Lr */
-                   "blx r2\n\t"
-                   "udf #0")
-
 /***********************************************************************
  *           setup_exception
  *
@@ -1045,13 +1036,8 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
  */
 static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    struct
-    {
-        CONTEXT          context;
-        EXCEPTION_RECORD rec;
-    } *stack;
-
-    void *stack_ptr = (void *)(SP_sig(sigcontext) & ~3);
+    struct exc_stack_layout *stack;
+    void *stack_ptr = (void *)(SP_sig(sigcontext) & ~7);
     CONTEXT context;
     NTSTATUS status;
 
@@ -1071,13 +1057,9 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (DWORD)stack;
-    LR_sig(sigcontext) = context.Pc;
-    PC_sig(sigcontext) = (DWORD)raise_func_trampoline;
+    PC_sig(sigcontext) = (DWORD)pKiUserExceptionDispatcher;
     if (PC_sig(sigcontext) & 1) CPSR_sig(sigcontext) |= 0x20;
     else CPSR_sig(sigcontext) &= ~0x20;
-    REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for KiUserExceptionDispatcher */
-    REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for KiUserExceptionDispatcher */
-    REGn_sig(2, sigcontext) = (DWORD)pKiUserExceptionDispatcher;
 }
 
 
@@ -1135,18 +1117,17 @@ void call_raise_user_exception_dispatcher(void)
  */
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    struct exc_stack_layout *stack;
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
-    DWORD lr = frame->lr;
-    DWORD sp = frame->sp;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (status) return status;
-    frame->r0 = (DWORD)rec;
-    frame->r1 = (DWORD)context;
+    stack = (struct exc_stack_layout *)(context->Sp & ~7) - 1;
+    memmove( &stack->context, context, sizeof(*context) );
+    memmove( &stack->rec, rec, sizeof(*rec) );
     frame->pc = (DWORD)pKiUserExceptionDispatcher;
-    frame->lr = lr;
-    frame->sp = sp;
-    frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;
+    frame->sp = (DWORD)stack;
+    frame->restore_flags |= CONTEXT_CONTROL;
     return status;
 }
 
