@@ -22,7 +22,7 @@
 @ stub StgCreatePropSetStg
 @ stub StgCreatePropStg
 @ stub StgCreateStorageEx
-@ stub StgIsStorageFile
+@ stdcall StgIsStorageFile(wstr)
 @ stdcall StgIsStorageILockBytes(ptr)
 @ stub StgOpenPropStg
 @ stub StgOpenStorage
