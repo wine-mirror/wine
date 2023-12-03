@@ -50,6 +50,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
+static const BYTE STORAGE_magic[8]    ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
+
 /***********************************************************************
  *              WriteClassStg        [coml2.@]
  */
@@ -161,4 +163,24 @@ HRESULT WINAPI GetConvertStg(IStorage *stg)
     }
 
     return header[1] & OleStream_Convert ? S_OK : S_FALSE;
+}
+
+/******************************************************************************
+ *              StgIsStorageILockBytes        [coml2.@]
+ */
+HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
+{
+    BYTE sig[sizeof(STORAGE_magic)];
+    ULARGE_INTEGER offset;
+    ULONG read = 0;
+
+    offset.HighPart = 0;
+    offset.LowPart  = 0;
+
+    ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), &read);
+
+    if (read == sizeof(sig) && memcmp(sig, STORAGE_magic, sizeof(sig)) == 0)
+      return S_OK;
+
+    return S_FALSE;
 }

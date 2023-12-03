@@ -9004,28 +9004,6 @@ HRESULT WINAPI StgSetTimes(OLECHAR const *str, FILETIME const *pctime,
   return r;
 }
 
-/******************************************************************************
- *              StgIsStorageILockBytes        [OLE32.@]
- *
- * Determines if the ILockBytes contains a storage object.
- */
-HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
-{
-  BYTE sig[sizeof(STORAGE_magic)];
-  ULARGE_INTEGER offset;
-  ULONG read = 0;
-
-  offset.HighPart = 0;
-  offset.LowPart  = 0;
-
-  ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), &read);
-
-  if (read == sizeof(sig) && memcmp(sig, STORAGE_magic, sizeof(sig)) == 0)
-    return S_OK;
-
-  return S_FALSE;
-}
-
 /***********************************************************************
  *    OleLoadFromStream (OLE32.@)
  *
