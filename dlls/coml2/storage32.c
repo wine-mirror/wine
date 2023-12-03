@@ -226,3 +226,15 @@ HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn)
     TRACE(" -> Invalid header.\n");
     return S_FALSE;
 }
+
+/******************************************************************************
+ *              StgCreatePropSetStg       [coml2.@]
+ */
+HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved, IPropertySetStorage **propset)
+{
+    TRACE("%p, %#lx, %p.\n", pstg, reserved, propset);
+    if (reserved)
+        return STG_E_INVALIDPARAMETER;
+
+    return IStorage_QueryInterface(pstg, &IID_IPropertySetStorage, (void**)propset);
+}

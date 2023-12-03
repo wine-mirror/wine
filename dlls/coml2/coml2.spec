@@ -19,7 +19,7 @@
 @ stdcall ReadClassStm(ptr ptr)
 @ stub StgCreateDocfile
 @ stub StgCreateDocfileOnILockBytes
-@ stub StgCreatePropSetStg
+@ stdcall StgCreatePropSetStg(ptr long ptr)
 @ stub StgCreatePropStg
 @ stub StgCreateStorageEx
 @ stdcall StgIsStorageFile(wstr)
