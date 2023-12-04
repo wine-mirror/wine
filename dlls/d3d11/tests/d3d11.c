@@ -21859,7 +21859,7 @@ static void test_unbind_shader_resource_view(void)
     ID3D11DeviceContext_PSSetShaderResources(context, 1, 1, &srv2);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
     draw_quad(&test_context);
-    todo_wine_if (!damavand) check_texture_color(test_context.backbuffer, 0x00000000, 1);
+    check_texture_color(test_context.backbuffer, 0x00000000, 1);
 
     ID3D11PixelShader_Release(ps);
     ID3D11ShaderResourceView_Release(srv);
