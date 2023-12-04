@@ -294,7 +294,8 @@ uint32_t FAudio_CreateSourceVoice(
 
 	if (	pSourceFormat->wFormatTag == FAUDIO_FORMAT_PCM ||
 		pSourceFormat->wFormatTag == FAUDIO_FORMAT_IEEE_FLOAT ||
-		pSourceFormat->wFormatTag == FAUDIO_FORMAT_WMAUDIO2	)
+		pSourceFormat->wFormatTag == FAUDIO_FORMAT_WMAUDIO2 ||
+		pSourceFormat->wFormatTag == FAUDIO_FORMAT_WMAUDIO3	)
 	{
 		FAudioWaveFormatExtensible *fmtex = (FAudioWaveFormatExtensible*) audio->pMalloc(
 			sizeof(FAudioWaveFormatExtensible)
@@ -320,6 +321,10 @@ uint32_t FAudio_CreateSourceVoice(
 		else if (pSourceFormat->wFormatTag == FAUDIO_FORMAT_WMAUDIO2)
 		{
 			FAudio_memcpy(&fmtex->SubFormat, &DATAFORMAT_SUBTYPE_WMAUDIO2, sizeof(FAudioGUID));
+		}
+		else if (pSourceFormat->wFormatTag == FAUDIO_FORMAT_WMAUDIO3)
+		{
+			FAudio_memcpy(&fmtex->SubFormat, &DATAFORMAT_SUBTYPE_WMAUDIO3, sizeof(FAudioGUID));
 		}
 		(*ppSourceVoice)->src.format = &fmtex->Format;
 	}
