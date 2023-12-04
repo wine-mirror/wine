@@ -124,7 +124,7 @@ void WINAPI get_device_guid(EDataFlow flow, const char *dev, GUID *guid)
         key_name[0] = '0';
     key_name[1] = ',';
 
-    MultiByteToWideChar(CP_UNIXCP, 0, dev, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
+    MultiByteToWideChar(CP_UTF8, 0, dev, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
 
     if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
         if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
@@ -195,13 +195,13 @@ BOOL WINAPI get_device_name_from_guid(const GUID *guid, char **name, EDataFlow *
                     return FALSE;
                 }
 
-                if(!(size = WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL)))
+                if(!(size = WideCharToMultiByte(CP_UTF8, 0, key_name + 2, -1, NULL, 0, NULL, NULL)))
                     return FALSE;
 
                 if(!(*name = malloc(size)))
                     return FALSE;
 
-                if(!WideCharToMultiByte(CP_UNIXCP, 0, key_name + 2, -1, *name, size, NULL, NULL)){
+                if(!WideCharToMultiByte(CP_UTF8, 0, key_name + 2, -1, *name, size, NULL, NULL)){
                     free(*name);
                     return FALSE;
                 }

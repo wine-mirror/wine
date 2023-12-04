@@ -84,8 +84,6 @@ typedef OSSpinLock                  os_unfair_lock;
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
-#define MAX_DEV_NAME_LEN 10 /* Max 32 bit digits */
-
 struct coreaudio_stream
 {
     os_unfair_lock lock;
@@ -242,6 +240,7 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
     struct endpoint_info
     {
         CFStringRef name;
+        CFStringRef uid;
         AudioDeviceID id;
     } *info;
     OSStatus sc;
@@ -293,13 +292,13 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
         return STATUS_SUCCESS;
     }
 
-    addr.mSelector = kAudioObjectPropertyName;
     addr.mScope = get_scope(params->flow);
     addr.mElement = 0;
 
     for(i = 0; i < num_devices; i++){
         if(!device_has_channels(devices[i], params->flow)) continue;
 
+        addr.mSelector = kAudioObjectPropertyName;
         size = sizeof(CFStringRef);
         sc = AudioObjectGetPropertyData(devices[i], &addr, 0, NULL, &size, &info[params->num].name);
         if(sc != noErr){
@@ -307,6 +306,16 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
                  (unsigned int)devices[i], (int)sc);
             continue;
         }
+
+        addr.mSelector = kAudioDevicePropertyDeviceUID;
+        size = sizeof(CFStringRef);
+        sc = AudioObjectGetPropertyData(devices[i], &addr, 0, NULL, &size, &info[params->num].uid);
+        if(sc != noErr){
+            WARN("Unable to get UID property for device %u: %x\n",
+                 (unsigned int)devices[i], (int)sc);
+            continue;
+        }
+
         info[params->num++].id = devices[i];
     }
     free(devices);
@@ -316,7 +325,7 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
 
     for(i = 0; i < params->num; i++){
         const SIZE_T name_len = CFStringGetLength(info[i].name) + 1;
-        const SIZE_T device_len = MAX_DEV_NAME_LEN + 1;
+        const SIZE_T device_len = CFStringGetLength(info[i].uid) + 1;
         needed += name_len * sizeof(WCHAR) + ((device_len + 1) & ~1);
 
         if(needed <= params->size){
@@ -325,12 +334,16 @@ static NTSTATUS unix_get_endpoint_ids(void *args)
             CFStringGetCharacters(info[i].name, CFRangeMake(0, name_len - 1), ptr);
             ptr[name_len - 1] = 0;
             offset += name_len * sizeof(WCHAR);
+
             endpoint->device = offset;
-            sprintf((char *)params->endpoints + offset, "%u", (unsigned int)info[i].id);
+            CFStringGetCString(info[i].uid, (char *)params->endpoints + offset, params->size - offset, kCFStringEncodingUTF8);
+            ((char *)params->endpoints)[offset + device_len - 1] = '\0';
             offset += (device_len + 1) & ~1;
+
             endpoint++;
         }
         CFRelease(info[i].name);
+        CFRelease(info[i].uid);
         if(info[i].id == default_id) params->default_idx = i;
     }
     free(info);
@@ -669,7 +682,31 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
 
 static AudioDeviceID dev_id_from_device(const char *device)
 {
-    return strtoul(device, NULL, 10);
+    AudioDeviceID id;
+    CFStringRef uid;
+    UInt32 size;
+    OSStatus sc;
+    const AudioObjectPropertyAddress addr =
+    {
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain,
+        .mSelector = kAudioHardwarePropertyTranslateUIDToDevice,
+    };
+
+    uid = CFStringCreateWithCStringNoCopy(NULL, device, kCFStringEncodingUTF8, kCFAllocatorNull);
+
+    size = sizeof(id);
+    sc = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, sizeof(uid), &uid, &size, &id);
+    CFRelease(uid);
+    if(sc != noErr){
+        WARN("Failed to get device ID for UID %s: %x\n", device, (int)sc);
+        return kAudioObjectUnknown;
+    }
+
+    if (id == kAudioObjectUnknown)
+        WARN("Failed to get device ID for UID %s\n", device);
+
+    return id;
 }
 
 static NTSTATUS unix_create_stream(void *args)
