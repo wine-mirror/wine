@@ -1561,7 +1561,12 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                     "add r1, sp, #0x1a8\n\t"
                     "str r1, [sp, #0x38]\n\t"  /* context->Sp */
                     "mov r1, sp\n\t"
-                    "mov r2, #1\n\t"
+                    "mrc p15, 0, r3, c13, c0, 2\n\t" /* NtCurrentTeb() */
+                    "ldr r3, [r3, #0x30]\n\t"  /* peb */
+                    "ldrb r2, [r3, #2]\n\t"    /* peb->BeingDebugged */
+                    "cbnz r2, 1f\n\t"
+                    "bl " __ASM_NAME("dispatch_exception") "\n"
+                    "1:\tmov r2, #1\n\t"
                     "bl " __ASM_NAME("NtRaiseException") "\n\t"
                     "bl " __ASM_NAME("RtlRaiseStatus") )
 

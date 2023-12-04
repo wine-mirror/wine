@@ -7425,7 +7425,6 @@ static void test_KiUserExceptionDispatcher(void)
     pRtlRaiseException(&record);
 
     ok(got_exception, "Handler was not called.\n");
-    todo_wine
     ok(!hook_called, "Hook was called.\n");
 
     memcpy( code_ptr, patched_code, sizeof(patched_code) );
