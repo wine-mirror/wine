@@ -170,108 +170,107 @@ class ThunkType(Enum):
 # These are regular device / instance functions for which we need
 # to do more work compared to a regular thunk or because they are
 # part of the driver interface.
-# - dispatch set whether we need a function pointer in the device
-#   / instance dispatch table.
-# - driver sets whether the API is part of the driver interface.
-# - thunk sets whether to create a thunk in vulkan_thunks.c.
+# - dispatch (default: True):  set whether we need a function pointer in the device / instance dispatch table.
+# - driver (default: False):   sets whether the API is part of the driver interface.
+# - thunk (default: ThunkType.PUBLIC):  sets whether to create a thunk in vulkan_thunks.c.
 #   - NONE means there's a fully custom implementation.
 #   - PUBLIC means the implementation is fully auto generated.
 #   - PRIVATE thunks can be used in custom implementations for
 #     struct conversion.
-# - loader_thunk sets whether to create a thunk for unix funcs.
+# - loader_thunk (default: ThunkType.PUBLIC):  sets whether to create a thunk for unix funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
     "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkEnumerateInstanceLayerProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
-    "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceLayerProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceVersion" : {"dispatch" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkGetInstanceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
 
     # Instance functions
-    "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
+    "vkCreateDevice" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
     "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkEnumerateDeviceExtensionProperties" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkEnumerateDeviceLayerProperties": {"dispatch": True, "driver": False, "thunk": ThunkType.NONE},
-    "vkEnumeratePhysicalDeviceGroups" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkEnumeratePhysicalDevices" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceImageFormatProperties2" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceProperties2" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PUBLIC, "loader_thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PUBLIC, "loader_thunk" : ThunkType.PRIVATE},
+    "vkEnumerateDeviceExtensionProperties" : {"thunk" : ThunkType.NONE},
+    "vkEnumerateDeviceLayerProperties" : {"thunk" : ThunkType.NONE},
+    "vkEnumeratePhysicalDeviceGroups" : {"thunk" : ThunkType.NONE},
+    "vkEnumeratePhysicalDevices" : {"thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceImageFormatProperties2" : {"thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceProperties2" : {"loader_thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceProperties2KHR" : {"loader_thunk" : ThunkType.PRIVATE},
 
     # Device functions
-    "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkCreateCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkAllocateCommandBuffers" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkCreateCommandPool" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
+    "vkDestroyCommandPool" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkDestroyDevice" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkFreeCommandBuffers" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
-    "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetDeviceQueue2" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkAllocateMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkFreeMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkMapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkMapMemory2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkUnmapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkUnmapMemory2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkCreateBuffer" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkCreateImage" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkGetDeviceQueue" : {"thunk" : ThunkType.NONE},
+    "vkGetDeviceQueue2" : {"thunk" : ThunkType.NONE},
+    "vkAllocateMemory" : {"thunk" : ThunkType.PRIVATE},
+    "vkFreeMemory" : {"thunk" : ThunkType.PRIVATE},
+    "vkMapMemory" : {"thunk" : ThunkType.PRIVATE},
+    "vkMapMemory2KHR" : {"thunk" : ThunkType.PRIVATE},
+    "vkUnmapMemory" : {"thunk" : ThunkType.PRIVATE},
+    "vkUnmapMemory2KHR" : {"thunk" : ThunkType.PRIVATE},
+    "vkCreateBuffer" : {"thunk" : ThunkType.PRIVATE},
+    "vkCreateImage" : {"thunk" : ThunkType.PRIVATE},
 
     # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
+    "vkDestroySurfaceKHR" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"driver" : True},
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"driver" : True, "thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"driver" : True},
+    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"driver" : True},
 
     # VK_KHR_get_surface_capabilities2
-    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"driver" : True, "thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"driver" : True},
 
     # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
+    "vkCreateWin32SurfaceKHR" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"driver" : True},
 
     # VK_KHR_swapchain
-    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
+    "vkCreateSwapchainKHR" : {"driver" : True},
+    "vkDestroySwapchainKHR" : {"driver" : True},
+    "vkGetSwapchainImagesKHR" : {"driver" : True},
+    "vkQueuePresentKHR" : {"driver" : True},
 
     # VK_KHR_external_fence_capabilities
-    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
 
     # VK_KHR_external_memory_capabilities
-    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"thunk" : ThunkType.PRIVATE},
 
     # VK_KHR_external_semaphore_capabilities
-    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
 
     # VK_KHR_device_group_creation
-    "vkEnumeratePhysicalDeviceGroupsKHR" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkEnumeratePhysicalDeviceGroupsKHR" : {"thunk" : ThunkType.NONE},
 
     # VK_KHR_device_group
-    "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
-    "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
+    "vkGetDeviceGroupSurfacePresentModesKHR" : {"driver" : True},
+    "vkGetPhysicalDevicePresentRectanglesKHR" : {"driver" : True},
 
     # VK_KHR_deferred_host_operations
-    "vkCreateDeferredOperationKHR" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkDestroyDeferredOperationKHR" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkCreateDeferredOperationKHR" : {"thunk" : ThunkType.NONE},
+    "vkDestroyDeferredOperationKHR" : {"thunk" : ThunkType.NONE},
 
     # VK_EXT_calibrated_timestamps
-    "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetCalibratedTimestampsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"thunk" : ThunkType.NONE},
+    "vkGetCalibratedTimestampsEXT" : {"thunk" : ThunkType.NONE},
 
     # VK_EXT_debug_utils
-    "vkCreateDebugUtilsMessengerEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkDestroyDebugUtilsMessengerEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkCreateDebugUtilsMessengerEXT" : {"thunk" : ThunkType.NONE},
+    "vkDestroyDebugUtilsMessengerEXT" : {"thunk" : ThunkType.NONE},
 
     # VK_EXT_debug_report
-    "vkCreateDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkDestroyDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkCreateDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
+    "vkDestroyDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
@@ -580,12 +579,12 @@ class VkFunction(object):
         self.alias = alias
 
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
-        func_info = FUNCTION_OVERRIDES.get(self.name, None)
-        self.dispatch = func_info["dispatch"] if func_info else True
-        self.driver = func_info["driver"] if func_info else False
-        self.thunk_type = func_info["thunk"] if func_info else ThunkType.PUBLIC
-        self.loader_thunk_type = func_info["loader_thunk"] if func_info and "loader_thunk" in func_info else ThunkType.PUBLIC
-        self.extra_param = func_info["extra_param"] if func_info and "extra_param" in func_info else None
+        func_info = FUNCTION_OVERRIDES.get(self.name, {})
+        self.dispatch = func_info.get("dispatch", True)
+        self.driver = func_info.get("driver", False)
+        self.thunk_type = func_info.get("thunk", ThunkType.PUBLIC)
+        self.loader_thunk_type = func_info.get("loader_thunk", ThunkType.PUBLIC)
+        self.extra_param = func_info.get("extra_param", None)
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
