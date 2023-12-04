@@ -674,6 +674,30 @@ static void test_width(void)
     test_tab(94);
 }
 
+static void test_setitemsize(void)
+{
+    HWND hwTab;
+    LRESULT result;
+    HDC hdc;
+    INT dpi;
+
+    hwTab = create_tabcontrol(0, TCIF_TEXT);
+    SendMessageA(hwTab, TCM_SETMINTABWIDTH, 0, -1);
+
+    hdc = GetDC(hwTab);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+    ReleaseDC(hwTab, hdc);
+
+    result = SendMessageA(hwTab, TCM_SETITEMSIZE, 0, MAKELPARAM(50, 20));
+    todo_wine ok (LOWORD(result) == dpi, "Excepted width to be %d, got %d\n", dpi, LOWORD(result));
+
+    result = SendMessageA(hwTab, TCM_SETITEMSIZE, 0, MAKELPARAM(0, 1));
+    todo_wine ok (LOWORD(result) == 50, "Excepted width to be 50, got %d\n", LOWORD(result));
+    ok (HIWORD(result) == 20, "Excepted height to be 20, got %d\n", HIWORD(result));
+
+    DestroyWindow (hwTab);
+}
+
 static void test_curfocus(void)
 {
     const INT nTabs = 5;
@@ -1581,6 +1605,7 @@ START_TEST(tab)
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
 
     test_width();
+    test_setitemsize();
     test_curfocus();
     test_cursel();
     test_extendedstyle();
