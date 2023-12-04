@@ -2462,7 +2462,7 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
             TRACE("Disabling stream %u.\n", stream_numbers[i]);
             wg_parser_stream_disable(stream->wg_stream);
         }
-        else if (selections[i] == WMT_ON)
+        else
         {
             if (selections[i] != WMT_ON)
                 FIXME("Ignoring selection %#x for stream %u; treating as enabled.\n",
