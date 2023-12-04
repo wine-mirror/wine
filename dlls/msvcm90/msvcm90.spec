@@ -3,8 +3,8 @@
 @ cdecl ?DoDllLanguageSupportValidation@<CrtImplementationDetails>@@YAXXZ() CrtImplementationDetails_DoDllLanguageSupportValidation
 @ cdecl -arch=win32 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
 @ cdecl -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
-@ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@@Z
-@ stub -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@@Z
+@ cdecl -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@@Z(ptr) CrtImplementationDetails_ThrowModuleLoadException
+@ cdecl -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@@Z(ptr) CrtImplementationDetails_ThrowModuleLoadException
 @ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@P$AAVException@3@@Z
 @ stub -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@PE$AAVException@3@@Z
 @ stub -arch=win32 ?ThrowNestedModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVException@System@@0@Z
