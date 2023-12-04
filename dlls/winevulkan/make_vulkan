@@ -321,17 +321,27 @@ class Direction(Enum):
     INPUT = 1
     OUTPUT = 2
 
+
+class Unwrap(Enum):
+    NONE = 0
+    HOST = 1
+
+
 def api_is_vulkan(obj):
     return "vulkan" in obj.get("api", "vulkan").split(",")
 
 
-def convert_suffix(direction, win_type, unwrap):
+def convert_suffix(direction, win_type, unwrap, is_wrapped):
     if direction == Direction.OUTPUT:
-        if not unwrap:
+        if not is_wrapped:
+            return "host_to_{0}".format(win_type)
+        if unwrap == Unwrap.NONE:
             return "unwrapped_host_to_{0}".format(win_type)
         return "host_to_{0}".format(win_type)
     else:
-        if not unwrap:
+        if not is_wrapped:
+            return "{0}_to_host".format(win_type)
+        if unwrap == Unwrap.NONE:
             return "{0}_to_unwrapped_host".format(win_type)
         return "{0}_to_host".format(win_type)
 
@@ -616,6 +626,11 @@ class VkFunction(object):
         # and is used by the code generation.
         self.required = True if func_info else False
 
+        if self.name in MANUAL_UNIX_THUNKS:
+            self.unwrap = Unwrap.NONE
+        else:
+            self.unwrap = Unwrap.HOST
+
     @staticmethod
     def from_alias(command, alias):
         """ Create VkFunction from an alias command.
@@ -662,7 +677,7 @@ class VkFunction(object):
 
         conversions = []
         for param in self.params:
-            conversions.extend(param.get_conversions(unwrap=self.name not in MANUAL_UNIX_THUNKS))
+            conversions.extend(param.get_conversions(self.unwrap))
         return conversions
 
     def is_alias(self):
@@ -802,14 +817,14 @@ class VkFunction(object):
             body += "    return params.result;\n"
         return body
 
-    def body(self, conv, unwrap, params_prefix=""):
+    def body(self, conv, params_prefix=""):
         body = ""
         needs_alloc = False
         deferred_op = None
 
         # Declare any tmp parameters for conversion.
         for p in self.params:
-            if p.needs_variable(conv, unwrap):
+            if p.needs_variable(conv, self.unwrap):
                 if p.is_dynamic_array():
                     body += "    {2}{0} *{1}_host;\n".format(
                         p.type, p.name, "const " if p.is_const() else "")
@@ -818,7 +833,7 @@ class VkFunction(object):
                     needs_alloc = True
                 else:
                     body += "    {0} {1}_host;\n".format(p.type, p.name)
-            if p.needs_alloc(conv, unwrap):
+            if p.needs_alloc(conv, self.unwrap):
                 needs_alloc = True
             if p.type == "VkDeferredOperationKHR" and not p.is_pointer():
                 deferred_op = p.name
@@ -849,15 +864,16 @@ class VkFunction(object):
         # Call any win_to_host conversion calls.
         unwrap = self.name not in MANUAL_UNIX_THUNKS
         for p in self.params:
-            if p.needs_conversion(conv, unwrap, Direction.INPUT):
-                body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
-            elif p.is_dynamic_array() and p.needs_conversion(conv, unwrap, Direction.OUTPUT):
+            if p.needs_conversion(conv, self.unwrap, Direction.INPUT):
+                body += p.copy(Direction.INPUT, conv, self.unwrap, prefix=params_prefix)
+            elif p.is_dynamic_array() and p.needs_conversion(conv, self.unwrap, Direction.OUTPUT):
                 body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
                     p.name, p.get_dyn_array_len(params_prefix, conv), params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
-        params = ", ".join([p.variable(conv, unwrap, params_prefix=params_prefix) for p in self.params])
+        unwrap = Unwrap.NONE if self.name in MANUAL_UNIX_THUNKS else self.unwrap
+        params = ", ".join([p.variable(conv, unwrap, params_prefix) for p in self.params])
         if self.extra_param:
             if conv:
                 params += ", UlongToPtr({0}{1})".format(params_prefix, self.extra_param)
@@ -877,8 +893,8 @@ class VkFunction(object):
 
         # Call any host_to_win conversion calls.
         for p in self.params:
-            if p.needs_conversion(conv, unwrap, Direction.OUTPUT):
-                body += p.copy(Direction.OUTPUT, conv, unwrap, prefix=params_prefix)
+            if p.needs_conversion(conv, self.unwrap, Direction.OUTPUT):
+                body += p.copy(Direction.OUTPUT, conv, self.unwrap, prefix=params_prefix)
 
         if needs_alloc:
             if deferred_op is not None:
@@ -949,7 +965,7 @@ class VkFunction(object):
             thunk += "    } *params = args;\n"
         else:
             thunk += "    struct {0}_params *params = args;\n".format(self.name)
-        thunk += self.body(conv=conv, unwrap=self.name not in MANUAL_UNIX_THUNKS, params_prefix="params->")
+        thunk += self.body(conv, params_prefix="params->")
         thunk += "}\n"
         if not conv:
             thunk += "#endif /* _WIN64 */\n"
@@ -1505,7 +1521,7 @@ class VkMember(VkVariable):
             - `conv` indicates whether the statement is in a struct alignment conversion path. """
 
         win_type = "win32" if conv else "win64"
-        suffix = convert_suffix(direction, win_type, unwrap or not self.is_wrapped())
+        suffix = convert_suffix(direction, win_type, unwrap, self.is_wrapped())
 
         if self.needs_conversion(conv, unwrap, direction, False):
             if self.is_dynamic_array():
@@ -1535,7 +1551,8 @@ class VkMember(VkVariable):
                     return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name, self.value(input, conv),
                         handle.driver_handle(self.value(input, conv)))
                 else:
-                    return "{0}{1} = {2};\n".format(output, self.name, handle.driver_handle(self.value(input, conv)))
+                    return "{0}{1} = {2};\n".format(output, self.name,
+                        handle.driver_handle(self.value(input, conv)))
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
@@ -1544,7 +1561,8 @@ class VkMember(VkVariable):
             else:
                 selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
                 if direction == Direction.OUTPUT:
-                    return "convert_{0}_host_to_{4}(&{2}{1}, &{3}{1}{5});\n".format(self.type, self.name, input, output, win_type, selector_part)
+                    return "convert_{0}_{4}(&{2}{1}, &{3}{1}{5});\n".format(self.type,
+                        self.name, input, output, suffix, selector_part)
                 else:
                     ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
                     return "convert_{0}_{4}({5}&{2}{1}, &{3}{1}{6});\n".format(self.type,
@@ -1631,12 +1649,12 @@ class VkMember(VkVariable):
                 return True
 
         if self.is_handle():
-            if unwrap and self.handle.is_wrapped():
+            if unwrap != Unwrap.NONE and self.handle.is_wrapped():
                 return True
             if conv and self.handle.is_dispatchable():
                 return True
         elif self.is_generic_handle():
-            if unwrap:
+            if unwrap != Unwrap.NONE:
                 return True
         elif self.is_struct() or self.is_union():
             if self.struct.needs_conversion(conv, unwrap, direction, is_const):
@@ -1757,7 +1775,7 @@ class VkParam(VkVariable):
 
     def copy(self, direction, conv, unwrap, prefix=""):
         win_type = "win32" if conv else "win64"
-        suffix = convert_suffix(direction, win_type, unwrap or not self.is_wrapped())
+        suffix = convert_suffix(direction, win_type, unwrap, self.is_wrapped())
 
         if direction == Direction.INPUT:
             ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
@@ -1865,7 +1883,7 @@ class VkParam(VkVariable):
             if direction != param_direction:
                 return False
 
-            if unwrap and self.handle.is_wrapped():
+            if unwrap != Unwrap.NONE and self.handle.is_wrapped():
                 return True
             if conv and self.handle.is_dispatchable():
                 return True
@@ -1918,7 +1936,7 @@ class VkParam(VkVariable):
 
         # Hack until we enable allocation callbacks from ICD to application. These are a joy
         # to enable one day, because of calling convention conversion.
-        if unwrap and "VkAllocationCallbacks" in self.type:
+        if unwrap != Unwrap.NONE and "VkAllocationCallbacks" in self.type:
             LOGGER.debug("TODO: setting NULL VkAllocationCallbacks for {0}".format(self.name))
             return "NULL"
 
@@ -1930,7 +1948,7 @@ class VkParam(VkVariable):
 
         p = self.value(params_prefix, conv)
 
-        if unwrap:
+        if unwrap != Unwrap.NONE:
             unwrap_handle = None
             if self.object_type != None and self.type == "uint64_t":
                 unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
@@ -2148,12 +2166,12 @@ class VkStruct(Sequence):
         for e in self.struct_extensions:
             if not e.required:
                 continue
-            if e.needs_conversion(conv, True, direction, is_const, check_extensions=False):
+            if e.needs_conversion(conv, Unwrap.HOST, direction, is_const, check_extensions=False):
                 return True
             if direction == Direction.INPUT:
                 # we need input conversion of structs containing struct chain even if it's returnedonly,
                 # so that we have a chance to allocate buffers
-                if e.needs_conversion(conv, True, Direction.OUTPUT, is_const, check_extensions=False):
+                if e.needs_conversion(conv, Unwrap.HOST, Direction.OUTPUT, is_const, check_extensions=False):
                     return True
 
         return False
@@ -2261,7 +2279,7 @@ class VkStruct(Sequence):
         for e in self.struct_extensions:
             if not e.required:
                 continue
-            conversions.extend(e.get_conversions(True, parent_const))
+            conversions.extend(e.get_conversions(Unwrap.HOST, parent_const))
 
         # Collect any conversion for any member structs.
         for m in self:
@@ -2278,12 +2296,12 @@ class StructConversionFunction(object):
         self.operand = struct
         self.type = struct.name
         self.conv = conv
-        self.unwrap = unwrap or not self.operand.is_wrapped()
+        self.unwrap = unwrap
         self.const = const
 
         name = "convert_{0}_".format(self.type)
         win_type = "win32" if self.conv else "win64"
-        name += convert_suffix(self.direction, win_type, self.unwrap)
+        name += convert_suffix(direction, win_type, unwrap, struct.is_wrapped())
         self.name = name
 
     def __eq__(self, other):
@@ -2438,8 +2456,7 @@ class StructConversionFunction(object):
                     if m.name == "pNext":
                         copy_body += ident + "out_ext->pNext = NULL;\n"
                         continue
-
-                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, True)
+                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST)
 
                 # Generate the definition of "in_ext" if we need it
                 if "in_ext->" in copy_body:
@@ -2476,7 +2493,7 @@ class ArrayConversionFunction(object):
         self.direction = direction
         self.type = array.type
         self.conv = conv
-        self.unwrap = unwrap or not array.is_wrapped()
+        self.unwrap = unwrap
 
         if array.is_static_array() and direction == Direction.INPUT:
             LOGGER.error("Static array input conversion is not supported")
@@ -2486,7 +2503,7 @@ class ArrayConversionFunction(object):
             name += "pointer_"
         name += "array_"
         win_type = "win32" if self.conv else "win64"
-        name += convert_suffix(self.direction, win_type, self.unwrap)
+        name += convert_suffix(direction, win_type, unwrap, array.is_wrapped())
         self.name = name
 
     def __eq__(self, other):
@@ -2557,8 +2574,7 @@ class ArrayConversionFunction(object):
             if self.array.is_struct():
                 struct = self.array.struct
                 win_part = "win32" if self.conv else "win64"
-                suffix = convert_suffix(self.direction, win_part, self.unwrap)
-
+                suffix = convert_suffix(self.direction, win_part, self.unwrap, struct.is_wrapped())
                 ctx_part = ""
                 if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap):
                     ctx_part = "ctx, "
@@ -2593,7 +2609,7 @@ class ArrayConversionFunction(object):
                 else:
                     input = "PtrToUlong(in[i])"
 
-                if not self.unwrap or not handle.is_wrapped():
+                if self.unwrap == Unwrap.NONE or not handle.is_wrapped():
                     body += "        out[i] = {0};\n".format(input)
                 elif self.direction == Direction.INPUT:
                     body += "        out[i] = " + handle.driver_handle(input) + ";\n"
