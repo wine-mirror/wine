@@ -45,17 +45,8 @@
 # define __ASM_EHABI(str)
 #endif
 
-#if defined(__SEH__) || (defined(_MSC_VER) && defined(__clang__) && (defined(__x86_64__) || defined(__aarch64__)))
-# if defined(__aarch64__) && defined(__clang_major__) && (__clang_major__ < 12 || defined(__apple_build_version__))
-   /* Clang got support for aarch64 SEH assembly directives in Clang 12,
-    * before that, only .seh_startproc/.seh_endproc but nothing else was
-    * supported. Support for it doesn't exist in any Apple branded version
-    * of Clang yet. */
-#  define __ASM_SEH(str)
-# else
-#  define __ASM_SEH(str) str
-#  define __ASM_SEH_SUPPORTED
-# endif
+#if defined(__WINE_PE_BUILD) && !defined(__i386__)
+# define __ASM_SEH(str) str
 #else
 # define __ASM_SEH(str)
 #endif

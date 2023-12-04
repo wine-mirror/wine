@@ -10819,6 +10819,55 @@ printf "%s\n" "$res" >&6; }
           as_fn_append ${wine_arch}_CC " $res" ;;
     esac
 
+    if test "x$wine_arch" = xi386
+then :
+
+else $as_nop
+  as_wine_cv_seh_support=`printf "%s\n" "ac_cv_${wine_arch}_seh_support" | $as_tr_sh`
+
+               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports SEH directives" >&5
+printf %s "checking whether $CC supports SEH directives... " >&6; }
+if eval test \${$as_wine_cv_seh_support+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$as_wine_cv_seh_support=yes"
+else $as_nop
+  eval "$as_wine_cv_seh_support=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+eval ac_res=\$$as_wine_cv_seh_support
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+               eval res=\$$as_wine_cv_seh_support
+
+               if test "x$res" = xyes
+then :
+
+else $as_nop
+  if test ${enable_archs+y}
+then :
+  as_fn_error $? "The $wine_arch cross-compiler doesn't support SEH directives.
+This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+fi
+                          continue
+fi
+fi
+
     as_fn_append PE_ARCHS " $wine_arch"
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5

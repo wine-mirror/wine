@@ -369,7 +369,7 @@ DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
 /***********************************************************************
  *		exception_handler_call_wrapper
  */
-#ifdef __ASM_SEH_SUPPORTED
+#ifdef __WINE_PE_BUILD
 DWORD WINAPI exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
                                       CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
 
@@ -1077,7 +1077,7 @@ DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
 /***********************************************************************
  *		unwind_handler_call_wrapper
  */
-#ifdef __ASM_SEH_SUPPORTED
+#ifdef __WINE_PE_BUILD
 DWORD WINAPI unwind_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
                                    CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
 
@@ -1666,7 +1666,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
-#ifdef __ASM_SEH_SUPPORTED
+#ifdef __WINE_PE_BUILD
 __ASM_GLOBAL_FUNC( RtlUserThreadStart,
                    "subq $0x28,%rsp\n\t"
                    ".seh_stackalloc 0x28\n\t"
