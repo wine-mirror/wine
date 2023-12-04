@@ -5,8 +5,8 @@
 @ cdecl -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
 @ cdecl -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@@Z(ptr) CrtImplementationDetails_ThrowModuleLoadException
 @ cdecl -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@@Z(ptr) CrtImplementationDetails_ThrowModuleLoadException
-@ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@P$AAVException@3@@Z
-@ stub -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@PE$AAVException@3@@Z
+@ cdecl -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@P$AAVException@3@@Z(ptr ptr) CrtImplementationDetails_ThrowModuleLoadException_inner
+@ cdecl -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@PE$AAVException@3@@Z(ptr ptr) CrtImplementationDetails_ThrowModuleLoadException_inner
 @ stub -arch=win32 ?ThrowNestedModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVException@System@@0@Z
 @ stub -arch=win64 ?ThrowNestedModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVException@System@@0@Z
 @ stub -arch=win32 ?_Addstd@ios_base@std@@SAXPAV12@@Z

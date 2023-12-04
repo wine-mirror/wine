@@ -49,3 +49,9 @@ void __cdecl CrtImplementationDetails_ThrowModuleLoadException(void* message)
 {
     FIXME("%p: stub\n", message);
 }
+
+/* void __cdecl <CrtImplementationDetails>::ThrowModuleLoadException(System.String^, System.Exception^) */
+void __cdecl CrtImplementationDetails_ThrowModuleLoadException_inner(void* message, void* inner)
+{
+    FIXME("%p %p: stub\n", message, inner);
+}
