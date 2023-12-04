@@ -3975,8 +3975,8 @@ static HRESULT stgmedium_cmp(const STGMEDIUM *med1, STGMEDIUM *med2)
         datasize2 = GetMetaFileBitsEx(mfpict2->hMF, 0, NULL);
         if (datasize1 == datasize2)
         {
-            data1 = HeapAlloc(GetProcessHeap(), 0, datasize1);
-            data2 = HeapAlloc(GetProcessHeap(), 0, datasize2);
+            data1 = malloc(datasize1);
+            data2 = malloc(datasize2);
             GetMetaFileBitsEx(mfpict1->hMF, datasize1, data1);
             GetMetaFileBitsEx(mfpict2->hMF, datasize2, data2);
         }
@@ -3988,8 +3988,8 @@ static HRESULT stgmedium_cmp(const STGMEDIUM *med1, STGMEDIUM *med2)
         datasize2 = GetEnhMetaFileBits(med2->hEnhMetaFile, 0, NULL);
         if (datasize1 == datasize2)
         {
-            data1 = HeapAlloc(GetProcessHeap(), 0, datasize1);
-            data2 = HeapAlloc(GetProcessHeap(), 0, datasize2);
+            data1 = malloc(datasize1);
+            data2 = malloc(datasize2);
             GetEnhMetaFileBits(med1->hEnhMetaFile, datasize1, data1);
             GetEnhMetaFileBits(med2->hEnhMetaFile, datasize2, data2);
         }
@@ -4021,15 +4021,15 @@ static HRESULT stgmedium_cmp(const STGMEDIUM *med1, STGMEDIUM *med2)
     }
     else if (med1->tymed == TYMED_MFPICT)
     {
-        HeapFree(GetProcessHeap(), 0, data1);
-        HeapFree(GetProcessHeap(), 0, data2);
+        free(data1);
+        free(data2);
         GlobalUnlock(med1->hMetaFilePict);
         GlobalUnlock(med2->hMetaFilePict);
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, data1);
-        HeapFree(GetProcessHeap(), 0, data2);
+        free(data1);
+        free(data2);
     }
 
     return S_OK;
@@ -4125,13 +4125,13 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
         if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
         {
             data_size += sizeof(dib_inf);
-            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            data = malloc(data_size);
             memcpy(data, dib_inf, sizeof(dib_inf));
             memcpy(data + sizeof(dib_inf), dib_white, sizeof(dib_white));
         }
         else
         {
-            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            data = malloc(data_size);
             memcpy(data, dib_white, sizeof(dib_white));
         }
         stg_def->stream[stm_idx].data = data;
@@ -4142,14 +4142,14 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
         data_size = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
         if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
         {
-            data = HeapAlloc(GetProcessHeap(), 0, data_size + sizeof(mf_rec));
+            data = malloc(data_size + sizeof(mf_rec));
             memcpy(data, mf_rec, sizeof(mf_rec));
             GetMetaFileBitsEx(mfpict->hMF, data_size, data + sizeof(mf_rec));
             data_size += sizeof(mf_rec);
         }
         else
         {
-            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            data = malloc(data_size);
             GetMetaFileBitsEx(mfpict->hMF, data_size, data);
         }
         GlobalUnlock(stg_med->hMetaFilePict);
@@ -4160,7 +4160,7 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
         if (!strcmp(stg_def->stream[stm_idx].name, "CONTENTS"))
         {
             data_size = GetEnhMetaFileBits(stg_med->hEnhMetaFile, 0, NULL);
-            data = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) + sizeof(ENHMETAHEADER) + data_size);
+            data = malloc(sizeof(DWORD) + sizeof(ENHMETAHEADER) + data_size);
             *((DWORD *)data) = sizeof(ENHMETAHEADER);
             GetEnhMetaFileBits(stg_med->hEnhMetaFile, data_size, data + sizeof(DWORD) + sizeof(ENHMETAHEADER));
             memcpy(data + sizeof(DWORD), data + sizeof(DWORD) + sizeof(ENHMETAHEADER), sizeof(ENHMETAHEADER));
@@ -4170,7 +4170,7 @@ static void get_stgdef(struct storage_def *stg_def, CLIPFORMAT cf, STGMEDIUM *st
         {
             hdc = GetDC(NULL);
             data_size = GetWinMetaFileBits(stg_med->hEnhMetaFile, 0, NULL, MM_ANISOTROPIC, hdc);
-            data = HeapAlloc(GetProcessHeap(), 0, data_size);
+            data = malloc(data_size);
             GetWinMetaFileBits(stg_med->hEnhMetaFile, data_size, data, MM_ANISOTROPIC, hdc);
             ReleaseDC(NULL, hdc);
         }
@@ -4389,7 +4389,7 @@ static void test_data_cache_save_data(void)
         IStorage_Release(doc);
         IOleCache2_Release(cache);
         for (i = 0; i < pdata->num_set; i++)
-            HeapFree(GetProcessHeap(), 0, (void *)pdata->stg_def.stream[i].data);
+            free((void *)pdata->stg_def.stream[i].data);
 
     }
 }
@@ -4549,7 +4549,7 @@ static void test_OleCreateStaticFromData(void)
     IPersist_Release(persist);
     IStorage_Release(storage);
     IOleObject_Release(ole_obj);
-    HeapFree(GetProcessHeap(), 0, (void *)stg_def_dib.stream[2].data);
+    free((void *)stg_def_dib.stream[2].data);
 
     /* CF_ENHMETAFILE */
     hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
@@ -4583,7 +4583,7 @@ static void test_OleCreateStaticFromData(void)
     IPersist_Release(persist);
     IStorage_Release(storage);
     IOleObject_Release(ole_obj);
-    HeapFree(GetProcessHeap(), 0, (void *)stg_def_emf.stream[2].data);
+    free((void *)stg_def_emf.stream[2].data);
 
     /* CF_TEXT */
     hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);

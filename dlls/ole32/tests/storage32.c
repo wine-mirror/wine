@@ -163,10 +163,10 @@ static HRESULT WINAPI TestLockBytes_SetSize(ILockBytes *iface,
     if (This->buffer_size < cb.QuadPart)
     {
         ULONG new_buffer_size = max(This->buffer_size * 2, cb.QuadPart);
-        BYTE* new_buffer = HeapAlloc(GetProcessHeap(), 0, new_buffer_size);
+        BYTE* new_buffer = malloc(new_buffer_size);
         if (!new_buffer) return E_OUTOFMEMORY;
         memcpy(new_buffer, This->contents, This->size);
-        HeapFree(GetProcessHeap(), 0, This->contents);
+        free(This->contents);
         This->contents = new_buffer;
     }
 
@@ -232,7 +232,7 @@ static const ILockBytesVtbl TestLockBytes_Vtbl = {
 
 static void CreateTestLockBytes(TestLockBytes **This)
 {
-    *This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**This));
+    *This = calloc(1, sizeof(**This));
 
     if (*This)
     {
@@ -240,7 +240,7 @@ static void CreateTestLockBytes(TestLockBytes **This)
         (*This)->ref = 1;
         (*This)->size = 0;
         (*This)->buffer_size = 1024;
-        (*This)->contents = HeapAlloc(GetProcessHeap(), 0, (*This)->buffer_size);
+        (*This)->contents = malloc((*This)->buffer_size);
     }
 }
 
@@ -248,8 +248,8 @@ static void DeleteTestLockBytes(TestLockBytes *This)
 {
     ok(This->ILockBytes_iface.lpVtbl == &TestLockBytes_Vtbl, "test lock bytes %p deleted with incorrect vtable\n", This);
     ok(This->ref == 1, "test lock bytes %p deleted with %li references instead of 1\n", This, This->ref);
-    HeapFree(GetProcessHeap(), 0, This->contents);
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This->contents);
+    free(This);
 }
 
 static void test_hglobal_storage_stat(void)

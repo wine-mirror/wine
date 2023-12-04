@@ -138,8 +138,8 @@ static ULONG WINAPI EnumFormatImpl_Release(IEnumFORMATETC *iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        HeapFree(GetProcessHeap(), 0, This->fmtetc);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->fmtetc);
+        free(This);
     }
 
     return ref;
@@ -207,12 +207,12 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
 {
     EnumFormatImpl *ret;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumFormatImpl));
+    ret = malloc(sizeof(EnumFormatImpl));
     ret->IEnumFORMATETC_iface.lpVtbl = &VT_EnumFormatImpl;
     ret->ref = 1;
     ret->cur = 0;
     ret->fmtetc_cnt = fmtetc_cnt;
-    ret->fmtetc = HeapAlloc(GetProcessHeap(), 0, fmtetc_cnt*sizeof(FORMATETC));
+    ret->fmtetc = malloc(fmtetc_cnt * sizeof(FORMATETC));
     memcpy(ret->fmtetc, fmtetc, fmtetc_cnt*sizeof(FORMATETC));
     *lplpformatetc = &ret->IEnumFORMATETC_iface;
     return S_OK;
@@ -248,8 +248,8 @@ static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
         int i;
         if(This->text) GlobalFree(This->text);
         for(i = 0; i < This->fmtetc_cnt; i++)
-            HeapFree(GetProcessHeap(), 0, This->fmtetc[i].ptd);
-        HeapFree(GetProcessHeap(), 0, This->fmtetc);
+            free(This->fmtetc[i].ptd);
+        free(This->fmtetc);
         if(This->stm) IStream_Release(This->stm);
         if(This->stg) IStorage_Release(This->stg);
         if(This->hmfp) {
@@ -258,7 +258,7 @@ static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
             GlobalUnlock(This->hmfp);
             GlobalFree(This->hmfp);
         }
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -417,7 +417,7 @@ static HRESULT DataObjectImpl_CreateFromHGlobal(HGLOBAL text, LPDATAOBJECT *data
 {
     DataObjectImpl *obj;
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
+    obj = malloc(sizeof(DataObjectImpl));
     obj->IDataObject_iface.lpVtbl = &VT_DataObjectImpl;
     obj->ref = 1;
     obj->text = text;
@@ -426,7 +426,7 @@ static HRESULT DataObjectImpl_CreateFromHGlobal(HGLOBAL text, LPDATAOBJECT *data
     obj->hmfp = NULL;
 
     obj->fmtetc_cnt = 1;
-    obj->fmtetc = HeapAlloc(GetProcessHeap(), 0, obj->fmtetc_cnt*sizeof(FORMATETC));
+    obj->fmtetc = malloc(obj->fmtetc_cnt * sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_TEXT, TYMED_HGLOBAL);
 
     *dataobj = &obj->IDataObject_iface;
@@ -451,7 +451,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     ILockBytes *lbs;
     DEVMODEW dm;
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
+    obj = malloc(sizeof(DataObjectImpl));
     obj->IDataObject_iface.lpVtbl = &VT_DataObjectImpl;
     obj->ref = 1;
     obj->text = GlobalAlloc(GMEM_MOVEABLE, strlen(cmpl_text_data) + 1);
@@ -468,7 +468,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
 
     obj->fmtetc_cnt = 9;
     /* zeroing here since FORMATETC has a hole in it, and it's confusing to have this uninitialised. */
-    obj->fmtetc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, obj->fmtetc_cnt*sizeof(FORMATETC));
+    obj->fmtetc = calloc(obj->fmtetc_cnt, sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_TEXT, TYMED_HGLOBAL);
     InitFormatEtc(obj->fmtetc[1], cf_stream, TYMED_ISTREAM);
     InitFormatEtc(obj->fmtetc[2], cf_storage, TYMED_ISTORAGE);
@@ -479,7 +479,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
         dm.dmSize = sizeof(dm);
         dm.dmDriverExtra = 0;
         lstrcpyW(dm.dmDeviceName, device_name);
-        obj->fmtetc[3].ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
+        obj->fmtetc[3].ptd = malloc(FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
         obj->fmtetc[3].ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra;
         obj->fmtetc[3].ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
         obj->fmtetc[3].ptd->tdDeviceNameOffset = 0;
@@ -1455,7 +1455,7 @@ static void test_flushed_getdata(void)
         dm.dmSize = sizeof(dm);
         dm.dmDriverExtra = 0;
         lstrcpyW(dm.dmDeviceName, device_name);
-        fmt.ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
+        fmt.ptd = malloc(FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
         fmt.ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra;
         fmt.ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
         fmt.ptd->tdDeviceNameOffset = 0;
@@ -1469,7 +1469,7 @@ static void test_flushed_getdata(void)
         ok(med.tymed == TYMED_ISTORAGE, "got %lx\n", med.tymed);
         if(SUCCEEDED(hr)) ReleaseStgMedium(&med);
 
-        HeapFree(GetProcessHeap(), 0, fmt.ptd);
+        free(fmt.ptd);
     }
 
     /* CF_ENHMETAFILE format */

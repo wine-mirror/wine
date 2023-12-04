@@ -610,7 +610,7 @@ static void test_varianttoproperty(void)
         return;
     }
 
-    own_propvalue = HeapAlloc(GetProcessHeap(), 0, sizeof(SERIALIZEDPROPERTYVALUE) + 20);
+    own_propvalue = malloc(sizeof(SERIALIZEDPROPERTYVALUE) + 20);
 
     PropVariantInit(&propvar);
 
@@ -626,7 +626,7 @@ static void test_varianttoproperty(void)
 
     if (len == 0xdeadbeef)
     {
-        HeapFree(GetProcessHeap(), 0, own_propvalue);
+        free(own_propvalue);
         return;
     }
 
@@ -680,7 +680,7 @@ static void test_varianttoproperty(void)
 
     SysFreeString(test_string_bstr);
 
-    HeapFree(GetProcessHeap(), 0, own_propvalue);
+    free(own_propvalue);
 }
 
 START_TEST(propvariant)

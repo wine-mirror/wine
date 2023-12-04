@@ -33,7 +33,6 @@
 #include "shobjidl.h"
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -465,7 +464,7 @@ static ULONG WINAPI RpcStubBuffer_Release(IRpcStubBuffer *iface)
     LONG ref = InterlockedDecrement(&This->ref);
     if(!ref) {
         IRpcStubBuffer_Release(This->buffer);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -573,7 +572,7 @@ static ULONG WINAPI RpcProxyBuffer_Release(IRpcProxyBuffer *iface)
     LONG ref = InterlockedDecrement(&This->ref);
     if(!ref) {
         IRpcProxyBuffer_Release(This->buffer);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -640,7 +639,7 @@ static HRESULT WINAPI PSFactoryBuffer_CreateProxy(IPSFactoryBuffer *iface, IUnkn
     HRESULT hr;
 
     CHECK_EXPECT(CreateProxy);
-    proxy = heap_alloc(sizeof(*proxy));
+    proxy = malloc(sizeof(*proxy));
     proxy->IRpcProxyBuffer_iface.lpVtbl = &RpcProxyBufferVtbl;
     proxy->ref = 1;
 
@@ -662,7 +661,7 @@ static HRESULT WINAPI PSFactoryBuffer_CreateStub(IPSFactoryBuffer *iface, REFIID
 
     ok(server == (IUnknown*)&Test_OleClientSite, "unexpected server %p\n", server);
 
-    stub = heap_alloc(sizeof(*stub));
+    stub = malloc(sizeof(*stub));
     stub->IRpcStubBuffer_iface.lpVtbl = &RpcStubBufferVtbl;
     stub->ref = 1;
 
@@ -742,7 +741,7 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
             DispatchMessageA(&msg);
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    free(data);
 
     CoUninitialize();
 
@@ -754,7 +753,7 @@ static DWORD start_host_object2(struct host_object_data *object_data, HANDLE *th
     DWORD tid = 0;
     struct host_object_data *data;
 
-    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+    data = malloc(sizeof(*data));
     *data = *object_data;
     data->marshal_event = CreateEventA(NULL, FALSE, FALSE, NULL);
     *thread = CreateThread(NULL, 0, host_object_proc, data, 0, &tid);
