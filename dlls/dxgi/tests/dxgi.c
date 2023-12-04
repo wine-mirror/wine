@@ -3523,12 +3523,6 @@ static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    refcount = IDXGISwapChain_Release(swapchain);
-    ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
-
-    refcount = IDXGIFactory_Release(factory);
-    ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
-
     ret = SetEvent(thread_data.finished);
     ok(ret, "Failed to set event, last error %#lx.\n", GetLastError());
     ret = WaitForSingleObject(thread, INFINITE);
@@ -3536,6 +3530,12 @@ static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
     CloseHandle(thread);
     CloseHandle(thread_data.window_created);
     CloseHandle(thread_data.finished);
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
+
+    refcount = IDXGIFactory_Release(factory);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
 }
 
 static void test_inexact_modes(void)
