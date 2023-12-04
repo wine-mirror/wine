@@ -180,11 +180,11 @@ class ThunkType(Enum):
 # - loader_thunk (default: ThunkType.PUBLIC):  sets whether to create a thunk for unix funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
-    "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkEnumerateInstanceLayerProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
-    "vkEnumerateInstanceVersion" : {"dispatch" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkGetInstanceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkCreateInstance" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
+    "vkEnumerateInstanceExtensionProperties" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkEnumerateInstanceLayerProperties" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceVersion" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkGetInstanceProcAddr" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
 
     # Instance functions
     "vkCreateDevice" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
