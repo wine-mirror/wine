@@ -161,73 +161,42 @@ PERF_CRITICAL_FUNCTIONS = [
 # in FUNCTION_OVERRIDES
 DRIVER_VERSION = 11
 
-class ThunkType(Enum):
-    NONE = 1
-    PUBLIC = 2
-    PRIVATE = 3
-
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
 # to do more work compared to a regular thunk or because they are
 # part of the driver interface.
 # - dispatch (default: True):  set whether we need a function pointer in the device / instance dispatch table.
 # - driver (default: False):   sets whether the API is part of the driver interface.
-# - thunk (default: ThunkType.PUBLIC):  sets whether to create a thunk in vulkan_thunks.c.
-#   - NONE means there's a fully custom implementation.
-#   - PUBLIC means the implementation is fully auto generated.
-#   - PRIVATE thunks can be used in custom implementations for
-#     struct conversion.
 FUNCTION_OVERRIDES = {
     # Global functions
-    "vkCreateInstance" : {"driver" : True, "thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
-    "vkEnumerateInstanceExtensionProperties" : {"driver" : True, "thunk" : ThunkType.NONE},
-    "vkEnumerateInstanceLayerProperties" : {"thunk" : ThunkType.NONE},
-    "vkEnumerateInstanceVersion" : {"thunk" : ThunkType.NONE},
-    "vkGetInstanceProcAddr" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkCreateInstance" : {"driver" : True, "extra_param" : "client_ptr"},
+    "vkEnumerateInstanceExtensionProperties" : {"driver" : True},
+    "vkGetInstanceProcAddr" : {"driver" : True},
 
     # Instance functions
-    "vkCreateDevice" : {"thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
-    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
-    "vkEnumerateDeviceExtensionProperties" : {"thunk" : ThunkType.NONE},
-    "vkEnumerateDeviceLayerProperties" : {"thunk" : ThunkType.NONE},
-    "vkEnumeratePhysicalDeviceGroups" : {"thunk" : ThunkType.NONE},
-    "vkEnumeratePhysicalDevices" : {"thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceImageFormatProperties2" : {"thunk" : ThunkType.PRIVATE},
+    "vkCreateDevice" : {"extra_param" : "client_ptr"},
+    "vkDestroyInstance" : {"dispatch" : False, "driver" : True},
+    "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False},
+    "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
+    "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False},
 
     # Device functions
-    "vkAllocateCommandBuffers" : {"thunk" : ThunkType.NONE},
-    "vkCreateCommandPool" : {"thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
-    "vkDestroyCommandPool" : {"thunk" : ThunkType.NONE},
-    "vkDestroyDevice" : {"thunk" : ThunkType.NONE},
-    "vkFreeCommandBuffers" : {"thunk" : ThunkType.NONE},
-    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
-    "vkGetDeviceQueue" : {"thunk" : ThunkType.NONE},
-    "vkGetDeviceQueue2" : {"thunk" : ThunkType.NONE},
-    "vkAllocateMemory" : {"thunk" : ThunkType.PRIVATE},
-    "vkFreeMemory" : {"thunk" : ThunkType.PRIVATE},
-    "vkMapMemory" : {"thunk" : ThunkType.PRIVATE},
-    "vkMapMemory2KHR" : {"thunk" : ThunkType.PRIVATE},
-    "vkUnmapMemory" : {"thunk" : ThunkType.PRIVATE},
-    "vkUnmapMemory2KHR" : {"thunk" : ThunkType.PRIVATE},
-    "vkCreateBuffer" : {"thunk" : ThunkType.PRIVATE},
-    "vkCreateImage" : {"thunk" : ThunkType.PRIVATE},
+    "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
+    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True},
 
     # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkDestroySurfaceKHR" : {"driver" : True},
     "vkGetPhysicalDeviceSurfaceSupportKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"driver" : True, "thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"driver" : True},
     "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"driver" : True},
     "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"driver" : True},
 
     # VK_KHR_get_surface_capabilities2
-    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"driver" : True, "thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"driver" : True},
     "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"driver" : True},
 
     # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkCreateWin32SurfaceKHR" : {"driver" : True},
     "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"driver" : True},
 
     # VK_KHR_swapchain
@@ -237,37 +206,69 @@ FUNCTION_OVERRIDES = {
     "vkQueuePresentKHR" : {"driver" : True},
 
     # VK_KHR_external_fence_capabilities
-    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False},
 
     # VK_KHR_external_memory_capabilities
-    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
-    "vkGetPhysicalDeviceImageFormatProperties2KHR" : {"thunk" : ThunkType.PRIVATE},
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR" : {"dispatch" : False},
 
     # VK_KHR_external_semaphore_capabilities
-    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False, "thunk" : ThunkType.NONE},
-
-    # VK_KHR_device_group_creation
-    "vkEnumeratePhysicalDeviceGroupsKHR" : {"thunk" : ThunkType.NONE},
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False},
 
     # VK_KHR_device_group
     "vkGetDeviceGroupSurfacePresentModesKHR" : {"driver" : True},
     "vkGetPhysicalDevicePresentRectanglesKHR" : {"driver" : True},
+}
 
-    # VK_KHR_deferred_host_operations
-    "vkCreateDeferredOperationKHR" : {"thunk" : ThunkType.NONE},
-    "vkDestroyDeferredOperationKHR" : {"thunk" : ThunkType.NONE},
-
-    # VK_EXT_calibrated_timestamps
-    "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"thunk" : ThunkType.NONE},
-    "vkGetCalibratedTimestampsEXT" : {"thunk" : ThunkType.NONE},
-
-    # VK_EXT_debug_utils
-    "vkCreateDebugUtilsMessengerEXT" : {"thunk" : ThunkType.NONE},
-    "vkDestroyDebugUtilsMessengerEXT" : {"thunk" : ThunkType.NONE},
-
-    # VK_EXT_debug_report
-    "vkCreateDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
-    "vkDestroyDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
+# functions for which the unix thunk is manually implemented
+MANUAL_UNIX_THUNKS = {
+    "vkAllocateCommandBuffers",
+    "vkAllocateMemory",
+    "vkCreateBuffer",
+    "vkCreateCommandPool",
+    "vkCreateDebugReportCallbackEXT",
+    "vkCreateDebugUtilsMessengerEXT",
+    "vkCreateDeferredOperationKHR",
+    "vkCreateDevice",
+    "vkCreateImage",
+    "vkCreateInstance",
+    "vkCreateWin32SurfaceKHR",
+    "vkDestroyCommandPool",
+    "vkDestroyDebugReportCallbackEXT",
+    "vkDestroyDebugUtilsMessengerEXT",
+    "vkDestroyDeferredOperationKHR",
+    "vkDestroyDevice",
+    "vkDestroyInstance",
+    "vkDestroySurfaceKHR",
+    "vkEnumerateDeviceExtensionProperties",
+    "vkEnumerateDeviceLayerProperties",
+    "vkEnumerateInstanceExtensionProperties",
+    "vkEnumerateInstanceLayerProperties",
+    "vkEnumerateInstanceVersion",
+    "vkEnumeratePhysicalDeviceGroups",
+    "vkEnumeratePhysicalDeviceGroupsKHR",
+    "vkEnumeratePhysicalDevices",
+    "vkFreeCommandBuffers",
+    "vkFreeMemory",
+    "vkGetCalibratedTimestampsEXT",
+    "vkGetDeviceProcAddr",
+    "vkGetDeviceQueue",
+    "vkGetDeviceQueue2",
+    "vkGetInstanceProcAddr",
+    "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT",
+    "vkGetPhysicalDeviceExternalBufferProperties",
+    "vkGetPhysicalDeviceExternalBufferPropertiesKHR",
+    "vkGetPhysicalDeviceExternalFenceProperties",
+    "vkGetPhysicalDeviceExternalFencePropertiesKHR",
+    "vkGetPhysicalDeviceExternalSemaphoreProperties",
+    "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR",
+    "vkGetPhysicalDeviceImageFormatProperties2",
+    "vkGetPhysicalDeviceImageFormatProperties2KHR",
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR",
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
+    "vkMapMemory",
+    "vkMapMemory2KHR",
+    "vkUnmapMemory",
+    "vkUnmapMemory2KHR",
 }
 
 # loader functions which are entirely manually implemented
@@ -602,7 +603,6 @@ class VkFunction(object):
         func_info = FUNCTION_OVERRIDES.get(self.name, {})
         self.dispatch = func_info.get("dispatch", True)
         self.driver = func_info.get("driver", False)
-        self.thunk_type = func_info.get("thunk", ThunkType.PUBLIC)
         self.extra_param = func_info.get("extra_param", None)
 
         # Required is set while parsing which APIs and types are required
@@ -655,7 +655,7 @@ class VkFunction(object):
 
         conversions = []
         for param in self.params:
-            conversions.extend(param.get_conversions(self.thunk_type == ThunkType.PUBLIC))
+            conversions.extend(param.get_conversions(unwrap=self.name not in MANUAL_UNIX_THUNKS))
         return conversions
 
     def is_alias(self):
@@ -713,7 +713,7 @@ class VkFunction(object):
 
     def needs_private_thunk(self):
         return self.needs_exposing() and self.name not in MANUAL_LOADER_FUNCTIONS and \
-            self.thunk_type != ThunkType.PUBLIC
+            self.name in MANUAL_UNIX_THUNKS
 
     def needs_exposing(self):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
@@ -840,7 +840,7 @@ class VkFunction(object):
                 body += "        ctx = &wine_deferred_operation_from_handle(params->{})->ctx;\n".format(deferred_op)
 
         # Call any win_to_host conversion calls.
-        unwrap = self.thunk_type == ThunkType.PUBLIC
+        unwrap = self.name not in MANUAL_UNIX_THUNKS
         for p in self.params:
             if p.needs_conversion(conv, unwrap, Direction.INPUT):
                 body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
@@ -850,14 +850,14 @@ class VkFunction(object):
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
-        params = ", ".join([p.variable(conv=conv, unwrap=unwrap, params_prefix=params_prefix) for p in self.params])
+        params = ", ".join([p.variable(conv, unwrap, params_prefix=params_prefix) for p in self.params])
         if self.extra_param:
             if conv:
                 params += ", UlongToPtr({0}{1})".format(params_prefix, self.extra_param)
             else:
                 params += ", {0}{1}".format(params_prefix, self.extra_param)
 
-        if unwrap or self.thunk_type == ThunkType.PUBLIC:
+        if self.name not in MANUAL_UNIX_THUNKS:
             func_prefix = "{0}.p_".format(self.params[0].dispatch_table(params_prefix, conv))
         else:
             func_prefix = "wine_"
@@ -942,7 +942,7 @@ class VkFunction(object):
             thunk += "    } *params = args;\n"
         else:
             thunk += "    struct {0}_params *params = args;\n".format(self.name)
-        thunk += self.body(conv=conv, unwrap=self.thunk_type == ThunkType.PUBLIC, params_prefix="params->")
+        thunk += self.body(conv=conv, unwrap=self.name not in MANUAL_UNIX_THUNKS, params_prefix="params->")
         thunk += "}\n"
         if not conv:
             thunk += "#endif /* _WIN64 */\n"
