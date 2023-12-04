@@ -90,7 +90,6 @@ static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice, 
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
-static VkResult (*pvkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
@@ -128,7 +127,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormats2KHR)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR)
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR)
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
     LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
@@ -525,17 +523,6 @@ static VkResult macdrv_vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevic
             modes);
 }
 
-static VkResult macdrv_vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice phys_dev,
-        uint32_t index, VkSurfaceKHR surface, VkBool32 *supported)
-{
-    struct wine_vk_surface *mac_surface = surface_from_handle(surface);
-
-    TRACE("%p, %u, 0x%s, %p\n", phys_dev, index, wine_dbgstr_longlong(surface), supported);
-
-    return pvkGetPhysicalDeviceSurfaceSupportKHR(phys_dev, index, mac_surface->host_surface,
-            supported);
-}
-
 static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -607,7 +594,6 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkGetPhysicalDeviceSurfaceFormats2KHR,
     macdrv_vkGetPhysicalDeviceSurfaceFormatsKHR,
     macdrv_vkGetPhysicalDeviceSurfacePresentModesKHR,
-    macdrv_vkGetPhysicalDeviceSurfaceSupportKHR,
     macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     macdrv_vkGetSwapchainImagesKHR,
     macdrv_vkQueuePresentKHR,

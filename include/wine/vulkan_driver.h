@@ -13,7 +13,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 11
+#define WINE_VULKAN_DRIVER_VERSION 12
 
 struct vulkan_funcs
 {
@@ -37,7 +37,6 @@ struct vulkan_funcs
     VkResult (*p_vkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
-    VkResult (*p_vkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
     VkResult (*p_vkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
     VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -103,8 +102,6 @@ static inline void *get_vulkan_driver_instance_proc_addr(
         return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR"))
         return vulkan_funcs->p_vkGetPhysicalDeviceSurfacePresentModesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceSupportKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceSupportKHR;
     if (!strcmp(name, "GetPhysicalDeviceWin32PresentationSupportKHR"))
         return vulkan_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
 
