@@ -1582,6 +1582,18 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
+#ifdef __WINE_PE_BUILD
+__ASM_GLOBAL_FUNC( RtlUserThreadStart,
+                   ".seh_endprologue\n\t"
+                   "mov r2, r1\n\t"
+                   "mov r1, r0\n\t"
+                   "mov r0, #0\n\t"
+                   "ldr ip, 1f\n\t"
+                   "ldr ip, [ip]\n\t"
+                   "blx ip\n"
+                   "1:\t.long " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
+                   ".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", %except" )
+#else
 void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
@@ -1594,6 +1606,7 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
     }
     __ENDTRY
 }
+#endif
 
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
