@@ -225,6 +225,7 @@ MANUAL_UNIX_THUNKS = {
     "vkCreateDevice",
     "vkCreateImage",
     "vkCreateInstance",
+    "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroyCommandPool",
     "vkDestroyDebugReportCallbackEXT",
@@ -233,6 +234,7 @@ MANUAL_UNIX_THUNKS = {
     "vkDestroyDevice",
     "vkDestroyInstance",
     "vkDestroySurfaceKHR",
+    "vkDestroySwapchainKHR",
     "vkEnumerateDeviceExtensionProperties",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
@@ -1185,6 +1187,8 @@ class VkHandle(object):
             return "wine_queue_from_handle({0})->host_queue".format(name)
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->host_surface".format(name)
+        if self.name == "VkSwapchainKHR":
+            return "wine_swapchain_from_handle({0})->host_swapchain".format(name)
         if self.is_dispatchable():
             LOGGER.error("Unhandled host handle for: {0}".format(self.name))
         return None

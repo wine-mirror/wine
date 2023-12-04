@@ -1542,6 +1542,47 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
     free(object);
 }
 
+VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCreateInfoKHR *create_info,
+                                   const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain_handle)
+{
+    struct wine_swapchain *object, *old_swapchain = wine_swapchain_from_handle(create_info->oldSwapchain);
+    struct wine_surface *surface = wine_surface_from_handle(create_info->surface);
+    struct wine_device *device = wine_device_from_handle(device_handle);
+    VkSwapchainCreateInfoKHR create_info_host = *create_info;
+    VkResult res;
+
+    if (surface) create_info_host.surface = surface->driver_surface;
+    if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
+
+    if (!(object = calloc(1, sizeof(*object)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    res = device->funcs.p_vkCreateSwapchainKHR(device->host_device, &create_info_host, NULL, &object->host_swapchain);
+    if (res != VK_SUCCESS)
+    {
+        free(object);
+        return res;
+    }
+
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object, object->host_swapchain, object);
+    *swapchain_handle = wine_swapchain_to_handle(object);
+
+    return res;
+}
+
+void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain_handle,
+                                const VkAllocationCallbacks *allocator)
+{
+    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
+
+    if (allocator) FIXME("Support for allocation callbacks not implemented yet\n");
+    if (!swapchain) return;
+
+    device->funcs.p_vkDestroySwapchainKHR(device->host_device, swapchain->host_swapchain, NULL);
+    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, swapchain);
+
+    free(swapchain);
+}
+
 VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *alloc_info,
                                const VkAllocationCallbacks *allocator, VkDeviceMemory *ret)
 {

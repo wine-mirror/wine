@@ -238,6 +238,23 @@ static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
     return (VkSurfaceKHR)(uintptr_t)surface;
 }
 
+struct wine_swapchain
+{
+    VkSwapchainKHR host_swapchain;
+
+    struct wine_vk_mapping mapping;
+};
+
+static inline struct wine_swapchain *wine_swapchain_from_handle(VkSwapchainKHR handle)
+{
+    return (struct wine_swapchain *)(uintptr_t)handle;
+}
+
+static inline VkSwapchainKHR wine_swapchain_to_handle(struct wine_swapchain *surface)
+{
+    return (VkSwapchainKHR)(uintptr_t)surface;
+}
+
 BOOL wine_vk_device_extension_supported(const char *name);
 BOOL wine_vk_instance_extension_supported(const char *name);
 
