@@ -3320,6 +3320,7 @@ static void test_window_refs(IHTMLDocument2 *doc)
     hres = IHTMLXMLHttpRequestFactory_create(xhr_factory, &xhr);
     ok(hres == S_OK, "create failed: %08lx\n", hres);
     IHTMLXMLHttpRequestFactory_Release(xhr_factory);
+    IHTMLXMLHttpRequest_Release(xhr);
 
     hres = IHTMLImageElementFactory_create(image_factory, vempty, vempty, &img_elem);
     ok(hres == S_OK, "create failed: %08lx\n", hres);
