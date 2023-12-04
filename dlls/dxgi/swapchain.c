@@ -2134,14 +2134,12 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
 
     present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     present_info.pNext = NULL;
-    present_info.waitSemaphoreCount = 0;
-    present_info.pWaitSemaphores = NULL;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
     present_info.swapchainCount = 1;
     present_info.pSwapchains = &swapchain->vk_swapchain;
     present_info.pImageIndices = &swapchain->vk_image_index;
     present_info.pResults = NULL;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = &swapchain->vk_semaphores[swapchain->vk_image_index];
 
     if ((vr = vk_funcs->p_vkQueuePresentKHR(vk_queue, &present_info)) >= 0)
         swapchain->vk_image_index = INVALID_VK_IMAGE_INDEX;
