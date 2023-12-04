@@ -166,44 +166,20 @@ DRIVER_VERSION = 11
 # to do more work compared to a regular thunk or because they are
 # part of the driver interface.
 # - dispatch (default: True):  set whether we need a function pointer in the device / instance dispatch table.
-# - driver (default: False):   sets whether the API is part of the driver interface.
 FUNCTION_OVERRIDES = {
     # Global functions
-    "vkCreateInstance" : {"driver" : True, "extra_param" : "client_ptr"},
-    "vkEnumerateInstanceExtensionProperties" : {"driver" : True},
-    "vkGetInstanceProcAddr" : {"driver" : True},
+    "vkCreateInstance" : {"extra_param" : "client_ptr"},
 
     # Instance functions
     "vkCreateDevice" : {"extra_param" : "client_ptr"},
-    "vkDestroyInstance" : {"dispatch" : False, "driver" : True},
+    "vkDestroyInstance" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False},
 
     # Device functions
     "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
-    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True},
-
-    # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfaceSupportKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"driver" : True},
-
-    # VK_KHR_get_surface_capabilities2
-    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"driver" : True},
-    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"driver" : True},
-
-    # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"driver" : True},
-    "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"driver" : True},
-
-    # VK_KHR_swapchain
-    "vkCreateSwapchainKHR" : {"driver" : True},
-    "vkDestroySwapchainKHR" : {"driver" : True},
-    "vkGetSwapchainImagesKHR" : {"driver" : True},
-    "vkQueuePresentKHR" : {"driver" : True},
+    "vkGetDeviceProcAddr" : {"dispatch" : False},
 
     # VK_KHR_external_fence_capabilities
     "vkGetPhysicalDeviceExternalFencePropertiesKHR" : {"dispatch" : False},
@@ -213,10 +189,30 @@ FUNCTION_OVERRIDES = {
 
     # VK_KHR_external_semaphore_capabilities
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR" : {"dispatch" : False},
+}
 
-    # VK_KHR_device_group
-    "vkGetDeviceGroupSurfacePresentModesKHR" : {"driver" : True},
-    "vkGetPhysicalDevicePresentRectanglesKHR" : {"driver" : True},
+# functions for which a user driver entry must be generated
+USER_DRIVER_FUNCS = {
+    "vkCreateInstance",
+    "vkCreateSwapchainKHR",
+    "vkCreateWin32SurfaceKHR",
+    "vkDestroyInstance",
+    "vkDestroySurfaceKHR",
+    "vkDestroySwapchainKHR",
+    "vkEnumerateInstanceExtensionProperties",
+    "vkGetDeviceGroupSurfacePresentModesKHR",
+    "vkGetDeviceProcAddr",
+    "vkGetInstanceProcAddr",
+    "vkGetPhysicalDevicePresentRectanglesKHR",
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR",
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
+    "vkGetPhysicalDeviceSurfaceFormats2KHR",
+    "vkGetPhysicalDeviceSurfaceFormatsKHR",
+    "vkGetPhysicalDeviceSurfacePresentModesKHR",
+    "vkGetPhysicalDeviceSurfaceSupportKHR",
+    "vkGetPhysicalDeviceWin32PresentationSupportKHR",
+    "vkGetSwapchainImagesKHR",
+    "vkQueuePresentKHR",
 }
 
 # functions for which the unix thunk is manually implemented
@@ -602,7 +598,6 @@ class VkFunction(object):
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
         func_info = FUNCTION_OVERRIDES.get(self.name, {})
         self.dispatch = func_info.get("dispatch", True)
-        self.driver = func_info.get("driver", False)
         self.extra_param = func_info.get("extra_param", None)
 
         # Required is set while parsing which APIs and types are required
@@ -678,7 +673,7 @@ class VkFunction(object):
 
     def is_driver_func(self):
         """ Returns if function is part of Wine driver interface. """
-        return self.driver
+        return self.name in USER_DRIVER_FUNCS
 
     def is_global_func(self):
         # Treat vkGetInstanceProcAddr as a global function as it
