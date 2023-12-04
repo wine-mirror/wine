@@ -1296,7 +1296,7 @@ static HRESULT WINAPI HTMLDocument_get_mimeType(IHTMLDocument2 *iface, BSTR *p)
 
     *p = NULL;
 
-    if(This->window && This->window->base.outer_window->readystate == READYSTATE_UNINITIALIZED)
+    if(This->window && !This->window->navigation_start_time)
         return (*p = SysAllocString(L"")) ? S_OK : E_FAIL;
 
     nsAString_InitDepend(&nsstr, NULL);
