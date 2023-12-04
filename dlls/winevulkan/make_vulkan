@@ -177,18 +177,17 @@ class ThunkType(Enum):
 #   - PUBLIC means the implementation is fully auto generated.
 #   - PRIVATE thunks can be used in custom implementations for
 #     struct conversion.
-# - loader_thunk (default: ThunkType.PUBLIC):  sets whether to create a thunk for unix funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
-    "vkCreateInstance" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkEnumerateInstanceExtensionProperties" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkEnumerateInstanceLayerProperties" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
-    "vkEnumerateInstanceVersion" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkGetInstanceProcAddr" : {"driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkCreateInstance" : {"driver" : True, "thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
+    "vkEnumerateInstanceExtensionProperties" : {"driver" : True, "thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceLayerProperties" : {"thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceVersion" : {"thunk" : ThunkType.NONE},
+    "vkGetInstanceProcAddr" : {"driver" : True, "thunk" : ThunkType.NONE},
 
     # Instance functions
-    "vkCreateDevice" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
+    "vkCreateDevice" : {"thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
+    "vkDestroyInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
     "vkEnumerateDeviceExtensionProperties" : {"thunk" : ThunkType.NONE},
     "vkEnumerateDeviceLayerProperties" : {"thunk" : ThunkType.NONE},
     "vkEnumeratePhysicalDeviceGroups" : {"thunk" : ThunkType.NONE},
@@ -197,16 +196,14 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
     "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "thunk" : ThunkType.NONE},
     "vkGetPhysicalDeviceImageFormatProperties2" : {"thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceProperties2" : {"loader_thunk" : ThunkType.PRIVATE},
-    "vkGetPhysicalDeviceProperties2KHR" : {"loader_thunk" : ThunkType.PRIVATE},
 
     # Device functions
-    "vkAllocateCommandBuffers" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkCreateCommandPool" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkDestroyCommandPool" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkDestroyDevice" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkFreeCommandBuffers" : {"thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
-    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
+    "vkAllocateCommandBuffers" : {"thunk" : ThunkType.NONE},
+    "vkCreateCommandPool" : {"thunk" : ThunkType.NONE, "extra_param" : "client_ptr"},
+    "vkDestroyCommandPool" : {"thunk" : ThunkType.NONE},
+    "vkDestroyDevice" : {"thunk" : ThunkType.NONE},
+    "vkFreeCommandBuffers" : {"thunk" : ThunkType.NONE},
+    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
     "vkGetDeviceQueue" : {"thunk" : ThunkType.NONE},
     "vkGetDeviceQueue2" : {"thunk" : ThunkType.NONE},
     "vkAllocateMemory" : {"thunk" : ThunkType.PRIVATE},
@@ -271,6 +268,29 @@ FUNCTION_OVERRIDES = {
     # VK_EXT_debug_report
     "vkCreateDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
     "vkDestroyDebugReportCallbackEXT" : {"thunk" : ThunkType.NONE},
+}
+
+# loader functions which are entirely manually implemented
+MANUAL_LOADER_FUNCTIONS = {
+    "vkEnumerateInstanceLayerProperties",
+    "vkGetDeviceProcAddr",
+    "vkGetInstanceProcAddr",
+}
+
+# functions which loader thunks are manually implemented
+MANUAL_LOADER_THUNKS = {
+    "vkAllocateCommandBuffers",
+    "vkCreateCommandPool",
+    "vkCreateDevice",
+    "vkCreateInstance",
+    "vkDestroyCommandPool",
+    "vkDestroyDevice",
+    "vkDestroyInstance",
+    "vkEnumerateInstanceExtensionProperties",
+    "vkEnumerateInstanceVersion",
+    "vkFreeCommandBuffers",
+    "vkGetPhysicalDeviceProperties2",
+    "vkGetPhysicalDeviceProperties2KHR",
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
@@ -583,7 +603,6 @@ class VkFunction(object):
         self.dispatch = func_info.get("dispatch", True)
         self.driver = func_info.get("driver", False)
         self.thunk_type = func_info.get("thunk", ThunkType.PUBLIC)
-        self.loader_thunk_type = func_info.get("loader_thunk", ThunkType.PUBLIC)
         self.extra_param = func_info.get("extra_param", None)
 
         # Required is set while parsing which APIs and types are required
@@ -693,7 +712,7 @@ class VkFunction(object):
         return self.dispatch
 
     def needs_private_thunk(self):
-        return self.needs_exposing() and self.loader_thunk_type != ThunkType.NONE and \
+        return self.needs_exposing() and self.name not in MANUAL_LOADER_FUNCTIONS and \
             self.thunk_type != ThunkType.PUBLIC
 
     def needs_exposing(self):
@@ -2700,7 +2719,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
                 continue
 
             f.write(vk_func.thunk(prefix="thunk64_"))
@@ -2771,7 +2790,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
                 continue
 
             if vk_func.is_perf_critical():
@@ -2795,7 +2814,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
                 continue
 
             if vk_func.is_perf_critical():
@@ -2894,7 +2913,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type != ThunkType.PUBLIC:
+            if vk_func.name in MANUAL_LOADER_THUNKS | MANUAL_LOADER_FUNCTIONS:
                 continue
 
             f.write(vk_func.loader_thunk())
@@ -2979,7 +2998,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
                 continue
 
             f.write("    unix_{0},\n".format(vk_func.name))
@@ -2989,7 +3008,7 @@ class VkGenerator(object):
         for vk_func in self.registry.funcs.values():
             if not vk_func.needs_exposing():
                 continue
-            if vk_func.loader_thunk_type == ThunkType.NONE:
+            if vk_func.name in MANUAL_LOADER_FUNCTIONS:
                 continue
 
             f.write("struct {0}_params\n".format(vk_func.name))
