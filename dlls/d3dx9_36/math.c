@@ -928,8 +928,8 @@ static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack *iface)
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, stack->stack);
-        HeapFree(GetProcessHeap(), 0, stack);
+        free(stack->stack);
+        free(stack);
     }
     return refcount;
 }
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Pop(ID3DXMatrixStack *iface)
         D3DXMATRIX *new_stack;
 
         new_size = This->stack_size / 2;
-        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(*new_stack));
+        new_stack = realloc(This->stack, new_size * sizeof(*new_stack));
         if (new_stack)
         {
             This->stack_size = new_size;
@@ -1029,7 +1029,7 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_Push(ID3DXMatrixStack *iface)
         if (This->stack_size > UINT_MAX / 2) return E_OUTOFMEMORY;
 
         new_size = This->stack_size * 2;
-        new_stack = HeapReAlloc(GetProcessHeap(), 0, This->stack, new_size * sizeof(*new_stack));
+        new_stack = realloc(This->stack, new_size * sizeof(*new_stack));
         if (!new_stack) return E_OUTOFMEMORY;
 
         This->stack_size = new_size;
@@ -1174,7 +1174,7 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack)
 
     TRACE("flags %#lx, stack %p.\n", flags, stack);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         *stack = NULL;
         return E_OUTOFMEMORY;
@@ -1182,9 +1182,9 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack)
     object->ID3DXMatrixStack_iface.lpVtbl = &ID3DXMatrixStack_Vtbl;
     object->ref = 1;
 
-    if (!(object->stack = HeapAlloc(GetProcessHeap(), 0, INITIAL_STACK_SIZE * sizeof(*object->stack))))
+    if (!(object->stack = malloc(INITIAL_STACK_SIZE * sizeof(*object->stack))))
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         *stack = NULL;
         return E_OUTOFMEMORY;
     }

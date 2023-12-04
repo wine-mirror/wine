@@ -75,7 +75,7 @@ static ULONG WINAPI d3dx9_line_Release(ID3DXLine *iface)
     if (!refcount)
     {
         IDirect3DDevice9_Release(line->device);
-        HeapFree(GetProcessHeap(), 0, line);
+        free(line);
     }
 
     return refcount;
@@ -309,7 +309,7 @@ HRESULT WINAPI D3DXCreateLine(struct IDirect3DDevice9 *device, struct ID3DXLine 
     if (!device || !line)
         return D3DERR_INVALIDCALL;
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3DXLine_iface.lpVtbl = &d3dx9_line_vtbl;

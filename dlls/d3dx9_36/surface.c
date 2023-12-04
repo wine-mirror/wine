@@ -869,7 +869,7 @@ static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
     TRACE("Converting DIB file to BMP\n");
 
     new_size = *size + sizeof(BITMAPFILEHEADER);
-    new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+    new_data = malloc(new_size);
     CopyMemory(new_data + sizeof(BITMAPFILEHEADER), *data, *size);
 
     /* Add BMP header */
@@ -1058,7 +1058,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
         IWICBitmapDecoder_Release(decoder);
 
     if (dib)
-        HeapFree(GetProcessHeap(), 0, (void*)data);
+        free((void*)data);
 
     if (FAILED(hr)) {
         TRACE("Invalid or unsupported image file\n");
@@ -1090,11 +1090,11 @@ HRESULT WINAPI D3DXGetImageInfoFromFileA(const char *file, D3DXIMAGE_INFO *info)
     if( !file ) return D3DERR_INVALIDCALL;
 
     strlength = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
-    widename = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*widename));
+    widename = malloc(strlength * sizeof(*widename));
     MultiByteToWideChar(CP_ACP, 0, file, -1, widename, strlength);
 
     hr = D3DXGetImageInfoFromFileW(widename, info);
-    HeapFree(GetProcessHeap(), 0, widename);
+    free(widename);
 
     return hr;
 }
@@ -1286,7 +1286,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
         WICColor *colors = NULL;
 
         pitch = formatdesc->bytes_per_pixel * wicrect.Width;
-        buffer = HeapAlloc(GetProcessHeap(), 0, pitch * wicrect.Height);
+        buffer = malloc(pitch * wicrect.Height);
 
         hr = IWICBitmapFrameDecode_CopyPixels(bitmapframe, &wicrect, pitch,
                                               pitch * wicrect.Height, buffer);
@@ -1303,8 +1303,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
                 hr = IWICPalette_GetColorCount(wic_palette, &nb_colors);
             if (SUCCEEDED(hr))
             {
-                colors = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(colors[0]));
-                palette = HeapAlloc(GetProcessHeap(), 0, nb_colors * sizeof(palette[0]));
+                colors = malloc(nb_colors * sizeof(colors[0]));
+                palette = malloc(nb_colors * sizeof(palette[0]));
                 if (!colors || !palette)
                     hr = E_OUTOFMEMORY;
             }
@@ -1334,9 +1334,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
                                            palette, &rect, dwFilter, Colorkey);
         }
 
-        HeapFree(GetProcessHeap(), 0, colors);
-        HeapFree(GetProcessHeap(), 0, palette);
-        HeapFree(GetProcessHeap(), 0, buffer);
+        free(colors);
+        free(palette);
+        free(buffer);
     }
 
     IWICBitmapFrameDecode_Release(bitmapframe);
@@ -1349,7 +1349,7 @@ cleanup_err:
         IWICImagingFactory_Release(factory);
 
     if (imginfo.ImageFileFormat == D3DXIFF_DIB)
-        HeapFree(GetProcessHeap(), 0, (void*)pSrcData);
+        free((void*)pSrcData);
 
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
@@ -1377,12 +1377,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileA(IDirect3DSurface9 *dst_surface,
         return D3DERR_INVALIDCALL;
 
     strlength = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0);
-    src_file_w = HeapAlloc(GetProcessHeap(), 0, strlength * sizeof(*src_file_w));
+    src_file_w = malloc(strlength * sizeof(*src_file_w));
     MultiByteToWideChar(CP_ACP, 0, src_file, -1, src_file_w, strlength);
 
     hr = D3DXLoadSurfaceFromFileW(dst_surface, dst_palette, dst_rect,
             src_file_w, src_rect, filter, color_key, src_info);
-    HeapFree(GetProcessHeap(), 0, src_file_w);
+    free(src_file_w);
 
     return hr;
 }
@@ -2040,7 +2040,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 
             src_pitch = src_pitch * srcformatdesc->block_width / srcformatdesc->block_byte_count;
 
-            src_uncompressed = heap_alloc(src_size.width * src_size.height * sizeof(DWORD));
+            src_uncompressed = malloc(src_size.width * src_size.height * sizeof(DWORD));
             if (!src_uncompressed)
             {
                 unlock_surface(dst_surface, &dst_rect_aligned, surface, FALSE);
@@ -2086,15 +2086,16 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
                     || dst_rect->top != dst_rect_aligned.top
                     || dst_rect->right != dst_rect_aligned.right
                     || dst_rect->bottom != dst_rect_aligned.bottom;
+            size_t dst_uncompressed_size = dst_size_aligned.width * dst_size_aligned.height * sizeof(DWORD);
 
-            dst_uncompressed = HeapAlloc(GetProcessHeap(), dst_misaligned ? HEAP_ZERO_MEMORY : 0,
-                    dst_size_aligned.width * dst_size_aligned.height * sizeof(DWORD));
+            dst_uncompressed = malloc(dst_uncompressed_size);
             if (!dst_uncompressed)
             {
-                heap_free(src_uncompressed);
+                free(src_uncompressed);
                 unlock_surface(dst_surface, &dst_rect_aligned, surface, FALSE);
                 return E_OUTOFMEMORY;
             }
+            if (dst_misaligned) memset(dst_uncompressed, 0, dst_uncompressed_size);
             dst_pitch = dst_size_aligned.width * sizeof(DWORD);
             dst_format = get_format_info(D3DFMT_A8B8G8R8);
             dst_mem = dst_uncompressed + (dst_rect->top - dst_rect_aligned.top) * dst_pitch
@@ -2123,7 +2124,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
                     dst_mem, dst_pitch, 0, &dst_size, dst_format, color_key, src_palette);
         }
 
-        heap_free(src_uncompressed);
+        free(src_uncompressed);
 
         if (dst_uncompressed)
         {
@@ -2149,7 +2150,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
             tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height,
                     dst_uncompressed, gl_format, lockrect.pBits,
                     lockrect.Pitch);
-            heap_free(dst_uncompressed);
+            free(dst_uncompressed);
         }
     }
 
@@ -2323,7 +2324,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
     if (!dst_filename) return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, NULL, 0);
-    filename = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    filename = malloc(len * sizeof(WCHAR));
     if (!filename) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, dst_filename, -1, filename, len);
 
@@ -2334,7 +2335,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileA(const char *dst_filename, D3DXIMAGE_FILEFO
         ID3DXBuffer_Release(buffer);
     }
 
-    HeapFree(GetProcessHeap(), 0, filename);
+    free(filename);
     return hr;
 }
 
@@ -2507,7 +2508,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             size.height = height;
             size.depth = 1;
             dst_pitch = width * dst_format_desc->bytes_per_pixel;
-            dst_data = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height);
+            dst_data = malloc(dst_pitch * height);
             if (!dst_data)
             {
                 hr = E_OUTOFMEMORY;
@@ -2515,7 +2516,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             }
             if (FAILED(hr = lock_surface(src_surface, src_rect, &locked_rect, &temp_surface, FALSE)))
             {
-                HeapFree(GetProcessHeap(), 0, dst_data);
+                free(dst_data);
                 goto cleanup;
             }
             convert_argb_pixels(locked_rect.pBits, locked_rect.Pitch, 0, &size, src_format_desc,
@@ -2523,7 +2524,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             unlock_surface(src_surface, src_rect, temp_surface, FALSE);
 
             IWICBitmapFrameEncode_WritePixels(frame, height, dst_pitch, dst_pitch * height, dst_data);
-            HeapFree(GetProcessHeap(), 0, dst_data);
+            free(dst_data);
         }
 
         hr = IWICBitmapFrameEncode_Commit(frame);

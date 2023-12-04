@@ -88,12 +88,12 @@ static ULONG WINAPI d3dx9_skin_info_Release(ID3DXSkinInfo *iface)
 
         for (i = 0; i < skin->num_bones; ++i)
         {
-            HeapFree(GetProcessHeap(), 0, skin->bones[i].name);
-            HeapFree(GetProcessHeap(), 0, skin->bones[i].vertices);
-            HeapFree(GetProcessHeap(), 0, skin->bones[i].weights);
+            free(skin->bones[i].name);
+            free(skin->bones[i].vertices);
+            free(skin->bones[i].weights);
         }
-        HeapFree(GetProcessHeap(), 0, skin->bones);
-        HeapFree(GetProcessHeap(), 0, skin);
+        free(skin->bones);
+        free(skin);
     }
 
     return refcount;
@@ -114,12 +114,12 @@ static HRESULT WINAPI d3dx9_skin_info_SetBoneInfluence(ID3DXSkinInfo *iface,
         return D3DERR_INVALIDCALL;
 
     if (num_influences) {
-        new_vertices = HeapAlloc(GetProcessHeap(), 0, num_influences * sizeof(*vertices));
+        new_vertices = malloc(num_influences * sizeof(*vertices));
         if (!new_vertices)
             return E_OUTOFMEMORY;
-        new_weights = HeapAlloc(GetProcessHeap(), 0, num_influences * sizeof(*weights));
+        new_weights = malloc(num_influences * sizeof(*weights));
         if (!new_weights) {
-            HeapFree(GetProcessHeap(), 0, new_vertices);
+            free(new_vertices);
             return E_OUTOFMEMORY;
         }
         memcpy(new_vertices, vertices, num_influences * sizeof(*vertices));
@@ -127,8 +127,8 @@ static HRESULT WINAPI d3dx9_skin_info_SetBoneInfluence(ID3DXSkinInfo *iface,
     }
     bone = &skin->bones[bone_num];
     bone->num_influences = num_influences;
-    HeapFree(GetProcessHeap(), 0, bone->vertices);
-    HeapFree(GetProcessHeap(), 0, bone->weights);
+    free(bone->vertices);
+    free(bone->weights);
     bone->vertices = new_vertices;
     bone->weights = new_weights;
 
@@ -240,19 +240,16 @@ static HRESULT WINAPI d3dx9_skin_info_SetBoneName(ID3DXSkinInfo *iface, DWORD bo
 {
     struct d3dx9_skin_info *skin = impl_from_ID3DXSkinInfo(iface);
     char *new_name;
-    size_t size;
 
     TRACE("iface %p, bone_idx %lu, name %s.\n", iface, bone_idx, debugstr_a(name));
 
     if (bone_idx >= skin->num_bones || !name)
         return D3DERR_INVALIDCALL;
 
-    size = strlen(name) + 1;
-    new_name = HeapAlloc(GetProcessHeap(), 0, size);
+    new_name = strdup(name);
     if (!new_name)
         return E_OUTOFMEMORY;
-    memcpy(new_name, name, size);
-    HeapFree(GetProcessHeap(), 0, skin->bones[bone_idx].name);
+    free(skin->bones[bone_idx].name);
     skin->bones[bone_idx].name = new_name;
 
     return D3D_OK;
@@ -476,7 +473,7 @@ HRESULT WINAPI D3DXCreateSkinInfo(DWORD vertex_count, const D3DVERTEXELEMENT9 *d
     if (!skin_info || !declaration)
         return D3DERR_INVALIDCALL;
 
-    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -487,7 +484,7 @@ HRESULT WINAPI D3DXCreateSkinInfo(DWORD vertex_count, const D3DVERTEXELEMENT9 *d
     object->vertex_declaration[0] = empty_declaration;
     object->fvf = 0;
 
-    object->bones = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bone_count * sizeof(*object->bones));
+    object->bones = calloc(bone_count, sizeof(*object->bones));
     if (!object->bones) {
         hr = E_OUTOFMEMORY;
         goto error;
@@ -500,8 +497,8 @@ HRESULT WINAPI D3DXCreateSkinInfo(DWORD vertex_count, const D3DVERTEXELEMENT9 *d
 
     return D3D_OK;
 error:
-    HeapFree(GetProcessHeap(), 0, object->bones);
-    HeapFree(GetProcessHeap(), 0, object);
+    free(object->bones);
+    free(object);
     return hr;
 }
 

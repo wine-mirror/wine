@@ -132,9 +132,9 @@ static ULONG WINAPI d3dx9_mesh_Release(ID3DXMesh *iface)
         if (mesh->vertex_declaration)
             IDirect3DVertexDeclaration9_Release(mesh->vertex_declaration);
         IDirect3DDevice9_Release(mesh->device);
-        HeapFree(GetProcessHeap(), 0, mesh->attrib_buffer);
-        HeapFree(GetProcessHeap(), 0, mesh->attrib_table);
-        HeapFree(GetProcessHeap(), 0, mesh);
+        free(mesh->attrib_buffer);
+        free(mesh->attrib_table);
+        free(mesh);
     }
 
     return refcount;
@@ -755,7 +755,7 @@ static HRESULT WINAPI d3dx9_mesh_CloneMesh(struct ID3DXMesh *iface, DWORD option
     if (This->attrib_table_size)
     {
         cloned_this->attrib_table_size = This->attrib_table_size;
-        cloned_this->attrib_table = HeapAlloc(GetProcessHeap(), 0, This->attrib_table_size * sizeof(*This->attrib_table));
+        cloned_this->attrib_table = malloc(This->attrib_table_size * sizeof(*This->attrib_table));
         if (!cloned_this->attrib_table) {
             hr = E_OUTOFMEMORY;
             goto error;
@@ -885,10 +885,10 @@ static HRESULT init_edge_face_map(struct edge_face_map *edge_face_map, const DWO
     DWORD face, edge;
     DWORD i;
 
-    edge_face_map->lists = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(*edge_face_map->lists));
+    edge_face_map->lists = malloc(3 * num_faces * sizeof(*edge_face_map->lists));
     if (!edge_face_map->lists) return E_OUTOFMEMORY;
 
-    edge_face_map->entries = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(*edge_face_map->entries));
+    edge_face_map->entries = malloc(3 * num_faces * sizeof(*edge_face_map->entries));
     if (!edge_face_map->entries) return E_OUTOFMEMORY;
 
 
@@ -938,7 +938,7 @@ static DWORD *generate_identity_point_reps(DWORD num_vertices)
         DWORD *id_point_reps;
         DWORD i;
 
-        id_point_reps = HeapAlloc(GetProcessHeap(), 0, num_vertices * sizeof(*id_point_reps));
+        id_point_reps = malloc(num_vertices * sizeof(*id_point_reps));
         if (!id_point_reps)
             return NULL;
 
@@ -994,7 +994,7 @@ static HRESULT WINAPI d3dx9_mesh_ConvertPointRepsToAdjacency(ID3DXMesh *iface,
         /* Widen 16 bit to 32 bit */
         DWORD i;
         WORD *ib_16bit = ib_ptr;
-        ib = HeapAlloc(GetProcessHeap(), 0, 3 * num_faces * sizeof(DWORD));
+        ib = malloc(3 * num_faces * sizeof(DWORD));
         if (!ib)
         {
             hr = E_OUTOFMEMORY;
@@ -1031,10 +1031,10 @@ static HRESULT WINAPI d3dx9_mesh_ConvertPointRepsToAdjacency(ID3DXMesh *iface,
 
     hr = D3D_OK;
 cleanup:
-    HeapFree(GetProcessHeap(), 0, id_point_reps);
-    if (indices_are_16_bit) HeapFree(GetProcessHeap(), 0, ib);
-    HeapFree(GetProcessHeap(), 0, edge_face_map.lists);
-    HeapFree(GetProcessHeap(), 0, edge_face_map.entries);
+    free(id_point_reps);
+    if (indices_are_16_bit) free(ib);
+    free(edge_face_map.lists);
+    free(edge_face_map.entries);
     if(ib_ptr) iface->lpVtbl->UnlockIndexBuffer(iface);
     return hr;
 }
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    if (!(new_indices = HeapAlloc(GetProcessHeap(), 0, 3 * mesh->numfaces * sizeof(*indices))))
+    if (!(new_indices = malloc(3 * mesh->numfaces * sizeof(*indices))))
         return E_OUTOFMEMORY;
 
     if (mesh->options & D3DXMESH_32BIT)
@@ -1147,7 +1147,7 @@ static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
         if (FAILED(hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void **)&indices_16bit)))
             goto cleanup;
 
-        if (!(indices = HeapAlloc(GetProcessHeap(), 0, 3 * mesh->numfaces * sizeof(*indices))))
+        if (!(indices = malloc(3 * mesh->numfaces * sizeof(*indices))))
         {
             hr = E_OUTOFMEMORY;
             goto cleanup;
@@ -1190,9 +1190,9 @@ static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
     {
         if (indices_16bit)
             iface->lpVtbl->UnlockIndexBuffer(iface);
-        HeapFree(GetProcessHeap(), 0, indices);
+        free(indices);
     }
-    HeapFree(GetProcessHeap(), 0, new_indices);
+    free(new_indices);
     return hr;
 }
 
@@ -1235,7 +1235,7 @@ static HRESULT WINAPI d3dx9_mesh_GenerateAdjacency(ID3DXMesh *iface, float epsil
     buffer_size = This->numfaces * 3 * sizeof(*shared_indices) + This->numvertices * sizeof(*sorted_vertices);
     if (!(This->options & D3DXMESH_32BIT))
         buffer_size += This->numfaces * 3 * sizeof(*indices);
-    shared_indices = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+    shared_indices = malloc(buffer_size);
     if (!shared_indices)
         return E_OUTOFMEMORY;
     sorted_vertices = (struct vertex_metadata*)(shared_indices + This->numfaces * 3);
@@ -1353,7 +1353,7 @@ static HRESULT WINAPI d3dx9_mesh_GenerateAdjacency(ID3DXMesh *iface, float epsil
 cleanup:
     if (indices) iface->lpVtbl->UnlockIndexBuffer(iface);
     if (vertices) iface->lpVtbl->UnlockVertexBuffer(iface);
-    HeapFree(GetProcessHeap(), 0, shared_indices);
+    free(shared_indices);
     return hr;
 }
 
@@ -1429,7 +1429,7 @@ static HRESULT WINAPI d3dx9_mesh_LockAttributeBuffer(ID3DXMesh *iface, DWORD fla
         D3DXATTRIBUTERANGE *attrib_table = mesh->attrib_table;
         mesh->attrib_table_size = 0;
         mesh->attrib_table = NULL;
-        HeapFree(GetProcessHeap(), 0, attrib_table);
+        free(attrib_table);
     }
 
     *data = mesh->attrib_buffer;
@@ -1600,14 +1600,14 @@ static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *in
     DWORD **sorted_attrib_ptr_buffer = NULL;
     DWORD i;
 
-    sorted_attrib_ptr_buffer = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(*sorted_attrib_ptr_buffer));
+    sorted_attrib_ptr_buffer = malloc(This->numfaces * sizeof(*sorted_attrib_ptr_buffer));
     if (!sorted_attrib_ptr_buffer)
         return E_OUTOFMEMORY;
 
-    *face_remap = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(**face_remap));
+    *face_remap = malloc(This->numfaces * sizeof(**face_remap));
     if (!*face_remap)
     {
-        HeapFree(GetProcessHeap(), 0, sorted_attrib_ptr_buffer);
+        free(sorted_attrib_ptr_buffer);
         return E_OUTOFMEMORY;
     }
 
@@ -1674,7 +1674,7 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
     hr = iface->lpVtbl->LockIndexBuffer(iface, 0, &indices);
     if (FAILED(hr)) goto cleanup;
 
-    dword_indices = HeapAlloc(GetProcessHeap(), 0, This->numfaces * 3 * sizeof(DWORD));
+    dword_indices = malloc(This->numfaces * 3 * sizeof(DWORD));
     if (!dword_indices) return E_OUTOFMEMORY;
     if (This->options & D3DXMESH_32BIT) {
         memcpy(dword_indices, indices, This->numfaces * 3 * sizeof(DWORD));
@@ -1746,7 +1746,7 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
         DWORD attrib_table_size;
 
         attrib_table_size = count_attributes(sorted_attrib_buffer, This->numfaces);
-        attrib_table = HeapAlloc(GetProcessHeap(), 0, attrib_table_size * sizeof(*attrib_table));
+        attrib_table = malloc(attrib_table_size * sizeof(*attrib_table));
         if (!attrib_table) {
             hr = E_OUTOFMEMORY;
             goto cleanup;
@@ -1772,7 +1772,7 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
         fill_attribute_table(attrib_buffer, This->numfaces, indices,
                              This->options & D3DXMESH_32BIT, attrib_table);
 
-        HeapFree(GetProcessHeap(), 0, This->attrib_table);
+        free(This->attrib_table);
         This->attrib_table = attrib_table;
         This->attrib_table_size = attrib_table_size;
     } else {
@@ -1821,9 +1821,9 @@ static HRESULT WINAPI d3dx9_mesh_OptimizeInplace(ID3DXMesh *iface, DWORD flags, 
 
     hr = D3D_OK;
 cleanup:
-    HeapFree(GetProcessHeap(), 0, sorted_attrib_buffer);
-    HeapFree(GetProcessHeap(), 0, face_remap);
-    HeapFree(GetProcessHeap(), 0, dword_indices);
+    free(sorted_attrib_buffer);
+    free(face_remap);
+    free(dword_indices);
     if (vertex_remap) ID3DXBuffer_Release(vertex_remap);
     if (vertex_buffer) IDirect3DVertexBuffer9_Release(vertex_buffer);
     if (attrib_buffer) iface->lpVtbl->UnlockAttributeBuffer(iface);
@@ -1842,7 +1842,7 @@ static HRESULT WINAPI d3dx9_mesh_SetAttributeTable(ID3DXMesh *iface,
     if (attrib_table_size) {
         size_t size = attrib_table_size * sizeof(*attrib_table);
 
-        new_table = HeapAlloc(GetProcessHeap(), 0, size);
+        new_table = malloc(size);
         if (!new_table)
             return E_OUTOFMEMORY;
 
@@ -1850,7 +1850,7 @@ static HRESULT WINAPI d3dx9_mesh_SetAttributeTable(ID3DXMesh *iface,
     } else if (attrib_table) {
         return D3DERR_INVALIDCALL;
     }
-    HeapFree(GetProcessHeap(), 0, mesh->attrib_table);
+    free(mesh->attrib_table);
     mesh->attrib_table = new_table;
     mesh->attrib_table_size = attrib_table_size;
 
@@ -2536,12 +2536,12 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options,
         return hr;
     }
 
-    attrib_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, numfaces * sizeof(*attrib_buffer));
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    attrib_buffer = calloc(numfaces, sizeof(*attrib_buffer));
+    object = calloc(1, sizeof(*object));
     if (object == NULL || attrib_buffer == NULL)
     {
-        HeapFree(GetProcessHeap(), 0, object);
-        HeapFree(GetProcessHeap(), 0, attrib_buffer);
+        free(object);
+        free(attrib_buffer);
         IDirect3DIndexBuffer9_Release(index_buffer);
         IDirect3DVertexBuffer9_Release(vertex_buffer);
         IDirect3DVertexDeclaration9_Release(vertex_declaration);
@@ -2625,14 +2625,13 @@ static HRESULT parse_texture_filename(ID3DXFileData *filedata, char **filename_o
     SIZE_T data_size;
     BYTE *data;
     char *filename_in;
-    char *filename = NULL;
 
     /* template TextureFilename {
      *     STRING filename;
      * }
      */
 
-    HeapFree(GetProcessHeap(), 0, *filename_out);
+    free(*filename_out);
     *filename_out = NULL;
 
     hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
@@ -2647,14 +2646,10 @@ static HRESULT parse_texture_filename(ID3DXFileData *filedata, char **filename_o
     }
     filename_in = *(char **)data;
 
-    filename = HeapAlloc(GetProcessHeap(), 0, strlen(filename_in) + 1);
-    if (!filename) {
+    if (!(*filename_out = strdup(filename_in))) {
         filedata->lpVtbl->Unlock(filedata);
         return E_OUTOFMEMORY;
     }
-
-    strcpy(filename, filename_in);
-    *filename_out = filename;
 
     filedata->lpVtbl->Unlock(filedata);
 
@@ -2750,9 +2745,9 @@ static void destroy_materials(struct mesh_data *mesh)
     unsigned int i;
 
     for (i = 0; i < mesh->num_materials; ++i)
-        HeapFree(GetProcessHeap(), 0, mesh->materials[i].pTextureFilename);
-    HeapFree(GetProcessHeap(), 0, mesh->materials);
-    HeapFree(GetProcessHeap(), 0, mesh->material_indices);
+        free(mesh->materials[i].pTextureFilename);
+    free(mesh->materials);
+    free(mesh->material_indices);
     mesh->num_materials = 0;
     mesh->materials = NULL;
     mesh->material_indices = NULL;
@@ -2826,8 +2821,8 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
         }
     }
 
-    mesh->materials = HeapAlloc(GetProcessHeap(), 0, material_count * sizeof(*mesh->materials));
-    mesh->material_indices = HeapAlloc(GetProcessHeap(), 0, mesh->num_poly_faces * sizeof(*mesh->material_indices));
+    mesh->materials = malloc(material_count * sizeof(*mesh->materials));
+    mesh->material_indices = malloc(mesh->num_poly_faces * sizeof(*mesh->material_indices));
     if (!mesh->materials || !mesh->material_indices) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -2882,7 +2877,7 @@ static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *m
     SIZE_T data_size;
     HRESULT hr;
 
-    HeapFree(GetProcessHeap(), 0, mesh->tex_coords);
+    free(mesh->tex_coords);
     mesh->tex_coords = NULL;
 
     hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
@@ -2918,7 +2913,7 @@ static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *m
         goto end;
     }
 
-    mesh->tex_coords = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(*mesh->tex_coords));
+    mesh->tex_coords = malloc(mesh->num_vertices * sizeof(*mesh->tex_coords));
     if (!mesh->tex_coords) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -2941,7 +2936,7 @@ static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *me
     SIZE_T data_size;
     HRESULT hr;
 
-    HeapFree(GetProcessHeap(), 0, mesh->vertex_colors);
+    free(mesh->vertex_colors);
     mesh->vertex_colors = NULL;
 
     hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
@@ -2972,7 +2967,7 @@ static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *me
         goto end;
     }
 
-    mesh->vertex_colors = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(uint32_t));
+    mesh->vertex_colors = malloc(mesh->num_vertices * sizeof(uint32_t));
     if (!mesh->vertex_colors) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -3022,7 +3017,7 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh, DW
     unsigned int i;
     HRESULT hr;
 
-    HeapFree(GetProcessHeap(), 0, mesh->normals);
+    free(mesh->normals);
     mesh->num_normals = 0;
     mesh->normals = NULL;
     mesh->normal_indices = NULL;
@@ -3064,8 +3059,8 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh, DW
         goto end;
     }
 
-    mesh->normals = HeapAlloc(GetProcessHeap(), 0, mesh->num_normals * sizeof(D3DXVECTOR3));
-    mesh->normal_indices = HeapAlloc(GetProcessHeap(), 0, num_face_indices * sizeof(uint32_t));
+    mesh->normals = malloc(mesh->num_normals * sizeof(D3DXVECTOR3));
+    mesh->normal_indices = malloc(num_face_indices * sizeof(uint32_t));
     if (!mesh->normals || !mesh->normal_indices) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -3317,12 +3312,9 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
 
     mesh_data->fvf = D3DFVF_XYZ;
 
-    mesh_data->vertices = HeapAlloc(GetProcessHeap(), 0,
-            mesh_data->num_vertices * sizeof(*mesh_data->vertices));
-    mesh_data->num_tri_per_face = HeapAlloc(GetProcessHeap(), 0,
-            mesh_data->num_poly_faces * sizeof(*mesh_data->num_tri_per_face));
-    mesh_data->indices = HeapAlloc(GetProcessHeap(), 0,
-            (mesh_data->num_tri_faces + mesh_data->num_poly_faces * 2) * sizeof(*mesh_data->indices));
+    mesh_data->vertices = malloc(mesh_data->num_vertices * sizeof(*mesh_data->vertices));
+    mesh_data->num_tri_per_face = malloc(mesh_data->num_poly_faces * sizeof(*mesh_data->num_tri_per_face));
+    mesh_data->indices = malloc((mesh_data->num_tri_faces + mesh_data->num_poly_faces * 2) * sizeof(*mesh_data->indices));
     if (!mesh_data->vertices || !mesh_data->num_tri_per_face || !mesh_data->indices) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -3547,7 +3539,7 @@ HRESULT WINAPI D3DXLoadSkinMeshFromXof(struct ID3DXFileData *filedata, DWORD opt
     if (mesh_data.fvf & D3DFVF_NORMAL) {
         /* duplicate vertices with multiple normals */
         DWORD num_face_indices = mesh_data.num_poly_faces * 2 + mesh_data.num_tri_faces;
-        duplications = HeapAlloc(GetProcessHeap(), 0, (mesh_data.num_vertices + num_face_indices) * sizeof(*duplications));
+        duplications = malloc((mesh_data.num_vertices + num_face_indices) * sizeof(*duplications));
         if (!duplications) {
             hr = E_OUTOFMEMORY;
             goto cleanup;
@@ -3739,15 +3731,15 @@ cleanup:
         if (mesh_data.skin_info) mesh_data.skin_info->lpVtbl->Release(mesh_data.skin_info);
         if (skin_info_out) *skin_info_out = NULL;
     }
-    HeapFree(GetProcessHeap(), 0, mesh_data.vertices);
-    HeapFree(GetProcessHeap(), 0, mesh_data.num_tri_per_face);
-    HeapFree(GetProcessHeap(), 0, mesh_data.indices);
-    HeapFree(GetProcessHeap(), 0, mesh_data.normals);
-    HeapFree(GetProcessHeap(), 0, mesh_data.normal_indices);
+    free(mesh_data.vertices);
+    free(mesh_data.num_tri_per_face);
+    free(mesh_data.indices);
+    free(mesh_data.normals);
+    free(mesh_data.normal_indices);
     destroy_materials(&mesh_data);
-    HeapFree(GetProcessHeap(), 0, mesh_data.tex_coords);
-    HeapFree(GetProcessHeap(), 0, mesh_data.vertex_colors);
-    HeapFree(GetProcessHeap(), 0, duplications);
+    free(mesh_data.tex_coords);
+    free(mesh_data.vertex_colors);
+    free(duplications);
     return hr;
 }
 
@@ -3768,13 +3760,13 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXA(const char *filename, DWORD options, 
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
-    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    filenameW = malloc(len * sizeof(WCHAR));
     if (!filenameW) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
 
     hr = D3DXLoadMeshHierarchyFromXW(filenameW, options, device,
             alloc_hier, load_user_data, frame_hierarchy, anim_controller);
-    HeapFree(GetProcessHeap(), 0, filenameW);
+    free(filenameW);
 
     return hr;
 }
@@ -3817,12 +3809,12 @@ static HRESULT filedata_get_name(ID3DXFileData *filedata, char **name)
 
     if (!name_len)
         name_len++;
-    *name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    *name = malloc(name_len);
     if (!*name) return E_OUTOFMEMORY;
 
     hr = filedata->lpVtbl->GetName(filedata, *name, &name_len);
     if (FAILED(hr))
-        HeapFree(GetProcessHeap(), 0, *name);
+        free(*name);
     else if (!name_len)
         (*name)[0] = 0;
 
@@ -3894,7 +3886,7 @@ cleanup:
     if (adjacency) ID3DXBuffer_Release(adjacency);
     if (skin_info) IUnknown_Release(skin_info);
     if (mesh_data.pMesh) IUnknown_Release(mesh_data.pMesh);
-    HeapFree(GetProcessHeap(), 0, name);
+    free(name);
     return hr;
 }
 
@@ -3945,7 +3937,7 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
     if (FAILED(hr)) return hr;
 
     hr = alloc_hier->lpVtbl->CreateFrame(alloc_hier, name, frame_out);
-    HeapFree(GetProcessHeap(), 0, name);
+    free(name);
     if (FAILED(hr)) return E_FAIL;
 
     frame = *frame_out;
@@ -4165,13 +4157,13 @@ HRESULT WINAPI D3DXLoadMeshFromXA(const char *filename, DWORD options, struct ID
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
-    filenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    filenameW = malloc(len * sizeof(WCHAR));
     if (!filenameW) return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
 
     hr = D3DXLoadMeshFromXW(filenameW, options, device, adjacency, materials,
                             effect_instances, num_materials, mesh);
-    HeapFree(GetProcessHeap(), 0, filenameW);
+    free(filenameW);
 
     return hr;
 }
@@ -4262,7 +4254,7 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
             goto err;
 
         if (IsEqualGUID(&type, &TID_D3DRMMesh)) {
-            struct mesh_container *container = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*container));
+            struct mesh_container *container = calloc(1, sizeof(*container));
             if (!container)
             {
                 hr = E_OUTOFMEMORY;
@@ -4281,7 +4273,7 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
             }
             else
             {
-                HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, container);
+                free(container);
             }
         } else if (IsEqualGUID(&type, &TID_D3DRMFrameTransformMatrix)) {
             D3DXMATRIX new_transform;
@@ -4365,7 +4357,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
         hr = filedata->lpVtbl->GetType(filedata, &guid);
         if (SUCCEEDED(hr)) {
             if (IsEqualGUID(&guid, &TID_D3DRMMesh)) {
-                container_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*container_ptr));
+                container_ptr = calloc(1, sizeof(*container_ptr));
                 if (!container_ptr) {
                     hr = E_OUTOFMEMORY;
                     goto cleanup;
@@ -4382,7 +4374,7 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
                 }
                 else
                 {
-                    HeapFree(GetProcessHeap(), 0, container_ptr);
+                    free(container_ptr);
                 }
             } else if (IsEqualGUID(&guid, &TID_D3DRMFrame)) {
                 hr = parse_frame(filedata, options, device, &identity, &container_list, provide_flags);
@@ -4664,7 +4656,7 @@ cleanup:
         if (container_ptr->adjacency) ID3DXBuffer_Release(container_ptr->adjacency);
         if (container_ptr->materials) ID3DXBuffer_Release(container_ptr->materials);
         if (container_ptr->effects) ID3DXBuffer_Release(container_ptr->effects);
-        HeapFree(GetProcessHeap(), 0, container_ptr);
+        free(container_ptr);
     }
     return hr;
 }
@@ -4869,8 +4861,8 @@ struct sincos_table
 
 static void free_sincos_table(struct sincos_table *sincos_table)
 {
-    HeapFree(GetProcessHeap(), 0, sincos_table->cos);
-    HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+    free(sincos_table->cos);
+    free(sincos_table->sin);
 }
 
 /* pre compute sine and cosine tables; caller must free */
@@ -4879,15 +4871,15 @@ static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_
     float angle;
     int i;
 
-    sincos_table->sin = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->sin));
+    sincos_table->sin = malloc(n * sizeof(*sincos_table->sin));
     if (!sincos_table->sin)
     {
         return FALSE;
     }
-    sincos_table->cos = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->cos));
+    sincos_table->cos = malloc(n * sizeof(*sincos_table->cos));
     if (!sincos_table->cos)
     {
-        HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+        free(sincos_table->sin);
         return FALSE;
     }
 
@@ -5303,12 +5295,12 @@ HRESULT WINAPI D3DXCreateTextA(struct IDirect3DDevice9 *device, HDC hdc, const c
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, text, -1, NULL, 0);
-    textW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    textW = malloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, text, -1, textW, len);
 
     hr = D3DXCreateTextW(device, hdc, textW, deviation, extrusion,
                          mesh, adjacency, glyphmetrics);
-    HeapFree(GetProcessHeap(), 0, textW);
+    free(textW);
 
     return hr;
 }
@@ -5508,14 +5500,8 @@ static BOOL reserve(struct dynamic_array *array, int count, int itemsize)
 {
     if (count > array->capacity) {
         void *new_buffer;
-        int new_capacity;
-        if (array->items && array->capacity) {
-            new_capacity = max(array->capacity * 2, count);
-            new_buffer = HeapReAlloc(GetProcessHeap(), 0, array->items, new_capacity * itemsize);
-        } else {
-            new_capacity = max(16, count);
-            new_buffer = HeapAlloc(GetProcessHeap(), 0, new_capacity * itemsize);
-        }
+        int new_capacity = max(array->capacity ? array->capacity * 2 : 16, count);
+        new_buffer = realloc(array->items, new_capacity * itemsize);
         if (!new_buffer)
             return FALSE;
         array->items = new_buffer;
@@ -5857,7 +5843,7 @@ static D3DXVECTOR2 *get_ordered_vertex(struct glyphinfo *glyph, WORD index)
 
 static void remove_triangulation(struct triangulation_array *array, struct triangulation *item)
 {
-    HeapFree(GetProcessHeap(), 0, item->vertex_stack.items);
+    free(item->vertex_stack.items);
     MoveMemory(item, item + 1, (char*)&array->items[array->count] - (char*)(item + 1));
     array->count--;
 }
@@ -5986,8 +5972,7 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
     for (i = 0; i < glyph->outlines.count; i++)
         nb_vertices += glyph->outlines.items[i].count;
 
-    glyph->ordered_vertices.items = HeapAlloc(GetProcessHeap(), 0,
-            nb_vertices * sizeof(*glyph->ordered_vertices.items));
+    glyph->ordered_vertices.items = malloc(nb_vertices * sizeof(*glyph->ordered_vertices.items));
     if (!glyph->ordered_vertices.items)
         return E_OUTOFMEMORY;
 
@@ -6034,8 +6019,7 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
         }
         if (ccw <= 0)
         {
-            glyph->faces.items = HeapAlloc(GetProcessHeap(), 0,
-                    (outline->count - 2) * sizeof(glyph->faces.items[0]));
+            glyph->faces.items = malloc((outline->count - 2) * sizeof(glyph->faces.items[0]));
             if (!glyph->faces.items)
                 return E_OUTOFMEMORY;
 
@@ -6060,8 +6044,7 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
      * # faces for outer outlines = outline->count - 2
      * # faces for inner outlines = outline->count + 2
      * There must be at least 1 outer outline. */
-    glyph->faces.items = HeapAlloc(GetProcessHeap(), 0,
-            (nb_vertices + glyph->outlines.count * 2 - 4) * sizeof(glyph->faces.items[0]));
+    glyph->faces.items = malloc((nb_vertices + glyph->outlines.count * 2 - 4) * sizeof(glyph->faces.items[0]));
     if (!glyph->faces.items)
         return E_OUTOFMEMORY;
 
@@ -6282,8 +6265,8 @@ HRESULT WINAPI D3DXCreateTextW(struct IDirect3DDevice9 *device, HDC hdc, const W
         goto error;
     }
 
-    glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
-    raw_outline = HeapAlloc(GetProcessHeap(), 0, bufsize);
+    glyphs = calloc(textlen, sizeof(*glyphs));
+    raw_outline = malloc(bufsize);
     if (!glyphs || !raw_outline) {
         hr = E_OUTOFMEMORY;
         goto error;
@@ -6525,20 +6508,20 @@ error:
         {
             int j;
             for (j = 0; j < glyphs[i].outlines.count; j++)
-                HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items[j].items);
-            HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items);
-            HeapFree(GetProcessHeap(), 0, glyphs[i].faces.items);
-            HeapFree(GetProcessHeap(), 0, glyphs[i].ordered_vertices.items);
+                free(glyphs[i].outlines.items[j].items);
+            free(glyphs[i].outlines.items);
+            free(glyphs[i].faces.items);
+            free(glyphs[i].ordered_vertices.items);
         }
-        HeapFree(GetProcessHeap(), 0, glyphs);
+        free(glyphs);
     }
     if (triangulations.items) {
         int i;
         for (i = 0; i < triangulations.count; i++)
-            HeapFree(GetProcessHeap(), 0, triangulations.items[i].vertex_stack.items);
-        HeapFree(GetProcessHeap(), 0, triangulations.items);
+            free(triangulations.items[i].vertex_stack.items);
+        free(triangulations.items);
     }
-    HeapFree(GetProcessHeap(), 0, raw_outline);
+    free(raw_outline);
     if (oldfont) SelectObject(hdc, oldfont);
     if (font) DeleteObject(font);
 
@@ -7151,7 +7134,7 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
     }
     else /* Adjacency has to be generated. */
     {
-        adjacency_generated = HeapAlloc(GetProcessHeap(), 0, 3 * This->numfaces * sizeof(*adjacency_generated));
+        adjacency_generated = malloc(3 * This->numfaces * sizeof(*adjacency_generated));
         if (!adjacency_generated)
         {
             ERR("Couldn't allocate memory for adjacency_generated.\n");
@@ -7168,7 +7151,7 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
     }
 
     /* Point representation says which vertices can be replaced. */
-    point_reps = HeapAlloc(GetProcessHeap(), 0, This->numvertices * sizeof(*point_reps));
+    point_reps = malloc(This->numvertices * sizeof(*point_reps));
     if (!point_reps)
     {
         hr = E_OUTOFMEMORY;
@@ -7195,7 +7178,7 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
         ERR("Couldn't lock attribute buffer.\n");
         goto cleanup;
     }
-    vertex_face_map = HeapAlloc(GetProcessHeap(), 0, This->numvertices * sizeof(*vertex_face_map));
+    vertex_face_map = malloc(This->numvertices * sizeof(*vertex_face_map));
     if (!vertex_face_map)
     {
         hr = E_OUTOFMEMORY;
@@ -7295,9 +7278,9 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
 
     hr = D3D_OK;
 cleanup:
-    HeapFree(GetProcessHeap(), 0, adjacency_generated);
-    HeapFree(GetProcessHeap(), 0, point_reps);
-    HeapFree(GetProcessHeap(), 0, vertex_face_map);
+    free(adjacency_generated);
+    free(point_reps);
+    free(vertex_face_map);
     if (attributes) mesh->lpVtbl->UnlockAttributeBuffer(mesh);
     if (indices) mesh->lpVtbl->UnlockIndexBuffer(mesh);
     if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
@@ -7509,7 +7492,7 @@ HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *mesh, DWORD texture_in_seman
     vertex_stride = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
     indices_are_32bit = mesh->lpVtbl->GetOptions(mesh) & D3DXMESH_32BIT;
 
-    point_reps = HeapAlloc(GetProcessHeap(), 0, num_vertices * sizeof(*point_reps));
+    point_reps = malloc(num_vertices * sizeof(*point_reps));
     if (!point_reps)
     {
         hr = E_OUTOFMEMORY;
@@ -7626,7 +7609,7 @@ done:
     if (indices)
         mesh->lpVtbl->UnlockIndexBuffer(mesh);
 
-    HeapFree(GetProcessHeap(), 0, point_reps);
+    free(point_reps);
 
     return hr;
 }
@@ -7693,7 +7676,7 @@ static BOOL queue_frame_node(struct list *queue, D3DXFRAME *frame)
     if (!frame->pFrameFirstChild)
         return TRUE;
 
-    node = HeapAlloc(GetProcessHeap(), 0, sizeof(*node));
+    node = malloc(sizeof(*node));
     if (!node)
         return FALSE;
 
@@ -7709,7 +7692,7 @@ static void empty_frame_queue(struct list *queue)
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, queue, struct frame_node, entry)
     {
         list_remove(&cur->entry);
-        HeapFree(GetProcessHeap(), 0, cur);
+        free(cur);
     }
 }
 
@@ -7751,7 +7734,7 @@ D3DXFRAME * WINAPI D3DXFrameFind(const D3DXFRAME *root, const char *name)
         node = LIST_ENTRY(list_head(&queue), struct frame_node, entry);
         list_remove(&node->entry);
         frame = node->frame->pFrameFirstChild;
-        HeapFree(GetProcessHeap(), 0, node);
+        free(node);
     }
 
 cleanup:

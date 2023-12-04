@@ -121,7 +121,7 @@ static ULONG WINAPI d3dx9_sprite_Release(ID3DXSprite *iface)
                 }
             }
 
-            HeapFree(GetProcessHeap(), 0, sprite->sprites);
+            free(sprite->sprites);
         }
 
         if (sprite->stateblock)
@@ -130,7 +130,7 @@ static ULONG WINAPI d3dx9_sprite_Release(ID3DXSprite *iface)
             IDirect3DVertexDeclaration9_Release(sprite->vdecl);
         if (sprite->device)
             IDirect3DDevice9_Release(sprite->device);
-        HeapFree(GetProcessHeap(), 0, sprite);
+        free(sprite);
     }
 
     return refcount;
@@ -344,6 +344,7 @@ static HRESULT WINAPI d3dx9_sprite_Draw(ID3DXSprite *iface, IDirect3DTexture9 *t
     struct d3dx9_sprite *This = impl_from_ID3DXSprite(iface);
     struct sprite *new_sprites;
     D3DSURFACE_DESC texdesc;
+    int new_size;
 
     TRACE("iface %p, texture %p, rect %s, center %p, position %p, color 0x%08lx.\n",
             iface, texture, wine_dbgstr_rect(rect), center, position, color);
@@ -351,19 +352,14 @@ static HRESULT WINAPI d3dx9_sprite_Draw(ID3DXSprite *iface, IDirect3DTexture9 *t
     if(texture==NULL) return D3DERR_INVALIDCALL;
     if(!This->ready) return D3DERR_INVALIDCALL;
 
-    if (!This->allocated_sprites)
+    if (This->allocated_sprites <= This->sprite_count)
     {
-        This->sprites = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32 * sizeof(*This->sprites));
-        This->allocated_sprites = 32;
-    }
-    else if (This->allocated_sprites <= This->sprite_count)
-    {
-        new_sprites = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                This->sprites, This->allocated_sprites * 2 * sizeof(*This->sprites));
+        new_size = This->allocated_sprites ? This->allocated_sprites * 2 : 32;
+        new_sprites = realloc(This->sprites, new_size * sizeof(*This->sprites));
         if (!new_sprites)
             return E_OUTOFMEMORY;
         This->sprites = new_sprites;
-        This->allocated_sprites *= 2;
+        This->allocated_sprites = new_size;
     }
     This->sprites[This->sprite_count].texture=texture;
     if(!(This->flags & D3DXSPRITE_DO_NOT_ADDREF_TEXTURE))
@@ -418,7 +414,7 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
     if(!This->sprite_count) return D3D_OK;
 
 /* TODO: use of a vertex buffer here */
-    vertices = HeapAlloc(GetProcessHeap(), 0, sizeof(*vertices) * 6 * This->sprite_count);
+    vertices = malloc(sizeof(*vertices) * 6 * This->sprite_count);
 
     for(start=0;start<This->sprite_count;start+=count,count=0) {
         i=start;
@@ -467,7 +463,7 @@ static HRESULT WINAPI d3dx9_sprite_Flush(ID3DXSprite *iface)
         IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLELIST,
                 2 * count, vertices + 6 * start, sizeof(*vertices));
     }
-    HeapFree(GetProcessHeap(), 0, vertices);
+    free(vertices);
 
     if(!(This->flags & D3DXSPRITE_DO_NOT_ADDREF_TEXTURE))
         for(i=0;i<This->sprite_count;i++)
@@ -571,7 +567,7 @@ HRESULT WINAPI D3DXCreateSprite(struct IDirect3DDevice9 *device, struct ID3DXSpr
 
     if(device==NULL || sprite==NULL) return D3DERR_INVALIDCALL;
 
-    if (!(object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         *sprite = NULL;
         return E_OUTOFMEMORY;
