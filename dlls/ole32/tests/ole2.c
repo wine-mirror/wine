@@ -4549,6 +4549,7 @@ static void test_OleCreateStaticFromData(void)
     IPersist_Release(persist);
     IStorage_Release(storage);
     IOleObject_Release(ole_obj);
+    HeapFree(GetProcessHeap(), 0, (void *)stg_def_dib.stream[2].data);
 
     /* CF_ENHMETAFILE */
     hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
@@ -4582,6 +4583,7 @@ static void test_OleCreateStaticFromData(void)
     IPersist_Release(persist);
     IStorage_Release(storage);
     IOleObject_Release(ole_obj);
+    HeapFree(GetProcessHeap(), 0, (void *)stg_def_emf.stream[2].data);
 
     /* CF_TEXT */
     hr = CreateILockBytesOnHGlobal(NULL, TRUE, &ilb);
