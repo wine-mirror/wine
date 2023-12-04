@@ -689,10 +689,10 @@ static void test_setitemsize(void)
     ReleaseDC(hwTab, hdc);
 
     result = SendMessageA(hwTab, TCM_SETITEMSIZE, 0, MAKELPARAM(50, 20));
-    todo_wine ok (LOWORD(result) == dpi, "Excepted width to be %d, got %d\n", dpi, LOWORD(result));
+    ok (LOWORD(result) == dpi, "Excepted width to be %d, got %d\n", dpi, LOWORD(result));
 
     result = SendMessageA(hwTab, TCM_SETITEMSIZE, 0, MAKELPARAM(0, 1));
-    todo_wine ok (LOWORD(result) == 50, "Excepted width to be 50, got %d\n", LOWORD(result));
+    ok (LOWORD(result) == 50, "Excepted width to be 50, got %d\n", LOWORD(result));
     ok (HIWORD(result) == 20, "Excepted height to be 20, got %d\n", HIWORD(result));
 
     DestroyWindow (hwTab);
