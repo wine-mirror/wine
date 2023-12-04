@@ -584,7 +584,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(message));
 
-    if(!This->outer_window || !This->outer_window->browser)
+    if(!This->outer_window->browser)
         return E_UNEXPECTED;
 
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, title, ARRAY_SIZE(title))) {
@@ -617,7 +617,7 @@ static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,
 
     if(!confirmed)
         return E_INVALIDARG;
-    if(!This->outer_window || !This->outer_window->browser)
+    if(!This->outer_window->browser)
         return E_UNEXPECTED;
 
     if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle, ARRAY_SIZE(wszTitle))) {
@@ -711,7 +711,7 @@ static HRESULT WINAPI HTMLWindow2_prompt(IHTMLWindow2 *iface, BSTR message,
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(message), debugstr_w(dststr), textdata);
 
-    if(!This->outer_window || !This->outer_window->browser)
+    if(!This->outer_window->browser)
         return E_UNEXPECTED;
 
     if(textdata) V_VT(textdata) = VT_NULL;
@@ -846,7 +846,7 @@ static HRESULT WINAPI HTMLWindow2_close(IHTMLWindow2 *iface)
 
     TRACE("(%p)\n", This);
 
-    if(!window || !window->browser) {
+    if(!window->browser) {
         FIXME("No document object\n");
         return E_FAIL;
     }
@@ -953,7 +953,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     if(replace)
         FIXME("unsupported relace argument\n");
 
-    if(!window || !window->browser || !window->uri_nofrag)
+    if(!window->browser || !window->uri_nofrag)
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
@@ -1310,7 +1310,7 @@ static HRESULT WINAPI HTMLWindow2_focus(IHTMLWindow2 *iface)
 
     TRACE("(%p)->()\n", This);
 
-    if(!This->outer_window || !This->outer_window->browser)
+    if(!This->outer_window->browser)
         return E_UNEXPECTED;
 
     SetFocus(This->outer_window->browser->doc->hwnd);
@@ -1477,7 +1477,7 @@ static HRESULT WINAPI HTMLWindow2_get_external(IHTMLWindow2 *iface, IDispatch **
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->outer_window || !This->outer_window->browser)
+    if(!This->outer_window->browser)
         return E_UNEXPECTED;
 
     *p = NULL;
@@ -2396,9 +2396,6 @@ static HRESULT WINAPI HTMLWindow7_getComputedStyle(IHTMLWindow7 *iface, IHTMLDOM
 
     TRACE("(%p)->(%p %s %p)\n", This, node, debugstr_w(pseudo_elt), p);
 
-    if(!This->outer_window || !This->inner_window)
-        return E_UNEXPECTED;
-
     hres = IHTMLDOMNode_QueryInterface(node, &IID_IHTMLElement, (void**)&elem);
     if(FAILED(hres))
         return hres;
@@ -2832,7 +2829,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
     if(flags & ~2)
         FIXME("unimplemented flags %lx\n", flags & ~2);
 
-    if(!window || !window->browser)
+    if(!window->browser)
         return E_FAIL;
 
     if(window->browser->doc->hostui) {
@@ -3641,6 +3638,9 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
     HTMLInnerWindow *window = This->inner_window;
+    HTMLOuterWindow *frame;
+    global_prop_t *prop;
+    IHTMLElement *elem;
     HRESULT hres;
 
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -3653,38 +3653,27 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    if(This->outer_window) {
-        HTMLOuterWindow *frame;
+    hres = get_frame_by_name(This->outer_window, bstrName, FALSE, &frame);
+    if(SUCCEEDED(hres) && frame) {
+        prop = alloc_global_prop(window, GLOBAL_FRAMEVAR, bstrName);
+        if(!prop)
+            return E_OUTOFMEMORY;
 
-        hres = get_frame_by_name(This->outer_window, bstrName, FALSE, &frame);
-        if(SUCCEEDED(hres) && frame) {
-            global_prop_t *prop;
-
-            prop = alloc_global_prop(window, GLOBAL_FRAMEVAR, bstrName);
-            if(!prop)
-                return E_OUTOFMEMORY;
-
-            *pid = prop_to_dispid(window, prop);
-            return S_OK;
-        }
+        *pid = prop_to_dispid(window, prop);
+        return S_OK;
     }
 
-    if(window->doc) {
-        global_prop_t *prop;
-        IHTMLElement *elem;
+    hres = IHTMLDocument3_getElementById(&window->base.inner_window->doc->IHTMLDocument3_iface,
+                                         bstrName, &elem);
+    if(SUCCEEDED(hres) && elem) {
+        IHTMLElement_Release(elem);
 
-        hres = IHTMLDocument3_getElementById(&window->base.inner_window->doc->IHTMLDocument3_iface,
-                                             bstrName, &elem);
-        if(SUCCEEDED(hres) && elem) {
-            IHTMLElement_Release(elem);
+        prop = alloc_global_prop(window, GLOBAL_ELEMENTVAR, bstrName);
+        if(!prop)
+            return E_OUTOFMEMORY;
 
-            prop = alloc_global_prop(window, GLOBAL_ELEMENTVAR, bstrName);
-            if(!prop)
-                return E_OUTOFMEMORY;
-
-            *pid = prop_to_dispid(window, prop);
-            return S_OK;
-        }
+        *pid = prop_to_dispid(window, prop);
+        return S_OK;
     }
 
     return DISP_E_UNKNOWNNAME;
@@ -4120,9 +4109,6 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
             return E_NOTIMPL;
         }
     case GLOBAL_FRAMEVAR:
-        if(!This->base.outer_window)
-            return E_UNEXPECTED;
-
         switch(flags) {
         case DISPATCH_PROPERTYGET: {
             HTMLOuterWindow *frame;
