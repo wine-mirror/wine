@@ -998,7 +998,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (!self)
     {
-        NTSTATUS ret = get_thread_context( handle, &context, &self, IMAGE_FILE_MACHINE_ARMNT );
+        NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_ARMNT );
         if (ret || !self) return ret;
     }
 
@@ -1076,6 +1076,9 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
         restore_context( &context, sigcontext );
         return;
     }
+
+    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc -= 2;
 
     stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
     stack->rec = *rec;
@@ -1348,6 +1351,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             return;
         }
         case 0xfe:  /* breakpoint */
+            PC_sig(context) += 2;  /* skip the instruction */
             rec.ExceptionCode = EXCEPTION_BREAKPOINT;
             rec.NumberParameters = 1;
             break;
