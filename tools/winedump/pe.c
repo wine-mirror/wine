@@ -1726,14 +1726,13 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
 
 static void dump_dir_exceptions(void)
 {
+    static const void *arm64_funcs;
     unsigned int i, size;
     const void *funcs;
-    const IMAGE_FILE_HEADER *file_header;
+    const IMAGE_FILE_HEADER *file_header = &PE_nt_headers->FileHeader;
+    const IMAGE_ARM64EC_METADATA *metadata;
 
     funcs = get_dir_and_size(IMAGE_FILE_EXCEPTION_DIRECTORY, &size);
-    if (!funcs) return;
-
-    file_header = &PE_nt_headers->FileHeader;
 
     switch (file_header->Machine)
     {
@@ -1741,16 +1740,22 @@ static void dump_dir_exceptions(void)
         size /= sizeof(struct runtime_function_x86_64);
         printf( "%s exception info (%u functions):\n", get_machine_str( file_header->Machine ), size );
         for (i = 0; i < size; i++) dump_x86_64_unwind_info( (struct runtime_function_x86_64*)funcs + i );
+        if (!(metadata = get_hybrid_metadata())) break;
+        if (!(size = metadata->ExtraRFETableSize)) break;
+        if (!(funcs = RVA( metadata->ExtraRFETable, size ))) break;
+        if (funcs == arm64_funcs) break; /* already dumped */
+        printf( "\n" );
+        /* fall through */
+    case IMAGE_FILE_MACHINE_ARM64:
+        arm64_funcs = funcs;
+        size /= sizeof(struct runtime_function_arm64);
+        printf( "%s exception info (%u functions):\n", get_machine_str( file_header->Machine ), size );
+        for (i = 0; i < size; i++) dump_arm64_unwind_info( (struct runtime_function_arm64*)funcs + i );
         break;
     case IMAGE_FILE_MACHINE_ARMNT:
         size /= sizeof(struct runtime_function_armnt);
         printf( "%s exception info (%u functions):\n", get_machine_str( file_header->Machine ), size );
         for (i = 0; i < size; i++) dump_armnt_unwind_info( (struct runtime_function_armnt*)funcs + i );
-        break;
-    case IMAGE_FILE_MACHINE_ARM64:
-        size /= sizeof(struct runtime_function_arm64);
-        printf( "%s exception info (%u functions):\n", get_machine_str( file_header->Machine ), size );
-        for (i = 0; i < size; i++) dump_arm64_unwind_info( (struct runtime_function_arm64*)funcs + i );
         break;
     default:
         printf( "Exception information not supported for %s binaries\n",
