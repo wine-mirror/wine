@@ -591,7 +591,8 @@ static char* get_literal_string(struct parsed_symbol* sym)
         if (!((*sym->current >= 'A' && *sym->current <= 'Z') ||
               (*sym->current >= 'a' && *sym->current <= 'z') ||
               (*sym->current >= '0' && *sym->current <= '9') ||
-              *sym->current == '_' || *sym->current == '$')) {
+              *sym->current == '_' || *sym->current == '$' ||
+              *sym->current == '<' || *sym->current == '>')) {
             TRACE("Failed at '%c' in %s\n", *sym->current, debugstr_a(ptr));
             return NULL;
         }
