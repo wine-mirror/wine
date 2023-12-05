@@ -1188,10 +1188,12 @@ static HRESULT WINAPI HTMLDocument_put_cookie(IHTMLDocument2 *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->outer_window)
+    if(!This->window)
         return S_OK;
+    if(!This->window->base.outer_window)
+        return E_FAIL;
 
-    bret = InternetSetCookieExW(This->outer_window->url, NULL, v, 0, 0);
+    bret = InternetSetCookieExW(This->window->base.outer_window->url, NULL, v, 0, 0);
     if(!bret) {
         FIXME("InternetSetCookieExW failed: %lu\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1208,13 +1210,15 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->outer_window) {
+    if(!This->window) {
         *p = NULL;
         return S_OK;
     }
+    if(!This->window->base.outer_window)
+        return E_FAIL;
 
     size = 0;
-    bret = InternetGetCookieExW(This->outer_window->url, NULL, NULL, &size, 0, NULL);
+    bret = InternetGetCookieExW(This->window->base.outer_window->url, NULL, NULL, &size, 0, NULL);
     if(!bret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         WARN("InternetGetCookieExW failed: %lu\n", GetLastError());
         *p = NULL;
@@ -1230,7 +1234,7 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
     if(!*p)
         return E_OUTOFMEMORY;
 
-    bret = InternetGetCookieExW(This->outer_window->url, NULL, *p, &size, 0, NULL);
+    bret = InternetGetCookieExW(This->window->base.outer_window->url, NULL, *p, &size, 0, NULL);
     if(!bret) {
         ERR("InternetGetCookieExW failed: %lu\n", GetLastError());
         return E_FAIL;
