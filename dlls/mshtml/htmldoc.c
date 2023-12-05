@@ -905,7 +905,7 @@ static HRESULT WINAPI HTMLDocument_get_readyState(IHTMLDocument2 *iface, BSTR *p
     if(!p)
         return E_POINTER;
 
-    return get_readystate_string(This->outer_window ? This->outer_window->readystate : 0, p);
+    return get_readystate_string(This->window && This->window->base.outer_window ? This->window->base.outer_window->readystate : 0, p);
 }
 
 static HRESULT WINAPI HTMLDocument_get_frames(IHTMLDocument2 *iface, IHTMLFramesCollection2 **p)
