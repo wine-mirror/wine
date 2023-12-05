@@ -1160,12 +1160,12 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
         return E_NOTIMPL;
     }
 
-    if(This->outer_window && !This->outer_window->uri)
+    if(This->window && (!This->window->base.outer_window || !This->window->base.outer_window->uri))
         return E_FAIL;
 
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMHTMLDocument_GetDomain(This->html_document, &nsstr);
-    if(NS_SUCCEEDED(nsres) && This->outer_window && This->outer_window->uri) {
+    if(NS_SUCCEEDED(nsres) && This->window) {
         const PRUnichar *str;
         HRESULT hres;
 
@@ -1173,7 +1173,7 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
         if(!*str) {
             TRACE("Gecko returned empty string, fallback to loaded URL.\n");
             nsAString_Finish(&nsstr);
-            hres = IUri_GetHost(This->outer_window->uri, p);
+            hres = IUri_GetHost(This->window->base.outer_window->uri, p);
             return FAILED(hres) ? hres : S_OK;
         }
     }
