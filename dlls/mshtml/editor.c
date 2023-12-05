@@ -146,7 +146,7 @@ static DWORD query_ns_edit_status(HTMLDocumentNode *doc, const char *nscmd)
     nsICommandParams *nsparam;
     cpp_bool b = FALSE;
 
-    if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || !doc->window->base.outer_window || doc->window->base.outer_window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     if(nscmd) {
@@ -180,7 +180,7 @@ static DWORD query_align_status(HTMLDocumentNode *doc, const WCHAR *align)
     cpp_bool b;
     nsresult nsres;
 
-    if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
+    if(doc->browser->usermode != EDITMODE || !doc->window->base.outer_window || doc->window->base.outer_window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
     if(!doc->html_document) {
@@ -669,7 +669,7 @@ static HRESULT query_justify(HTMLDocumentNode *doc, OLECMD *cmd)
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", doc);
         /* FIXME: We should set OLECMDF_LATCHED only if it's set explicitly. */
-        if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
+        if(doc->browser->usermode != EDITMODE || !doc->window->base.outer_window || doc->window->base.outer_window->readystate < READYSTATE_INTERACTIVE)
             cmd->cmdf = OLECMDF_SUPPORTED;
         else
             cmd->cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
