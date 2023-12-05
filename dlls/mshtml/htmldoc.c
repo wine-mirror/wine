@@ -2364,9 +2364,13 @@ static HRESULT WINAPI HTMLDocument3_get_documentElement(IHTMLDocument3 *iface, I
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(This->outer_window && This->outer_window->readystate == READYSTATE_UNINITIALIZED) {
-        *p = NULL;
-        return S_OK;
+    if(This->window) {
+        if(!This->window->base.outer_window)
+            return E_FAIL;
+        if(This->window->base.outer_window->readystate == READYSTATE_UNINITIALIZED) {
+            *p = NULL;
+            return S_OK;
+        }
     }
 
     if(!This->dom_document) {

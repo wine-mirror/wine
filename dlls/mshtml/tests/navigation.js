@@ -121,6 +121,7 @@ function detached_iframe_doc() {
             expect_exception(function() { origDoc.toString(); }, true);
             expect_exception(function() { origDoc.cookie; });
             expect_exception(function() { origDoc.cookie = "test=val"; });
+            expect_exception(function() { origDoc.documentElement; });
             expect_exception(function() { origDoc.domain; });
             expect_exception(function() { origDoc.frames; });
             expect_exception(function() { origDoc.readyState; }, true);
