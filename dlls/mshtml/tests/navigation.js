@@ -126,6 +126,7 @@ function detached_iframe_doc() {
             expect_exception(function() { origDoc.readyState; }, true);
             expect_exception(function() { origDoc.URL; });
             expect_exception(function() { origDoc.URL = "blank.html"; });
+            expect_exception(function() { origDoc.open("blank.html", "_self"); });
 
             next_test();
         });

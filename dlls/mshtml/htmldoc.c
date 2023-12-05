@@ -1463,7 +1463,7 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
 
     *pomWindowResult = NULL;
 
-    if(!This->outer_window)
+    if(!This->window || !This->window->base.outer_window)
         return E_FAIL;
 
     if(!This->dom_document) {
@@ -1490,8 +1490,8 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
     if(tmp)
         nsISupports_Release(tmp);
 
-    *pomWindowResult = (IDispatch*)&This->outer_window->base.IHTMLWindow2_iface;
-    IHTMLWindow2_AddRef(&This->outer_window->base.IHTMLWindow2_iface);
+    *pomWindowResult = (IDispatch*)&This->window->base.outer_window->base.IHTMLWindow2_iface;
+    IHTMLWindow2_AddRef(&This->window->base.outer_window->base.IHTMLWindow2_iface);
     return S_OK;
 }
 
