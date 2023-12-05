@@ -4895,7 +4895,7 @@ static void HTMLDocumentNode_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocumentNode *This = CONTAINING_RECORD((IHTMLDocument2*)iface, HTMLDocumentNode, IHTMLDocument2_iface);
 
-    if(This->outer_window)
+    if(This->window && This->window->base.outer_window)
         update_doc_cp_events(This, cp);
 }
 
@@ -6208,7 +6208,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     doc->IDocumentRange_iface.lpVtbl = &DocumentRangeVtbl;
 
     doc->doc_obj = doc_obj;
-    doc->outer_window = window ? window->base.outer_window : NULL;
     doc->window = window;
 
     if(window)

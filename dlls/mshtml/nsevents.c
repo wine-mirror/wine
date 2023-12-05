@@ -336,7 +336,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
     TRACE("(%p)\n", doc);
 
-    if(!doc->outer_window)
+    if(!doc->window || !doc->window->base.outer_window)
         return NS_ERROR_FAILURE;
     if(doc->doc_obj && doc->doc_obj->doc_node == doc) {
         doc_obj = doc->doc_obj;
@@ -348,7 +348,8 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
         handle_docobj_load(doc_obj);
 
     doc->window->dom_complete_time = get_time_stamp();
-    set_ready_state(doc->outer_window, READYSTATE_COMPLETE);
+    if(doc->window->base.outer_window)
+        set_ready_state(doc->window->base.outer_window, READYSTATE_COMPLETE);
 
     if(doc_obj) {
         if(doc_obj->view_sink)
@@ -358,9 +359,9 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
         update_title(doc_obj);
 
-        if(doc_obj->doc_object_service && !(doc->outer_window->load_flags & BINDING_REFRESH))
+        if(doc_obj->doc_object_service && doc->window->base.outer_window && !(doc->window->base.outer_window->load_flags & BINDING_REFRESH))
             IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
-                    &doc->outer_window->base.IHTMLWindow2_iface, 0);
+                    &doc->window->base.outer_window->base.IHTMLWindow2_iface, 0);
 
         IUnknown_Release(doc_obj->outer_unk);
     }
@@ -516,7 +517,7 @@ static nsIDOMEventTarget *get_default_document_target(HTMLDocumentNode *doc)
     nsISupports *target_iface;
     nsresult nsres;
 
-    target_iface = doc->window ? (nsISupports*)doc->outer_window->nswindow : (nsISupports*)doc->dom_document;
+    target_iface = doc->window && doc->window->base.outer_window ? (nsISupports*)doc->window->base.outer_window->nswindow : (nsISupports*)doc->dom_document;
     nsres = nsISupports_QueryInterface(target_iface, &IID_nsIDOMEventTarget, (void**)&target);
     return NS_SUCCEEDED(nsres) ? target : NULL;
 }

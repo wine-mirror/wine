@@ -940,7 +940,6 @@ struct HTMLDocumentNode {
 
     nsIDocumentObserver          nsIDocumentObserver_iface;
     ConnectionPointContainer cp_container;
-    HTMLOuterWindow *outer_window;
     HTMLInnerWindow *window;
     HTMLDocumentObj *doc_obj;
 

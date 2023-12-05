@@ -76,10 +76,10 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
 
     TRACE("(%p)->(%ld %p %ld %p %ld %lx %lx)\n", This, dwAction, pPolicy, cbPolicy, pContext, cbContext, dwFlags, dwReserved);
 
-    if(!This->outer_window)
+    if(!This->window || !This->window->base.outer_window)
         return E_UNEXPECTED;
 
-    url = This->outer_window->url ? This->outer_window->url : L"about:blank";
+    url = This->window->base.outer_window->url ? This->window->base.outer_window->url : L"about:blank";
 
     return IInternetSecurityManager_ProcessUrlAction(get_security_manager(), url, dwAction, pPolicy, cbPolicy,
             pContext, cbContext, dwFlags, dwReserved);
@@ -181,10 +181,10 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
 
     TRACE("(%p)->(%s %p %p %p %ld %lx)\n", This, debugstr_guid(guidKey), ppPolicy, pcbPolicy, pContext, cbContext, dwReserved);
 
-    if(!This->outer_window)
+    if(!This->window || !This->window->base.outer_window)
         return E_UNEXPECTED;
 
-    url = This->outer_window->url ? This->outer_window->url : L"about:blank";
+    url = This->window->base.outer_window->url ? This->window->base.outer_window->url : L"about:blank";
 
     hres = IInternetSecurityManager_QueryCustomPolicy(get_security_manager(), url, guidKey, ppPolicy, pcbPolicy,
             pContext, cbContext, dwReserved);

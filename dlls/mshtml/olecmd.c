@@ -490,10 +490,10 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
         }
     }
 
-    if(!doc->outer_window)
+    if(!doc->window || !doc->window->base.outer_window)
         return E_UNEXPECTED;
 
-    return reload_page(doc->outer_window);
+    return reload_page(doc->window->base.outer_window);
 }
 
 static HRESULT exec_stop(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
