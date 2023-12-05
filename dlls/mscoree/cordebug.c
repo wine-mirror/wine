@@ -121,7 +121,7 @@ static ULONG WINAPI cordebugprocess_Release(ICorDebugProcess *iface)
         if(This->cordebug)
             ICorDebug_Release(&This->cordebug->ICorDebug_iface);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -405,7 +405,7 @@ static HRESULT CorDebugProcess_Create(CorDebug *cordebug, IUnknown** ppUnk, LPPR
 {
     DebugProcess *This;
 
-    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    This = malloc(sizeof *This);
     if ( !This )
         return E_OUTOFMEMORY;
 
@@ -413,7 +413,7 @@ static HRESULT CorDebugProcess_Create(CorDebug *cordebug, IUnknown** ppUnk, LPPR
                     GetCurrentProcess(), &This->handle, 0, FALSE, DUPLICATE_SAME_ACCESS))
     {
         ERR("Failed to duplicate process handle\n");
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_FAIL;
     }
     if(!DuplicateHandle(GetCurrentProcess(), lpProcessInformation->hThread,
@@ -422,7 +422,7 @@ static HRESULT CorDebugProcess_Create(CorDebug *cordebug, IUnknown** ppUnk, LPPR
         CloseHandle(This->handle);
 
         ERR("Failed to duplicate thread handle\n");
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_FAIL;
     }
 
@@ -587,7 +587,7 @@ static ULONG WINAPI CorDebug_Release(ICorDebug *iface)
         if(This->pCallback)
             ICorDebugManagedCallback_Release(This->pCallback);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -616,7 +616,7 @@ static HRESULT WINAPI CorDebug_Terminate(ICorDebug *iface)
         }
 
         list_remove(&cursor->entry);
-        HeapFree(GetProcessHeap(), 0, cursor);
+        free(cursor);
     }
 
     return S_OK;
@@ -685,7 +685,7 @@ static HRESULT WINAPI CorDebug_CreateProcess(ICorDebug *iface, LPCWSTR lpApplica
         hr = CorDebugProcess_Create(This, (IUnknown**)&pDebugProcess, lpProcessInformation);
         if(hr == S_OK)
         {
-            struct CorProcess *new_process = HeapAlloc( GetProcessHeap(), 0, sizeof(CorProcess) );
+            struct CorProcess *new_process = malloc(sizeof(CorProcess));
 
             new_process->pProcess = pDebugProcess;
             list_add_tail(&This->processes, &new_process->entry);
@@ -764,7 +764,7 @@ HRESULT CorDebug_Create(ICLRRuntimeHost *runtimehost, IUnknown** ppUnk)
 {
     CorDebug *This;
 
-    This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
+    This = malloc(sizeof *This);
     if ( !This )
         return E_OUTOFMEMORY;
 

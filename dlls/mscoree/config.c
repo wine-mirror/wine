@@ -111,7 +111,7 @@ static ULONG WINAPI ConfigStream_Release(IStream *iface)
     if (!ref)
     {
         CloseHandle(This->file);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -231,7 +231,7 @@ HRESULT WINAPI CreateConfigStream(const WCHAR *filename, IStream **stream)
     if (file == INVALID_HANDLE_VALUE)
         return GetLastError() == ERROR_FILE_NOT_FOUND ? COR_E_FILENOTFOUND : E_FAIL;
 
-    config_stream = HeapAlloc(GetProcessHeap(), 0, sizeof(*config_stream));
+    config_stream = malloc(sizeof(*config_stream));
     if (!config_stream)
     {
         CloseHandle(file);
@@ -288,7 +288,7 @@ static ULONG WINAPI ConfigFileHandler_Release(ISAXContentHandler *iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
 
     return ref;
 }
@@ -350,10 +350,8 @@ static HRESULT parse_probing(ConfigFileHandler *This, ISAXAttributes *pAttr)
     {
         TRACE("%s\n", debugstr_wn(value, value_size));
 
-        This->result->private_path = HeapAlloc(GetProcessHeap(), 0, (value_size + 1) * sizeof(WCHAR));
-        if (This->result->private_path)
-            wcscpy(This->result->private_path, value);
-        else
+        This->result->private_path = wcsdup(value);
+        if (!This->result->private_path)
             hr = E_OUTOFMEMORY;
     }
 
@@ -375,18 +373,17 @@ static HRESULT parse_supported_runtime(ConfigFileHandler *This, ISAXAttributes *
     if (SUCCEEDED(hr))
     {
         TRACE("%s\n", debugstr_wn(value, value_size));
-        entry = HeapAlloc(GetProcessHeap(), 0, sizeof(supported_runtime));
+        entry = malloc(sizeof(supported_runtime));
         if (entry)
         {
-            entry->version = HeapAlloc(GetProcessHeap(), 0, (value_size + 1) * sizeof(WCHAR));
+            entry->version = wcsdup(value);
             if (entry->version)
             {
-                lstrcpyW(entry->version, value);
                 list_add_tail(&This->result->supported_runtimes, &entry->entry);
             }
             else
             {
-                HeapFree(GetProcessHeap(), 0, entry);
+                free(entry);
                 hr = E_OUTOFMEMORY;
             }
         }
@@ -626,7 +623,7 @@ static HRESULT parse_config(VARIANT input, parsed_config_file *result)
     ConfigFileHandler *handler;
     HRESULT hr;
 
-    handler = HeapAlloc(GetProcessHeap(), 0, sizeof(ConfigFileHandler));
+    handler = malloc(sizeof(ConfigFileHandler));
     if (!handler)
         return E_OUTOFMEMORY;
 
@@ -702,10 +699,10 @@ void free_parsed_config_file(parsed_config_file *file)
 
     LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &file->supported_runtimes, supported_runtime, entry)
     {
-        HeapFree(GetProcessHeap(), 0, cursor->version);
+        free(cursor->version);
         list_remove(&cursor->entry);
-        HeapFree(GetProcessHeap(), 0, cursor);
+        free(cursor);
     }
 
-    HeapFree(GetProcessHeap(), 0, file->private_path);
+    free(file->private_path);
 }
