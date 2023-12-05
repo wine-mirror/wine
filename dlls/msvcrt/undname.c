@@ -519,6 +519,28 @@ static BOOL get_qualified_type(struct datatype_t *ct, struct parsed_symbol* sym,
     ct->right = NULL;
     ct->flags = 0;
 
+    /* parse managed handle information */
+    if (sym->current[0] == '$' && sym->current[1] == 'A')
+    {
+        sym->current += 2;
+
+        switch (qualif)
+        {
+        case 'A':
+        case 'B':
+            ref = " %";
+            break;
+        case 'P':
+        case 'Q':
+        case 'R':
+        case 'S':
+            ref = " ^";
+            break;
+        default:
+            return FALSE;
+        }
+    }
+
     if (get_qualifier(sym, &xdt2, &class))
     {
         unsigned            mark = sym->stack.num;
