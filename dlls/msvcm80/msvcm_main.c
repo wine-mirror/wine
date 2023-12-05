@@ -55,3 +55,9 @@ void __cdecl CrtImplementationDetails_ThrowModuleLoadException_inner(void* messa
 {
     FIXME("%p %p: stub\n", message, inner);
 }
+
+/* void __cdecl <CrtImplementationDetails>::ThrowNestedModuleLoadException(System.Exception^, System.Exception^) */
+void __cdecl CrtImplementationDetails_ThrowNestedModuleLoadException(void* inner, void* nested)
+{
+    FIXME("%p %p: stub\n", inner, nested);
+}
