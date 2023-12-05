@@ -119,6 +119,7 @@ function detached_iframe_doc() {
             expect_exception(function() { origDoc.onclick; }, true);
             expect_exception(function() { origDoc.toString; }, true);
             expect_exception(function() { origDoc.toString(); }, true);
+            expect_exception(function() { origDoc.frames; });
             expect_exception(function() { origDoc.readyState; }, true);
             expect_exception(function() { origDoc.URL; });
             expect_exception(function() { origDoc.URL = "blank.html"; });
