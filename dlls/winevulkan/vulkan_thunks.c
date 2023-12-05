@@ -17914,7 +17914,7 @@ static inline const VkShaderCreateInfoEXT *convert_VkShaderCreateInfoEXT_array_w
 }
 
 #ifdef _WIN64
-static inline void convert_VkSwapchainCreateInfoKHR_win64_to_host(const VkSwapchainCreateInfoKHR *in, VkSwapchainCreateInfoKHR *out)
+static inline void convert_VkSwapchainCreateInfoKHR_win64_to_driver(const VkSwapchainCreateInfoKHR *in, VkSwapchainCreateInfoKHR *out)
 {
     if (!in) return;
 
@@ -17939,7 +17939,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win64_to_host(const VkSwapch
 }
 #endif /* _WIN64 */
 
-static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkSwapchainCreateInfoKHR32 *in, VkSwapchainCreateInfoKHR *out)
+static inline void convert_VkSwapchainCreateInfoKHR_win32_to_driver(struct conversion_context *ctx, const VkSwapchainCreateInfoKHR32 *in, VkSwapchainCreateInfoKHR *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -26448,7 +26448,7 @@ static inline void convert_VkSurfaceCapabilities2KHR_host_to_win32(const VkSurfa
 }
 
 #ifdef _WIN64
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_driver(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     if (!in) return;
 
@@ -26458,7 +26458,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const V
 }
 #endif /* _WIN64 */
 
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_driver(struct conversion_context *ctx, const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -36113,7 +36113,7 @@ static NTSTATUS thunk64_vkCreateSwapchainKHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
 
-    convert_VkSwapchainCreateInfoKHR_win64_to_host(params->pCreateInfo, &pCreateInfo_host);
+    convert_VkSwapchainCreateInfoKHR_win64_to_driver(params->pCreateInfo, &pCreateInfo_host);
     params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateSwapchainKHR(wine_device_from_handle(params->device)->host_device, &pCreateInfo_host, NULL, params->pSwapchain);
     return STATUS_SUCCESS;
 }
@@ -36136,7 +36136,7 @@ static NTSTATUS thunk32_vkCreateSwapchainKHR(void *args)
     TRACE("%#x, %#x, %#x, %#x\n", params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
 
     init_conversion_context(ctx);
-    convert_VkSwapchainCreateInfoKHR_win32_to_host(ctx, (const VkSwapchainCreateInfoKHR32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
+    convert_VkSwapchainCreateInfoKHR_win32_to_driver(ctx, (const VkSwapchainCreateInfoKHR32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateSwapchainKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pCreateInfo_host, NULL, (VkSwapchainKHR *)UlongToPtr(params->pSwapchain));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -41232,7 +41232,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
-    convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(params->pSurfaceInfo, &pSurfaceInfo_host);
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_driver(params->pSurfaceInfo, &pSurfaceInfo_host);
     params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, &pSurfaceInfo_host, params->pSurfaceFormatCount, params->pSurfaceFormats);
     return STATUS_SUCCESS;
 }
@@ -41256,7 +41256,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
     TRACE("%#x, %#x, %#x, %#x\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
     init_conversion_context(ctx);
-    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(ctx, (const VkPhysicalDeviceSurfaceInfo2KHR32 *)UlongToPtr(params->pSurfaceInfo), &pSurfaceInfo_host);
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_driver(ctx, (const VkPhysicalDeviceSurfaceInfo2KHR32 *)UlongToPtr(params->pSurfaceInfo), &pSurfaceInfo_host);
     pSurfaceFormats_host = convert_VkSurfaceFormat2KHR_array_win32_to_host(ctx, (VkSurfaceFormat2KHR32 *)UlongToPtr(params->pSurfaceFormats), *(uint32_t *)UlongToPtr(params->pSurfaceFormatCount));
     params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pSurfaceInfo_host, (uint32_t *)UlongToPtr(params->pSurfaceFormatCount), pSurfaceFormats_host);
     convert_VkSurfaceFormat2KHR_array_host_to_win32(pSurfaceFormats_host, (VkSurfaceFormat2KHR32 *)UlongToPtr(params->pSurfaceFormats), *(uint32_t *)UlongToPtr(params->pSurfaceFormatCount));

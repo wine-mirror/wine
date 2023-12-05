@@ -325,6 +325,7 @@ class Direction(Enum):
 class Unwrap(Enum):
     NONE = 0
     HOST = 1
+    DRIVER = 2
 
 
 def api_is_vulkan(obj):
@@ -337,12 +338,16 @@ def convert_suffix(direction, win_type, unwrap, is_wrapped):
             return "host_to_{0}".format(win_type)
         if unwrap == Unwrap.NONE:
             return "unwrapped_host_to_{0}".format(win_type)
+        if unwrap == Unwrap.DRIVER:
+            return "driver_to_{0}".format(win_type)
         return "host_to_{0}".format(win_type)
     else:
         if not is_wrapped:
             return "{0}_to_host".format(win_type)
         if unwrap == Unwrap.NONE:
             return "{0}_to_unwrapped_host".format(win_type)
+        if unwrap == Unwrap.DRIVER:
+            return "{0}_to_driver".format(win_type)
         return "{0}_to_host".format(win_type)
 
 
@@ -628,6 +633,8 @@ class VkFunction(object):
 
         if self.name in MANUAL_UNIX_THUNKS:
             self.unwrap = Unwrap.NONE
+        elif self.name in USER_DRIVER_FUNCS:
+            self.unwrap = Unwrap.DRIVER
         else:
             self.unwrap = Unwrap.HOST
 
@@ -1190,6 +1197,14 @@ class VkHandle(object):
 
         return self.host_handle(name)
 
+    def unwrap_handle(self, name, unwrap):
+        if unwrap == Unwrap.DRIVER:
+            return self.driver_handle(name)
+        if unwrap == Unwrap.HOST:
+            return self.host_handle(name)
+        assert unwrap != Unwrap.NONE
+        return None
+
     def is_wrapped(self):
         return self.host_handle("test") is not None
 
@@ -1549,15 +1564,16 @@ class VkMember(VkVariable):
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
                 elif self.optional:
                     return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name, self.value(input, conv),
-                        handle.driver_handle(self.value(input, conv)))
+                        handle.unwrap_handle(self.value(input, conv), unwrap))
                 else:
                     return "{0}{1} = {2};\n".format(output, self.name,
-                        handle.driver_handle(self.value(input, conv)))
+                        handle.unwrap_handle(self.value(input, conv), unwrap))
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
-                else:
-                    return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
+                if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
+                    LOGGER.err("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
+                return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
                 selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
                 if direction == Direction.OUTPUT:
@@ -1951,13 +1967,15 @@ class VkParam(VkVariable):
         if unwrap != Unwrap.NONE:
             unwrap_handle = None
             if self.object_type != None and self.type == "uint64_t":
+                if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
+                    LOGGER.err("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
                 unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
                     params_prefix, self.object_type, self.name)
 
             elif self.is_handle():
                 # We need to pass the host handle to the host Vulkan calls and
                 # the wine driver's handle to calls which are wrapped by the driver.
-                unwrap_handle = self.handle.driver_handle(p)
+                unwrap_handle = self.handle.unwrap_handle(p, unwrap)
             if unwrap_handle:
                 if self.optional:
                     unwrap_handle = "{0}{1} ? {2} : 0".format(params_prefix, self.name, unwrap_handle)
@@ -2612,7 +2630,7 @@ class ArrayConversionFunction(object):
                 if self.unwrap == Unwrap.NONE or not handle.is_wrapped():
                     body += "        out[i] = {0};\n".format(input)
                 elif self.direction == Direction.INPUT:
-                    body += "        out[i] = " + handle.driver_handle(input) + ";\n"
+                    body += "        out[i] = {0};\n".format(handle.unwrap_handle(input, self.unwrap))
                 else:
                     LOGGER.warning("Unhandled handle output conversion")
             elif self.array.pointer_array:
