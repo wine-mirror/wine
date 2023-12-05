@@ -149,7 +149,7 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
     char display_key_name[19];
     HKEY display_hkey;
     CGDisplayModeRef display_mode;
-    UNICODE_STRING str;
+    UNICODE_STRING str = RTL_CONSTANT_STRING(pixelencodingW);
     DWORD val;
     CFStringRef pixel_encoding;
     size_t len;
@@ -189,7 +189,6 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
     CFStringGetCharacters(pixel_encoding, CFRangeMake(0, len), (UniChar*)buf);
     buf[len] = 0;
     CFRelease(pixel_encoding);
-    RtlInitUnicodeString(&str, pixelencodingW);
     if (NtSetValueKey(display_hkey, &str, 0, REG_SZ, (const BYTE*)buf, (len + 1) * sizeof(WCHAR)))
         goto fail;
 

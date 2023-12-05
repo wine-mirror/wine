@@ -1665,8 +1665,7 @@ void macdrv_UpdateClipboard(void)
 
     if (!NtUserIsWindow(clipboard_manager))
     {
-        UNICODE_STRING str;
-        RtlInitUnicodeString(&str, clipboard_classname);
+        UNICODE_STRING str = RTL_CONSTANT_STRING(clipboard_classname);
         clipboard_manager = NtUserFindWindowEx(NULL, NULL, &str, NULL, 0);
         if (!clipboard_manager)
         {
