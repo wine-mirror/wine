@@ -20,7 +20,7 @@
 #ifndef __MSCOREE_PRIVATE__
 #define __MSCOREE_PRIVATE__
 
-extern char *WtoA(LPCWSTR wstr);
+extern char *WtoA(const WCHAR *wstr) __WINE_DEALLOC(free) __WINE_MALLOC;
 
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 extern HRESULT CLRMetaHostPolicy_CreateInstance(REFIID riid, void **ppobj);
