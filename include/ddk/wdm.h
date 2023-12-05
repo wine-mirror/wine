@@ -1657,8 +1657,12 @@ static inline void IoCopyCurrentIrpStackLocationToNext(IRP *irp)
     next->Control = 0;
 }
 
-#define KernelMode 0
-#define UserMode   1
+typedef enum _MODE
+{
+    KernelMode,
+    UserMode,
+    MaximumMode
+} MODE;
 
 /* directory object access rights */
 #define DIRECTORY_QUERY                 0x0001
