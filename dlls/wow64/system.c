@@ -657,7 +657,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
     }
 
     case SystemCpuSetInformation:  /* SYSTEM_CPU_SET_INFORMATION */
-    case SystemSupportedProcessorArchitectures:  /* ULONG */
+    case SystemSupportedProcessorArchitectures:  /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
         return NtQuerySystemInformationEx( class, &handle, sizeof(handle), ptr, len, retlen );
 
     default:

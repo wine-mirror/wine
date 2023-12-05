@@ -108,19 +108,18 @@ USHORT WINAPI RtlWow64GetCurrentMachine(void)
  */
 NTSTATUS WINAPI RtlWow64GetProcessMachines( HANDLE process, USHORT *current_ret, USHORT *native_ret )
 {
-    ULONG i, machines[8];
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     USHORT current = 0, native = 0;
     NTSTATUS status;
+    ULONG i;
 
     status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                          machines, sizeof(machines), NULL );
     if (status) return status;
-    for (i = 0; machines[i]; i++)
+    for (i = 0; machines[i].Machine; i++)
     {
-        USHORT flags = HIWORD(machines[i]);
-        USHORT machine = LOWORD(machines[i]);
-        if (flags & 4 /* native machine */) native = machine;
-        else if (flags & 8 /* current machine */) current = machine;
+        if (machines[i].Native) native = machines[i].Machine;
+        else if (machines[i].Process) current = machines[i].Machine;
     }
     if (current_ret) *current_ret = current;
     if (native_ret) *native_ret = native;
@@ -148,18 +147,19 @@ NTSTATUS WINAPI RtlWow64GetSharedInfoProcess( HANDLE process, BOOLEAN *is_wow64,
  */
 NTSTATUS WINAPI RtlWow64IsWowGuestMachineSupported( USHORT machine, BOOLEAN *supported )
 {
-    ULONG i, machines[8];
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     HANDLE process = 0;
     NTSTATUS status;
+    ULONG i;
 
     status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                          machines, sizeof(machines), NULL );
     if (status) return status;
     *supported = FALSE;
-    for (i = 0; machines[i]; i++)
+    for (i = 0; machines[i].Machine; i++)
     {
-        if (HIWORD(machines[i]) & 4 /* native machine */) continue;
-        if (machine == LOWORD(machines[i])) *supported = TRUE;
+        if (machines[i].Native) continue;
+        if (machine == machines[i].Machine) *supported = TRUE;
     }
     return status;
 }

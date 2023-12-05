@@ -357,6 +357,7 @@ static UINT64 read_tsc_frequency(void)
 
 static void create_user_shared_data(void)
 {
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     struct _KUSER_SHARED_DATA *data;
     RTL_OSVERSIONINFOEXW version;
     SYSTEM_CPU_INFORMATION sci;
@@ -366,7 +367,7 @@ static void create_user_shared_data(void)
     UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wine_user_shared_data" );
     NTSTATUS status;
     HANDLE handle;
-    ULONG i, machines[8];
+    ULONG i;
     HANDLE process = 0;
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
@@ -446,9 +447,9 @@ static void create_user_shared_data(void)
         if (!NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                          machines, sizeof(machines), NULL ))
         {
-            for (i = 0; machines[i]; i++)
+            for (i = 0; machines[i].Machine; i++)
             {
-                switch (LOWORD(machines[i]))
+                switch (machines[i].Machine)
                 {
                 case IMAGE_FILE_MACHINE_ARMNT:
                     features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
@@ -1596,12 +1597,12 @@ static void update_wineprefix( BOOL force )
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
-        ULONG machines[8];
+        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
         HANDLE process = 0;
         DWORD count = 0;
 
         if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
-                                        machines, sizeof(machines), NULL )) machines[0] = 0;
+                                        machines, sizeof(machines), NULL )) machines[0].Machine = 0;
 
         if ((process = start_rundll32( inf_path, L"PreInstall", IMAGE_FILE_MACHINE_TARGET_HOST )))
         {
@@ -1619,11 +1620,11 @@ static void update_wineprefix( BOOL force )
                     }
                     CloseHandle( process );
                 }
-                if (!machines[count]) break;
-                if (HIWORD(machines[count]) & 4 /* native machine */)
+                if (!machines[count].Machine) break;
+                if (machines[count].Native)
                     process = start_rundll32( inf_path, L"DefaultInstall", IMAGE_FILE_MACHINE_TARGET_HOST );
                 else
-                    process = start_rundll32( inf_path, L"Wow64Install", LOWORD(machines[count]) );
+                    process = start_rundll32( inf_path, L"Wow64Install", machines[count].Machine );
                 count++;
             }
             DestroyWindow( hwnd );

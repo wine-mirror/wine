@@ -112,20 +112,21 @@ static LPCWSTR find_arg_start(LPCWSTR cmdline)
 
 static void reexec_self( WORD machine )
 {
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     WCHAR app[MAX_PATH];
     LPCWSTR args;
     WCHAR *cmdline;
-    ULONG i, machines[8];
     HANDLE process = 0;
     STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi;
     void *cookie;
+    ULONG i;
 
     NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                 machines, sizeof(machines), NULL );
-    for (i = 0; machines[i]; i++) if (LOWORD(machines[i]) == machine) break;
-    if (!machines[i]) return;
-    if (HIWORD(machines[i]) & 4 /* native machine */) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
+    for (i = 0; machines[i].Machine; i++) if (machines[i].Machine == machine) break;
+    if (!machines[i].Machine) return;
+    if (machines[i].Native) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
     if (!GetSystemWow64Directory2W( app, MAX_PATH, machine )) return;
     wcscat( app, L"\\regsvr32.exe" );
 

@@ -3365,6 +3365,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
 
     case SystemSupportedProcessorArchitectures:
     {
+        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION *machines = info;
         HANDLE process;
         ULONG i;
         USHORT machine = 0;
@@ -3382,7 +3383,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
             if (ret) return ret;
         }
 
-        len = (supported_machines_count + 1) * sizeof(ULONG);
+        len = (supported_machines_count + 1) * sizeof(*machines);
         if (size < len)
         {
             ret = STATUS_BUFFER_TOO_SMALL;
@@ -3390,12 +3391,22 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
         }
         for (i = 0; i < supported_machines_count; i++)
         {
-            USHORT flags = 2;  /* supported (?) */
-            if (!i) flags |= 5;  /* native machine (?) */
-            if (supported_machines[i] == machine) flags |= 8;  /* current machine */
-            ((DWORD *)info)[i] = MAKELONG( supported_machines[i], flags );
+            machines[i].Machine = supported_machines[i];
+            machines[i].UserMode = 1;
+            machines[i].KernelMode = machines[i].Native = i == 0;
+            machines[i].Process = supported_machines[i] == machine;
+            machines[i].WoW64Container = 0;
+            machines[i].ReservedZero0 = 0;
         }
-        ((DWORD *)info)[i] = 0;
+
+        machines[i].Machine = 0;
+        machines[i].KernelMode = 0;
+        machines[i].UserMode = 0;
+        machines[i].Native = 0;
+        machines[i].Process = 0;
+        machines[i].WoW64Container = 0;
+        machines[i].ReservedZero0 = 0;
+
         ret = STATUS_SUCCESS;
         break;
     }
