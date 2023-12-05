@@ -737,8 +737,10 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
             return NULL;
         }
 
+        GST_BUFFER_PTS(buffer) = 0;
+        GST_BUFFER_DTS(buffer) = 0;
         gst_buffer_fill(buffer, 0, format->u.video_h264.codec_data, format->u.video_h264.codec_data_len);
-        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_caps_set_simple(caps, "streamheader", GST_TYPE_BUFFER, buffer, NULL);
         gst_buffer_unref(buffer);
     }
 
