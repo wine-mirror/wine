@@ -347,6 +347,20 @@ static DOMUIEvent *DOMUIEvent_from_DOMEvent(DOMEvent *event)
 }
 
 typedef struct {
+    DOMEvent event;
+    IDOMStorageEvent IDOMStorageEvent_iface;
+    BSTR key;
+    BSTR old_value;
+    BSTR new_value;
+    BSTR url;
+} DOMStorageEvent;
+
+static DOMStorageEvent *DOMStorageEvent_from_DOMEvent(DOMEvent *event)
+{
+    return CONTAINING_RECORD(event, DOMStorageEvent, event);
+}
+
+typedef struct {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
     IHTMLEventObj2 IHTMLEventObj2_iface;
@@ -1765,20 +1779,44 @@ static HRESULT WINAPI HTMLEventObj5_Invoke(IHTMLEventObj5 *iface, DISPID dispIdM
 static HRESULT WINAPI HTMLEventObj5_put_url(IHTMLEventObj5 *iface, BSTR v)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
+    IDOMStorageEvent *storage_event;
+    DOMStorageEvent *p;
+    BSTR url;
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return DISP_E_MEMBERNOTFOUND;
+    if(!v)
+        return E_POINTER;
+
+    if(!This->event || FAILED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMStorageEvent, (void**)&storage_event)))
+        return DISP_E_MEMBERNOTFOUND;
+    IDOMStorageEvent_Release(storage_event);
+
+    if(!(url = SysAllocString(v)))
+        return E_OUTOFMEMORY;
+
+    p = DOMStorageEvent_from_DOMEvent(This->event);
+    SysFreeString(p->url);
+    p->url = url;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLEventObj5_get_url(IHTMLEventObj5 *iface, BSTR *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
+    IDOMStorageEvent *storage_event;
+    HRESULT hres;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
-    return S_OK;
+    if(!This->event || FAILED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMStorageEvent, (void**)&storage_event))) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = IDOMStorageEvent_get_url(storage_event, p);
+    IDOMStorageEvent_Release(storage_event);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLEventObj5_put_data(IHTMLEventObj5 *iface, BSTR v)
@@ -3954,15 +3992,6 @@ static void DOMProgressEvent_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsevent);
 }
 
-typedef struct {
-    DOMEvent event;
-    IDOMStorageEvent IDOMStorageEvent_iface;
-    BSTR key;
-    BSTR old_value;
-    BSTR new_value;
-    BSTR url;
-} DOMStorageEvent;
-
 static inline DOMStorageEvent *impl_from_IDOMStorageEvent(IDOMStorageEvent *iface)
 {
     return CONTAINING_RECORD(iface, DOMStorageEvent, IDOMStorageEvent_iface);
@@ -4096,11 +4125,6 @@ static const IDOMStorageEventVtbl DOMStorageEventVtbl = {
     DOMStorageEvent_get_storageArea,
     DOMStorageEvent_initStorageEvent
 };
-
-static DOMStorageEvent *DOMStorageEvent_from_DOMEvent(DOMEvent *event)
-{
-    return CONTAINING_RECORD(event, DOMStorageEvent, event);
-}
 
 static void *DOMStorageEvent_query_interface(DispatchEx *dispex, REFIID riid)
 {

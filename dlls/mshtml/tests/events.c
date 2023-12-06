@@ -3872,9 +3872,11 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
 {
     const WCHAR *expect_key = onstorage_expect_key, *expect_old_value = onstorage_expect_old_value, *expect_new_value = onstorage_expect_new_value;
     unsigned line = onstorage_expect_line;
+    IHTMLEventObj5 *event_obj5;
     IHTMLEventObj *event_obj;
     IDOMStorageEvent *event;
     IDispatchEx *dispex;
+    IDispatch *disp;
     HRESULT hres;
     unsigned i;
     DISPID id;
@@ -3898,6 +3900,8 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
 
         hres = IDispatchEx_QueryInterface(dispex, &IID_IHTMLEventObj, (void**)&event_obj);
         ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLEventObj: %08lx\n", hres);
+        hres = IHTMLEventObj_QueryInterface(event_obj, &IID_IHTMLEventObj5, (void**)&event_obj5);
+        ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLEventObj5: %08lx\n", hres);
         IHTMLEventObj_Release(event_obj);
 
         for(i = 0; i < ARRAY_SIZE(props); i++) {
@@ -3906,8 +3910,39 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
             ok_(__FILE__,line)(hres == DISP_E_UNKNOWNNAME, "GetDispID(%s) failed: %08lx\n", wine_dbgstr_w(bstr), hres);
             SysFreeString(bstr);
         }
-
         IDispatchEx_Release(dispex);
+
+        hres = IHTMLEventObj5_get_data(event_obj5, &bstr);
+        ok_(__FILE__,line)(hres == S_OK, "get_data failed: %08lx\n", hres);
+        ok_(__FILE__,line)(!bstr, "data = %s\n", wine_dbgstr_w(bstr));
+
+        hres = IHTMLEventObj5_get_origin(event_obj5, &bstr);
+        ok_(__FILE__,line)(hres == S_OK, "get_origin failed: %08lx\n", hres);
+        ok_(__FILE__,line)(!bstr, "origin = %s\n", wine_dbgstr_w(bstr));
+
+        hres = IHTMLEventObj5_get_source(event_obj5, &disp);
+        ok_(__FILE__,line)(hres == S_OK, "get_source failed: %08lx\n", hres);
+        ok_(__FILE__,line)(!disp, "source != NULL\n");
+
+        hres = IHTMLEventObj5_get_url(event_obj5, &bstr);
+        ok_(__FILE__,line)(hres == S_OK, "get_url failed: %08lx\n", hres);
+        ok_(__FILE__,line)(!wcscmp(bstr, L"http://winetest.example.org/"), "url = %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        bstr = SysAllocString(L"barfoo");
+        hres = IHTMLEventObj5_put_url(event_obj5, bstr);
+        ok_(__FILE__,line)(hres == S_OK, "put_url failed: %08lx\n", hres);
+        SysFreeString(bstr);
+
+        hres = IHTMLEventObj5_get_url(event_obj5, &bstr);
+        ok_(__FILE__,line)(hres == S_OK, "get_url after put failed: %08lx\n", hres);
+        ok_(__FILE__,line)(!wcscmp(bstr, L"barfoo"), "url after put = %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        hres = IHTMLEventObj5_put_url(event_obj5, NULL);
+        ok_(__FILE__,line)(hres == E_POINTER, "put_url NULL returned: %08lx\n", hres);
+
+        IHTMLEventObj5_Release(event_obj5);
         return;
     }
 
