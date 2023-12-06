@@ -277,6 +277,8 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
     if(name_override)
         name = SysAllocString(name_override);
+    else if(desc->wFuncFlags & FUNCFLAG_FRESTRICTED)
+        return;
     else {
         hres = ITypeInfo_GetDocumentation(dti, desc->memid, &name, NULL, NULL, NULL);
         if(FAILED(hres)) {
