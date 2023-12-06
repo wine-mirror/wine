@@ -1578,10 +1578,31 @@ static HRESULT WINAPI VMR7WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
 static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface, HWND window)
 {
     struct quartz_vmr *filter = impl_from_IVMRWindowlessControl(iface);
+    HRESULT hr;
 
-    TRACE("iface %p, window %p.\n", iface, window);
+    TRACE("filter %p, window %p.\n", filter, window);
 
-    return IVMRWindowlessControl9_SetVideoClippingWindow(&filter->IVMRWindowlessControl9_iface, window);
+    if (!IsWindow(window))
+    {
+        WARN("Invalid window %p, returning E_INVALIDARG.\n", window);
+        return E_INVALIDARG;
+    }
+
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+
+    if (filter->renderer.sink.pin.peer)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        WARN("Attempt to set the clipping window while connected; returning VFW_E_WRONG_STATE.\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    filter->clipping_window = window;
+
+    hr = IVMRFilterConfig_SetNumberOfStreams(&filter->IVMRFilterConfig_iface, 4);
+
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+    return hr;
 }
 
 static HRESULT WINAPI VMR7WindowlessControl_RepaintVideo(IVMRWindowlessControl *iface,
