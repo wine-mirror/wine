@@ -990,7 +990,7 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
 
     buf = HeapAlloc( GetProcessHeap(), 0, max(sizeof(do_pattern) + 100, 2 * w/8 * h + 1) );
     ptr = buf;
-    for(y = h-1; y >= 0; y--) {
+    for(y = 0; y < h; y++) {
         for(x = 0; x < w/8; x++) {
 	    sprintf(ptr, "%02x", *(bits + x/8 + y *
 				   ((bmi->bmiHeader.biWidth + 31) / 32) * 4));
