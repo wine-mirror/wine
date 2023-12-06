@@ -685,7 +685,7 @@ static void init_font_prop_vec(DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STRETCH st
     struct dwrite_font_propvec *vec)
 {
     vec->stretch = ((INT32)stretch - DWRITE_FONT_STRETCH_NORMAL) * 11.0f;
-    vec->style = style * 7.0f;
+    vec->style = (float)style * 7.0f;
     vec->weight = ((INT32)weight - DWRITE_FONT_WEIGHT_NORMAL) / 100.0f * 5.0f;
 }
 
