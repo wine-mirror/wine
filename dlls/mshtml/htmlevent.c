@@ -2035,11 +2035,11 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
     return event_obj;
 }
 
-HRESULT create_event_obj(compat_mode_t compat_mode, IHTMLEventObj **ret)
+HRESULT create_event_obj(DOMEvent *event, compat_mode_t compat_mode, IHTMLEventObj **ret)
 {
     HTMLEventObj *event_obj;
 
-    event_obj = alloc_event_obj(NULL, compat_mode);
+    event_obj = alloc_event_obj(event, compat_mode);
     if(!event_obj)
         return E_OUTOFMEMORY;
 

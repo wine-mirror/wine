@@ -208,12 +208,21 @@ static void storage_event_proc(event_task_t *_task)
     struct storage_event_task *task = (struct storage_event_task*)_task;
     HTMLInnerWindow *window = task->header.window;
     DOMEvent *event = task->event;
+    compat_mode_t compat_mode;
     VARIANT_BOOL cancelled;
+    HRESULT hres;
+    VARIANT var;
 
-    if(event->event_id == EVENTID_STORAGE && dispex_compat_mode(&window->event_target.dispex) >= COMPAT_MODE_IE9) {
+    if(event->event_id == EVENTID_STORAGE && (compat_mode = dispex_compat_mode(&window->event_target.dispex)) >= COMPAT_MODE_IE9) {
         dispatch_event(&window->event_target, event);
-        if(window->doc)
-            fire_event(&window->doc->node, L"onstorage", NULL, &cancelled);
+        if(window->doc) {
+            hres = create_event_obj(event, compat_mode, (IHTMLEventObj**)&V_DISPATCH(&var));
+            if(SUCCEEDED(hres)) {
+                V_VT(&var) = VT_DISPATCH;
+                fire_event(&window->doc->node, L"onstorage", &var, &cancelled);
+                IDispatch_Release(V_DISPATCH(&var));
+            }
+        }
     }else if(window->doc) {
         dispatch_event(&window->doc->node.event_target, event);
     }

@@ -107,7 +107,7 @@ HRESULT fire_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*);
 void update_doc_cp_events(HTMLDocumentNode*,cp_static_data_t*);
 HRESULT doc_init_events(HTMLDocumentNode*);
 void detach_events(HTMLDocumentNode *doc);
-HRESULT create_event_obj(compat_mode_t,IHTMLEventObj**);
+HRESULT create_event_obj(DOMEvent*,compat_mode_t,IHTMLEventObj**);
 void bind_target_event(HTMLDocumentNode*,EventTarget*,const WCHAR*,IDispatch*);
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode*,nsIDOMNode*,eventid_t);
 
