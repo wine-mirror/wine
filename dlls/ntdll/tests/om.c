@@ -73,6 +73,7 @@ static NTSTATUS (WINAPI *pNtOpenIoCompletion)( PHANDLE, ACCESS_MASK, POBJECT_ATT
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, void *, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtOpenProcess)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID * );
 static NTSTATUS (WINAPI *pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
+static NTSTATUS (WINAPI *pNtGetNextProcess)(HANDLE process, ACCESS_MASK access, ULONG attributes, ULONG flags, HANDLE *handle);
 static NTSTATUS (WINAPI *pNtGetNextThread)(HANDLE process, HANDLE thread, ACCESS_MASK access, ULONG attributes,
                                             ULONG flags, HANDLE *handle);
 static NTSTATUS (WINAPI *pNtOpenProcessToken)(HANDLE,DWORD,HANDLE*);
@@ -2489,6 +2490,39 @@ static void test_get_next_thread(void)
     CloseHandle(thread);
 }
 
+static void test_get_next_process(void)
+{
+    NTSTATUS status;
+    HANDLE handle, prev = 0;
+    BOOL found = FALSE;
+
+    if (!pNtGetNextProcess)
+    {
+        win_skip("NtGetNextProcess is not available.\n");
+        return;
+    }
+
+    while (!(status = pNtGetNextProcess(prev, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 0, &handle)))
+    {
+        DWORD pid = GetProcessId( handle );
+        ok( pid, "GetProcessId failed err %lu\n", GetLastError() );
+        if (pid == GetCurrentProcessId()) found = TRUE;
+        if (prev) pNtClose(prev);
+        prev = handle;
+    }
+    ok(status == STATUS_NO_MORE_ENTRIES, "Unexpected status %#lx.\n", status);
+    ok(found, "current process not found\n" );
+    pNtClose(prev);
+
+    /* Reversed search only supported in recent enough Win10 */
+    status = pNtGetNextProcess(0, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 1, &handle);
+    ok(!status || broken(status == STATUS_INVALID_PARAMETER), "Unexpected status %#lx.\n", status);
+    if (!status) pNtClose(handle);
+
+    status = pNtGetNextProcess(0, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 2, &handle);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %#lx.\n", status);
+}
+
 static void test_globalroot(void)
 {
     NTSTATUS status;
@@ -3865,6 +3899,7 @@ START_TEST(om)
     pNtQueryInformationFile =  (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
     pNtOpenProcess          =  (void *)GetProcAddress(hntdll, "NtOpenProcess");
     pNtCreateDebugObject    =  (void *)GetProcAddress(hntdll, "NtCreateDebugObject");
+    pNtGetNextProcess       =  (void *)GetProcAddress(hntdll, "NtGetNextProcess");
     pNtGetNextThread        =  (void *)GetProcAddress(hntdll, "NtGetNextThread");
     pNtOpenProcessToken     =  (void *)GetProcAddress(hntdll, "NtOpenProcessToken");
     pNtOpenThreadToken      =  (void *)GetProcAddress(hntdll, "NtOpenThreadToken");
@@ -3888,6 +3923,7 @@ START_TEST(om)
     test_duplicate_object();
     test_object_types();
     test_get_next_thread();
+    test_get_next_process();
     test_globalroot();
     test_object_identity();
     test_query_directory();
