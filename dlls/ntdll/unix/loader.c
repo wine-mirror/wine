@@ -297,11 +297,23 @@ static char *build_path( const char *dir, const char *name )
     size_t len = strlen( dir );
     char *ret = malloc( len + strlen( name ) + 2 );
 
-    memcpy( ret, dir, len );
-    if (len && ret[len - 1] != '/') ret[len++] = '/';
-    if (name[0] == '/') name++;
+    if (len)
+    {
+        memcpy( ret, dir, len );
+        if (ret[len - 1] != '/') ret[len++] = '/';
+        if (name[0] == '/') name++;
+    }
     strcpy( ret + len, name );
     return ret;
+}
+
+
+/* build a path to a binary and exec it */
+static void build_path_and_exec( const char *dir, const char *name, char **argv )
+{
+    argv[0] = build_path( dir, name );
+    execv( argv[0], argv );
+    free( argv[0] );
 }
 
 
@@ -564,34 +576,22 @@ static void exec_wineserver( char **argv )
         if (!is_win64)  /* look for 64-bit server */
         {
             char *loader = realpath_dirname( build_path( build_dir, "loader/wine64" ));
-            if (loader)
-            {
-                argv[0] = build_path( loader, "../server/wineserver" );
-                execv( argv[0], argv );
-            }
+            if (loader) build_path_and_exec( loader, "../server/wineserver", argv );
         }
-        argv[0] = build_path( build_dir, "server/wineserver" );
-        execv( argv[0], argv );
+        build_path_and_exec( build_dir, "server/wineserver", argv );
         return;
     }
 
-    argv[0] = build_path( bin_dir, "wineserver" );
-    execv( argv[0], argv );
+    build_path_and_exec( bin_dir, "wineserver", argv );
 
-    argv[0] = getenv( "WINESERVER" );
-    if (argv[0]) execv( argv[0], argv );
+    if ((path = getenv( "WINESERVER" ))) build_path_and_exec( "", path, argv );
 
     if ((path = getenv( "PATH" )))
     {
         for (path = strtok( strdup( path ), ":" ); path; path = strtok( NULL, ":" ))
-        {
-            argv[0] = build_path( path, "wineserver" );
-            execvp( argv[0], argv );
-        }
+            build_path_and_exec( path, "wineserver", argv );
     }
-
-    argv[0] = build_path( BINDIR, "wineserver" );
-    execv( argv[0], argv );
+    build_path_and_exec( BINDIR, "wineserver", argv );
 }
 
 
