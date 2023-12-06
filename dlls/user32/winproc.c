@@ -738,8 +738,7 @@ static size_t string_size( const void *str, BOOL ansi )
  *
  * Unpack a message received from win32u.
  */
-void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                     void *buffer, size_t size, BOOL ansi )
+void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam, void *buffer, BOOL ansi )
 {
     switch(message)
     {
@@ -816,7 +815,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         buffer = (char *)params + offset;
 
         unpack_message( params->hwnd, params->msg, &params->wparam, &params->lparam,
-                        buffer, packed_size, params->ansi );
+                        buffer, params->ansi );
     }
 
     result = dispatch_win_proc_params( params );

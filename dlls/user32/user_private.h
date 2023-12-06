@@ -52,7 +52,7 @@ extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 extern void free_cached_data( UINT format, HANDLE handle );
 extern HANDLE render_synthesized_format( UINT format, UINT from );
 extern void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                            void *buffer, size_t size, BOOL ansi );
+                            void *buffer, BOOL ansi );
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd );
 extern HDC get_display_dc(void);

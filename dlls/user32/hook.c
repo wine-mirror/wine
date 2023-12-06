@@ -478,7 +478,7 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
             {
                 cbtc.hwndInsertAfter = HWND_TOP;
                 unpack_message( (HWND)params->wparam, WM_CREATE, NULL, (LPARAM *)&cbtc.lpcs,
-                                ret_ptr, ret_size, FALSE );
+                                ret_ptr, FALSE );
                 params->lparam = (LPARAM)&cbtc;
                 ret_size = sizeof(*cbtc.lpcs);
             }
@@ -490,7 +490,7 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
                 size_t offset = (lparam_offset + sizeof(*cwp) + 15) & ~15;
 
                 unpack_message( cwp->hwnd, cwp->message, &cwp->wParam, &cwp->lParam,
-                                (char *)params + offset, size - offset, !params->prev_unicode );
+                                (char *)params + offset, !params->prev_unicode );
                 ret_size = 0;
                 break;
             }
@@ -501,7 +501,7 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
                 size_t offset = (lparam_offset + sizeof(*cwpret) + 15) & ~15;
 
                 unpack_message( cwpret->hwnd, cwpret->message, &cwpret->wParam, &cwpret->lParam,
-                                (char *)params + offset, size - offset, !params->prev_unicode );
+                                (char *)params + offset, !params->prev_unicode );
                 ret_size = 0;
                 break;
             }
