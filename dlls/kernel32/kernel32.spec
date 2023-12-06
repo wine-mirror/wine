@@ -798,6 +798,7 @@
 @ stdcall -import GetProcessHeaps(long ptr) RtlGetProcessHeaps
 @ stdcall -import GetProcessId(long)
 @ stdcall -import GetProcessIdOfThread(long)
+@ stdcall GetProcessInformation(long long ptr long)
 @ stdcall GetProcessIoCounters(long ptr)
 @ stdcall -import GetProcessMitigationPolicy(long long ptr long)
 @ stdcall -import GetProcessPreferredUILanguages(long ptr ptr ptr)

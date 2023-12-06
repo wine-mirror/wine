@@ -96,6 +96,7 @@ static BOOL   (WINAPI *pUpdateProcThreadAttribute)(struct _PROC_THREAD_ATTRIBUTE
 static void   (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*);
 static DWORD  (WINAPI *pGetActiveProcessorCount)(WORD);
 static DWORD  (WINAPI *pGetMaximumProcessorCount)(WORD);
+static BOOL   (WINAPI *pGetProcessInformation)(HANDLE,PROCESS_INFORMATION_CLASS,void*,DWORD);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -282,6 +283,7 @@ static BOOL init(void)
     pDeleteProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "DeleteProcThreadAttributeList");
     pGetActiveProcessorCount = (void *)GetProcAddress(hkernel32, "GetActiveProcessorCount");
     pGetMaximumProcessorCount = (void *)GetProcAddress(hkernel32, "GetMaximumProcessorCount");
+    pGetProcessInformation = (void *)GetProcAddress(hkernel32, "GetProcessInformation");
 
     return TRUE;
 }
@@ -5279,6 +5281,60 @@ static void test_startupinfo( void )
     params->dwFlags ^= STARTF_USESTDHANDLES;
 }
 
+static void test_GetProcessInformation(void)
+{
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
+    PROCESS_MACHINE_INFORMATION mi;
+    NTSTATUS status;
+    HANDLE process;
+    unsigned int i;
+    BOOL ret;
+
+    if (!pGetProcessInformation)
+    {
+        win_skip("GetProcessInformation() is not available.\n");
+        return;
+    }
+
+    ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, NULL, 0);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, 0);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, sizeof(mi) - 1);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, sizeof(mi) + 1);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+
+    ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, sizeof(mi));
+    ok(ret, "Unexpected return value %d.\n", ret);
+
+    process = GetCurrentProcess();
+    status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+            machines, sizeof(machines), NULL );
+    ok(!status, "Failed to get architectures information.\n");
+    for (i = 0; machines[i].Machine; i++)
+    {
+        if (machines[i].Process)
+        {
+            ok(mi.ProcessMachine == machines[i].Machine, "Unexpected process machine %#x.\n", mi.ProcessMachine);
+            ok(!mi.Res0, "Unexpected process machine %#x.\n", mi.ProcessMachine);
+            ok(!!(mi.MachineAttributes & UserEnabled) == machines[i].UserMode, "Unexpected attributes %#x.\n",
+                    mi.MachineAttributes);
+            ok(!!(mi.MachineAttributes & KernelEnabled) == machines[i].KernelMode, "Unexpected attributes %#x.\n",
+                    mi.MachineAttributes);
+            ok(!!(mi.MachineAttributes & Wow64Container) == machines[i].WoW64Container, "Unexpected attributes %#x.\n",
+                    mi.MachineAttributes);
+            ok(!(mi.MachineAttributes & ~(UserEnabled | KernelEnabled | Wow64Container)), "Unexpected attributes %#x.\n",
+                    mi.MachineAttributes);
+            break;
+        }
+    }
+}
+
 START_TEST(process)
 {
     HANDLE job, hproc, h, h2;
@@ -5408,6 +5464,7 @@ START_TEST(process)
     test_dead_process();
     test_services_exe();
     test_startupinfo();
+    test_GetProcessInformation();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched

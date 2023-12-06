@@ -44,6 +44,7 @@
 #ifdef __APPLE__
 #define GetCurrentProcess GetCurrentProcess_Mac
 #define GetCurrentThread GetCurrentThread_Mac
+#define GetProcessInformation GetProcessInformation_Mac
 #define LoadResource LoadResource_Mac
 #define AnimatePalette AnimatePalette_Mac
 #define EqualRgn EqualRgn_Mac
@@ -71,6 +72,7 @@
 #include <ApplicationServices/ApplicationServices.h>
 #undef GetCurrentProcess
 #undef GetCurrentThread
+#undef GetProcessInformation
 #undef LoadResource
 #undef AnimatePalette
 #undef EqualRgn

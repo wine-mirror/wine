@@ -30,6 +30,7 @@
 
 #define GetCurrentProcess MacGetCurrentProcess
 #define GetCurrentThread MacGetCurrentThread
+#define GetProcessInformation MacGetProcessInformation
 #define LoadResource MacLoadResource
 #define AnimatePalette MacAnimatePalette
 #define EqualRgn MacEqualRgn
@@ -59,6 +60,7 @@
 
 #undef GetCurrentProcess
 #undef GetCurrentThread
+#undef GetProcessInformation
 #undef LoadResource
 #undef AnimatePalette
 #undef EqualRgn
