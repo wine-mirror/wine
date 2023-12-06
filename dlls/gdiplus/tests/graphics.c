@@ -1307,6 +1307,63 @@ static void test_GdipDrawLineI(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_GdipDrawImageFX(void)
+{
+    GpGraphics *graphics = NULL;
+    GpMatrix *transform;
+    GpBitmap *bm = NULL;
+    GpStatus status;
+    GpRectF source;
+    BYTE buff[400];
+    HDC hdc;
+
+    if (!(hdc = GetDC( hwnd )))
+        return;
+
+    memset(buff, 0, sizeof(buff));
+    status = GdipCreateBitmapFromScan0(10, 10, 40, PixelFormat32bppRGB, buff, &bm);
+    expect(Ok, status);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateMatrix2(2.0, 0.0, 0.0, 1.0, 10.0, 20.0, &transform);
+    expect(Ok, status);
+
+    /* DrawImageFX with source rectangle */
+    status = GdipDrawImageFX(graphics, NULL, &source, NULL, NULL, NULL, UnitPixel);
+    todo_wine
+    expect(InvalidParameter, status);
+
+    /* DrawImageFX with source bitmap */
+    status = GdipDrawImageFX(graphics, (GpImage*)bm, NULL, NULL, NULL, NULL, UnitPixel);
+    todo_wine
+    expect(Ok, status);
+
+    /* DrawImageFX with source bitmap and transform */
+    status = GdipDrawImageFX(graphics, (GpImage*)bm, NULL, transform, NULL, NULL, UnitPixel);
+    todo_wine
+    expect(Ok, status);
+
+    /* DrawImageFX with source bitmap and source rectangle */
+    source.X = source.Y = 0.0;
+    source.Height = source.Width = 10.0;
+
+    status = GdipDrawImageFX(graphics, (GpImage*)bm, &source, NULL, NULL, NULL, UnitPixel);
+    todo_wine
+    expect(Ok, status);
+
+    /* DrawImageFX with source bitmap, source rectangle, and transform */
+    status = GdipDrawImageFX(graphics, (GpImage*)bm, &source, transform, NULL, NULL, UnitPixel);
+    todo_wine
+    expect(Ok, status);
+
+    GdipDeleteMatrix(transform);
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bm);
+    ReleaseDC(hwnd, hdc);
+}
+
 static void test_GdipDrawImagePointsRect(void)
 {
     GpStatus status;
@@ -7395,6 +7452,7 @@ START_TEST(graphics)
     test_GdipDrawCurve3I();
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
+    test_GdipDrawImageFX();
     test_GdipDrawImagePointsRect();
     test_GdipFillClosedCurve();
     test_GdipFillClosedCurveI();
