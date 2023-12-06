@@ -1920,6 +1920,33 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 
 
 /**********************************************************************
+ *           NtGetNextProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetNextProcess( HANDLE process, ACCESS_MASK access, ULONG attributes,
+                                  ULONG flags, HANDLE *handle )
+{
+    HANDLE ret_handle = 0;
+    unsigned int ret;
+
+    TRACE( "process %p, access %#x, attributes %#x, flags %#x, handle %p.\n",
+           process, (int)access, (int)attributes, (int)flags, handle );
+
+    SERVER_START_REQ( get_next_process )
+    {
+        req->last = wine_server_obj_handle( process );
+        req->access = access;
+        req->attributes = attributes;
+        req->flags = flags;
+        if (!(ret = wine_server_call( req ))) ret_handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    *handle = ret_handle;
+    return ret;
+}
+
+
+/**********************************************************************
  *           NtDebugActiveProcess  (NTDLL.@)
  */
 NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug )

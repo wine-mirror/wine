@@ -1392,6 +1392,40 @@ DECL_HANDLER(get_new_process_info)
     }
 }
 
+/* Itererate processes using global process list */
+DECL_HANDLER(get_next_process)
+{
+    struct process *process;
+    struct list *ptr;
+
+    if (req->flags > 1)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!req->last)
+    {
+        ptr = req->flags ? list_tail( &process_list ) : list_head( &process_list );
+    }
+    else
+    {
+        if (!(process = get_process_from_handle( req->last, 0 ))) return;
+        ptr = req->flags ? list_prev( &process_list, &process->entry )
+                         : list_next( &process_list, &process->entry );
+        release_object( process );
+    }
+
+    while (ptr)
+    {
+        process = LIST_ENTRY( ptr, struct process, entry );
+        if ((reply->handle = alloc_handle( current->process, process, req->access, req->attributes ))) return;
+        ptr = req->flags ? list_prev( &process_list, &process->entry )
+                         : list_next( &process_list, &process->entry );
+    }
+    set_error( STATUS_NO_MORE_ENTRIES );
+}
+
 /* Retrieve the new process startup info */
 DECL_HANDLER(get_startup_info)
 {
