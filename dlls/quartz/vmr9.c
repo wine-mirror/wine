@@ -893,9 +893,27 @@ static HRESULT WINAPI VMR7FilterConfig_SetNumberOfStreams(IVMRFilterConfig *ifac
 {
     struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
 
-    FIXME("filter %p, count %lu, stub!\n", filter, count);
+    FIXME("iface %p, count %lu, stub!\n", iface, count);
 
-    return E_NOTIMPL;
+    if (!count)
+    {
+        WARN("Application requested zero streams; returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+
+    if (filter->stream_count)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        WARN("Stream count is already set; returning VFW_E_WRONG_STATE.\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    filter->stream_count = count;
+
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR7FilterConfig_GetNumberOfStreams(IVMRFilterConfig *iface, DWORD *max)

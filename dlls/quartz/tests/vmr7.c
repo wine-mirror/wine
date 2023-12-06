@@ -54,7 +54,7 @@ static HRESULT set_mixing_mode(IBaseFilter *filter)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IVMRFilterConfig_SetNumberOfStreams(config, 2);
-    todo_wine ok(hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE || hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE || hr == S_OK, "Got hr %#lx.\n", hr);
 
     IVMRFilterConfig_Release(config);
     return hr;
@@ -171,7 +171,7 @@ static void test_filter_config(void)
     hr = IVMRFilterConfig_SetNumberOfStreams(config, 3);
     if (hr != VFW_E_DDRAW_CAPS_NOT_SUITABLE)
     {
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IVMRFilterConfig_GetNumberOfStreams(config, &count);
         todo_wine {
@@ -502,7 +502,7 @@ static void test_enum_pins(void)
     if (SUCCEEDED(set_mixing_mode(filter)))
     {
         hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+        ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
         hr = IEnumPins_Reset(enum1);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -512,8 +512,9 @@ static void test_enum_pins(void)
         IPin_Release(pins[0]);
 
         hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        IPin_Release(pins[0]);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+            IPin_Release(pins[0]);
 
         hr = IEnumPins_Next(enum1, 1, pins, NULL);
         ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
@@ -522,19 +523,21 @@ static void test_enum_pins(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IEnumPins_Next(enum1, 2, pins, &count);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(count == 2, "Got count %lu.\n", count);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(count == 2, "Got count %lu.\n", count);
         IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
+        if (count == 2)
+            IPin_Release(pins[1]);
 
         hr = IEnumPins_Reset(enum1);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IEnumPins_Next(enum1, 3, pins, &count);
         ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-        ok(count == 2, "Got count %lu.\n", count);
+        todo_wine ok(count == 2, "Got count %lu.\n", count);
         IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
+        if (count == 2)
+            IPin_Release(pins[1]);
     }
     else
         skip("Mixing mode is not supported.\n");
@@ -584,12 +587,15 @@ static void test_find_pin(void)
         IPin_Release(pin2);
 
         hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(pin == pin2, "Pins did not match.\n");
-        IPin_Release(pin);
-        IPin_Release(pin2);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(pin == pin2, "Pins did not match.\n");
+            IPin_Release(pin);
+            IPin_Release(pin2);
+        }
 
         hr = IBaseFilter_FindPin(filter, L"VMR Input2", &pin);
         ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
@@ -635,26 +641,30 @@ static void test_pin_info(void)
 
     if (SUCCEEDED(set_mixing_mode(filter)))
     {
-        IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
-        hr = IPin_QueryPinInfo(pin, &info);
-        ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
-        ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-        ok(!wcscmp(info.achName, L"VMR Input1"), "Got name %s.\n", wine_dbgstr_w(info.achName));
-        IBaseFilter_Release(info.pFilter);
+        hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IPin_QueryPinInfo(pin, &info);
+            ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
+            ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
+            ok(!wcscmp(info.achName, L"VMR Input1"), "Got name %s.\n", wine_dbgstr_w(info.achName));
+            IBaseFilter_Release(info.pFilter);
 
-        hr = IPin_QueryDirection(pin, &dir);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
+            hr = IPin_QueryDirection(pin, &dir);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
 
-        hr = IPin_QueryId(pin, &id);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(!wcscmp(id, L"VMR Input1"), "Got id %s.\n", wine_dbgstr_w(id));
-        CoTaskMemFree(id);
+            hr = IPin_QueryId(pin, &id);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(!wcscmp(id, L"VMR Input1"), "Got id %s.\n", wine_dbgstr_w(id));
+            CoTaskMemFree(id);
 
-        hr = IPin_QueryInternalConnections(pin, NULL, &count);
-        ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+            hr = IPin_QueryInternalConnections(pin, NULL, &count);
+            ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
 
-        IPin_Release(pin);
+            IPin_Release(pin);
+        }
     }
     else
         skip("Mixing mode is not supported.\n");
