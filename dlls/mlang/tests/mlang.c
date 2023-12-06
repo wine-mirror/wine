@@ -1021,19 +1021,18 @@ static void test_GetCharsetInfo_other(IMultiLanguage *ml)
     WCHAR iso88591_6W[] =    {'-','I','S','O','8','8','5','9','1',0};
     WCHAR iso88591_7W[] =    {' ','I','S','O','-','8','8','5','9','-','1',0};
     struct other {
-        int todo;
         HRESULT hr;
         WCHAR* charset;
         WCHAR* ret_charset;
     } other[] = {
-        { 0, S_OK,   asciiW, asciiW },
-        { 0, S_OK,   iso88591_1W, iso88591_1retW },
-        { 1, S_OK,   iso88591_2W, iso88591_2retW },
-        { 0, E_FAIL, iso88591_3W, 0 },
-        { 0, E_FAIL, iso88591_4W, 0 },
-        { 0, E_FAIL, iso88591_5W, 0 },
-        { 0, E_FAIL, iso88591_6W, 0 },
-        { 0, E_FAIL, iso88591_7W, 0 },
+        { S_OK,   asciiW, asciiW },
+        { S_OK,   iso88591_1W, iso88591_1retW },
+        { S_OK,   iso88591_2W, iso88591_2retW },
+        { E_FAIL, iso88591_3W, 0 },
+        { E_FAIL, iso88591_4W, 0 },
+        { E_FAIL, iso88591_5W, 0 },
+        { E_FAIL, iso88591_6W, 0 },
+        { E_FAIL, iso88591_7W, 0 },
     };
     MIMECSETINFO info;
     HRESULT hr;
@@ -1043,11 +1042,9 @@ static void test_GetCharsetInfo_other(IMultiLanguage *ml)
     {
         hr = IMultiLanguage_GetCharsetInfo(ml, other[i].charset, &info);
 
-        todo_wine_if(other[i].todo)
         ok(hr == other[i].hr, "#%d: got %08lx, expected %08lx\n", i, hr, other[i].hr);
 
         if (hr == S_OK)
-            todo_wine_if(other[i].todo)
             ok(!lstrcmpW(info.wszCharset, other[i].ret_charset), "#%d: got %s, expected %s\n",
                 i, wine_dbgstr_w(info.wszCharset), wine_dbgstr_w(other[i].ret_charset));
     }
