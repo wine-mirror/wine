@@ -1382,6 +1382,19 @@ static LPARAM callwnd_hook_lparam, callwnd_hook_lparam2, retwnd_hook_lparam, ret
 static LPARAM wndproc_lparam;
 static char lparam_buffer[521];
 
+static void check_zero_memory( const char *mem, size_t size )
+{
+    size_t i;
+    for (i = 0; i < size; i++)
+    {
+        if (mem[i])
+        {
+            ok( 0, "non-zero byte %x at offset %Iu\n", mem[i], i );
+            return;
+        }
+    }
+}
+
 static void check_params( const struct lparam_hook_test *test, UINT message,
                          WPARAM wparam, LPARAM lparam, BOOL is_ret )
 {
@@ -1428,8 +1441,14 @@ static void check_params( const struct lparam_hook_test *test, UINT message,
         }
         break;
 
+    case CB_GETLBTEXT:
+    case LB_GETTEXT:
+        check_zero_memory( (const char *)lparam, 2048 );
+        break;
+
     default:
-        if (test->check_size) {
+        if (test->check_size)
+        {
             const void *expected;
             if (is_ret && test->check_lparam)
                 expected = test->check_lparam;

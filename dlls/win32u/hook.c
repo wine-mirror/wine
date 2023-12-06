@@ -241,6 +241,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         HHOOK prev = thread_info->hook;
         BOOL prev_unicode = thread_info->hook_unicode;
         struct win_hook_params *params = info;
+        size_t reply_size;
         void *ret_ptr;
         ULONG ret_len;
 
@@ -252,7 +253,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
             {
                 CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
                 message_size = user_message_size( (HWND)params->wparam, WM_NCCREATE,
-                                                  0, (LPARAM)cbtc->lpcs, TRUE, FALSE );
+                                                  0, (LPARAM)cbtc->lpcs, TRUE, FALSE, &reply_size );
                 lparam_size = lparam_ret_size = 0;
             }
 

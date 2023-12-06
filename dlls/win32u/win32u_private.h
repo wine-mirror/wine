@@ -141,7 +141,7 @@ extern BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                      UINT flags, UINT timeout, BOOL ansi );
 extern size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
-                                 BOOL other_process, BOOL ansi );
+                                 BOOL other_process, BOOL ansi, size_t *reply_size );
 extern void pack_user_message( void *buffer, size_t size, UINT message,
                                WPARAM wparam, LPARAM lparam, BOOL ansi );
 
