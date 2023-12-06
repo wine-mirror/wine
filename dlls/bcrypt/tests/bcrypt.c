@@ -3835,11 +3835,113 @@ static void test_DSA(void)
 
 static void test_SecretAgreement(void)
 {
-    BCRYPT_SECRET_HANDLE secret;
+    static BCryptBuffer hash_param_buffers[] =
+    {
+        {
+            sizeof(BCRYPT_SHA256_ALGORITHM),
+            KDF_HASH_ALGORITHM,
+            (void *)BCRYPT_SHA256_ALGORITHM,
+        }
+    };
+    static BCryptBufferDesc hash_params =
+    {
+        BCRYPTBUFFER_VERSION,
+        ARRAY_SIZE(hash_param_buffers),
+        hash_param_buffers,
+    };
+
+    static const ULONG dh_private_key[] =
+    {
+        0xc4caf69c, 0x57b4db27, 0x36f7135f, 0x5ccba686, 0xc37b8819, 0x1d35c9b2, 0xbb07a1cf, 0x0c5d1c1b,
+        0xc79acb10, 0x31dfdabb, 0x702e02b9, 0x1efab345, 0x262a8074, 0x5edf7698, 0x9b9dc630, 0x13c34b93,
+        0xacbc928b, 0xb79eed8c, 0x7413dce9, 0xa5521280, 0x88d8e695, 0xa310269f, 0xca7c5719, 0xcd0c775b,
+        0x9a6e2cf2, 0x9e235c51, 0xf49db62d, 0x28e72424, 0x4a44da5a, 0x3d98268d, 0x8e4d2be3, 0x254e44e6,
+
+        0x18a67e55, 0x572e13a1, 0x46f81ca8, 0xc331c9b9, 0xf8fe3dd4, 0x8a889e5a, 0x6c0505fd, 0xbd97a121,
+        0xed2dbd67, 0xf39efa8e, 0x36f9c287, 0xf6bbfa6c, 0x461e42ad, 0x17dc170e, 0xc002dc2e, 0x4813d9a4,
+        0x0b6fabb8, 0x6a9e1860, 0xa8a8cbd9, 0xb7ed6b5d, 0xabb34d23, 0xf2fbe1fd, 0x8670df1e, 0xba7fa4e6,
+        0xf7039712, 0x94448f30, 0xe10c812e, 0x3e311976, 0xcfdd72c4, 0xbdbea98f, 0xc9a540d6, 0x89646d57,
+
+        0x7ab63b33, 0x03a1e9b6, 0x947f7a9b, 0x5ae59eeb, 0x1d12eb05, 0x3f425d92, 0xe028c6ba, 0xbf90ddc9,
+        0xb554f55a, 0x7aeb88b6, 0x4a443a5f, 0xbab35111, 0x82c78a0c, 0x298dd482, 0x02937cb1, 0xc94cdc2e,
+        0x59b010eb, 0x3bbc0a2b, 0xd845fee0, 0x04c1d0db, 0x0c8c9424, 0x1cafd4b2, 0x9aa7aed9, 0x6a478486,
+        0xa8841fd7, 0xbfeff40a, 0x8fd7bcc5, 0x3bb28977, 0x2b9a7955, 0xa55cd2e4, 0x1b6ad657, 0x067cdf21,
+
+        0x06f36920, 0x63280e1b, 0xf17d930f, 0xa06e74a8, 0x463b3a6f, 0x2a464507, 0x93f8a982, 0x8f620a7d,
+        0xeda32d11, 0x9706a6d4, 0x33dce588, 0x75a1c446, 0x048ab567, 0xd735aafa, 0x806f7c1c, 0xdcb9651a,
+        0x26acf3b4, 0x45f91cc9, 0x2a0de6fc, 0xf3c03d0c, 0xf5aee0aa, 0x3eeaaf36, 0x18ccee61, 0x83faa783,
+        0x4b2b5250, 0xf4ccea22, 0x5ac0714b, 0x3f0b2bc6, 0x481b13ce, 0x12040ea7, 0x66e0bbed, 0x158e1a67,
+    };
+    static const ULONG dh_private_key2[] =
+    {
+        0xffffffff, 0xffffffff, 0xa2da0fc9, 0x34c26821, 0x8b62c6c4, 0xd11cdc80, 0x084e0229, 0x74cc678a,
+        0xa6be0b02, 0x229b133b, 0x79084a51, 0xdd04348e, 0xb31995ef, 0x1b433acd, 0x6d0a2b30, 0x37145ff2,
+        0x6d35e14f, 0x45c2516d, 0x76b585e4, 0xc67e5e62, 0xe9424cf4, 0x6bed37a6, 0xb65cff0b, 0xedb706f4,
+        0xfb6b38ee, 0xa59f895a, 0x11249fae, 0xe61f4b7c, 0x51662849, 0x8153e6ec, 0xffffffff, 0xffffffff,
+
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000,
+
+        0xa0c3c734, 0xc130c92d, 0x5265abf8, 0xff409f17, 0xbcdce187, 0xff64dae3, 0x170560aa, 0xb2423ed8,
+        0x9ee5a8b9, 0x92548030, 0x02bba1f9, 0x823e39a4, 0x69c438f5, 0xf91016ac, 0x89bfd166, 0x7f996446,
+        0x86224203, 0x15bf689c, 0x619354a4, 0x0c1d3a1f, 0x11bcf3d2, 0x58aae029, 0x41c69824, 0x3fafc179,
+        0xa742747c, 0x60658c7a, 0xd3b0bde4, 0x78d3f08b, 0x6cefa061, 0x33752536, 0xe84d4901, 0x48cd73f4,
+
+        0x8d449700, 0x1f95120e, 0xceb31745, 0x3663177b, 0xbd9bb2d5, 0x9c23c0d9, 0x814d34f8, 0xbc54edb0,
+        0xb874659a, 0x3bac8a30, 0xa1f3dd46, 0x1705c900, 0xbc46fefe, 0x7d13875b, 0x3064351a, 0x4bd89a1c,
+        0x9e938761, 0x931949db, 0x34490719, 0x84fb08ca, 0xa9dd355a, 0x5b3f5061, 0x2ac96663, 0xc594429e,
+        0xbe58395d, 0x2f7d872a, 0x303d37b3, 0xa3a9b606, 0x735a6732, 0xa095bd95, 0x3d55a7c3, 0x00e54635,
+    };
+    static const ULONG dh_peer_key[] =
+    {
+        0xffffffff, 0xffffffff, 0xa2da0fc9, 0x34c26821, 0x8b62c6c4, 0xd11cdc80, 0x084e0229, 0x74cc678a,
+        0xa6be0b02, 0x229b133b, 0x79084a51, 0xdd04348e, 0xb31995ef, 0x1b433acd, 0x6d0a2b30, 0x37145ff2,
+        0x6d35e14f, 0x45c2516d, 0x76b585e4, 0xc67e5e62, 0xe9424cf4, 0x6bed37a6, 0xb65cff0b, 0xedb706f4,
+        0xfb6b38ee, 0xa59f895a, 0x11249fae, 0xe61f4b7c, 0x51662849, 0x8153e6ec, 0xffffffff, 0xffffffff,
+
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x02000000,
+
+        0x3bf7404b, 0x6284fffe, 0x97c0d565, 0xd830c658, 0xcc21bf39, 0xcae45bb6, 0x019df7df, 0xbf4cd293,
+        0x6bf1989d, 0x78a81f52, 0xa4ed861c, 0x6bacf493, 0xa3e700d1, 0xd06cc206, 0x411b9727, 0x01e9c9ab,
+        0x9b7e6efa, 0xf46bb25d, 0xd1027242, 0x6130787c, 0xa7b87d8b, 0xfee41492, 0x50db6213, 0x321199b6,
+        0x7dace53a, 0xe8b1ec51, 0x2181b113, 0x3b33e3c0, 0x5b3a2d67, 0xbd34f0c1, 0x7037c542, 0x4a8d5540,
+    };
+    static const ULONG dh_shared_secret_raw[] =
+    {
+        0x375d89b5, 0x35a9c270, 0xfbc5ba82, 0x09eb3069, 0xd50965b0, 0xace510f7, 0x981e8731, 0x80a76115,
+        0xf386d348, 0xca17b8df, 0x0b0e84ec, 0xf81f756e, 0x5030fa20, 0x03113b71, 0x97b7e879, 0x899b5fae,
+        0xe6913299, 0x09270076, 0x39bc813a, 0xde3ef070, 0x65ad5b3a, 0x2b7c4ba4, 0x86c98ef9, 0x3236feaf,
+        0x3e0253f7, 0x0489d2dd, 0x97669a3d, 0x50242fca, 0x5d4aecb1, 0xcf2d805f, 0x2258afff, 0x750e92cd,
+    };
+    static const ULONG dh_shared_secret_raw2[] =
+    {
+        0x0815f37d, 0x19ee74ab, 0x9f63f123, 0xe1b3f10c, 0xbcc9be83, 0xaddf5b9d, 0x28174e72, 0xf8a33825,
+        0xfc74e47d, 0x2c950888, 0xf5b776d9, 0xfc712fef, 0x5b213b32, 0x489a9829, 0xfc0a4d1d, 0x6e641d3b,
+        0x3bb2ff57, 0x63500318, 0x081ee54f, 0xf33a2805, 0xb3759e98, 0xa9a64afe, 0x964b8897, 0x04691bbc,
+        0x80f4aae1, 0x617405ee, 0xab71724d, 0x6c10c214, 0x6f60b96f, 0xdc777b0b, 0x22f40d4f, 0x8a1c4eb5,
+    };
+    static const ULONG dh_shared_secret_sha1[] =
+    {
+        0x0babba9c, 0x0bdeacbd, 0x04e36574, 0xdd504dcd, 0x0cd88db0,
+    };
+    static const ULONG dh_shared_secret_sha256[] =
+    {
+        0x3213db5b, 0x8cc8250b, 0xc829eaab, 0x00933709, 0x68160aa9, 0xfb9f1e20, 0xf92368e6, 0x2b8e18eb,
+    };
+    static const ULONG length = 1024;
+    BCRYPT_DH_PARAMETER_HEADER *dh_header;
+    BCRYPT_DH_KEY_BLOB *dh_key_blob;
+    BCRYPT_SECRET_HANDLE secret, secret2;
     BCRYPT_ALG_HANDLE alg;
-    BCRYPT_KEY_HANDLE key;
+    BCRYPT_KEY_HANDLE key, key2;
+    UCHAR buffer[2048];
     NTSTATUS status;
-    ULONG size;
+    ULONG size, i;
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P256_ALGORITHM, NULL, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
@@ -3927,6 +4029,224 @@ static void test_SecretAgreement(void)
 
     status = BCryptDestroySecret(secret);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    key = NULL;
+    status = BCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+
+    status = BCryptGenerateKeyPair(alg, &key, length, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(key != NULL, "key not set\n");
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = BCryptGetProperty(key, BCRYPT_DH_PARAMETERS, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    if (status != STATUS_SUCCESS)
+    {
+        BCryptDestroyKey(key);
+        BCryptCloseAlgorithmProvider(alg, 0);
+        return;
+    }
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    size = 0xdeadbeef;
+    status = BCryptGetProperty(key, BCRYPT_DH_PARAMETERS, NULL, sizeof(buffer), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_PARAMETER_HEADER) + length / 8 * 2, "Got unexpected size %lu.\n", size);
+
+    size = 0xdeadbeef;
+    status = BCryptGetProperty(key, BCRYPT_DH_PARAMETERS, buffer, 28, &size, 0);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_PARAMETER_HEADER) + length / 8 * 2, "Got unexpected size %lu.\n", size);
+
+    size = 0xdeadbeef;
+    status = BCryptGetProperty(key, BCRYPT_DH_PARAMETERS, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_PARAMETER_HEADER) + length / 8 * 2, "Got unexpected size %lu.\n", size);
+
+    dh_header = (BCRYPT_DH_PARAMETER_HEADER *)buffer;
+    ok(dh_header->cbLength == sizeof(*dh_header) + length / 8 * 2, "Got unexpected length %lu.\n", dh_header->cbLength);
+    ok(dh_header->cbKeyLength == length / 8, "Got unexpected length %lu.\n", dh_header->cbKeyLength);
+    ok(dh_header->dwMagic == BCRYPT_DH_PARAMETERS_MAGIC, "Got unexpected magic %#lx.\n", dh_header->dwMagic);
+
+    status = BCryptDestroyKey(key);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    dh_key_blob = (BCRYPT_DH_KEY_BLOB *)buffer;
+    dh_key_blob->dwMagic = BCRYPT_DH_PRIVATE_MAGIC;
+    dh_key_blob->cbKey = length / 8;
+    memcpy(dh_key_blob + 1, dh_private_key, sizeof(dh_private_key));
+    size = sizeof(buffer);
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_DH_PRIVATE_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+    size = sizeof(*dh_key_blob) + length / 8 * 4;
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_DH_PRIVATE_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    size = 0xdeadbeef;
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PUBLIC_BLOB, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_KEY_BLOB) + length / 8 * 3, "Got unexpected size %lu.\n", size);
+
+    size = 0xdeadbeef;
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_KEY_BLOB) + length / 8 * 3, "Got unexpected size %lu.\n", size);
+    dh_key_blob = (BCRYPT_DH_KEY_BLOB *)buffer;
+    ok(dh_key_blob->dwMagic == BCRYPT_DH_PUBLIC_MAGIC, "Got unexpected magic %#lx.\n", dh_key_blob->dwMagic);
+    ok(dh_key_blob->cbKey == length / 8, "Got unexpected length %lu.\n", dh_key_blob->cbKey);
+    ok(!memcmp(dh_key_blob + 1, dh_private_key, length / 8 * 3), "Key data does not match.\n");
+
+    status = BCryptGenerateKeyPair(alg, &key2, length, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    dh_header = (BCRYPT_DH_PARAMETER_HEADER *)buffer;
+    dh_header->dwMagic = BCRYPT_DH_PARAMETERS_MAGIC;
+    dh_header->cbLength = sizeof(*dh_header) + length / 8 * 2;
+    dh_header->cbKeyLength = length / 8;
+    memcpy(dh_header + 1, dh_private_key, length / 8 * 2);
+    status = BCryptSetProperty(key2, BCRYPT_DH_PARAMETERS, buffer, dh_header->cbLength, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptFinalizeKeyPair(key2, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptExportKey(key2, NULL, BCRYPT_DH_PUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == sizeof(BCRYPT_DH_KEY_BLOB) + length / 8 * 3, "Got unexpected size %lu.\n", size);
+    ok(dh_key_blob->dwMagic == BCRYPT_DH_PUBLIC_MAGIC, "Got unexpected dwMagic %#lx.\n", dh_key_blob->dwMagic);
+    ok(dh_key_blob->cbKey == length / 8, "Got unexpected length %lu.\n", dh_key_blob->cbKey);
+    todo_wine ok(!memcmp(dh_key_blob + 1, dh_private_key, length / 8 * 2), "DH parameters do not match.\n");
+    ok(memcmp((BYTE *)(dh_key_blob + 1) + length / 8 * 2, (BYTE *)dh_private_key + length / 8 * 2, length / 8),
+       "Random public key data matches.\n");
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = BCryptExportKey(key, NULL, BCRYPT_DH_PRIVATE_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    dh_key_blob = (BCRYPT_DH_KEY_BLOB *)buffer;
+    ok(size == sizeof(BCRYPT_DH_KEY_BLOB) + length / 8 * 4, "Got unexpected size %lu.\n", size);
+    ok(dh_key_blob->dwMagic == BCRYPT_DH_PRIVATE_MAGIC, "Got unexpected dwMagic %#lx.\n", dh_key_blob->dwMagic);
+    ok(dh_key_blob->cbKey == length / 8, "Got unexpected length %lu.\n", dh_key_blob->cbKey);
+    ok(!memcmp(dh_key_blob + 1, dh_private_key, length / 8 * 4), "Private key data does not match.\n");
+
+    status = BCryptSecretAgreement(NULL, key, &secret, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptSecretAgreement(key, NULL, &secret, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptSecretAgreement(key, key, NULL, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+
+    status = BCryptSecretAgreement(key, key, &secret, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptDeriveKey(NULL, L"HASH", NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptDeriveKey(key, L"HASH", NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08lx\n", status);
+
+    status = BCryptDeriveKey(secret, NULL, NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08lx\n", status);
+
+    size = 0xdeadbeef;
+    status = BCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == 20, "Got unexpected size %lu.\n", size);
+
+    size = 0xdeadbeef;
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == length / 8, "Got unexpected size %lu.\n", size);
+
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buffer, 128, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == length / 8, "Got unexpected size %lu.\n", size);
+    ok(!memcmp(buffer, dh_shared_secret_raw, size), "Raw shared secret data does not match.\n");
+
+    size = sizeof(buffer);
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, NULL, buffer, 128, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == 20, "Got unexpected size %lu.\n", size);
+    ok(!memcmp(buffer, dh_shared_secret_sha1, sizeof(dh_shared_secret_sha1)),
+       "sha1 shared secret data does not match.\n");
+
+    size = sizeof(buffer);
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_HASH, &hash_params, buffer, size, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == 32, "Got unexpected size %lu.\n", size);
+    ok(!memcmp(buffer, dh_shared_secret_sha256, sizeof(dh_shared_secret_sha256)),
+       "sha256 shared secret data does not match.\n");
+
+    for (i = size; i < sizeof(buffer); ++i)
+        if (buffer[i] != 0xcc) break;
+    ok(i == sizeof(buffer), "Buffer modified at %lu, value %#x.\n", i, buffer[i]);
+
+    status = BCryptDestroySecret(secret);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptSecretAgreement(key, key2, &secret, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptSecretAgreement(key2, key, &secret2, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buffer, 128, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buffer + size, 128, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(!memcmp(buffer, buffer + size, size), "Shared secrets do not match.\n");
+
+    status = BCryptDestroySecret(secret);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptDestroySecret(secret2);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptDestroyKey(key);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptDestroyKey(key2);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    dh_key_blob = (BCRYPT_DH_KEY_BLOB *)buffer;
+    dh_key_blob->dwMagic = BCRYPT_DH_PRIVATE_MAGIC;
+    dh_key_blob->cbKey = length / 8;
+    memcpy(dh_key_blob + 1, dh_private_key2, sizeof(dh_private_key2));
+
+    size = sizeof(*dh_key_blob) + length / 8 * 4;
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_DH_PRIVATE_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    dh_key_blob = (BCRYPT_DH_KEY_BLOB *)buffer;
+    dh_key_blob->dwMagic = BCRYPT_DH_PUBLIC_MAGIC;
+    dh_key_blob->cbKey = length / 8;
+    memcpy(dh_key_blob + 1, dh_peer_key, sizeof(dh_peer_key));
+
+    size = sizeof(*dh_key_blob) + length / 8 * 3;
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_DH_PUBLIC_BLOB, &key2, buffer, size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptSecretAgreement(key, key2, &secret, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+
+    status = BCryptDeriveKey(secret, BCRYPT_KDF_RAW_SECRET, NULL, buffer, 128, &size, 0);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    ok(size == length / 8, "Got unexpected size %lu.\n", size);
+    ok(!memcmp(buffer, dh_shared_secret_raw2, size), "Raw shared secret data does not match.\n");
+
+    status = BCryptDestroySecret(secret);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptDestroyKey(key);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
+    status = BCryptDestroyKey(key2);
+    ok(status == STATUS_SUCCESS, "got %08lx\n", status);
 
     status = BCryptCloseAlgorithmProvider(alg, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
