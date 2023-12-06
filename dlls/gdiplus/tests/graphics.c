@@ -1332,17 +1332,14 @@ static void test_GdipDrawImageFX(void)
 
     /* DrawImageFX with source rectangle */
     status = GdipDrawImageFX(graphics, NULL, &source, NULL, NULL, NULL, UnitPixel);
-    todo_wine
     expect(InvalidParameter, status);
 
     /* DrawImageFX with source bitmap */
     status = GdipDrawImageFX(graphics, (GpImage*)bm, NULL, NULL, NULL, NULL, UnitPixel);
-    todo_wine
     expect(Ok, status);
 
     /* DrawImageFX with source bitmap and transform */
     status = GdipDrawImageFX(graphics, (GpImage*)bm, NULL, transform, NULL, NULL, UnitPixel);
-    todo_wine
     expect(Ok, status);
 
     /* DrawImageFX with source bitmap and source rectangle */
@@ -1350,12 +1347,10 @@ static void test_GdipDrawImageFX(void)
     source.Height = source.Width = 10.0;
 
     status = GdipDrawImageFX(graphics, (GpImage*)bm, &source, NULL, NULL, NULL, UnitPixel);
-    todo_wine
     expect(Ok, status);
 
     /* DrawImageFX with source bitmap, source rectangle, and transform */
     status = GdipDrawImageFX(graphics, (GpImage*)bm, &source, transform, NULL, NULL, UnitPixel);
-    todo_wine
     expect(Ok, status);
 
     GdipDeleteMatrix(transform);
