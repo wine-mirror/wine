@@ -46,14 +46,13 @@ static void update_location(struct hlsl_ctx *ctx, YYLTYPE *loc);
 
 %x pp pp_line pp_pragma pp_ignore
 
-RESERVED1               auto|case|catch|char|class|const_cast|default|delete|dynamic_cast|enum
+RESERVED1               auto|catch|char|class|const_cast|delete|dynamic_cast|enum
 RESERVED2               explicit|friend|goto|long|mutable|new|operator|private|protected|public
 RESERVED3               reinterpret_cast|short|signed|sizeof|static_cast|template|this|throw|try
 RESERVED4               typename|union|unsigned|using|virtual
 
 WS                      [ \t]
 NEWLINE                 (\n)|(\r\n)
-DOUBLESLASHCOMMENT      "//"[^\n]*
 STRING                  \"[^\"]*\"
 IDENTIFIER              [A-Za-z_][A-Za-z0-9_]*
 
@@ -73,12 +72,16 @@ ANY                     (.)
 BlendState              {return KW_BLENDSTATE;          }
 break                   {return KW_BREAK;               }
 Buffer                  {return KW_BUFFER;              }
+case                    {return KW_CASE;                }
 cbuffer                 {return KW_CBUFFER;             }
+centroid                {return KW_CENTROID;            }
+column_major            {return KW_COLUMN_MAJOR;        }
 compile                 {return KW_COMPILE;             }
 const                   {return KW_CONST;               }
 continue                {return KW_CONTINUE;            }
 DepthStencilState       {return KW_DEPTHSTENCILSTATE;   }
 DepthStencilView        {return KW_DEPTHSTENCILVIEW;    }
+default                 {return KW_DEFAULT;             }
 discard                 {return KW_DISCARD;             }
 do                      {return KW_DO;                  }
 double                  {return KW_DOUBLE;              }
@@ -92,31 +95,36 @@ if                      {return KW_IF;                  }
 in                      {return KW_IN;                  }
 inline                  {return KW_INLINE;              }
 inout                   {return KW_INOUT;               }
+linear                  {return KW_LINEAR;              }
 matrix                  {return KW_MATRIX;              }
 namespace               {return KW_NAMESPACE;           }
 nointerpolation         {return KW_NOINTERPOLATION;     }
+noperspective           {return KW_NOPERSPECTIVE;       }
 out                     {return KW_OUT;                 }
 packoffset              {return KW_PACKOFFSET;          }
 pass                    {return KW_PASS;                }
 PixelShader             {return KW_PIXELSHADER;         }
 precise                 {return KW_PRECISE;             }
 RasterizerState         {return KW_RASTERIZERSTATE;     }
+register                {return KW_REGISTER;            }
 RenderTargetView        {return KW_RENDERTARGETVIEW;    }
 return                  {return KW_RETURN;              }
-register                {return KW_REGISTER;            }
+row_major               {return KW_ROW_MAJOR;           }
 RWBuffer                {return KW_RWBUFFER;            }
 RWStructuredBuffer      {return KW_RWSTRUCTUREDBUFFER;  }
 RWTexture1D             {return KW_RWTEXTURE1D;         }
+RWTexture1DArray        {return KW_RWTEXTURE1DARRAY;    }
 RWTexture2D             {return KW_RWTEXTURE2D;         }
+RWTexture2DArray        {return KW_RWTEXTURE2DARRAY;    }
 RWTexture3D             {return KW_RWTEXTURE3D;         }
 sampler                 {return KW_SAMPLER;             }
 sampler1D               {return KW_SAMPLER1D;           }
 sampler2D               {return KW_SAMPLER2D;           }
 sampler3D               {return KW_SAMPLER3D;           }
-samplerCUBE             {return KW_SAMPLERCUBE;         }
-sampler_state           {return KW_SAMPLER_STATE;       }
 SamplerComparisonState  {return KW_SAMPLERCOMPARISONSTATE;}
+samplerCUBE             {return KW_SAMPLERCUBE;         }
 SamplerState            {return KW_SAMPLER;             }
+sampler_state           {return KW_SAMPLER_STATE;       }
 shared                  {return KW_SHARED;              }
 stateblock              {return KW_STATEBLOCK;          }
 stateblock_state        {return KW_STATEBLOCK_STATE;    }
@@ -125,21 +133,22 @@ string                  {return KW_STRING;              }
 struct                  {return KW_STRUCT;              }
 switch                  {return KW_SWITCH;              }
 tbuffer                 {return KW_TBUFFER;             }
-technique               {return KW_TECHNIQUE;           }
+(?i:technique)          {return KW_TECHNIQUE;           }
 technique10             {return KW_TECHNIQUE10;         }
+technique11             {return KW_TECHNIQUE11;         }
 texture                 {return KW_TEXTURE;             }
-texture1D               {return KW_TEXTURE1D;           }
 Texture1D               {return KW_TEXTURE1D;           }
+texture1D               {return KW_TEXTURE1D;           }
 Texture1DArray          {return KW_TEXTURE1DARRAY;      }
-texture2D               {return KW_TEXTURE2D;           }
 Texture2D               {return KW_TEXTURE2D;           }
+texture2D               {return KW_TEXTURE2D;           }
 Texture2DArray          {return KW_TEXTURE2DARRAY;      }
 Texture2DMS             {return KW_TEXTURE2DMS;         }
 Texture2DMSArray        {return KW_TEXTURE2DMSARRAY;    }
-texture3D               {return KW_TEXTURE3D;           }
 Texture3D               {return KW_TEXTURE3D;           }
-textureCUBE             {return KW_TEXTURECUBE;         }
+texture3D               {return KW_TEXTURE3D;           }
 TextureCube             {return KW_TEXTURECUBE;         }
+textureCUBE             {return KW_TEXTURECUBE;         }
 TextureCubeArray        {return KW_TEXTURECUBEARRAY;    }
 true                    {return KW_TRUE;                }
 typedef                 {return KW_TYPEDEF;             }
@@ -159,7 +168,6 @@ while                   {return KW_WHILE;               }
 \<\<=                   {return OP_LEFTSHIFTASSIGN;     }
 \>\>                    {return OP_RIGHTSHIFT;          }
 \>\>=                   {return OP_RIGHTSHIFTASSIGN;    }
-\.\.\.                  {return OP_ELLIPSIS;            }
 \<=                     {return OP_LE;                  }
 \>=                     {return OP_GE;                  }
 !=                      {return OP_NE;                  }
@@ -171,13 +179,6 @@ while                   {return KW_WHILE;               }
 &=                      {return OP_ANDASSIGN;           }
 \|=                     {return OP_ORASSIGN;            }
 ^=                      {return OP_XORASSIGN;           }
-##                      {return OP_UNKNOWN1;            }
-#@                      {return OP_UNKNOWN2;            }
-::                      {return OP_UNKNOWN3;            }
-\-\>                    {return OP_UNKNOWN4;            }
-
-column_major            {return KW_COLUMN_MAJOR;        }
-row_major               {return KW_ROW_MAJOR;           }
 
 {IDENTIFIER}            {
                             struct hlsl_ctx *ctx = yyget_extra(yyscanner);
@@ -203,20 +204,30 @@ row_major               {return KW_ROW_MAJOR;           }
                             yylval->floatval = atof(yytext);
                             return C_FLOAT;
                         }
-0x[0-9a-fA-F]+          {
+0x[0-9a-fA-F]+[lL]?     {
                             yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
-0[0-7]+                 {
+0[0-7]+[lL]?            {
                             yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
-[0-9]+                  {
+[0-9]+[lL]?             {
                             yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
-
-{DOUBLESLASHCOMMENT}    {}
+0x[0-9a-fA-F]+([uU]|[uU][lL]|[lL][uU]) {
+                            yylval->intval = vkd3d_parse_integer(yytext);
+                            return C_UNSIGNED;
+                        }
+0[0-7]+([uU]|[uU][lL]|[lL][uU]) {
+                            yylval->intval = vkd3d_parse_integer(yytext);
+                            return C_UNSIGNED;
+                        }
+[0-9]+([uU]|[uU][lL]|[lL][uU]) {
+                            yylval->intval = vkd3d_parse_integer(yytext);
+                            return C_UNSIGNED;
+                        }
 
 {WS}+                   {}
 {NEWLINE}               {

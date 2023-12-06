@@ -49,12 +49,33 @@
         ((uint32_t)(ch0) | ((uint32_t)(ch1) << 8) \
         | ((uint32_t)(ch2) << 16) | ((uint32_t)(ch3) << 24))
 
+#define TAG_AON9 VKD3D_MAKE_TAG('A', 'o', 'n', '9')
+#define TAG_DXBC VKD3D_MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_DXIL VKD3D_MAKE_TAG('D', 'X', 'I', 'L')
+#define TAG_ISG1 VKD3D_MAKE_TAG('I', 'S', 'G', '1')
+#define TAG_ISGN VKD3D_MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSG1 VKD3D_MAKE_TAG('O', 'S', 'G', '1')
+#define TAG_OSG5 VKD3D_MAKE_TAG('O', 'S', 'G', '5')
+#define TAG_OSGN VKD3D_MAKE_TAG('O', 'S', 'G', 'N')
+#define TAG_PCSG VKD3D_MAKE_TAG('P', 'C', 'S', 'G')
+#define TAG_PSG1 VKD3D_MAKE_TAG('P', 'S', 'G', '1')
+#define TAG_RD11 VKD3D_MAKE_TAG('R', 'D', '1', '1')
+#define TAG_RDEF VKD3D_MAKE_TAG('R', 'D', 'E', 'F')
+#define TAG_RTS0 VKD3D_MAKE_TAG('R', 'T', 'S', '0')
+#define TAG_SDBG VKD3D_MAKE_TAG('S', 'D', 'B', 'G')
+#define TAG_SHDR VKD3D_MAKE_TAG('S', 'H', 'D', 'R')
+#define TAG_SHEX VKD3D_MAKE_TAG('S', 'H', 'E', 'X')
+#define TAG_STAT VKD3D_MAKE_TAG('S', 'T', 'A', 'T')
+#define TAG_TEXT VKD3D_MAKE_TAG('T', 'E', 'X', 'T')
+#define TAG_XNAP VKD3D_MAKE_TAG('X', 'N', 'A', 'P')
+#define TAG_XNAS VKD3D_MAKE_TAG('X', 'N', 'A', 'S')
+
 static inline size_t align(size_t addr, size_t alignment)
 {
     return (addr + (alignment - 1)) & ~(alignment - 1);
 }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 # define VKD3D_NORETURN __attribute__((noreturn))
 # ifdef __MINGW_PRINTF_FORMAT
 #  define VKD3D_PRINTF_FUNC(fmt, args) __attribute__((format(__MINGW_PRINTF_FORMAT, fmt, args)))

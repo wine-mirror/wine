@@ -51,6 +51,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_7,
     VKD3D_SHADER_API_VERSION_1_8,
     VKD3D_SHADER_API_VERSION_1_9,
+    VKD3D_SHADER_API_VERSION_1_10,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -96,6 +97,11 @@ enum vkd3d_shader_structure_type
      * \since 1.9
      */
     VKD3D_SHADER_STRUCTURE_TYPE_VARYING_MAP_INFO,
+    /**
+     * The structure is a vkd3d_shader_scan_combined_resource_sampler_info structure.
+     * \since 1.10
+     */
+    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_COMBINED_RESOURCE_SAMPLER_INFO,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_STRUCTURE_TYPE),
 };
@@ -154,6 +160,42 @@ enum vkd3d_shader_compile_option_pack_matrix_order
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_PACK_MATRIX_ORDER),
 };
 
+/** Individual options to enable various backward compatibility features. \since 1.10 */
+enum vkd3d_shader_compile_option_backward_compatibility
+{
+    /**
+     *  Causes compiler to convert SM1-3 semantics to corresponding System Value semantics,
+     *  when compiling HLSL sources for SM4+ targets.
+     *
+     *  This option does the following conversions:
+     *
+     *  - POSITION to SV_Position for vertex shader outputs, pixel shader inputs,
+     *    and geometry shader inputs and outputs;
+     *  - COLORN to SV_TargetN for pixel shader outputs;
+     *  - DEPTH to SV_Depth for pixel shader outputs.
+     */
+    VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_MAP_SEMANTIC_NAMES = 0x00000001,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY),
+};
+
+/**
+ * Determines the origin of fragment coordinates.
+ *
+ * \since 1.10
+ */
+enum vkd3d_shader_compile_option_fragment_coordinate_origin
+{
+    /** Fragment coordinates originate from the upper-left. This is the
+     * default; it's also the only value supported by Vulkan environments. */
+    VKD3D_SHADER_COMPILE_OPTION_FRAGMENT_COORDINATE_ORIGIN_UPPER_LEFT = 0x00000000,
+    /** Fragment coordinates originate from the lower-left. This matches the
+     * traditional behaviour of OpenGL environments. */
+    VKD3D_SHADER_COMPILE_OPTION_FRAGMENT_COORDINATE_ORIGIN_LOWER_LEFT = 0x00000001,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_FRAGMENT_COORDINATE_ORIGIN),
+};
+
 enum vkd3d_shader_compile_option_name
 {
     /**
@@ -193,6 +235,24 @@ enum vkd3d_shader_compile_option_name
      * \since 1.9
      */
     VKD3D_SHADER_COMPILE_OPTION_PACK_MATRIX_ORDER = 0x00000007,
+    /**
+     * This option is used to enable various backward compatibility features.
+     *
+     * \a value is a mask of values from enum vkd3d_shader_compile_option_backward_compatibility.
+     *
+     * \since 1.10
+     */
+    VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY = 0x00000008,
+    /**
+     * This option specifies the origin of fragment coordinates for SPIR-V
+     * targets.
+     *
+     * \a value is a member of enum
+     * vkd3d_shader_compile_option_fragment_coordinate_origin.
+     *
+     * \since 1.10
+     */
+    VKD3D_SHADER_COMPILE_OPTION_FRAGMENT_COORDINATE_ORIGIN = 0x00000009,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
@@ -1383,19 +1443,33 @@ struct vkd3d_shader_descriptor_info
  *
  * This structure extends vkd3d_shader_compile_info.
  *
- * When scanning a legacy Direct3D shader, vkd3d-shader enumerates each
- * constant register set used by the shader as a single constant buffer
- * descriptor, as follows:
- * - The \ref vkd3d_shader_descriptor_info.type field is set to
- *   VKD3D_SHADER_DESCRIPTOR_TYPE_CBV.
- * - The \ref vkd3d_shader_descriptor_info.register_space field is set to zero.
- * - The \ref vkd3d_shader_descriptor_info.register_index field is set to a
- *   member of enum vkd3d_shader_d3dbc_constant_register denoting which set
- *   is used.
- * - The \ref vkd3d_shader_descriptor_info.count field is set to one.
+ * When scanning a legacy Direct3D shader, vkd3d-shader enumerates descriptors
+ * as follows:
  *
- * In summary, there may be up to three such descriptors, one for each register
- * set used by the shader: float, integer, and boolean.
+ * - Each constant register set used by the shader is scanned as a single
+ *   constant buffer descriptor.
+ *   There may therefore be up to three such descriptors, one for each register
+ *   set used by the shader: float, integer, and boolean.
+ *   The fields are set as follows:
+ *   * The \ref vkd3d_shader_descriptor_info.type field is set to
+ *     VKD3D_SHADER_DESCRIPTOR_TYPE_CBV.
+ *   * The \ref vkd3d_shader_descriptor_info.register_space field is set to zero.
+ *   * The \ref vkd3d_shader_descriptor_info.register_index field is set to a
+ *     member of enum vkd3d_shader_d3dbc_constant_register denoting which set
+ *     is used.
+ *   * The \ref vkd3d_shader_descriptor_info.count field is set to one.
+ * - Each sampler used by the shader is scanned as two separate descriptors,
+ *   one representing the texture, and one representing the sampler state.
+ *   If desired, these may be mapped back into a single combined sampler using
+ *   struct vkd3d_shader_combined_resource_sampler.
+ *   The fields are set as follows:
+ *   * The \ref vkd3d_shader_descriptor_info.type field is set to
+ *     VKD3D_SHADER_DESCRIPTOR_TYPE_SRV and VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER
+ *     respectively.
+ *   * The \ref vkd3d_shader_descriptor_info.register_space field is set to zero.
+ *   * The \ref vkd3d_shader_descriptor_info.register_index field is set to the
+ *     binding index of the original sampler, for both descriptors.
+ *   * The \ref vkd3d_shader_descriptor_info.count field is set to one.
  */
 struct vkd3d_shader_scan_descriptor_info
 {
@@ -1410,6 +1484,53 @@ struct vkd3d_shader_scan_descriptor_info
     struct vkd3d_shader_descriptor_info *descriptors;
     /** Output; size, in elements, of \ref descriptors. */
     unsigned int descriptor_count;
+};
+
+/**
+ * This structure describes a single resource-sampler pair. It is returned as
+ * part of struct vkd3d_shader_scan_combined_resource_sampler_info.
+ *
+ * \since 1.10
+ */
+struct vkd3d_shader_combined_resource_sampler_info
+{
+    unsigned int resource_space;
+    unsigned int resource_index;
+    unsigned int sampler_space;
+    unsigned int sampler_index;
+};
+
+/**
+ * A chained structure describing the resource-sampler pairs used by a shader.
+ *
+ * This structure extends vkd3d_shader_compile_info.
+ *
+ * The information returned in this structure can be used to populate the
+ * \ref vkd3d_shader_interface_info.combined_samplers field. This is
+ * particularly useful when targeting environments without separate binding
+ * points for samplers and resources, like OpenGL.
+ *
+ * No resource-sampler pairs are returned for dynamic accesses to
+ * resource/sampler descriptor arrays, as can occur in Direct3D shader model
+ * 5.1 shaders.
+ *
+ * Members of this structure are allocated by vkd3d-shader and should be freed
+ * with vkd3d_shader_free_scan_combined_resource_sampler_info() when no longer
+ * needed.
+ *
+ * \since 1.10
+ */
+struct vkd3d_shader_scan_combined_resource_sampler_info
+{
+    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_COMBINED_RESOURCE_SAMPLER_INFO. */
+    enum vkd3d_shader_structure_type type;
+    /** Optional pointer to a structure containing further parameters. */
+    const void *next;
+
+    /** Pointer to an array of resource-sampler pairs. */
+    struct vkd3d_shader_combined_resource_sampler_info *combined_samplers;
+    /** The number of resource-sampler pairs in \ref combined_samplers. */
+    unsigned int combined_sampler_count;
 };
 
 /**
@@ -2028,12 +2149,14 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  *
  * Currently this function supports the following code types:
  * - VKD3D_SHADER_SOURCE_DXBC_TPF
+ * - VKD3D_SHADER_SOURCE_D3D_BYTECODE
  *
  * \param compile_info A chained structure containing scan parameters.
  * \n
- * The DXBC_TPF scanner supports the following chained structures:
+ * The scanner supports the following chained structures:
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_signature_info
+ * - vkd3d_shader_scan_combined_resource_sampler_info
  * \n
  * Although the \a compile_info parameter is read-only, chained structures
  * passed to this function need not be, and may serve as output parameters,
@@ -2313,6 +2436,21 @@ VKD3D_SHADER_API void vkd3d_shader_build_varying_map(const struct vkd3d_shader_s
         const struct vkd3d_shader_signature *input_signature,
         unsigned int *count, struct vkd3d_shader_varying_map *varyings);
 
+/**
+ * Free members of struct vkd3d_shader_scan_combined_resource_sampler_info
+ * allocated by vkd3d_shader_scan().
+ *
+ * This function may free members of
+ * vkd3d_shader_scan_combined_resource_sampler_info, but does not free the
+ * structure itself.
+ *
+ * \param info Combined resource-sampler information to free.
+ *
+ * \since 1.10
+ */
+VKD3D_SHADER_API void vkd3d_shader_free_scan_combined_resource_sampler_info(
+        struct vkd3d_shader_scan_combined_resource_sampler_info *info);
+
 #endif  /* VKD3D_SHADER_NO_PROTOTYPES */
 
 /** Type of vkd3d_shader_get_version(). */
@@ -2384,6 +2522,10 @@ typedef void (*PFN_vkd3d_shader_build_varying_map)(const struct vkd3d_shader_sig
         unsigned int *count, struct vkd3d_shader_varying_map *varyings);
 /** Type of vkd3d_shader_free_scan_signature_info(). \since 1.9 */
 typedef void (*PFN_vkd3d_shader_free_scan_signature_info)(struct vkd3d_shader_scan_signature_info *info);
+
+/** Type of vkd3d_shader_free_scan_combined_resource_sampler_info(). \since 1.10 */
+typedef void (*PFN_vkd3d_shader_free_scan_combined_resource_sampler_info)(
+        struct vkd3d_shader_scan_combined_resource_sampler_info *info);
 
 #ifdef __cplusplus
 }

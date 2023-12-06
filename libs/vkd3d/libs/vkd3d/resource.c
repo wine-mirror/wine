@@ -574,10 +574,14 @@ static HRESULT d3d12_heap_init(struct d3d12_heap *heap,
 }
 
 HRESULT d3d12_heap_create(struct d3d12_device *device, const D3D12_HEAP_DESC *desc,
-        const struct d3d12_resource *resource, struct d3d12_heap **heap)
+        const struct d3d12_resource *resource, ID3D12ProtectedResourceSession *protected_session,
+        struct d3d12_heap **heap)
 {
     struct d3d12_heap *object;
     HRESULT hr;
+
+    if (protected_session)
+        FIXME("Protected session is not supported.\n");
 
     if (!(object = vkd3d_malloc(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1254,12 +1258,13 @@ static bool d3d12_resource_init_tiles(struct d3d12_resource *resource, struct d3
 }
 
 /* ID3D12Resource */
-static HRESULT STDMETHODCALLTYPE d3d12_resource_QueryInterface(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_QueryInterface(ID3D12Resource1 *iface,
         REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_ID3D12Resource)
+    if (IsEqualGUID(riid, &IID_ID3D12Resource1)
+            || IsEqualGUID(riid, &IID_ID3D12Resource)
             || IsEqualGUID(riid, &IID_ID3D12Pageable)
             || IsEqualGUID(riid, &IID_ID3D12DeviceChild)
             || IsEqualGUID(riid, &IID_ID3D12Object)
@@ -1276,9 +1281,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_QueryInterface(ID3D12Resource *i
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d3d12_resource_AddRef(ID3D12Resource *iface)
+static ULONG STDMETHODCALLTYPE d3d12_resource_AddRef(ID3D12Resource1 *iface)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     ULONG refcount = InterlockedIncrement(&resource->refcount);
 
     TRACE("%p increasing refcount to %u.\n", resource, refcount);
@@ -1294,9 +1299,9 @@ static ULONG STDMETHODCALLTYPE d3d12_resource_AddRef(ID3D12Resource *iface)
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d3d12_resource_Release(ID3D12Resource *iface)
+static ULONG STDMETHODCALLTYPE d3d12_resource_Release(ID3D12Resource1 *iface)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     ULONG refcount = InterlockedDecrement(&resource->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", resource, refcount);
@@ -1313,39 +1318,39 @@ static ULONG STDMETHODCALLTYPE d3d12_resource_Release(ID3D12Resource *iface)
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_GetPrivateData(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_GetPrivateData(ID3D12Resource1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return vkd3d_get_private_data(&resource->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_SetPrivateData(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_SetPrivateData(ID3D12Resource1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return vkd3d_set_private_data(&resource->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_SetPrivateDataInterface(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_SetPrivateDataInterface(ID3D12Resource1 *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
     return vkd3d_set_private_data_interface(&resource->private_store, guid, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_SetName(ID3D12Resource *iface, const WCHAR *name)
+static HRESULT STDMETHODCALLTYPE d3d12_resource_SetName(ID3D12Resource1 *iface, const WCHAR *name)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     HRESULT hr;
 
     TRACE("iface %p, name %s.\n", iface, debugstr_w(name, resource->device->wchar_size));
@@ -1364,9 +1369,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_SetName(ID3D12Resource *iface, c
                 VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, name);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_GetDevice(ID3D12Resource *iface, REFIID iid, void **device)
+static HRESULT STDMETHODCALLTYPE d3d12_resource_GetDevice(ID3D12Resource1 *iface, REFIID iid, void **device)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p, iid %s, device %p.\n", iface, debugstr_guid(iid), device);
 
@@ -1417,10 +1422,10 @@ static void d3d12_resource_flush(struct d3d12_resource *resource, uint64_t offse
         ERR("Failed to flush memory, vr %d.\n", vr);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_Map(ID3D12Resource *iface, UINT sub_resource,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_Map(ID3D12Resource1 *iface, UINT sub_resource,
         const D3D12_RANGE *read_range, void **data)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     unsigned int sub_resource_count;
 
     TRACE("iface %p, sub_resource %u, read_range %p, data %p.\n",
@@ -1466,10 +1471,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_Map(ID3D12Resource *iface, UINT 
     return S_OK;
 }
 
-static void STDMETHODCALLTYPE d3d12_resource_Unmap(ID3D12Resource *iface, UINT sub_resource,
+static void STDMETHODCALLTYPE d3d12_resource_Unmap(ID3D12Resource1 *iface, UINT sub_resource,
         const D3D12_RANGE *written_range)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     unsigned int sub_resource_count;
 
     TRACE("iface %p, sub_resource %u, written_range %p.\n",
@@ -1488,10 +1493,10 @@ static void STDMETHODCALLTYPE d3d12_resource_Unmap(ID3D12Resource *iface, UINT s
         d3d12_resource_flush(resource, written_range->Begin, written_range->End - written_range->Begin);
 }
 
-static D3D12_RESOURCE_DESC * STDMETHODCALLTYPE d3d12_resource_GetDesc(ID3D12Resource *iface,
+static D3D12_RESOURCE_DESC * STDMETHODCALLTYPE d3d12_resource_GetDesc(ID3D12Resource1 *iface,
         D3D12_RESOURCE_DESC *resource_desc)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p, resource_desc %p.\n", iface, resource_desc);
 
@@ -1499,20 +1504,20 @@ static D3D12_RESOURCE_DESC * STDMETHODCALLTYPE d3d12_resource_GetDesc(ID3D12Reso
     return resource_desc;
 }
 
-static D3D12_GPU_VIRTUAL_ADDRESS STDMETHODCALLTYPE d3d12_resource_GetGPUVirtualAddress(ID3D12Resource *iface)
+static D3D12_GPU_VIRTUAL_ADDRESS STDMETHODCALLTYPE d3d12_resource_GetGPUVirtualAddress(ID3D12Resource1 *iface)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
 
     TRACE("iface %p.\n", iface);
 
     return resource->gpu_address;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_WriteToSubresource(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_WriteToSubresource(ID3D12Resource1 *iface,
         UINT dst_sub_resource, const D3D12_BOX *dst_box, const void *src_data,
         UINT src_row_pitch, UINT src_slice_pitch)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     const struct vkd3d_vk_device_procs *vk_procs;
     VkImageSubresource vk_sub_resource;
     const struct vkd3d_format *format;
@@ -1593,11 +1598,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_WriteToSubresource(ID3D12Resourc
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_ReadFromSubresource(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_ReadFromSubresource(ID3D12Resource1 *iface,
         void *dst_data, UINT dst_row_pitch, UINT dst_slice_pitch,
         UINT src_sub_resource, const D3D12_BOX *src_box)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     const struct vkd3d_vk_device_procs *vk_procs;
     VkImageSubresource vk_sub_resource;
     const struct vkd3d_format *format;
@@ -1678,10 +1683,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_ReadFromSubresource(ID3D12Resour
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_resource_GetHeapProperties(ID3D12Resource *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_resource_GetHeapProperties(ID3D12Resource1 *iface,
         D3D12_HEAP_PROPERTIES *heap_properties, D3D12_HEAP_FLAGS *flags)
 {
-    struct d3d12_resource *resource = impl_from_ID3D12Resource(iface);
+    struct d3d12_resource *resource = impl_from_ID3D12Resource1(iface);
     struct d3d12_heap *heap;
 
     TRACE("iface %p, heap_properties %p, flags %p.\n",
@@ -1715,7 +1720,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_resource_GetHeapProperties(ID3D12Resource
     return S_OK;
 }
 
-static const struct ID3D12ResourceVtbl d3d12_resource_vtbl =
+static HRESULT STDMETHODCALLTYPE d3d12_resource_GetProtectedResourceSession(ID3D12Resource1 *iface,
+        REFIID iid, void **session)
+{
+    FIXME("iface %p, iid %s, session %p stub!\n", iface, debugstr_guid(iid), session);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D12Resource1Vtbl d3d12_resource_vtbl =
 {
     /* IUnknown methods */
     d3d12_resource_QueryInterface,
@@ -1736,13 +1749,15 @@ static const struct ID3D12ResourceVtbl d3d12_resource_vtbl =
     d3d12_resource_WriteToSubresource,
     d3d12_resource_ReadFromSubresource,
     d3d12_resource_GetHeapProperties,
+    /* ID3D12Resource1 methods */
+    d3d12_resource_GetProtectedResourceSession,
 };
 
 struct d3d12_resource *unsafe_impl_from_ID3D12Resource(ID3D12Resource *iface)
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &d3d12_resource_vtbl);
+    assert(iface->lpVtbl == (ID3D12ResourceVtbl *)&d3d12_resource_vtbl);
     return impl_from_ID3D12Resource(iface);
 }
 
@@ -1940,7 +1955,7 @@ static HRESULT d3d12_resource_init(struct d3d12_resource *resource, struct d3d12
 {
     HRESULT hr;
 
-    resource->ID3D12Resource_iface.lpVtbl = &d3d12_resource_vtbl;
+    resource->ID3D12Resource1_iface.lpVtbl = &d3d12_resource_vtbl;
     resource->refcount = 1;
     resource->internal_refcount = 1;
 
@@ -2064,7 +2079,7 @@ static HRESULT vkd3d_allocate_resource_memory(
     heap_desc.Properties = *heap_properties;
     heap_desc.Alignment = 0;
     heap_desc.Flags = heap_flags;
-    if (SUCCEEDED(hr = d3d12_heap_create(device, &heap_desc, resource, &resource->heap)))
+    if (SUCCEEDED(hr = d3d12_heap_create(device, &heap_desc, resource, NULL, &resource->heap)))
         resource->flags |= VKD3D_RESOURCE_DEDICATED_HEAP;
     return hr;
 }
@@ -2072,7 +2087,8 @@ static HRESULT vkd3d_allocate_resource_memory(
 HRESULT d3d12_committed_resource_create(struct d3d12_device *device,
         const D3D12_HEAP_PROPERTIES *heap_properties, D3D12_HEAP_FLAGS heap_flags,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
-        const D3D12_CLEAR_VALUE *optimized_clear_value, struct d3d12_resource **resource)
+        const D3D12_CLEAR_VALUE *optimized_clear_value, ID3D12ProtectedResourceSession *protected_session,
+        struct d3d12_resource **resource)
 {
     struct d3d12_resource *object;
     HRESULT hr;
@@ -2083,13 +2099,16 @@ HRESULT d3d12_committed_resource_create(struct d3d12_device *device,
         return E_INVALIDARG;
     }
 
+    if (protected_session)
+        FIXME("Protected session is not supported.\n");
+
     if (FAILED(hr = d3d12_resource_create(device, heap_properties, heap_flags,
             desc, initial_state, optimized_clear_value, &object)))
         return hr;
 
     if (FAILED(hr = vkd3d_allocate_resource_memory(device, object, heap_properties, heap_flags)))
     {
-        d3d12_resource_Release(&object->ID3D12Resource_iface);
+        d3d12_resource_Release(&object->ID3D12Resource1_iface);
         return hr;
     }
 
@@ -2182,7 +2201,7 @@ HRESULT d3d12_placed_resource_create(struct d3d12_device *device, struct d3d12_h
 
     if (FAILED(hr = vkd3d_bind_heap_memory(device, object, heap, heap_offset)))
     {
-        d3d12_resource_Release(&object->ID3D12Resource_iface);
+        d3d12_resource_Release(&object->ID3D12Resource1_iface);
         return hr;
     }
 
@@ -2206,7 +2225,7 @@ HRESULT d3d12_reserved_resource_create(struct d3d12_device *device,
 
     if (!d3d12_resource_init_tiles(object, device))
     {
-        d3d12_resource_Release(&object->ID3D12Resource_iface);
+        d3d12_resource_Release(&object->ID3D12Resource1_iface);
         return E_OUTOFMEMORY;
     }
 
@@ -2220,7 +2239,7 @@ HRESULT d3d12_reserved_resource_create(struct d3d12_device *device,
 HRESULT vkd3d_create_image_resource(ID3D12Device *device,
         const struct vkd3d_image_resource_create_info *create_info, ID3D12Resource **resource)
 {
-    struct d3d12_device *d3d12_device = unsafe_impl_from_ID3D12Device1((ID3D12Device1 *)device);
+    struct d3d12_device *d3d12_device = unsafe_impl_from_ID3D12Device5((ID3D12Device5 *)device);
     struct d3d12_resource *object;
     HRESULT hr;
 
@@ -2241,7 +2260,7 @@ HRESULT vkd3d_create_image_resource(ID3D12Device *device,
 
     memset(object, 0, sizeof(*object));
 
-    object->ID3D12Resource_iface.lpVtbl = &d3d12_resource_vtbl;
+    object->ID3D12Resource1_iface.lpVtbl = &d3d12_resource_vtbl;
     object->refcount = 1;
     object->internal_refcount = 1;
     object->desc = create_info->desc;
@@ -2265,7 +2284,7 @@ HRESULT vkd3d_create_image_resource(ID3D12Device *device,
 
     TRACE("Created resource %p.\n", object);
 
-    *resource = &object->ID3D12Resource_iface;
+    *resource = (ID3D12Resource *)&object->ID3D12Resource1_iface;
 
     return S_OK;
 }
@@ -2998,6 +3017,7 @@ static bool init_default_texture_view_desc(struct vkd3d_texture_view_desc *desc,
     desc->components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
     desc->components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
     desc->allowed_swizzle = false;
+    desc->usage = 0;
     return true;
 }
 
@@ -3039,6 +3059,7 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
 {
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     const struct vkd3d_format *format = desc->format;
+    VkImageViewUsageCreateInfoKHR usage_desc;
     struct VkImageViewCreateInfo view_desc;
     VkImageView vk_view = VK_NULL_HANDLE;
     struct vkd3d_view *object;
@@ -3060,6 +3081,13 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
         view_desc.subresourceRange.levelCount = desc->miplevel_count;
         view_desc.subresourceRange.baseArrayLayer = desc->layer_idx;
         view_desc.subresourceRange.layerCount = desc->layer_count;
+        if (device->vk_info.KHR_maintenance2)
+        {
+            usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+            usage_desc.pNext = NULL;
+            usage_desc.usage = desc->usage;
+            view_desc.pNext = &usage_desc;
+        }
         if ((vr = VK_CALL(vkCreateImageView(device->vk_device, &view_desc, NULL, &vk_view))) < 0)
         {
             WARN("Failed to create Vulkan image view, vr %d.\n", vr);
@@ -3196,6 +3224,7 @@ static void vkd3d_create_null_srv(struct d3d12_desc *descriptor,
     vkd3d_desc.components.b = VK_COMPONENT_SWIZZLE_ZERO;
     vkd3d_desc.components.a = VK_COMPONENT_SWIZZLE_ZERO;
     vkd3d_desc.allowed_swizzle = true;
+    vkd3d_desc.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 
     vkd3d_create_texture_view(device, VKD3D_DESCRIPTOR_MAGIC_SRV, vk_image, &vkd3d_desc, &descriptor->s.u.view);
 }
@@ -3268,6 +3297,7 @@ void d3d12_desc_create_srv(struct d3d12_desc *descriptor,
 
     vkd3d_desc.miplevel_count = VK_REMAINING_MIP_LEVELS;
     vkd3d_desc.allowed_swizzle = true;
+    vkd3d_desc.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 
     if (desc)
     {
@@ -3421,6 +3451,7 @@ static void vkd3d_create_null_uav(struct d3d12_desc *descriptor,
     vkd3d_desc.components.b = VK_COMPONENT_SWIZZLE_B;
     vkd3d_desc.components.a = VK_COMPONENT_SWIZZLE_A;
     vkd3d_desc.allowed_swizzle = false;
+    vkd3d_desc.usage = VK_IMAGE_USAGE_STORAGE_BIT;
 
     vkd3d_create_texture_view(device, VKD3D_DESCRIPTOR_MAGIC_UAV, vk_image, &vkd3d_desc, &descriptor->s.u.view);
 }
@@ -3479,6 +3510,8 @@ static void vkd3d_create_texture_uav(struct d3d12_desc *descriptor,
 
     if (!init_default_texture_view_desc(&vkd3d_desc, resource, desc ? desc->Format : 0))
         return;
+
+    vkd3d_desc.usage = VK_IMAGE_USAGE_STORAGE_BIT;
 
     if (vkd3d_format_is_compressed(vkd3d_desc.format))
     {
@@ -3747,6 +3780,8 @@ void d3d12_rtv_desc_create_rtv(struct d3d12_rtv_desc *rtv_desc, struct d3d12_dev
     if (!init_default_texture_view_desc(&vkd3d_desc, resource, desc ? desc->Format : 0))
         return;
 
+    vkd3d_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
     if (vkd3d_desc.format->vk_aspect_mask != VK_IMAGE_ASPECT_COLOR_BIT)
     {
         WARN("Trying to create RTV for depth/stencil format %#x.\n", vkd3d_desc.format->dxgi_format);
@@ -3846,6 +3881,8 @@ void d3d12_dsv_desc_create_dsv(struct d3d12_dsv_desc *dsv_desc, struct d3d12_dev
 
     if (!init_default_texture_view_desc(&vkd3d_desc, resource, desc ? desc->Format : 0))
         return;
+
+    vkd3d_desc.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     if (!(vkd3d_desc.format->vk_aspect_mask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)))
     {
