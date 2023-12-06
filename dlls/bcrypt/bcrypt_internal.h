@@ -283,8 +283,10 @@ struct key_asymmetric_verify_params
     unsigned    flags;
 };
 
-#define KEY_EXPORT_FLAG_PUBLIC   0x00000001
-#define KEY_EXPORT_FLAG_RSA_FULL 0x00000002
+#define KEY_EXPORT_FLAG_PUBLIC        0x00000001
+#define KEY_EXPORT_FLAG_RSA_FULL      0x00000002
+#define KEY_EXPORT_FLAG_DH_PARAMETERS 0x00000004
+
 struct key_asymmetric_export_params
 {
     struct key  *key;

@@ -1651,8 +1651,7 @@ static NTSTATUS key_export_dh( struct key *key, UCHAR *buf, ULONG len, ULONG *re
         return STATUS_INTERNAL_ERROR;
     }
 
-    ret = pgnutls_privkey_export_dh_raw( key_data(key)->a.privkey, params, &y, &x, 0 );
-    if (ret)
+    if ((ret = pgnutls_privkey_export_dh_raw( key_data(key)->a.privkey, params, &y, &x, 0 )))
     {
         pgnutls_perror( ret );
         pgnutls_dh_params_deinit( params );
@@ -1684,6 +1683,40 @@ static NTSTATUS key_export_dh( struct key *key, UCHAR *buf, ULONG len, ULONG *re
     free( p.data ); free( g.data ); free( y.data ); free( x.data );
     pgnutls_dh_params_deinit( params );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_export_dh_params( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_DH_PARAMETER_HEADER *hdr = (BCRYPT_DH_PARAMETER_HEADER *)buf;
+    unsigned int size = sizeof(*hdr) + key->u.a.bitlen / 8 * 2;
+    gnutls_datum_t p, g;
+    NTSTATUS status = STATUS_SUCCESS;
+    UCHAR *dst;
+    int ret;
+
+    if (!key_data(key)->a.dh_params) return STATUS_INVALID_PARAMETER;
+
+    if ((ret = pgnutls_dh_params_export_raw( key_data(key)->a.dh_params, &p, &g, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *ret_len = size;
+    if (len < size) status = STATUS_BUFFER_TOO_SMALL;
+    else if (buf)
+    {
+        hdr->cbLength    = size;
+        hdr->dwMagic     = BCRYPT_DH_PARAMETERS_MAGIC;
+        hdr->cbKeyLength = key->u.a.bitlen / 8;
+
+        dst = (UCHAR *)(hdr + 1);
+        dst += export_gnutls_datum( dst, hdr->cbKeyLength, &p, 1 );
+        dst += export_gnutls_datum( dst, hdr->cbKeyLength, &g, 1 );
+    }
+
+    free( p.data ); free( g.data );
+    return status;
 }
 
 static NTSTATUS key_asymmetric_export( void *args )
@@ -1720,7 +1753,9 @@ static NTSTATUS key_asymmetric_export( void *args )
         return STATUS_NOT_IMPLEMENTED;
 
     case ALG_ID_DH:
-       if (flags & KEY_EXPORT_FLAG_PUBLIC)
+        if (flags & KEY_EXPORT_FLAG_DH_PARAMETERS)
+            return key_export_dh_params( key, params->buf, params->len, params->ret_len );
+        if (flags & KEY_EXPORT_FLAG_PUBLIC)
             return key_export_dh_public( key, params->buf, params->len, params->ret_len );
         return key_export_dh( key, params->buf, params->len, params->ret_len );
 
