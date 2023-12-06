@@ -69,7 +69,7 @@ struct vmr7
     DWORD stream_count;
     DWORD mixing_prefs;
 
-    VMR9Mode mode;
+    VMRMode mode;
 
     HMODULE d3d9_module;
 
@@ -312,7 +312,7 @@ static HRESULT allocate_surfaces(struct vmr7 *filter, const AM_MEDIA_TYPE *mt)
     TRACE("Initializing in mode %u, our window %p, clipping window %p.\n",
             filter->mode, filter->window.hwnd, filter->clipping_window);
 
-    if (filter->mode == VMR9Mode_Windowless && !filter->clipping_window)
+    if (filter->mode == VMRMode_Windowless && !filter->clipping_window)
         return S_OK;
 
     info.Pool = D3DPOOL_DEFAULT;
@@ -468,9 +468,9 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IVMRFilterConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig))
         *out = &filter->IVMRMonitorConfig_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify) && filter->mode == (VMR9Mode)VMRMode_Renderless)
+    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify) && filter->mode == VMRMode_Renderless)
         *out = &filter->IVMRSurfaceAllocatorNotify_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl) && filter->mode == (VMR9Mode)VMRMode_Windowless)
+    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl) && filter->mode == VMRMode_Windowless)
         *out = &filter->IVMRWindowlessControl_iface;
     else
         return E_NOINTERFACE;
@@ -821,8 +821,8 @@ static HRESULT WINAPI filter_config_SetRenderingMode(IVMRFilterConfig *iface, DW
 
     switch (mode)
     {
-        case VMR9Mode_Windowed:
-        case VMR9Mode_Windowless:
+        case VMRMode_Windowed:
+        case VMRMode_Windowless:
             if (FAILED(hr = default_presenter_create(filter, &default_presenter)))
             {
                 ERR("Failed to create default presenter, hr %#lx.\n", hr);
@@ -834,7 +834,7 @@ static HRESULT WINAPI filter_config_SetRenderingMode(IVMRFilterConfig *iface, DW
             IVMRImagePresenter9_AddRef(filter->presenter);
             break;
 
-        case VMR9Mode_Renderless:
+        case VMRMode_Renderless:
             break;
 
         default:
@@ -842,7 +842,7 @@ static HRESULT WINAPI filter_config_SetRenderingMode(IVMRFilterConfig *iface, DW
             return E_INVALIDARG;
     }
 
-    if (mode != VMR9Mode_Windowed)
+    if (mode != VMRMode_Windowed)
         video_window_cleanup(&filter->window);
 
     filter->mode = mode;
@@ -1987,7 +1987,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
 
     presenter->info = *info;
 
-    if (presenter->vmr->mode == VMR9Mode_Windowed)
+    if (presenter->vmr->mode == VMRMode_Windowed)
         window = presenter->vmr->window.hwnd;
     else
         window = presenter->vmr->clipping_window;
