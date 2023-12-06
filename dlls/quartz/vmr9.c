@@ -926,10 +926,47 @@ static HRESULT WINAPI VMR7FilterConfig_GetRenderingPrefs(IVMRFilterConfig *iface
 static HRESULT WINAPI VMR7FilterConfig_SetRenderingMode(IVMRFilterConfig *iface, DWORD mode)
 {
     struct quartz_vmr *filter = impl_from_IVMRFilterConfig(iface);
+    struct default_presenter *default_presenter;
+    HRESULT hr = S_OK;
 
-    TRACE("iface %p, mode %#lx.\n", iface, mode);
+    TRACE("filter %p, mode %lu.\n", filter, mode);
 
-    return IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, mode);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+    if (filter->mode)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        return VFW_E_WRONG_STATE;
+    }
+
+    switch (mode)
+    {
+    case VMRMode_Windowed:
+    case VMRMode_Windowless:
+        if (FAILED(hr = default_presenter_create(filter, &default_presenter)))
+        {
+            ERR("Failed to create default presenter, hr %#lx.\n", hr);
+            LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+            return hr;
+        }
+        filter->allocator = &default_presenter->IVMRSurfaceAllocator9_iface;
+        filter->presenter = &default_presenter->IVMRImagePresenter9_iface;
+        IVMRImagePresenter9_AddRef(filter->presenter);
+
+        IVMRSurfaceAllocator9_AdviseNotify(filter->allocator, &filter->IVMRSurfaceAllocatorNotify9_iface);
+        break;
+    case VMRMode_Renderless:
+        break;
+    default:
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        return E_INVALIDARG;
+    }
+
+    if (mode != VMRMode_Windowed)
+        video_window_cleanup(&filter->window);
+
+    filter->mode = mode;
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+    return hr;
 }
 
 static HRESULT WINAPI VMR7FilterConfig_GetRenderingMode(IVMRFilterConfig *iface, DWORD *mode)
