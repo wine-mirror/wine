@@ -460,16 +460,6 @@ static inline void valgrind_make_noaccess( void const *ptr, SIZE_T size )
 #endif
 }
 
-/* mark a block of memory as initialized for debugging purposes */
-static inline void valgrind_make_readable( void const *ptr, SIZE_T size )
-{
-#if defined(VALGRIND_MAKE_MEM_DEFINED)
-    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_DEFINED( ptr, size ) );
-#elif defined(VALGRIND_MAKE_READABLE)
-    VALGRIND_DISCARD( VALGRIND_MAKE_READABLE( ptr, size ) );
-#endif
-}
-
 /* mark a block of memory as uninitialized for debugging purposes */
 static inline void valgrind_make_writable( void const *ptr, SIZE_T size )
 {
