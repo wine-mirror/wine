@@ -18,6 +18,7 @@ SOURCES = \
 	regsvr.c \
 	systemclock.c \
 	videorenderer.c \
+	vmr7.c \
 	vmr9.c \
 	window.c
 
