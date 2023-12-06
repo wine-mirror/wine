@@ -283,7 +283,16 @@ function test_attach_in_attach() {
     document.body.removeChild(div);
 }
 
+function test_event_obj_props(e) {
+    var i, props;
+
+    props = [ "imeCompositionChange", "imeNotifyCommand", "imeNotifyData", "imeRequest", "imeRequestData", "issession", "keyboardLayout" ];
+    for(i = 0; i < props.length; i++)
+        ok(!(props[i] in e), props[i] + " in event obj");
+}
+
 window.onload = function() {
+    test_event_obj_props(window.event);
     try {
         ok(inlscr_complete_called, "onreadystatechange not fired");
         ok(extern_res_script_rs === "eval,complete1," || extern_res_script_rs == "loaded0,eval,complete1,",

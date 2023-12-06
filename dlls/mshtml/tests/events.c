@@ -394,6 +394,9 @@ static void _elem_fire_event(unsigned line, IUnknown *unk, const WCHAR *event, V
 static void _test_event_args(unsigned line, const IID *dispiid, DISPID id, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+    IHTMLEventObj *window_event, *event_obj = NULL;
+    HRESULT hres;
+
     ok_(__FILE__,line) (id == DISPID_VALUE, "id = %ld\n", id);
     ok_(__FILE__,line) (wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
     ok_(__FILE__,line) (pdp != NULL, "pdp == NULL\n");
@@ -411,10 +414,11 @@ static void _test_event_args(unsigned line, const IID *dispiid, DISPID id, WORD 
     if(dispiid)
         _test_disp(line, (IUnknown*)V_DISPATCH(pdp->rgvarg), dispiid);
 
+    hres = IHTMLWindow2_get_event(window, &window_event);
+    ok(hres == S_OK, "get_event failed: %08lx\n", hres);
+
     if(pdp->cArgs > 1) {
-        IHTMLEventObj *window_event, *event_obj;
         IDOMEvent *event;
-        HRESULT hres;
 
         hres = IDispatch_QueryInterface(V_DISPATCH(pdp->rgvarg+1), &IID_IDOMEvent, (void**)&event);
         if(in_fire_event)
@@ -424,23 +428,61 @@ static void _test_event_args(unsigned line, const IID *dispiid, DISPID id, WORD 
 
         hres = IDispatch_QueryInterface(V_DISPATCH(pdp->rgvarg+1), &IID_IHTMLEventObj, (void**)&event_obj);
         if(in_fire_event)
-            ok(hres == S_OK, "Could not get IDOMEventObj iface: %08lx\n", hres);
+            ok(hres == S_OK, "Could not get IHTMLEventObj iface: %08lx\n", hres);
         else
             ok(hres == E_NOINTERFACE, "QI(IID_IHTMLEventObj) returned %08lx\n", hres);
 
         if(event)
             IDOMEvent_Release(event);
-        if(event_obj)
-            IHTMLEventObj_Release(event_obj);
 
-        hres = IHTMLWindow2_get_event(window, &window_event);
-        ok(hres == S_OK, "get_event failed: %08lx\n", hres);
         if(window_event) {
             todo_wine_if(in_fire_event)
             ok(!iface_cmp((IUnknown*)V_DISPATCH(pdp->rgvarg+1), (IUnknown*)window_event),
                "window_event != event arg\n");
-            IHTMLEventObj_Release(window_event);
         }
+    }
+
+    if(window_event) {
+        if(!event_obj)
+            event_obj = window_event;
+        else
+            IHTMLEventObj_Release(window_event);
+    }
+
+    if(event_obj) {
+        IHTMLEventObj5 *event_obj5;
+        IDispatch *disp;
+        BSTR bstr;
+
+        hres = IHTMLEventObj_QueryInterface(event_obj, &IID_IHTMLEventObj5, (void**)&event_obj5);
+        ok(hres == S_OK, "Could not get IHTMLEventObj5: %08lx\n", hres);
+        IHTMLEventObj_Release(event_obj);
+
+        hres = IHTMLEventObj5_get_data(event_obj5, &bstr);
+        ok(hres == S_OK, "get_data failed: %08lx\n", hres);
+        ok(!bstr, "data = %s\n", wine_dbgstr_w(bstr));
+
+        hres = IHTMLEventObj5_get_origin(event_obj5, &bstr);
+        ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+        ok(!bstr, "origin = %s\n", wine_dbgstr_w(bstr));
+
+        hres = IHTMLEventObj5_get_source(event_obj5, &disp);
+        ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+        ok(!disp, "source != NULL\n");
+
+        hres = IHTMLEventObj5_get_url(event_obj5, &bstr);
+        ok(hres == S_OK, "get_url failed: %08lx\n", hres);
+        ok(!bstr, "url = %s\n", wine_dbgstr_w(bstr));
+
+        bstr = SysAllocString(L"foobar");
+        hres = IHTMLEventObj5_put_origin(event_obj5, bstr);
+        ok(hres == DISP_E_MEMBERNOTFOUND, "put_origin returned: %08lx\n", hres);
+
+        hres = IHTMLEventObj5_put_url(event_obj5, bstr);
+        ok(hres == DISP_E_MEMBERNOTFOUND, "put_url returned: %08lx\n", hres);
+        SysFreeString(bstr);
+
+        IHTMLEventObj5_Release(event_obj5);
     }
 }
 
