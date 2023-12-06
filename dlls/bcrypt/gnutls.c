@@ -1725,6 +1725,8 @@ static NTSTATUS key_asymmetric_export( void *args )
     struct key *key = params->key;
     unsigned flags = params->flags;
 
+    if (!(key->u.a.flags & KEY_FLAG_FINALIZED)) return STATUS_INVALID_HANDLE;
+
     switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
