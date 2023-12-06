@@ -679,6 +679,33 @@ for x = 5 to 8
 next
 Call ok(y = "for8: 5 7", "y = " & y)
 
+function testfor( startvalue, endvalue, stepvalue, steps)
+    Dim s
+    s=0
+    for x=startvalue to endvalue step stepvalue
+        s = s + 1
+    Next
+    Call ok( s = steps, "counted " & s & " steps in for loop, expected " & steps)
+end function
+
+Call testfor (1, 2, 1, 2)
+Call testfor ("1", 2, 1, 2)
+Call testfor (1, "2", 1, 2)
+Call testfor (1, 2, "1", 2)
+Call testfor ("1", "2", "1", 2)
+if (isEnglishLang) then
+    Call testfor (1, 2, 0.5, 3)
+    Call testfor (1, 2.5, 0.5, 4)
+    Call testfor ("1", 2,  0.5, 3)
+    Call testfor ("1", 2.5, 0.5, 4)
+    Call testfor (1, "2",  0.5, 3)
+    Call testfor (1, "2.5", 0.5, 4)
+    Call testfor (1, 2, "0.5", 3)
+    Call testfor (1, 2.5, "0.5", 4)
+    Call testfor ("1", "2", "0.5", 3)
+    Call testfor ("1", "2.5", "0.5", 4)
+end if
+
 for x = 1.5 to 1
     Call ok(false, "for..to called when unexpected")
 next

@@ -875,6 +875,8 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     hres = compile_expression(ctx, stat->from_expr);
     if(FAILED(hres))
         return hres;
+    if(!push_instr(ctx, OP_numval))
+        return E_OUTOFMEMORY;
 
     /* FIXME: Assign should happen after both expressions evaluation. */
     instr = push_instr(ctx, OP_assign_ident);
@@ -887,7 +889,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    if(!push_instr(ctx, OP_val))
+    if(!push_instr(ctx, OP_numval))
         return E_OUTOFMEMORY;
 
     if(stat->step_expr) {
@@ -895,7 +897,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         if(FAILED(hres))
             return hres;
 
-        if(!push_instr(ctx, OP_val))
+        if(!push_instr(ctx, OP_numval))
             return E_OUTOFMEMORY;
     }else {
         hres = push_instr_int(ctx, OP_int, 1);

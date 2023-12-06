@@ -1088,6 +1088,37 @@ static HRESULT interp_val(exec_ctx_t *ctx)
     return stack_push(ctx, val.owned ? val.v : &v);
 }
 
+static HRESULT interp_numval(exec_ctx_t *ctx)
+{
+    variant_val_t val;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if (V_VT(val.v) == VT_BSTR) {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantChangeType(&v, val.v, 0, VT_R8);
+        if(FAILED(hres))
+            return hres;
+        release_val(&val);
+        return stack_push(ctx, &v);
+    }
+
+    if(!val.owned) {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantCopy(&v, val.v);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return stack_push(ctx, val.owned ? val.v : &v);
+}
+
 static HRESULT interp_pop(exec_ctx_t *ctx)
 {
     const unsigned n = ctx->instr->arg1.uint;
