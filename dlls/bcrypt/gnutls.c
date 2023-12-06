@@ -84,8 +84,9 @@ union key_data
     gnutls_cipher_hd_t cipher;
     struct
     {
-        gnutls_privkey_t privkey;
-        gnutls_pubkey_t  pubkey;
+        gnutls_privkey_t   privkey;
+        gnutls_pubkey_t    pubkey;
+        gnutls_dh_params_t dh_params;
     } a;
 };
 C_ASSERT( sizeof(union key_data) <= sizeof(((struct key *)0)->private) );
@@ -1833,6 +1834,36 @@ static NTSTATUS key_import_dh( struct key *key, UCHAR *buf, ULONG len )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS key_import_dh_params( struct key *key, UCHAR *buf, ULONG len )
+{
+    BCRYPT_DH_PARAMETER_HEADER *dh_header = (BCRYPT_DH_PARAMETER_HEADER *)buf;
+    gnutls_dh_params_t params;
+    gnutls_datum_t p, g;
+    int ret;
+
+    if ((ret = pgnutls_dh_params_init( &params )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    p.data = (unsigned char *)(dh_header + 1);
+    p.size = dh_header->cbKeyLength;
+    g.data = p.data + dh_header->cbKeyLength;
+    g.size = dh_header->cbKeyLength;
+
+    if ((ret = pgnutls_dh_params_import_raw( params, &p, &g )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key_data(key)->a.dh_params) pgnutls_dh_params_deinit( key_data(key)->a.dh_params );
+    key_data(key)->a.dh_params = params;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_import( void *args )
 {
     const struct key_asymmetric_import_params *params = args;
@@ -1875,9 +1906,12 @@ static NTSTATUS key_asymmetric_import( void *args )
         return STATUS_NOT_IMPLEMENTED;
 
     case ALG_ID_DH:
+        if (flags & KEY_IMPORT_FLAG_DH_PARAMETERS)
+            return key_import_dh_params( key, params->buf, params->len );
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
             return key_import_dh_public( key, params->buf, params->len );
-        return key_import_dh( key, params->buf, params->len );
+        ret = key_import_dh( key, params->buf, params->len );
+        break;
 
     default:
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
@@ -2300,6 +2334,7 @@ static NTSTATUS key_asymmetric_destroy( void *args )
 
     if (key_data(key)->a.privkey) pgnutls_privkey_deinit( key_data(key)->a.privkey );
     if (key_data(key)->a.pubkey) pgnutls_pubkey_deinit( key_data(key)->a.pubkey );
+    if (key_data(key)->a.dh_params) pgnutls_dh_params_deinit( key_data(key)->a.dh_params );
     return STATUS_SUCCESS;
 }
 

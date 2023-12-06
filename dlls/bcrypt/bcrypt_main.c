@@ -887,6 +887,21 @@ static NTSTATUS set_key_property( struct key *key, const WCHAR *prop, UCHAR *val
         key->u.a.bitlen = *(DWORD*)value;
         return STATUS_SUCCESS;
     }
+    else if (!wcscmp( prop, BCRYPT_DH_PARAMETERS ))
+    {
+        BCRYPT_DH_PARAMETER_HEADER *hdr = (BCRYPT_DH_PARAMETER_HEADER *)value;
+        struct key_asymmetric_import_params params;
+
+        if (key->alg_id != ALG_ID_DH || size < sizeof(*hdr) || hdr->cbLength != size ||
+            hdr->dwMagic != BCRYPT_DH_PARAMETERS_MAGIC || hdr->cbKeyLength != key->u.a.bitlen / 8)
+            return STATUS_INVALID_PARAMETER;
+
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_DH_PARAMETERS;
+        params.buf   = value;
+        params.len   = size;
+        return UNIX_CALL( key_asymmetric_import, &params );
+    }
 
     FIXME( "unsupported key property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
