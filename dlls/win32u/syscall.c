@@ -36,9 +36,9 @@
 
 ULONG_PTR zero_bits = 0;
 
-static void * const syscalls[] =
+static ULONG_PTR syscalls[] =
 {
-#define SYSCALL_ENTRY(id,name,args) name,
+#define SYSCALL_ENTRY(id,name,args) (ULONG_PTR)name,
 #ifdef _WIN64
     ALL_SYSCALLS64
 #else
@@ -58,14 +58,6 @@ static BYTE arguments[ARRAY_SIZE(syscalls)] =
 #undef SYSCALL_ENTRY
 };
 
-static const SYSTEM_SERVICE_TABLE syscall_table =
-{
-    (ULONG_PTR *)syscalls,
-    0,
-    ARRAY_SIZE(syscalls),
-    arguments
-};
-
 static NTSTATUS init( void *args )
 {
 #ifdef _WIN64
@@ -77,8 +69,7 @@ static NTSTATUS init( void *args )
         zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 #endif
-
-    KeServiceDescriptorTable[1] = syscall_table;
+    KeAddSystemServiceTable( syscalls, NULL, ARRAY_SIZE(syscalls), arguments, 1 );
     return STATUS_SUCCESS;
 }
 

@@ -31,7 +31,6 @@ typedef NTSTATUS (*unixlib_entry_t)( void *args );
 
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_funcs[];
 extern DECLSPEC_EXPORT const unixlib_entry_t __wine_unix_call_wow64_funcs[];
-extern DECLSPEC_EXPORT SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 
 /* some useful helpers from ntdll */
 NTSYSAPI const char *ntdll_get_build_dir(void);
@@ -84,6 +83,8 @@ NTSYSAPI void ntdll_set_exception_jmp_buf( __wine_jmp_buf *jmp );
          } \
     } while (0);
 
+NTSYSAPI BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG limit,
+                                          BYTE *arguments, ULONG index );
 NTSYSAPI NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len );
 
 /* wide char string functions */
