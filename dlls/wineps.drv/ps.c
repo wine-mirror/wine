@@ -985,20 +985,20 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
 	return FALSE;
     }
 
-    w = bmi->bmiHeader.biWidth & ~0x7;
-    h = abs_height & ~0x7;
+    w = bmi->bmiHeader.biWidth;
+    h = abs_height;
 
     buf = HeapAlloc( GetProcessHeap(), 0, max(sizeof(do_pattern) + 100, 2 * w/8 * h + 1) );
     ptr = buf;
     for(y = 0; y < h; y++) {
-        for(x = 0; x < w/8; x++) {
-	    sprintf(ptr, "%02x", *(bits + x/8 + y *
+        for(x = 0; x < (w + 7) / 8; x++) {
+	    sprintf(ptr, "%02x", *(bits + x + y *
 				   ((bmi->bmiHeader.biWidth + 31) / 32) * 4));
 	    ptr += 2;
 	}
     }
     PSDRV_WriteSpool(ctx, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(ctx, 1, FALSE, 8, 8, buf, bmi->bmiHeader.biHeight < 0);
+    PSDRV_WriteImageDict(ctx, 1, FALSE, w, h, buf, bmi->bmiHeader.biHeight < 0);
     PSDRV_WriteSpool(ctx, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(ctx, 1);
