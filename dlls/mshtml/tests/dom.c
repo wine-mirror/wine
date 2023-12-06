@@ -3672,6 +3672,8 @@ static LONG test_attr_collection_attr(IDispatch *attr, LONG i)
     VARIANT val;
     BSTR name;
 
+    V_VT(&val) = VT_EMPTY;
+
     hres = IDispatch_QueryInterface(attr, &IID_IHTMLDOMAttribute, (void**)&dom_attr);
     ok(hres == S_OK, "%ld) QueryInterface failed: %08lx\n", i, hres);
 
