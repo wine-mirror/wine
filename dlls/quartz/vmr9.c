@@ -642,15 +642,12 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_pin_query_interface = vmr_pin_query_interface,
 };
 
-static RECT vmr_get_default_rect(struct video_window *This)
+static void vmr_get_default_rect(struct video_window *iface, RECT *rect)
 {
-    struct quartz_vmr *pVMR9 = impl_from_video_window(This);
-    const BITMAPINFOHEADER *bmiheader = get_filter_bitmap_header(pVMR9);
-    static RECT defRect;
+    struct quartz_vmr *filter = impl_from_video_window(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_filter_bitmap_header(filter);
 
-    SetRect(&defRect, 0, 0, bmiheader->biWidth, bmiheader->biHeight);
-
-    return defRect;
+    SetRect(rect, 0, 0, bitmap_header->biWidth, bitmap_header->biHeight);
 }
 
 static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LONG *image)

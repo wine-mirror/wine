@@ -199,14 +199,11 @@ static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_
     return S_OK;
 }
 
-static RECT video_renderer_get_default_rect(struct video_window *iface)
+static void video_renderer_get_default_rect(struct video_window *iface, RECT *rect)
 {
-    struct video_renderer *This = impl_from_video_window(iface);
-    static RECT defRect;
+    struct video_renderer *filter = impl_from_video_window(iface);
 
-    SetRect(&defRect, 0, 0, This->VideoWidth, This->VideoHeight);
-
-    return defRect;
+    SetRect(rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
 }
 
 static const struct strmbase_renderer_ops renderer_ops =

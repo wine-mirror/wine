@@ -655,7 +655,7 @@ HRESULT WINAPI BaseControlWindowImpl_GetMinIdealImageSize(IVideoWindow *iface, L
 
     TRACE("window %p, width %p, height %p.\n", window, width, height);
 
-    rect = window->ops->get_default_rect(window);
+    window->ops->get_default_rect(window, &rect);
     *width = rect.right - rect.left;
     *height = rect.bottom - rect.top;
     return S_OK;
@@ -668,7 +668,7 @@ HRESULT WINAPI BaseControlWindowImpl_GetMaxIdealImageSize(IVideoWindow *iface, L
 
     TRACE("window %p, width %p, height %p.\n", window, width, height);
 
-    rect = window->ops->get_default_rect(window);
+    window->ops->get_default_rect(window, &rect);
     *width = rect.right - rect.left;
     *height = rect.bottom - rect.top;
     return S_OK;

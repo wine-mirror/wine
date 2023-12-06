@@ -108,7 +108,7 @@ struct video_window
 
 struct video_window_ops
 {
-    RECT (*get_default_rect)(struct video_window *window);
+    void (*get_default_rect)(struct video_window *window, RECT *rect);
     HRESULT (*get_current_image)(struct video_window *window, LONG *size, LONG *image);
 };
 
