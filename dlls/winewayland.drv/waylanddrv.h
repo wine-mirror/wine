@@ -92,6 +92,7 @@ struct wayland_pointer
 {
     struct wl_pointer *wl_pointer;
     struct zwp_confined_pointer_v1 *zwp_confined_pointer_v1;
+    struct zwp_locked_pointer_v1 *zwp_locked_pointer_v1;
     struct zwp_relative_pointer_v1 *zwp_relative_pointer_v1;
     HWND focused_hwnd;
     HWND constraint_hwnd;
