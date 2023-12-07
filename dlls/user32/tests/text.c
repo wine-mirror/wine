@@ -604,7 +604,7 @@ static void test_DrawTextCalcRect(void)
     textheight = DrawTextW(hdc, wordbreak_text_colonW, -1, &rect, DT_CALCRECT | DT_WORDBREAK);
     ok(textheight == heightcheck * 2, "Got unexpected textheight %d, expected %d.\n",
        textheight, heightcheck * 2);
-    todo_wine ok(rect.right > rect2.right - 10, "Got unexpected textwdith %ld, expected larger than %ld.\n",
+    ok(rect.right > rect2.right - 10, "Got unexpected textwdith %ld, expected larger than %ld.\n",
        rect.right, rect2.right - 10);
 
     SetRect(&rect, 0, 0, 200, 1);
@@ -618,7 +618,7 @@ static void test_DrawTextCalcRect(void)
     textheight = DrawTextW(hdc, wordbreak_text_csbW, -1, &rect, DT_CALCRECT | DT_WORDBREAK);
     ok(textheight == heightcheck * 2, "Got unexpected textheight %d, expected %d.\n",
        textheight, heightcheck * 2);
-    todo_wine ok(rect.right > rect2.right - 10, "Got unexpected textwdith %ld, expected larger than %ld.\n",
+    ok(rect.right > rect2.right - 10, "Got unexpected textwdith %ld, expected larger than %ld.\n",
        rect.right, rect2.right - 10);
 
 

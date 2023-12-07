@@ -384,9 +384,9 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     }
     else
     {
-        while (i > 0 && !sla[(--i)+1].fSoftBreak) p--;
+        while (i > 0 && !sla[(--i)+1].fWhiteSpace) p--;
         p--;
-        word_fits = (i != 0 || sla[i+1].fSoftBreak );
+        word_fits = (i != 0 || sla[i+1].fWhiteSpace );
     }
 
     /* If there was one. */
