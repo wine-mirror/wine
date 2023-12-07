@@ -1002,8 +1002,34 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
     PSDRV_WriteSpool(ctx, "def\n", 4);
 
     PSDRV_WriteIndexColorSpaceBegin(ctx, 1);
-    map[0] = GetTextColor( ctx->hdc );
-    map[1] = GetBkColor( ctx->hdc );
+    if (usage == DIB_RGB_COLORS)
+    {
+        map[0] = RGB( bmi->bmiColors[0].rgbRed, bmi->bmiColors[0].rgbGreen,
+                bmi->bmiColors[0].rgbBlue );
+        map[1] = RGB( bmi->bmiColors[1].rgbRed, bmi->bmiColors[1].rgbGreen,
+                bmi->bmiColors[1].rgbBlue );
+    }
+    else if (usage == DIB_PAL_COLORS)
+    {
+        HPALETTE hpal = GetCurrentObject( ctx->hdc, OBJ_PAL );
+        PALETTEENTRY pal[2];
+
+        memset(pal, 0, sizeof(pal));
+        if (hpal) GetPaletteEntries(hpal, 0, 2, pal);
+
+        map[0] = RGB(pal[0].peRed, pal[0].peGreen, pal[0].peBlue);
+        map[1] = RGB(pal[1].peRed, pal[1].peGreen, pal[1].peBlue);
+    }
+    else if (usage == 2 /* DIB_PAL_INDICES */)
+    {
+        map[0] = GetTextColor( ctx->hdc );
+        map[1] = GetBkColor( ctx->hdc );
+    }
+    else
+    {
+        FIXME("wrong usage: %d\n", usage);
+        return FALSE;
+    }
     PSDRV_WriteRGB(ctx, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(ctx);
 
