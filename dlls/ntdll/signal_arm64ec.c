@@ -1684,11 +1684,27 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                                 PNTAPCFUNC apc )
+void WINAPI dispatch_apc( void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*),
+                          ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                          BOOLEAN alertable, ARM64_NT_CONTEXT *arm_ctx )
 {
-    FIXME( "not implemented\n" );
+    CONTEXT context;
+
+    context_arm_to_x64( &context, arm_ctx );
+    func( arg1, arg2, arg3, &context );
+    NtContinue( &context, alertable );
 }
+__ASM_GLOBAL_FUNC( "#KiUserApcDispatcher",
+                   __ASM_SEH(".seh_context\n\t")
+                   "nop\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x30\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "ldp x0, x1, [sp]\n\t"         /* func, arg1 */
+                   "ldp x2, x3, [sp, #0x10]\n\t"  /* arg2, arg3 */
+                   "ldr w4, [sp, #0x20]\n\t"      /* alertable */
+                   "add x5, sp, #0x30\n\t"        /* context */
+                   "bl " __ASM_NAME("dispatch_apc") "\n\t"
+                   "brk #1" )
 
 
 /*******************************************************************
