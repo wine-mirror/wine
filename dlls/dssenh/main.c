@@ -51,6 +51,7 @@ struct container
     struct key *exch_key;
     struct key *sign_key;
     char        name[MAX_PATH];
+    DWORD       alg_idx;
 };
 
 #define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
@@ -64,6 +65,14 @@ struct hash
 };
 
 static const char dss_path_fmt[] = "Software\\Wine\\Crypto\\DSS\\%s";
+
+#define S(s) sizeof(s), s
+static const PROV_ENUMALGS_EX supported_base_algs[] =
+{
+    { CALG_SHA1, 160, 160, 160, CRYPT_FLAG_SIGNING, S("SHA-1"), S("Secure Hash Algorithm (SHA-1)") },
+    { CALG_MD5, 128, 128, 128, 0, S("MD5"), S("Message Digest 5 (MD5)") },
+    { CALG_DSS_SIGN, 1024, 512, 1024, CRYPT_FLAG_SIGNING, S("DSA_SIGN"), S("Digital Signature Algorithm") }
+};
 
 static BOOL create_container_regkey( struct container *container, REGSAM sam, HKEY *hkey )
 {
@@ -90,6 +99,7 @@ static struct container *create_key_container( const char *name, DWORD flags )
     ret->magic = MAGIC_CONTAINER;
     ret->flags = flags;
     if (name) strcpy( ret->name, name );
+    ret->alg_idx = 0;
 
     if (!(flags & CRYPT_VERIFYCONTEXT))
     {
@@ -323,9 +333,84 @@ BOOL WINAPI CPReleaseContext( HCRYPTPROV hprov, DWORD flags )
     return TRUE;
 }
 
+static BOOL copy_param( void *dst, DWORD *dst_size, const void *src, DWORD src_size )
+{
+    if (!dst_size)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+
+    if (!dst)
+    {
+        *dst_size = src_size;
+        return TRUE;
+    }
+
+    if (*dst_size < src_size)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+
+    *dst_size = src_size;
+    memcpy( dst, src, src_size );
+    return TRUE;
+}
+
 BOOL WINAPI CPGetProvParam( HCRYPTPROV hprov, DWORD param, BYTE *data, DWORD *len, DWORD flags )
 {
-    return FALSE;
+    struct container *container = (struct container *)hprov;
+
+    TRACE( "%p, %lu, %p, %p, %08lx\n", (void *)hprov, param, data, len, flags );
+
+    if (!len)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (container->magic != MAGIC_CONTAINER)
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    switch (param)
+    {
+    case PP_ENUMALGS:
+    case PP_ENUMALGS_EX:
+    {
+        if (flags & CRYPT_FIRST)
+            container->alg_idx = 0;
+        else
+            container->alg_idx++;
+
+        if (container->alg_idx >= ARRAY_SIZE(supported_base_algs))
+        {
+            SetLastError( ERROR_NO_MORE_ITEMS );
+            return FALSE;
+        }
+
+        if (param == PP_ENUMALGS)
+        {
+            PROV_ENUMALGS alg;
+
+            alg.aiAlgid = supported_base_algs[container->alg_idx].aiAlgid;
+            alg.dwBitLen = supported_base_algs[container->alg_idx].dwDefaultLen;
+            strcpy( alg.szName, supported_base_algs[container->alg_idx].szName );
+            alg.dwNameLen = supported_base_algs[container->alg_idx].dwNameLen;
+            return copy_param( data, len, &alg, sizeof(alg) );
+        }
+        else
+            return copy_param( data, len, &supported_base_algs[container->alg_idx], sizeof(PROV_ENUMALGS_EX) );
+    }
+
+    default:
+        FIXME( "param %lu is not supported\n", param );
+        SetLastError( NTE_BAD_TYPE );
+        return FALSE;
+    }
 }
 
 static BOOL store_key_pair( struct key *key, HKEY hkey, DWORD keyspec, DWORD flags )
