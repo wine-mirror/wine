@@ -621,16 +621,16 @@ struct x11drv_win_data
     RECT        whole_rect;     /* X window rectangle for the whole window relative to win32 parent window client area */
     RECT        client_rect;    /* client area relative to win32 parent window client area */
     XIC         xic;            /* X input context */
-    BOOL        managed : 1;    /* is window managed? */
-    BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
-    BOOL        iconic : 1;     /* is window in iconic state? */
-    BOOL        embedded : 1;   /* is window an XEMBED client? */
-    BOOL        shaped : 1;     /* is window using a custom region shape? */
-    BOOL        layered : 1;    /* is window layered and with valid attributes? */
-    BOOL        use_alpha : 1;  /* does window use an alpha channel? */
-    BOOL        skip_taskbar : 1; /* does window should be deleted from taskbar */
-    BOOL        add_taskbar : 1; /* does window should be added to taskbar regardless of style */
-    BOOL        net_wm_fullscreen_monitors_set : 1; /* is _NET_WM_FULLSCREEN_MONITORS set */
+    UINT        managed : 1;    /* is window managed? */
+    UINT        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
+    UINT        iconic : 1;     /* is window in iconic state? */
+    UINT        embedded : 1;   /* is window an XEMBED client? */
+    UINT        shaped : 1;     /* is window using a custom region shape? */
+    UINT        layered : 1;    /* is window layered and with valid attributes? */
+    UINT        use_alpha : 1;  /* does window use an alpha channel? */
+    UINT        skip_taskbar : 1; /* does window should be deleted from taskbar */
+    UINT        add_taskbar : 1; /* does window should be added to taskbar regardless of style */
+    UINT        net_wm_fullscreen_monitors_set : 1; /* is _NET_WM_FULLSCREEN_MONITORS set */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
