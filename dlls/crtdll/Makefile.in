@@ -15,6 +15,7 @@ SOURCES = \
 	except.c \
 	except_arm.c \
 	except_arm64.c \
+	except_arm64ec.c \
 	except_i386.c \
 	except_x86_64.c \
 	exception_ptr.c \
