@@ -53,6 +53,7 @@ static struct menu_item public_startmenu;
 static struct menu_item user_startmenu;
 
 #define MENU_ID_RUN 1
+#define MENU_ID_EXIT 2
 
 static ULONG copy_pidls(struct menu_item* item, LPITEMIDLIST dest)
 {
@@ -383,6 +384,17 @@ static void run_dialog(void)
     FreeLibrary(hShell32);
 }
 
+static void shut_down(HWND hwnd)
+{
+    WCHAR prompt[256];
+    int ret;
+
+    LoadStringW(NULL, IDS_EXIT_PROMPT, prompt, ARRAY_SIZE(prompt));
+    ret = MessageBoxW(hwnd, prompt, L"Wine", MB_YESNO|MB_ICONQUESTION|MB_SYSTEMMODAL);
+    if (ret == IDYES)
+        ExitWindows(0, 0);
+}
+
 LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -419,6 +431,8 @@ LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 exec_item(item);
             else if (mii.wID == MENU_ID_RUN)
                 run_dialog();
+            else if (mii.wID == MENU_ID_EXIT)
+                shut_down(hwnd);
 
             destroy_menus();
 
@@ -436,7 +450,7 @@ void do_startmenu(HWND hwnd)
     MENUITEMINFOW mii;
     RECT rc={0,0,0,0};
     TPMPARAMS tpm;
-    WCHAR run_label[50];
+    WCHAR label[64];
 
     destroy_menus();
 
@@ -475,13 +489,21 @@ void do_startmenu(HWND hwnd)
     if (SUCCEEDED(SHGetSpecialFolderLocation(NULL, CSIDL_CONTROLS, &pidl)))
         add_shell_item(&root_menu, pidl);
 
-    LoadStringW(NULL, IDS_RUN, run_label, ARRAY_SIZE(run_label));
-
+    LoadStringW(NULL, IDS_RUN, label, ARRAY_SIZE(label));
     mii.cbSize = sizeof(mii);
     mii.fMask = MIIM_STRING|MIIM_ID;
-    mii.dwTypeData = run_label;
+    mii.dwTypeData = label;
     mii.wID = MENU_ID_RUN;
+    InsertMenuItemW(root_menu.menuhandle, -1, TRUE, &mii);
 
+    mii.fMask = MIIM_FTYPE;
+    mii.fType = MFT_SEPARATOR;
+    InsertMenuItemW(root_menu.menuhandle, -1, TRUE, &mii);
+
+    LoadStringW(NULL, IDS_EXIT_LABEL, label, ARRAY_SIZE(label));
+    mii.fMask = MIIM_STRING|MIIM_ID;
+    mii.dwTypeData = label;
+    mii.wID = MENU_ID_EXIT;
     InsertMenuItemW(root_menu.menuhandle, -1, TRUE, &mii);
 
     mi.cbSize = sizeof(mi);

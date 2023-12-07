@@ -32,6 +32,8 @@ STRINGTABLE
     IDS_PATHBOX_LABEL   "Location:"
     IDS_START_LABEL     "Start"
     IDS_RUN             "&Run..."
+    IDS_EXIT_LABEL      "E&xit desktop"
+    IDS_EXIT_PROMPT     "Are you sure you want to close all programs and exit the virtual desktop?"
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

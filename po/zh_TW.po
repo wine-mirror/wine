@@ -14574,6 +14574,19 @@ msgstr "開始"
 msgid "&Run..."
 msgstr "執行(&R)..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "結束 Windows(&X)"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "您確認要刪除這些登錄值嗎?"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Use c&onnection string"

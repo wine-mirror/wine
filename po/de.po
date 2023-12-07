@@ -14803,6 +14803,19 @@ msgstr "Start"
 msgid "&Run..."
 msgstr "&Ausführen..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "&Programm-Manager beenden"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "Möchten Sie diese Werte wirklich löschen?"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Aufruf: findstr /Optionen String\n"

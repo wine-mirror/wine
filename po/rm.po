@@ -14291,6 +14291,16 @@ msgstr ""
 msgid "&Run..."
 msgstr ""
 
+#: programs/explorer/explorer.rc:36
+msgid "E&xit desktop"
+msgstr ""
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "Tuot las datotecas (*.*).\n"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr ""

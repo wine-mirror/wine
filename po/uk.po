@@ -15014,6 +15014,19 @@ msgstr "Пуск"
 msgid "&Run..."
 msgstr "&Запустити..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "Ви&йти з Windows"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "Ви впевнені, що хочете видалити ці значення?"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Use c&onnection string"

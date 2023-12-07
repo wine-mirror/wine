@@ -15502,6 +15502,19 @@ msgstr "'Start' izbornik"
 msgid "&Run..."
 msgstr "Pok&reni..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "Izađi iz &prozora"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these %1 items?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "Sigurno želite izbrisati ovih %1 stavki?"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Reconnecting"

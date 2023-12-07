@@ -15500,6 +15500,19 @@ msgstr "תפריט ההתחלה"
 msgid "&Run..."
 msgstr "הפע&לה..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "י&ציאה מ־Windows"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "האם ברצונך למחוק ערכים אלו?"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Reset Connections"

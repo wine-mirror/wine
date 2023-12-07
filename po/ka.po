@@ -14318,6 +14318,19 @@ msgstr "დაწყება"
 msgid "&Run..."
 msgstr "&გაშვება..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "&Windows-დან გასვლა"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "დარწმუნებული ბრძანდებით, რომ გნებავთ, წაშალოთ ეს მნიშვნელობები?"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "გამოყენება: findstr /პარამეტრების სტრიქონი\n"

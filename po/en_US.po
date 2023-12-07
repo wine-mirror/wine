@@ -14720,6 +14720,16 @@ msgstr "Start"
 msgid "&Run..."
 msgstr "&Run..."
 
+#: programs/explorer/explorer.rc:36
+msgid "E&xit desktop"
+msgstr "E&xit desktop"
+
+#: programs/explorer/explorer.rc:37
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Usage: findstr /options string\n"

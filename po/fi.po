@@ -14696,6 +14696,19 @@ msgstr "Käynnistä"
 msgid "&Run..."
 msgstr "&Suorita..."
 
+#: programs/explorer/explorer.rc:36
+#, fuzzy
+#| msgid "E&xit Windows"
+msgid "E&xit desktop"
+msgstr "&Poistu Windowsista"
+
+#: programs/explorer/explorer.rc:37
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid ""
+"Are you sure you want to close all programs and exit the virtual desktop?"
+msgstr "Haluatko varmasti tuhota nämä arvot?"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Käyttö: findstr /asetukset merkkijono\n"
