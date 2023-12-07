@@ -151,15 +151,12 @@ BOOL WINAPI PaintDesktop(HDC hdc)
 }
 
 /***********************************************************************
- *           SetDeskWallPaper   (USER32.@)
- *
- * FIXME: is there a unicode version?
+ *           SetDeskWallpaper   (USER32.@)
  */
-BOOL WINAPI SetDeskWallPaper( LPCSTR filename )
+BOOL WINAPI SetDeskWallpaper( const char *filename )
 {
     return SystemParametersInfoA( SPI_SETDESKWALLPAPER, MAX_PATH, (void *)filename, SPIF_UPDATEINIFILE );
 }
-
 
 /***********************************************************************
  *           update_wallpaper

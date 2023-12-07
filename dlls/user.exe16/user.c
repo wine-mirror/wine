@@ -1828,7 +1828,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
  */
 BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 {
-    return SetDeskWallPaper( filename );
+    return SetDeskWallpaper( filename );
 }
 
 

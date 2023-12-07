@@ -671,8 +671,7 @@
 @ stub SetCursorContents
 @ stdcall -import SetCursorPos(long long) NtUserSetCursorPos
 @ stdcall SetDebugErrorLevel(long)
-@ stdcall SetDeskWallPaper(str)
-# @ stub SetDeskWallpaper
+@ stdcall SetDeskWallpaper(str)
 # @ stub SetDesktopBitmap
 @ stdcall SetDisplayAutoRotationPreferences(long)
 @ stdcall SetDisplayConfig(long ptr long ptr long)
