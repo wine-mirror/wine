@@ -574,12 +574,15 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(IDirectSoundBuff
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	HRESULT hres = DS_OK;
 
-	TRACE("(%p,%ld)\n",This,newpos);
+	TRACE("(%p,%lu)\n",This,newpos);
+
+        if (newpos >= This->buflen) {
+            return E_INVALIDARG;
+        }
 
 	AcquireSRWLockExclusive(&This->lock);
 
 	/* start mixing from this new location instead */
-	newpos %= This->buflen;
 	newpos -= newpos%This->pwfx->nBlockAlign;
 	This->sec_mixpos = newpos;
 

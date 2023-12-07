@@ -919,6 +919,13 @@ static HRESULT test_block_align(LPGUID lpGuid)
             rc = IDirectSoundBuffer_GetCurrentPosition(secondary, &pos2, NULL);
             ok(rc == DS_OK, "Could not get new position: %08lx\n", rc);
             ok(pos == pos2, "Positions not the same! Old position: %ld, new position: %ld\n", pos, pos2);
+
+            /* Set position to past the end of the buffer */
+            rc = IDirectSoundBuffer_SetCurrentPosition(secondary, wfx.nAvgBytesPerSec + 100);
+            ok(rc == E_INVALIDARG, "Set position to %lu succeeded\n", wfx.nAvgBytesPerSec + 100);
+            rc = IDirectSoundBuffer_GetCurrentPosition(secondary, &pos2, NULL);
+            ok(rc == DS_OK, "Could not get new position: %08lx\n", rc);
+            ok(pos == pos2, "Positions not the same! Old position: %ld, new position: %ld\n", pos, pos2);
         }
         ref=IDirectSoundBuffer_Release(secondary);
         ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, "
