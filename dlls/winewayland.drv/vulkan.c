@@ -270,6 +270,15 @@ static VkResult check_queue_present(const VkPresentInfoKHR *present_info,
 
             wayland_surface_ensure_contents(wayland_surface);
 
+            /* Handle any processed configure request, to ensure the related
+             * surface state is applied by the compositor. */
+            if (wayland_surface->processing.serial &&
+                wayland_surface->processing.processed &&
+                wayland_surface_reconfigure(wayland_surface))
+            {
+                wl_surface_commit(wayland_surface->wl_surface);
+            }
+
             pthread_mutex_unlock(&wayland_surface->mutex);
 
             if (client_width == wine_vk_swapchain->extent.width &&
