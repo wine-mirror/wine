@@ -139,6 +139,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdCopyMicromapToMemoryEXT)(VkCommandBuffer, const VkCopyMicromapToMemoryInfoEXT *);
     void (*p_vkCmdCopyQueryPoolResults)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t, VkBuffer, VkDeviceSize, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkCmdCuLaunchKernelNVX)(VkCommandBuffer, const VkCuLaunchInfoNVX *);
+    void (*p_vkCmdCudaLaunchKernelNV)(VkCommandBuffer, const VkCudaLaunchInfoNV *);
     void (*p_vkCmdDebugMarkerBeginEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
     void (*p_vkCmdDebugMarkerEndEXT)(VkCommandBuffer);
     void (*p_vkCmdDebugMarkerInsertEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
@@ -334,6 +335,8 @@ struct vulkan_device_funcs
     VkResult (*p_vkCreateComputePipelines)(VkDevice, VkPipelineCache, uint32_t, const VkComputePipelineCreateInfo *, const VkAllocationCallbacks *, VkPipeline *);
     VkResult (*p_vkCreateCuFunctionNVX)(VkDevice, const VkCuFunctionCreateInfoNVX *, const VkAllocationCallbacks *, VkCuFunctionNVX *);
     VkResult (*p_vkCreateCuModuleNVX)(VkDevice, const VkCuModuleCreateInfoNVX *, const VkAllocationCallbacks *, VkCuModuleNVX *);
+    VkResult (*p_vkCreateCudaFunctionNV)(VkDevice, const VkCudaFunctionCreateInfoNV *, const VkAllocationCallbacks *, VkCudaFunctionNV *);
+    VkResult (*p_vkCreateCudaModuleNV)(VkDevice, const VkCudaModuleCreateInfoNV *, const VkAllocationCallbacks *, VkCudaModuleNV *);
     VkResult (*p_vkCreateDeferredOperationKHR)(VkDevice, const VkAllocationCallbacks *, VkDeferredOperationKHR *);
     VkResult (*p_vkCreateDescriptorPool)(VkDevice, const VkDescriptorPoolCreateInfo *, const VkAllocationCallbacks *, VkDescriptorPool *);
     VkResult (*p_vkCreateDescriptorSetLayout)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, const VkAllocationCallbacks *, VkDescriptorSetLayout *);
@@ -376,6 +379,8 @@ struct vulkan_device_funcs
     void (*p_vkDestroyCommandPool)(VkDevice, VkCommandPool, const VkAllocationCallbacks *);
     void (*p_vkDestroyCuFunctionNVX)(VkDevice, VkCuFunctionNVX, const VkAllocationCallbacks *);
     void (*p_vkDestroyCuModuleNVX)(VkDevice, VkCuModuleNVX, const VkAllocationCallbacks *);
+    void (*p_vkDestroyCudaFunctionNV)(VkDevice, VkCudaFunctionNV, const VkAllocationCallbacks *);
+    void (*p_vkDestroyCudaModuleNV)(VkDevice, VkCudaModuleNV, const VkAllocationCallbacks *);
     void (*p_vkDestroyDeferredOperationKHR)(VkDevice, VkDeferredOperationKHR, const VkAllocationCallbacks *);
     void (*p_vkDestroyDescriptorPool)(VkDevice, VkDescriptorPool, const VkAllocationCallbacks *);
     void (*p_vkDestroyDescriptorSetLayout)(VkDevice, VkDescriptorSetLayout, const VkAllocationCallbacks *);
@@ -426,6 +431,7 @@ struct vulkan_device_funcs
     uint64_t (*p_vkGetBufferOpaqueCaptureAddressKHR)(VkDevice, const VkBufferDeviceAddressInfo *);
     VkResult (*p_vkGetBufferOpaqueCaptureDescriptorDataEXT)(VkDevice, const VkBufferCaptureDescriptorDataInfoEXT *, void *);
     VkResult (*p_vkGetCalibratedTimestampsEXT)(VkDevice, uint32_t, const VkCalibratedTimestampInfoEXT *, uint64_t *, uint64_t *);
+    VkResult (*p_vkGetCudaModuleCacheNV)(VkDevice, VkCudaModuleNV, size_t *, void *);
     uint32_t (*p_vkGetDeferredOperationMaxConcurrencyKHR)(VkDevice, VkDeferredOperationKHR);
     VkResult (*p_vkGetDeferredOperationResultKHR)(VkDevice, VkDeferredOperationKHR);
     void (*p_vkGetDescriptorEXT)(VkDevice, const VkDescriptorGetInfoEXT *, size_t, void *);
@@ -473,7 +479,7 @@ struct vulkan_device_funcs
     VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX *);
     uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX *);
     VkResult (*p_vkGetImageViewOpaqueCaptureDescriptorDataEXT)(VkDevice, const VkImageViewCaptureDescriptorDataInfoEXT *, void *);
-    void (*p_vkGetLatencyTimingsNV)(VkDevice, VkSwapchainKHR, uint32_t *, VkGetLatencyMarkerInfoNV *);
+    void (*p_vkGetLatencyTimingsNV)(VkDevice, VkSwapchainKHR, VkGetLatencyMarkerInfoNV *);
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
     void (*p_vkGetMicromapBuildSizesEXT)(VkDevice, VkAccelerationStructureBuildTypeKHR, const VkMicromapBuildInfoEXT *, VkMicromapBuildSizesInfoEXT *);
     VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL *);
@@ -695,6 +701,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdCopyMicromapToMemoryEXT) \
     USE_VK_FUNC(vkCmdCopyQueryPoolResults) \
     USE_VK_FUNC(vkCmdCuLaunchKernelNVX) \
+    USE_VK_FUNC(vkCmdCudaLaunchKernelNV) \
     USE_VK_FUNC(vkCmdDebugMarkerBeginEXT) \
     USE_VK_FUNC(vkCmdDebugMarkerEndEXT) \
     USE_VK_FUNC(vkCmdDebugMarkerInsertEXT) \
@@ -890,6 +897,8 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCreateComputePipelines) \
     USE_VK_FUNC(vkCreateCuFunctionNVX) \
     USE_VK_FUNC(vkCreateCuModuleNVX) \
+    USE_VK_FUNC(vkCreateCudaFunctionNV) \
+    USE_VK_FUNC(vkCreateCudaModuleNV) \
     USE_VK_FUNC(vkCreateDeferredOperationKHR) \
     USE_VK_FUNC(vkCreateDescriptorPool) \
     USE_VK_FUNC(vkCreateDescriptorSetLayout) \
@@ -932,6 +941,8 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkDestroyCommandPool) \
     USE_VK_FUNC(vkDestroyCuFunctionNVX) \
     USE_VK_FUNC(vkDestroyCuModuleNVX) \
+    USE_VK_FUNC(vkDestroyCudaFunctionNV) \
+    USE_VK_FUNC(vkDestroyCudaModuleNV) \
     USE_VK_FUNC(vkDestroyDeferredOperationKHR) \
     USE_VK_FUNC(vkDestroyDescriptorPool) \
     USE_VK_FUNC(vkDestroyDescriptorSetLayout) \
@@ -982,6 +993,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetBufferOpaqueCaptureAddressKHR) \
     USE_VK_FUNC(vkGetBufferOpaqueCaptureDescriptorDataEXT) \
     USE_VK_FUNC(vkGetCalibratedTimestampsEXT) \
+    USE_VK_FUNC(vkGetCudaModuleCacheNV) \
     USE_VK_FUNC(vkGetDeferredOperationMaxConcurrencyKHR) \
     USE_VK_FUNC(vkGetDeferredOperationResultKHR) \
     USE_VK_FUNC(vkGetDescriptorEXT) \

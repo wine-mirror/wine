@@ -793,6 +793,14 @@ void WINAPI vkCmdCuLaunchKernelNVX(VkCommandBuffer commandBuffer, const VkCuLaun
     UNIX_CALL(vkCmdCuLaunchKernelNVX, &params);
 }
 
+void WINAPI vkCmdCudaLaunchKernelNV(VkCommandBuffer commandBuffer, const VkCudaLaunchInfoNV *pLaunchInfo)
+{
+    struct vkCmdCudaLaunchKernelNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.pLaunchInfo = pLaunchInfo;
+    UNIX_CALL(vkCmdCudaLaunchKernelNV, &params);
+}
+
 void WINAPI vkCmdDebugMarkerBeginEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo)
 {
     struct vkCmdDebugMarkerBeginEXT_params params;
@@ -2684,6 +2692,32 @@ VkResult WINAPI vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoN
     return params.result;
 }
 
+VkResult WINAPI vkCreateCudaFunctionNV(VkDevice device, const VkCudaFunctionCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaFunctionNV *pFunction)
+{
+    struct vkCreateCudaFunctionNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pAllocator = pAllocator;
+    params.pFunction = pFunction;
+    status = UNIX_CALL(vkCreateCudaFunctionNV, &params);
+    assert(!status && "vkCreateCudaFunctionNV");
+    return params.result;
+}
+
+VkResult WINAPI vkCreateCudaModuleNV(VkDevice device, const VkCudaModuleCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaModuleNV *pModule)
+{
+    struct vkCreateCudaModuleNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pAllocator = pAllocator;
+    params.pModule = pModule;
+    status = UNIX_CALL(vkCreateCudaModuleNV, &params);
+    assert(!status && "vkCreateCudaModuleNV");
+    return params.result;
+}
+
 VkResult WINAPI vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback)
 {
     struct vkCreateDebugReportCallbackEXT_params params;
@@ -3259,6 +3293,28 @@ void WINAPI vkDestroyCuModuleNVX(VkDevice device, VkCuModuleNVX module, const Vk
     params.pAllocator = pAllocator;
     status = UNIX_CALL(vkDestroyCuModuleNVX, &params);
     assert(!status && "vkDestroyCuModuleNVX");
+}
+
+void WINAPI vkDestroyCudaFunctionNV(VkDevice device, VkCudaFunctionNV function, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyCudaFunctionNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.function = function;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyCudaFunctionNV, &params);
+    assert(!status && "vkDestroyCudaFunctionNV");
+}
+
+void WINAPI vkDestroyCudaModuleNV(VkDevice device, VkCudaModuleNV module, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyCudaModuleNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.module = module;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyCudaModuleNV, &params);
+    assert(!status && "vkDestroyCudaModuleNV");
 }
 
 void WINAPI vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks *pAllocator)
@@ -3907,6 +3963,19 @@ VkResult WINAPI vkGetCalibratedTimestampsEXT(VkDevice device, uint32_t timestamp
     return params.result;
 }
 
+VkResult WINAPI vkGetCudaModuleCacheNV(VkDevice device, VkCudaModuleNV module, size_t *pCacheSize, void *pCacheData)
+{
+    struct vkGetCudaModuleCacheNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.module = module;
+    params.pCacheSize = pCacheSize;
+    params.pCacheData = pCacheData;
+    status = UNIX_CALL(vkGetCudaModuleCacheNV, &params);
+    assert(!status && "vkGetCudaModuleCacheNV");
+    return params.result;
+}
+
 uint32_t WINAPI vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDeferredOperationKHR operation)
 {
     struct vkGetDeferredOperationMaxConcurrencyKHR_params params;
@@ -4446,13 +4515,12 @@ VkResult WINAPI vkGetImageViewOpaqueCaptureDescriptorDataEXT(VkDevice device, co
     return params.result;
 }
 
-void WINAPI vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, uint32_t *pTimingCount, VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo)
+void WINAPI vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo)
 {
     struct vkGetLatencyTimingsNV_params params;
     NTSTATUS status;
     params.device = device;
     params.swapchain = swapchain;
-    params.pTimingCount = pTimingCount;
     params.pLatencyMarkerInfo = pLatencyMarkerInfo;
     status = UNIX_CALL(vkGetLatencyTimingsNV, &params);
     assert(!status && "vkGetLatencyTimingsNV");
@@ -6061,6 +6129,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdCopyMicromapToMemoryEXT", vkCmdCopyMicromapToMemoryEXT},
     {"vkCmdCopyQueryPoolResults", vkCmdCopyQueryPoolResults},
     {"vkCmdCuLaunchKernelNVX", vkCmdCuLaunchKernelNVX},
+    {"vkCmdCudaLaunchKernelNV", vkCmdCudaLaunchKernelNV},
     {"vkCmdDebugMarkerBeginEXT", vkCmdDebugMarkerBeginEXT},
     {"vkCmdDebugMarkerEndEXT", vkCmdDebugMarkerEndEXT},
     {"vkCmdDebugMarkerInsertEXT", vkCmdDebugMarkerInsertEXT},
@@ -6256,6 +6325,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateComputePipelines", vkCreateComputePipelines},
     {"vkCreateCuFunctionNVX", vkCreateCuFunctionNVX},
     {"vkCreateCuModuleNVX", vkCreateCuModuleNVX},
+    {"vkCreateCudaFunctionNV", vkCreateCudaFunctionNV},
+    {"vkCreateCudaModuleNV", vkCreateCudaModuleNV},
     {"vkCreateDeferredOperationKHR", vkCreateDeferredOperationKHR},
     {"vkCreateDescriptorPool", vkCreateDescriptorPool},
     {"vkCreateDescriptorSetLayout", vkCreateDescriptorSetLayout},
@@ -6298,6 +6369,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyCommandPool", vkDestroyCommandPool},
     {"vkDestroyCuFunctionNVX", vkDestroyCuFunctionNVX},
     {"vkDestroyCuModuleNVX", vkDestroyCuModuleNVX},
+    {"vkDestroyCudaFunctionNV", vkDestroyCudaFunctionNV},
+    {"vkDestroyCudaModuleNV", vkDestroyCudaModuleNV},
     {"vkDestroyDeferredOperationKHR", vkDestroyDeferredOperationKHR},
     {"vkDestroyDescriptorPool", vkDestroyDescriptorPool},
     {"vkDestroyDescriptorSetLayout", vkDestroyDescriptorSetLayout},
@@ -6348,6 +6421,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetBufferOpaqueCaptureAddressKHR", vkGetBufferOpaqueCaptureAddressKHR},
     {"vkGetBufferOpaqueCaptureDescriptorDataEXT", vkGetBufferOpaqueCaptureDescriptorDataEXT},
     {"vkGetCalibratedTimestampsEXT", vkGetCalibratedTimestampsEXT},
+    {"vkGetCudaModuleCacheNV", vkGetCudaModuleCacheNV},
     {"vkGetDeferredOperationMaxConcurrencyKHR", vkGetDeferredOperationMaxConcurrencyKHR},
     {"vkGetDeferredOperationResultKHR", vkGetDeferredOperationResultKHR},
     {"vkGetDescriptorEXT", vkGetDescriptorEXT},

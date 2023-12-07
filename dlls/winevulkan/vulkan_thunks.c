@@ -849,6 +849,24 @@ typedef struct VkCuLaunchInfoNVX32
     PTR32 pExtras;
 } VkCuLaunchInfoNVX32;
 
+typedef struct VkCudaLaunchInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkCudaFunctionNV DECLSPEC_ALIGN(8) function;
+    uint32_t gridDimX;
+    uint32_t gridDimY;
+    uint32_t gridDimZ;
+    uint32_t blockDimX;
+    uint32_t blockDimY;
+    uint32_t blockDimZ;
+    uint32_t sharedMemBytes;
+    PTR32 paramCount;
+    PTR32 pParams;
+    PTR32 extraCount;
+    PTR32 pExtras;
+} VkCudaLaunchInfoNV32;
+
 typedef struct VkDebugMarkerMarkerInfoEXT32
 {
     VkStructureType sType;
@@ -1473,6 +1491,22 @@ typedef struct VkCuModuleCreateInfoNVX32
     PTR32 pData;
 } VkCuModuleCreateInfoNVX32;
 
+typedef struct VkCudaFunctionCreateInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkCudaModuleNV DECLSPEC_ALIGN(8) module;
+    PTR32 pName;
+} VkCudaFunctionCreateInfoNV32;
+
+typedef struct VkCudaModuleCreateInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 dataSize;
+    PTR32 pData;
+} VkCudaModuleCreateInfoNV32;
+
 typedef struct VkDebugReportCallbackCreateInfoEXT32
 {
     VkStructureType sType;
@@ -1587,6 +1621,13 @@ typedef struct VkDeviceQueueGlobalPriorityCreateInfoKHR32
     VkQueueGlobalPriorityKHR globalPriority;
 } VkDeviceQueueGlobalPriorityCreateInfoKHR32;
 typedef VkDeviceQueueGlobalPriorityCreateInfoKHR32 VkDeviceQueueGlobalPriorityCreateInfoEXT32;
+
+typedef struct VkDeviceQueueShaderCoreControlCreateInfoARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t shaderCoreCount;
+} VkDeviceQueueShaderCoreControlCreateInfoARM32;
 
 typedef struct VkDeviceQueueCreateInfo32
 {
@@ -3050,6 +3091,27 @@ typedef struct VkPhysicalDeviceDescriptorPoolOverallocationFeaturesNV32
     VkBool32 descriptorPoolOverallocation;
 } VkPhysicalDeviceDescriptorPoolOverallocationFeaturesNV32;
 
+typedef struct VkPhysicalDeviceCudaKernelLaunchFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 cudaKernelLaunchFeatures;
+} VkPhysicalDeviceCudaKernelLaunchFeaturesNV32;
+
+typedef struct VkPhysicalDeviceSchedulingControlsFeaturesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 schedulingControls;
+} VkPhysicalDeviceSchedulingControlsFeaturesARM32;
+
+typedef struct VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 relaxedLineRasterization;
+} VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32;
+
 typedef struct VkDeviceCreateInfo32
 {
     VkStructureType sType;
@@ -3665,6 +3727,15 @@ typedef struct VkIndirectCommandsLayoutCreateInfoNV32
     PTR32 pStreamStrides;
 } VkIndirectCommandsLayoutCreateInfoNV32;
 
+typedef struct VkLayerSettingEXT32
+{
+    PTR32 pLayerName;
+    PTR32 pSettingName;
+    VkLayerSettingTypeEXT type;
+    uint32_t valueCount;
+    PTR32 pValues;
+} VkLayerSettingEXT32;
+
 typedef struct VkApplicationInfo32
 {
     VkStructureType sType;
@@ -3693,6 +3764,14 @@ typedef struct VkValidationFeaturesEXT32
     uint32_t disabledValidationFeatureCount;
     PTR32 pDisabledValidationFeatures;
 } VkValidationFeaturesEXT32;
+
+typedef struct VkLayerSettingsCreateInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t settingCount;
+    PTR32 pSettings;
+} VkLayerSettingsCreateInfoEXT32;
 
 typedef struct VkInstanceCreateInfo32
 {
@@ -4721,6 +4800,7 @@ typedef struct VkGetLatencyMarkerInfoNV32
 {
     VkStructureType sType;
     PTR32 pNext;
+    uint32_t timingCount;
     PTR32 pTimings;
 } VkGetLatencyMarkerInfoNV32;
 
@@ -6086,6 +6166,21 @@ typedef struct VkPhysicalDeviceLayeredDriverPropertiesMSFT32
     PTR32 pNext;
     VkLayeredDriverUnderlyingApiMSFT underlyingAPI;
 } VkPhysicalDeviceLayeredDriverPropertiesMSFT32;
+
+typedef struct VkPhysicalDeviceCudaKernelLaunchPropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t computeCapabilityMinor;
+    uint32_t computeCapabilityMajor;
+} VkPhysicalDeviceCudaKernelLaunchPropertiesNV32;
+
+typedef struct VkPhysicalDeviceSchedulingControlsPropertiesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkPhysicalDeviceSchedulingControlsFlagsARM DECLSPEC_ALIGN(8) schedulingControlsFlags;
+} VkPhysicalDeviceSchedulingControlsPropertiesARM32;
 
 typedef struct VkPhysicalDeviceProperties232
 {
@@ -8522,6 +8617,28 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkCudaLaunchInfoNV_win32_to_host(const VkCudaLaunchInfoNV32 *in, VkCudaLaunchInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->function = in->function;
+    out->gridDimX = in->gridDimX;
+    out->gridDimY = in->gridDimY;
+    out->gridDimZ = in->gridDimZ;
+    out->blockDimX = in->blockDimX;
+    out->blockDimY = in->blockDimY;
+    out->blockDimZ = in->blockDimZ;
+    out->sharedMemBytes = in->sharedMemBytes;
+    out->paramCount = in->paramCount;
+    out->pParams = (const void * const *)UlongToPtr(in->pParams);
+    out->extraCount = in->extraCount;
+    out->pExtras = (const void * const *)UlongToPtr(in->pExtras);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static inline void convert_VkDebugMarkerMarkerInfoEXT_win32_to_host(const VkDebugMarkerMarkerInfoEXT32 *in, VkDebugMarkerMarkerInfoEXT *out)
 {
     if (!in) return;
@@ -10221,6 +10338,30 @@ static inline void convert_VkCuModuleCreateInfoNVX_win32_to_host(const VkCuModul
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkCudaFunctionCreateInfoNV_win32_to_host(const VkCudaFunctionCreateInfoNV32 *in, VkCudaFunctionCreateInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->module = in->module;
+    out->pName = (const char *)UlongToPtr(in->pName);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkCudaModuleCreateInfoNV_win32_to_host(const VkCudaModuleCreateInfoNV32 *in, VkCudaModuleCreateInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->dataSize = in->dataSize;
+    out->pData = (const void *)UlongToPtr(in->pData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static inline void convert_VkDebugReportCallbackCreateInfoEXT_win32_to_host(const VkDebugReportCallbackCreateInfoEXT32 *in, VkDebugReportCallbackCreateInfoEXT *out)
 {
     if (!in) return;
@@ -10501,6 +10642,17 @@ static inline void convert_VkDeviceQueueCreateInfo_win32_to_host(struct conversi
             out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_GLOBAL_PRIORITY_CREATE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->globalPriority = in_ext->globalPriority;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM:
+        {
+            VkDeviceQueueShaderCoreControlCreateInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDeviceQueueShaderCoreControlCreateInfoARM32 *in_ext = (const VkDeviceQueueShaderCoreControlCreateInfoARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->shaderCoreCount = in_ext->shaderCoreCount;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -12651,6 +12803,50 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCudaKernelLaunchFeaturesNV *in_ext = (const VkPhysicalDeviceCudaKernelLaunchFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cudaKernelLaunchFeatures = in_ext->cudaKernelLaunchFeatures;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM:
+        {
+            VkDeviceQueueShaderCoreControlCreateInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDeviceQueueShaderCoreControlCreateInfoARM *in_ext = (const VkDeviceQueueShaderCoreControlCreateInfoARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->shaderCoreCount = in_ext->shaderCoreCount;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceSchedulingControlsFeaturesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->schedulingControls = in_ext->schedulingControls;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG:
+        {
+            VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *in_ext = (const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG;
+            out_ext->pNext = NULL;
+            out_ext->relaxedLineRasterization = in_ext->relaxedLineRasterization;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -14765,6 +14961,50 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCudaKernelLaunchFeaturesNV32 *in_ext = (const VkPhysicalDeviceCudaKernelLaunchFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cudaKernelLaunchFeatures = in_ext->cudaKernelLaunchFeatures;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM:
+        {
+            VkDeviceQueueShaderCoreControlCreateInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDeviceQueueShaderCoreControlCreateInfoARM32 *in_ext = (const VkDeviceQueueShaderCoreControlCreateInfoARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->shaderCoreCount = in_ext->shaderCoreCount;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceSchedulingControlsFeaturesARM32 *in_ext = (const VkPhysicalDeviceSchedulingControlsFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->schedulingControls = in_ext->schedulingControls;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG:
+        {
+            VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32 *in_ext = (const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG;
+            out_ext->pNext = NULL;
+            out_ext->relaxedLineRasterization = in_ext->relaxedLineRasterization;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -16388,6 +16628,33 @@ static inline void convert_VkIndirectCommandsLayoutCreateInfoNV_win32_to_host(st
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkLayerSettingEXT_win32_to_host(const VkLayerSettingEXT32 *in, VkLayerSettingEXT *out)
+{
+    if (!in) return;
+
+    out->pLayerName = (const char *)UlongToPtr(in->pLayerName);
+    out->pSettingName = (const char *)UlongToPtr(in->pSettingName);
+    out->type = in->type;
+    out->valueCount = in->valueCount;
+    out->pValues = (const void *)UlongToPtr(in->pValues);
+}
+
+static inline const VkLayerSettingEXT *convert_VkLayerSettingEXT_array_win32_to_host(struct conversion_context *ctx, const VkLayerSettingEXT32 *in, uint32_t count)
+{
+    VkLayerSettingEXT *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkLayerSettingEXT_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static inline void convert_VkApplicationInfo_win32_to_host(const VkApplicationInfo32 *in, VkApplicationInfo *out)
 {
     if (!in) return;
@@ -16481,6 +16748,18 @@ static inline void convert_VkInstanceCreateInfo_win64_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT:
+        {
+            VkLayerSettingsCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkLayerSettingsCreateInfoEXT *in_ext = (const VkLayerSettingsCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->settingCount = in_ext->settingCount;
+            out_ext->pSettings = in_ext->pSettings;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT:
         {
             VkDebugUtilsMessengerCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -16561,6 +16840,18 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
             out_ext->pEnabledValidationFeatures = (const VkValidationFeatureEnableEXT *)UlongToPtr(in_ext->pEnabledValidationFeatures);
             out_ext->disabledValidationFeatureCount = in_ext->disabledValidationFeatureCount;
             out_ext->pDisabledValidationFeatures = (const VkValidationFeatureDisableEXT *)UlongToPtr(in_ext->pDisabledValidationFeatures);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT:
+        {
+            VkLayerSettingsCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkLayerSettingsCreateInfoEXT32 *in_ext = (const VkLayerSettingsCreateInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->settingCount = in_ext->settingCount;
+            out_ext->pSettings = convert_VkLayerSettingEXT_array_win32_to_host(ctx, (const VkLayerSettingEXT32 *)UlongToPtr(in_ext->pSettings), in_ext->settingCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19428,7 +19719,8 @@ static inline void convert_VkGetLatencyMarkerInfoNV_win32_to_host(struct convers
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->pTimings = convert_VkLatencyTimingsFrameReportNV_array_win32_to_host(ctx, (VkLatencyTimingsFrameReportNV32 *)UlongToPtr(in->pTimings), 1);
+    out->timingCount = in->timingCount;
+    out->pTimings = convert_VkLatencyTimingsFrameReportNV_array_win32_to_host(ctx, (VkLatencyTimingsFrameReportNV32 *)UlongToPtr(in->pTimings), in->timingCount);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -19437,7 +19729,8 @@ static inline void convert_VkGetLatencyMarkerInfoNV_host_to_win32(const VkGetLat
 {
     if (!in) return;
 
-    convert_VkLatencyTimingsFrameReportNV_array_host_to_win32(in->pTimings, (VkLatencyTimingsFrameReportNV32 *)UlongToPtr(out->pTimings), 1);
+    out->timingCount = in->timingCount;
+    convert_VkLatencyTimingsFrameReportNV_array_host_to_win32(in->pTimings, (VkLatencyTimingsFrameReportNV32 *)UlongToPtr(out->pTimings), in->timingCount);
 }
 
 static inline void convert_VkMemoryHostPointerPropertiesEXT_win32_to_host(const VkMemoryHostPointerPropertiesEXT32 *in, VkMemoryHostPointerPropertiesEXT *out)
@@ -21796,6 +22089,39 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCudaKernelLaunchFeaturesNV32 *in_ext = (const VkPhysicalDeviceCudaKernelLaunchFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cudaKernelLaunchFeatures = in_ext->cudaKernelLaunchFeatures;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceSchedulingControlsFeaturesARM32 *in_ext = (const VkPhysicalDeviceSchedulingControlsFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->schedulingControls = in_ext->schedulingControls;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG:
+        {
+            VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32 *in_ext = (const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG;
+            out_ext->pNext = NULL;
+            out_ext->relaxedLineRasterization = in_ext->relaxedLineRasterization;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -23507,6 +23833,33 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV);
+            const VkPhysicalDeviceCudaKernelLaunchFeaturesNV *in_ext = (const VkPhysicalDeviceCudaKernelLaunchFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV;
+            out_ext->cudaKernelLaunchFeatures = in_ext->cudaKernelLaunchFeatures;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsFeaturesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM);
+            const VkPhysicalDeviceSchedulingControlsFeaturesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM;
+            out_ext->schedulingControls = in_ext->schedulingControls;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG:
+        {
+            VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG);
+            const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *in_ext = (const VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG;
+            out_ext->relaxedLineRasterization = in_ext->relaxedLineRasterization;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -24906,6 +25259,26 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceSchedulingControlsPropertiesARM32 *in_ext = (const VkPhysicalDeviceSchedulingControlsPropertiesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->schedulingControlsFlags = in_ext->schedulingControlsFlags;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -26028,6 +26401,25 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             const VkPhysicalDeviceLayeredDriverPropertiesMSFT *in_ext = (const VkPhysicalDeviceLayeredDriverPropertiesMSFT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT;
             out_ext->underlyingAPI = in_ext->underlyingAPI;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCudaKernelLaunchPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV);
+            const VkPhysicalDeviceCudaKernelLaunchPropertiesNV *in_ext = (const VkPhysicalDeviceCudaKernelLaunchPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV;
+            out_ext->computeCapabilityMinor = in_ext->computeCapabilityMinor;
+            out_ext->computeCapabilityMajor = in_ext->computeCapabilityMajor;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsPropertiesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM);
+            const VkPhysicalDeviceSchedulingControlsPropertiesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
+            out_ext->schedulingControlsFlags = in_ext->schedulingControlsFlags;
             out_header = (void *)out_ext;
             break;
         }
@@ -30304,6 +30696,28 @@ static void thunk32_vkCmdCuLaunchKernelNVX(void *args)
 
     convert_VkCuLaunchInfoNVX_win32_to_host((const VkCuLaunchInfoNVX32 *)UlongToPtr(params->pLaunchInfo), &pLaunchInfo_host);
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdCuLaunchKernelNVX(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, &pLaunchInfo_host);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdCudaLaunchKernelNV(void *args)
+{
+    struct vkCmdCudaLaunchKernelNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdCudaLaunchKernelNV(wine_cmd_buffer_from_handle(params->commandBuffer)->host_command_buffer, params->pLaunchInfo);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdCudaLaunchKernelNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pLaunchInfo;
+    } *params = args;
+    VkCudaLaunchInfoNV pLaunchInfo_host;
+
+    convert_VkCudaLaunchInfoNV_win32_to_host((const VkCudaLaunchInfoNV32 *)UlongToPtr(params->pLaunchInfo), &pLaunchInfo_host);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdCudaLaunchKernelNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, &pLaunchInfo_host);
 }
 
 #ifdef _WIN64
@@ -34899,6 +35313,68 @@ static NTSTATUS thunk32_vkCreateCuModuleNVX(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkCreateCudaFunctionNV(void *args)
+{
+    struct vkCreateCudaFunctionNV_params *params = args;
+
+    TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFunction);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateCudaFunctionNV(wine_device_from_handle(params->device)->host_device, params->pCreateInfo, NULL, params->pFunction);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkCreateCudaFunctionNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pCreateInfo;
+        PTR32 pAllocator;
+        PTR32 pFunction;
+        VkResult result;
+    } *params = args;
+    VkCudaFunctionCreateInfoNV pCreateInfo_host;
+
+    TRACE("%#x, %#x, %#x, %#x\n", params->device, params->pCreateInfo, params->pAllocator, params->pFunction);
+
+    convert_VkCudaFunctionCreateInfoNV_win32_to_host((const VkCudaFunctionCreateInfoNV32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateCudaFunctionNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pCreateInfo_host, NULL, (VkCudaFunctionNV *)UlongToPtr(params->pFunction));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkCreateCudaModuleNV(void *args)
+{
+    struct vkCreateCudaModuleNV_params *params = args;
+
+    TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pModule);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateCudaModuleNV(wine_device_from_handle(params->device)->host_device, params->pCreateInfo, NULL, params->pModule);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkCreateCudaModuleNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pCreateInfo;
+        PTR32 pAllocator;
+        PTR32 pModule;
+        VkResult result;
+    } *params = args;
+    VkCudaModuleCreateInfoNV pCreateInfo_host;
+
+    TRACE("%#x, %#x, %#x, %#x\n", params->device, params->pCreateInfo, params->pAllocator, params->pModule);
+
+    convert_VkCudaModuleCreateInfoNV_win32_to_host((const VkCudaModuleCreateInfoNV32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateCudaModuleNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pCreateInfo_host, NULL, (VkCudaModuleNV *)UlongToPtr(params->pModule));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkCreateDebugReportCallbackEXT(void *args)
 {
     struct vkCreateDebugReportCallbackEXT_params *params = args;
@@ -36511,6 +36987,60 @@ static NTSTATUS thunk32_vkDestroyCuModuleNVX(void *args)
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->module), params->pAllocator);
 
     wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkDestroyCuModuleNVX(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->module, NULL);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkDestroyCudaFunctionNV(void *args)
+{
+    struct vkDestroyCudaFunctionNV_params *params = args;
+
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->function), params->pAllocator);
+
+    wine_device_from_handle(params->device)->funcs.p_vkDestroyCudaFunctionNV(wine_device_from_handle(params->device)->host_device, params->function, NULL);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkDestroyCudaFunctionNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkCudaFunctionNV DECLSPEC_ALIGN(8) function;
+        PTR32 pAllocator;
+    } *params = args;
+
+    TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->function), params->pAllocator);
+
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkDestroyCudaFunctionNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->function, NULL);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkDestroyCudaModuleNV(void *args)
+{
+    struct vkDestroyCudaModuleNV_params *params = args;
+
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->module), params->pAllocator);
+
+    wine_device_from_handle(params->device)->funcs.p_vkDestroyCudaModuleNV(wine_device_from_handle(params->device)->host_device, params->module, NULL);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkDestroyCudaModuleNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkCudaModuleNV DECLSPEC_ALIGN(8) module;
+        PTR32 pAllocator;
+    } *params = args;
+
+    TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->module), params->pAllocator);
+
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkDestroyCudaModuleNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->module, NULL);
     return STATUS_SUCCESS;
 }
 
@@ -38324,6 +38854,38 @@ static NTSTATUS thunk32_vkGetCalibratedTimestampsEXT(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetCudaModuleCacheNV(void *args)
+{
+    struct vkGetCudaModuleCacheNV_params *params = args;
+
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->module), params->pCacheSize, params->pCacheData);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetCudaModuleCacheNV(wine_device_from_handle(params->device)->host_device, params->module, params->pCacheSize, params->pCacheData);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetCudaModuleCacheNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        VkCudaModuleNV DECLSPEC_ALIGN(8) module;
+        PTR32 pCacheSize;
+        PTR32 pCacheData;
+        VkResult result;
+    } *params = args;
+    size_t pCacheSize_host;
+
+    TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->module), params->pCacheSize, params->pCacheData);
+
+    pCacheSize_host = *(PTR32 *)UlongToPtr(params->pCacheSize);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetCudaModuleCacheNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->module, &pCacheSize_host, (void *)UlongToPtr(params->pCacheData));
+    *(PTR32 *)UlongToPtr(params->pCacheSize) = pCacheSize_host;
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetDeferredOperationMaxConcurrencyKHR(void *args)
 {
     struct vkGetDeferredOperationMaxConcurrencyKHR_params *params = args;
@@ -39844,9 +40406,9 @@ static NTSTATUS thunk64_vkGetLatencyTimingsNV(void *args)
 {
     struct vkGetLatencyTimingsNV_params *params = args;
 
-    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pTimingCount, params->pLatencyMarkerInfo);
+    TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pLatencyMarkerInfo);
 
-    wine_device_from_handle(params->device)->funcs.p_vkGetLatencyTimingsNV(wine_device_from_handle(params->device)->host_device, params->swapchain, params->pTimingCount, params->pLatencyMarkerInfo);
+    wine_device_from_handle(params->device)->funcs.p_vkGetLatencyTimingsNV(wine_device_from_handle(params->device)->host_device, params->swapchain, params->pLatencyMarkerInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -39857,18 +40419,17 @@ static NTSTATUS thunk32_vkGetLatencyTimingsNV(void *args)
     {
         PTR32 device;
         VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
-        PTR32 pTimingCount;
         PTR32 pLatencyMarkerInfo;
     } *params = args;
     VkGetLatencyMarkerInfoNV pLatencyMarkerInfo_host;
     struct conversion_context local_ctx;
     struct conversion_context *ctx = &local_ctx;
 
-    TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pTimingCount, params->pLatencyMarkerInfo);
+    TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pLatencyMarkerInfo);
 
     init_conversion_context(ctx);
     convert_VkGetLatencyMarkerInfoNV_win32_to_host(ctx, (VkGetLatencyMarkerInfoNV32 *)UlongToPtr(params->pLatencyMarkerInfo), &pLatencyMarkerInfo_host);
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetLatencyTimingsNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->swapchain, (uint32_t *)UlongToPtr(params->pTimingCount), &pLatencyMarkerInfo_host);
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetLatencyTimingsNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->swapchain, &pLatencyMarkerInfo_host);
     convert_VkGetLatencyMarkerInfoNV_host_to_win32(&pLatencyMarkerInfo_host, (VkGetLatencyMarkerInfoNV32 *)UlongToPtr(params->pLatencyMarkerInfo));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -43987,6 +44548,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_trinary_minmax",
     "VK_AMD_texture_gather_bias_lod",
     "VK_ARM_rasterization_order_attachment_access",
+    "VK_ARM_scheduling_controls",
     "VK_ARM_shader_core_builtins",
     "VK_ARM_shader_core_properties",
     "VK_EXT_4444_formats",
@@ -44101,6 +44663,7 @@ static const char * const vk_device_extensions[] =
     "VK_HUAWEI_subpass_shading",
     "VK_IMG_filter_cubic",
     "VK_IMG_format_pvrtc",
+    "VK_IMG_relaxed_line_rasterization",
     "VK_INTEL_performance_query",
     "VK_INTEL_shader_integer_functions2",
     "VK_KHR_16bit_storage",
@@ -44181,6 +44744,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_copy_memory_indirect",
     "VK_NV_corner_sampled_image",
     "VK_NV_coverage_reduction_mode",
+    "VK_NV_cuda_kernel_launch",
     "VK_NV_dedicated_allocation",
     "VK_NV_dedicated_allocation_image_aliasing",
     "VK_NV_descriptor_pool_overallocation",
@@ -44237,6 +44801,7 @@ static const char * const vk_instance_extensions[] =
 {
     "VK_EXT_debug_report",
     "VK_EXT_debug_utils",
+    "VK_EXT_layer_settings",
     "VK_EXT_surface_maintenance1",
     "VK_EXT_swapchain_colorspace",
     "VK_EXT_validation_features",
@@ -44372,6 +44937,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdCopyMicromapToMemoryEXT,
     (void *)thunk64_vkCmdCopyQueryPoolResults,
     (void *)thunk64_vkCmdCuLaunchKernelNVX,
+    (void *)thunk64_vkCmdCudaLaunchKernelNV,
     (void *)thunk64_vkCmdDebugMarkerBeginEXT,
     (void *)thunk64_vkCmdDebugMarkerEndEXT,
     (void *)thunk64_vkCmdDebugMarkerInsertEXT,
@@ -44567,6 +45133,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkCreateComputePipelines,
     thunk64_vkCreateCuFunctionNVX,
     thunk64_vkCreateCuModuleNVX,
+    thunk64_vkCreateCudaFunctionNV,
+    thunk64_vkCreateCudaModuleNV,
     thunk64_vkCreateDebugReportCallbackEXT,
     thunk64_vkCreateDebugUtilsMessengerEXT,
     thunk64_vkCreateDeferredOperationKHR,
@@ -44615,6 +45183,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkDestroyCommandPool,
     thunk64_vkDestroyCuFunctionNVX,
     thunk64_vkDestroyCuModuleNVX,
+    thunk64_vkDestroyCudaFunctionNV,
+    thunk64_vkDestroyCudaModuleNV,
     thunk64_vkDestroyDebugReportCallbackEXT,
     thunk64_vkDestroyDebugUtilsMessengerEXT,
     thunk64_vkDestroyDeferredOperationKHR,
@@ -44677,6 +45247,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetBufferOpaqueCaptureAddressKHR,
     thunk64_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetCalibratedTimestampsEXT,
+    thunk64_vkGetCudaModuleCacheNV,
     thunk64_vkGetDeferredOperationMaxConcurrencyKHR,
     thunk64_vkGetDeferredOperationResultKHR,
     (void *)thunk64_vkGetDescriptorEXT,
@@ -44944,6 +45515,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdCopyMicromapToMemoryEXT,
     (void *)thunk32_vkCmdCopyQueryPoolResults,
     (void *)thunk32_vkCmdCuLaunchKernelNVX,
+    (void *)thunk32_vkCmdCudaLaunchKernelNV,
     (void *)thunk32_vkCmdDebugMarkerBeginEXT,
     (void *)thunk32_vkCmdDebugMarkerEndEXT,
     (void *)thunk32_vkCmdDebugMarkerInsertEXT,
@@ -45139,6 +45711,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkCreateComputePipelines,
     thunk32_vkCreateCuFunctionNVX,
     thunk32_vkCreateCuModuleNVX,
+    thunk32_vkCreateCudaFunctionNV,
+    thunk32_vkCreateCudaModuleNV,
     thunk32_vkCreateDebugReportCallbackEXT,
     thunk32_vkCreateDebugUtilsMessengerEXT,
     thunk32_vkCreateDeferredOperationKHR,
@@ -45187,6 +45761,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkDestroyCommandPool,
     thunk32_vkDestroyCuFunctionNVX,
     thunk32_vkDestroyCuModuleNVX,
+    thunk32_vkDestroyCudaFunctionNV,
+    thunk32_vkDestroyCudaModuleNV,
     thunk32_vkDestroyDebugReportCallbackEXT,
     thunk32_vkDestroyDebugUtilsMessengerEXT,
     thunk32_vkDestroyDeferredOperationKHR,
@@ -45249,6 +45825,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetBufferOpaqueCaptureAddressKHR,
     thunk32_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetCalibratedTimestampsEXT,
+    thunk32_vkGetCudaModuleCacheNV,
     thunk32_vkGetDeferredOperationMaxConcurrencyKHR,
     thunk32_vkGetDeferredOperationResultKHR,
     (void *)thunk32_vkGetDescriptorEXT,

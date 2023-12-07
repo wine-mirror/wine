@@ -126,7 +126,7 @@
 #define VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME "VK_KHR_get_physical_device_properties2"
 #define VK_KHR_DEVICE_GROUP_SPEC_VERSION 4
 #define VK_KHR_DEVICE_GROUP_EXTENSION_NAME "VK_KHR_device_group"
-#define VK_EXT_VALIDATION_FLAGS_SPEC_VERSION 2
+#define VK_EXT_VALIDATION_FLAGS_SPEC_VERSION 3
 #define VK_EXT_VALIDATION_FLAGS_EXTENSION_NAME "VK_EXT_validation_flags"
 #define VK_KHR_SHADER_DRAW_PARAMETERS_SPEC_VERSION 1
 #define VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME "VK_KHR_shader_draw_parameters"
@@ -194,6 +194,8 @@
 #define VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME "VK_KHR_imageless_framebuffer"
 #define VK_KHR_CREATE_RENDERPASS_2_SPEC_VERSION 1
 #define VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME "VK_KHR_create_renderpass2"
+#define VK_IMG_RELAXED_LINE_RASTERIZATION_SPEC_VERSION 1
+#define VK_IMG_RELAXED_LINE_RASTERIZATION_EXTENSION_NAME "VK_IMG_relaxed_line_rasterization"
 #define VK_KHR_EXTERNAL_FENCE_CAPABILITIES_SPEC_VERSION 1
 #define VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME "VK_KHR_external_fence_capabilities"
 #define VK_KHR_EXTERNAL_FENCE_SPEC_VERSION 1
@@ -372,7 +374,7 @@
 #define VK_EXT_TOOLING_INFO_EXTENSION_NAME "VK_EXT_tooling_info"
 #define VK_EXT_SEPARATE_STENCIL_USAGE_SPEC_VERSION 1
 #define VK_EXT_SEPARATE_STENCIL_USAGE_EXTENSION_NAME "VK_EXT_separate_stencil_usage"
-#define VK_EXT_VALIDATION_FEATURES_SPEC_VERSION 5
+#define VK_EXT_VALIDATION_FEATURES_SPEC_VERSION 6
 #define VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME "VK_EXT_validation_features"
 #define VK_KHR_PRESENT_WAIT_SPEC_VERSION 1
 #define VK_KHR_PRESENT_WAIT_EXTENSION_NAME "VK_KHR_present_wait"
@@ -450,6 +452,8 @@
 #define VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME "VK_NV_device_diagnostics_config"
 #define VK_QCOM_RENDER_PASS_STORE_OPS_SPEC_VERSION 2
 #define VK_QCOM_RENDER_PASS_STORE_OPS_EXTENSION_NAME "VK_QCOM_render_pass_store_ops"
+#define VK_NV_CUDA_KERNEL_LAUNCH_SPEC_VERSION 2
+#define VK_NV_CUDA_KERNEL_LAUNCH_EXTENSION_NAME "VK_NV_cuda_kernel_launch"
 #define VK_NV_LOW_LATENCY_SPEC_VERSION 1
 #define VK_NV_LOW_LATENCY_EXTENSION_NAME "VK_NV_low_latency"
 #define VK_KHR_SYNCHRONIZATION_2_SPEC_VERSION 1
@@ -540,7 +544,7 @@
 #define VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME "VK_EXT_opacity_micromap"
 #define VK_EXT_LOAD_STORE_OP_NONE_SPEC_VERSION 1
 #define VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME "VK_EXT_load_store_op_none"
-#define VK_HUAWEI_CLUSTER_CULLING_SHADER_SPEC_VERSION 2
+#define VK_HUAWEI_CLUSTER_CULLING_SHADER_SPEC_VERSION 3
 #define VK_HUAWEI_CLUSTER_CULLING_SHADER_EXTENSION_NAME "VK_HUAWEI_cluster_culling_shader"
 #define VK_EXT_BORDER_COLOR_SWIZZLE_SPEC_VERSION 1
 #define VK_EXT_BORDER_COLOR_SWIZZLE_EXTENSION_NAME "VK_EXT_border_color_swizzle"
@@ -550,6 +554,8 @@
 #define VK_KHR_MAINTENANCE_4_EXTENSION_NAME "VK_KHR_maintenance4"
 #define VK_ARM_SHADER_CORE_PROPERTIES_SPEC_VERSION 1
 #define VK_ARM_SHADER_CORE_PROPERTIES_EXTENSION_NAME "VK_ARM_shader_core_properties"
+#define VK_ARM_SCHEDULING_CONTROLS_SPEC_VERSION 1
+#define VK_ARM_SCHEDULING_CONTROLS_EXTENSION_NAME "VK_ARM_scheduling_controls"
 #define VK_EXT_IMAGE_SLICED_VIEW_OF_3D_SPEC_VERSION 1
 #define VK_EXT_IMAGE_SLICED_VIEW_OF_3D_EXTENSION_NAME "VK_EXT_image_sliced_view_of_3d"
 #define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_SPEC_VERSION 1
@@ -606,13 +612,15 @@
 #define VK_NV_EXTENDED_SPARSE_ADDRESS_SPACE_EXTENSION_NAME "VK_NV_extended_sparse_address_space"
 #define VK_EXT_MUTABLE_DESCRIPTOR_TYPE_SPEC_VERSION 1
 #define VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME "VK_EXT_mutable_descriptor_type"
+#define VK_EXT_LAYER_SETTINGS_SPEC_VERSION 2
+#define VK_EXT_LAYER_SETTINGS_EXTENSION_NAME "VK_EXT_layer_settings"
 #define VK_ARM_SHADER_CORE_BUILTINS_SPEC_VERSION 2
 #define VK_ARM_SHADER_CORE_BUILTINS_EXTENSION_NAME "VK_ARM_shader_core_builtins"
 #define VK_EXT_PIPELINE_LIBRARY_GROUP_HANDLES_SPEC_VERSION 1
 #define VK_EXT_PIPELINE_LIBRARY_GROUP_HANDLES_EXTENSION_NAME "VK_EXT_pipeline_library_group_handles"
 #define VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_SPEC_VERSION 1
 #define VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME "VK_EXT_dynamic_rendering_unused_attachments"
-#define VK_NV_LOW_LATENCY_2_SPEC_VERSION 1
+#define VK_NV_LOW_LATENCY_2_SPEC_VERSION 2
 #define VK_NV_LOW_LATENCY_2_EXTENSION_NAME "VK_NV_low_latency2"
 #define VK_KHR_COOPERATIVE_MATRIX_SPEC_VERSION 2
 #define VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME "VK_KHR_cooperative_matrix"
@@ -658,7 +666,7 @@
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
 #define VKSC_API_VERSION_1_0 VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 0)
-#define VK_HEADER_VERSION 267
+#define VK_HEADER_VERSION 272
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -693,6 +701,8 @@ VK_DEFINE_HANDLE(VkCommandBuffer)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCommandPool)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCuFunctionNVX)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCuModuleNVX)
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCudaFunctionNV)
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCudaModuleNV)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDebugReportCallbackEXT)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDebugUtilsMessengerEXT)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDeferredOperationKHR)
@@ -860,6 +870,7 @@ typedef VkFlags VkOpticalFlowUsageFlagsNV;
 typedef VkFlags VkPeerMemoryFeatureFlags;
 typedef VkPeerMemoryFeatureFlags VkPeerMemoryFeatureFlagsKHR;
 typedef VkFlags VkPerformanceCounterDescriptionFlagsKHR;
+typedef VkFlags64 VkPhysicalDeviceSchedulingControlsFlagsARM;
 typedef VkFlags VkPipelineCacheCreateFlags;
 typedef VkFlags VkPipelineColorBlendStateCreateFlags;
 typedef VkFlags VkPipelineColorBlendStateCreateFlags;
@@ -1639,6 +1650,8 @@ typedef enum VkDebugReportObjectTypeEXT
     VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR_EXT = 1000150000,
     VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT = 1000156000,
     VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT = 1000165000,
+    VK_DEBUG_REPORT_OBJECT_TYPE_CUDA_MODULE_NV_EXT = 1000307000,
+    VK_DEBUG_REPORT_OBJECT_TYPE_CUDA_FUNCTION_NV_EXT = 1000307001,
     VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT,
     VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT,
     VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
@@ -2843,6 +2856,19 @@ typedef enum VkLatencyMarkerNV
     VK_LATENCY_MARKER_NV_MAX_ENUM = 0x7fffffff,
 } VkLatencyMarkerNV;
 
+typedef enum VkLayerSettingTypeEXT
+{
+    VK_LAYER_SETTING_TYPE_BOOL32_EXT = 0,
+    VK_LAYER_SETTING_TYPE_INT32_EXT = 1,
+    VK_LAYER_SETTING_TYPE_INT64_EXT = 2,
+    VK_LAYER_SETTING_TYPE_UINT32_EXT = 3,
+    VK_LAYER_SETTING_TYPE_UINT64_EXT = 4,
+    VK_LAYER_SETTING_TYPE_FLOAT32_EXT = 5,
+    VK_LAYER_SETTING_TYPE_FLOAT64_EXT = 6,
+    VK_LAYER_SETTING_TYPE_STRING_EXT = 7,
+    VK_LAYER_SETTING_TYPE_EXT_MAX_ENUM = 0x7fffffff,
+} VkLayerSettingTypeEXT;
+
 typedef enum VkLayeredDriverUnderlyingApiMSFT
 {
     VK_LAYERED_DRIVER_UNDERLYING_API_NONE_MSFT = 0,
@@ -2980,6 +3006,8 @@ typedef enum VkObjectType
     VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR = 1000268000,
     VK_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NV = 1000277000,
     VK_OBJECT_TYPE_PRIVATE_DATA_SLOT = 1000295000,
+    VK_OBJECT_TYPE_CUDA_MODULE_NV = 1000307000,
+    VK_OBJECT_TYPE_CUDA_FUNCTION_NV = 1000307001,
     VK_OBJECT_TYPE_MICROMAP_EXT = 1000396000,
     VK_OBJECT_TYPE_OPTICAL_FLOW_SESSION_NV = 1000464000,
     VK_OBJECT_TYPE_SHADER_EXT = 1000482000,
@@ -3162,6 +3190,12 @@ typedef enum VkPerformanceValueTypeINTEL
     VK_PERFORMANCE_VALUE_TYPE_STRING_INTEL = 4,
     VK_PERFORMANCE_VALUE_TYPE_INTEL_MAX_ENUM = 0x7fffffff,
 } VkPerformanceValueTypeINTEL;
+
+typedef enum VkPhysicalDeviceSchedulingControlsFlagBitsARM
+{
+    VK_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_SHADER_CORE_COUNT_ARM = 0x00000001,
+    VK_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FLAG_BITS_ARM_MAX_ENUM = 0x7fffffff,
+} VkPhysicalDeviceSchedulingControlsFlagBitsARM;
 
 typedef enum VkPhysicalDeviceType
 {
@@ -4154,6 +4188,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2 = 1000109004,
     VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO = 1000109005,
     VK_STRUCTURE_TYPE_SUBPASS_END_INFO = 1000109006,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG = 1000110000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO = 1000112000,
     VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES = 1000112001,
     VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO = 1000113000,
@@ -4424,6 +4459,11 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES = 1000297000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV = 1000300000,
     VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV = 1000300001,
+    VK_STRUCTURE_TYPE_CUDA_MODULE_CREATE_INFO_NV = 1000307000,
+    VK_STRUCTURE_TYPE_CUDA_FUNCTION_CREATE_INFO_NV = 1000307001,
+    VK_STRUCTURE_TYPE_CUDA_LAUNCH_INFO_NV = 1000307002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_FEATURES_NV = 1000307003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUDA_KERNEL_LAUNCH_PROPERTIES_NV = 1000307004,
     VK_STRUCTURE_TYPE_QUERY_LOW_LATENCY_SUPPORT_NV = 1000310000,
     VK_STRUCTURE_TYPE_MEMORY_BARRIER_2 = 1000314000,
     VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2 = 1000314001,
@@ -4543,6 +4583,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT = 1000396009,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_FEATURES_HUAWEI = 1000404000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI = 1000404001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_VRS_FEATURES_HUAWEI = 1000404002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT = 1000411000,
     VK_STRUCTURE_TYPE_SAMPLER_BORDER_COLOR_COMPONENT_MAPPING_CREATE_INFO_EXT = 1000411001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PAGEABLE_DEVICE_LOCAL_MEMORY_FEATURES_EXT = 1000412000,
@@ -4551,6 +4592,9 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS = 1000413002,
     VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS = 1000413003,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM = 1000415000,
+    VK_STRUCTURE_TYPE_DEVICE_QUEUE_SHADER_CORE_CONTROL_CREATE_INFO_ARM = 1000417000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_FEATURES_ARM = 1000417001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM = 1000417002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_SLICED_VIEW_OF_3D_FEATURES_EXT = 1000418000,
     VK_STRUCTURE_TYPE_IMAGE_VIEW_SLICED_CREATE_INFO_EXT = 1000418001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE = 1000420000,
@@ -4612,6 +4656,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV = 1000490001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_FEATURES_NV = 1000492000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV = 1000492001,
+    VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT = 1000496000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM = 1000497000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM = 1000497001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_LIBRARY_GROUP_HANDLES_FEATURES_EXT = 1000498000,
@@ -5756,6 +5801,40 @@ typedef struct VkCuModuleCreateInfoNVX
     const void *pData;
 } VkCuModuleCreateInfoNVX;
 
+typedef struct VkCudaFunctionCreateInfoNV
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkCudaModuleNV WINE_VK_ALIGN(8) module;
+    const char *pName;
+} VkCudaFunctionCreateInfoNV;
+
+typedef struct VkCudaLaunchInfoNV
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkCudaFunctionNV WINE_VK_ALIGN(8) function;
+    uint32_t gridDimX;
+    uint32_t gridDimY;
+    uint32_t gridDimZ;
+    uint32_t blockDimX;
+    uint32_t blockDimY;
+    uint32_t blockDimZ;
+    uint32_t sharedMemBytes;
+    size_t paramCount;
+    const void * const *pParams;
+    size_t extraCount;
+    const void * const *pExtras;
+} VkCudaLaunchInfoNV;
+
+typedef struct VkCudaModuleCreateInfoNV
+{
+    VkStructureType sType;
+    const void *pNext;
+    size_t dataSize;
+    const void *pData;
+} VkCudaModuleCreateInfoNV;
+
 typedef struct VkDebugMarkerMarkerInfoEXT
 {
     VkStructureType sType;
@@ -6207,6 +6286,13 @@ typedef struct VkDeviceQueueInfo2
     uint32_t queueFamilyIndex;
     uint32_t queueIndex;
 } VkDeviceQueueInfo2;
+
+typedef struct VkDeviceQueueShaderCoreControlCreateInfoARM
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t shaderCoreCount;
+} VkDeviceQueueShaderCoreControlCreateInfoARM;
 
 typedef struct VkDispatchIndirectCommand
 {
@@ -6851,6 +6937,23 @@ typedef struct VkLayerProperties
     char description[VK_MAX_DESCRIPTION_SIZE];
 } VkLayerProperties;
 
+typedef struct VkLayerSettingEXT
+{
+    const char *pLayerName;
+    const char *pSettingName;
+    VkLayerSettingTypeEXT type;
+    uint32_t valueCount;
+    const void *pValues;
+} VkLayerSettingEXT;
+
+typedef struct VkLayerSettingsCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t settingCount;
+    const VkLayerSettingEXT *pSettings;
+} VkLayerSettingsCreateInfoEXT;
+
 typedef struct VkMappedMemoryRange
 {
     VkStructureType sType;
@@ -7383,6 +7486,13 @@ typedef struct VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI
     VkDeviceSize WINE_VK_ALIGN(8) indirectBufferOffsetAlignment;
 } VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI;
 
+typedef struct VkPhysicalDeviceClusterCullingShaderVrsFeaturesHUAWEI
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 clusterShadingRate;
+} VkPhysicalDeviceClusterCullingShaderVrsFeaturesHUAWEI;
+
 typedef struct VkPhysicalDeviceCoherentMemoryFeaturesAMD
 {
     VkStructureType sType;
@@ -7499,6 +7609,21 @@ typedef struct VkPhysicalDeviceCubicWeightsFeaturesQCOM
     void *pNext;
     VkBool32 selectableCubicWeights;
 } VkPhysicalDeviceCubicWeightsFeaturesQCOM;
+
+typedef struct VkPhysicalDeviceCudaKernelLaunchFeaturesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 cudaKernelLaunchFeatures;
+} VkPhysicalDeviceCudaKernelLaunchFeaturesNV;
+
+typedef struct VkPhysicalDeviceCudaKernelLaunchPropertiesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t computeCapabilityMinor;
+    uint32_t computeCapabilityMajor;
+} VkPhysicalDeviceCudaKernelLaunchPropertiesNV;
 
 typedef struct VkPhysicalDeviceCustomBorderColorFeaturesEXT
 {
@@ -9053,6 +9178,13 @@ typedef struct VkPhysicalDeviceRayTracingPropertiesNV
     uint32_t maxDescriptorSetAccelerationStructures;
 } VkPhysicalDeviceRayTracingPropertiesNV;
 
+typedef struct VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 relaxedLineRasterization;
+} VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG;
+
 typedef struct VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV
 {
     VkStructureType sType;
@@ -9112,6 +9244,20 @@ typedef struct VkPhysicalDeviceScalarBlockLayoutFeatures
     VkBool32 scalarBlockLayout;
 } VkPhysicalDeviceScalarBlockLayoutFeatures;
 typedef VkPhysicalDeviceScalarBlockLayoutFeatures VkPhysicalDeviceScalarBlockLayoutFeaturesEXT;
+
+typedef struct VkPhysicalDeviceSchedulingControlsFeaturesARM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 schedulingControls;
+} VkPhysicalDeviceSchedulingControlsFeaturesARM;
+
+typedef struct VkPhysicalDeviceSchedulingControlsPropertiesARM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPhysicalDeviceSchedulingControlsFlagsARM WINE_VK_ALIGN(8) schedulingControlsFlags;
+} VkPhysicalDeviceSchedulingControlsPropertiesARM;
 
 typedef struct VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures
 {
@@ -11827,6 +11973,7 @@ typedef struct VkGetLatencyMarkerInfoNV
 {
     VkStructureType sType;
     const void *pNext;
+    uint32_t timingCount;
     VkLatencyTimingsFrameReportNV *pTimings;
 } VkGetLatencyMarkerInfoNV;
 
@@ -12638,6 +12785,7 @@ typedef void (VKAPI_PTR *PFN_vkCmdCopyMicromapEXT)(VkCommandBuffer, const VkCopy
 typedef void (VKAPI_PTR *PFN_vkCmdCopyMicromapToMemoryEXT)(VkCommandBuffer, const VkCopyMicromapToMemoryInfoEXT *);
 typedef void (VKAPI_PTR *PFN_vkCmdCopyQueryPoolResults)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t, VkBuffer, VkDeviceSize, VkDeviceSize, VkQueryResultFlags);
 typedef void (VKAPI_PTR *PFN_vkCmdCuLaunchKernelNVX)(VkCommandBuffer, const VkCuLaunchInfoNVX *);
+typedef void (VKAPI_PTR *PFN_vkCmdCudaLaunchKernelNV)(VkCommandBuffer, const VkCudaLaunchInfoNV *);
 typedef void (VKAPI_PTR *PFN_vkCmdDebugMarkerBeginEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
 typedef void (VKAPI_PTR *PFN_vkCmdDebugMarkerEndEXT)(VkCommandBuffer);
 typedef void (VKAPI_PTR *PFN_vkCmdDebugMarkerInsertEXT)(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT *);
@@ -12833,6 +12981,8 @@ typedef VkResult (VKAPI_PTR *PFN_vkCreateCommandPool)(VkDevice, const VkCommandP
 typedef VkResult (VKAPI_PTR *PFN_vkCreateComputePipelines)(VkDevice, VkPipelineCache, uint32_t, const VkComputePipelineCreateInfo *, const VkAllocationCallbacks *, VkPipeline *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateCuFunctionNVX)(VkDevice, const VkCuFunctionCreateInfoNVX *, const VkAllocationCallbacks *, VkCuFunctionNVX *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateCuModuleNVX)(VkDevice, const VkCuModuleCreateInfoNVX *, const VkAllocationCallbacks *, VkCuModuleNVX *);
+typedef VkResult (VKAPI_PTR *PFN_vkCreateCudaFunctionNV)(VkDevice, const VkCudaFunctionCreateInfoNV *, const VkAllocationCallbacks *, VkCudaFunctionNV *);
+typedef VkResult (VKAPI_PTR *PFN_vkCreateCudaModuleNV)(VkDevice, const VkCudaModuleCreateInfoNV *, const VkAllocationCallbacks *, VkCudaModuleNV *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugReportCallbackEXT)(VkInstance, const VkDebugReportCallbackCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugReportCallbackEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugUtilsMessengerEXT)(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugUtilsMessengerEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDeferredOperationKHR)(VkDevice, const VkAllocationCallbacks *, VkDeferredOperationKHR *);
@@ -12881,6 +13031,8 @@ typedef void (VKAPI_PTR *PFN_vkDestroyBufferView)(VkDevice, VkBufferView, const 
 typedef void (VKAPI_PTR *PFN_vkDestroyCommandPool)(VkDevice, VkCommandPool, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyCuFunctionNVX)(VkDevice, VkCuFunctionNVX, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyCuModuleNVX)(VkDevice, VkCuModuleNVX, const VkAllocationCallbacks *);
+typedef void (VKAPI_PTR *PFN_vkDestroyCudaFunctionNV)(VkDevice, VkCudaFunctionNV, const VkAllocationCallbacks *);
+typedef void (VKAPI_PTR *PFN_vkDestroyCudaModuleNV)(VkDevice, VkCudaModuleNV, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDebugReportCallbackEXT)(VkInstance, VkDebugReportCallbackEXT, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDebugUtilsMessengerEXT)(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDeferredOperationKHR)(VkDevice, VkDeferredOperationKHR, const VkAllocationCallbacks *);
@@ -12944,6 +13096,7 @@ typedef uint64_t (VKAPI_PTR *PFN_vkGetBufferOpaqueCaptureAddress)(VkDevice, cons
 typedef uint64_t (VKAPI_PTR *PFN_vkGetBufferOpaqueCaptureAddressKHR)(VkDevice, const VkBufferDeviceAddressInfo *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetBufferOpaqueCaptureDescriptorDataEXT)(VkDevice, const VkBufferCaptureDescriptorDataInfoEXT *, void *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetCalibratedTimestampsEXT)(VkDevice, uint32_t, const VkCalibratedTimestampInfoEXT *, uint64_t *, uint64_t *);
+typedef VkResult (VKAPI_PTR *PFN_vkGetCudaModuleCacheNV)(VkDevice, VkCudaModuleNV, size_t *, void *);
 typedef uint32_t (VKAPI_PTR *PFN_vkGetDeferredOperationMaxConcurrencyKHR)(VkDevice, VkDeferredOperationKHR);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeferredOperationResultKHR)(VkDevice, VkDeferredOperationKHR);
 typedef void (VKAPI_PTR *PFN_vkGetDescriptorEXT)(VkDevice, const VkDescriptorGetInfoEXT *, size_t, void *);
@@ -12993,7 +13146,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkGetImageViewAddressNVX)(VkDevice, VkImageView
 typedef uint32_t (VKAPI_PTR *PFN_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetImageViewOpaqueCaptureDescriptorDataEXT)(VkDevice, const VkImageViewCaptureDescriptorDataInfoEXT *, void *);
 typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance, const char *);
-typedef void (VKAPI_PTR *PFN_vkGetLatencyTimingsNV)(VkDevice, VkSwapchainKHR, uint32_t *, VkGetLatencyMarkerInfoNV *);
+typedef void (VKAPI_PTR *PFN_vkGetLatencyTimingsNV)(VkDevice, VkSwapchainKHR, VkGetLatencyMarkerInfoNV *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryWin32HandleKHR)(VkDevice, const VkMemoryGetWin32HandleInfoKHR *, HANDLE *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryWin32HandlePropertiesKHR)(VkDevice, VkExternalMemoryHandleTypeFlagBits, HANDLE, VkMemoryWin32HandlePropertiesKHR *);
@@ -13203,6 +13356,7 @@ void VKAPI_CALL vkCmdCopyMicromapEXT(VkCommandBuffer commandBuffer, const VkCopy
 void VKAPI_CALL vkCmdCopyMicromapToMemoryEXT(VkCommandBuffer commandBuffer, const VkCopyMicromapToMemoryInfoEXT *pInfo);
 void VKAPI_CALL vkCmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize stride, VkQueryResultFlags flags);
 void VKAPI_CALL vkCmdCuLaunchKernelNVX(VkCommandBuffer commandBuffer, const VkCuLaunchInfoNVX *pLaunchInfo);
+void VKAPI_CALL vkCmdCudaLaunchKernelNV(VkCommandBuffer commandBuffer, const VkCudaLaunchInfoNV *pLaunchInfo);
 void VKAPI_CALL vkCmdDebugMarkerBeginEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo);
 void VKAPI_CALL vkCmdDebugMarkerEndEXT(VkCommandBuffer commandBuffer);
 void VKAPI_CALL vkCmdDebugMarkerInsertEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo);
@@ -13398,6 +13552,8 @@ VkResult VKAPI_CALL vkCreateCommandPool(VkDevice device, const VkCommandPoolCrea
 VkResult VKAPI_CALL vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines);
 VkResult VKAPI_CALL vkCreateCuFunctionNVX(VkDevice device, const VkCuFunctionCreateInfoNVX *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCuFunctionNVX *pFunction);
 VkResult VKAPI_CALL vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoNVX *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCuModuleNVX *pModule);
+VkResult VKAPI_CALL vkCreateCudaFunctionNV(VkDevice device, const VkCudaFunctionCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaFunctionNV *pFunction);
+VkResult VKAPI_CALL vkCreateCudaModuleNV(VkDevice device, const VkCudaModuleCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaModuleNV *pModule);
 VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback);
 VkResult VKAPI_CALL vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pMessenger);
 VkResult VKAPI_CALL vkCreateDeferredOperationKHR(VkDevice device, const VkAllocationCallbacks *pAllocator, VkDeferredOperationKHR *pDeferredOperation);
@@ -13446,6 +13602,8 @@ void VKAPI_CALL vkDestroyBufferView(VkDevice device, VkBufferView bufferView, co
 void VKAPI_CALL vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyCuFunctionNVX(VkDevice device, VkCuFunctionNVX function, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyCuModuleNVX(VkDevice device, VkCuModuleNVX module, const VkAllocationCallbacks *pAllocator);
+void VKAPI_CALL vkDestroyCudaFunctionNV(VkDevice device, VkCudaFunctionNV function, const VkAllocationCallbacks *pAllocator);
+void VKAPI_CALL vkDestroyCudaModuleNV(VkDevice device, VkCudaModuleNV module, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDeferredOperationKHR(VkDevice device, VkDeferredOperationKHR operation, const VkAllocationCallbacks *pAllocator);
@@ -13509,6 +13667,7 @@ uint64_t VKAPI_CALL vkGetBufferOpaqueCaptureAddress(VkDevice device, const VkBuf
 uint64_t VKAPI_CALL vkGetBufferOpaqueCaptureAddressKHR(VkDevice device, const VkBufferDeviceAddressInfo *pInfo);
 VkResult VKAPI_CALL vkGetBufferOpaqueCaptureDescriptorDataEXT(VkDevice device, const VkBufferCaptureDescriptorDataInfoEXT *pInfo, void *pData);
 VkResult VKAPI_CALL vkGetCalibratedTimestampsEXT(VkDevice device, uint32_t timestampCount, const VkCalibratedTimestampInfoEXT *pTimestampInfos, uint64_t *pTimestamps, uint64_t *pMaxDeviation);
+VkResult VKAPI_CALL vkGetCudaModuleCacheNV(VkDevice device, VkCudaModuleNV module, size_t *pCacheSize, void *pCacheData);
 uint32_t VKAPI_CALL vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDeferredOperationKHR operation);
 VkResult VKAPI_CALL vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOperationKHR operation);
 void VKAPI_CALL vkGetDescriptorEXT(VkDevice device, const VkDescriptorGetInfoEXT *pDescriptorInfo, size_t dataSize, void *pDescriptor);
@@ -13558,7 +13717,7 @@ VkResult VKAPI_CALL vkGetImageViewAddressNVX(VkDevice device, VkImageView imageV
 uint32_t VKAPI_CALL vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo);
 VkResult VKAPI_CALL vkGetImageViewOpaqueCaptureDescriptorDataEXT(VkDevice device, const VkImageViewCaptureDescriptorDataInfoEXT *pInfo, void *pData);
 PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *pName);
-void VKAPI_CALL vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, uint32_t *pTimingCount, VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo);
+void VKAPI_CALL vkGetLatencyTimingsNV(VkDevice device, VkSwapchainKHR swapchain, VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo);
 VkResult VKAPI_CALL vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties);
 VkResult VKAPI_CALL vkGetMemoryWin32HandleKHR(VkDevice device, const VkMemoryGetWin32HandleInfoKHR *pGetWin32HandleInfo, HANDLE *pHandle);
 VkResult VKAPI_CALL vkGetMemoryWin32HandlePropertiesKHR(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, HANDLE handle, VkMemoryWin32HandlePropertiesKHR *pMemoryWin32HandleProperties);

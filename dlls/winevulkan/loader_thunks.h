@@ -92,6 +92,7 @@ enum unix_call
     unix_vkCmdCopyMicromapToMemoryEXT,
     unix_vkCmdCopyQueryPoolResults,
     unix_vkCmdCuLaunchKernelNVX,
+    unix_vkCmdCudaLaunchKernelNV,
     unix_vkCmdDebugMarkerBeginEXT,
     unix_vkCmdDebugMarkerEndEXT,
     unix_vkCmdDebugMarkerInsertEXT,
@@ -287,6 +288,8 @@ enum unix_call
     unix_vkCreateComputePipelines,
     unix_vkCreateCuFunctionNVX,
     unix_vkCreateCuModuleNVX,
+    unix_vkCreateCudaFunctionNV,
+    unix_vkCreateCudaModuleNV,
     unix_vkCreateDebugReportCallbackEXT,
     unix_vkCreateDebugUtilsMessengerEXT,
     unix_vkCreateDeferredOperationKHR,
@@ -335,6 +338,8 @@ enum unix_call
     unix_vkDestroyCommandPool,
     unix_vkDestroyCuFunctionNVX,
     unix_vkDestroyCuModuleNVX,
+    unix_vkDestroyCudaFunctionNV,
+    unix_vkDestroyCudaModuleNV,
     unix_vkDestroyDebugReportCallbackEXT,
     unix_vkDestroyDebugUtilsMessengerEXT,
     unix_vkDestroyDeferredOperationKHR,
@@ -397,6 +402,7 @@ enum unix_call
     unix_vkGetBufferOpaqueCaptureAddressKHR,
     unix_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     unix_vkGetCalibratedTimestampsEXT,
+    unix_vkGetCudaModuleCacheNV,
     unix_vkGetDeferredOperationMaxConcurrencyKHR,
     unix_vkGetDeferredOperationResultKHR,
     unix_vkGetDescriptorEXT,
@@ -1182,6 +1188,12 @@ struct vkCmdCuLaunchKernelNVX_params
 {
     VkCommandBuffer commandBuffer;
     const VkCuLaunchInfoNVX *pLaunchInfo;
+};
+
+struct vkCmdCudaLaunchKernelNV_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkCudaLaunchInfoNV *pLaunchInfo;
 };
 
 struct vkCmdDebugMarkerBeginEXT_params
@@ -2657,6 +2669,24 @@ struct vkCreateCuModuleNVX_params
     VkResult result;
 };
 
+struct vkCreateCudaFunctionNV_params
+{
+    VkDevice device;
+    const VkCudaFunctionCreateInfoNV *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkCudaFunctionNV *pFunction;
+    VkResult result;
+};
+
+struct vkCreateCudaModuleNV_params
+{
+    VkDevice device;
+    const VkCudaModuleCreateInfoNV *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkCudaModuleNV *pModule;
+    VkResult result;
+};
+
 struct vkCreateDebugReportCallbackEXT_params
 {
     VkInstance instance;
@@ -3077,6 +3107,20 @@ struct vkDestroyCuModuleNVX_params
 {
     VkDevice device;
     VkCuModuleNVX DECLSPEC_ALIGN(8) module;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyCudaFunctionNV_params
+{
+    VkDevice device;
+    VkCudaFunctionNV DECLSPEC_ALIGN(8) function;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyCudaModuleNV_params
+{
+    VkDevice device;
+    VkCudaModuleNV DECLSPEC_ALIGN(8) module;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -3532,6 +3576,15 @@ struct vkGetCalibratedTimestampsEXT_params
     VkResult result;
 };
 
+struct vkGetCudaModuleCacheNV_params
+{
+    VkDevice device;
+    VkCudaModuleNV DECLSPEC_ALIGN(8) module;
+    size_t *pCacheSize;
+    void *pCacheData;
+    VkResult result;
+};
+
 struct vkGetDeferredOperationMaxConcurrencyKHR_params
 {
     VkDevice device;
@@ -3889,7 +3942,6 @@ struct vkGetLatencyTimingsNV_params
 {
     VkDevice device;
     VkSwapchainKHR DECLSPEC_ALIGN(8) swapchain;
-    uint32_t *pTimingCount;
     VkGetLatencyMarkerInfoNV *pLatencyMarkerInfo;
 };
 
