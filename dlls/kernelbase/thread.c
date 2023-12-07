@@ -787,8 +787,8 @@ struct fiber_data
     struct fiber_actctx   actctx;            /*       activation context state */
 };
 
-extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
 #ifdef __i386__
+extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
 __ASM_STDCALL_FUNC( switch_fiber, 8,
                     "movl 4(%esp),%ecx\n\t"     /* old */
                     "movl %edi,0x9c(%ecx)\n\t"  /* old->Edi */
@@ -806,7 +806,36 @@ __ASM_STDCALL_FUNC( switch_fiber, 8,
                     "movl 0xb4(%ecx),%ebp\n\t"  /* new->Ebp */
                     "movl 0xc4(%ecx),%esp\n\t"  /* new->Esp */
                     "jmp *0xb8(%ecx)" )         /* new->Eip */
+#elif defined(__arm64ec__)
+static void __attribute__((naked)) WINAPI switch_fiber( CONTEXT *old, CONTEXT *new )
+{
+    asm( "mov x2, sp\n\t"
+         "stp x27, x2,  [x0, #0x90]\n\t"  /* old->Rbx,Rsp */
+         "str x29,      [x0, #0xa0]\n\t"  /* old->Rbp */
+         "stp x25, x26, [x0, #0xa8]\n\t"  /* old->Rsi,Rdi */
+         "stp x19, x20, [x0, #0xd8]\n\t"  /* old->R12,R13 */
+         "stp x21, x22, [x0, #0xe8]\n\t"  /* old->R14,R15 */
+         "str x30,      [x0, #0xf8]\n\t"  /* old->Rip */
+         "stp q8,  q9,  [x0, #0x220]\n\t" /* old->Xmm8,Xmm9 */
+         "stp q10, q11, [x0, #0x240]\n\t" /* old->Xmm10,Xmm11 */
+         "stp q12, q13, [x0, #0x260]\n\t" /* old->Xmm12,Xmm13 */
+         "stp q14, q15, [x0, #0x280]\n\t" /* old->Xmm14,Xmm15 */
+         /* FIXME: MxCsr */
+         "ldp x27, x2,  [x1, #0x90]\n\t"  /* old->Rbx,Rsp */
+         "ldr x29,      [x1, #0xa0]\n\t"  /* old->Rbp */
+         "ldp x25, x26, [x1, #0xa8]\n\t"  /* old->Rsi,Rdi */
+         "ldp x19, x20, [x1, #0xd8]\n\t"  /* old->R12,R13 */
+         "ldp x21, x22, [x1, #0xe8]\n\t"  /* old->R14,R15 */
+         "ldr x30,      [x1, #0xf8]\n\t"  /* old->Rip */
+         "ldp q8,  q9,  [x1, #0x220]\n\t" /* old->Xmm8,Xmm9 */
+         "ldp q10, q11, [x1, #0x240]\n\t" /* old->Xmm10,Xmm11 */
+         "ldp q12, q13, [x1, #0x260]\n\t" /* old->Xmm12,Xmm13 */
+         "ldp q14, q15, [x1, #0x280]\n\t" /* old->Xmm14,Xmm15 */
+         "mov sp, x2\n\t"
+         "ret" );
+}
 #elif defined(__x86_64__)
+extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
 __ASM_GLOBAL_FUNC( switch_fiber,
                     "movq %rbx,0x90(%rcx)\n\t"       /* old->Rbx */
                     "leaq 0x8(%rsp),%rax\n\t"
@@ -851,6 +880,7 @@ __ASM_GLOBAL_FUNC( switch_fiber,
                     "movq 0x98(%rdx),%rsp\n\t"       /* new->Rsp */
                     "jmp *0xf8(%rdx)" )              /* new->Rip */
 #elif defined(__arm__)
+extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
 __ASM_GLOBAL_FUNC( switch_fiber,
                    "str r4, [r0, #0x14]\n\t"   /* old->R4 */
                    "str r5, [r0, #0x18]\n\t"   /* old->R5 */
@@ -874,6 +904,7 @@ __ASM_GLOBAL_FUNC( switch_fiber,
                    "ldr r2, [r1, #0x40]\n\t"   /* new->Pc */
                    "bx r2" )
 #elif defined(__aarch64__)
+extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
 __ASM_GLOBAL_FUNC( switch_fiber,
                    "stp x19, x20, [x0, #0xa0]\n\t"  /* old->X19,X20 */
                    "stp x21, x22, [x0, #0xb0]\n\t"  /* old->X21,X22 */
@@ -895,7 +926,7 @@ __ASM_GLOBAL_FUNC( switch_fiber,
                    "mov sp, x2\n\t"
                    "ret" )
 #else
-void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new )
+static void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new )
 {
     FIXME( "not implemented\n" );
     DbgBreakPoint();
@@ -925,6 +956,9 @@ static void init_fiber_context( struct fiber_data *fiber )
 #ifdef __i386__
     fiber->context.Esp = (ULONG_PTR)fiber->stack_base - 4;
     fiber->context.Eip = (ULONG_PTR)start_fiber;
+#elif defined(__arm64ec__)
+    fiber->context.Rsp = (ULONG_PTR)fiber->stack_base;
+    fiber->context.Rip = (ULONG_PTR)start_fiber;
 #elif defined(__x86_64__)
     fiber->context.Rsp = (ULONG_PTR)fiber->stack_base - 0x28;
     fiber->context.Rip = (ULONG_PTR)start_fiber;
