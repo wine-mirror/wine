@@ -1210,6 +1210,8 @@ static NTSTATUS key_asymmetric_create( enum alg_id alg_id, ULONG bitlen, struct 
         return STATUS_NOT_IMPLEMENTED;
     }
 
+    if (alg_id == ALG_ID_DH && bitlen < 512) return STATUS_INVALID_PARAMETER;
+
     if (!(key = calloc( 1, sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic  = MAGIC_KEY;
     key->alg_id     = alg_id;
