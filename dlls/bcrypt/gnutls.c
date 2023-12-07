@@ -1005,6 +1005,48 @@ done:
     return status;
 }
 
+static gnutls_privkey_t create_privkey( gnutls_pk_algorithm_t pk_alg, unsigned int bitlen )
+{
+    gnutls_privkey_t privkey;
+    int ret;
+
+    if ((ret = pgnutls_privkey_init( &privkey )))
+    {
+        pgnutls_perror( ret );
+        return NULL;
+    }
+
+    if ((ret = pgnutls_privkey_generate( privkey, pk_alg, bitlen, 0 )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( privkey );
+        return NULL;
+    }
+
+    return privkey;
+}
+
+static gnutls_pubkey_t create_pubkey_from_privkey( gnutls_privkey_t privkey )
+{
+    gnutls_pubkey_t pubkey;
+    int ret;
+
+    if ((ret = pgnutls_pubkey_init( &pubkey )))
+    {
+        pgnutls_perror( ret );
+        return NULL;
+    }
+
+    if ((ret = pgnutls_pubkey_import_privkey( pubkey, privkey, 0, 0 )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_pubkey_deinit( pubkey );
+        return NULL;
+    }
+
+    return pubkey;
+}
+
 static NTSTATUS key_asymmetric_generate( void *args )
 {
     struct key *key = args;
@@ -1012,7 +1054,6 @@ static NTSTATUS key_asymmetric_generate( void *args )
     gnutls_privkey_t privkey;
     gnutls_pubkey_t pubkey;
     unsigned int bitlen;
-    int ret;
 
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
     if (key_data(key)->a.privkey) return STATUS_INVALID_HANDLE;
@@ -1052,30 +1093,10 @@ static NTSTATUS key_asymmetric_generate( void *args )
         return STATUS_NOT_SUPPORTED;
     }
 
-    if ((ret = pgnutls_privkey_init( &privkey )))
+    if (!(privkey = create_privkey( pk_alg, bitlen ))) return STATUS_INTERNAL_ERROR;
+    if (!(pubkey = create_pubkey_from_privkey( privkey )))
     {
-        pgnutls_perror( ret );
-        return STATUS_INTERNAL_ERROR;
-    }
-    if ((ret = pgnutls_pubkey_init( &pubkey )))
-    {
-        pgnutls_perror( ret );
         pgnutls_privkey_deinit( privkey );
-        return STATUS_INTERNAL_ERROR;
-    }
-
-    if ((ret = pgnutls_privkey_generate( privkey, pk_alg, bitlen, 0 )))
-    {
-        pgnutls_perror( ret );
-        pgnutls_privkey_deinit( privkey );
-        pgnutls_pubkey_deinit( pubkey );
-        return STATUS_INTERNAL_ERROR;
-    }
-    if ((ret = pgnutls_pubkey_import_privkey( pubkey, privkey, 0, 0 )))
-    {
-        pgnutls_perror( ret );
-        pgnutls_privkey_deinit( privkey );
-        pgnutls_pubkey_deinit( pubkey );
         return STATUS_INTERNAL_ERROR;
     }
 
