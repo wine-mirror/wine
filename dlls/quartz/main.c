@@ -59,6 +59,7 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_ACMWrapper, acm_wrapper_create },
+    { &CLSID_AllocPresenter, vmr7_presenter_create },
     { &CLSID_AsyncReader, async_reader_create },
     { &CLSID_AudioRender, dsound_render_create },
     { &CLSID_AVIDec, avi_dec_create },

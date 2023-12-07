@@ -19,6 +19,7 @@ SOURCES = \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \
+	vmr7_presenter.c \
 	vmr9.c \
 	window.c
 

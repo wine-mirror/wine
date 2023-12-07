@@ -139,3 +139,9 @@ coclass VideoMixingRenderer { interface IBaseFilter; }
     uuid(51b4abf3-748f-4e3b-a276-c828330e926a)
 ]
 coclass VideoMixingRenderer9 { interface IBaseFilter; }
+
+[
+    threading(both),
+    uuid(99d54f63-1a69-41ae-aa4d-c976eb3f0713)
+]
+coclass AllocPresenter {}

@@ -81,6 +81,7 @@ HRESULT system_clock_create(IUnknown *outer, IUnknown **out);
 HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out);
 HRESULT video_renderer_create(IUnknown *outer, IUnknown **out);
 HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out);
+HRESULT vmr7_presenter_create(IUnknown *outer, IUnknown **out);
 HRESULT vmr7_create(IUnknown *outer, IUnknown **out);
 HRESULT vmr9_create(IUnknown *outer, IUnknown **out);
 
