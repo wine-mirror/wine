@@ -784,6 +784,13 @@ static const char gbkxml[] =
 DECL_GBK
 "<open></open>";
 
+#define DECL_ISO8859_1 \
+"<?xml version=\"1.0\" encoding=\"ISO8859-1\"?>"
+
+static const char iso8859_1_xml[] =
+DECL_ISO8859_1
+"<open></open>";
+
 #define DECL_WIN_936 \
 "<?xml version=\"1.0\" encoding=\"Windows-936\"?>"
 
@@ -1604,6 +1611,14 @@ if (0)
     /* try a BSTR containing a Windows-1252 document */
     b = VARIANT_TRUE;
     str = SysAllocStringByteLen( win1252xml, strlen(win1252xml) );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok(hr == S_FALSE, "loadXML succeeded\n");
+    ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
+    SysFreeString( str );
+
+    /* try a BSTR containing a ISO8859-1 document */
+    b = VARIANT_TRUE;
+    str = SysAllocStringByteLen( iso8859_1_xml, strlen(iso8859_1_xml) );
     hr = IXMLDOMDocument_loadXML( doc, str, &b );
     ok(hr == S_FALSE, "loadXML succeeded\n");
     ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
@@ -10838,9 +10853,10 @@ static void test_load(void)
         VARIANT_BOOL expected_ret;
     } encoding_tests[] =
     {
-        { gbkxml,     S_OK,    VARIANT_TRUE  },
-        { win1252xml, S_OK,    VARIANT_TRUE  },
-        { win936xml,  S_FALSE, VARIANT_FALSE },
+        { gbkxml,        S_OK,    VARIANT_TRUE  },
+        { iso8859_1_xml, S_OK,    VARIANT_TRUE  },
+        { win1252xml,    S_OK,    VARIANT_TRUE  },
+        { win936xml,     S_FALSE, VARIANT_FALSE },
     };
 
 
