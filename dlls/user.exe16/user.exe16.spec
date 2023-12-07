@@ -282,7 +282,7 @@
 282 pascal -ret16 SelectPalette(word word word) SelectPalette16
 283 pascal -ret16 RealizePalette(word) RealizePalette16
 284 pascal -ret16 GetFreeSystemResources(word) GetFreeSystemResources16
-285 pascal -ret16 SetDeskWallPaper(ptr) SetDeskWallPaper16 # BEAR285
+285 pascal -ret16 SetDeskWallpaper(str) SetDeskWallpaper16 # BEAR285
 286 pascal -ret16 GetDesktopWindow() GetDesktopWindow16
 287 pascal -ret16 GetLastActivePopup(word) GetLastActivePopup16
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo

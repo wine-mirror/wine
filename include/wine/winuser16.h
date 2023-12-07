@@ -880,7 +880,7 @@ HWND16      WINAPI SetClipboardViewer16(HWND16);
 INT16       WINAPI SetCommBreak16(INT16);
 HCURSOR16   WINAPI SetCursor16(HCURSOR16);
 void        WINAPI SetCursorPos16(INT16,INT16);
-BOOL16      WINAPI SetDeskWallPaper16(LPCSTR);
+BOOL16      WINAPI SetDeskWallpaper16(const char*);
 void        WINAPI SetDlgItemInt16(HWND16,INT16,UINT16,BOOL16);
 void        WINAPI SetDlgItemText16(HWND16,INT16,SEGPTR);
 VOID        WINAPI SetDoubleClickTime16(UINT16);
