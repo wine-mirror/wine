@@ -30,6 +30,9 @@ struct vmr7_presenter
     IVMRSurfaceAllocator IVMRSurfaceAllocator_iface;
     IVMRWindowlessControl IVMRWindowlessControl_iface;
     LONG refcount;
+
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *frontbuffer;
 };
 
 static struct vmr7_presenter *impl_from_IVMRImagePresenter(IVMRImagePresenter *iface)
@@ -76,7 +79,12 @@ static ULONG WINAPI image_presenter_Release(IVMRImagePresenter *iface)
 
     TRACE("%p decreasing refcount to %lu.\n", presenter, refcount);
     if (!refcount)
+    {
+        if (presenter->frontbuffer)
+            IDirectDrawSurface7_Release(presenter->frontbuffer);
+        IDirectDraw7_Release(presenter->ddraw);
         free(presenter);
+    }
     return refcount;
 }
 
@@ -136,16 +144,66 @@ static ULONG WINAPI surface_allocator_Release(IVMRSurfaceAllocator *iface)
 }
 
 static HRESULT WINAPI surface_allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
-        DWORD_PTR id, VMRALLOCATIONINFO *info, DWORD *count, IDirectDrawSurface7 **surfaces)
+        DWORD_PTR id, VMRALLOCATIONINFO *info, DWORD *count, IDirectDrawSurface7 **surface)
 {
-    FIXME("iface %p, id %#Ix, info %p, count %p, surfaces %p, stub!\n", iface, id, info, count, surfaces);
-    return E_NOTIMPL;
+    struct vmr7_presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    DDSURFACEDESC2 surface_desc = {.dwSize = sizeof(surface_desc)};
+    HRESULT hr;
+
+    TRACE("presenter %p, id %#Ix, info %p, count %p, surface %p.\n", presenter, id, info, count, surface);
+
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surface_desc.dwWidth = info->lpHdr->biWidth;
+    surface_desc.dwHeight = info->lpHdr->biHeight;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwBackBufferCount = *count;
+
+    if (info->lpHdr->biCompression == BI_RGB)
+    {
+        if (info->lpHdr->biBitCount != 32)
+        {
+            FIXME("Unhandled bit depth %u.\n", info->lpHdr->biBitCount);
+            return E_NOTIMPL;
+        }
+
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+        surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+        surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    }
+    else
+    {
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+        surface_desc.ddpfPixelFormat.dwFourCC = info->lpHdr->biCompression;
+    }
+
+    if (FAILED(hr = IDirectDraw7_CreateSurface(presenter->ddraw,
+            &surface_desc, &presenter->frontbuffer, NULL)))
+    {
+        WARN("Failed to create surface, hr %#lx.\n", hr);
+        return hr;
+    }
+    *surface = presenter->frontbuffer;
+    ++*count;
+    return S_OK;
 }
 
 static HRESULT WINAPI surface_allocator_FreeSurface(IVMRSurfaceAllocator *iface, DWORD_PTR id)
 {
-    FIXME("iface %p, id %#Ix, stub!\n", iface, id);
-    return E_NOTIMPL;
+    struct vmr7_presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    DDSURFACEDESC2 surface_desc = {.dwSize = sizeof(surface_desc)};
+
+    TRACE("presenter %p, id %#Ix.\n", presenter, id);
+
+    if (presenter->frontbuffer)
+    {
+        IDirectDrawSurface7_Release(presenter->frontbuffer);
+        presenter->frontbuffer = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI surface_allocator_PrepareSurface(IVMRSurfaceAllocator *iface,
@@ -324,6 +382,7 @@ static const IVMRWindowlessControlVtbl windowless_control_vtbl =
 HRESULT vmr7_presenter_create(IUnknown *outer, IUnknown **out)
 {
     struct vmr7_presenter *object;
+    HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
@@ -336,6 +395,16 @@ HRESULT vmr7_presenter_create(IUnknown *outer, IUnknown **out)
     object->IVMRSurfaceAllocator_iface.lpVtbl = &surface_allocator_vtbl;
     object->IVMRWindowlessControl_iface.lpVtbl = &windowless_control_vtbl;
     object->refcount = 1;
+
+    if (FAILED(hr = DirectDrawCreateEx(NULL, (void **)&object->ddraw, &IID_IDirectDraw7, NULL)))
+    {
+        ERR("Failed to create ddraw object, hr %#lx.\n", hr);
+        free(object);
+        return hr;
+    }
+
+    if (FAILED(hr = IDirectDraw7_SetCooperativeLevel(object->ddraw, NULL, DDSCL_NORMAL)))
+        ERR("Failed to set cooperative level, hr %#lx.\n", hr);
 
     TRACE("Created VMR7 default presenter %p.\n", object);
     *out = (IUnknown *)&object->IVMRSurfaceAllocator_iface;
