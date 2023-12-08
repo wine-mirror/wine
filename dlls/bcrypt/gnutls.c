@@ -2671,6 +2671,7 @@ static NTSTATUS key_asymmetric_derive_key( void *args )
 {
     const struct key_asymmetric_derive_key_params *params = args;
     gnutls_datum_t s;
+    NTSTATUS status = STATUS_SUCCESS;
     int ret;
 
     if ((ret = pgnutls_privkey_derive_secret( key_data(params->privkey)->a.privkey,
@@ -2680,15 +2681,15 @@ static NTSTATUS key_asymmetric_derive_key( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!params->output) *params->ret_len = s.size;
-    else
+    *params->ret_len = EXPORT_SIZE( s, params->privkey->u.a.bitlen / 8, 1 );
+    if (params->output)
     {
-        *params->ret_len = min( params->output_len, s.size );
-        memcpy( params->output, s.data, *params->ret_len );
+        if (params->output_len < *params->ret_len) status = STATUS_BUFFER_TOO_SMALL;
+        else export_gnutls_datum( params->output, *params->ret_len, &s, 1 );
     }
 
     free( s.data );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
