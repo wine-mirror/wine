@@ -31,6 +31,92 @@ DEFINE_GUID(ColorBalanceEffectGuid,           0x537e597d, 0x251e, 0x48da, 0x96, 
 DEFINE_GUID(RedEyeCorrectionEffectGuid,       0x74d29d05, 0x69a4, 0x4266, 0x95, 0x49, 0x3c, 0xc5, 0x28, 0x36, 0xb6, 0x32);
 DEFINE_GUID(ColorCurveEffectGuid,             0xdd6a0022, 0x58e4, 0x4a67, 0x9d, 0x9b, 0xd4, 0x8e, 0xb8, 0x81, 0xa5, 0x3d);
 
+struct BlurParams
+{
+    float radius;
+    BOOL expandEdge;
+};
+
+struct SharpenParams
+{
+    float radius;
+    float amount;
+};
+
+struct TintParams
+{
+    INT hue;
+    INT amount;
+};
+
+struct RedEyeCorrectionParams
+{
+    UINT numberOfAreas;
+    RECT *areas;
+};
+
+struct ColorLUTParams
+{
+   ColorChannelLUT lutB;
+   ColorChannelLUT lutG;
+   ColorChannelLUT lutR;
+   ColorChannelLUT lutA;
+};
+
+struct BrightnessContrastParams
+{
+    INT brightnessLevel;
+    INT contrastLevel;
+};
+
+struct HueSaturationLightnessParams
+{
+    INT hueLevel;
+    INT saturationLevel;
+    INT lightnessLevel;
+};
+
+struct ColorBalanceParams
+{
+    INT cyanRed;
+    INT magentaGreen;
+    INT yellowBlue;
+};
+
+struct LevelsParams
+{
+    INT highlight;
+    INT midtone;
+    INT shadow;
+};
+
+enum CurveAdjustments
+{
+   AdjustExposure,
+   AdjustDensity,
+   AdjustContrast,
+   AdjustHighlight,
+   AdjustShadow,
+   AdjustMidtone,
+   AdjustWhiteSaturation,
+   AdjustBlackSaturation
+};
+
+enum CurveChannel
+{
+    CurveChannelAll,
+    CurveChannelRed,
+    CurveChannelGreen,
+    CurveChannelBlue
+};
+
+struct ColorCurveParams
+{
+    enum CurveAdjustments adjustment;
+    enum CurveChannel channel;
+    INT adjustValue;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
