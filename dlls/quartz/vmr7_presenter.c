@@ -235,8 +235,8 @@ static HRESULT WINAPI surface_allocator_FreeSurface(IVMRSurfaceAllocator *iface,
 static HRESULT WINAPI surface_allocator_PrepareSurface(IVMRSurfaceAllocator *iface,
         DWORD_PTR id, IDirectDrawSurface7 *surface, DWORD flags)
 {
-    FIXME("iface %p, id %#Ix, surface %p, flags %#lx, stub!\n", iface, id, surface, flags);
-    return E_NOTIMPL;
+    TRACE("iface %p, id %#Ix, surface %p, flags %#lx.\n", iface, id, surface, flags);
+    return S_OK;
 }
 
 static HRESULT WINAPI surface_allocator_AdviseNotify(IVMRSurfaceAllocator *iface,
