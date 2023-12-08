@@ -79,6 +79,10 @@ typedef enum
 typedef struct gnutls_x509_spki_st *gnutls_x509_spki_t;
 #endif
 
+#if GUTLS_VERSION_MAJOR < 3 || (GNUTLS_VERSION_MAJOR == 3 && GNUTLS_VERSION_MINOR < 8)
+#define GNUTLS_KEYGEN_DH 4
+#endif
+
 union key_data
 {
     gnutls_cipher_hd_t cipher;
@@ -132,10 +136,13 @@ static int (*pgnutls_privkey_export_rsa_raw)(gnutls_privkey_t, gnutls_datum_t *,
                                              gnutls_datum_t *);
 static int (*pgnutls_privkey_export_dsa_raw)(gnutls_privkey_t, gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *,
                                              gnutls_datum_t *, gnutls_datum_t *);
-static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, unsigned int, unsigned int);
 static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *);
+
+/* Not present in gnutls version < 3.5.0 */
+static int (*pgnutls_privkey_generate2)(gnutls_privkey_t, gnutls_pk_algorithm_t, unsigned int, unsigned int,
+                                        const gnutls_keygen_data_st *, unsigned);
 
 /* Not present in gnutls version < 3.6.0 */
 static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
@@ -263,12 +270,6 @@ static int compat_gnutls_pubkey_import_dsa_raw(gnutls_pubkey_t key, const gnutls
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
-static int compat_gnutls_privkey_generate(gnutls_privkey_t key, gnutls_pk_algorithm_t algo, unsigned int bits,
-                                          unsigned int flags)
-{
-    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
-}
-
 static int compat_gnutls_decode_rs_value(const gnutls_datum_t * sig_value, gnutls_datum_t * r, gnutls_datum_t * s)
 {
     return GNUTLS_E_INTERNAL_ERROR;
@@ -347,6 +348,12 @@ static int compat_gnutls_pubkey_import_dh_raw(gnutls_pubkey_t pubkey, const gnut
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_privkey_generate2(gnutls_privkey_t privkey, gnutls_pk_algorithm_t alg, unsigned int bits,
+                                           unsigned int flags, const gnutls_keygen_data_st *data, unsigned data_size)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -419,7 +426,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_generate)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_generate2)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_dh_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
@@ -1005,7 +1012,8 @@ done:
     return status;
 }
 
-static gnutls_privkey_t create_privkey( gnutls_pk_algorithm_t pk_alg, unsigned int bitlen )
+static gnutls_privkey_t create_privkey( gnutls_pk_algorithm_t pk_alg, unsigned int bitlen,
+                                        const gnutls_keygen_data_st *data, unsigned int data_size )
 {
     gnutls_privkey_t privkey;
     int ret;
@@ -1016,7 +1024,7 @@ static gnutls_privkey_t create_privkey( gnutls_pk_algorithm_t pk_alg, unsigned i
         return NULL;
     }
 
-    if ((ret = pgnutls_privkey_generate( privkey, pk_alg, bitlen, 0 )))
+    if ((ret = pgnutls_privkey_generate2( privkey, pk_alg, bitlen, 0, data, data_size )))
     {
         pgnutls_perror( ret );
         pgnutls_privkey_deinit( privkey );
@@ -1045,6 +1053,29 @@ static gnutls_pubkey_t create_pubkey_from_privkey( gnutls_privkey_t privkey )
     }
 
     return pubkey;
+}
+
+static gnutls_dh_params_t get_dh_params( gnutls_privkey_t privkey )
+{
+    gnutls_dh_params_t params;
+    gnutls_datum_t x;
+    int ret;
+
+    if ((ret = pgnutls_dh_params_init( &params )))
+    {
+        pgnutls_perror( ret );
+        return NULL;
+    }
+
+    if ((ret = pgnutls_privkey_export_dh_raw( privkey, params, NULL, &x, 0 )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
+        return NULL;
+    }
+
+    free( x.data );
+    return params;
 }
 
 static NTSTATUS key_asymmetric_generate( void *args )
@@ -1093,7 +1124,24 @@ static NTSTATUS key_asymmetric_generate( void *args )
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!(privkey = create_privkey( pk_alg, bitlen ))) return STATUS_INTERNAL_ERROR;
+    if (key->alg_id == ALG_ID_DH && key_data(key)->a.dh_params)
+    {
+        gnutls_keygen_data_st data;
+
+        data.type = GNUTLS_KEYGEN_DH;
+        data.data = (unsigned char *)key_data(key)->a.dh_params;
+        data.size = 0;
+        if (!(privkey = create_privkey( pk_alg, bitlen, &data, 1 ))) return STATUS_INTERNAL_ERROR;
+    }
+    else if (!(privkey = create_privkey( pk_alg, bitlen, NULL, 0 ))) return STATUS_INTERNAL_ERROR;
+
+    if (key->alg_id == ALG_ID_DH && !key_data(key)->a.dh_params &&
+        !(key_data(key)->a.dh_params = get_dh_params( privkey )))
+    {
+        pgnutls_privkey_deinit( privkey );
+        return STATUS_INTERNAL_ERROR;
+    }
+
     if (!(pubkey = create_pubkey_from_privkey( privkey )))
     {
         pgnutls_privkey_deinit( privkey );
