@@ -2036,6 +2036,7 @@ char* CDECL setlocale(int category, const char* locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
+    int locale_flags;
 
     if(category<LC_MIN || category>LC_MAX)
         return NULL;
@@ -2047,7 +2048,11 @@ char* CDECL setlocale(int category, const char* locale)
         return locinfo->lc_category[category].locale;
     }
 
+    /* Make sure that locinfo is not updated by e.g. stricmp function */
+    locale_flags = data->locale_flags;
+    data->locale_flags |= LOCALE_THREAD;
     newlocinfo = create_locinfo(category, locale, locinfo);
+    data->locale_flags = locale_flags;
     if(!newlocinfo) {
         WARN("%d %s failed\n", category, locale);
         return NULL;
