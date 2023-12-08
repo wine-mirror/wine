@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-12-08 00:07+0200\n"
+"PO-Revision-Date: 2023-12-08 23:56+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -13738,7 +13738,7 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <komandųfailovardas> naudojama komandų failo viduje komandoms iš kito\n"
-"komandų failo vykdyti. Kai komandų failas egzistuoja, valdymas grąžinamas\n"
+"komandų failo vykdyti. Kai komandų failas išeina, valdymas grąžinamas\n"
 "kvietusiam failui. CALL komanda gali pateikti parametrus kviečiamai\n"
 "procedūrai.\n"
 "\n"
@@ -14725,17 +14725,15 @@ msgid "&Run..."
 msgstr "&Vykdyti..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "Iš&eiti"
+msgstr "Iš&eiti iš darbalaukio"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "Ar tikrai norite pašalinti šias reikšmes?"
+msgstr ""
+"Ar tikrai norite uždaryti visas programas ir išeiti iš virtualaus "
+"darbalaukio?"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
