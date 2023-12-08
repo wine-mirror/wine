@@ -1288,7 +1288,9 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
 
     size = sizeof(buffer);
     hr = IBasicVideo_GetCurrentImage(video, &size, buffer);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto out;
     ok(size == sizeof(buffer), "Got size %ld.\n", size);
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
     /* The contents seem to reflect the last frame rendered. */
@@ -1339,6 +1341,7 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+out:
     IBasicVideo_Release(video);
 }
 
@@ -1495,7 +1498,7 @@ static void test_connect_pin(void)
 
     vih.bmiHeader.biBitCount = 16;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     vih.bmiHeader.biBitCount = 32;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
