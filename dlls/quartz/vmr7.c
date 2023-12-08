@@ -1176,8 +1176,39 @@ static ULONG WINAPI surface_allocator_notify_Release(IVMRSurfaceAllocatorNotify 
 static HRESULT WINAPI surface_allocator_notify_AdviseSurfaceAllocator(
         IVMRSurfaceAllocatorNotify *iface, DWORD_PTR cookie, IVMRSurfaceAllocator *allocator)
 {
-    FIXME("iface %p, cookie %#Ix, allocator %p, stub!\n", iface, cookie, allocator);
-    return E_NOTIMPL;
+    struct vmr7 *filter = impl_from_IVMRSurfaceAllocatorNotify(iface);
+    IVMRImagePresenter *presenter;
+
+    TRACE("filter %p, cookie %#Ix, allocator %p.\n", filter, cookie, allocator);
+
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
+
+    filter->cookie = cookie;
+
+    if (filter->renderer.sink.pin.peer)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        WARN("Attempt to set allocator while connected; returning VFW_E_WRONG_STATE.\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    if (FAILED(IVMRSurfaceAllocator_QueryInterface(allocator, &IID_IVMRImagePresenter, (void **)&presenter)))
+    {
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+        return E_NOINTERFACE;
+    }
+
+    if (filter->allocator)
+    {
+        IVMRImagePresenter_Release(filter->presenter);
+        IVMRSurfaceAllocator_Release(filter->allocator);
+    }
+    filter->allocator = allocator;
+    filter->presenter = presenter;
+    IVMRSurfaceAllocator_AddRef(allocator);
+
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI surface_allocator_notify_SetDDrawDevice(
