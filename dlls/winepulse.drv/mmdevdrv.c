@@ -72,10 +72,12 @@ static WCHAR drv_key_devicesW[256];
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
-    if (reason == DLL_PROCESS_ATTACH) {
-        WCHAR buf[MAX_PATH];
-        WCHAR *filename;
+    WCHAR buf[MAX_PATH];
+    WCHAR *filename;
 
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(dll);
         if (__wine_init_unix_call())
             return FALSE;
@@ -87,11 +89,16 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 
         swprintf(drv_key_devicesW, ARRAY_SIZE(drv_key_devicesW),
                  L"Software\\Wine\\Drivers\\%s\\devices", filename);
-    } else if (reason == DLL_PROCESS_DETACH) {
-        struct device_cache *device, *device_next;
+        break;
+    case DLL_PROCESS_DETACH:
+        if (!reserved)
+        {
+            struct device_cache *device, *device_next;
 
-        LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
-            free(device);
+            LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
+                free(device);
+        }
+        break;
     }
     return TRUE;
 }
