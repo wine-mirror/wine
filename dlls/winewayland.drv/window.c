@@ -628,6 +628,9 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_WAYLAND_CONFIGURE:
         wayland_configure_window(hwnd);
         return 0;
+    case WM_WAYLAND_SET_FOREGROUND:
+        NtUserSetForegroundWindow(hwnd);
+        return 0;
     default:
         FIXME("got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (long)wp, lp);
         return 0;

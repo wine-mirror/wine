@@ -717,7 +717,12 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
 
     if ((surface = wayland_surface_lock_hwnd(hwnd)))
     {
-        if (surface->window.managed) NtUserSetForegroundWindow(hwnd);
+        /* TODO: Drop the internal message and call NtUserSetForegroundWindow
+         * directly once it's updated to not explicitly deactivate the old
+         * foreground window when both the old and new foreground windows
+         * are in the same non-current thread. */
+        if (surface->window.managed)
+            NtUserPostMessage(hwnd, WM_WAYLAND_SET_FOREGROUND, 0, 0);
         pthread_mutex_unlock(&surface->mutex);
     }
 }

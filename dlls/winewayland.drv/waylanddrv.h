@@ -60,7 +60,8 @@ extern struct wayland process_wayland;
 enum wayland_window_message
 {
     WM_WAYLAND_INIT_DISPLAY_DEVICES = 0x80001000,
-    WM_WAYLAND_CONFIGURE = 0x80001001
+    WM_WAYLAND_CONFIGURE = 0x80001001,
+    WM_WAYLAND_SET_FOREGROUND = 0x80001002,
 };
 
 enum wayland_surface_config_state
