@@ -48,6 +48,7 @@ struct container
 {
     DWORD       magic;
     DWORD       flags;
+    DWORD       type;
     struct key *exch_key;
     struct key *sign_key;
     char        name[MAX_PATH];
@@ -91,13 +92,14 @@ static BOOL create_container_regkey( struct container *container, REGSAM sam, HK
     return !RegCreateKeyExA( rootkey, path, 0, NULL, REG_OPTION_NON_VOLATILE, sam, NULL, hkey, NULL );
 }
 
-static struct container *create_key_container( const char *name, DWORD flags )
+static struct container *create_key_container( const char *name, DWORD flags, DWORD type )
 {
     struct container *ret;
 
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     ret->magic = MAGIC_CONTAINER;
     ret->flags = flags;
+    ret->type = type;
     if (name) strcpy( ret->name, name );
     ret->alg_idx = 0;
 
@@ -229,7 +231,7 @@ static void destroy_container( struct container *container )
     free( container );
 }
 
-static struct container *read_key_container( const char *name, DWORD flags )
+static struct container *read_key_container( const char *name, DWORD flags, DWORD type )
 {
     DWORD protect_flags = (flags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0;
     struct container *ret;
@@ -237,7 +239,7 @@ static struct container *read_key_container( const char *name, DWORD flags )
 
     if (!open_container_regkey( name, flags, KEY_READ, &hkey )) return NULL;
 
-    if ((ret = create_key_container( name, flags )))
+    if ((ret = create_key_container( name, flags, type )))
     {
         ret->exch_key = read_key( hkey, AT_KEYEXCHANGE, protect_flags );
         ret->sign_key = read_key( hkey, AT_SIGNATURE, protect_flags );
@@ -286,24 +288,24 @@ BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags
     {
     case 0:
     case 0 | CRYPT_MACHINE_KEYSET:
-        if (!(ret = read_key_container( name, flags )))
+        if (!(ret = read_key_container( name, flags, vtable->dwProvType )))
             SetLastError( NTE_BAD_KEYSET );
         break;
 
     case CRYPT_NEWKEYSET:
     case CRYPT_NEWKEYSET | CRYPT_MACHINE_KEYSET:
-        if ((ret = read_key_container( name, flags )))
+        if ((ret = read_key_container( name, flags, vtable->dwProvType )))
         {
             free( ret );
             SetLastError( NTE_EXISTS );
             return FALSE;
         }
-        ret = create_key_container( name, flags );
+        ret = create_key_container( name, flags, vtable->dwProvType );
         break;
 
     case CRYPT_VERIFYCONTEXT:
     case CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET:
-        ret = create_key_container( "", flags );
+        ret = create_key_container( "", flags, vtable->dwProvType );
         break;
 
     case CRYPT_DELETEKEYSET:
@@ -378,6 +380,26 @@ BOOL WINAPI CPGetProvParam( HCRYPTPROV hprov, DWORD param, BYTE *data, DWORD *le
 
     switch (param)
     {
+    case PP_NAME:
+    {
+        const char *name;
+
+        switch (container->type)
+        {
+        default:
+        case PROV_DSS:
+            name = MS_DEF_DSS_PROV_A;
+            break;
+        case PROV_DSS_DH:
+            name = MS_ENH_DSS_DH_PROV_A;
+            break;
+        case PROV_DH_SCHANNEL:
+            name = MS_DEF_DH_SCHANNEL_PROV_A;
+            break;
+        }
+        return copy_param( data, len, name, strlen(name) + 1 );
+    }
+
     case PP_ENUMALGS:
     case PP_ENUMALGS_EX:
     {
