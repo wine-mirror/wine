@@ -5525,8 +5525,23 @@ GpStatus WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect)
 GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect)
 {
     FIXME("(%p): stub\n", effect);
+
+    if (!effect)
+        return InvalidParameter;
     /* note: According to Jose Roca's GDI+ Docs, this is not implemented
      * in Windows's gdiplus */
+    return NotImplemented;
+}
+
+/*****************************************************************************
+ * GdipGetEffectParameterSize [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetEffectParameterSize(CGpEffect *effect, UINT *size)
+{
+    FIXME("(%p,%p): stub\n", effect, size);
+
+    if (!effect || !size)
+        return InvalidParameter;
     return NotImplemented;
 }
 
