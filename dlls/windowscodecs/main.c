@@ -44,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             windowscodecs_module = hinstDLL;
             break;
         case DLL_PROCESS_DETACH:
+            if (lpvReserved) break;
             ReleaseComponentInfos();
             break;
     }
