@@ -6431,6 +6431,15 @@ enable_wow64win=${enable_wow64win:-aarch64,x86_64}
 enable_wow64cpu=${enable_wow64cpu:-x86_64}
 enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
 
+enable_cmd=${enable_cmd:-yes}
+enable_dllhost=${enable_dllhost:-yes}
+enable_dpnsvr=${enable_dpnsvr:-i386,x86_64,arm64ec}
+enable_dxdiag=${enable_dxdiag:-yes}
+enable_msiexec=${enable_msiexec:-yes}
+enable_netsh=${enable_netsh:-yes}
+enable_regsvr32=${enable_regsvr32:-yes}
+enable_rundll32=${enable_rundll32:-yes}
+
 enable_winetest=${enable_winetest:-$enable_tests}
 
 if test "x$enable_win64" = "xyes"
@@ -9438,6 +9447,7 @@ wine_fn_config_makefile ()
     eval enable=\$$2
     case "$enable" in
       no) as_fn_append DISABLED_SUBDIRS " $1" ;;
+      yes) ;;
       *aarch64*|*arm*|*i386*|*x86_64*)
         if test -n "$PE_ARCHS"
         then
@@ -9447,7 +9457,11 @@ wine_fn_config_makefile ()
             done
         else
             test $(expr ",$enable," : ".*,$HOST_ARCH,") -gt 0 || as_fn_append DISABLED_SUBDIRS " $1"
-        fi;;
+        fi ;;
+      "")
+        case "$1, $PE_ARCHS " in
+          programs/*,*\ arm64ec\ *) as_fn_append arm64ec_DISABLED_SUBDIRS " $1" ;;
+        esac ;;
     esac
 }
 
