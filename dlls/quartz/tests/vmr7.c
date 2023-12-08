@@ -3156,6 +3156,472 @@ static void test_unconnected_eos(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static IDirectDraw7 *create_ddraw(HWND window)
+{
+    DDSURFACEDESC2 desc = {.dwSize = sizeof(desc)};
+    IDirectDraw7 *ddraw;
+    HRESULT hr;
+
+    if (FAILED(DirectDrawCreateEx(NULL, (void **)&ddraw, &IID_IDirectDraw7, NULL)))
+        return NULL;
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    return ddraw;
+}
+
+struct presenter
+{
+    IVMRSurfaceAllocator IVMRSurfaceAllocator_iface;
+    IVMRImagePresenter IVMRImagePresenter_iface;
+    LONG refcount;
+
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *surfaces[6];
+    DWORD surface_count;
+
+    BITMAPINFOHEADER format;
+    IVMRSurfaceAllocatorNotify *notify;
+    unsigned int got_PresentImage, got_PrepareSurface;
+};
+
+static struct presenter *impl_from_IVMRImagePresenter(IVMRImagePresenter *iface)
+{
+    return CONTAINING_RECORD(iface, struct presenter, IVMRImagePresenter_iface);
+}
+
+static HRESULT WINAPI presenter_QueryInterface(IVMRImagePresenter *iface, REFIID iid, void **out)
+{
+    struct presenter *presenter = impl_from_IVMRImagePresenter(iface);
+    return IVMRSurfaceAllocator_QueryInterface(&presenter->IVMRSurfaceAllocator_iface, iid, out);
+}
+
+static ULONG WINAPI presenter_AddRef(IVMRImagePresenter *iface)
+{
+    struct presenter *presenter = impl_from_IVMRImagePresenter(iface);
+    return IVMRSurfaceAllocator_AddRef(&presenter->IVMRSurfaceAllocator_iface);
+}
+
+static ULONG WINAPI presenter_Release(IVMRImagePresenter *iface)
+{
+    struct presenter *presenter = impl_from_IVMRImagePresenter(iface);
+    return IVMRSurfaceAllocator_Release(&presenter->IVMRSurfaceAllocator_iface);
+}
+
+static HRESULT WINAPI presenter_StartPresenting(IVMRImagePresenter *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StartPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_StopPresenting(IVMRImagePresenter *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StopPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter *iface, DWORD_PTR cookie, VMRPRESENTATIONINFO *info)
+{
+    struct presenter *presenter = impl_from_IVMRImagePresenter(iface);
+    static const RECT rect;
+
+    if (winetest_debug > 1) trace("PresentImage(surface %p)\n", info->lpSurf);
+
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    ok(info->dwFlags == VMRSample_TimeValid, "Got flags %#lx.\n", info->dwFlags);
+    todo_wine ok(info->lpSurf == presenter->surfaces[5 - presenter->got_PresentImage], "Got unexpected surface.\n");
+    ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
+    ok(info->rtEnd == 10000000, "Got end time %s.\n", wine_dbgstr_longlong(info->rtEnd));
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %ld.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %ld.\n", info->szAspectRatio.cy);
+    ok(EqualRect(&info->rcSrc, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&info->rcSrc));
+    ok(EqualRect(&info->rcDst, &rect), "Got dest rect %s.\n", wine_dbgstr_rect(&info->rcDst));
+    ok(!info->dwTypeSpecificFlags, "Got type-specific flags %#lx.\n", info->dwTypeSpecificFlags);
+    ok(!info->dwInterlaceFlags, "Got interlace flags %#lx.\n", info->dwInterlaceFlags);
+
+    ++presenter->got_PresentImage;
+    ok(presenter->got_PresentImage == presenter->got_PrepareSurface,
+            "Got %u calls to PrepareSurface(); %u calls to PresentImage().\n",
+            presenter->got_PrepareSurface, presenter->got_PresentImage);
+
+    return S_OK;
+}
+
+static const IVMRImagePresenterVtbl presenter_vtbl =
+{
+    presenter_QueryInterface,
+    presenter_AddRef,
+    presenter_Release,
+    presenter_StartPresenting,
+    presenter_StopPresenting,
+    presenter_PresentImage,
+};
+
+static struct presenter *impl_from_IVMRSurfaceAllocator(IVMRSurfaceAllocator *iface)
+{
+    return CONTAINING_RECORD(iface, struct presenter, IVMRSurfaceAllocator_iface);
+}
+
+static HRESULT WINAPI allocator_QueryInterface(IVMRSurfaceAllocator *iface, REFIID iid, void **out)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IVMRImagePresenter))
+    {
+        *out = &presenter->IVMRImagePresenter_iface;
+        IVMRImagePresenter_AddRef(&presenter->IVMRImagePresenter_iface);
+        return S_OK;
+    }
+    ok(!IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorEx9), "Unexpected query for IVMRSurfaceAllocatorEx9.\n");
+    *out = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI allocator_AddRef(IVMRSurfaceAllocator *iface)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    return InterlockedIncrement(&presenter->refcount);
+}
+
+static ULONG WINAPI allocator_Release(IVMRSurfaceAllocator *iface)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    return InterlockedDecrement(&presenter->refcount);
+}
+
+static HRESULT WINAPI allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
+        DWORD_PTR cookie, VMRALLOCATIONINFO *info, DWORD *buffer_count, IDirectDrawSurface7 **surface)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    DDSURFACEDESC2 surface_desc = {.dwSize = sizeof(surface_desc)};
+    HRESULT hr;
+
+    if (winetest_debug > 1) trace("AllocateSurface()\n");
+
+    ok(!presenter->surfaces[0], "Surface should not already exist.\n");
+
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    ok(info->dwFlags == (AMAP_DIRECTED_FLIP | AMAP_ALLOW_SYSMEM), "Got flags %#lx.\n", info->dwFlags);
+    todo_wine ok(info->dwMinBuffers == 5, "Got minimum buffer count %lu.\n", info->dwMinBuffers);
+    todo_wine ok(info->dwMaxBuffers == 5, "Got maximum buffer count %lu.\n", info->dwMaxBuffers);
+    ok(!info->dwInterlaceFlags, "Got interlace flags %#lx.\n", info->dwInterlaceFlags);
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %ld.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %ld.\n", info->szAspectRatio.cy);
+    ok(info->szNativeSize.cx == 32, "Got native width %ld.\n", info->szNativeSize.cx);
+    ok(info->szNativeSize.cy == 16, "Got native height %ld.\n", info->szNativeSize.cy);
+    todo_wine ok(*buffer_count == 5, "Got buffer count %lu.\n", *buffer_count);
+    ok(!info->lpPixFmt, "Got pixel format %p.\n", info->lpPixFmt);
+
+    presenter->format = *info->lpHdr;
+
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surface_desc.dwWidth = presenter->format.biWidth;
+    surface_desc.dwHeight = presenter->format.biHeight;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwBackBufferCount = *buffer_count;
+
+    if (presenter->format.biCompression == BI_RGB)
+    {
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = 32;
+        surface_desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+        surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+        surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+    }
+    else
+    {
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+        surface_desc.ddpfPixelFormat.dwFourCC = presenter->format.biCompression;
+    }
+
+    hr = IDirectDraw7_CreateSurface(presenter->ddraw, &surface_desc, surface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    presenter->surfaces[0] = *surface;
+    presenter->surface_count = *buffer_count;
+    for (unsigned int i = 0; i < *buffer_count; ++i)
+    {
+        DDSCAPS2 caps = {.dwCaps = DDSCAPS_FLIP};
+
+        hr = IDirectDrawSurface7_GetAttachedSurface(presenter->surfaces[i], &caps, &presenter->surfaces[i + 1]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    ++*buffer_count;
+    return S_OK;
+}
+
+static HRESULT WINAPI allocator_FreeSurface(IVMRSurfaceAllocator *iface, DWORD_PTR cookie)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    LONG ref;
+
+    if (winetest_debug > 1) trace("FreeSurface()\n");
+
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    ok(!!presenter->surfaces[0], "Surface should exist.\n");
+
+    for (unsigned int i = 0; i < presenter->surface_count; ++i)
+        IDirectDrawSurface7_Release(presenter->surfaces[i + 1]);
+    ref = IDirectDrawSurface7_Release(presenter->surfaces[0]);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    memset(presenter->surfaces, 0, sizeof(presenter->surfaces));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI allocator_PrepareSurface(IVMRSurfaceAllocator *iface,
+        DWORD_PTR cookie, IDirectDrawSurface7 *surface, DWORD flags)
+{
+    struct presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+
+    if (winetest_debug > 1) trace("PrepareSurface(surface %p)\n", surface);
+    ok(cookie == 0xabacab, "Got cookie %#Ix.\n", cookie);
+    ok(!flags, "Got flags %#lx.\n", flags);
+    todo_wine ok(surface == presenter->surfaces[5 - presenter->got_PrepareSurface], "Got unexpected surface.\n");
+    ++presenter->got_PrepareSurface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI allocator_AdviseNotify(IVMRSurfaceAllocator *iface, IVMRSurfaceAllocatorNotify *notify)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IVMRSurfaceAllocatorVtbl allocator_vtbl =
+{
+    allocator_QueryInterface,
+    allocator_AddRef,
+    allocator_Release,
+    allocator_AllocateSurface,
+    allocator_FreeSurface,
+    allocator_PrepareSurface,
+    allocator_AdviseNotify,
+};
+
+static void test_renderless_present(struct presenter *presenter,
+        IFilterGraph2 *graph, IMemInputPin *input)
+{
+    IMediaControl *control;
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    presenter->got_PrepareSurface = 0;
+    presenter->got_PresentImage = 0;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    thread = send_frame(input);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(presenter->got_PrepareSurface == 1, "Got %u calls to PrepareSurface().\n", presenter->got_PrepareSurface);
+    ok(presenter->got_PresentImage == 1, "Got %u calls to PresentImage().\n", presenter->got_PresentImage);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(presenter->got_PrepareSurface == 1, "Got %u calls to PrepareSurface().\n", presenter->got_PrepareSurface);
+    ok(presenter->got_PresentImage == 1, "Got %u calls to PresentImage().\n", presenter->got_PresentImage);
+
+    thread = send_frame(input);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(presenter->got_PrepareSurface == 2, "Got %u calls to PrepareSurface().\n", presenter->got_PrepareSurface);
+    ok(presenter->got_PresentImage == 2, "Got %u calls to PresentImage().\n", presenter->got_PresentImage);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
+static void test_renderless_formats(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 160, 120},
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biPlanes = 1,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_WAVE,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    ALLOCATOR_PROPERTIES req_props = {5, 32 * 16 * 4, 1, 0}, ret_props;
+    struct presenter presenter =
+    {
+        .IVMRSurfaceAllocator_iface.lpVtbl = &allocator_vtbl,
+        .IVMRImagePresenter_iface.lpVtbl = &presenter_vtbl,
+        .refcount = 1,
+    };
+    struct presenter presenter2 = presenter;
+    IVMRSurfaceAllocatorNotify *notify;
+    RECT rect = {0, 0, 640, 480};
+    struct testfilter source;
+    IMemAllocator *allocator;
+    IFilterGraph2 *graph;
+    IDirectDraw7 *ddraw;
+    IMemInputPin *input;
+    IBaseFilter *filter;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    static const struct
+    {
+        const GUID *subtype;
+        WORD depth;
+        DWORD compression;
+    }
+    tests[] =
+    {
+        {&MEDIASUBTYPE_RGB32,   32, BI_RGB},
+        {&MEDIASUBTYPE_NV12,    12, mmioFOURCC('N','V','1','2')},
+        {&MEDIASUBTYPE_YV12,    12, mmioFOURCC('Y','V','1','2')},
+        {&MEDIASUBTYPE_UYVY,    16, mmioFOURCC('U','Y','V','Y')},
+        {&MEDIASUBTYPE_YUY2,    16, mmioFOURCC('Y','U','Y','2')},
+    };
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    if (!(ddraw = create_ddraw(window)))
+    {
+        DestroyWindow(window);
+        return;
+    }
+
+    filter = create_vmr7(VMRMode_Renderless);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify, (void **)&notify);
+
+    ref = get_refcount(ddraw);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IVMRSurfaceAllocatorNotify_SetDDrawDevice(notify, ddraw, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    presenter.ddraw = ddraw;
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ref = get_refcount(ddraw);
+    todo_wine ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+
+    hr = IVMRSurfaceAllocatorNotify_AdviseSurfaceAllocator(notify, 0xabacab,
+            &presenter.IVMRSurfaceAllocator_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    presenter.notify = notify;
+
+    testfilter_init(&source);
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Compression %#lx, depth %u", tests[i].compression, tests[i].depth);
+
+        req_mt.subtype = *tests[i].subtype;
+        vih.bmiHeader.biBitCount = tests[i].depth;
+        vih.bmiHeader.biCompression = tests[i].compression;
+
+        hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+        /* Connection never fails on native, but Wine currently creates
+         * surfaces during IPin::ReceiveConnection() instead of
+         * IMemAllocator::SetProperties(), so let that fail here for now. */
+        if (hr != S_OK)
+        {
+            skip("Format is not supported, hr %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IMemInputPin_GetAllocator(input, &allocator);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr != S_OK)
+        {
+            test_allocator(input);
+            hr = IMemInputPin_GetAllocator(input, &allocator);
+        }
+
+        req_props.cbBuffer = vih.bmiHeader.biWidth * vih.bmiHeader.biHeight * vih.bmiHeader.biBitCount / 8;
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        if (hr != S_OK)
+        {
+            skip("Format is not supported, hr %#lx.\n", hr);
+            IMemAllocator_Release(allocator);
+            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IFilterGraph2_Disconnect(graph, pin);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IVMRSurfaceAllocatorNotify_AdviseSurfaceAllocator(notify, 0xabacab,
+                &presenter2.IVMRSurfaceAllocator_iface);
+        ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+
+        ok(!memcmp(&presenter.format, &vih.bmiHeader, sizeof(BITMAPINFOHEADER)),
+                "Bitmap header didn't match.\n");
+
+        test_renderless_present(&presenter, graph, input);
+
+        hr = IMemAllocator_Decommit(allocator);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        IMemAllocator_Release(allocator);
+
+        hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IFilterGraph2_Disconnect(graph, pin);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        winetest_pop_context();
+    }
+
+    hr = IVMRSurfaceAllocatorNotify_AdviseSurfaceAllocator(notify, 0xabacab,
+            &presenter2.IVMRSurfaceAllocator_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+
+    IVMRSurfaceAllocatorNotify_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(presenter.refcount == 1, "Got outstanding refcount %ld.\n", presenter.refcount);
+    ok(presenter2.refcount == 1, "Got outstanding refcount %ld.\n", presenter2.refcount);
+    ref = IDirectDraw7_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    DestroyWindow(window);
+}
+
 static void test_default_presenter_allocate(void)
 {
     IDirectDrawSurface7 *frontbuffer, *backbuffer, *backbuffer2, *backbuffer3;
@@ -3346,6 +3812,7 @@ START_TEST(vmr7)
     test_windowless_size();
     test_unconnected_eos();
     test_default_presenter_allocate();
+    test_renderless_formats();
 
     CoUninitialize();
 }
