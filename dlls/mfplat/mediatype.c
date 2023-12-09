@@ -3221,12 +3221,18 @@ HRESULT WINAPI MFCreateAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID
     return hr;
 }
 
+static UINT32 media_type_get_uint32(IMFMediaType *media_type, REFGUID guid)
+{
+    UINT32 value;
+    return SUCCEEDED(IMFMediaType_GetUINT32(media_type, guid, &value)) ? value : 0;
+}
+
 /***********************************************************************
  *      MFCreateMFVideoFormatFromMFMediaType (mfplat.@)
  */
 HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size)
 {
-    UINT32 flags, palette_size = 0, value;
+    UINT32 palette_size = 0;
     MFVIDEOFORMAT *format;
     INT32 stride;
     GUID guid;
@@ -3258,40 +3264,35 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
     media_type_get_ratio(media_type, &MF_MT_FRAME_RATE, &format->videoInfo.FramesPerSecond.Numerator,
             &format->videoInfo.FramesPerSecond.Denominator);
 
-    IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_CHROMA_SITING, &format->videoInfo.SourceChromaSubsampling);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &format->videoInfo.InterlaceMode);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_TRANSFER_FUNCTION, &format->videoInfo.TransferFunction);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_PRIMARIES, &format->videoInfo.ColorPrimaries);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &format->videoInfo.TransferMatrix);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_LIGHTING, &format->videoInfo.SourceLighting);
-    IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &format->videoInfo.NominalRange);
+    format->videoInfo.SourceChromaSubsampling = media_type_get_uint32(media_type, &MF_MT_VIDEO_CHROMA_SITING);
+    format->videoInfo.InterlaceMode = media_type_get_uint32(media_type, &MF_MT_INTERLACE_MODE);
+    format->videoInfo.TransferFunction = media_type_get_uint32(media_type, &MF_MT_TRANSFER_FUNCTION);
+    format->videoInfo.ColorPrimaries = media_type_get_uint32(media_type, &MF_MT_VIDEO_PRIMARIES);
+    format->videoInfo.TransferMatrix = media_type_get_uint32(media_type, &MF_MT_YUV_MATRIX);
+    format->videoInfo.SourceLighting = media_type_get_uint32(media_type, &MF_MT_VIDEO_LIGHTING);
+    format->videoInfo.NominalRange = media_type_get_uint32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE);
     IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&format->videoInfo.GeometricAperture,
            sizeof(format->videoInfo.GeometricAperture), NULL);
     IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (UINT8 *)&format->videoInfo.MinimumDisplayAperture,
            sizeof(format->videoInfo.MinimumDisplayAperture), NULL);
 
     /* Video flags. */
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_PAD_CONTROL_FLAGS, &flags)))
-        format->videoInfo.VideoFlags |= flags;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SOURCE_CONTENT_HINT, &flags)))
-        format->videoInfo.VideoFlags |= flags;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_DRM_FLAGS, &flags)))
-        format->videoInfo.VideoFlags |= flags;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &flags)) && !!flags)
+    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_PAD_CONTROL_FLAGS);
+    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_SOURCE_CONTENT_HINT);
+    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_DRM_FLAGS);
+    if (media_type_get_uint32(media_type, &MF_MT_PAN_SCAN_ENABLED))
     {
         format->videoInfo.VideoFlags |= MFVideoFlag_PanScanEnabled;
         IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (UINT8 *)&format->videoInfo.PanScanAperture,
                sizeof(format->videoInfo.PanScanAperture), NULL);
     }
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)) && stride < 0)
+    stride = media_type_get_uint32(media_type, &MF_MT_DEFAULT_STRIDE);
+    if (stride < 0)
         format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
 
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &value)))
-        format->compressedInfo.AvgBitrate = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &value)))
-        format->compressedInfo.AvgBitErrorRate = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &value)))
-        format->compressedInfo.MaxKeyFrameSpacing = value;
+    format->compressedInfo.AvgBitrate = media_type_get_uint32(media_type, &MF_MT_AVG_BITRATE);
+    format->compressedInfo.AvgBitErrorRate = media_type_get_uint32(media_type, &MF_MT_AVG_BIT_ERROR_RATE);
+    format->compressedInfo.MaxKeyFrameSpacing = media_type_get_uint32(media_type, &MF_MT_MAX_KEYFRAME_SPACING);
 
     /* Palette. */
     if (palette_size)
