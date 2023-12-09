@@ -3,21 +3,22 @@
 # Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013, 2014, 2021.
 # Adam "Saibamen" Stachowicz <saibamenppl@gmail.com>, 2015.
 # Marcin Mikołajczak <me@m4sk.in>, 2017, 2018.
+# Bartosz Kosiorek <gang65@poczta.onet.pl>, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-11-13 12:53+0100\n"
-"Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
+"PO-Revision-Date: 2023-12-09 01:58+0100\n"
+"Last-Translator: Bartosz Kosiorek <gang65@poczta.onet.pl>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 22.03.70\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -331,6 +332,8 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
+"Proszę czekać dopóki bieżący proces de-instalacji/modyfikacji zostanie "
+"zakończony."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -1345,8 +1348,6 @@ msgid "Options"
 msgstr "Ustawienia"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
 msgstr "Domyślne"
 
@@ -3733,20 +3734,16 @@ msgid "High"
 msgstr "Najwyższy"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "Indeks"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Kodek Wine Video 1"
+msgstr "Kodek Indeo Video Interactive wersja 5"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
-msgstr "Joysticki"
+msgstr "Dżojstiki"
 
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
@@ -3766,7 +3763,7 @@ msgstr "&Zastąp"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
-msgstr "Włączone"
+msgstr "Podłączony"
 
 #: dlls/joy.cpl/joy.rc:46
 msgid "Connected (xinput device)"
@@ -3786,25 +3783,23 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "Osie"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "POVs"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Przyciski"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Próbowanie odczuć siły zwrotnej"
+msgstr "Efekt sprzężenia zwrotnego"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3816,60 +3811,60 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Użytkownik"
+msgstr "Użytkownik #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Użytkownik"
+msgstr "Użytkownik #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Użytkownik"
+msgstr "Użytkownik #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Użytkownik"
+msgstr "Użytkownik #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Nie wykryto użytkownika na slocie #0. Upewnij się że twój pad jest "
+"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Nie wykryto użytkownika na slocie #1. Upewnij się że twój pad jest "
+"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Nie wykryto użytkownika na slocie #2. Upewnij się że twój pad jest "
+"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Nie wykryto użytkownika na slocie #3. Upewnij się że twój pad jest "
+"podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "Rumble"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4044,10 +4039,8 @@ msgid "Syntax error in regular expression"
 msgstr "Błąd składni w regularnym wyrażeniu"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "Oczekiwano identyfikatora"
+msgstr "Nieprawidłowy identyfikator"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4090,10 +4083,8 @@ msgid "Cyclic __proto__ value"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:76
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "Nie można określić własności '|': obiekt jest nierozciągalny"
+msgstr "Nie można stworzyć własności dla nierozszerzalnego obiektu"
 
 #: dlls/jscript/jscript.rc:77
 msgid "Cannot define property '|': object is not extensible"
@@ -4108,16 +4099,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Nie można zmienić niezapisywalnej własności '|'"
 
 #: dlls/jscript/jscript.rc:80
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' nie jest obiektem Map"
+msgstr "'this' nie jest obiektem |"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'key' is not an object"
-msgstr "'this' nie jest obiektem Map"
+msgstr "'key' nie jest obiektem"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -7125,54 +7112,40 @@ msgid "This network connection does not exist.\n"
 msgstr "Połączenie sieciowe nie istnieje.\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Niepoprawny w czasie przerywania.\n"
+msgstr "Wywołanie przerwane.\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Nieprawidłowy uchwyt.\n"
+msgstr "Nieprawidłowy uchwyt pliku.\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Niepoprawny adres sieci.\n"
+msgstr "Niepoprawny adres wskaźnika.\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Niepoprawna nazwa.\n"
+msgstr "Niepoprawny argument.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Połączenie wyzerowane przez uczestnika.\n"
 
 #: dlls/kernelbase/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "Nie znaleziono punktu.\n"
+msgstr "Nie znaleziono hosta.\n"
 
 #: dlls/kernelbase/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Nie znaleziono atrybutu.\n"
+msgstr "Nie znaleziono nieautorytatywnego hosta.\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "Wystąpił błąd bez możliwości kontynuacji.\n"
+msgstr "Wystąpił nienaprawialny błąd.\n"
 
 #: dlls/kernelbase/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "Nazwa prawidłowa, brak rekordu danych.\n"
 
 #: dlls/kernelbase/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -9216,7 +9189,7 @@ msgstr "Aby połączyć się do danych ODBC, określ następujące:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr "1. Wskaż źródło danych"
+msgstr "1. Wskaż źródło danych:"
 
 #: dlls/oledb32/version.rc:71
 msgid "Use &data source name"
@@ -9296,7 +9269,7 @@ msgid ""
 "value, select a property, then choose Edit Value below."
 msgstr ""
 "Oto właściwości przygotowujące ten rodzaj danych. Aby zmienić wartość, "
-"zaznacz właściwość, a następnie naciśnij \"Zmień wartość\" poniżej"
+"zaznacz właściwość, a następnie wybierz \"Zmień wartość\"."
 
 #: dlls/oledb32/version.rc:115
 msgid "&Edit Value..."
@@ -10589,8 +10562,6 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr "(UTC+05:45) Katmandu"
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgid "Cape Verde Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
 msgstr "Czas urzędowy Zielonego Przylądka"
@@ -10782,24 +10753,18 @@ msgid "(UTC+00:00) Dublin, Edinburgh, Lisbon, London"
 msgstr "(UTC+00:00) Dublin, Edynburg, Lizbona, Londyn"
 
 #: dlls/tzres/tzres.rc:324
-#, fuzzy
-#| msgid "Sudan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "South Sudan Standard Time"
-msgstr "Czas urzędowy Sudanu"
+msgstr "Czas urzędowy Sudanu Połudn."
 
 #: dlls/tzres/tzres.rc:325
-#, fuzzy
-#| msgid "Sudan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "South Sudan Daylight Time"
-msgstr "Czas letni Sudanu"
+msgstr "Czas letni Sudanu Południowego"
 
 #: dlls/tzres/tzres.rc:326
-#, fuzzy
-#| msgid "(UTC+02:00) Jerusalem"
 msgid "(UTC+02:00) Juba"
-msgstr "(UTC+02:00) Jeruzalem"
+msgstr "(UTC+02:00) Dżuba"
 
 #: dlls/tzres/tzres.rc:84
 msgctxt "maximum 31 characters"
@@ -10827,7 +10792,7 @@ msgstr "Czas letni Lord Howe"
 
 #: dlls/tzres/tzres.rc:197
 msgid "(UTC+10:30) Lord Howe Island"
-msgstr "(UTC+10:30) Wyspy Lord Howe"
+msgstr "(UTC+10:30) Wyspa Lord Howe"
 
 #: dlls/tzres/tzres.rc:30
 msgctxt "maximum 31 characters"
@@ -10850,7 +10815,7 @@ msgstr "UTC+13"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC+13:00) Coordinated Universal Time+13"
-msgstr "(UTC+13:00) Uniwersalny Czas Koordynowany+13"
+msgstr "(UTC+13:00) Uniwersalny czas koordynowany+13"
 
 #: dlls/tzres/tzres.rc:198
 msgctxt "maximum 31 characters"
@@ -10895,11 +10860,9 @@ msgid "(UTC+02:00) Khartoum"
 msgstr "(UTC+02:00) Chartum"
 
 #: dlls/tzres/tzres.rc:420
-#, fuzzy
-#| msgid "West Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Pacific Standard Time"
-msgstr "Czas urzędowy pacyficzny zachodni"
+msgstr "Czas urzędowy pacyficzny zach."
 
 #: dlls/tzres/tzres.rc:421
 msgctxt "maximum 31 characters"
@@ -10981,8 +10944,6 @@ msgid "(UTC+02:00) Kaliningrad"
 msgstr "(UTC+02:00) Kaliningrad"
 
 #: dlls/tzres/tzres.rc:264
-#, fuzzy
-#| msgid "Pacific Standard Time (Mexico)"
 msgctxt "maximum 31 characters"
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Czas urzędowy pacyficzny (Meksyk)"
@@ -11118,18 +11079,14 @@ msgid "(UTC-01:00) Azores"
 msgstr "(UTC-01:00) Azory"
 
 #: dlls/tzres/tzres.rc:246
-#, fuzzy
-#| msgid "North Asia East Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia East Standard Time"
-msgstr "Czas urzędowy Azji północnej wschodni"
+msgstr "Czas urzędowy Azji półn. wsch."
 
 #: dlls/tzres/tzres.rc:247
-#, fuzzy
-#| msgid "North Asia East Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia East Daylight Time"
-msgstr "Czas letni Azji północnej wschodni"
+msgstr "Czas letni Azji półn. wsch."
 
 #: dlls/tzres/tzres.rc:248
 msgid "(UTC+08:00) Irkutsk"
@@ -11175,16 +11132,16 @@ msgstr "(UTC-05:00) Turks i Caicos"
 #: dlls/tzres/tzres.rc:204
 msgctxt "maximum 31 characters"
 msgid "Marquesas Standard Time"
-msgstr "Czas urzędowy Marquesas"
+msgstr "Czas urzędowy Markizy"
 
 #: dlls/tzres/tzres.rc:205
 msgctxt "maximum 31 characters"
 msgid "Marquesas Daylight Time"
-msgstr "Czas letni Marquesas"
+msgstr "Czas letni Markizy"
 
 #: dlls/tzres/tzres.rc:206
 msgid "(UTC-09:30) Marquesas Islands"
-msgstr "(UTC-09:30) Wyspy Marquesas"
+msgstr "(UTC-09:30) Wyspy Markizy"
 
 #: dlls/tzres/tzres.rc:225
 msgctxt "maximum 31 characters"
@@ -11287,7 +11244,7 @@ msgstr "Czas urzędowy Kanady środkowej"
 #: dlls/tzres/tzres.rc:70
 msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
-msgstr "Czas letni Kanady środkowej "
+msgstr "Czas letni Kanady środkowej"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC-06:00) Saskatchewan"
@@ -11392,11 +11349,9 @@ msgid "(UTC+04:00) Yerevan"
 msgstr "(UTC+04:00) Erywań"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
-msgstr "Czas urzędowy Australii wschodni"
+msgstr "Czas urzędowy Australii wsch."
 
 #: dlls/tzres/tzres.rc:49
 msgctxt "maximum 31 characters"
@@ -11408,18 +11363,14 @@ msgid "(UTC+10:00) Canberra, Melbourne, Sydney"
 msgstr "(UTC+10:00) Canberra, Melbourne, Sydney"
 
 #: dlls/tzres/tzres.rc:228
-#, fuzzy
-#| msgid "N. Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Standard Time"
-msgstr "Czas urzędowy Azji środkowej północny"
+msgstr "Czas urzędowy Azji środk. półn."
 
 #: dlls/tzres/tzres.rc:229
-#, fuzzy
-#| msgid "N. Central Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "N. Central Asia Daylight Time"
-msgstr "Czas letni Azji północno-środkowej"
+msgstr "Czas letni Azji półn.-środ."
 
 #: dlls/tzres/tzres.rc:230
 msgid "(UTC+07:00) Novosibirsk"
@@ -11524,18 +11475,14 @@ msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr "(UTC-07:00) Czas górski (US & Canada)"
 
 #: dlls/tzres/tzres.rc:366
-#, fuzzy
-#| msgid "US Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
-msgstr "Czas urzędowy Standów Zjednoczonych wschodni"
+msgstr "Czas urzędowy St. Zjedn. wsch."
 
 #: dlls/tzres/tzres.rc:367
-#, fuzzy
-#| msgid "US Eastern Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
-msgstr "Czas letni Stanów Zjednoczonych wschodnich"
+msgstr "Czas letni St. Zjedn. wsch."
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC-05:00) Indiana (East)"
@@ -11607,29 +11554,23 @@ msgid "(UTC-02:00) Coordinated Universal Time-02"
 msgstr "(UTC-02:00) Uniwersalny Czas Koordynowany-02"
 
 #: dlls/tzres/tzres.rc:369
-#, fuzzy
-#| msgid "US Mountain Standard Time"
 msgctxt "maximum 31 characters"
 msgid "US Mountain Standard Time"
-msgstr "Czas urzędowy Stanów Zjednoczonych górski"
+msgstr "Czas urzędowy St. Zjedn. górski"
 
 #: dlls/tzres/tzres.rc:370
-#, fuzzy
-#| msgid "US Mountain Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "US Mountain Daylight Time"
-msgstr "Czas letni Stanów Zjednoczonych górski"
+msgstr "Czas letni St. Zjedn. górski"
 
 #: dlls/tzres/tzres.rc:371
 msgid "(UTC-07:00) Arizona"
 msgstr "(UTC-07:00) Arizona"
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "South Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
-msgstr "Czas urzędowy Afryki południowej"
+msgstr "Czas urzędowy Afryki poł."
 
 #: dlls/tzres/tzres.rc:322
 msgctxt "maximum 31 characters"
@@ -11641,11 +11582,9 @@ msgid "(UTC+02:00) Harare, Pretoria"
 msgstr "(UTC+02:00) Harare, Pretoria"
 
 #: dlls/tzres/tzres.rc:78
-#, fuzzy
-#| msgid "Cen. Australia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cen. Australia Standard Time"
-msgstr "Czas urzędowy Australii środkowej"
+msgstr "Czas urzędowy Australii śr."
 
 #: dlls/tzres/tzres.rc:79
 msgctxt "maximum 31 characters"
@@ -11708,18 +11647,14 @@ msgid "(UTC+09:00) Yakutsk"
 msgstr "(UTC+09:00) Jakuck"
 
 #: dlls/tzres/tzres.rc:291
-#, fuzzy
-#| msgid "SA Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Standard Time"
-msgstr "Czas urzędowy Ameryki Południowej wschodni"
+msgstr "Czas urzędowy Ameryki Poł. wsch."
 
 #: dlls/tzres/tzres.rc:292
-#, fuzzy
-#| msgid "SA Eastern Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Eastern Daylight Time"
-msgstr "Czas letni Ameryki Południowej wschodniej"
+msgstr "Czas letni Ameryki Poł. wsch."
 
 #: dlls/tzres/tzres.rc:293
 msgid "(UTC-03:00) Cayenne, Fortaleza"
@@ -11782,18 +11717,14 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Moskwa, St. Petersburg"
 
 #: dlls/tzres/tzres.rc:45
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "Czas urzędowy Australii środkowej wschodni"
+msgstr "Czas urzędowy Australii śr. wsch."
 
 #: dlls/tzres/tzres.rc:46
-#, fuzzy
-#| msgid "Aus Central W. Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
-msgstr "Czas letni Australii środkowej zachodni"
+msgstr "Czas letni Australii śr. zach."
 
 #: dlls/tzres/tzres.rc:47
 msgid "(UTC+08:45) Eucla"
@@ -11837,16 +11768,14 @@ msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) Anadyr, Pietropawłowsk-Kamczacki"
 
 #: dlls/tzres/tzres.rc:417
-#, fuzzy
-#| msgid "West Bank Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
-msgstr "Czas urzędowy zachodniego wybrzeża"
+msgstr "Czas urzędowy Zachodniego Brzegu"
 
 #: dlls/tzres/tzres.rc:418
 msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
-msgstr "Czas letni zachodniego wybrzeża"
+msgstr "Czas letni Zachodniego Brzegu"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -11867,11 +11796,9 @@ msgid "(UTC+02:00) Damascus"
 msgstr "(UTC+02:00) Damaszek"
 
 #: dlls/tzres/tzres.rc:42
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Central Standard Time"
-msgstr "Czas urzędowy Australii środkowej"
+msgstr "Czas urzędowy Australii śr."
 
 #: dlls/tzres/tzres.rc:43
 msgctxt "maximum 31 characters"
@@ -11953,18 +11880,14 @@ msgid "(UTC+06:00) Dhaka"
 msgstr "(UTC+06:00) Dhaka"
 
 #: dlls/tzres/tzres.rc:294
-#, fuzzy
-#| msgid "SA Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Standard Time"
-msgstr "Czas urzędowy Ameryki Południowej pacyficzny"
+msgstr "Czas urzędowy Ameryki Poł. pacyficzny"
 
 #: dlls/tzres/tzres.rc:295
-#, fuzzy
-#| msgid "SA Pacific Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Pacific Daylight Time"
-msgstr "Czas letni Ameryki Południowej pacyficzny"
+msgstr "Czas letni Ameryki Poł. pacyficzny"
 
 #: dlls/tzres/tzres.rc:296
 msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
@@ -12080,7 +12003,7 @@ msgstr "Czas letni Bougainville"
 
 #: dlls/tzres/tzres.rc:68
 msgid "(UTC+11:00) Bougainville Island"
-msgstr "(UTC+11:00) Wyspy Bougainville"
+msgstr "(UTC+11:00) Wyspa Bougainville’a"
 
 #: dlls/tzres/tzres.rc:168
 msgctxt "maximum 31 characters"
@@ -12097,18 +12020,14 @@ msgid "(UTC-10:00) Hawaii"
 msgstr "(UTC-10:00) Hawaje"
 
 #: dlls/tzres/tzres.rc:315
-#, fuzzy
-#| msgid "SE Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
-msgstr "Czas urzędowy Azji południowo-wschodniej"
+msgstr "Czas urzędowy Azji poł.-wsch."
 
 #: dlls/tzres/tzres.rc:316
-#, fuzzy
-#| msgid "SE Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
-msgstr "Czas letni Azji południowo-wschodniej"
+msgstr "Czas letni Azji poł.-wsch."
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
@@ -12129,11 +12048,9 @@ msgid "(UTC+05:00) Qyzylorda"
 msgstr "(UTC+05:00) Qyzylorda"
 
 #: dlls/tzres/tzres.rc:411
-#, fuzzy
-#| msgid "W. Mongolia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Mongolia Standard Time"
-msgstr "Czas urzędowy zachodniej Mongolii"
+msgstr "Czas urzędowy zach. Mongolii"
 
 #: dlls/tzres/tzres.rc:412
 msgctxt "maximum 31 characters"
@@ -12187,11 +12104,9 @@ msgid "(UTC+06:00) Omsk"
 msgstr "(UTC+06:00) Omsk"
 
 #: dlls/tzres/tzres.rc:87
-#, fuzzy
-#| msgid "Central Brazilian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Brazilian Standard Time"
-msgstr "Czas urzędowy Brazylii środkowej"
+msgstr "Czas urzędowy Brazylii śr."
 
 #: dlls/tzres/tzres.rc:88
 msgctxt "maximum 31 characters"
@@ -12217,18 +12132,14 @@ msgid "(UTC+03:00) Minsk"
 msgstr "(UTC+03:00) Mińsk"
 
 #: dlls/tzres/tzres.rc:297
-#, fuzzy
-#| msgid "SA Western Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Standard Time"
-msgstr "Czas urzędowy Ameryki Południowej wschodni"
+msgstr "Czas urzędowy Ameryki Poł. wsch."
 
 #: dlls/tzres/tzres.rc:298
-#, fuzzy
-#| msgid "SA Western Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SA Western Daylight Time"
-msgstr "Czas letni Ameryki Południowej zachodniej"
+msgstr "Czas letni Ameryki Poł. zach."
 
 #: dlls/tzres/tzres.rc:299
 msgid "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan"
@@ -12249,16 +12160,14 @@ msgid "(UTC-03:00) Greenland"
 msgstr "(UTC-03:00) Grenlandia"
 
 #: dlls/tzres/tzres.rc:129
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Easter Island Standard Time"
-msgstr "Czas urzędowy Wysp Wielkanocnych"
+msgstr "Czas urzędowy Wyspy Wielk."
 
 #: dlls/tzres/tzres.rc:130
 msgctxt "maximum 31 characters"
 msgid "Easter Island Daylight Time"
-msgstr "Czas letni Wysp Wielkanocnych"
+msgstr "Czas letni Wyspy Wielkanocnej"
 
 #: dlls/tzres/tzres.rc:131
 msgid "(UTC-06:00) Easter Island"
@@ -12400,29 +12309,23 @@ msgid "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius"
 msgstr "(UTC+02:00) Helsinki, Kijów, Ryga, Sofia, Tallinn, Vilnius"
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "E. South America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Standard Time"
-msgstr "Czas urzędowy Ameryki Południowej wschodni"
+msgstr "Czas urzędowy Ameryki Poł. wsch."
 
 #: dlls/tzres/tzres.rc:127
-#, fuzzy
-#| msgid "E. South America Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "E. South America Daylight Time"
-msgstr "Czas letni Ameryki Południowej wschodni"
+msgstr "Czas letni Ameryki Poł. wsch."
 
 #: dlls/tzres/tzres.rc:128
 msgid "(UTC-03:00) Brasilia"
 msgstr "(UTC-03:00) Brasilia"
 
 #: dlls/tzres/tzres.rc:96
-#, fuzzy
-#| msgid "Central Pacific Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Pacific Standard Time"
-msgstr "Czas urzędowy pacyficzny środkowy"
+msgstr "Czas urzędowy pacyficzny śr."
 
 #: dlls/tzres/tzres.rc:97
 msgctxt "maximum 31 characters"
@@ -12434,47 +12337,37 @@ msgid "(UTC+11:00) Solomon Is., New Caledonia"
 msgstr "(UTC+11:00) Wyspy Salomona, Nowa Kaledonia"
 
 #: dlls/tzres/tzres.rc:405
-#, fuzzy
-#| msgid "W. Central Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Standard Time"
-msgstr "Czas urzędowy Afryki środkowej zachodni"
+msgstr "Czas urzędowy Afryki śr-zach."
 
 #: dlls/tzres/tzres.rc:406
-#, fuzzy
-#| msgid "W. Central Africa Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "W. Central Africa Daylight Time"
-msgstr "Czas letni Afryki zachodnio-środkowej"
+msgstr "Czas letni Afryki śr.-zach."
 
 #: dlls/tzres/tzres.rc:407
 msgid "(UTC+01:00) West Central Africa"
 msgstr "(UTC+01:00) Zachodniośrodkowa Afryka"
 
 #: dlls/tzres/tzres.rc:258
-#, fuzzy
-#| msgid "Pacific SA Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Standard Time"
-msgstr "Czas urzędowy pacyficzny Ameryki Południowej"
+msgstr "Czas urzędowy pacyficzny Am. Poł."
 
 #: dlls/tzres/tzres.rc:259
-#, fuzzy
-#| msgid "Pacific SA Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Pacific SA Daylight Time"
-msgstr "Czas letni pacyficzny Ameryki Południowej"
+msgstr "Czas letni pacyficzny Ameryki Poł."
 
 #: dlls/tzres/tzres.rc:260
 msgid "(UTC-04:00) Santiago"
 msgstr "(UTC-04:00) Santiago"
 
 #: dlls/tzres/tzres.rc:120
-#, fuzzy
-#| msgid "E. Australia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. Australia Standard Time"
-msgstr "Czas urzędowy Australii wschodniej"
+msgstr "Czas urzędowy Australii wsch."
 
 #: dlls/tzres/tzres.rc:121
 msgctxt "maximum 31 characters"
@@ -12486,11 +12379,9 @@ msgid "(UTC+10:00) Brisbane"
 msgstr "(UTC+10:00) Brisbane"
 
 #: dlls/tzres/tzres.rc:402
-#, fuzzy
-#| msgid "W. Australia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Australia Standard Time"
-msgstr "Czas urzędowy Australii zachodniej"
+msgstr "Czas urzędowy Australii zach."
 
 #: dlls/tzres/tzres.rc:403
 msgctxt "maximum 31 characters"
@@ -12616,7 +12507,7 @@ msgstr "Niezgodność rodzajów"
 
 #: dlls/vbscript/vbscript.rc:36
 msgid "Device I/O error"
-msgstr "Błąd WE/WY urządzenia."
+msgstr "Błąd WE/WY urządzenia"
 
 #: dlls/vbscript/vbscript.rc:37
 msgid "File already exists"
@@ -12759,10 +12650,8 @@ msgid "Duplex:"
 msgstr "Dupleks:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "&Tacka:"
+msgstr "&Tacka na papier:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -13809,13 +13698,11 @@ msgstr ""
 
 #: programs/chcp.com/chcp.rc:28
 msgid "Active code page: %1!u!\n"
-msgstr ""
+msgstr "Aktywna strona kodowania: %1!u!\n"
 
 #: programs/chcp.com/chcp.rc:29
-#, fuzzy
-#| msgid "Invalid message.\n"
 msgid "Invalid code page\n"
-msgstr "Niepoprawna wiadomość.\n"
+msgstr "Niepoprawna strona kodowania\n"
 
 #: programs/chcp.com/chcp.rc:33
 msgid ""
@@ -14869,37 +14756,31 @@ msgid "&Run..."
 msgstr "Urucho&m..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "&Wyjdź z Windows"
+msgstr "&Zamknij pulpit"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "Czy jesteś pewien, że chcesz usunąć te wartości?"
+msgstr ""
+"Czy jesteś pewien, że chcesz zamknąć wszystkie programy i opuścić wirtualny "
+"pulpit?"
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "&Użyj ciągu znaków połączenia"
+msgstr "Użycie: findstr /opcje tekst\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "Nieprawidłowy wiersz poleceń.\n"
+msgstr "FINDSTR: Złe polecenie\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: Nie można otworzyć %s\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: /%c zignorowano\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -15015,36 +14896,27 @@ msgstr "Adres IPv6"
 
 #: programs/ipconfig/ipconfig.rc:38
 msgid "Primary DNS suffix"
-msgstr ""
+msgstr "Główny przedrostek DNS"
 
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
-msgstr ""
+msgstr "Użycie: klist <tickets | tgt | purge | get [service principal name]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "Nieznany błąd"
+msgstr "Nieznany błąd\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "Menu Start"
+msgstr "Czas rozpoczęcia"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "Czas urzędowy FLE"
+msgstr "Czas zakończenia"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "Wpisz nowy czas: "
+msgstr "Czas ponowienia"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
@@ -15055,16 +14927,12 @@ msgid "Cached Tickets"
 msgstr ""
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "Rodzaj szyfrowania"
+msgstr "Rodzaj szyfrowania KerbTicket"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "Bieżące połączenia"
+msgstr "Bieżący LogonId"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15202,7 +15070,7 @@ msgstr "Uruchomione są następujące usługi:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "Polecenie zostało użyte z niekompatybilnymi przełącznikami.\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -15388,10 +15256,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Za&mień...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Nowy...\tCtrl+N"
+msgstr "&Idź do...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15434,17 +15300,15 @@ msgstr "&Górny:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Idż do linii"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "Numer listy CRL"
+msgstr "Numer &linii:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Idź do"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15510,7 +15374,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15587,7 +15451,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Ln %ld, kol %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -16196,55 +16060,6 @@ msgstr ""
 
 #: programs/reg/reg.rc:67
 #, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -16294,7 +16109,7 @@ msgid ""
 "\n"
 msgstr ""
 "REG ADD <key> [/v nazwa_wartości | /ve] [/t rodzaj] [/s rozdzielacz] [/d "
-"dana] [/f]\n"
+"dane] [/f]\n"
 "\n"
 "  Dodaje klucz do rejestru lub dodaje nową wartość do danego klucza "
 "rejestru.\n"
@@ -16781,10 +16596,8 @@ msgstr "Wartość &DWORD"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "Wartość &DWORD"
+msgstr "Wartość &QWORD"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17347,16 +17160,12 @@ msgid "Collapse"
 msgstr "Zwiń"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Dodaje nową wartość 32-bitową"
+msgstr "Dodaje nową wartość 64-bitową"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Edycja danej liczbowej (DWORD)"
+msgstr "Edycja QWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
@@ -17443,38 +17252,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: Pomyślnie odinstalowano bibliotekę DLL '%1'\n"
 
 #: programs/start/start.rc:56
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/exec          Exec the specified file (for internal Wine usage).\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17509,13 +17286,13 @@ msgstr ""
 "Uruchom program lub otwórz dokument w programie normalnie używanym do\n"
 "plików z tym przyrostkiem.\n"
 "Użycie:\n"
-"start [opcje] nazwa_programu_ze_ścieżką [...]\n"
-"start [opcje] nazwa_dokumentu_ze_ścieżką\n"
+"start [opcje] nazwa_pliku_programu [...]\n"
+"start [opcje] nazwa_pliku_dokumentu\n"
 "\n"
 "Opcje:\n"
-"\"title\"         Podaje tytuł podrzędnych okien.\n"
+"\"title\"         Nadaje tytuł podrzędnych okien.\n"
 "/d katalog      Uruchamia program w podanym katalogu.\n"
-"/b              Nie twórz nowej konsoli dla programu.\n"
+"/b              Nie tworzy nowej konsoli dla programu.\n"
 "/i              Uruchom program ze świeżymi zmiennymi środowiskowymi.\n"
 "/min            Uruchom program zminimalizowany.\n"
 "/max            Uruchom program zmaksymalizowany.\n"
@@ -17611,27 +17388,25 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Błąd: Samo-zakończenie procesu nie jest dozwolone.\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "Proces z PID %1!u! został zmuszony do zakończenia.\n"
+msgstr "Proces z PID %1!u! (PID procesu potomnego %2!u!) został zakończony.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"Wysłano sygnał zatrzymania do procesu z PID-em %1!u!, PID procesu potomnego "
+"%2!u!.\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "lista kart stron"
+msgstr "Lista zadań Wine"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "Użycie: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17642,38 +17417,28 @@ msgid "PID"
 msgstr "PID (identyfikator procesu)"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "Identyfikator sesji"
+msgstr "Nazwa sesji"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "Identyfikator sesji"
+msgstr "Sesja#"
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "Użycie pamięci"
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "OK"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: Nieprawidłowa składnia. "
+msgstr "BŁĄD: Nieprawidłowa składnia\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "Nie można rozbić nazwy pliku.\n"
+msgstr "BŁĄD: Nie można rozpoznać filtru wyszukiwania.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18806,13 +18571,11 @@ msgstr "Wygląd"
 
 #: programs/winecfg/winecfg.rc:293
 msgid "&Theme:"
-msgstr "Wys&trój:"
+msgstr "Mo&tyw:"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "Wys&trój:"
+msgstr "Motyw &WinRT:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18831,10 +18594,8 @@ msgid "MIME types"
 msgstr "Typy MIME"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Z&arządzaj skojarzeniami plików"
+msgstr "Z&arządzaj skojarzeniami plików i protokołów"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
@@ -18937,14 +18698,12 @@ msgid "Mono"
 msgstr "Mono"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "Do prawej"
+msgstr "Jasny"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "Ciemny"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
