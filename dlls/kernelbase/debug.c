@@ -1428,7 +1428,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
                                                      WCHAR *name, DWORD size )
 {
     BOOL wow64, found = FALSE;
-    DWORD len;
+    DWORD len = 0;
 
     if (!size) return 0;
 
