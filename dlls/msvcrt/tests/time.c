@@ -55,6 +55,8 @@ static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static struct tm* (__cdecl *p_gmtime)(time_t*);
 static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
+static struct tm* (__cdecl *p_gmtime64)(__time64_t*);
+static errno_t    (__cdecl *p_gmtime64_s)(struct tm*, __time64_t*);
 static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
 static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
 static errno_t    (__cdecl *p_localtime32_s)(struct tm*, __time32_t*);
@@ -76,6 +78,8 @@ static void init(void)
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
     p_gmtime = (void*)GetProcAddress(hmod, "gmtime");
     p_gmtime32_s = (void*)GetProcAddress(hmod, "_gmtime32_s");
+    p_gmtime64 = (void*)GetProcAddress(hmod, "_gmtime64");
+    p_gmtime64_s = (void*)GetProcAddress(hmod, "_gmtime64_s");
     p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
     p_strdate_s = (void*)GetProcAddress(hmod, "_strdate_s");
@@ -206,6 +210,78 @@ static void test_gmtime(void)
         ok(err==EINVAL, "err = %d\n", err);
         ok(errno==EINVAL, "errno = %d\n", errno);
     }
+}
+
+static void test_gmtime64(void)
+{
+    struct tm *ptm, tm;
+    __time64_t t;
+    int ret;
+
+    t = -1;
+    memset(&tm, 0xcc, sizeof(tm));
+    ptm = p_gmtime64(&t);
+    if (!ptm)
+    {
+        skip("Old gmtime64 limits, skipping tests.\n");
+        return;
+    }
+    ok(!!ptm, "got NULL.\n");
+    ret = p_gmtime64_s(&tm, &t);
+    ok(!ret, "got %d.\n", ret);
+    ok(tm.tm_year == 69 && tm.tm_hour == 23 && tm.tm_min == 59 && tm.tm_sec == 59, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    t = -43200;
+    memset(&tm, 0xcc, sizeof(tm));
+    ptm = p_gmtime64(&t);
+    ok(!!ptm, "got NULL.\n");
+    ret = p_gmtime64_s(&tm, &t);
+    ok(!ret, "got %d.\n", ret);
+    ok(tm.tm_year == 69 && tm.tm_hour == 12 && tm.tm_min == 0 && tm.tm_sec == 0, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    ptm = p_gmtime32((__time32_t *)&t);
+    ok(!!ptm, "got NULL.\n");
+    memset(&tm, 0xcc, sizeof(tm));
+    ret = p_gmtime32_s(&tm, (__time32_t *)&t);
+    ok(!ret, "got %d.\n", ret);
+    todo_wine_if(tm.tm_year == 69 && tm.tm_hour == 12)
+    ok(tm.tm_year == 70 && tm.tm_hour == -12 && tm.tm_min == 0 && tm.tm_sec == 0, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    t = -43201;
+    ptm = p_gmtime64(&t);
+    ok(!ptm, "got non-NULL.\n");
+    memset(&tm, 0xcc, sizeof(tm));
+    ret = p_gmtime64_s(&tm, &t);
+    ok(ret == EINVAL, "got %d.\n", ret);
+    ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    ptm = p_gmtime32((__time32_t *)&t);
+    ok(!ptm, "got NULL.\n");
+    memset(&tm, 0xcc, sizeof(tm));
+    ret = p_gmtime32_s(&tm, (__time32_t *)&t);
+    ok(ret == EINVAL, "got %d.\n", ret);
+    ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    t = _MAX__TIME64_T + 46800;
+    memset(&tm, 0xcc, sizeof(tm));
+    ptm = p_gmtime64(&t);
+    ok(!!ptm, "got NULL.\n");
+    ret = p_gmtime64_s(&tm, &t);
+    ok(!ret, "got %d.\n", ret);
+    ok(tm.tm_year == 1101 && tm.tm_hour == 20 && tm.tm_min == 59 && tm.tm_sec == 59, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    t = _MAX__TIME64_T + 46801;
+    ptm = p_gmtime64(&t);
+    ok(!ptm, "got non-NULL.\n");
+    memset(&tm, 0xcc, sizeof(tm));
+    ret = p_gmtime64_s(&tm, &t);
+    ok(ret == EINVAL, "got %d.\n", ret);
+    ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
+            tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
 static void test_mktime(void)
@@ -963,6 +1039,7 @@ START_TEST(time)
     test_strftime();
     test_ctime();
     test_gmtime();
+    test_gmtime64();
     test_mktime();
     test_localtime();
     test_strdate();

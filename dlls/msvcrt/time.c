@@ -66,6 +66,17 @@ static const int MAX_SECONDS = 60;
 static const int MAX_SECONDS = 59;
 #endif
 
+#if _MSVCR_VER == 0
+#define MIN_GMTIME64_TIME 0
+#define MAX_GMTIME64_TIME _MAX__TIME64_T
+#elif _MSVCR_VER >= 140
+#define MIN_GMTIME64_TIME -43200
+#define MAX_GMTIME64_TIME (_MAX__TIME64_T + 1605600)
+#else
+#define MIN_GMTIME64_TIME -43200
+#define MAX_GMTIME64_TIME (_MAX__TIME64_T + 46800)
+#endif
+
 static inline BOOL IsLeapYear(int Year)
 {
     return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
@@ -457,7 +468,9 @@ int CDECL _gmtime64_s(struct tm *res, const __time64_t *secs)
     SYSTEMTIME st;
     ULONGLONG time;
 
-    if (!res || !secs || *secs < 0 || *secs > _MAX__TIME64_T) {
+    TRACE("res %p, secs %p (%I64d).\n", res, secs, secs ? *secs : 0);
+
+    if (!res || !secs || *secs < MIN_GMTIME64_TIME || *secs > MAX_GMTIME64_TIME) {
         if (res) {
             write_invalid_msvcrt_tm(res);
         }
