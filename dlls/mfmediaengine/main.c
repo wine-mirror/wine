@@ -1110,9 +1110,9 @@ static HRESULT media_engine_create_audio_renderer(struct media_engine *engine, I
 
 static HRESULT media_engine_create_video_renderer(struct media_engine *engine, IMFTopologyNode **node)
 {
-    DXGI_FORMAT output_format;
     IMFMediaType *media_type;
     IMFActivate *activate;
+    UINT32 output_format;
     GUID subtype;
     HRESULT hr;
 
@@ -3255,7 +3255,7 @@ static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactory *ifa
 
 static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct media_engine *engine)
 {
-    DXGI_FORMAT output_format;
+    UINT32 output_format;
     UINT64 playback_hwnd;
     IMFClock *clock;
     HRESULT hr;
