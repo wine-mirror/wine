@@ -386,8 +386,8 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
 {
     IMFMediaTypeHandler *down_handler;
     IMFMediaType *down_type = NULL;
-    MF_CONNECT_METHOD method;
     MF_TOPOLOGY_TYPE type;
+    UINT32 method;
     DWORD flags;
     HRESULT hr;
 
@@ -465,7 +465,7 @@ static HRESULT topology_branch_foreach_up_types(IMFTopology *topology, MF_CONNEC
 static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
         struct topology_branch *branch, BOOL enumerate_source_types)
 {
-    MF_CONNECT_METHOD method;
+    UINT32 method;
     HRESULT hr;
 
     TRACE("topology %p, method_mask %#x, branch %s.\n", topology, method_mask, debugstr_topology_branch(branch));
