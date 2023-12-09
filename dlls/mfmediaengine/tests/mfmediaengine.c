@@ -435,6 +435,7 @@ static void test_CreateInstance(void)
 
 static void test_Shutdown(void)
 {
+    MF_MEDIA_ENGINE_CANPLAY can_play_state;
     struct media_engine_notify *notify;
     IMFMediaEngineEx *media_engine_ex;
     IMFMediaTimeRange *time_range;
@@ -492,7 +493,7 @@ static void test_Shutdown(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     str = SysAllocString(L"video/mp4");
-    hr = IMFMediaEngine_CanPlayType(media_engine, str, &state);
+    hr = IMFMediaEngine_CanPlayType(media_engine, str, &can_play_state);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
 
