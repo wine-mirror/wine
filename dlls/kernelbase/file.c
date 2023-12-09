@@ -1488,9 +1488,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *da
         /* don't return '.' and '..' in the root of the drive */
         if (info->is_root)
         {
-            if (dir_info->FileNameLength == sizeof(WCHAR) && dir_info->FileName[0] == '.') continue;
+            const WCHAR *file_name = dir_info->FileName;
+            if (dir_info->FileNameLength == sizeof(WCHAR) && file_name[0] == '.') continue;
             if (dir_info->FileNameLength == 2 * sizeof(WCHAR) &&
-                dir_info->FileName[0] == '.' && dir_info->FileName[1] == '.') continue;
+                file_name[0] == '.' && file_name[1] == '.') continue;
         }
 
         if (info->mask)
