@@ -236,6 +236,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     if (stat != Ok)
     {
         free(*font);
+        *font = NULL;
         return NotTrueTypeFont;
     }
 
