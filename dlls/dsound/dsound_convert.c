@@ -142,7 +142,7 @@ static inline LONG f_to_32(float value)
 {
     if(value <= -1.f)
         return 0x80000000;
-    if(value >= 1.f * 0x7FFFFFFF / 0x80000000U)  /* this rounds to 1.f */
+    if(value >= 1.f)
         return 0x7FFFFFFF;
     return le32(lrintf(value * 0x80000000U));
 }
