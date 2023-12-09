@@ -1423,7 +1423,7 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     unsigned int i, value;
     GUID major, subtype;
     UINT64 frame_size;
-    D3D11_USAGE usage;
+    UINT32 usage;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &major)))
