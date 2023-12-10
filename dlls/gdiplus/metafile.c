@@ -3404,6 +3404,8 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 {
                     if (flags & 0x800) /* P */
                     {
+                        points[0].X = 0;
+                        points[0].Y = 0;
                         for (i = 1; i < fill->Count; i++)
                         {
                             points[i].X = points[i - 1].X + fill->PointData.pointsR[i].X;
