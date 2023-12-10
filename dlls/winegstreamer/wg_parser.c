@@ -484,9 +484,7 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
         GST_LOG("Ignoring QoS event.");
         return S_OK;
     }
-    if (!(event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
-            params->proportion, diff, stream_time)))
-        GST_ERROR("Failed to create QOS event.");
+    event = gst_event_new_qos(params->underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW, params->proportion, diff, stream_time);
     push_event(stream->my_sink, event);
 
     return S_OK;
