@@ -1983,7 +1983,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice device_hand
         return res;
     }
 
-    surface_info_host.surface = surface->driver_surface;
+    surface_info_host.surface = surface->host_surface;
 
     return instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(physical_device->host_physical_device,
                                                                    &surface_info_host, format_count, formats);

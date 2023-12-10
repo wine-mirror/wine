@@ -60,7 +60,6 @@ static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocati
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
-static VkResult (*pvkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
@@ -534,56 +533,6 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
     return pvkGetInstanceProcAddr(instance, name);
 }
 
-static VkResult wayland_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice phys_dev,
-                                                              const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
-                                                              uint32_t *count,
-                                                              VkSurfaceFormat2KHR *formats)
-{
-    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface_info->surface);
-    VkPhysicalDeviceSurfaceInfo2KHR surface_info_host;
-    VkSurfaceFormatKHR *formats_host;
-    uint32_t i;
-    VkResult result;
-
-    TRACE("%p, %p, %p, %p\n", phys_dev, surface_info, count, formats);
-
-    surface_info_host = *surface_info;
-    surface_info_host.surface = wine_vk_surface->host_surface;
-
-    if (pvkGetPhysicalDeviceSurfaceFormats2KHR)
-    {
-        return pvkGetPhysicalDeviceSurfaceFormats2KHR(phys_dev, &surface_info_host,
-                                                      count, formats);
-    }
-
-    /* Until the loader version exporting this function is common, emulate it
-     * using the older non-2 version. */
-    if (surface_info->pNext)
-    {
-        FIXME("Emulating vkGetPhysicalDeviceSurfaceFormats2KHR with "
-              "vkGetPhysicalDeviceSurfaceFormatsKHR, pNext is ignored.\n");
-    }
-
-    if (!formats)
-    {
-        return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface,
-                                                     count, NULL);
-    }
-
-    formats_host = calloc(*count, sizeof(*formats_host));
-    if (!formats_host) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    result = pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface,
-                                                   count, formats_host);
-    if (result == VK_SUCCESS || result == VK_INCOMPLETE)
-    {
-        for (i = 0; i < *count; i++)
-            formats[i].surfaceFormat = formats_host[i];
-    }
-
-    free(formats_host);
-    return result;
-}
-
 static VkResult wayland_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice phys_dev,
                                                              VkSurfaceKHR surface,
                                                              uint32_t *count,
@@ -649,7 +598,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
-    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceFormats2KHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
@@ -675,7 +623,6 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
-    .p_vkGetPhysicalDeviceSurfaceFormats2KHR = wayland_vkGetPhysicalDeviceSurfaceFormats2KHR,
     .p_vkGetPhysicalDeviceSurfaceFormatsKHR = wayland_vkGetPhysicalDeviceSurfaceFormatsKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
