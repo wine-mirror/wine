@@ -13,7 +13,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 18
+#define WINE_VULKAN_DRIVER_VERSION 19
 
 struct vulkan_funcs
 {
@@ -30,7 +30,6 @@ struct vulkan_funcs
     VkResult (*p_vkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
     void * (*p_vkGetDeviceProcAddr)(VkDevice, const char *);
     void * (*p_vkGetInstanceProcAddr)(VkInstance, const char *);
-    VkResult (*p_vkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
     VkResult (*p_vkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
     VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -82,8 +81,6 @@ static inline void *get_vulkan_driver_instance_proc_addr(
         return vulkan_funcs->p_vkDestroySurfaceKHR;
     if (!strcmp(name, "GetInstanceProcAddr"))
         return vulkan_funcs->p_vkGetInstanceProcAddr;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR"))
-        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     if (!strcmp(name, "GetPhysicalDeviceWin32PresentationSupportKHR"))
         return vulkan_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
 

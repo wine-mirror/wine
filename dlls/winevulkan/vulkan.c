@@ -1946,7 +1946,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice device_handl
     struct wine_surface *surface = wine_surface_from_handle(surface_handle);
     struct wine_instance *instance = physical_device->instance;
 
-    return instance->funcs.p_vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device->host_physical_device, surface->driver_surface,
+    return instance->funcs.p_vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device->host_physical_device, surface->host_surface,
                                                                   format_count, formats);
 }
 

@@ -83,7 +83,6 @@ static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocati
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
-static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -119,7 +118,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR);
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
     LOAD_FUNCPTR(vkQueuePresentKHR);
@@ -473,16 +471,6 @@ static void *X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
     return pvkGetInstanceProcAddr(instance, name);
 }
 
-static VkResult X11DRV_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice phys_dev,
-        VkSurfaceKHR surface, uint32_t *count, VkSurfaceFormatKHR *formats)
-{
-    struct wine_vk_surface *x11_surface = surface_from_handle(surface);
-
-    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, formats);
-
-    return pvkGetPhysicalDeviceSurfaceFormatsKHR( phys_dev, x11_surface->host_surface, count, formats );
-}
-
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -551,7 +539,6 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkEnumerateInstanceExtensionProperties,
     X11DRV_vkGetDeviceProcAddr,
     X11DRV_vkGetInstanceProcAddr,
-    X11DRV_vkGetPhysicalDeviceSurfaceFormatsKHR,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     X11DRV_vkGetSwapchainImagesKHR,
     X11DRV_vkQueuePresentKHR,

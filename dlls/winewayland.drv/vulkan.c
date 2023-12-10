@@ -60,7 +60,6 @@ static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocati
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
 static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
 static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
-static VkResult (*pvkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -533,19 +532,6 @@ static void *wayland_vkGetInstanceProcAddr(VkInstance instance, const char *name
     return pvkGetInstanceProcAddr(instance, name);
 }
 
-static VkResult wayland_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice phys_dev,
-                                                             VkSurfaceKHR surface,
-                                                             uint32_t *count,
-                                                             VkSurfaceFormatKHR *formats)
-{
-    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
-
-    TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, formats);
-
-    return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, wine_vk_surface->host_surface,
-                                                 count, formats);
-}
-
 static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
                                                                        uint32_t index)
 {
@@ -598,7 +584,6 @@ static void wine_vk_init(void)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
     LOAD_FUNCPTR(vkGetDeviceProcAddr);
     LOAD_FUNCPTR(vkGetInstanceProcAddr);
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
     LOAD_FUNCPTR(vkQueuePresentKHR);
@@ -623,7 +608,6 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkEnumerateInstanceExtensionProperties = wayland_vkEnumerateInstanceExtensionProperties,
     .p_vkGetDeviceProcAddr = wayland_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = wayland_vkGetInstanceProcAddr,
-    .p_vkGetPhysicalDeviceSurfaceFormatsKHR = wayland_vkGetPhysicalDeviceSurfaceFormatsKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
     .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
