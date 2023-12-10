@@ -1746,40 +1746,36 @@ static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurf
     }
 }
 
-VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle, VkSurfaceKHR surface_handle,
+VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice device_handle, VkSurfaceKHR surface_handle,
                                                         VkSurfaceCapabilitiesKHR *capabilities)
 {
-    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
+    struct wine_phys_dev *physical_device = wine_phys_dev_from_handle(device_handle);
     struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_instance *instance = physical_device->instance;
     VkResult res;
 
-    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev->host_physical_device,
-                                                                                surface->driver_surface, capabilities);
-
-    if (res == VK_SUCCESS)
-        adjust_max_image_count(phys_dev, capabilities);
-
+    if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
+    res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
+                                                                      surface->driver_surface, capabilities);
+    if (res == VK_SUCCESS) adjust_max_image_count(physical_device, capabilities);
     return res;
 }
 
-VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice handle,
-                                                         const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
+VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice device_handle, const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
                                                          VkSurfaceCapabilities2KHR *capabilities)
 {
-    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
+    struct wine_phys_dev *physical_device = wine_phys_dev_from_handle(device_handle);
     struct wine_surface *surface = wine_surface_from_handle(surface_info->surface);
-    VkPhysicalDeviceSurfaceInfo2KHR host_info;
+    VkPhysicalDeviceSurfaceInfo2KHR surface_info_host = *surface_info;
+    struct wine_instance *instance = physical_device->instance;
     VkResult res;
 
-    host_info.sType = surface_info->sType;
-    host_info.pNext = surface_info->pNext;
-    host_info.surface = surface->driver_surface;
-    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev->host_physical_device,
-                                                                                 &host_info, capabilities);
+    surface_info_host.surface = surface->driver_surface;
 
-    if (res == VK_SUCCESS)
-        adjust_max_image_count(phys_dev, &capabilities->surfaceCapabilities);
-
+    if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
+    res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physical_device->host_physical_device,
+                                                                       &surface_info_host, capabilities);
+    if (res == VK_SUCCESS) adjust_max_image_count(physical_device, &capabilities->surfaceCapabilities);
     return res;
 }
 

@@ -635,11 +635,8 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
         if (IsWindow(hwnd))
             ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
         else
-        {
-            todo_wine
             ok(vr == VK_ERROR_SURFACE_LOST_KHR /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */,
                     "Got unexpected vr %d.\n", vr);
-        }
     }
 
     count = 0;
