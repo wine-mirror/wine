@@ -47,7 +47,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBVULKAN
-WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static pthread_mutex_t vulkan_mutex;
 
@@ -263,34 +262,8 @@ static VkResult X11DRV_vkGetSwapchainImagesKHR(VkDevice device,
 
 static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
 {
-    VkResult res;
-
     TRACE("%p, %p\n", queue, present_info);
-
-    res = pvkQueuePresentKHR(queue, present_info);
-
-    if (TRACE_ON(fps))
-    {
-        static unsigned long frames, frames_total;
-        static long prev_time, start_time;
-        DWORD time;
-
-        time = NtGetTickCount();
-        frames++;
-        frames_total++;
-        if (time - prev_time > 1500)
-        {
-            TRACE_(fps)("%p @ approx %.2ffps, total %.2ffps\n",
-                    queue, 1000.0 * frames / (time - prev_time),
-                    1000.0 * frames_total / (time - start_time));
-            prev_time = time;
-            frames = 0;
-            if (!start_time)
-                start_time = time;
-        }
-    }
-
-    return res;
+    return pvkQueuePresentKHR(queue, present_info);
 }
 
 static const char *X11DRV_get_host_surface_extension(void)

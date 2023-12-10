@@ -31,6 +31,7 @@
 #include "ntuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
@@ -1704,6 +1705,28 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
     res = device->funcs.p_vkQueuePresentKHR(queue->host_queue, &present_info_host);
 
     if (swapchains != swapchains_buffer) free(swapchains);
+
+    if (TRACE_ON(fps))
+    {
+        static unsigned long frames, frames_total;
+        static long prev_time, start_time;
+        DWORD time;
+
+        time = NtGetTickCount();
+        frames++;
+        frames_total++;
+
+        if (time - prev_time > 1500)
+        {
+            TRACE_(fps)("%p @ approx %.2ffps, total %.2ffps\n", queue,
+                        1000.0 * frames / (time - prev_time),
+                        1000.0 * frames_total / (time - start_time));
+            prev_time = time;
+            frames = 0;
+
+            if (!start_time) start_time = time;
+        }
+    }
 
     return res;
 }
