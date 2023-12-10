@@ -985,6 +985,12 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
 	return FALSE;
     }
 
+    if (usage > 2)
+    {
+        FIXME("wrong usage: %d\n", usage);
+        return FALSE;
+    }
+
     w = bmi->bmiHeader.biWidth;
     h = abs_height;
 
@@ -1025,11 +1031,7 @@ BOOL PSDRV_WriteDIBPatternDict(print_ctx *ctx, const BITMAPINFO *bmi, BYTE *bits
         map[0] = GetTextColor( ctx->hdc );
         map[1] = GetBkColor( ctx->hdc );
     }
-    else
-    {
-        FIXME("wrong usage: %d\n", usage);
-        return FALSE;
-    }
+
     PSDRV_WriteRGB(ctx, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(ctx);
 
