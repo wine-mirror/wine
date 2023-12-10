@@ -7,3 +7,4 @@
 8 stdcall XInputGetKeystroke(long long ptr)
 10 stub XInputGetAudioDeviceIds(long ptr ptr ptr ptr)
 100 stdcall XInputGetStateEx(long ptr)
+108 stdcall XInputGetCapabilitiesEx(long long long ptr)
