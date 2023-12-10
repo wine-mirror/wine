@@ -34,6 +34,7 @@
 #include "ntsyscalls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(unwind);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
