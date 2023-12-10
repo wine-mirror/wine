@@ -1086,25 +1086,14 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetKeystroke(DWORD index, DWORD reserved, P
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES *capabilities)
 {
-    TRACE("index %lu, flags %#lx, capabilities %p.\n", index, flags, capabilities);
+    XINPUT_CAPABILITIES_EX caps_ex;
+    DWORD ret;
 
-    start_update_thread();
+    ret = XInputGetCapabilitiesEx(1, index, flags, &caps_ex);
 
-    if (index >= XUSER_MAX_COUNT) return ERROR_BAD_ARGUMENTS;
+    if (!ret) *capabilities = caps_ex.Capabilities;
 
-    if (!controller_lock(&controllers[index])) return ERROR_DEVICE_NOT_CONNECTED;
-
-    if (flags & XINPUT_FLAG_GAMEPAD && controllers[index].caps.SubType != XINPUT_DEVSUBTYPE_GAMEPAD)
-    {
-        controller_unlock(&controllers[index]);
-        return ERROR_DEVICE_NOT_CONNECTED;
-    }
-
-    memcpy(capabilities, &controllers[index].caps, sizeof(*capabilities));
-
-    controller_unlock(&controllers[index]);
-
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetDSoundAudioDeviceGuids(DWORD index, GUID *render_guid, GUID *capture_guid)
