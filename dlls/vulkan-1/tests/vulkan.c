@@ -762,11 +762,8 @@ static void test_win32_surface_swapchain_hwnd(VkDevice device, VkSwapchainKHR sw
 
     vr = vkQueuePresentKHR(queue, &present_info);
     if (expect_suboptimal)
-    {
-        todo_wine
         ok(vr == VK_SUBOPTIMAL_KHR || broken(vr == VK_ERROR_OUT_OF_DATE_KHR) /* Nvidia */,
                 "Got unexpected vr %d.\n", vr);
-    }
     else if (IsWindow(hwnd))
         ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     else

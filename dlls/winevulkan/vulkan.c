@@ -1624,6 +1624,12 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
     free(object);
 }
 
+static BOOL extents_equals(const VkExtent2D *extents, const RECT *rect)
+{
+    return extents->width == rect->right - rect->left &&
+           extents->height == rect->bottom - rect->top;
+}
+
 VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCreateInfoKHR *create_info,
                                    const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain_handle)
 {
@@ -1660,6 +1666,9 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
         free(object);
         return res;
     }
+
+    object->surface = surface;
+    object->extents = create_info->imageExtent;
 
     *swapchain_handle = wine_swapchain_to_handle(object);
     add_handle_mapping(instance, *swapchain_handle, object->host_swapchain, &object->wrapper_entry);
@@ -1703,6 +1712,31 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
     present_info_host.pSwapchains = swapchains;
 
     res = device->funcs.p_vkQueuePresentKHR(queue->host_queue, &present_info_host);
+
+    for (i = 0; i < present_info->swapchainCount; i++)
+    {
+        struct wine_swapchain *swapchain = wine_swapchain_from_handle(present_info->pSwapchains[i]);
+        VkResult swapchain_res = present_info->pResults ? present_info->pResults[i] : res;
+        struct wine_surface *surface = swapchain->surface;
+        RECT client_rect;
+
+        if (swapchain_res < VK_SUCCESS) continue;
+        if (!NtUserGetClientRect(surface->hwnd, &client_rect))
+        {
+            WARN("Swapchain window %p is invalid, returning VK_ERROR_OUT_OF_DATE_KHR\n", surface->hwnd);
+            if (present_info->pResults) present_info->pResults[i] = VK_ERROR_OUT_OF_DATE_KHR;
+            if (res >= VK_SUCCESS) res = VK_ERROR_OUT_OF_DATE_KHR;
+        }
+        else if (swapchain_res != VK_SUCCESS)
+            WARN("Present returned status %d for swapchain %p\n", swapchain_res, swapchain);
+        else if (!extents_equals(&swapchain->extents, &client_rect))
+        {
+            WARN("Swapchain size %dx%d does not match client rect %s, returning VK_SUBOPTIMAL_KHR\n",
+                    swapchain->extents.width, swapchain->extents.height, wine_dbgstr_rect(&client_rect));
+            if (present_info->pResults) present_info->pResults[i] = VK_SUBOPTIMAL_KHR;
+            if (res == VK_SUCCESS) res = VK_SUBOPTIMAL_KHR;
+        }
+    }
 
     if (swapchains != swapchains_buffer) free(swapchains);
 

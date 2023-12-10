@@ -253,7 +253,9 @@ static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
 
 struct wine_swapchain
 {
+    struct wine_surface *surface;  /* parent */
     VkSwapchainKHR host_swapchain;
+    VkExtent2D extents;
 
     struct wrapper_entry wrapper_entry;
 };
