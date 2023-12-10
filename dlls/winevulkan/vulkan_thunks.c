@@ -29299,57 +29299,7 @@ static inline const VkPresentRegionKHR *convert_VkPresentRegionKHR_array_win32_t
     return out;
 }
 
-#ifdef _WIN64
-static inline const VkSwapchainKHR *convert_VkSwapchainKHR_array_win64_to_driver(struct conversion_context *ctx, const VkSwapchainKHR *in, uint32_t count)
-{
-    VkSwapchainKHR *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i] = wine_swapchain_from_handle(in[i])->host_swapchain;
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
-static inline const VkSwapchainKHR *convert_VkSwapchainKHR_array_win32_to_driver(struct conversion_context *ctx, const VkSwapchainKHR *in, uint32_t count)
-{
-    VkSwapchainKHR *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i] = wine_swapchain_from_handle(in[i])->host_swapchain;
-    }
-
-    return out;
-}
-
-#ifdef _WIN64
-static inline void convert_VkPresentInfoKHR_win64_to_driver(struct conversion_context *ctx, const VkPresentInfoKHR *in, VkPresentInfoKHR *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->waitSemaphoreCount = in->waitSemaphoreCount;
-    out->pWaitSemaphores = in->pWaitSemaphores;
-    out->swapchainCount = in->swapchainCount;
-    out->pSwapchains = convert_VkSwapchainKHR_array_win64_to_driver(ctx, in->pSwapchains, in->swapchainCount);
-    out->pImageIndices = in->pImageIndices;
-    out->pResults = in->pResults;
-}
-#endif /* _WIN64 */
-
-static inline void convert_VkPresentInfoKHR_win32_to_driver(struct conversion_context *ctx, const VkPresentInfoKHR32 *in, VkPresentInfoKHR *out)
+static inline void convert_VkPresentInfoKHR_win32_to_unwrapped_host(struct conversion_context *ctx, const VkPresentInfoKHR32 *in, VkPresentInfoKHR *out)
 {
     const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -29361,7 +29311,7 @@ static inline void convert_VkPresentInfoKHR_win32_to_driver(struct conversion_co
     out->waitSemaphoreCount = in->waitSemaphoreCount;
     out->pWaitSemaphores = (const VkSemaphore *)UlongToPtr(in->pWaitSemaphores);
     out->swapchainCount = in->swapchainCount;
-    out->pSwapchains = convert_VkSwapchainKHR_array_win32_to_driver(ctx, (const VkSwapchainKHR *)UlongToPtr(in->pSwapchains), in->swapchainCount);
+    out->pSwapchains = (const VkSwapchainKHR *)UlongToPtr(in->pSwapchains);
     out->pImageIndices = (const uint32_t *)UlongToPtr(in->pImageIndices);
     out->pResults = (VkResult *)UlongToPtr(in->pResults);
 
@@ -45145,16 +45095,10 @@ static NTSTATUS thunk32_vkQueueNotifyOutOfBandNV(void *args)
 static NTSTATUS thunk64_vkQueuePresentKHR(void *args)
 {
     struct vkQueuePresentKHR_params *params = args;
-    VkPresentInfoKHR pPresentInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p\n", params->queue, params->pPresentInfo);
 
-    init_conversion_context(ctx);
-    convert_VkPresentInfoKHR_win64_to_driver(ctx, params->pPresentInfo, &pPresentInfo_host);
-    params->result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueuePresentKHR(wine_queue_from_handle(params->queue)->host_queue, &pPresentInfo_host);
-    free_conversion_context(ctx);
+    params->result = wine_vkQueuePresentKHR(params->queue, params->pPresentInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -45174,8 +45118,8 @@ static NTSTATUS thunk32_vkQueuePresentKHR(void *args)
     TRACE("%#x, %#x\n", params->queue, params->pPresentInfo);
 
     init_conversion_context(ctx);
-    convert_VkPresentInfoKHR_win32_to_driver(ctx, (const VkPresentInfoKHR32 *)UlongToPtr(params->pPresentInfo), &pPresentInfo_host);
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->funcs.p_vkQueuePresentKHR(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, &pPresentInfo_host);
+    convert_VkPresentInfoKHR_win32_to_unwrapped_host(ctx, (const VkPresentInfoKHR32 *)UlongToPtr(params->pPresentInfo), &pPresentInfo_host);
+    params->result = wine_vkQueuePresentKHR((VkQueue)UlongToPtr(params->queue), &pPresentInfo_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }

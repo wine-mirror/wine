@@ -260,6 +260,7 @@ MANUAL_UNIX_THUNKS = {
     "vkGetPhysicalDeviceSurfaceFormats2KHR",
     "vkMapMemory",
     "vkMapMemory2KHR",
+    "vkQueuePresentKHR",
     "vkUnmapMemory",
     "vkUnmapMemory2KHR",
 }
