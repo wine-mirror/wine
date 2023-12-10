@@ -1920,6 +1920,25 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice device
     return res;
 }
 
+VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice device_handle, VkSurfaceKHR surface_handle,
+                                                      uint32_t *rect_count, VkRect2D *rects)
+{
+    struct wine_phys_dev *physical_device = wine_phys_dev_from_handle(device_handle);
+    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_instance *instance = physical_device->instance;
+
+    if (!NtUserIsWindow(surface->hwnd))
+    {
+        if (rects && !*rect_count) return VK_INCOMPLETE;
+        if (rects) memset(rects, 0, sizeof(VkRect2D));
+        *rect_count = 1;
+        return VK_SUCCESS;
+    }
+
+    return instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(physical_device->host_physical_device,
+                                                                     surface->driver_surface, rect_count, rects);
+}
+
 VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
                                              const VkDebugUtilsMessengerCreateInfoEXT *create_info,
                                              const VkAllocationCallbacks *allocator,

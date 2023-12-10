@@ -43065,7 +43065,7 @@ static NTSTATUS thunk64_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, wine_surface_from_handle(params->surface)->driver_surface, params->pRectCount, params->pRects);
+    params->result = wine_vkGetPhysicalDevicePresentRectanglesKHR(params->physicalDevice, params->surface, params->pRectCount, params->pRects);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -43083,7 +43083,7 @@ static NTSTATUS thunk32_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
 
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->funcs.p_vkGetPhysicalDevicePresentRectanglesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, wine_surface_from_handle(params->surface)->driver_surface, (uint32_t *)UlongToPtr(params->pRectCount), (VkRect2D *)UlongToPtr(params->pRects));
+    params->result = wine_vkGetPhysicalDevicePresentRectanglesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (uint32_t *)UlongToPtr(params->pRectCount), (VkRect2D *)UlongToPtr(params->pRects));
     return STATUS_SUCCESS;
 }
 

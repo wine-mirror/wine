@@ -656,14 +656,10 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     if (IsWindow(hwnd))
         ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     else
-    {
-        todo_wine
         ok(vr == VK_SUCCESS /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */, "Got unexpected vr %d.\n", vr);
-    }
 
     memset(&rect, 0xcc, sizeof(rect));
     vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, &rect);
-    todo_wine_if(!IsWindow(hwnd))
     ok(vr == VK_SUCCESS /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */, "Got unexpected vr %d.\n", vr);
     if (vr == VK_SUCCESS)
     {
@@ -676,7 +672,7 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
         };
 
         ok(count == 1, "Got unexpected count %u.\n", count);
-        todo_wine_if(IsRectEmpty(&client_rect))
+        todo_wine_if(IsWindow(hwnd) && IsRectEmpty(&client_rect))
         ok(EqualRect(&tmp_rect, &client_rect), "Got unexpected rect %s.\n", wine_dbgstr_rect(&tmp_rect));
     }
 
