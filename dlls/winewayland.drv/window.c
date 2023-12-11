@@ -463,17 +463,23 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
                               const RECT *visible_rect, const RECT *valid_rects,
                               struct window_surface *surface)
 {
-    struct wayland_win_data *data = wayland_win_data_get(hwnd);
+    struct wayland_win_data *data;
+    BOOL managed;
 
     TRACE("hwnd %p window %s client %s visible %s after %p flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
 
-    if (!data) return;
+    /* Get the managed state with win_data unlocked, as is_window_managed
+     * may need to query win_data information about other HWNDs and thus
+     * acquire the lock itself internally. */
+    managed = is_window_managed(hwnd, swp_flags, window_rect);
+
+    if (!(data = wayland_win_data_get(hwnd))) return;
 
     data->window_rect = *window_rect;
     data->client_rect = *client_rect;
-    data->managed = is_window_managed(hwnd, swp_flags, window_rect);
+    data->managed = managed;
 
     if (surface) window_surface_add_ref(surface);
     if (data->window_surface) window_surface_release(data->window_surface);
