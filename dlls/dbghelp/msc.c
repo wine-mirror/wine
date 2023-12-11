@@ -3809,6 +3809,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             /* no fpo ext stream in this case */
             break;
         case sizeof(PDB_STREAM_INDEXES):
+        case sizeof(PDB_STREAM_INDEXES) + 2:
             psi = (PDB_STREAM_INDEXES*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
                                         symbols.module_size + symbols.sectcontrib_size +
                                         symbols.segmap_size + symbols.srcmodule_size +
