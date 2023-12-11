@@ -1868,17 +1868,19 @@ static NTSTATUS key_import_dh_public( struct key *key, UCHAR *buf, ULONG len )
         return STATUS_INTERNAL_ERROR;
     }
 
-    ret = pgnutls_pubkey_import_dh_raw( handle, params, &y );
-    pgnutls_dh_params_deinit( params );
-    if (ret < 0)
+    if ((ret = pgnutls_pubkey_import_dh_raw( handle, params, &y )))
     {
         pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
         pgnutls_pubkey_deinit( handle );
         return STATUS_INTERNAL_ERROR;
     }
 
     if (key_data(key)->a.pubkey) pgnutls_pubkey_deinit( key_data(key)->a.pubkey );
     key_data(key)->a.pubkey = handle;
+
+    if (key_data(key)->a.dh_params) pgnutls_dh_params_deinit( key_data(key)->a.dh_params );
+    key_data(key)->a.dh_params = params;
     return STATUS_SUCCESS;
 }
 
@@ -1921,17 +1923,19 @@ static NTSTATUS key_import_dh( struct key *key, UCHAR *buf, ULONG len )
         return STATUS_INTERNAL_ERROR;
     }
 
-    ret = pgnutls_privkey_import_dh_raw( handle, params, &y, &x );
-    pgnutls_dh_params_deinit( params );
-    if (ret < 0)
+    if ((ret = pgnutls_privkey_import_dh_raw( handle, params, &y, &x )))
     {
         pgnutls_perror( ret );
+        pgnutls_dh_params_deinit( params );
         pgnutls_privkey_deinit( handle );
         return STATUS_INTERNAL_ERROR;
     }
 
     if (key_data(key)->a.privkey) pgnutls_privkey_deinit( key_data(key)->a.privkey );
     key_data(key)->a.privkey = handle;
+
+    if (key_data(key)->a.dh_params) pgnutls_dh_params_deinit( key_data(key)->a.dh_params );
+    key_data(key)->a.dh_params = params;
     return STATUS_SUCCESS;
 }
 
