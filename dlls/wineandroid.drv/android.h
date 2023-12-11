@@ -125,7 +125,7 @@ extern MONITORINFOEXW default_monitor;
 
 enum android_window_messages
 {
-    WM_ANDROID_REFRESH = 0x80001000,
+    WM_ANDROID_REFRESH = WM_WINE_FIRST_DRIVER_MSG,
 };
 
 extern void init_gralloc( const struct hw_module_t *module );
