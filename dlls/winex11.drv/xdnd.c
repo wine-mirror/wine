@@ -233,7 +233,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
         }
     }
 
-    if (XDNDAccepted)
+    if (XDNDAccepted && XDNDDropEffect != DROPEFFECT_NONE)
         accept = 1;
     else
     {
@@ -246,7 +246,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
         }
     }
 
-    return accept ? effect : 0;
+    return accept ? effect : DROPEFFECT_NONE;
 }
 
 NTSTATUS x11drv_dnd_drop_event( UINT arg )
@@ -319,7 +319,7 @@ NTSTATUS x11drv_dnd_drop_event( UINT arg )
     TRACE("effectRequested(0x%lx) accept(%d) performed(0x%lx) at x(%ld),y(%ld)\n",
           XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
 
-    return accept ? effect : 0;
+    return accept ? effect : DROPEFFECT_NONE;
 }
 
 /**************************************************************************
