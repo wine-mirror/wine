@@ -470,6 +470,7 @@ SOURCES = \
 	msdaguid.h \
 	msdasc.idl \
 	msdasql.h \
+	msdelta.h \
 	mshtmcid.h \
 	mshtmdid.h \
 	mshtmhst.idl \
