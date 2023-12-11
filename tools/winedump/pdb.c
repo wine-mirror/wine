@@ -762,6 +762,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                    sidx.sections_stream);
             break;
         case sizeof(PDB_STREAM_INDEXES):
+        case sizeof(PDB_STREAM_INDEXES) + 2:
             memcpy(&sidx,
                    (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
                    symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
