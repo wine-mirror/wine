@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-11-09 19:50+0100\n"
+"PO-Revision-Date: 2023-12-11 19:30+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -12647,10 +12647,8 @@ msgid "Duplex:"
 msgstr "Dubbelzijdig:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "La&de:"
+msgstr "Papierla&de:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -14778,17 +14776,15 @@ msgid "&Run..."
 msgstr "&Uitvoeren..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "Windows &afsluiten"
+msgstr "&Scherm sluiten"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "Moeten deze waarden verwijderd worden?"
+msgstr ""
+"Alle programma's en het virtuele bureaublad worden afgesloten.\n"
+"Doorgaan?"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
