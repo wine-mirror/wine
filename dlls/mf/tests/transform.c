@@ -4677,7 +4677,14 @@ static void test_h264_decoder_concat_streams(void)
 
     hr = IMFCollection_GetElementCount(output_samples, &output_count);
     ok(hr == S_OK, "GetElementCount returned %#lx\n", hr);
-    ok(output_count == 96, "GetElementCount returned %#lx\n", output_count);
+    ok(output_count == 96 || broken(output_count == 120) /* Win7 sometimes */, "GetElementCount returned %lu\n", output_count);
+    while (broken(output_count > 96)) /* Win7 sometimes */
+    {
+        IMFSample *sample;
+        hr = IMFCollection_RemoveElement(output_samples, --output_count, (IUnknown **)&sample);
+        ok(hr == S_OK, "GetElementCount returned %#lx\n", hr);
+        IMFSample_Release(sample);
+    }
 
     ret = check_mf_sample_collection(output_samples, output_sample_desc, NULL);
     ok(ret == 0, "got %lu%% diff\n", ret);
