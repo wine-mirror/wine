@@ -1165,6 +1165,8 @@ static client_ptr_t assign_map_address( struct mapping *mapping )
 
     if ((ret = get_fd_map_address( mapping->fd ))) return ret;
 
+    size += granularity_mask + 1;  /* leave some free space between mappings */
+
     for (i = 0; i < range->count; i++)
     {
         if (range->free[i].size < size) continue;
