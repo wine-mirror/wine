@@ -200,11 +200,7 @@ static unsigned get_stream_by_name(struct pdb_reader* reader, const char* name)
     /* bitfield: first dword is len (in dword), then data */
     ok_bits = pdw;
     pdw += *ok_bits++ + 1;
-    if (*pdw++ != 0)
-    {
-        printf("unexpected value\n");
-        return -1;
-    }
+    pdw += *pdw + 1; /* skip deleted vector */
 
     for (i = 0; i < count; i++)
     {
@@ -1195,11 +1191,7 @@ static void pdb_jg_dump_header_root(struct pdb_reader* reader)
     /* bitfield: first dword is len (in dword), then data */
     ok_bits = pdw;
     pdw += *ok_bits++ + 1;
-    if (*pdw++ != 0)
-    {
-        printf("unexpected value\n");
-        return;
-    }
+    pdw += *pdw + 1; /* skip deleted vector */
 
     for (i = 0; i < count; i++)
     {
@@ -1346,11 +1338,7 @@ static void pdb_ds_dump_header_root(struct pdb_reader* reader)
     /* bitfield: first dword is len (in dword), then data */
     ok_bits = pdw;
     pdw += *ok_bits++ + 1;
-    if (*pdw++ != 0)
-    {
-        printf("unexpected value\n");
-        return;
-    }
+    pdw += *pdw + 1; /* skip deleted vector */
 
     for (i = 0; i < count; i++)
     {
