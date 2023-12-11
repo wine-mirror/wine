@@ -1657,7 +1657,7 @@ static NTSTATUS key_export_dh_public( struct key *key, UCHAR *buf, ULONG len, UL
     BCRYPT_DH_KEY_BLOB *dh_blob = (BCRYPT_DH_KEY_BLOB *)buf;
     ULONG size = key->u.a.bitlen / 8;
     gnutls_dh_params_t params;
-    gnutls_datum_t p, g, y, x = {0};
+    gnutls_datum_t p, g, y;
     UCHAR *dst;
     int ret = GNUTLS_E_INVALID_REQUEST;
 
@@ -1667,12 +1667,7 @@ static NTSTATUS key_export_dh_public( struct key *key, UCHAR *buf, ULONG len, UL
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (key_data(key)->a.pubkey)
-        ret = pgnutls_pubkey_export_dh_raw( key_data(key)->a.pubkey, params, &y, 0 );
-    else if (key_data(key)->a.privkey)
-        ret = pgnutls_privkey_export_dh_raw( key_data(key)->a.privkey, params, &y, &x, 0 );
-
-    if (ret)
+    if ((ret = pgnutls_pubkey_export_dh_raw( key_data(key)->a.pubkey, params, &y, 0 )))
     {
         pgnutls_perror( ret );
         pgnutls_dh_params_deinit( params );
@@ -1682,7 +1677,7 @@ static NTSTATUS key_export_dh_public( struct key *key, UCHAR *buf, ULONG len, UL
     if ((ret = pgnutls_dh_params_export_raw( params, &p, &g, NULL )) < 0)
     {
         pgnutls_perror( ret );
-        free( y.data ); free( x.data );
+        free( y.data );
         pgnutls_dh_params_deinit( params );
         return STATUS_INTERNAL_ERROR;
     }
@@ -1699,7 +1694,7 @@ static NTSTATUS key_export_dh_public( struct key *key, UCHAR *buf, ULONG len, UL
         dh_blob->cbKey   = size;
     }
 
-    free( p.data ); free( g.data ); free( y.data ); free( x.data );
+    free( p.data ); free( g.data ); free( y.data );
     return STATUS_SUCCESS;
 }
 
