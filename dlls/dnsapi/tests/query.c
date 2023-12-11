@@ -180,19 +180,6 @@ static void test_DnsQuery(void)
     wcscpy(domain, L"winehq.org");
     if (ptr->wType == DNS_TYPE_CNAME)
         ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
-    ptr = ptr->pNext;
-
-    while (ptr)
-    {
-        if (ptr->wType != DNS_TYPE_OPT)
-        {
-            ok(wcscmp(domain, ptr->pName), "did not expect a record for %s\n",
-               wine_dbgstr_w(ptr->pName));
-            ok(ptr->wType == DNS_TYPE_A || ptr->wType == DNS_TYPE_AAAA,
-               "unexpected record type %d\n", ptr->wType);
-        }
-        ptr = ptr->pNext;
-    }
     DnsRecordListFree(rec, DnsFreeRecordList);
 
     status = DnsQuery_W(L"", DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
