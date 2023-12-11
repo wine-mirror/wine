@@ -2357,10 +2357,29 @@ static void test_GdipDrawString(void)
     }
     expect(Ok, status);
 
-    status = GdipCreateSolidFill((ARGB)0xdeadbeef, (GpSolidFill**)&brush);
+    status = GdipCreateStringFormat(0,0,&format);
     expect(Ok, status);
 
-    status = GdipCreateStringFormat(0,0,&format);
+    if (winetest_interactive)
+    {
+        status = GdipCreateSolidFill(0xFF000000, (GpSolidFill**)&brush);
+        expect(Ok, status);
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = 0;
+        rect.Height = 14;
+        GdipRotateWorldTransform(graphics, 45, MatrixOrderPrepend);
+        GdipScaleWorldTransform(graphics, 2, 2, MatrixOrderPrepend);
+        GdipGraphicsClear(graphics, 0xFFFFFFFF);
+        status = GdipDrawString(graphics, L"\u8336Hola\u8336", 6, fnt, &rect, format, brush);
+        expect(Ok, status);
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW); /* FIXME: In Windows this test works without this line. */
+        Sleep(4000);
+        GdipDeleteBrush(brush);
+        GdipResetWorldTransform(graphics);
+    }
+
+    status = GdipCreateSolidFill((ARGB)0xdeadbeef, (GpSolidFill**)&brush);
     expect(Ok, status);
 
     rect.X = 0;
