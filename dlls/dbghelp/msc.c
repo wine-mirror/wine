@@ -3159,11 +3159,7 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
     /* bitfield: first dword is len (in dword), then data */
     ok_bits = pdw;
     pdw += *ok_bits++ + 1;
-    if (*pdw++ != 0)
-    {
-        FIXME("unexpected value\n");
-        return FALSE;
-    }
+    pdw += *pdw + 1; /* skip deleted vector */
 
     for (i = j = 0; i < count; i++)
     {
