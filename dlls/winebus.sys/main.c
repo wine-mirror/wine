@@ -542,6 +542,7 @@ struct bus_main_params
 
     void *init_args;
     HANDLE init_done;
+    NTSTATUS *init_status;
     unsigned int init_code;
     unsigned int wait_code;
     struct bus_event *bus_event;
@@ -555,6 +556,7 @@ static DWORD CALLBACK bus_main_thread(void *args)
 
     TRACE("%s main loop starting\n", debugstr_w(bus.name));
     status = winebus_call(bus.init_code, bus.init_args);
+    *bus.init_status = status;
     SetEvent(bus.init_done);
     TRACE("%s main loop started\n", debugstr_w(bus.name));
 
@@ -603,6 +605,7 @@ static DWORD CALLBACK bus_main_thread(void *args)
 static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
 {
     DWORD i = bus_count++, max_size;
+    NTSTATUS status;
 
     if (!(bus->init_done = CreateEventW(NULL, FALSE, FALSE, NULL)))
     {
@@ -620,6 +623,7 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
         return STATUS_UNSUCCESSFUL;
     }
 
+    bus->init_status = &status;
     if (!(bus_thread[i] = CreateThread(NULL, 0, bus_main_thread, bus, 0, NULL)))
     {
         ERR("failed to create %s bus thread.\n", debugstr_w(bus->name));
@@ -630,7 +634,7 @@ static NTSTATUS bus_main_thread_start(struct bus_main_params *bus)
 
     WaitForSingleObject(bus->init_done, INFINITE);
     CloseHandle(bus->init_done);
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static void sdl_bus_free_mappings(struct sdl_bus_options *options)
