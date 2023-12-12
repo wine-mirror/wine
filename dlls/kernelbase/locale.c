@@ -552,8 +552,8 @@ static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 
 static const struct calendar *get_calendar_data( const NLS_LOCALE_DATA *locale, UINT id )
 {
-    if (id == CAL_HIJRI) id = locale->islamic_cal[0];
-    else if (id == CAL_PERSIAN) id = locale->islamic_cal[1];
+    if (id == CAL_HIJRI && locale->islamic_cal[0]) id = locale->islamic_cal[0];
+    else if (id == CAL_PERSIAN && locale->islamic_cal[1]) id = locale->islamic_cal[1];
 
     if (!id || id > locale_table->nb_calendars) return NULL;
     return (const struct calendar *)((const char *)locale_table + locale_table->calendars_offset +
@@ -1617,7 +1617,7 @@ static int get_calendar_info( const NLS_LOCALE_DATA *locale, CALID id, CALTYPE t
     }
     else if (len < 0 || value) goto invalid;
 
-    if (id != CAL_GREGORIAN)
+    if (id != CAL_GREGORIAN && type != CAL_ITWODIGITYEARMAX)
     {
         const USHORT *ids = locale_strings + locale->scalendartype;
         for (i = 0; i < ids[0]; i++) if (ids[1 + i] == id) break;
