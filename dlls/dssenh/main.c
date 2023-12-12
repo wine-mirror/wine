@@ -1012,5 +1012,11 @@ BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *s
         return FALSE;
     }
 
+    if (!hash->finished)
+    {
+        if (BCryptFinishHash( hash->handle, hash->value, hash->len, 0 )) return FALSE;
+        hash->finished = TRUE;
+    }
+
     return !BCryptVerifySignature( key->handle, NULL, hash->value, hash->len, (UCHAR *)sig, siglen, 0 );
 }
