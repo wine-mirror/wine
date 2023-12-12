@@ -3596,9 +3596,14 @@ static void test_destructors(void)
         "a.ref = { 'ref': Math, 'a': a }; b.ref = Math.ref;\n"
         "a.self = a; b.self = b; c.self = c;\n"
     "})(), true";
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
+    IActiveScript *script, *script2;
+    IDispatchEx *dispex, *dispex2;
     IActiveScriptParse *parser;
-    IActiveScript *script;
+    DISPPARAMS dp = { 0 };
     VARIANT v;
+    DISPID id;
+    BSTR str;
     HRESULT hres;
 
     V_VT(&v) = VT_EMPTY;
@@ -3642,6 +3647,74 @@ static void test_destructors(void)
     IActiveScriptParse_Release(parser);
     CHECK_CALLED(testdestrobj);
 
+    IActiveScript_Release(script);
+
+    /* Create a cyclic ref across two jscript engines */
+    V_VT(&v) = VT_EMPTY;
+    hres = parse_script_expr(cyclic_refs, &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IActiveScriptParse_ParseScriptText(parser, L"Math.ref", NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &v, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(v) = NULL\n");
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = parse_script_expr(L"new Object()", &v, &script2);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(v) = NULL\n");
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex2);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    dp.cArgs = dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    dp.rgvarg = &v;
+
+    str = SysAllocString(L"diff_ctx");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameEnsure, &id);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)dispex2;
+    hres = IDispatchEx_Invoke(dispex, id, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+
+    str = SysAllocString(L"ref");
+    hres = IDispatchEx_GetDispID(dispex2, str, fdexNameEnsure, &id);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)dispex;
+    hres = IDispatchEx_Invoke(dispex2, id, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+
+    IDispatchEx_Release(dispex2);
+    IDispatchEx_Release(dispex);
+
+    SET_EXPECT(testdestrobj);
+    V_VT(&v) = VT_EMPTY;
+    hres = IActiveScriptParse_ParseScriptText(parser, L"Math.ref = undefined, CollectGarbage(), true",
+                                              NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &v, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    IActiveScriptParse_Release(parser);
+    CHECK_CALLED(testdestrobj);
+
+    IActiveScript_Release(script2);
     IActiveScript_Release(script);
 }
 

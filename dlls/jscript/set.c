@@ -745,11 +745,6 @@ static HRESULT WeakMap_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
     if(!key)
         return JS_E_KEY_NOT_OBJECT;
 
-    if(key->ctx != ctx) {
-        FIXME("different ctx not supported\n");
-        return JS_E_KEY_NOT_OBJECT;
-    }
-
     if((entry = get_weakmap_entry(weakmap, key))) {
         jsval_t val;
         hres = jsval_copy(value, &val);

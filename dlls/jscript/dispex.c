@@ -820,13 +820,13 @@ HRESULT gc_run(script_ctx_t *ctx)
         for(prop = obj->props, props_end = prop + obj->prop_cnt; prop < props_end; prop++) {
             switch(prop->type) {
             case PROP_JSVAL:
-                if(is_object_instance(prop->u.val) && (link = to_jsdisp(get_object(prop->u.val))) && link->ctx == ctx)
+                if(is_object_instance(prop->u.val) && (link = to_jsdisp(get_object(prop->u.val))))
                     link->ref--;
                 break;
             case PROP_ACCESSOR:
-                if(prop->u.accessor.getter && prop->u.accessor.getter->ctx == ctx)
+                if(prop->u.accessor.getter)
                     prop->u.accessor.getter->ref--;
-                if(prop->u.accessor.setter && prop->u.accessor.setter->ctx == ctx)
+                if(prop->u.accessor.setter)
                     prop->u.accessor.setter->ref--;
                 break;
             default:
@@ -834,7 +834,7 @@ HRESULT gc_run(script_ctx_t *ctx)
             }
         }
 
-        if(obj->prototype && obj->prototype->ctx == ctx)
+        if(obj->prototype)
             obj->prototype->ref--;
         if(obj->builtin_info->gc_traverse)
             obj->builtin_info->gc_traverse(&gc_ctx, GC_TRAVERSE_SPECULATIVELY, obj);
@@ -870,12 +870,12 @@ HRESULT gc_run(script_ctx_t *ctx)
                 default:
                     continue;
                 }
-                if(link && link->gc_marked && link->ctx == ctx) {
+                if(link && link->gc_marked) {
                     hres = gc_stack_push(&gc_ctx, link);
                     if(FAILED(hres))
                         break;
                 }
-                if(link2 && link2->gc_marked && link2->ctx == ctx) {
+                if(link2 && link2->gc_marked) {
                     hres = gc_stack_push(&gc_ctx, link2);
                     if(FAILED(hres))
                         break;
@@ -885,7 +885,7 @@ HRESULT gc_run(script_ctx_t *ctx)
             if(FAILED(hres))
                 break;
 
-            if(obj2->prototype && obj2->prototype->gc_marked && obj2->prototype->ctx == ctx) {
+            if(obj2->prototype && obj2->prototype->gc_marked) {
                 hres = gc_stack_push(&gc_ctx, obj2->prototype);
                 if(FAILED(hres))
                     break;
@@ -974,8 +974,6 @@ HRESULT gc_process_linked_obj(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsd
         return S_OK;
     }
 
-    if(link->ctx != obj->ctx)
-        return S_OK;
     if(op == GC_TRAVERSE_SPECULATIVELY)
         link->ref--;
     else if(link->gc_marked)
@@ -994,7 +992,7 @@ HRESULT gc_process_linked_val(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsd
         return S_OK;
     }
 
-    if(!is_object_instance(*link) || !(jsdisp = to_jsdisp(get_object(*link))) || jsdisp->ctx != obj->ctx)
+    if(!is_object_instance(*link) || !(jsdisp = to_jsdisp(get_object(*link))))
         return S_OK;
     if(op == GC_TRAVERSE_SPECULATIVELY)
         jsdisp->ref--;
