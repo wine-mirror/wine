@@ -776,11 +776,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
 
         ctx->last_match = jsstr_empty();
 
-        ctx = InterlockedCompareExchangePointer((void**)&This->ctx, ctx, NULL);
-        if(ctx) {
-            script_release(ctx);
-            return E_UNEXPECTED;
-        }
+        This->ctx = ctx;
     }
 
     /* Retrieve new dispatches for persistent named items */
