@@ -908,7 +908,7 @@ static void test_themed_background(void)
     pSetThreadDpiAwarenessContext = (void *)GetProcAddress(GetModuleHandleA("user32.dll"),
                                                            "SetThreadDpiAwarenessContext");
     if (pSetThreadDpiAwarenessContext)
-        pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+        old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 
     memset(&cls, 0, sizeof(cls));
     cls.hInstance = GetModuleHandleA(0);
