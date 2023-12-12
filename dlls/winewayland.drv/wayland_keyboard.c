@@ -33,6 +33,7 @@
 
 #include "waylanddrv.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
@@ -602,6 +603,50 @@ static BOOL find_xkb_layout_variant(const char *name, const char **layout, const
     return FALSE;
 }
 
+static BOOL get_async_key_state(BYTE state[256])
+{
+    BOOL ret;
+
+    SERVER_START_REQ(get_key_state)
+    {
+        req->async = 1;
+        req->key = -1;
+        wine_server_set_reply(req, state, 256);
+        ret = !wine_server_call(req);
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
+
+static void release_all_keys(HWND hwnd)
+{
+    BYTE state[256];
+    int vkey;
+    INPUT input = {.type = INPUT_KEYBOARD};
+
+    get_async_key_state(state);
+
+    for (vkey = 1; vkey < 256; vkey++)
+    {
+        /* Skip mouse buttons. */
+        if (vkey < 7 && vkey != VK_CANCEL) continue;
+        /* Skip left/right-agnostic modifier vkeys. */
+        if (vkey == VK_SHIFT || vkey == VK_CONTROL || vkey == VK_MENU) continue;
+
+        if (state[vkey] & 0x80)
+        {
+            UINT scan = NtUserMapVirtualKeyEx(vkey, MAPVK_VK_TO_VSC_EX,
+                                              keyboard_hkl);
+            input.ki.wVk = vkey;
+            input.ki.wScan = scan & 0xff;
+            input.ki.dwFlags = KEYEVENTF_KEYUP;
+            if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            __wine_send_input(hwnd, &input, NULL);
+        }
+    }
+}
+
 /**********************************************************************
  *          Keyboard handling
  */
@@ -744,6 +789,10 @@ static void keyboard_handle_leave(void *data, struct wl_keyboard *wl_keyboard,
     if (keyboard->focused_hwnd == hwnd)
         keyboard->focused_hwnd = NULL;
     pthread_mutex_unlock(&keyboard->mutex);
+
+    /* The spec for the leave event tells us to treat all keys as released,
+     * and for any key repetition to stop. */
+    release_all_keys(hwnd);
 
     /* FIXME: update foreground window as well */
 }
