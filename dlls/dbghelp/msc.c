@@ -3823,7 +3823,8 @@ static BOOL pdb_process_internal(const struct process* pcs,
         struct codeview_type_parse ipi_ctp;
         BYTE*       file;
         int         header_size = 0;
-        PDB_STREAM_INDEXES* psi;
+        unsigned    num_sub_streams;
+        const unsigned short* sub_streams;
         BOOL        ipi_ok;
 
         pdb_convert_symbols_header(&symbols, &header_size, symbols_image);
@@ -3839,25 +3840,14 @@ static BOOL pdb_process_internal(const struct process* pcs,
                 symbols.version, symbols.version);
         }
 
-        switch (symbols.stream_index_size)
-        {
-        case 0:
-        case sizeof(PDB_STREAM_INDEXES_OLD):
-            /* no fpo ext stream in this case */
-            break;
-        case sizeof(PDB_STREAM_INDEXES):
-        case sizeof(PDB_STREAM_INDEXES) + 2:
-            psi = (PDB_STREAM_INDEXES*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
-                                        symbols.module_size + symbols.sectcontrib_size +
-                                        symbols.segmap_size + symbols.srcmodule_size +
-                                        symbols.pdbimport_size + symbols.unknown2_size);
-            pdb_file->fpoext_stream = psi->FPO_EXT;
-            break;
-        default:
-            FIXME("Unknown PDB_STREAM_INDEXES size (%u)\n", symbols.stream_index_size);
-            pdb_free(symbols_image);
-            return FALSE;
-        }
+        num_sub_streams = symbols.stream_index_size / sizeof(sub_streams[0]);
+        sub_streams = (const unsigned short*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
+                                              symbols.module_size + symbols.sectcontrib_size +
+                                              symbols.segmap_size + symbols.srcmodule_size +
+                                              symbols.pdbimport_size + symbols.unknown2_size);
+        if (PDB_SIDX_FPO < num_sub_streams)
+            pdb_file->fpoext_stream = sub_streams[PDB_SIDX_FPO];
+
         files_image = pdb_read_strings(pdb_file);
 
         pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,

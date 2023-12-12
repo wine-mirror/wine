@@ -2576,31 +2576,6 @@ enum PDB_STREAM_INDEX
     PDB_SIDX_FPOEXT = 9
 };
 
-typedef struct
-{
-    unsigned short FPO;
-    unsigned short unk0;
-    unsigned short unk1;
-    unsigned short unk2;
-    unsigned short unk3;
-    unsigned short sections_stream;
-} PDB_STREAM_INDEXES_OLD;
-
-typedef struct
-{
-    unsigned short FPO;
-    unsigned short unk0;
-    unsigned short unk1;
-    unsigned short unk2;
-    unsigned short unk3;
-    unsigned short sections_stream;
-    unsigned short unk4;
-    unsigned short unk5;
-    unsigned short unk6;
-    unsigned short FPO_EXT;
-    unsigned short unk7;
-} PDB_STREAM_INDEXES;
-
 typedef struct _PDB_FPO_DATA
 {
     unsigned int   start;

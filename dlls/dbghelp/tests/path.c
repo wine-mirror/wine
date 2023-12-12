@@ -587,7 +587,7 @@ static BOOL create_test_pdb_ds(const WCHAR* pdb_name, const GUID* guid, DWORD ag
         .hash_records_size = 0,
         .unknown = 0
     };
-    PDB_STREAM_INDEXES pddt = {0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, };
+    unsigned short dbi_substream[] = {0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, };
     char unknown[] =
     {
         0xfe, 0xef, 0xfe, 0xef, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
@@ -650,7 +650,7 @@ static BOOL create_test_pdb_ds(const WCHAR* pdb_name, const GUID* guid, DWORD ag
     DBI.unknown2_size = stream->size - mark;
 
     mark = stream->size;
-    pdb_append_to_stream(stream, &pddt, sizeof(pddt));
+    pdb_append_to_stream(stream, dbi_substream, sizeof(dbi_substream));
     DBI.stream_index_size = stream->size - mark;
 
     stream = pdb_add_stream(&pdb, NULL, &IPI, sizeof(IPI)); /* always stream #4 */
@@ -658,7 +658,7 @@ static BOOL create_test_pdb_ds(const WCHAR* pdb_name, const GUID* guid, DWORD ag
     stream = pdb_add_stream(&pdb, &DBI.global_hash_stream, &GHASH, sizeof(GHASH));
     stream = pdb_add_stream(&pdb, &DBI.gsym_stream, NULL, 0);
 
-    stream = pdb_add_stream(&pdb, &pddt.sections_stream, &ro_section, sizeof(ro_section));
+    stream = pdb_add_stream(&pdb, &dbi_substream[PDB_SIDX_SECTIONS], &ro_section, sizeof(ro_section));
 
     hfile = CreateFileW(pdb_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to create %ls err %lu\n", pdb_name, GetLastError());
