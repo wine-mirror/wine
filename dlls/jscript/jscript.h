@@ -132,6 +132,12 @@ HRESULT builtin_set_const(script_ctx_t*,jsdisp_t*,jsval_t);
 struct thread_data {
     LONG ref;
     LONG thread_id;
+
+    BOOL gc_is_unlinking;
+    DWORD gc_last_tick;
+
+    struct list objects;
+    struct rb_tree weak_refs;
 };
 
 struct thread_data *get_thread_data(void);
@@ -383,10 +389,9 @@ struct _script_ctx_t {
     SCRIPTSTATE state;
     IActiveScript *active_script;
 
+    struct thread_data *thread_data;
     struct _call_frame_t *call_ctx;
     struct list named_items;
-    struct list objects;
-    struct rb_tree weak_refs;
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;
@@ -398,9 +403,6 @@ struct _script_ctx_t {
     jsexcept_t *ei;
 
     heap_pool_t tmp_heap;
-
-    BOOL gc_is_unlinking;
-    DWORD gc_last_tick;
 
     jsval_t *stack;
     unsigned stack_top;

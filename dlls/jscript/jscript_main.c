@@ -40,6 +40,13 @@ HINSTANCE jscript_hinstance;
 static DWORD jscript_tls;
 static ITypeInfo *dispatch_typeinfo;
 
+static int weak_refs_compare(const void *key, const struct rb_entry *entry)
+{
+    const struct weak_refs_entry *weak_refs_entry = RB_ENTRY_VALUE(entry, const struct weak_refs_entry, entry);
+    ULONG_PTR a = (ULONG_PTR)key, b = (ULONG_PTR)LIST_ENTRY(weak_refs_entry->list.next, struct weakmap_entry, weak_refs_entry)->key;
+    return (a > b) - (a < b);
+}
+
 struct thread_data *get_thread_data(void)
 {
     struct thread_data *thread_data = TlsGetValue(jscript_tls);
@@ -49,6 +56,8 @@ struct thread_data *get_thread_data(void)
         if(!thread_data)
             return NULL;
         thread_data->thread_id = GetCurrentThreadId();
+        list_init(&thread_data->objects);
+        rb_init(&thread_data->weak_refs, weak_refs_compare);
         TlsSetValue(jscript_tls, thread_data);
     }
 

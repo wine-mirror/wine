@@ -783,6 +783,7 @@ HRESULT gc_run(script_ctx_t *ctx)
         struct chunk *next;
         LONG ref[1020];
     } *head, *chunk;
+    struct thread_data *thread_data = ctx->thread_data;
     jsdisp_t *obj, *obj2, *link, *link2;
     dispex_prop_t *prop, *props_end;
     struct gc_ctx gc_ctx = { 0 };
@@ -791,7 +792,7 @@ HRESULT gc_run(script_ctx_t *ctx)
     struct list *iter;
 
     /* Prevent recursive calls from side-effects during unlinking (e.g. CollectGarbage from host object's Release) */
-    if(ctx->gc_is_unlinking)
+    if(thread_data->gc_is_unlinking)
         return S_OK;
 
     if(!(head = malloc(sizeof(*head))))
@@ -800,7 +801,7 @@ HRESULT gc_run(script_ctx_t *ctx)
     chunk = head;
 
     /* 1. Save actual refcounts and decrease them speculatively as-if we unlinked the objects */
-    LIST_FOR_EACH_ENTRY(obj, &ctx->objects, jsdisp_t, entry) {
+    LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
         if(chunk_idx == ARRAY_SIZE(chunk->ref)) {
             if(!(chunk->next = malloc(sizeof(*chunk)))) {
                 do {
@@ -815,7 +816,7 @@ HRESULT gc_run(script_ctx_t *ctx)
         }
         chunk->ref[chunk_idx++] = obj->ref;
     }
-    LIST_FOR_EACH_ENTRY(obj, &ctx->objects, jsdisp_t, entry) {
+    LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
         for(prop = obj->props, props_end = prop + obj->prop_cnt; prop < props_end; prop++) {
             switch(prop->type) {
             case PROP_JSVAL:
@@ -841,7 +842,7 @@ HRESULT gc_run(script_ctx_t *ctx)
     }
 
     /* 2. Clear mark on objects with non-zero "external refcount" and all objects accessible from them */
-    LIST_FOR_EACH_ENTRY(obj, &ctx->objects, jsdisp_t, entry) {
+    LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
         if(!obj->ref || !obj->gc_marked)
             continue;
 
@@ -899,7 +900,7 @@ HRESULT gc_run(script_ctx_t *ctx)
             /* For weak refs, traverse paths accessible from it via the WeakMaps, if the WeakMaps are alive at this point.
                We need both the key and the WeakMap for the entry to actually be accessible (and thus traversed). */
             if(obj2->has_weak_refs) {
-                struct list *list = &RB_ENTRY_VALUE(rb_get(&ctx->weak_refs, obj2), struct weak_refs_entry, entry)->list;
+                struct list *list = &RB_ENTRY_VALUE(rb_get(&thread_data->weak_refs, obj2), struct weak_refs_entry, entry)->list;
                 struct weakmap_entry *entry;
 
                 LIST_FOR_EACH_ENTRY(entry, list, struct weakmap_entry, weak_refs_entry) {
@@ -926,7 +927,7 @@ HRESULT gc_run(script_ctx_t *ctx)
 
     /* Restore */
     chunk = head; chunk_idx = 0;
-    LIST_FOR_EACH_ENTRY(obj, &ctx->objects, jsdisp_t, entry) {
+    LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
         obj->ref = chunk->ref[chunk_idx++];
         if(chunk_idx == ARRAY_SIZE(chunk->ref)) {
             struct chunk *next = chunk->next;
@@ -940,13 +941,13 @@ HRESULT gc_run(script_ctx_t *ctx)
         return hres;
 
     /* 3. Remove all the links from the marked objects, since they are dangling */
-    ctx->gc_is_unlinking = TRUE;
+    thread_data->gc_is_unlinking = TRUE;
 
-    iter = list_head(&ctx->objects);
+    iter = list_head(&thread_data->objects);
     while(iter) {
         obj = LIST_ENTRY(iter, jsdisp_t, entry);
         if(!obj->gc_marked) {
-            iter = list_next(&ctx->objects, iter);
+            iter = list_next(&thread_data->objects, iter);
             continue;
         }
 
@@ -956,12 +957,12 @@ HRESULT gc_run(script_ctx_t *ctx)
 
         /* Releasing unlinked object should not delete any other object,
            so we can safely obtain the next pointer now */
-        iter = list_next(&ctx->objects, iter);
+        iter = list_next(&thread_data->objects, iter);
         jsdisp_release(obj);
     }
 
-    ctx->gc_is_unlinking = FALSE;
-    ctx->gc_last_tick = GetTickCount();
+    thread_data->gc_is_unlinking = FALSE;
+    thread_data->gc_last_tick = GetTickCount();
     return S_OK;
 }
 
@@ -2174,7 +2175,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
     unsigned i;
 
     /* FIXME: Use better heuristics to decide when to run the GC */
-    if(GetTickCount() - ctx->gc_last_tick > 30000)
+    if(GetTickCount() - ctx->thread_data->gc_last_tick > 30000)
         gc_run(ctx);
 
     TRACE("%p (%p)\n", dispex, prototype);
@@ -2201,7 +2202,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
     script_addref(ctx);
     dispex->ctx = ctx;
 
-    list_add_tail(&ctx->objects, &dispex->entry);
+    list_add_tail(&ctx->thread_data->objects, &dispex->entry);
     return S_OK;
 }
 
@@ -2241,7 +2242,7 @@ void jsdisp_free(jsdisp_t *obj)
     TRACE("(%p)\n", obj);
 
     if(obj->has_weak_refs) {
-        struct list *list = &RB_ENTRY_VALUE(rb_get(&obj->ctx->weak_refs, obj), struct weak_refs_entry, entry)->list;
+        struct list *list = &RB_ENTRY_VALUE(rb_get(&obj->ctx->thread_data->weak_refs, obj), struct weak_refs_entry, entry)->list;
         do {
             remove_weakmap_entry(LIST_ENTRY(list->next, struct weakmap_entry, weak_refs_entry));
         } while(obj->has_weak_refs);

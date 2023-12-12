@@ -658,7 +658,7 @@ void remove_weakmap_entry(struct weakmap_entry *entry)
     else {
         struct weak_refs_entry *weak_refs_entry = LIST_ENTRY(next, struct weak_refs_entry, list);
         entry->key->has_weak_refs = FALSE;
-        rb_remove(&entry->key->ctx->weak_refs, &weak_refs_entry->entry);
+        rb_remove(&entry->key->ctx->thread_data->weak_refs, &weak_refs_entry->entry);
         free(weak_refs_entry);
     }
     rb_remove(&weakmap->map, &entry->entry);
@@ -771,14 +771,14 @@ static HRESULT WeakMap_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
         }
 
         if(key->has_weak_refs)
-            weak_refs_entry = RB_ENTRY_VALUE(rb_get(&ctx->weak_refs, key), struct weak_refs_entry, entry);
+            weak_refs_entry = RB_ENTRY_VALUE(rb_get(&ctx->thread_data->weak_refs, key), struct weak_refs_entry, entry);
         else {
             if(!(weak_refs_entry = malloc(sizeof(*weak_refs_entry)))) {
                 jsval_release(entry->value);
                 free(entry);
                 return E_OUTOFMEMORY;
             }
-            rb_put(&ctx->weak_refs, key, &weak_refs_entry->entry);
+            rb_put(&ctx->thread_data->weak_refs, key, &weak_refs_entry->entry);
             list_init(&weak_refs_entry->list);
             key->has_weak_refs = TRUE;
         }
