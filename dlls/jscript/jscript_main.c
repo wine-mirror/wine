@@ -37,7 +37,33 @@ LONG module_ref = 0;
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 HINSTANCE jscript_hinstance;
+static DWORD jscript_tls;
 static ITypeInfo *dispatch_typeinfo;
+
+struct thread_data *get_thread_data(void)
+{
+    struct thread_data *thread_data = TlsGetValue(jscript_tls);
+
+    if(!thread_data) {
+        thread_data = calloc(1, sizeof(struct thread_data));
+        if(!thread_data)
+            return NULL;
+        thread_data->thread_id = GetCurrentThreadId();
+        TlsSetValue(jscript_tls, thread_data);
+    }
+
+    thread_data->ref++;
+    return thread_data;
+}
+
+void release_thread_data(struct thread_data *thread_data)
+{
+    if(--thread_data->ref)
+        return;
+
+    free(thread_data);
+    TlsSetValue(jscript_tls, NULL);
+}
 
 HRESULT get_dispatch_typeinfo(ITypeInfo **out)
 {
@@ -164,13 +190,16 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         jscript_hinstance = hInstDLL;
-        if(!init_strings())
+        jscript_tls = TlsAlloc();
+        if(jscript_tls == TLS_OUT_OF_INDEXES || !init_strings())
             return FALSE;
         break;
     case DLL_PROCESS_DETACH:
         if (lpv) break;
         if (dispatch_typeinfo) ITypeInfo_Release(dispatch_typeinfo);
+        if(jscript_tls != TLS_OUT_OF_INDEXES) TlsFree(jscript_tls);
         free_strings();
+        break;
     }
 
     return TRUE;

@@ -129,6 +129,14 @@ typedef HRESULT (*builtin_setter_t)(script_ctx_t*,jsdisp_t*,jsval_t);
 
 HRESULT builtin_set_const(script_ctx_t*,jsdisp_t*,jsval_t);
 
+struct thread_data {
+    LONG ref;
+    LONG thread_id;
+};
+
+struct thread_data *get_thread_data(void);
+void release_thread_data(struct thread_data*);
+
 typedef struct named_item_t {
     jsdisp_t *script_obj;
     IDispatch *disp;
