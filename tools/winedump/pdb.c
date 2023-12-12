@@ -489,10 +489,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     unsigned char*      modimage;
     const char*         file;
     char                tcver[32];
-    PDB_STREAM_INDEXES  sidx;
-
-    sidx.FPO = sidx.unk0 = sidx.unk1 = sidx.unk2 = sidx.unk3 = sidx.sections_stream =
-        sidx.unk4 = sidx.unk5 = sidx.unk6 = sidx.FPO_EXT = sidx.unk7 = -1;
+    const unsigned short* sub_streams = NULL;
+    unsigned            num_sub_streams = 0;
 
     symbols = reader->read_stream(reader, 3);
     if (!symbols) return;
@@ -736,52 +734,20 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     }
     if (symbols->stream_index_size && globals_dump_sect("image"))
     {
+        const char* sub_stream_names[] = {"FPO", NULL, NULL, NULL, NULL, "Sections stream", NULL, NULL, NULL, "FPO-ext"};
+        int i;
+
         printf("\t------------stream indexes--------------\n");
-        switch (symbols->stream_index_size)
+        num_sub_streams = symbols->stream_index_size / sizeof(sub_streams[0]);
+        sub_streams = (const unsigned short*)((const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
+                                              symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
+                                              symbols->pdbimport_size + symbols->unknown2_size);
+        for (i = 0; i < num_sub_streams; i++)
         {
-        case sizeof(PDB_STREAM_INDEXES_OLD):
-            /* PDB_STREAM_INDEXES is a superset of PDB_STREAM_INDEX_OLD
-             * FIXME: to be confirmed when all fields are fully understood
-             */
-            memcpy(&sidx,
-                   (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
-                   symbols->pdbimport_size + symbols->unknown2_size,
-                   sizeof(PDB_STREAM_INDEXES_OLD));
-            printf("\tFPO:                  %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\tSections stream:      %04x\n",
-                   sidx.FPO, sidx.unk0, sidx.unk1, sidx.unk2, sidx.unk3,
-                   sidx.sections_stream);
-            break;
-        case sizeof(PDB_STREAM_INDEXES):
-        case sizeof(PDB_STREAM_INDEXES) + 2:
-            memcpy(&sidx,
-                   (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
-                   symbols->pdbimport_size + symbols->unknown2_size,
-                   sizeof(sidx));
-            printf("\tFPO:                  %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\tSection stream:       %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\t?:                    %04x\n"
-                   "\tFPO-ext:              %04x\n"
-                   "\t?:                    %04x\n",
-                   sidx.FPO, sidx.unk0, sidx.unk1, sidx.unk2, sidx.unk3,
-                   sidx.sections_stream, sidx.unk4, sidx.unk5, sidx.unk6, sidx.FPO_EXT,
-                   sidx.unk7);
-            break;
-        default:
-            printf("unexpected size for stream index %d\n", symbols->stream_index_size);
-            break;
+            const char* name = "?";
+            if (i < ARRAY_SIZE(sub_stream_names) && sub_stream_names[i])
+                name = sub_stream_names[i];
+            printf("\t%s:%.*s%04x\n", name, (int)(21 - strlen(name)), "", sub_streams[i]);
         }
     }
 
@@ -835,11 +801,14 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     dump_global_symbol(reader, symbols->global_hash_stream);
     dump_public_symbol(reader, symbols->public_stream);
 
-    if (globals_dump_sect("image"))
+    if (sub_streams && globals_dump_sect("image"))
     {
-        pdb_dump_fpo(reader, sidx.FPO);
-        pdb_dump_fpo_ext(reader, sidx.FPO_EXT);
-        pdb_dump_sections(reader, sidx.sections_stream);
+        if (PDB_SIDX_FPO < num_sub_streams)
+            pdb_dump_fpo(reader, sub_streams[PDB_SIDX_FPO]);
+        if (PDB_SIDX_FPOEXT < num_sub_streams)
+            pdb_dump_fpo_ext(reader, sub_streams[PDB_SIDX_FPOEXT]);
+        if (PDB_SIDX_SECTIONS < num_sub_streams)
+            pdb_dump_sections(reader, sub_streams[PDB_SIDX_SECTIONS]);
     }
 
     free(symbols);

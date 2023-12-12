@@ -2568,6 +2568,14 @@ typedef struct _PDB_SYMBOLS
     unsigned int   resvd4;
 } PDB_SYMBOLS, *PPDB_SYMBOLS;
 
+/* FIXME other entries are unknown */
+enum PDB_STREAM_INDEX
+{
+    PDB_SIDX_FPO,
+    PDB_SIDX_SECTIONS = 5,
+    PDB_SIDX_FPOEXT = 9
+};
+
 typedef struct
 {
     unsigned short FPO;
