@@ -46,6 +46,7 @@
 132 stdcall -noname ShouldAppsUseDarkMode()
 133 stdcall -noname AllowDarkModeForWindow(ptr long)
 135 stdcall -noname SetPreferredAppMode(long)
+137 stdcall -noname IsDarkModeAllowedForWindow(ptr)
 138 stdcall -noname ShouldSystemUseDarkMode()
 
 # Standard functions

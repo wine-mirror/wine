@@ -1315,3 +1315,13 @@ int WINAPI SetPreferredAppMode(int app_mode)
     FIXME("%d: stub\n", app_mode);
     return 0;
 }
+
+/**********************************************************************
+ *      IsDarkModeAllowedForWindow                        (UXTHEME.137)
+ *
+ */
+BOOL WINAPI IsDarkModeAllowedForWindow(HWND hwnd)
+{
+    FIXME("%p: stub\n", hwnd);
+    return FALSE;
+}
