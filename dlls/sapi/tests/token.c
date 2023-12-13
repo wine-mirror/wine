@@ -783,6 +783,8 @@ static void test_object_token(void)
     ISpObjectToken_Release( test_class_token );
     IUnknown_Release( obj );
     ISpObjectToken_Release( token );
+
+    RegDeleteTreeA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Winetest\\sapi" );
 }
 
 START_TEST(token)
