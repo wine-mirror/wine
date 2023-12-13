@@ -478,6 +478,15 @@ static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         break;
     }
 
+    case WM_CLOSE:
+        if (icon->display == ICON_DISPLAY_DOCKED)
+        {
+            TRACE( "icon %u no longer embedded\n", icon->id );
+            hide_icon( icon );
+            show_icon( icon );
+        }
+        return 0;
+
     case WM_CREATE:
         icon->window = hwnd;
         create_tooltip( icon );
