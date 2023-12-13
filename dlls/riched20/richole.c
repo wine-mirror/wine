@@ -5799,6 +5799,8 @@ void draw_ole( ME_Context *c, int x, int y, ME_Run *run, BOOL selected )
   assert(run->nFlags & MERF_GRAPHICS);
   assert(run->reobj);
 
+  if (!run->reobj->obj.poleobj) return;
+
   if (SUCCEEDED(IOleObject_QueryInterface(run->reobj->obj.poleobj, &IID_IViewObject, (void**)&ivo)))
   {
     HRESULT hr;
