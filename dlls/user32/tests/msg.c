@@ -12584,7 +12584,6 @@ static void test_recursive_hook(void)
     flush_events();
 
     /* Expect the WH_KEYBOARD hook not gets called recursively */
-    todo_wine
     ok(max_hook_depth == 1, "Got expected %d.\n", max_hook_depth);
 
     /* Test a possible recursive WH_CBT HCBT_KEYSKIPPED hook condition */
@@ -12600,7 +12599,6 @@ static void test_recursive_hook(void)
     while (PeekMessageA(&msg, hook_hwnd, WM_KEYFIRST, WM_KEYLAST, 0)) DispatchMessageA(&msg);
 
     /* Expect the WH_CBT HCBT_KEYSKIPPED hook not gets called recursively */
-    todo_wine
     ok(max_hook_depth == 1, "Got expected %d.\n", max_hook_depth);
 
     UnhookWindowsHookEx(cbt_hook);

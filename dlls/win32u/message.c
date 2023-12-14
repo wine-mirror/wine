@@ -2384,15 +2384,17 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
         }
     }
 
+    /* if remove is TRUE, remove message first before calling hooks to avoid recursive hook calls */
+    if (remove) accept_hardware_message( hw_id );
     if (call_hooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
                     LOWORD(msg->wParam), msg->lParam, 0 ))
     {
+        /* if the message has not been removed, remove it */
+        if (!remove) accept_hardware_message( hw_id );
         /* skip this message */
         call_hooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, 0 );
-        accept_hardware_message( hw_id );
         return FALSE;
     }
-    if (remove) accept_hardware_message( hw_id );
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
 
     if (remove && msg->message == WM_KEYDOWN)
