@@ -81,6 +81,14 @@ interface ISampleGrabber: IUnknown
 }
 
 [
+    uuid(c1f400a0-3f08-11d3-9f0b-006008039e37)
+]
+coclass SampleGrabber
+{
+    [default] interface ISampleGrabber;
+}
+
+[
     object,
     uuid(65bd0710-24d2-4FF7-9324-ed2e5d3abafa),
     pointer_default(unique)
