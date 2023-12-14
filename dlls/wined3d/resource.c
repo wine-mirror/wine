@@ -208,6 +208,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
     resource->map_binding = WINED3D_LOCATION_SYSMEM;
+    resource->heap_pointer = NULL;
     resource->heap_memory = NULL;
 
     /* Check that we have enough video ram left */
@@ -331,12 +332,11 @@ void CDECL wined3d_resource_preload(struct wined3d_resource *resource)
 
 static BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
 {
-    void **p;
     /* Overallocate and add padding to the allocated pointer, to guard against
      * games (for instance Railroad Tycoon 2) writing before the locked resource
      * memory pointer.
      */
-    SIZE_T align = RESOURCE_ALIGNMENT + sizeof(*p);
+    static const SIZE_T align = RESOURCE_ALIGNMENT;
     void *mem;
 
     if (!(mem = heap_alloc_zero(resource->size + align)))
@@ -345,10 +345,8 @@ static BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
         return FALSE;
     }
 
-    p = (void **)(((ULONG_PTR)mem + align) & ~(RESOURCE_ALIGNMENT - 1)) - 1;
-    *p = mem;
-
-    resource->heap_memory = ++p;
+    resource->heap_memory = (void *)(((ULONG_PTR)mem + align) & ~(RESOURCE_ALIGNMENT - 1));
+    resource->heap_pointer = mem;
 
     return TRUE;
 }
@@ -363,13 +361,12 @@ BOOL wined3d_resource_prepare_sysmem(struct wined3d_resource *resource)
 
 void wined3d_resource_free_sysmem(struct wined3d_resource *resource)
 {
-    void **p = resource->heap_memory;
-
-    if (!p)
+    if (!resource->heap_memory)
         return;
-
-    heap_free(*(--p));
     resource->heap_memory = NULL;
+
+    heap_free(resource->heap_pointer);
+    resource->heap_pointer = NULL;
 }
 
 GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *resource)
