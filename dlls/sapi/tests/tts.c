@@ -686,6 +686,8 @@ done:
     ISpVoice_Release(voice);
     ISpObjectToken_Release(token);
     ISpMMSysAudio_Release(audio_out);
+
+    RegDeleteTreeA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Winetest\\sapi" );
 }
 
 START_TEST(tts)
