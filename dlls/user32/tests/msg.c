@@ -12430,6 +12430,29 @@ todo_wine {
 static HWND hook_hwnd;
 static HHOOK recursive_hook;
 static int hook_depth, max_hook_depth;
+static BOOL skip_WH_KEYBOARD_hook, skip_WH_MOUSE_hook;
+
+static void simulate_click(BOOL left, int x, int y)
+{
+    POINT old_pt;
+    INPUT input[2];
+    UINT events_no;
+
+    GetCursorPos(&old_pt);
+    SetCursorPos(x, y);
+    memset(input, 0, sizeof(input));
+    input[0].type = INPUT_MOUSE;
+    input[0].mi.dx = x;
+    input[0].mi.dy = y;
+    input[0].mi.dwFlags = left ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN;
+    input[1].type = INPUT_MOUSE;
+    input[1].mi.dx = x;
+    input[1].mi.dy = y;
+    input[1].mi.dwFlags = left ? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP;
+    events_no = SendInput(2, input, sizeof(input[0]));
+    ok(events_no == 2, "SendInput returned %d\n", events_no);
+    SetCursorPos(old_pt.x, old_pt.y);
+}
 
 static LRESULT WINAPI rec_get_message_hook(int code, WPARAM w, LPARAM l)
 {
@@ -12450,12 +12473,85 @@ static LRESULT WINAPI rec_get_message_hook(int code, WPARAM w, LPARAM l)
     return res;
 }
 
+static LRESULT CALLBACK keyboard_recursive_hook_proc(int code, WPARAM wp, LPARAM lp)
+{
+    MSG msg;
+
+    if (code < 0)
+        return CallNextHookEx(0, code, wp, lp);
+
+    if (skip_WH_KEYBOARD_hook)
+        return 1;
+
+    hook_depth++;
+    max_hook_depth = max(max_hook_depth, hook_depth);
+    PeekMessageW(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE);
+    hook_depth--;
+    return CallNextHookEx(0, code, wp, lp);
+}
+
+static LRESULT CALLBACK mouse_recursive_hook_proc(int code, WPARAM wp, LPARAM lp)
+{
+    MSG msg;
+
+    if (code < 0)
+        return CallNextHookEx(0, code, wp, lp);
+
+    if (skip_WH_MOUSE_hook)
+        return 1;
+
+    hook_depth++;
+    max_hook_depth = max(max_hook_depth, hook_depth);
+    PeekMessageW(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE);
+    hook_depth--;
+    return CallNextHookEx(0, code, wp, lp);
+}
+
+static LRESULT CALLBACK keyboard_recursive_cbt_hook_proc(int code, WPARAM wp, LPARAM lp)
+{
+    MSG msg;
+
+    if (code < 0)
+        return CallNextHookEx(0, code, wp, lp);
+
+    if (code == HCBT_KEYSKIPPED)
+    {
+        hook_depth++;
+        max_hook_depth = max(max_hook_depth, hook_depth);
+        PeekMessageW(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE);
+        hook_depth--;
+    }
+
+    return CallNextHookEx(0, code, wp, lp);
+}
+
+static LRESULT CALLBACK mouse_recursive_cbt_hook_proc(int code, WPARAM wp, LPARAM lp)
+{
+    MSG msg;
+
+    if (code < 0)
+        return CallNextHookEx(0, code, wp, lp);
+
+    if (code == HCBT_CLICKSKIPPED)
+    {
+        hook_depth++;
+        max_hook_depth = max(max_hook_depth, hook_depth);
+        PeekMessageW(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE);
+        hook_depth--;
+    }
+
+    return CallNextHookEx(0, code, wp, lp);
+}
+
 static void test_recursive_hook(void)
 {
+    HHOOK hook, cbt_hook;
+    INPUT input = {0};
     MSG msg;
     BOOL b;
 
-    hook_hwnd = CreateWindowA("Static", NULL, WS_POPUP, 0, 0, 200, 60, NULL, NULL, NULL, NULL);
+    hook_hwnd = CreateWindowExA(WS_EX_TOPMOST, "Static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 200, 60,
+                                NULL, NULL, NULL, NULL);
     ok(hook_hwnd != NULL, "CreateWindow failed\n");
 
     recursive_hook = SetWindowsHookExW(WH_GETMESSAGE, rec_get_message_hook, NULL, GetCurrentThreadId());
@@ -12472,6 +12568,75 @@ static void test_recursive_hook(void)
     b = UnhookWindowsHookEx(recursive_hook);
     ok(b, "UnhokWindowsHookEx failed\n");
 
+    /* Test possible recursive hook conditions */
+    b = SetForegroundWindow(hook_hwnd);
+    ok(b, "SetForegroundWindow failed, error %ld.\n", GetLastError());
+
+    /* Test a possible recursive WH_KEYBOARD hook condition */
+    max_hook_depth = 0;
+    hook = SetWindowsHookExA(WH_KEYBOARD, keyboard_recursive_hook_proc, NULL, GetCurrentThreadId());
+    ok(!!hook, "SetWindowsHookExA failed, error %ld.\n", GetLastError());
+
+    flush_events();
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = VK_F3;
+    SendInput(1, &input, sizeof(INPUT));
+    flush_events();
+
+    /* Expect the WH_KEYBOARD hook not gets called recursively */
+    todo_wine
+    ok(max_hook_depth == 1, "Got expected %d.\n", max_hook_depth);
+
+    /* Test a possible recursive WH_CBT HCBT_KEYSKIPPED hook condition */
+    max_hook_depth = 0;
+    skip_WH_KEYBOARD_hook = 1;
+    cbt_hook = SetWindowsHookExA(WH_CBT, keyboard_recursive_cbt_hook_proc, NULL, GetCurrentThreadId());
+    ok(!!cbt_hook, "SetWindowsHookExA failed, error %ld.\n", GetLastError());
+
+    flush_events();
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = VK_F3;
+    SendInput(1, &input, sizeof(INPUT));
+    while (PeekMessageA(&msg, hook_hwnd, WM_KEYFIRST, WM_KEYLAST, 0)) DispatchMessageA(&msg);
+
+    /* Expect the WH_CBT HCBT_KEYSKIPPED hook not gets called recursively */
+    todo_wine
+    ok(max_hook_depth == 1, "Got expected %d.\n", max_hook_depth);
+
+    UnhookWindowsHookEx(cbt_hook);
+    UnhookWindowsHookEx(hook);
+
+    /* Test a recursive WH_MOUSE hook condition */
+    SetCapture(hook_hwnd);
+
+    max_hook_depth = 0;
+    hook = SetWindowsHookExA(WH_MOUSE, mouse_recursive_hook_proc, NULL, GetCurrentThreadId());
+    ok(!!hook, "SetWindowsHookExA failed, error %ld.\n", GetLastError());
+
+    flush_events();
+    simulate_click(FALSE, 50, 50);
+    flush_events();
+
+    /* Expect the WH_MOUSE hook gets called recursively */
+    ok(max_hook_depth > 10, "Got expected %d.\n", max_hook_depth);
+
+    /* Test a possible recursive WH_CBT HCBT_CLICKSKIPPED hook condition */
+    max_hook_depth = 0;
+    skip_WH_MOUSE_hook = 1;
+    cbt_hook = SetWindowsHookExA(WH_CBT, mouse_recursive_cbt_hook_proc, NULL, GetCurrentThreadId());
+    ok(!!cbt_hook, "SetWindowsHookExA failed, error %ld.\n", GetLastError());
+
+    flush_events();
+    simulate_click(FALSE, 50, 50);
+    flush_events();
+
+    /* Expect the WH_CBT HCBT_CLICKSKIPPED hook not gets called recursively */
+    todo_wine
+    ok(max_hook_depth <= 10, "Got expected %d.\n", max_hook_depth);
+
+    UnhookWindowsHookEx(cbt_hook);
+    UnhookWindowsHookEx(hook);
+    ReleaseCapture();
     DestroyWindow(hook_hwnd);
 }
 
