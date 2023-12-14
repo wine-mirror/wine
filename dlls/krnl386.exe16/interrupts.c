@@ -96,9 +96,6 @@ static void WINAPI DOSVM_DefaultHandler( CONTEXT *context )
  */
 void DOSVM_Exit( WORD retval )
 {
-    DWORD count;
-
-    ReleaseThunkLock( &count );
     ExitThread( retval );
 }
 

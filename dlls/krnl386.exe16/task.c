@@ -549,15 +549,8 @@ void TASK_ExitTask(void)
     TDB *pTask;
     DWORD lockCount;
 
-    /* Enter the Win16Lock to protect global data structures */
-    _EnterWin16Lock();
-
     pTask = TASK_GetCurrent();
-    if ( !pTask )
-    {
-        _LeaveWin16Lock();
-        return;
-    }
+    if (!pTask) return;
 
     TRACE("Killing task %04x\n", pTask->hSelf );
 
