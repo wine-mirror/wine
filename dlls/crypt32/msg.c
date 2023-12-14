@@ -824,6 +824,25 @@ static BOOL CRYPT_ConstructAttributes(CRYPT_ATTRIBUTES *out,
     return ret;
 }
 
+static BOOL CRYPT_AddAttribute(CRYPT_ATTRIBUTES *out, const CRYPT_ATTRIBUTE *in)
+{
+    BOOL ret;
+    CRYPT_ATTRIBUTE *new_attrs;
+
+    new_attrs = CryptMemRealloc(out->rgAttr, (out->cAttr + 1) * sizeof(CRYPT_ATTRIBUTE));
+    if (new_attrs)
+    {
+        out->rgAttr = new_attrs;
+        memset(&out->rgAttr[out->cAttr], 0, sizeof(CRYPT_ATTRIBUTE));
+        ret = CRYPT_ConstructAttribute(&new_attrs[out->cAttr], in);
+        if (ret)
+            out->cAttr++;
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
 /* Constructs a CMSG_CMS_SIGNER_INFO from a CMSG_SIGNER_ENCODE_INFO_WITH_CMS. */
 static BOOL CSignerInfo_Construct(CMSG_CMS_SIGNER_INFO *info,
  const CMSG_SIGNER_ENCODE_INFO_WITH_CMS *in)
@@ -3666,8 +3685,51 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
             break;
         }
         break;
+    case CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR:
+        switch (msg->type)
+        {
+        case CMSG_SIGNED:
+        {
+            CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA *param = (CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA *)pvCtrlPara;
+            CRYPT_ATTRIBUTE *attr;
+            DWORD size;
+
+            if (!msg->u.signed_data.info)
+            {
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+                break;
+            }
+
+            if (param->dwSignerIndex >= msg->u.signed_data.info->cSignerInfo)
+            {
+                SetLastError(CRYPT_E_INVALID_INDEX);
+                break;
+            }
+
+            ret = CryptDecodeObjectEx(PKCS_7_ASN_ENCODING, PKCS_ATTRIBUTE, param->blob.pbData, param->blob.cbData,
+                                      CRYPT_DECODE_ALLOC_FLAG, NULL, &attr, &size);
+            if (!ret)
+            {
+                WARN("CryptDecodeObjectEx(PKCS_ATTRIBUTE) error %#lx\n", GetLastError());
+                break;
+            }
+
+            TRACE("existing CRYPT_ATTRIBUTES: cAttr = %lu\n", msg->u.signed_data.info->rgSignerInfo[param->dwSignerIndex].UnauthAttrs.cAttr);
+            TRACE("CRYPT_ATTRIBUTE: %p: pszObjId %s, cValue %lu, rgValue %p\n", attr, debugstr_a(attr->pszObjId), attr->cValue, attr->rgValue);
+            ret = CRYPT_AddAttribute(&msg->u.signed_data.info->rgSignerInfo[param->dwSignerIndex].UnauthAttrs, attr);
+            LocalFree(attr);
+            break;
+        }
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+            break;
+        }
+        break;
+
     default:
+        FIXME("unimplemented for %ld\n", dwCtrlType);
         SetLastError(CRYPT_E_CONTROL_TYPE);
+        break;
     }
     return ret;
 }
