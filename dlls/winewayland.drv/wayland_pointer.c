@@ -163,6 +163,16 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
     case BTN_LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
     case BTN_RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
     case BTN_MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+    case BTN_SIDE:
+    case BTN_BACK:
+        input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+        input.mi.mouseData = XBUTTON1;
+        break;
+    case BTN_EXTRA:
+    case BTN_FORWARD:
+        input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+        input.mi.mouseData = XBUTTON2;
+        break;
     default: break;
     }
 
