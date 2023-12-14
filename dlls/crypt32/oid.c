@@ -1716,7 +1716,13 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
 {
     PCCRYPT_OID_INFO ret = NULL;
 
-    TRACE("(%ld, %p, %ld)\n", dwKeyType, pvKey, dwGroupId);
+    TRACE("(%#lx, %p, %lu)\n", dwKeyType, pvKey, dwGroupId);
+
+    if (dwKeyType & (CRYPT_OID_INFO_PUBKEY_ENCRYPT_KEY_FLAG | CRYPT_OID_INFO_PUBKEY_SIGN_KEY_FLAG))
+    {
+        FIXME("flags %#lx not supported\n", dwKeyType & (CRYPT_OID_INFO_PUBKEY_ENCRYPT_KEY_FLAG | CRYPT_OID_INFO_PUBKEY_SIGN_KEY_FLAG));
+        dwKeyType &= ~(CRYPT_OID_INFO_PUBKEY_ENCRYPT_KEY_FLAG | CRYPT_OID_INFO_PUBKEY_SIGN_KEY_FLAG);
+    }
 
     switch(dwKeyType)
     {
