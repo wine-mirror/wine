@@ -2570,8 +2570,8 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
         hook.mouseData    = msg->wParam;
-        call_hooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, sizeof(hook) );
         accept_hardware_message( hw_id );
+        call_hooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, sizeof(hook) );
         return FALSE;
     }
 

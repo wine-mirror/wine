@@ -12629,7 +12629,6 @@ static void test_recursive_hook(void)
     flush_events();
 
     /* Expect the WH_CBT HCBT_CLICKSKIPPED hook not gets called recursively */
-    todo_wine
     ok(max_hook_depth <= 10, "Got expected %d.\n", max_hook_depth);
 
     UnhookWindowsHookEx(cbt_hook);
