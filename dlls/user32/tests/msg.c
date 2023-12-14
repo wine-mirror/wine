@@ -12637,6 +12637,52 @@ static void test_recursive_hook(void)
     DestroyWindow(hook_hwnd);
 }
 
+static int max_msg_depth;
+
+static LRESULT WINAPI recursive_messages_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    static int msg_depth;
+    MSG msg;
+
+    if (message == WM_SETCURSOR && max_msg_depth < 25)
+    {
+        msg_depth++;
+        max_msg_depth = max(max_msg_depth, msg_depth);
+        PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE);
+        msg_depth--;
+    }
+    return DefWindowProcA(hwnd, message, wp, lp);
+}
+
+static void test_recursive_messages(void)
+{
+    WNDCLASSA cls = {0};
+    HWND hwnd;
+
+    cls.lpfnWndProc = recursive_messages_proc;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszClassName = "TestRecursiveMsgClass";
+    register_class(&cls);
+
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, "TestRecursiveMsgClass", NULL, WS_POPUP | WS_DISABLED | WS_VISIBLE, 0, 0,
+                           100, 100, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowExA failed, error %ld.\n", GetLastError());
+    SetForegroundWindow(hwnd);
+    flush_events();
+
+    max_msg_depth = 0;
+    simulate_click(FALSE, 50, 50);
+    flush_events();
+
+    /* Expect recursive_messages_proc() gets called recursively for WM_SETCURSOR */
+    ok(max_msg_depth == 25, "Got expected %d.\n", max_msg_depth);
+
+    DestroyWindow(hwnd);
+    UnregisterClassA(cls.lpszClassName, cls.hInstance);
+}
+
 static const struct message ScrollWindowPaint1[] = {
     { WM_PAINT, sent },
     { WM_ERASEBKGND, sent|beginpaint },
@@ -20464,6 +20510,7 @@ START_TEST(msg)
         test_set_hook();
         test_recursive_hook();
     }
+    test_recursive_messages();
     test_DestroyWindow();
     test_DispatchMessage();
     test_SendMessageTimeout();
