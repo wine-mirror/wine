@@ -3105,6 +3105,7 @@ static void test_MapFile(void)
 {
     HANDLE handle;
     HANDLE hmap;
+    UINT err;
 
     ok(test_Mapfile_createtemp(&handle), "Couldn't create test file.\n");
 
@@ -3123,15 +3124,17 @@ static void test_MapFile(void)
 
     ok(test_Mapfile_createtemp(&handle), "Couldn't create test file.\n");
 
+    SetLastError( 0xdeadbeef );
     hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0, 0, NULL );
+    err = GetLastError();
     ok( hmap == NULL, "mapped zero size file\n");
-    ok( GetLastError() == ERROR_FILE_INVALID, "not ERROR_FILE_INVALID\n");
+    ok( err == ERROR_FILE_INVALID, "got %u\n", err );
 
-    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000, 0, NULL );
+    SetLastError( 0xdeadbeef );
+    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x8000000, 0x10000, NULL );
+    err = GetLastError();
     ok( hmap == NULL, "mapping should fail\n");
-
-    hmap = CreateFileMappingA( handle, NULL, PAGE_READWRITE, 0x80000, 0x10000, NULL );
-    ok( hmap == NULL, "mapping should fail\n");
+    ok( err == ERROR_NOT_ENOUGH_MEMORY || err == ERROR_INVALID_PARAMETER, "got %u\n", err );
 
     /* On XP you can now map again, on Win 95 you cannot. */
 

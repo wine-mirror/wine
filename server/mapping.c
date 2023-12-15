@@ -993,7 +993,7 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
         }
         else if (st.st_size < mapping->size)
         {
-            if (!(file_access & FILE_WRITE_DATA))
+            if (!(file_access & FILE_WRITE_DATA) || mapping->size >> 54 /* ntfs limit */)
             {
                 set_error( STATUS_SECTION_TOO_BIG );
                 goto error;
