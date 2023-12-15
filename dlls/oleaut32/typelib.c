@@ -7955,8 +7955,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
                         && IsEqualIID(&entry->guid->guid, TLB_get_guid_null(ref_type->pImpTLInfo->guid))
                         && entry->ver_major == ref_type->pImpTLInfo->wVersionMajor
                         && entry->ver_minor == ref_type->pImpTLInfo->wVersionMinor
-                        && entry->set_lcid == ref_type->pImpTLInfo->lcid
-                        && entry->syskind == This->pTypeLib->syskind)
+                        && entry->set_lcid == ref_type->pImpTLInfo->lcid)
                     {
                         TRACE("got cached %p\n", entry);
                         pTLib = (ITypeLib*)&entry->ITypeLib2_iface;
