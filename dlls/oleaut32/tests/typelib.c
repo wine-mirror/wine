@@ -1988,20 +1988,18 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     switch(sys){
     case SYS_WIN32:
-        trace("testing SYS_WIN32\n");
+        winetest_push_context( "win32" );
         ptr_size = 4;
         alignment = sizeof(void*);
         break;
     case SYS_WIN64:
-        trace("testing SYS_WIN64\n");
+        winetest_push_context( "win64" );
         ptr_size = 8;
         alignment = 4;
         break;
     default:
         return;
     }
-
-    trace("CreateTypeLib tests\n");
 
     hres = LoadTypeLib(wszStdOle2, &stdole);
     ok(hres == S_OK, "got %08lx\n", hres);
@@ -2153,10 +2151,6 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     hres = ICreateTypeInfo_AddRefTypeInfo(createti, unknown, &hreftype);
     ok(hres == S_OK, "got %08lx\n", hres);
-    if(hres != S_OK) {
-        skip("Skipping some tests\n");
-        return;
-    }
 
     hres = ICreateTypeInfo_AddImplType(createti, 1, hreftype);
     ok(hres == TYPE_E_ELEMENTNOTFOUND, "got %08lx\n", hres);
@@ -3939,6 +3933,7 @@ todo_wine {
     ok(ITypeLib_Release(tl)==0, "Object should be freed\n");
 
     DeleteFileA(filename);
+    winetest_pop_context();
 }
 
 #if 0       /* use this to generate more tests */
@@ -6342,7 +6337,7 @@ static void test_dump_typelib(const WCHAR *name)
         BSTR bstrIfName;
         DWORD help_ctx;
 
-        trace("Interface %s\n", ti->name);
+        winetest_push_context("Interface %s", ti->name);
         ole_check(ITypeLib_GetTypeInfo(typelib, iface, &typeinfo));
         if (hRefType)
         {
@@ -6411,7 +6406,7 @@ static void test_dump_typelib(const WCHAR *name)
             UINT cNames;
             int i;
 
-            trace("Function %s\n", fn_info->names[0]);
+            winetest_push_context("Function %s", fn_info->names[0]);
             ole_check(ITypeInfo_GetFuncDesc(typeinfo, func, &desc));
             expect_int(desc->memid, fn_info->memid);
             expect_int(desc->funckind, fn_info->funckind);
@@ -6496,6 +6491,7 @@ static void test_dump_typelib(const WCHAR *name)
 
             memset(&cust_data, 0, sizeof(cust_data));
             ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+            winetest_pop_context();
         }
 
         for (var = 0; var < typeattr->cVars; var++)
@@ -6505,7 +6501,7 @@ static void test_dump_typelib(const WCHAR *name)
             BSTR varname;
             UINT cNames;
 
-            trace("Variable %s\n", var_info->name);
+            winetest_push_context("Variable %s", var_info->name);
             ole_check(ITypeInfo_GetVarDesc(typeinfo, var, &desc));
 
             expect_int(desc->memid, var_info->memid);
@@ -6547,6 +6543,7 @@ static void test_dump_typelib(const WCHAR *name)
             check_type(&desc->elemdescVar, &var_info->elemdescVar);
 
             ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+            winetest_pop_context();
         }
 
         if ((typeattr->typekind == TKIND_DISPATCH) && (typeattr->wTypeFlags & TYPEFLAG_FDUAL) &&
@@ -6564,6 +6561,7 @@ static void test_dump_typelib(const WCHAR *name)
 
         ITypeInfo2_Release(typeinfo2);
         ITypeInfo_Release(typeinfo);
+        winetest_pop_context();
     }
     expect_eq(ITypeLib_GetTypeInfoCount(typelib), iface, UINT, "%d");
     ITypeLib_ReleaseTLibAttr(typelib, libattr);
@@ -6694,14 +6692,12 @@ static void test_register_typelib(BOOL system_registration)
         { TKIND_MODULE, 0 },
     };
 
-    trace("Starting %s typelib registration tests\n",
-          system_registration ? "system" : "user");
-
     if (!system_registration && (!pRegisterTypeLibForUser || !pUnRegisterTypeLibForUser))
     {
         win_skip("User typelib registration functions are not available\n");
         return;
     }
+    winetest_push_context( "%s", system_registration ? "system" : "user" );
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
@@ -6720,6 +6716,7 @@ static void test_register_typelib(BOOL system_registration)
         win_skip("Insufficient privileges to register typelib in the registry\n");
         ITypeLib_Release(typelib);
         DeleteFileW(filename);
+        winetest_pop_context();
         return;
     }
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -6850,6 +6847,7 @@ static void test_register_typelib(BOOL system_registration)
 
     ITypeLib_Release(typelib);
     DeleteFileW(filename);
+    winetest_pop_context();
 }
 
 static void test_register_typelib_64(void)
@@ -7953,11 +7951,11 @@ static void test_SetTypeDescAlias(SYSKIND kind)
 
     switch(kind){
     case SYS_WIN32:
-        trace("testing SYS_WIN32\n");
+        winetest_push_context("win32");
         ptr_size = 4;
         break;
     case SYS_WIN64:
-        trace("testing SYS_WIN64\n");
+        winetest_push_context("win64");
         ptr_size = 8;
         break;
     default:
@@ -8002,8 +8000,6 @@ static void test_SetTypeDescAlias(SYSKIND kind)
     ITypeLib_Release(tl);
     ok(0 == ICreateTypeLib2_Release(ctl), "typelib should have been released\n");
 
-    trace("after save...\n");
-
     hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
     ok(hr == S_OK, "got %08lx\n", hr);
 
@@ -8025,6 +8021,7 @@ static void test_SetTypeDescAlias(SYSKIND kind)
     ok(0 == ITypeLib_Release(tl), "typelib should have been released\n");
 
     DeleteFileA(filenameA);
+    winetest_pop_context();
 }
 
 static void test_GetLibAttr(void)
