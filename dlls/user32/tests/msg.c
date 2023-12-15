@@ -16535,7 +16535,6 @@ static void test_unicode_wm_char(void)
 
     DestroyWindow( hwnd );
     ActivateKeyboardLayout( hkl_orig, 0 );
-    UnloadKeyboardLayout( hkl_greek );
 }
 
 #define ID_LISTBOX 0x000f
