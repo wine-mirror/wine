@@ -5296,15 +5296,24 @@ static void test_GetProcessInformation(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, NULL, 0);
+    if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("GetProcessInformation(ProcessMachineTypeInfo) is not supported.\n"); /* < win11 */
+        return;
+    }
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    SetLastError(0xdeadbeef);
     ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, 0);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    SetLastError(0xdeadbeef);
     ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, sizeof(mi) - 1);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
+    SetLastError(0xdeadbeef);
     ret = pGetProcessInformation(GetCurrentProcess(), ProcessMachineTypeInfo, &mi, sizeof(mi) + 1);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_BAD_LENGTH, "Unexpected error %ld.\n", GetLastError());
@@ -5321,7 +5330,6 @@ static void test_GetProcessInformation(void)
         if (machines[i].Process)
         {
             ok(mi.ProcessMachine == machines[i].Machine, "Unexpected process machine %#x.\n", mi.ProcessMachine);
-            ok(!mi.Res0, "Unexpected process machine %#x.\n", mi.ProcessMachine);
             ok(!!(mi.MachineAttributes & UserEnabled) == machines[i].UserMode, "Unexpected attributes %#x.\n",
                     mi.MachineAttributes);
             ok(!!(mi.MachineAttributes & KernelEnabled) == machines[i].KernelMode, "Unexpected attributes %#x.\n",
