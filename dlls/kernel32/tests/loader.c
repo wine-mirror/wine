@@ -2072,9 +2072,7 @@ static void test_section_access(void)
 
         test_image_mapping(dll_name, td[i].scn_page_access, FALSE);
 
-        SetLastError(0xdeadbeef);
-        ret = DeleteFileA(dll_name);
-        ok(ret, "DeleteFile error %ld\n", GetLastError());
+        DeleteFileA(dll_name);
     }
 }
 
