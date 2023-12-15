@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-01-16 12:26+0800\n"
+"PO-Revision-Date: 2023-12-15 07:05+0100\n"
 "Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -313,7 +313,7 @@ msgstr "已下载的文件校验值错误。放弃安装已损坏的文件。"
 
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
-msgstr ""
+msgstr "请等待当前的卸载/修改进程完成。"
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -3664,16 +3664,12 @@ msgid "High"
 msgstr "高"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "索引"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Wine Video 1 视频编解码器"
+msgstr "Indeo Video Interactive 版本 5 视频编解码器"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -3971,10 +3967,8 @@ msgid "Syntax error in regular expression"
 msgstr "正则表达式中出现语法错误"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "期望标识符"
+msgstr "非期望量词"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4035,10 +4029,8 @@ msgid "'this' is not a | object"
 msgstr "'this' 不是 | 对象"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'key' is not an object"
-msgstr "'this' 不是 | 对象"
+msgstr "'key' 不是一个对象"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -12552,10 +12544,8 @@ msgid "Duplex:"
 msgstr "双面:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "托盘(&T):"
+msgstr "纸盒(&T):"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -14519,37 +14509,29 @@ msgid "&Run..."
 msgstr "运行(&R)..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "退出 Windows(&X)"
+msgstr "退出桌面(&X)"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "您确认要删除这些值吗?"
+msgstr "您确认要关闭所有程序并退出虚拟桌面吗?"
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "使用连接字符串(&O)"
+msgstr "用法: findstr /选项 字符串\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "命令行无效。\n"
+msgstr "FINDSTR: 命令行无效\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: 无法打开 %s\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: 已忽略 /%c\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -14667,52 +14649,39 @@ msgstr "主 DNS 后缀"
 
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
-msgstr ""
+msgstr "用法: klist <tickets | tgt | purge | get [服务主体名称]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "未知错误"
+msgstr "未知错误\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "开始菜单"
+msgstr "开始时间"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "FLE 标准时间"
+msgstr "结束时间"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "输入新的时间: "
+msgstr "更新时间"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "票证标志"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "已缓存票证"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "加密类型"
+msgstr "KerbTicket 加密类型"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "当前连接数"
+msgstr "当前 LogonId 是"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -14850,7 +14819,7 @@ msgstr "下列服务正在运行:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "命令使用了有冲突的选项。\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -16990,38 +16959,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: 成功卸载 DLL \"%1\"\n"
 
 #: programs/start/start.rc:56
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/exec          Exec the specified file (for internal Wine usage).\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17073,6 +17010,7 @@ msgstr ""
 "/belownormal   以 belownormal 优先级运行程序。\n"
 "/node n        在指定的 NUMA 节点中运行程序。\n"
 "/affinity 掩码  以指定的关联掩码运行程序。\n"
+"/machine  架构  强制使用一个特定的架构(x86、arm、amd64、arm64)。\n"
 "/wait          等待运行的程序结束，并以它的返回值退出。\n"
 "/unix          使用 Unix 文件名并像 Windows 文件管理器一样打开该文件。\n"
 "/exec          执行所指定的文件 (在 Wine 内部使用)。\n"
@@ -17150,27 +17088,23 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "错误: 不允许结束本进程。\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "已经强行结束 PID 为 %1!u! 的进程。\n"
+msgstr "已经强行结束 PID 为 %1!u!（PID %2!u! 的子进程）的进程。\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
-msgstr ""
+msgstr "已向 PID %2!u! 的子进程、PID 为 %1!u! 的进程发送结束信号。\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "标签页列表"
+msgstr "Wine 任务列表"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "用法: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17181,38 +17115,28 @@ msgid "PID"
 msgstr "PID"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "会话 ID"
+msgstr "会话名称"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "会话 ID"
+msgstr "会话#"
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "内存占用"
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "确定"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: 语法无效。"
+msgstr "错误: 语法无效\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "不能解析文件名。\n"
+msgstr "错误: 无法识别搜索筛选器。\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18330,10 +18254,8 @@ msgid "&Theme:"
 msgstr "主题(&T):"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "主题(&T):"
+msgstr "WinRT 主题(&W):"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18352,10 +18274,8 @@ msgid "MIME types"
 msgstr "MIME 类型"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "管理文件关联(&A)"
+msgstr "管理文件和协议关联(&A)"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
@@ -18458,14 +18378,12 @@ msgid "Mono"
 msgstr "单声道"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "右"
+msgstr "浅色"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "深色"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
