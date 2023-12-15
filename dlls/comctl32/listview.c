@@ -10832,17 +10832,9 @@ static inline LRESULT LISTVIEW_WMPaint(LISTVIEW_INFO *infoPtr, HDC hdc)
  */
 static LRESULT LISTVIEW_PrintClient(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD options)
 {
-    if ((options & PRF_CHECKVISIBLE) && !IsWindowVisible(infoPtr->hwndSelf))
-        return 0;
+    FIXME("(hdc=%p options=%#lx) partial stub\n", hdc, options);
 
-    if (options & ~(PRF_ERASEBKGND|PRF_CLIENT))
-        FIXME("(hdc=%p options %#lx) partial stub\n", hdc, options);
-
-    if (options & PRF_ERASEBKGND)
-        LISTVIEW_EraseBkgnd(infoPtr, hdc);
-
-    if (options & PRF_CLIENT)
-        LISTVIEW_Paint(infoPtr, hdc);
+    LISTVIEW_Paint(infoPtr, hdc);
 
     return 0;
 }
