@@ -1707,7 +1707,6 @@ static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwn
 
     skip_key_tests:
         ActivateKeyboardLayout( old_hkl, 0 );
-        UnloadKeyboardLayout( hkl );
 
         winetest_pop_context();
     }
@@ -2253,7 +2252,6 @@ static void test_sys_keyboard( DWORD version )
 
 skip_key_tests:
     ActivateKeyboardLayout( old_hkl, 0 );
-    UnloadKeyboardLayout( hkl );
 
     test_dik_codes( device, event, hwnd, version );
 
