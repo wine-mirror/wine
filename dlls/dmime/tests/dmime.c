@@ -4503,17 +4503,20 @@ static void test_segment_state(void)
 
     tmp_state = (void *)0xdeadbeef;
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 0);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    ok(state == tmp_state, "got %p\n", state);
-    IDirectMusicSegmentState_Release(tmp_state);
+    ok(hr == S_OK || broken(hr == DMUS_E_NOT_FOUND) /* sometimes on Windows */, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+        ok(state == tmp_state, "got %p\n", tmp_state);
+        IDirectMusicSegmentState_Release(tmp_state);
+    }
 
     tmp_state = (void *)0xdeadbeef;
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 69);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(state == tmp_state, "got %p\n", state);
+    ok(state == tmp_state, "got %p\n", tmp_state);
     IDirectMusicSegmentState_Release(tmp_state);
 
-    hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 70);
+    hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 71);
     todo_wine ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
 
 
