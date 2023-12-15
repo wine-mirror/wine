@@ -2119,13 +2119,13 @@ static void test_syscalls(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     ok( ptr != NULL, "MapViewOfFile failed err %lu\n", GetLastError() );
     CloseHandle( mapping );
-    CloseHandle( file );
     delta = (char *)ptr - (char *)module;
 
     if (memcmp( ptr, module, 0x1000 ))
     {
         skip( "modules are not identical (non-PE build?)\n" );
         UnmapViewOfFile( ptr );
+        CloseHandle( file );
         return;
     }
     perform_relocations( ptr, delta );
@@ -2152,12 +2152,40 @@ static void test_syscalls(void)
     }
     else
     {
-#ifdef __x86_64__
+#ifdef __i386__
+        NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, void *, ULONG, ULONG *);
+        PROCESS_BASIC_INFORMATION pbi;
+        void *exec_mem, *va_ptr;
+        ULONG size;
+        BOOL ret;
+
+        exec_mem = VirtualAlloc( NULL, 4096, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        ok( !!exec_mem, "got NULL.\n" );
+
+        /* NtQueryInformationProcess is special. */
+        pNtQueryInformationProcess = (void *)GetProcAddress( module, "NtQueryInformationProcess" );
+        va_ptr = RtlImageRvaToVa( RtlImageNtHeader(module), module,
+                                  (char *)pNtQueryInformationProcess - (char *)module, NULL );
+        ok( !!va_ptr, "offset not found %p / %p\n", pNtQueryInformationProcess, module );
+        ret = SetFilePointer( file, (char *)va_ptr - (char *)module, NULL, FILE_BEGIN );
+        ok( ret, "got %d, err %lu.\n", ret, GetLastError() );
+        ret = ReadFile( file, exec_mem, 32, NULL, NULL );
+        ok( ret, "got %d, err %lu.\n", ret, GetLastError() );
+        pNtQueryInformationProcess = exec_mem;
+        /* The thunk still works without relocation. */
+        status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &size );
+        ok( !status, "got %#lx.\n", status );
+        ok( size == sizeof(pbi), "got %lu.\n", size );
+        ok( pbi.PebBaseAddress == NtCurrentTeb()->Peb, "got %p, %p.\n", pbi.PebBaseAddress, NtCurrentTeb()->Peb );
+
+        VirtualFree( exec_mem, 0, MEM_RELEASE );
+#elif defined __x86_64__
         ok( 0, "syscall thunk relocated\n" );
 #else
         skip( "syscall thunk relocated\n" );
 #endif
     }
+    CloseHandle( file );
     UnmapViewOfFile( ptr );
 }
 

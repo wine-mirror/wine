@@ -73,6 +73,30 @@ extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler );
 
 
+#ifdef __WINE_PE_BUILD
+
+enum syscall_ids
+{
+#define SYSCALL_ENTRY(id,name,args) __id_##name = id,
+ALL_SYSCALLS32
+#undef SYSCALL_ENTRY
+};
+
+/*******************************************************************
+ *         NtQueryInformationProcess
+ */
+void NtQueryInformationProcess_wrapper(void)
+{
+    asm( ".globl " __ASM_STDCALL("NtQueryInformationProcess", 20) "\n"
+         __ASM_STDCALL("NtQueryInformationProcess", 20) ":\n\t"
+         "movl %0,%%eax\n\t"
+         "call *%%fs:0xc0\n\t"
+         "ret $20"  :: "i" (__id_NtQueryInformationProcess) );
+}
+#define NtQueryInformationProcess syscall_NtQueryInformationProcess
+
+#endif /* __WINE_PE_BUILD */
+
 /*******************************************************************
  *         syscalls
  */
