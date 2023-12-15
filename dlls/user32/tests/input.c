@@ -3369,6 +3369,16 @@ static void test_keyboard_layout_name(void)
     ok(GetLastError() == ERROR_NOACCESS, "got %ld\n", GetLastError());
 
     layout = GetKeyboardLayout(0);
+    if (broken( layout == (HKL)0x040a0c0a ))
+    {
+        /* The testbot w7u_es has a broken layout configuration, its active layout is 040a:0c0a,
+         * with 0c0a its user locale and 040a its layout langid. Its layout preload list contains
+         * a 00000c0a layout but the system layouts OTOH only contains the standard 0000040a layout.
+         * Later, after activating 0409:0409 layout, GetKeyboardLayoutNameW returns 00000c0a.
+         */
+        win_skip( "broken keyboard layout, skipping tests\n" );
+        return;
+    }
 
     len = GetKeyboardLayoutList(0, NULL);
     ok(len > 0, "GetKeyboardLayoutList returned %d\n", len);
@@ -3549,6 +3559,13 @@ static void test_ActivateKeyboardLayout( char **argv )
     DWORD ret;
 
     layout = GetKeyboardLayout( 0 );
+    if (broken( layout == (HKL)0x040a0c0a ))
+    {
+        /* The testbot w7u_es has a broken layout configuration, see test_keyboard_layout_name above. */
+        win_skip( "broken keyboard layout, skipping tests\n" );
+        return;
+    }
+
     count = GetKeyboardLayoutList( 0, NULL );
     ok( count > 0, "GetKeyboardLayoutList returned %d\n", count );
     layouts = malloc( count * sizeof(HKL) );
