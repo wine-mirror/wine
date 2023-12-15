@@ -94,6 +94,7 @@ static WCHAR wszGUID[] = {'G','U','I','D',0};
 static WCHAR wszguid[] = {'g','u','i','d',0};
 
 static const BOOL is_win64 = sizeof(void *) > sizeof(int);
+static BOOL is_wow64;
 
 #ifdef __i386__
 static const BOOL abi_supports_stdcall = TRUE;
@@ -1613,17 +1614,25 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
     if (!do_typelib_reg_key(&uid, 3, 1, arch, base, FALSE)) return;
     if (!do_typelib_reg_key(&uid, 3, 37, arch, base, FALSE)) return;
     if (!do_typelib_reg_key(&uid, 5, 37, arch, base, FALSE)) return;
-    if (arch == 64 && !do_typelib_reg_key(&uid, 5, 37, 32, wrongW, FALSE)) return;
+    if (!do_typelib_reg_key(&uid, 5, 37, (arch == 32) ? 64 : 32, wrongW, FALSE)) return;
 
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
+        winetest_push_context( "win%lu: %u", arch, i );
         ret = QueryPathOfRegTypeLib(&uid, td[i].maj, td[i].min, LOCALE_NEUTRAL, &path);
-        ok(ret == td[i].ret, "QueryPathOfRegTypeLib(%u.%u) returned %08lx\n", td[i].maj, td[i].min, ret);
+        ok(ret == td[i].ret || (ret == TYPE_E_LIBNOTREGISTERED && arch == 64 && !is_win64 && !is_wow64),
+           "QueryPathOfRegTypeLib(%u.%u) returned %08lx\n", td[i].maj, td[i].min, ret);
         if (ret == S_OK)
         {
-            ok(!lstrcmpW(td[i].path, path), "typelib %u.%u path doesn't match\n", td[i].maj, td[i].min);
+            if (i == 6 && arch == (is_win64 ? 32 : 64))
+                ok( !lstrcmpW( path, L"wrong_5_37.dll" ), "typelib %u.%u path doesn't match: %s\n",
+                    td[i].maj, td[i].min, debugstr_w(path));
+            else
+                ok(!lstrcmpW(td[i].path, path), "typelib %u.%u path doesn't match: %s\n",
+                   td[i].maj, td[i].min, debugstr_w(path));
             SysFreeString(path);
         }
+        winetest_pop_context();
     }
 
     do_typelib_reg_key(&uid, 0, 0, arch, NULL, TRUE);
@@ -3716,7 +3725,8 @@ todo_wine {
     ok(typeattr->cVars == 0, "cVars = %d\n", typeattr->cVars);
     ok(typeattr->cImplTypes == 1, "cImplTypes = %d\n", typeattr->cImplTypes);
     ok(typeattr->cbSizeVft == 0xaab8 || typeattr->cbSizeVft == 0xaab0 ||
-            typeattr->cbSizeVft == 0x5560, "cbSizeVft = 0x%x\n", typeattr->cbSizeVft);
+       typeattr->cbSizeVft == 0x555c || typeattr->cbSizeVft == 0x5560,
+       "cbSizeVft = 0x%x\n", typeattr->cbSizeVft);
     ok(typeattr->cbAlignment == alignment, "cbAlignment = %d\n", typeattr->cbAlignment);
     ok(typeattr->wTypeFlags == 0, "wTypeFlags = %d\n", typeattr->wTypeFlags);
     ok(typeattr->wMajorVerNum == 0, "wMajorVerNum = %d\n", typeattr->wMajorVerNum);
@@ -7926,10 +7936,8 @@ static void testTDA(ITypeLib *tl, struct _TDATest *TDATest,
         }else if(TDATest->vt == VT_VARIANT){
             if(create){
                 size = sizeof(VARIANT);
-#ifdef _WIN64
                 if(ptr_size != sizeof(void*))
-                    size -= 8; /* 32-bit variant is 4 bytes smaller than 64-bit variant */
-#endif
+                    size += (is_win64 ? -8 : 8);  /* 32-bit variant is 8 bytes smaller than 64-bit variant */
             }else
                 size = sizeof(VARIANT);
         }
@@ -8276,7 +8284,8 @@ static void test_stub(void)
     CoUninitialize();
 }
 
-static void test_dep(void) {
+static void test_dep( SYSKIND sys )
+{
     HRESULT          hr;
     const WCHAR     *refFilename;
     ITypeLib        *preftLib;
@@ -8295,7 +8304,7 @@ static void test_dep(void) {
     static const GUID libguid = {0xe0228f26,0x2946,0x478c,{0xb6,0x4a,0x93,0xfe,0xef,0xa5,0x05,0x32}};
     static const GUID ifaceguid = {0x394376dd,0x3bb8,0x4804,{0x8c,0xcc,0x95,0x59,0x43,0x40,0x04,0xf3}};
 
-    trace("Starting typelib dependency tests\n");
+    winetest_push_context( "%s", sys == SYS_WIN32 ? "win32" : "win64" );
 
     refFilename = create_test_typelib(4);
     hr = LoadTypeLibEx(refFilename, REGKIND_NONE, &preftLib);
@@ -8307,13 +8316,8 @@ static void test_dep(void) {
     GetTempFileNameA(".", "tlb", 0, filename);
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, MAX_PATH);
 
-    if(sizeof(void*) == 8) {
-        hr = CreateTypeLib2(SYS_WIN64, filenameW, &pctLib);
-        ok(hr == S_OK, "got %08lx\n", hr);
-    } else {
-        hr = CreateTypeLib2(SYS_WIN32, filenameW, &pctLib);
-        ok(hr == S_OK, "got %08lx\n", hr);
-    }
+    hr = CreateTypeLib2(sys, filenameW, &pctLib);
+    ok(hr == S_OK, "got %08lx\n", hr);
 
     hr = ICreateTypeLib2_SetGuid(pctLib, &libguid);
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -8391,6 +8395,7 @@ static void test_dep(void) {
     ITypeLib_Release(ptLib);
 
     DeleteFileW(filenameW);
+    winetest_pop_context();
 }
 
 static void test_DeleteImplType(void)
@@ -8572,6 +8577,7 @@ START_TEST(typelib)
     const WCHAR *filename;
 
     init_function_pointers();
+    if (!is_win64) IsWow64Process( GetCurrentProcess(), &is_wow64 );
 
     ref_count_test(wszStdOle2);
     test_TypeComp();
@@ -8579,13 +8585,13 @@ START_TEST(typelib)
     test_TypeInfo();
     test_DispCallFunc();
     test_QueryPathOfRegTypeLib(32);
-    if(sizeof(void*) == 8){
-        test_QueryPathOfRegTypeLib(64);
-        test_CreateTypeLib(SYS_WIN64);
-        test_SetTypeDescAlias(SYS_WIN64);
-    }
+    test_QueryPathOfRegTypeLib(64);
+    test_CreateTypeLib(SYS_WIN64);
+    test_SetTypeDescAlias(SYS_WIN64);
+    test_dep(SYS_WIN64);
     test_CreateTypeLib(SYS_WIN32);
     test_SetTypeDescAlias(SYS_WIN32);
+    test_dep(SYS_WIN32);
     test_inheritance();
     test_SetVarHelpContext();
     test_SetFuncAndParamNames();
@@ -8607,7 +8613,6 @@ START_TEST(typelib)
     test_LoadRegTypeLib();
     test_GetLibAttr();
     test_stub();
-    test_dep();
     test_DeleteImplType();
     test_DeleteFuncDesc();
 }
