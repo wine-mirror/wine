@@ -65,6 +65,11 @@ static double scale_music_time(MUSIC_TIME time, double tempo)
     return (600000000.0 * time) / (tempo * DMUS_PPQ);
 }
 
+static MUSIC_TIME music_time_from_reference(REFERENCE_TIME time, double tempo)
+{
+    return (time * tempo * DMUS_PPQ) / 600000000;
+}
+
 #define check_dmus_note_pmsg(a, b, c, d, e, f, g) check_dmus_note_pmsg_(__LINE__, a, b, c, d, e, f, g)
 static void check_dmus_note_pmsg_(int line, DMUS_NOTE_PMSG *msg, MUSIC_TIME time, UINT chan,
         UINT duration, UINT key, UINT vel, UINT flags)
@@ -2896,7 +2901,7 @@ static void test_performance_time(void)
     hr = IDirectMusicPerformance_GetTime(performance, &time, &music_time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(time - init_time <= 200 * 10000, "got %I64d\n", time - init_time);
-    ok(music_time == (time - init_time) / 6510, "got %ld\n", music_time);
+    ok(abs(music_time - music_time_from_reference(time - init_time, 120)) <= 1, "got %ld\n", music_time);
 
 
     hr = IDirectMusicPerformance_CloseDown(performance);
