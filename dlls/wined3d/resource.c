@@ -332,7 +332,11 @@ void CDECL wined3d_resource_preload(struct wined3d_resource *resource)
 static BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
 {
     void **p;
-    SIZE_T align = RESOURCE_ALIGNMENT - 1 + sizeof(*p);
+    /* Overallocate and add padding to the allocated pointer, to guard against
+     * games (for instance Railroad Tycoon 2) writing before the locked resource
+     * memory pointer.
+     */
+    SIZE_T align = RESOURCE_ALIGNMENT + sizeof(*p);
     void *mem;
 
     if (!(mem = heap_alloc_zero(resource->size + align)))
