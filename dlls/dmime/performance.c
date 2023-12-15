@@ -2087,7 +2087,7 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
         DMUS_CURVE_PMSG *curve = (DMUS_CURVE_PMSG *)msg;
 
         msg->mtTime += curve->nOffset;
-        switch (curve->dwType)
+        switch (curve->bType)
         {
         case DMUS_CURVET_CCCURVE:
             if (FAILED(hr = performance_send_midi_pmsg(This, msg, DMUS_PMSGF_MUSICTIME | DMUS_PMSGF_TOOL_IMMEDIATE,
@@ -2096,7 +2096,13 @@ static HRESULT WINAPI performance_tool_ProcessPMsg(IDirectMusicTool *iface,
             break;
         case DMUS_CURVET_RPNCURVE:
         case DMUS_CURVET_NRPNCURVE:
-            FIXME("Unhandled curve type %#lx\n", curve->dwType);
+        case DMUS_CURVET_MATCURVE:
+        case DMUS_CURVET_PATCURVE:
+        case DMUS_CURVET_PBCURVE:
+            FIXME("Unhandled curve type %#x\n", curve->bType);
+            break;
+        default:
+            WARN("Invalid curve type %#x\n", curve->bType);
             break;
         }
 
