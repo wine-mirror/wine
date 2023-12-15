@@ -62,7 +62,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static double scale_music_time(MUSIC_TIME time, double tempo)
 {
-    return (600000000.0 * time) / (tempo * 768.0);
+    return (600000000.0 * time) / (tempo * DMUS_PPQ);
 }
 
 #define check_dmus_note_pmsg(a, b, c, d, e, f, g) check_dmus_note_pmsg_(__LINE__, a, b, c, d, e, f, g)
@@ -2812,10 +2812,11 @@ static void test_performance_graph(void)
     IDirectMusicTool_Release(tool);
 }
 
-#define check_music_time(a, b) check_music_time_(__LINE__, a, b)
-static void check_music_time_(int line, MUSIC_TIME time, MUSIC_TIME expect)
+#define check_reference_time(a, b) check_reference_time_(__LINE__, a, b)
+static void check_reference_time_(int line, REFERENCE_TIME time, double expect)
 {
-    ok_(__FILE__, line)(abs(time - expect) <= 1, "got %ld, expected %ld\n", time, expect);
+    ok_(__FILE__, line)(llabs(time - (REFERENCE_TIME)expect) <= scale_music_time(1, 120) / 2.0,
+                        "got %I64u, expected %f\n", time, expect);
 }
 
 static void test_performance_time(void)
@@ -2867,15 +2868,15 @@ static void test_performance_time(void)
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(1, 120));
+    check_reference_time(time - init_time, scale_music_time(1, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(1000, 120));
+    check_reference_time(time - init_time, scale_music_time(1000, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 2000, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(2000, 120));
+    check_reference_time(time - init_time, scale_music_time(2000, 120));
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time, &music_time);
@@ -4250,23 +4251,23 @@ static void test_tempo_track_play(void)
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 1, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(1, 120));
+    check_reference_time(time - init_time, scale_music_time(1, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 100, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(100, 120));
+    check_reference_time(time - init_time, scale_music_time(100, 120));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 150, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(50, 80));
+    check_reference_time(time - init_time, scale_music_time(100, 120) + scale_music_time(50, 80));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 200, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(100, 80));
+    check_reference_time(time - init_time, scale_music_time(100, 120) + scale_music_time(100, 80));
     time = 0xdeadbeef;
     hr = IDirectMusicPerformance_MusicToReferenceTime(performance, 400, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
-    check_music_time(time - init_time, scale_music_time(100, 120) + scale_music_time(200, 80) + scale_music_time(100, 20));
+    check_reference_time(time - init_time, scale_music_time(100, 120) + scale_music_time(200, 80) + scale_music_time(100, 20));
 
     music_time = 0xdeadbeef;
     hr = IDirectMusicPerformance_ReferenceToMusicTime(performance, init_time, &music_time);
