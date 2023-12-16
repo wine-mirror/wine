@@ -605,7 +605,6 @@ static void test_modules_overlap(void)
         if (tests[i].error_code != ~0)
         {
             ok(base[1] == 0, "SymLoadModuleEx should have failed\n");
-            todo_wine_if((i >= 8 && i < 12) || (i >= 20 && i < 32))
             ok(GetLastError() == tests[i].error_code ||
                /* Win8 returns this */
                (tests[i].error_code == ERROR_NO_MORE_FILES && broken(GetLastError() == ERROR_INVALID_HANDLE)),

@@ -943,6 +943,19 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (Flags & ~(SLMFLAG_VIRTUAL))
         FIXME("Unsupported Flags %08lx for %s\n", Flags, debugstr_w(wImageName));
 
+    /* Trying to load a new module at the same address of an existing one,
+     * native simply keeps the old one in place.
+     */
+    if (BaseOfDll)
+        for (altmodule = pcs->lmodules; altmodule; altmodule = altmodule->next)
+        {
+            if (altmodule->type == DMT_PE && BaseOfDll == altmodule->module.BaseOfImage)
+            {
+                SetLastError(ERROR_SUCCESS);
+                return 0;
+            }
+        }
+
     pcs->loader->synchronize_module_list(pcs);
 
     /* this is a Wine extension to the API just to redo the synchronisation */
@@ -974,6 +987,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (!module)
     {
         WARN("Couldn't locate %s\n", debugstr_w(wImageName));
+        SetLastError(ERROR_NO_MORE_FILES);
         return 0;
     }
     /* by default module_new fills module.ModuleName from a derivation
@@ -997,11 +1011,11 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
          * (it's hidden by altmodule).
          * We need to decide which one the two modules we need to get rid of.
          */
-        /* loading same module at same address... don't change anything */
+        /* loading same module at same address... we can only get here when BaseOfDll is 0 */
         if (module->module.BaseOfImage == altmodule->module.BaseOfImage)
         {
             module_remove(pcs, module);
-            SetLastError(ERROR_SUCCESS);
+            SetLastError(ERROR_INVALID_ADDRESS);
             return 0;
         }
         /* replace old module with new one */
