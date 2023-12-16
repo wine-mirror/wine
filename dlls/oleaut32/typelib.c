@@ -2633,6 +2633,7 @@ static void TLB_fix_typeinfo_ptr_size(ITypeInfoImpl *info)
         case VT_VARIANT:
             info->typeattr.cbSizeInstance = sizeof(VARIANT);
             info->typeattr.cbAlignment = sizeof(void *);
+            break;
         default:
             if(info->typeattr.cbSizeInstance < sizeof(void*))
                 info->typeattr.cbAlignment = info->typeattr.cbSizeInstance;
