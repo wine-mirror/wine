@@ -472,27 +472,60 @@ static BOOL test_modules(void)
     return TRUE;
 }
 
+struct test_module
+{
+    DWORD64             base;
+    DWORD               size;
+    const char*         name;
+};
+
+static struct test_module get_test_module(const char* path)
+{
+    struct test_module tm;
+    HANDLE dummy = (HANDLE)(ULONG_PTR)0xcafef00d;
+    IMAGEHLP_MODULEW64 im;
+    BOOL ret;
+
+    ret = SymInitialize(dummy, NULL, FALSE);
+    ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+
+    tm.base = SymLoadModuleEx(dummy, NULL, path, NULL, 0, 0, NULL, 0);
+    ok(tm.base != 0, "SymLoadModuleEx failed: %lu\n", GetLastError());
+
+    im.SizeOfStruct = sizeof(im);
+    ret = SymGetModuleInfoW64(dummy, tm.base, &im);
+    ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
+
+    tm.size = im.ImageSize;
+    ok(tm.base == im.BaseOfImage, "Unexpected image base\n");
+    ok(tm.size == get_module_size(path), "Unexpected size\n");
+    tm.name = path;
+
+    ret = SymCleanup(dummy);
+    ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+
+    return tm;
+}
+
 static void test_modules_overlap(void)
 {
     BOOL ret;
-    DWORD64 base;
+    DWORD64 base[2];
     const DWORD64 base1 = 0x00010000;
     HANDLE dummy = (HANDLE)(ULONG_PTR)0xcafef00d;
     const char* target1_dll = "c:\\windows\\system32\\kernel32.dll";
     const char* target2_dll = "c:\\windows\\system32\\winmm.dll";
-    DWORD imsize = get_module_size(target1_dll);
+    const char* target3_dll = "c:\\windows\\system32\\idontexist.dll";
     char buffer[512];
     IMAGEHLP_SYMBOL64* sym = (void*)buffer;
 
     int i, j;
-    struct test_module
-    {
-        DWORD64             base;
-        DWORD               size;
-        const char*         name;
-    };
+    struct test_module target1_dflt = get_test_module(target1_dll);
+    DWORD64 base0 = target1_dflt.base;
+    DWORD64 imsize0 = target1_dflt.size;
     const struct test
     {
+        DWORD64             first_base;
         struct test_module  input;
         DWORD               error_code;
         struct test_module  outputs[2];
@@ -500,48 +533,87 @@ static void test_modules_overlap(void)
     tests[] =
     {
         /* cases where first module is left "untouched" and second not loaded */
-        {{base1,              0,          target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
-        {{base1,              imsize,     target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
-        {{base1,              imsize / 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
-        {{base1,              imsize * 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
+/* 0*/  {base1, {base1,               0,           target1_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0,     target1_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0 / 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0 * 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+
+        {base1, {base1,               0,           target2_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+/* 5*/  {base1, {base1,               imsize0,     target2_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0 / 2, target2_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0 * 2, target2_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+
+        {base1, {base1,               0,           target3_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0,     target3_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+/*10*/  {base1, {base1,               imsize0 / 2, target3_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+        {base1, {base1,               imsize0 * 2, target3_dll}, ERROR_SUCCESS, {{base1, imsize0, "kernel32"}, {0}}},
+
+        {base0, {base0,               0,           target1_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0,     target1_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0 / 2, target1_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+/*15*/  {base0, {base0,               imsize0 * 2, target1_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+
+        {base0, {base0,               0,           target2_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0,     target2_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0 / 2, target2_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0 * 2, target2_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+
+/*20*/  {base0, {base0,               0,           target3_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0,     target3_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0 / 2, target3_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {base0,               imsize0 * 2, target3_dll}, ERROR_SUCCESS, {{base0, imsize0, "kernel32"}, {0}}},
+
+        /* error cases for second module */
+        {base0, {0,                   0,           target1_dll}, ERROR_INVALID_ADDRESS, {{base0, imsize0, "kernel32"}, {0}}},
+/*25*/  {base0, {0,                   imsize0,     target1_dll}, ERROR_INVALID_ADDRESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {0,                   imsize0 / 2, target1_dll}, ERROR_INVALID_ADDRESS, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {0,                   imsize0 * 2, target1_dll}, ERROR_INVALID_ADDRESS, {{base0, imsize0, "kernel32"}, {0}}},
+
+        {base0, {0,                   0,           target3_dll}, ERROR_NO_MORE_FILES, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {0,                   imsize0,     target3_dll}, ERROR_NO_MORE_FILES, {{base0, imsize0, "kernel32"}, {0}}},
+/*30*/  {base0, {0,                   imsize0 / 2, target3_dll}, ERROR_NO_MORE_FILES, {{base0, imsize0, "kernel32"}, {0}}},
+        {base0, {0,                   imsize0 * 2, target3_dll}, ERROR_NO_MORE_FILES, {{base0, imsize0, "kernel32"}, {0}}},
 
         /* cases where first module is unloaded and replaced by second module */
-        {{base1 + imsize / 2, imsize,     target1_dll}, ~0,            {{base1 + imsize / 2, imsize,     "kernel32"},{0}}},
-        {{base1 + imsize / 3, imsize / 3, target1_dll}, ~0,            {{base1 + imsize / 3, imsize / 3, "kernel32"},{0}}},
-        {{base1 + imsize / 2, imsize,     target2_dll}, ~0,            {{base1 + imsize / 2, imsize,     "winmm"},{0}}},
-        {{base1 + imsize / 3, imsize / 3, target2_dll}, ~0,            {{base1 + imsize / 3, imsize / 3, "winmm"},{0}}},
+        {base1, {base1 + imsize0 / 2, imsize0,     target1_dll}, ~0,            {{base1 + imsize0 / 2, imsize0,     "kernel32"}, {0}}},
+        {base1, {base1 + imsize0 / 3, imsize0 / 3, target1_dll}, ~0,            {{base1 + imsize0 / 3, imsize0 / 3, "kernel32"}, {0}}},
+        {base1, {base1 + imsize0 / 2, imsize0,     target2_dll}, ~0,            {{base1 + imsize0 / 2, imsize0,     "winmm"}, {0}}},
+/*35*/  {base1, {base1 + imsize0 / 3, imsize0 / 3, target2_dll}, ~0,            {{base1 + imsize0 / 3, imsize0 / 3, "winmm"}, {0}}},
 
         /* cases where second module is actually loaded */
-        {{base1 + imsize,     imsize,     target1_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 + imsize, imsize, "kernel32"}}},
-        {{base1 - imsize / 2, imsize,     target1_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 - imsize / 2, imsize, NULL}}},
+        {base1, {base1 + imsize0,     imsize0,     target1_dll}, ~0,            {{base1, imsize0, "kernel32"}, {base1 + imsize0, imsize0, "kernel32"}}},
+        {base1, {base1 - imsize0 / 2, imsize0,     target1_dll}, ~0,            {{base1, imsize0, "kernel32"}, {base1 - imsize0 / 2, imsize0, NULL}}},
         /* we mark with a NULL modulename the cases where the module is loaded, but isn't visible
          * (SymGetModuleInfo fails in callback) as it's base address is inside the first loaded module.
          */
-        {{base1 + imsize,     imsize,     target2_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 + imsize, imsize, "winmm"}}},
-        {{base1 - imsize / 2, imsize,     target2_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 - imsize / 2, imsize, NULL}}},
+        {base1, {base1 + imsize0,     imsize0,     target2_dll}, ~0,            {{base1, imsize0, "kernel32"}, {base1 + imsize0, imsize0, "winmm"}}},
+        {base1, {base1 - imsize0 / 2, imsize0,     target2_dll}, ~0,            {{base1, imsize0, "kernel32"}, {base1 - imsize0 / 2, imsize0, NULL}}},
     };
-
-    ok(imsize, "Cannot get image size\n");
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
+        winetest_push_context("overlap tests[%d]", i);
         ret = SymInitialize(dummy, NULL, FALSE);
         ok(ret, "SymInitialize failed: %lu\n", GetLastError());
 
-        base = SymLoadModuleEx(dummy, NULL, target1_dll, NULL, base1, 0, NULL, 0);
-        ok(base == base1, "SymLoadModuleEx failed: %lu\n", GetLastError());
-        ret = SymAddSymbol(dummy, base1, "winetest_symbol_virtual", base1 + (3 * imsize) / 4, 13, 0);
+        base[0] = SymLoadModuleEx(dummy, NULL, target1_dll, NULL, tests[i].first_base, 0, NULL, 0);
+        ok(base[0] == tests[i].first_base ? tests[i].first_base : base0, "SymLoadModuleEx failed: %lu\n", GetLastError());
+        ret = SymAddSymbol(dummy, base[0], "winetest_symbol_virtual", base[0] + (3 * imsize0) / 4, 13, 0);
         ok(ret, "SymAddSymbol failed: %lu\n", GetLastError());
 
-        base = SymLoadModuleEx(dummy, NULL, tests[i].input.name, NULL, tests[i].input.base, tests[i].input.size, NULL, 0);
+        base[1] = SymLoadModuleEx(dummy, NULL, tests[i].input.name, NULL, tests[i].input.base, tests[i].input.size, NULL, 0);
         if (tests[i].error_code != ~0)
         {
-            ok(base == 0, "SymLoadModuleEx should have failed\n");
-            ok(GetLastError() == tests[i].error_code, "Wrong error %lu\n", GetLastError());
+            ok(base[1] == 0, "SymLoadModuleEx should have failed\n");
+            todo_wine_if((i >= 8 && i < 12) || (i >= 20 && i < 32))
+            ok(GetLastError() == tests[i].error_code ||
+               /* Win8 returns this */
+               (tests[i].error_code == ERROR_NO_MORE_FILES && broken(GetLastError() == ERROR_INVALID_HANDLE)),
+               "Wrong error %lu\n", GetLastError());
         }
         else
         {
-            ok(base == tests[i].input.base, "SymLoadModuleEx failed: %lu\n", GetLastError());
+            ok(base[1] == tests[i].input.base, "SymLoadModuleEx failed: %lu\n", GetLastError());
         }
         for (j = 0; j < ARRAY_SIZE(tests[i].outputs); j++)
         {
@@ -566,11 +638,11 @@ static void test_modules_overlap(void)
         sym->SizeOfStruct = sizeof(*sym);
         sym->MaxNameLength = sizeof(buffer) - sizeof(*sym);
         ret = SymGetSymFromName64(dummy, "winetest_symbol_virtual", sym);
-        if (tests[i].error_code == ERROR_SUCCESS || tests[i].outputs[1].base)
+        if (tests[i].error_code != ~0 || tests[i].outputs[1].base)
         {
             /* first module is not unloaded, so our added symbol should be present, with right attributes */
             ok(ret, "SymGetSymFromName64 has failed: %lu (%d, %d)\n", GetLastError(), i, j);
-            ok(sym->Address == base1 + (3 * imsize) / 4, "Unexpected size %lu\n", sym->Size);
+            ok(sym->Address == base[0] + (3 * imsize0) / 4, "Unexpected size %lu\n", sym->Size);
             ok(sym->Size == 13, "Unexpected size %lu\n", sym->Size);
             ok(sym->Flags & SYMFLAG_VIRTUAL, "Unexpected flag %lx\n", sym->Flags);
         }
@@ -581,6 +653,7 @@ static void test_modules_overlap(void)
         }
         ret = SymCleanup(dummy);
         ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+        winetest_pop_context();
     }
 }
 
