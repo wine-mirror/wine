@@ -395,6 +395,7 @@ static void test_private_data(VkPhysicalDevice vk_physical_device)
 {
     PFN_vkDestroyPrivateDataSlotEXT pfn_vkDestroyPrivateDataSlotEXT;
     PFN_vkCreatePrivateDataSlotEXT pfn_vkCreatePrivateDataSlotEXT;
+    VkPhysicalDevicePrivateDataFeaturesEXT data_features;
     VkPrivateDataSlotCreateInfoEXT data_create_info;
     PFN_vkGetPrivateDataEXT pfn_vkGetPrivateDataEXT;
     PFN_vkSetPrivateDataEXT pfn_vkSetPrivateDataEXT;
@@ -407,7 +408,11 @@ static void test_private_data(VkPhysicalDevice vk_physical_device)
 
     static const char *ext_name = "VK_EXT_private_data";
 
-    if ((vr = create_device(vk_physical_device, 1, &ext_name, NULL, &vk_device)) < 0)
+    data_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES_EXT;
+    data_features.pNext = NULL;
+    data_features.privateData = VK_TRUE;
+
+    if ((vr = create_device(vk_physical_device, 1, &ext_name, &data_features, &vk_device)) < 0)
     {
         skip("Failed to create device with VK_EXT_private_data, VkResult %d.\n", vr);
         return;
