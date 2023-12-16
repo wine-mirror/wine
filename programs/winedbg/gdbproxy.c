@@ -64,6 +64,7 @@ struct reply_buffer
 struct gdb_context
 {
     /* gdb information */
+    HANDLE                      gdb_ctrl_thread;
     SOCKET                      sock;
     /* incoming buffer */
     char*                       in_buf;
@@ -2391,21 +2392,28 @@ static int fetch_data(struct gdb_context* gdbctx)
     return gdbctx->in_len - in_len;
 }
 
+static DWORD WINAPI gdb_ctrl_thread(void *pmt)
+{
+    /* don't bother freeing passed memory, we're terminating anyway */
+    return __wine_unix_spawnvp( (char **)pmt, TRUE );
+}
+
 #define FLAG_NO_START   1
 #define FLAG_WITH_XTERM 2
 
-static BOOL gdb_exec(unsigned port, unsigned flags)
+static HANDLE gdb_exec(unsigned port, unsigned flags)
 {
     WCHAR tmp[MAX_PATH], buf[MAX_PATH];
-    const char *argv[6];
+    const char **argv;
     char *unix_tmp;
     const char      *gdb_path;
     FILE*           f;
 
+    if (!(argv = HeapAlloc( GetProcessHeap(), 0, 6 * sizeof(argv[0]) ))) return NULL;
     if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
     GetTempPathW( MAX_PATH, buf );
     GetTempFileNameW( buf, L"gdb", 0, tmp );
-    if ((f = _wfopen( tmp, L"w+" )) == NULL) return FALSE;
+    if ((f = _wfopen( tmp, L"w+" )) == NULL) return NULL;
     unix_tmp = wine_get_unix_file_name( tmp );
     fprintf(f, "target remote localhost:%d\n", ntohs(port));
     fprintf(f, "set prompt Wine-gdb>\\ \n");
@@ -2428,12 +2436,7 @@ static BOOL gdb_exec(unsigned port, unsigned flags)
     argv[3] = "-x";
     argv[4] = unix_tmp;
     argv[5] = NULL;
-    if (flags & FLAG_WITH_XTERM)
-        __wine_unix_spawnvp( (char **)argv, FALSE );
-    else
-        __wine_unix_spawnvp( (char **)argv + 2, FALSE );
-    HeapFree( GetProcessHeap(), 0, unix_tmp );
-    return TRUE;
+    return CreateThread( NULL, 0, gdb_ctrl_thread, (char **)argv + ((flags & FLAG_WITH_XTERM) ? 0 : 2), 0, NULL );
 }
 
 static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned port)
@@ -2473,7 +2476,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
     if (flags & FLAG_NO_START)
         fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
     else
-        gdb_exec(s_addrs.sin_port, flags);
+        gdbctx->gdb_ctrl_thread = gdb_exec(s_addrs.sin_port, flags);
 
     /* step 4: wait for gdb to connect actually */
     FD_ZERO( &read_fds );
@@ -2505,6 +2508,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
 {
     int                 i;
 
+    gdbctx->gdb_ctrl_thread = NULL;
     gdbctx->sock = INVALID_SOCKET;
     gdbctx->in_buf = NULL;
     gdbctx->in_buf_alloc = 0;
@@ -2575,6 +2579,8 @@ static int gdb_remote(unsigned flags, unsigned port)
             }
         }
     }
+    /* wait for gdb to terminate */
+    WaitForSingleObject(gdbctx.gdb_ctrl_thread, INFINITE);
     return 0;
 }
 
