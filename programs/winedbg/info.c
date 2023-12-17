@@ -287,8 +287,8 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
 
     if (!im.num_used) return;
 
-    qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
     machine = im.modules[0].mi.MachineType;
+    qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
 
     if (multi_machine)
         dbg_printf("%-8s%-40s%-16s%-16sName (%d modules)\n", "Module", "Address", "Machine", "Debug info", im.num_used);
