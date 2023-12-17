@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-12-18 19:29+0900\n"
+"PO-Revision-Date: 2023-12-18 22:35+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -326,7 +326,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
-msgstr ""
+msgstr "実行中のアンインストール・変更が完了するのをお待ちください。"
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -3706,16 +3706,12 @@ msgid "High"
 msgstr "高"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "索引"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Wine ビデオ 1 ビデオコーデック"
+msgstr "Indeo Video Interactive バージョン 5 ビデオ コーデック"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -4015,10 +4011,8 @@ msgid "Syntax error in regular expression"
 msgstr "正規表現に構文誤りがあります"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "識別子を期待していました"
+msgstr "予期しない数量詞です"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4081,10 +4075,8 @@ msgid "'this' is not a | object"
 msgstr "'this' は | オブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'key' is not an object"
-msgstr "'this' は | オブジェクトではありません"
+msgstr "'key' はオブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -12626,8 +12618,6 @@ msgid "Duplex:"
 msgstr "両面印刷:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
 msgstr "給紙方法(&T):"
 
@@ -14726,37 +14716,29 @@ msgid "&Run..."
 msgstr "実行(&R)..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "Windows の終了(&X)"
+msgstr "デスクトップの終了(&X)"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "これらの値を削除しますか?"
+msgstr "すべてのプログラムを閉じて、仮想デスクトップを終了しますか?"
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "利用する接続文字列(&O)"
+msgstr "使い方: findstr /オプション 文字列\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "コマンド ラインが正しくありません。\n"
+msgstr "FINDSTR: コマンド ラインが正しくありません\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: %s を開けません\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: /%c は無視されました\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -14876,51 +14858,39 @@ msgstr "プライマリ DNS サフィックス"
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
 msgstr ""
+"使い方: klist <tickets | tgt | purge | get [サービス プリンシパル名]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "不明なエラー"
+msgstr "不明なエラー\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "Start Menu"
+msgstr "開始時刻"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "FLE 標準時"
+msgstr "終了時刻"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "新しい時刻を入力してください: "
+msgstr "更新時刻"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "チケット フラグ"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "キャッシュされたチケット"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "暗号化の種類"
+msgstr "Kerberos チケットの暗号化の種類"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "現在の接続"
+msgstr "現在のログオン ID は"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15058,7 +15028,7 @@ msgstr "以下のサービスが実行中です:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "コマンドで相反するスイッチが使われました。\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -17223,38 +17193,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL '%1'のアンインストールに成功しました\n"
 
 #: programs/start/start.rc:56
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/exec          Exec the specified file (for internal Wine usage).\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17307,8 +17245,9 @@ msgstr ""
 "/belownormal 優先度クラス「通常以下」でプログラムを開始します。\n"
 "/node n      指定した NUMA ノードでプログラムを開始します。\n"
 "/affinity mask 指定した関連マスクでプログラムを開始します。\n"
-"/wait        開始プログラムの完了を待ち、そのプログラムの終了コードで終了し\n"
-"ます。\n"
+"/machine arch アーキテクチャ (x86,arm,amd64,arm64) の利用を強制します。\n"
+"/wait        プログラムの完了を待ち、そのプログラムの終了コードで終了しま\n"
+"す。\n"
 "/unix        Unix ファイル名を使い、Windows エクスプローラーのようにファイ\n"
 "ルを開始します。\n"
 "/exec        指定したファイルを実行します (Wine 内部で使用)。\n"
@@ -17391,27 +17330,24 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "エラー: このプロセス自身を終了することはできません。\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "プロセス(PID %1!u!)は強制的に終了されました。\n"
+msgstr "PID %1!u! のプロセス (PID %2!u! の子プロセス) は終了されました。\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"終了シグナルが PID %1!u! のプロセス (PID %2!u! の子) に送られました。\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "ページ タブ リスト"
+msgstr "Wine tasklist"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "使い方: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17422,38 +17358,28 @@ msgid "PID"
 msgstr "PID"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "セッション ID"
+msgstr "セッション名"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "セッション ID"
+msgstr "セッション#"
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "メモリ使用量"
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "OK"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: 無効な構文です。"
+msgstr "ERROR: 構文が無効です\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "ファイル名は解決できません。\n"
+msgstr "ERROR: 認識できない検索フィルタです。\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18583,10 +18509,8 @@ msgid "&Theme:"
 msgstr "テーマ(&T):"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "テーマ(&T):"
+msgstr "&WinRT テーマ:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18605,10 +18529,8 @@ msgid "MIME types"
 msgstr "MIME タイプ"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "ファイル関連付けの管理(&A)"
+msgstr "ファイルとプロトコル関連付けの管理(&A)"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
@@ -18711,14 +18633,12 @@ msgid "Mono"
 msgstr "モノラル"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "右"
+msgstr "ライト"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "ダーク"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
