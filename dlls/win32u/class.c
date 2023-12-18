@@ -1125,14 +1125,6 @@ static const struct builtin_class_descr builtin_classes[] =
         .extra = DLGWINDOWEXTRA,
         .cursor = IDC_ARROW,
     },
-    /* edit */
-    {
-        .name = "Edit",
-        .style = CS_DBLCLKS | CS_PARENTDC,
-        .proc = WINPROC_EDIT,
-        .extra = sizeof(UINT64),
-        .cursor = IDC_IBEAM,
-    },
     /* icon title */
     {
         .name = MAKEINTRESOURCEA(ICONTITLE_CLASS_ATOM),
@@ -1233,7 +1225,19 @@ static void register_builtins(void)
     ULONG ret_len, i;
     void *ret_ptr;
 
+    /* 64-bit Windows use sizeof(UINT64) for all processes, while 32-bit Windows use 6 for extra
+     * bytes size. Civilization II depends on the size being 6, so we use that even in wow64. */
+    const struct builtin_class_descr edit_class =
+    {
+        .name = "Edit",
+        .style = CS_DBLCLKS | CS_PARENTDC,
+        .proc = WINPROC_EDIT,
+        .extra = sizeof(void *) == 4 || NtCurrentTeb()->WowTebOffset ? 6 : sizeof(UINT64),
+        .cursor = IDC_IBEAM,
+    };
+
     for (i = 0; i < ARRAYSIZE(builtin_classes); i++) register_builtin( &builtin_classes[i] );
+    register_builtin( &edit_class );
     KeUserModeCallback( NtUserInitBuiltinClasses, NULL, 0, &ret_ptr, &ret_len );
 }
 
