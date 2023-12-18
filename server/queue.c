@@ -1711,6 +1711,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     input = thread->queue->input;
 
+    if (win != msg->win) always_queue = 1;
     if (!always_queue || merge_message( input, msg )) free_message( msg );
     else
     {
