@@ -956,10 +956,12 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
             }
         }
 
-    pcs->loader->synchronize_module_list(pcs);
-
     /* this is a Wine extension to the API just to redo the synchronisation */
-    if (!wImageName && !hFile) return 0;
+    if (!wImageName && !hFile)
+    {
+        pcs->loader->synchronize_module_list(pcs);
+        return 0;
+    }
 
     if (Flags & SLMFLAG_VIRTUAL)
     {
@@ -968,28 +970,31 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         if (!module) return 0;
         module->module.SymType = SymVirtual;
     }
-    /* check if it's a builtin PE module with a containing ELF module */
-    else if (wImageName && module_is_container_loaded(pcs, wImageName, BaseOfDll))
+    else
     {
-        /* force the loading of DLL as builtin */
-        module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
-    }
-    if (!module)
-    {
-        /* otherwise, try a regular PE module */
-        if (!(module = pe_load_native_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)) &&
-            wImageName)
+        /* try PE image */
+        module = pe_load_native_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll);
+        if (!module && wImageName)
         {
-            /* and finally an ELF or Mach-O module */
-            module = pcs->loader->load_module(pcs, wImageName, BaseOfDll);
+            /* It could be either a dll.so file (for which we need the corresponding
+             * system module) or a system module.
+             * In both cases, ensure system module list is up-to-date.
+             */
+            pcs->loader->synchronize_module_list(pcs);
+            if (module_is_container_loaded(pcs, wImageName, BaseOfDll))
+                module = pe_load_builtin_module(pcs, wImageName, BaseOfDll, SizeOfDll);
+            /* at last, try ELF or Mach-O module */
+            if (!module)
+                module = pcs->loader->load_module(pcs, wImageName, BaseOfDll);
+        }
+        if (!module)
+        {
+            WARN("Couldn't locate %s\n", debugstr_w(wImageName));
+            SetLastError(ERROR_NO_MORE_FILES);
+            return 0;
         }
     }
-    if (!module)
-    {
-        WARN("Couldn't locate %s\n", debugstr_w(wImageName));
-        SetLastError(ERROR_NO_MORE_FILES);
-        return 0;
-    }
+
     /* by default module_new fills module.ModuleName from a derivation
      * of LoadedImageName. Overwrite it, if we have better information
      */
