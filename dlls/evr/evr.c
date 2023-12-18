@@ -344,7 +344,7 @@ static void evr_destroy(struct strmbase_renderer *iface)
     free(filter);
 }
 
-static HRESULT evr_copy_sample_buffer(struct evr *filter, IMediaSample *input_sample, IMFSample **sample)
+static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, IMediaSample *input_sample, IMFSample **sample)
 {
     IDirect3DSurface9 *surface;
     D3DLOCKED_RECT locked_rect;
@@ -363,6 +363,15 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, IMediaSample *input_sa
     IMFMediaType_GetUINT64(filter->media_type, &MF_MT_FRAME_SIZE, &frame_size);
     width = frame_size >> 32;
     lines = frame_size;
+
+    if (IsEqualGUID(subtype, &MFVideoFormat_YUY2))
+    {
+        width = (3 * width + 3) & ~3;
+    }
+    else
+    {
+        width *= 4;
+    }
 
     if (FAILED(hr = IMediaSample_GetPointer(input_sample, &src)))
     {
@@ -383,7 +392,7 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, IMediaSample *input_sa
             if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD)))
             {
                 if (src_stride < 0) src += (-src_stride) * (lines - 1);
-                MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 4, lines);
+                MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
                 IDirect3DSurface9_UnlockRect(surface);
             }
 
@@ -417,9 +426,10 @@ static HRESULT evr_render(struct strmbase_renderer *iface, IMediaSample *input_s
     IMFMediaType_GetGUID(filter->media_type, &MF_MT_SUBTYPE, &subtype);
 
     if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB32)
-            || IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+            || IsEqualGUID(&subtype, &MFVideoFormat_RGB32)
+            || IsEqualGUID(&subtype, &MFVideoFormat_YUY2))
     {
-        if (SUCCEEDED(hr = evr_copy_sample_buffer(filter, input_sample, &sample)))
+        if (SUCCEEDED(hr = evr_copy_sample_buffer(filter, &subtype, input_sample, &sample)))
         {
             if (SUCCEEDED(IMFTransform_ProcessInput(filter->mixer, 0, sample, 0)))
                 IMFVideoPresenter_ProcessMessage(filter->presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
