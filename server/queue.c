@@ -454,8 +454,6 @@ static int update_desktop_cursor_window( struct desktop *desktop, user_handle_t 
 
 static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win, int x, int y )
 {
-    struct thread_input *input;
-    user_handle_t capture;
     int updated;
 
     x = max( min( x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
@@ -465,7 +463,6 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
     desktop->cursor.y = y;
     desktop->cursor.last_change = get_tick_count();
 
-    if ((input = desktop->foreground_input) && (capture = input->capture)) win = capture;
     if (!win || !is_window_visible( win ) || is_window_transparent( win ))
         win = shallow_window_from_point( desktop, x, y );
     if (update_desktop_cursor_window( desktop, win )) updated = 1;
