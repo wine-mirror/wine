@@ -3379,7 +3379,7 @@ static void test_keyboard_layout_name(void)
     len = GetKeyboardLayoutList(len, layouts);
     ok(len > 0, "GetKeyboardLayoutList returned %d\n", len);
 
-    layouts_preload = calloc(len, sizeof(HKL));
+    layouts_preload = calloc(1, sizeof(HKL));
     ok(layouts_preload != NULL, "Could not allocate memory\n");
 
     if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Keyboard Layout\\Preload", &hkey ))
@@ -3388,24 +3388,26 @@ static void test_keyboard_layout_name(void)
         type = REG_SZ;
         klid_size = sizeof(klid);
         value_size = ARRAY_SIZE(value);
-        while (i < len && !RegEnumValueW( hkey, i++, value, &value_size, NULL, &type, (void *)&klid, &klid_size ))
+        while (!RegEnumValueW( hkey, i++, value, &value_size, NULL, &type, (void *)&klid, &klid_size ))
         {
             klid_size = sizeof(klid);
             value_size = ARRAY_SIZE(value);
+            layouts_preload = realloc( layouts_preload, (i + 1) * sizeof(*layouts_preload) );
+            ok(layouts_preload != NULL, "Could not allocate memory\n");
             layouts_preload[i - 1] = UlongToHandle( wcstoul( klid, NULL, 16 ) );
+            layouts_preload[i] = 0;
 
             id = (DWORD_PTR)layouts_preload[i - 1];
             if (id & 0x80000000) todo_wine_if(HIWORD(id) == 0xe001) ok((id & 0xf0000000) == 0xd0000000, "Unexpected preloaded keyboard layout high bits %#lx\n", id);
             else ok(!(id & 0xf0000000), "Unexpected preloaded keyboard layout high bits %#lx\n", id);
         }
 
-        ok(i <= len, "Unexpected keyboard count %d in preload list\n", i);
         RegCloseKey( hkey );
     }
 
     if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Keyboard Layout\\Substitutes", &hkey ))
     {
-        for (i = 0; i < len && layouts_preload[i]; ++i)
+        for (i = 0; layouts_preload[i]; ++i)
         {
             type = REG_SZ;
             klid_size = sizeof(klid);
@@ -3447,7 +3449,7 @@ static void test_keyboard_layout_name(void)
 
         GetKeyboardLayoutNameW(klid);
 
-        for (j = 0; j < len; ++j)
+        for (j = 0; layouts_preload[j]; ++j)
         {
             swprintf( tmpklid, KL_NAMELENGTH, L"%08X", layouts_preload[j] );
             if (!wcscmp( tmpklid, klid )) break;
