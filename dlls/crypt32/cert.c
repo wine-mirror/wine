@@ -1482,10 +1482,15 @@ static BOOL compare_cert_by_name(PCCERT_CONTEXT pCertContext, DWORD dwType,
     CERT_NAME_BLOB *blob = (CERT_NAME_BLOB *)pvPara, *toCompare;
     BOOL ret;
 
-    if (dwType & CERT_INFO_SUBJECT_FLAG)
+    if ((dwType & CERT_COMPARE_MASK) == CERT_INFO_SUBJECT_FLAG)
         toCompare = &pCertContext->pCertInfo->Subject;
-    else
+    else if ((dwType & CERT_COMPARE_MASK) == CERT_INFO_ISSUER_FLAG)
         toCompare = &pCertContext->pCertInfo->Issuer;
+    else
+    {
+        ERR("dwType %08lx doesn't specify SUBJECT or ISSUER\n", dwType);
+        return FALSE;
+    }
     ret = CertCompareCertificateName(pCertContext->dwCertEncodingType,
      toCompare, blob);
     return ret;
@@ -1735,7 +1740,7 @@ static PCCERT_CONTEXT find_cert_by_issuer(HCERTSTORE store, DWORD dwType,
     }
     else
        found = cert_compare_certs_in_store(store, prev,
-        compare_cert_by_name, CERT_COMPARE_NAME | CERT_COMPARE_SUBJECT_CERT,
+        compare_cert_by_name, CERT_FIND_SUBJECT_NAME,
         dwFlags, &subject->pCertInfo->Issuer);
     return found;
 }
@@ -1747,7 +1752,7 @@ static BOOL compare_cert_by_name_str(PCCERT_CONTEXT pCertContext,
     DWORD len;
     BOOL ret = FALSE;
 
-    if (dwType & CERT_INFO_SUBJECT_FLAG)
+    if ((dwType & CERT_COMPARE_MASK) == CERT_INFO_SUBJECT_FLAG)
         name = &pCertContext->pCertInfo->Subject;
     else
         name = &pCertContext->pCertInfo->Issuer;
