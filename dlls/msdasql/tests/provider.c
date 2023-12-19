@@ -939,18 +939,18 @@ static void test_enumeration(void)
         for( i = 0; i < columns; i++ )
         {
             if (!dbcolumninfo[i].pwszName || !colinfo_data[i].pwszName)
-                ok (dbcolumninfo[i].pwszName == colinfo_data[i].pwszName, "got %p/%p", dbcolumninfo[i].pwszName, colinfo_data[i].pwszName);
+                ok (dbcolumninfo[i].pwszName == colinfo_data[i].pwszName, "got %p/%p\n", dbcolumninfo[i].pwszName, colinfo_data[i].pwszName);
             else
-                ok ( !wcscmp(dbcolumninfo[i].pwszName, colinfo_data[i].pwszName), "got %p/%p",
+                ok ( !wcscmp(dbcolumninfo[i].pwszName, colinfo_data[i].pwszName), "got %p/%p\n",
                      debugstr_w(dbcolumninfo[i].pwszName), debugstr_w(colinfo_data[i].pwszName));
 
-            ok (dbcolumninfo[i].pTypeInfo == colinfo_data[i].pTypeInfo, "got %p/%p", dbcolumninfo[i].pTypeInfo, colinfo_data[i].pTypeInfo);
-            ok (dbcolumninfo[i].iOrdinal == colinfo_data[i].iOrdinal, "got %Id/%Id", dbcolumninfo[i].iOrdinal, colinfo_data[i].iOrdinal);
-            ok (dbcolumninfo[i].dwFlags == colinfo_data[i].dwFlags, "got 0x%08lx/0x%08lx", dbcolumninfo[i].dwFlags, colinfo_data[i].dwFlags);
-            ok (dbcolumninfo[i].ulColumnSize == colinfo_data[i].ulColumnSize, "got %Iu/%Iu", dbcolumninfo[i].ulColumnSize, colinfo_data[i].ulColumnSize);
-            ok (dbcolumninfo[i].wType == colinfo_data[i].wType, "got %d/%d", dbcolumninfo[i].wType, colinfo_data[i].wType);
-            ok (dbcolumninfo[i].bPrecision == colinfo_data[i].bPrecision, "got %d/%d", dbcolumninfo[i].bPrecision, colinfo_data[i].bPrecision);
-            ok (dbcolumninfo[i].bScale == colinfo_data[i].bScale, "got %d/%d", dbcolumninfo[i].bScale, colinfo_data[i].bScale);
+            ok (dbcolumninfo[i].pTypeInfo == colinfo_data[i].pTypeInfo, "got %p/%p\n", dbcolumninfo[i].pTypeInfo, colinfo_data[i].pTypeInfo);
+            ok (dbcolumninfo[i].iOrdinal == colinfo_data[i].iOrdinal, "got %Id/%Id\n", dbcolumninfo[i].iOrdinal, colinfo_data[i].iOrdinal);
+            ok (dbcolumninfo[i].dwFlags == colinfo_data[i].dwFlags, "got 0x%08lx/0x%08lx\n", dbcolumninfo[i].dwFlags, colinfo_data[i].dwFlags);
+            ok (dbcolumninfo[i].ulColumnSize == colinfo_data[i].ulColumnSize, "got %Iu/%Iu\n", dbcolumninfo[i].ulColumnSize, colinfo_data[i].ulColumnSize);
+            ok (dbcolumninfo[i].wType == colinfo_data[i].wType, "got %d/%d\n", dbcolumninfo[i].wType, colinfo_data[i].wType);
+            ok (dbcolumninfo[i].bPrecision == colinfo_data[i].bPrecision, "got %d/%d\n", dbcolumninfo[i].bPrecision, colinfo_data[i].bPrecision);
+            ok (dbcolumninfo[i].bScale == colinfo_data[i].bScale, "got %d/%d\n", dbcolumninfo[i].bScale, colinfo_data[i].bScale);
         }
 
         CoTaskMemFree(buffer);
