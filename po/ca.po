@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-12-15 12:32-0700\n"
+"PO-Revision-Date: 2023-12-18 23:58-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -22,7 +22,7 @@ msgstr "Seguretat"
 
 #: dlls/aclui/aclui.rc:32
 msgid "&Group or user names:"
-msgstr "Noms de &grups i d'usuaris:"
+msgstr "Noms de &grups o d'usuaris:"
 
 #: dlls/aclui/aclui.rc:38
 msgid "Allow"
@@ -329,6 +329,8 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
+"Si us plau, espereu fins que es termini el procès actual d'instal·lació o de "
+"modificació."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -3731,16 +3733,12 @@ msgid "High"
 msgstr "Alt"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "Índex"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Còdec de vídeo Wine Video 1"
+msgstr "Còdec de vídeo Indeo Video Interactive versió 5"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -4044,10 +4042,8 @@ msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "S'esperava un identificador"
+msgstr "Quantificador inesperat"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4110,10 +4106,8 @@ msgid "'this' is not a | object"
 msgstr "'this' no és un objecte de |"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'key' is not an object"
-msgstr "'this' no és un objecte de |"
+msgstr "'clau' no és un objecte"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -12676,10 +12670,8 @@ msgid "Duplex:"
 msgstr "Dúplex:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "&Safata:"
+msgstr "&Safata de paper:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -14832,37 +14824,31 @@ msgid "&Run..."
 msgstr "&Executa..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "&Surt del Windows"
+msgstr "&Surt de l'escriptori"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "Esteu segur que voleu suprimir aquests valors?"
+msgstr ""
+"Esteu segur que voleu tancar tots els programes i sortir de l'escriptori "
+"virtual?"
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "Utilitza una cadena de c&onnexió"
+msgstr "Ús: findstr /opcions cadena\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "La línia d'ordres no és vàlida.\n"
+msgstr "FINDSTR: Línia d'ordres dolenta\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: No es pot obrir %s\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: /%c ignorat\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -14984,52 +14970,39 @@ msgstr "Sufix DNS principal"
 
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
-msgstr ""
+msgstr "Ús: klist <tickets | tgt | purge | get [nom de principal de servei]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "Error desconegut"
+msgstr "Error desconegut\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "Menú Inicia"
+msgstr "Hora d'inici"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "Europa, central, hora estàndard"
+msgstr "Hora de finalització"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "Introduïu hora nova: "
+msgstr "Hora de renovació"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "Opcions de tiquet"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "Tiquets en memòria cau"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "Tipus de xifratge"
+msgstr "Tipus de xifratge de KerbTicket"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "Connexions actuals"
+msgstr "El LogonId actual és"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15168,7 +15141,7 @@ msgstr "Els següents serveis s'estan executant:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "S'ha usat un ordre amb commutadors en conflicte.\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -17356,38 +17329,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: S'ha desinstal·lat el DLL '%1' amb èxit\n"
 
 #: programs/start/start.rc:56
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/exec          Exec the specified file (for internal Wine usage).\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17419,36 +17360,41 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"Inicia un programa, o obre un document en el programa que normalment "
-"s'utilitza\n"
-"per als fitxers amb aquell sufix.\n"
+"Inicia un programa, o obre un document en el programa que normalment\n"
+"s'utilitza per als fitxers amb aquell sufix.\n"
 "Ús:\n"
 "start [opcions] nom_de_fitxer_de_programa [...]\n"
 "start [opcions] nom_de_fitxer_de_document\n"
 "\n"
 "Opcions:\n"
-"\"títol\"           Especifica el títol de les finestres filles.\n"
-"/d directori      Inicia el programa en el directori especificat.\n"
-"/b                No creïs una consola nova per al programa.\n"
-"/i                Inicia el programa amb variables d'entorn fresques.\n"
-"/min              Inicia el programa minimitzat.\n"
-"/max              Inicia el programa maximitzat.\n"
-"/low              Inicia el programa en la classe de prioritat idle.\n"
-"/normal           Inicia el programa en la classe de prioritat normal.\n"
-"/high             Inicia el programa en la classe de prioritat high.\n"
-"/realtime         Inicia el programa en la classe de prioritat realtime.\n"
-"/abovenormal      Inicia el programa en la classe de prioritat abovenormal.\n"
-"/belownormal      Inicia el programa en la classe de prioritat belownormal.\n"
-"/node n           Inicia el programa en el node NUMA especificat.\n"
-"/affinity màscara Inicia el programa amb la màscara d'afinitat\n"
-"                  especificada.\n"
-"/wait             Espera que el programa iniciat termini, llavors surt amb\n"
-"                  el seu codi de sortida.\n"
-"/unix             Utilitza un nom de fitxer d'Unix i inicia el fitxer com\n"
-"                  el Windows Explorer.\n"
-"/exec             Executa el fitxer especificat (per a ús intern del Wine).\n"
-"/ProgIDOpen       Obre un document utilitzant el progID especificat.\n"
-"/?                Mostra aquesta ajuda i surt.\n"
+"\"títol\"               Especifica el títol de les finestres filles.\n"
+"/d directori          Inicia el programa en el directori especificat.\n"
+"/b                    No creïs una consola nova per al programa.\n"
+"/i                    Inicia el programa amb variables d'entorn fresques.\n"
+"/min                  Inicia el programa minimitzat.\n"
+"/max                  Inicia el programa maximitzat.\n"
+"/low                  Inicia el programa en la classe de prioritat idle.\n"
+"/normal               Inicia el programa en la classe de prioritat normal.\n"
+"/high                 Inicia el programa en la classe de prioritat high.\n"
+"/realtime             Inicia el programa en la classe de prioritat\n"
+"                      realtime.\n"
+"/abovenormal          Inicia el programa en la classe de prioritat\n"
+"                      abovenormal.\n"
+"/belownormal          Inicia el programa en la classe de prioritat\n"
+"                      belownormal.\n"
+"/node n               Inicia el programa en el node NUMA especificat.\n"
+"/affinity màscara     Inicia el programa amb la màscara d'afinitat\n"
+"                      especificada.\n"
+"/machine arquitectura Força utilitzar una arquitectura específica (x86,arm,\n"
+"                      amd64,arm64).\n"
+"/wait                 Espera que el programa iniciat termini, llavors surt\n"
+"                      amb el seu codi de sortida.\n"
+"/unix                 Utilitza un nom de fitxer d'Unix i inicia el fitxer\n"
+"                      com el Windows Explorer.\n"
+"/exec                 Executa el fitxer especificat (per a ús intern del\n"
+"                      Wine).\n"
+"/ProgIDOpen           Obre un document utilitzant el progID especificat.\n"
+"/?                    Mostra aquesta ajuda i surt.\n"
 
 #: programs/start/start.rc:58
 msgid ""
@@ -17530,27 +17476,26 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Error: No es permet l'autoterminació de procés.\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "El procés amb PID %1!u! s'ha terminat a la força.\n"
+msgstr ""
+"El procés amb PID %1!u! (fil del procès amb PID %2!u!) s'ha terminat.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"S'han enviat el senyal de terminació al procès amb PID %1!u!, fil del PID %2!"
+"u!.\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "llista de tabuladors de pàgina"
+msgstr "Llista de tasques del Wine"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "Ús: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17561,38 +17506,28 @@ msgid "PID"
 msgstr "PID"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "ID de sessió"
+msgstr "Nom de sessió"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "ID de sessió"
+msgstr "Número de sessió"
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "Ús de memòria"
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "D'acord"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: La sintaxi no és vàlida. "
+msgstr "ERROR: Sintaxi no vàlida\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "No es pot resoldre el nom de fitxer.\n"
+msgstr "ERROR: No es pot reconèixer el filtre de cerca.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18735,10 +18670,8 @@ msgid "&Theme:"
 msgstr "&Tema:"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "&Tema:"
+msgstr "Tema &WinRT:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18757,10 +18690,8 @@ msgid "MIME types"
 msgstr "Tipus MIME"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Gestiona &associacions de fitxer"
+msgstr "Gestiona &associacions de fitxer i protocol"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
@@ -18863,14 +18794,12 @@ msgid "Mono"
 msgstr "Mono"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "Dreta"
+msgstr "Clar"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "Fosc"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
