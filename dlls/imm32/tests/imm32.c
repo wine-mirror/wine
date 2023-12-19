@@ -3721,7 +3721,7 @@ static void ime_cleanup( HKL hkl, BOOL free )
     {
         value_len = ARRAY_SIZE(value);
         buffer_len = sizeof(buffer);
-        if (hkl != UlongToHandle( wcstoul( buffer, NULL, 16 ) )) continue;
+        if (HandleToUlong( hkl ) != wcstoul( buffer, NULL, 16 )) continue;
         ret = RegDeleteValueW( hkey, value );
         ok( !ret, "RegDeleteValueW returned %#lx, error %lu\n", ret, GetLastError() );
     }
