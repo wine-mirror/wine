@@ -2227,6 +2227,9 @@ static void test_handles(void)
 #define check_display_dc(a, b, c) _check_display_dc(__LINE__, a, b, c)
 static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_todo)
 {
+    unsigned char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])] = {0};
+    BITMAPINFO *bmi = (BITMAPINFO *)buffer;
+    DIBSECTION dib;
     BITMAP bitmap;
     HBITMAP hbmp;
     INT value;
@@ -2265,6 +2268,19 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
 
     hbmp = GetCurrentObject(hdc, OBJ_BITMAP);
     ok_(__FILE__, line)(!!hbmp, "GetCurrentObject failed, error %#lx.\n", GetLastError());
+
+    /* Expect hbmp to be a bitmap, not a DIB when GetObjectA() succeeds */
+    value = GetObjectA(hbmp, sizeof(dib), &dib);
+    ok(!value || value == sizeof(BITMAP), "GetObjectA failed, value %d.\n", value);
+
+    /* Expect GetDIBits() to succeed */
+    bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    value = GetDIBits(hdc, hbmp, 0, 0, NULL, (LPBITMAPINFO)bmi, DIB_RGB_COLORS);
+    todo_wine
+    ok(value, "GetDIBits failed, error %#lx.\n", GetLastError());
+    todo_wine
+    ok(bmi->bmiHeader.biCompression == BI_BITFIELDS, "Got unexpected biCompression %lu.\n", bmi->bmiHeader.biCompression);
+
     ret = GetObjectA(hbmp, sizeof(bitmap), &bitmap);
     /* GetObjectA fails on Win7 and older */
     if (ret)
