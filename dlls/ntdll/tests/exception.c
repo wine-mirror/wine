@@ -4425,6 +4425,169 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
+static void test_continue(void)
+{
+    struct context_pair {
+        CONTEXT before;
+        CONTEXT after;
+    } contexts;
+    NTSTATUS (*func_ptr)( struct context_pair *, BOOL alertable, void *continue_func, void *capture_func ) = code_mem;
+    int i;
+
+    static const BYTE call_func[] =
+    {
+        /* ret at 8*13(rsp) */
+
+        /* need to preserve these */
+        0x53,             /* push %rbx; 8*12(rsp) */
+        0x55,             /* push %rbp; 8*11(rsp) */
+        0x56,             /* push %rsi; 8*10(rsp) */
+        0x57,             /* push %rdi; 8*9(rsp) */
+        0x41, 0x54,       /* push %r12; 8*8(rsp) */
+        0x41, 0x55,       /* push %r13; 8*7(rsp) */
+        0x41, 0x56,       /* push %r14; 8*6(rsp) */
+        0x41, 0x57,       /* push %r15; 8*5(rsp) */
+
+        0x48, 0x83, 0xec, 0x28, /* sub $0x28, %rsp; reserve space for rsp and outgoing reg params */
+        0x48, 0x89, 0x64, 0x24, 0x20, /* mov %rsp, 8*4(%rsp); for stack validation */
+
+        /* save args */
+        0x48, 0x89, 0x4c, 0x24, 0x70,                   /* mov %rcx, 8*14(%rsp) */
+        0x48, 0x89, 0x54, 0x24, 0x78,                   /* mov %rdx, 8*15(%rsp) */
+        0x4c, 0x89, 0x84, 0x24, 0x80, 0x00, 0x00, 0x00, /* mov %r8,  8*16(%rsp) */
+        0x4c, 0x89, 0x8c, 0x24, 0x88, 0x00, 0x00, 0x00, /* mov %r9,  8*17(%rsp) */
+
+        /* invoke capture context */
+        0x41, 0xff, 0xd1,       /* call *%r9 */
+
+        /* overwrite general registers */
+        0x48, 0xb8, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde,  /* movabs $0xdeadbeefdeadbeef, %rax */
+        0x48, 0x89, 0xc1, /* mov %rax, %rcx */
+        0x48, 0x89, 0xc2, /* mov %rax, %rdx */
+        0x48, 0x89, 0xc3, /* mov %rax, %rbx */
+        0x48, 0x89, 0xc5, /* mov %rax, %rbp */
+        0x48, 0x89, 0xc6, /* mov %rax, %rsi */
+        0x48, 0x89, 0xc7, /* mov %rax, %rdi */
+        0x49, 0x89, 0xc0, /* mov %rax, %r8 */
+        0x49, 0x89, 0xc1, /* mov %rax, %r9 */
+        0x49, 0x89, 0xc2, /* mov %rax, %r10 */
+        0x49, 0x89, 0xc3, /* mov %rax, %r11 */
+        0x49, 0x89, 0xc4, /* mov %rax, %r12 */
+        0x49, 0x89, 0xc5, /* mov %rax, %r13 */
+        0x49, 0x89, 0xc6, /* mov %rax, %r14 */
+        0x49, 0x89, 0xc7, /* mov %rax, %r15 */
+
+        /* overwrite SSE registers */
+        0x66, 0x48, 0x0f, 0x6e, 0xc0, /* movq %rax, %xmm0 */
+        0x66, 0x0f, 0x6c, 0xc0,       /* punpcklqdq %xmm0, %xmm0; extend to high quadword */
+        0x0f, 0x28, 0xc8,             /* movaps %xmm0, %xmm1 */
+        0x0f, 0x28, 0xd0,             /* movaps %xmm0, %xmm2 */
+        0x0f, 0x28, 0xd8,             /* movaps %xmm0, %xmm3 */
+        0x0f, 0x28, 0xe0,             /* movaps %xmm0, %xmm4 */
+        0x0f, 0x28, 0xe8,             /* movaps %xmm0, %xmm5 */
+        0x0f, 0x28, 0xf0,             /* movaps %xmm0, %xmm6 */
+        0x0f, 0x28, 0xf8,             /* movaps %xmm0, %xmm7 */
+        0x44, 0x0f, 0x28, 0xc0,       /* movaps %xmm0, %xmm8 */
+        0x44, 0x0f, 0x28, 0xc8,       /* movaps %xmm0, %xmm9 */
+        0x44, 0x0f, 0x28, 0xd0,       /* movaps %xmm0, %xmm10 */
+        0x44, 0x0f, 0x28, 0xd8,       /* movaps %xmm0, %xmm11 */
+        0x44, 0x0f, 0x28, 0xe0,       /* movaps %xmm0, %xmm12 */
+        0x44, 0x0f, 0x28, 0xe8,       /* movaps %xmm0, %xmm13 */
+        0x44, 0x0f, 0x28, 0xf0,       /* movaps %xmm0, %xmm14 */
+        0x44, 0x0f, 0x28, 0xf8,       /* movaps %xmm0, %xmm15 */
+
+        /* FIXME: overwrite debug, x87 FPU and AVX registers to test those */
+
+        /* load args */
+        0x48, 0x8b, 0x4c, 0x24, 0x70, /* mov 8*14(%rsp), %rcx; context   */
+        0x48, 0x8b, 0x54, 0x24, 0x78, /* mov 8*15(%rsp), %rdx; alertable */
+        0x48, 0x83, 0xec, 0x70,       /* sub $0x70, %rsp; change stack   */
+
+        /* setup context to return to label 1 */
+        0x48, 0x8d, 0x05, 0x18, 0x00, 0x00, 0x00, /* lea 1f(%rip), %rax */
+        0x48, 0x89, 0x81, 0xf8, 0x00, 0x00, 0x00, /* mov %rax, 0xf8(%rcx); context.Rip */
+
+        /* flip some EFLAGS */
+        0x9c,                                           /* pushf */
+        /*
+           0x0001 Carry flag
+           0x0004 Parity flag
+           0x0010 Auxiliary Carry flag
+           0x0040 Zero flag
+           0x0080 Sign flag
+           FIXME: 0x0400 Direction flag - not changing as it breaks Wine
+           0x0800 Overflow flag
+           ~0x4000~ Nested task flag - not changing - breaks Wine
+           = 0x8d5
+        */
+        0x48, 0x81, 0x34, 0x24, 0xd5, 0x08, 0x00, 0x00, /* xorq $0x8d5, (%rsp) */
+        0x9d,                                           /* popf */
+
+        /* invoke NtContinue... */
+        0xff, 0x94, 0x24, 0xf0, 0x00, 0x00, 0x00, /* call *8*16+0x70(%rsp) */
+
+        /* validate stack pointer */
+        0x48, 0x3b, 0x64, 0x24, 0x20, /* 1: cmp 0x20(%rsp), %rsp */
+        0x74, 0x02,                   /* je 2f; jump over ud2 */
+        0x0f, 0x0b,                   /* ud2; stack pointer invalid, let's crash */
+
+        /* invoke capture context */
+        0x48, 0x8b, 0x4c, 0x24, 0x70,             /* 2: mov 8*14(%rsp), %rcx; context */
+        0x48, 0x81, 0xc1, 0xd0, 0x04, 0x00, 0x00, /* add $0x4d0, %rcx; +sizeof(CONTEXT) to get context->after */
+        0xff, 0x94, 0x24, 0x88, 0x00, 0x00, 0x00, /* call *8*17(%rsp) */
+
+        /* free stack */
+        0x48, 0x83, 0xc4, 0x28, /* add $0x28, %rsp */
+
+        /* restore back */
+        0x41, 0x5f,       /* pop %r15 */
+        0x41, 0x5e,       /* pop %r14 */
+        0x41, 0x5d,       /* pop %r13 */
+        0x41, 0x5c,       /* pop %r12 */
+        0x5f,             /* pop %rdi */
+        0x5e,             /* pop %rsi */
+        0x5d,             /* pop %rbp */
+        0x5b,             /* pop %rbx */
+        0xc3              /* ret      */
+    };
+
+    if (!pRtlCaptureContext)
+    {
+        win_skip("RtlCaptureContext is not available.\n");
+        return;
+    }
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+    FlushInstructionCache( GetCurrentProcess(), func_ptr, sizeof(call_func) );
+
+    func_ptr( &contexts, FALSE, NtContinue, pRtlCaptureContext );
+
+#define COMPARE(reg) \
+    ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
+
+    COMPARE( Rax );
+    COMPARE( Rdx );
+    COMPARE( Rbx );
+    COMPARE( Rbp );
+    COMPARE( Rsi );
+    COMPARE( Rdi );
+    COMPARE( R8 );
+    COMPARE( R9 );
+    COMPARE( R10 );
+    COMPARE( R11 );
+    COMPARE( R12 );
+    COMPARE( R13 );
+    COMPARE( R14 );
+    COMPARE( R15 );
+
+    for (i = 0; i < 16; i++)
+        ok( !memcmp( &contexts.before.Xmm0 + i, &contexts.after.Xmm0 + i, sizeof(contexts.before.Xmm0) ),
+            "wrong xmm%u %08I64x%08I64x/%08I64x%08I64x\n", i, *(&contexts.before.Xmm0.High + i*2), *(&contexts.before.Xmm0.Low + i*2),
+            *(&contexts.after.Xmm0.High + i*2), *(&contexts.after.Xmm0.Low + i*2) );
+
+#undef COMPARE
+}
+
 static void test_wow64_context(void)
 {
     const char appname[] = "C:\\windows\\syswow64\\cmd.exe";
@@ -12469,6 +12632,7 @@ START_TEST(exception)
     test_debug_registers_wow64();
     test_debug_service(1);
     test_simd_exceptions();
+    test_continue();
     test_virtual_unwind();
     test___C_specific_handler();
     test_restore_context();
