@@ -2276,9 +2276,7 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
     /* Expect GetDIBits() to succeed */
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     value = GetDIBits(hdc, hbmp, 0, 0, NULL, (LPBITMAPINFO)bmi, DIB_RGB_COLORS);
-    todo_wine
     ok(value, "GetDIBits failed, error %#lx.\n", GetLastError());
-    todo_wine
     ok(bmi->bmiHeader.biCompression == BI_BITFIELDS, "Got unexpected biCompression %lu.\n", bmi->bmiHeader.biCompression);
 
     ret = GetObjectA(hbmp, sizeof(bitmap), &bitmap);
@@ -2292,7 +2290,6 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
         todo_wine
         ok_(__FILE__, line)(bitmap.bmHeight == GetSystemMetrics(SM_CYVIRTUALSCREEN),
                 "Expected bmHeight %d, got %d.\n", GetSystemMetrics(SM_CYVIRTUALSCREEN), bitmap.bmHeight);
-        todo_wine
         ok_(__FILE__, line)(bitmap.bmBitsPixel == 32, "Expected bmBitsPixel %d, got %d.\n", 32,
                 bitmap.bmBitsPixel);
         ok_(__FILE__, line)(bitmap.bmWidthBytes == get_bitmap_stride(bitmap.bmWidth, bitmap.bmBitsPixel),

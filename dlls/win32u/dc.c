@@ -278,7 +278,7 @@ void free_dc_ptr( DC *dc )
     if (dc->hBitmap)
     {
         if (dc->is_display)
-            NtGdiDeleteClientObj( dc->hBitmap );
+            NtGdiDeleteObjectApp( dc->hBitmap );
         else
             GDI_dec_ref_count( dc->hBitmap );
     }
@@ -731,7 +731,7 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     hdc = dc->hSelf;
 
     if (is_display)
-        dc->hBitmap = NtGdiCreateClientObj( NTGDI_OBJ_SURF );
+        dc->hBitmap = NtGdiCreateCompatibleBitmap( hdc, 1, 1 );
     else
         dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
 
