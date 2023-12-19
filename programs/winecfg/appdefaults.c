@@ -58,9 +58,7 @@ static const struct win_version win_versions[] =
     { L"win2008",   L"Windows 2008",    NULL,    6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
     { L"vista",     L"Windows Vista",   NULL,    6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
     { L"win2003",   L"Windows 2003",    NULL,    5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
-#ifdef _WIN64
-    { L"winxp64",   L"Windows XP",      NULL,    5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
-#else
+    { L"winxp64",   L"Windows XP 64",   NULL,    5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
     { L"winxp",     L"Windows XP",      NULL,    5,  1,  2600, VER_PLATFORM_WIN32_NT, L"Service Pack 3", 3, 0, L"WinNT"},
     { L"win2k",     L"Windows 2000",    NULL,    5,  0,  2195, VER_PLATFORM_WIN32_NT, L"Service Pack 4", 4, 0, L"WinNT"},
     { L"winme",     L"Windows ME",      NULL,    4, 90,  3000, VER_PLATFORM_WIN32_WINDOWS, L" ", 0, 0, L""},
@@ -71,7 +69,6 @@ static const struct win_version win_versions[] =
     { L"win31",     L"Windows 3.1",     NULL,    3, 10,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
     { L"win30",     L"Windows 3.0",     NULL,    3,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
     { L"win20",     L"Windows 2.0",     NULL,    2,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""}
-#endif
 };
 
 #define DEFAULT_WIN_VERSION   L"win10"
