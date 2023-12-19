@@ -1565,6 +1565,8 @@ size_t server_init_process(void)
     {
         const char *arch = getenv( "WINEARCH" );
 
+        if (is_win64 && arch && !strcmp( arch, "win32" ))
+            fatal_error( "WINEARCH is set to 'win32' but this is not supported in wow64 mode.\n" );
         if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ))
             fatal_error( "WINEARCH set to invalid value '%s', it must be either win32 or win64.\n", arch );
 
