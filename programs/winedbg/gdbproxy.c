@@ -1639,7 +1639,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
     packet_reply(gdbctx, "OK");
 }
 
-struct query_detail
+static const struct query_detail
 {
     int         with_arg;
     const char* name;
@@ -1659,7 +1659,7 @@ static enum packet_return packet_query_remote_command(struct gdb_context* gdbctx
                                                       const char* hxcmd, size_t len)
 {
     char                        buffer[128];
-    struct query_detail*        qd;
+    const struct query_detail*  qd;
 
     assert((len & 1) == 0 && len < 2 * sizeof(buffer));
     len /= 2;
@@ -1986,7 +1986,7 @@ static enum packet_return packet_query_exec_file(struct gdb_context* gdbctx)
     return packet_send_buffer;
 }
 
-struct qxfer
+static const struct qxfer
 {
     const char*        name;
     enum packet_return (*handler)(struct gdb_context* gdbctx);
@@ -2260,7 +2260,7 @@ struct packet_entry
     enum packet_return  (*handler)(struct gdb_context* gdbctx);
 };
 
-static struct packet_entry packet_entries[] =
+static const struct packet_entry packet_entries[] =
 {
         {'?', packet_last_signal},
         {'c', packet_continue},
