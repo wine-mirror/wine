@@ -2675,6 +2675,83 @@ static void test_LBS_NODATA(void)
     DestroyWindow(parent);
 }
 
+static void test_LB_FINDSTRING(void)
+{
+    static const WCHAR *strings[] =
+    {
+        L"abci",
+        L"AbCI",
+        L"abcI",
+        L"abc\xcdzz",
+        L"abc\xedzz",
+        L"abc\xcd",
+        L"abc\xed",
+        L"abcO",
+        L"abc\xd8",
+        L"abcP",
+    };
+    static const struct { const WCHAR *str; LRESULT from, res, exact, alt_res, alt_exact; } tests[] =
+    {
+        { L"ab",        -1, 0, -1, 0, -1 },
+        { L"abc",       -1, 0, -1, 0, -1 },
+        { L"abci",      -1, 0, 0, 0, 0 },
+        { L"ABCI",      -1, 0, 0, 0, 0 },
+        { L"ABC\xed",   -1, 3, 3, 3, 3 },
+        { L"ABC\xcd",    4, 5, 3, 5, 3 },
+        { L"abcp",      -1, 9, 9, 8, 8 },
+    };
+    HWND listbox;
+    unsigned int i;
+    LRESULT ret;
+
+    listbox = CreateWindowW( L"listbox", L"TestList", LBS_HASSTRINGS | LBS_SORT,
+                             0, 0, 100, 100, NULL, NULL, NULL, 0 );
+    ok( listbox != NULL, "Failed to create listbox\n" );
+    SendMessageW( listbox, LB_SETLOCALE, MAKELANGID( LANG_FRENCH, SUBLANG_DEFAULT ), 0 );
+    for (i = 0; i < ARRAY_SIZE(strings); i++) SendMessageW( listbox, LB_ADDSTRING, 0, (LPARAM)strings[i] );
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        ret = SendMessageW( listbox, LB_FINDSTRING, tests[i].from, (LPARAM)tests[i].str );
+        ok( ret == tests[i].res, "%u: wrong result %Id / %Id\n", i, ret, tests[i].res );
+        ret = SendMessageW( listbox, LB_FINDSTRINGEXACT, tests[i].from, (LPARAM)tests[i].str );
+        ok( ret == tests[i].exact, "%u: wrong result %Id / %Id\n", i, ret, tests[i].exact );
+    }
+
+    SendMessageW( listbox, LB_RESETCONTENT, 0, 0 );
+    SendMessageW( listbox, LB_SETLOCALE, MAKELANGID( LANG_SWEDISH, SUBLANG_DEFAULT ), 0 );
+    for (i = 0; i < ARRAY_SIZE(strings); i++) SendMessageW( listbox, LB_ADDSTRING, 0, (LPARAM)strings[i] );
+    ret = SendMessageW( listbox, LB_FINDSTRING, -1, (LPARAM)L"abcp" );
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        ret = SendMessageW( listbox, LB_FINDSTRING, tests[i].from, (LPARAM)tests[i].str );
+        ok( ret == tests[i].alt_res, "%u: wrong result %Id / %Id\n", i, ret, tests[i].alt_res );
+        ret = SendMessageW( listbox, LB_FINDSTRINGEXACT, tests[i].from, (LPARAM)tests[i].str );
+        ok( ret == tests[i].alt_exact, "%u: wrong result %Id / %Id\n", i, ret, tests[i].alt_exact );
+    }
+
+    SendMessageW( listbox, LB_RESETCONTENT, 0, 0 );
+    SendMessageW( listbox, LB_ADDSTRING, 0, (LPARAM)L"abc" );
+    SendMessageW( listbox, LB_ADDSTRING, 0, (LPARAM)L"[abc]" );
+    SendMessageW( listbox, LB_ADDSTRING, 0, (LPARAM)L"[-abc-]" );
+    ret = SendMessageW( listbox, LB_FINDSTRING, -1, (LPARAM)L"abc" );
+    ok( ret == 0, "wrong result %Id\n", ret );
+    ret = SendMessageW( listbox, LB_FINDSTRINGEXACT, -1, (LPARAM)L"abc" );
+    todo_wine
+    ok( ret == 0, "wrong result %Id\n", ret );
+    ret = SendMessageW( listbox, LB_FINDSTRING, 0, (LPARAM)L"abc" );
+    ok( ret == 1, "wrong result %Id\n", ret );
+    ret = SendMessageW( listbox, LB_FINDSTRINGEXACT, 0, (LPARAM)L"abc" );
+    todo_wine
+    ok( ret == 0, "wrong result %Id\n", ret );
+    ret = SendMessageW( listbox, LB_FINDSTRING, 1, (LPARAM)L"abc" );
+    ok( ret == 2, "wrong result %Id\n", ret );
+    ret = SendMessageW( listbox, LB_FINDSTRINGEXACT, 1, (LPARAM)L"abc" );
+    todo_wine
+    ok( ret == 0, "wrong result %Id\n", ret );
+    DestroyWindow( listbox );
+}
+
 START_TEST(listbox)
 {
     ULONG_PTR ctx_cookie;
@@ -2704,6 +2781,7 @@ START_TEST(listbox)
     test_WM_MEASUREITEM();
     test_LB_SETSEL();
     test_LBS_NODATA();
+    test_LB_FINDSTRING();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
