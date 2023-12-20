@@ -35,3 +35,9 @@ TBS_RESULT WINAPI Tbsi_GetDeviceInfo(UINT32 size, void *info)
     FIXME("(%u, %p) stub\n", size, info);
     return TBS_E_TPM_NOT_FOUND;
 }
+
+HRESULT WINAPI GetDeviceIDString(WCHAR *out, UINT32 size, UINT32 *used, BOOL *tpm)
+{
+    FIXME("(%p, %u, %p, %p) stub\n", out, size, used, tpm);
+    return E_NOTIMPL;
+}
