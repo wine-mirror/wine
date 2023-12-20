@@ -1,7 +1,7 @@
 @ stub Tbsi_Create_Attestation_From_Log
 @ stub Tbsi_Get_TCG_Logs
 @ stub GetDeviceID
-@ stub GetDeviceIDString
+@ stdcall GetDeviceIDString(ptr long ptr ptr)
 @ stub GetDeviceIDWithTimeout
 @ stdcall Tbsi_Context_Create(ptr ptr)
 @ stub Tbsi_Create_Windows_Key
