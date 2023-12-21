@@ -58,6 +58,21 @@ typedef struct NCryptKeyName {
     DWORD dwFlags;
 } NCryptKeyName;
 
+typedef struct __NCRYPT_SUPPORTED_LENGTHS {
+    DWORD dwMinLength;
+    DWORD dwMaxLength;
+    DWORD dwIncrement;
+    DWORD dwDefaultLength;
+} NCRYPT_SUPPORTED_LENGTHS;
+
+typedef struct __NCRYPT_UI_POLICY {
+    DWORD dwVersion;
+    DWORD dwFlags;
+    LPCWSTR pszCreationTitle;
+    LPCWSTR pszFriendlyName;
+    LPCWSTR pszDescription;
+} NCRYPT_UI_POLICY;
+
 typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;
@@ -75,6 +90,17 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define NCRYPT_PAD_PKCS1_FLAG  0x00000002
 #define NCRYPT_PAD_OAEP_FLAG   0x00000004
 #define NCRYPT_PAD_PSS_FLAG    0x00000008
+
+#define NCRYPT_ALLOW_DECRYPT_FLAG       0x00000001
+#define NCRYPT_ALLOW_SIGNING_FLAG       0x00000002
+#define NCRYPT_ALLOW_KEY_AGREEMENT_FLAG 0x00000004
+#define NCRYPT_ALLOW_KEY_IMPORT_FLAG    0x00000008
+#define NCRYPT_ALLOW_ALL_USAGES         0x00ffffff
+
+#define NCRYPT_ALLOW_EXPORT_FLAG              0x00000001
+#define NCRYPT_ALLOW_PLAINTEXT_EXPORT_FLAG    0x00000002
+#define NCRYPT_ALLOW_ARCHIVING_FLAG           0x00000004
+#define NCRYPT_ALLOW_PLAINTEXT_ARCHIVING_FLAG 0x00000008
 
 #define NCRYPT_NAME_PROPERTY                    L"Name"
 #define NCRYPT_UNIQUE_NAME_PROPERTY             L"Unique Name"
