@@ -798,6 +798,37 @@ static void test_NCryptEncrypt(void)
     NCryptFreeObject(prov);
 }
 
+static void test_NCryptExportKey(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    NCRYPT_KEY_HANDLE key;
+    SECURITY_STATUS ret;
+    DWORD size, policy;
+    BYTE buffer[1024];
+
+    ret = NCryptOpenStorageProvider(&prov, NULL, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    ret = NCryptCreatePersistedKey(prov, &key, BCRYPT_RSA_ALGORITHM, NULL, 0, 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    policy = NCRYPT_ALLOW_EXPORT_FLAG | NCRYPT_ALLOW_PLAINTEXT_EXPORT_FLAG;
+    ret = NCryptSetProperty(key, NCRYPT_EXPORT_POLICY_PROPERTY, (BYTE *)&policy, sizeof(policy), 0);
+    ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
+    NCryptFinalizeKey(key, 0);
+
+    size = 0;
+    ret = NCryptExportKey(key, 0, BCRYPT_RSAPRIVATE_BLOB, NULL, buffer, sizeof(buffer), &size, 0);
+    ok(ret == ERROR_SUCCESS, "got unexpected return value %lx\n", ret);
+    ok(size == 283, "got unexpected size %#lx\n", size);
+
+    size = 0;
+    ret = NCryptExportKey(key, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL, buffer, sizeof(buffer), &size, 0);
+    ok(ret == ERROR_SUCCESS, "got unexpected return value %lx\n", ret);
+    ok(size == 603, "got unexpected size %#lx\n", size);
+
+    NCryptFreeObject(key);
+    NCryptFreeObject(prov);
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
@@ -809,4 +840,5 @@ START_TEST(ncrypt)
     test_verify_signature();
     test_NCryptIsAlgSupported();
     test_NCryptEncrypt();
+    test_NCryptExportKey();
 }
