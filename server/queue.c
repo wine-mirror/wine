@@ -429,26 +429,34 @@ static void queue_cursor_message( struct desktop *desktop, user_handle_t win, un
     queue_hardware_message( desktop, msg, 1 );
 }
 
+static struct thread_input *get_desktop_cursor_thread_input( struct desktop *desktop )
+{
+    struct thread_input *input = NULL;
+    struct thread *thread;
+
+    if ((thread = get_window_thread( desktop->cursor.win )))
+    {
+        if (thread->queue) input = thread->queue->input;
+        release_object( thread );
+    }
+
+    return input;
+}
+
 static int update_desktop_cursor_window( struct desktop *desktop, user_handle_t win )
 {
     int updated = win != desktop->cursor.win;
-    user_handle_t handle = desktop->cursor.handle;
+    struct thread_input *input;
     desktop->cursor.win = win;
-    if (updated)
+
+    if (updated && (input = get_desktop_cursor_thread_input( desktop )))
     {
-        struct thread *thread;
-
-        if ((thread = get_window_thread( win )))
-        {
-            struct thread_input *input = thread->queue->input;
-            if (input) handle = input->cursor_count < 0 ? 0 : input->cursor;
-            release_object( thread );
-        }
-
+        user_handle_t handle = input->cursor_count < 0 ? 0 : input->cursor;
         /* when clipping send the message to the foreground window as well, as some driver have an artificial overlay window */
         if (is_cursor_clipped( desktop )) queue_cursor_message( desktop, 0, WM_WINE_SETCURSOR, win, handle );
         queue_cursor_message( desktop, win, WM_WINE_SETCURSOR, win, handle );
     }
+
     return updated;
 }
 
