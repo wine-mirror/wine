@@ -753,6 +753,7 @@ static void test_mmioOpen_fourcc(void)
     mmioGetInfo(hmmio, &mmio, 0);
     ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
             mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    ok(mmio.pIOProc == mmio_test_IOProc, "Unexpected pIOProc %p\n", mmio.pIOProc);
     ok(mmio.adwInfo[1] == 0, "mmioOpenA sent MMIOM_SEEK, got %ld\n",
        mmio.adwInfo[1]);
     ok(mmio.lDiskOffset == 0, "mmioOpenA updated lDiskOffset, got %ld\n",
@@ -765,6 +766,7 @@ static void test_mmioOpen_fourcc(void)
     mmioGetInfo(hmmio, &mmio, 0);
     ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
             mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    ok(mmio.pIOProc == mmio_test_IOProc, "Unexpected pIOProc %p\n", mmio.pIOProc);
     ok(mmio.adwInfo[1] == 0, "mmioOpenA sent MMIOM_SEEK, got %ld\n",
        mmio.adwInfo[1]);
     ok(mmio.lDiskOffset == 0, "mmioOpenA updated lDiskOffset, got %ld\n",

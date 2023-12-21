@@ -693,6 +693,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 
     wm->ioProc->count++;
     wm->info.dwFlags = dwOpenFlags;
+    wm->info.pIOProc = wm->ioProc->pIOProc;
 
     if (dwOpenFlags & MMIO_ALLOCBUF) {
 	refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer,
