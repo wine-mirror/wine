@@ -478,13 +478,11 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
     return updated;
 }
 
-static void update_desktop_cursor_handle( struct desktop *desktop, user_handle_t handle )
+static void update_desktop_cursor_handle( struct desktop *desktop, struct thread_input *input )
 {
-    int updated = desktop->cursor.handle != handle;
-    user_handle_t win = desktop->cursor.win;
-    desktop->cursor.handle = handle;
-    if (updated)
+    if (input == get_desktop_cursor_thread_input( desktop ))
     {
+        user_handle_t handle = input->cursor_count < 0 ? 0 : input->cursor, win = desktop->cursor.win;
         /* when clipping send the message to the foreground window as well, as some driver have an artificial overlay window */
         if (is_cursor_clipped( desktop )) queue_cursor_message( desktop, 0, WM_WINE_SETCURSOR, win, handle );
         queue_cursor_message( desktop, win, WM_WINE_SETCURSOR, win, handle );
@@ -3414,10 +3412,7 @@ DECL_HANDLER(set_cursor)
     if (req->flags & SET_CURSOR_NOCLIP) set_clip_rectangle( desktop, NULL, SET_CURSOR_NOCLIP, 0 );
 
     if (req->flags & (SET_CURSOR_HANDLE | SET_CURSOR_COUNT))
-    {
-        if (input->cursor_count < 0) update_desktop_cursor_handle( desktop, 0 );
-        else update_desktop_cursor_handle( desktop, input->cursor );
-    }
+        update_desktop_cursor_handle( desktop, input );
 
     reply->new_x       = desktop->cursor.x;
     reply->new_y       = desktop->cursor.y;
