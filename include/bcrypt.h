@@ -58,6 +58,7 @@ typedef LONG NTSTATUS;
 #define BCRYPT_PADDING_SCHEMES      L"PaddingSchemes"
 #define BCRYPT_PROVIDER_HANDLE      L"ProviderHandle"
 #define BCRYPT_SIGNATURE_LENGTH     L"SignatureLength"
+#define BCRYPT_PUBLIC_KEY_LENGTH    L"PublicKeyLength"
 
 #define BCRYPT_OPAQUE_KEY_BLOB      L"OpaqueKeyBlob"
 #define BCRYPT_KEY_DATA_BLOB        L"KeyDataBlob"
@@ -138,6 +139,7 @@ static const WCHAR BCRYPT_OBJECT_LENGTH[] = {'O','b','j','e','c','t','L','e','n'
 static const WCHAR BCRYPT_PADDING_SCHEMES[] = {'P','a','d','d','i','n','g','S','c','h','e','m','e','s',0};
 static const WCHAR BCRYPT_PROVIDER_HANDLE[] = {'P','r','o','v','i','d','e','r','H','a','n','d','l','e',0};
 static const WCHAR BCRYPT_SIGNATURE_LENGTH[] = {'S','i','g','n','a','t','u','r','e','L','e','n','g','t','h',0};
+static const WCHAR BCRYPT_PUBLIC_KEY_LENGTH[] = {'P','u','b','l','i','c','K','e','y','L','e','n','g','t','h',0};
 
 static const WCHAR BCRYPT_OPAQUE_KEY_BLOB[] = {'O','p','a','q','u','e','K','e','y','B','l','o','b',0};
 static const WCHAR BCRYPT_KEY_DATA_BLOB[] = {'K','e','y','D','a','t','a','B','l','o','b',0};
