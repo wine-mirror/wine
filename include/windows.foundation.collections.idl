@@ -148,8 +148,8 @@ cpp_quote("#endif")
             interface IIterator<T> : IInspectable
             {
                 [propget] HRESULT Current([out, retval] T *value);
-                [propget] HRESULT HasCurrent([out, retval] BOOL *value);
-                HRESULT MoveNext([out, retval] BOOL *value);
+                [propget] HRESULT HasCurrent([out, retval] boolean *value);
+                HRESULT MoveNext([out, retval] boolean *value);
                 HRESULT GetMany([in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
             }
 

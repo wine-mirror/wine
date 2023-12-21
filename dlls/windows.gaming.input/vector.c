@@ -108,7 +108,7 @@ static HRESULT WINAPI iterator_get_Current( IIterator_IInspectable *iface, IInsp
     return IVectorView_IInspectable_GetAt( impl->view, impl->index, value );
 }
 
-static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IInspectable *iface, BOOL *value )
+static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IInspectable *iface, boolean *value )
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
 
@@ -118,7 +118,7 @@ static HRESULT WINAPI iterator_get_HasCurrent( IIterator_IInspectable *iface, BO
     return S_OK;
 }
 
-static HRESULT WINAPI iterator_MoveNext( IIterator_IInspectable *iface, BOOL *value )
+static HRESULT WINAPI iterator_MoveNext( IIterator_IInspectable *iface, boolean *value )
 {
     struct iterator *impl = impl_from_IIterator_IInspectable( iface );
 

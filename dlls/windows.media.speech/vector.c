@@ -113,7 +113,7 @@ static HRESULT WINAPI iterator_hstring_get_Current( IIterator_HSTRING *iface, HS
     return IVectorView_HSTRING_GetAt(impl->view, impl->index, value);
 }
 
-static HRESULT WINAPI iterator_hstring_get_HasCurrent( IIterator_HSTRING *iface, BOOL *value )
+static HRESULT WINAPI iterator_hstring_get_HasCurrent( IIterator_HSTRING *iface, boolean *value )
 {
     struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
 
@@ -123,7 +123,7 @@ static HRESULT WINAPI iterator_hstring_get_HasCurrent( IIterator_HSTRING *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI iterator_hstring_MoveNext( IIterator_HSTRING *iface, BOOL *value )
+static HRESULT WINAPI iterator_hstring_MoveNext( IIterator_HSTRING *iface, boolean *value )
 {
     struct iterator_hstring *impl = impl_from_IIterator_HSTRING(iface);
 
@@ -735,7 +735,7 @@ HRESULT vector_hstring_create_copy( IIterable_HSTRING *iterable, IVector_HSTRING
     struct vector_hstring *impl;
     IIterator_HSTRING *iterator;
     UINT32 capacity = 0;
-    BOOL available;
+    boolean available;
     HRESULT hr;
 
     TRACE("iterable %p, out %p.\n", iterable, out);
@@ -865,7 +865,7 @@ static HRESULT WINAPI iterator_inspectable_get_Current( IIterator_IInspectable *
     return IVectorView_IInspectable_GetAt(impl->view, impl->index, value);
 }
 
-static HRESULT WINAPI iterator_inspectable_get_HasCurrent( IIterator_IInspectable *iface, BOOL *value )
+static HRESULT WINAPI iterator_inspectable_get_HasCurrent( IIterator_IInspectable *iface, boolean *value )
 {
     struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
 
@@ -875,7 +875,7 @@ static HRESULT WINAPI iterator_inspectable_get_HasCurrent( IIterator_IInspectabl
     return S_OK;
 }
 
-static HRESULT WINAPI iterator_inspectable_MoveNext( IIterator_IInspectable *iface, BOOL *value )
+static HRESULT WINAPI iterator_inspectable_MoveNext( IIterator_IInspectable *iface, boolean *value )
 {
     struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
 

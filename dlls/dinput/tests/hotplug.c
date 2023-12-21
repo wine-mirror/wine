@@ -977,11 +977,11 @@ static void test_windows_gaming_input(void)
     HANDLE hwnd, thread, stop_event;
     IInspectable *tmp_inspectable;
     HDEVNOTIFY devnotify;
+    boolean boolret;
     HSTRING str;
     UINT32 size;
     HRESULT hr;
     DWORD res;
-    BOOL ret;
     MSG msg;
 
     if (!load_combase_functions()) return;
@@ -1100,18 +1100,18 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "First returned %#lx\n", hr );
     IIterable_RawGameController_Release( iterable );
 
-    hr = IIterator_RawGameController_get_HasCurrent( iterator, &ret );
+    hr = IIterator_RawGameController_get_HasCurrent( iterator, &boolret );
     ok( hr == S_OK, "First returned %#lx\n", hr );
-    ok( ret == TRUE, "got HasCurrent %u\n", ret );
-    hr = IIterator_RawGameController_MoveNext( iterator, &ret );
+    ok( boolret == TRUE, "got HasCurrent %u\n", boolret );
+    hr = IIterator_RawGameController_MoveNext( iterator, &boolret );
     ok( hr == S_OK, "First returned %#lx\n", hr );
-    ok( ret == FALSE, "got MoveNext %u\n", ret );
-    hr = IIterator_RawGameController_get_HasCurrent( iterator, &ret );
+    ok( boolret == FALSE, "got MoveNext %u\n", boolret );
+    hr = IIterator_RawGameController_get_HasCurrent( iterator, &boolret );
     ok( hr == S_OK, "First returned %#lx\n", hr );
-    ok( ret == FALSE, "got MoveNext %u\n", ret );
-    hr = IIterator_RawGameController_MoveNext( iterator, &ret );
+    ok( boolret == FALSE, "got MoveNext %u\n", boolret );
+    hr = IIterator_RawGameController_MoveNext( iterator, &boolret );
     ok( hr == S_OK, "First returned %#lx\n", hr );
-    ok( ret == FALSE, "got MoveNext %u\n", ret );
+    ok( boolret == FALSE, "got MoveNext %u\n", boolret );
     IIterator_RawGameController_Release( iterator );
 
     IVectorView_RawGameController_Release( controller_view );
