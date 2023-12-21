@@ -31,6 +31,42 @@ static WCHAR wow64_directory[MAX_PATH];
 
 static BOOL (*WINAPI pIsWow64Process2)(HANDLE, USHORT*, USHORT*);
 
+struct startup_cb
+{
+    DWORD pid;
+    HWND wnd;
+};
+
+static BOOL CALLBACK startup_cb_window(HWND wnd, LPARAM lParam)
+{
+    struct startup_cb *info = (struct startup_cb*)lParam;
+    DWORD pid;
+
+    if (GetWindowThreadProcessId(wnd, &pid) && info->pid == pid && IsWindowVisible(wnd))
+    {
+        info->wnd = wnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL wait_process_window_visible(HANDLE proc, DWORD pid, DWORD timeout)
+{
+    DWORD max_tc = GetTickCount() + timeout;
+    BOOL ret = WaitForInputIdle(proc, timeout);
+    struct startup_cb info = {pid, NULL};
+
+    if (!ret)
+    {
+        do
+        {
+            if (EnumWindows(startup_cb_window, (LPARAM)&info))
+                Sleep(100);
+        } while (!info.wnd && GetTickCount() < max_tc);
+    }
+    return info.wnd != NULL;
+}
+
 #if defined(__i386__) || defined(__x86_64__)
 
 static DWORD CALLBACK stack_walk_thread(void *arg)
@@ -373,14 +409,18 @@ static BOOL wrapper_EnumerateLoadedModulesW64(HANDLE proc, PENUMLOADED_MODULES_C
 {
     BOOL ret;
     int retry;
+    int retry_count = !strcmp(winetest_platform, "wine") ? 1 : 5;
 
-    for (retry = !strcmp(winetest_platform, "wine") ? 1 : 5; retry >= 0; retry--)
+    for (retry = retry_count - 1; retry >= 0; retry--)
     {
         ret = EnumerateLoadedModulesW64(proc, cb, usr);
         if (ret || GetLastError() != STATUS_INFO_LENGTH_MISMATCH)
             break;
         Sleep(10);
     }
+    if (retry + 1 < retry_count)
+        trace("used wrapper retry: ret=%d retry=%d top=%d\n", ret, retry, retry_count);
+
     return ret;
 }
 
@@ -789,8 +829,8 @@ static void test_loaded_modules(void)
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed: %lu\n", GetLastError());
 
-    ret = WaitForInputIdle(pi.hProcess, 5000);
-    ok(!ret, "wait timed out\n");
+    ret = wait_process_window_visible(pi.hProcess, pi.dwProcessId, 5000);
+    ok(ret, "wait timed out\n");
 
     ret = SymInitialize(pi.hProcess, NULL, FALSE);
     ok(ret, "SymInitialize failed: %lu\n", GetLastError());
@@ -869,8 +909,8 @@ static void test_loaded_modules(void)
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         if (ret)
         {
-            ret = WaitForInputIdle(pi.hProcess, 5000);
-            ok(!ret, "wait timed out\n");
+            ret = wait_process_window_visible(pi.hProcess, pi.dwProcessId, 5000);
+            ok(ret, "wait timed out\n");
 
             ret = SymInitialize(pi.hProcess, NULL, FALSE);
             ok(ret, "SymInitialize failed: %lu\n", GetLastError());
