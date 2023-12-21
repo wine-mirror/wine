@@ -192,11 +192,16 @@ static NTSTATUS resolv_get_serverlist( void *args )
         if (filter( buf[i].sin.sin_family, params->family )) continue;
         found++;
     }
-    if (!found) return DNS_ERROR_NO_DNS_SERVERS;
+    if (!found)
+    {
+        free( buf );
+        return DNS_ERROR_NO_DNS_SERVERS;
+    }
 
     needed = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[found]);
     if (!addrs || *params->len < needed)
     {
+        free( buf );
         *params->len = needed;
         return !addrs ? ERROR_SUCCESS : ERROR_MORE_DATA;
     }
