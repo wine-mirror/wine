@@ -3102,6 +3102,19 @@ BOOL WINAPI SaferCloseLevel(SAFER_LEVEL_HANDLE handle)
 }
 
 /******************************************************************************
+ * TreeSetNamedSecurityInfoW   [ADVAPI32.@]
+ */
+DWORD WINAPI TreeSetNamedSecurityInfoW(WCHAR *name, SE_OBJECT_TYPE type, SECURITY_INFORMATION info,
+                                       SID *owner, SID *group, ACL *dacl, ACL *sacl, DWORD action,
+                                       FN_PROGRESS progress, PROG_INVOKE_SETTING pis, void *args)
+{
+    FIXME("(%s, %d, %lu, %p, %p, %p, %p, %lu, %p, %d, %p) stub\n",
+          debugstr_w(name), type, info, owner, group, dacl, sacl, action, progress, pis, args);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * TreeResetNamedSecurityInfoW   [ADVAPI32.@]
  */
 DWORD WINAPI TreeResetNamedSecurityInfoW( LPWSTR pObjectName,
