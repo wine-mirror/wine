@@ -1652,7 +1652,7 @@ static HRESULT build_directshowfilters_tree(IDxDiagContainerImpl_Container *node
         return hr;
 
     hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &CLSID_ActiveMovieCategories, &pEmCat, 0);
-    if (FAILED(hr))
+    if (hr != S_OK)
         goto cleanup;
 
     while (IEnumMoniker_Next(pEmCat, 1, &pMCat, NULL) == S_OK)
