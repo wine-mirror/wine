@@ -3264,6 +3264,19 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
+    case CMSG_ENCRYPTED_DIGEST:
+        if (msg->u.signed_data.info)
+        {
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyParam(pvData, pcbData,
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex].EncryptedHash.pbData,
+                 msg->u.signed_data.info->rgSignerInfo[dwIndex].EncryptedHash.cbData);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
     default:
         FIXME("unimplemented for %ld\n", dwParamType);
         SetLastError(CRYPT_E_INVALID_MSG_TYPE);
