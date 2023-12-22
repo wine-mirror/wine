@@ -128,7 +128,9 @@ static SECURITY_STATUS set_object_property(struct object *object, const WCHAR *n
 
 static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE provider)
 {
+    NCRYPT_SUPPORTED_LENGTHS supported_lengths = {512, 16384, 8, 1024};
     struct object *object;
+    DWORD dw_value;
 
     switch (algid)
     {
@@ -136,8 +138,16 @@ static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE pro
         if (!(object = allocate_object(KEY))) return NULL;
 
         object->key.algid = RSA;
+        set_object_property(object, NCRYPT_ALGORITHM_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM,
+                            sizeof(BCRYPT_RSA_ALGORITHM));
         set_object_property(object, NCRYPT_ALGORITHM_GROUP_PROPERTY, (BYTE *)BCRYPT_RSA_ALGORITHM,
                             sizeof(BCRYPT_RSA_ALGORITHM));
+        set_object_property(object, NCRYPT_LENGTHS_PROPERTY, (BYTE *)&supported_lengths,
+                            sizeof(supported_lengths));
+        dw_value = 128;
+        set_object_property(object, NCRYPT_BLOCK_LENGTH_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
+        dw_value = 128;
+        set_object_property(object, BCRYPT_SIGNATURE_LENGTH, (BYTE *)&dw_value, sizeof(dw_value));
         break;
 
     default:
@@ -145,6 +155,12 @@ static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE pro
         return NULL;
     }
 
+    dw_value = 0;
+    set_object_property(object, NCRYPT_EXPORT_POLICY_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
+    dw_value = NCRYPT_ALLOW_ALL_USAGES;
+    set_object_property(object, NCRYPT_KEY_USAGE_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
+    dw_value = 0;
+    set_object_property(object, NCRYPT_KEY_TYPE_PROPERTY, (BYTE *)&dw_value, sizeof(dw_value));
     set_object_property(object, NCRYPT_PROVIDER_HANDLE_PROPERTY, (BYTE *)&provider, sizeof(provider));
     return object;
 }
@@ -181,6 +197,7 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
         }
 
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&default_bitlen, sizeof(default_bitlen));
+        set_object_property(object, BCRYPT_PUBLIC_KEY_LENGTH, (BYTE *)&default_bitlen, sizeof(default_bitlen));
     }
     else
     {
@@ -401,6 +418,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
         }
 
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&rsablob->BitLength, sizeof(rsablob->BitLength));
+        set_object_property(object, BCRYPT_PUBLIC_KEY_LENGTH, (BYTE *)&rsablob->BitLength, sizeof(rsablob->BitLength));
         break;
     }
     default:
