@@ -287,7 +287,14 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
 
     if (!im.num_used) return;
 
-    machine = im.modules[0].mi.MachineType;
+    /* main module is the first PE module in enumeration */
+    for (i = 0; i < im.num_used; i++)
+        if (im.modules[i].ext_module_info.type == DMT_PE)
+        {
+            machine = im.modules[i].mi.MachineType;
+            break;
+        }
+    if (i == im.num_used) machine = IMAGE_FILE_MACHINE_UNKNOWN;
     qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
 
     if (multi_machine)
