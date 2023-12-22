@@ -1,11 +1,11 @@
-The Wine development release 9.0-rc2 is now available.
+The Wine development release 9.0-rc3 is now available.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/9.0/wine-9.0-rc2.tar.xz
+  https://dl.winehq.org/wine/source/9.0/wine-9.0-rc3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -21,119 +21,122 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 9.0-rc2 (total 33):
+Bugs fixed in 9.0-rc3 (total 35):
 
- - #21550  Winedbg's disassembler doesn't support SSE2 instructions
- - #27916  Ferro CCTV: Fails to start
- - #45122  gdiplus/font test crashes under clang-5.0.1 but not gcc-7.3.0
- - #45123  gdiplus/graphicspath test crashes under clang-5.0.1 but not gcc-7.3.0
- - #52000  EA Desktop fails to install using French locale
- - #52883  Improve support for high-level graphic settings in The Settlers: Heritage of Kings
- - #53845  Regression in GetCalendarInfoEx et al
- - #54115  wine client error:68: write: Bad file descriptor
- - #54361  Winebus doesn't enumerate hid devices (in a --without-sdl build) unless SDL also disabled by winebus registry key
- - #54402  Borland Turbo CPP 4.5 installer deadlocks on start
- - #54616  Memory Access Violation in Libaes.dll, Texecom Wintex
- - #54769  major regression in dnSpy startup time
- - #54847  dnsapi:query - test_DnsQuery() fails on the TestBot VMs in Windows and Wine
- - #54987  Waves Central does not launch
- - #55179  Garmin MapSource drag & drop doesn't work in center of window
- - #55561  kernel32:virtual - The 32-bit test_write_watch() fails in the new WoW mode
- - #55569  mshtml:dom - The 32-bit test_attr_collection_attr() crashes on Windows 10 2004+
- - #55588  mf:mf - test_scheme_resolvers() crashes on Windows 7
- - #55638  mf:transform - test_h264_decoder_concat_streams() sometimes fails on Windows 7
- - #55649  quartz:vmr9 - test_changed3ddevice() fails on the TestBot's w11pro64-amd & -nv VMs
- - #55703  AstroArt crashes when trying to drag and drop files from one pane to another
- - #55761  PLSQL Developer: Access Violation when trying to log in
- - #55774  Sid Meier's Alpha Centauri: invisible mouse pointer
- - #55783  Pronote 2023 can't load native msxml6
- - #55809  FEMM 4.2 mesh creation won't run, running an analysis is impossible, works on wine-stable
- - #55813  Hitomi Downloader fails with "[Errno 9] Bad file descriptor"
- - #55833  Multiple 64bit programs crash due to pointer truncation (HeidiSQL 12.5.0.6677, Falcon BMS 4.37u3, PNGGauntlet, PLSQL Developer, ...)
- - #55863  Wine fails to build on macOS with LLVM 17
- - #55908  PNGGauntlet expects LocalAlloc addresses to fit into 32bit int, breaks on 64bit due to recent memory changes
- - #55972  Dolphin Emulator requires GetProcessInformation (since 5.0-16711)
- - #55993  PLSQL Developer: Hangs when trying to connect a database.
- - #55995  Wine 9.0-rc1 Wayland cursor does not move on some surfaces
- - #56006  CrystalDiskInfo: Unhandled exception crashes DiskInfo64.exe
+ - #51314  vulkan-1:vulkan crashes on Windows with recent Radeon drivers
+ - #51478  dinput:device8 breaks user32:input's test_keyboard_layout_name() in some locales ()
+ - #52971  HardWest 2 (playtest) is broken with OpenGL/Vulkan backend
+ - #53166  Star Wars : Fallen Order crashes at launch
+ - #53726  Silent Hill 4: The Room low res videos are not played (needs CLSID_CMpegVideoCodec)
+ - #54381  tightvnc viewer crashes on connection
+ - #54878  WinSCP 5.21.1.12643 doesn't list files when Windows version is set to 10
+ - #55005  Program Treecomp - some widgets are not drawn
+ - #55061  Starcraft Remastered: blurry graphics / low resolution
+ - #55161  IrfanView full screen mode creates an unneeded and uncalled for permanent overlaying panel
+ - #55288  advapi32:registry & ntdll:reg - The 32-bit test_redirection() fails if run after the 64 WineTest
+ - #55306  Cannot double click in the server browser in Worms Armageddon
+ - #55327  user32:input - test_ActivateKeyboardLayout() fails on Windows 7 for the Spanish locale
+ - #55328  user32:input - test_keyboard_layout_name() fails on Windows 7 for the Spanish locale
+ - #55394  comctl32:listbox - test_LBS_NODATA() fails in Wine for the Hindi locale
+ - #55439  RPG Maker game crashes
+ - #55446  Using C run-time for unicode strings comparison breaks case insensitive LB_FINDSTRING
+ - #55578  kernel32:loader - test_section_access() sometimes fails on Windows 8
+ - #55582  Civilization 2 crashes when setting up new game
+ - #55655  user32:dialog - test_IsDialogMessageA_proc() fails in the Hindi locale on Wine
+ - #55667  kernel32:file - test_MapFile() fails on macOS
+ - #55773  Railroad Tycoon 2 Platinum (Steam, GOG) crashes when changing to 800X600 resolution
+ - #55903  Falcon BMS 4.37u3: game randomly fails to load 3D models
+ - #55942  Crazy Chicken Approaching - Nebula Assertion and Visual C++ Runtime Library Errors
+ - #55962  Program that mixes 32-bit and 64-bit typelibs fails to find a referenced typelib
+ - #55967  app regression; SWATH stops working at all as of 8.18
+ - #56001  Some shortcut keys don't work with winewayland when focus is lost and restored
+ - #56015  SysTray doesn't work for (and crashes) WiseReminder
+ - #56022  Wine 9.0-rc1 wayland: Cursor does not move on some surfaces
+ - #56026  Wine 9.0-rc1 Wayland: Mouse buttons 3-6 do not work
+ - #56033  winewayland.drv: Alt-shift to change the input language appears like Shift is pressed all the time
+ - #56039  winecfg does no longer run after export WINEARCH=win32
+ - #56046  Pegasus Mail 4.80 regression: Pointer does not change
+ - #56048  winedbg --auto: shows incomplete modules list
+ - #56053  Regression on fallout 3 in the new wow64 mode
 
 ----------------------------------------------------------------
 
-Changes since 9.0-rc1:
+Changes since 9.0-rc2:
 
-Akihiro Sagawa (2):
-      winex11: Do window search if IDropTarget::DragOver() returns DROPEFFECT_NONE.
-      comctl32/tests: Store old DPI awareness context.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Alexandre Julliard (13):
-      server: Leave some free space between modules in ASLR mode.
-      kernelbase: Don't validate calendar id for GetCalendarInfo(CAL_ITWODIGITYEARMAX).
-      ntdll: Switch to the kernel stack before restoring the pthread TEB.
-      ntdll: Switch to the user stack before restoring the %fs register.
-      ntdll: Only free reserved memory for DYNAMIC_BASE binaries.
-      krnl386: Don't release the Win16 lock when exiting a task.
-      server: Enforce a mapping size limit instead of relying on the Unix file system.
-      kernel32/tests: Don't bother checking for errors in cleanup path.
-      user32: Support utf-8 in WM_CHAR W->A conversion.
-      oleaut32/tests: Use winetest contexts instead of traces in the typelib test.
-      Revert "oleaut32: Check that the 32/64 syskind matches when getting a typelib from the cache.".
-      oleaut32: Fix loading a 64-bit typelib in 32-bit mode.
-      oleaut32/tests: Run the 64-bit typelib tests also on 32-bit platforms.
+Alex Henrie (2):
+      po: Update Catalan translation.
+      comctl32/listview: Ignore the lParam to WM_PRINTCLIENT and add tests.
 
-Alexandros Frantzis (5):
-      winewayland.drv: Avoid deadlock when determining whether a window is managed.
-      winewayland.drv: Avoid transient deactivation of foreground thread.
-      winewayland.drv: Consider implicit fullscreen clip for pointer locking.
-      winewayland.drv: Release all keys on keyboard focus loss.
-      winewayland.drv: Support mouse buttons 4 and 5.
+Alexandre Julliard (5):
+      wow64: Initialize the syscall dispatcher in the 32-bit TEB.
+      user32: Fix string comparison for listbox inexact matches.
+      ntdll: Add a more explicit failure for 32-bit prefix in wow64 mode.
+      winecfg: Support all Windows versions also in 64-bit mode.
+      comctl32: Fix string comparison for listbox inexact matches.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
-
-Bartosz Kosiorek (1):
-      po: Update Polish translation.
+Alistair Leslie-Hughes (1):
+      msdasql/tests: Add missing carriage returns.
 
 Bernhard Übelacker (1):
-      uxtheme: Add stub for IsDarkModeAllowedForWindow.
+      winedbg: Retrieve module architecture before sorting.
 
-Biswapriyo Nath (1):
-      include: Add SampleGrabber coclass definition in qedit.idl.
+Brendan McGrath (1):
+      server: Always release internal hardware messages.
 
-Eric Pouech (4):
-      winedump: Don't fail on extra stream entry in PDB.
-      dbghelp: Allow an extra stream index entry in PDB files.
-      winedump: Skip deleted vector in hash inside PDB header.
-      dbghelp: Skip deleted vector in hash inside PDB header.
+Eric Pouech (7):
+      riched20: Don't crash when no OLE obj is present.
+      riched20: Don't write past end of buffer.
+      dbghelp/tests: Extend tests for module loading.
+      dbghelp: Fix some tests for SymLoadModule*().
+      winmm: Fill in pIOProc field in MMIOINFO.
+      dbghelp/tests: Wait for child window to be up before testing.
+      winedbg: Fix main module detection in 'info share' command.
 
 Fabian Maurer (1):
-      gdiplus: Prevent uninitializd memory access (Coverity).
+      wineps: Don't leak memory in error case (Coverity).
 
-Floris Renaud (1):
-      po: Update Dutch translation.
+Georg Lehmann (1):
+      vulkan-1/tests: Enable feature in private data test.
 
-Hans Lehnert (1):
-      gdiplus: Fix invalid pointer returned when failing to create font.
+Huw D. M. Davies (2):
+      dnsapi: Update the array ptr in the insufficient buffer case.
+      dnsapi: Free the buffer in the early return paths.
 
-Hans Leidekker (2):
-      dnsapi/tests: Don't test extra records returned for CNAME query.
-      kernel32/tests: Fix ProcessMachineTypeInfo tests.
+Jacek Caban (1):
+      win32u: Use 32-bit window extra size on wow64.
 
-Jacek Caban (3):
-      dwrite: Explicitly cast DWRITE_FONT_STRETCH to float in init_font_prop_vec.
-      configure: Enable -Wenum-conversion warnings.
-      ntdll: Declare seh debug channel in signal_arm64ec.c.
+Nikolay Sivov (1):
+      oleaut32/typelib: Add a missing break (Coverity).
 
-Jactry Zeng (1):
-      po: Update Simplified Chinese translation.
+Paul Gofman (3):
+      ntdll: Use position independent syscall thunk for NtQueryInformationProcess on i386.
+      include: Fix boolean return value definition in IIterator<T> methods.
+      dxdiagn: Check ICreateDevEnum_CreateClassEnumerator result for S_OK.
 
-Rémi Bernon (6):
-      winebus: Return backend init status from bus_main_thread_start.
-      mf/tests: Workaround broken Win7 test_h264_decoder_concat_streams result.
-      explorer: Handle WM_CLOSE for docked icons for when they lose embedding.
-      server: Peek wine internal driver messages regardless of filter.
-      server: Update the desktop cursor position / window on click.
-      server: Use the capture window as cursor window if it is set.
+Rémi Bernon (16):
+      user32/tests: Dynamically resize the keyboard layout preload list.
+      user32/tests: Skip some keyboard layout tests on broken VMs.
+      dinput/tests: Avoid calling UnloadKeyboardLayout.
+      user32/tests: Avoid calling UnloadKeyboardLayout.
+      server: Always queue mouse messages delivered to another window.
+      server: Ignore the capture window wrt desktop cursor changes.
+      imm32/tests: Fix HKL comparison when cleaning up preload list.
+      wined3d: Add more padding to resource memory allocations.
+      wined3d: Store the resource heap memory pointer separately.
+      server: Introduce a new get_desktop_cursor_thread_input helper.
+      server: Change desktop cursor only when inside the thread's windows.
+      dmime/tests: Check reference time and allow 0.5 tick difference.
+      dmime/tests: Allow small time variation in test_performance_time.
+      dmime/tests: Allow small time variation in test_segment_state.
+      dmime/tests: Add optional notification sequence on segment stop.
+      dmime/tests: Remove some unnecessary and spuriously failing waits.
 
-Sven Baars (2):
-      sapi/tests: Remove registry keys created by SetId().
-      sapi/tests: Remove registry keys created by SetId() in the SpVoice tests.
+Zebediah Figura (1):
+      qcap/audiorecord: Do not leak the sample when pausing or stopping.
+
+Zhiyi Zhang (2):
+      user32/tests: Add more display DC tests.
+      win32u: Create a real bitmap object for display DCs.
