@@ -1323,19 +1323,21 @@ done:
 
 static BOOL read_record(HANDLE handle, DWORD flags, DWORD offset, EVENTLOGRECORD **record, DWORD *size)
 {
-    DWORD read;
+    DWORD read, needed;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
     memset(*record, 0, *size);
-    if (!(ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, size)) &&
+    needed = 0;
+    if (!(ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, &needed)) &&
         GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
         free(*record);
-        *record = malloc(*size);
+        *record = malloc(needed);
         SetLastError(0xdeadbeef);
-        memset(*record, 0, *size);
-        ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, size);
+        memset(*record, 0, needed);
+        *size = needed;
+        ret = ReadEventLogW(handle, flags, offset, *record, *size, &read, &needed);
     }
 
     return ret;
@@ -1560,7 +1562,8 @@ static void test_eventlog_start(void)
     /* change how */
     ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ, 100, &record, &size);
     ok(ret, "Expected success : %ld\n", GetLastError());
-    ok(record->RecordNumber == 4, "Expected 4, got %lu\n", record->RecordNumber);
+    ok(record->RecordNumber == 4 || broken(record->RecordNumber == 5) /* some win10 22h2 */,
+        "Expected 4, got %lu\n", record->RecordNumber);
     /* change direction */
     ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_BACKWARDS_READ, 10, &record, &size);
     ok(ret, "Expected success : %ld\n", GetLastError());
@@ -1591,7 +1594,8 @@ static void test_eventlog_start(void)
     /* change how */
     ret = read_record(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_BACKWARDS_READ, 100, &record, &size);
     ok(ret, "Expected success : %ld\n", GetLastError());
-    ok(record->RecordNumber == 3, "Expected 3, got %lu\n", record->RecordNumber);
+    ok(record->RecordNumber == 3 || broken(record->RecordNumber == 2) /* some win10 22h2 */,
+        "Expected 3, got %lu\n", record->RecordNumber);
     /* change direction */
     ret = read_record(handle, EVENTLOG_SEEK_READ | EVENTLOG_FORWARDS_READ, 10, &record, &size);
     ok(ret, "Expected success : %ld\n", GetLastError());
