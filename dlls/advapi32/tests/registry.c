@@ -1338,9 +1338,9 @@ static void test_reg_create_key(void)
      * the registry access check is performed correctly. Redirection isn't
      * being tested, so the tests don't care about whether the process is
      * running under WOW64. */
-    if (!pIsWow64Process)
+    if (!has_wow64())
     {
-        win_skip("WOW64 flags are not recognized\n");
+        skip("WOW64 flags are not recognized\n");
         return;
     }
 
