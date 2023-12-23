@@ -64,6 +64,17 @@ static DWORD (WINAPI *pEnumDynamicTimeZoneInformation)(const DWORD,
 static BOOL limited_user;
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
+static BOOL has_wow64(void)
+{
+    if (!is_64bit)
+    {
+        BOOL is_wow64;
+        if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 ) || !is_wow64)
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static const char *dbgstr_SYSTEMTIME(const SYSTEMTIME *st)
 {
     return wine_dbg_sprintf("%02d-%02d-%04d %02d:%02d:%02d.%03d",
@@ -2575,14 +2586,10 @@ static void test_redirection(void)
     HKEY key, key32, key64, root, root32, root64;
     DWORD subkeys, subkeys32, subkeys64;
 
-    if (ptr_size != 64)
+    if (!has_wow64())
     {
-        BOOL is_wow64;
-        if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 ) || !is_wow64)
-        {
-            skip( "Not on Wow64, no redirection\n" );
-            return;
-        }
+        skip( "Not on Wow64, no redirection\n" );
+        return;
     }
 
     if (limited_user)
