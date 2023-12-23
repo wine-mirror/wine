@@ -117,10 +117,16 @@ struct flatten_bezier_job
 static BOOL flatten_bezier_add(struct list *jobs, path_list_node_t *start, REAL x2, REAL y2, REAL x3, REAL y3, path_list_node_t *end)
 {
     struct flatten_bezier_job *job = malloc(sizeof(struct flatten_bezier_job));
-    struct flatten_bezier_job temp = { start, x2, y2, x3, y3, end };
     if (!job)
         return FALSE;
-    *job = temp;
+
+    job->start = start;
+    job->x2 = x2;
+    job->y2 = y2;
+    job->x3 = x3;
+    job->y3 = y3;
+    job->end = end;
+
     list_add_after(jobs, &job->entry);
     return TRUE;
 }
