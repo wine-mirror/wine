@@ -410,7 +410,11 @@ static void test_swapchain(void)
     d3dpp.BackBufferCount = 0;
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-    ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.BackBufferWidth, "Got unexpected BackBufferWidth %u.\n", d3dpp.BackBufferWidth);
+    ok(!d3dpp.BackBufferHeight, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
+    ok(d3dpp.BackBufferFormat == D3DFMT_A8R8G8B8, "Got unexpected BackBufferFormat %#x.\n", d3dpp.BackBufferFormat);
+    ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.hDeviceWindow, "Got unexpected hDeviceWindow %p.\n", d3dpp.hDeviceWindow);
 
     d3dpp.hDeviceWindow = NULL;
     d3dpp.BackBufferCount  = 1;
