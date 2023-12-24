@@ -1263,6 +1263,7 @@ static void test_swapchain(void)
     IDirect3DSurface9 *backbuffer, *stereo_buffer;
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DDevice9 *device;
+    RECT client_rect;
     IDirect3D9 *d3d;
     ULONG refcount;
     HWND window, window2;
@@ -1341,11 +1342,23 @@ static void test_swapchain(void)
     ok(swapchainX == NULL, "Swapchain 1 is %p\n", swapchainX);
     if(swapchainX) IDirect3DSwapChain9_Release(swapchainX);
 
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;
+    GetClientRect(window, &client_rect);
+
     /* Create a bunch of swapchains */
     d3dpp.BackBufferCount = 0;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &swapchain1);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-    ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
+    todo_wine ok(d3dpp.BackBufferWidth == client_rect.right, "Got unexpected BackBufferWidth %u, expected %ld.\n",
+            d3dpp.BackBufferWidth, client_rect.right);
+    todo_wine ok(d3dpp.BackBufferHeight == client_rect.bottom, "Got unexpected BackBufferHeight %u, expected %ld.\n",
+            d3dpp.BackBufferHeight, client_rect.bottom);
+    ok(d3dpp.BackBufferFormat == D3DFMT_A8R8G8B8, "Got unexpected BackBufferFormat %#x.\n", d3dpp.BackBufferFormat);
+    ok(d3dpp.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", d3dpp.BackBufferCount);
+    ok(!d3dpp.hDeviceWindow, "Got unexpected hDeviceWindow %p.\n", d3dpp.hDeviceWindow);
 
     d3dpp.hDeviceWindow = NULL;
     d3dpp.BackBufferCount  = 1;
