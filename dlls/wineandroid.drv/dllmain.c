@@ -119,7 +119,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     struct init_params params;
     void **callback_table;
 
-    if (reason == DLL_PROCESS_ATTACH) return TRUE;
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( inst );
     if (__wine_init_unix_call()) return FALSE;
