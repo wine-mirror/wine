@@ -3698,6 +3698,36 @@ static BOOL CDecodeMsg_Control(HCRYPTMSG hCryptMsg, DWORD dwFlags,
             break;
         }
         break;
+    case CMSG_CTRL_DEL_CERT:
+        switch (msg->type)
+        {
+        case CMSG_SIGNED:
+        {
+            DWORD index = *(const DWORD *)pvCtrlPara;
+
+            if (!msg->u.signed_data.info)
+            {
+                SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+                break;
+            }
+            if (index >= msg->u.signed_data.info->cCertEncoded)
+            {
+                SetLastError(CRYPT_E_INVALID_INDEX);
+                break;
+            }
+            TRACE("CMSG_CTRL_DEL_CERT: index %lu of %lu\n", index, msg->u.signed_data.info->cCertEncoded);
+            CryptMemFree(msg->u.signed_data.info->rgCertEncoded[index].pbData);
+            memmove(&msg->u.signed_data.info->rgCertEncoded[index], &msg->u.signed_data.info->rgCertEncoded[index + 1],
+                    (msg->u.signed_data.info->cCertEncoded - index - 1) * sizeof(msg->u.signed_data.info->rgCertEncoded));
+            msg->u.signed_data.info->cCertEncoded--;
+            ret = TRUE;
+            break;
+        }
+        default:
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+            break;
+        }
+        break;
     case CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR:
         switch (msg->type)
         {
