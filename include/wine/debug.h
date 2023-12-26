@@ -501,9 +501,11 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
 #define WINE_ERR_ON(ch)            __WINE_IS_DEBUG_ON(_ERR,&__wine_dbch_##ch)
 
 #define WINE_DECLARE_DEBUG_CHANNEL(ch) \
-    static struct __wine_debug_channel __wine_dbch_##ch = { 0xff, #ch }
+    static struct __wine_debug_channel __wine_dbch_##ch = { 0xff, #ch }; \
+    C_ASSERT(sizeof(#ch) <= sizeof(__wine_dbch_##ch.name))
 #define WINE_DEFAULT_DEBUG_CHANNEL(ch) \
     static struct __wine_debug_channel __wine_dbch_##ch = { 0xff, #ch }; \
+    C_ASSERT(sizeof(#ch) <= sizeof(__wine_dbch_##ch.name)); \
     static struct __wine_debug_channel * const __wine_dbch___default = &__wine_dbch_##ch
 
 #define WINE_MESSAGE               wine_dbg_printf
