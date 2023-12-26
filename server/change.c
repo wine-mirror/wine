@@ -723,18 +723,18 @@ static unsigned int filter_from_inode( struct inode *inode, int is_parent )
 
 static char *get_path_from_fd( int fd, int sz )
 {
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#ifdef linux
+    char *ret = malloc( 32 + sz );
+
+    if (ret) sprintf( ret, "/proc/self/fd/%u", fd );
+    return ret;
+#elif defined(F_GETPATH)
     char *ret = malloc( PATH_MAX + sz );
 
     if (!ret) return NULL;
     if (!fcntl( fd, F_GETPATH, ret )) return ret;
     free( ret );
     return NULL;
-#elif defined(linux)
-    char *ret = malloc( 32 + sz );
-
-    if (ret) sprintf( ret, "/proc/self/fd/%u", fd );
-    return ret;
 #else
     return NULL;
 #endif
