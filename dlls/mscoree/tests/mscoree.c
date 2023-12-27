@@ -633,8 +633,8 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     DWORD exit_code = 0xdeadbeef, err;
     BOOL ret;
 
-    ok(create_new_dir(tmpdir, L"loadpaths"),
-       "failed to create a new dir %lu\n", GetLastError());
+    ret = create_new_dir(tmpdir, L"loadpaths");
+    ok(ret, "failed to create a new dir %lu\n", GetLastError());
     end = tmpdir + wcslen(tmpdir);
 
     wcscpy(tmpexe, tmpdir);
