@@ -672,7 +672,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     }
     else
     {
-        ok(GetLastError() == RtlNtStatusToDosError(expect_status), "got error %lu\n", GetLastError());
+        ok(GetLastError() == RtlNtStatusToDosErrorNoTeb(expect_status), "got error %lu\n", GetLastError());
     }
     if (NT_ERROR(expect_status))
         ok(size == 0xdeadf00d, "got size %lu\n", size);
