@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-17 20:32+0200\n"
+"PO-Revision-Date: 2023-12-27 19:27+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -12615,10 +12615,8 @@ msgid "Duplex:"
 msgstr "Kaksipuolinen:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "&Syöttö:"
+msgstr "&Paperilähde:"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -14697,17 +14695,13 @@ msgid "&Run..."
 msgstr "&Suorita..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "&Poistu Windowsista"
+msgstr "&Sulje työpöytä"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "Haluatko varmasti tuhota nämä arvot?"
+msgstr "Haluatko varmasti lopettaa kaikki ohjelmat ja sulkea työpöydän?"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -15011,7 +15005,7 @@ msgstr "Seuraavat palvelut ovat toiminnassa:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "Annetut valitsimet ovat ristiriidassa.\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -18475,10 +18469,8 @@ msgid "&Theme:"
 msgstr "&Teema:"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&WinRT app theme:"
 msgid "&WinRT theme:"
-msgstr "&WinRT-sovellusten teema:"
+msgstr "&WinRT-teema:"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18497,10 +18489,8 @@ msgid "MIME types"
 msgstr "MIME-tyypit"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "&Muokkaa tiedostosidoksia"
+msgstr "&Muokkaa tiedosto- ja protokollasidoksia"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
