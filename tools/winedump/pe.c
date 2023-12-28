@@ -697,9 +697,9 @@ static	void	dump_dir_exported_functions(void)
     printf("  Ordinal base:    %u\n", (UINT)dir->Base);
     printf("  # of functions:  %u\n", (UINT)dir->NumberOfFunctions);
     printf("  # of Names:      %u\n", (UINT)dir->NumberOfNames);
-    printf("Addresses of functions: %08X\n", (UINT)dir->AddressOfFunctions);
-    printf("Addresses of name ordinals: %08X\n", (UINT)dir->AddressOfNameOrdinals);
-    printf("Addresses of names: %08X\n", (UINT)dir->AddressOfNames);
+    printf("  Functions RVA:   %08X\n", (UINT)dir->AddressOfFunctions);
+    printf("  Ordinals RVA:    %08X\n", (UINT)dir->AddressOfNameOrdinals);
+    printf("  Names RVA:       %08X\n", (UINT)dir->AddressOfNames);
     printf("\n");
     printf("  Entry Pt  Ordn  Name\n");
 
@@ -716,7 +716,7 @@ static	void	dump_dir_exported_functions(void)
     for (i = 0; i < dir->NumberOfFunctions; i++)
     {
         if (!pFunc[i]) continue;
-        printf("  %08X %5u ", pFunc[i], (UINT)dir->Base + i);
+        printf("  %08X %5u  ", pFunc[i], (UINT)dir->Base + i);
         if (funcs[i])
             printf("%s", get_symbol_str((const char*)RVA(funcs[i], sizeof(DWORD))));
         else
