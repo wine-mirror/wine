@@ -889,7 +889,17 @@ static void reference_shader_resources(struct wined3d_device_context *context, u
             continue;
 
         if (!(shader = state->shader[i]))
+        {
+            if (i == WINED3D_SHADER_TYPE_PIXEL)
+            {
+                for (j = 0; j < WINED3D_MAX_FFP_TEXTURES; ++j)
+                {
+                    if ((view = state->shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][j]))
+                        wined3d_device_context_reference_resource(context, view->resource);
+                }
+            }
             continue;
+        }
 
         for (j = 0; j < WINED3D_MAX_CBS; ++j)
         {
