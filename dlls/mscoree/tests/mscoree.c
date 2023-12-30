@@ -630,7 +630,7 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     PROCESS_INFORMATION pi;
     STARTUPINFOW si = { 0 };
     WCHAR *ptr, *end;
-    DWORD exit_code = 0xdeadbeef;
+    DWORD exit_code = 0xdeadbeef, err;
     BOOL ret;
 
     ok(create_new_dir(tmpdir, L"loadpaths"),
@@ -702,7 +702,31 @@ static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name,
     while (ptr >= end && (ptr = wcsrchr(tmpdir, '\\')))
     {
         ret = RemoveDirectoryW(tmpdir);
-        ok(ret, "RemoveDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), GetLastError());
+        err = GetLastError();
+        ok(ret, "RemoveDirectoryW(%s) failed: %lu\n", debugstr_w(tmpdir), err);
+
+        if (!ret && err == ERROR_DIR_NOT_EMPTY)
+        {
+            WIN32_FIND_DATAW fd;
+            HANDLE hfind;
+
+            wcscat(tmpdir, L"\\*");
+            hfind = FindFirstFileW(tmpdir, &fd);
+            while (hfind != INVALID_HANDLE_VALUE && (!wcscmp(fd.cFileName, L".") || !wcscmp(fd.cFileName, L"..")))
+            {
+                if (!FindNextFileW(hfind, &fd))
+                {
+                    FindClose(hfind);
+                    hfind = INVALID_HANDLE_VALUE;
+                }
+            }
+            if (hfind != INVALID_HANDLE_VALUE)
+            {
+                trace("file %s still present in tmpdir\n", debugstr_w(fd.cFileName));
+                FindClose(hfind);
+            }
+        }
+
         *ptr = '\0';
     }
 }
