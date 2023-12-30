@@ -91,8 +91,12 @@ int CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *ber, BERVAL **berval )
     TRACE( "%p, %p\n", ber, berval );
 
     if (ber_flatten( BER(ber), &bervalU )) return WLDAP32_LBER_ERROR;
-    if (!(bervalW = bervalUtoW( bervalU ))) return WLDAP32_LBER_ERROR;
+
+    bervalW = bervalUtoW( bervalU );
     ber_bvfree( bervalU );
+    if (!bervalW)
+        return WLDAP32_LBER_ERROR;
+
     *berval = bervalW;
     return 0;
 }
