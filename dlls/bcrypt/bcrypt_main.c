@@ -272,7 +272,7 @@ static struct object *get_object( BCRYPT_HANDLE handle, ULONG magic )
     }
 
     idx = (ULONG_PTR)handle >> 4;
-    if (idx > ARRAY_SIZE(pseudo_algorithms) || !pseudo_algorithms[idx].hdr.magic)
+    if (idx >= ARRAY_SIZE(pseudo_algorithms) || !pseudo_algorithms[idx].hdr.magic)
     {
         FIXME( "pseudo-handle %p not supported\n", handle );
         return NULL;
