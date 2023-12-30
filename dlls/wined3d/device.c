@@ -1130,6 +1130,8 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
         {
             if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
                 buffer_offset = memory->offset;
+            else if (!context_gl)
+                WARN_(d3d_perf)("Failed to suballocate buffer from the client thread.\n");
         }
         else if (context_gl)
         {
@@ -1139,7 +1141,8 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
 
         if (!id)
         {
-            WARN("Failed to allocate buffer.\n");
+            if (context_gl)
+                WARN("Failed to allocate buffer.\n");
             return false;
         }
     }
