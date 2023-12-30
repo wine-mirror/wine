@@ -6121,7 +6121,7 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
     if (IS_INTRESOURCE(colors)) return FALSE; /* stupid app passes a color instead of an array */
 
     for (i = 0; i < count; i++)
-        if (colors[i] >= 0 && colors[i] <= ARRAY_SIZE( system_colors ))
+        if (colors[i] >= 0 && colors[i] < ARRAY_SIZE( system_colors ))
             set_entry( &system_colors[colors[i]], values[i], 0, 0 );
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
