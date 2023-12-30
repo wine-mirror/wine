@@ -4887,7 +4887,7 @@ static void wined3d_view_gl_destroy_object(void *object)
         checkGLcall("delete resources");
         context_release(context);
     }
-    if (ctx->bo_user)
+    if (ctx->bo_user && ctx->bo_user->valid)
         list_remove(&ctx->bo_user->entry);
 
     heap_free(ctx->object);

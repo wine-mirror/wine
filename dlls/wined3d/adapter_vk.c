@@ -1467,7 +1467,7 @@ static void wined3d_view_vk_destroy_object(void *object)
             TRACE("Destroyed image view 0x%s.\n", wine_dbgstr_longlong(*ctx->vk_image_view));
         }
     }
-    if (ctx->bo_user)
+    if (ctx->bo_user && ctx->bo_user->valid)
         list_remove(&ctx->bo_user->entry);
     if (ctx->vk_counter_bo && ctx->vk_counter_bo->vk_buffer)
         wined3d_context_vk_destroy_bo(wined3d_context_vk(context), ctx->vk_counter_bo);
