@@ -3770,6 +3770,11 @@ SymbolicName=WSAEMFILE
 Language=ENU
 Too many open files.
 .
+MessageId=10049
+SymbolicName=WSAEADDRNOTAVAIL
+Language=ENU
+Cannot assign requested address.
+.
 MessageId=10054
 SymbolicName=WSAECONNRESET
 Language=ENU
