@@ -12527,6 +12527,13 @@ static void test_bind(void)
     s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+    todo_wine
+    ok(ret == -1, "expected failure\n");
+    todo_wine
+    ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
     ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* win <7 */, "got error %u\n", WSAGetLastError());
