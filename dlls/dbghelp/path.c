@@ -398,13 +398,6 @@ BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_p
 
     filename = file_name(full_path);
 
-    /* first check full path to file */
-    if (sffip_cb(full_path, &s))
-    {
-        lstrcpyW(buffer, full_path);
-        return TRUE;
-    }
-
     while (searchPath)
     {
         ptr = wcschr(searchPath, ';');
@@ -425,6 +418,7 @@ BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_p
             return TRUE;
         }
     }
+    SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }
 

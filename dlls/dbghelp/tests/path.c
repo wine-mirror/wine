@@ -957,12 +957,7 @@ static BOOL CALLBACK path_cb(PCWSTR filename, void* _usr)
     BOOL ret;
 
     pv->cb_count++;
-    /* wine returns paths in relative form, but relative to search path...
-     * fail (== continue search) until it's fixed
-     */
-    todo_wine_if(!filename[0] || filename[1] != ':')
     ok(filename[0] && filename[1] == ':', "Expecting full path, but got %ls\n", filename);
-    if (!filename[0] || filename[1] != ':') return TRUE;
 
     memset(&ssii, 0, sizeof(ssii));
     ssii.sizeofstruct = sizeof(ssii);
@@ -1161,7 +1156,6 @@ static void test_find_in_path_pe(void)
                                  image_tests[i].lookup_size_of_image, 0,
                                  SSRVOPT_DWORDPTR, found, path_cb, &pv);
 
-        todo_wine
         ok(pv.cb_count == image_tests[i].expected_cb_count,
            "Mismatch in cb count, got %u (expected %lu)\n",
            pv.cb_count, image_tests[i].expected_cb_count);
@@ -1184,9 +1178,7 @@ static void test_find_in_path_pe(void)
         }
         else
         {
-            todo_wine_if(i == 26 || i == 27)
             ok(!ret, "File reported found, while failure is expected\n");
-            todo_wine_if(i == 26 || i == 27 || (GetLastError() != ERROR_FILE_NOT_FOUND))
             ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %lu\n", GetLastError());
         }
         for (ptr = image_tests[i].files; *ptr; ptr++)
@@ -1378,7 +1370,6 @@ static void test_find_in_path_pdb(void)
                                  0, pdb_tests[i].lookup_age,
                                  SSRVOPT_GUIDPTR, found, path_cb, &pv);
 
-        todo_wine
         ok(pv.cb_count == pdb_tests[i].expected_cb_count,
            "Mismatch in cb count, got %u (expected %lu)\n",
            pv.cb_count, pdb_tests[i].expected_cb_count);
@@ -1401,9 +1392,7 @@ static void test_find_in_path_pdb(void)
         }
         else
         {
-            todo_wine_if(i == 26 || i == 27)
             ok(!ret, "File reported found, while failure is expected\n");
-            todo_wine
             ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %lu\n", GetLastError());
         }
 
