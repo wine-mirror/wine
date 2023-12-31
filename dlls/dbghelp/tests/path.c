@@ -943,6 +943,8 @@ static void make_path(WCHAR file[MAX_PATH], const WCHAR* topdir, const WCHAR* su
 
 struct path_validate
 {
+    GUID guid;
+    DWORD age;
     DWORD timestamp;
     DWORD size_of_image;
     unsigned cb_count;
@@ -966,7 +968,8 @@ static BOOL CALLBACK path_cb(PCWSTR filename, void* _usr)
     ssii.sizeofstruct = sizeof(ssii);
     ret = SymSrvGetFileIndexInfoW(filename, &ssii, 0);
     ok(ret, "SymSrvGetFileIndexInfo failed: %lu %ls\n", GetLastError(), filename);
-    return !(ret && ssii.timestamp == pv->timestamp && ssii.size == pv->size_of_image);
+    return !(ret && !memcmp(&ssii.guid, &pv->guid, sizeof(GUID)) &&
+             ssii.age == pv->age && ssii.timestamp == pv->timestamp && ssii.size == pv->size_of_image);
 }
 
 static unsigned char2index(char ch)
@@ -1111,7 +1114,7 @@ static void test_find_in_path_pe(void)
 
                 make_path(file, topdir, NULL, ft->module_path);
                 /* all modules created with ds pdb reference so that SymSrvGetFileInfoInfo() succeeds */
-                ds_blob = make_pdb_ds_blob(ft->timestamp, &guid1, 124, "pdbds.pdb");
+                ds_blob = make_pdb_ds_blob(ft->timestamp, &guid1, 124 + i, "pdbds.pdb");
                 if (ft->bitness == 64)
                 {
                     init_headers64(&hdr.nt_header64, ft->timestamp, ft->size_of_image, 0);
@@ -1146,9 +1149,11 @@ static void test_find_in_path_pe(void)
         else
             wcscpy(file, image_tests[i].module);
 
+        memset(&pv, 0, sizeof(pv));
+        pv.age = 124 + i;
+        pv.guid = guid1;
         pv.timestamp = image_tests[i].lookup_timestamp;
         pv.size_of_image = image_tests[i].lookup_size_of_image;
-        pv.cb_count = 0;
         memset(found, 0, sizeof(found));
 
         ret = SymFindFileInPathW(proc, search, file,
@@ -1212,6 +1217,224 @@ static void test_find_in_path_pe(void)
     ok(ret, "Couldn't remove directory\n");
 }
 
+/* Comment on top of test_find_in_path_pe() also applies here */
+static void test_find_in_path_pdb(void)
+{
+    HANDLE proc = (HANDLE)(DWORD_PTR)0x666002;
+    WCHAR topdir[MAX_PATH];
+    WCHAR search[MAX_PATH];
+    WCHAR file[MAX_PATH];
+    WCHAR found[MAX_PATH];
+    struct path_validate pv;
+    DWORD len;
+    BOOL ret;
+    int i;
+
+    static const struct debug_info_file
+    {
+        const GUID* guid;
+        DWORD       age;
+        const WCHAR*module_path;
+    }
+    test_files[] =
+    {
+        /*  0 */ { &guid1,     0x0030cafe, L"foobar.pdb" },
+        /*  1 */ { &guid1,     0x0030cafe, L"A\\foobar.pdb" },
+        /*  2 */ { &guid1,     0x0030cafe, L"B\\foobar.pdb" },
+        /*  3 */ { &guid2,     0x0010f00d, L"foobar.pdb" },
+        /*  4 */ { &guid2,     0x0010f00d, L"A\\foobar.pdb" },
+        /*  5 */ { &guid2,     0x0010f00d, L"B\\foobar.pdb" },
+        /*  6 */ { &guid1,     0x0030cafe, L"foobar.pdb" },
+        /*  7 */ { &guid1,     0x0030cafe, L"A\\foobar.pdb" },
+        /*  8 */ { &guid1,     0x0030cafe, L"B\\foobar.pdb" },
+        /*  9 */ { &guid2,     0x0010f00d, L"foobar.pdb" },
+        /*  a */ { &guid2,     0x0010f00d, L"A\\foobar.pdb" },
+        /*  b */ { &guid2,     0x0010f00d, L"B\\foobar.pdb" },
+        /*  c */ { &guid1,     0x0030cafe, L"dll\\foobar.pdb" },
+        /*  d */ { &guid1,     0x0030cafe, L"symbols\\dll\\foobar.pdb" },
+    };
+    static const struct image_tests
+    {
+        /* files to generate */
+        const char* files;
+        /* parameters for lookup */
+        const GUID* lookup_guid;
+        DWORD lookup_age;
+        const char* search; /* several of ., A, B to link to directories */
+        const WCHAR* module;
+        /* expected results */
+        const WCHAR* found_subdir;
+        DWORD expected_cb_count;
+    }
+    pdb_tests[] =
+    {
+        /* all files 64 bit */
+        /* the passed timestamp & size are not checked before calling the callback! */
+        /*  0 */ { "0",   NULL,   0x00000000, ".", L"foobar.pdb",  NULL,   1},
+        /*  1 */ { "0",   &guid1, 0x00000000, ".", L"foobar.pdb",  NULL,   1},
+        /*  2 */ { "0",   NULL,   0x0030cafe, ".", L"foobar.pdb",  NULL,   1},
+        /*  3 */ { "0",   &guid1, 0x0030cafe, ".", L"foobar.pdb",  L"",    1},
+        /* no recursion into subdirectories */
+        /*  4 */ { "1",   &guid1, 0x0030cafe, ".", L"foobar.pdb",  NULL,   0},
+        /* directories are searched in order */
+        /*  5 */ { "15",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /*  6 */ { "15",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"A\\", 2},
+        /*  7 */ { "12",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /*  8 */ { "12",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"B\\", 1},
+
+        /* all files 32 bit */
+        /* the passed timestamp & size is not checked ! */
+        /*  9 */ { "6",   NULL,   0x00000000, ".", L"foobar.pdb",  NULL,   1},
+        /* 10 */ { "6",   &guid1, 0x00000000, ".", L"foobar.pdb",  NULL,   1},
+        /* 11 */ { "6",   NULL,   0x0030cafe, ".", L"foobar.pdb",  NULL,   1},
+        /* 12 */ { "6",   &guid1, 0x0030cafe, ".", L"foobar.pdb",  L"",    1},
+        /* no recursion into subdirectories */
+        /* 13 */ { "7",   &guid1, 0x0030cafe, ".", L"foobar.pdb",  NULL,   0},
+        /* directories are searched in order */
+        /* 14 */ { "7b",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 15 */ { "7b",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"A\\", 2},
+        /* 16 */ { "78",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 17 */ { "78",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"B\\", 1},
+
+        /* machine and bitness is not used */
+        /* 18 */ { "1b",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 19 */ { "1b",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"A\\", 2},
+        /* 20 */ { "18",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 21 */ { "18",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"B\\", 1},
+        /* 22 */ { "75",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 23 */ { "75",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"A\\", 2},
+        /* 24 */ { "72",  &guid1, 0x0030cafe, "AB", L"foobar.pdb", L"A\\", 1},
+        /* 25 */ { "72",  &guid1, 0x0030cafe, "BA", L"foobar.pdb", L"B\\", 1},
+
+        /* specifying a full path to module isn't taken into account */
+        /* 26 */ { "0",   &guid1, 0x0030cafe, "AB", L"@foobar.pdb", NULL,  0},
+        /* 27 */ { "6",   &guid1, 0x0030cafe, "AB", L"@foobar.pdb", NULL,  0},
+
+        /* subdirectories searched by SymLoadModule*() are not covered implicitely */
+        /* 28 */ { "c",   &guid1, 0x0030cafe, ".", L"foobar.pdb",   NULL,  0},
+        /* 28 */ { "d",   &guid1, 0x0030cafe, ".", L"foobar.pdb",   NULL,  0},
+
+    };
+    static const WCHAR* list_directories[] = {L"A", L"B", L"dll", L"symbols", L"symbols\\dll", L"acm", L"symbols\\acm"};
+
+    ret = SymInitializeW(proc, NULL, FALSE);
+    ok(ret, "Couldn't init dbghelp\n");
+
+    len = GetTempPathW(ARRAY_SIZE(topdir), topdir);
+    ok(len && len < ARRAY_SIZE(topdir), "Unexpected length\n");
+    wcscat(topdir, L"dh.tmp\\");
+    ret = CreateDirectoryW(topdir, NULL);
+    ok(ret, "Couldn't create directory\n");
+    for (i = 0; i < ARRAY_SIZE(list_directories); i++)
+    {
+        make_path(file, topdir, list_directories[i], NULL);
+        ret = CreateDirectoryW(file, NULL);
+        ok(ret, "Couldn't create directory %u %ls\n", i, list_directories[i]);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(pdb_tests); ++i)
+    {
+        const char* ptr;
+        winetest_push_context("path_pdb_%u", i);
+
+        for (ptr = pdb_tests[i].files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(file, topdir, NULL, test_files[val].module_path);
+                create_test_pdb_ds(file, test_files[val].guid, test_files[val].age);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+
+        search[0] = L'\0';
+        for (ptr = pdb_tests[i].search; *ptr; ptr++)
+        {
+            if (*search) wcscat(search, L";");
+            wcscat(search, topdir);
+            if (*ptr == '.')
+                ;
+            else if (*ptr == 'A')
+                wcscat(search, L"A");
+            else if (*ptr == 'B')
+                wcscat(search, L"B");
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+
+        if (pdb_tests[i].module[0] == L'@')
+            make_path(file, topdir, NULL, &pdb_tests[i].module[1]);
+        else
+            wcscpy(file, pdb_tests[i].module);
+
+        memset(&pv, 0, sizeof(pv));
+        if (pdb_tests[i].lookup_guid)
+            pv.guid = *pdb_tests[i].lookup_guid;
+        pv.age = pdb_tests[i].lookup_age;
+        memset(found, 0, sizeof(found));
+
+        ret = SymFindFileInPathW(proc, search, file,
+                                 (void*)pdb_tests[i].lookup_guid,
+                                 0, pdb_tests[i].lookup_age,
+                                 SSRVOPT_GUIDPTR, found, path_cb, &pv);
+
+        todo_wine
+        ok(pv.cb_count == pdb_tests[i].expected_cb_count,
+           "Mismatch in cb count, got %u (expected %lu)\n",
+           pv.cb_count, pdb_tests[i].expected_cb_count);
+        if (pdb_tests[i].found_subdir)
+        {
+            size_t l1, l2, l3;
+
+            ok(ret, "Couldn't find file: %ls %lu\n", search, GetLastError());
+
+            l1 = wcslen(topdir);
+            l2 = wcslen(pdb_tests[i].found_subdir);
+            l3 = wcslen(pdb_tests[i].module);
+
+            ok(l1 + l2 + l3 == wcslen(found) &&
+               !memcmp(found, topdir, l1 * sizeof(WCHAR)) &&
+               !memcmp(&found[l1], pdb_tests[i].found_subdir, l2 * sizeof(WCHAR)) &&
+               !memcmp(&found[l1 + l2], pdb_tests[i].module, l3 * sizeof(WCHAR)),
+               "Mismatch in found file %ls (expecting %ls)\n",
+               found, pdb_tests[i].found_subdir);
+        }
+        else
+        {
+            todo_wine_if(i == 26 || i == 27)
+            ok(!ret, "File reported found, while failure is expected\n");
+            todo_wine
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %lu\n", GetLastError());
+        }
+
+        for (ptr = pdb_tests[i].files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(file, topdir, NULL, test_files[val].module_path);
+                ret = DeleteFileW(file);
+                ok(ret, "Couldn't delete file %c %ls\n", *ptr, file);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+
+        winetest_pop_context();
+    }
+
+    SymCleanup(proc);
+
+    for (i = ARRAY_SIZE(list_directories) - 1; i >= 0; i--)
+    {
+        make_path(file, topdir, list_directories[i], NULL);
+        ret = RemoveDirectoryW(file);
+        ok(ret, "Couldn't remove directory %u %ls\n", i, list_directories[i]);
+    }
+
+    ret = RemoveDirectoryW(topdir);
+    ok(ret, "Couldn't remove directory\n");
+}
+
 START_TEST(path)
 {
     /* cleanup env variables that affect dbghelp's behavior */
@@ -1222,4 +1445,5 @@ START_TEST(path)
     test_srvgetindexes_pdb();
     test_srvgetindexes_dbg();
     test_find_in_path_pe();
+    test_find_in_path_pdb();
 }
