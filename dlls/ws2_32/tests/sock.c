@@ -12528,9 +12528,7 @@ static void test_bind(void)
 
     WSASetLastError(0xdeadbeef);
     ret = bind(s, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
-    todo_wine
     ok(ret == -1, "expected failure\n");
-    todo_wine
     ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);

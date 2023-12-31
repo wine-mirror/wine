@@ -2231,7 +2231,7 @@ static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr 
     in_addr_t bind_addr = addr->sin_addr.s_addr;
     struct ifaddrs *ifaddrs, *ifaddr;
     int fd = get_unix_fd( sock->fd );
-    int err = 0;
+    int err = -1;
 
     if (bind_addr == htonl( INADDR_ANY ) || bind_addr == htonl( INADDR_LOOPBACK ))
         return 0;
