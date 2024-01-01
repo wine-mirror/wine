@@ -220,6 +220,21 @@ L"<?xml version='1.0'?>                                                       \
     </Effect>                                                                 \
 ";
 
+static const WCHAR *effect_variable_input_count =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string' value='VariableInputs'/>   \
+        <Property name='Author'      type='string' value='The Wine Project'/> \
+        <Property name='Category'    type='string' value='Test'/>             \
+        <Property name='Description' type='string' value='Test effect.'/>     \
+        <Inputs minimum='2' maximum='5' >                                     \
+            <Input name='Source1'/>                                           \
+            <Input name='Source2'/>                                           \
+            <Input name='Source3'/>                                           \
+        </Inputs>                                                             \
+    </Effect>                                                                 \
+";
+
 static const DWORD test_vs[] =
 {
 #if 0
@@ -11450,6 +11465,33 @@ static void test_effect_register(BOOL d3d11)
     /* Unregister builtin effect */
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_D2D1Composite);
     ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+
+    /* Variable input count. */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_variable_input_count, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    integer = 0;
+    hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(integer == 2, "Unexpected value %u.\n", integer);
+    hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(integer == 5, "Unexpected value %u.\n", integer);
+    hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY,
+            (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 3, "Unexpected data %u.\n", integer);
+    ID2D1Effect_Release(effect);
+
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     release_test_context(&ctx);
 }
