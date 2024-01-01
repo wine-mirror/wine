@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-01-20 20:34+0900\n"
+"PO-Revision-Date: 2024-01-02 08:33+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -265,7 +265,7 @@ msgid ""
 "entry for this program from the registry?"
 msgstr ""
 "제거 프로그램 '%s'을(를) 실행할 수 없습니다. 레지스트리에서 이 프로그램의 제"
-"거 항목을 제거하시겠습니까?"
+"거 항목을 삭제하시겠습니까?"
 
 #: dlls/appwiz.cpl/appwiz.rc:36
 msgid "Not specified"
@@ -279,7 +279,7 @@ msgstr "이름"
 
 #: dlls/appwiz.cpl/appwiz.rc:39
 msgid "Publisher"
-msgstr "제조업체"
+msgstr "게시자"
 
 #: dlls/appwiz.cpl/appwiz.rc:40 dlls/cryptui/cryptui.rc:54
 msgid "Version"
@@ -303,7 +303,7 @@ msgstr "모든 파일 (*.*)"
 
 #: dlls/appwiz.cpl/appwiz.rc:46
 msgid "&Modify/Remove"
-msgstr "수정(&M)/제거"
+msgstr "수정/제거(&M)"
 
 #: dlls/appwiz.cpl/appwiz.rc:52
 msgid "Downloading..."
@@ -318,12 +318,12 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
-"다운로드한 파일의 체크섬에 문제가 있습니다. 망가진 파일 설치를 취소하는 중입"
+"다운로드한 파일에 체크섬 오류가 있습니다. 손상된 파일의 설치를 중단하는 중입"
 "니다."
 
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
-msgstr ""
+msgstr "현재 제거/수정 프로세스가 완료될 때까지 기다려 주세요."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -3696,16 +3696,12 @@ msgid "High"
 msgstr "높음"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "인덱스"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "Wine 비디오 1 비디오 코덱"
+msgstr "Indeo Video Interactive 버전 5 비디오 코덱"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -4005,10 +4001,8 @@ msgid "Syntax error in regular expression"
 msgstr "정규식에 구문 오류가 있습니다"
 
 #: dlls/jscript/jscript.rc:66
-#, fuzzy
-#| msgid "Expected identifier"
 msgid "Unexpected quantifier"
-msgstr "필요한 식별자"
+msgstr "예기치 않은 수량자"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Exception thrown and not caught"
@@ -4070,10 +4064,8 @@ msgid "'this' is not a | object"
 msgstr "'this'는 '|' 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'key' is not an object"
-msgstr "'this'는 '|' 개체가 아닙니다"
+msgstr "'key'는 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Property cannot have both accessors and a value"
@@ -12606,10 +12598,8 @@ msgid "Duplex:"
 msgstr "양면:"
 
 #: dlls/wineps.drv/wineps.rc:45
-#, fuzzy
-#| msgid "&Tray:"
 msgid "Paper &Tray:"
-msgstr "트레이(&T):"
+msgstr "용지 트레이(&T):"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -14682,37 +14672,29 @@ msgid "&Run..."
 msgstr "실행(&R)..."
 
 #: programs/explorer/explorer.rc:36
-#, fuzzy
-#| msgid "E&xit Windows"
 msgid "E&xit desktop"
-msgstr "끝내기(&X)"
+msgstr "데스크톱 종료(&X)"
 
 #: programs/explorer/explorer.rc:37
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
-msgstr "이 값을 지우시겠습니까?"
+msgstr "모든 프로그램을 닫고 가상 데스크톱을 종료하시겠습니까?"
 
 #: programs/findstr/findstr.rc:28
-#, fuzzy
-#| msgid "Use c&onnection string"
 msgid "Usage: findstr /options string\n"
-msgstr "연결 문자열 사용(&O)"
+msgstr "사용법: findstr /옵션 문자열\n"
 
 #: programs/findstr/findstr.rc:29
-#, fuzzy
-#| msgid "Invalid command line.\n"
 msgid "FINDSTR: Bad command line\n"
-msgstr "잘못된 명령줄.\n"
+msgstr "FINDSTR: 잘못된 명령줄\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: %s을(를) 열 수 없습니다\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
-msgstr ""
+msgstr "FINDSTR: %c 옵션이 무시되었습니다\n"
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -14831,52 +14813,39 @@ msgstr "주 DNS 접미사"
 
 #: programs/klist/klist.rc:28
 msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
-msgstr ""
+msgstr "사용법: klist <tickets | tgt | purge | get [서비스 주체 이름]>\n"
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "알 수 없는 오류"
+msgstr "알 수 없는 오류\n"
 
 #: programs/klist/klist.rc:30
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start Time"
-msgstr "시작 메뉴"
+msgstr "시작 시간"
 
 #: programs/klist/klist.rc:31
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "FLE Standard Time"
 msgid "End Time"
-msgstr "FLE 표준시"
+msgstr "종료 시간"
 
 #: programs/klist/klist.rc:32
-#, fuzzy
-#| msgid "Enter new time: "
 msgid "Renew Time"
-msgstr "새 시간 입력: "
+msgstr "시간 갱신"
 
 #: programs/klist/klist.rc:33
 msgid "Ticket Flags"
-msgstr ""
+msgstr "티켓 플래그"
 
 #: programs/klist/klist.rc:34
 msgid "Cached Tickets"
-msgstr ""
+msgstr "캐시된 티켓"
 
 #: programs/klist/klist.rc:36
-#, fuzzy
-#| msgid "Encryption Type"
 msgid "KerbTicket Encryption Type"
-msgstr "암호화 유형"
+msgstr "KerbTicket 암호화 유형"
 
 #: programs/klist/klist.rc:37
-#, fuzzy
-#| msgid "Current Connections"
 msgid "Current LogonId is"
-msgstr "현재 연결"
+msgstr "현재 로그온 아이디"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15014,7 +14983,7 @@ msgstr "실행 중인 서비스:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "명령이 충돌하는 스위치와 함께 사용되었습니다.\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
@@ -17168,38 +17137,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: '%1' 제거 성공\n"
 
 #: programs/start/start.rc:56
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/exec          Exec the specified file (for internal Wine usage).\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -17231,8 +17168,8 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"프로그램을 시작하거나, 파일 확장자와 연관된 프로그램으로\n"
-"문서를 엽니다.\n"
+"프로그램을 시작하거나, 파일 확장자에 연결된 프로그램으로 문서를 엽니다.\n"
+"\n"
 "사용법:\n"
 "start [옵션] 프로그램_파일_이름 [...]\n"
 "start [옵션] 문서_파일_이름\n"
@@ -17252,10 +17189,9 @@ msgstr ""
 "/belownormal   프로그램을 BELOWNORMAL 우선 순위 클래스에서 시작합니다.\n"
 "/node n        지정한 NUMA 노드에서 프로그램을 시작합니다.\n"
 "/affinity mask 지정한 프로세서 친화도 마스크에서 프로그램을 시작합니다.\n"
-"/wait          시작한 프로그램이 끝날 때까지 기다립니다. 이 명령의 반환값은\n"
-"               실행했던 프로그램의 반환 코드입니다.\n"
-"/unix          유닉스 파일 이름을 사용하고, Windows 탐색기처럼 파일을\n"
-"               시작합니다.\n"
+"/machine arch  지정한 아키텍처(x86,arm,amd64,arm64)를 강제로 사용합니다.\n"
+"/wait          프로그램 완료를 기다린 다음 프로그램 종료 코드로 종료합니다.\n"
+"/unix          유닉스 파일 이름을 사용하고, 탐색기처럼 파일을 시작합니다.\n"
 "/exec          지정한 파일을 실행합니다 (Wine 내부 용도).\n"
 "/ProgIDOpen    지정한 progID를 사용해서 문서를 엽니다.\n"
 "/?             도움말을 보여주고 끝냅니다.\n"
@@ -17331,27 +17267,24 @@ msgid "Error: Process self-termination is not permitted.\n"
 msgstr "오류: 프로세스 자체 종료는 허용되지 않습니다.\n"
 
 #: programs/taskkill/taskkill.rc:44
-#, fuzzy
-#| msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgid ""
 "The process with PID %1!u! (child process of PID %2!u!) has been "
 "terminated.\n"
-msgstr "PID %1!u! 프로세스를 강제로 종료하였습니다.\n"
+msgstr "PID %1!u! (자식 프로세스 PID %2!u!)의 프로세스가 종료되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:45
 msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr ""
+"PID %1!u!, 자식 프로세스 PID %2!u!인 프로세스에 종료 신호를 보냈습니다.\n"
 
 #: include/wine/wine_common_ver.rc:138
-#, fuzzy
-#| msgid "page tab list"
 msgid "Wine tasklist"
-msgstr "페이지 탭 목록"
+msgstr "Wine 작업 목록"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "사용법: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -17362,38 +17295,28 @@ msgid "PID"
 msgstr "PID"
 
 #: programs/tasklist/tasklist.rc:32
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session Name"
-msgstr "세션 ID"
+msgstr "세션 이름"
 
 #: programs/tasklist/tasklist.rc:33
-#, fuzzy
-#| msgid "Session ID"
 msgid "Session#"
-msgstr "세션 ID"
+msgstr "세션#"
 
 #: programs/tasklist/tasklist.rc:34 programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "메모리 사용량"
 
 #: programs/tasklist/tasklist.rc:35
-#, fuzzy
-#| msgid "OK"
 msgid "K"
-msgstr "확인"
+msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "ERROR: Invalid syntax\n"
-msgstr "reg: 잘못된 구문. "
+msgstr "오류: 잘못된 구문\n"
 
 #: programs/tasklist/tasklist.rc:37
-#, fuzzy
-#| msgid "The filename cannot be resolved.\n"
 msgid "ERROR: The search filter cannot be recognized.\n"
-msgstr "파일 이름을 확인할 수 없습니다.\n"
+msgstr "오류: 검색 필터를 인식할 수 없습니다.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -18521,10 +18444,8 @@ msgid "&Theme:"
 msgstr "테마(&T):"
 
 #: programs/winecfg/winecfg.rc:295
-#, fuzzy
-#| msgid "&Theme:"
 msgid "&WinRT theme:"
-msgstr "테마(&T):"
+msgstr "WinRT 테마(&W):"
 
 #: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
@@ -18543,10 +18464,8 @@ msgid "MIME types"
 msgstr "MIME 형식"
 
 #: programs/winecfg/winecfg.rc:311
-#, fuzzy
-#| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
-msgstr "Wine 관련 파일 연결을 데스크톱에 추가합니다(&A)"
+msgstr "파일 및 프로토콜 연결 관리(&A)"
 
 #: programs/winecfg/winecfg.rc:314
 msgid "Folders"
@@ -18649,14 +18568,12 @@ msgid "Mono"
 msgstr "모노"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "오른쪽"
+msgstr "밝음"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "어두움"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
