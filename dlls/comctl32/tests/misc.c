@@ -1246,7 +1246,6 @@ static void test_WM_SETFONT(void)
         }
         else
         {
-            todo_wine_if(!lstrcmpA(tests[i].class_name, "SysLink"))
             ok(ret == sizeof(lf), "GetObjectA failed, error %lu.\n", GetLastError());
         }
 
