@@ -11477,12 +11477,10 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
             (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 2, "Unexpected value %u.\n", integer);
     hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
             (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(integer == 5, "Unexpected value %u.\n", integer);
     hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY,
             (BYTE *)&integer, sizeof(integer));

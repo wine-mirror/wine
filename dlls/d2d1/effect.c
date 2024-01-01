@@ -570,6 +570,13 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     return S_OK;
 }
 
+HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
+        const struct d2d_effect_property *prop, UINT32 *value)
+{
+    return d2d_effect_property_get_value(properties, prop, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)value, sizeof(*value));
+}
+
 static HRESULT d2d_effect_property_set_value(struct d2d_effect_properties *properties,
         struct d2d_effect_property *prop, D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
 {

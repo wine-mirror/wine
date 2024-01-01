@@ -788,12 +788,13 @@ static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_regis
 
 static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registration *effect)
 {
+    struct d2d_effect_property *inputs, *min_inputs, *max_inputs;
     struct d2d_effect_properties *subproperties;
+    UINT32 min_inputs_value, max_inputs_value;
     unsigned int depth, input_count = 0;
-    struct d2d_effect_property *inputs;
     XmlNodeType node_type;
-    WCHAR nameW[16];
-    WCHAR *name;
+    WCHAR *name, *value;
+    WCHAR buffW[16];
     HRESULT hr;
 
     if (FAILED(hr = d2d_effect_properties_add(&effect->properties, L"Inputs",
@@ -811,28 +812,85 @@ static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registr
     d2d_effect_subproperties_add(subproperties, L"DisplayName", D2D1_SUBPROPERTY_DISPLAYNAME,
             D2D1_PROPERTY_TYPE_STRING, L"Inputs");
 
-    if (IXmlReader_IsEmptyElement(reader)) return S_OK;
-
-    while (parse_effect_get_next_xml_node(reader, XmlNodeType_None, L"Input", &depth) == S_OK)
+    if (SUCCEEDED(parse_effect_get_attribute(reader, L"minimum", &value)))
     {
-        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
-        if (node_type == XmlNodeType_EndElement) continue;
-        if (node_type != XmlNodeType_Element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
-
-        if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name))) return hr;
-
-        swprintf(nameW, ARRAY_SIZE(nameW), L"%lu", input_count);
-        d2d_effect_subproperties_add(subproperties, nameW, input_count, D2D1_PROPERTY_TYPE_STRING, name);
-        input_count++;
-
-        free(name);
+        hr = d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, value);
+        free(value);
+        if (FAILED(hr)) return hr;
     }
-    *(UINT32 *)(effect->properties.data.ptr + inputs->data.offset) = input_count;
+    if (SUCCEEDED(parse_effect_get_attribute(reader, L"maximum", &value)))
+    {
+        hr = d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, value);
+        free(value);
+        if (FAILED(hr)) return hr;
+    }
 
-    if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
-    if (node_type != XmlNodeType_EndElement) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+    min_inputs = d2d_effect_properties_get_property_by_name(&effect->properties, L"MinInputs");
+    max_inputs = d2d_effect_properties_get_property_by_name(&effect->properties, L"MaxInputs");
 
-    return S_OK;
+    if (!IXmlReader_IsEmptyElement(reader))
+    {
+        while (parse_effect_get_next_xml_node(reader, XmlNodeType_None, L"Input", &depth) == S_OK)
+        {
+            if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+            if (node_type == XmlNodeType_EndElement) continue;
+            if (node_type != XmlNodeType_Element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+            if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name))) return hr;
+
+            swprintf(buffW, ARRAY_SIZE(buffW), L"%lu", input_count);
+            d2d_effect_subproperties_add(subproperties, buffW, input_count, D2D1_PROPERTY_TYPE_STRING, name);
+            input_count++;
+
+            free(name);
+        }
+        *(UINT32 *)(effect->properties.data.ptr + inputs->data.offset) = input_count;
+
+        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+        if (node_type != XmlNodeType_EndElement) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+    }
+
+    if (min_inputs)
+        d2d_effect_property_get_uint32_value(&effect->properties, min_inputs, &min_inputs_value);
+    if (max_inputs)
+        d2d_effect_property_get_uint32_value(&effect->properties, max_inputs, &max_inputs_value);
+
+    /* Validate the range */
+    if (min_inputs && max_inputs)
+    {
+        if (min_inputs_value > max_inputs_value)
+        {
+            WARN("Invalid input count range %u - %u.\n", min_inputs_value, max_inputs_value);
+            return E_INVALIDARG;
+        }
+    }
+
+    /* Validate actual input count with specified range. */
+    if (min_inputs && min_inputs_value > input_count)
+    {
+        WARN("Too few inputs were declared, expected at least %u.\n", min_inputs_value);
+        return E_INVALIDARG;
+    }
+
+    if (max_inputs && max_inputs_value < input_count)
+    {
+        WARN("Too many inputs were declared, expected at most %u.\n", max_inputs_value);
+        return E_INVALIDARG;
+    }
+
+    /* Apply default value to a missing property. */
+    if (min_inputs != max_inputs)
+    {
+        swprintf(buffW, ARRAY_SIZE(buffW), L"%lu", min_inputs ? min_inputs_value : max_inputs_value);
+        if (min_inputs)
+            hr = d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
+        else
+            hr = d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
+    }
+
+    return hr;
 }
 
 static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registration *effect)

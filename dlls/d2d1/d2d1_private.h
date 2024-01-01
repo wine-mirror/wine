@@ -707,6 +707,8 @@ struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory 
         const GUID *effect_id);
 void d2d_factory_register_effect(struct d2d_factory *factory,
         struct d2d_effect_registration *effect);
+HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
+        const struct d2d_effect_property *prop, UINT32 *value);
 
 struct d2d_transform_graph
 {
