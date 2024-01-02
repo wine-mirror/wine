@@ -1852,7 +1852,7 @@ static void test_OpenProcess(void)
             ok(info.Type == MEM_PRIVATE, "%lx != MEM_PRIVATE\n", info.Type);
         }
         else /* before win8 */
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %ld\n", GetLastError());
+            ok(broken(GetLastError() == ERROR_ACCESS_DENIED), "wrong error %ld\n", GetLastError());
 
         SetLastError(0xdeadbeef);
         ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),

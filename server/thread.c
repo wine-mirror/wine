@@ -1734,7 +1734,7 @@ DECL_HANDLER(queue_apc)
         process = get_process_from_handle( req->handle, PROCESS_VM_OPERATION );
         break;
     case APC_VIRTUAL_QUERY:
-        process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION );
+        process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION );
         break;
     case APC_MAP_VIEW:
     case APC_MAP_VIEW_EX:
