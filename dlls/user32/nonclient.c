@@ -159,12 +159,16 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             if (hmodule)
             {
                 BOOL (WINAPI *aboutproc)(HWND, LPCSTR, LPCSTR, HICON);
-                extern const char * CDECL wine_get_version(void);
+                const char * (CDECL *p_wine_get_version)(void);
                 char app[256];
 
-                sprintf( app, "Wine %s", wine_get_version() );
+                p_wine_get_version = (void *)GetProcAddress( GetModuleHandleW(L"ntdll.dll"), "wine_get_version" );
                 aboutproc = (void *)GetProcAddress( hmodule, "ShellAboutA" );
-                if (aboutproc) aboutproc( hwnd, app, NULL, 0 );
+                if (p_wine_get_version && aboutproc)
+                {
+                    snprintf( app, ARRAY_SIZE(app), "Wine %s", p_wine_get_version() );
+                    aboutproc( hwnd, app, NULL, 0 );
+                }
                 FreeLibrary( hmodule );
             }
         }
