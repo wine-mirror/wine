@@ -72,15 +72,6 @@ En donnant à
 .B WINEPREFIX
 une valeur spécifique pour différents processus Wine, il est possible d'exécuter plusieurs
 sessions de Wine totalement indépendantes.
-.TP
-.B WINESERVER
-Spécifie le chemin et le nom de l'exécutable
-.B wineserver
-qui sera lancé automatiquement par \fBwine\fR.
-Si cette variable n'est pas définie, Wine essaiera de charger
-.I @bindir@/wineserver
-ou, à défaut, un fichier nommé
-\fIwineserver\fR dans le chemin système ou quelques autres emplacements potentiels.
 .SH FICHIERS
 .TP
 .B ~/.wine

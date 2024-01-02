@@ -72,15 +72,6 @@ By setting
 .B WINEPREFIX
 to different values for different Wine processes, it is possible to
 run a number of truly independent Wine sessions.
-.TP
-.B WINESERVER
-Specifies the path and name of the
-.B wineserver
-binary that will be launched automatically by \fBwine\fR. If not set,
-\fBwine\fR will try to load
-.IR @bindir@/wineserver ,
-and if this doesn't exist it will then look for a file named
-\fIwineserver\fR in the path and in a few other likely locations.
 .SH FILES
 .TP
 .B ~/.wine

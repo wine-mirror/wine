@@ -70,16 +70,6 @@ Durch Setzen von unterschiedlichen Pfaden als
 .I WINEPREFIX
 für verschiedene Wine-Prozesse ist es möglich, eine beliebige Zahl komplett
 unabhängiger Sitzungen von Wine zu betreiben.
-.TP
-.I WINESERVER
-Gibt den Pfad und Namen der
-.B wineserver
--Binärdatei an, die automatisch von \fBwine\fR gestartet wird. Ist diese
-Variable nicht gesetzt, wird \fBwine\fR versuchen,
-.IR @bindir@/wineserver
-zu laden. Existiert dieser Pfad nicht, wird nach einer Datei namens
-\fIwineserver\fR an den in der Variable PATH spezifizierten und anderen
-wahrscheinlichen Orten gesucht.
 .SH DATEIEN
 .TP
 .B ~/.wine
