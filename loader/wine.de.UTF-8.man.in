@@ -61,7 +61,7 @@ die Windows-Applikation weiter. Um eine für Ihre Applikation nötige
 Variable zugänglich zu machen, folgen Sie der Anleitung Ihrer Shell zu
 Umgebungsvariablen.
 .TP
-.I WINEPREFIX
+.B WINEPREFIX
 Wenn gesetzt, wird dieser Ordner als Speicherort für die
 Konfigurationsdateien von
 .B wine
@@ -83,25 +83,21 @@ beim Starten verschiedener
 .B wine
 -Prozesse zu starten.
 .TP
-.I WINESERVER
+.B WINESERVER
 Gibt den Ort der
 .B wineserver
--Anwendung an. Wenn diese Variable nicht gesetzt ist, wird versucht,
-.B @bindir@/wineserver
-zu laden. Wenn auch dies nicht funktioniert, sucht
+-Anwendung an. Wenn diese Variable nicht gesetzt ist, sucht
 .B wine
 in $PATH und anderen Orten nach wineserver.
 .TP
-.I WINELOADER
+.B WINELOADER
 Gibt den Ort der
 .B wine
 -Anwendung an, die genutzt wird, um Windows-Programme zu laden. Wenn
- diese Variable nicht gesetzt ist, wird versucht,
-.B @bindir@/wine
-zu laden. Wenn auch dies nicht funktioniert, wird in $PATH und anderen
-Orten nach wine gesucht.
+diese Variable nicht gesetzt ist, wird in $PATH und anderen Orten
+nach wine gesucht.
 .TP
-.I WINEDEBUG
+.B WINEDEBUG
 Wählt die Stufe der Debug-Meldungen aus. Die Variable hat das Format
 .RI [ Klasse ][+/-] Kanal [,[ Klasse2 ][+/-] Kanal2 ].
 .RS +7
@@ -151,14 +147,12 @@ Für mehr Informationen zu den Debug-Meldungen siehe den Abschnitt
 im Wine-Benutzerhandbuch.
 .RE
 .TP
-.I WINEDLLPATH
+.B WINEDLLPATH
 Gibt den Pfad/die Pfade an, in denen wine nach eigenen DLLs und
 Winelib-Anwendungen sucht. Die Einträge der Liste werden mit einem ":"
-getrennt. Zusätzlich wird noch in
-.B @dlldir@
-gesucht.
+getrennt.
 .TP
-.I WINEDLLOVERRIDES
+.B WINEDLLOVERRIDES
 Definiert die Bibliotheksüberschreibung und Ladereihenfolge der DLLs,
 die beim Laden jeder DLL berücksichtigt wird. Derzeit gibt es zwei Typen von
 DLLs, die in den Speicher eines Prozesses geladen werden können:
@@ -210,47 +204,43 @@ immer die mitgebrachte Version verwendet werden; bei comctl32 immer
 die native.
 .RE
 .TP
-.I DISPLAY
+.B DISPLAY
 Gibt das zu nutzende X11-Display an.
 .TP
 OSS sound driver configuration variables
 .TP
-.I AUDIODEV
+.B AUDIODEV
 Gerät für Audio-Ein-/Ausgabe festlegen. Standard:
 .BR /dev/dsp .
 .TP
-.I MIXERDEV
+.B MIXERDEV
 Audiomixer-Gerät festlegen. Standard:
 .BR /dev/mixer .
 .TP
-.I MIDIDEV
+.B MIDIDEV
 MIDI-Sequencergerät festlegen. Standard:
 .BR /dev/sequencer .
 .SH DATEIEN
 .TP
-.I @bindir@/wine
+.I wine
 Der
 .B wine
 -Programmstarter
 .TP
-.I @bindir@/wineconsole
+.I wineconsole
 Der
 .B wine
 -Programmstarter für Konsolenapplikationen (CLI)
 .TP
-.I @bindir@/wineserver
+.I wineserver
 Der
 .B wine
 -Server
 .TP
-.I @bindir@/winedbg
+.I winedbg
 Der
 .B wine
 -Debugger
-.TP
-.I @dlldir@
-Der Ordner mit den gemeinsamen DLLs von
-.B wine
 .TP
 .I $WINEPREFIX/dosdevices
 Dieser Ordner enthält die DOS-Gerätezuweisungen. Jede Datei in diesem

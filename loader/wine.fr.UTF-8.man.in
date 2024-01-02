@@ -85,19 +85,16 @@ totalement indépendantes.
 .B WINESERVER
 Spécifie le chemin et le nom de l'exécutable
 .BR wineserver .
-Si cette variable n'est pas définie, Wine essaiera de charger
-.I @bindir@/wineserver
-ou, à défaut, un fichier nommé
-« wineserver » dans le chemin système ou quelques autres emplacements potentiels.
+Si cette variable n'est pas définie, Wine essaiera de charger un
+fichier nommé « wineserver » dans le chemin système ou quelques autres
+emplacements potentiels.
 .TP
 .B WINELOADER
 Spécifie le chemin et le nom de l'exécutable
 .B wine
-à utiliser pour exécuter de nouveaux processus Windows. Si pas définie, Wine
-essaiera de charger
-.I @bindir@/wine
-ou, à défaut, un fichier nommé
-« wine » dans le chemin système ou quelques autres emplacements potentiels.
+à utiliser pour exécuter de nouveaux processus Windows. A défaut, Wine
+essaiera de charger un fichier nommé « wine » dans le chemin système
+ou quelques autres emplacements potentiels.
 .TP
 .B WINEDEBUG
 Active ou désactive les messages de débogage. La syntaxe est :
@@ -152,8 +149,7 @@ Spécifie le(s) chemin(s) où chercher les DLL intégrées et les applications
 Winelib. C'est une liste de répertoires séparés par des « : ». En plus des
 répertoires spécifiés dans
 .BR WINEDLLPATH ,
-Wine utilisera aussi le répertoire
-.IR @dlldir@ .
+Wine utilisera aussi le répertoire d'installation.
 .TP
 .B WINEDLLOVERRIDES
 Définit le type de remplacement et l'ordre de chargement des DLL utilisées lors du
@@ -233,20 +229,17 @@ Définit le périphérique pour le séquenceur MIDI, par défaut
 .IR /dev/sequencer .
 .SH FICHIERS
 .TP
-.I @bindir@/wine
+.I wine
 Le chargeur de programme de Wine.
 .TP
-.I @bindir@/wineconsole
+.I wineconsole
 Le chargeur de programme de Wine pour les applications en mode console (CUI).
 .TP
-.I @bindir@/wineserver
+.I wineserver
 Le serveur Wine.
 .TP
-.I @bindir@/winedbg
+.I winedbg
 Le débogueur de Wine.
-.TP
-.I @dlldir@
-Répertoire contenant les bibliothèques partagées de Wine.
 .TP
 .I $WINEPREFIX/dosdevices
 Répertoire contenant le mapping des périphériques DOS. Chaque fichier dans ce

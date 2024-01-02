@@ -86,19 +86,15 @@ processes.
 .B WINESERVER
 Specifies the path and name of the
 .B wineserver
-binary. If not set, Wine will try to load
-.IR @bindir@/wineserver ,
-and if this doesn't exist it will then look for a file named
-"wineserver" in the path and in a few other likely locations.
+binary. If not set, Wine will look for a file named "wineserver" in
+the path and in a few other likely locations.
 .TP
 .B WINELOADER
 Specifies the path and name of the
 .B wine
 binary to use to launch new Windows processes. If not set, Wine will
-try to load
-.IR @bindir@/wine ,
-and if this doesn't exist it will then look for a file named "wine" in
-the path and in a few other likely locations.
+look for a file named "wine" in the path and in a few other likely
+locations.
 .TP
 .B WINEDEBUG
 Turns debugging messages on or off. The syntax of the variable is
@@ -155,8 +151,7 @@ Specifies the path(s) in which to search for builtin dlls and Winelib
 applications. This is a list of directories separated by ":". In
 addition to any directory specified in
 .BR WINEDLLPATH ,
-Wine will also look in
-.IR @dlldir@ .
+Wine will also look in the installation directory.
 .TP
 .B WINEDLLOVERRIDES
 Defines the override type and load order of dlls used in the loading
@@ -258,20 +253,17 @@ Set the MIDI (sequencer) device. Default
 .IR /dev/sequencer .
 .SH FILES
 .TP
-.I @bindir@/wine
+.I wine
 The Wine program loader.
 .TP
-.I @bindir@/wineconsole
+.I wineconsole
 The Wine program loader for CUI (console) applications.
 .TP
-.I @bindir@/wineserver
+.I wineserver
 The Wine server
 .TP
-.I @bindir@/winedbg
+.I winedbg
 The Wine debugger
-.TP
-.I @dlldir@
-Directory containing Wine shared libraries
 .TP
 .I $WINEPREFIX/dosdevices
 Directory containing the DOS device mappings. Each file in that
