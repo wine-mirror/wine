@@ -421,6 +421,29 @@ static void test_child_env(char** argv)
     free( env );
 }
 
+static void test_case_insensitive(void)
+{
+    const char *uppercase_env = getenv("APPDATA");
+    const char *lowercase_env = getenv("appdata");
+    const wchar_t *uppercase_wenv = _wgetenv(L"APPDATA");
+    const wchar_t *lowercase_wenv = _wgetenv(L"appdata");
+
+    ok( uppercase_env == lowercase_env, "getenv() must be case insensitive, %p should be %p\n",
+        lowercase_env, uppercase_env );
+    ok( uppercase_wenv == lowercase_wenv, "_wgetenv() must be case insensitive, %p should be %p\n",
+        lowercase_wenv, uppercase_wenv );
+
+    ok( !_putenv("cAt=bar"), "Failed to set CAT=bar\n" );
+    ok( !_putenv("CAT=BAR"), "Failed to set CAT=BAR\n" );
+    ok( !strcmp(getenv("cAt"), "BAR"), "_putenv() must be case insensitive\n" );
+
+    ok( !_wputenv(L"cAt=bar"), "Failed to set CAT=bar\n" );
+    ok( !_wputenv(L"CAT=BAR"), "Failed to set CAT=BAR\n" );
+    ok( !wcscmp(_wgetenv(L"cAt"), L"BAR"), "_wputenv() must be case insensitive\n" );
+
+    _putenv("cat=");
+}
+
 START_TEST(environ)
 {
     char **argv;
@@ -443,4 +466,5 @@ START_TEST(environ)
     test_environment_manipulation();
     test_child_env(argv);
     test_system();
+    test_case_insensitive();
 }
