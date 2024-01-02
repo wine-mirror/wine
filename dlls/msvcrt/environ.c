@@ -125,7 +125,7 @@ static int env_get_index(const char *name)
     len = strlen(name);
     for (i = 0; MSVCRT__environ[i]; i++)
     {
-        if (!strncmp(name, MSVCRT__environ[i], len) && MSVCRT__environ[i][len] == '=')
+        if (!strnicmp(name, MSVCRT__environ[i], len) && MSVCRT__environ[i][len] == '=')
             return i;
     }
     return i;
@@ -138,7 +138,7 @@ static int wenv_get_index(const wchar_t *name)
     len = wcslen(name);
     for (i = 0; MSVCRT__wenviron[i]; i++)
     {
-        if (!wcsncmp(name, MSVCRT__wenviron[i], len) && MSVCRT__wenviron[i][len] == '=')
+        if (!wcsnicmp(name, MSVCRT__wenviron[i], len) && MSVCRT__wenviron[i][len] == '=')
             return i;
     }
     return i;
