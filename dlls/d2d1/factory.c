@@ -69,7 +69,7 @@ struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory 
     struct d2d_factory *factory = unsafe_impl_from_ID2D1Factory(iface);
     struct d2d_effect_registration *reg;
 
-    d2d_effects_init_builtins(factory);
+    d2d_factory_init_builtin_effects(factory);
 
     LIST_FOR_EACH_ENTRY(reg, &factory->effects, struct d2d_effect_registration, entry)
     {
@@ -880,7 +880,7 @@ static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registr
         return E_INVALIDARG;
     }
 
-    /* Apply default value to a missing property. */
+    /* Apply default value to a missing property. If both properties are missing, add them. */
     if (min_inputs != max_inputs)
     {
         swprintf(buffW, ARRAY_SIZE(buffW), L"%lu", min_inputs ? min_inputs_value : max_inputs_value);
@@ -888,6 +888,13 @@ static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registr
             hr = d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
         else
             hr = d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
+    }
+    else if (!min_inputs)
+    {
+        swprintf(buffW, ARRAY_SIZE(buffW), L"%lu", input_count);
+        hr = d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
+        if (SUCCEEDED(hr))
+            hr = d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32, buffW);
     }
 
     return hr;
@@ -933,20 +940,14 @@ static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registrati
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Factory3 *iface,
+static HRESULT d2d_factory_register_effect_from_stream(struct d2d_factory *factory,
         REFCLSID effect_id, IStream *property_xml, const D2D1_PROPERTY_BINDING *bindings,
-        UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
+        UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory, BOOL builtin)
 {
-    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
     struct d2d_effect_registration *effect;
     IXmlReader *reader;
     unsigned int i;
     HRESULT hr;
-
-    TRACE("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p.\n",
-            iface, debugstr_guid(effect_id), property_xml, bindings, binding_count, effect_factory);
-
-    d2d_factory_init_builtin_effects(factory);
 
     LIST_FOR_EACH_ENTRY_REV(effect, &factory->effects, struct d2d_effect_registration, entry)
     {
@@ -972,6 +973,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Facto
         IXmlReader_Release(reader);
         return E_OUTOFMEMORY;
     }
+    effect->builtin = builtin;
 
     hr = parse_effect_xml(reader, effect);
     IXmlReader_Release(reader);
@@ -1013,27 +1015,34 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Facto
     effect->registration_count = 1;
     effect->id = *effect_id;
     effect->factory = effect_factory;
-    d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
-            D2D1_PROPERTY_TYPE_UINT32, L"1");
-    d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
-            D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
-    effect->default_input_count = 1;
     d2d_factory_register_effect(factory, effect);
 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Factory3 *iface,
-        REFCLSID effect_id, const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings,
+static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Factory3 *iface,
+        REFCLSID effect_id, IStream *property_xml, const D2D1_PROPERTY_BINDING *bindings,
         UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+
+    TRACE("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p.\n",
+            iface, debugstr_guid(effect_id), property_xml, bindings, binding_count, effect_factory);
+
+    d2d_factory_init_builtin_effects(factory);
+
+    return d2d_factory_register_effect_from_stream(factory, effect_id, property_xml, bindings,
+            binding_count, effect_factory, FALSE);
+}
+
+static HRESULT d2d_factory_register_effect_from_string(struct d2d_factory *factory,
+        REFCLSID effect_id, const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings,
+        UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory, BOOL builtin)
 {
     static const LARGE_INTEGER zero;
     IStream *stream;
     ULONG size;
     HRESULT hr;
-
-    TRACE("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p.\n",
-          iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
 
     if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &stream)))
         return hr;
@@ -1043,11 +1052,34 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Facto
         hr = IStream_Seek(stream, zero, SEEK_SET, NULL);
 
     if (SUCCEEDED(hr))
-        hr = ID2D1Factory3_RegisterEffectFromStream(iface, effect_id, stream, bindings,
-                binding_count, effect_factory);
+        hr = d2d_factory_register_effect_from_stream(factory, effect_id, stream, bindings,
+                binding_count, effect_factory, builtin);
 
     IStream_Release(stream);
     return hr;
+}
+
+HRESULT d2d_factory_register_builtin_effect(struct d2d_factory *factory, REFCLSID effect_id,
+        const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings, UINT32 binding_count,
+        PD2D1_EFFECT_FACTORY effect_factory)
+{
+    return d2d_factory_register_effect_from_string(factory, effect_id, property_xml, bindings,
+            binding_count, effect_factory, TRUE);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Factory3 *iface,
+        REFCLSID effect_id, const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings,
+        UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+
+    TRACE("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p.\n",
+          iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
+
+    d2d_factory_init_builtin_effects(factory);
+
+    return d2d_factory_register_effect_from_string(factory, effect_id, property_xml, bindings,
+            binding_count, effect_factory, FALSE);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory3 *iface, REFCLSID effect_id)

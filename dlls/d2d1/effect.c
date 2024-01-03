@@ -211,48 +211,105 @@ static HRESULT STDMETHODCALLTYPE builtin_factory_stub(IUnknown **effect_impl)
     return S_OK;
 }
 
-struct d2d_effect_info
-{
-    const CLSID *clsid;
-    UINT32 default_input_count;
-    UINT32 min_inputs;
-    UINT32 max_inputs;
-};
+static const WCHAR * const _2d_affine_transform_description =
+L"<?xml version='1.0'?>                                                      \
+  <Effect>                                                                   \
+    <Property name='DisplayName' type='string' value='2D Affine Transform'/> \
+    <Property name='Author'      type='string' value='The Wine Project'/>    \
+    <Property name='Category'    type='string' value='Stub'/>                \
+    <Property name='Description' type='string' value='2D Affine Transform'/> \
+    <Inputs>                                                                 \
+      <Input name='Source'/>                                                 \
+    </Inputs>                                                                \
+  </Effect>";
 
-static const struct d2d_effect_info builtin_effects[] =
-{
-    {&CLSID_D2D12DAffineTransform,      1, 1, 1},
-    {&CLSID_D2D13DPerspectiveTransform, 1, 1, 1},
-    {&CLSID_D2D1Composite,              2, 1, 0xffffffff},
-    {&CLSID_D2D1Crop,                   1, 1, 1},
-    {&CLSID_D2D1Shadow,                 1, 1, 1},
-    {&CLSID_D2D1Grayscale,              1, 1, 1},
-};
+static const WCHAR * const _3d_perspective_transform_description =
+L"<?xml version='1.0'?>                                                           \
+  <Effect>                                                                        \
+    <Property name='DisplayName' type='string' value='3D Perspective Transform'/> \
+    <Property name='Author'      type='string' value='The Wine Project'/>         \
+    <Property name='Category'    type='string' value='Stub'/>                     \
+    <Property name='Description' type='string' value='3D Perspective Transform'/> \
+    <Inputs>                                                                      \
+      <Input name='Source'/>                                                      \
+    </Inputs>                                                                     \
+  </Effect>";
+
+static const WCHAR * const composite_description =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Composite'/>        \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Composite'/>        \
+    <Inputs minimum='1' maximum='0xffffffff' >                            \
+      <Input name='Source1'/>                                             \
+      <Input name='Source2'/>                                             \
+    </Inputs>                                                             \
+  </Effect>";
+
+static const WCHAR * const crop_description =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Crop'/>             \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Crop'/>             \
+    <Inputs >                                                             \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+  </Effect>";
+
+static const WCHAR * const shadow_description =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Shadow'/>           \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Shadow'/>           \
+    <Inputs >                                                             \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+  </Effect>";
+
+static const WCHAR * const grayscale_description =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Grayscale'/>        \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Grayscale'/>        \
+    <Inputs >                                                             \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+  </Effect>";
 
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
-    struct d2d_effect_registration *effect;
+    static const struct builtin_description
+    {
+        const CLSID *clsid;
+        const WCHAR *description;
+    }
+    builtin_effects[] =
+    {
+        { &CLSID_D2D12DAffineTransform, _2d_affine_transform_description },
+        { &CLSID_D2D13DPerspectiveTransform, _3d_perspective_transform_description},
+        { &CLSID_D2D1Composite, composite_description },
+        { &CLSID_D2D1Crop, crop_description },
+        { &CLSID_D2D1Shadow, shadow_description },
+        { &CLSID_D2D1Grayscale, grayscale_description },
+    };
     unsigned int i;
+    HRESULT hr;
 
     for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
     {
-        const struct d2d_effect_info *info = &builtin_effects[i];
-        WCHAR max_inputs[32];
-
-        if (!(effect = calloc(1, sizeof(*effect))))
-            return;
-
-        swprintf(max_inputs, ARRAY_SIZE(max_inputs), L"%lu", info->max_inputs);
-        d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, L"1");
-        d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
-                D2D1_PROPERTY_TYPE_UINT32, max_inputs);
-
-        memcpy(&effect->id, info->clsid, sizeof(*info->clsid));
-        effect->default_input_count = info->default_input_count;
-        effect->factory = builtin_factory_stub;
-        effect->builtin = TRUE;
-        d2d_factory_register_effect(factory, effect);
+        if (FAILED(hr = d2d_factory_register_builtin_effect(factory, builtin_effects[i].clsid, builtin_effects[i].description,
+                NULL, 0, builtin_factory_stub)))
+        {
+            WARN("Failed to register the effect %s, hr %#lx.\n", wine_dbgstr_guid(builtin_effects[i].clsid), hr);
+        }
     }
 }
 
@@ -387,6 +444,9 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
             {
                 case D2D1_PROPERTY_TYPE_UINT32:
                 case D2D1_PROPERTY_TYPE_INT32:
+                    _uint32 = wcstoul(value, NULL, 0);
+                    src = &_uint32;
+                    break;
                 case D2D1_PROPERTY_TYPE_ENUM:
                     _uint32 = wcstoul(value, NULL, 10);
                     src = &_uint32;
@@ -1127,6 +1187,12 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_GetValueByName(ID2D1Effect *iface, c
             value, value_size);
 }
 
+static HRESULT d2d_effect_get_value(struct d2d_effect *effect, UINT32 index, D2D1_PROPERTY_TYPE type,
+        BYTE *value, UINT32 value_size)
+{
+    return ID2D1Properties_GetValue(&effect->properties.ID2D1Properties_iface, index, type, value, value_size);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_effect_GetValue(ID2D1Effect *iface, UINT32 index, D2D1_PROPERTY_TYPE type,
         BYTE *value, UINT32 value_size)
 {
@@ -1134,8 +1200,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_GetValue(ID2D1Effect *iface, UINT32 
 
     TRACE("iface %p, index %#x, type %u, value %p, value_size %u.\n", iface, index, type, value, value_size);
 
-    return ID2D1Properties_GetValue(&effect->properties.ID2D1Properties_iface, index, type,
-            value, value_size);
+    return d2d_effect_get_value(effect, index, type, value, value_size);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_GetValueSize(ID2D1Effect *iface, UINT32 index)
@@ -1172,20 +1237,10 @@ static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 ind
     effect->inputs[index] = input;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)
+static HRESULT d2d_effect_set_input_count(struct d2d_effect *effect, UINT32 count)
 {
-    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
-    unsigned int i, min_inputs, max_inputs;
+    unsigned int i;
 
-    TRACE("iface %p, count %u.\n", iface, count);
-
-    d2d_effect_GetValue(iface, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
-            (BYTE *)&min_inputs, sizeof(min_inputs));
-    d2d_effect_GetValue(iface, D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
-            (BYTE *)&max_inputs, sizeof(max_inputs));
-
-    if (count < min_inputs || count > max_inputs)
-        return E_INVALIDARG;
     if (count == effect->input_count)
         return S_OK;
 
@@ -1211,6 +1266,24 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UI
     effect->input_count = count;
 
     return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)
+{
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+    unsigned int min_inputs, max_inputs;
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    d2d_effect_get_value(effect, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&min_inputs, sizeof(min_inputs));
+    d2d_effect_get_value(effect, D2D1_PROPERTY_MAX_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
+            (BYTE *)&max_inputs, sizeof(max_inputs));
+
+    if (count < min_inputs || count > max_inputs)
+        return E_INVALIDARG;
+
+    return d2d_effect_set_input_count(effect, count);
 }
 
 static void STDMETHODCALLTYPE d2d_effect_GetInput(ID2D1Effect *iface, UINT32 index, ID2D1Image **input)
@@ -1539,6 +1612,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     const struct d2d_effect_registration *reg;
     struct d2d_transform_graph *graph;
     struct d2d_effect *object;
+    UINT32 input_count;
     WCHAR clsidW[39];
     HRESULT hr;
 
@@ -1581,7 +1655,9 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     d2d_effect_properties_add(&object->properties, L"Precision", D2D1_PROPERTY_PRECISION, D2D1_PROPERTY_TYPE_ENUM, L"0");
     d2d_effect_init_properties_vtbls(object);
 
-    d2d_effect_SetInputCount(&object->ID2D1Effect_iface, reg->default_input_count);
+    /* Sync instance input count with default input count from the description. */
+    d2d_effect_get_value(object, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY, (BYTE *)&input_count, sizeof(input_count));
+    d2d_effect_set_input_count(object, input_count);
 
     if (FAILED(hr = reg->factory((IUnknown **)&object->impl)))
     {

@@ -674,8 +674,6 @@ struct d2d_effect_registration
     BOOL builtin;
     CLSID id;
 
-    UINT32 input_count;
-    UINT32 default_input_count;
     struct d2d_effect_properties properties;
 };
 
@@ -740,6 +738,9 @@ HRESULT d2d_effect_subproperties_add(struct d2d_effect_properties *props, const 
 struct d2d_effect_property * d2d_effect_properties_get_property_by_name(
         const struct d2d_effect_properties *properties, const WCHAR *name);
 void d2d_effect_properties_cleanup(struct d2d_effect_properties *props);
+HRESULT d2d_factory_register_builtin_effect(struct d2d_factory *factory, REFCLSID effect_id,
+        const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings, UINT32 binding_count,
+        PD2D1_EFFECT_FACTORY effect_factory);
 
 enum d2d_command_list_state
 {
