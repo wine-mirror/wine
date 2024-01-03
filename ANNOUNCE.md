@@ -3,25 +3,21 @@ The Wine development release 9.0-rc3 is now available.
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
-The source is available at:
+The source is available at <https://dl.winehq.org/wine/source/9.0/wine-9.0-rc3.tar.xz>
 
-  https://dl.winehq.org/wine/source/9.0/wine-9.0-rc3.tar.xz
+Binary packages for various distributions will be available
+from <https://www.winehq.org/download>
 
-Binary packages for various distributions will be available from:
+You will find documentation on <https://www.winehq.org/documentation>
 
-  https://www.winehq.org/download
+Wine is available thanks to the work of many people.
+See the file [AUTHORS][1] for the complete list.
 
-You will find documentation on https://www.winehq.org/documentation
-
-You can also get the current source directly from the git
-repository. Check https://www.winehq.org/git for details.
-
-Wine is available thanks to the work of many people. See the file
-AUTHORS in the distribution for the complete list.
+[1]: https://gitlab.winehq.org/wine/wine/-/raw/wine-9.0-rc3/AUTHORS
 
 ----------------------------------------------------------------
 
-Bugs fixed in 9.0-rc3 (total 35):
+### Bugs fixed in 9.0-rc3 (total 35):
 
  - #51314  vulkan-1:vulkan crashes on Windows with recent Radeon drivers
  - #51478  dinput:device8 breaks user32:input's test_keyboard_layout_name() in some locales ()
@@ -59,10 +55,8 @@ Bugs fixed in 9.0-rc3 (total 35):
  - #56048  winedbg --auto: shows incomplete modules list
  - #56053  Regression on fallout 3 in the new wow64 mode
 
-----------------------------------------------------------------
-
-Changes since 9.0-rc2:
-
+### Changes since 9.0-rc2:
+```
 Akihiro Sagawa (1):
       po: Update Japanese translation.
 
@@ -140,3 +134,4 @@ Zebediah Figura (1):
 Zhiyi Zhang (2):
       user32/tests: Add more display DC tests.
       win32u: Create a real bitmap object for display DCs.
+```

@@ -130,8 +130,8 @@ my %authors = get_authors();
 
 # update the ANNOUNCE file
 
-open ANNOUNCE, "<ANNOUNCE" or die "cannot open ANNOUNCE";
-open NEW, ">ANNOUNCE.new" or die "cannot create ANNOUNCE.new";
+open ANNOUNCE, "<ANNOUNCE.md" or die "cannot open ANNOUNCE.md";
+open NEW, ">ANNOUNCE.md.new" or die "cannot create ANNOUNCE.md.new";
 
 # replace version number in first line
 $_ = <ANNOUNCE>;
@@ -141,31 +141,34 @@ print NEW $_;
 while (<ANNOUNCE>)
 {
     last if /^------------------/;
-    s!(https?://.*/wine/source/).*\.tar!$1$reldir/wine-$new.tar!;
+    s!(https://.*/wine/source/).*\.tar!$1$reldir/wine-$new.tar!;
+    s/wine-(([0-9]+)\.)+[0-9]+(-rc[0-9]+)?/wine-$new/g;
     print NEW $_;
 }
+close ANNOUNCE;
 
 print NEW "----------------------------------------------------------------\n\n";
-printf NEW "Bugs fixed in %s (total %u):\n\n", $new, scalar( keys %bugs );
+printf NEW "### Bugs fixed in %s (total %u):\n\n", $new, scalar( keys %bugs );
 foreach my $id (sort {$a <=> $b} keys %bugs)
 {
     printf NEW " - #%-6d %s\n", $id, unescape( $bugs{$id} );
 }
 
-print NEW "\n----------------------------------------------------------------\n\n";
-print NEW "Changes since $old:\n";
+print NEW "\n### Changes since $old:\n```\n";
 
+my @shortlog = ();
 open LOG, "-|" or exec "git", "shortlog", "wine-$old..HEAD" or die "cannot run git shortlog";
 while (<LOG>)
 {
     next if /^$/;
-    if (/^(\S.*)\s\(\d+\):$/) { $authors{$1} = 1; print NEW "\n"; }
-    print NEW $_;
+    if (/^(\S.*)\s\(\d+\):$/) { $authors{$1} = 1; push @shortlog, "\n" if @shortlog; }
+    push @shortlog, $_;
 }
 close LOG;
-close ANNOUNCE;
+print NEW join("",@shortlog);
+print NEW "```\n";
 close NEW;
-update_file( "ANNOUNCE" );
+update_file( "ANNOUNCE.md" );
 
 # update the AUTHORS file
 
