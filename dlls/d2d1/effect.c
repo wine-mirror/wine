@@ -189,7 +189,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_impl_PrepareForRender(ID2D1EffectImp
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_impl_SetGraph(ID2D1EffectImpl *iface, ID2D1TransformGraph *graph)
 {
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const ID2D1EffectImplVtbl d2d_effect_impl_vtbl =
@@ -1045,7 +1045,8 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     }
     free(effect->inputs);
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
-    ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
+    if (effect->graph)
+        ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
     d2d_effect_properties_cleanup(&effect->properties);
     if (effect->impl)
         ID2D1EffectImpl_Release(effect->impl);
@@ -1239,6 +1240,8 @@ static void STDMETHODCALLTYPE d2d_effect_SetInput(ID2D1Effect *iface, UINT32 ind
 
 static HRESULT d2d_effect_set_input_count(struct d2d_effect *effect, UINT32 count)
 {
+    bool initialized = effect->inputs != NULL;
+    HRESULT hr = S_OK;
     unsigned int i;
 
     if (count == effect->input_count)
@@ -1251,21 +1254,34 @@ static HRESULT d2d_effect_set_input_count(struct d2d_effect *effect, UINT32 coun
             if (effect->inputs[i])
                 ID2D1Image_Release(effect->inputs[i]);
         }
-        effect->input_count = count;
-        return S_OK;
     }
-
-    if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
-            count, sizeof(*effect->inputs)))
+    else
     {
-        ERR("Failed to resize inputs array.\n");
-        return E_OUTOFMEMORY;
-    }
+        if (!d2d_array_reserve((void **)&effect->inputs, &effect->inputs_size,
+                count, sizeof(*effect->inputs)))
+        {
+            ERR("Failed to resize inputs array.\n");
+            return E_OUTOFMEMORY;
+        }
 
-    memset(&effect->inputs[effect->input_count], 0, sizeof(*effect->inputs) * (count - effect->input_count));
+        memset(&effect->inputs[effect->input_count], 0, sizeof(*effect->inputs) * (count - effect->input_count));
+    }
     effect->input_count = count;
 
-    return S_OK;
+    if (initialized)
+    {
+        ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
+        effect->graph = NULL;
+
+        if (!(effect->graph = calloc(1, sizeof(*effect->graph))))
+            return E_OUTOFMEMORY;
+        d2d_transform_graph_init(effect->graph);
+
+        if (FAILED(hr = ID2D1EffectImpl_SetGraph(effect->impl, &effect->graph->ID2D1TransformGraph_iface)))
+            WARN("Failed to set a new transform graph, hr %#lx.\n", hr);
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_SetInputCount(ID2D1Effect *iface, UINT32 count)

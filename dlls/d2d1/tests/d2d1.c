@@ -11166,7 +11166,12 @@ static HRESULT STDMETHODCALLTYPE effect_impl_PrepareForRender(ID2D1EffectImpl *i
 
 static HRESULT STDMETHODCALLTYPE effect_impl_SetGraph(ID2D1EffectImpl *iface, ID2D1TransformGraph *graph)
 {
-    return E_NOTIMPL;
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+
+    ID2D1TransformGraph_Release(effect_impl->transform_graph);
+    ID2D1TransformGraph_AddRef(effect_impl->transform_graph = graph);
+
+    return S_OK;
 }
 
 static const ID2D1EffectImplVtbl effect_impl_vtbl =
@@ -11496,6 +11501,13 @@ static void test_effect_register(BOOL d3d11)
             (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(integer == 3, "Unexpected data %u.\n", integer);
+    hr = ID2D1Effect_SetInputCount(effect, 4);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY,
+            (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 3, "Unexpected data %u.\n", integer);
+
     ID2D1Effect_Release(effect);
 
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
