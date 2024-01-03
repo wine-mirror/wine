@@ -745,6 +745,14 @@ if (0) { /* crashes on native */
     ok(V_VT(&hash) == VT_I4, "got %d\n", V_VT(&hash));
     ok(V_I4(&hash) == expected, "got hash %#lx, expected %#lx\n", V_I4(&hash), expected);
 
+    V_VT(&key) = VT_EMPTY;
+    V_I4(&key) = 1234;
+    V_I4(&hash) = 5678;
+    hr = IDictionary_get_HashVal(dict, &key, &hash);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&hash) == VT_I4, "Unexpected hash type %d.\n", V_VT(&hash));
+    ok(V_I4(&hash) == 0, "Unexpected hash value %ld.\n", V_I4(&hash));
+
     IDictionary_Release(dict);
 }
 
