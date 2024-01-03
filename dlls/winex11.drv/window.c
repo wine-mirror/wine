@@ -716,8 +716,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
     {
         if (data->hwnd != NtUserGetDesktopWindow())  /* don't force position of desktop */
         {
-            size_hints->x = data->whole_rect.left;
-            size_hints->y = data->whole_rect.top;
+            POINT pt = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
+            size_hints->x = pt.x;
+            size_hints->y = pt.y;
             size_hints->flags |= PPosition;
         }
         else size_hints->win_gravity = NorthWestGravity;
