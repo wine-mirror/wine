@@ -107,7 +107,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
     if (!display || !is_virtual_desktop()) return;
 
     xev.xclient.type = ClientMessage;
-    xev.xclient.window = root_window;
+    xev.xclient.window = DefaultRootWindow(display);
     xev.xclient.message_type = x11drv_atom(_NET_WM_STATE);
     xev.xclient.serial = 0;
     xev.xclient.display = display;
