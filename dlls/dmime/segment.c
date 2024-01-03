@@ -442,7 +442,9 @@ static HRESULT WINAPI segment_Clone(IDirectMusicSegment8 *iface, MUSIC_TIME star
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
         if (FAILED(hr = IDirectMusicTrack_Clone(entry->pTrack, start, end, &track))) break;
-        if (FAILED(hr = segment_append_track(clone, track, entry->dwGroupBits, entry->flags))) break;
+        hr = segment_append_track(clone, track, entry->dwGroupBits, entry->flags);
+        IDirectMusicTrack_Release(track);
+        if (FAILED(hr)) break;
     }
 
     *segment = (IDirectMusicSegment *)&clone->IDirectMusicSegment8_iface;
@@ -822,6 +824,7 @@ static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream
             This->header.mtLength = 1;
             if (FAILED(hr = wave_track_create_from_chunk(stream, &chunk, &track))) break;
             hr = segment_append_track(This, (IDirectMusicTrack *)track, 1, 0);
+            IDirectMusicTrack8_Release(track);
             break;
         }
 
