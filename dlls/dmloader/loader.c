@@ -271,6 +271,7 @@ static struct cache_entry *find_cache_object(struct loader *This, DMUS_OBJECTDES
 
 static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDESC *pDesc, REFIID riid, void **ppv)
 {
+    static const DWORD source_flags = DMUS_OBJ_STREAM | DMUS_OBJ_FILENAME | DMUS_OBJ_URL | DMUS_OBJ_STREAM;
 	struct loader *This = impl_from_IDirectMusicLoader8(iface);
 	HRESULT result = S_OK;
 	HRESULT ret = S_OK; /* used at the end of function, to determine whether everything went OK */
@@ -426,6 +427,11 @@ static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDE
     /* add object to cache/overwrite existing info (if cache is enabled) */
     bCache = is_cache_enabled(This, &pDesc->guidClass);
     if (!bCache) TRACE(": caching disabled\n");
+    else if ((pDesc->dwValidData & source_flags) == DMUS_OBJ_STREAM)
+    {
+        FIXME("Skipping cache for DMUS_OBJ_STREAM object\n");
+        bCache = FALSE;
+    }
     else
     {
         if (!pObjectEntry)
