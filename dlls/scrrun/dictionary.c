@@ -910,6 +910,7 @@ static HRESULT WINAPI dictionary_get_HashVal(IDictionary *iface, VARIANT *key, V
     case VT_R8:
         return get_flt_hash(V_VT(key) & VT_BYREF ? *V_R8REF(key) : V_R8(key), &V_I4(hash));
     case VT_EMPTY:
+    case VT_NULL:
         V_I4(hash) = 0;
         return S_OK;
     case VT_INT:
