@@ -15507,7 +15507,7 @@ static void test_pinned_sysmem(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     color = ((unsigned short *)surface_desc.lpSurface)[0];
-    todo_wine ok(color == 0xface, "Got color %04x.\n", color);
+    ok(color == 0xface, "Got color %04x.\n", color);
 
     memset(surface_desc.lpSurface, 0x55, 32 * 16 * 2);
 
@@ -15517,7 +15517,7 @@ static void test_pinned_sysmem(void)
     hr = IDirectDrawSurface_Lock(surface2, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     color = ((unsigned short *)surface_desc.lpSurface)[0];
-    todo_wine ok(color == 0x5555, "Got color %04x.\n", color);
+    ok(color == 0x5555, "Got color %04x.\n", color);
     color = ((unsigned short *)surface_desc.lpSurface)[32 * 16];
     ok(color == 0xface, "Got color %04x.\n", color);
     hr = IDirectDrawSurface_Unlock(surface2, NULL);

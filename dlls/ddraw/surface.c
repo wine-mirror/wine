@@ -1531,6 +1531,33 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Flip(IDirectDrawSurface2 
             src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
 }
 
+/* Emperor: Rise of the Middle Kingdom accesses the map pointer outside of
+ * Lock()/Unlock(), and expects those updates to be propagated by a Blt().
+ * It also blits to the surface, and color-fills it.
+ *
+ * This function is called after a color-fill that might update the GPU side.
+ * We need to make sure the sysmem surface is synchronized. */
+static void ddraw_surface_sync_pinned_sysmem(struct ddraw_surface *surface)
+{
+    RECT rect;
+
+    if (!surface->draw_texture)
+        return;
+
+    if (!(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
+        return;
+
+    SetRect(&rect, 0, 0, surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+    wined3d_device_context_blt(surface->ddraw->immediate_context,
+            surface->wined3d_texture, surface->sub_resource_idx, &rect,
+            surface->draw_texture, surface->sub_resource_idx, &rect,
+            WINED3D_BLT_SYNCHRONOUS, NULL, WINED3D_TEXF_POINT);
+
+    /* The sysmem surface may be updated at any time, so we must invalidate the
+     * draw texture location here. */
+    surface->texture_location = DDRAW_SURFACE_LOCATION_DEFAULT;
+}
+
 static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *dst_rect,
         struct ddraw_surface *src_surface, const RECT *src_rect, DWORD flags, DWORD fill_colour,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
@@ -1539,6 +1566,7 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
     struct wined3d_device *wined3d_device = ddraw->wined3d_device;
     struct wined3d_color colour;
     DWORD wined3d_flags;
+    HRESULT hr;
 
     if (flags & DDBLT_COLORFILL)
     {
@@ -1552,9 +1580,11 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
 
         wined3d_device_apply_stateblock(wined3d_device, ddraw->state);
         ddraw_surface_get_draw_texture(dst_surface, dst_rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE);
-        return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
+        hr = wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
                 ddraw_surface_get_rendertarget_view(dst_surface),
                 dst_rect, wined3d_flags, &colour, 0.0f, 0);
+        ddraw_surface_sync_pinned_sysmem(dst_surface);
+        return hr;
     }
 
     if (flags & DDBLT_DEPTHFILL)
