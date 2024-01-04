@@ -1472,17 +1472,6 @@ static void test_SpeechRecognitionListConstraint(void)
     hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, NULL, NULL, &listconstraint);
     ok(hr == E_POINTER, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
 
-    /*
-     * The create functions break on Win10 <= 1709 x32 with the given iterator.
-     * Seems like a Windows bug, but if you see an issue in the test's code, please FIXME.
-     * Skipping these tests.
-     */
-    if (broken((is_win10_1507 || is_win10_1709) && (sizeof(void*) == 4)))
-    {
-        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 <= 1709 x32!\n");
-        goto skip_create;
-    }
-
     iterator_hstring_create_static(&iterator_hstring, commands, ARRAY_SIZE(commands));
     iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
 
@@ -1553,7 +1542,6 @@ skip_tests:
     ref = ISpeechRecognitionListConstraint_Release(listconstraint);
     ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
-skip_create:
     ref = ISpeechRecognitionListConstraintFactory_Release(listconstraint_factory);
     ok(ref == 2, "Got unexpected ref %lu.\n", ref);
 
@@ -1626,17 +1614,6 @@ static void test_Recognition(void)
     {
         hr = WindowsCreateString(speech_constraints[i], wcslen(speech_constraints[i]), &commands[i]);
         ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
-    }
-
-    /*
-     * The create functions break on Win10 <= 1709 x32 with the given iterator.
-     * Seems like a Windows bug, but if you see an issue in the test's code, please FIXME.
-     * Skipping these tests.
-     */
-    if (broken((is_win10_1507 || is_win10_1709) && (sizeof(void*) == 4)))
-    {
-        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 <= 1709 x32!\n");
-        goto done;
     }
 
     hr = WindowsCreateString(recognizer_name, wcslen(recognizer_name), &hstr);
