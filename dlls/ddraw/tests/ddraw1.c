@@ -1403,6 +1403,16 @@ static BOOL compare_mode_rect(const DEVMODEW *mode1, const DEVMODEW *mode2)
             && mode1->dmPelsHeight == mode2->dmPelsHeight;
 }
 
+static void init_format_b5g6r5(DDPIXELFORMAT *format)
+{
+    format->dwSize = sizeof(*format);
+    format->dwFlags = DDPF_RGB;
+    format->dwRGBBitCount = 16;
+    format->dwRBitMask = 0xf800;
+    format->dwGBitMask = 0x07e0;
+    format->dwBBitMask = 0x001f;
+}
+
 static ULONG get_refcount(IUnknown *test_iface)
 {
     IUnknown_AddRef(test_iface);
@@ -15457,6 +15467,69 @@ static void test_enum_devices(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+/* Emperor: Rise of the Middle Kingdom locks a sysmem surface and then accesses
+ * the pointer after unlocking it. This test roughly replicates the calls that
+ * it makes. */
+static void test_pinned_sysmem(void)
+{
+    DDBLTFX fx = {.dwSize = sizeof(fx), .dwFillColor = 0xface};
+    IDirectDrawSurface *surface, *surface2;
+    DDSURFACEDESC surface_desc;
+    unsigned int color;
+    IDirectDraw *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    surface_desc.dwWidth = 32;
+    surface_desc.dwHeight = 32;
+    init_format_b5g6r5(&surface_desc.ddpfPixelFormat);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectDrawSurface_Unlock(surface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    color = ((unsigned short *)surface_desc.lpSurface)[0];
+    todo_wine ok(color == 0xface, "Got color %04x.\n", color);
+
+    memset(surface_desc.lpSurface, 0x55, 32 * 16 * 2);
+
+    hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface, NULL, DDBLTFAST_WAIT);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(surface2, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    color = ((unsigned short *)surface_desc.lpSurface)[0];
+    todo_wine ok(color == 0x5555, "Got color %04x.\n", color);
+    color = ((unsigned short *)surface_desc.lpSurface)[32 * 16];
+    ok(color == 0xface, "Got color %04x.\n", color);
+    hr = IDirectDrawSurface_Unlock(surface2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IDirectDrawSurface_Release(surface2);
+    IDirectDrawSurface_Release(surface);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -15576,4 +15649,5 @@ START_TEST(ddraw1)
     run_for_each_device_type(test_texture_wrong_caps);
     test_filling_convention();
     test_enum_devices();
+    test_pinned_sysmem();
 }
