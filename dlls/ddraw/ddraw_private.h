@@ -698,7 +698,8 @@ static inline struct wined3d_texture *ddraw_surface_get_draw_texture(struct ddra
 
 static inline struct wined3d_texture *ddraw_surface_get_any_texture(struct ddraw_surface *surface, unsigned int flags)
 {
-    if (surface->texture_location & DDRAW_SURFACE_LOCATION_DEFAULT)
+    if ((surface->texture_location & DDRAW_SURFACE_LOCATION_DEFAULT)
+            || (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
         return ddraw_surface_get_default_texture(surface, flags);
 
     assert(surface->texture_location & DDRAW_SURFACE_LOCATION_DRAW);
