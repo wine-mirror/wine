@@ -1009,6 +1009,45 @@ static void test_Add(void)
 
     VariantClear(&item);
 
+    /* Empty and null keys. */
+    hr = IDictionary_RemoveAll(dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key1) = VT_EMPTY;
+    V_I4(&key1) = 1;
+
+    V_VT(&item) = VT_BSTR;
+    V_BSTR(&item) = SysAllocString(L"empty");
+
+    hr = IDictionary_Add(dict, &key1, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key2) = VT_EMPTY;
+    V_I4(&key2) = 2;
+
+    hr = IDictionary_Add(dict, &key2, &item);
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key2) = VT_NULL;
+    V_I4(&key2) = 2;
+
+    hr = IDictionary_Add(dict, &key2, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDictionary_RemoveAll(dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDictionary_Add(dict, &key2, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDictionary_Add(dict, &key2, &item);
+    ok(hr == CTL_E_KEY_ALREADY_EXISTS, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDictionary_Add(dict, &key1, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantClear(&item);
+
     IDictionary_Release(dict);
 }
 
