@@ -6574,3 +6574,12 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         return STATUS_INVALID_PARAMETER;
     }
 }
+
+/******************************************************************************
+ *           NtGdiDdDDIEnumAdapters2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
+{
+    FIXME(" (%p): stub\n", desc );
+    return STATUS_PROCEDURE_NOT_FOUND;
+}

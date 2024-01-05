@@ -223,7 +223,7 @@
 @ stub NtGdiDdDDIDispMgrSourceOperation
 @ stub NtGdiDdDDIDispMgrTargetOperation
 @ stub NtGdiDdDDIEnumAdapters
-@ stub NtGdiDdDDIEnumAdapters2
+@ stdcall -syscall NtGdiDdDDIEnumAdapters2(ptr)
 @ stdcall -syscall NtGdiDdDDIEscape(ptr)
 @ stub NtGdiDdDDIEvict
 @ stub NtGdiDdDDIExtractBundleObject
