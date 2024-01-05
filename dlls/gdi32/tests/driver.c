@@ -46,6 +46,7 @@ static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECK
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
 static NTSTATUS (WINAPI *pD3DKMTCreateDevice)(D3DKMT_CREATEDEVICE *);
 static NTSTATUS (WINAPI *pD3DKMTDestroyDevice)(const D3DKMT_DESTROYDEVICE *);
+static NTSTATUS (WINAPI *pD3DKMTEnumAdapters2)(D3DKMT_ENUMADAPTERS2 *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromDeviceName)(D3DKMT_OPENADAPTERFROMDEVICENAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
@@ -187,6 +188,58 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
         status = pD3DKMTCloseAdapter(&close_adapter_desc);
         ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
     }
+}
+
+static void test_D3DKMTEnumAdapters2(void)
+{
+    D3DKMT_ENUMADAPTERS2 enum_adapters_2_desc = {0};
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    NTSTATUS status;
+    UINT i;
+
+    if (!pD3DKMTEnumAdapters2 || pD3DKMTEnumAdapters2(&enum_adapters_2_desc) == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        skip("D3DKMTEnumAdapters2() is unavailable.\n");
+        return;
+    }
+
+    /* Invalid parameters */
+    status = pD3DKMTEnumAdapters2(NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+
+    /* Query the array to allocate */
+    memset(&enum_adapters_2_desc, 0, sizeof(enum_adapters_2_desc));
+    status = pD3DKMTEnumAdapters2(&enum_adapters_2_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+    ok(enum_adapters_2_desc.NumAdapters == 32 /* win10 and older */ || enum_adapters_2_desc.NumAdapters == 34 /* win11 */,
+       "Got unexpected value %lu.\n", enum_adapters_2_desc.NumAdapters);
+
+    /* Allocate the array */
+    enum_adapters_2_desc.pAdapters = calloc(enum_adapters_2_desc.NumAdapters, sizeof(D3DKMT_ADAPTERINFO));
+    ok(!!enum_adapters_2_desc.pAdapters, "Expect not null.\n");
+
+    /* Enumerate adapters */
+    status = pD3DKMTEnumAdapters2(&enum_adapters_2_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+    ok(enum_adapters_2_desc.NumAdapters, "Expect not zero.\n");
+
+    for (i = 0; i < enum_adapters_2_desc.NumAdapters; ++i)
+    {
+        ok(enum_adapters_2_desc.pAdapters[i].hAdapter, "Expect not null.\n");
+        ok(enum_adapters_2_desc.pAdapters[i].AdapterLuid.LowPart || enum_adapters_2_desc.pAdapters[i].AdapterLuid.HighPart,
+           "Expect LUID not zero.\n");
+
+        close_adapter_desc.hAdapter = enum_adapters_2_desc.pAdapters[i].hAdapter;
+        status = pD3DKMTCloseAdapter(&close_adapter_desc);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+    }
+
+    /* Check for insufficient buffer */
+    enum_adapters_2_desc.NumAdapters = 0;
+    status = pD3DKMTEnumAdapters2(&enum_adapters_2_desc);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected return code %#lx.\n", status);
+
+    free(enum_adapters_2_desc.pAdapters);
 }
 
 static void test_D3DKMTCloseAdapter(void)
@@ -1077,6 +1130,7 @@ START_TEST(driver)
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32, "D3DKMTCloseAdapter");
     pD3DKMTCreateDevice = (void *)GetProcAddress(gdi32, "D3DKMTCreateDevice");
     pD3DKMTDestroyDevice = (void *)GetProcAddress(gdi32, "D3DKMTDestroyDevice");
+    pD3DKMTEnumAdapters2 = (void *)GetProcAddress(gdi32, "D3DKMTEnumAdapters2");
     pD3DKMTOpenAdapterFromDeviceName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromDeviceName");
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
@@ -1088,6 +1142,7 @@ START_TEST(driver)
 
     test_D3DKMTOpenAdapterFromGdiDisplayName();
     test_D3DKMTOpenAdapterFromHdc();
+    test_D3DKMTEnumAdapters2();
     test_D3DKMTCloseAdapter();
     test_D3DKMTCreateDevice();
     test_D3DKMTDestroyDevice();
