@@ -228,7 +228,7 @@ static enum debugger_stages test_stage;
 #if defined(__i386__) || defined(__x86_64__)
 static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, enum debugger_stages stage)
 {
-    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 1024];
+    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 3072];
     CONTEXT_EX *c_ex;
     NTSTATUS status;
     YMMCONTEXT *ymm;
@@ -10886,8 +10886,8 @@ static void test_extended_context(void)
     const ULONG64 supported_features = 7, supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
     ULONG expected_length, expected_length_xstate, context_flags, expected_offset, max_xstate_length;
     ULONG64 enabled_features, expected_compaction;
-    DECLSPEC_ALIGN(64) BYTE context_buffer2[2048];
-    DECLSPEC_ALIGN(64) BYTE context_buffer[2048];
+    DECLSPEC_ALIGN(64) BYTE context_buffer2[4096];
+    DECLSPEC_ALIGN(64) BYTE context_buffer[4096];
     unsigned int i, j, address_offset, test;
     ULONG ret, ret2, length, length2, align;
     ULONG flags, flags_fpx, expected_flags;
