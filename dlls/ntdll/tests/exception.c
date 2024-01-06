@@ -11952,7 +11952,7 @@ static void test_copy_context(void)
         *(DWORD *)((BYTE *)dst + flags_offset) = 0;
         *(DWORD *)((BYTE *)src + flags_offset) = 0;
 
-        context_length = (BYTE *)dst_ex - (BYTE *)dst + dst_ex->All.Length;
+        context_length = dst_ex->All.Length;
 
         if (flags & 0x40)
         {
