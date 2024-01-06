@@ -3200,7 +3200,7 @@ static void run_exception_test_flags(void *handler, const void* context,
                                const void *code, unsigned int code_size,
                                DWORD access, DWORD handler_flags)
 {
-    unsigned char buf[8 + 6 + 8 + 8];
+    unsigned char buf[2 + 8 + 2 + 8 + 8];
     RUNTIME_FUNCTION runtime_func;
     UNWIND_INFO *unwind = (UNWIND_INFO *)buf;
     void (*func)(void) = code_mem;
@@ -3219,11 +3219,13 @@ static void run_exception_test_flags(void *handler, const void* context,
     *(ULONG *)&buf[4] = 0x1010;
     *(const void **)&buf[8] = context;
 
-    /* jmp near */
-    buf[16] = 0xff;
-    buf[17] = 0x25;
-    *(ULONG *)&buf[18] = 0;
-    *(void **)&buf[22] = handler;
+    /* movabs $<handler>, %rax */
+    buf[16] = 0x48;
+    buf[17] = 0xb8;
+    *(void **)&buf[18] = handler;
+    /* jmp *%rax */
+    buf[26] = 0xff;
+    buf[27] = 0xe0;
 
     memcpy((unsigned char *)code_mem + 0x1000, buf, sizeof(buf));
     memcpy(code_mem, code, code_size);
