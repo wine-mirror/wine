@@ -335,17 +335,15 @@ static inline DWORD stack32_pop( CONTEXT *context )
                         __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")         \
                         "movl %esp,%ebp\n\t"                            \
                         __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")     \
-                        "leal -(0x2cc+4)(%esp),%esp\n\t"  /* sizeof(CONTEXT) + space for %eax */ \
-                        "movl %eax,-4(%ebp)\n\t"                        \
+                        "leal -0x2cc(%esp),%esp\n\t" /* sizeof(CONTEXT) */ \
                         "pushl %esp\n\t"             /* context */      \
                         "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t" \
-                        "movl -4(%ebp),%eax\n\t"                        \
-                        "movl %eax,0xb0(%esp)\n\t"   /* context->Eax */ \
+                        "movl %esp,%esi\n\t"                            \
                         "pushl %esp\n\t"             /* context */      \
                         "call " __ASM_STDCALL("__regs_" #name,4) "\n\t" \
-                        "pushl %esp\n\t"             /* context */      \
-                        "pushl $-2\n\t"   /* GetCurrentThread() */      \
-                        "call " __ASM_STDCALL("NtSetContextThread",8) "\n\t" \
+                        "pushl $0\n\t"               /* alertable */    \
+                        "pushl %esi\n\t"             /* context */      \
+                        "call " __ASM_STDCALL("NtContinue",8) "\n\t"    \
                         "ret" ) /* fake ret to make copy protections happy */
 
 #endif  /* __WINE_KERNEL16_PRIVATE_H */
