@@ -585,7 +585,11 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
             !!(actual.dwEffectFlags & DMUS_EFFECT_REVERB));
     fluid_settings_setint(This->fluid_settings, "synth.chorus.active",
             !!(actual.dwEffectFlags & DMUS_EFFECT_CHORUS));
-    if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings))) return E_OUTOFMEMORY;
+    if (!(This->fluid_synth = new_fluid_synth(This->fluid_settings)))
+    {
+        LeaveCriticalSection(&This->cs);
+        return E_OUTOFMEMORY;
+    }
     if ((id = fluid_synth_add_sfont(This->fluid_synth, This->fluid_sfont)) == FLUID_FAILED)
         WARN("Failed to add fluid_sfont to fluid_synth\n");
     synth_reset_default_values(This);
