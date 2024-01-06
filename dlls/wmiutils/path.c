@@ -437,7 +437,7 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
     }
     if (path->num_namespaces)
     {
-        if (!(path->namespaces = malloc( path->num_namespaces * sizeof(WCHAR *) ))) goto done;
+        if (!(path->namespaces = calloc( path->num_namespaces, sizeof(WCHAR *) ))) goto done;
         if (!(path->len_namespaces = malloc( path->num_namespaces * sizeof(int) ))) goto done;
 
         i = 0;
