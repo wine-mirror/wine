@@ -103,6 +103,45 @@ static INT path_list_count(path_list_node_t *node)
     return count;
 }
 
+static BOOL path_list_to_path(path_list_node_t *node, GpPath *path)
+{
+    INT i, count = path_list_count(node);
+    GpPointF *Points;
+    BYTE *Types;
+
+    if (count == 0)
+    {
+        path->pathdata.Count = count;
+        return TRUE;
+    }
+
+    Points = calloc(count, sizeof(GpPointF));
+    Types = calloc(1, count);
+
+    if (!Points || !Types)
+    {
+        free(Points);
+        free(Types);
+        return FALSE;
+    }
+
+    for(i = 0; i < count; i++){
+        Points[i] = node->pt;
+        Types[i] = node->type;
+        node = node->next;
+    }
+
+    free(path->pathdata.Points);
+    free(path->pathdata.Types);
+
+    path->pathdata.Points = Points;
+    path->pathdata.Types = Types;
+    path->pathdata.Count = count;
+    path->datalen = count;
+
+    return TRUE;
+}
+
 struct flatten_bezier_job
 {
     path_list_node_t *start;
@@ -1417,19 +1456,7 @@ GpStatus WINGDIPAPI GdipFlattenPath(GpPath *path, GpMatrix* matrix, REAL flatnes
         ++i;
     }/* while */
 
-    /* store path data back */
-    i = path_list_count(list);
-    if(!lengthen_path(path, i))
-        goto memout;
-    path->pathdata.Count = i;
-
-    node = list;
-    for(i = 0; i < path->pathdata.Count; i++){
-        path->pathdata.Points[i] = node->pt;
-        path->pathdata.Types[i]  = node->type;
-        node = node->next;
-    }
-
+    if (!path_list_to_path(list, path)) goto memout;
     free_path_list(list);
     return Ok;
 
