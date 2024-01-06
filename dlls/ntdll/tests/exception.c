@@ -11848,7 +11848,7 @@ static void test_copy_context(void)
     static struct modified_range ranges_x86[] =
     {
         {0x0, ~0}, {0x4, 0x10}, {0x1c, 0x8}, {0x8c, 0x4}, {0x9c, 0x2}, {0xb4, 0x1}, {0xcc, 0x20}, {0x1ec, 0x80000020},
-        {0x2cc, ~0}, {0x294, 0}, {0x1000, 0},
+        {0x2cc, ~0}, {0x440, 0}, {0x1000, 0},
     };
     static const struct modified_range single_range[] =
     {
@@ -11963,7 +11963,7 @@ static void test_copy_context(void)
             if (flags & CONTEXT_AMD64)
                 ranges_amd64[ARRAY_SIZE(ranges_amd64) - 2].start = 0x640 + src_ex->XState.Length - sizeof(XSTATE);
             else
-                ranges_x86[ARRAY_SIZE(ranges_x86) - 2].start = 0x294 + src_ex->XState.Length - sizeof(XSTATE);
+                ranges_x86[ARRAY_SIZE(ranges_x86) - 2].start = 0x440 + src_ex->XState.Length - sizeof(XSTATE);
         }
 
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
