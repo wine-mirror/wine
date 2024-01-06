@@ -10884,7 +10884,7 @@ static void test_extended_context(void)
     const struct context_parameters *context_arch;
 
     const ULONG64 supported_features = 7, supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
-    ULONG expected_length, expected_length_xstate, context_flags, expected_offset;
+    ULONG expected_length, expected_length_xstate, context_flags, expected_offset, max_xstate_length;
     ULONG64 enabled_features, expected_compaction;
     DECLSPEC_ALIGN(64) BYTE context_buffer2[2048];
     DECLSPEC_ALIGN(64) BYTE context_buffer[2048];
@@ -11511,6 +11511,9 @@ static void test_extended_context(void)
     context_ex = (CONTEXT_EX *)(context + 1);
     xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
 
+    max_xstate_length = context_ex->XState.Length;
+    ok(max_xstate_length >= sizeof(XSTATE), "XSTATE size: %#lx; min: %#Ix.\n", max_xstate_length, sizeof(XSTATE));
+
     *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_addr) = RtlCaptureContext;
     *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param1) = context;
     *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param2) = (void *)0xdeadbeef;
@@ -11571,7 +11574,7 @@ static void test_extended_context(void)
 
     xs->CompactionMask = 4;
     xs->Mask = compaction_enabled ? 0 : 4;
-    context_ex->XState.Length = sizeof(XSTATE) + 64;
+    context_ex->XState.Length = max_xstate_length + 64;
     bret = func();
     ok(!bret && GetLastError() == ERROR_INVALID_PARAMETER,
             "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
