@@ -3446,8 +3446,13 @@ static DWORD WINAPI align_check_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
 #ifdef __GNUC__
     __asm__ volatile( "pushfq; andl $~0x40000,(%rsp); popfq" );
 #endif
-    ok (!(context->EFlags & 0x40000), "eflags has AC bit set\n");
+    ok (context->EFlags & 0x40000, "eflags has AC bit unset\n");
     got_exception++;
+    if (got_exception != 1)
+    {
+        ok(broken(1) /* win7 */, "exception should occur only once");
+        context->EFlags &= ~0x40000;
+    }
     return ExceptionContinueExecution;
 }
 
@@ -3588,12 +3593,10 @@ static void test_exceptions(void)
     ok(got_exception == 3, "expected 3 single step exceptions, got %d\n", got_exception);
 
     /* test alignment exceptions */
-    if (0)  /* broken on Windows */
-    {
     got_exception = 0;
     run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code), 0);
-    ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
-    }
+    todo_wine
+    ok(got_exception == 1 || broken(got_exception == 2) /* win7 */, "got %d alignment faults, expected 1\n", got_exception);
 
     /* test direction flag */
     got_exception = 0;
