@@ -851,6 +851,7 @@ static size_t packed_result_32to64( UINT message, WPARAM wparam, const void *par
             cs64->dwExStyle      = cs32->dwExStyle;
             return sizeof(*cs64);
         }
+        break;
 
     case WM_NCCALCSIZE:
         if (wparam)
