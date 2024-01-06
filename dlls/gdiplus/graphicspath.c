@@ -95,10 +95,13 @@ static path_list_node_t* add_path_list_node(path_list_node_t *node, REAL x, REAL
 /* returns element count */
 static INT path_list_count(path_list_node_t *node)
 {
-    INT count = 1;
+    INT count = 0;
 
-    while((node = node->next))
+    while(node)
+    {
         ++count;
+        node = node->next;
+    }
 
     return count;
 }
@@ -2501,7 +2504,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     GpPath *flat_path=NULL;
     GpStatus status;
     path_list_node_t *points=NULL, *last_point=NULL;
-    int i, subpath_start=0, new_length;
+    int i, subpath_start=0;
 
     TRACE("(%p,%p,%s,%0.2f)\n", path, pen, debugstr_matrix(matrix), flatness);
 
@@ -2584,23 +2587,8 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
             }
         }
 
-        new_length = path_list_count(points)-1;
-
-        if (!lengthen_path(path, new_length))
+        if (!path_list_to_path(points->next, path))
             status = OutOfMemory;
-    }
-
-    if (status == Ok)
-    {
-        path->pathdata.Count = new_length;
-
-        last_point = points->next;
-        for (i = 0; i < new_length; i++)
-        {
-            path->pathdata.Points[i] = last_point->pt;
-            path->pathdata.Types[i] = last_point->type;
-            last_point = last_point->next;
-        }
 
         path->fill = FillModeWinding;
     }
