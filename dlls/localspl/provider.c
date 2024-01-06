@@ -3783,7 +3783,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
 {
     printer_t *printer = (printer_t *)hprinter;
     WCHAR output[1024], name[1024], *datatype;
-    BOOL datatype_valid = FALSE, ret = TRUE;
+    BOOL datatype_valid = FALSE, ret = FALSE;
     PRINTPROCESSOROPENDATA pp_data;
     const WCHAR *port_name, *port;
     job_info_t *job;
@@ -3852,8 +3852,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     if (!datatype_valid)
     {
         pp = print_proc_load(printer->print_proc);
-        if (!pp)
-            return FALSE;
+        if (!pp) goto cleanup;
 
         datatype_valid = print_proc_check_datatype(pp, datatype);
     }
@@ -3863,7 +3862,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
         WARN("%s datatype not supported by %s\n", debugstr_w(datatype),
                 debugstr_w(printer->info->print_proc));
         print_proc_unload(pp);
-        return FALSE;
+        goto cleanup;
     }
 
     swprintf(name, ARRAY_SIZE(name), L"%s, Port", port_name);
@@ -3879,7 +3878,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     {
         WARN("OpenPrintProcessor failed %ld\n", GetLastError());
         print_proc_unload(pp);
-        return FALSE;
+        goto cleanup;
     }
 
     swprintf(name, ARRAY_SIZE(name), L"%s, Job %d", printer->name, job->id);
@@ -3892,6 +3891,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     if (!(printer->info->attributes & PRINTER_ATTRIBUTE_KEEPPRINTEDJOBS))
         DeleteFileW(job->filename);
     free_job(job);
+cleanup:
     LeaveCriticalSection(&printer->info->jobs_cs);
     return ret;
 }
