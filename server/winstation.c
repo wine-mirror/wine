@@ -221,14 +221,24 @@ struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, u
 static struct desktop *create_desktop( const struct unicode_str *name, unsigned int attr,
                                        unsigned int flags, struct winstation *winstation )
 {
-    struct desktop *desktop;
+    struct desktop *desktop, *current_desktop;
 
     if ((desktop = create_named_object( &winstation->obj, &desktop_ops, name, attr, NULL )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
+
             desktop->flags = flags;
+
+            /* inherit DF_WINE_*_DESKTOP flags if none of them are specified */
+            if (!(flags & (DF_WINE_ROOT_DESKTOP | DF_WINE_VIRTUAL_DESKTOP))
+                && (current_desktop = get_thread_desktop( current, 0 )))
+            {
+                desktop->flags |= current_desktop->flags & (DF_WINE_VIRTUAL_DESKTOP | DF_WINE_ROOT_DESKTOP);
+                release_object( current_desktop );
+            }
+
             desktop->winstation = (struct winstation *)grab_object( winstation );
             desktop->top_window = NULL;
             desktop->msg_window = NULL;
@@ -243,7 +253,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
         }
         else
         {
-            desktop->flags |= (flags & DF_WINE_VIRTUAL_DESKTOP);
+            desktop->flags |= flags & (DF_WINE_VIRTUAL_DESKTOP | DF_WINE_ROOT_DESKTOP);
             clear_error();
         }
     }

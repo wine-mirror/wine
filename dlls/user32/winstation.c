@@ -256,7 +256,8 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
 
-    if (device || (devmode && !(flags & DF_WINE_VIRTUAL_DESKTOP)))
+    if (device || (devmode && !(flags & DF_WINE_VIRTUAL_DESKTOP))
+        || (flags & DF_WINE_ROOT_DESKTOP && flags & DF_WINE_VIRTUAL_DESKTOP))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
