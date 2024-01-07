@@ -57,6 +57,22 @@ static char *textBuffer = NULL;
 
 static BOOL received_end_edit = FALSE;
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static void get_combobox_info(HWND hwnd, COMBOBOXINFO *info)
 {
     BOOL ret;
@@ -1514,6 +1530,128 @@ static void test_comboex_CBEN_GETDISPINFO(void)
     DestroyWindow(combo);
 }
 
+#define ok_selected_value(list, selected) \
+        _ok_selected_value(list, selected, __LINE__)
+static void _ok_selected_value(HWND combo, const char *selected, int line)
+{
+    char buffer[20] = {0};
+    int index = SendMessageA(combo, CB_GETCURSEL, 0, 0);
+    SendMessageA(combo, CB_GETLBTEXT, index, (LPARAM)buffer);
+    ok_(__FILE__, line)(!strcmp(buffer, selected), "Got %s\n", buffer);
+}
+
+static void test_combo_keypresses(void)
+{
+    HWND combo;
+    BOOL dropped;
+    int i;
+    const char *strings_to_add[] = {
+        "b_eta", "a_lpha", "be_ta", "al_pha", "beta", "alpha", "gamma", "epsilon", "le"
+    };
+
+    /* Test with an unsorted combo box */
+
+    combo = create_combobox(CBS_DROPDOWNLIST);
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'a', 0);
+    ok_selected_value(combo, "a_lpha");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'l', 0);
+    ok_selected_value(combo, "le");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'p', 0);
+    ok_selected_value(combo, "le");
+
+    SendMessageA(combo, CB_SHOWDROPDOWN, TRUE, 0);
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'b', 0);
+    ok_selected_value(combo, "b_eta");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'e', 0);
+    ok_selected_value(combo, "epsilon");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'t', 0);
+    ok_selected_value(combo, "epsilon");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    DestroyWindow(combo);
+
+    /* Test with a sorted combo box */
+
+    combo = create_combobox(CBS_DROPDOWNLIST | CBS_SORT);
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'a', 0);
+    todo_wine
+    ok_selected_value(combo, "a_lpha");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'l', 0);
+    todo_wine
+    ok_selected_value(combo, "al_pha");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'p', 0);
+    todo_wine
+    ok_selected_value(combo, "alpha");
+
+    SendMessageA(combo, CB_SHOWDROPDOWN, TRUE, 0);
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'b', 0);
+    ok_selected_value(combo, "b_eta");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'e', 0);
+    todo_wine
+    ok_selected_value(combo, "be_ta");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'t', 0);
+    todo_wine
+    ok_selected_value(combo, "beta");
+    dropped = SendMessageA(combo, CB_GETDROPPEDSTATE, 0, 0);
+    todo_wine
+    ok(dropped, "Expected combo box to be dropped\n");
+
+    /* Windows needs a certain time to pass until it starts a new search */
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'a', 0);
+    todo_wine
+    ok_selected_value(combo, "beta");
+
+    Sleep(2100);
+    flush_events();
+
+    SendMessageA(combo, WM_CHAR, (WPARAM)'a', 0);
+    todo_wine
+    ok_selected_value(combo, "a_lpha");
+
+    DestroyWindow(combo);
+}
+
 START_TEST(combo)
 {
     ULONG_PTR ctx_cookie;
@@ -1565,6 +1703,7 @@ START_TEST(combo)
     test_combo_dropdown_size(0);
     test_combo_dropdown_size(CBS_NOINTEGRALHEIGHT);
     test_combo_ctlcolor();
+    test_combo_keypresses();
 
     cleanup();
     unload_v6_module(ctx_cookie, hCtx);
