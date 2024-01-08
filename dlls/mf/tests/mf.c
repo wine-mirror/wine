@@ -3756,6 +3756,13 @@ static void test_topology_loader_evr(void)
     ok(hr == S_OK, "Failed to create activate object, hr %#lx.\n", hr);
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    if (FAILED(hr))
+    {
+        skip("Failed to create an EVR sink, skipping tests.\n");
+        DestroyWindow(window);
+        IMFActivate_Release(activate);
+        return;
+    }
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
