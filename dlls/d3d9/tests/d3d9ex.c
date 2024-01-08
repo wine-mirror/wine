@@ -3851,11 +3851,11 @@ static void test_swapchain_parameters(void)
             window, D3DCREATE_SOFTWARE_VERTEXPROCESSING,
             &present_parameters, NULL, &device);
 
-    todo_wine ok(present_parameters.BackBufferWidth == client_rect.right, "Got unexpected BackBufferWidth %u, expected %ld.\n",
+    ok(present_parameters.BackBufferWidth == client_rect.right, "Got unexpected BackBufferWidth %u, expected %ld.\n",
             present_parameters.BackBufferWidth, client_rect.right);
-    todo_wine ok(present_parameters.BackBufferHeight == client_rect.bottom, "Got unexpected BackBufferHeight %u, expected %ld.\n",
+    ok(present_parameters.BackBufferHeight == client_rect.bottom, "Got unexpected BackBufferHeight %u, expected %ld.\n",
             present_parameters.BackBufferHeight, client_rect.bottom);
-    todo_wine ok(present_parameters.BackBufferFormat != D3DFMT_UNKNOWN, "Got unexpected BackBufferFormat %#x.\n",
+    ok(present_parameters.BackBufferFormat != D3DFMT_UNKNOWN, "Got unexpected BackBufferFormat %#x.\n",
             present_parameters.BackBufferFormat);
     ok(present_parameters.BackBufferCount == 1, "Got unexpected BackBufferCount %u.\n", present_parameters.BackBufferCount);
     ok(!present_parameters.MultiSampleType, "Got unexpected MultiSampleType %u.\n", present_parameters.MultiSampleType);
