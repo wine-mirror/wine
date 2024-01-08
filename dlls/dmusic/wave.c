@@ -38,7 +38,7 @@ struct wave
     struct sample *sample;
     WAVEFORMATEX *format;
     UINT data_size;
-    void *data;
+    IStream *data;
 };
 
 static inline struct wave *impl_from_IUnknown(IUnknown *iface)
@@ -96,7 +96,7 @@ static ULONG WINAPI wave_Release(IUnknown *iface)
     if (!ref)
     {
         free(This->format);
-        free(This->data);
+        if (This->data) IStream_Release(This->data);
         free(This->sample);
         free(This);
     }
@@ -150,8 +150,8 @@ static HRESULT parse_wave_chunk(struct wave *This, IStream *stream, struct chunk
             break;
 
         case mmioFOURCC('d','a','t','a'):
-            if (!(This->data = malloc(chunk.size))) return E_OUTOFMEMORY;
-            hr = stream_chunk_get_data(stream, &chunk, This->data, chunk.size);
+            if (This->data) IStream_Release(This->data);
+            hr = IStream_Clone(stream, &This->data);
             if (SUCCEEDED(hr)) This->data_size = chunk.size;
             break;
 
@@ -341,9 +341,9 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     struct sample *sample = NULL;
     WAVEFORMATEX *format = NULL;
     HRESULT hr = E_OUTOFMEMORY;
-    UINT data_size, offset;
+    DWORD data_size, offset;
     struct wave *This;
-    void *data = NULL;
+    IStream *stream = NULL;
     IDirectMusicObject *iface;
 
     TRACE("(%p, %u, %p)\n", soundfont, index, ret_iface);
@@ -365,9 +365,9 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     sample->loops[0].ulLength = sf_sample->end_loop - sf_sample->start_loop;
 
     data_size = sf_sample->end - sf_sample->start;
-    if (!(data = malloc(data_size * format->nBlockAlign))) goto failed;
+    if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &stream))) goto failed;
     offset = sf_sample->start * format->nBlockAlign / format->nChannels;
-    memcpy(data, soundfont->sdta + offset, data_size);
+    if (FAILED(hr = IStream_Write(stream, soundfont->sdta + offset, data_size, &data_size))) goto failed;
 
     if (FAILED(hr = wave_create(&iface))) goto failed;
 
@@ -375,7 +375,7 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     This->format = format;
     This->sample = sample;
     This->data_size = data_size;
-    This->data = data;
+    This->data = stream;
 
     if (TRACE_ON(dmusic))
     {
@@ -408,9 +408,23 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     return S_OK;
 
 failed:
-    free(data);
+    if (stream) IStream_Release(stream);
     free(sample);
     free(format);
+    return hr;
+}
+
+static HRESULT wave_read_data(struct wave *This, void *data, DWORD *data_size)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IStream_Clone(This->data, &stream)))
+    {
+        hr = IStream_Read(stream, data, This->data_size, data_size);
+        IStream_Release(stream);
+    }
+
     return hr;
 }
 
@@ -446,11 +460,12 @@ HRESULT wave_download_to_port(IDirectMusicObject *iface, IDirectMusicPortDownloa
         buffer->wave.ulCopyrightIdx = 0;
         buffer->wave.ulFirstExtCkIdx = 0;
 
-        buffer->data.cbSize = This->data_size;
-        memcpy(buffer->data.byData, This->data, This->data_size);
-
-        if (SUCCEEDED(hr = IDirectMusicPortDownload_Download(port, download))) *id = buffer->info.dwDLId;
-        else WARN("Failed to download wave to port, hr %#lx\n", hr);
+        if (FAILED(hr = wave_read_data(This, buffer->data.byData, &buffer->data.cbSize)))
+            WARN("Failed to read wave data from stream, hr %#lx\n", hr);
+        else if (FAILED(hr = IDirectMusicPortDownload_Download(port, download)))
+            WARN("Failed to download wave to port, hr %#lx\n", hr);
+        else
+            *id = buffer->info.dwDLId;
     }
 
     IDirectMusicDownload_Release(download);
@@ -481,8 +496,9 @@ HRESULT wave_download_to_dsound(IDirectMusicObject *iface, IDirectSound *dsound,
 
     if (SUCCEEDED(hr = IDirectSoundBuffer_Lock(buffer, 0, This->data_size, &data, &size, NULL, 0, 0)))
     {
-        memcpy(data, This->data, This->data_size);
-        hr = IDirectSoundBuffer_Unlock(buffer, data, This->data_size, NULL, 0);
+        if (FAILED(hr = wave_read_data(This, data, &size)))
+            WARN("Failed to read wave data from stream, hr %#lx\n", hr);
+        hr = IDirectSoundBuffer_Unlock(buffer, data, size, NULL, 0);
     }
 
     if (FAILED(hr))
