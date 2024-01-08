@@ -959,7 +959,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         }
 
     /* this is a Wine extension to the API just to redo the synchronisation */
-    if (!wImageName && !hFile)
+    if (!wImageName && !hFile && !Flags)
     {
         pcs->loader->synchronize_module_list(pcs);
         return 0;
@@ -967,7 +967,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     if (Flags & SLMFLAG_VIRTUAL)
     {
-        if (!wImageName) return 0;
+        if (!wImageName) wImageName = L"";
         module = module_new(pcs, wImageName, DMT_PE, FALSE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
         if (!module) return 0;
         module->module.SymType = SymVirtual;

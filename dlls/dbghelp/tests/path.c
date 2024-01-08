@@ -1774,12 +1774,9 @@ static void test_load_modules_details(void)
         base = SymLoadModuleExW(dummy, NULL,
                                 test->in_image_name, test->in_module_name,
                                 0x4000, 0x6666, NULL, test->flags);
-        todo_wine_if(i == 0 || i == 1)
         ok(base == 0x4000, "SymLoadModuleExW failed: %lu\n", GetLastError());
         ret = SymGetModuleInfoW64(dummy, base, &im);
-        todo_wine_if(i == 0 || i == 1)
         ok(ret, "SymGetModuleInfow64 failed: %lu\n", GetLastError());
-        if (!ret) goto temp_bail_out;
         if (test->in_image_name)
         {
             WCHAR *dot;
@@ -1892,7 +1889,6 @@ static void test_load_modules_details(void)
             }
             else ok(0, "Unrecognized file reference %c\n", *ptr);
         }
-    temp_bail_out:
         if (test->in_image_name && !wcscmp(test->in_image_name, L"bar.dll"))
         {
             make_path(filename, topdir, NULL, test->in_image_name);
