@@ -440,6 +440,7 @@ SOURCES = \
 	mfplay.idl \
 	mfreadwrite.idl \
 	mftransform.idl \
+	mgmtapi.h \
 	midles.h \
 	mimeinfo.idl \
 	mimeole.idl \
