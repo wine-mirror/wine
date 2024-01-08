@@ -339,7 +339,8 @@ static inline DWORD stack32_pop( CONTEXT *context )
                         "pushl %esp\n\t"             /* context */      \
                         "call " __ASM_STDCALL("RtlCaptureContext",4) "\n\t" \
                         "movl %esp,%esi\n\t"                            \
-                        "pushl %esp\n\t"             /* context */      \
+                        "andl $~3,%esp\n\t"                             \
+                        "pushl %esi\n\t"             /* context */      \
                         "call " __ASM_STDCALL("__regs_" #name,4) "\n\t" \
                         "pushl $0\n\t"               /* alertable */    \
                         "pushl %esi\n\t"             /* context */      \
