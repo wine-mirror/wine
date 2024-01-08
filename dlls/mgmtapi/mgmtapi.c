@@ -19,9 +19,16 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "mgmtapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mgmtapi);
+
+LPSNMP_MGR_SESSION WINAPI SnmpMgrOpen(char *hostname, char *community, int timeout, int retries)
+{
+    FIXME("stub: %s, %s, %d, %d\n", hostname, community, timeout, retries);
+    return NULL;
+}
 
 BOOL WINAPI SnmpMgrTrapListen(HANDLE *available)
 {
