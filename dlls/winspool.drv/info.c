@@ -636,7 +636,7 @@ static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
     DRIVER_INFO_3W di3;
     unsigned int i;
     BOOL res = FALSE;
-    WCHAR raw[] = L"RAW", driver_nt[] = L"wineps.drv";
+    WCHAR raw[] = L"RAW", driver_nt[] = L"wineps.drv", driver_9x[] = L"wineps16.drv";
 
     if (!ppd) return FALSE;
     if (!RtlDosPathNameToNtPathName_U( ppd, &nt_ppd, NULL, NULL )) goto end;
@@ -661,7 +661,6 @@ static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
         di3.pEnvironment = (WCHAR *)all_printenv[i]->envname;
         if (all_printenv[i]->driverversion == 0)
         {
-            WCHAR driver_9x[] = L"wineps16.drv";
             /* We use wineps16.drv as driver for 16 bit */
             di3.pDriverPath = driver_9x;
             di3.pConfigFile = driver_9x;
