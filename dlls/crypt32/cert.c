@@ -2778,32 +2778,37 @@ BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key)
 static BOOL CNG_PrepareSignatureECC(BYTE *encoded_sig, DWORD encoded_size, BYTE **sig_value, DWORD *sig_len)
 {
     CERT_ECC_SIGNATURE *ecc_sig;
-    DWORD size;
+    DWORD size, r_size, s_size, r_offset, s_offset;
     int i;
 
     if (!CryptDecodeObjectEx(X509_ASN_ENCODING, X509_ECC_SIGNATURE, encoded_sig, encoded_size,
             CRYPT_DECODE_ALLOC_FLAG, NULL, &ecc_sig, &size))
         return FALSE;
 
-    if (!ecc_sig->r.cbData || !ecc_sig->s.cbData)
+    if (!(r_size = ecc_sig->r.cbData) || !(s_size = ecc_sig->s.cbData))
     {
         LocalFree(ecc_sig);
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
+    r_size = s_size = max( r_size, s_size );
 
-    *sig_len = ecc_sig->r.cbData + ecc_sig->s.cbData;
+    *sig_len = r_size + s_size;
     if (!(*sig_value = CryptMemAlloc(*sig_len)))
     {
         LocalFree(ecc_sig);
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
+    memset( *sig_value, 0, *sig_len );
+
+    r_offset = r_size - ecc_sig->r.cbData;
+    s_offset = s_size - ecc_sig->s.cbData;
 
     for (i = 0; i < ecc_sig->r.cbData; i++)
-        (*sig_value)[i] = ecc_sig->r.pbData[ecc_sig->r.cbData - i - 1];
+        (*sig_value)[i + r_offset] = ecc_sig->r.pbData[ecc_sig->r.cbData - i - 1];
     for (i = 0; i < ecc_sig->s.cbData; i++)
-        (*sig_value)[ecc_sig->r.cbData + i] = ecc_sig->s.pbData[ecc_sig->s.cbData - i - 1];
+        (*sig_value)[r_size + i + s_offset] = ecc_sig->s.pbData[ecc_sig->s.cbData - i - 1];
 
     LocalFree(ecc_sig);
     return TRUE;
