@@ -54,7 +54,7 @@ void wined3d_context_cleanup(struct wined3d_context *context)
  * A to avoid breaking caller code. */
 void context_restore(struct wined3d_context *context, struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
-    if (context->current_rt.texture != texture || context->current_rt.sub_resource_idx != sub_resource_idx)
+    if (texture && (context->current_rt.texture != texture || context->current_rt.sub_resource_idx != sub_resource_idx))
     {
         context_release(context);
         context = context_acquire(texture->resource.device, texture, sub_resource_idx);

@@ -4356,7 +4356,6 @@ struct wined3d_context *wined3d_context_gl_acquire(const struct wined3d_device *
     if (!texture)
     {
         if (current_context
-                && current_context->c.current_rt.texture
                 && current_context->c.device == device)
         {
             texture = current_context->c.current_rt.texture;

@@ -340,12 +340,12 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
         struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, DWORD dst_location,
         const RECT *dst_rect, const struct wined3d_format *resolve_format)
 {
-    struct wined3d_texture *required_texture, *restore_texture = NULL, *dst_save_texture = dst_texture;
+    struct wined3d_texture *required_texture, *restore_texture, *dst_save_texture = dst_texture;
     unsigned int restore_idx, dst_save_sub_resource_idx = dst_sub_resource_idx;
+    bool resolve, scaled_resolve, restore_context = false;
     struct wined3d_texture *src_staging_texture = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
-    bool resolve, scaled_resolve;
     GLenum gl_filter;
     GLenum buffer;
     RECT s, d;
@@ -490,16 +490,17 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     restore_texture = context->current_rt.texture;
     restore_idx = context->current_rt.sub_resource_idx;
     if (restore_texture != required_texture)
+    {
         context = context_acquire(device, required_texture, 0);
-    else
-        restore_texture = NULL;
+        restore_context = true;
+    }
 
     context_gl = wined3d_context_gl(context);
     if (!context_gl->valid)
     {
         context_release(context);
         WARN("Invalid context, skipping blit.\n");
-        restore_texture = NULL;
+        restore_context = false;
         goto done;
     }
 
@@ -565,7 +566,7 @@ done:
     if (src_staging_texture)
         wined3d_texture_decref(src_staging_texture);
 
-    if (restore_texture)
+    if (restore_context)
         context_restore(context, restore_texture, restore_idx);
 }
 
