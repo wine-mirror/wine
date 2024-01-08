@@ -1627,6 +1627,297 @@ static void test_load_modules_path(void)
     ok(ret, "Couldn't remove directory\n");
 }
 
+struct module_details
+{
+    WCHAR*      name;
+    unsigned    count;
+};
+
+static BOOL CALLBACK aggregate_module_details_cb(PCWSTR name, DWORD64 base, PVOID usr)
+{
+    struct module_details* md = usr;
+
+    if (md->count == 0) md->name = wcsdup(name);
+    md->count++;
+    return TRUE;
+}
+
+static BOOL has_mismatch(const char *str, char ch, unsigned *val)
+{
+    if (str && *str == ch)
+    {
+        if (val && (ch == 'D' || ch == 'P' || ch == '!'))
+            *val = char2index(str[1]);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void test_load_modules_details(void)
+{
+    static const struct debug_info_file
+    {
+        const GUID* guid; /* non-NULL means PDB/DS, DBG otherwise */
+        DWORD       age_or_timestamp; /* age for PDB, timestamp for DBG */
+        const WCHAR*module_path;
+    }
+    test_files[] =
+    {
+        /*  0 */ { &guid1, 0x0030cafe, L"bar.pdb" },
+        /*  1 */ { NULL,   0xcafe0030, L"bar.dbg" },
+    };
+
+    static const struct module_details_test
+    {
+        /* input parameters */
+        DWORD        flags;
+        DWORD        options;
+        const WCHAR *in_image_name;
+        const WCHAR *in_module_name;
+        int          blob_index; /* only when in_image_name is bar.dll */
+        const char  *test_files; /* various test_files to be created */
+        /* output parameters */
+        SYM_TYPE     sym_type;
+        const char   *mismatch_in; /* 'PN'=PDB, 'DN'=DBG, NULL (N index of expected found file) */
+    }
+    module_details_tests[] =
+    {
+/* 0*/  {SLMFLAG_VIRTUAL,    0,                     NULL,       NULL,       -1, "",  SymVirtual},
+        {SLMFLAG_VIRTUAL,    0,                     NULL,       L"foo_bar", -1, "",  SymVirtual},
+        {SLMFLAG_VIRTUAL,    0,                     L"foo.dll", L"foo_bar", -1, "",  SymVirtual},
+        {SLMFLAG_VIRTUAL,    SYMOPT_DEFERRED_LOADS, L"foo.dll", L"foo_bar", -1, "",  SymDeferred},
+
+        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar", -1, "0", SymNone},
+/* 5*/  {SLMFLAG_NO_SYMBOLS, SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar", -1, "0", SymDeferred},
+
+        {0,                  0,                     L"bar.dll", L"foo_bar", -1, "0", SymPdb,      "!0"},
+        {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar", -1, "0", SymDeferred},
+
+        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar",  0, "0", SymNone},
+        {SLMFLAG_NO_SYMBOLS, SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  0, "0", SymDeferred},
+
+/*10*/  {0,                  0,                     L"bar.dll", L"foo_bar",  0, "0", SymPdb},
+        {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  0, "0", SymDeferred},
+
+        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar",  1, "0", SymNone,     "P0"},
+        {SLMFLAG_NO_SYMBOLS, SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  1, "0", SymDeferred},
+
+        {0,                  0,                     L"bar.dll", L"foo_bar",  1, "0", SymNone,     "P0"},
+/*15*/  {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  1, "0", SymDeferred},
+
+        /* FIXME add lookup path, exact symbol, .DBG files */
+    };
+
+    unsigned i;
+    HANDLE dummy = (HANDLE)(ULONG_PTR)0xc4fef00d;
+    DWORD old_options;
+    IMAGEHLP_MODULEW64 im;
+    BOOL ret;
+    DWORD64 base;
+    struct module_details md;
+    WCHAR topdir[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    const WCHAR* loaded_img_name;
+    WCHAR expected_module_name[32];
+    WCHAR sym_name[128];
+    char buffer[512];
+    SYMBOL_INFOW* sym = (void*)buffer;
+    DWORD len;
+
+    union nt_header h;
+    struct debug_directory_blob* blob_refs[2];
+
+    old_options = SymGetOptions();
+    im.SizeOfStruct = sizeof(im);
+
+    len = GetTempPathW(ARRAY_SIZE(topdir), topdir);
+    ok(len && len < ARRAY_SIZE(topdir), "Unexpected length\n");
+    wcscat(topdir, L"dh.tmp\\");
+    ret = CreateDirectoryW(topdir, NULL);
+    ok(ret, "Couldn't create directory\n");
+
+    init_headers64(&h.nt_header64, 12324, 3242, 0);
+    blob_refs[0] = make_pdb_ds_blob(12324, &guid1, 0x0030cafe, "bar.pdb");
+    blob_refs[1] = make_pdb_ds_blob(12324, &guid1, 0x0030caff, "bar.pdb"); /* shall generate a mismatch */
+
+    for (i = 0; i < ARRAY_SIZE(module_details_tests); i++)
+    {
+        const struct module_details_test *test = module_details_tests + i;
+        const char* ptr;
+
+        winetest_push_context("module_test %d", i);
+
+        /* setup debug info files */
+        for (ptr = test->test_files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(filename, topdir, NULL, test_files[val].module_path);
+                if (test_files[val].guid)
+                    create_test_pdb_ds(filename, test_files[val].guid, test_files[val].age_or_timestamp);
+                else
+                    create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64 /* FIXME */, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+
+        /* set up image files (when needed) */
+        if (test->in_image_name && !wcscmp(test->in_image_name, L"bar.dll"))
+        {
+            make_path(filename, topdir, NULL, test->in_image_name);
+            if (test->blob_index >= 0)
+            {
+                ok(test->blob_index < ARRAY_SIZE(blob_refs), "Out of bounds blob %d\n", test->blob_index);
+                create_test_dll(&h, sizeof(h.nt_header64), &blob_refs[test->blob_index], 1, filename);
+            }
+            else
+                create_test_dll(&h, sizeof(h.nt_header64), NULL, 0, filename);
+        }
+
+        ret = SymInitializeW(dummy, topdir, FALSE);
+        ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+        SymSetOptions((SymGetOptions() & ~SYMOPT_DEFERRED_LOADS) | test->options);
+        base = SymLoadModuleExW(dummy, NULL,
+                                test->in_image_name, test->in_module_name,
+                                0x4000, 0x6666, NULL, test->flags);
+        todo_wine_if(i == 0 || i == 1)
+        ok(base == 0x4000, "SymLoadModuleExW failed: %lu\n", GetLastError());
+        ret = SymGetModuleInfoW64(dummy, base, &im);
+        todo_wine_if(i == 0 || i == 1)
+        ok(ret, "SymGetModuleInfow64 failed: %lu\n", GetLastError());
+        if (!ret) goto temp_bail_out;
+        if (test->in_image_name)
+        {
+            WCHAR *dot;
+            wcscpy_s(expected_module_name, ARRAY_SIZE(expected_module_name), test->in_image_name);
+            dot = wcsrchr(expected_module_name, L'.');
+            if (dot) *dot = L'\0';
+        }
+        else
+            expected_module_name[0] = L'\0';
+        todo_wine_if(i >= 2)
+        ok(!wcsicmp(im.ModuleName, expected_module_name), "Unexpected module name '%ls'\n", im.ModuleName);
+        ok(!wcsicmp(im.ImageName, test->in_image_name ? test->in_image_name : L""), "Unexpected image name '%ls'\n", im.ImageName);
+        if ((test->options & SYMOPT_DEFERRED_LOADS) || !test->in_image_name)
+            loaded_img_name = L"";
+        else if (!wcscmp(test->in_image_name, L"bar.dll"))
+        {
+            make_path(filename, topdir, NULL, L"bar.dll");
+            loaded_img_name = filename;
+        }
+        else
+            loaded_img_name = test->in_image_name;
+        todo_wine_if(test->options & SYMOPT_DEFERRED_LOADS)
+        ok(!wcsicmp(im.LoadedImageName, (test->options & SYMOPT_DEFERRED_LOADS) ? L"" : loaded_img_name),
+           "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
+        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 10 || i == 12 || i == 14)
+        ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
+        todo_wine_if(i == 8)
+        ok(!im.TypeInfo, "No type info present\n");
+        if (test->mismatch_in)
+        {
+            unsigned val;
+            if (has_mismatch(test->mismatch_in, '!', &val))
+            {
+                make_path(filename, topdir, NULL, L"bar.pdb");
+                todo_wine
+                ok(!wcscmp(filename, im.LoadedPdbName), "Unexpected value '%ls\n", im.LoadedPdbName);
+                todo_wine
+                ok(im.PdbUnmatched, "Unexpected value\n");
+                todo_wine
+                ok(im.PdbUnmatched, "Unexpected value\n");
+                ok(!im.DbgUnmatched, "Unexpected value\n");
+                todo_wine
+                ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
+                   wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
+                todo_wine
+                ok(im.PdbAge == test_files[val].age_or_timestamp, "Unexpected value\n");
+            }
+            else if (has_mismatch(test->mismatch_in, 'P', &val))
+            {
+                ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
+                ok(!im.PdbUnmatched, "Unexpected value\n");
+                ok(!im.DbgUnmatched, "Unexpected value\n");
+                todo_wine
+                ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
+                   wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
+                todo_wine
+                ok(im.PdbAge == test_files[val].age_or_timestamp + 1, "Unexpected value\n");
+            }
+            else if (has_mismatch(test->mismatch_in, 'D', &val))
+            {
+                ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
+                ok(!im.PdbUnmatched, "Unexpected value\n");
+                ok(!im.DbgUnmatched, "Unexpected value\n");
+            }
+        }
+        else
+        {
+            ok(!im.PdbUnmatched, "Unexpected value\n");
+            ok(!im.DbgUnmatched, "Unexpected value\n");
+        }
+        ok(im.ImageSize == 0x6666, "Unexpected image size\n");
+        memset(&md, 0, sizeof(md));
+        ret = SymEnumerateModulesW64(dummy, aggregate_module_details_cb, &md);
+        ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
+        ok(md.count == 1, "Unexpected module count %u\n", md.count);
+        todo_wine_if(i >= 2)
+        ok(!wcscmp(md.name, expected_module_name), "Unexpected module name %ls\n", md.name);
+        free(md.name);
+        /* native will fail loading symbol in deferred state, so force loading of debug symbols */
+        if (im.SymType == SymDeferred)
+        {
+             memset(sym, 0, sizeof(*sym));
+             sym->SizeOfStruct = sizeof(*sym);
+             sym->MaxNameLen = (sizeof(buffer) - sizeof(*sym)) / sizeof(WCHAR);
+             SymFromNameW(dummy, L"foo", sym);
+        }
+        ret = SymAddSymbol(dummy, base, "winetest_symbol_virtual", base + 4242, 13, 0);
+        ok(ret, "Failed to add symbol\n");
+        memset(sym, 0, sizeof(*sym));
+        sym->SizeOfStruct = sizeof(*sym);
+        sym->MaxNameLen = (sizeof(buffer) - sizeof(*sym)) / sizeof(WCHAR);
+
+        swprintf(sym_name, ARRAY_SIZE(sym_name), L"%ls!%s", im.ModuleName, L"winetest_symbol_virtual");
+        ret = SymFromNameW(dummy, sym_name, (void*)sym);
+        ok(ret, "Couldn't find symbol %ls\n", sym_name);
+        if (test->in_module_name)
+        {
+            swprintf(sym_name, ARRAY_SIZE(sym_name), L"%ls!%s", test->in_module_name, L"winetest_symbol_virtual");
+            ret = SymFromNameW(dummy, sym_name, (void*)sym);
+            ok(ret, "Couldn't find symbol %ls\n", sym_name);
+        }
+
+        ret = SymCleanup(dummy);
+        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+        for (ptr = test->test_files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(filename, topdir, NULL, test_files[val].module_path);
+                ret = DeleteFileW(filename);
+                ok(ret, "Couldn't delete file %c %ls\n", *ptr, filename);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+    temp_bail_out:
+        if (test->in_image_name && !wcscmp(test->in_image_name, L"bar.dll"))
+        {
+            make_path(filename, topdir, NULL, test->in_image_name);
+            ret = DeleteFileW(filename);
+            ok(ret, "Couldn't delete file %c %ls\n", *ptr, filename);
+        }
+
+        winetest_pop_context();
+    }
+    SymSetOptions(old_options);
+    for (i = 0; i < ARRAY_SIZE(blob_refs); i++) free(blob_refs[i]);
+    ret = RemoveDirectoryW(topdir);
+    ok(ret, "Couldn't remove directory\n");
+}
+
 static BOOL skip_too_old_dbghelp(void)
 {
     IMAGEHLP_MODULEW64 im64 = {sizeof(im64)};
@@ -1663,5 +1954,6 @@ START_TEST(path)
     else
     {
         test_load_modules_path();
+        test_load_modules_details();
     }
 }
