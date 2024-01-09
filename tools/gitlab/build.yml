@@ -9,12 +9,6 @@
   cache:
     - paths:
         - ccache/
-    - key:
-        files:
-          - configure.ac
-      paths:
-        - build32/config.cache
-        - build64/config.cache
   before_script:
     - export BASEDIR="$PWD"
     - export CCACHE_BASEDIR="$BASEDIR"
@@ -34,7 +28,15 @@ build-linux:
     expire_in: 1 day
     paths:
       - usr/local/
+  cache:
+    - key:
+        files:
+          - configure.ac
+      paths:
+        - build32/config.cache
+        - build64/config.cache
   script:
+    - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
     - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
       (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
@@ -43,7 +45,14 @@ build-clang:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  cache:
+    - key:
+        files:
+          - configure.ac
+      paths:
+        - build/config.cache
   script:
+    - mkdir -p build
     - ./tools/gitlab/build-clang
 
 build-mac:
@@ -52,12 +61,20 @@ build-mac:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   tags:
     - mac
+  cache:
+    - key:
+        files:
+          - configure.ac
+      paths:
+        - build32/config.cache
+        - build64/config.cache
   artifacts:
     when: on_failure
     paths:
       - build64/config.log
       - build32/config.log
   script:
+    - mkdir -p build32 build64
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 

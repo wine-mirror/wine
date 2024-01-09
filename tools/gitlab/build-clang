@@ -9,5 +9,7 @@ set -Eeuxo pipefail
 ./tools/make_makefiles
 autoreconf -f
 
-./configure -q --enable-archs=i386,x86_64,aarch64 --with-mingw=clang
+cd build
+../configure -q -C --enable-archs=i386,x86_64,aarch64 --with-mingw=clang
 make -s -j$(nproc)
+cd ..
