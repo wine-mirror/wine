@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
+#define TRAY_MINIMIZE_ALL 419
+
 struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 {
     LONG  hWnd;
@@ -1060,7 +1062,15 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
         break;
 
     case WM_COMMAND:
-        if (HIWORD(wparam) == BN_CLICKED) click_taskbar_button( (HWND)lparam );
+        if (HIWORD(wparam) == BN_CLICKED)
+        {
+            if (LOWORD(wparam) == TRAY_MINIMIZE_ALL)
+            {
+                FIXME( "Shell command %u is not supported.\n", LOWORD(wparam) );
+                break;
+            }
+            click_taskbar_button( (HWND)lparam );
+        }
         break;
 
     case WM_CONTEXTMENU:
