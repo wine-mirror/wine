@@ -1622,7 +1622,7 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
         {
             static const char hex_table[] = "0123456789abcdef";
             textUriList[next++] = '%';
-            textUriList[next++] = hex_table[unixFilename[u] >> 4];
+            textUriList[next++] = hex_table[(unsigned char)unixFilename[u] >> 4];
             textUriList[next++] = hex_table[unixFilename[u] & 0xf];
         }
         textUriList[next++] = '\r';
