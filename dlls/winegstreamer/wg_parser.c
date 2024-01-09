@@ -70,6 +70,7 @@ struct wg_parser
 
     guint64 file_size, start_offset, next_offset, stop_offset;
     guint64 next_pull_offset;
+    gchar *uri;
 
     pthread_t push_thread;
 
@@ -1548,11 +1549,21 @@ static NTSTATUS wg_parser_connect(void *args)
             GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
     const struct wg_parser_connect_params *params = args;
     struct wg_parser *parser = get_parser(params->parser);
+    const WCHAR *uri = params->uri;
     unsigned int i;
     int ret;
 
     parser->file_size = params->file_size;
     parser->sink_connected = true;
+    if (uri)
+    {
+        parser->uri = malloc(wcslen(uri) * 3 + 1);
+        ntdll_wcstoumbs(uri, wcslen(uri) + 1, parser->uri, wcslen(uri) * 3 + 1, FALSE);
+    }
+    else
+    {
+        parser->uri = NULL;
+    }
 
     if (!parser->bus)
     {
@@ -1818,6 +1829,7 @@ static NTSTATUS wg_parser_destroy(void *args)
     pthread_cond_destroy(&parser->read_cond);
     pthread_cond_destroy(&parser->read_done_cond);
 
+    free(parser->uri);
     free(parser);
     return S_OK;
 }

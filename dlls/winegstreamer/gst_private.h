@@ -52,7 +52,7 @@ void wg_sample_queue_flush(struct wg_sample_queue *queue, bool all);
 wg_parser_t wg_parser_create(bool output_compressed);
 void wg_parser_destroy(wg_parser_t parser);
 
-HRESULT wg_parser_connect(wg_parser_t parser, uint64_t file_size);
+HRESULT wg_parser_connect(wg_parser_t parser, uint64_t file_size, const WCHAR *uri);
 void wg_parser_disconnect(wg_parser_t parser);
 
 bool wg_parser_get_next_read_offset(wg_parser_t parser, uint64_t *offset, uint32_t *size);

@@ -1654,7 +1654,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
 
     object->state = SOURCE_OPENING;
 
-    if (FAILED(hr = wg_parser_connect(parser, object->file_size)))
+    if (FAILED(hr = wg_parser_connect(parser, object->file_size, context->url)))
         goto fail;
 
     stream_count = wg_parser_get_stream_count(parser);

@@ -1529,7 +1529,7 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
     filter->sink_connected = true;
     filter->read_thread = CreateThread(NULL, 0, read_thread, filter, 0, NULL);
 
-    if (FAILED(hr = wg_parser_connect(filter->wg_parser, file_size)))
+    if (FAILED(hr = wg_parser_connect(filter->wg_parser, file_size, NULL)))
         goto err;
 
     if (!filter->init_gst(filter))
