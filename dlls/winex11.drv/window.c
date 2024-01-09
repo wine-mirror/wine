@@ -747,9 +747,13 @@ static void set_mwm_hints( struct x11drv_win_data *data, UINT style, UINT ex_sty
 
     if (data->hwnd == NtUserGetDesktopWindow())
     {
-        if (is_desktop_fullscreen()) mwm_hints.decorations = 0;
-        else mwm_hints.decorations = MWM_DECOR_TITLE | MWM_DECOR_BORDER | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE;
         mwm_hints.functions        = MWM_FUNC_MOVE | MWM_FUNC_MINIMIZE | MWM_FUNC_CLOSE;
+        if (is_desktop_fullscreen())
+        {
+            mwm_hints.decorations = 0;
+            mwm_hints.functions |= MWM_FUNC_RESIZE;  /* some WMs need this to make it fullscreen */
+        }
+        else mwm_hints.decorations = MWM_DECOR_TITLE | MWM_DECOR_BORDER | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE;
     }
     else
     {
