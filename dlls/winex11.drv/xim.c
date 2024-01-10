@@ -555,7 +555,7 @@ UINT X11DRV_ImeToAsciiEx( UINT vkey, UINT lparam, const BYTE *state, COMPOSITION
     if (!(update = find_ime_update( lparam )))
     {
         pthread_mutex_unlock( &ime_mutex );
-        return 0;
+        return STATUS_NOT_FOUND;
     }
 
     if (!update->comp_str) comp_len = 0;
