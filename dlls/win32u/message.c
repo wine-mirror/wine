@@ -2397,7 +2397,7 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     }
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
 
-    if (remove && msg->message == WM_KEYDOWN)
+    if (remove && (msg->message == WM_KEYDOWN || msg->message == WM_KEYUP))
         if (ImmProcessKey( msg->hwnd, NtUserGetKeyboardLayout(0), msg->wParam, msg->lParam, 0 ))
             msg->wParam = VK_PROCESSKEY;
 
@@ -4399,6 +4399,11 @@ BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
     if (flags) FIXME( "unsupported flags %x\n", flags );
 
     if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
+    if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
+    {
+        if (msg->wParam != VK_PROCESSKEY) return TRUE;
+        return ImmTranslateMessage( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+    }
     if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
 
     TRACE_(key)( "Translating key %s (%04x), scancode %04x\n",

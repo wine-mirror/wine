@@ -7246,7 +7246,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     keybd_event( 'Q', 0x10, KEYEVENTF_KEYUP, 0 );
     flush_events();
     process_messages_( hwnd );
-    todo_wine ok_seq( key_up_seq );
+    ok_seq( key_up_seq );
 
     ignore_WM_IME_NOTIFY = FALSE;
 
