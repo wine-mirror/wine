@@ -1126,16 +1126,34 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
 
     if (gl_info->supported[ARB_BUFFER_STORAGE])
     {
-        if (use_buffer_chunk_suballocation(device_gl, gl_info, binding))
+        /* Only suballocate dynamic buffers.
+         *
+         * We only need suballocation so that we can allocate GL buffers from
+         * the client thread and thereby accelerate DISCARD maps.
+         *
+         * For other buffer types, suballocating means that a whole-buffer
+         * upload won't be replacing the whole buffer anymore. If the driver
+         * isn't smart enough to track individual buffer ranges then it'll
+         * force synchronizing that BO with the GPU. Even using ARB_sync
+         * ourselves won't help here, because glBufferSubData() is still
+         * implicitly synchronized. */
+        if (flags & GL_CLIENT_STORAGE_BIT)
         {
-            if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
-                buffer_offset = memory->offset;
-            else if (!context_gl)
-                WARN_(d3d_perf)("Failed to suballocate buffer from the client thread.\n");
+            if (use_buffer_chunk_suballocation(device_gl, gl_info, binding))
+            {
+                if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
+                    buffer_offset = memory->offset;
+                else if (!context_gl)
+                    WARN_(d3d_perf)("Failed to suballocate buffer from the client thread.\n");
+            }
+            else if (context_gl)
+            {
+                WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
+                id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
+            }
         }
-        else if (context_gl)
+        else
         {
-            WARN_(d3d_perf)("Not allocating chunk memory for binding type %#x.\n", binding);
             id = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type_idx, size);
         }
 
