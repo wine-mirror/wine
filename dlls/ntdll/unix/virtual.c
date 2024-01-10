@@ -5466,6 +5466,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
 #endif
 
+    if (alloc_type & MEM_REPLACE_PLACEHOLDER)
+        mask = page_mask;
+
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_MAPPED_ALIGNMENT;
 
@@ -5534,6 +5537,9 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
         mask = page_mask;
     }
 #endif
+
+    if (alloc_type & MEM_REPLACE_PLACEHOLDER)
+        mask = page_mask;
 
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_MAPPED_ALIGNMENT;
