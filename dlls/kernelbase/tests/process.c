@@ -106,6 +106,11 @@ static void test_MapViewOfFile3(void)
     HANDLE file, mapping;
     void *ptr;
     BOOL ret;
+    SYSTEM_INFO system_info;
+    size_t file_size = 1024 * 1024;
+    void *allocation;
+    void *map_start, *map_end, *map_start_offset;
+    void *view;
 
     if (!pMapViewOfFile3)
     {
@@ -132,6 +137,83 @@ static void test_MapViewOfFile3(void)
     CloseHandle( file );
     ret = DeleteFileA( testfile );
     ok(ret, "Failed to delete a test file.\n");
+
+    /* Tests for using MapViewOfFile3 together with MEM_RESERVE_PLACEHOLDER/MEM_REPLACE_PLACEHOLDER */
+    /* like self pe-loading programs do (e.g. .net pe-loader). */
+    /* With MEM_REPLACE_PLACEHOLDER, MapViewOfFile3/NtMapViewOfSection(Ex) shall relax alignment from 64k to pagesize */
+    GetSystemInfo(&system_info);
+    mapping = CreateFileMappingA(NULL, NULL, PAGE_READWRITE, 0, (DWORD)file_size, NULL);
+    ok(mapping != NULL, "CreateFileMapping did not return a handle %lu\n", GetLastError());
+
+    allocation = pVirtualAlloc2(GetCurrentProcess(), NULL, file_size,
+                                MEM_RESERVE | MEM_RESERVE_PLACEHOLDER, PAGE_NOACCESS, NULL, 0);
+    ok(allocation != NULL, "VirtualAlloc2 returned NULL %lu\n", GetLastError());
+
+    map_start = (void*)((ULONG_PTR)allocation + system_info.dwPageSize);
+    map_end = (void*)((ULONG_PTR)map_start + system_info.dwPageSize);
+    ret = VirtualFree(map_start, system_info.dwPageSize, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+    ok(ret, "VirtualFree failed to split the placeholder %lu\n", GetLastError());
+
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_start, system_info.dwPageSize,
+                           system_info.dwPageSize, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
+    ok(view != NULL, "MapViewOfFile3 did not map the file mapping %lu\n", GetLastError());
+
+    ret = UnmapViewOfFile(view);
+    ok(ret, "UnmapViewOfFile failed %lu\n", GetLastError());
+
+    map_start_offset = (void*)((ULONG_PTR)map_start - 1);
+    SetLastError(0xdeadbeef);
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_start_offset, system_info.dwPageSize,
+                           system_info.dwPageSize, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
+    ok(view == NULL, "MapViewOfFile3 did map the file mapping, though baseaddr was not pagesize aligned\n");
+    ok(GetLastError() == ERROR_MAPPED_ALIGNMENT, "MapViewOfFile3 did not return ERROR_MAPPED_ALIGNMENT(%u), instead it returned %lu\n",
+       ERROR_MAPPED_ALIGNMENT, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_start, system_info.dwPageSize-1,
+                           system_info.dwPageSize, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
+    ok(view == NULL, "MapViewOfFile3 did map the file mapping, though offset was not pagesize aligned\n");
+    ok(GetLastError() == ERROR_MAPPED_ALIGNMENT,
+       "MapViewOfFile3 did not return ERROR_MAPPED_ALIGNMENT(%u), instead it returned %lu\n",
+       ERROR_MAPPED_ALIGNMENT, GetLastError());
+
+    ret = VirtualFree(allocation, 0, MEM_RELEASE);
+    ok(ret, "VirtualFree of first remaining region failed: %lu\n", GetLastError());
+
+    ret = VirtualFree(map_end, 0, MEM_RELEASE);
+    ok(ret, "VirtualFree of remaining region failed: %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_end, system_info.dwPageSize, 0, 0, PAGE_READWRITE, NULL, 0);
+    ok(view == NULL, "MapViewOfFile3 did map the file mapping, though baseaddr was not 64k aligned\n");
+    ok(GetLastError() == ERROR_MAPPED_ALIGNMENT,
+       "MapViewOfFile3 did not return ERROR_MAPPED_ALIGNMENT(%u), instead it returned %lu\n",
+       ERROR_MAPPED_ALIGNMENT, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    map_start = (void*)(((ULONG_PTR)allocation + system_info.dwAllocationGranularity) & ~((ULONG_PTR)system_info.dwAllocationGranularity-1));
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_end,
+                           system_info.dwPageSize, system_info.dwPageSize, 0, PAGE_READWRITE, NULL, 0);
+    ok(view == NULL, "MapViewOfFile3 did map the file mapping, though offset was not 64k aligned\n");
+    ok(GetLastError() == ERROR_MAPPED_ALIGNMENT,
+       "MapViewOfFile3 did not return ERROR_MAPPED_ALIGNMENT(%u), instead it returned %lu\n",
+       ERROR_MAPPED_ALIGNMENT, GetLastError());
+
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_start, 0,
+                           system_info.dwPageSize, 0, PAGE_READWRITE, NULL, 0);
+    ok(view != NULL, "MapViewOfFile3 failed though both baseaddr and offset were 64k aligned %lu\n", GetLastError());
+
+    ret = UnmapViewOfFile(view);
+    ok(ret, "UnmapViewOfFile failed %lu\n", GetLastError());
+
+    view = pMapViewOfFile3(mapping, GetCurrentProcess(), map_start,
+                           4*system_info.dwAllocationGranularity, system_info.dwPageSize, 0, PAGE_READWRITE, NULL, 0);
+    ok(view != NULL, "MapViewOfFile3 failed though both baseaddr and offset were 64k aligned %lu\n", GetLastError());
+
+    ret = UnmapViewOfFile(view);
+    ok(ret, "UnmapViewOfFile failed %lu\n", GetLastError());
+
+    ok(CloseHandle(mapping), "CloseHandle failed on mapping\n");
 }
 
 #define check_region_size(p, s) check_region_size_(p, s, __LINE__)
