@@ -7087,6 +7087,30 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
         },
         {0},
     };
+    struct ime_call key_down_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(1, 0x10)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = kbd_char_first ? MAKELONG('Q', 'q') : 'Q', .vsc = 0x10},
+        },
+        {0},
+    };
+    struct ime_call key_up_seq[] =
+    {
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_PROCESS_KEY,
+            .process_key = {.vkey = 'Q', .lparam = MAKELONG(1, 0xc010)},
+        },
+        {
+            .hkl = expect_ime, .himc = 0/*himc*/, .func = IME_TO_ASCII_EX,
+            .to_ascii_ex = {.vkey = 'Q', .vsc = 0xc010},
+        },
+        {0},
+    };
     struct ime_call post_messages[] =
     {
         {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1}},
@@ -7169,6 +7193,8 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     for (i = 0; i < ARRAY_SIZE(to_ascii_ex_3); i++) to_ascii_ex_3[i].himc = himc;
     for (i = 0; i < ARRAY_SIZE(post_messages); i++) post_messages[i].himc = himc;
     for (i = 0; i < ARRAY_SIZE(sent_messages); i++) sent_messages[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(key_down_seq); i++) key_down_seq[i].himc = himc;
+    for (i = 0; i < ARRAY_SIZE(key_up_seq); i++) key_up_seq[i].himc = himc;
     memset( ime_calls, 0, sizeof(ime_calls) );
     ime_call_count = 0;
 
@@ -7208,6 +7234,22 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     ok_seq( post_messages );
     ok_ret( 1, ImmGenerateMessage( himc ) );
     ok_seq( empty_sequence );
+
+
+    ignore_WM_IME_NOTIFY = TRUE;
+
+    keybd_event( 'Q', 0x10, 0, 0 );
+    flush_events();
+    process_messages_( hwnd );
+    ok_seq( key_down_seq );
+
+    keybd_event( 'Q', 0x10, KEYEVENTF_KEYUP, 0 );
+    flush_events();
+    process_messages_( hwnd );
+    todo_wine ok_seq( key_up_seq );
+
+    ignore_WM_IME_NOTIFY = FALSE;
+
 
     ok_ret( 1, ImmUnlockIMC( himc ) );
     ok_ret( 1, ImmDestroyContext( himc ) );
