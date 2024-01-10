@@ -1095,7 +1095,7 @@ void manage_desktop( WCHAR *arg )
         DEVMODEW devmode = {.dmPelsWidth = width, .dmPelsHeight = height};
         /* magic: desktop "root" means use the root window */
         if ((using_root = !wcsicmp( name, L"root" ))) desktop = CreateDesktopW( name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
-        else desktop = CreateDesktopW( name, NULL, &devmode, DF_WINE_CREATE_DESKTOP, DESKTOP_ALL_ACCESS, NULL );
+        else desktop = CreateDesktopW( name, NULL, &devmode, DF_WINE_VIRTUAL_DESKTOP, DESKTOP_ALL_ACCESS, NULL );
         if (!desktop)
         {
             ERR( "failed to create desktop %s error %ld\n", debugstr_w(name), GetLastError() );
