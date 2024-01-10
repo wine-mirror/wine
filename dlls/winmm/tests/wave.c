@@ -1409,6 +1409,36 @@ static void wave_out_test_device(UINT_PTR device)
         trace("waveOutOpen(%s): 32 bit float samples not supported\n",
               dev_name(device));
 
+    /* Test if waveOutGetID() returns expected device */
+
+    format.wFormatTag=WAVE_FORMAT_PCM;
+    format.nChannels=1;
+    format.wBitsPerSample=8;
+    format.nSamplesPerSec=22050;
+    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+    format.cbSize=0;
+
+    rc = waveOutOpen(&wout, device, &format, 0, 0, 0);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        rc = waveOutGetID(wout, &f);
+        ok(rc==MMSYSERR_NOERROR ||
+           rc==MMSYSERR_INVALHANDLE || rc==MMSYSERR_INVALPARAM,
+           "waveOutGetID(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+        if (rc==MMSYSERR_NOERROR) {
+           ok(f==(UINT)device,
+              "waveOutGetID(%s): wrong id device, got %d expected %d\n",
+              dev_name(device),f,(int)device);
+        } else
+            trace("waveOutGetID(%s): cannot get device id\n",
+                  dev_name(device));
+    } else
+        trace("waveOutOpen(%s): cannot test waveOutGetID()\n",
+              dev_name(device));
+
     /* Test invalid parameters */
 
     format.wFormatTag = WAVE_FORMAT_PCM;

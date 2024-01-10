@@ -3159,6 +3159,9 @@ UINT WINAPI waveOutGetID(HWAVEOUT hWaveOut, UINT* lpuDeviceID)
 
     WINMM_DecomposeHWAVE((HWAVE)hWaveOut, lpuDeviceID, &is_out, &dev, &junk);
 
+    if (*lpuDeviceID == MAPPER_INDEX)
+        *lpuDeviceID = WAVE_MAPPER;
+
     return MMSYSERR_NOERROR;
 }
 
