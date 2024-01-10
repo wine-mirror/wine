@@ -243,7 +243,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
         }
         else
         {
-            desktop->flags |= (flags & DF_WINE_CREATE_DESKTOP);
+            desktop->flags |= (flags & DF_WINE_VIRTUAL_DESKTOP);
             clear_error();
         }
     }
