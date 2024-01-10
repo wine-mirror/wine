@@ -1874,7 +1874,7 @@ static void test_pnp_driver(struct testsign_context *ctx)
     GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
     ret = SetupCopyOEMInfA(path, NULL, 0, 0, dest, sizeof(dest), NULL, &filepart);
     ok(ret, "Failed to copy INF, error %#lx\n", GetLastError());
-    ret = SetupUninstallOEMInfA(filepart, 0, NULL);
+    ret = SetupUninstallOEMInfA(filepart, SUOI_FORCEDELETE, NULL);
     ok(ret, "Failed to uninstall INF, error %lu\n", GetLastError());
 
     ret = DeleteFileA("winetest.cat");
