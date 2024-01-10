@@ -654,13 +654,13 @@ static NTSTATUS acquire_credentials_handle( void *args )
         cred_usage = GSS_C_ACCEPT;
         break;
 
+    case SECPKG_CRED_BOTH:
     case SECPKG_CRED_OUTBOUND:
         if ((status = init_creds( params->username, params->password )) != STATUS_SUCCESS) return status;
-        cred_usage = GSS_C_INITIATE;
+        cred_usage = params->credential_use == SECPKG_CRED_OUTBOUND ? GSS_C_INITIATE : GSS_C_BOTH;
         break;
 
     default:
-        FIXME( "SECPKG_CRED_BOTH not supported\n" );
         return SEC_E_UNKNOWN_CREDENTIALS;
     }
 
