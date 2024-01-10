@@ -169,6 +169,12 @@ static void test_ldap_bind_sA( void )
     }
 
     ret = ldap_connect( ld, NULL );
+    if (ret == LDAP_SERVER_DOWN)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
     ok( !ret, "ldap_connect failed %#lx\n", ret );
 
     ret = ldap_bind_sA( ld, (char *)"uid=winetest,ou=users,dc=debian,dc=org", (char *)"winetest",
@@ -511,6 +517,12 @@ static void test_opt_ssl(void)
     ret = ldap_set_optionA( ld, LDAP_OPT_SSL, LDAP_OPT_ON );
     ok( !ret, "ldap_set_optionA should succeed, got %#lx\n", ret );
     ret = ldap_simple_bind_sA( ld, NULL, NULL );
+    if (ret == LDAP_SERVER_DOWN)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
     todo_wine ok( ret == LDAP_PROTOCOL_ERROR, "ldap_simple_bind_sA should fail, got %#lx\n", ret );
     ldap_unbind( ld );
 
