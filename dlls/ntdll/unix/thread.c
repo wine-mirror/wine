@@ -1911,30 +1911,21 @@ static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
         close( fd );
     }
 #elif defined(__APPLE__)
-    /* pthread_setname_np() silently fails if the name is longer than 63 characters + null terminator */
-    char nameA[64];
-    NTSTATUS status;
-    int unix_pid, unix_tid, len, current_tid;
+    char nameA[MAXTHREADNAMESIZE];
+    int len;
+    THREAD_BASIC_INFORMATION info;
 
-    SERVER_START_REQ( get_thread_times )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        status = wine_server_call( req );
-        if (status == STATUS_SUCCESS)
-        {
-            unix_pid = reply->unix_pid;
-            unix_tid = reply->unix_tid;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (status != STATUS_SUCCESS || unix_pid == -1 || unix_tid == -1)
+    if (NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
         return;
 
-    current_tid = mach_thread_self();
-    mach_port_deallocate(mach_task_self(), current_tid);
+    if (HandleToULong( info.ClientId.UniqueProcess ) != GetCurrentProcessId())
+    {
+        static int once;
+        if (!once++) FIXME("cross-process native thread naming not supported\n");
+        return;
+    }
 
-    if (unix_tid != current_tid)
+    if (HandleToULong( info.ClientId.UniqueThread ) != GetCurrentThreadId())
     {
         static int once;
         if (!once++) FIXME("setting other thread name not supported\n");
@@ -1943,7 +1934,7 @@ static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
 
     len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA) - 1, FALSE );
     nameA[len] = '\0';
-    pthread_setname_np(nameA);
+    pthread_setname_np( nameA );
 #else
     static int once;
     if (!once++) FIXME("not implemented on this platform\n");
