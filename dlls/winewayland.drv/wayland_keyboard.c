@@ -404,10 +404,10 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
 
     switch (lang)
     {
-    case MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT): scan2vk = scan2vk_azerty;
-    case MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT): scan2vk = scan2vk_qwertz;
-    case MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS): scan2vk = scan2vk_qwertz;
-    default: scan2vk = scan2vk_qwerty;
+    case MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT): scan2vk = scan2vk_azerty; break;
+    case MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT): scan2vk = scan2vk_qwertz; break;
+    case MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS): scan2vk = scan2vk_qwertz; break;
+    default: scan2vk = scan2vk_qwerty; break;
     }
     if (strstr(xkb_layout, "dvorak")) scan2vk = scan2vk_dvorak;
 
