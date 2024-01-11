@@ -134,7 +134,7 @@ static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param
     input.hi.uMsg = WM_INPUT_DEVICE_CHANGE;
     input.hi.wParamH = 0;
     input.hi.wParamL = 0;
-    __wine_send_input(0, &input, &rawinput);
+    NtUserSendHardwareInput(0, 0, &input, (LPARAM)&rawinput);
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)

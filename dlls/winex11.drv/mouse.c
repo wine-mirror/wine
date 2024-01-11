@@ -524,7 +524,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     {
         struct x11drv_thread_data *thread_data = x11drv_thread_data();
         if (!thread_data->clipping_cursor || thread_data->clip_window != window) return;
-        __wine_send_input( hwnd, input, NULL );
+        NtUserSendHardwareInput( hwnd, 0, input, 0 );
         return;
     }
 
@@ -551,7 +551,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         SERVER_END_REQ;
     }
 
-    __wine_send_input( hwnd, input, NULL );
+    NtUserSendHardwareInput( hwnd, 0, input, 0 );
 }
 
 #ifdef SONAME_LIBXCURSOR
@@ -1494,7 +1494,7 @@ void move_resize_window( HWND hwnd, int dir )
             input.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
             input.mi.time        = NtGetTickCount();
             input.mi.dwExtraInfo = 0;
-            __wine_send_input( hwnd, &input, NULL );
+            NtUserSendHardwareInput( hwnd, 0, &input, 0 );
         }
 
         while (NtUserPeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
@@ -1722,7 +1722,7 @@ static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
     input.mi.dy          = 0;
     if (!map_raw_event_coords( event, &input )) return FALSE;
 
-    __wine_send_input( 0, &input, NULL );
+    NtUserSendHardwareInput( 0, 0, &input, 0 );
     return TRUE;
 }
 

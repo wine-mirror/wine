@@ -158,7 +158,7 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
     input.mi.time           = time;
     input.mi.dwExtraInfo    = 0;
 
-    __wine_send_input(top_level_hwnd, &input, NULL);
+    NtUserSendHardwareInput(top_level_hwnd, 0, &input, 0);
 }
 
 

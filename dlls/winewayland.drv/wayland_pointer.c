@@ -86,7 +86,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
           hwnd, wl_fixed_to_double(sx), wl_fixed_to_double(sy),
           (int)screen.x, (int)screen.y);
 
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static void pointer_handle_motion(void *data, struct wl_pointer *wl_pointer,
@@ -185,7 +185,7 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
 
     TRACE("hwnd=%p button=%#x state=%u\n", hwnd, button, state);
 
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static void pointer_handle_axis(void *data, struct wl_pointer *wl_pointer,
@@ -232,7 +232,7 @@ static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_point
 
     TRACE("hwnd=%p axis=%u discrete=%d\n", hwnd, axis, discrete);
 
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static const struct wl_pointer_listener pointer_listener =
@@ -317,7 +317,7 @@ static void relative_pointer_v1_relative_motion(void *data,
           hwnd, wl_fixed_to_double(dx), wl_fixed_to_double(dy),
           (int)screen.x, (int)screen.y);
 
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static const struct zwp_relative_pointer_v1_listener relative_pointer_v1_listener =

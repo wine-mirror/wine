@@ -1001,7 +1001,7 @@ static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, unsigned
     input.ki.time           = time;
     input.ki.dwExtraInfo    = 0;
 
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 

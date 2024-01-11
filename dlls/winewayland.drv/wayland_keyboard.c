@@ -642,7 +642,7 @@ static void release_all_keys(HWND hwnd)
             input.ki.wScan = scan & 0xff;
             input.ki.dwFlags = KEYEVENTF_KEYUP;
             if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-            __wine_send_input(hwnd, &input, NULL);
+            NtUserSendHardwareInput(hwnd, 0, &input, 0);
         }
     }
 }
@@ -805,7 +805,7 @@ static void send_right_control(HWND hwnd, uint32_t state)
     input.ki.wVk = VK_RCONTROL;
     input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
@@ -829,7 +829,7 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
     if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
     if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;
-    __wine_send_input(hwnd, &input, NULL);
+    NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
 
 static void keyboard_handle_modifiers(void *data, struct wl_keyboard *wl_keyboard,

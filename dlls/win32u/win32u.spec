@@ -1322,4 +1322,3 @@
 
 @ stdcall -syscall __wine_get_icm_profile(long long ptr ptr)
 @ stdcall -syscall __wine_get_file_outline_text_metric(wstr ptr ptr ptr)
-@ stdcall -syscall __wine_send_input(long ptr ptr)

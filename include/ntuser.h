@@ -1236,6 +1236,7 @@ enum
     NtUserCallHwndParam_SetMDIClientInfo,
     NtUserCallHwndParam_SetWindowContextHelpId,
     NtUserCallHwndParam_ShowOwnedPopups,
+    NtUserCallHwndParam_SendHardwareInput,
     /* temporary exports */
     NtUserSetWindowStyle,
 };
@@ -1406,7 +1407,17 @@ static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )
     return NtUserCallHwndParam( hwnd, show, NtUserCallHwndParam_ShowOwnedPopups );
 }
 
-/* Wine extensions */
-W32KAPI BOOL WINAPI __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
+struct send_hardware_input_params
+{
+    UINT flags;
+    const INPUT *input;
+    LPARAM lparam;  /* RAWINPUT pointer for WM_INPUT* messages */
+};
+
+static inline BOOL NtUserSendHardwareInput( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
+{
+    struct send_hardware_input_params params = {.flags = flags, .input = input, .lparam = lparam};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SendHardwareInput );
+}
 
 #endif /* _NTUSER_ */

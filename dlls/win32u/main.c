@@ -2163,11 +2163,6 @@ BOOL SYSCALL_API __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *siz
     SYSCALL_FUNC( __wine_get_icm_profile );
 }
 
-BOOL SYSCALL_API __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
-{
-    SYSCALL_FUNC( __wine_send_input );
-}
-
 #else /*  __arm64ec__ */
 
 #ifdef _WIN64

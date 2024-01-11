@@ -3482,7 +3482,7 @@ LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
 /***********************************************************************
  *		send_hardware_message
  */
-NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput, UINT flags )
+NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )
 {
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
@@ -3500,18 +3500,22 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
     if (input->type == INPUT_MOUSE && (input->mi.dwFlags & (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_RIGHTDOWN)))
         clip_fullscreen_window( hwnd, FALSE );
 
-    if (input->type == INPUT_HARDWARE && rawinput->header.dwType == RIM_TYPEHID)
+    if (input->type == INPUT_HARDWARE)
     {
         if (input->hi.uMsg == WM_INPUT_DEVICE_CHANGE)
         {
+            const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
             hid_usage_page = ((USAGE *)rawinput->data.hid.bRawData)[0];
             hid_usage = ((USAGE *)rawinput->data.hid.bRawData)[1];
         }
-        if (input->hi.uMsg == WM_INPUT &&
-            !rawinput_device_get_usages( rawinput->header.hDevice, &hid_usage_page, &hid_usage ))
+        if (input->hi.uMsg == WM_INPUT)
         {
-            WARN( "unable to get HID usages for device %p\n", rawinput->header.hDevice );
-            return STATUS_INVALID_HANDLE;
+            const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
+            if (!rawinput_device_get_usages( rawinput->header.hDevice, &hid_usage_page, &hid_usage ))
+            {
+                WARN( "unable to get HID usages for device %p\n", rawinput->header.hDevice );
+                return STATUS_INVALID_HANDLE;
+            }
         }
     }
 
@@ -3549,6 +3553,8 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             {
             case WM_INPUT:
             case WM_INPUT_DEVICE_CHANGE:
+            {
+                const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
                 switch (rawinput->header.dwType)
                 {
                 case RIM_TYPEHID:
@@ -3564,6 +3570,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
                     assert( 0 );
                     break;
                 }
+            }
             }
             break;
         }

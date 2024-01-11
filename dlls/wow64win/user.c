@@ -1710,6 +1710,22 @@ NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
             return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
         }
 
+    case NtUserCallHwndParam_SendHardwareInput:
+        {
+            struct
+            {
+                UINT flags;
+                ULONG input;
+                ULONG lparam;
+            } *params32 = UlongToPtr( param );
+            struct send_hardware_input_params params;
+
+            params.flags = params32->flags;
+            params.input = UlongToPtr( params32->input );
+            params.lparam = params32->lparam;
+            return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
+        }
+
     default:
         return NtUserCallHwndParam( hwnd, param, code );
     }
@@ -4874,10 +4890,4 @@ NTSTATUS WINAPI wow64_NtUserDisplayConfigGetDeviceInfo( UINT *args )
     DISPLAYCONFIG_DEVICE_INFO_HEADER *packet = get_ptr( &args );
 
     return NtUserDisplayConfigGetDeviceInfo( packet );
-}
-
-NTSTATUS WINAPI wow64___wine_send_input( UINT *args )
-{
-    ERR( "not supported\n" );
-    return 0;
 }
