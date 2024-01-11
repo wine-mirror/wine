@@ -3247,6 +3247,7 @@ done:
     if (FAILED(hr))
     {
         free(geometry->fill.bezier_vertices);
+        geometry->fill.bezier_vertices = NULL;
         geometry->fill.bezier_vertex_count = 0;
         d2d_path_geometry_free_figures(geometry);
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
