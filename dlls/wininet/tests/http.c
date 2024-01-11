@@ -6716,16 +6716,11 @@ typedef struct {
 } cert_struct_test_t;
 
 static const cert_struct_test_t test_winehq_org_cert = {
-    "US\r\n"
-    "Minnesota\r\n"
-    "CodeWeavers\r\n"
-    "*.winehq.org",
+    "winehq.org",
 
     "US\r\n"
-    "VA\r\n"
-    "Herndon\r\n"
-    "Network Solutions L.L.C.\r\n"
-    "Network Solutions OV Server CA 2"
+    "Let's Encrypt\r\n"
+    "R3"
 };
 
 static const cert_struct_test_t test_winehq_com_cert = {
