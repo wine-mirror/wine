@@ -99,39 +99,6 @@ BOOL is_desktop_fullscreen(void)
             primary_rect.bottom - primary_rect.top == host_primary_rect.bottom - host_primary_rect.top);
 }
 
-static void update_desktop_fullscreen( unsigned int width, unsigned int height)
-{
-    Display *display = thread_display();
-    XEvent xev;
-
-    if (!display || !is_virtual_desktop()) return;
-
-    xev.xclient.type = ClientMessage;
-    xev.xclient.window = root_window;
-    xev.xclient.message_type = x11drv_atom(_NET_WM_STATE);
-    xev.xclient.serial = 0;
-    xev.xclient.display = display;
-    xev.xclient.send_event = True;
-    xev.xclient.format = 32;
-    if (width == host_primary_rect.right - host_primary_rect.left && height == host_primary_rect.bottom - host_primary_rect.top)
-        xev.xclient.data.l[0] = _NET_WM_STATE_ADD;
-    else
-        xev.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
-    xev.xclient.data.l[1] = x11drv_atom(_NET_WM_STATE_FULLSCREEN);
-    xev.xclient.data.l[2] = 0;
-    xev.xclient.data.l[3] = 1;
-
-    TRACE("action=%li\n", xev.xclient.data.l[0]);
-
-    XSendEvent( display, DefaultRootWindow(display), False,
-                SubstructureRedirectMask | SubstructureNotifyMask, &xev );
-
-    xev.xclient.data.l[1] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_VERT);
-    xev.xclient.data.l[2] = x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ);
-    XSendEvent( display, DefaultRootWindow(display), False,
-                SubstructureRedirectMask | SubstructureNotifyMask, &xev );
-}
-
 /***********************************************************************
  *		X11DRV_resize_desktop
  */
@@ -139,20 +106,13 @@ void X11DRV_resize_desktop(void)
 {
     static RECT old_virtual_rect;
 
-    RECT primary_rect, virtual_rect;
+    RECT virtual_rect = NtUserGetVirtualScreenRect();
     HWND hwnd = NtUserGetDesktopWindow();
-    INT width, height;
-
-    virtual_rect = NtUserGetVirtualScreenRect();
-    primary_rect = NtUserGetPrimaryMonitorRect();
-    width = primary_rect.right;
-    height = primary_rect.bottom;
+    INT width = virtual_rect.right - virtual_rect.left, height = virtual_rect.bottom - virtual_rect.top;
 
     TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
-    NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
-                        virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
+    NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top, width, height,
                         SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-    update_desktop_fullscreen( width, height );
 
     if (old_virtual_rect.left != virtual_rect.left || old_virtual_rect.top != virtual_rect.top)
         send_message_timeout( HWND_BROADCAST, WM_X11DRV_DESKTOP_RESIZED, old_virtual_rect.left,
