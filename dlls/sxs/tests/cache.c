@@ -47,16 +47,13 @@ static void test_QueryAssemblyInfo( void )
     ok( hr == E_INVALIDARG, "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, L"wine", NULL );
-    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == E_INVALIDARG) /* winxp */, "got %08lx\n", hr );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ), "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, L"wine,version=\"1.2.3.4\"", NULL );
-    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08lx\n", hr );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ), "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, L"wine,version=\"1.2.3.4\",type=\"win32\"", NULL );
-    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ) ||
-        broken(hr == HRESULT_FROM_WIN32( ERROR_NOT_FOUND )) /* winxp */, "got %08lx\n", hr );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_SXS_MISSING_ASSEMBLY_IDENTITY_ATTRIBUTE ), "got %08lx\n", hr );
 
     hr = IAssemblyCache_QueryAssemblyInfo( cache, 0, L"wine,version=\"1.2.3.4\",type=\"win32\",processorArchitecture=\"x86\"",
                                            NULL );
