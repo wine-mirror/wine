@@ -5386,6 +5386,21 @@ static void test_ClipCursor( char **argv )
     if (!EqualRect( &rect, &virtual_rect )) ok_ret( 1, ClipCursor( NULL ) );
 }
 
+/* run the tests in a separate desktop to avoid interaction with other
+ * tests, current desktop state, or user actions. */
+static void test_input_desktop( char **argv )
+{
+    POINT pos;
+
+    ok_ret( 1, GetCursorPos( &pos ) );
+
+    test_SendInput();
+    test_Input_blackbox();
+    test_Input_whitebox();
+
+    ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -5408,10 +5423,10 @@ START_TEST(input)
         return test_ClipCursor_process();
     if (argc >= 3 && !strcmp( argv[2], "test_ClipCursor_desktop" ))
         return test_ClipCursor_desktop( argv );
+    if (argc >= 3 && !strcmp( argv[2], "test_input_desktop" ))
+        return test_input_desktop( argv );
 
-    test_SendInput();
-    test_Input_blackbox();
-    test_Input_whitebox();
+    run_in_desktop( argv, "test_input_desktop", 1 );
     test_Input_unicode();
     test_Input_mouse();
     test_keynames();
