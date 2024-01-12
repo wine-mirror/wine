@@ -840,6 +840,22 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_test rshift_scan[] =
+    {
+        {.scan = 0x36, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
+         .todo_state = {[0] = TRUE, [VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x36, VK_RSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0x36, VK_SHIFT, .todo_value = TRUE), {0}}},
+        {.scan = scan, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80, /*[vkey] = 0x80*/},
+         .todo_state = {[0] = TRUE, [VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE, /*[vkey] = TRUE*/},
+         .expect = {KEY_HOOK(WM_KEYDOWN, scan, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, scan, vkey, .todo_value = TRUE), WIN_MSG(WM_CHAR, wch_shift, MAKELONG(1, scan), .todo = TRUE), {0}}},
+        {.scan = scan, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
+         .todo_state = {[VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE},
+         .expect = {KEY_HOOK(WM_KEYUP, scan, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYUP, scan, vkey, .todo_value = TRUE), {0}}},
+        {.scan = 0x36, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 0x36, VK_RSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0x36, VK_SHIFT, .todo_value = TRUE), {0}}},
+        {0},
+    };
+
 #undef WIN_MSG
 #undef KBD_HOOK
 #undef KEY_HOOK_
@@ -872,6 +888,8 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     lcontrol_vkey[1].expect_state[vkey] = 0x80;
     lmenu_lcontrol_vkey[2].expect_state[vkey] = 0x80;
     shift_vkey[1].expect_state[vkey] = 0x80;
+    rshift_scan[1].expect_state[vkey] = 0x80;
+    rshift_scan[1].todo_state[vkey] = 0x80;
 
     /* test peeked messages */
     winetest_push_context( "peek" );
@@ -895,6 +913,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_test( menu_peeked, TRUE );
     check_send_input_test( menu_ext_peeked, TRUE );
     check_send_input_test( lrshift_ext, TRUE );
+    check_send_input_test( rshift_scan, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -925,6 +944,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_test( menu, FALSE );
     check_send_input_test( menu_ext, FALSE );
     check_send_input_test( lrshift_ext, FALSE );
+    check_send_input_test( rshift_scan, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
