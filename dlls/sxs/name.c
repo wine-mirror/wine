@@ -43,11 +43,6 @@ struct name
     WCHAR *version;
 };
 
-static const WCHAR archW[] = {'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e',0};
-static const WCHAR tokenW[] = {'p','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
-static const WCHAR typeW[] = {'t','y','p','e',0};
-static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
-
 static inline struct name *impl_from_IAssemblyName( IAssemblyName *iface )
 {
     return CONTAINING_RECORD( iface, struct name, IAssemblyName_iface );
@@ -140,10 +135,10 @@ static HRESULT WINAPI name_GetDisplayName(
     if (!buflen || flags) return E_INVALIDARG;
 
     len = lstrlenW( name->name ) + 1;
-    if (name->arch)    len += lstrlenW( archW ) + lstrlenW( name->arch ) + 4;
-    if (name->token)   len += lstrlenW( tokenW ) + lstrlenW( name->token ) + 4;
-    if (name->type)    len += lstrlenW( typeW ) + lstrlenW( name->type ) + 4;
-    if (name->version) len += lstrlenW( versionW ) + lstrlenW( name->version ) + 4;
+    if (name->arch)    len += lstrlenW( L"processorArchitecture" ) + lstrlenW( name->arch ) + 4;
+    if (name->token)   len += lstrlenW( L"publicKeyToken" ) + lstrlenW( name->token ) + 4;
+    if (name->type)    len += lstrlenW( L"type" ) + lstrlenW( name->type ) + 4;
+    if (name->version) len += lstrlenW( L"version" ) + lstrlenW( name->version ) + 4;
     if (len > *buflen)
     {
         *buflen = len;
@@ -151,10 +146,10 @@ static HRESULT WINAPI name_GetDisplayName(
     }
     lstrcpyW( buffer, name->name );
     len = lstrlenW( buffer );
-    if (name->arch)    len += swprintf( buffer + len, *buflen - len, fmtW, archW, name->arch );
-    if (name->token)   len += swprintf( buffer + len, *buflen - len, fmtW, tokenW, name->token );
-    if (name->type)    len += swprintf( buffer + len, *buflen - len, fmtW, typeW, name->type );
-    if (name->version) len += swprintf( buffer + len, *buflen - len, fmtW, versionW, name->version );
+    if (name->arch)    len += swprintf( buffer + len, *buflen - len, fmtW, L"processorArchitecture", name->arch );
+    if (name->token)   len += swprintf( buffer + len, *buflen - len, fmtW, L"publicKeyToken", name->token );
+    if (name->type)    len += swprintf( buffer + len, *buflen - len, fmtW, L"type", name->type );
+    if (name->version) len += swprintf( buffer + len, *buflen - len, fmtW, L"version", name->version );
     return S_OK;
 }
 
@@ -325,25 +320,25 @@ static HRESULT parse_displayname( struct name *name, const WCHAR *displayname )
         while (*q && *q != '=') q++;
         if (!*q) return E_INVALIDARG;
         len = q - p;
-        if (len == ARRAY_SIZE(archW) - 1 && !memcmp( p, archW, len * sizeof(WCHAR) ))
+        if (len == ARRAY_SIZE(L"processorArchitecture") - 1 && !memcmp( p, L"processorArchitecture", len * sizeof(WCHAR) ))
         {
             p = ++q;
             if (!(name->arch = parse_value( p, &len ))) return E_INVALIDARG;
             q += len;
         }
-        else if (len == ARRAY_SIZE(tokenW) - 1 && !memcmp( p, tokenW, len * sizeof(WCHAR) ))
+        else if (len == ARRAY_SIZE(L"publicKeyToken") - 1 && !memcmp( p, L"publicKeyToken", len * sizeof(WCHAR) ))
         {
             p = ++q;
             if (!(name->token = parse_value( p, &len ))) return E_INVALIDARG;
             q += len;
         }
-        else if (len == ARRAY_SIZE(typeW) - 1 && !memcmp( p, typeW, len * sizeof(WCHAR) ))
+        else if (len == ARRAY_SIZE(L"type") - 1 && !memcmp( p, L"type", len * sizeof(WCHAR) ))
         {
             p = ++q;
             if (!(name->type = parse_value( p, &len ))) return E_INVALIDARG;
             q += len;
         }
-        else if (len == ARRAY_SIZE(versionW) - 1 && !memcmp( p, versionW, len * sizeof(WCHAR) ))
+        else if (len == ARRAY_SIZE(L"version") - 1 && !memcmp( p, L"version", len * sizeof(WCHAR) ))
         {
             p = ++q;
             if (!(name->version = parse_value( p, &len ))) return E_INVALIDARG;
