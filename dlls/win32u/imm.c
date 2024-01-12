@@ -37,7 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 struct ime_update
 {
     struct list entry;
-    DWORD id;
+    WORD vkey;
+    WORD scan;
     DWORD cursor_pos;
     WCHAR *comp_str;
     WCHAR *result_str;
@@ -58,6 +59,9 @@ struct imm_thread_data
     HWND  default_hwnd;
     BOOL  disable_ime;
     UINT  window_cnt;
+    WORD  ime_process_scan;    /* scan code of the key being processed */
+    WORD  ime_process_vkey;    /* vkey of the key being processed */
+    BOOL  ime_process_result;  /* result string has been received */
 };
 
 static struct list thread_data_list = LIST_INIT( thread_data_list );
@@ -434,7 +438,9 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
 static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str )
 {
     static UINT ime_update_count;
-    UINT id, comp_len, result_len;
+
+    struct imm_thread_data *data = get_imm_thread_data();
+    UINT id = -1, comp_len, result_len;
     struct ime_update *update;
 
     TRACE( "hwnd %p, cursor_pos %u, comp_str %s, result_str %s\n", hwnd, cursor_pos,
@@ -449,19 +455,25 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     update->result_str = result_str ? memcpy( update->buffer + comp_len, result_str, result_len * sizeof(WCHAR) ) : NULL;
 
     pthread_mutex_lock( &imm_mutex );
-    id = update->id = ++ime_update_count;
+    update->scan = data->ime_process_scan;
+    if (!(update->vkey = data->ime_process_vkey))
+    {
+        id = update->scan = ++ime_update_count;
+        update->vkey = VK_PROCESSKEY;
+    }
     list_add_tail( &ime_updates, &update->entry );
     pthread_mutex_unlock( &imm_mutex );
 
-    NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
+    if (!data->ime_process_vkey) NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
+    if (result_str) data->ime_process_result = TRUE;
 }
 
-static struct ime_update *find_ime_update( UINT id )
+static struct ime_update *find_ime_update( WORD vkey, WORD scan )
 {
     struct ime_update *update;
 
     LIST_FOR_EACH_ENTRY( update, &ime_updates, struct ime_update, entry )
-        if (update->id == id) return update;
+        if (update->vkey == vkey && update->scan == scan) return update;
 
     return NULL;
 }
@@ -476,7 +488,7 @@ UINT ime_to_tascii_ex( UINT vkey, UINT lparam, const BYTE *state, COMPOSITIONSTR
 
     pthread_mutex_lock( &imm_mutex );
 
-    if (!(update = find_ime_update( lparam )))
+    if (!(update = find_ime_update( vkey, lparam )))
     {
         pthread_mutex_unlock( &imm_mutex );
         return STATUS_NOT_FOUND;
@@ -564,7 +576,19 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
     switch (call)
     {
     case WINE_IME_PROCESS_KEY:
-        return user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
+    {
+        struct imm_thread_data *data = get_imm_thread_data();
+
+        data->ime_process_scan = HIWORD(lparam) & 0x1ff;
+        data->ime_process_vkey = LOWORD(wparam);
+        data->ime_process_result = FALSE;
+        res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
+        data->ime_process_vkey = data->ime_process_scan = 0;
+        if (!res) res = data->ime_process_result;
+
+        TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam) & 0x1ff, (UINT)res );
+        return res;
+    }
     case WINE_IME_TO_ASCII_EX:
         res = user_driver->pImeToAsciiEx( wparam, lparam, params->state, params->compstr, params->himc );
         if ((NTSTATUS)res != STATUS_NOT_IMPLEMENTED) return res;
