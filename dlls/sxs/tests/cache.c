@@ -33,7 +33,7 @@ static void test_QueryAssemblyInfo( void )
     ASSEMBLY_INFO info;
     IAssemblyCache *cache = NULL;
     WCHAR path[MAX_PATH];
-    char comctl_path1[MAX_PATH], comctl_path2[MAX_PATH], comctl_path3[MAX_PATH], comctl_path4[MAX_PATH];
+    char comctl_path1[MAX_PATH], comctl_path2[MAX_PATH];
     const WCHAR *comctlW;
 
     hr = CreateAssemblyCache( &cache, 0 );
@@ -65,22 +65,12 @@ static void test_QueryAssemblyInfo( void )
     GetWindowsDirectoryA( comctl_path1, MAX_PATH );
     lstrcatA( comctl_path1, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.2600.2982_none_deadbeef" );
     GetWindowsDirectoryA( comctl_path2, MAX_PATH );
-    lstrcatA( comctl_path2, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.3790.4770_x-ww_05fdf087" );
-    GetWindowsDirectoryA( comctl_path3, MAX_PATH );
-    lstrcatA( comctl_path3, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.8250.0_none_c119e7cca62b92bd" );
-    GetWindowsDirectoryA( comctl_path4, MAX_PATH );
-    lstrcatA( comctl_path4, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.7601.17514_none_41e6975e2bd6f2b2" );
+    lstrcatA( comctl_path2, "\\winsxs\\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.19041.3636_none_a863d714867441db" );
     if (GetFileAttributesA( comctl_path1 ) != INVALID_FILE_ATTRIBUTES)
         comctlW = L"microsoft.windows.common-controls,version=\"6.0.2600.2982\",type=\"win32\",processorArchitecture=\"x86\","
                    "publicKeyToken=\"6595b64144ccf1df\"";
     else if (GetFileAttributesA( comctl_path2 ) != INVALID_FILE_ATTRIBUTES)
-        comctlW = L"microsoft.windows.common-controls,version=\"6.0.3790.4770\",type=\"win32\",processorArchitecture=\"x86\","
-                   "publicKeyToken=\"6595b64144ccf1df\"";
-    else if (GetFileAttributesA( comctl_path3 ) != INVALID_FILE_ATTRIBUTES)
-        comctlW = L"microsoft.windows.common-controls,version=\"6.0.8250.0\",type=\"win32\",processorArchitecture=\"x86\","
-                   "publicKeyToken=\"6595b64144ccf1df\"";
-    else if (GetFileAttributesA( comctl_path4 ) != INVALID_FILE_ATTRIBUTES)
-        comctlW = L"microsoft.windows.common-controls,version=\"6.0.7601.17514\",type=\"win32\",processorArchitecture=\"x86\","
+        comctlW = L"microsoft.windows.common-controls,version=\"6.0.19041.3636\",type=\"win32\",processorArchitecture=\"x86\","
                    "publicKeyToken=\"6595b64144ccf1df\"";
     else
     {
