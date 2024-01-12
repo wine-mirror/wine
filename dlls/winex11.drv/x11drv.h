@@ -208,8 +208,6 @@ extern INT X11DRV_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size );
 extern UINT X11DRV_MapVirtualKeyEx( UINT code, UINT map_type, HKL hkl );
 extern INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
                                LPWSTR bufW, int bufW_size, UINT flags, HKL hkl );
-extern UINT X11DRV_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state,
-                                 COMPOSITIONSTRING *compstr, HIMC himc );
 extern SHORT X11DRV_VkKeyScanEx( WCHAR wChar, HKL hkl );
 extern void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status );
 extern void X11DRV_DestroyCursorIcon( HCURSOR handle );

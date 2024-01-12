@@ -3597,6 +3597,7 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
                 ULONG compstr;
             } *params32 = result_info;
             struct ime_driver_call_params params;
+            if (msg == WINE_IME_POST_UPDATE) ERR( "Unexpected WINE_IME_POST_UPDATE message\n" );
             params.himc = UlongToPtr( params32->himc );
             params.state = UlongToPtr( params32->state );
             params.compstr = UlongToPtr( params32->compstr );

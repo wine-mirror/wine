@@ -731,7 +731,7 @@ static UINT nulldrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const BY
 
 static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, COMPOSITIONSTRING *compstr, HIMC himc )
 {
-    return 0;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static void nulldrv_NotifyIMEStatus( HWND hwnd, UINT status )
