@@ -598,6 +598,13 @@ static HRESULT install_assembly( const WCHAR *manifest, struct assembly *assembl
     dst = build_manifest_filename( assembly->arch, assembly->name, assembly->token, assembly->version );
     if (!dst) return E_OUTOFMEMORY;
 
+    if (GetFileAttributesW( dst ) != INVALID_FILE_ATTRIBUTES)
+    {
+        free( dst );
+        TRACE("manifest exists, skipping install\n");
+        return S_OK;
+    }
+
     ret = CopyFileW( manifest, dst, FALSE );
     free( dst );
     if (!ret)
