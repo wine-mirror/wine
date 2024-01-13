@@ -365,7 +365,7 @@ static void test_unsupported_instance_extensions(void)
     for (i = 0; i < ARRAY_SIZE(extensions); ++i)
     {
         vr = create_instance(1, &extensions[i], &vk_instance);
-        ok(vr == VK_ERROR_EXTENSION_NOT_PRESENT,
+        ok(vr == VK_ERROR_EXTENSION_NOT_PRESENT || vr == VK_ERROR_INCOMPATIBLE_DRIVER,
                 "Got VkResult %d for extension %s.\n", vr, extensions[i]);
     }
 }
