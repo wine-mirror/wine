@@ -2234,6 +2234,7 @@ static void test_sys_keyboard( DWORD version )
     memset( key_state, 0xcd, sizeof(key_state) );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(key_state), key_state );
     ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    flaky_wine_if( version < 0x800 && key_state[0] == 0 )
     ok( key_state[0] == (version < 0x800 ? 0x80 : 0), "got key_state[0] %lu\n", key_state[0] );
 
     /* unacquiring should reset the device state */
