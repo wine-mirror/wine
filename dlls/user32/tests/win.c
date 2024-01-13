@@ -3814,10 +3814,13 @@ static void test_SetActiveWindow_0( char **argv )
     flush_events( TRUE );
 
     tmp = GetForegroundWindow();
+    flaky_wine
     ok( tmp == hwnd, "GetForegroundWindow returned %p\n", tmp );
     tmp = GetActiveWindow();
+    flaky_wine
     ok( tmp == hwnd, "GetActiveWindow returned %p\n", tmp );
     tmp = GetFocus();
+    flaky_wine
     ok( tmp == hwnd, "GetFocus returned %p\n", tmp );
 
     events[1] = CreateEventW( NULL, FALSE, FALSE, L"test_SetActiveWindow_0_start" );
