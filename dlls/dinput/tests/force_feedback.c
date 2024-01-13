@@ -2222,7 +2222,6 @@ static BOOL test_force_feedback_joystick( DWORD version )
             .report_len = 2,
             .report_buf = {1, 0x02},
             .broken_id = 8, /* Win8 sends them in the reverse order */
-            .todo = TRUE,
         },
         {
             .code = IOCTL_HID_WRITE_REPORT,
