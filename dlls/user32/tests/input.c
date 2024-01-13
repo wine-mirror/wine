@@ -56,6 +56,7 @@
 #include "winreg.h"
 #include "ddk/hidsdi.h"
 #include "imm.h"
+#include "kbd.h"
 
 #include "wine/test.h"
 
@@ -566,6 +567,70 @@ static BOOL test_send_input_accept_message( UINT msg )
     return is_keyboard_message( msg ) || msg == WM_SYSCOMMAND;
 }
 
+static BOOL keyboard_layout_has_altgr(void)
+{
+    typedef struct
+    {
+        UINT64 pCharModifiers;
+        UINT64 pVkToWcharTable;
+        UINT64 pDeadKey;
+        UINT64 pKeyNames;
+        UINT64 pKeyNamesExt;
+        UINT64 pKeyNamesDead;
+        UINT64 pusVSCtoVK;
+        BYTE bMaxVSCtoVK;
+        UINT64 pVSCtoVK_E0;
+        UINT64 pVSCtoVK_E1;
+        DWORD fLocaleFlags;
+    } KBDTABLES64;
+
+    WCHAR layout_path[MAX_PATH] = {L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\"}, value[MAX_PATH];
+    KBDTABLES *(CDECL *pKbdLayerDescriptor)(void);
+    DWORD value_size = sizeof(value), flags;
+    KBDTABLES *tables;
+    HMODULE module;
+
+    ok_ret( 1, GetKeyboardLayoutNameW( layout_path + wcslen(layout_path) ) );
+    todo_wine
+    ok_ret( 0, RegGetValueW( HKEY_LOCAL_MACHINE, layout_path, L"Layout File", RRF_RT_REG_SZ,
+                             NULL, (void *)&value, &value_size) );
+
+    module = LoadLibraryW( value );
+    todo_wine
+    ok_ne( NULL, module, HMODULE, "%p" );
+    pKbdLayerDescriptor = (void *)GetProcAddress( module, "KbdLayerDescriptor" );
+    todo_wine
+    ok_ne( NULL, pKbdLayerDescriptor, void *, "%p" );
+    /* FIXME: Wine doesn't implement ALTGR behavior */
+    if (!pKbdLayerDescriptor) return FALSE;
+    tables = pKbdLayerDescriptor();
+    ok_ne( NULL, tables, KBDTABLES *, "%p" );
+    flags = is_wow64 ? ((KBDTABLES64 *)tables)->fLocaleFlags : tables->fLocaleFlags;
+    ok_ret( 1, FreeLibrary( module ) );
+
+    trace( "%s flags %#lx\n", debugstr_w(value), flags );
+    return !!(flags & KLLF_ALTGR);
+}
+
+static void get_test_scan( WORD vkey, WORD *scan, WCHAR *wch, WCHAR *wch_shift )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+    BYTE state[256] = {0};
+
+    *scan = MapVirtualKeyExW( vkey, MAPVK_VK_TO_VSC_EX, hkl );
+    ok_ne( 0, *scan, WORD, "%#x" );
+    ok_ret( 1, ToUnicodeEx( vkey, *scan, state, wch, 1, 0, hkl ) );
+    state[VK_SHIFT] = 0x80;
+    ok_ret( 1, ToUnicodeEx( vkey, *scan, state, wch_shift, 1, 0, hkl ) );
+
+    /* zh_CN returns a different WM_(SYS)CHAR, possibly coming from IME */
+    if (HIWORD(hkl) == 0x0804)
+    {
+        *wch = 0x430;
+        *wch_shift = 0x410;
+    }
+}
+
 static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, WCHAR wch_shift, WCHAR wch_control )
 {
 #define WIN_MSG(m, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .wparam = w, .lparam = l}, ## __VA_ARGS__}
@@ -827,6 +892,85 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_test rmenu_altgr[] =
+    {
+        {
+            .vkey = VK_RMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+            .expect =
+            {
+                KEY_HOOK_(WM_SYSKEYDOWN, 0x21d, VK_LCONTROL, LLKHF_ALTDOWN),
+                KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN, .todo_value = TRUE),
+                KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL),
+                KEY_MSG_(WM_KEYDOWN, 1, VK_MENU, KF_ALTDOWN),
+                {0}
+            }
+        },
+        {
+            .vkey = VK_RMENU, .flags = KEYEVENTF_KEYUP,
+            .expect =
+            {
+                KEY_HOOK(WM_KEYUP, 0x21d, VK_LCONTROL),
+                KEY_HOOK(WM_KEYUP, 2, VK_RMENU),
+                KEY_MSG_(WM_SYSKEYUP, 0x1d, VK_CONTROL, KF_ALTDOWN),
+                KEY_MSG(WM_KEYUP, 2, VK_MENU),
+                {0}
+            }
+        },
+        {0},
+    };
+    struct send_input_test rmenu_ext_altgr[] =
+    {
+        {
+            .vkey = VK_RMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+            .expect =
+            {
+                KEY_HOOK_(WM_SYSKEYDOWN, 0x21d, VK_LCONTROL, LLKHF_ALTDOWN),
+                KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE),
+                KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL),
+                KEY_MSG_(WM_KEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED),
+                {0}
+            }
+        },
+        {
+            .vkey = VK_RMENU, .flags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY,
+            .expect =
+            {
+                KEY_HOOK(WM_KEYUP, 0x21d, VK_LCONTROL),
+                KEY_HOOK_(WM_KEYUP, 2, VK_RMENU, LLKHF_EXTENDED, .todo_value = TRUE),
+                KEY_MSG_(WM_SYSKEYUP, 0x1d, VK_CONTROL, KF_ALTDOWN),
+                KEY_MSG_(WM_KEYUP, 2, VK_MENU, KF_EXTENDED),
+                {0}
+            }
+        },
+        {0},
+    };
+    struct send_input_test menu_ext_altgr[] =
+    {
+        {
+            .vkey = VK_MENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+            .expect =
+            {
+                KEY_HOOK_(WM_SYSKEYDOWN, 0x21d, VK_LCONTROL, LLKHF_ALTDOWN),
+                KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE),
+                KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL),
+                KEY_MSG_(WM_KEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED),
+                {0}
+            }
+        },
+        {
+            .vkey = VK_MENU, .flags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY,
+            .expect =
+            {
+                KEY_HOOK(WM_KEYUP, 0x21d, VK_LCONTROL),
+                KEY_HOOK_(WM_KEYUP, 2, VK_RMENU, LLKHF_EXTENDED, .todo_value = TRUE),
+                KEY_MSG_(WM_SYSKEYUP, 0x1d, VK_CONTROL, KF_ALTDOWN),
+                KEY_MSG_(WM_KEYUP, 2, VK_MENU, KF_EXTENDED),
+                {0}
+            }
+        },
+        {0},
+    };
+
     static const struct send_input_test lrshift_ext[] =
     {
         {.vkey = VK_LSHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
@@ -863,15 +1007,14 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 #undef KEY_MSG_
 #undef KEY_MSG
 
+    BOOL altgr = keyboard_layout_has_altgr(), skip_altgr = FALSE;
     LONG_PTR old_proc;
     HHOOK hook;
     HWND hwnd;
 
-    if (GetKeyboardLayout(0) != (HKL)(ULONG_PTR)0x04090409)
-    {
-        skip("Skipping Input_blackbox test on non-US keyboard\n");
-        return;
-    }
+    /* on 32-bit with ALTGR keyboard, the CONTROL key is sent to the hooks without the
+     * LLKHF_INJECTED flag, skip the tests to keep it simple */
+    if (altgr && sizeof(void *) == 4 && !is_wow64) skip_altgr = TRUE;
 
     hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( NULL, hwnd, HWND, "%p" );
@@ -907,11 +1050,17 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_test( rcontrol_ext, TRUE );
     check_send_input_test( control, TRUE );
     check_send_input_test( control_ext, TRUE );
-    check_send_input_test( rmenu_peeked, TRUE );
+    if (skip_altgr) skip( "skipping rmenu_altgr test\n" );
+    else if (altgr) check_send_input_test( rmenu_altgr, TRUE );
+    else check_send_input_test( rmenu_peeked, TRUE );
     check_send_input_test( lmenu_ext_peeked, TRUE );
-    check_send_input_test( rmenu_ext_peeked, TRUE );
+    if (skip_altgr) skip( "skipping rmenu_ext_altgr test\n" );
+    else if (altgr) check_send_input_test( rmenu_ext_altgr, TRUE );
+    else check_send_input_test( rmenu_ext_peeked, TRUE );
     check_send_input_test( menu_peeked, TRUE );
-    check_send_input_test( menu_ext_peeked, TRUE );
+    if (skip_altgr) skip( "skipping menu_ext_altgr test\n" );
+    else if (altgr) check_send_input_test( menu_ext_altgr, TRUE );
+    else check_send_input_test( menu_ext_peeked, TRUE );
     check_send_input_test( lrshift_ext, TRUE );
     check_send_input_test( rshift_scan, TRUE );
     winetest_pop_context();
@@ -938,11 +1087,17 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_test( rcontrol_ext, FALSE );
     check_send_input_test( control, FALSE );
     check_send_input_test( control_ext, FALSE );
-    check_send_input_test( rmenu, FALSE );
+    if (skip_altgr) skip( "skipping rmenu_altgr test\n" );
+    else if (altgr) check_send_input_test( rmenu_altgr, FALSE );
+    else check_send_input_test( rmenu, FALSE );
     check_send_input_test( lmenu_ext, FALSE );
-    check_send_input_test( rmenu_ext, FALSE );
+    if (skip_altgr) skip( "skipping rmenu_ext_altgr test\n" );
+    else if (altgr) check_send_input_test( rmenu_ext_altgr, FALSE );
+    else check_send_input_test( rmenu_ext, FALSE );
     check_send_input_test( menu, FALSE );
-    check_send_input_test( menu_ext, FALSE );
+    if (skip_altgr) skip( "skipping menu_ext_altgr test\n" );
+    else if (altgr) check_send_input_test( menu_ext_altgr, FALSE );
+    else check_send_input_test( menu_ext, FALSE );
     check_send_input_test( lrshift_ext, FALSE );
     check_send_input_test( rshift_scan, FALSE );
     winetest_pop_context();
@@ -5250,12 +5405,17 @@ static void test_ClipCursor( char **argv )
  * tests, current desktop state, or user actions. */
 static void test_input_desktop( char **argv )
 {
+    HKL hkl = GetKeyboardLayout( 0 );
+    WCHAR wch, wch_shift;
     POINT pos;
+    WORD scan;
 
+    trace( "hkl %p\n", hkl );
     ok_ret( 1, GetCursorPos( &pos ) );
 
-    test_SendInput( 'F', 'f' );
-    test_SendInput_keyboard_messages( 'F', 0x21, 'f', 'F', '\x06' );
+    get_test_scan( 'F', &scan, &wch, &wch_shift );
+    test_SendInput( 'F', wch );
+    test_SendInput_keyboard_messages( 'F', scan, wch, wch_shift, '\x06' );
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
