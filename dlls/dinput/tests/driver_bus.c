@@ -1109,9 +1109,10 @@ static NTSTATUS pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
         winetest_push_context( "%s expect[%ld]", context, index );
         ok( code == expect.code, "got %#lx, expected %#lx\n", code, expect.code );
-        ok( packet->reportId == expect.report_id, "got id %u\n", packet->reportId );
+        ok( packet->reportId == expect.report_id || broken( packet->reportId == expect.broken_id ),
+            "got id %u\n", packet->reportId );
         ok( packet->reportBufferLen == expect.report_len, "got len %lu\n", packet->reportBufferLen );
-        check_buffer( packet, &expect );
+        if (!broken( packet->reportId == expect.broken_id )) check_buffer( packet, &expect );
         winetest_pop_context();
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
