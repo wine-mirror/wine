@@ -543,7 +543,7 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Information = (ULONG_PTR)get_instance_id(device);
             break;
         default:
-            FIXME("Unhandled type %08x\n", type);
+            WARN("Unhandled type %08x\n", type);
             return status;
     }
 
