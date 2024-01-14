@@ -526,7 +526,7 @@ static NTSTATUS WINAPI pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             else status = STATUS_SUCCESS;
             break;
         default:
-            FIXME("IRP_MN_QUERY_ID type %u, not implemented!\n", type);
+            WARN("IRP_MN_QUERY_ID type %u, not implemented!\n", type);
             status = irp->IoStatus.Status;
             break;
         }
