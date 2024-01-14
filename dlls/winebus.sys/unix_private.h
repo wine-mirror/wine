@@ -266,8 +266,4 @@ extern void hid_device_drop_report(struct unix_device *iface);
 
 extern void hid_device_set_effect_state(struct unix_device *iface, BYTE index, BYTE flags);
 
-BOOL is_xbox_gamepad(WORD vid, WORD pid);
-BOOL is_dualshock4_gamepad(WORD vid, WORD pid);
-BOOL is_dualsense_gamepad(WORD vid, WORD pid);
-
 #endif /* __WINEBUS_UNIX_PRIVATE_H */
