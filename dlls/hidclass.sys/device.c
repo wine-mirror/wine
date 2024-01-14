@@ -527,7 +527,6 @@ static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, 
 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
-    struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     NTSTATUS status = irp->IoStatus.Status;
@@ -637,7 +636,10 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(ULONG))
                 status = STATUS_BUFFER_OVERFLOW;
             else
+            {
+                struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
                 status = hid_queue_resize( queue, *(ULONG *)irp->AssociatedIrp.SystemBuffer );
+            }
             break;
         }
         case IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS:
@@ -646,6 +648,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 status = STATUS_BUFFER_TOO_SMALL;
             else
             {
+                struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
                 *(ULONG *)irp->AssociatedIrp.SystemBuffer = queue->length;
                 irp->IoStatus.Information = sizeof(ULONG);
                 status = STATUS_SUCCESS;
