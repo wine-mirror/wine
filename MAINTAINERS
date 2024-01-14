@@ -169,6 +169,7 @@ P:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/hidparse.sys/
+F:	dlls/mouhid.sys/
 F:	dlls/winehid.sys/
 
 HTTP server

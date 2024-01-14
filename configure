@@ -1233,6 +1233,7 @@ enable_midimap
 enable_mlang
 enable_mmcndmgr
 enable_mmdevapi
+enable_mouhid_sys
 enable_mountmgr_sys
 enable_mp3dmod
 enable_mpr
@@ -21976,6 +21977,7 @@ wine_fn_config_makefile dlls/mmdevapi/tests enable_tests
 wine_fn_config_makefile dlls/mmdevldr.vxd enable_win16
 wine_fn_config_makefile dlls/mmsystem.dll16 enable_win16
 wine_fn_config_makefile dlls/monodebg.vxd enable_win16
+wine_fn_config_makefile dlls/mouhid.sys enable_mouhid_sys
 wine_fn_config_makefile dlls/mountmgr.sys enable_mountmgr_sys
 wine_fn_config_makefile dlls/mouse.drv16 enable_win16
 wine_fn_config_makefile dlls/mp3dmod enable_mp3dmod
