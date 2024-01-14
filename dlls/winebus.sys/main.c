@@ -412,6 +412,9 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid)
 
     if (check_bus_option(L"DisableHidraw", FALSE)) return FALSE;
 
+    if (is_dualshock4_gamepad(vid, pid)) prefer_hidraw = TRUE;
+    if (is_dualsense_gamepad(vid, pid)) prefer_hidraw = TRUE;
+
     RtlInitUnicodeString(&str, L"EnableHidraw");
     if (!NtQueryValueKey(driver_key, &str, KeyValuePartialInformation, info,
                          sizeof(buffer) - sizeof(WCHAR), &size))
