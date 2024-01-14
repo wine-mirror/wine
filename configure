@@ -22441,6 +22441,7 @@ wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
 wine_fn_config_makefile dlls/winexinput.sys enable_winexinput_sys
 wine_fn_config_makefile dlls/wing.dll16 enable_win16
 wine_fn_config_makefile dlls/wing32 enable_wing32
+wine_fn_config_makefile dlls/wing32/tests enable_tests
 wine_fn_config_makefile dlls/winhttp enable_winhttp
 wine_fn_config_makefile dlls/winhttp/tests enable_tests
 wine_fn_config_makefile dlls/wininet enable_wininet
