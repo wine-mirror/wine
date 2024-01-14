@@ -372,6 +372,80 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     }
 }
 
+static WCHAR *query_hardware_ids(DEVICE_OBJECT *device)
+{
+    static const WCHAR vid_pid_format[] = L"HID\\VID_%04X&PID_%04X";
+    static const WCHAR vid_usage_format[] = L"HID\\VID_%04X&UP:%04X_U:%04X";
+    static const WCHAR usage_format[] = L"HID_DEVICE_UP:%04X_U:%04X";
+    static const WCHAR hid_format[] = L"HID_DEVICE";
+
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
+    HID_COLLECTION_INFORMATION *info = &ext->u.pdo.information;
+    WCHAR *dst;
+    DWORD size;
+
+    size = sizeof(vid_pid_format);
+    size += sizeof(vid_usage_format);
+    size += sizeof(usage_format);
+    size += sizeof(hid_format);
+
+    if ((dst = ExAllocatePool(PagedPool, size + sizeof(WCHAR))))
+    {
+        DWORD len = size / sizeof(WCHAR), pos = 0;
+        pos += swprintf( dst + pos, len - pos, vid_pid_format, info->VendorID, info->ProductID ) + 1;
+        pos += swprintf( dst + pos, len - pos, vid_usage_format, info->VendorID, desc->UsagePage, desc->Usage ) + 1;
+        pos += swprintf( dst + pos, len - pos, usage_format, desc->UsagePage, desc->Usage ) + 1;
+        pos += swprintf( dst + pos, len - pos, hid_format ) + 1;
+        dst[pos] = 0;
+    }
+
+    return dst;
+}
+
+static WCHAR *query_compatible_ids(DEVICE_OBJECT *device)
+{
+    WCHAR *dst;
+    if ((dst = ExAllocatePool(PagedPool, sizeof(WCHAR)))) dst[0] = 0;
+    return dst;
+}
+
+static WCHAR *query_device_id(DEVICE_OBJECT *device)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    DWORD size = (wcslen(ext->device_id) + 1) * sizeof(WCHAR);
+    WCHAR *dst;
+
+    if ((dst = ExAllocatePool(PagedPool, size)))
+        memcpy(dst, ext->device_id, size);
+
+    return dst;
+}
+
+static WCHAR *query_instance_id(DEVICE_OBJECT *device)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    DWORD size = (wcslen(ext->instance_id) + 1) * sizeof(WCHAR);
+    WCHAR *dst;
+
+    if ((dst = ExAllocatePool(PagedPool, size)))
+        memcpy(dst, ext->instance_id, size);
+
+    return dst;
+}
+
+static WCHAR *query_container_id(DEVICE_OBJECT *device)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    DWORD size = (wcslen(ext->container_id) + 1) * sizeof(WCHAR);
+    WCHAR *dst;
+
+    if ((dst = ExAllocatePool(PagedPool, size)))
+        memcpy(dst, ext->instance_id, size);
+
+    return dst;
+}
+
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -387,60 +461,40 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     {
         case IRP_MN_QUERY_ID:
         {
-            WCHAR *id = ExAllocatePool(PagedPool, sizeof(WCHAR) * REGSTR_VAL_MAX_HCID_LEN);
-            TRACE("IRP_MN_QUERY_ID[%i]\n", irpsp->Parameters.QueryId.IdType);
-            switch (irpsp->Parameters.QueryId.IdType)
+            BUS_QUERY_ID_TYPE type = irpsp->Parameters.QueryId.IdType;
+            switch (type)
             {
-                case BusQueryHardwareIDs:
-                case BusQueryCompatibleIDs:
+            case BusQueryHardwareIDs:
+                irp->IoStatus.Information = (ULONG_PTR)query_hardware_ids(device);
+                if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
+                else status = STATUS_SUCCESS;
+                break;
+            case BusQueryCompatibleIDs:
+                irp->IoStatus.Information = (ULONG_PTR)query_compatible_ids(device);
+                if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
+                else status = STATUS_SUCCESS;
+                break;
+            case BusQueryDeviceID:
+                irp->IoStatus.Information = (ULONG_PTR)query_device_id(device);
+                if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
+                else status = STATUS_SUCCESS;
+                break;
+            case BusQueryInstanceID:
+                irp->IoStatus.Information = (ULONG_PTR)query_instance_id(device);
+                if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
+                else status = STATUS_SUCCESS;
+                break;
+            case BusQueryContainerID:
+                if (ext->container_id[0])
                 {
-                    WCHAR *ptr;
-                    ptr = id;
-                    /* Device instance ID */
-                    lstrcpyW(ptr, ext->device_id);
-                    ptr += lstrlenW(ext->device_id);
-                    lstrcpyW(ptr, L"\\");
-                    ptr += 1;
-                    lstrcpyW(ptr, ext->instance_id);
-                    ptr += lstrlenW(ext->instance_id) + 1;
-                    /* Device ID */
-                    lstrcpyW(ptr, ext->device_id);
-                    ptr += lstrlenW(ext->device_id) + 1;
-                    /* Bus ID */
-                    lstrcpyW(ptr, L"HID");
-                    ptr += lstrlenW(L"HID") + 1;
-                    *ptr = 0;
-                    irp->IoStatus.Information = (ULONG_PTR)id;
-                    status = STATUS_SUCCESS;
-                    break;
+                    irp->IoStatus.Information = (ULONG_PTR)query_container_id(device);
+                    if (!irp->IoStatus.Information) status = STATUS_NO_MEMORY;
+                    else status = STATUS_SUCCESS;
                 }
-                case BusQueryDeviceID:
-                    lstrcpyW(id, ext->device_id);
-                    irp->IoStatus.Information = (ULONG_PTR)id;
-                    status = STATUS_SUCCESS;
-                    break;
-                case BusQueryInstanceID:
-                    lstrcpyW(id, ext->instance_id);
-                    irp->IoStatus.Information = (ULONG_PTR)id;
-                    status = STATUS_SUCCESS;
-                    break;
-                case BusQueryContainerID:
-                    if (ext->container_id[0])
-                    {
-                        lstrcpyW(id, ext->container_id);
-                        irp->IoStatus.Information = (ULONG_PTR)id;
-                        status = STATUS_SUCCESS;
-                    }
-                    else
-                    {
-                        ExFreePool(id);
-                    }
-                    break;
-
-                case BusQueryDeviceSerialNumber:
-                    FIXME("unimplemented id type %#x\n", irpsp->Parameters.QueryId.IdType);
-                    ExFreePool(id);
-                    break;
+                break;
+            default:
+                WARN("IRP_MN_QUERY_ID type %u, not implemented!\n", type);
+                break;
             }
             break;
         }
