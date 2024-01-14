@@ -38,6 +38,7 @@ struct device_desc
     UINT input;
     UINT uid;
     BOOL is_gamepad;
+    BOOL is_hidraw;
 
     WCHAR manufacturer[MAX_PATH];
     WCHAR product[MAX_PATH];
@@ -147,8 +148,8 @@ enum unix_funcs
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
-    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u}",
-                            desc->vid, desc->pid, desc->version, desc->input, desc->uid, desc->is_gamepad);
+    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u, is_hidraw %u}",
+                            desc->vid, desc->pid, desc->version, desc->input, desc->uid, desc->is_gamepad, desc->is_hidraw);
 }
 
 #endif /* __WINEBUS_UNIXLIB_H */

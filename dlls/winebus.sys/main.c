@@ -401,6 +401,36 @@ static DWORD check_bus_option(const WCHAR *option, DWORD default_value)
     return default_value;
 }
 
+static BOOL is_hidraw_enabled(WORD vid, WORD pid)
+{
+    char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[1024])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    WCHAR vidpid[MAX_PATH], *tmp;
+    BOOL prefer_hidraw = FALSE;
+    UNICODE_STRING str;
+    DWORD size;
+
+    if (check_bus_option(L"DisableHidraw", FALSE)) return FALSE;
+
+    RtlInitUnicodeString(&str, L"EnableHidraw");
+    if (!NtQueryValueKey(driver_key, &str, KeyValuePartialInformation, info,
+                         sizeof(buffer) - sizeof(WCHAR), &size))
+    {
+        UINT len = swprintf(vidpid, ARRAY_SIZE(vidpid), L"%04X:%04X", vid, pid);
+        size -= FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+        tmp = (WCHAR *)info->Data;
+
+        while (size >= len * sizeof(WCHAR))
+        {
+            if (!wcsnicmp(tmp, vidpid, len)) prefer_hidraw = TRUE;
+            size -= (len + 1) * sizeof(WCHAR);
+            tmp += len + 1;
+        }
+    }
+
+    return prefer_hidraw;
+}
+
 static BOOL deliver_next_report(struct device_extension *ext, IRP *irp)
 {
     struct hid_report *report;
@@ -580,6 +610,14 @@ static DWORD CALLBACK bus_main_thread(void *args)
             IoInvalidateDeviceRelations(bus_pdo, BusRelations);
             break;
         case BUS_EVENT_TYPE_DEVICE_CREATED:
+        {
+            const struct device_desc *desc = &event->device_created.desc;
+            if (!desc->is_hidraw != !is_hidraw_enabled(desc->vid, desc->pid))
+            {
+                WARN("ignoring %shidraw device %04x:%04x\n", desc->is_hidraw ? "" : "non-", desc->vid, desc->pid);
+                break;
+            }
+
             device = bus_create_hid_device(&event->device_created.desc, event->device);
             if (device) IoInvalidateDeviceRelations(bus_pdo, BusRelations);
             else
@@ -589,6 +627,7 @@ static DWORD CALLBACK bus_main_thread(void *args)
                 winebus_call(device_remove, &params);
             }
             break;
+        }
         case BUS_EVENT_TYPE_INPUT_REPORT:
             RtlEnterCriticalSection(&device_list_cs);
             device = bus_find_unix_device(event->device);
@@ -739,7 +778,7 @@ static NTSTATUS sdl_driver_init(void)
     return status;
 }
 
-static NTSTATUS udev_driver_init(void)
+static NTSTATUS udev_driver_init(BOOL enable_sdl)
 {
     struct udev_bus_options bus_options;
     struct bus_main_params bus =
@@ -752,7 +791,7 @@ static NTSTATUS udev_driver_init(void)
 
     bus_options.disable_hidraw = check_bus_option(L"DisableHidraw", 0);
     if (bus_options.disable_hidraw) TRACE("UDEV hidraw devices disabled in registry\n");
-    bus_options.disable_input = check_bus_option(L"DisableInput", 0);
+    bus_options.disable_input = check_bus_option(L"DisableInput", 0) || enable_sdl;
     if (bus_options.disable_input) TRACE("UDEV input devices disabled in registry\n");
     bus_options.disable_udevd = check_bus_option(L"DisableUdevd", 0);
     if (bus_options.disable_udevd) TRACE("UDEV udevd use disabled in registry\n");
@@ -771,12 +810,19 @@ static NTSTATUS iohid_driver_init(void)
         .wait_code = iohid_wait,
     };
 
+    if (check_bus_option(L"DisableHidraw", FALSE))
+    {
+        TRACE("IOHID hidraw devices disabled in registry\n");
+        return STATUS_SUCCESS;
+    }
+
     return bus_main_thread_start(&bus);
 }
 
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    BOOL enable_sdl;
     NTSTATUS ret;
 
     switch (irpsp->MinorFunction)
@@ -788,11 +834,10 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         mouse_device_create();
         keyboard_device_create();
 
-        if (!check_bus_option(L"Enable SDL", 1) || sdl_driver_init())
-        {
-            udev_driver_init();
-            iohid_driver_init();
-        }
+        if ((enable_sdl = check_bus_option(L"Enable SDL", 1)))
+            enable_sdl = !sdl_driver_init();
+        udev_driver_init(enable_sdl);
+        iohid_driver_init();
 
         irp->IoStatus.Status = STATUS_SUCCESS;
         break;
