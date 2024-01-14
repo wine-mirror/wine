@@ -51,6 +51,9 @@ static void test_WinGGetDIBPointer(void)
     dib = WinGGetDIBPointer(NULL, NULL);
     ok(dib == NULL, "WinGGetDIBPointer returned unexpected value %p\n", dib);
 
+    dib = WinGGetDIBPointer(bmp, NULL);
+    ok(dib != NULL, "WinGGetDIBPointer failed\n");
+
     dib = WinGGetDIBPointer(bmp, &bmi);
     ok(dib != NULL, "WinGGetDIBPointer failed\n");
 
