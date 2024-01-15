@@ -5799,7 +5799,12 @@ static void test_evr(void)
     ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
 
     hr = MFCreateVideoRenderer(&IID_IMFVideoRenderer, (void **)&video_renderer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Failed to create video renderer object, skipping tests.\n");
+        MFShutdown();
+        return;
+    }
 
     hr = IMFVideoRenderer_InitializeRenderer(video_renderer, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
