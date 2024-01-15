@@ -199,7 +199,7 @@ static void test_D3DKMTEnumAdapters2(void)
 
     if (!pD3DKMTEnumAdapters2 || pD3DKMTEnumAdapters2(&enum_adapters_2_desc) == STATUS_PROCEDURE_NOT_FOUND)
     {
-        skip("D3DKMTEnumAdapters2() is unavailable.\n");
+        win_skip("D3DKMTEnumAdapters2() is unavailable.\n");
         return;
     }
 

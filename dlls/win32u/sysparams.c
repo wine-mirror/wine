@@ -6656,6 +6656,80 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
  */
 NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
 {
-    FIXME(" (%p): stub\n", desc );
-    return STATUS_PROCEDURE_NOT_FOUND;
+    D3DKMT_OPENADAPTERFROMLUID open_adapter_from_luid;
+    static const ULONG max_adapters = 34;
+    D3DKMT_CLOSEADAPTER close_adapter;
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG idx = 0, count;
+    struct gpu *gpu;
+
+    TRACE( "(%p)\n", desc );
+
+    if (!desc) return STATUS_INVALID_PARAMETER;
+
+    if (!desc->pAdapters)
+    {
+        desc->NumAdapters = max_adapters;
+        return STATUS_SUCCESS;
+    }
+
+    if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
+
+    if ((count = list_count( &gpus )) > max_adapters)
+    {
+        WARN( "Too many adapters (%u), only up to %u can be enumerated.\n",
+              (unsigned int)count, (unsigned int)max_adapters );
+        count = max_adapters;
+    }
+
+    if (count > desc->NumAdapters)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        goto done;
+    }
+
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+    {
+        if (gpu->luid.LowPart || gpu->luid.HighPart)
+        {
+            open_adapter_from_luid.AdapterLuid = gpu->luid;
+
+            /* give the GDI driver a chance to be notified about new adapter handle */
+            if (NT_SUCCESS( NtGdiDdDDIOpenAdapterFromLuid( &open_adapter_from_luid ) ))
+            {
+                desc->pAdapters[idx].hAdapter = open_adapter_from_luid.hAdapter;
+                desc->pAdapters[idx].AdapterLuid = gpu->luid;
+                desc->pAdapters[idx].NumOfSources = gpu->adapter_count;
+                desc->pAdapters[idx].bPrecisePresentRegionsPreferred = FALSE;
+                idx += 1;
+                continue;
+            }
+            else
+            {
+                ERR( "Failed to open adapter %u from LUID.\n", (unsigned int)idx );
+            }
+        }
+        else
+        {
+            ERR( "Adapter %u does not have a LUID.\n", (unsigned int)idx );
+        }
+
+        while (idx--)
+        {
+            close_adapter.hAdapter = desc->pAdapters[idx].hAdapter;
+            NtGdiDdDDICloseAdapter( &close_adapter );
+        }
+
+        memset( desc->pAdapters, 0, desc->NumAdapters * sizeof(D3DKMT_ADAPTERINFO) );
+        status = STATUS_UNSUCCESSFUL;
+        break;
+    }
+
+done:
+    if (status == STATUS_SUCCESS)
+        desc->NumAdapters = idx;
+
+    unlock_display_devices();
+
+    return status;
 }
