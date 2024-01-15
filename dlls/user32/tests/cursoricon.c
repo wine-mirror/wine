@@ -1116,11 +1116,10 @@ static unsigned char bmpimage[70] = {
 0xFF,0xFF,0x00,0x00,0x00,0x00
 };
 
-/* 1x1 pixel bmp using BITMAPCOREHEADER */
+/* 1x1 pixel bmp using BITMAPCOREHEADER with 24 bits colors (1 bit color fails to load) */
 static const unsigned char bmpcoreimage[38] = {
-0x42,0x4d,0x26,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x22,0x00,0x00,0x00,0x0c,0x00,
-0x00,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0xff,0xff,0xff,0x00,0x55,0x55,
-0x55,0x00,0x00,0x00,0x00,0x00
+0x42,0x4d,0x1e,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1a,0x00,0x00,0x00,0x0c,0x00,
+0x00,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x18,0x00,0xff,0xff,0xff,0x00
 };
 
 /* 2x2 pixel gif */
@@ -1228,7 +1227,8 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
         "Last error: %lu\n", error);
 
     if (expect_success) {
-        ok(handle != NULL, "IMAGE_BITMAP failed\n");
+        ok(handle != NULL || broken(image_data == bmpcoreimage) /* pre-security update */,
+           "IMAGE_BITMAP failed\n");
         if (handle != NULL) test_LoadImageBitmap(handle);
     }
     else ok(handle == NULL, "IMAGE_BITMAP succeeded incorrectly\n");
@@ -2914,9 +2914,8 @@ static void test_monochrome_icon(void)
         CloseHandle(handle);
 
         handle = LoadImageA(NULL, "icon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-        ok(handle != NULL ||
-           broken(use_core_info && handle == NULL), /* Win 8, 10 */
-           "LoadImage() failed with %lu.\n", GetLastError());
+        if (!monochrome && !use_core_info) ok(handle != NULL, "LoadImage() failed with %lu.\n", GetLastError());
+        else todo_wine ok(handle == NULL || broken(!use_core_info) /* Win7 */, "LoadImage() failed with %lu.\n", GetLastError());
         if (handle == NULL)
         {
             skip("Icon failed to load: %s, %s\n",
