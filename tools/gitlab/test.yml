@@ -79,7 +79,7 @@ test-win10-21h2-32:
   tags:
     - win10-21h2
   script:
-    - $WINETEST_ARGS = Get-Content ./winetest.args
+    - $WINETEST_ARGS = @(Get-Content ./winetest.args)
     - if ($WINETEST_ARGS.count -gt 0) { ./winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL @WINETEST_ARGS >winetest.log } else { echo $null >winetest.log }
   after_script:
     - Get-Content ./winetest.log
@@ -100,7 +100,7 @@ test-win10-21h2-64:
   tags:
     - win10-21h2
   script:
-    - $WINETEST_ARGS = Get-Content ./winetest.args
+    - $WINETEST_ARGS = @(Get-Content ./winetest.args)
     - if ($WINETEST_ARGS.count -gt 0) { ./winetest64.exe -q -q -o - -t gitlab -u $CI_JOB_URL @WINETEST_ARGS >winetest.log } else { echo $null >winetest.log }
   after_script:
     - Get-Content ./winetest.log
