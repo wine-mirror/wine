@@ -385,6 +385,7 @@ struct ime_call
     BOOL broken;
     BOOL flaky_himc;
     BOOL todo_value;
+    BOOL todo_himc;
 };
 
 struct ime_call empty_sequence[] = {{0}};
@@ -399,7 +400,13 @@ static int ok_call_( const char *file, int line, const struct ime_call *expected
     if ((ret = expected->func - received->func)) goto done;
     /* Wine doesn't allocate HIMC in a deterministic order, ignore them when they are enumerated */
     if (expected->flaky_himc && (ret = !!(UINT_PTR)expected->himc - !!(UINT_PTR)received->himc)) goto done;
-    if (!expected->flaky_himc && (ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc)) goto done;
+    if (!expected->flaky_himc && (ret = (UINT_PTR)expected->himc - (UINT_PTR)received->himc))
+    {
+        /* on some Wine configurations the IME UI doesn't get an HIMC */
+        if (!winetest_platform_is_wine || !expected->todo_himc) goto done;
+        else todo_wine ok( 0, "got himc %p\n", received->himc );
+    }
+
     if ((ret = (UINT)(UINT_PTR)expected->hkl - (UINT)(UINT_PTR)received->hkl)) goto done;
     switch (expected->func)
     {
@@ -7081,17 +7088,25 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     struct ime_call post_messages[] =
     {
         {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1}},
-        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 1},
+         .todo_himc = TRUE /* on some Wine configurations the IME UI doesn't get an HIMC */
+        },
         {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 1}},
-        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 1}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 1},
+         .todo_himc = TRUE /* on some Wine configurations the IME UI doesn't get an HIMC */
+        },
         {0},
     };
     struct ime_call sent_messages[] =
     {
         {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 2}},
-        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 2}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_STARTCOMPOSITION, .wparam = 2},
+         .todo_himc = TRUE /* on some Wine configurations the IME UI doesn't get an HIMC */
+        },
         {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_TEST_WIN, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 2}},
-        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 2}},
+        {.hkl = expect_ime, .himc = 0/*himc*/, .func = MSG_IME_UI, .message = {.msg = WM_IME_ENDCOMPOSITION, .wparam = 2},
+         .todo_himc = TRUE /* on some Wine configurations the IME UI doesn't get an HIMC */
+        },
         {0},
     };
     HWND hwnd, other_hwnd;
