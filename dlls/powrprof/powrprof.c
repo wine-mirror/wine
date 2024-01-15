@@ -356,6 +356,12 @@ DWORD WINAPI PowerSettingUnregisterNotification(HPOWERNOTIFY handle)
     return ERROR_SUCCESS;
 }
 
+DWORD WINAPI PowerWriteACValueIndex(HKEY key, const GUID *scheme, const GUID *subgroup, const GUID *setting, DWORD index)
+{
+   FIXME("(%p,%s,%s,%s,0x%08lx) stub!\n", key, debugstr_guid(scheme), debugstr_guid(subgroup), debugstr_guid(setting), index);
+   return ERROR_SUCCESS;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
    switch(fdwReason) {
