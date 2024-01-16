@@ -143,7 +143,7 @@ void WINAPI RoUninitialize(void)
 /***********************************************************************
  *      RoGetActivationFactory (combase.@)
  */
-HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **class_factory)
+HRESULT WINAPI DECLSPEC_HOTPATCH RoGetActivationFactory(HSTRING classid, REFIID iid, void **class_factory)
 {
     PFNGETACTIVATIONFACTORY pDllGetActivationFactory;
     IActivationFactory *factory;
