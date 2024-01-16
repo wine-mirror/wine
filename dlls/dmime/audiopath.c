@@ -23,7 +23,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 struct IDirectMusicAudioPathImpl {
     IDirectMusicAudioPath IDirectMusicAudioPath_iface;
-    struct dmobject dmobj;
     LONG ref;
     IDirectMusicPerformance8* pPerf;
     IDirectMusicGraph*        pToolGraph;
@@ -33,14 +32,21 @@ struct IDirectMusicAudioPathImpl {
     BOOL fActive;
 };
 
+struct audio_path_config
+{
+    IUnknown IUnknown_iface;
+    struct dmobject dmobj;
+    LONG ref;
+};
+
 static inline struct IDirectMusicAudioPathImpl *impl_from_IDirectMusicAudioPath(IDirectMusicAudioPath *iface)
 {
     return CONTAINING_RECORD(iface, struct IDirectMusicAudioPathImpl, IDirectMusicAudioPath_iface);
 }
 
-static inline struct IDirectMusicAudioPathImpl *impl_from_IPersistStream(IPersistStream *iface)
+static inline struct audio_path_config *impl_from_IPersistStream(IPersistStream *iface)
 {
-    return CONTAINING_RECORD(iface, struct IDirectMusicAudioPathImpl, dmobj.IPersistStream_iface);
+    return CONTAINING_RECORD(iface, struct audio_path_config, dmobj.IPersistStream_iface);
 }
 
 void set_audiopath_perf_pointer(IDirectMusicAudioPath *iface, IDirectMusicPerformance8 *performance)
@@ -74,10 +80,6 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_QueryInterface (IDirectMusicAudi
 
     if (IsEqualIID (riid, &IID_IDirectMusicAudioPath) || IsEqualIID (riid, &IID_IUnknown))
         *ppobj = &This->IDirectMusicAudioPath_iface;
-    else if (IsEqualIID (riid, &IID_IDirectMusicObject))
-        *ppobj = &This->dmobj.IDirectMusicObject_iface;
-    else if (IsEqualIID (riid, &IID_IPersistStream))
-        *ppobj = &This->dmobj.IPersistStream_iface;
 
     if (*ppobj) {
         IUnknown_AddRef((IUnknown*)*ppobj);
@@ -255,7 +257,7 @@ static const IDirectMusicAudioPathVtbl DirectMusicAudioPathVtbl = {
 };
 
 /* IDirectMusicObject */
-static HRESULT WINAPI path_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
+static HRESULT WINAPI path_config_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
     struct chunk_entry riff = {0};
@@ -294,13 +296,13 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     dmobj_IDirectMusicObject_Release,
     dmobj_IDirectMusicObject_GetDescriptor,
     dmobj_IDirectMusicObject_SetDescriptor,
-    path_IDirectMusicObject_ParseDescriptor
+    path_config_IDirectMusicObject_ParseDescriptor
 };
 
 /* IPersistStream */
-static HRESULT WINAPI path_IPersistStream_Load(IPersistStream *iface, IStream *stream)
+static HRESULT WINAPI path_config_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-    struct IDirectMusicAudioPathImpl *This = impl_from_IPersistStream(iface);
+    struct audio_path_config *This = impl_from_IPersistStream(iface);
 
     FIXME("(%p, %p): Loading not implemented yet\n", This, stream);
 
@@ -314,9 +316,62 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     dmobj_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-    path_IPersistStream_Load,
+    path_config_IPersistStream_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
+};
+
+static inline struct audio_path_config *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_path_config, IUnknown_iface);
+}
+
+static HRESULT WINAPI path_config_IUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppobj)
+{
+    struct audio_path_config *This = impl_from_IUnknown(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+
+    *ppobj = NULL;
+
+    if (IsEqualIID (riid, &IID_IUnknown))
+        *ppobj = &This->IUnknown_iface;
+    else if (IsEqualIID (riid, &IID_IDirectMusicObject))
+        *ppobj = &This->dmobj.IDirectMusicObject_iface;
+    else if (IsEqualIID (riid, &IID_IPersistStream))
+        *ppobj = &This->dmobj.IPersistStream_iface;
+
+    if (*ppobj)
+    {
+        IUnknown_AddRef((IUnknown*)*ppobj);
+        return S_OK;
+    }
+
+    WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI path_config_IUnknown_AddRef(IUnknown *unk)
+{
+    struct audio_path_config *This = impl_from_IUnknown(unk);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI path_config_IUnknown_Release(IUnknown *unk)
+{
+    struct audio_path_config *This = impl_from_IUnknown(unk);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+        free(This);
+    return ref;
+}
+
+static const IUnknownVtbl path_config_unk_vtbl =
+{
+    path_config_IUnknown_QueryInterface,
+    path_config_IUnknown_AddRef,
+    path_config_IUnknown_Release,
 };
 
 /* for ClassFactory */
@@ -329,12 +384,26 @@ HRESULT create_dmaudiopath(REFIID riid, void **ppobj)
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicAudioPath_iface.lpVtbl = &DirectMusicAudioPathVtbl;
     obj->ref = 1;
-    dmobject_init(&obj->dmobj, &CLSID_DirectMusicAudioPathConfig,
-            (IUnknown *)&obj->IDirectMusicAudioPath_iface);
-    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
     hr = IDirectMusicAudioPath_QueryInterface(&obj->IDirectMusicAudioPath_iface, riid, ppobj);
     IDirectMusicAudioPath_Release(&obj->IDirectMusicAudioPath_iface);
+    return hr;
+}
+
+HRESULT create_dmaudiopath_config(REFIID riid, void **ppobj)
+{
+    struct audio_path_config *obj;
+    HRESULT hr;
+
+    *ppobj = NULL;
+    if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicAudioPathConfig, &obj->IUnknown_iface);
+    obj->IUnknown_iface.lpVtbl = &path_config_unk_vtbl;
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+    obj->ref = 1;
+
+    hr = IUnknown_QueryInterface(&obj->IUnknown_iface, riid, ppobj);
+    IUnknown_Release(&obj->IUnknown_iface);
     return hr;
 }

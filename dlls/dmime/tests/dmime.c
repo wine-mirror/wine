@@ -908,12 +908,10 @@ static void test_COM_audiopath(void)
 
     /* IDirectMusicObject and IPersistStream are not supported */
     hr = IDirectMusicAudioPath_QueryInterface(dmap, &IID_IDirectMusicObject, (void**)&unk);
-    todo_wine ok(FAILED(hr) && !unk, "Unexpected IDirectMusicObject interface: hr=%#lx, iface=%p\n",
-            hr, unk);
+    ok(FAILED(hr) && !unk, "Unexpected IDirectMusicObject interface: hr=%#lx, iface=%p\n", hr, unk);
     if (unk) IUnknown_Release(unk);
     hr = IDirectMusicAudioPath_QueryInterface(dmap, &IID_IPersistStream, (void**)&unk);
-    todo_wine ok(FAILED(hr) && !unk, "Unexpected IPersistStream interface: hr=%#lx, iface=%p\n",
-            hr, unk);
+    ok(FAILED(hr) && !unk, "Unexpected IPersistStream interface: hr=%#lx, iface=%p\n", hr, unk);
     if (unk) IUnknown_Release(unk);
 
     /* Same refcount for all DirectMusicAudioPath interfaces */
@@ -988,7 +986,7 @@ static void test_COM_audiopathconfig(void)
     /* IDirectMusicAudioPath not supported */
     hr = CoCreateInstance(&CLSID_DirectMusicAudioPathConfig, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicAudioPath, (void**)&dmap);
-    todo_wine ok(FAILED(hr) && !dmap,
+    ok(FAILED(hr) && !dmap,
             "Unexpected IDirectMusicAudioPath interface: hr=%#lx, iface=%p\n", hr, dmap);
 
     /* IDirectMusicObject and IPersistStream supported */
@@ -1018,8 +1016,8 @@ static void test_COM_audiopathconfig(void)
 
     /* IDirectMusicAudioPath still not supported */
     hr = IDirectMusicObject_QueryInterface(dmo, &IID_IDirectMusicAudioPath, (void**)&dmap);
-    todo_wine ok(FAILED(hr) && !dmap,
-            "Unexpected IDirectMusicAudioPath interface: hr=%#lx, iface=%p\n", hr, dmap);
+    ok(FAILED(hr) && !dmap,
+        "Unexpected IDirectMusicAudioPath interface: hr=%#lx, iface=%p\n", hr, dmap);
 
     while (IDirectMusicObject_Release(dmo));
 }

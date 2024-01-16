@@ -57,6 +57,7 @@ extern HRESULT create_dmsegment(REFIID riid, void **ret_iface);
 extern HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface);
 extern HRESULT create_dmgraph(REFIID riid, void **ret_iface);
 extern HRESULT create_dmaudiopath(REFIID riid, void **ret_iface);
+extern HRESULT create_dmaudiopath_config(REFIID riid, void **ret_iface);
 
 extern HRESULT create_dmlyricstrack(REFIID riid, void **ret_iface);
 extern HRESULT create_dmmarkertrack(REFIID riid, void **ret_iface);
