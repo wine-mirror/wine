@@ -438,8 +438,8 @@ PROC WINAPI wglGetDefaultProcAddress( LPCSTR name )
 /***********************************************************************
  *		wglSwapLayerBuffers (OPENGL32.@)
  */
-BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
-				UINT fuPlanes) {
+BOOL WINAPI DECLSPEC_HOTPATCH wglSwapLayerBuffers(HDC hdc, UINT fuPlanes)
+{
   TRACE("(%p, %08x)\n", hdc, fuPlanes);
 
   if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
