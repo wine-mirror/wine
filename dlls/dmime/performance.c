@@ -1654,7 +1654,7 @@ static HRESULT WINAPI performance_CreateAudioPath(IDirectMusicPerformance8 *ifac
 
     FIXME("(%p, %p, %d, %p): stub\n", This, pSourceConfig, fActivate, ret_iface);
 
-    if (!ret_iface) return E_POINTER;
+    if (!ret_iface || !pSourceConfig) return E_POINTER;
     if (!This->audio_paths_enabled) return DMUS_E_AUDIOPATH_INACTIVE;
 
     create_dmaudiopath(&IID_IDirectMusicAudioPath, (void **)&pPath);
