@@ -229,6 +229,7 @@ static struct device *add_device( HKEY key, DWORD type )
     SIZE_T size;
     HANDLE file;
     WCHAR *path;
+    unsigned int i = 0;
 
     if (!query_reg_value( key, symbolic_linkW, value, sizeof(value_buffer) - sizeof(WCHAR) ))
     {
@@ -237,8 +238,12 @@ static struct device *add_device( HKEY key, DWORD type )
     }
     memset( value->Data + value->DataLength, 0, sizeof(WCHAR) );
 
-    /* upper case everything but the GUID */
-    for (path = (WCHAR *)value->Data; *path && *path != '{'; path++) *path = towupper( *path );
+    /* upper case everything until the instance ID */
+    for (path = (WCHAR *)value->Data; *path && i < 2; path++)
+    {
+        if (*path == '#') ++i;
+        *path = towupper( *path );
+    }
     path = (WCHAR *)value->Data;
 
     /* path is in DOS format and begins with \\?\ prefix */
