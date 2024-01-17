@@ -3112,6 +3112,16 @@ void __thiscall _Cancellation_beacon_dtor(_Cancellation_beacon *this)
     free(this->beacon);
 }
 
+/* ?_Confirm_cancel@_Cancellation_beacon@details@Concurrency@@QAA_NXZ */
+/* ?_Confirm_cancel@_Cancellation_beacon@details@Concurrency@@QAE_NXZ */
+/* ?_Confirm_cancel@_Cancellation_beacon@details@Concurrency@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(_Cancellation_beacon__Confirm_cancel, 4)
+bool __thiscall _Cancellation_beacon__Confirm_cancel(_Cancellation_beacon *this)
+{
+    FIXME("(%p)\n", this);
+    return TRUE;
+}
+
 /* ??0_Condition_variable@details@Concurrency@@QAE@XZ */
 /* ??0_Condition_variable@details@Concurrency@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(_Condition_variable_ctor, 4)
