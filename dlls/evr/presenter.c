@@ -2136,7 +2136,7 @@ static HRESULT video_presenter_init_d3d(struct video_presenter *presenter)
     present_params.Flags = D3DPRESENTFLAG_VIDEO;
     present_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
     hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, GetDesktopWindow(),
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_params, &device);
+            D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED, &present_params, &device);
 
     IDirect3D9_Release(d3d);
 
