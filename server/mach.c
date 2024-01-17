@@ -28,9 +28,6 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SYSCALL_H
-#include <sys/syscall.h>
-#endif
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
@@ -358,6 +355,8 @@ done:
 #endif
 }
 
+extern int __pthread_kill( mach_port_t, int );
+
 int send_thread_signal( struct thread *thread, int sig )
 {
     int ret = -1;
@@ -371,7 +370,7 @@ int send_thread_signal( struct thread *thread, int sig )
         if (!mach_port_extract_right( process_port, thread->unix_tid,
                                       MACH_MSG_TYPE_COPY_SEND, &port, &type ))
         {
-            ret = syscall( SYS___pthread_kill, port, sig );
+            ret = __pthread_kill( port, sig );
             mach_port_deallocate( mach_task_self(), port );
         }
         else errno = ESRCH;
