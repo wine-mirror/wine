@@ -1789,7 +1789,6 @@ static void test_load_modules_details(void)
         }
         else
             expected_module_name[0] = L'\0';
-        todo_wine_if(i >= 2)
         ok(!wcsicmp(im.ModuleName, expected_module_name), "Unexpected module name '%ls'\n", im.ModuleName);
         ok(!wcsicmp(im.ImageName, test->in_image_name ? test->in_image_name : L""), "Unexpected image name '%ls'\n", im.ImageName);
         if ((test->options & SYMOPT_DEFERRED_LOADS) || !test->in_image_name)
@@ -1853,7 +1852,6 @@ static void test_load_modules_details(void)
         ret = SymEnumerateModulesW64(dummy, aggregate_module_details_cb, &md);
         ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
         ok(md.count == 1, "Unexpected module count %u\n", md.count);
-        todo_wine_if(i >= 2)
         ok(!wcscmp(md.name, expected_module_name), "Unexpected module name %ls\n", md.name);
         free(md.name);
         /* native will fail loading symbol in deferred state, so force loading of debug symbols */

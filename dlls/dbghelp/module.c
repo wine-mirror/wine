@@ -210,6 +210,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;
     module_set_module(module, name);
+    module->alt_modulename = NULL;
     module->module.ImageName[0] = '\0';
     lstrcpynW(module->module.LoadedImageName, name, ARRAY_SIZE(module->module.LoadedImageName));
     module->module.SymType = SymDeferred;
@@ -288,6 +289,7 @@ struct module* module_find_by_nameW(const struct process* pcs, const WCHAR* name
     for (module = pcs->lmodules; module; module = module->next)
     {
         if (!wcsicmp(name, module->modulename)) return module;
+        if (module->alt_modulename && !wcsicmp(name, module->alt_modulename)) return module;
     }
     SetLastError(ERROR_INVALID_NAME);
     return NULL;
@@ -995,11 +997,9 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         }
     }
 
-    /* by default module_new fills module.ModuleName from a derivation
-     * of LoadedImageName. Overwrite it, if we have better information
-     */
+    /* Store alternate name for module when provided. */
     if (wModuleName)
-        module_set_module(module, wModuleName);
+        module->alt_modulename = pool_wcsdup(&module->pool, wModuleName);
     if (wImageName)
         lstrcpynW(module->module.ImageName, wImageName, ARRAY_SIZE(module->module.ImageName));
 

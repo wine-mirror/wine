@@ -438,6 +438,7 @@ struct module
     struct process*             process;
     IMAGEHLP_MODULEW64          module;
     WCHAR                       modulename[64]; /* used for enumeration */
+    WCHAR*                      alt_modulename; /* used in symbol lookup */
     struct module*              next;
     enum dhext_module_type	type : 16;
     unsigned short              is_virtual : 1,
