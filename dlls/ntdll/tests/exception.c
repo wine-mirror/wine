@@ -3185,6 +3185,13 @@ static const struct exception
       1, 1, STATUS_SINGLE_STEP, 0 },
     { { 0xcd, 0x2c, 0xc3 },
       0, 2, STATUS_ASSERTION_FAILURE, 0 },
+    { { 0xb8, 0xb8, 0xb8, 0xb8, 0xb8,          /* mov $0xb8b8b8b8, %eax */
+        0xcd, 0x2d, 0xfa, 0xc3 },              /* int $0x2d; cli; ret */
+      7, 1, STATUS_BREAKPOINT, 1, { 0xb8b8b8b8 } },
+/* 40 */
+    { { 0xb8, 0x01, 0x00, 0x00, 0x00,          /* mov $0x01, %eax */
+        0xcd, 0x2d, 0xfa, 0xc3 },              /* int $0x2d; cli; ret */
+      8, 0, STATUS_SUCCESS, 0 },
 };
 
 static int got_exception;
