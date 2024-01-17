@@ -498,6 +498,7 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
         mf->info->guid = info.guid;
         mf->info->timestamp = info.timestamp;
         mf->info->age = info.age;
+        mf->info->sig = info.sig;
     }
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.

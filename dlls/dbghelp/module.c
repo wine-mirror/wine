@@ -376,8 +376,12 @@ BOOL module_load_debug(struct module* module)
     if (module->module.SymType == SymDeferred)
     {
         BOOL ret;
-        
-        if (module->is_virtual) ret = FALSE;
+
+        if (module->is_virtual)
+        {
+            module->module.SymType = SymVirtual;
+            ret = TRUE;
+        }
         else if (module->type == DMT_PE)
         {
             idslW64.SizeOfStruct = sizeof(idslW64);
@@ -942,7 +946,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     if (!(pcs = process_find_by_handle(hProcess))) return 0;
 
-    if (Flags & ~(SLMFLAG_VIRTUAL))
+    if (Flags & ~(SLMFLAG_VIRTUAL | SLMFLAG_NO_SYMBOLS))
         FIXME("Unsupported Flags %08lx for %s\n", Flags, debugstr_w(wImageName));
 
     /* Trying to load a new module at the same address of an existing one,
@@ -970,7 +974,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
         if (!wImageName) wImageName = L"";
         module = module_new(pcs, wImageName, DMT_PE, FALSE, TRUE, BaseOfDll, SizeOfDll, 0, 0, IMAGE_FILE_MACHINE_UNKNOWN);
         if (!module) return 0;
-        module->module.SymType = SymVirtual;
     }
     else
     {
@@ -996,6 +999,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
             return 0;
         }
     }
+    if (Flags & SLMFLAG_NO_SYMBOLS) module->dont_load_symbols = 1;
 
     /* Store alternate name for module when provided. */
     if (wModuleName)
@@ -1531,6 +1535,11 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
 
     if (dbghelp_opt_real_path && module->real_path)
         lstrcpynW(miw64.LoadedImageName, module->real_path, ARRAY_SIZE(miw64.LoadedImageName));
+    else if (miw64.SymType == SymDeferred)
+    {
+        miw64.LoadedImageName[0] = '\0';
+        miw64.TimeDateStamp = 0;
+    }
 
     /* update debug information from container if any */
     if (module->module.SymType == SymNone)

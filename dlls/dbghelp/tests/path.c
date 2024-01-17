@@ -1803,10 +1803,9 @@ static void test_load_modules_details(void)
         }
         else
             loaded_img_name = test->in_image_name;
-        todo_wine_if(i == 3 || i == 5 || i == 7 || i == 9 || i == 11 || i == 13 || i == 15 || i == 17)
         ok(!wcsicmp(im.LoadedImageName, (test->options & SYMOPT_DEFERRED_LOADS) ? L"" : loaded_img_name),
            "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
-        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 16)
+        todo_wine_if(i == 4 || i == 6 || i == 16)
         ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
         if (test->mismatch_in)
         {
@@ -1842,7 +1841,6 @@ static void test_load_modules_details(void)
             {
                 ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
                 if (test->flags & SLMFLAG_NO_SYMBOLS)
-                    todo_wine_if(i == 8)
                     ok(!im.LoadedPdbName[0], "Unexpected value\n");
                 else
                 {
@@ -1853,7 +1851,6 @@ static void test_load_modules_details(void)
                 ok(!im.DbgUnmatched, "Unexpected value\n");
                 ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
                    wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
-                todo_wine_if(i == 10)
                 ok(im.PdbSig == 0, "Unexpected value\n");
                 ok(im.PdbAge == test_files[val].age_or_timestamp, "Unexpected value\n");
             }
@@ -1868,7 +1865,7 @@ static void test_load_modules_details(void)
             ok(im.PdbSig == 0, "Unexpected value\n");
             ok(!im.PdbAge, "Unexpected value\n");
             /* native returns either 0 or the actual timestamp depending on test case */
-            todo_wine_if(i == 4 || i == 5 || i == 7 || i == 9 || i == 11 || i == 13 || (i >= 15 && i <= 17))
+            todo_wine_if(i == 4 || i == 16)
             ok(!im.TimeDateStamp || broken(im.TimeDateStamp == 12324), "Unexpected value\n");
         }
         ok(im.ImageSize == 0x6666, "Unexpected image size\n");
@@ -1887,7 +1884,7 @@ static void test_load_modules_details(void)
              SymFromNameW(dummy, L"foo", sym);
         }
         ret = SymAddSymbol(dummy, base, "winetest_symbol_virtual", base + 4242, 13, 0);
-        todo_wine_if(i >= 12 && i <= 15) { /* temp */
+        todo_wine_if(i == 8 || i == 9 || (i >= 12 && i <= 15)) { /* temp */
         ok(ret, "Failed to add symbol\n");
         memset(sym, 0, sizeof(*sym));
         sym->SizeOfStruct = sizeof(*sym);

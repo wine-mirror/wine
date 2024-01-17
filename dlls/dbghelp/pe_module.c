@@ -721,9 +721,12 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
 
     if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
-        ret = image_check_alternate(&module->format_info[DFI_PE]->u.pe_info->fmap, module);
-        ret = pe_load_stabs(pcs, module) || ret;
-        ret = pe_load_dwarf(module) || ret;
+        if (!module->dont_load_symbols)
+        {
+            ret = image_check_alternate(&module->format_info[DFI_PE]->u.pe_info->fmap, module);
+            ret = pe_load_stabs(pcs, module) || ret;
+            ret = pe_load_dwarf(module) || ret;
+        }
         ret = pe_load_msc_debug_info(pcs, module) || ret;
         ret = ret || pe_load_coff_symbol_table(module); /* FIXME */
         /* if we still have no debug info (we could only get SymExport at this

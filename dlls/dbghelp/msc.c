@@ -3889,16 +3889,18 @@ static BOOL pdb_process_file(const struct process *pcs,
                              const struct msc_debug_info *msc_dbg,
                              const char *filename, const GUID *guid, DWORD timestamp, DWORD age)
 {
-    BOOL                        ret;
     struct module_format*       modfmt;
     struct pdb_module_info*     pdb_module_info;
     SYMSRV_INDEX_INFOW          info;
     BOOL                        unmatched;
 
-    if (path_find_symbol_file(pcs, msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched) &&
+    if (!msc_dbg->module->dont_load_symbols &&
+        path_find_symbol_file(pcs, msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched) &&
         (modfmt = HeapAlloc(GetProcessHeap(), 0,
-                             sizeof(struct module_format) + sizeof(struct pdb_module_info))))
+                            sizeof(struct module_format) + sizeof(struct pdb_module_info))))
     {
+        BOOL ret;
+
         pdb_module_info = (void*)(modfmt + 1);
         msc_dbg->module->format_info[DFI_PDB] = modfmt;
         modfmt->module      = msc_dbg->module;
@@ -3926,6 +3928,7 @@ static BOOL pdb_process_file(const struct process *pcs,
             msc_dbg->module->module.TypeInfo = TRUE;
             msc_dbg->module->module.SourceIndexed = TRUE;
             msc_dbg->module->module.Publics = TRUE;
+
             return TRUE;
         }
         msc_dbg->module->format_info[DFI_PDB] = NULL;
@@ -3936,7 +3939,7 @@ static BOOL pdb_process_file(const struct process *pcs,
         msc_dbg->module->module.PdbSig70 = *guid;
     else
         memset(&msc_dbg->module->module.PdbSig70, 0, sizeof(GUID));
-    msc_dbg->module->module.PdbSig = timestamp;
+    msc_dbg->module->module.PdbSig = 0;
     msc_dbg->module->module.PdbAge = age;
     return FALSE;
 }
