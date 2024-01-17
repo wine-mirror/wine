@@ -93,6 +93,8 @@ static int is_rosetta( void )
     return rosetta_status;
 }
 
+extern kern_return_t bootstrap_register2( mach_port_t bp, name_t service_name, mach_port_t sp, uint64_t flags );
+
 /* initialize the process control mechanism */
 void init_tracing_mechanism(void)
 {
@@ -107,7 +109,7 @@ void init_tracing_mechanism(void)
                                  server_mach_port,
                                  MACH_MSG_TYPE_MAKE_SEND ) != KERN_SUCCESS)
             fatal_error("Error inserting rights\n");
-    if (bootstrap_register(bp, server_dir, server_mach_port) != KERN_SUCCESS)
+    if (bootstrap_register2( bp, server_dir, server_mach_port, 0 ) != KERN_SUCCESS)
         fatal_error("Can't check in server_mach_port\n");
     mach_port_deallocate(mach_task_self(), bp);
 }
