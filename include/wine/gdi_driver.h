@@ -299,7 +299,6 @@ struct user_driver_funcs
     void    (*pReleaseKbdTables)(const KBDTABLES *);
     /* IME functions */
     UINT    (*pImeProcessKey)(HIMC,UINT,UINT,const BYTE*);
-    UINT    (*pImeToAsciiEx)(UINT,UINT,const BYTE*,COMPOSITIONSTRING*,HIMC);
     void    (*pNotifyIMEStatus)(HWND,UINT);
     /* cursor/icon functions */
     void    (*pDestroyCursorIcon)(HCURSOR);

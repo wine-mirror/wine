@@ -590,8 +590,6 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
         return res;
     }
     case WINE_IME_TO_ASCII_EX:
-        res = user_driver->pImeToAsciiEx( wparam, lparam, params->state, params->compstr, params->himc );
-        if ((NTSTATUS)res != STATUS_NOT_IMPLEMENTED) return res;
         return ime_to_tascii_ex( wparam, lparam, params->state, params->compstr, params->himc );
     case WINE_IME_POST_UPDATE:
         post_ime_update( hwnd, wparam, (WCHAR *)lparam, (WCHAR *)params );
