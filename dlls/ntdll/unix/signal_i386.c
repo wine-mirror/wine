@@ -1139,6 +1139,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 if (context_ex->XState.Length < xstate_get_size( xstate->CompactionMask, xstate->Mask ))
                     return STATUS_BUFFER_OVERFLOW;
                 copy_xstate( xstate, &frame->xstate, xstate->Mask );
+                /* copy_xstate may use avx in memcpy, restore xstate not to break the tests. */
+                frame->restore_flags |= CONTEXT_XSTATE;
             }
         }
         /* update the cached version of the debug registers */

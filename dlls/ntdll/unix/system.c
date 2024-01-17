@@ -250,20 +250,60 @@ BOOL xstate_compaction_enabled = FALSE;
 UINT64 xstate_supported_features_mask;
 UINT64 xstate_features_size;
 
+static int xstate_feature_offset[64] = {0, 0, 576};
+static int xstate_feature_size[64] = {0, 0, 256};
+static UINT64 xstate_aligned_features;
+
+static int next_xstate_offset( int off, UINT64 compaction_mask, int feature_idx )
+{
+    const UINT64 feature_mask = (UINT64)1 << feature_idx;
+
+    if (!compaction_mask) return xstate_feature_offset[feature_idx + 1] - sizeof(XSAVE_FORMAT);
+
+    if (compaction_mask & feature_mask) off += xstate_feature_size[feature_idx];
+    if (xstate_aligned_features & (feature_mask << 1))
+        off = (off + 63) & ~63;
+    return off;
+}
+
 unsigned int xstate_get_size( UINT64 compaction_mask, UINT64 mask )
 {
-    if (!(mask & ((UINT64)1 << XSTATE_AVX))) return sizeof(XSAVE_AREA_HEADER);
-    return sizeof(XSAVE_AREA_HEADER) + sizeof(YMMCONTEXT);
+    unsigned int i;
+    int off;
+
+    mask >>= 2;
+    off = sizeof(XSAVE_AREA_HEADER);
+    i = 2;
+    while (mask)
+    {
+        if (mask == 1) return off + xstate_feature_size[i];
+        off = next_xstate_offset( off, compaction_mask, i );
+        mask >>= 1;
+        ++i;
+    }
+    return off;
 }
 
 void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask )
 {
+    unsigned int i;
+    int src_off, dst_off;
+
     mask &= xstate_extended_features() & src->Mask;
     if (src->CompactionMask) mask &= src->CompactionMask;
     if (dst->CompactionMask) mask &= dst->CompactionMask;
     dst->Mask = (dst->Mask & ~xstate_extended_features()) | mask;
-    if (mask & ((UINT64)1 << XSTATE_AVX))
-        *(YMMCONTEXT *)(dst + 1) = *(YMMCONTEXT *)(src + 1);
+    mask >>= 2;
+    src_off = dst_off = sizeof(XSAVE_AREA_HEADER);
+    i = 2;
+    while (1)
+    {
+        if (mask & 1) memcpy( (char *)dst + dst_off, (char *)src + src_off, xstate_feature_size[i] );
+        if (!(mask >>= 1)) break;
+        src_off = next_xstate_offset( src_off, src->CompactionMask, i );
+        dst_off = next_xstate_offset( dst_off, dst->CompactionMask, i );
+        ++i;
+    }
 }
 
 #define AUTH	0x68747541	/* "Auth" */
