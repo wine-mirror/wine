@@ -100,18 +100,18 @@ void init_tracing_mechanism(void)
 {
     mach_port_t bp;
 
-    if (task_get_bootstrap_port(mach_task_self(), &bp) != KERN_SUCCESS)
-        fatal_error("Can't find bootstrap port\n");
-    if (mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &server_mach_port) != KERN_SUCCESS)
-        fatal_error("Can't allocate port\n");
+    if (task_get_bootstrap_port( mach_task_self(), &bp ) != KERN_SUCCESS)
+        fatal_error( "Can't find bootstrap port\n" );
+    if (mach_port_allocate( mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &server_mach_port ) != KERN_SUCCESS)
+        fatal_error( "Can't allocate port\n" );
     if  (mach_port_insert_right( mach_task_self(),
                                  server_mach_port,
                                  server_mach_port,
                                  MACH_MSG_TYPE_MAKE_SEND ) != KERN_SUCCESS)
-            fatal_error("Error inserting rights\n");
+            fatal_error( "Error inserting rights\n" );
     if (bootstrap_register2( bp, server_dir, server_mach_port, 0 ) != KERN_SUCCESS)
-        fatal_error("Can't check in server_mach_port\n");
-    mach_port_deallocate(mach_task_self(), bp);
+        fatal_error( "Can't check in server_mach_port\n" );
+    mach_port_deallocate( mach_task_self(), bp );
 }
 
 /* initialize the per-process tracing mechanism */
