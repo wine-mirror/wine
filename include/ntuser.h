@@ -200,6 +200,11 @@ struct draw_text_params
     UINT flags;
     WCHAR str[1];
 };
+struct draw_text_result
+{
+    int height;
+    RECT rect;
+};
 
 /* NtUserFreeCachedClipboardData params */
 struct free_cached_data_params

@@ -125,13 +125,15 @@ static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params 
     return 0;
 }
 
-static NTSTATUS WINAPI User32DrawText( struct draw_text_params *params, ULONG size )
+static NTSTATUS WINAPI User32DrawText( void *args, ULONG size )
 {
-    int ret;
+    const struct draw_text_params *params = args;
+    struct draw_text_result result;
 
     size -= FIELD_OFFSET( struct draw_text_params, str );
-    ret = DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), &params->rect, params->flags );
-    return NtCallbackReturn( &params->rect, sizeof(params->rect), ret );
+    result.rect = params->rect;
+    result.height = DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), &result.rect, params->flags );
+    return NtCallbackReturn( &result, sizeof(result), STATUS_SUCCESS );
 }
 
 static NTSTATUS WINAPI User32ImmProcessKey( const struct imm_process_key_params *params, ULONG size )
