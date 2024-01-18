@@ -5236,6 +5236,33 @@ static void test_input_desktop( char **argv )
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
 
+static void test_keyboard_layout(void)
+{
+    const CHAR *layout_name;
+    LANGID lang_id;
+    HKL hkl;
+
+    /* Test that the high word of the keyboard layout in CJK locale is the same as the low word,
+     * even when IME is on */
+    lang_id = PRIMARYLANGID(GetUserDefaultLCID());
+    if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
+    {
+        hkl = GetKeyboardLayout(0);
+        todo_wine
+        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+
+        if (lang_id == LANG_CHINESE)
+            layout_name = "00000804";
+        else if (lang_id == LANG_JAPANESE)
+            layout_name = "00000411";
+        else if (lang_id == LANG_KOREAN)
+            layout_name = "00000412";
+        hkl = LoadKeyboardLayoutA(layout_name, 0);
+        todo_wine
+        ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
+    }
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -5269,6 +5296,7 @@ START_TEST(input)
     test_ToUnicode();
     test_ToAscii();
     test_get_async_key_state();
+    test_keyboard_layout();
     test_keyboard_layout_name();
     test_ActivateKeyboardLayout( argv );
     test_key_names();
