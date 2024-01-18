@@ -99,19 +99,6 @@ static const WORD main_key_scan_abnt_qwerty[MAIN_LEN] =
    0x56, /* the 102nd key (actually to the right of l-shift) */
 };
 
-static const WORD main_key_scan_dvorak[MAIN_LEN] =
-{
- /* `    1    2    3    4    5    6    7    8    9    0    [    ] */
-   0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x1A,0x1B,
- /* '    ,    .    p    y    f    g    c    r    l    /    = */
-   0x28,0x33,0x34,0x19,0x15,0x21,0x22,0x2E,0x13,0x26,0x35,0x0D,
- /* a    o    e    u    i    d    h    t    n    s    -    \ */
-   0x1E,0x18,0x12,0x16,0x17,0x20,0x23,0x14,0x31,0x1F,0x0C,0x2B,
- /* ;    q    j    k    x    b    m    w    v    z */
-   0x27,0x10,0x24,0x25,0x2D,0x30,0x32,0x11,0x2F,0x2C,
-   0x56 /* the 102nd key (actually to the right of l-shift) */
-};
-
 static const WORD main_key_scan_qwerty_jp106[MAIN_LEN] =
 {
  /* 1    2    3    4    5    6    7    8    9    0    -    ^    \ (Yen) */
@@ -866,7 +853,8 @@ static const struct {
 } main_key_tab[]={
  {0x0409, "United States keyboard layout", &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0409, "United States keyboard layout (phantom key version)", &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0x0409, "United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_dvorak, &main_key_vkey_dvorak},
+ /* Dvorak users tend to run QWERTY keyboards and rely on Windows/X11/Wayland to translate to the correct keysyms */
+ {0x0409, "United States keyboard layout (dvorak)", &main_key_US_dvorak, &main_key_scan_qwerty, &main_key_vkey_dvorak},
  {0x0409, "United States International keyboard layout", &main_key_US_intl, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0809, "British keyboard layout", &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0407, "German keyboard layout", &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwertz},
