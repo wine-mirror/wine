@@ -1522,8 +1522,7 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
     }
     TRACE("matches=%d, mismatches=%d, seq=%d, score=%d\n",
 	   match, mismatch, seq, score);
-    if ((score > max_score) ||
-	((score == max_score) && (seq > max_seq))) {
+    if (score + (int)seq > max_score + (int)max_seq) {
       /* best match so far */
       kbd_layout = current;
       max_score = score;
