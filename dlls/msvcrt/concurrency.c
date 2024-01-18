@@ -98,7 +98,7 @@ struct scheduler_list {
 };
 
 struct beacon {
-    bool cancelling;
+    LONG cancelling;
     struct list entry;
     struct _StructuredTaskCollection *task_collection;
 };
@@ -2149,7 +2149,7 @@ void __thiscall _StructuredTaskCollection__Cancel(
     EnterCriticalSection(&((ExternalContextBase*)this->context)->beacons_cs);
     LIST_FOR_EACH_ENTRY(beacon, &((ExternalContextBase*)this->context)->beacons, struct beacon, entry) {
         if (beacon->task_collection == this)
-            beacon->cancelling = TRUE;
+            InterlockedIncrement(&beacon->cancelling);
     }
     LeaveCriticalSection(&((ExternalContextBase*)this->context)->beacons_cs);
 
@@ -3118,8 +3118,14 @@ void __thiscall _Cancellation_beacon_dtor(_Cancellation_beacon *this)
 DEFINE_THISCALL_WRAPPER(_Cancellation_beacon__Confirm_cancel, 4)
 bool __thiscall _Cancellation_beacon__Confirm_cancel(_Cancellation_beacon *this)
 {
-    FIXME("(%p)\n", this);
-    return TRUE;
+    bool ret;
+
+    TRACE("(%p)\n", this);
+
+    ret = Context_IsCurrentTaskCollectionCanceling();
+    if (!ret)
+        InterlockedDecrement(&this->beacon->cancelling);
+    return ret;
 }
 
 /* ??0_Condition_variable@details@Concurrency@@QAE@XZ */
