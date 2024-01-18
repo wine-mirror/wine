@@ -60,8 +60,8 @@
 @ stub -arch=!i386 __std_smf_hermitef
 @ stdcall -arch=i386 ___std_smf_hypot3@24(double double double) __std_smf_hypot3
 @ stdcall -arch=!i386 __std_smf_hypot3(double double double)
-@ stub -arch=i386 ___std_smf_hypot3f@12
-@ stub -arch=!i386 __std_smf_hypot3f
+@ stdcall -arch=i386 ___std_smf_hypot3f@12(float float float) __std_smf_hypot3f
+@ stdcall -arch=!i386 __std_smf_hypot3f(float float float)
 @ stub -arch=i386 ___std_smf_laguerre@12
 @ stub -arch=!i386 __std_smf_laguerre
 @ stub -arch=i386 ___std_smf_laguerref@8

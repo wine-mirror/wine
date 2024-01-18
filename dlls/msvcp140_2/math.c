@@ -24,3 +24,8 @@ double __stdcall __std_smf_hypot3(double x, double y, double z)
 {
     return hypot(hypot(x, y), z);
 }
+
+float __stdcall __std_smf_hypot3f(float x, float y, float z)
+{
+    return hypotf(hypotf(x, y), z);
+}
