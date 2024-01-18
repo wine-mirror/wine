@@ -30,6 +30,7 @@ extern "C" {
 
 _ACRTIMP wchar_t* __cdecl _wasctime(const struct tm*);
 _ACRTIMP size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
+_ACRTIMP size_t   __cdecl _wcsftime_l(wchar_t*,size_t,const wchar_t*,const struct tm*,_locale_t);
 _ACRTIMP wchar_t* __cdecl _wctime32(const __time32_t*);
 _ACRTIMP wchar_t* __cdecl _wctime64(const __time64_t*);
 _ACRTIMP wchar_t* __cdecl _wstrdate(wchar_t*);

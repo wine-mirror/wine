@@ -39,6 +39,7 @@ size_t  __cdecl mbrlen(const char *,size_t,mbstate_t*);
 size_t  __cdecl mbrtowc(wchar_t*,const char*,size_t,mbstate_t*);
 size_t  __cdecl mbsrtowcs(wchar_t*,const char**,size_t,mbstate_t*);
 size_t  __cdecl wcrtomb(char*,wchar_t,mbstate_t*);
+int     __cdecl wcrtomb_s(size_t*,char*,size_t,wchar_t,mbstate_t*);
 size_t  __cdecl wcsrtombs(char*,const wchar_t**,size_t,mbstate_t*);
 int     __cdecl wctob(wint_t);
 

@@ -225,6 +225,7 @@ _ACRTIMP int           __cdecl rand(void);
 _ACRTIMP errno_t       __cdecl rand_s(unsigned int*);
 _ACRTIMP void          __cdecl srand(unsigned int);
 _ACRTIMP float         __cdecl strtof(const char*,char**);
+_ACRTIMP float         __cdecl _strtof_l(const char*,char**,_locale_t);
 _ACRTIMP double        __cdecl strtod(const char*,char**);
 _ACRTIMP __msvcrt_long __cdecl strtol(const char*,char**,int);
 _ACRTIMP __msvcrt_ulong __cdecl strtoul(const char*,char**,int);
