@@ -3007,12 +3007,15 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
 {
     LARGE_INTEGER time;
-    DWORD ret, lock;
+    DWORD ret, lock = 0;
     void *ret_ptr;
     ULONG ret_len;
 
     if (enable_thunk_lock)
-        lock = KeUserModeCallback( NtUserThunkLock, NULL, 0, &ret_ptr, &ret_len );
+    {
+        if (!KeUserModeCallback( NtUserThunkLock, NULL, 0, &ret_ptr, &ret_len ) && ret_len == sizeof(lock))
+            lock = *(DWORD *)ret_ptr;
+    }
 
     if (user_driver->pProcessEvents( mask )) ret = count ? count - 1 : 0;
     else if (count)

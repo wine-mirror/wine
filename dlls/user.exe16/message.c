@@ -22,6 +22,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "winerror.h"
@@ -2587,16 +2589,17 @@ static void WINAPI User16CallFreeIcon( ULONG *param, ULONG size )
 }
 
 
-static DWORD WINAPI User16ThunkLock( DWORD *param, ULONG size )
+static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
 {
+    DWORD *param = args;
     if (size != sizeof(DWORD))
     {
         DWORD lock;
         ReleaseThunkLock( &lock );
-        return lock;
+        return NtCallbackReturn( &lock, sizeof(lock), STATUS_SUCCESS );
     }
     RestoreThunkLock( *param );
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 
