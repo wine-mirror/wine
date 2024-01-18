@@ -399,7 +399,6 @@ struct draw_text_params32
 
 struct unpack_dde_message_params32
 {
-    ULONG result;
     ULONG hwnd;
     UINT message;
     LONG wparam;
@@ -1395,14 +1394,13 @@ static NTSTATUS WINAPI wow64_NtUserUnpackDDEMessage( void *arg, ULONG size )
         LONG wparam;
         LONG lparam;
     } *result32;
-    void *ret_ptr;
     ULONG ret_len;
+    NTSTATUS status;
 
     size -= FIELD_OFFSET( struct unpack_dde_message_params, data );
     if (!(params32 = Wow64AllocateTemp( FIELD_OFFSET( struct unpack_dde_message_params32, data[size] ))))
-        return 0;
+        return STATUS_NO_MEMORY;
 
-    params32->result = 0;
     params32->hwnd = HandleToUlong( params->hwnd );
     params32->message = params->message;
     params32->wparam = params->wparam;
@@ -1410,18 +1408,14 @@ static NTSTATUS WINAPI wow64_NtUserUnpackDDEMessage( void *arg, ULONG size )
     if (size) memcpy( params32->data, params->data, size );
     size = FIELD_OFFSET( struct unpack_dde_message_params32, data[size] );
 
-    if (!Wow64KiUserCallbackDispatcher( NtUserUnpackDDEMessage, params32, size, &ret_ptr, &ret_len ))
-        return FALSE;
-    if (ret_len == sizeof(*result32))
+    status = Wow64KiUserCallbackDispatcher( NtUserUnpackDDEMessage, params32, size, (void **)&result32, &ret_len );
+    if (!status && ret_len == sizeof(*result32))
     {
-        result32 = ret_ptr;
         result.wparam = result32->wparam;
         result.lparam = result32->lparam;
+        return NtCallbackReturn( &result, sizeof(result), status );
     }
-
-    if (!params->result) NtCallbackReturn( &result, sizeof(result), TRUE );
-    *params->result = result;
-    return TRUE;
+    return status;
 }
 
 static NTSTATUS WINAPI wow64_NtUserCallFreeIcon( void *arg, ULONG size )

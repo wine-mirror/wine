@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "imm.h"
@@ -179,18 +181,17 @@ static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
     return LoadLibraryW( path ) != NULL;
 }
 
-static NTSTATUS WINAPI User32UnpackDDEMessage( const struct unpack_dde_message_params *params, ULONG size )
+static NTSTATUS WINAPI User32UnpackDDEMessage( void *args, ULONG size )
 {
+    const struct unpack_dde_message_params *params = args;
     struct unpack_dde_message_result result = { .wparam = params->wparam, .lparam = params->lparam };
 
     size -= FIELD_OFFSET( struct unpack_dde_message_params, data );
     if (!unpack_dde_message( params->hwnd, params->message, &result.wparam, &result.lparam,
                              params->data, size ))
-        return FALSE;
+        return STATUS_NO_MEMORY;
 
-    if (params->result) *params->result = result;
-    else NtCallbackReturn( &result, sizeof(result), TRUE );
-    return TRUE;
+    return NtCallbackReturn( &result, sizeof(result), STATUS_SUCCESS );
 }
 
 static const void *kernel_callback_table[NtUserCallCount] =

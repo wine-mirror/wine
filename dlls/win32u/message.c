@@ -2894,27 +2894,27 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             }
             if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
             {
-                struct unpack_dde_message_result result;
+                struct unpack_dde_message_result *result;
                 struct unpack_dde_message_params *params;
-                void *ret_ptr;
+                NTSTATUS status;
                 ULONG len;
-                BOOL ret;
 
                 len = FIELD_OFFSET( struct unpack_dde_message_params, data[size] );
                 if (!(params = malloc( len )))
                     continue;
-                params->result  = &result;
                 params->hwnd    = info.msg.hwnd;
                 params->message = info.msg.message;
                 params->wparam  = info.msg.wParam;
                 params->lparam  = info.msg.lParam;
                 if (size) memcpy( params->data, buffer, size );
-                ret = KeUserModeCallback( NtUserUnpackDDEMessage, params, len, &ret_ptr, &len );
-                if (len == sizeof(result)) result = *(struct unpack_dde_message_result *)ret_ptr;
+                status = KeUserModeCallback( NtUserUnpackDDEMessage, params, len, (void **)&result, &len );
                 free( params );
-                if (!ret) continue; /* ignore it */
-                info.msg.wParam = result.wparam;
-                info.msg.lParam = result.lparam;
+                if (status) continue; /* ignore it */
+                if (len == sizeof(*result))
+                {
+                    info.msg.wParam = result->wparam;
+                    info.msg.lParam = result->lparam;
+                }
             }
             *msg = info.msg;
             msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
