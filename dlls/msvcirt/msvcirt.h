@@ -68,7 +68,7 @@ typedef enum {
     FLAGS_stdio      = 0x4000
 } ios_flags;
 
-extern void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
-extern void (__cdecl *MSVCRT_operator_delete)(void*);
+void* __cdecl operator_new(SIZE_T);
+void __cdecl operator_delete(void*);
 
 void init_exception(void*);
