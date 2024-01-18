@@ -145,11 +145,13 @@ static NTSTATUS WINAPI User32ImmTranslateMessage( const struct imm_translate_mes
     return ImmTranslateMessage( params->hwnd, params->msg, params->wparam, params->key_data );
 }
 
-static NTSTATUS WINAPI User32LoadImage( const struct load_image_params *params, ULONG size )
+static NTSTATUS WINAPI User32LoadImage( void *args, ULONG size )
 {
+    const struct load_image_params *params = args;
     HANDLE ret = LoadImageW( params->hinst, params->name, params->type,
                              params->dx, params->dy, params->flags );
-    return HandleToUlong( ret );
+    if (!ret) return STATUS_NO_MEMORY;
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 static NTSTATUS WINAPI User32LoadSysMenu( const struct load_sys_menu_params *params, ULONG size )
