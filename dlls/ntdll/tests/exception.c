@@ -9171,7 +9171,7 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     }
     else
     {
-        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
+        ok((xs->Mask & 7) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
         /* The save area has garbage if xsaveopt is available, so we can't test
          * its contents. */
 

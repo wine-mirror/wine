@@ -250,8 +250,8 @@ BOOL xstate_compaction_enabled = FALSE;
 UINT64 xstate_supported_features_mask;
 UINT64 xstate_features_size;
 
-static int xstate_feature_offset[64] = {0, 0, 576};
-static int xstate_feature_size[64] = {0, 0, 256};
+static int xstate_feature_offset[64];
+static int xstate_feature_size[64];
 static UINT64 xstate_aligned_features;
 
 static int next_xstate_offset( int off, UINT64 compaction_mask, int feature_idx )
@@ -345,6 +345,21 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "ret" )
 #endif
 
+extern UINT64 do_xgetbv( unsigned int cx);
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( do_xgetbv,
+                   "movl 4(%esp),%ecx\n\t"
+                   "xgetbv\n\t"
+                   "ret" )
+#else
+__ASM_GLOBAL_FUNC( do_xgetbv,
+                   "movl %edi,%ecx\n\t"
+                   "xgetbv\n\t"
+                   "shlq $32,%rdx\n\t"
+                   "orq %rdx,%rax\n\t"
+                   "ret" )
+#endif
+
 #ifdef __i386__
 extern int have_cpuid(void);
 __ASM_GLOBAL_FUNC( have_cpuid,
@@ -403,8 +418,11 @@ static void get_cpuid_name( char *buffer )
 
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
+    static const ULONG64 wine_xstate_supported_features = 0xff; /* XSTATE_AVX, XSTATE_MPX_BNDREGS, XSTATE_MPX_BNDCSR,
+                                                                 * XSTATE_AVX512_KMASK, XSTATE_AVX512_ZMM_H, XSTATE_AVX512_ZMM */
     unsigned int regs[4], regs2[4], regs3[4];
     ULONGLONG features;
+    unsigned int i;
 
 #if defined(__i386__)
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
@@ -454,13 +472,25 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         {
             do_cpuid( 0x0000000d, 1, regs3 ); /* get XSAVE details */
             if (regs3[0] & 2) xstate_compaction_enabled = TRUE;
-            xstate_supported_features_mask = 3;
-            if (features & CPU_FEATURE_AVX)
-                xstate_supported_features_mask |= (UINT64)1 << XSTATE_AVX;
+
+            do_cpuid( 0x0000000d, 0, regs3 ); /* get user xstate features */
+            xstate_supported_features_mask = ((ULONG64)regs3[3] << 32) | regs3[0];
+            xstate_supported_features_mask &= do_xgetbv( 0 ) & wine_xstate_supported_features;
+            TRACE("xstate_supported_features_mask %#llx.\n", (long long)xstate_supported_features_mask);
+            for (i = 2; i < 64; ++i)
+            {
+                if (!(xstate_supported_features_mask & ((ULONG64)1 << i))) continue;
+                do_cpuid( 0x0000000d, i, regs3 ); /* get user xstate features */
+                xstate_feature_offset[i] = regs3[1];
+                xstate_feature_size[i] = regs3[0];
+                if (regs3[2] & 2) xstate_aligned_features |= (ULONG64)1 << i;
+                TRACE("xstate[%d] offset %d, size %d, aligned %d.\n", i, xstate_feature_offset[i], xstate_feature_size[i], !!(regs3[2] & 2));
+            }
             xstate_features_size = xstate_get_size( xstate_compaction_enabled ? 0x8000000000000000
                                    | xstate_supported_features_mask : 0, xstate_supported_features_mask )
                                    - sizeof(XSAVE_AREA_HEADER);
             xstate_features_size = (xstate_features_size + 15) & ~15;
+            TRACE("xstate_features_size %lld.\n", (long long)xstate_features_size);
         }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
