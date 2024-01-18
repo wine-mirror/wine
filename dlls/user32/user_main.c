@@ -100,10 +100,12 @@ static void dpiaware_init(void)
     }
 }
 
-static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, ULONG size )
+static NTSTATUS WINAPI User32CopyImage( void *args, ULONG size )
 {
+    const struct copy_image_params *params = args;
     HANDLE ret = CopyImage( params->hwnd, params->type, params->dx, params->dy, params->flags );
-    return HandleToUlong( ret );
+    if (!ret) return STATUS_NO_MEMORY;
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 static NTSTATUS WINAPI User32DrawNonClientButton( const struct draw_non_client_button_params *params, ULONG size )

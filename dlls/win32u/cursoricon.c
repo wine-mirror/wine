@@ -718,7 +718,8 @@ HANDLE WINAPI CopyImage( HANDLE hwnd, UINT type, INT dx, INT dy, UINT flags )
         { .hwnd = hwnd, .type = type, .dx = dx, .dy = dy, .flags = flags };
 
     ret = KeUserModeCallback( NtUserCopyImage, &params, sizeof(params), &ret_ptr, &ret_len );
-    return UlongToHandle( ret );
+    if (!ret && ret_len == sizeof(HANDLE)) return *(HANDLE *)ret_ptr;
+    return 0;
 }
 
 /******************************************************************************
