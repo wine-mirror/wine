@@ -913,7 +913,6 @@ DWORD get_input_state(void)
 static HKL get_locale_kbd_layout(void)
 {
     LCID layout;
-    LANGID langid;
 
     /* FIXME:
      *
@@ -927,19 +926,7 @@ static HKL get_locale_kbd_layout(void)
      */
 
     NtQueryDefaultLocale( TRUE, &layout );
-
-    /*
-     * Microsoft Office expects this value to be something specific
-     * for Japanese and Korean Windows with an IME the value is 0xe001
-     * We should probably check to see if an IME exists and if so then
-     * set this word properly.
-     */
-    langid = PRIMARYLANGID( LANGIDFROMLCID( layout ) );
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout = MAKELONG( layout, 0xe001 ); /* IME */
-    else
-        layout = MAKELONG( layout, layout );
-
+    layout = MAKELONG( layout, layout );
     return ULongToHandle( layout );
 }
 

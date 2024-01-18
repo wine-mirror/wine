@@ -5248,7 +5248,6 @@ static void test_keyboard_layout(void)
     if (lang_id == LANG_CHINESE || lang_id == LANG_JAPANESE || lang_id == LANG_KOREAN)
     {
         hkl = GetKeyboardLayout(0);
-        todo_wine
         ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
 
         if (lang_id == LANG_CHINESE)
@@ -5258,7 +5257,6 @@ static void test_keyboard_layout(void)
         else if (lang_id == LANG_KOREAN)
             layout_name = "00000412";
         hkl = LoadKeyboardLayoutA(layout_name, 0);
-        todo_wine
         ok(HIWORD(hkl) == LOWORD(hkl), "Got unexpected hkl %p.\n", hkl);
     }
 }
