@@ -3733,6 +3733,23 @@ static void test_topology_loader_evr(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
+    /* EVR sink node. */
+    window = create_window();
+
+    hr = MFCreateVideoRendererActivate(window, &activate);
+    ok(hr == S_OK, "Failed to create activate object, hr %#lx.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    if (FAILED(hr))
+    {
+        skip("Failed to create an EVR sink, skipping tests.\n");
+        DestroyWindow(window);
+        IMFActivate_Release(activate);
+        CoUninitialize();
+        return;
+    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     hr = MFCreateTopoLoader(&loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -3749,21 +3766,6 @@ static void test_topology_loader_evr(void)
     IMFPresentationDescriptor_Release(pd);
     IMFStreamDescriptor_Release(sd);
 
-    /* EVR sink node. */
-    window = create_window();
-
-    hr = MFCreateVideoRendererActivate(window, &activate);
-    ok(hr == S_OK, "Failed to create activate object, hr %#lx.\n", hr);
-
-    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
-    if (FAILED(hr))
-    {
-        skip("Failed to create an EVR sink, skipping tests.\n");
-        DestroyWindow(window);
-        IMFActivate_Release(activate);
-        return;
-    }
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
