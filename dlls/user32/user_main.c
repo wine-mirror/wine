@@ -154,10 +154,12 @@ static NTSTATUS WINAPI User32LoadImage( void *args, ULONG size )
     return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
-static NTSTATUS WINAPI User32LoadSysMenu( const struct load_sys_menu_params *params, ULONG size )
+static NTSTATUS WINAPI User32LoadSysMenu( void *args, ULONG size )
 {
+    const struct load_sys_menu_params *params = args;
     HMENU ret = LoadMenuW( user32_module, params->mdi ? L"SYSMENUMDI" : L"SYSMENU" );
-    return HandleToUlong( ret );
+    if (!ret) return STATUS_NO_MEMORY;
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_data_params *params,

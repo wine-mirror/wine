@@ -1374,7 +1374,17 @@ static NTSTATUS WINAPI wow64_NtUserLoadImage( void *arg, ULONG size )
 
 static NTSTATUS WINAPI wow64_NtUserLoadSysMenu( void *arg, ULONG size )
 {
-    return dispatch_callback( NtUserLoadSysMenu, arg, size );
+    void *ret_ptr;
+    ULONG ret_len;
+    NTSTATUS status;
+
+    status = Wow64KiUserCallbackDispatcher( NtUserLoadSysMenu, arg, size, &ret_ptr, &ret_len );
+    if (!status && ret_len == sizeof(ULONG))
+    {
+        HMENU menu = ULongToHandle( *(ULONG *)ret_ptr );
+        return NtCallbackReturn( &menu, sizeof(menu), status );
+    }
+    return status;
 }
 
 static NTSTATUS WINAPI wow64_NtUserPostDDEMessage( void *arg, ULONG size )
