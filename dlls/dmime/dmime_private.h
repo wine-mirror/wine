@@ -93,6 +93,8 @@ extern HRESULT performance_send_segment_tick(IDirectMusicPerformance8 *iface, MU
 extern HRESULT performance_send_segment_end(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
         IDirectMusicSegmentState *state, BOOL abort);
 
+HRESULT path_config_get_audio_path_params(IUnknown *iface, WAVEFORMATEX *format, DSBUFFERDESC *desc, DMUS_PORTPARAMS *params);
+
 /*****************************************************************************
  * Auxiliary definitions
  */
