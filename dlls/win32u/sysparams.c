@@ -3435,18 +3435,17 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     params.proc = proc;
     params.hdc = hdc;
     params.lparam = lparam;
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count && ret; i++)
     {
         void *ret_ptr;
         ULONG ret_len;
+        NTSTATUS status;
         params.monitor = enum_info[i].handle;
         params.rect = enum_info[i].rect;
-        if (!KeUserModeCallback( NtUserCallEnumDisplayMonitor, &params, sizeof(params),
-                                 &ret_ptr, &ret_len ))
-        {
-            ret = FALSE;
-            break;
-        }
+        status = KeUserModeCallback( NtUserCallEnumDisplayMonitor, &params, sizeof(params),
+                                     &ret_ptr, &ret_len );
+        if (!status && ret_len == sizeof(ret)) ret = *(BOOL *)ret_ptr;
+        else ret = FALSE;
     }
     if (enum_info != enum_buf) free( enum_info );
     return ret;
