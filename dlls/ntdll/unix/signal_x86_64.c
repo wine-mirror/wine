@@ -1591,7 +1591,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
                    "movq 0x328(%r8),%r10\n\t"  /* amd64_thread_data()->syscall_frame */
                    "movq (%r8),%rax\n\t"       /* NtCurrentTeb()->Tib.ExceptionList */
-                   "movq %rax,0x408(%rsp)\n\t"
+                   "movq %rax,0x400(%rsp)\n\t"
                    "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
                    "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
@@ -1624,7 +1624,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    __ASM_CFI(".cfi_rel_offset %r13,-0x18\n\t")
                    __ASM_CFI(".cfi_rel_offset %r14,-0x20\n\t")
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
-                   "movq 0x408(%r10),%rax\n\t" /* exception list */
+                   "movq 0x400(%r10),%rax\n\t" /* exception list */
                    "movq %rax,0(%rcx)\n\t"     /* teb->Tib.ExceptionList */
                    "movq -0x38(%rbp),%r10\n\t"  /* ret_ptr */
                    "movq -0x40(%rbp),%r11\n\t"  /* ret_len */
