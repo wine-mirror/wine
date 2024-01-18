@@ -62,6 +62,8 @@
  *     WH_MOUSE_LL                  Implemented but should use SendMessage instead
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
@@ -452,8 +454,9 @@ BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, 
     return TRUE;
 }
 
-BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
+NTSTATUS WINAPI User32CallWindowsHook( void *args, ULONG size )
 {
+    struct win_hook_params *params = args;
     HOOKPROC proc = params->proc;
     HMODULE free_module = 0;
     void *ret_ptr = NULL;
@@ -514,7 +517,14 @@ BOOL WINAPI User32CallWindowsHook( struct win_hook_params *params, ULONG size )
                           params->prev_unicode, params->next_unicode );
 
     if (free_module) FreeLibrary( free_module );
-    return NtCallbackReturn( ret_ptr, ret_size, ret );
+
+    if (ret_size)
+    {
+        LRESULT *result_ptr = (LRESULT *)ret_ptr - 1;
+        *result_ptr = ret;
+        return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + ret_size, STATUS_SUCCESS );
+    }
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 /***********************************************************************

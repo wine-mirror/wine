@@ -1113,8 +1113,9 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
     struct win_hook_params32 params32;
     UINT module_len, size32, offset;
     void *ret_ptr;
-    ULONG ret_len;
-    NTSTATUS ret;
+    LRESULT *result_ptr = arg;
+    ULONG ret_len, ret_size = 0;
+    NTSTATUS status;
 
     module_len = wcslen( params->module );
     size32 = FIELD_OFFSET( struct win_hook_params32, module[module_len + 1] );
@@ -1142,22 +1143,23 @@ static NTSTATUS WINAPI wow64_NtUserCallWindowsHook( void *arg, ULONG size )
                                       size - offset, (char *)arg + size32 );
     }
 
-    ret = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, arg, size32, &ret_ptr, &ret_len );
+    status = Wow64KiUserCallbackDispatcher( NtUserCallWindowsHook, arg, size32, &ret_ptr, &ret_len );
+    if (status || ret_len < sizeof(LONG)) return status;
 
     switch (params32.id)
     {
     case WH_SYSMSGFILTER:
     case WH_MSGFILTER:
     case WH_GETMESSAGE:
-        if (ret_len == sizeof(MSG32))
+        if (ret_len == sizeof(MSG32) + sizeof(LONG))
         {
-            MSG msg;
-            msg_32to64( &msg, ret_ptr );
-            return NtCallbackReturn( &msg, sizeof(msg), ret );
+            msg_32to64( (MSG *)(result_ptr + 1), (MSG32 *)((LONG *)ret_ptr + 1) );
+            ret_size = sizeof(MSG);
         }
+        break;
     }
-
-    return ret;
+    *result_ptr = *(LONG *)ret_ptr;
+    return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + ret_size, status );
 }
 
 static NTSTATUS WINAPI wow64_NtUserCopyImage( void *arg, ULONG size )

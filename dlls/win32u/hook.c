@@ -330,9 +330,14 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         thread_info->hook = params->handle;
         thread_info->hook_unicode = params->next_unicode;
         thread_info->hook_call_depth++;
-        ret = KeUserModeCallback( NtUserCallWindowsHook, params, size, &ret_ptr, &ret_len );
-        if (ret_len && ret_len == lparam_ret_size)
-            memcpy( (void *)params->lparam, ret_ptr, ret_len );
+        if (!KeUserModeCallback( NtUserCallWindowsHook, params, size, &ret_ptr, &ret_len ) &&
+            ret_len >= sizeof(ret))
+        {
+            LRESULT *result_ptr = ret_ptr;
+            ret = *result_ptr;
+            if (ret_len == sizeof(ret) + lparam_ret_size)
+                memcpy( (void *)params->lparam, result_ptr + 1, ret_len - sizeof(ret) );
+        }
         thread_info->hook = prev;
         thread_info->hook_unicode = prev_unicode;
         thread_info->hook_call_depth--;
