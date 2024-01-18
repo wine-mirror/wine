@@ -22059,6 +22059,7 @@ wine_fn_config_makefile dlls/msvcp140/tests enable_tests
 wine_fn_config_makefile dlls/msvcp140_1 enable_msvcp140_1
 wine_fn_config_makefile dlls/msvcp140_1/tests enable_tests
 wine_fn_config_makefile dlls/msvcp140_2 enable_msvcp140_2
+wine_fn_config_makefile dlls/msvcp140_2/tests enable_tests
 wine_fn_config_makefile dlls/msvcp140_atomic_wait enable_msvcp140_atomic_wait
 wine_fn_config_makefile dlls/msvcp140_atomic_wait/tests enable_tests
 wine_fn_config_makefile dlls/msvcp140_codecvt_ids enable_msvcp140_codecvt_ids
