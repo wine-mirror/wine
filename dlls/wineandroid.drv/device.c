@@ -1177,7 +1177,8 @@ void start_android_device(void)
 {
     void *ret_ptr;
     ULONG ret_len;
-    thread = ULongToHandle( KeUserModeCallback( client_start_device, NULL, 0, &ret_ptr, &ret_len ));
+    KeUserModeCallback( client_start_device, NULL, 0, &ret_ptr, &ret_len );
+    if (ret_len == sizeof(thread)) thread = *(HANDLE *)ret_ptr;
 }
 
 

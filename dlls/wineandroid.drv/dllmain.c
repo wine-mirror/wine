@@ -34,7 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 static HANDLE stop_event;
-static HANDLE thread;
 
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
@@ -97,10 +96,10 @@ static NTSTATUS WINAPI android_start_device(void *param, ULONG size)
     HANDLE handles[2];
 
     handles[0] = CreateEventW( NULL, TRUE, FALSE, NULL );
-    handles[1] = thread = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
+    handles[1] = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
     WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
     CloseHandle( handles[0] );
-    return HandleToULong( thread );
+    return NtCallbackReturn( &handles[1], sizeof(handles[1]), STATUS_SUCCESS );
 }
 
 
