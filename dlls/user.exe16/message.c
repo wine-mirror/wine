@@ -2583,9 +2583,11 @@ HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, 
 }
 
 
-static void WINAPI User16CallFreeIcon( ULONG *param, ULONG size )
+static NTSTATUS WINAPI User16CallFreeIcon( void *args, ULONG size )
 {
+    ULONG *param = args;
     GlobalFree16( LOWORD(*param) );
+    return STATUS_SUCCESS;
 }
 
 

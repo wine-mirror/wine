@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "wine/debug.h"
@@ -268,7 +270,7 @@ static void load_uxtheme(void)
 /***********************************************************************
  *           User32InitBuiltinClasses
  */
-BOOL WINAPI User32InitBuiltinClasses( const struct win_hook_params *params, ULONG size )
+NTSTATUS WINAPI User32InitBuiltinClasses( void *args, ULONG size )
 {
     DWORD layout;
 
@@ -276,7 +278,7 @@ BOOL WINAPI User32InitBuiltinClasses( const struct win_hook_params *params, ULON
 
     /* Load uxtheme.dll so that standard scrollbars and dialogs are hooked for theming support */
     load_uxtheme();
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 

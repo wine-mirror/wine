@@ -63,7 +63,7 @@ extern void register_window_surface( struct window_surface *old,
 extern LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     BOOL ansi );
 extern LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
-extern BOOL draw_menu_button( HWND hwnd, HDC dc, RECT *r, enum NONCLIENT_BUTTON_TYPE, BOOL down, BOOL grayed );
+extern void draw_menu_button( HWND hwnd, HDC dc, RECT *r, enum NONCLIENT_BUTTON_TYPE, BOOL down, BOOL grayed );
 extern BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags );
 extern BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down );
 extern BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT uType, UINT uFlags, UINT width );

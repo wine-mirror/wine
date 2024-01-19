@@ -112,7 +112,7 @@ static NTSTATUS WINAPI User32DrawNonClientButton( const struct draw_non_client_b
 {
     user_api->pNonClientButtonDraw( params->hwnd, params->hdc, params->type, params->rect,
                                     params->down, params->grayed );
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params *params, ULONG size )
@@ -122,7 +122,7 @@ static NTSTATUS WINAPI User32DrawScrollBar( const struct draw_scroll_bar_params 
                               &params->tracking_info, params->arrows, params->interior,
                               &rect, params->enable_flags, params->arrow_size, params->thumb_pos,
                               params->thumb_size, params->vertical );
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS WINAPI User32DrawText( void *args, ULONG size )
@@ -136,15 +136,20 @@ static NTSTATUS WINAPI User32DrawText( void *args, ULONG size )
     return NtCallbackReturn( &result, sizeof(result), STATUS_SUCCESS );
 }
 
-static NTSTATUS WINAPI User32ImmProcessKey( const struct imm_process_key_params *params, ULONG size )
+static NTSTATUS WINAPI User32ImmProcessKey( void *args, ULONG size )
 {
-    return ImmProcessKey( params->hwnd, params->hkl, params->vkey, params->key_data, 0 );
+    const struct imm_process_key_params *params = args;
+    if (ImmProcessKey( params->hwnd, params->hkl, params->vkey, params->key_data, 0 ))
+        return STATUS_SUCCESS;
+    return STATUS_INVALID_PARAMETER;
 }
 
-static NTSTATUS WINAPI User32ImmTranslateMessage( const struct imm_translate_message_params *params,
-                                                  ULONG size )
+static NTSTATUS WINAPI User32ImmTranslateMessage( void *args, ULONG size )
 {
-    return ImmTranslateMessage( params->hwnd, params->msg, params->wparam, params->key_data );
+    const struct imm_translate_message_params *params = args;
+    if (ImmTranslateMessage( params->hwnd, params->msg, params->wparam, params->key_data ))
+        return STATUS_SUCCESS;
+    return STATUS_INVALID_PARAMETER;
 }
 
 static NTSTATUS WINAPI User32LoadImage( void *args, ULONG size )
@@ -168,7 +173,7 @@ static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_d
                                                       ULONG size )
 {
     free_cached_data( params->format, params->handle );
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS WINAPI User32PostDDEMessage( const struct post_dde_message_params *params, ULONG size )
@@ -181,7 +186,7 @@ static NTSTATUS WINAPI User32RenderSsynthesizedFormat( const struct render_synth
                                                        ULONG size )
 {
     render_synthesized_format( params->format, params->from );
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS WINAPI User32LoadDriver( void *args, ULONG size )

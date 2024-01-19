@@ -614,7 +614,7 @@ BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD
         { .hwnd = hwnd, .hkl = hkl, .vkey = vkey, .key_data = key_data };
     void *ret_ptr;
     ULONG ret_len;
-    return KeUserModeCallback( NtUserImmProcessKey, &params, sizeof(params), &ret_ptr, &ret_len );
+    return !KeUserModeCallback( NtUserImmProcessKey, &params, sizeof(params), &ret_ptr, &ret_len );
 }
 
 BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM key_data )
@@ -623,6 +623,5 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM key_
         { .hwnd = hwnd, .msg = msg, .wparam = wparam, .key_data = key_data };
     void *ret_ptr;
     ULONG ret_len;
-    return KeUserModeCallback( NtUserImmTranslateMessage, &params, sizeof(params),
-                               &ret_ptr, &ret_len );
+    return !KeUserModeCallback( NtUserImmTranslateMessage, &params, sizeof(params), &ret_ptr, &ret_len );
 }

@@ -432,12 +432,14 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     return NtUserSetWinEventHook( event_min, event_max, inst, &str, proc, pid, tid, flags );
 }
 
-BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size )
+NTSTATUS WINAPI User32CallWinEventHook( void *args, ULONG size )
 {
+    const struct win_event_hook_params *params = args;
     WINEVENTPROC proc = params->proc;
     HMODULE free_module = 0;
 
-    if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module ))) return FALSE;
+    if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module )))
+        return STATUS_INVALID_PARAMETER;
 
     TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
                    proc, params->handle, params->event, params->hwnd, params->object_id,
@@ -451,7 +453,7 @@ BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, 
                    params->child_id, params->tid, params->time );
 
     if (free_module) FreeLibrary( free_module );
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI User32CallWindowsHook( void *args, ULONG size )

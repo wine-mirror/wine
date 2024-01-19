@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "dbt.h"
@@ -802,8 +804,9 @@ void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam, vo
     *lparam = (LPARAM)buffer;
 }
 
-BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
+NTSTATUS WINAPI User32CallWindowProc( void *args, ULONG size )
 {
+    struct win_proc_params *params = args;
     size_t packed_size = 0;
     void *buffer = NULL;
     LRESULT result;
@@ -824,15 +827,16 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     {
         LRESULT *result_ptr = (LRESULT *)buffer - 1;
         *result_ptr = result;
-        return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + packed_size, TRUE );
+        return NtCallbackReturn( result_ptr, sizeof(*result_ptr) + packed_size, STATUS_SUCCESS );
     }
-    return NtCallbackReturn( &result, sizeof(result), TRUE );
+    return NtCallbackReturn( &result, sizeof(result), STATUS_SUCCESS );
 }
 
-BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size )
+NTSTATUS WINAPI User32CallSendAsyncCallback( void *args, ULONG size )
 {
+    const struct send_async_params *params = args;
     params->callback( params->hwnd, params->msg, params->data, params->result );
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /**********************************************************************

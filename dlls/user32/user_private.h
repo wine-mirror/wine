@@ -82,11 +82,11 @@ extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *
 /* kernel callbacks */
 
 NTSTATUS WINAPI User32CallEnumDisplayMonitor( void *args, ULONG size );
-BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size );
-BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size );
-BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size );
+NTSTATUS WINAPI User32CallSendAsyncCallback( void *args, ULONG size );
+NTSTATUS WINAPI User32CallWinEventHook( void *args, ULONG size );
+NTSTATUS WINAPI User32CallWindowProc( void *args, ULONG size );
 NTSTATUS WINAPI User32CallWindowsHook( void *args, ULONG size );
-BOOL WINAPI User32InitBuiltinClasses( const struct win_hook_params *params, ULONG size );
+NTSTATUS WINAPI User32InitBuiltinClasses( void *args, ULONG size );
 
 /* message spy definitions */
 
