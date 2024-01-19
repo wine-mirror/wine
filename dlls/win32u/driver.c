@@ -1019,8 +1019,7 @@ static BOOL load_desktop_driver( HWND hwnd )
         {
             void *ret_ptr;
             ULONG ret_len;
-            ret = KeUserModeCallback( NtUserLoadDriver, info->Data, info->DataLength,
-                                      &ret_ptr, &ret_len );
+            ret = !KeUserModeCallback( NtUserLoadDriver, info->Data, info->DataLength, &ret_ptr, &ret_len );
         }
         else
         {
