@@ -3299,7 +3299,8 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         params.lparam   = info->lparam;
         params.dest_tid = info->dest_tid;
         params.type     = info->type;
-        return KeUserModeCallback( NtUserPostDDEMessage, &params, sizeof(params), &ret_ptr, &ret_len );
+        res = KeUserModeCallback( NtUserPostDDEMessage, &params, sizeof(params), &ret_ptr, &ret_len );
+        goto done;
     }
 
     SERVER_START_REQ( send_message )
@@ -3315,16 +3316,13 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
 
         if (info->flags & SMTO_ABORTIFHUNG) req->flags |= SEND_MSG_ABORT_IF_HUNG;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
-        if ((res = wine_server_call( req )))
-        {
-            if (res == STATUS_INVALID_PARAMETER)
-                /* FIXME: find a STATUS_ value for this one */
-                RtlSetLastWin32Error( ERROR_INVALID_THREAD_ID );
-            else
-                RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
-        }
+        res = wine_server_call( req );
     }
     SERVER_END_REQ;
+
+done:
+    if (res == STATUS_INVALID_PARAMETER) res = STATUS_NO_LDT;
+    if (res) RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
     return !res;
 }
 
