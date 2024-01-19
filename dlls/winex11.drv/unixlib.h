@@ -55,29 +55,15 @@ struct xim_preedit_state_params
 /* driver client callbacks exposed with KernelCallbackTable interface */
 enum x11drv_client_funcs
 {
-    client_func_callback = NtUserDriverCallbackFirst,
-    client_func_dnd_enter_event,
+    client_func_dnd_enter_event = NtUserDriverCallbackFirst,
     client_func_dnd_position_event,
     client_func_dnd_post_drop,
+    client_func_dnd_drop_event,
+    client_func_dnd_leave_event,
     client_func_last
 };
 
 C_ASSERT( client_func_last <= NtUserDriverCallbackLast + 1 );
-
-/* simplified interface for client callbacks requiring only a single UINT parameter */
-enum client_callback
-{
-    client_dnd_drop_event,
-    client_dnd_leave_event,
-    client_funcs_count
-};
-
-/* x11drv_callback params */
-struct client_callback_params
-{
-    UINT id;
-    UINT arg;
-};
 
 /* x11drv_dnd_enter_event and x11drv_dnd_post_drop params */
 struct format_entry

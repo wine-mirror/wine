@@ -25,28 +25,14 @@
 HMODULE x11drv_module = 0;
 
 
-typedef NTSTATUS (*callback_func)( UINT arg );
-static const callback_func callback_funcs[] =
-{
-    x11drv_dnd_drop_event,
-    x11drv_dnd_leave_event,
-};
-
-C_ASSERT( ARRAYSIZE(callback_funcs) == client_funcs_count );
-
-static NTSTATUS WINAPI x11drv_callback( void *arg, ULONG size )
-{
-    struct client_callback_params *params = arg;
-    return callback_funcs[params->id]( params->arg );
-}
-
 typedef NTSTATUS (WINAPI *kernel_callback)( void *params, ULONG size );
 static const kernel_callback kernel_callbacks[] =
 {
-    x11drv_callback,
     x11drv_dnd_enter_event,
     x11drv_dnd_position_event,
     x11drv_dnd_post_drop,
+    x11drv_dnd_drop_event,
+    x11drv_dnd_leave_event,
 };
 
 C_ASSERT( NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last );

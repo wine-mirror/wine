@@ -844,7 +844,6 @@ extern NTSTATUS x11drv_tablet_info( void *arg );
 
 extern NTSTATUS x11drv_client_func( enum x11drv_client_funcs func, const void *params,
                                     ULONG size );
-extern NTSTATUS x11drv_client_call( enum client_callback func, UINT arg );
 
 /* GDI helpers */
 
