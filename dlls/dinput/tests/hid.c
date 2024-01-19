@@ -1048,7 +1048,7 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
         struct hid_expect broken_expect =
         {
             .code = IOCTL_HID_GET_INPUT_REPORT,
-            .broken = TRUE,
+            .broken_id = -1,
             .report_len = report_len - 1,
             .report_buf =
             {
@@ -1142,7 +1142,7 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
         struct hid_expect broken_expect =
         {
             .code = IOCTL_HID_GET_FEATURE,
-            .broken = TRUE,
+            .broken_id = -1,
             .report_len = report_len - 1,
             .report_buf =
             {
@@ -1240,7 +1240,7 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
         struct hid_expect broken_expect =
         {
             .code = IOCTL_HID_SET_FEATURE,
-            .broken = TRUE,
+            .broken_id = -1,
             .report_len = report_len - 1,
             .report_buf =
             {
@@ -1341,7 +1341,7 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
         struct hid_expect broken_expect =
         {
             .code = IOCTL_HID_SET_OUTPUT_REPORT,
-            .broken = TRUE,
+            .broken_id = -1,
             .report_len = report_len - 1,
             .report_buf = {0x5a,0x5a},
             .ret_length = 3,
