@@ -309,11 +309,8 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, &up_branch, up_type);
         if (down_type)
         {
-            if (SUCCEEDED(hr))
-                hr = topology_branch_fill_media_type(up_type, down_type);
-            if (SUCCEEDED(hr))
-                hr = IMFTransform_SetOutputType(transform, 0, down_type, 0);
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(topology_branch_fill_media_type(up_type, down_type))
+                    && SUCCEEDED(IMFTransform_SetOutputType(transform, 0, down_type, 0)))
                 method = MF_CONNECT_DIRECT;
         }
         IMFTransform_Release(transform);

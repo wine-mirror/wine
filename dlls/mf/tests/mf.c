@@ -3293,7 +3293,6 @@ static void test_topology_loader(void)
             .input_type = &video_h264_1280, .output_type = &video_video_processor_1280_rgb32, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_TODO,
         },
         {
             /* RGB32 -> Any Video, no current output type */
@@ -3577,7 +3576,7 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
-            todo_wine_if(!IsEqualGUID(&test->decoder_class, &GUID_NULL))
+            todo_wine_if(IsEqualGUID(&test->decoder_class, &CLSID_CMP3DecMediaObject))
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);
@@ -3623,14 +3622,21 @@ todo_wine {
                 IUnknown_Release(node_object);
 
                 hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+                todo_wine
                 ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
+                if (hr == S_OK)
+                {
                 hr = IMFMediaType_Compare(input_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
                 ok(ret, "Input type of first transform doesn't match source node type.\n");
                 IMFMediaType_Release(media_type);
+                }
 
                 hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+                todo_wine
                 ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
+                if (hr == S_OK)
+                {
                 if (IsEqualGUID(&test->converter_class, &GUID_NULL))
                 {
                     hr = IMFMediaType_Compare(output_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
@@ -3642,6 +3648,7 @@ todo_wine {
                     check_media_type(media_type, *test->decoded_type, -1);
                 }
                 IMFMediaType_Release(media_type);
+                }
 
                 IMFTransform_Release(transform);
             }
@@ -3702,13 +3709,17 @@ todo_wine {
             hr = IMFTopology_SetUINT32(full_topology, &IID_IMFTopology, 123);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
+            todo_wine_if(IsEqualGUID(&test->decoder_class, &CLSID_MSH264DecoderMFT))
             ok(hr == S_OK, "Failed to resolve topology, hr %#lx.\n", hr);
+            if (hr == S_OK)
+            {
             ok(full_topology != topology2, "Unexpected instance.\n");
             hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             ref = IMFTopology_Release(topology2);
             ok(ref == 0, "Release returned %ld\n", ref);
+            }
             ref = IMFTopology_Release(full_topology);
             ok(ref == 0, "Release returned %ld\n", ref);
         }
