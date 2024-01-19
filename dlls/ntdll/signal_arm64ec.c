@@ -376,6 +376,11 @@ NTSTATUS SYSCALL_API NtCompareObjects( HANDLE first, HANDLE second )
     __ASM_SYSCALL_FUNC( __id_NtCompareObjects );
 }
 
+NTSTATUS SYSCALL_API NtCompareTokens( HANDLE first, HANDLE second, BOOLEAN *equal )
+{
+    __ASM_SYSCALL_FUNC( __id_NtCompareTokens );
+}
+
 NTSTATUS SYSCALL_API NtCompleteConnectPort( HANDLE handle )
 {
     __ASM_SYSCALL_FUNC( __id_NtCompleteConnectPort );
