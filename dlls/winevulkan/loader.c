@@ -602,15 +602,19 @@ void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32
     }
 }
 
-static BOOL WINAPI call_vulkan_debug_report_callback( struct wine_vk_debug_report_params *params, ULONG size )
+static NTSTATUS WINAPI call_vulkan_debug_report_callback( void *args, ULONG size )
 {
-    return params->user_callback(params->flags, params->object_type, params->object_handle, params->location,
-                                 params->code, params->layer_prefix, params->message, params->user_data);
+    struct wine_vk_debug_report_params *params = args;
+    VkBool32 ret = params->user_callback(params->flags, params->object_type, params->object_handle, params->location,
+                                         params->code, params->layer_prefix, params->message, params->user_data);
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
-static BOOL WINAPI call_vulkan_debug_utils_callback( struct wine_vk_debug_utils_params *params, ULONG size )
+static NTSTATUS WINAPI call_vulkan_debug_utils_callback( void *args, ULONG size )
 {
-    return params->user_callback(params->severity, params->message_types, &params->data, params->user_data);
+    struct wine_vk_debug_utils_params *params = args;
+    VkBool32 ret = params->user_callback(params->severity, params->message_types, &params->data, params->user_data);
+    return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)

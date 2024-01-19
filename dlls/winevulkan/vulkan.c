@@ -118,7 +118,6 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     struct wine_debug_utils_messenger *object;
     void *ret_ptr;
     ULONG ret_len;
-    VkBool32 result;
     unsigned int i;
 
     TRACE("%i, %u, %p, %p\n", severity, message_types, callback_data, user_data);
@@ -166,12 +165,11 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     params.data.pObjects = object_name_infos;
 
     /* applications should always return VK_FALSE */
-    result = KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, &params, sizeof(params),
-                                 &ret_ptr, &ret_len );
+    KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, &params, sizeof(params), &ret_ptr, &ret_len );
 
     free(object_name_infos);
-
-    return result;
+    if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
+    return VK_FALSE;
 }
 
 static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type,
@@ -207,8 +205,9 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     if (!params.object_handle)
         params.object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
 
-    return KeUserModeCallback( NtUserCallVulkanDebugReportCallback, &params, sizeof(params),
-                               &ret_ptr, &ret_len );
+    KeUserModeCallback( NtUserCallVulkanDebugReportCallback, &params, sizeof(params), &ret_ptr, &ret_len );
+    if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
+    return VK_FALSE;
 }
 
 static void wine_vk_physical_device_free(struct wine_phys_dev *phys_dev)
