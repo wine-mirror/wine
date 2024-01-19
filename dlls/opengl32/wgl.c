@@ -1285,11 +1285,12 @@ GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
     return gl_unmap_named_buffer( unix_glUnmapNamedBufferEXT, buffer );
 }
 
-static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_message_params *params, ULONG size )
+static NTSTATUS WINAPI call_opengl_debug_message_callback( void *args, ULONG size )
 {
+    struct wine_gl_debug_message_params *params = args;
     params->user_callback( params->source, params->type, params->id, params->severity,
                            params->length, params->message, params->user_data );
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
