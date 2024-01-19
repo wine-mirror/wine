@@ -3099,7 +3099,7 @@ BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if ((vkey = data->vkey) == VK_PROCESSKEY) return FALSE;
     data->vkey = VK_PROCESSKEY;
     GetKeyboardState( state );
-    scan = lparam >> 0x10;
+    scan = (lparam >> 0x10) & 0xffff;
 
     if (ime->info.fdwProperty & IME_PROP_KBD_CHAR_FIRST)
     {

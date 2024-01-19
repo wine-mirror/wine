@@ -7044,7 +7044,6 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
             .hkl = expect_ime, .himc = default_himc, .func = IME_TO_ASCII_EX,
             /* FIXME what happened to kbd_char_first here!? */
             .to_ascii_ex = {.vkey = 'Q', .vsc = 0xc010},
-            .todo_value = TRUE,
         },
         {0},
     };
