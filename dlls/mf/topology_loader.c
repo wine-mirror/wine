@@ -297,6 +297,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         struct topology_branch down_branch = {.up.node = node, .down = branch->down};
         struct topology_branch up_branch = {.up = branch->up, .down.node = node};
         MF_CONNECT_METHOD method = method_mask;
+        IMFMediaType *media_type;
 
         if (FAILED(IMFActivate_ActivateObject(activates[i], &IID_IMFTransform, (void **)&transform)))
             continue;
@@ -314,6 +315,14 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
                 method = MF_CONNECT_DIRECT;
         }
         IMFTransform_Release(transform);
+
+        if (SUCCEEDED(hr) && method != MF_CONNECT_DIRECT
+                && SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
+        {
+            if (SUCCEEDED(topology_branch_fill_media_type(up_type, media_type)))
+                IMFTransform_SetOutputType(transform, 0, media_type, 0);
+            IMFMediaType_Release(media_type);
+        }
 
         if (SUCCEEDED(hr))
             hr = topology_branch_connect(topology, method, &down_branch, !down_type);

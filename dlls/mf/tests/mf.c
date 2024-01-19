@@ -3633,10 +3633,7 @@ todo_wine {
                 }
 
                 hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
-                todo_wine
                 ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
-                if (hr == S_OK)
-                {
                 if (IsEqualGUID(&test->converter_class, &GUID_NULL))
                 {
                     hr = IMFMediaType_Compare(output_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
@@ -3648,7 +3645,6 @@ todo_wine {
                     check_media_type(media_type, *test->decoded_type, -1);
                 }
                 IMFMediaType_Release(media_type);
-                }
 
                 IMFTransform_Release(transform);
             }
