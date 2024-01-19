@@ -61,7 +61,7 @@ struct imm_thread_data
     UINT  window_cnt;
     WORD  ime_process_scan;    /* scan code of the key being processed */
     WORD  ime_process_vkey;    /* vkey of the key being processed */
-    BOOL  ime_process_result;  /* result string has been received */
+    struct ime_update *update; /* result of ImeProcessKey */
 };
 
 static struct list thread_data_list = LIST_INIT( thread_data_list );
@@ -454,18 +454,22 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     update->comp_str = comp_str ? memcpy( update->buffer, comp_str, comp_len * sizeof(WCHAR) ) : NULL;
     update->result_str = result_str ? memcpy( update->buffer + comp_len, result_str, result_len * sizeof(WCHAR) ) : NULL;
 
-    pthread_mutex_lock( &imm_mutex );
-    update->scan = data->ime_process_scan;
     if (!(update->vkey = data->ime_process_vkey))
     {
+        pthread_mutex_lock( &imm_mutex );
         id = update->scan = ++ime_update_count;
         update->vkey = VK_PROCESSKEY;
-    }
-    list_add_tail( &ime_updates, &update->entry );
-    pthread_mutex_unlock( &imm_mutex );
+        list_add_tail( &ime_updates, &update->entry );
+        pthread_mutex_unlock( &imm_mutex );
 
-    if (!data->ime_process_vkey) NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
-    if (result_str) data->ime_process_result = TRUE;
+        NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
+    }
+    else
+    {
+        update->scan = data->ime_process_scan;
+        free( data->update );
+        data->update = update;
+    }
 }
 
 static struct ime_update *find_ime_update( WORD vkey, WORD scan )
@@ -581,10 +585,17 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
 
         data->ime_process_scan = HIWORD(lparam) & 0x1ff;
         data->ime_process_vkey = LOWORD(wparam);
-        data->ime_process_result = FALSE;
         res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
         data->ime_process_vkey = data->ime_process_scan = 0;
-        if (!res) res = data->ime_process_result;
+
+        if (data->update)
+        {
+            pthread_mutex_lock( &imm_mutex );
+            list_add_tail( &ime_updates, &data->update->entry );
+            pthread_mutex_unlock( &imm_mutex );
+            data->update = NULL;
+            res = TRUE;
+        }
 
         TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam) & 0x1ff, (UINT)res );
         return res;
