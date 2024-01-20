@@ -119,6 +119,7 @@ struct user_call
     {
         struct
         {
+            HWND hwnd;
             UINT msg;
             WPARAM wparam;
             LPARAM lparam;
@@ -187,6 +188,7 @@ static int ok_call_( const char *file, int line, const struct user_call *expecte
     switch (expected->func)
     {
     case MSG_TEST_WIN:
+        if ((ret = expected->message.hwnd - received->message.hwnd)) goto done;
         if ((ret = expected->message.msg - received->message.msg)) goto done;
         if ((ret = (expected->message.wparam - received->message.wparam))) goto done;
         if ((ret = (expected->message.lparam - received->message.lparam))) goto done;
@@ -207,12 +209,12 @@ done:
     {
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "got msg %s, wparam %#Ix, lparam %#Ix\n", debugstr_wm(received->message.msg),
-                         received->message.wparam, received->message.lparam );
+        ok_(file, line)( !ret, "got MSG_TEST_WIN hwnd %p, msg %s, wparam %#Ix, lparam %#Ix\n", received->message.hwnd,
+                         debugstr_wm(received->message.msg), received->message.wparam, received->message.lparam );
         return ret;
     case LL_HOOK_KEYBD:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "got hook msg %s scan %#x, vkey %s, flags %#x, extra %#Ix\n", debugstr_wm(received->ll_hook_kbd.msg),
+        ok_(file, line)( !ret, "got LL_HOOK_KEYBD msg %s scan %#x, vkey %s, flags %#x, extra %#Ix\n", debugstr_wm(received->ll_hook_kbd.msg),
                          received->ll_hook_kbd.scan, debugstr_vk(received->ll_hook_kbd.vkey), received->ll_hook_kbd.flags,
                          received->ll_hook_kbd.extra );
         return ret;
@@ -222,12 +224,12 @@ done:
     {
     case MSG_TEST_WIN:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "msg %s, wparam %#Ix, lparam %#Ix\n", debugstr_wm(expected->message.msg),
-                         expected->message.wparam, expected->message.lparam );
+        ok_(file, line)( !ret, "MSG_TEST_WIN hwnd %p, %s, wparam %#Ix, lparam %#Ix\n", expected->message.hwnd,
+                         debugstr_wm(expected->message.msg), expected->message.wparam, expected->message.lparam );
         break;
     case LL_HOOK_KEYBD:
         todo_wine_if( expected->todo || expected->todo_value )
-        ok_(file, line)( !ret, "hook msg %s scan %#x, vkey %s, flags %#x, extra %#Ix\n", debugstr_wm(expected->ll_hook_kbd.msg),
+        ok_(file, line)( !ret, "LL_HOOK_KBD msg %s scan %#x, vkey %s, flags %#x, extra %#Ix\n", debugstr_wm(expected->ll_hook_kbd.msg),
                          expected->ll_hook_kbd.scan, debugstr_vk(expected->ll_hook_kbd.vkey), expected->ll_hook_kbd.flags,
                          expected->ll_hook_kbd.extra );
         break;
@@ -244,7 +246,7 @@ static void ok_seq_( const char *file, int line, const struct user_call *expecte
 
     while (expected->func || received->func)
     {
-        winetest_push_context( "%u%s%s", i++, !expected->func ? " (spurious)" : "",
+        winetest_push_context( "%s %u%s%s", context, i++, !expected->func ? " (spurious)" : "",
                                !received->func ? " (missing)" : "" );
         ret = ok_call_( file, line, expected, received );
         if (ret && expected->todo && expected->func &&
@@ -279,21 +281,23 @@ static void append_ll_hook_kbd( UINT msg, const KBDLLHOOKSTRUCT *info )
     current_sequence[index] = call;
 }
 
+static BOOL append_message_hwnd;
 static BOOL (*p_accept_message)( UINT msg );
-static void append_message( UINT msg, WPARAM wparam, LPARAM lparam )
+static void append_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (!p_accept_message || p_accept_message( msg ))
     {
-        struct user_call call = {.func = MSG_TEST_WIN, .message = {.msg = msg, .wparam = wparam, .lparam = lparam}};
+        struct user_call call = {.func = MSG_TEST_WIN, .message = {.hwnd = hwnd, .msg = msg, .wparam = wparam, .lparam = lparam}};
         ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
         ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
+        if (!append_message_hwnd) call.message.hwnd = 0;
         current_sequence[index] = call;
     }
 }
 
 static LRESULT CALLBACK append_message_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    append_message( msg, wparam, lparam );
+    append_message( hwnd, msg, wparam, lparam );
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
@@ -418,7 +422,7 @@ static DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HAND
     {
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
         {
-            if (append_peeked) append_message( msg.message, msg.wParam, msg.lParam );
+            if (append_peeked) append_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
             TranslateMessage( &msg );
             DispatchMessageW( &msg );
         }
@@ -466,7 +470,7 @@ static void empty_message_queue(void)
     }
 }
 
-struct send_input_test
+struct send_input_keyboard_test
 {
     WORD scan;
     WORD vkey;
@@ -514,8 +518,8 @@ static void check_keyboard_state_( int line, const BYTE expect_state[256], const
     }
 }
 
-#define check_send_input_test( a, b ) check_send_input_test_( a, #a, b )
-static void check_send_input_test_( const struct send_input_test *test, const char *context, BOOL peeked )
+#define check_send_input_keyboard_test( a, b ) check_send_input_keyboard_test_( a, #a, b )
+static void check_send_input_keyboard_test_( const struct send_input_keyboard_test *test, const char *context, BOOL peeked )
 {
     static BYTE empty_state[256] = {0};
     INPUT input = {.type = INPUT_KEYBOARD};
@@ -544,7 +548,7 @@ static void check_send_input_test_( const struct send_input_test *test, const ch
     winetest_pop_context();
 }
 
-static BOOL test_send_input_accept_message( UINT msg )
+static BOOL accept_keyboard_messages_syscommand( UINT msg )
 {
     return is_keyboard_message( msg ) || msg == WM_SYSCOMMAND;
 }
@@ -624,7 +628,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 #define KEY_MSG_(m, s, v, f, ...) WIN_MSG( m, v, MAKELONG(1, (s) | (m == WM_KEYUP || m == WM_SYSKEYUP ? (KF_UP | KF_REPEAT) : 0) | (f)), ## __VA_ARGS__ )
 #define KEY_MSG(m, s, v, ...) KEY_MSG_( m, s, v, 0, ## __VA_ARGS__ )
 
-    struct send_input_test lmenu_vkey[] =
+    struct send_input_keyboard_test lmenu_vkey[] =
     {
         {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -646,7 +650,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test lmenu_vkey_peeked[] =
+    struct send_input_keyboard_test lmenu_vkey_peeked[] =
     {
         {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -667,7 +671,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test lcontrol_vkey[] =
+    struct send_input_keyboard_test lcontrol_vkey[] =
     {
         {.vkey = VK_LCONTROL, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 1, VK_CONTROL), {0}}},
@@ -680,7 +684,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test lmenu_lcontrol_vkey[] =
+    struct send_input_keyboard_test lmenu_lcontrol_vkey[] =
     {
         {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -697,7 +701,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test shift_vkey[] =
+    struct send_input_keyboard_test shift_vkey[] =
     {
         {.vkey = VK_LSHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LSHIFT), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -710,7 +714,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    static const struct send_input_test rshift[] =
+    static const struct send_input_keyboard_test rshift[] =
     {
         {.vkey = VK_RSHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_RSHIFT] = 0x80}, .todo_state = {[VK_RSHIFT] = TRUE, [VK_LSHIFT] = TRUE},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RSHIFT, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -718,7 +722,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RSHIFT, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
         {0},
     };
-    static const struct send_input_test lshift_ext[] =
+    static const struct send_input_keyboard_test lshift_ext[] =
     {
         {.vkey = VK_LSHIFT, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_SHIFT] = 0x80, [VK_RSHIFT] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_LSHIFT, LLKHF_EXTENDED), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -726,7 +730,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_LSHIFT, LLKHF_EXTENDED), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
         {0},
     };
-    static const struct send_input_test rshift_ext[] =
+    static const struct send_input_keyboard_test rshift_ext[] =
     {
         {.vkey = VK_RSHIFT, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_SHIFT] = 0x80, [VK_RSHIFT] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RSHIFT, LLKHF_EXTENDED), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -734,7 +738,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RSHIFT, LLKHF_EXTENDED), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
         {0},
     };
-    static const struct send_input_test shift[] =
+    static const struct send_input_keyboard_test shift[] =
     {
         {.vkey = VK_SHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -742,7 +746,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
         {0},
     };
-    static const struct send_input_test shift_ext[] =
+    static const struct send_input_keyboard_test shift_ext[] =
     {
         {.vkey = VK_SHIFT, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_SHIFT] = 0x80, [VK_RSHIFT] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_LSHIFT, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -751,7 +755,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    static const struct send_input_test rcontrol[] =
+    static const struct send_input_keyboard_test rcontrol[] =
     {
         {.vkey = VK_RCONTROL, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_RCONTROL), KEY_MSG(WM_KEYDOWN, 1, VK_CONTROL), {0}}},
@@ -759,7 +763,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_RCONTROL), KEY_MSG(WM_KEYUP, 2, VK_CONTROL), {0}}},
         {0},
     };
-    static const struct send_input_test lcontrol_ext[] =
+    static const struct send_input_keyboard_test lcontrol_ext[] =
     {
         {.vkey = VK_LCONTROL, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_LCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYDOWN, 1, VK_CONTROL, KF_EXTENDED), {0}}},
@@ -767,7 +771,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_LCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYUP, 2, VK_CONTROL, KF_EXTENDED), {0}}},
         {0},
     };
-    static const struct send_input_test rcontrol_ext[] =
+    static const struct send_input_keyboard_test rcontrol_ext[] =
     {
         {.vkey = VK_RCONTROL, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYDOWN, 1, VK_CONTROL, KF_EXTENDED), {0}}},
@@ -775,7 +779,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYUP, 2, VK_CONTROL, KF_EXTENDED), {0}}},
         {0},
     };
-    static const struct send_input_test control[] =
+    static const struct send_input_keyboard_test control[] =
     {
         {.vkey = VK_CONTROL, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_CONTROL), {0}}},
@@ -783,7 +787,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 2, VK_CONTROL), {0}}},
         {0},
     };
-    static const struct send_input_test control_ext[] =
+    static const struct send_input_keyboard_test control_ext[] =
     {
         {.vkey = VK_CONTROL, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
          .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_KEYDOWN, 1, VK_CONTROL, KF_EXTENDED), {0}}},
@@ -792,7 +796,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    static const struct send_input_test rmenu[] =
+    static const struct send_input_keyboard_test rmenu[] =
     {
         {.vkey = VK_RMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -800,7 +804,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_RMENU, .todo_value = TRUE), KEY_MSG(WM_SYSKEYUP, 2, VK_MENU), WIN_MSG(WM_SYSCOMMAND, SC_KEYMENU, 0), {0}}},
         {0},
     };
-    static const struct send_input_test lmenu_ext[] =
+    static const struct send_input_keyboard_test lmenu_ext[] =
     {
         {.vkey = VK_LMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -808,7 +812,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_LMENU, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 2, VK_MENU, KF_EXTENDED), WIN_MSG(WM_SYSCOMMAND, SC_KEYMENU, 0), {0}}},
         {0},
     };
-    static const struct send_input_test rmenu_ext[] =
+    static const struct send_input_keyboard_test rmenu_ext[] =
     {
         {.vkey = VK_RMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -816,7 +820,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RMENU, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 2, VK_MENU, KF_EXTENDED), WIN_MSG(WM_SYSCOMMAND, SC_KEYMENU, 0), {0}}},
         {0},
     };
-    static const struct send_input_test menu[] =
+    static const struct send_input_keyboard_test menu[] =
     {
         {.vkey = VK_MENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -824,7 +828,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LMENU, .todo_value = TRUE), KEY_MSG(WM_SYSKEYUP, 2, VK_MENU), WIN_MSG(WM_SYSCOMMAND, SC_KEYMENU, 0), {0}}},
         {0},
     };
-    static const struct send_input_test menu_ext[] =
+    static const struct send_input_keyboard_test menu_ext[] =
     {
         {.vkey = VK_MENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -833,7 +837,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    static const struct send_input_test rmenu_peeked[] =
+    static const struct send_input_keyboard_test rmenu_peeked[] =
     {
         {.vkey = VK_RMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -841,7 +845,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_RMENU, .todo_value = TRUE), KEY_MSG(WM_SYSKEYUP, 2, VK_MENU), {0}}},
         {0},
     };
-    static const struct send_input_test lmenu_ext_peeked[] =
+    static const struct send_input_keyboard_test lmenu_ext_peeked[] =
     {
         {.vkey = VK_LMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -849,7 +853,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_LMENU, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 2, VK_MENU, KF_EXTENDED), {0}}},
         {0},
     };
-    static const struct send_input_test rmenu_ext_peeked[] =
+    static const struct send_input_keyboard_test rmenu_ext_peeked[] =
     {
         {.vkey = VK_RMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -857,7 +861,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RMENU, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 2, VK_MENU, KF_EXTENDED), {0}}},
         {0},
     };
-    static const struct send_input_test menu_peeked[] =
+    static const struct send_input_keyboard_test menu_peeked[] =
     {
         {.vkey = VK_MENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -865,7 +869,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LMENU, .todo_value = TRUE), KEY_MSG(WM_SYSKEYUP, 2, VK_MENU), {0}}},
         {0},
     };
-    static const struct send_input_test menu_ext_peeked[] =
+    static const struct send_input_keyboard_test menu_ext_peeked[] =
     {
         {.vkey = VK_MENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_RMENU, LLKHF_ALTDOWN|LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN|KF_EXTENDED), {0}}},
@@ -874,7 +878,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test rmenu_altgr[] =
+    struct send_input_keyboard_test rmenu_altgr[] =
     {
         {
             .vkey = VK_RMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
@@ -900,7 +904,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         },
         {0},
     };
-    struct send_input_test rmenu_ext_altgr[] =
+    struct send_input_keyboard_test rmenu_ext_altgr[] =
     {
         {
             .vkey = VK_RMENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
@@ -926,7 +930,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         },
         {0},
     };
-    struct send_input_test menu_ext_altgr[] =
+    struct send_input_keyboard_test menu_ext_altgr[] =
     {
         {
             .vkey = VK_MENU, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_MENU] = 0x80, [VK_RMENU] = 0x80, [VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
@@ -953,7 +957,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    static const struct send_input_test lrshift_ext[] =
+    static const struct send_input_keyboard_test lrshift_ext[] =
     {
         {.vkey = VK_LSHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LSHIFT), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
@@ -966,7 +970,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test rshift_scan[] =
+    struct send_input_keyboard_test rshift_scan[] =
     {
         {.scan = 0x36, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
          .todo_state = {[0] = TRUE, [VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE},
@@ -982,7 +986,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test unicode[] =
+    struct send_input_keyboard_test unicode[] =
     {
         {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_PACKET] = 0x80},
          .expect = {KEY_HOOK(WM_KEYDOWN, 0x3c0, VK_PACKET), KEY_MSG(WM_KEYDOWN, 0, VK_PACKET, .todo_value = TRUE), WIN_MSG(WM_CHAR, 0x3c0, 1), {0}}},
@@ -991,7 +995,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test lmenu_unicode[] =
+    struct send_input_keyboard_test lmenu_unicode[] =
     {
         {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -1012,7 +1016,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
          .expect = {KEY_HOOK(WM_KEYUP, 4, VK_LMENU), KEY_MSG(WM_KEYUP, 4, VK_MENU), {0}}},
         {0},
     };
-    struct send_input_test lmenu_unicode_peeked[] =
+    struct send_input_keyboard_test lmenu_unicode_peeked[] =
     {
         {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
          .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
@@ -1033,7 +1037,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
-    struct send_input_test unicode_vkey[] =
+    struct send_input_keyboard_test unicode_vkey[] =
     {
         {.scan = 0x3c0, .vkey = vkey, .flags = KEYEVENTF_UNICODE, .expect_state = {/*[vkey] = 0x80*/},
          .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), WIN_MSG(WM_CHAR, wch, MAKELONG(1, 0xc0), .todo_value = TRUE), {0}}},
@@ -1065,7 +1069,7 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     hook = SetWindowsHookExW( WH_KEYBOARD_LL, ll_hook_kbd_proc, GetModuleHandleW( NULL ), 0 );
     ok_ne( NULL, hook, HHOOK, "%p" );
 
-    p_accept_message = test_send_input_accept_message;
+    p_accept_message = accept_keyboard_messages_syscommand;
     ok_seq( empty_sequence );
 
     lmenu_vkey_peeked[1].expect_state[vkey] = 0x80;
@@ -1079,36 +1083,36 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 
     /* test peeked messages */
     winetest_push_context( "peek" );
-    check_send_input_test( lmenu_vkey_peeked, TRUE );
-    check_send_input_test( lcontrol_vkey, TRUE );
-    check_send_input_test( lmenu_lcontrol_vkey, TRUE );
-    check_send_input_test( shift_vkey, TRUE );
-    check_send_input_test( rshift, TRUE );
-    check_send_input_test( lshift_ext, TRUE );
-    check_send_input_test( rshift_ext, TRUE );
-    check_send_input_test( shift, TRUE );
-    check_send_input_test( shift_ext, TRUE );
-    check_send_input_test( rcontrol, TRUE );
-    check_send_input_test( lcontrol_ext, TRUE );
-    check_send_input_test( rcontrol_ext, TRUE );
-    check_send_input_test( control, TRUE );
-    check_send_input_test( control_ext, TRUE );
+    check_send_input_keyboard_test( lmenu_vkey_peeked, TRUE );
+    check_send_input_keyboard_test( lcontrol_vkey, TRUE );
+    check_send_input_keyboard_test( lmenu_lcontrol_vkey, TRUE );
+    check_send_input_keyboard_test( shift_vkey, TRUE );
+    check_send_input_keyboard_test( rshift, TRUE );
+    check_send_input_keyboard_test( lshift_ext, TRUE );
+    check_send_input_keyboard_test( rshift_ext, TRUE );
+    check_send_input_keyboard_test( shift, TRUE );
+    check_send_input_keyboard_test( shift_ext, TRUE );
+    check_send_input_keyboard_test( rcontrol, TRUE );
+    check_send_input_keyboard_test( lcontrol_ext, TRUE );
+    check_send_input_keyboard_test( rcontrol_ext, TRUE );
+    check_send_input_keyboard_test( control, TRUE );
+    check_send_input_keyboard_test( control_ext, TRUE );
     if (skip_altgr) skip( "skipping rmenu_altgr test\n" );
-    else if (altgr) check_send_input_test( rmenu_altgr, TRUE );
-    else check_send_input_test( rmenu_peeked, TRUE );
-    check_send_input_test( lmenu_ext_peeked, TRUE );
+    else if (altgr) check_send_input_keyboard_test( rmenu_altgr, TRUE );
+    else check_send_input_keyboard_test( rmenu_peeked, TRUE );
+    check_send_input_keyboard_test( lmenu_ext_peeked, TRUE );
     if (skip_altgr) skip( "skipping rmenu_ext_altgr test\n" );
-    else if (altgr) check_send_input_test( rmenu_ext_altgr, TRUE );
-    else check_send_input_test( rmenu_ext_peeked, TRUE );
-    check_send_input_test( menu_peeked, TRUE );
+    else if (altgr) check_send_input_keyboard_test( rmenu_ext_altgr, TRUE );
+    else check_send_input_keyboard_test( rmenu_ext_peeked, TRUE );
+    check_send_input_keyboard_test( menu_peeked, TRUE );
     if (skip_altgr) skip( "skipping menu_ext_altgr test\n" );
-    else if (altgr) check_send_input_test( menu_ext_altgr, TRUE );
-    else check_send_input_test( menu_ext_peeked, TRUE );
-    check_send_input_test( lrshift_ext, TRUE );
-    check_send_input_test( rshift_scan, TRUE );
-    check_send_input_test( unicode, TRUE );
-    check_send_input_test( lmenu_unicode_peeked, TRUE );
-    check_send_input_test( unicode_vkey, TRUE );
+    else if (altgr) check_send_input_keyboard_test( menu_ext_altgr, TRUE );
+    else check_send_input_keyboard_test( menu_ext_peeked, TRUE );
+    check_send_input_keyboard_test( lrshift_ext, TRUE );
+    check_send_input_keyboard_test( rshift_scan, TRUE );
+    check_send_input_keyboard_test( unicode, TRUE );
+    check_send_input_keyboard_test( lmenu_unicode_peeked, TRUE );
+    check_send_input_keyboard_test( unicode_vkey, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -1119,36 +1123,36 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     ok_ne( 0, old_proc, LONG_PTR, "%#Ix" );
 
     winetest_push_context( "receive" );
-    check_send_input_test( lmenu_vkey, FALSE );
-    check_send_input_test( lcontrol_vkey, FALSE );
-    check_send_input_test( lmenu_lcontrol_vkey, FALSE );
-    check_send_input_test( shift_vkey, FALSE );
-    check_send_input_test( rshift, FALSE );
-    check_send_input_test( lshift_ext, FALSE );
-    check_send_input_test( rshift_ext, FALSE );
-    check_send_input_test( shift, FALSE );
-    check_send_input_test( shift_ext, FALSE );
-    check_send_input_test( rcontrol, FALSE );
-    check_send_input_test( lcontrol_ext, FALSE );
-    check_send_input_test( rcontrol_ext, FALSE );
-    check_send_input_test( control, FALSE );
-    check_send_input_test( control_ext, FALSE );
+    check_send_input_keyboard_test( lmenu_vkey, FALSE );
+    check_send_input_keyboard_test( lcontrol_vkey, FALSE );
+    check_send_input_keyboard_test( lmenu_lcontrol_vkey, FALSE );
+    check_send_input_keyboard_test( shift_vkey, FALSE );
+    check_send_input_keyboard_test( rshift, FALSE );
+    check_send_input_keyboard_test( lshift_ext, FALSE );
+    check_send_input_keyboard_test( rshift_ext, FALSE );
+    check_send_input_keyboard_test( shift, FALSE );
+    check_send_input_keyboard_test( shift_ext, FALSE );
+    check_send_input_keyboard_test( rcontrol, FALSE );
+    check_send_input_keyboard_test( lcontrol_ext, FALSE );
+    check_send_input_keyboard_test( rcontrol_ext, FALSE );
+    check_send_input_keyboard_test( control, FALSE );
+    check_send_input_keyboard_test( control_ext, FALSE );
     if (skip_altgr) skip( "skipping rmenu_altgr test\n" );
-    else if (altgr) check_send_input_test( rmenu_altgr, FALSE );
-    else check_send_input_test( rmenu, FALSE );
-    check_send_input_test( lmenu_ext, FALSE );
+    else if (altgr) check_send_input_keyboard_test( rmenu_altgr, FALSE );
+    else check_send_input_keyboard_test( rmenu, FALSE );
+    check_send_input_keyboard_test( lmenu_ext, FALSE );
     if (skip_altgr) skip( "skipping rmenu_ext_altgr test\n" );
-    else if (altgr) check_send_input_test( rmenu_ext_altgr, FALSE );
-    else check_send_input_test( rmenu_ext, FALSE );
-    check_send_input_test( menu, FALSE );
+    else if (altgr) check_send_input_keyboard_test( rmenu_ext_altgr, FALSE );
+    else check_send_input_keyboard_test( rmenu_ext, FALSE );
+    check_send_input_keyboard_test( menu, FALSE );
     if (skip_altgr) skip( "skipping menu_ext_altgr test\n" );
-    else if (altgr) check_send_input_test( menu_ext_altgr, FALSE );
-    else check_send_input_test( menu_ext, FALSE );
-    check_send_input_test( lrshift_ext, FALSE );
-    check_send_input_test( rshift_scan, FALSE );
-    check_send_input_test( unicode, FALSE );
-    check_send_input_test( lmenu_unicode, FALSE );
-    check_send_input_test( unicode_vkey, FALSE );
+    else if (altgr) check_send_input_keyboard_test( menu_ext_altgr, FALSE );
+    else check_send_input_keyboard_test( menu_ext, FALSE );
+    check_send_input_keyboard_test( lrshift_ext, FALSE );
+    check_send_input_keyboard_test( rshift_scan, FALSE );
+    check_send_input_keyboard_test( unicode, FALSE );
+    check_send_input_keyboard_test( lmenu_unicode, FALSE );
+    check_send_input_keyboard_test( unicode_vkey, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
