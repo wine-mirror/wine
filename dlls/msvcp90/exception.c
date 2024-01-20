@@ -1001,7 +1001,19 @@ bool __cdecl MSVCP__uncaught_exception(void)
 /* ?_XGetLastError@std@@YAXXZ */
 void __cdecl _XGetLastError(void)
 {
-    FIXME("stub\n");
+    int err = GetLastError();
+    system_error se;
+    const char *msg;
+
+    TRACE("() GetLastError()=%d\n", err);
+
+    msg = _Winerror_map_str(err);
+    MSVCP_runtime_error_ctor(&se.base, &msg);
+    se.code.code = err;
+    se.code.category = std_system_category();
+    se.base.e.vtable = &system_error_vtable;
+
+    _CxxThrowException(&se, &system_error_cxx_type);
 }
 #endif
 

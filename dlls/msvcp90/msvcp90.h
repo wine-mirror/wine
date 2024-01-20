@@ -694,12 +694,15 @@ typedef struct {
 
 const error_category* __cdecl std_iostream_category(void);
 const error_category* __cdecl std_generic_category(void);
+const error_category* __cdecl std_system_category(void);
 
 typedef struct
 {
     int code;
     const error_category *category;
 } error_code;
+
+const char *_Winerror_map_str(int err);
 #endif
 
 #if _MSVCP_VER < 80
