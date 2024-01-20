@@ -997,6 +997,14 @@ bool __cdecl MSVCP__uncaught_exception(void)
     return __uncaught_exception();
 }
 
+#if _MSVCP_VER >= 140
+/* ?_XGetLastError@std@@YAXXZ */
+void __cdecl _XGetLastError(void)
+{
+    FIXME("stub\n");
+}
+#endif
+
 #if _MSVCP_VER >= 110
 typedef struct
 {

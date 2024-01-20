@@ -1672,7 +1672,7 @@
 @ cdecl ?_Winerror_map@std@@YAHH@Z(long) _Winerror_map
 @ cdecl -arch=win32 ?_Winerror_message@std@@YAKKPADK@Z(long ptr long) _Winerror_message
 @ cdecl -arch=win64 ?_Winerror_message@std@@YAKKPEADK@Z(long ptr long) _Winerror_message
-@ stub ?_XGetLastError@std@@YAXXZ
+@ cdecl ?_XGetLastError@std@@YAXXZ() _XGetLastError
 @ cdecl ?_XLgamma@std@@YAMM@Z(float) std__XLgamma_float
 @ cdecl ?_XLgamma@std@@YANN@Z(double) std__XLgamma_double
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) std__XLgamma_double

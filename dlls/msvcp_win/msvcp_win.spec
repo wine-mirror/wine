@@ -1672,7 +1672,7 @@
 @ cdecl ?_Winerror_map@std@@YAHH@Z(long) msvcp140.?_Winerror_map@std@@YAHH@Z
 @ cdecl -arch=win32 ?_Winerror_message@std@@YAKKPADK@Z(long ptr long) msvcp140.?_Winerror_message@std@@YAKKPADK@Z
 @ cdecl -arch=win64 ?_Winerror_message@std@@YAKKPEADK@Z(long ptr long) msvcp140.?_Winerror_message@std@@YAKKPEADK@Z
-@ stub ?_XGetLastError@std@@YAXXZ
+@ cdecl ?_XGetLastError@std@@YAXXZ() msvcp140.?_XGetLastError@std@@YAXXZ
 @ cdecl ?_XLgamma@std@@YAMM@Z(float) msvcp140.?_XLgamma@std@@YAMM@Z
 @ cdecl ?_XLgamma@std@@YANN@Z(double) msvcp140.?_XLgamma@std@@YANN@Z
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) msvcp140.?_XLgamma@std@@YAOO@Z
