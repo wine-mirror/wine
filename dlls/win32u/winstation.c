@@ -293,6 +293,12 @@ HDESK WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK acce
     return ret;
 }
 
+BOOL WINAPI NtUserSwitchDesktop( HDESK desktop )
+{
+    FIXME( "desktop %p stub!\n", desktop );
+    return TRUE;
+}
+
 /***********************************************************************
  *           NtUserGetObjectInformation   (win32u.@)
  */

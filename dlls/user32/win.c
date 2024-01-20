@@ -1571,18 +1571,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, WINDOWINFO *info )
     return NtUserGetWindowInfo( hwnd, info );
 }
 
-/******************************************************************************
- *              SwitchDesktop (USER32.@)
- *
- * NOTES: Sets the current input or interactive desktop.
- */
-BOOL WINAPI SwitchDesktop( HDESK hDesktop)
-{
-    FIXME("(hwnd %p) stub!\n", hDesktop);
-    return TRUE;
-}
-
-
 /*****************************************************************************
  *              UpdateLayeredWindowIndirect  (USER32.@)
  */

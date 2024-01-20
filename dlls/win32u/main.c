@@ -2035,6 +2035,11 @@ BOOL SYSCALL_API NtUserShowWindowAsync( HWND hwnd, INT cmd )
     SYSCALL_FUNC( NtUserShowWindowAsync );
 }
 
+BOOL SYSCALL_API NtUserSwitchDesktop( HDESK handle )
+{
+    SYSCALL_FUNC( NtUserSwitchDesktop );
+}
+
 BOOL SYSCALL_API NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT winini )
 {
     SYSCALL_FUNC( NtUserSystemParametersInfo );

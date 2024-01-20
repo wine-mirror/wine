@@ -1270,7 +1270,7 @@
 @ stub NtUserSlicerControl
 @ stub NtUserSoundSentry
 @ stub NtUserStopAndEndInertia
-@ stub NtUserSwitchDesktop
+@ stdcall -syscall NtUserSwitchDesktop(long)
 @ stdcall -syscall NtUserSystemParametersInfo(long long ptr long)
 @ stdcall -syscall NtUserSystemParametersInfoForDpi(long long ptr long long)
 @ stub NtUserTestForInteractiveUser

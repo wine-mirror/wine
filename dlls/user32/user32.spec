@@ -758,7 +758,7 @@
 # @ stub SoftModalMessageBox
 @ stdcall SubtractRect(ptr ptr ptr)
 @ stdcall SwapMouseButton(long)
-@ stdcall SwitchDesktop(long)
+@ stdcall SwitchDesktop(long) NtUserSwitchDesktop
 @ stdcall SwitchToThisWindow(long long)
 # @ stub SysErrorBox
 @ stdcall SystemParametersInfoA(long long ptr long)

@@ -4472,6 +4472,13 @@ NTSTATUS WINAPI wow64_NtUserShowWindowAsync( UINT *args )
     return NtUserShowWindowAsync( hwnd, cmd );
 }
 
+NTSTATUS WINAPI wow64_NtUserSwitchDesktop( UINT *args )
+{
+    HDESK handle = get_handle( &args );
+
+    return NtUserSwitchDesktop( handle );
+}
+
 NTSTATUS WINAPI wow64_NtUserSystemParametersInfo( UINT *args )
 {
     UINT action = get_ulong( &args );

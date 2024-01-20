@@ -784,6 +784,7 @@ W32KAPI BOOL    WINAPI NtUserShowWindow( HWND hwnd, INT cmd );
 W32KAPI BOOL    WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd );
 W32KAPI BOOL    WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT winini );
 W32KAPI BOOL    WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, UINT winini, UINT dpi );
+W32KAPI BOOL    WINAPI NtUserSwitchDesktop( HDESK desktop );
 W32KAPI BOOL    WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info );
 W32KAPI UINT    WINAPI NtUserThunkedMenuItemInfo( HMENU menu, UINT pos, UINT flags, UINT method,
                                                   MENUITEMINFOW *info, UNICODE_STRING *str );
