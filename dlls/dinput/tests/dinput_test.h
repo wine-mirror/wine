@@ -109,4 +109,7 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_devi
 #define msg_wait_for_events( a, b, c ) msg_wait_for_events_( __FILE__, __LINE__, a, b, c )
 DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HANDLE *events, DWORD timeout );
 
+#define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
+HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries );
+
 #endif /* __WINE_DINPUT_TEST_H */

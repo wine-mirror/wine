@@ -3079,8 +3079,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
                         FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
-    hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
-                          NULL, NULL, NULL, NULL );
+    hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
@@ -4131,8 +4130,7 @@ static void test_device_managed_effect(void)
                         FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
-    hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
-                          NULL, NULL, NULL, NULL );
+    hwnd = create_foreground_window( FALSE );
 
     event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( event != NULL, "CreateEventW failed, last error %lu\n", GetLastError() );

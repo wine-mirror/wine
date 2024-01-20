@@ -2279,8 +2279,7 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
     ok( hr == E_HANDLE, "SetCooperativeLevel returned: %#lx\n", hr );
 
-    hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
-                          NULL, NULL, NULL, NULL );
+    hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
@@ -5278,13 +5277,6 @@ static void test_rawinput(void)
             .report_buf = {1,0x10,0x10,0x10,0xee,0x10,0x10,0x10,0x54},
         },
     };
-    WNDCLASSEXW class =
-    {
-        .cbSize = sizeof(WNDCLASSEXW),
-        .hInstance = GetModuleHandleW( NULL ),
-        .lpszClassName = L"rawinput",
-        .lpfnWndProc = rawinput_wndproc,
-    };
     RAWINPUT *rawinput = (RAWINPUT *)wm_input_buf;
     RAWINPUTDEVICELIST raw_device_list[16];
     RAWINPUTDEVICE raw_devices[16];
@@ -5294,8 +5286,6 @@ static void test_rawinput(void)
     UINT count;
     HWND hwnd;
     BOOL ret;
-
-    RegisterClassExW( &class );
 
     cleanup_registry_keys();
 
@@ -5310,9 +5300,8 @@ static void test_rawinput(void)
     rawinput_event = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
     ok( !!rawinput_event, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
 
-    hwnd = CreateWindowW( class.lpszClassName, L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
-                          NULL, NULL, NULL, NULL );
-    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    hwnd = create_foreground_window( FALSE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (ULONG_PTR)rawinput_wndproc );
 
     count = ARRAY_SIZE(raw_devices);
     res = GetRegisteredRawInputDevices( raw_devices, &count, sizeof(RAWINPUTDEVICE) );
@@ -5464,7 +5453,6 @@ done:
     cleanup_registry_keys();
 
     DestroyWindow( hwnd );
-    UnregisterClassW( class.lpszClassName, class.hInstance );
 }
 
 START_TEST( joystick8 )

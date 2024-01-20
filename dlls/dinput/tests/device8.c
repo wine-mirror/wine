@@ -66,6 +66,41 @@ static void flush_events(void)
     }
 }
 
+HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
+{
+    for (;;)
+    {
+        HWND hwnd;
+        BOOL ret;
+
+        hwnd = CreateWindowW( L"static", NULL, WS_POPUP | (fullscreen ? 0 : WS_VISIBLE),
+                              100, 100, 200, 200, NULL, NULL, NULL, NULL );
+        ok_(file, line)( hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+        if (fullscreen)
+        {
+            HMONITOR hmonitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+            MONITORINFO mi = {.cbSize = sizeof(MONITORINFO)};
+
+            ok_(file, line)( hmonitor != NULL, "MonitorFromWindow failed, error %lu\n", GetLastError() );
+            ret = GetMonitorInfoW( hmonitor, &mi );
+            ok_(file, line)( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+            ret = SetWindowPos( hwnd, 0, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left,
+                                mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW );
+            ok_(file, line)( ret, "SetWindowPos failed, error %lu\n", GetLastError() );
+        }
+        flush_events();
+
+        if (GetForegroundWindow() == hwnd) return hwnd;
+        ok_(file, line)( retries > 0, "failed to create foreground window\n" );
+        if (!retries--) return hwnd;
+
+        ret = DestroyWindow( hwnd );
+        ok_(file, line)( ret, "DestroyWindow failed, error %lu\n", GetLastError() );
+        flush_events();
+    }
+}
+
 static HRESULT create_dinput_device( DWORD version, const GUID *guid, IDirectInputDevice8W **device )
 {
     IDirectInputW *dinput;
@@ -294,8 +329,7 @@ void test_overlapped_format( DWORD version )
 
     event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
-    hwnd = CreateWindowW( L"static", L"Title", WS_POPUP | WS_VISIBLE, 10, 10, 200, 200, NULL, NULL, NULL, NULL );
-    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInput_CreateDevice( dinput, &GUID_SysKeyboard, &keyboard, NULL );
     ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
@@ -556,10 +590,6 @@ static void test_mouse_keyboard(void)
     UINT raw_devices_count;
     RAWINPUTDEVICE raw_devices[3];
 
-    hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "CreateWindowExA failed\n");
-    flush_events();
-
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&di);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
         hr == DIERR_BETADIRECTINPUTVERSION ||
@@ -577,6 +607,8 @@ static void test_mouse_keyboard(void)
         return;
     }
     ok(SUCCEEDED(hr), "IDirectInput8_Initialize failed: %#lx\n", hr);
+
+    hwnd = create_foreground_window( TRUE );
 
     hr = IDirectInput8_CreateDevice(di, &GUID_SysMouse, &di_mouse, NULL);
     ok(SUCCEEDED(hr), "IDirectInput8_CreateDevice failed: %#lx\n", hr);
@@ -771,8 +803,7 @@ static void test_keyboard_events(void)
     }
     ok(SUCCEEDED(hr), "IDirectInput8_Initialize failed: %#lx\n", hr);
 
-    hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "CreateWindowExA failed\n");
+    hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInput8_CreateDevice(di, &GUID_SysKeyboard, &di_keyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput8_CreateDevice failed: %#lx\n", hr);
@@ -872,9 +903,7 @@ static void test_appdata_property(void)
     ok(SUCCEEDED(hr), "DirectInput8 Initialize failed: hr=%#lx\n", hr);
     if (FAILED(hr)) return;
 
-    hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput",
-            WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "failed to create window\n");
+    hwnd = create_foreground_window( TRUE );
 
     hr = IDirectInput8_CreateDevice(pDI, &GUID_SysKeyboard, &di_keyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput8_CreateDevice failed: %#lx\n", hr);
@@ -1412,11 +1441,7 @@ static void test_sys_mouse( DWORD version )
     check_member( objinst, expect_objects[3], "%u", wReportId );
 
 
-    SetCursorPos( 60, 60 );
-
-    hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
-                          50, 50, 200, 200, NULL, NULL, NULL, NULL );
-    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    hwnd = create_foreground_window( TRUE );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
@@ -1571,9 +1596,7 @@ static void test_sys_mouse( DWORD version )
         ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
     }
 
-    tmp_hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
-                              50, 250, 200, 200, NULL, NULL, NULL, NULL );
-    ok( !!tmp_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    tmp_hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     ok( hr == DIERR_NOTACQUIRED, "GetDeviceState  returned %#lx\n", hr );
@@ -2126,9 +2149,7 @@ static void test_sys_keyboard( DWORD version )
     check_member( objinst, expect_objects[2], "%u", wReportId );
 
 
-    hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
-                          50, 50, 200, 200, NULL, NULL, NULL, NULL );
-    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    hwnd = create_foreground_window( FALSE );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
     ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
