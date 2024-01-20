@@ -28,6 +28,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 #if _MSVCP_VER >= 110
 /* error strings generated with glibc strerror */
+#if _MSVCP_VER >= 140
+static const char str_SUCC[]            = "success";
+#endif
 static const char str_EPERM[]           = "operation not permitted";
 static const char str_ENOENT[]          = "no such file or directory";
 static const char str_ESRCH[]           = "no such process";
@@ -112,6 +115,9 @@ static const struct {
     const char *str;
 } syserror_map[] =
 {
+#if _MSVCP_VER >= 140
+    {0, str_SUCC},
+#endif
     {EPERM, str_EPERM},
     {ENOENT, str_ENOENT},
     {ESRCH, str_ESRCH},
