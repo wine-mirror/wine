@@ -109,6 +109,7 @@ enum user_function
 {
     MSG_TEST_WIN = 1,
     LL_HOOK_KEYBD,
+    LL_HOOK_MOUSE,
 };
 
 struct user_call
@@ -132,6 +133,15 @@ struct user_call
             UINT flags;
             UINT_PTR extra;
         } ll_hook_kbd;
+        struct
+        {
+            UINT msg;
+            POINT point;
+            UINT data;
+            UINT flags;
+            UINT time;
+            UINT_PTR extra;
+        } ll_hook_ms;
     };
 
     BOOL todo;
@@ -154,6 +164,11 @@ static const char *debugstr_wm( UINT msg )
     case WM_SYSCOMMAND: return "WM_SYSCOMMAND";
     case WM_SYSKEYDOWN: return "WM_SYSKEYDOWN";
     case WM_SYSKEYUP: return "WM_SYSKEYUP";
+    case WM_MOUSEMOVE: return "WM_MOUSEMOVE";
+    case WM_LBUTTONDOWN: return "WM_LBUTTONDOWN";
+    case WM_LBUTTONUP: return "WM_LBUTTONUP";
+    case WM_LBUTTONDBLCLK: return "WM_LBUTTONDBLCLK";
+    case WM_NCHITTEST: return "WM_NCHITTEST";
     }
     return wine_dbg_sprintf( "%#x", msg );
 }
@@ -200,6 +215,15 @@ static int ok_call_( const char *file, int line, const struct user_call *expecte
         if ((ret = (expected->ll_hook_kbd.flags - received->ll_hook_kbd.flags))) goto done;
         if ((ret = (expected->ll_hook_kbd.extra - received->ll_hook_kbd.extra))) goto done;
         break;
+    case LL_HOOK_MOUSE:
+        if ((ret = expected->ll_hook_ms.msg - received->ll_hook_ms.msg)) goto done;
+        if ((ret = expected->ll_hook_ms.point.x - received->ll_hook_ms.point.x)) goto done;
+        if ((ret = expected->ll_hook_ms.point.y - received->ll_hook_ms.point.y)) goto done;
+        if ((ret = (expected->ll_hook_ms.data - received->ll_hook_ms.data))) goto done;
+        if ((ret = (expected->ll_hook_ms.flags - received->ll_hook_ms.flags))) goto done;
+        if (0 && (ret = expected->ll_hook_ms.time - received->ll_hook_ms.time)) goto done;
+        if ((ret = (expected->ll_hook_ms.extra - received->ll_hook_ms.extra))) goto done;
+        break;
     }
 
 done:
@@ -218,6 +242,12 @@ done:
                          received->ll_hook_kbd.scan, debugstr_vk(received->ll_hook_kbd.vkey), received->ll_hook_kbd.flags,
                          received->ll_hook_kbd.extra );
         return ret;
+    case LL_HOOK_MOUSE:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "got LL_HOOK_MOUSE msg %s, point %s, data %#x, flags %#x, time %u, extra %#Ix\n", debugstr_wm(received->ll_hook_ms.msg),
+                         wine_dbgstr_point(&received->ll_hook_ms.point), received->ll_hook_ms.data, received->ll_hook_ms.flags, received->ll_hook_ms.time,
+                         received->ll_hook_ms.extra );
+        return ret;
     }
 
     switch (expected->func)
@@ -233,6 +263,12 @@ done:
                          expected->ll_hook_kbd.scan, debugstr_vk(expected->ll_hook_kbd.vkey), expected->ll_hook_kbd.flags,
                          expected->ll_hook_kbd.extra );
         break;
+    case LL_HOOK_MOUSE:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "LL_HOOK_MOUSE msg %s, point %s, data %#x, flags %#x, time %u, extra %#Ix\n", debugstr_wm(received->ll_hook_ms.msg),
+                         wine_dbgstr_point(&received->ll_hook_ms.point), received->ll_hook_ms.data, received->ll_hook_ms.flags, received->ll_hook_ms.time,
+                         received->ll_hook_ms.extra );
+        return ret;
     }
 
     return 0;
@@ -274,6 +310,21 @@ static void append_ll_hook_kbd( UINT msg, const KBDLLHOOKSTRUCT *info )
         {
             .msg = msg, .scan = info->scanCode, .vkey = info->vkCode,
             .flags = info->flags, .extra = info->dwExtraInfo
+        }
+    };
+    ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
+    ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
+    current_sequence[index] = call;
+}
+
+static void append_ll_hook_ms( UINT msg, const MSLLHOOKSTRUCT *info )
+{
+    struct user_call call =
+    {
+        .func = LL_HOOK_MOUSE, .ll_hook_ms =
+        {
+            .msg = msg, .point = info->pt, .data = info->mouseData, .flags = info->flags,
+            .time = info->time, .extra = info->dwExtraInfo
         }
     };
     ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
@@ -3535,24 +3586,6 @@ static void simulate_click(BOOL left, int x, int y)
     ok(events_no == 2, "SendInput returned %d\n", events_no);
 }
 
-static BOOL wait_for_message( MSG *msg )
-{
-    BOOL ret;
-
-    for (;;)
-    {
-        ret = PeekMessageA(msg, 0, 0, 0, PM_REMOVE);
-        if (ret)
-        {
-            if (msg->message == WM_PAINT) DispatchMessageA(msg);
-            else break;
-        }
-        else if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT) break;
-    }
-    if (!ret) msg->message = 0;
-    return ret;
-}
-
 static BOOL wait_for_event(HANDLE event, int timeout)
 {
     DWORD end_time = GetTickCount() + timeout;
@@ -3569,49 +3602,42 @@ static BOOL wait_for_event(HANDLE event, int timeout)
     return FALSE;
 }
 
-static WNDPROC def_static_proc;
-static DWORD hittest_no;
-static LRESULT WINAPI static_hook_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static LRESULT CALLBACK httransparent_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    if (msg == WM_NCHITTEST)
-    {
-        /* break infinite hittest loop */
-        if(hittest_no > 50) return HTCLIENT;
-        hittest_no++;
-    }
-
-    return def_static_proc(hwnd, msg, wp, lp);
+    append_message( hwnd, msg, wparam, lparam );
+    if (msg == WM_NCHITTEST) return HTTRANSPARENT;
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
-struct thread_data
+struct create_transparent_window_params
 {
     HANDLE start_event;
     HANDLE end_event;
-    HWND win;
+    HWND hwnd;
 };
 
-static DWORD WINAPI create_static_win(void *arg)
+static DWORD WINAPI create_transparent_window_thread(void *arg)
 {
-    struct thread_data *thread_data = arg;
-    HWND win;
-    MSG msg;
+    struct create_transparent_window_params *params = arg;
+    ULONG_PTR old_proc;
 
-    win = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
-            100, 100, 100, 100, 0, NULL, NULL, NULL);
-    ok(win != 0, "CreateWindow failed\n");
-    def_static_proc = (void*)SetWindowLongPtrA(win,
-            GWLP_WNDPROC, (LONG_PTR)static_hook_proc);
-    thread_data->win = win;
+    params->hwnd = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, params->hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    old_proc = SetWindowLongPtrW( params->hwnd, GWLP_WNDPROC, (LONG_PTR)httransparent_wndproc );
+    ok_ne( 0, old_proc, LONG_PTR, "%#Ix" );
 
-    while (wait_for_message(&msg)) DispatchMessageA(&msg);
-    SetEvent(thread_data->start_event);
-    wait_for_event(thread_data->end_event, 5000);
+    ok_ret( 1, SetEvent( params->start_event ) );
+    wait_for_event( params->end_event, 5000 );
+
+    ok_ret( 1, DestroyWindow( params->hwnd ) );
+    wait_messages( 100, FALSE );
     return 0;
 }
 
 static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static DWORD last_x = 200, expect_x = 210;
+    static DWORD last_x = 50, expect_x = 60;
 
     if (msg == WM_MOUSEMOVE)
     {
@@ -3621,281 +3647,378 @@ static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
         flaky
         if (pt.x != last_x) ok( pt.x == expect_x, "got unexpected WM_MOUSEMOVE x %ld, expected %ld\n", pt.x, expect_x );
 
-        expect_x = pt.x == 200 ? 210 : 200;
+        expect_x = pt.x == 50 ? 60 : 50;
         last_x = pt.x;
     }
 
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-static void test_Input_mouse(void)
+struct send_input_mouse_test
 {
-    BOOL got_button_down, got_button_up;
-    HWND hwnd, button_win, static_win;
-    struct thread_data thread_data;
-    HANDLE thread;
+    BOOL set_cursor_pos;
+    POINT cursor_pos;
+    UINT data;
+    UINT flags;
+    ULONG_PTR extra;
+    struct user_call expect[8];
+    BYTE expect_state[256];
+    BOOL todo_state[256];
+};
+
+static LRESULT CALLBACK ll_hook_ms_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    MSLLHOOKSTRUCT *hook_info = (MSLLHOOKSTRUCT *)lparam;
+    if (code == HC_ACTION) append_ll_hook_ms( wparam, hook_info );
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
+static BOOL accept_mouse_messages_nomove( UINT msg )
+{
+    return is_mouse_message( msg ) && msg != WM_MOUSEMOVE;
+}
+
+static void test_SendInput_mouse_messages(void)
+{
+#define WIN_MSG(m, h, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .hwnd = h, .wparam = w, .lparam = l}, ## __VA_ARGS__}
+#define MS_HOOK(m, x, y, ...) {.func = LL_HOOK_MOUSE, .ll_hook_ms = {.msg = m, .point = {x, y}, .flags = 1}, ## __VA_ARGS__}
+    struct user_call button_down_hwnd[] =
+    {
+        MS_HOOK(WM_LBUTTONDOWN, 50, 50),
+        WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50)),
+        {0},
+    };
+    struct user_call button_down_hwnd_todo[] =
+    {
+        MS_HOOK(WM_LBUTTONDOWN, 50, 50),
+        WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50), .todo = TRUE),
+        {0},
+    };
+    struct user_call button_down_hwnd_todo_attached[] =
+    {
+        MS_HOOK(WM_LBUTTONDOWN, 50, 50),
+        WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50), .todo = TRUE),
+        {.todo = TRUE /* spurious message on Wine */},
+        {0},
+    };
+    struct user_call button_up_hwnd[] =
+    {
+        MS_HOOK(WM_LBUTTONUP, 50, 50),
+        WIN_MSG(WM_LBUTTONUP, (HWND)-1/*hwnd*/, 0, MAKELONG(50, 50)),
+        {0},
+    };
+    struct user_call button_up_hwnd_todo[] =
+    {
+        MS_HOOK(WM_LBUTTONUP, 50, 50),
+        WIN_MSG(WM_LBUTTONUP, (HWND)-1/*hwnd*/, 0, MAKELONG(50, 50), .todo = TRUE),
+        {0},
+    };
+    struct user_call button_down_no_message[] =
+    {
+        MS_HOOK(WM_LBUTTONDOWN, 50, 50),
+        {.todo = TRUE /* spurious message on Wine */},
+        {0},
+    };
+    struct user_call button_up_no_message[] =
+    {
+        MS_HOOK(WM_LBUTTONUP, 50, 50),
+        {.todo = TRUE /* spurious message on Wine */},
+        {0},
+    };
+#undef WIN_MSG
+#undef MS_HOOK
+    static const POINT expect_60x50 = {60, 50}, expect_50x50 = {50, 50};
+
+    struct create_transparent_window_params params = {0};
+    ULONG_PTR old_proc, old_other_proc;
+    UINT dblclk_time;
+    HWND hwnd, other;
     DWORD thread_id;
-    POINT pt, pt_org;
-    MSG msg;
-    BOOL ret;
+    HANDLE thread;
+    HHOOK hook;
+    POINT pt;
 
-    SetLastError(0xdeadbeef);
-    ret = GetCursorPos(NULL);
-    ok(!ret, "GetCursorPos succeed\n");
-    ok(GetLastError() == 0xdeadbeef || GetLastError() == ERROR_NOACCESS, "error %lu\n", GetLastError());
+    params.start_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    ok( !!params.start_event, "CreateEvent failed\n" );
+    params.end_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    ok( !!params.end_event, "CreateEvent failed\n" );
 
-    SetLastError(0xdeadbeef);
-    ret = GetCursorPos(&pt_org);
-    ok(ret, "GetCursorPos failed\n");
-    ok(GetLastError() == 0xdeadbeef, "error %lu\n", GetLastError());
 
-    button_win = CreateWindowA("button", "button", WS_VISIBLE | WS_POPUP,
-            100, 100, 100, 100, 0, NULL, NULL, NULL);
-    ok(button_win != 0, "CreateWindow failed\n");
+    dblclk_time = GetDoubleClickTime();
+    ok_eq( 500, dblclk_time, UINT, "%u" );
 
-    pt.x = pt.y = 50;
-    ClientToScreen(button_win, &pt);
-    hwnd = WindowFromPoint(pt);
-    if (hwnd != button_win)
-    {
-        skip("there's another window covering test window\n");
-        DestroyWindow(button_win);
-        return;
-    }
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, SetDoubleClickTime( 1 ) );
 
-    /* simple button click test */
-    simulate_click(TRUE, pt.x, pt.y);
-    got_button_down = got_button_up = FALSE;
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    trace( "hwnd %p\n", hwnd );
 
-        if (msg.message == WM_LBUTTONDOWN)
-        {
-            got_button_down = TRUE;
-        }
-        else if (msg.message == WM_LBUTTONUP)
-        {
-            got_button_up = TRUE;
-            break;
-        }
-    }
-    ok(got_button_down, "expected WM_LBUTTONDOWN message\n");
-    ok(got_button_up, "expected WM_LBUTTONUP message\n");
+    hook = SetWindowsHookExW( WH_MOUSE_LL, ll_hook_ms_proc, GetModuleHandleW( NULL ), 0 );
+    ok_ne( NULL, hook, HHOOK, "%p" );
 
-    /* click through HTTRANSPARENT child window */
-    static_win = CreateWindowA("static", "static", WS_VISIBLE | WS_CHILD,
-            0, 0, 100, 100, button_win, NULL, NULL, NULL);
-    ok(static_win != 0, "CreateWindow failed\n");
-    def_static_proc = (void*)SetWindowLongPtrA(static_win,
-            GWLP_WNDPROC, (LONG_PTR)static_hook_proc);
-    simulate_click(FALSE, pt.x, pt.y);
-    hittest_no = 0;
-    got_button_down = got_button_up = FALSE;
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
+    append_message_hwnd = TRUE;
+    p_accept_message = accept_mouse_messages_nomove;
+    ok_seq( empty_sequence );
 
-        if (msg.message == WM_RBUTTONDOWN)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_down = TRUE;
-        }
-        else if (msg.message == WM_RBUTTONUP)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_up = TRUE;
-            break;
-        }
-    }
-    ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
-    ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
-    ok(got_button_up, "expected WM_RBUTTONUP message\n");
-    DestroyWindow(static_win);
+
+    /* basic button messages */
+
+    old_proc = SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_proc, LONG_PTR, "%#Ix" );
+
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    wait_messages( 100, FALSE );
+    ok_seq( empty_sequence );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
+
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+
+
+    /* click through top-level window */
+
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = other;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = other;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
+
+    /* click through child window */
+
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_CHILD, 0, 0, 100, 100, hwnd, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = other;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = other;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
 
     /* click through HTTRANSPARENT top-level window */
-    static_win = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
-            100, 100, 100, 100, 0, NULL, NULL, NULL);
-    ok(static_win != 0, "CreateWindow failed\n");
-    def_static_proc = (void*)SetWindowLongPtrA(static_win,
-            GWLP_WNDPROC, (LONG_PTR)static_hook_proc);
-    pt.x = pt.y = 50;
-    ClientToScreen(static_win, &pt);
-    simulate_click(TRUE, pt.x, pt.y);
-    hittest_no = 0;
-    got_button_down = got_button_up = FALSE;
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
 
-        if (msg.message == WM_LBUTTONDOWN)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_down = TRUE;
-        }
-        else if (msg.message == WM_LBUTTONUP)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_up = TRUE;
-            break;
-        }
-    }
-    ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
-    todo_wine ok(got_button_down, "expected WM_LBUTTONDOWN message\n");
-    todo_wine ok(got_button_up, "expected WM_LBUTTONUP message\n");
-    DestroyWindow(static_win);
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)httransparent_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd_todo[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd_todo );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd_todo[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd_todo );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
+
+    /* click through HTTRANSPARENT child window */
+
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_CHILD, 0, 0, 100, 100, hwnd, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)httransparent_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
 
     /* click on HTTRANSPARENT top-level window that belongs to other thread */
-    thread_data.start_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(thread_data.start_event != NULL, "CreateEvent failed\n");
-    thread_data.end_event = CreateEventA(NULL, FALSE, FALSE, NULL);
-    ok(thread_data.end_event != NULL, "CreateEvent failed\n");
-    thread = CreateThread(NULL, 0, create_static_win, &thread_data, 0, NULL);
-    ok(thread != NULL, "CreateThread failed\n");
-    hittest_no = 0;
-    got_button_down = got_button_up = FALSE;
-    WaitForSingleObject(thread_data.start_event, INFINITE);
-    pt.x = pt.y = 50;
-    ClientToScreen(thread_data.win, &pt);
-    simulate_click(FALSE, pt.x, pt.y);
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
 
-        if (msg.message == WM_RBUTTONDOWN)
-            got_button_down = TRUE;
-        else if (msg.message == WM_RBUTTONUP)
-            got_button_up = TRUE;
-    }
-    SetEvent(thread_data.end_event);
-    WaitForSingleObject(thread, INFINITE);
-    CloseHandle(thread);
-    flaky_wine
-    ok(hittest_no && hittest_no<50, "expected WM_NCHITTEST message\n");
-    ok(!got_button_down, "unexpected WM_RBUTTONDOWN message\n");
-    ok(!got_button_up, "unexpected WM_RBUTTONUP message\n");
+    thread = CreateThread( NULL, 0, create_transparent_window_thread, &params, 0, NULL );
+    ok_ne( NULL, thread, HANDLE, "%p" );
+
+    ok_ret( 0, WaitForSingleObject( params.start_event, 5000 ) );
+    ok_ret( 0, SendMessageW( params.hwnd, WM_USER, 0, 0 ) );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    ok_seq( button_down_no_message );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    ok_seq( button_up_no_message );
+
+    ok_ret( 1, SetEvent( params.end_event ) );
+    ok_ret( 0, WaitForSingleObject( thread, 5000 ) );
+    ok_ret( 1, CloseHandle( thread ) );
+    ResetEvent( params.start_event );
+    ResetEvent( params.end_event );
+
 
     /* click on HTTRANSPARENT top-level window that belongs to other thread,
      * thread input queues are attached */
-    thread = CreateThread(NULL, 0, create_static_win, &thread_data, 0, &thread_id);
-    ok(thread != NULL, "CreateThread failed\n");
-    hittest_no = 0;
-    got_button_down = got_button_up = FALSE;
-    WaitForSingleObject(thread_data.start_event, INFINITE);
-    ok(AttachThreadInput(thread_id, GetCurrentThreadId(), TRUE),
-            "AttachThreadInput failed\n");
-    while (wait_for_message(&msg)) DispatchMessageA(&msg);
-    SetWindowPos(thread_data.win, button_win, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    pt.x = pt.y = 50;
-    ClientToScreen(thread_data.win, &pt);
-    simulate_click(TRUE, pt.x, pt.y);
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
 
-        if (msg.message == WM_LBUTTONDOWN)
-            got_button_down = TRUE;
-        else if (msg.message == WM_LBUTTONUP)
-            got_button_up = TRUE;
-    }
-    SetEvent(thread_data.end_event);
-    WaitForSingleObject(thread, INFINITE);
-    todo_wine ok(hittest_no > 50, "expected loop with WM_NCHITTEST messages\n");
-    ok(!got_button_down, "unexpected WM_LBUTTONDOWN message\n");
-    ok(!got_button_up, "unexpected WM_LBUTTONUP message\n");
+    thread = CreateThread( NULL, 0, create_transparent_window_thread, &params, 0, &thread_id );
+    ok_ne( NULL, thread, HANDLE, "%p" );
 
-    /* click after SetCapture call */
-    hwnd = CreateWindowA("button", "button", WS_VISIBLE | WS_POPUP,
-            0, 0, 100, 100, 0, NULL, NULL, NULL);
-    ok(hwnd != 0, "CreateWindow failed\n");
-    SetCapture(button_win);
-    got_button_down = got_button_up = FALSE;
-    pt.x = pt.y = 50;
-    ClientToScreen(hwnd, &pt);
-    simulate_click(FALSE, pt.x, pt.y);
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
+    ok_ret( 0, WaitForSingleObject( params.start_event, 5000 ) );
+    todo_wine ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), TRUE ) );
+    ok_ret( 0, SendMessageW( params.hwnd, WM_USER, 0, 0 ) );
 
-        if (msg.message == WM_RBUTTONDOWN)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_down = TRUE;
-        }
-        else if (msg.message == WM_RBUTTONUP)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_up = TRUE;
-            break;
-        }
-    }
-    ok(got_button_down, "expected WM_RBUTTONDOWN message\n");
-    ok(got_button_up, "expected WM_RBUTTONUP message\n");
-    DestroyWindow(hwnd);
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd_todo_attached[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd_todo_attached );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
 
-    /* click on child window after SetCapture call */
-    hwnd = CreateWindowA("button", "button2", WS_VISIBLE | WS_CHILD,
-            0, 0, 100, 100, button_win, NULL, NULL, NULL);
-    ok(hwnd != 0, "CreateWindow failed\n");
-    got_button_down = got_button_up = FALSE;
-    pt.x = pt.y = 50;
-    ClientToScreen(hwnd, &pt);
-    simulate_click(TRUE, pt.x, pt.y);
-    while (wait_for_message(&msg))
-    {
-        DispatchMessageA(&msg);
+    todo_wine ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), FALSE ) );
+    ok_ret( 1, SetEvent( params.end_event ) );
+    ok_ret( 0, WaitForSingleObject( thread, 5000 ) );
+    ok_ret( 1, CloseHandle( thread ) );
+    ResetEvent( params.start_event );
+    ResetEvent( params.end_event );
 
-        if (msg.message == WM_LBUTTONDOWN)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_down = TRUE;
-        }
-        else if (msg.message == WM_LBUTTONUP)
-        {
-            ok(msg.hwnd == button_win, "msg.hwnd = %p\n", msg.hwnd);
-            got_button_up = TRUE;
-            break;
-        }
-    }
-    ok(got_button_down, "expected WM_LBUTTONDOWN message\n");
-    ok(got_button_up, "expected WM_LBUTTONUP message\n");
-    DestroyWindow(hwnd);
-    ok(ReleaseCapture(), "ReleaseCapture failed\n");
-    SetCursorPos(pt_org.x, pt_org.y);
 
-    CloseHandle(thread_data.start_event);
-    CloseHandle(thread_data.end_event);
-    DestroyWindow(button_win);
+    /* click on top-level window with SetCapture called for the underlying window */
 
-    SetCursorPos(200, 200);
-    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                         100, 100, 200, 200, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "CreateWindowA failed %lu\n", GetLastError());
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    SetCapture( hwnd );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
+    SetCapture( 0 );
+
+
+    /* click through child window with SetCapture called for the underlying window */
+
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_CHILD, 0, 0, 100, 100, hwnd, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    SetCapture( hwnd );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
+
+    SetCapture( 0 );
+
 
     /* warm up test case by moving cursor and window a bit first */
-    SetCursorPos(210, 200);
-    SetWindowPos(hwnd, NULL, 110, 100, 0, 0, SWP_NOSIZE);
-    empty_message_queue();
-    SetCursorPos(200, 200);
-    SetWindowPos(hwnd, NULL, 100, 100, 0, 0, SWP_NOSIZE);
-    empty_message_queue();
-    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)mouse_move_wndproc);
+    ok_ret( 1, SetCursorPos( 60, 50 ) );
+    ok_ret( 1, SetWindowPos( hwnd, NULL, 10, 0, 0, 0, SWP_NOSIZE ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, SetWindowPos( hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE ) );
+    wait_messages( 5, FALSE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)mouse_move_wndproc );
 
-    SetCursorPos(210, 200);
-    SetWindowPos(hwnd, NULL, 110, 100, 0, 0, SWP_NOSIZE);
-    empty_message_queue();
-    GetCursorPos(&pt);
-    ok(pt.x == 210 && pt.y == 200, "GetCursorPos returned %ldx%ld, expected 210x200\n", pt.x, pt.y);
+    ok_ret( 1, SetCursorPos( 60, 50 ) );
+    ok_ret( 1, SetWindowPos( hwnd, NULL, 10, 0, 0, 0, SWP_NOSIZE ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, GetCursorPos( &pt ) );
+    ok_point( expect_60x50, pt );
 
-    SetCursorPos(200, 200);
-    SetWindowPos(hwnd, NULL, 100, 100, 0, 0, SWP_NOSIZE);
-    empty_message_queue();
-    GetCursorPos(&pt);
-    ok(pt.x == 200 && pt.y == 200, "GetCursorPos returned %ldx%ld, expected 200x200\n", pt.x, pt.y);
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, SetWindowPos( hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, GetCursorPos( &pt ) );
+    ok_point( expect_50x50, pt );
 
-    SetCursorPos(pt_org.x, pt_org.y);
-    empty_message_queue();
-    DestroyWindow(hwnd);
+
+    ok_ret( 1, UnhookWindowsHookEx( hook ) );
+
+    wait_messages( 100, FALSE );
+    todo_wine ok_seq( empty_sequence );
+    p_accept_message = NULL;
+    append_message_hwnd = FALSE;
+
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+
+    CloseHandle( params.start_event );
+    CloseHandle( params.end_event );
+
+
+    ok_ret( 1, SetDoubleClickTime( dblclk_time ) );
 }
 
 
@@ -5234,6 +5357,7 @@ static void test_input_desktop( char **argv )
     get_test_scan( 'F', &scan, &wch, &wch_shift );
     test_SendInput( 'F', wch );
     test_SendInput_keyboard_messages( 'F', scan, wch, wch_shift, '\x06' );
+    test_SendInput_mouse_messages();
 
     test_keyboard_ll_hook_blocking();
 
@@ -5291,7 +5415,6 @@ START_TEST(input)
         return test_input_desktop( argv );
 
     run_in_desktop( argv, "test_input_desktop", 1 );
-    test_Input_mouse();
     test_keynames();
     test_mouse_ll_hook();
     test_key_map();
