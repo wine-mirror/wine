@@ -76,6 +76,22 @@ static unsigned hash_Ly(const char *str)
     return hash;
 }
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static const char * const strings[4] = {
     "First added",
     "Second added",
@@ -2756,6 +2772,91 @@ static void test_LB_FINDSTRING(void)
     DestroyWindow( listbox );
 }
 
+#define ok_selected_value(list, selected) \
+        _ok_selected_value(list, selected, __LINE__)
+static void _ok_selected_value(HWND list, const char *selected, int line)
+{
+    char buffer[20] = {0};
+    int index = SendMessageA(list, LB_GETCURSEL, 0, 0);
+    SendMessageA(list, LB_GETTEXT, index, (LPARAM)buffer);
+    ok_(__FILE__, line)(!strcmp(buffer, selected), "Got %s\n", buffer);
+}
+
+static void test_keypresses(void)
+{
+    HWND list;
+    int i;
+    const char *strings_to_add[] = {
+        "b_eta", "a_lpha", "be_ta", "al_pha", "beta", "alpha", "gamma", "epsilon", "le"
+    };
+
+    /* Test with an unsorted list */
+
+    list = CreateWindowA(WC_LISTBOXA, "TestList", (LBS_STANDARD & ~LBS_SORT), 0, 0, 100, 100, NULL, NULL, NULL, 0);
+    ok(list != NULL, "Failed to create listbox window.\n");
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(list, LB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'a', 0);
+    ok_selected_value(list, "a_lpha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'l', 0);
+    ok_selected_value(list, "le");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'p', 0);
+    ok_selected_value(list, "le");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    ok_selected_value(list, "b_eta");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'e', 0);
+    ok_selected_value(list, "epsilon");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'t', 0);
+    ok_selected_value(list, "epsilon");
+
+    DestroyWindow(list);
+
+    /* Test with a sorted list */
+
+    list = CreateWindowA(WC_LISTBOXA, "TestList", LBS_STANDARD, 0, 0, 100, 100, NULL, NULL, NULL, 0);
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(list, LB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'a', 0);
+    todo_wine
+    ok_selected_value(list, "a_lpha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'l', 0);
+    todo_wine
+    ok_selected_value(list, "al_pha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'p', 0);
+    todo_wine
+    ok_selected_value(list, "alpha");
+
+    /* Windows needs a certain time to pass until it starts a new search */
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    todo_wine
+    ok_selected_value(list, "alpha");
+
+    Sleep(2100);
+    flush_events();
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    todo_wine
+    ok_selected_value(list, "b_eta");
+
+    DestroyWindow(list);
+}
+
 START_TEST(listbox)
 {
     ULONG_PTR ctx_cookie;
@@ -2786,6 +2887,7 @@ START_TEST(listbox)
     test_LB_SETSEL();
     test_LBS_NODATA();
     test_LB_FINDSTRING();
+    test_keypresses();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
