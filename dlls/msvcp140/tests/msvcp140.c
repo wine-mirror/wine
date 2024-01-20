@@ -1396,6 +1396,8 @@ static void test__Syserror_map(void)
 
     r1 = p__Syserror_map(0);
     ok(r1 != NULL, "_Syserror_map(0) returned NULL\n");
+    r1 = p__Syserror_map(1233);
+    ok(r1 != NULL, "_Syserror_map(1233) returned NULL\n");
     r2 = p__Syserror_map(1234);
     ok(r2 != NULL, "_Syserror_map(1234) returned NULL\n");
     ok(r1 == r2, "r1 = %p(%s), r2 = %p(%s)\n", r1, r1, r2, r2);
