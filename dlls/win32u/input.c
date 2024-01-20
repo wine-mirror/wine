@@ -1187,27 +1187,25 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                               WCHAR *str, int size, UINT flags, HKL layout )
 {
     const KBDTABLES *kbd_tables;
-    WCHAR buffer[2] = {0};
     INT len;
 
     TRACE_(keyboard)( "virt %#x, scan %#x, state %p, str %p, size %d, flags %#x, layout %p.\n",
                       virt, scan, state, str, size, flags, layout );
 
-    if (!state) return 0;
+    if (!state || !size) return 0;
     if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1) return len;
 
     if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
-    if (scan & 0x8000) buffer[0] = 0; /* key up */
-    else buffer[0] = kbd_tables_vkey_to_wchar( kbd_tables, virt, state );
+    if (scan & 0x8000) str[0] = 0; /* key up */
+    else str[0] = kbd_tables_vkey_to_wchar( kbd_tables, virt, state );
+    if (size > 1) str[1] = 0;
 
-    if (buffer[0] != WCH_NONE) len = 1;
-    else buffer[0] = len = 0;
-
-    lstrcpynW( str, buffer, size );
+    if (str[0] != WCH_NONE) len = 1;
+    else str[0] = len = 0;
 
     if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
 
-    TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
+    TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_wn(str, len) );
     return len;
 }
 
