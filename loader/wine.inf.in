@@ -2196,6 +2196,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,help,
 10,logs,
 10,performance\winsat\datastore,
+10,security,
 10,tasks,
 10,temp,
 11,catroot,
