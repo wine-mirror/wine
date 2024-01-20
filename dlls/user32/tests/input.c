@@ -298,25 +298,7 @@ static LRESULT CALLBACK append_message_wndproc( HWND hwnd, UINT msg, WPARAM wpar
 }
 
 /* globals */
-static HWND hWndTest;
-
 #define DESKTOP_ALL_ACCESS 0x01ff
-
-static struct {
-    LONG last_key_down;
-    LONG last_key_up;
-    LONG last_syskey_down;
-    LONG last_syskey_up;
-    LONG last_char;
-    LONG last_syschar;
-    LONG last_hook_down;
-    LONG last_hook_up;
-    LONG last_hook_syskey_down;
-    LONG last_hook_syskey_up;
-    WORD vk;
-    BOOL expect_alt;
-    BOOL sendinput_broken;
-} key_status;
 
 static BOOL (WINAPI *pEnableMouseInPointer)( BOOL );
 static BOOL (WINAPI *pIsMouseInPointerEnabled)(void);
@@ -546,7 +528,7 @@ static void check_send_input_test_( const struct send_input_test *test, const ch
     {
         winetest_push_context( "%u", i );
 
-        input.ki.wScan = test->flags & KEYEVENTF_SCANCODE ? test->scan : i + 1;
+        input.ki.wScan = test->flags & (KEYEVENTF_SCANCODE | KEYEVENTF_UNICODE) ? test->scan : (i + 1);
         input.ki.dwFlags = test->flags;
         input.ki.wVk = test->vkey;
         ok_ret( 1, SendInput( 1, &input, sizeof(input) ) );
@@ -1000,6 +982,66 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_test unicode[] =
+    {
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_PACKET] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x3c0, VK_PACKET), KEY_MSG(WM_KEYDOWN, 0, VK_PACKET, .todo_value = TRUE), WIN_MSG(WM_CHAR, 0x3c0, 1), {0}}},
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 0x3c0, VK_PACKET, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0, VK_PACKET, .todo_value = TRUE), {0}}},
+        {0},
+    };
+
+    struct send_input_test lmenu_unicode[] =
+    {
+        {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
+         .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
+        {
+            .scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80, [VK_PACKET] = 0x80},
+            .expect =
+            {
+                KEY_HOOK_(WM_SYSKEYDOWN, 0x3c0, VK_PACKET, LLKHF_ALTDOWN, .todo_value = TRUE),
+                KEY_MSG_(WM_SYSKEYDOWN, 0, VK_PACKET, KF_ALTDOWN, .todo_value = TRUE),
+                WIN_MSG(WM_SYSCHAR, 0x3c0, MAKELONG(1, KF_ALTDOWN), .todo_value = TRUE),
+                WIN_MSG(WM_SYSCOMMAND, SC_KEYMENU, 0x3c0, .todo = TRUE),
+                {0},
+            },
+        },
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
+         .expect = {KEY_HOOK_(WM_SYSKEYUP, 0x3c0, VK_PACKET, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 0, VK_PACKET, KF_ALTDOWN, .todo_value = TRUE), {0}}},
+        {.vkey = VK_LMENU, .flags = KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 4, VK_LMENU), KEY_MSG(WM_KEYUP, 4, VK_MENU), {0}}},
+        {0},
+    };
+    struct send_input_test lmenu_unicode_peeked[] =
+    {
+        {.vkey = VK_LMENU, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
+         .expect = {KEY_HOOK_(WM_SYSKEYDOWN, 1, VK_LMENU, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYDOWN, 1, VK_MENU, KF_ALTDOWN), {0}}},
+        {
+            .scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80, [VK_PACKET] = 0x80},
+            .expect =
+            {
+                KEY_HOOK_(WM_SYSKEYDOWN, 0x3c0, VK_PACKET, LLKHF_ALTDOWN, .todo_value = TRUE),
+                KEY_MSG_(WM_SYSKEYDOWN, 0, VK_PACKET, KF_ALTDOWN, .todo_value = TRUE),
+                WIN_MSG(WM_SYSCHAR, 0x3c0, MAKELONG(1, KF_ALTDOWN), .todo_value = TRUE),
+                {0},
+            },
+        },
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP, .expect_state = {[VK_MENU] = 0x80, [VK_LMENU] = 0x80},
+         .expect = {KEY_HOOK_(WM_SYSKEYUP, 0x3c0, VK_PACKET, LLKHF_ALTDOWN, .todo_value = TRUE), KEY_MSG_(WM_SYSKEYUP, 0, VK_PACKET, KF_ALTDOWN, .todo_value = TRUE), {0}}},
+        {.vkey = VK_LMENU, .flags = KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 4, VK_LMENU), KEY_MSG(WM_KEYUP, 4, VK_MENU), {0}}},
+        {0},
+    };
+
+    struct send_input_test unicode_vkey[] =
+    {
+        {.scan = 0x3c0, .vkey = vkey, .flags = KEYEVENTF_UNICODE, .expect_state = {/*[vkey] = 0x80*/},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), WIN_MSG(WM_CHAR, wch, MAKELONG(1, 0xc0), .todo_value = TRUE), {0}}},
+        {.scan = 0x3c0, .vkey = vkey, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 0xc0, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0xc0, vkey, .todo_value = TRUE), {0}}},
+        {0},
+    };
+
 #undef WIN_MSG
 #undef KBD_HOOK
 #undef KEY_HOOK_
@@ -1032,7 +1074,8 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     lmenu_lcontrol_vkey[2].expect_state[vkey] = 0x80;
     shift_vkey[1].expect_state[vkey] = 0x80;
     rshift_scan[1].expect_state[vkey] = 0x80;
-    rshift_scan[1].todo_state[vkey] = 0x80;
+    rshift_scan[1].todo_state[vkey] = TRUE;
+    unicode_vkey[0].expect_state[vkey] = 0x80;
 
     /* test peeked messages */
     winetest_push_context( "peek" );
@@ -1063,6 +1106,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     else check_send_input_test( menu_ext_peeked, TRUE );
     check_send_input_test( lrshift_ext, TRUE );
     check_send_input_test( rshift_scan, TRUE );
+    check_send_input_test( unicode, TRUE );
+    check_send_input_test( lmenu_unicode_peeked, TRUE );
+    check_send_input_test( unicode_vkey, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -1100,6 +1146,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     else check_send_input_test( menu_ext, FALSE );
     check_send_input_test( lrshift_ext, FALSE );
     check_send_input_test( rshift_scan, FALSE );
+    check_send_input_test( unicode, FALSE );
+    check_send_input_test( lmenu_unicode, FALSE );
+    check_send_input_test( unicode_vkey, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
@@ -1108,278 +1157,6 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     wait_messages( 100, FALSE );
     ok_seq( empty_sequence );
     p_accept_message = NULL;
-}
-
-static void reset_key_status(WORD vk)
-{
-    key_status.last_key_down = -1;
-    key_status.last_key_up = -1;
-    key_status.last_syskey_down = -1;
-    key_status.last_syskey_up = -1;
-    key_status.last_char = -1;
-    key_status.last_syschar = -1;
-    key_status.last_hook_down = -1;
-    key_status.last_hook_up = -1;
-    key_status.last_hook_syskey_down = -1;
-    key_status.last_hook_syskey_up = -1;
-    key_status.vk = vk;
-    key_status.expect_alt = FALSE;
-    key_status.sendinput_broken = FALSE;
-}
-
-static void test_unicode_keys(HWND hwnd, HHOOK hook)
-{
-    INPUT inputs[2];
-    MSG msg;
-
-    /* init input data that never changes */
-    inputs[1].type = inputs[0].type = INPUT_KEYBOARD;
-    inputs[1].ki.dwExtraInfo = inputs[0].ki.dwExtraInfo = 0;
-    inputs[1].ki.time = inputs[0].ki.time = 0;
-
-    /* pressing & releasing a single unicode character */
-    inputs[0].ki.wVk = 0;
-    inputs[0].ki.wScan = 0x3c0;
-    inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
-
-    reset_key_status(VK_PACKET);
-    SendInput(1, inputs, sizeof(INPUT));
-    while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
-        if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
-            TranslateMessage(&msg);
-        }
-        DispatchMessageW(&msg);
-    }
-    if(!key_status.sendinput_broken){
-        ok(key_status.last_key_down == VK_PACKET,
-            "Last keydown msg should have been VK_PACKET[0x%04x] (was: 0x%lx)\n", VK_PACKET, key_status.last_key_down);
-        ok(key_status.last_char == 0x3c0,
-            "Last char msg wparam should have been 0x3c0 (was: 0x%lx)\n", key_status.last_char);
-        if(hook)
-            ok(key_status.last_hook_down == 0x3c0,
-                "Last hookdown msg should have been 0x3c0, was: 0x%lx\n", key_status.last_hook_down);
-    }
-
-    inputs[1].ki.wVk = 0;
-    inputs[1].ki.wScan = 0x3c0;
-    inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-
-    reset_key_status(VK_PACKET);
-    SendInput(1, inputs + 1, sizeof(INPUT));
-    while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
-        if(msg.message == WM_KEYDOWN && msg.wParam == VK_PACKET){
-            TranslateMessage(&msg);
-        }
-        DispatchMessageW(&msg);
-    }
-    if(!key_status.sendinput_broken){
-        ok(key_status.last_key_up == VK_PACKET,
-            "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%lx)\n", VK_PACKET, key_status.last_key_up);
-        if(hook)
-            ok(key_status.last_hook_up == 0x3c0,
-                "Last hookup msg should have been 0x3c0, was: 0x%lx\n", key_status.last_hook_up);
-    }
-
-    /* holding alt, pressing & releasing a unicode character, releasing alt */
-    inputs[0].ki.wVk = VK_LMENU;
-    inputs[0].ki.wScan = 0;
-    inputs[0].ki.dwFlags = 0;
-
-    inputs[1].ki.wVk = 0;
-    inputs[1].ki.wScan = 0x3041;
-    inputs[1].ki.dwFlags = KEYEVENTF_UNICODE;
-
-    reset_key_status(VK_PACKET);
-    key_status.expect_alt = TRUE;
-    SendInput(2, inputs, sizeof(INPUT));
-    while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
-        if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
-            TranslateMessage(&msg);
-        }
-        DispatchMessageW(&msg);
-    }
-    if(!key_status.sendinput_broken){
-        ok(key_status.last_syskey_down == VK_PACKET,
-            "Last syskeydown msg should have been VK_PACKET[0x%04x] (was: 0x%lx)\n", VK_PACKET, key_status.last_syskey_down);
-        ok(key_status.last_syschar == 0x3041,
-            "Last syschar msg should have been 0x3041 (was: 0x%lx)\n", key_status.last_syschar);
-        if(hook)
-            ok(key_status.last_hook_syskey_down == 0x3041,
-                "Last hooksysdown msg should have been 0x3041, was: 0x%lx\n", key_status.last_hook_syskey_down);
-    }
-
-    inputs[1].ki.wVk = 0;
-    inputs[1].ki.wScan = 0x3041;
-    inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-
-    inputs[0].ki.wVk = VK_LMENU;
-    inputs[0].ki.wScan = 0;
-    inputs[0].ki.dwFlags = KEYEVENTF_KEYUP;
-
-    reset_key_status(VK_PACKET);
-    key_status.expect_alt = TRUE;
-    SendInput(2, inputs, sizeof(INPUT));
-    while(PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE)){
-        if(msg.message == WM_SYSKEYDOWN && msg.wParam == VK_PACKET){
-            TranslateMessage(&msg);
-        }
-        DispatchMessageW(&msg);
-    }
-    if(!key_status.sendinput_broken){
-        ok(key_status.last_key_up == VK_PACKET,
-            "Last keyup msg should have been VK_PACKET[0x%04x] (was: 0x%lx)\n", VK_PACKET, key_status.last_key_up);
-        if(hook)
-            ok(key_status.last_hook_up == 0x3041,
-                "Last hook up msg should have been 0x3041, was: 0x%lx\n", key_status.last_hook_up);
-    }
-
-    /* Press and release, non-zero key code. */
-    inputs[0].ki.wVk = 0x51;
-    inputs[0].ki.wScan = 0x123;
-    inputs[0].ki.dwFlags = KEYEVENTF_UNICODE;
-
-    inputs[1].ki.wVk = 0x51;
-    inputs[1].ki.wScan = 0x123;
-    inputs[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-
-    reset_key_status(inputs[0].ki.wVk);
-    SendInput(2, inputs, sizeof(INPUT));
-    while (PeekMessageW(&msg, hwnd, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
-
-    if (!key_status.sendinput_broken)
-    {
-        ok(key_status.last_key_down == 0x51, "Unexpected key down %#lx.\n", key_status.last_key_down);
-        ok(key_status.last_key_up == 0x51, "Unexpected key up %#lx.\n", key_status.last_key_up);
-        if (hook)
-            todo_wine
-            ok(key_status.last_hook_up == 0x23, "Unexpected hook message %#lx.\n", key_status.last_hook_up);
-    }
-}
-
-static LRESULT CALLBACK unicode_wnd_proc( HWND hWnd, UINT msg, WPARAM wParam,
-        LPARAM lParam )
-{
-    switch(msg){
-    case WM_KEYDOWN:
-        key_status.last_key_down = wParam;
-        break;
-    case WM_SYSKEYDOWN:
-        key_status.last_syskey_down = wParam;
-        break;
-    case WM_KEYUP:
-        key_status.last_key_up = wParam;
-        break;
-    case WM_SYSKEYUP:
-        key_status.last_syskey_up = wParam;
-        break;
-    case WM_CHAR:
-        key_status.last_char = wParam;
-        break;
-    case WM_SYSCHAR:
-        key_status.last_syschar = wParam;
-        break;
-    }
-    return DefWindowProcW(hWnd, msg, wParam, lParam);
-}
-
-static LRESULT CALLBACK llkbd_unicode_hook(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    if(nCode == HC_ACTION){
-        LPKBDLLHOOKSTRUCT info = (LPKBDLLHOOKSTRUCT)lParam;
-        if(!info->vkCode){
-            key_status.sendinput_broken = TRUE;
-            win_skip("SendInput doesn't support unicode on this platform\n");
-        }else{
-            if(key_status.expect_alt){
-                ok(info->vkCode == VK_LMENU, "vkCode should have been VK_LMENU[0x%04x], was: 0x%lx\n", VK_LMENU, info->vkCode);
-                key_status.expect_alt = FALSE;
-            }else
-            todo_wine_if(key_status.vk != VK_PACKET)
-                ok(info->vkCode == key_status.vk, "Unexpected vkCode %#lx, expected %#x.\n", info->vkCode, key_status.vk);
-        }
-        switch(wParam){
-        case WM_KEYDOWN:
-            key_status.last_hook_down = info->scanCode;
-            break;
-        case WM_KEYUP:
-            key_status.last_hook_up = info->scanCode;
-            break;
-        case WM_SYSKEYDOWN:
-            key_status.last_hook_syskey_down = info->scanCode;
-            break;
-        case WM_SYSKEYUP:
-            key_status.last_hook_syskey_up = info->scanCode;
-            break;
-        }
-    }
-    return CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-static void test_Input_unicode(void)
-{
-    WCHAR classNameW[] = {'I','n','p','u','t','U','n','i','c','o','d','e',
-        'K','e','y','T','e','s','t','C','l','a','s','s',0};
-    WCHAR windowNameW[] = {'I','n','p','u','t','U','n','i','c','o','d','e',
-        'K','e','y','T','e','s','t',0};
-    MSG msg;
-    WNDCLASSW wclass;
-    HANDLE hInstance = GetModuleHandleW(NULL);
-    HHOOK hook;
-    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
-    if (!us_kbd)
-    {
-        skip( "skipping test with inconsistent results on non-us keyboard\n" );
-        return;
-    }
-
-    wclass.lpszClassName = classNameW;
-    wclass.style         = CS_HREDRAW | CS_VREDRAW;
-    wclass.lpfnWndProc   = unicode_wnd_proc;
-    wclass.hInstance     = hInstance;
-    wclass.hIcon         = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
-    wclass.hCursor       = LoadCursorW( NULL, (LPCWSTR)IDC_ARROW);
-    wclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wclass.lpszMenuName  = 0;
-    wclass.cbClsExtra    = 0;
-    wclass.cbWndExtra    = 0;
-    if(!RegisterClassW(&wclass)){
-        win_skip("Unicode functions not supported\n");
-        return;
-    }
-
-    ImmDisableIME(0);
-
-    /* create the test window that will receive the keystrokes */
-    hWndTest = CreateWindowW(wclass.lpszClassName, windowNameW,
-                             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
-                             NULL, NULL, hInstance, NULL);
-
-    assert(hWndTest);
-    assert(IsWindowUnicode(hWndTest));
-
-    hook = SetWindowsHookExW(WH_KEYBOARD_LL, llkbd_unicode_hook, GetModuleHandleW(NULL), 0);
-    if(!hook)
-        win_skip("unable to set WH_KEYBOARD_LL hook\n");
-
-    ShowWindow(hWndTest, SW_SHOW);
-    SetWindowPos(hWndTest, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
-    SetForegroundWindow(hWndTest);
-    UpdateWindow(hWndTest);
-
-    /* flush pending messages */
-    while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageW(&msg);
-
-    SetFocus(hWndTest);
-
-    test_unicode_keys(hWndTest, hook);
-
-    if(hook)
-        UnhookWindowsHookEx(hook);
-    DestroyWindow(hWndTest);
 }
 
 static void test_keynames(void)
@@ -5446,7 +5223,6 @@ START_TEST(input)
         return test_input_desktop( argv );
 
     run_in_desktop( argv, "test_input_desktop", 1 );
-    test_Input_unicode();
     test_Input_mouse();
     test_keynames();
     test_mouse_ll_hook();
