@@ -5178,6 +5178,43 @@ static void test_ClipCursor( char **argv )
     if (!EqualRect( &rect, &virtual_rect )) ok_ret( 1, ClipCursor( NULL ) );
 }
 
+static HANDLE ll_keyboard_event;
+
+static LRESULT CALLBACK ll_keyboard_event_wait(int code, WPARAM wparam, LPARAM lparam)
+{
+    if (code == HC_ACTION)
+    {
+        ok_ret( WAIT_TIMEOUT, WaitForSingleObject( ll_keyboard_event, 100 ) );
+        return -123;
+    }
+
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
+static void test_keyboard_ll_hook_blocking(void)
+{
+    INPUT input = {.type = INPUT_KEYBOARD, .ki = {.wVk = VK_RETURN}};
+    HHOOK hook;
+    HWND hwnd;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    hook = SetWindowsHookExW( WH_KEYBOARD_LL, ll_keyboard_event_wait, GetModuleHandleW( NULL ), 0 );
+    ok_ne( NULL, hook, HHOOK, "%p" );
+    ll_keyboard_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_ne( NULL, ll_keyboard_event, HANDLE, "%p" );
+
+    ok_ret( 1, SendInput( 1, &input, sizeof(input) ) );
+    input.ki.dwFlags = KEYEVENTF_KEYUP;
+    ok_ret( 1, SendInput( 1, &input, sizeof(input) ) );
+    ok_ret( 1, SetEvent( ll_keyboard_event ) );
+
+    ok_ret( 1, CloseHandle( ll_keyboard_event ) );
+    ok_ret( 1, UnhookWindowsHookEx( hook ) );
+    ok_ret( 1, DestroyWindow( hwnd ) );
+}
+
 /* run the tests in a separate desktop to avoid interaction with other
  * tests, current desktop state, or user actions. */
 static void test_input_desktop( char **argv )
@@ -5193,6 +5230,8 @@ static void test_input_desktop( char **argv )
     get_test_scan( 'F', &scan, &wch, &wch_shift );
     test_SendInput( 'F', wch );
     test_SendInput_keyboard_messages( 'F', scan, wch, wch_shift, '\x06' );
+
+    test_keyboard_ll_hook_blocking();
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
