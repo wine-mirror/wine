@@ -2429,18 +2429,28 @@ static void test__Mtx(void)
 
         r = p__Mtx_init(&mtx, flags[i]);
         ok(!r, "failed to init mtx (flags %x)\n", flags[i]);
+        ok(mtx->thread_id == -1, "mtx.thread_id = %lx (flags %x)\n", mtx->thread_id, flags[i]);
+        ok(mtx->count == 0, "mtx.count = %lu (flags %x)\n", mtx->count, flags[i]);
 
         r = p__Mtx_trylock(&mtx);
         ok(!r, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx (flags %x)\n", mtx->thread_id, flags[i]);
+        ok(mtx->count == 1, "mtx.count = %lu (flags %x)\n", mtx->count, flags[i]);
         r = p__Mtx_trylock(&mtx);
         ok(r == expect, "_Mtx_trylock returned %x (flags %x)\n", r, flags[i]);
+        ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx (flags %x)\n", mtx->thread_id, flags[i]);
+        ok(mtx->count == r ? 1 : 2, "mtx.count = %lu, expected %u (flags %x)\n", mtx->count, r ? 1 : 2, flags[i]);
         if(!r) p__Mtx_unlock(&mtx);
 
         r = p__Mtx_lock(&mtx);
         ok(r == expect, "_Mtx_lock returned %x (flags %x)\n", r, flags[i]);
+        ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx (flags %x)\n", mtx->thread_id, flags[i]);
+        ok(mtx->count == r ? 1 : 2, "mtx.count = %lu, expected %u (flags %x)\n", mtx->count, r ? 1 : 2, flags[i]);
         if(!r) p__Mtx_unlock(&mtx);
 
         p__Mtx_unlock(&mtx);
+        ok(mtx->thread_id == -1, "mtx.thread_id = %lx (flags %x)\n", mtx->thread_id, flags[i]);
+        ok(mtx->count == 0, "mtx.count = %lu (flags %x)\n", mtx->count, flags[i]);
         p__Mtx_destroy(&mtx);
     }
 }
