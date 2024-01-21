@@ -716,6 +716,9 @@ typedef struct
 {
     DWORD flags;
     cs cs;
+#if _MSVCP_VER >= 140
+    ULONG_PTR unknown;
+#endif
     DWORD thread_id;
     DWORD count;
 } *_Mtx_t;
