@@ -2357,6 +2357,8 @@ DECL_HANDLER(unload_registry)
     {
         if (key->obj.handle_count)
             set_error( STATUS_CANNOT_DELETE );
+        else if (key->obj.is_permanent)
+            set_error( STATUS_ACCESS_DENIED );
         else
             delete_key( key, 1 );     /* FIXME */
         release_object( key );
