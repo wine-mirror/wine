@@ -3,5 +3,6 @@ IMPORTS = combase advapi32
 
 SOURCES = \
 	classes.idl \
+	inputpane.c \
 	main.c \
 	uisettings.c
