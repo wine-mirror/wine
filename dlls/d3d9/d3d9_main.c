@@ -41,7 +41,7 @@ IDirect3D9 * WINAPI DECLSPEC_HOTPATCH Direct3DCreate9(UINT sdk_version)
     if (!(object = calloc(1, sizeof(*object))))
         return NULL;
 
-    if (!d3d9_init(object, FALSE))
+    if (!d3d9_init(object, FALSE, FALSE))
     {
         WARN("Failed to initialize d3d9.\n");
         free(object);
@@ -62,7 +62,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH Direct3DCreate9Ex(UINT sdk_version, IDirect3D9E
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (!d3d9_init(object, TRUE))
+    if (!d3d9_init(object, TRUE, FALSE))
     {
         WARN("Failed to initialize d3d9.\n");
         free(object);
@@ -73,6 +73,30 @@ HRESULT WINAPI DECLSPEC_HOTPATCH Direct3DCreate9Ex(UINT sdk_version, IDirect3D9E
     *d3d9ex = &object->IDirect3D9Ex_iface;
 
     return D3D_OK;
+}
+
+IDirect3D9 * WINAPI DECLSPEC_HOTPATCH Direct3DCreate9On12(UINT sdk_version, D3D9ON12_ARGS *d3d9on12_args, UINT d3d9on12_args_count)
+{
+    struct d3d9 *object;
+    BOOL d3d9on12 = TRUE;
+
+    TRACE("sdk_version %#x, d3d9on12_args %p, d3d9on12_args_count %#x.\n", sdk_version, d3d9on12_args, d3d9on12_args_count);
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return NULL;
+
+    if (!d3d9on12_args || !d3d9on12_args->Enable9On12 || !d3d9on12_args_count)
+        d3d9on12 = FALSE;
+
+    if (!d3d9_init(object, TRUE, d3d9on12))
+    {
+        WARN("Failed to initialize d3d9.\n");
+        free(object);
+        return NULL;
+    }
+
+    TRACE("Created d3d9 object %p.\n", object);
+    return (IDirect3D9 *)&object->IDirect3D9Ex_iface;
 }
 
 /* The callback is called on any error encountered during validation, including

@@ -593,6 +593,56 @@ static void device_reset_viewport_state(struct d3d9_device *device)
     wined3d_stateblock_set_scissor_rect(device->state, &rect);
 }
 
+static HRESULT WINAPI d3d9on12_QueryInterface(IDirect3DDevice9On12 *iface, REFIID iid, void **out)
+{
+    return IDirect3DDevice9Ex_QueryInterface(iface, iid, out);
+}
+
+static ULONG WINAPI d3d9on12_AddRef(IDirect3DDevice9On12 *iface)
+{
+    return IDirect3DDevice9Ex_AddRef(iface);
+}
+
+static ULONG WINAPI d3d9on12_Release(IDirect3DDevice9On12 *iface)
+{
+    return IDirect3DDevice9Ex_Release(iface);
+}
+
+static HRESULT WINAPI d3d9on12_GetD3D12Device(IDirect3DDevice9On12 *iface, REFIID iid, void **out)
+{
+    FIXME("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (!out)
+        return E_INVALIDARG;
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI d3d9on12_UnwrapUnderlyingResource(IDirect3DDevice9On12 *iface, IDirect3DResource9 *resource, ID3D12CommandQueue *queue, REFIID iid, void **out)
+{
+    FIXME("iface %p, resource %p, queue %p, iid %s, out %p stub!\n", iface, resource, queue, debugstr_guid(iid), out);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3d9on12_ReturnUnderlyingResource(IDirect3DDevice9On12 *iface, IDirect3DResource9 *resource, UINT fence_count, UINT64 *signal_values, ID3D12Fence **fences)
+{
+    FIXME("iface %p, resource %p, fence_count %#x, signal_values %p, fences %p stub!\n", iface, resource, fence_count, signal_values, fences);
+    return E_NOTIMPL;
+}
+
+static const struct IDirect3DDevice9On12Vtbl d3d9on12_vtbl =
+{
+    /* IUnknown */
+    d3d9on12_QueryInterface,
+    d3d9on12_AddRef,
+    d3d9on12_Release,
+    /* IDirect3DDevice9On12 */
+    d3d9on12_GetD3D12Device,
+    d3d9on12_UnwrapUnderlyingResource,
+    d3d9on12_ReturnUnderlyingResource
+};
+
 static HRESULT WINAPI d3d9_device_QueryInterface(IDirect3DDevice9Ex *iface, REFIID riid, void **out)
 {
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
@@ -620,6 +670,22 @@ static HRESULT WINAPI d3d9_device_QueryInterface(IDirect3DDevice9Ex *iface, REFI
 
         IDirect3DDevice9Ex_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IDirect3DDevice9On12))
+    {
+        struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+
+        if (!device->d3d_parent->d3d9on12)
+        {
+            WARN("IDirect3D9 instance wasn't created with D3D9On12 enabled, returning E_NOINTERFACE.\n");
+            *out = NULL;
+            return E_NOINTERFACE;
+        }
+
+        IDirect3DDevice9Ex_AddRef(iface);
+        *out = &device->IDirect3DDevice9On12_iface;
         return S_OK;
     }
 
@@ -4669,6 +4735,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         FIXME("Ignoring display mode.\n");
 
     device->IDirect3DDevice9Ex_iface.lpVtbl = &d3d9_device_vtbl;
+    device->IDirect3DDevice9On12_iface.lpVtbl = &d3d9on12_vtbl;
     device->device_parent.ops = &d3d9_wined3d_device_parent_ops;
     device->adapter_ordinal = adapter;
     device->refcount = 1;
