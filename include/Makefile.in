@@ -141,6 +141,7 @@ SOURCES = \
 	d3d8types.h \
 	d3d9.h \
 	d3d9caps.h \
+	d3d9on12.idl \
 	d3d9types.h \
 	d3dcaps.h \
 	d3dcommon.idl \
