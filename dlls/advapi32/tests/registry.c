@@ -1587,6 +1587,14 @@ static void test_reg_unload_key(void)
     ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
+    pRtlInitUnicodeString(&key_name, L"\\REGISTRY\\User\\.Default");
+    InitializeObjectAttributes(&attr, &key_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    status = pNtUnloadKey(&attr);
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %08lx\n", status);
+
+    ret = RegUnLoadKeyA(HKEY_USERS, ".Default");
+    ok(ret == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", ret);
+
     set_privileges(SE_RESTORE_NAME, FALSE);
 
     DeleteFileA("saved_key");
