@@ -157,6 +157,7 @@ static void test_RtlQueryProcessDebugInformation(void)
     DEBUG_BUFFER *buffer;
     NTSTATUS status;
 
+    /* PDI_HEAPS | PDI_HEAP_BLOCKS */
     buffer = RtlCreateQueryDebugBuffer( 0, 0 );
     ok( buffer != NULL, "RtlCreateQueryDebugBuffer returned NULL" );
 
@@ -165,6 +166,20 @@ static void test_RtlQueryProcessDebugInformation(void)
 
     status = RtlQueryProcessDebugInformation( GetCurrentProcessId(), PDI_HEAPS | PDI_HEAP_BLOCKS, buffer );
     ok( !status, "RtlQueryProcessDebugInformation returned %lx\n", status );
+    ok( buffer->InfoClassMask == (PDI_HEAPS | PDI_HEAP_BLOCKS), "unexpected InfoClassMask %ld\n", buffer->InfoClassMask);
+    ok( buffer->HeapInformation != NULL, "unexpected HeapInformation %p\n", buffer->HeapInformation);
+
+    status = RtlDestroyQueryDebugBuffer( buffer );
+    ok( !status, "RtlDestroyQueryDebugBuffer returned %lx\n", status );
+
+    /* PDI_MODULES */
+    buffer = RtlCreateQueryDebugBuffer( 0, 0 );
+    ok( buffer != NULL, "RtlCreateQueryDebugBuffer returned NULL" );
+
+    status = RtlQueryProcessDebugInformation( GetCurrentProcessId(), PDI_MODULES, buffer );
+    ok( !status, "RtlQueryProcessDebugInformation returned %lx\n", status );
+    ok( buffer->InfoClassMask == PDI_MODULES, "unexpected InfoClassMask %ld\n", buffer->InfoClassMask);
+    ok( buffer->ModuleInformation != NULL, "unexpected ModuleInformation %p\n", buffer->ModuleInformation);
 
     status = RtlDestroyQueryDebugBuffer( buffer );
     ok( !status, "RtlDestroyQueryDebugBuffer returned %lx\n", status );

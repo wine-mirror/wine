@@ -77,8 +77,8 @@ static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
   TRACE( "EventPairHandle:%p\n", iBuf->EventPairHandle);
   TRACE( "RemoteThreadHandle:%p\n", iBuf->RemoteThreadHandle);
   TRACE( "InfoClassMask:%lx\n", iBuf->InfoClassMask);
-  TRACE( "SizeOfInfo:%ld\n", iBuf->SizeOfInfo);
-  TRACE( "AllocatedSize:%ld\n", iBuf->AllocatedSize);
+  TRACE( "SizeOfInfo:%Iu\n", iBuf->SizeOfInfo);
+  TRACE( "AllocatedSize:%Iu\n", iBuf->AllocatedSize);
   TRACE( "SectionSize:%ld\n", iBuf->SectionSize);
   TRACE( "BackTraceInfo:%p\n", iBuf->BackTraceInformation);
   dump_DEBUG_MODULE_INFORMATION(iBuf->ModuleInformation);
