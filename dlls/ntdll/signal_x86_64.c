@@ -702,7 +702,17 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    "movq 0x20(%rsp),%rcx\n\t"  /* args */
                    "movl 0x28(%rsp),%edx\n\t"  /* len */
                    "movl 0x2c(%rsp),%r8d\n\t"  /* id */
+#ifdef __WINE_PE_BUILD
+                   "movq %gs:0x30,%rax\n\t"     /* NtCurrentTeb() */
+                   "movq 0x60(%rax),%rax\n\t"   /* peb */
+                   "movq 0x58(%rax),%rax\n\t"   /* peb->KernelCallbackTable */
+                   "call *(%rax,%r8,8)\n\t"     /* KernelCallbackTable[id] */
+                   ".seh_handler " __ASM_NAME("user_callback_handler") ", @except\n\t"
+                   ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
+                   __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
+#else
                    "call " __ASM_NAME("dispatch_user_callback") "\n\t"
+#endif
                    "xorq %rcx,%rcx\n\t"         /* ret_ptr */
                    "xorl %edx,%edx\n\t"         /* ret_len */
                    "movl %eax,%r8d\n\t"         /* status */

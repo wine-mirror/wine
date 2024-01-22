@@ -585,10 +585,19 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    __ASM_EHABI(".save {sp, pc}\n\t")
                    __ASM_EHABI(".save {lr}\n\t")
                    __ASM_EHABI(".pad #0x0c\n\t")
-                   "ldr r0, [sp]\n\t"             /* args */
-                   "ldr r1, [sp, #0x04]\n\t"      /* len */
-                   "ldr r2, [sp, #0x08]\n\t"      /* id */
+                   "ldr r0, [sp]\n\t"               /* args */
+                   "ldr r1, [sp, #0x04]\n\t"        /* len */
+                   "ldr r2, [sp, #0x08]\n\t"        /* id */
+#ifdef __WINE_PE_BUILD
+                   "mrc p15, 0, r3, c13, c0, 2\n\t" /* NtCurrentTeb() */
+                   "ldr r3, [r3, 0x30]\n\t"         /* peb */
+                   "ldr r3, [r3, 0x2c]\n\t"         /* peb->KernelCallbackTable */
+                   "ldr ip, [r3, r2, lsl #3]\n\t"
+                   "blx ip\n\t"
+                   ".seh_handler " __ASM_NAME("user_callback_handler") ", %except\n\t"
+#else
                    "bl " __ASM_NAME("dispatch_user_callback") "\n\t"
+#endif
                    ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
                    __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
                    "mov r2, r0\n\t"  /* status */

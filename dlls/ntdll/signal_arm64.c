@@ -606,15 +606,19 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
  *		KiUserCallbackDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
-                   __ASM_SEH(".seh_pushframe\n\t")
+                   ".seh_pushframe\n\t"
                    "nop\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x20\n\t")
+                   ".seh_stackalloc 0x20\n\t"
                    "nop\n\t"
-                   __ASM_SEH(".seh_save_reg lr, 0x18\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_save_reg lr, 0x18\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler " __ASM_NAME("user_callback_handler") ", @except\n\t"
                    "ldr x0, [sp]\n\t"             /* args */
                    "ldp w1, w2, [sp, #0x08]\n\t"  /* len, id */
-                   "bl " __ASM_NAME("dispatch_user_callback") "\n\t"
+                   "ldr x3, [x18, 0x60]\n\t"      /* peb */
+                   "ldr x3, [x3, 0x58]\n\t"       /* peb->KernelCallbackTable */
+                   "ldr x15, [x3, x2, lsl #3]\n\t"
+                   "blr x15\n\t"
                    ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
                    __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
                    "mov x2, x0\n\t"               /* status */

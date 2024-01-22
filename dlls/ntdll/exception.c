@@ -185,6 +185,26 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 }
 
 
+#if defined(__WINE_PE_BUILD) && !defined(__i386__)
+
+/*******************************************************************
+ *		user_callback_handler
+ *
+ * Exception handler for KiUserCallbackDispatcher.
+ */
+EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
+                                                    CONTEXT *context, void *dispatch )
+{
+    if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+    {
+        ERR( "ignoring exception %lx\n", record->ExceptionCode );
+        RtlUnwind( frame, KiUserCallbackDispatcherReturn, record, ULongToPtr(record->ExceptionCode) );
+    }
+    return ExceptionContinueSearch;
+}
+
+#else
+
 /*******************************************************************
  *		dispatch_user_callback
  *
@@ -208,6 +228,7 @@ NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
     return status;
 }
 
+#endif
 
 /*******************************************************************
  *		raise_status
