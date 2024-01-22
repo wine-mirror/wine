@@ -484,7 +484,7 @@ XIC X11DRV_get_ic( HWND hwnd )
 void xim_set_focus( HWND hwnd, BOOL focus )
 {
     XIC xic;
-    if ((xic = X11DRV_get_ic( hwnd ))) return;
+    if (!(xic = X11DRV_get_ic( hwnd ))) return;
     if (focus) XSetICFocus( xic );
     else XUnsetICFocus( xic );
 }
