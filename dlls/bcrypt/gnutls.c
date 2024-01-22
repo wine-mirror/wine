@@ -2741,7 +2741,7 @@ struct key32
 {
     struct object hdr;
     enum alg_id   alg_id;
-    UINT64        private[2];  /* private data for backend */
+    UINT64        private[PRIVATE_DATA_SIZE];  /* private data for backend */
     union
     {
         struct key_symmetric32 s;
@@ -2791,8 +2791,7 @@ static struct key *get_symmetric_key( struct key32 *key32, struct key *key )
 {
     key->hdr            = key32->hdr;
     key->alg_id         = key32->alg_id;
-    key->private[0]     = key32->private[0];
-    key->private[1]     = key32->private[1];
+    memcpy( key->private, key32->private, sizeof(key->private) );
     key->u.s.mode       = key32->u.s.mode;
     key->u.s.block_size = key32->u.s.block_size;
     key->u.s.vector     = ULongToPtr(key32->u.s.vector);
@@ -2806,8 +2805,7 @@ static struct key *get_asymmetric_key( struct key32 *key32, struct key *key )
 {
     key->hdr            = key32->hdr;
     key->alg_id         = key32->alg_id;
-    key->private[0]     = key32->private[0];
-    key->private[1]     = key32->private[1];
+    memcpy( key->private, key32->private, sizeof(key->private) );
     key->u.a.bitlen     = key32->u.a.bitlen;
     key->u.a.flags      = key32->u.a.flags;
     key->u.a.dss_seed   = key32->u.a.dss_seed;
@@ -2816,14 +2814,12 @@ static struct key *get_asymmetric_key( struct key32 *key32, struct key *key )
 
 static void put_symmetric_key32( struct key *key, struct key32 *key32 )
 {
-    key32->private[0]     = key->private[0];
-    key32->private[1]     = key->private[1];
+    memcpy( key32->private, key->private, sizeof(key32->private) );
 }
 
 static void put_asymmetric_key32( struct key *key, struct key32 *key32 )
 {
-    key32->private[0]     = key->private[0];
-    key32->private[1]     = key->private[1];
+    memcpy( key32->private, key->private, sizeof(key32->private) );
     key32->u.a.flags      = key->u.a.flags;
     key32->u.a.dss_seed   = key->u.a.dss_seed;
 }

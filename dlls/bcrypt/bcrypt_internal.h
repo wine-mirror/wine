@@ -184,11 +184,12 @@ struct key_asymmetric
     DSSSEED           dss_seed;
 };
 
+#define PRIVATE_DATA_SIZE 3
 struct key
 {
     struct object hdr;
     enum alg_id   alg_id;
-    UINT64        private[3];  /* private data for backend */
+    UINT64        private[PRIVATE_DATA_SIZE];  /* private data for backend */
     union
     {
         struct key_symmetric s;
