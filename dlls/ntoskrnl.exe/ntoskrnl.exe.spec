@@ -135,6 +135,7 @@
 @ stdcall ExAcquireSharedWaitForExclusive(ptr long)
 @ stub ExAllocateFromPagedLookasideList
 @ stdcall ExAllocatePool(long long)
+@ stdcall ExAllocatePool2(int64 long long)
 @ stdcall ExAllocatePoolWithQuota(long long)
 @ stdcall ExAllocatePoolWithQuotaTag(long long long)
 @ stdcall ExAllocatePoolWithTag(long long long)
