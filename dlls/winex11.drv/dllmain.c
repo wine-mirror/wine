@@ -25,8 +25,7 @@
 HMODULE x11drv_module = 0;
 
 
-typedef NTSTATUS (WINAPI *kernel_callback)( void *params, ULONG size );
-static const kernel_callback kernel_callbacks[] =
+static const KERNEL_CALLBACK_PROC kernel_callbacks[] =
 {
     x11drv_dnd_enter_event,
     x11drv_dnd_position_event,
@@ -40,7 +39,7 @@ C_ASSERT( NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-    void **callback_table;
+    KERNEL_CALLBACK_PROC *callback_table;
     struct init_params params =
     {
         foreign_window_proc,

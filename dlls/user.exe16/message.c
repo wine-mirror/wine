@@ -2607,7 +2607,7 @@ static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
 
 void register_wow_handlers(void)
 {
-    void **callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
+    KERNEL_CALLBACK_PROC *callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     static const struct wow_handlers16 handlers16 =
     {
         button_proc16,

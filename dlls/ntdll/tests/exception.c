@@ -2176,7 +2176,7 @@ static void test_KiUserApcDispatcher(void)
 static void CDECL hook_KiUserCallbackDispatcher( void *eip, ULONG id, ULONG *args, ULONG len,
                                                  ULONG unk1, ULONG unk2, ULONG arg0, ULONG arg1 )
 {
-    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[id];
 
     trace( "eip %p id %lx args %p (%x) len %lx unk1 %lx unk2 %lx args %lx,%lx\n",
            eip, id, args, (char *)args - (char *)&eip, len, unk1, unk2, arg0, arg1 );
@@ -5164,7 +5164,7 @@ static void WINAPI hook_KiUserCallbackDispatcher(void *rsp)
         BYTE                 args_data[0];
     } *stack = rsp;
 
-    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+    KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[stack->id];
 
     trace( "rsp %p args %p (%#Ix) len %lu id %lu\n", stack, stack->args,
            (char *)stack->args - (char *)stack, stack->len, stack->id );
@@ -7561,7 +7561,7 @@ static void WINAPI hook_KiUserCallbackDispatcher(void *sp)
         BYTE args_data[0];
     } *stack = sp;
     ULONG_PTR redzone = (BYTE *)stack->sp - &stack->args_data[stack->len];
-    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+    KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[stack->id];
 
     trace( "stack=%p len=%lx id=%lx lr=%lx sp=%lx pc=%lx\n",
            stack, stack->len, stack->id, stack->lr, stack->sp, stack->pc );
@@ -9200,7 +9200,7 @@ static void WINAPI hook_KiUserCallbackDispatcher(void *sp)
         BYTE args_data[0];
     } *stack = sp;
     ULONG_PTR redzone = (BYTE *)stack->sp - &stack->args_data[stack->len];
-    NTSTATUS (WINAPI *func)(void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[stack->id];
+    KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[stack->id];
 
     trace( "stack=%p len=%lx id=%lx unk=%Ix lr=%Ix sp=%Ix pc=%Ix\n",
            stack, stack->len, stack->id, stack->unknown, stack->lr, stack->sp, stack->pc );

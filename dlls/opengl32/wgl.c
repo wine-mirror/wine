@@ -1298,7 +1298,7 @@ static NTSTATUS WINAPI call_opengl_debug_message_callback( void *args, ULONG siz
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    void **kernel_callback_table;
+    KERNEL_CALLBACK_PROC *kernel_callback_table;
     NTSTATUS status;
 
     switch(reason)

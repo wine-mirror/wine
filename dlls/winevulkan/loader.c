@@ -619,7 +619,7 @@ static NTSTATUS WINAPI call_vulkan_debug_utils_callback( void *args, ULONG size 
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
-    void **kernel_callback_table;
+    KERNEL_CALLBACK_PROC *kernel_callback_table;
 
     TRACE("%p, %lu, %p\n", hinst, reason, reserved);
 

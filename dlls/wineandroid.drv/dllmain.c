@@ -116,7 +116,7 @@ static void CALLBACK register_window_callback( ULONG_PTR arg1, ULONG_PTR arg2, U
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
     struct init_params params;
-    void **callback_table;
+    KERNEL_CALLBACK_PROC *callback_table;
 
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 

@@ -368,8 +368,7 @@ cleanup:
     return NtCallbackReturn(entries, count * sizeof(entries[0]), 0);
 }
 
-typedef NTSTATUS (WINAPI *kernel_callback)(void *params, ULONG size);
-static const kernel_callback kernel_callbacks[] =
+static const KERNEL_CALLBACK_PROC kernel_callbacks[] =
 {
     macdrv_app_icon,
     macdrv_app_quit_request,
@@ -384,7 +383,7 @@ C_ASSERT(NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_
 static BOOL process_attach(void)
 {
     struct init_params params;
-    void **callback_table;
+    KERNEL_CALLBACK_PROC *callback_table;
 
     struct localized_string *str;
     struct localized_string strings[] = {
