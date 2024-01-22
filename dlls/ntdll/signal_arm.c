@@ -589,6 +589,8 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    "ldr r1, [sp, #0x04]\n\t"      /* len */
                    "ldr r2, [sp, #0x08]\n\t"      /* id */
                    "bl " __ASM_NAME("dispatch_user_callback") "\n\t"
+                   ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
+                   __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
                    "mov r2, r0\n\t"  /* status */
                    "mov r1, #0\n\t"  /* ret_len */
                    "mov r0, r1\n\t"  /* ret_ptr */

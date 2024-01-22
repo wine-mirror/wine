@@ -57,6 +57,7 @@ extern void WINAPI LdrInitializeThunk(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR);
 extern NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
 extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC);
 extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
+extern void WINAPI KiUserCallbackDispatcherReturn(void);
 extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 #if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
