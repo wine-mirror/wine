@@ -294,21 +294,9 @@ __ASM_STDCALL_FUNC( KiUserApcDispatcher, 20,
  */
 void WINAPI KiUserCallbackDispatcher( ULONG id, void *args, ULONG len )
 {
-    NTSTATUS status;
-
-    __TRY
-    {
-        KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[id];
-        status = NtCallbackReturn( NULL, 0, func( args, len ));
-    }
-    __EXCEPT_ALL
-    {
-        ERR_(seh)( "ignoring exception\n" );
-        status = NtCallbackReturn( 0, 0, 0 );
-    }
-    __ENDTRY
-
-    RtlRaiseStatus( status );
+    NTSTATUS status = dispatch_user_callback( args, len, id );
+    status = NtCallbackReturn( NULL, 0, status );
+    for (;;) RtlRaiseStatus( status );
 }
 
 

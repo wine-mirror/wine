@@ -186,6 +186,30 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /*******************************************************************
+ *		dispatch_user_callback
+ *
+ * Implementation of KiUserCallbackDispatcher.
+ */
+NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
+{
+    NTSTATUS status;
+
+    __TRY
+    {
+        KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[id];
+        status = func( args, len );
+    }
+    __EXCEPT_ALL
+    {
+        ERR( "ignoring exception\n" );
+        status = STATUS_SUCCESS;
+    }
+    __ENDTRY
+    return status;
+}
+
+
+/*******************************************************************
  *		raise_status
  *
  * Implementation of RtlRaiseStatus with a specific exception record.

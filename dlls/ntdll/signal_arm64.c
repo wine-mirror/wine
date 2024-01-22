@@ -605,24 +605,6 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
 /*******************************************************************
  *		KiUserCallbackDispatcher (NTDLL.@)
  */
-void WINAPI dispatch_callback( void *args, ULONG len, ULONG id )
-{
-    NTSTATUS status;
-
-    __TRY
-    {
-        KERNEL_CALLBACK_PROC func = NtCurrentTeb()->Peb->KernelCallbackTable[id];
-        status = NtCallbackReturn( NULL, 0, func( args, len ));
-    }
-    __EXCEPT_ALL
-    {
-        ERR_(seh)( "ignoring exception\n" );
-        status = NtCallbackReturn( 0, 0, 0 );
-    }
-    __ENDTRY
-
-    RtlRaiseStatus( status );
-}
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    __ASM_SEH(".seh_pushframe\n\t")
                    "nop\n\t"
@@ -632,7 +614,12 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    __ASM_SEH(".seh_endprologue\n\t")
                    "ldr x0, [sp]\n\t"             /* args */
                    "ldp w1, w2, [sp, #0x08]\n\t"  /* len, id */
-                   "bl " __ASM_NAME("dispatch_callback") "\n\t"
+                   "bl " __ASM_NAME("dispatch_user_callback") "\n\t"
+                   "mov x2, x0\n\t"               /* status */
+                   "mov x1, #0\n\t"               /* ret_len */
+                   "mov x0, x1\n\t"               /* ret_ptr */
+                   "bl " __ASM_NAME("NtCallbackReturn") "\n\t"
+                   "bl " __ASM_NAME("RtlRaiseStatus") "\n\t"
                    "brk #1" )
 
 

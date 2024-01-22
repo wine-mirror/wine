@@ -49,6 +49,7 @@ extern UINT_PTR page_size;
 
 /* exceptions */
 extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
+extern NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id );
 extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec );
 extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr );
 
