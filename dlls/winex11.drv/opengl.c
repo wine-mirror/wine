@@ -3378,7 +3378,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     case DC_GL_PIXMAP_WIN:
         if (ctx) sync_context( ctx );
         escape.gl_drawable = gl->pixmap;
-        if (pglXCopySubBufferMESA) {
+        if (ctx && pglXCopySubBufferMESA) {
             /* (glX)SwapBuffers has an implicit glFlush effect, however
              * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
              * copying */
@@ -3387,7 +3387,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
                                    gl->pixmap_size.cx, gl->pixmap_size.cy );
             break;
         }
-        if (pglXSwapBuffersMscOML)
+        if (ctx && pglXSwapBuffersMscOML)
         {
             pglFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
@@ -3401,7 +3401,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         if (gl->type == DC_GL_CHILD_WIN) escape.gl_drawable = gl->window;
         /* fall through */
     default:
-        if (escape.gl_drawable && pglXSwapBuffersMscOML)
+        if (ctx && escape.gl_drawable && pglXSwapBuffersMscOML)
         {
             pglFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
@@ -3411,13 +3411,13 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         break;
     }
 
-    if (escape.gl_drawable && pglXWaitForSbcOML)
+    if (ctx && escape.gl_drawable && pglXWaitForSbcOML)
         pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
     release_gl_drawable( gl );
 
     if (escape.gl_drawable)
-        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+        NtGdiExtEscape( ctx ? ctx->hdc : hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
     return TRUE;
 }
 

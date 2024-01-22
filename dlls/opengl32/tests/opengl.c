@@ -2006,6 +2006,55 @@ static void test_copy_context(HDC hdc)
     ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
 }
 
+static void test_child_window(HWND hwnd, PIXELFORMATDESCRIPTOR *pfd)
+{
+    int pixel_format;
+    DWORD t1, t;
+    HGLRC hglrc;
+    HWND child;
+    HDC hdc;
+    int res;
+
+    child = CreateWindowA("static", "Title", WS_CHILDWINDOW | WS_VISIBLE, 50, 50, 100, 100, hwnd, NULL, NULL, NULL);
+    ok(!!child, "got error %lu.\n", GetLastError());
+
+    hdc = GetDC(child);
+    pixel_format = ChoosePixelFormat(hdc, pfd);
+    res = SetPixelFormat(hdc, pixel_format, pfd);
+    ok(res, "got error %lu.\n", GetLastError());
+
+    hglrc = wglCreateContext(hdc);
+    ok(!!hglrc, "got error %lu.\n", GetLastError());
+
+    /* Test SwapBuffers with NULL context. */
+
+    glDrawBuffer(GL_BACK);
+
+    /* Currently blit happening for child window in winex11 may not be updated with the latest GL frame
+     * even on glXWaitForSbcOML() path. So simulate continuous present for the test purpose. */
+    trace("Child window rectangle should turn from red to green now.\n");
+    t1 = GetTickCount();
+    while ((t = GetTickCount()) - t1 < 3000)
+    {
+        res = wglMakeCurrent(hdc, hglrc);
+        ok(res, "got error %lu.\n", GetLastError());
+        if (t - t1 > 1500)
+            glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        else
+            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        res = wglMakeCurrent(NULL, NULL);
+        ok(res, "got error %lu.\n", GetLastError());
+        SwapBuffers(hdc);
+    }
+
+    res = wglDeleteContext(hglrc);
+    ok(res, "got error %lu.\n", GetLastError());
+
+    ReleaseDC(child, hdc);
+    DestroyWindow(child);
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -2137,6 +2186,9 @@ START_TEST(opengl)
             test_swap_control(hdc);
         else
             skip("WGL_EXT_swap_control not supported, skipping test\n");
+
+        if (winetest_interactive)
+            test_child_window(hwnd, &pfd);
 
 cleanup:
         ReleaseDC(hwnd, hdc);
