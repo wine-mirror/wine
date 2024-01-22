@@ -4512,6 +4512,10 @@ static void test_segment_state(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicSegment_SetRepeats(segment, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 70);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicSegment_SetLoopPoints(segment, 10, 101);
+    ok(hr == DMUS_E_OUT_OF_RANGE, "got %#lx\n", hr);
     hr = IDirectMusicSegment_SetLoopPoints(segment, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
