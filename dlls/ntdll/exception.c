@@ -201,8 +201,8 @@ NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
     }
     __EXCEPT_ALL
     {
-        ERR( "ignoring exception\n" );
-        status = STATUS_SUCCESS;
+        status = GetExceptionCode();
+        ERR( "ignoring exception %lx\n", status );
     }
     __ENDTRY
     return status;
