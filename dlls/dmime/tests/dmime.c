@@ -4483,10 +4483,11 @@ static void test_segment_state(void)
     hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(time == 0, "got %#lx\n", time);
-    time = 0xdeadbeef;
+    value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    todo_wine
+    ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -4566,10 +4567,11 @@ static void test_segment_state(void)
     hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(time == 50, "got %lu\n", time);
-    time = 0xdeadbeef;
+    value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    todo_wine
+    ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -4596,10 +4598,11 @@ static void test_segment_state(void)
     hr = IDirectMusicSegmentState_GetStartPoint(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(time == 50, "got %#lx\n", time);
-    time = 0xdeadbeef;
+    value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(time == 0xdeadbeef, "got %#lx\n", time);
+    todo_wine
+    ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
     ok(hr == S_OK, "got %#lx\n", hr);
