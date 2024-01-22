@@ -1068,22 +1068,19 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
     if (!(ret = CopyFileW( source, target, TRUE )))
         return ret;
 
+    wcscpy(pnf_path, target);
+    PathRemoveExtensionW(pnf_path);
+    PathAddExtensionW(pnf_path, L".pnf");
+    if ((pnf_file = _wfopen(pnf_path, L"w")))
+    {
+        fputws(PNF_HEADER, pnf_file);
+        fputws(source, pnf_file);
+        fclose(pnf_file);
+    }
+
 done:
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW( source );
-
-    if (ret)
-    {
-        wcscpy(pnf_path, target);
-        PathRemoveExtensionW(pnf_path);
-        PathAddExtensionW(pnf_path, L".pnf");
-        if ((pnf_file = _wfopen(pnf_path, L"w")))
-        {
-            fputws(PNF_HEADER, pnf_file);
-            fputws(source, pnf_file);
-            fclose(pnf_file);
-        }
-    }
 
     size = lstrlenW( target ) + 1;
     if (dest)
