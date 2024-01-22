@@ -53,7 +53,7 @@ struct segment_state
     MUSIC_TIME end_point;
     MUSIC_TIME played;
     BOOL auto_download;
-    DWORD repeats;
+    DWORD repeats, actual_repeats;
 
     struct list tracks;
 };
@@ -117,7 +117,8 @@ static ULONG WINAPI segment_state_Release(IDirectMusicSegmentState8 *iface)
 static HRESULT WINAPI segment_state_GetRepeats(IDirectMusicSegmentState8 *iface, DWORD *repeats)
 {
     struct segment_state *This = impl_from_IDirectMusicSegmentState8(iface);
-    FIXME("(%p, %p): semi-stub\n", This, repeats);
+    TRACE("(%p, %p)\n", This, repeats);
+    *repeats = This->repeats;
     return S_OK;
 }
 
@@ -236,6 +237,7 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetStartPoint(segment, &This->start_point);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetLength(segment, &This->end_point);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment_GetRepeats(segment, &This->repeats);
+    if (SUCCEEDED(hr)) This->actual_repeats = This->repeats;
 
     for (i = 0; SUCCEEDED(hr); i++)
     {
@@ -315,7 +317,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
 
     while ((hr = segment_state_play_until(This, performance, next_time, track_flags)) == S_FALSE)
     {
-        if (!This->repeats)
+        if (!This->actual_repeats)
         {
             MUSIC_TIME end_time = This->start_time + This->played;
 
@@ -332,7 +334,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
                 &This->end_point)))
             break;
         This->start_time += This->end_point - This->start_point;
-        This->repeats--;
+        This->actual_repeats--;
 
         if (next_time <= This->start_time || This->end_point <= This->start_point) break;
     }

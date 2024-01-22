@@ -4540,7 +4540,6 @@ static void test_segment_state(void)
     value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine
     ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
@@ -4624,7 +4623,6 @@ static void test_segment_state(void)
     value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine
     ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
@@ -4655,7 +4653,6 @@ static void test_segment_state(void)
     value = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetRepeats(state, &value);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine
     ok(value == 0, "got %#lx\n", value);
     time = 0xdeadbeef;
     hr = IDirectMusicSegmentState_GetStartTime(state, &time);
