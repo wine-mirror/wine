@@ -978,10 +978,11 @@ static BOOL PRINTDLG_SetUpPaperComboBoxW(HWND hDlg,
 /***********************************************************************
  *               PRINTDLG_UpdatePrinterInfoTexts               [internal]
  */
-static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, const PRINTER_INFO_2A *pi)
+static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, DWORD flags, const PRINTER_INFO_2A *pi)
 {
     char   StatusMsg[256];
     char   ResourceString[256];
+    char   printer_name[256];
     int    i;
 
     /* Status Message */
@@ -1004,6 +1005,17 @@ static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, const PRINTER_INFO_2A *p
     SetDlgItemTextA(hDlg, stc12, StatusMsg);
 
     /* set all other printer info texts */
+    if (flags & PD_PRINTSETUP)
+    {
+        DWORD dwBufLen = ARRAY_SIZE(printer_name);
+        GetDefaultPrinterA(printer_name, &dwBufLen);
+    }
+    else
+    {
+        /* FIXME: Windows decorates the printer name with text like 'System Printer' or 'on <port>'. */
+        lstrcpynA(printer_name, pi->pPrinterName, ARRAY_SIZE(printer_name));
+    }
+    SetDlgItemTextA(hDlg, stc1, printer_name);
     SetDlgItemTextA(hDlg, stc11, pi->pDriverName);
     
     if (pi->pLocation != NULL && pi->pLocation[0] != '\0')
@@ -1014,11 +1026,12 @@ static void PRINTDLG_UpdatePrinterInfoTextsA(HWND hDlg, const PRINTER_INFO_2A *p
     return;
 }
 
-static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *pi)
+static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, DWORD flags, const PRINTER_INFO_2W *pi)
 {
     WCHAR   StatusMsg[256];
     WCHAR   ResourceString[256];
-    int    i;
+    WCHAR   printer_name[256];
+    int     i;
 
     /* Status Message */
     StatusMsg[0]='\0';
@@ -1040,6 +1053,17 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *p
     SetDlgItemTextW(hDlg, stc12, StatusMsg);
 
     /* set all other printer info texts */
+    if (flags & PD_PRINTSETUP)
+    {
+        DWORD dwBufLen = ARRAY_SIZE(printer_name);
+        GetDefaultPrinterW(printer_name, &dwBufLen);
+    }
+    else
+    {
+        /* FIXME: Windows decorates the printer name with text like 'System Printer' or 'on <port>'. */
+        lstrcpynW(printer_name, pi->pPrinterName, ARRAY_SIZE(printer_name));
+    }
+    SetDlgItemTextW(hDlg, stc1, printer_name);
     SetDlgItemTextW(hDlg, stc11, pi->pDriverName);
     if (pi->pLocation != NULL && pi->pLocation[0] != '\0')
         SetDlgItemTextW(hDlg, stc14, pi->pLocation);
@@ -1081,7 +1105,7 @@ static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStru
     }
     ClosePrinter(hprn);
 
-    PRINTDLG_UpdatePrinterInfoTextsA(hDlg, PrintStructures->lpPrinterInfo);
+    PRINTDLG_UpdatePrinterInfoTextsA(hDlg, lppd->Flags, PrintStructures->lpPrinterInfo);
 
     free(PrintStructures->lpDevMode);
     PrintStructures->lpDevMode = NULL;
@@ -1288,7 +1312,7 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
     }
     ClosePrinter(hprn);
 
-    PRINTDLG_UpdatePrinterInfoTextsW(hDlg, PrintStructures->lpPrinterInfo);
+    PRINTDLG_UpdatePrinterInfoTextsW(hDlg, lppd->Flags, PrintStructures->lpPrinterInfo);
 
     free(PrintStructures->lpDevMode);
     PrintStructures->lpDevMode = NULL;
