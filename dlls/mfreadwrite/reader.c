@@ -679,6 +679,26 @@ static HRESULT source_reader_allocate_stream_sample(MFT_OUTPUT_STREAM_INFO *info
 }
 
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry);
+static HRESULT source_reader_push_transform_samples(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry, IMFSample *sample)
+{
+    HRESULT hr;
+
+    do
+    {
+        if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry))
+                && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
+            return hr;
+        if (SUCCEEDED(hr = IMFTransform_ProcessInput(entry->transform, 0, sample, 0)))
+            return source_reader_pull_transform_samples(reader, stream, entry);
+    }
+    while (hr == MF_E_NOTACCEPTING);
+
+    return hr;
+}
+
+static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
     MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
@@ -689,7 +709,7 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
         return hr;
     stream_info.cbSize = max(stream_info.cbSize, entry->min_buffer_size);
 
-    for (;;)
+    while (SUCCEEDED(hr))
     {
         MFT_OUTPUT_DATA_BUFFER out_buffer = {0};
 
@@ -697,14 +717,9 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
                 && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
             break;
 
-        if (FAILED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
-        {
-            if (out_buffer.pSample)
-                IMFSample_Release(out_buffer.pSample);
-            break;
-        }
+        if (SUCCEEDED(hr = IMFTransform_ProcessOutput(stream->decoder.transform, 0, 1, &out_buffer, &status)))
+            hr = source_reader_queue_sample(reader, stream, out_buffer.pSample);
 
-        source_reader_queue_sample(reader, stream, out_buffer.pSample);
         if (out_buffer.pSample)
             IMFSample_Release(out_buffer.pSample);
         if (out_buffer.pEvents)
@@ -748,19 +763,9 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
         return source_reader_queue_sample(reader, stream, sample);
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
-
-    hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder);
-    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
-    {
-        if (FAILED(hr = IMFTransform_ProcessInput(stream->decoder.transform, 0, sample, 0)))
-        {
-            WARN("Transform failed to process input, hr %#lx.\n", hr);
-            return hr;
-        }
-
-        if ((hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder)) == MF_E_TRANSFORM_NEED_MORE_INPUT)
-            return S_OK;
-    }
+    if (SUCCEEDED(hr = source_reader_push_transform_samples(reader, stream, &stream->decoder, sample))
+            || hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        hr = stream->requests ? source_reader_request_sample(reader, stream) : S_OK;
     else
         WARN("Transform failed to process output, hr %#lx.\n", hr);
 
@@ -797,12 +802,8 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
         if (id == reader->streams[i].id)
         {
             /* FIXME: propagate processing errors? */
-
             reader->streams[i].flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
             hr = source_reader_process_sample(reader, &reader->streams[i], sample);
-            if (reader->streams[i].requests)
-                source_reader_request_sample(reader, &reader->streams[i]);
-
             break;
         }
     }
