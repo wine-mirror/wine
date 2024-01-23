@@ -655,42 +655,47 @@ static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallbac
     return source_reader_release(reader);
 }
 
+static HRESULT source_reader_allocate_stream_sample(MFT_OUTPUT_STREAM_INFO *info, IMFSample **out)
+{
+    IMFMediaBuffer *buffer;
+    IMFSample *sample;
+    HRESULT hr;
+
+    *out = NULL;
+    if (FAILED(hr = MFCreateSample(&sample)))
+        return hr;
+    if (SUCCEEDED(hr = MFCreateAlignedMemoryBuffer(info->cbSize, info->cbAlignment, &buffer)))
+    {
+        if (SUCCEEDED(hr = IMFSample_AddBuffer(sample, buffer)))
+        {
+            *out = sample;
+            IMFSample_AddRef(sample);
+        }
+        IMFMediaBuffer_Release(buffer);
+    }
+
+    IMFSample_Release(sample);
+    return hr;
+}
+
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
     MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
-    MFT_OUTPUT_DATA_BUFFER out_buffer;
-    unsigned int buffer_size;
-    IMFMediaBuffer *buffer;
     DWORD status;
     HRESULT hr;
 
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info)))
-    {
-        WARN("Failed to get output stream info, hr %#lx.\n", hr);
         return hr;
-    }
+    stream_info.cbSize = max(stream_info.cbSize, entry->min_buffer_size);
 
     for (;;)
     {
-        memset(&out_buffer, 0, sizeof(out_buffer));
+        MFT_OUTPUT_DATA_BUFFER out_buffer = {0};
 
-        if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES)))
-        {
-            if (FAILED(hr = MFCreateSample(&out_buffer.pSample)))
-                break;
-
-            buffer_size = max(stream_info.cbSize, entry->min_buffer_size);
-
-            if (FAILED(hr = MFCreateAlignedMemoryBuffer(buffer_size, stream_info.cbAlignment, &buffer)))
-            {
-                IMFSample_Release(out_buffer.pSample);
-                break;
-            }
-
-            IMFSample_AddBuffer(out_buffer.pSample, buffer);
-            IMFMediaBuffer_Release(buffer);
-        }
+        if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+                && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
+            break;
 
         if (FAILED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
         {
