@@ -1,6 +1,7 @@
-/* H264 Decoder Transform
+/* Generic Video Decoder Transform
  *
  * Copyright 2022 Rémi Bernon for CodeWeavers
+ * Copyright 2023 Shaun Ren for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -109,7 +110,10 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
         attrs.low_latency = !!low_latency;
 
     if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    {
+        ERR("Failed to create transform with input major_type %u.\n", input_format.major_type);
         return E_FAIL;
+    }
 
     return S_OK;
 }
@@ -897,4 +901,33 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     hr = IMFTransform_QueryInterface(iface, riid, out);
     IMFTransform_Release(iface);
     return hr;
+}
+
+extern GUID MFVideoFormat_IV50;
+static const GUID *const iv50_decoder_input_types[] =
+{
+    &MFVideoFormat_IV50,
+};
+static const GUID *const iv50_decoder_output_types[] =
+{
+    &MFVideoFormat_YV12,
+    &MFVideoFormat_YUY2,
+    &MFVideoFormat_NV11,
+    &MFVideoFormat_NV12,
+    &MFVideoFormat_RGB32,
+    &MFVideoFormat_RGB24,
+    &MFVideoFormat_RGB565,
+    &MFVideoFormat_RGB555,
+    &MFVideoFormat_RGB8,
+};
+
+HRESULT WINAPI winegstreamer_create_video_decoder(IMFTransform **out)
+{
+    TRACE("out %p.\n", out);
+
+    if (!init_gstreamer())
+        return E_FAIL;
+
+    return video_decoder_create_with_types(iv50_decoder_input_types, ARRAY_SIZE(iv50_decoder_input_types),
+            iv50_decoder_output_types, ARRAY_SIZE(iv50_decoder_output_types), out);
 }

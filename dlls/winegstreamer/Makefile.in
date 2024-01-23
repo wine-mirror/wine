@@ -19,7 +19,6 @@ SOURCES = \
 	resampler.c \
 	rsrc.rc \
 	unixlib.c \
-	video_decoder.c \
 	video_processor.c \
 	wg_allocator.c \
 	wg_format.c \
