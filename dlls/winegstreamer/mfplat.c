@@ -634,12 +634,14 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *sub
 
 static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
-    BYTE buffer[64];
-    HEAACWAVEFORMAT *user_data = (HEAACWAVEFORMAT *)buffer;
+    BYTE buffer[sizeof(HEAACWAVEFORMAT) + 64];
+    HEAACWAVEFORMAT *wfx = (HEAACWAVEFORMAT *)buffer;
     UINT32 codec_data_size;
     BOOL raw_aac;
 
-    if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_USER_DATA, buffer, sizeof(buffer), &codec_data_size)))
+    wfx->wfInfo.wfx.cbSize = sizeof(buffer) - sizeof(wfx->wfInfo.wfx);
+    if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_USER_DATA, (BYTE *)(&wfx->wfInfo.wfx + 1),
+            wfx->wfInfo.wfx.cbSize, &codec_data_size)))
     {
         FIXME("Codec data is not set.\n");
         return;
@@ -647,16 +649,16 @@ static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUI
 
     raw_aac = IsEqualGUID(subtype, &MFAudioFormat_RAW_AAC);
     if (!raw_aac)
-        codec_data_size -= min(codec_data_size, offsetof(HEAACWAVEFORMAT, pbAudioSpecificConfig));
+        codec_data_size -= min(codec_data_size, sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX));
     if (codec_data_size > sizeof(format->u.audio_mpeg4.codec_data))
     {
         FIXME("Codec data needs %u bytes.\n", codec_data_size);
         return;
     }
     if (raw_aac)
-        memcpy(format->u.audio_mpeg4.codec_data, buffer, codec_data_size);
+        memcpy(format->u.audio_mpeg4.codec_data, (BYTE *)(&wfx->wfInfo.wfx + 1), codec_data_size);
     else
-        memcpy(format->u.audio_mpeg4.codec_data, user_data->pbAudioSpecificConfig, codec_data_size);
+        memcpy(format->u.audio_mpeg4.codec_data, wfx->pbAudioSpecificConfig, codec_data_size);
 
     format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG4;
 
