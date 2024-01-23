@@ -478,8 +478,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
             CFRelease(lastKeyboardLayoutInputSource);
         lastKeyboardLayoutInputSource = inputSourceLayout;
 
-        inputSourceIsInputMethodValid = FALSE;
-
         if (inputSourceLayout)
         {
             CFDataRef uchr;
@@ -2064,24 +2062,68 @@ static NSString* WineLocalizedString(unsigned int stringID)
         [NSApp activate];
      }
 
-    - (BOOL) inputSourceIsInputMethod
+    static BOOL InputSourceShouldBeIgnored(TISInputSourceRef inputSource)
     {
-        if (!inputSourceIsInputMethodValid)
+        /* Certain system utilities are technically input sources, but we
+           shouldn't consider them as such for our purposes.
+           Dictation is its own source too (com.apple.inputmethod.ironwood), but
+           it should receive keypresses; it cancels input on escape. */
+        static CFStringRef ignoredIDs[] = {
+            /* The "Emoji & Symbols" palette. */
+            CFSTR("com.apple.CharacterPaletteIM"),
+            /* The on-screen keyboard and accessibility panel. */
+            CFSTR("com.apple.inputmethod.AssistiveControl"),
+            /* The popup for accented characters when you hold down a key. */
+            CFSTR("com.apple.PressAndHold"),
+        };
+
+        CFStringRef sourceID = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
+        for (int i = 0; i < sizeof(ignoredIDs) / sizeof(CFStringRef); i++)
         {
-            TISInputSourceRef inputSource = TISCopyCurrentKeyboardInputSource();
-            if (inputSource)
-            {
-                CFStringRef type = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceType);
-                inputSourceIsInputMethod = !CFEqual(type, kTISTypeKeyboardLayout);
-                CFRelease(inputSource);
-            }
-            else
-                inputSourceIsInputMethod = FALSE;
-            inputSourceIsInputMethodValid = TRUE;
+            if (CFEqual(sourceID, ignoredIDs[i]))
+                return YES;
         }
 
-        return inputSourceIsInputMethod;
+        return NO;
     }
+
+    - (BOOL) inputSourceIsInputMethod
+    {
+        static dispatch_once_t onceToken;
+        static CFDictionaryRef filterDict;
+        CFArrayRef enabledSources;
+        CFIndex i;
+        BOOL ret = NO;
+
+        /* There may be multiple active ("selected") input sources, but there is
+           always exactly one selected keyboard input source. For instance,
+           handwriting methods are active simultaneously with a keyboard source.
+           As the name implies, TISCopyCurrentKeyboardInputSource only returns
+           the keyboard source, so it's not sufficient for our needs. We use
+           TISCreateInputSourceList instead to find all selected sources. */
+        dispatch_once(&onceToken, ^{
+            filterDict = CFDictionaryCreate(NULL, (const void **)&kTISPropertyInputSourceIsSelected, (const void **)&kCFBooleanTrue, 1,
+                                            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+
+        });
+        enabledSources = TISCreateInputSourceList(filterDict, false);
+        for (i = 0; i < CFArrayGetCount(enabledSources); i++)
+        {
+            TISInputSourceRef source = (TISInputSourceRef)CFArrayGetValueAtIndex(enabledSources, i);
+            CFStringRef type = TISGetInputSourceProperty(source, kTISPropertyInputSourceType);
+
+            /* kTISTypeKeyboardLayout is for physical keyboards. Any type other
+               than that is an IME. */
+            if (!CFEqual(type, kTISTypeKeyboardLayout) && !InputSourceShouldBeIgnored(source))
+            {
+                ret = YES;
+                break;
+            }
+        }
+
+        CFRelease(enabledSources);
+        return ret;
+     }
 
     - (void) releaseMouseCapture
     {
