@@ -116,102 +116,112 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     return S_OK;
 }
 
-static HRESULT fill_output_media_type(struct h264_decoder *decoder, IMFMediaType *media_type)
+static HRESULT create_output_media_type(struct h264_decoder *decoder, const GUID *subtype,
+        IMFMediaType **media_type)
 {
     IMFMediaType *default_type = decoder->output_type;
+    IMFVideoMediaType *video_type;
     UINT32 value, width, height;
     MFVideoArea aperture;
     UINT64 ratio;
-    GUID subtype;
     HRESULT hr;
 
-    if (FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
+    if (FAILED(hr = MFCreateVideoMediaTypeFromSubtype(subtype, &video_type)))
         return hr;
 
-    if (FAILED(hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &ratio)))
+    if (FAILED(IMFVideoMediaType_GetUINT64(video_type, &MF_MT_FRAME_SIZE, &ratio)))
     {
         if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_SIZE, &ratio)))
             ratio = (UINT64)1920 << 32 | 1080;
-        if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ratio)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, ratio)))
+            goto done;
     }
     width = ratio >> 32;
     height = ratio;
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_FRAME_RATE, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_FRAME_RATE, NULL)))
     {
         if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_RATE, &ratio)))
             ratio = (UINT64)30000 << 32 | 1001;
-        if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, ratio)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_RATE, ratio)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_PIXEL_ASPECT_RATIO, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_PIXEL_ASPECT_RATIO, NULL)))
     {
         if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
             ratio = (UINT64)1 << 32 | 1;
-        if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_SAMPLE_SIZE, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_SAMPLE_SIZE, NULL)))
     {
-        if (FAILED(hr = MFCalculateImageSize(&subtype, width, height, &value)))
-            return hr;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, value)))
-            return hr;
+        if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &value)))
+            goto done;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_SAMPLE_SIZE, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_DEFAULT_STRIDE, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_DEFAULT_STRIDE, NULL)))
     {
-        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, width, (LONG *)&value)))
-            return hr;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, value)))
-            return hr;
+        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, width, (LONG *)&value)))
+            goto done;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_DEFAULT_STRIDE, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_INTERLACE_MODE, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_INTERLACE_MODE, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_INTERLACE_MODE, &value)))
+        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_INTERLACE_MODE, &value)))
             value = MFVideoInterlace_MixedInterlaceOrProgressive;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_INTERLACE_MODE, value)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_INTERLACE_MODE, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
+        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
             value = 1;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, value)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_VIDEO_ROTATION, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_VIDEO_ROTATION, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_VIDEO_ROTATION, &value)))
+        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_VIDEO_ROTATION, &value)))
             value = 0;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_VIDEO_ROTATION, value)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_VIDEO_ROTATION, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_FIXED_SIZE_SAMPLES, &value)))
+        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_FIXED_SIZE_SAMPLES, &value)))
             value = 1;
-        if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, value)))
-            return hr;
+        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, value)))
+            goto done;
     }
 
-    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL))
-            && SUCCEEDED(hr = IMFMediaType_GetBlob(decoder->stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
+    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL))
+            && SUCCEEDED(IMFMediaType_GetBlob(decoder->stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
             (BYTE *)&aperture, sizeof(aperture), &value)))
     {
-        if (FAILED(hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
+        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
                 (BYTE *)&aperture, sizeof(aperture))))
-            return hr;
+            goto done;
     }
 
-    return S_OK;
+done:
+    if (SUCCEEDED(hr))
+        *media_type = (IMFMediaType *)video_type;
+    else
+    {
+        IMFVideoMediaType_Release(video_type);
+        *media_type = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT init_allocator(struct h264_decoder *decoder)
@@ -404,37 +414,15 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
         DWORD index, IMFMediaType **type)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
-    IMFMediaType *media_type;
-    const GUID *output_type;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
 
+    *type = NULL;
     if (!decoder->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
-
-    *type = NULL;
-
     if (index >= ARRAY_SIZE(h264_decoder_output_types))
         return MF_E_NO_MORE_TYPES;
-    output_type = h264_decoder_output_types[index];
-
-    if (FAILED(hr = MFCreateMediaType(&media_type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, output_type)))
-        goto done;
-
-    hr = fill_output_media_type(decoder, media_type);
-
-done:
-    if (SUCCEEDED(hr))
-        IMFMediaType_AddRef((*type = media_type));
-
-    IMFMediaType_Release(media_type);
-    return hr;
+    return create_output_media_type(decoder, h264_decoder_output_types[index], type);
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
