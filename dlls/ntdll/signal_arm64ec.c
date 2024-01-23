@@ -2001,6 +2001,23 @@ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR 
 }
 
 
+/***********************************************************************
+ *           process_breakpoint
+ */
+void WINAPI process_breakpoint(void)
+{
+    __TRY
+    {
+        DbgBreakPoint();
+    }
+    __EXCEPT_ALL
+    {
+        /* do nothing */
+    }
+    __ENDTRY
+}
+
+
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
