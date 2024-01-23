@@ -25,6 +25,19 @@
 #define COBJMACROS
 #include <d3d9.h>
 #include "utils.h"
+#include <initguid.h>
+#include <d3d9on12.h>
+#include <dxgi1_4.h>
+
+static HMODULE d3d9_handle = 0;
+static HMODULE d3d12_handle = 0;
+static HMODULE dxgi_handle = 0;
+
+static IDirect3D9 * (WINAPI *pDirect3DCreate9On12)(UINT sdk_version, D3D9ON12_ARGS *d3d9on12_args, UINT d3d9on12_args_count);
+static HRESULT (WINAPI *pCreateDXGIFactory2)(UINT flags, REFIID iid, void **factory);
+static HRESULT (WINAPI *pD3D12CreateDevice)(IUnknown *adapter, D3D_FEATURE_LEVEL feature_level, REFIID iid, void **device);
+
+DEFINE_GUID(IID_IDeadbeef, 0xdeadbeef, 0xdead, 0xbeef, 0xde, 0xad, 0xbe, 0xee, 0xee, 0xee, 0xee, 0xef);
 
 struct vec3
 {
@@ -15035,6 +15048,239 @@ static void test_window_position(void)
     IDirect3D9_Release(d3d);
 }
 
+static BOOL init_d3d9on12_modules(void)
+{
+    d3d9_handle = LoadLibraryA("d3d9.dll");
+    if (!d3d9_handle)
+    {
+        skip("Could not load d3d9.dll\n");
+        return FALSE;
+    }
+    dxgi_handle = LoadLibraryA("dxgi.dll");
+    if (!dxgi_handle)
+    {
+        skip("Could not load dxgi.dll\n");
+        return FALSE;
+    }
+    d3d12_handle = LoadLibraryA("d3d12.dll");
+    if (!d3d12_handle)
+    {
+        skip("Could not load d3d12.dll\n");
+        return FALSE;
+    }
+
+    pDirect3DCreate9On12 = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9On12");
+    if (!pDirect3DCreate9On12)
+    {
+        win_skip("Direct3DCreate9On12 is not supported, skipping d3d9on12 tests\n");
+        return FALSE;
+    }
+    pCreateDXGIFactory2 = (void *)GetProcAddress(dxgi_handle, "CreateDXGIFactory2");
+    if (!pCreateDXGIFactory2)
+    {
+        win_skip("CreateDXGIFactory2 is not supported, skipping d3d9on12 tests\n");
+        return FALSE;
+    }
+    pD3D12CreateDevice = (void *)GetProcAddress(d3d12_handle, "D3D12CreateDevice");
+    if (!pD3D12CreateDevice)
+    {
+        win_skip("D3D12CreateDevice is not supported, skipping d3d9on12 tests\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+#define create_d3d9on12_device(out_d3d9, window, d3d9on12_args, d3d9on12_args_count, out_device) \
+        create_d3d9on12_device_(__LINE__, out_d3d9, window, d3d9on12_args, d3d9on12_args_count, out_device)
+static HRESULT create_d3d9on12_device_(unsigned int line, IDirect3D9 **out_d3d9, HWND window, D3D9ON12_ARGS *d3d9on12_args,
+        UINT d3d9on12_args_count, IDirect3DDevice9 **out_device)
+{
+    IDirect3DDevice9On12 *d3d9on12 = (void *)0xdeadbeef;
+    IDirect3DDevice9 *device = (void *)0xdeadbeef;
+    IDirect3D9 *d3d9 = (void *)0xdeadbeef;
+    D3DPRESENT_PARAMETERS present_parameters;
+    HRESULT hr;
+
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_COPY;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+
+    d3d9 = pDirect3DCreate9On12(D3D_SDK_VERSION, d3d9on12_args, d3d9on12_args_count);
+    ok_(__FILE__, line)(d3d9 != NULL, "got NULL d3d9 object\n");
+
+    hr = IDirect3D9_QueryInterface(d3d9, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok_(__FILE__, line)(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok_(__FILE__, line)(d3d9on12 == NULL, "QueryInterface returned interface %p, expected NULL\n", d3d9on12);
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, present_parameters.hDeviceWindow,
+                                 D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+
+    *out_d3d9 = d3d9;
+    *out_device = device;
+
+    return hr;
+}
+
+static void test_d3d9on12(void)
+{
+    IDirect3DDevice9On12 *d3d9on12_2 = (void *)0xdeadbeef;
+    IDirect3DDevice9On12 *d3d9on12 = (void *)0xdeadbeef;
+    IDirect3DDevice9 *device = (void *)0xdeadbeef;
+    IDirect3D9 *d3d9 = (void *)0xdeadbeef;
+    IDXGIAdapter *adapter = (void *)0xdeadbeef;
+    IDXGIFactory4 *factory = (void *)0xdeadbeef;
+    ID3D12Device *d3d12device = (void *)0xdeadbeef;
+    ID3D12Device *d3d12device_2 = (void *)0xdeadbeef;
+    D3D9ON12_ARGS d3d9on12_args;
+    ULONG ref;
+    HRESULT hr;
+    HWND window = create_window();
+
+    if (!init_d3d9on12_modules())
+    {
+        win_skip("Failed to load d3d9on12 modules, skipping d3d9on12 tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    d3d9 = pDirect3DCreate9On12(D3D_SDK_VERSION, NULL, 0);
+    ok(d3d9 != NULL, "got NULL d3d9 object\n");
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 0, &device);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to create a regular Direct3DDevice9, skipping d3d9on12 tests\n");
+        goto out;
+    }
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(d3d9on12 == NULL, "QueryInterface returned interface %p, expected NULL\n", d3d9on12);
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12_args.Enable9On12 = TRUE;
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 0, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(d3d9on12 == NULL, "QueryInterface returned interface %p, expected NULL\n", d3d9on12);
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 1, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(d3d9on12 == NULL, "QueryInterface returned interface %p, expected NULL\n", d3d9on12);
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12_args.Enable9On12 = TRUE;
+    d3d9on12_args.NodeMask = 0xdeadbeef;
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 1, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9On12_QueryInterface(d3d9on12, &IID_IDirect3DDevice9On12, (void **)&d3d9on12_2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = IDirect3DDevice9On12_Release(d3d9on12_2);
+    todo_wine
+    ok(ref == 1, "Got refcount %lu.\n", ref);
+    ref = IDirect3DDevice9On12_Release(d3d9on12);
+    todo_wine
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12_args.Enable9On12 = TRUE;
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 1, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9On12_GetD3D12Device(d3d9on12, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9On12_GetD3D12Device(d3d9on12, &IID_IDeadbeef, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    IDirect3DDevice9On12_Release(d3d9on12);
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d9);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12_args.Enable9On12 = TRUE;
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 0xdeadbeef, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = IDirect3DDevice9On12_Release(d3d9on12);
+    todo_wine
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    IDirect3D9_Release(d3d9);
+
+    hr = pCreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDXGIFactory4_EnumAdapters(factory, 0, &adapter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IDXGIFactory4_Release(factory);
+
+    hr = pD3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&d3d12device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    memset(&d3d9on12_args, 0, sizeof(d3d9on12_args));
+    d3d9on12_args.Enable9On12 = TRUE;
+    d3d9on12_args.pD3D12Device = (IUnknown *)d3d12device;
+    d3d9on12 = (void *)0xdeadbeef;
+    hr = create_d3d9on12_device(&d3d9, window, &d3d9on12_args, 1, &device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9On12, (void **)&d3d9on12);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9On12_GetD3D12Device(d3d9on12, &IID_ID3D12Device, (void **)&d3d12device_2);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(d3d9on12_args.pD3D12Device == (IUnknown *)d3d12device_2, "GetD3D12Device returned device %p, expected %p\n", d3d12device_2, d3d9on12_args.pD3D12Device);
+    d3d12device_2 = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9On12_GetD3D12Device(d3d9on12, &IID_IDeadbeef, (void **)&d3d12device_2);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(d3d12device_2 == NULL, "GetD3D12Device returned device %p, expected NULL\n", d3d12device_2);
+
+    ref = ID3D12Device_Release(d3d12device);
+    todo_wine
+    ok(ref == 28, "Got refcount %lu.\n", ref);
+    ref = IDirect3DDevice9On12_Release(d3d9on12);
+    todo_wine
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "Got refcount %lu.\n", ref);
+out:
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = GetModuleHandleA("d3d9.dll");
@@ -15171,6 +15417,7 @@ START_TEST(device)
     test_creation_parameters();
     test_cursor_clipping();
     test_window_position();
+    test_d3d9on12();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
