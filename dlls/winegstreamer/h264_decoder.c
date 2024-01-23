@@ -129,82 +129,54 @@ static HRESULT create_output_media_type(struct h264_decoder *decoder, const GUID
     if (FAILED(hr = MFCreateVideoMediaTypeFromSubtype(subtype, &video_type)))
         return hr;
 
-    if (FAILED(IMFVideoMediaType_GetUINT64(video_type, &MF_MT_FRAME_SIZE, &ratio)))
-    {
-        if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_SIZE, &ratio)))
-            ratio = (UINT64)1920 << 32 | 1080;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, ratio)))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_SIZE, &ratio)))
+        ratio = (UINT64)1920 << 32 | 1080;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, ratio)))
+        goto done;
     width = ratio >> 32;
     height = ratio;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_FRAME_RATE, NULL)))
-    {
-        if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_RATE, &ratio)))
-            ratio = (UINT64)30000 << 32 | 1001;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_RATE, ratio)))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_FRAME_RATE, &ratio)))
+        ratio = (UINT64)30000 << 32 | 1001;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_RATE, ratio)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_PIXEL_ASPECT_RATIO, NULL)))
-    {
-        if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
-            ratio = (UINT64)1 << 32 | 1;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetUINT64(decoder->stream_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
+        ratio = (UINT64)1 << 32 | 1;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_SAMPLE_SIZE, NULL)))
-    {
-        if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &value)))
-            goto done;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_SAMPLE_SIZE, value)))
-            goto done;
-    }
+    if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &value)))
+        goto done;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_SAMPLE_SIZE, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_DEFAULT_STRIDE, NULL)))
-    {
-        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, width, (LONG *)&value)))
-            goto done;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_DEFAULT_STRIDE, value)))
-            goto done;
-    }
+    if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, width, (LONG *)&value)))
+        goto done;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_DEFAULT_STRIDE, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_INTERLACE_MODE, NULL)))
-    {
-        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_INTERLACE_MODE, &value)))
-            value = MFVideoInterlace_MixedInterlaceOrProgressive;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_INTERLACE_MODE, value)))
-            goto done;
-    }
+    if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_INTERLACE_MODE, &value)))
+        value = MFVideoInterlace_MixedInterlaceOrProgressive;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_INTERLACE_MODE, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
-    {
-        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
-            value = 1;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, value)))
-            goto done;
-    }
+    if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
+        value = 1;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_VIDEO_ROTATION, NULL)))
-    {
-        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_VIDEO_ROTATION, &value)))
-            value = 0;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_VIDEO_ROTATION, value)))
-            goto done;
-    }
+    if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_VIDEO_ROTATION, &value)))
+        value = 0;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_VIDEO_ROTATION, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
-    {
-        if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_FIXED_SIZE_SAMPLES, &value)))
-            value = 1;
-        if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, value)))
-            goto done;
-    }
+    if (!default_type || FAILED(IMFMediaType_GetUINT32(default_type, &MF_MT_FIXED_SIZE_SAMPLES, &value)))
+        value = 1;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, value)))
+        goto done;
 
-    if (FAILED(IMFVideoMediaType_GetItem(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL))
-            && SUCCEEDED(IMFMediaType_GetBlob(decoder->stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
+    if (SUCCEEDED(IMFMediaType_GetBlob(decoder->stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
             (BYTE *)&aperture, sizeof(aperture), &value)))
     {
         if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
