@@ -463,6 +463,17 @@ static HRESULT source_reader_queue_response(struct source_reader *reader, struct
     return S_OK;
 }
 
+static HRESULT source_reader_queue_sample(struct source_reader *reader, struct media_stream *stream,
+        IMFSample *sample)
+{
+    LONGLONG timestamp = 0;
+
+    if (FAILED(IMFSample_GetSampleTime(sample, &timestamp)))
+        WARN("Sample time wasn't set.\n");
+
+    return source_reader_queue_response(reader, stream, S_OK, 0, timestamp, sample);
+}
+
 static HRESULT source_reader_request_sample(struct source_reader *reader, struct media_stream *stream)
 {
     HRESULT hr = S_OK;
@@ -650,7 +661,6 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
     MFT_OUTPUT_DATA_BUFFER out_buffer;
     unsigned int buffer_size;
     IMFMediaBuffer *buffer;
-    LONGLONG timestamp;
     DWORD status;
     HRESULT hr;
 
@@ -688,11 +698,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
             break;
         }
 
-        timestamp = 0;
-        if (FAILED(IMFSample_GetSampleTime(out_buffer.pSample, &timestamp)))
-            WARN("Sample time wasn't set.\n");
-
-        source_reader_queue_response(reader, stream, S_OK /* FIXME */, 0, timestamp, out_buffer.pSample);
+        source_reader_queue_sample(reader, stream, out_buffer.pSample);
         if (out_buffer.pSample)
             IMFSample_Release(out_buffer.pSample);
         if (out_buffer.pEvents)
@@ -705,17 +711,10 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
 static HRESULT source_reader_process_sample(struct source_reader *reader, struct media_stream *stream,
         IMFSample *sample)
 {
-    LONGLONG timestamp;
     HRESULT hr;
 
     if (!stream->decoder.transform)
-    {
-        timestamp = 0;
-        if (FAILED(IMFSample_GetSampleTime(sample, &timestamp)))
-            WARN("Sample time wasn't set.\n");
-
-        return source_reader_queue_response(reader, stream, S_OK, 0, timestamp, sample);
-    }
+        return source_reader_queue_sample(reader, stream, sample);
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
 
