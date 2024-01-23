@@ -9,7 +9,6 @@ UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 SOURCES = \
 	aac_decoder.c \
 	color_convert.c \
-	h264_decoder.c \
 	main.c \
 	media_sink.c \
 	media_source.c \
@@ -19,6 +18,7 @@ SOURCES = \
 	resampler.c \
 	rsrc.rc \
 	unixlib.c \
+	video_decoder.c \
 	video_processor.c \
 	wg_allocator.c \
 	wg_format.c \
