@@ -4131,15 +4131,15 @@ void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *contex
 
 static void init_wow64( CONTEXT *context )
 {
-    build_wow64_main_module();
-    build_ntdll_module();
-
     if (!imports_fixup_done)
     {
         HMODULE wow64;
         WINE_MODREF *wm;
         NTSTATUS status;
         static const WCHAR wow64_path[] = L"C:\\windows\\system32\\wow64.dll";
+
+        build_wow64_main_module();
+        build_ntdll_module();
 
         if ((status = load_dll( NULL, wow64_path, 0, &wm, FALSE )))
         {
