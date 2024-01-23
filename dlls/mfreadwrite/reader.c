@@ -714,6 +714,31 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
     return hr;
 }
 
+static HRESULT source_reader_drain_transform_samples(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_DRAIN, 0)))
+        WARN("Failed to drain transform %p, hr %#lx\n", entry->transform, hr);
+    if (FAILED(hr = source_reader_pull_transform_samples(reader, stream, entry))
+            && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
+        WARN("Failed to pull pending samples, hr %#lx.\n", hr);
+
+    return S_OK;
+}
+
+static HRESULT source_reader_flush_transform_samples(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_FLUSH, 0)))
+        WARN("Failed to flush transform %p, hr %#lx\n", entry->transform, hr);
+
+    return S_OK;
+}
+
 static HRESULT source_reader_process_sample(struct source_reader *reader, struct media_stream *stream,
         IMFSample *sample)
 {
@@ -824,11 +849,10 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                     stream->state = STREAM_STATE_EOS;
                     stream->flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
 
-                    if (stream->decoder.transform && SUCCEEDED(IMFTransform_ProcessMessage(stream->decoder.transform,
-                            MFT_MESSAGE_COMMAND_DRAIN, 0)))
+                    if (stream->decoder.transform)
                     {
-                        if ((hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
-                            WARN("Failed to pull pending samples, hr %#lx.\n", hr);
+                        if (FAILED(hr = source_reader_drain_transform_samples(reader, stream, &stream->decoder)))
+                            WARN("Failed to drain pending samples, hr %#lx.\n", hr);
                     }
 
                     while (stream->requests)
@@ -1187,10 +1211,16 @@ static void source_reader_release_responses(struct source_reader *reader, struct
 static void source_reader_flush_stream(struct source_reader *reader, DWORD stream_index)
 {
     struct media_stream *stream = &reader->streams[stream_index];
+    HRESULT hr;
 
     source_reader_release_responses(reader, stream);
+
     if (stream->decoder.transform)
-        IMFTransform_ProcessMessage(stream->decoder.transform, MFT_MESSAGE_COMMAND_FLUSH, 0);
+    {
+        if (FAILED(hr = source_reader_flush_transform_samples(reader, stream, &stream->decoder)))
+            WARN("Failed to drain pending samples, hr %#lx.\n", hr);
+    }
+
     stream->requests = 0;
 }
 
