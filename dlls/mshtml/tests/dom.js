@@ -339,6 +339,12 @@ sync_test("rects", function() {
     ok(rects.length === 0, "rect.length = " + rects.length);
 });
 
+sync_test("document_lastModified", function() {
+    // actually it seems to be rounded up from about ~250ms above a sec, but be more conservative with the check
+    var diff = Date.parse(document.lastModified) - performance.timing.navigationStart;
+    ok(diff > -1000 && diff < 1000, "lastModified too far from navigationStart: " + diff);
+});
+
 sync_test("document_owner", function() {
     var node;
 
