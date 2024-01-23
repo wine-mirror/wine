@@ -1,5 +1,5 @@
 TESTDLL   = mfreadwrite.dll
-IMPORTS   = ole32 user32 d3d9 dxva2 mfplat mfreadwrite mfuuid
+IMPORTS   = ole32 user32 d3d9 dxva2 mfplat mfreadwrite mfuuid propsys
 
 SOURCES = \
 	mfplat.c \

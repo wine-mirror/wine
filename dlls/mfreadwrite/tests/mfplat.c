@@ -61,6 +61,53 @@ struct attribute_desc
 #define ATTR_RATIO(k, n, d, ...)  {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.HighPart = n, .LowPart = d}}, .ratio = TRUE, __VA_ARGS__ }
 #define ATTR_UINT64(k, v, ...)    {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.QuadPart = v}}, __VA_ARGS__ }
 
+#define check_media_type(a, b, c) check_attributes_(__FILE__, __LINE__, (IMFAttributes *)a, b, c)
+#define check_attributes(a, b, c) check_attributes_(__FILE__, __LINE__, a, b, c)
+void check_attributes_(const char *file, int line, IMFAttributes *attributes,
+        const struct attribute_desc *desc, ULONG limit)
+{
+    char buffer[1024], *buf = buffer;
+    PROPVARIANT value;
+    int i, j, ret;
+    HRESULT hr;
+
+    for (i = 0; i < limit && desc[i].key; ++i)
+    {
+        hr = IMFAttributes_GetItem(attributes, desc[i].key, &value);
+        todo_wine_if(desc[i].todo)
+        ok_(file, line)(hr == S_OK, "%s missing, hr %#lx\n", debugstr_a(desc[i].name), hr);
+        if (hr != S_OK) continue;
+
+        switch (value.vt)
+        {
+        default: sprintf(buffer, "??"); break;
+        case VT_CLSID: sprintf(buffer, "%s", debugstr_guid(value.puuid)); break;
+        case VT_UI4: sprintf(buffer, "%lu", value.ulVal); break;
+        case VT_UI8:
+            if (desc[i].ratio)
+                sprintf(buffer, "%lu:%lu", value.uhVal.HighPart, value.uhVal.LowPart);
+            else
+                sprintf(buffer, "%I64u", value.uhVal.QuadPart);
+            break;
+        case VT_VECTOR | VT_UI1:
+            buf += sprintf(buf, "size %lu, data {", value.caub.cElems);
+            for (j = 0; j < 128 && j < value.caub.cElems; ++j)
+                buf += sprintf(buf, "0x%02x,", value.caub.pElems[j]);
+            if (value.caub.cElems > 128)
+                buf += sprintf(buf, "...}");
+            else
+                buf += sprintf(buf - (j ? 1 : 0), "}");
+            break;
+        }
+
+        ret = PropVariantCompareEx(&value, &desc[i].value, 0, 0);
+        todo_wine_if(desc[i].todo_value)
+        ok_(file, line)(ret == 0, "%s mismatch, type %u, value %s\n",
+                debugstr_a(desc[i].name), value.vt, buffer);
+        PropVariantClear(&value);
+    }
+}
+
 #define init_media_type(a, b, c) init_attributes_(__FILE__, __LINE__, (IMFAttributes *)a, b, c)
 #define init_attributes(a, b, c) init_attributes_(__FILE__, __LINE__, a, b, c)
 static void init_attributes_(const char *file, int line, IMFAttributes *attributes,
@@ -1604,6 +1651,343 @@ static void test_interfaces(void)
         IMFStreamDescriptor_Release(audio_streams[i]);
 }
 
+static void test_source_reader_transforms(void)
+{
+    static const struct attribute_desc h264_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        {0},
+    };
+    static const struct attribute_desc nv12_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        {0},
+    };
+    static const struct attribute_desc nv12_expect_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 96),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 13824),
+        ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        {0},
+    };
+    static const struct attribute_desc yuy2_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        {0},
+    };
+    static const struct attribute_desc yuy2_expect_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AVG_BIT_ERROR_RATE, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 192),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 18432),
+        ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0),
+        {0},
+    };
+    static const struct attribute_desc rgb32_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        {0},
+    };
+    IMFStreamDescriptor *video_stream;
+    IMFSourceReaderEx *reader_ex;
+    IMFMediaType *media_type;
+    IMFSourceReader *reader;
+    IMFTransform *transform;
+    IMFMediaSource *source;
+    GUID category;
+    HRESULT hr;
+
+    /* test source reader with a RGB32 source */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, rgb32_stream_type_desc, -1);
+    hr = MFCreateStreamDescriptor(0, 1, &media_type, &video_stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    source = create_test_source(&video_stream, 1);
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* skip tests on Win7 which misses IMFSourceReaderEx and has uninteresting media types differences */
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win7 */, "Unexpected hr %#lx.\n", hr);
+    if (broken(hr == E_NOINTERFACE))
+    {
+        win_skip("missing IMFSourceReaderEx interface, skipping tests on Win7\n");
+        goto skip_tests;
+    }
+    IMFSourceReaderEx_Release(reader_ex);
+
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, rgb32_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, rgb32_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    /* only one stream type and only one stream */
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 1, &media_type);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_GetNativeMediaType(reader, 1, 0, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 1, &media_type);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
+
+    /* cannot request encoding to compressed media type */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, h264_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    /* SetCurrentMediaType needs major type and subtype */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, nv12_stream_type_desc, 1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* RGB32 -> NV12 conversion */
+    init_media_type(media_type, nv12_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, rgb32_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetServiceForStream(reader, 0, &GUID_NULL, &IID_IMFTransform, (void **)&transform);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+    IMFStreamDescriptor_Release(video_stream);
+
+
+    /* test source reader with a NV12 source */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, nv12_stream_type_desc, -1);
+    hr = MFCreateStreamDescriptor(0, 1, &media_type, &video_stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    source = create_test_source(&video_stream, 1);
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, nv12_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, nv12_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    /* NV12 -> RGB32 conversion */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, rgb32_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetServiceForStream(reader, 0, &GUID_NULL, &IID_IMFTransform, (void **)&transform);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    /* NV12 -> YUY2 conversion */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, yuy2_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, nv12_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetServiceForStream(reader, 0, &GUID_NULL, &IID_IMFTransform, (void **)&transform);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+    IMFStreamDescriptor_Release(video_stream);
+
+
+    /* test source reader with a H264 source */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, h264_stream_type_desc, -1);
+    hr = MFCreateStreamDescriptor(0, 1, &media_type, &video_stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    source = create_test_source(&video_stream, 1);
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, h264_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, h264_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    /* when H264 output is used, there's no decoder transform */
+    hr = IMFSourceReader_GetServiceForStream(reader, 0, &GUID_NULL, &IID_IMFTransform, (void **)&transform);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    /* H264 -> RGB32 conversion */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, rgb32_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    /* H264 -> NV12 conversion */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, nv12_stream_type_desc, 2); /* doesn't need the frame size */
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, nv12_expect_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    /* the H264 decoder transform can now be accessed */
+    hr = IMFSourceReader_GetServiceForStream(reader, 0, &GUID_NULL, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, h264_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, nv12_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    IMFTransform_Release(transform);
+
+    /* YUY2 output works too */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, yuy2_stream_type_desc, 2); /* doesn't need the frame size */
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, yuy2_expect_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    /* decoder transform is also available through the IMFSourceReaderEx interface */
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, &category, &transform);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_media_type(media_type, h264_stream_type_desc, -1);
+        IMFMediaType_Release(media_type);
+
+        hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_media_type(media_type, yuy2_stream_type_desc, -1);
+        IMFMediaType_Release(media_type);
+
+        /* changing the transform media type doesn't change the reader output type */
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(media_type, nv12_stream_type_desc, -1);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+
+        hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_media_type(media_type, yuy2_expect_desc, -1);
+        IMFMediaType_Release(media_type);
+
+        IMFTransform_Release(transform);
+    }
+
+    hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 1, &category, &transform);
+    todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    IMFSourceReaderEx_Release(reader_ex);
+
+skip_tests:
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+    IMFStreamDescriptor_Release(video_stream);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -1618,6 +2002,7 @@ START_TEST(mfplat)
     test_source_reader("test.wav", false);
     test_source_reader("test.mp4", true);
     test_source_reader_from_media_source();
+    test_source_reader_transforms();
     test_reader_d3d9();
     test_sink_writer_create();
     test_sink_writer_mp4();
