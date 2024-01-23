@@ -772,7 +772,7 @@ static void test_UrlGetPart(void)
 }
 
 /* ########################### */
-static void check_url_canonicalize(const char *url, DWORD flags, const char *expect, BOOL todo)
+static void check_url_canonicalize(const char *url, DWORD flags, const char *expect)
 {
     char output[INTERNET_MAX_URL_LENGTH];
     WCHAR outputW[INTERNET_MAX_URL_LENGTH];
@@ -788,8 +788,7 @@ static void check_url_canonicalize(const char *url, DWORD flags, const char *exp
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = UrlCanonicalizeA(url, output, &size, flags);
     ok(hr == S_OK || (!url[0] && hr == S_FALSE) /* Vista+ */, "Got unexpected hr %#lx.\n", hr);
-    todo_wine_if (todo)
-        ok(!strcmp(output, expect), "Expected %s, got %s.\n", debugstr_a(expect), debugstr_a(output));
+    ok(!strcmp(output, expect), "Expected %s, got %s.\n", debugstr_a(expect), debugstr_a(output));
 
     size = INTERNET_MAX_URL_LENGTH;
     hr = UrlCanonicalizeW(urlW, NULL, &size, flags);
@@ -967,12 +966,11 @@ static void test_UrlCanonicalizeA(void)
         const char *url;
         DWORD flags;
         const char *expect;
-        BOOL todo;
     }
     tests[] =
     {
         {"", 0, ""},
-        {"http://www.winehq.org/tests/../tests/../..", 0, "http://www.winehq.org/", TRUE},
+        {"http://www.winehq.org/tests/../tests/../..", 0, "http://www.winehq.org/"},
         {"http://www.winehq.org/..", 0, "http://www.winehq.org/.."},
         {"http://www.winehq.org/tests/tests2/../../tests", 0, "http://www.winehq.org/tests"},
         {"http://www.winehq.org/tests/../tests", 0, "http://www.winehq.org/tests"},
@@ -1066,7 +1064,7 @@ static void test_UrlCanonicalizeA(void)
         {"///A/../B", URL_WININET_COMPATIBILITY, "///B"},
         {"A", 0, "A"},
         {"../A", 0, "../A"},
-        {"A/../B", 0, "B", TRUE},
+        {"A/../B", 0, "B"},
         {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, "/uri-res/N2R?urn:sha1:B3K"} /*LimeWire online installer calls this*/,
         {"http:www.winehq.org/dir/../index.html", 0, "http:www.winehq.org/index.html"},
         {"http://localhost/test.html", URL_FILE_USE_PATHURL, "http://localhost/test.html"},
@@ -1158,7 +1156,7 @@ static void test_UrlCanonicalizeA(void)
 
     /* test url-modification */
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-        check_url_canonicalize(tests[i].url, tests[i].flags, tests[i].expect, tests[i].todo);
+        check_url_canonicalize(tests[i].url, tests[i].flags, tests[i].expect);
 }
 
 /* ########################### */

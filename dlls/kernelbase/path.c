@@ -1,6 +1,7 @@
 /*
  * Copyright 2018 Nikolay Sivov
  * Copyright 2018 Zhiyi Zhang
+ * Copyright 2021-2023 Zebediah Figura
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +19,9 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -89,6 +92,38 @@ static WCHAR *heap_strdupAtoW(const char *str)
     }
 
     return ret;
+}
+
+static bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    unsigned int new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return true;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return false;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc( *elements, new_capacity * size )))
+        return false;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return true;
+}
+
+static bool is_slash( char c )
+{
+    return c == '/' || c == '\\';
 }
 
 static BOOL is_drive_spec( const WCHAR *str )
@@ -2770,6 +2805,13 @@ url_schemes[] =
     { URL_SCHEME_RES,        L"res"},
 };
 
+static const WCHAR *parse_scheme( const WCHAR *p )
+{
+    while (*p <= 0x7f && (iswalnum( *p ) || *p == '+' || *p == '-' || *p == '.'))
+        ++p;
+    return p;
+}
+
 static DWORD get_scheme_code(const WCHAR *scheme, DWORD scheme_len)
 {
     unsigned int i;
@@ -3554,16 +3596,596 @@ HRESULT WINAPI UrlCanonicalizeA(const char *src_url, char *canonicalized, DWORD 
     return hr;
 }
 
+static bool scheme_is_opaque( URL_SCHEME scheme )
+{
+    switch (scheme)
+    {
+        case URL_SCHEME_ABOUT:
+        case URL_SCHEME_JAVASCRIPT:
+        case URL_SCHEME_MAILTO:
+        case URL_SCHEME_SHELL:
+        case URL_SCHEME_VBSCRIPT:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static bool scheme_preserves_backslashes( URL_SCHEME scheme )
+{
+    switch (scheme)
+    {
+        case URL_SCHEME_FTP:
+        case URL_SCHEME_INVALID:
+        case URL_SCHEME_LOCAL:
+        case URL_SCHEME_MK:
+        case URL_SCHEME_RES:
+        case URL_SCHEME_UNKNOWN:
+        case URL_SCHEME_WAIS:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static bool scheme_uses_hostname( URL_SCHEME scheme )
+{
+    switch (scheme)
+    {
+        case URL_SCHEME_ABOUT:
+        case URL_SCHEME_JAVASCRIPT:
+        case URL_SCHEME_MAILTO:
+        case URL_SCHEME_MK:
+        case URL_SCHEME_SHELL:
+        case URL_SCHEME_VBSCRIPT:
+            return false;
+
+        default:
+            return true;
+    }
+}
+
+static bool scheme_char_is_separator( URL_SCHEME scheme, WCHAR c )
+{
+    if (c == '/')
+        return true;
+    if (c == '\\' && scheme != URL_SCHEME_INVALID && scheme != URL_SCHEME_UNKNOWN)
+        return true;
+    return false;
+}
+
+static bool scheme_char_is_hostname_separator( URL_SCHEME scheme, DWORD flags, WCHAR c )
+{
+    switch (c)
+    {
+        case 0:
+        case '/':
+            return true;
+        case '\\':
+            return !scheme_preserves_backslashes( scheme );
+        case '?':
+            return scheme != URL_SCHEME_FILE || (flags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL));
+        case '#':
+            return scheme != URL_SCHEME_FILE;
+        default:
+            return false;
+    }
+}
+
+static bool scheme_char_is_dot_separator( URL_SCHEME scheme, DWORD flags, WCHAR c )
+{
+    switch (c)
+    {
+        case 0:
+        case '/':
+        case '?':
+            return true;
+        case '#':
+            return (scheme != URL_SCHEME_FILE || !(flags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL)));
+        case '\\':
+            return (scheme != URL_SCHEME_INVALID && scheme != URL_SCHEME_UNKNOWN && scheme != URL_SCHEME_MK);
+        default:
+            return false;
+    }
+}
+
+/* There are essentially two types of behaviour concerning dot simplification,
+ * not counting opaque schemes:
+ *
+ * 1) Simplify dots if and only if the first element is not a single or double
+ *    dot. If a double dot would rewind past the root, ignore it. For example:
+ *
+ *        http://hostname/a/../../b/. -> http://hostname/b/
+ *        http://hostname/./../../b/. -> http://hostname/./../../b/.
+ *
+ * 2) Effectively treat all paths as relative. Always simplify, except if a
+ *    double dot would rewind past the root, in which case emit it verbatim.
+ *    For example:
+ *
+ *        wine://hostname/a/../../b/. -> wine://hostname/../b/
+ *        wine://hostname/./../../b/. -> wine://hostname/../b/
+ *
+ * For unclear reasons, this behaviour also correlates with whether a final
+ * slash is always emitted after a single or double dot (e.g. if
+ * URL_DONT_SIMPLIFY is specified). The former type does not emit a slash; the
+ * latter does.
+ */
+static bool scheme_is_always_relative( URL_SCHEME scheme, DWORD flags )
+{
+    switch (scheme)
+    {
+        case URL_SCHEME_INVALID:
+        case URL_SCHEME_UNKNOWN:
+            return true;
+
+        case URL_SCHEME_FILE:
+            return flags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL);
+
+        default:
+            return false;
+    }
+}
+
+struct string_buffer
+{
+    WCHAR *string;
+    size_t len, capacity;
+};
+
+static void append_string( struct string_buffer *buffer, const WCHAR *str, size_t len )
+{
+    array_reserve( (void **)&buffer->string, &buffer->capacity, buffer->len + len, sizeof(WCHAR) );
+    memcpy( buffer->string + buffer->len, str, len * sizeof(WCHAR) );
+    buffer->len += len;
+}
+
+static void append_char( struct string_buffer *buffer, WCHAR c )
+{
+    append_string( buffer, &c, 1 );
+}
+
+static char get_slash_dir( URL_SCHEME scheme, DWORD flags, char src, const struct string_buffer *dst )
+{
+    if (src && scheme_preserves_backslashes( scheme ))
+        return src;
+
+    if (scheme == URL_SCHEME_FILE && (flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
+            && !wmemchr( dst->string, '#', dst->len ))
+        return '\\';
+
+    return '/';
+}
+
+static void rewrite_url( struct string_buffer *dst, const WCHAR *url, DWORD *flags_ptr )
+{
+    DWORD flags = *flags_ptr;
+    bool pathurl = (flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY));
+    bool is_relative = false, has_hostname = false, has_initial_slash = false;
+    const WCHAR *query = NULL, *hash = NULL;
+    URL_SCHEME scheme = URL_SCHEME_INVALID;
+    size_t query_len = 0, hash_len = 0;
+    const WCHAR *scheme_end, *src_end;
+    const WCHAR *hostname = NULL;
+    size_t hostname_len = 0;
+    const WCHAR *src = url;
+    size_t root_offset;
+
+    /* Determine the scheme. */
+
+    scheme_end = parse_scheme( url );
+
+    if (*scheme_end == ':' && scheme_end >= url + 2)
+    {
+        size_t scheme_len = scheme_end + 1 - url;
+
+        scheme = get_scheme_code( url, scheme_len - 1 );
+
+        for (size_t i = 0; i < scheme_len; ++i)
+            append_char( dst, tolower( *src++ ));
+    }
+    else if (url[0] == '\\' && url[1] == '\\')
+    {
+        append_string( dst, L"file:", 5 );
+        if (!pathurl && !(flags & URL_UNESCAPE))
+            flags |= URL_ESCAPE_UNSAFE | URL_ESCAPE_PERCENT;
+        scheme = URL_SCHEME_FILE;
+
+        has_hostname = true;
+    }
+
+    if (is_escaped_drive_spec( url ))
+    {
+        append_string( dst, L"file://", 7 );
+        if (!pathurl && !(flags & URL_UNESCAPE))
+            flags |= URL_ESCAPE_UNSAFE | URL_ESCAPE_PERCENT;
+        scheme = URL_SCHEME_FILE;
+
+        hostname_len = 0;
+        has_hostname = true;
+    }
+    else if (scheme == URL_SCHEME_MK)
+    {
+        if (src[0] == '@')
+        {
+            while (*src && *src != '/')
+                append_char( dst, *src++ );
+            if (*src == '/')
+                append_char( dst, *src++ );
+            else
+                append_char( dst, '/' );
+
+            if ((src[0] == '.' && scheme_char_is_dot_separator( scheme, flags, src[1] )) ||
+                (src[0] == '.' && src[1] == '.' && scheme_char_is_dot_separator( scheme, flags, src[2] )))
+                is_relative = true;
+        }
+    }
+    else if (scheme_uses_hostname( scheme ) && scheme_char_is_separator( scheme, src[0] )
+            && scheme_char_is_separator( scheme, src[1] ))
+    {
+        append_char( dst, scheme_preserves_backslashes( scheme ) ? src[0] : '/' );
+        append_char( dst, scheme_preserves_backslashes( scheme ) ? src[1] : '/' );
+        src += 2;
+        if (scheme == URL_SCHEME_FILE && is_slash( src[0] ) && is_slash( src[1] ))
+        {
+            while (is_slash( *src ))
+                ++src;
+        }
+
+        hostname = src;
+
+        while (!scheme_char_is_hostname_separator( scheme, flags, *src ))
+            ++src;
+        hostname_len = src - hostname;
+        has_hostname = true;
+        has_initial_slash = true;
+    }
+    else if (scheme_char_is_separator( scheme, src[0] ))
+    {
+        has_initial_slash = true;
+
+        if (scheme == URL_SCHEME_UNKNOWN || scheme == URL_SCHEME_INVALID)
+        {
+            /* Special case: an unknown scheme starting with a single slash
+             * considers the "root" to be the single slash.
+             * Most other schemes treat it as an empty path segment instead. */
+            append_char( dst, *src++ );
+
+            if (*src == '\\')
+                ++src;
+        }
+        else if (scheme == URL_SCHEME_FILE)
+        {
+            src++;
+
+            append_string( dst, L"//", 2 );
+
+            hostname_len = 0;
+            has_hostname = true;
+        }
+    }
+    else
+    {
+        if (scheme == URL_SCHEME_FILE)
+        {
+            if (is_escaped_drive_spec( src ))
+            {
+                append_string( dst, L"//", 2 );
+                hostname_len = 0;
+                has_hostname = true;
+            }
+            else
+            {
+                if (flags & URL_FILE_USE_PATHURL)
+                    append_string( dst, L"//", 2 );
+            }
+        }
+    }
+
+    if (scheme == URL_SCHEME_FILE && (flags & URL_FILE_USE_PATHURL))
+        flags |= URL_UNESCAPE;
+
+    *flags_ptr = flags;
+
+    if (has_hostname)
+    {
+        if (scheme == URL_SCHEME_FILE)
+        {
+            bool is_drive = false;
+
+            if (is_slash( *src ))
+                ++src;
+
+            if (hostname_len >= 2 && is_escaped_drive_spec( hostname ))
+            {
+                hostname_len = 0;
+                src = hostname;
+                is_drive = true;
+            }
+            else if (is_escaped_drive_spec( src ))
+            {
+                is_drive = true;
+            }
+
+            if (pathurl)
+            {
+                if (hostname_len == 9 && !wcsnicmp( hostname, L"localhost", 9 ))
+                {
+                    hostname_len = 0;
+                    if (is_slash( *src ))
+                        ++src;
+                    if (is_escaped_drive_spec( src ))
+                        is_drive = true;
+                }
+
+                if (!is_drive)
+                {
+                    if (hostname_len)
+                    {
+                        append_string( dst, L"\\\\", 2 );
+                        append_string( dst, hostname, hostname_len );
+                    }
+
+                    if ((*src && *src != '?') || (flags & URL_WININET_COMPATIBILITY))
+                        append_char( dst, get_slash_dir( scheme, flags, 0, dst ));
+                }
+            }
+            else
+            {
+                if (hostname_len)
+                    append_string( dst, hostname, hostname_len );
+                append_char( dst, '/' );
+            }
+
+            if (is_drive)
+            {
+                /* Root starts after the first slash when file flags are in use,
+                 * but directly after the drive specification if not. */
+                if (pathurl)
+                {
+                    while (!scheme_char_is_hostname_separator( scheme, flags, *src ))
+                        append_char( dst, *src++ );
+                    if (is_slash( *src ))
+                    {
+                        append_char( dst, '\\' );
+                        src++;
+                    }
+                }
+                else
+                {
+                    append_char( dst, *src++ );
+                    append_char( dst, *src++ );
+                    if (is_slash( *src ))
+                    {
+                        append_char( dst, '/' );
+                        src++;
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < hostname_len; ++i)
+            {
+                if (scheme == URL_SCHEME_UNKNOWN || scheme == URL_SCHEME_INVALID)
+                    append_char( dst, hostname[i] );
+                else
+                    append_char( dst, tolower( hostname[i] ));
+            }
+
+            if (*src == '/' || *src == '\\')
+            {
+                append_char( dst, scheme_preserves_backslashes( scheme ) ? *src : '/' );
+                src++;
+            }
+            else
+            {
+                append_char( dst, '/' );
+            }
+        }
+
+        if ((src[0] == '.' && scheme_char_is_dot_separator( scheme, flags, src[1] )) ||
+            (src[0] == '.' && src[1] == '.' && scheme_char_is_dot_separator( scheme, flags, src[2] )))
+        {
+            if (!scheme_is_always_relative( scheme, flags ))
+                is_relative = true;
+        }
+    }
+
+    /* root_offset now points to the point past which we will not rewind.
+     * If there is a hostname, it points to the character after the closing
+     * slash. */
+
+    root_offset = dst->len;
+
+    /* Break up the rest of the URL into the body, query, and hash parts. */
+
+    src_end = src + wcslen( src );
+
+    if (scheme_is_opaque( scheme ))
+    {
+        /* +1 for null terminator */
+        append_string( dst, src, src_end + 1 - src );
+        return;
+    }
+
+    if (scheme == URL_SCHEME_FILE)
+    {
+        if (!pathurl)
+        {
+            if (src[0] == '#')
+                hash = src;
+            else if (is_slash( src[0] ) && src[1] == '#')
+                hash = src + 1;
+
+            if (src[0] == '?')
+                query = src;
+            else if (is_slash( src[0] ) && src[1] == '?')
+                query = src + 1;
+        }
+        else
+        {
+            query = wcschr( src, '?' );
+        }
+
+        if (!hash)
+        {
+            for (const WCHAR *p = src; p < src_end; ++p)
+            {
+                if (!wcsnicmp( p, L".htm#" , 5))
+                    hash = p + 4;
+                else if (!wcsnicmp( p, L".html#", 6 ))
+                    hash = p + 5;
+            }
+        }
+    }
+    else
+    {
+        query = wcschr( src, '?' );
+        hash = wcschr( src, '#' );
+    }
+
+    if (query)
+        query_len = ((hash && hash > query) ? hash : src_end) - query;
+    if (hash)
+        hash_len = ((query && query > hash) ? query : src_end) - hash;
+
+    if (query)
+        src_end = query;
+    if (hash && hash < src_end)
+        src_end = hash;
+
+    if (scheme == URL_SCHEME_UNKNOWN && !has_initial_slash)
+    {
+        if (!(flags & URL_DONT_SIMPLIFY) && src[0] == '.' && src_end == src + 1)
+            src++;
+        flags |= URL_DONT_SIMPLIFY;
+    }
+
+    while (src < src_end)
+    {
+        bool is_dots = false;
+        size_t len;
+
+        for (len = 0; src + len < src_end && !scheme_char_is_separator( scheme, src[len] ); ++len)
+            ;
+
+        if (src[0] == '.' && scheme_char_is_dot_separator( scheme, flags, src[1] ))
+        {
+            if (!is_relative)
+            {
+                if (flags & URL_DONT_SIMPLIFY)
+                {
+                    is_dots = true;
+                }
+                else
+                {
+                    ++src;
+                    if (*src == '/' || *src == '\\')
+                        ++src;
+                    continue;
+                }
+            }
+        }
+        else if (src[0] == '.' && src[1] == '.' && scheme_char_is_dot_separator( scheme, flags, src[2] ))
+        {
+            if (!is_relative)
+            {
+                if (flags & URL_DONT_SIMPLIFY)
+                {
+                    is_dots = true;
+                }
+                else if (dst->len == root_offset && scheme_is_always_relative( scheme, flags ))
+                {
+                    /* We could also use is_dots here, except that we need to
+                     * update root afterwards. */
+
+                    append_char( dst, *src++ );
+                    append_char( dst, *src++ );
+                    if (*src == '/' || *src == '\\')
+                        append_char( dst, get_slash_dir( scheme, flags, *src++, dst ));
+                    else
+                        append_char( dst, get_slash_dir( scheme, flags, 0, dst ));
+                    root_offset = dst->len;
+                    continue;
+                }
+                else
+                {
+                    if (dst->len > root_offset)
+                        --dst->len; /* rewind past the last slash */
+
+                    while (dst->len > root_offset && !scheme_char_is_separator( scheme, dst->string[dst->len - 1] ))
+                        --dst->len;
+
+                    src += 2;
+                    if (*src == '/' || *src == '\\')
+                        ++src;
+                    continue;
+                }
+            }
+        }
+
+        if (len)
+        {
+            append_string( dst, src, len );
+            src += len;
+        }
+
+        if (*src == '?' || *src == '#' || !*src)
+        {
+            if (scheme == URL_SCHEME_UNKNOWN && !has_initial_slash)
+                is_dots = false;
+
+            if (is_dots && scheme_is_always_relative( scheme, flags ))
+                append_char( dst, get_slash_dir( scheme, flags, 0, dst ));
+        }
+        else /* slash */
+        {
+            append_char( dst, get_slash_dir( scheme, flags, *src++, dst ));
+        }
+    }
+
+    /* If the source was non-empty but collapsed to an empty string, output a
+     * single slash. */
+    if (!dst->len && src_end != url)
+        append_char( dst, '/' );
+
+    /* UNKNOWN and FILE schemes usually reorder the ? before the #, but others
+     * emit them in the original order. */
+    if (query && hash && scheme != URL_SCHEME_FILE && scheme != URL_SCHEME_INVALID && scheme != URL_SCHEME_UNKNOWN)
+    {
+        if (query < hash)
+        {
+            append_string( dst, query, query_len );
+            append_string( dst, hash, hash_len );
+        }
+        else
+        {
+            append_string( dst, hash, hash_len );
+            append_string( dst, query, query_len );
+        }
+    }
+    else if (!(scheme == URL_SCHEME_FILE && (flags & URL_FILE_USE_PATHURL)))
+    {
+        if (query)
+            append_string( dst, query, query_len );
+
+        if (hash)
+            append_string( dst, hash, hash_len );
+    }
+
+    append_char( dst, 0 );
+}
+
 HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWORD *canonicalized_len, DWORD flags)
 {
-    WCHAR *url_copy, *url, *wk2, *mp, *mp2;
-    DWORD nByteLen, nLen, nWkLen;
-    const WCHAR *wk1, *root;
+    struct string_buffer rewritten = {0};
     DWORD escape_flags;
-    WCHAR slash = '\0';
     HRESULT hr = S_OK;
-    BOOL is_file_url;
-    INT state;
+    const WCHAR *src;
+    WCHAR *url, *dst;
+    DWORD len;
 
     TRACE("%s, %p, %p, %#lx\n", wine_dbgstr_w(src_url), canonicalized, canonicalized_len, flags);
 
@@ -3576,326 +4198,64 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
         return S_OK;
     }
 
-    /* Remove '\t' characters from URL */
-    nByteLen = (lstrlenW(src_url) + 1) * sizeof(WCHAR); /* length in bytes */
-    url = HeapAlloc(GetProcessHeap(), 0, nByteLen);
-    if(!url)
+    /* PATHURL takes precedence. */
+    if (flags & URL_FILE_USE_PATHURL)
+        flags &= ~URL_WININET_COMPATIBILITY;
+
+    /* strip initial and final C0 control characters and space */
+    src = src_url;
+    while (*src > 0 && *src <= 0x20)
+        ++src;
+    len = wcslen( src );
+    while (len && src[len - 1] > 0 && src[len - 1] <= 0x20)
+        --len;
+
+    if (!(url = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
         return E_OUTOFMEMORY;
 
-    wk1 = src_url;
-    wk2 = url;
-    do
+    dst = url;
+    for (size_t i = 0; i < len; ++i)
     {
-        while(*wk1 == '\t')
-            wk1++;
-        *wk2++ = *wk1;
-    } while (*wk1++);
+        if (src[i] != '\t' && src[i] != '\n' && src[i] != '\r')
+            *dst++ = src[i];
+    }
+    *dst++ = 0;
 
-    /* Allocate memory for simplified URL (before escaping) */
-    nByteLen = (wk2-url)*sizeof(WCHAR);
-    url_copy = heap_alloc(nByteLen + sizeof(L"file:///"));
-    if (!url_copy)
+    rewrite_url( &rewritten, url, &flags );
+
+    if (flags & URL_UNESCAPE)
     {
-        heap_free(url);
-        return E_OUTOFMEMORY;
+        len = rewritten.len;
+        UrlUnescapeW( rewritten.string, NULL, &len, URL_UNESCAPE_INPLACE);
+        rewritten.len = wcslen( rewritten.string ) + 1;
     }
 
-    is_file_url = !wcsncmp(url, L"file:", 5);
-
-    if ((nByteLen >= 5*sizeof(WCHAR) && !wcsncmp(url, L"http:", 5)) || is_file_url)
-        slash = '/';
-
-    if ((flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY)) && is_file_url)
-        slash = '\\';
-
-    if (nByteLen >= 4*sizeof(WCHAR) && !wcsncmp(url, L"res:", 4))
-    {
-        flags &= ~URL_FILE_USE_PATHURL;
-        slash = '\0';
-    }
-
-    /*
-     * state =
-     *         0   initial  1,3
-     *         1   have 2[+] alnum  2,3
-     *         2   have scheme (found :)  4,6,3
-     *         3   failed (no location)
-     *         4   have //  5,3
-     *         5   have 1[+] alnum  6,3
-     *         6   have location (found /) save root location
-     */
-
-    wk1 = url;
-    wk2 = url_copy;
-    state = 0;
-
-    /* Assume path */
-    if (url[1] == ':')
-    {
-        lstrcpyW(wk2, L"file:///");
-        wk2 += lstrlenW(wk2);
-        if (flags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
-        {
-            slash = '\\';
-            --wk2;
-        }
-        else
-            flags |= URL_ESCAPE_UNSAFE;
-        state = 5;
-        is_file_url = TRUE;
-    }
-    else if (url[0] == '/')
-    {
-        state = 5;
-        is_file_url = TRUE;
-    }
-
-    while (*wk1)
-    {
-        switch (state)
-        {
-        case 0:
-            if (!iswalnum(*wk1)) {state = 3; break;}
-            *wk2++ = *wk1++;
-            if (!iswalnum(*wk1)) {state = 3; break;}
-            *wk2++ = *wk1++;
-            state = 1;
-            break;
-        case 1:
-            *wk2++ = *wk1;
-            if (*wk1++ == ':') state = 2;
-            break;
-        case 2:
-            *wk2++ = *wk1++;
-            if (*wk1 != '/') {state = 6; break;}
-            *wk2++ = *wk1++;
-            if ((flags & URL_FILE_USE_PATHURL) && nByteLen >= 9*sizeof(WCHAR) && is_file_url
-                && !wcsncmp(wk1, L"localhost", 9))
-            {
-                wk1 += 9;
-                while (*wk1 == '\\' && (flags & URL_FILE_USE_PATHURL))
-                    wk1++;
-            }
-
-            if (*wk1 == '/' && (flags & URL_FILE_USE_PATHURL))
-                wk1++;
-            else if (is_file_url)
-            {
-                const WCHAR *body = wk1;
-
-                while (*body == '/')
-                    ++body;
-
-                if (is_drive_spec( body ))
-                {
-                    if (!(flags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL)))
-                    {
-                        if (slash)
-                            *wk2++ = slash;
-                        else
-                            *wk2++ = '/';
-                    }
-                }
-                else
-                {
-                    if (flags & URL_WININET_COMPATIBILITY)
-                    {
-                        if (*wk1 == '/' && *(wk1 + 1) != '/')
-                        {
-                            *wk2++ = '\\';
-                        }
-                        else
-                        {
-                            *wk2++ = '\\';
-                            *wk2++ = '\\';
-                        }
-                    }
-                    else
-                    {
-                        if (*wk1 == '/' && *(wk1+1) != '/')
-                        {
-                            if (slash)
-                                *wk2++ = slash;
-                            else
-                                *wk2++ = '/';
-                        }
-                    }
-                }
-                wk1 = body;
-            }
-            state = 4;
-            break;
-        case 3:
-            nWkLen = lstrlenW(wk1);
-            memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
-            mp = wk2;
-            wk1 += nWkLen;
-            wk2 += nWkLen;
-
-            if (slash)
-            {
-                while (mp < wk2)
-                {
-                    if (*mp == '/' || *mp == '\\')
-                        *mp = slash;
-                    mp++;
-                }
-            }
-            break;
-        case 4:
-            if (!iswalnum(*wk1) && (*wk1 != '-') && (*wk1 != '.') && (*wk1 != ':'))
-            {
-                state = 3;
-                break;
-            }
-            while (iswalnum(*wk1) || (*wk1 == '-') || (*wk1 == '.') || (*wk1 == ':'))
-                *wk2++ = *wk1++;
-            state = 5;
-            if (!*wk1)
-            {
-                if (slash)
-                    *wk2++ = slash;
-                else
-                    *wk2++ = '/';
-            }
-            break;
-        case 5:
-            if (*wk1 != '/' && *wk1 != '\\')
-            {
-                state = 3;
-                break;
-            }
-            while (*wk1 == '/' || *wk1 == '\\')
-            {
-                if (slash)
-                    *wk2++ = slash;
-                else
-                    *wk2++ = *wk1;
-                wk1++;
-            }
-            state = 6;
-            break;
-        case 6:
-            if (flags & URL_DONT_SIMPLIFY)
-            {
-                state = 3;
-                break;
-            }
-
-            /* Now at root location, cannot back up any more. */
-            /* "root" will point at the '/' */
-
-            root = wk2-1;
-            while (*wk1)
-            {
-                mp = wcschr(wk1, '/');
-                mp2 = wcschr(wk1, '\\');
-                if (mp2 && (!mp || mp2 < mp))
-                    mp = mp2;
-                if (!mp)
-                {
-                    nWkLen = lstrlenW(wk1);
-                    memcpy(wk2, wk1, (nWkLen + 1) * sizeof(WCHAR));
-                    wk1 += nWkLen;
-                    wk2 += nWkLen;
-                    continue;
-                }
-                nLen = mp - wk1;
-                if (nLen)
-                {
-                    memcpy(wk2, wk1, nLen * sizeof(WCHAR));
-                    wk2 += nLen;
-                    wk1 += nLen;
-                }
-                if (slash)
-                    *wk2++ = slash;
-                else
-                    *wk2++ = *wk1;
-                wk1++;
-
-                while (*wk1 == '.')
-                {
-                    TRACE("found '/.'\n");
-                    if (wk1[1] == '/' || wk1[1] == '\\')
-                    {
-                        /* case of /./ -> skip the ./ */
-                        wk1 += 2;
-                    }
-                    else if (wk1[1] == '.' && (wk1[2] == '/' || wk1[2] == '\\' || wk1[2] == '?'
-                            || wk1[2] == '#' || !wk1[2]))
-                    {
-                        /* case /../ -> need to backup wk2 */
-                        TRACE("found '/../'\n");
-                        *(wk2-1) = '\0';  /* set end of string */
-                        mp = wcsrchr(root, '/');
-                        mp2 = wcsrchr(root, '\\');
-                        if (mp2 && (!mp || mp2 < mp))
-                            mp = mp2;
-                        if (mp && (mp >= root))
-                        {
-                            /* found valid backup point */
-                            wk2 = mp + 1;
-                            if(wk1[2] != '/' && wk1[2] != '\\')
-                                wk1 += 2;
-                            else
-                                wk1 += 3;
-                        }
-                        else
-                        {
-                            /* did not find point, restore '/' */
-                            *(wk2-1) = slash;
-                            break;
-                        }
-                    }
-                    else
-                        break;
-                }
-            }
-            *wk2 = '\0';
-            break;
-        default:
-            FIXME("how did we get here - state=%d\n", state);
-            heap_free(url_copy);
-            heap_free(url);
-            return E_INVALIDARG;
-        }
-        *wk2 = '\0';
-        TRACE("Simplified, orig <%s>, simple <%s>\n", wine_dbgstr_w(src_url), wine_dbgstr_w(url_copy));
-    }
-    nLen = lstrlenW(url_copy);
-    while ((nLen > 0) && ((url_copy[nLen-1] <= ' ')))
-        url_copy[--nLen]=0;
-
-    if ((flags & URL_UNESCAPE) ||
-        ((flags & URL_FILE_USE_PATHURL) && nByteLen >= 5*sizeof(WCHAR) && !wcsncmp(url, L"file:", 5)))
-    {
-        UrlUnescapeW(url_copy, NULL, &nLen, URL_UNESCAPE_INPLACE);
-    }
-
+    /* URL_ESCAPE_SEGMENT_ONLY seems to be ignored. */
     escape_flags = flags & (URL_ESCAPE_UNSAFE | URL_ESCAPE_SPACES_ONLY | URL_ESCAPE_PERCENT |
-            URL_DONT_ESCAPE_EXTRA_INFO | URL_ESCAPE_SEGMENT_ONLY);
+            URL_DONT_ESCAPE_EXTRA_INFO);
 
     if (escape_flags)
     {
         escape_flags &= ~URL_ESCAPE_UNSAFE;
-        hr = UrlEscapeW(url_copy, canonicalized, canonicalized_len, escape_flags);
+        hr = UrlEscapeW( rewritten.string, canonicalized, canonicalized_len, escape_flags );
     }
     else
     {
         /* No escaping needed, just copy the string */
-        nLen = lstrlenW(url_copy);
-        if (nLen < *canonicalized_len)
-            memcpy(canonicalized, url_copy, (nLen + 1)*sizeof(WCHAR));
+        if (rewritten.len <= *canonicalized_len)
+        {
+            memcpy( canonicalized, rewritten.string, rewritten.len * sizeof(WCHAR) );
+            *canonicalized_len = rewritten.len - 1;
+        }
         else
         {
             hr = E_POINTER;
-            nLen++;
+            *canonicalized_len = rewritten.len;
         }
-        *canonicalized_len = nLen;
     }
 
-    heap_free(url_copy);
-    heap_free(url);
+    heap_free( rewritten.string );
+    heap_free( url );
 
     if (hr == S_OK)
         TRACE("result %s\n", wine_dbgstr_w(canonicalized));
@@ -4223,13 +4583,6 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     return hr;
 }
 
-static const WCHAR *parse_scheme( const WCHAR *p )
-{
-    while (iswalnum( *p ) || *p == '+' || *p == '-' || *p == '.')
-        ++p;
-    return p;
-}
-
 static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators )
 {
     const WCHAR *p;
@@ -4237,11 +4590,6 @@ static const WCHAR *parse_url_element( const WCHAR *url, const WCHAR *separators
     if ((p = wcspbrk( url, separators )))
         return p;
     return url + wcslen( url );
-}
-
-static BOOL is_slash( char c )
-{
-    return c == '/' || c == '\\';
 }
 
 static void parse_url( const WCHAR *url, struct parsed_url *pl )
