@@ -33,14 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-#define ALIGN_SIZE(size, alignment) (((size) + (alignment)) & ~((alignment)))
-
-static const GUID *const h264_decoder_input_types[] =
-{
-    &MFVideoFormat_H264,
-    &MFVideoFormat_H264_ES,
-};
-static const GUID *const h264_decoder_output_types[] =
+static const GUID *const video_decoder_output_types[] =
 {
     &MFVideoFormat_NV12,
     &MFVideoFormat_YV12,
@@ -56,6 +49,11 @@ struct h264_decoder
 
     IMFAttributes *attributes;
     IMFAttributes *output_attributes;
+
+    UINT input_type_count;
+    const GUID *const *input_types;
+    UINT output_type_count;
+    const GUID *const *output_types;
 
     UINT64 sample_time;
     IMFMediaType *input_type;
@@ -374,12 +372,14 @@ static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD strea
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
 
     *type = NULL;
-    if (index >= ARRAY_SIZE(h264_decoder_input_types))
+    if (index >= decoder->input_type_count)
         return MF_E_NO_MORE_TYPES;
-    return MFCreateVideoMediaTypeFromSubtype(h264_decoder_input_types[index], (IMFVideoMediaType **)type);
+    return MFCreateVideoMediaTypeFromSubtype(decoder->input_types[index], (IMFVideoMediaType **)type);
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
@@ -392,9 +392,9 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
     *type = NULL;
     if (!decoder->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
-    if (index >= ARRAY_SIZE(h264_decoder_output_types))
+    if (index >= decoder->output_type_count)
         return MF_E_NO_MORE_TYPES;
-    return create_output_media_type(decoder, h264_decoder_output_types[index], type);
+    return create_output_media_type(decoder, decoder->output_types[index], type);
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
@@ -414,10 +414,10 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     if (!IsEqualGUID(&major, &MFMediaType_Video))
         return MF_E_INVALIDMEDIATYPE;
 
-    for (i = 0; i < ARRAY_SIZE(h264_decoder_input_types); ++i)
-        if (IsEqualGUID(&subtype, h264_decoder_input_types[i]))
+    for (i = 0; i < decoder->input_type_count; ++i)
+        if (IsEqualGUID(&subtype, decoder->input_types[i]))
             break;
-    if (i == ARRAY_SIZE(h264_decoder_input_types))
+    if (i == decoder->input_type_count)
         return MF_E_INVALIDMEDIATYPE;
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
@@ -462,10 +462,10 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     if (!IsEqualGUID(&major, &MFMediaType_Video))
         return MF_E_INVALIDMEDIATYPE;
 
-    for (i = 0; i < ARRAY_SIZE(h264_decoder_output_types); ++i)
-        if (IsEqualGUID(&subtype, h264_decoder_output_types[i]))
+    for (i = 0; i < decoder->output_type_count; ++i)
+        if (IsEqualGUID(&subtype, decoder->output_types[i]))
             break;
-    if (i == ARRAY_SIZE(h264_decoder_output_types))
+    if (i == decoder->output_type_count)
         return MF_E_INVALIDMEDIATYPE;
 
     if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
@@ -777,38 +777,22 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
-HRESULT h264_decoder_create(REFIID riid, void **ret)
+static HRESULT video_decoder_create_with_types(const GUID *const *input_types, UINT input_type_count,
+        const GUID *const *output_types, UINT output_type_count, IMFTransform **ret)
 {
-    static const struct wg_format output_format =
-    {
-        .major_type = WG_MAJOR_TYPE_VIDEO,
-        .u.video =
-        {
-            .format = WG_VIDEO_FORMAT_I420,
-            .width = 1920,
-            .height = 1080,
-        },
-    };
-    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_VIDEO_H264};
-    struct wg_transform_attrs attrs = {0};
-    wg_transform_t transform;
     struct h264_decoder *decoder;
     HRESULT hr;
-
-    TRACE("riid %s, ret %p.\n", debugstr_guid(riid), ret);
-
-    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
-    {
-        ERR_(winediag)("GStreamer doesn't support H.264 decoding, please install appropriate plugins\n");
-        return E_FAIL;
-    }
-    wg_transform_destroy(transform);
 
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
 
     decoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
     decoder->refcount = 1;
+
+    decoder->input_type_count = input_type_count;
+    decoder->input_types = input_types;
+    decoder->output_type_count = output_type_count;
+    decoder->output_types = output_types;
 
     decoder->input_info.dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
             | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
@@ -853,5 +837,47 @@ failed:
     if (decoder->stream_type)
         IMFMediaType_Release(decoder->stream_type);
     free(decoder);
+    return hr;
+}
+
+static const GUID *const h264_decoder_input_types[] =
+{
+    &MFVideoFormat_H264,
+    &MFVideoFormat_H264_ES,
+};
+
+HRESULT h264_decoder_create(REFIID riid, void **out)
+{
+    static const struct wg_format output_format =
+    {
+        .major_type = WG_MAJOR_TYPE_VIDEO,
+        .u.video =
+        {
+            .format = WG_VIDEO_FORMAT_I420,
+            .width = 1920,
+            .height = 1080,
+        },
+    };
+    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_VIDEO_H264};
+    struct wg_transform_attrs attrs = {0};
+    wg_transform_t transform;
+    IMFTransform *iface;
+    HRESULT hr;
+
+    TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
+
+    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    {
+        ERR_(winediag)("GStreamer doesn't support H.264 decoding, please install appropriate plugins\n");
+        return E_FAIL;
+    }
+    wg_transform_destroy(transform);
+
+    if (FAILED(hr = video_decoder_create_with_types(h264_decoder_input_types, ARRAY_SIZE(h264_decoder_input_types),
+            video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), &iface)))
+        return hr;
+
+    hr = IMFTransform_QueryInterface(iface, riid, out);
+    IMFTransform_Release(iface);
     return hr;
 }
