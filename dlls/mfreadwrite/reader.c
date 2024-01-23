@@ -71,7 +71,7 @@ enum media_stream_flags
     STREAM_FLAG_STOPPED = 0x8,          /* Received MEStreamStopped */
 };
 
-struct stream_transform
+struct transform_entry
 {
     IMFTransform *transform;
     unsigned int min_buffer_size;
@@ -81,7 +81,7 @@ struct media_stream
 {
     IMFMediaStream *stream;
     IMFMediaType *current;
-    struct stream_transform decoder;
+    struct transform_entry decoder;
     IMFVideoSampleAllocatorEx *allocator;
     DWORD id;
     unsigned int index;
@@ -655,7 +655,8 @@ static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallbac
     return source_reader_release(reader);
 }
 
-static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, struct media_stream *stream)
+static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry)
 {
     MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
     MFT_OUTPUT_DATA_BUFFER out_buffer;
@@ -664,7 +665,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
     DWORD status;
     HRESULT hr;
 
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(stream->decoder.transform, 0, &stream_info)))
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info)))
     {
         WARN("Failed to get output stream info, hr %#lx.\n", hr);
         return hr;
@@ -679,7 +680,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
             if (FAILED(hr = MFCreateSample(&out_buffer.pSample)))
                 break;
 
-            buffer_size = max(stream_info.cbSize, stream->decoder.min_buffer_size);
+            buffer_size = max(stream_info.cbSize, entry->min_buffer_size);
 
             if (FAILED(hr = MFCreateAlignedMemoryBuffer(buffer_size, stream_info.cbAlignment, &buffer)))
             {
@@ -691,7 +692,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
             IMFMediaBuffer_Release(buffer);
         }
 
-        if (FAILED(hr = IMFTransform_ProcessOutput(stream->decoder.transform, 0, 1, &out_buffer, &status)))
+        if (FAILED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
         {
             if (out_buffer.pSample)
                 IMFSample_Release(out_buffer.pSample);
@@ -718,7 +719,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
 
-    hr = source_reader_pull_stream_samples(reader, stream);
+    hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder);
     if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
     {
         if (FAILED(hr = IMFTransform_ProcessInput(stream->decoder.transform, 0, sample, 0)))
@@ -727,7 +728,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
             return hr;
         }
 
-        if ((hr = source_reader_pull_stream_samples(reader, stream)) == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        if ((hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder)) == MF_E_TRANSFORM_NEED_MORE_INPUT)
             return S_OK;
     }
     else
@@ -821,7 +822,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                     if (stream->decoder.transform && SUCCEEDED(IMFTransform_ProcessMessage(stream->decoder.transform,
                             MFT_MESSAGE_COMMAND_DRAIN, 0)))
                     {
-                        if ((hr = source_reader_pull_stream_samples(reader, stream)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
+                        if ((hr = source_reader_pull_transform_samples(reader, stream, &stream->decoder)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
                             WARN("Failed to pull pending samples, hr %#lx.\n", hr);
                     }
 
