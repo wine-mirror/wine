@@ -1386,6 +1386,61 @@ static BOOL PRINTDLG_ChangePrinterW(HWND hDlg, WCHAR *name,
 	if (lppd->Flags & PD_HIDEPRINTTOFILE)
             ShowWindow(GetDlgItem(hDlg, chx1), SW_HIDE);
 
+        /* Fill print quality combo, PrintDlg16 */
+        if (GetDlgItem(hDlg, cmb1))
+        {
+            DWORD num_resolutions = DeviceCapabilitiesW(PrintStructures->lpPrinterInfo->pPrinterName,
+                                                           PrintStructures->lpPrinterInfo->pPortName,
+                                                           DC_ENUMRESOLUTIONS, NULL, lpdm);
+
+            if (num_resolutions != -1)
+            {
+                HWND quality = GetDlgItem(hDlg, cmb1);
+                LONG* resolutions;
+                WCHAR buf[255];
+                DWORD i;
+                int dpiX, dpiY;
+                HDC printer = CreateDCW(PrintStructures->lpPrinterInfo->pDriverName,
+                                           PrintStructures->lpPrinterInfo->pPrinterName,
+                                           0, lpdm);
+
+                resolutions = malloc(num_resolutions * sizeof(LONG) * 2);
+                DeviceCapabilitiesW(PrintStructures->lpPrinterInfo->pPrinterName,
+                                PrintStructures->lpPrinterInfo->pPortName,
+                                DC_ENUMRESOLUTIONS, (LPWSTR)resolutions, lpdm);
+
+                dpiX = GetDeviceCaps(printer, LOGPIXELSX);
+                dpiY = GetDeviceCaps(printer, LOGPIXELSY);
+                DeleteDC(printer);
+
+                SendMessageW(quality, CB_RESETCONTENT, 0, 0);
+                for (i = 0; i < (num_resolutions * 2); i += 2)
+                {
+                    BOOL is_default = FALSE;
+                    LRESULT index;
+
+                    if (resolutions[i] == resolutions[i+1])
+                    {
+                        if (dpiX == resolutions[i])
+                            is_default = TRUE;
+                        swprintf(buf, sizeof(buf), L"%ld dpi", resolutions[i]);
+                    } else
+                    {
+                        if (dpiX == resolutions[i] && dpiY == resolutions[i+1])
+                            is_default = TRUE;
+                        swprintf(buf, sizeof(buf), L"%ld dpi x %ld dpi", resolutions[i], resolutions[i+1]);
+                    }
+
+                    index = SendMessageW(quality, CB_ADDSTRING, 0, (LPARAM)buf);
+
+                    if (is_default)
+                        SendMessageW(quality, CB_SETCURSEL, index, 0);
+
+                    SendMessageW(quality, CB_SETITEMDATA, index, MAKELONG(resolutions[i], resolutions[i+1]));
+                }
+                free(resolutions);
+            }
+        }
     } else { /* PD_PRINTSETUP */
       BOOL bPortrait = (lpdm->dmOrientation == DMORIENT_PORTRAIT);
 
