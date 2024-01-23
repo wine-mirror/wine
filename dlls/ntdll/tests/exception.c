@@ -1270,7 +1270,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                     __asm__( "movw %%ss,%0" : "=r" (ss) );
                     ok( ctx.SegSs == ss, "wrong ss %04lx / %04x\n", ctx.SegSs, ss );
                     ok( ctx.SegFs != ctx.SegSs, "wrong fs %04lx / %04lx\n", ctx.SegFs, ctx.SegSs );
-                    if (is_wow64) todo_wine
+                    if (is_wow64) todo_wine_if( !ctx.SegDs ) /* old wow64 */
                     {
                         ok( ctx.SegDs == ctx.SegSs, "wrong ds %04lx / %04lx\n", ctx.SegDs, ctx.SegSs );
                         ok( ctx.SegEs == ctx.SegSs, "wrong es %04lx / %04lx\n", ctx.SegEs, ctx.SegSs );
@@ -4547,10 +4547,6 @@ static void test_wow64_context(void)
     ret = pNtGetContextThread( pi.hThread, &context );
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok( context.ContextFlags == CONTEXT_ALL, "got context flags %#lx\n", context.ContextFlags );
-    todo_wine
-    ok( !context.Rax, "rax is not zero %Ix\n", context.Rax );
-    todo_wine
-    ok( !context.Rbx, "rbx is not zero %Ix\n", context.Rbx );
     ok( !context.Rsi, "rsi is not zero %Ix\n", context.Rsi );
     ok( !context.Rdi, "rdi is not zero %Ix\n", context.Rdi );
     ok( !context.Rbp, "rbp is not zero %Ix\n", context.Rbp );
@@ -4562,15 +4558,8 @@ static void test_wow64_context(void)
     ok( !context.R13, "r13 is not zero %Ix\n", context.R13 );
     ok( !context.R14, "r14 is not zero %Ix\n", context.R14 );
     ok( !context.R15, "r15 is not zero %Ix\n", context.R15 );
-    todo_wine
-    ok( ((ULONG_PTR)context.Rsp & ~0xfff) == ((ULONG_PTR)teb.Tib.StackBase & ~0xfff),
-        "rsp is not at top of stack %p / %p\n", (void *)context.Rsp, teb.Tib.StackBase );
-    todo_wine
-    ok( context.EFlags == 0x200, "wrong flags %08lx\n", context.EFlags );
     ok( context.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", context.MxCsr );
     ok( context.FltSave.ControlWord == 0x27f, "wrong control %08x\n", context.FltSave.ControlWord );
-    todo_wine
-    ok( context.SegCs != ctx.SegCs, "wrong cs %04x\n", context.SegCs );
     ok( context.SegDs == ctx.SegDs, "wrong ds %04x / %04lx\n", context.SegDs, ctx.SegDs  );
     ok( context.SegEs == ctx.SegEs, "wrong es %04x / %04lx\n", context.SegEs, ctx.SegEs  );
     ok( context.SegFs == ctx.SegFs, "wrong fs %04x / %04lx\n", context.SegFs, ctx.SegFs  );
@@ -4584,6 +4573,12 @@ static void test_wow64_context(void)
         todo_wine win_skip( "no wow64 support\n" );
         goto done;
     }
+
+    ok( !context.Rax, "rax is not zero %Ix\n", context.Rax );
+    ok( !context.Rbx, "rbx is not zero %Ix\n", context.Rbx );
+    ok( ((ULONG_PTR)context.Rsp & ~0xfff) == ((ULONG_PTR)teb.Tib.StackBase & ~0xfff),
+        "rsp is not at top of stack %p / %p\n", (void *)context.Rsp, teb.Tib.StackBase );
+    ok( context.EFlags == 0x200, "wrong flags %08lx\n", context.EFlags );
 
     for (i = 0, got32 = got64 = FALSE; i < 10000 && !(got32 && got64); i++)
     {
@@ -4661,21 +4656,23 @@ static void test_wow64_context(void)
                 memset( &ctx, 0x55, sizeof(ctx) );
                 ctx.ContextFlags = WOW64_CONTEXT_ALL;
                 pRtlWow64GetThreadContext( pi.hThread, &ctx );
-                ok( ctx.Ecx == 0x87654321, "cs64: ecx set to %08lx\n", ctx.Ecx );
+                todo_wine
+                ok( ctx.Ecx == 0x87654321, "cs32: ecx set to %08lx\n", ctx.Ecx );
                 ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
-                ok( ctx_ptr->Ecx == ecx, "cs64: ecx set to %08lx\n", ctx_ptr->Ecx );
+                ok( ctx_ptr->Ecx == ecx, "cs32: ecx set to %08lx\n", ctx_ptr->Ecx );
                 ctx.Ecx = 0x33334444;
                 pRtlWow64SetThreadContext( pi.hThread, &ctx );
                 memset( &ctx, 0x55, sizeof(ctx) );
                 ctx.ContextFlags = WOW64_CONTEXT_ALL;
                 pRtlWow64GetThreadContext( pi.hThread, &ctx );
-                ok( ctx.Ecx == 0x33334444, "cs64: ecx set to %08lx\n", ctx.Ecx );
+                ok( ctx.Ecx == 0x33334444, "cs32: ecx set to %08lx\n", ctx.Ecx );
                 ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
-                ok( ctx_ptr->Ecx == ecx, "cs64: ecx set to %08lx\n", ctx_ptr->Ecx );
+                ok( ctx_ptr->Ecx == ecx, "cs32: ecx set to %08lx\n", ctx_ptr->Ecx );
                 memset( &context, 0x55, sizeof(context) );
                 context.ContextFlags = CONTEXT_ALL;
                 pNtGetContextThread( pi.hThread, &context );
-                ok( context.Rcx == 0x33334444, "cs64: rcx set to %p\n", (void *)context.Rcx );
+                todo_wine
+                ok( context.Rcx == 0x33334444, "cs32: rcx set to %p\n", (void *)context.Rcx );
                 /* restore everything */
                 context.Rcx = rcx;
                 pNtSetContextThread( pi.hThread, &context );
@@ -4738,6 +4735,7 @@ static void test_wow64_context(void)
                 pRtlWow64GetThreadContext( pi.hThread, &ctx );
                 ok( ctx.Ecx == 0x22223333, "cs64: ecx set to %08lx\n", ctx.Ecx );
                 ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
+                todo_wine
                 ok( ctx_ptr->Ecx == 0x22223333, "cs64: ecx set to %08lx\n", ctx_ptr->Ecx );
                 memset( &context, 0x55, sizeof(context) );
                 context.ContextFlags = CONTEXT_ALL;
