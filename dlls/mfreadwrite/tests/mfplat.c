@@ -38,10 +38,46 @@ DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #include "mfidl.h"
 #include "mferror.h"
 #include "mfreadwrite.h"
+#include "propvarutil.h"
 #include "d3d9.h"
 #include "dxva2api.h"
 
 #include "wine/test.h"
+
+struct attribute_desc
+{
+    const GUID *key;
+    const char *name;
+    PROPVARIANT value;
+    BOOL ratio;
+    BOOL required;
+    BOOL todo;
+    BOOL todo_value;
+};
+
+#define ATTR_GUID(k, g, ...)      {.key = &k, .name = #k, {.vt = VT_CLSID, .puuid = (GUID *)&g}, __VA_ARGS__ }
+#define ATTR_UINT32(k, v, ...)    {.key = &k, .name = #k, {.vt = VT_UI4, .ulVal = v}, __VA_ARGS__ }
+#define ATTR_BLOB(k, p, n, ...)   {.key = &k, .name = #k, {.vt = VT_VECTOR | VT_UI1, .caub = {.pElems = (void *)p, .cElems = n}}, __VA_ARGS__ }
+#define ATTR_RATIO(k, n, d, ...)  {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.HighPart = n, .LowPart = d}}, .ratio = TRUE, __VA_ARGS__ }
+#define ATTR_UINT64(k, v, ...)    {.key = &k, .name = #k, {.vt = VT_UI8, .uhVal = {.QuadPart = v}}, __VA_ARGS__ }
+
+#define init_media_type(a, b, c) init_attributes_(__FILE__, __LINE__, (IMFAttributes *)a, b, c)
+#define init_attributes(a, b, c) init_attributes_(__FILE__, __LINE__, a, b, c)
+static void init_attributes_(const char *file, int line, IMFAttributes *attributes,
+        const struct attribute_desc *desc, ULONG limit)
+{
+    HRESULT hr;
+    ULONG i;
+
+    hr = IMFAttributes_DeleteAllItems(attributes);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < limit && desc[i].key; ++i)
+    {
+        hr = IMFAttributes_SetItem(attributes, desc[i].key, &desc[i].value);
+        ok_(file, line)(hr == S_OK, "SetItem %s returned %#lx\n", debugstr_a(desc[i].name), hr);
+    }
+}
 
 static ULONG get_refcount(void *iface)
 {
@@ -357,48 +393,10 @@ static HRESULT WINAPI test_source_GetCharacteristics(IMFMediaSource *iface, DWOR
 static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **pd)
 {
     struct test_source *source = impl_from_IMFMediaSource(iface);
-    IMFStreamDescriptor *sds[ARRAY_SIZE(source->streams)];
-    IMFMediaType *media_type;
     HRESULT hr = S_OK;
-    int i;
 
-    EnterCriticalSection(&source->cs);
-
-    if (source->pd)
-    {
-        *pd = source->pd;
-        IMFPresentationDescriptor_AddRef(*pd);
-    }
-    else
-    {
-        for (i = 0; i < source->stream_count; ++i)
-        {
-            hr = MFCreateMediaType(&media_type);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-            hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 32);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-            hr = MFCreateStreamDescriptor(i, 1, &media_type, &sds[i]);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-            IMFMediaType_Release(media_type);
-        }
-
-        hr = MFCreatePresentationDescriptor(source->stream_count, sds, &source->pd);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        for (i = 0; i < source->stream_count; ++i)
-            IMFStreamDescriptor_Release(sds[i]);
-
-        *pd = source->pd;
-        IMFPresentationDescriptor_AddRef(*pd);
-    }
-
-    LeaveCriticalSection(&source->cs);
+    *pd = source->pd;
+    IMFPresentationDescriptor_AddRef(*pd);
 
     return hr;
 }
@@ -522,17 +520,22 @@ static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMedia
     return stream;
 }
 
-static IMFMediaSource *create_test_source(int stream_count)
+static IMFMediaSource *create_test_source(IMFStreamDescriptor **streams, UINT stream_count)
 {
     struct test_source *source;
+    HRESULT hr;
     int i;
 
     source = calloc(1, sizeof(*source));
     source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
     source->refcount = 1;
     source->stream_count = stream_count;
-    MFCreateEventQueue(&source->event_queue);
+    hr = MFCreatePresentationDescriptor(stream_count, streams, &source->pd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateEventQueue(&source->event_queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     InitializeCriticalSection(&source->cs);
+
     for (i = 0; i < source->stream_count; ++i)
         source->streams[i] = create_test_stream(i, &source->IMFMediaSource_iface);
 
@@ -1028,7 +1031,15 @@ static void test_source_reader(const char *filename, bool video)
 static void test_source_reader_from_media_source(void)
 {
     static const DWORD expected_sample_order[10] = {0, 0, 1, 1, 0, 0, 0, 0, 1, 0};
+    static const struct attribute_desc audio_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        {0},
+    };
 
+    IMFStreamDescriptor *audio_streams[3];
     struct async_callback *callback;
     IMFSourceReader *reader;
     IMFMediaSource *source;
@@ -1043,7 +1054,18 @@ static void test_source_reader_from_media_source(void)
     int i;
     PROPVARIANT pos;
 
-    source = create_test_source(3);
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+    {
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(media_type, audio_stream_type_desc, -1);
+
+        hr = MFCreateStreamDescriptor(i, 1, &media_type, &audio_streams[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+    }
+
+    source = create_test_source(audio_streams, 3);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
@@ -1122,7 +1144,7 @@ static void test_source_reader_from_media_source(void)
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
 
-    source = create_test_source(1);
+    source = create_test_source(audio_streams, 1);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
@@ -1159,7 +1181,7 @@ static void test_source_reader_from_media_source(void)
     IMFMediaSource_Release(source);
 
     /* Request from stream 0. */
-    source = create_test_source(3);
+    source = create_test_source(audio_streams, 3);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
@@ -1193,7 +1215,7 @@ static void test_source_reader_from_media_source(void)
     IMFMediaSource_Release(source);
 
     /* Request a non-native bit depth. */
-    source = create_test_source(1);
+    source = create_test_source(audio_streams, 1);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
@@ -1241,7 +1263,7 @@ static void test_source_reader_from_media_source(void)
     IMFMediaSource_Release(source);
 
     /* Async mode. */
-    source = create_test_source(3);
+    source = create_test_source(audio_streams, 3);
     ok(!!source, "Failed to create test source.\n");
 
     callback = create_async_callback();
@@ -1286,7 +1308,7 @@ static void test_source_reader_from_media_source(void)
     IMFMediaSource_Release(source);
 
     /* RequestSample failure. */
-    source = create_test_source(3);
+    source = create_test_source(audio_streams, 3);
     ok(!!source, "Failed to create test source.\n");
 
     fail_request_sample = TRUE;
@@ -1329,7 +1351,7 @@ static void test_source_reader_from_media_source(void)
     fail_request_sample = FALSE;
 
     /* MF_SOURCE_READER_ANY_STREAM with streams of different sample sizes */
-    source = create_test_source(2);
+    source = create_test_source(audio_streams, 2);
     ok(!!source, "Failed to create test source.\n");
 
     test_source = impl_from_IMFMediaSource(source);
@@ -1359,19 +1381,32 @@ static void test_source_reader_from_media_source(void)
 
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
+
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+        IMFStreamDescriptor_Release(audio_streams[i]);
 }
 
 static void test_reader_d3d9(void)
 {
+    static const struct attribute_desc audio_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        {0},
+    };
+
+    IMFStreamDescriptor *audio_streams[3];
     IDirect3DDeviceManager9 *d3d9_manager;
     IDirect3DDevice9 *d3d9_device;
     IMFAttributes *attributes;
+    IMFMediaType *media_type;
     IMFSourceReader *reader;
     IMFMediaSource *source;
     IDirect3D9 *d3d9;
     HWND window;
     HRESULT hr;
-    UINT token;
+    UINT i, token;
     ULONG refcount;
 
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
@@ -1387,13 +1422,24 @@ static void test_reader_d3d9(void)
         goto done;
     }
 
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+    {
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(media_type, audio_stream_type_desc, -1);
+
+        hr = MFCreateStreamDescriptor(i, 1, &media_type, &audio_streams[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+    }
+
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &d3d9_manager);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(d3d9_manager, d3d9_device, token);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    source = create_test_source(3);
+    source = create_test_source(audio_streams, 3);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateAttributes(&attributes, 1);
@@ -1409,11 +1455,13 @@ static void test_reader_d3d9(void)
 
     IMFSourceReader_Release(reader);
 
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+        IMFStreamDescriptor_Release(audio_streams[i]);
+
     refcount = IDirect3DDeviceManager9_Release(d3d9_manager);
     ok(!refcount, "Unexpected refcount %lu.\n", refcount);
 
     IDirect3DDevice9_Release(d3d9_device);
-
 done:
     IDirect3D9_Release(d3d9);
     DestroyWindow(window);
@@ -1511,12 +1559,34 @@ static void test_sink_writer_mp4(void)
 
 static void test_interfaces(void)
 {
+    static const struct attribute_desc audio_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        {0},
+    };
+
+    IMFStreamDescriptor *audio_streams[1];
+    IMFMediaType *media_type;
     IMFSourceReader *reader;
     IMFMediaSource *source;
     IUnknown *unk;
     HRESULT hr;
+    UINT i;
 
-    source = create_test_source(1);
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+    {
+        hr = MFCreateMediaType(&media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(media_type, audio_stream_type_desc, -1);
+
+        hr = MFCreateStreamDescriptor(i, 1, &media_type, &audio_streams[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFMediaType_Release(media_type);
+    }
+
+    source = create_test_source(audio_streams, 1);
     ok(!!source, "Failed to create test source.\n");
 
     hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
@@ -1529,6 +1599,9 @@ static void test_interfaces(void)
 
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
+
+    for (i = 0; i < ARRAY_SIZE(audio_streams); i++)
+        IMFStreamDescriptor_Release(audio_streams[i]);
 }
 
 START_TEST(mfplat)
