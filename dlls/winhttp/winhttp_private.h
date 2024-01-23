@@ -312,6 +312,19 @@ struct task_header
     volatile LONG completion_sent;
 };
 
+struct send_callback
+{
+    struct task_header task_hdr;
+    DWORD status;
+    void *info;
+    DWORD buflen;
+    union
+    {
+        WINHTTP_ASYNC_RESULT result;
+        DWORD count;
+    };
+};
+
 struct send_request
 {
     struct task_header task_hdr;

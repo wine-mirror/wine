@@ -1929,6 +1929,9 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
             break;
 
         case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
+        {
+            static DWORD len;
+
             if (!buflen)
             {
                 SetEvent( context->wait );
@@ -1939,13 +1942,19 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
             context->max_recursion_read = max( context->max_recursion_read, context->recursion_count );
             context->read_from_callback = TRUE;
             InterlockedIncrement( &context->recursion_count );
-            ret = WinHttpQueryDataAvailable( context->request, NULL );
+            len = 0xdeadbeef;
+            /* Use static variable len here so write to it doesn't destroy the stack on old Windows which
+             * doesn't set the value at once. */
+            ret = WinHttpQueryDataAvailable( context->request, &len );
             err = GetLastError();
             ok( ret, "failed to query data available, GetLastError() %lu\n", err );
             ok( err == ERROR_SUCCESS || err == ERROR_IO_PENDING, "got %lu\n", err );
+            ok( len != 0xdeadbeef || broken( len == 0xdeadbeef ) /* Win7 */, "got %lu.\n", len );
             if (err == ERROR_SUCCESS) context->have_sync_callback = TRUE;
             InterlockedDecrement( &context->recursion_count );
             break;
+        }
+
         case WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE:
             if (!context->headers_available
                 && context->call_receive_response_status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE)
