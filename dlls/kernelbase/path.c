@@ -4662,7 +4662,7 @@ HRESULT WINAPI UrlCombineA(const char *base, const char *relative, char *combine
 HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *combined, DWORD *combined_len, DWORD flags)
 {
     DWORD i, len, process_case = 0, myflags, sizeloc = 0;
-    LPWSTR work, preliminary, mbase, mrelative;
+    LPWSTR work, preliminary, mbase, canonicalized;
     PARSEDURLW base, relative;
     HRESULT hr;
 
@@ -4677,17 +4677,13 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
     /* Get space for duplicates of the input and the output */
     preliminary = heap_alloc(3 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
     mbase = preliminary + INTERNET_MAX_URL_LENGTH;
-    mrelative = mbase + INTERNET_MAX_URL_LENGTH;
+    canonicalized = mbase + INTERNET_MAX_URL_LENGTH;
     *preliminary = '\0';
 
     /* Canonicalize the base input prior to looking for the scheme */
     myflags = flags & (URL_DONT_SIMPLIFY | URL_UNESCAPE);
     len = INTERNET_MAX_URL_LENGTH;
     UrlCanonicalizeW(baseW, mbase, &len, myflags);
-
-    /* Canonicalize the relative input prior to looking for the scheme */
-    len = INTERNET_MAX_URL_LENGTH;
-    UrlCanonicalizeW(relativeW, mrelative, &len, myflags);
 
     /* See if the base has a scheme */
     if (ParseURLW(mbase, &base) != S_OK)
@@ -4787,12 +4783,12 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
          *              the last '/'
          */
 
-        if (ParseURLW(mrelative, &relative) != S_OK)
+        if (ParseURLW(relativeW, &relative) != S_OK)
         {
             /* No scheme in relative */
             TRACE("no scheme detected in Relative\n");
-            relative.pszSuffix = mrelative;  /* case 3,4,5 depends on this */
-            relative.cchSuffix = lstrlenW(mrelative);
+            relative.pszSuffix = relativeW;  /* case 3,4,5 depends on this */
+            relative.cchSuffix = lstrlenW( relativeW );
             if (*relativeW == ':')
             {
                 /* Case that is either left alone or uses base. */
@@ -4804,26 +4800,26 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
                 process_case = 1;
                 break;
             }
-            if (is_drive_spec( mrelative ))
+            if (is_drive_spec( relativeW ))
             {
                 /* case that becomes "file:///" */
                 lstrcpyW(preliminary, L"file:///");
                 process_case = 1;
                 break;
             }
-            if (*mrelative == '/' && *(mrelative+1) == '/')
+            if (relativeW[0] == '/' && relativeW[1] == '/')
             {
                 /* Relative has location and the rest. */
                 process_case = 3;
                 break;
             }
-            if (*mrelative == '/')
+            if (*relativeW == '/')
             {
                 /* Relative is root to location. */
                 process_case = 4;
                 break;
             }
-            if (*mrelative == '#')
+            if (*relativeW == '#')
             {
                 if (!(work = wcschr(base.pszSuffix+base.cchSuffix, '#')))
                     work = (LPWSTR)base.pszSuffix + lstrlenW(base.pszSuffix);
@@ -4880,12 +4876,12 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
     {
     case 1:
         /* Return relative appended to whatever is in combined (which may the string "file:///" */
-        lstrcatW(preliminary, mrelative);
+        lstrcatW(preliminary, relativeW);
         break;
 
     case 2:
         /* Relative replaces scheme and location */
-        lstrcpyW(preliminary, mrelative);
+        lstrcpyW(preliminary, relativeW);
         break;
 
     case 3:
@@ -4920,12 +4916,11 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
 
     if (hr == S_OK)
     {
-        /* Reuse mrelative as temp storage as it's already allocated and not needed anymore */
         if (*combined_len == 0)
             *combined_len = 1;
-        hr = UrlCanonicalizeW(preliminary, mrelative, combined_len, flags & ~URL_FILE_USE_PATHURL);
+        hr = UrlCanonicalizeW(preliminary, canonicalized, combined_len, flags & ~URL_FILE_USE_PATHURL);
         if (SUCCEEDED(hr) && combined)
-            lstrcpyW(combined, mrelative);
+            lstrcpyW( combined, canonicalized );
 
         TRACE("return-%ld len=%ld, %s\n", process_case, *combined_len, debugstr_w(combined));
     }
