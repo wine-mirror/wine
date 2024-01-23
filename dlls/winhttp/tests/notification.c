@@ -1904,6 +1904,9 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
             break;
 
         case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
+        {
+            DWORD len;
+
             if (!context->read_from_callback)
             {
                 SetEvent( context->wait );
@@ -1920,13 +1923,18 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
                 "got %lu, thread %#lx\n", context->recursion_count, GetCurrentThreadId() );
             context->max_recursion_query = max( context->max_recursion_query, context->recursion_count );
             InterlockedIncrement( &context->recursion_count );
-            ret = WinHttpReadData( context->request, &b, 1, NULL );
+            b = 0xff;
+            len = 0xdeadbeef;
+            ret = WinHttpReadData( context->request, &b, 1, &len );
             err = GetLastError();
             ok( ret, "failed to read data, GetLastError() %lu\n", err );
             ok( err == ERROR_SUCCESS || err == ERROR_IO_PENDING, "got %lu\n", err );
+            ok( b != 0xff, "got %#x.\n", b );
+            ok( len == 1, "got %lu.\n", len );
             if (err == ERROR_SUCCESS) context->have_sync_callback = TRUE;
             InterlockedDecrement( &context->recursion_count );
             break;
+        }
 
         case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
         {
