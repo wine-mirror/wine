@@ -1728,6 +1728,17 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3
 /***********************************************************************
  *           process_breakpoint
  */
+#ifdef __WINE_PE_BUILD
+__ASM_GLOBAL_FUNC( process_breakpoint,
+                   ".seh_endprologue\n\t"
+                   ".seh_handler process_breakpoint_handler, @except\n\t"
+                   "int $3\n\t"
+                   "ret\n"
+                   "process_breakpoint_handler:\n\t"
+                   "incq 0xf8(%r8)\n\t"  /* context->Rip */
+                   "xorl %eax,%eax\n\t"  /* ExceptionContinueExecution */
+                   "ret" )
+#else
 void WINAPI process_breakpoint(void)
 {
     __TRY
@@ -1740,6 +1751,7 @@ void WINAPI process_breakpoint(void)
     }
     __ENDTRY
 }
+#endif
 
 
 /**********************************************************************

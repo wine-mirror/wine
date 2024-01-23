@@ -1619,6 +1619,19 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3
 /***********************************************************************
  *           process_breakpoint
  */
+#ifdef __WINE_PE_BUILD
+__ASM_GLOBAL_FUNC( process_breakpoint,
+                   ".seh_endprologue\n\t"
+                   ".seh_handler process_breakpoint_handler, %except\n\t"
+                   "udf #0xfe\n\t"
+                   "bx lr\n"
+                   "process_breakpoint_handler:\n\t"
+                   "ldr r0, [r2, #0x40]\n\t" /* context->Pc */
+                   "add r0, r0, #2\n\t"
+                   "str r0, [r2, #0x40]\n\t"
+                   "mov r0, #0\n\t"          /* ExceptionContinueExecution */
+                   "bx lr" )
+#else
 void WINAPI process_breakpoint(void)
 {
     __TRY
@@ -1631,6 +1644,7 @@ void WINAPI process_breakpoint(void)
     }
     __ENDTRY
 }
+#endif
 
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
