@@ -592,7 +592,7 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    "mrc p15, 0, r3, c13, c0, 2\n\t" /* NtCurrentTeb() */
                    "ldr r3, [r3, 0x30]\n\t"         /* peb */
                    "ldr r3, [r3, 0x2c]\n\t"         /* peb->KernelCallbackTable */
-                   "ldr ip, [r3, r2, lsl #3]\n\t"
+                   "ldr ip, [r3, r2, lsl #2]\n\t"
                    "blx ip\n\t"
                    ".seh_handler " __ASM_NAME("user_callback_handler") ", %except\n\t"
 #else
