@@ -4255,13 +4255,9 @@ void loader_init( CONTEXT *context, void **entry )
 
     if (!imports_fixup_done)
     {
-        MEMORY_BASIC_INFORMATION meminfo;
         ANSI_STRING ctrl_routine = RTL_CONSTANT_STRING( "CtrlRoutine" );
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
-
-        NtQueryVirtualMemory( GetCurrentProcess(), LdrInitializeThunk, MemoryBasicInformation,
-                              &meminfo, sizeof(meminfo), NULL );
 
         peb->LdrData            = &ldr;
         peb->FastPebLock        = &peb_lock;
