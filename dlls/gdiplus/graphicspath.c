@@ -1185,23 +1185,14 @@ GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)
     if(!path || !clone)
         return InvalidParameter;
 
-    *clone = malloc(sizeof(GpPath));
-    if(!*clone) return OutOfMemory;
-
-    **clone = *path;
-
-    (*clone)->pathdata.Points = malloc(path->datalen * sizeof(PointF));
-    (*clone)->pathdata.Types = malloc(path->datalen);
-    if(!(*clone)->pathdata.Points || !(*clone)->pathdata.Types){
-        free((*clone)->pathdata.Points);
-        free((*clone)->pathdata.Types);
-        free(*clone);
-        return OutOfMemory;
+    if (path->pathdata.Count)
+      return GdipCreatePath2(path->pathdata.Points, path->pathdata.Types, path->pathdata.Count,
+                             path->fill, clone);
+    else
+    {
+        *clone = calloc(1, sizeof(GpPath));
+        if(!*clone) return OutOfMemory;
     }
-
-    memcpy((*clone)->pathdata.Points, path->pathdata.Points,
-           path->datalen * sizeof(PointF));
-    memcpy((*clone)->pathdata.Types, path->pathdata.Types, path->datalen);
 
     return Ok;
 }
