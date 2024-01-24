@@ -1227,205 +1227,6 @@ static void test_keynames(void)
     }
 }
 
-static POINT pt_old, pt_new;
-static BOOL clipped;
-#define STEP 3
-
-static LRESULT CALLBACK hook_proc1( int code, WPARAM wparam, LPARAM lparam )
-{
-    MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    POINT pt, pt1;
-
-    if (code == HC_ACTION)
-    {
-        /* This is our new cursor position */
-        pt_new = hook->pt;
-        /* Should return previous position */
-        GetCursorPos(&pt);
-        ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%ld,%ld)\n", pt.x, pt.y);
-
-        /* Should set new position until hook chain is finished. */
-        pt.x = pt_old.x + STEP;
-        pt.y = pt_old.y + STEP;
-        SetCursorPos(pt.x, pt.y);
-        GetCursorPos(&pt1);
-        if (clipped)
-            ok(pt1.x == pt_old.x && pt1.y == pt_old.y, "Wrong set pos: (%ld,%ld)\n", pt1.x, pt1.y);
-        else
-            ok(pt1.x == pt.x && pt1.y == pt.y, "Wrong set pos: (%ld,%ld)\n", pt1.x, pt1.y);
-    }
-    return CallNextHookEx( 0, code, wparam, lparam );
-}
-
-static LRESULT CALLBACK hook_proc2( int code, WPARAM wparam, LPARAM lparam )
-{
-    MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    POINT pt;
-
-    if (code == HC_ACTION)
-    {
-        ok(hook->pt.x == pt_new.x && hook->pt.y == pt_new.y,
-           "Wrong hook coords: (%ld %ld) != (%ld,%ld)\n", hook->pt.x, hook->pt.y, pt_new.x, pt_new.y);
-
-        /* Should match position set above */
-        GetCursorPos(&pt);
-        if (clipped)
-            ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%ld,%ld)\n", pt.x, pt.y);
-        else
-            ok(pt.x == pt_old.x +STEP && pt.y == pt_old.y +STEP, "GetCursorPos: (%ld,%ld)\n", pt.x, pt.y);
-    }
-    return CallNextHookEx( 0, code, wparam, lparam );
-}
-
-static LRESULT CALLBACK hook_proc3( int code, WPARAM wparam, LPARAM lparam )
-{
-    POINT pt;
-
-    if (code == HC_ACTION)
-    {
-        /* MSLLHOOKSTRUCT does not seem to be reliable and contains different data on each run. */
-        GetCursorPos(&pt);
-        ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%ld,%ld)\n", pt.x, pt.y);
-    }
-    return CallNextHookEx( 0, code, wparam, lparam );
-}
-
-static void test_mouse_ll_hook(void)
-{
-    HWND hwnd;
-    HHOOK hook1, hook2;
-    POINT pt_org, pt;
-    RECT rc;
-
-    GetCursorPos(&pt_org);
-    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
-    SetCursorPos(100, 100);
-
-    if (!(hook2 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc2, GetModuleHandleA(0), 0)))
-    {
-        win_skip( "cannot set MOUSE_LL hook\n" );
-        goto done;
-    }
-    hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc1, GetModuleHandleA(0), 0);
-
-    GetCursorPos(&pt_old);
-    mouse_event(MOUSEEVENTF_MOVE, -STEP,  0, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE, +STEP,  0, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE,  0, -STEP, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE,  0, +STEP, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-
-    SetRect(&rc, 50, 50, 151, 151);
-    ClipCursor(&rc);
-    clipped = TRUE;
-
-    SetCursorPos(40, 40);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 50 && pt_old.y == 50, "Wrong new pos: (%ld,%ld)\n", pt_new.x, pt_new.y);
-    SetCursorPos(160, 160);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%ld,%ld)\n", pt_new.x, pt_new.y);
-    mouse_event(MOUSEEVENTF_MOVE, +STEP, +STEP, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%ld,%ld)\n", pt_new.x, pt_new.y);
-
-    clipped = FALSE;
-    pt_new.x = pt_new.y = 150;
-    ClipCursor(NULL);
-    UnhookWindowsHookEx(hook1);
-
-    /* Now check that mouse buttons do not change mouse position
-       if we don't have MOUSEEVENTF_MOVE flag specified. */
-
-    /* We reusing the same hook callback, so make it happy */
-    pt_old.x = pt_new.x - STEP;
-    pt_old.y = pt_new.y - STEP;
-    mouse_event(MOUSEEVENTF_LEFTUP, 123, 456, 0, 0);
-    GetCursorPos(&pt);
-    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%ld,%ld)\n", pt.x, pt.y);
-    mouse_event(MOUSEEVENTF_RIGHTUP, 456, 123, 0, 0);
-    GetCursorPos(&pt);
-    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%ld,%ld)\n", pt.x, pt.y);
-
-    mouse_event(MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE, 123, 456, 0, 0);
-    GetCursorPos(&pt);
-    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%ld,%ld)\n", pt.x, pt.y);
-    mouse_event(MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_ABSOLUTE, 456, 123, 0, 0);
-    GetCursorPos(&pt);
-    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%ld,%ld)\n", pt.x, pt.y);
-
-    UnhookWindowsHookEx(hook2);
-    hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc3, GetModuleHandleA(0), 0);
-
-    SetRect(&rc, 150, 150, 150, 150);
-    ClipCursor(&rc);
-    clipped = TRUE;
-
-    SetCursorPos(140, 140);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    SetCursorPos(160, 160);
-    GetCursorPos(&pt_old);
-    todo_wine
-    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE, -STEP, -STEP, 0, 0);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE, +STEP, +STEP, 0, 0);
-    GetCursorPos(&pt_old);
-    todo_wine
-    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
-    GetCursorPos(&pt_old);
-    ok((pt_old.x == 150 && pt_old.y == 150) ||
-       broken(pt_old.x == 149 && pt_old.y == 149) /* w1064v1809 */,
-       "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    mouse_event(MOUSEEVENTF_MOVE, 0, 0, 0, 0);
-    GetCursorPos(&pt_old);
-    todo_wine
-    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-
-    clipped = FALSE;
-    ClipCursor(NULL);
-
-    SetCursorPos(140, 140);
-    SetRect(&rc, 150, 150, 150, 150);
-    ClipCursor(&rc);
-    GetCursorPos(&pt_old);
-    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    ClipCursor(NULL);
-
-    SetCursorPos(160, 160);
-    SetRect(&rc, 150, 150, 150, 150);
-    ClipCursor(&rc);
-    GetCursorPos(&pt_old);
-    todo_wine
-    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    ClipCursor(NULL);
-
-    SetCursorPos(150, 150);
-    SetRect(&rc, 150, 150, 150, 150);
-    ClipCursor(&rc);
-    GetCursorPos(&pt_old);
-    todo_wine
-    ok(pt_old.x == 149 && pt_old.y == 149, "Wrong new pos: (%ld,%ld)\n", pt_old.x, pt_old.y);
-    ClipCursor(NULL);
-
-    UnhookWindowsHookEx(hook1);
-
-done:
-    DestroyWindow(hwnd);
-    SetCursorPos(pt_org.x, pt_org.y);
-}
-
 static void test_GetMouseMovePointsEx( char **argv )
 {
 #define BUFLIM  64
@@ -3673,6 +3474,42 @@ static LRESULT CALLBACK ll_hook_ms_proc( int code, WPARAM wparam, LPARAM lparam 
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
+static LRESULT CALLBACK ll_hook_setpos_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    if (code == HC_ACTION)
+    {
+        MSLLHOOKSTRUCT *hook_info = (MSLLHOOKSTRUCT *)lparam;
+        POINT pos, hook_pos = {40, 40};
+
+        ok( abs( hook_info->pt.x - 51 ) <= 1, "got x %ld\n", hook_info->pt.x );
+        ok( abs( hook_info->pt.y - 49 ) <= 1, "got y %ld\n", hook_info->pt.y );
+
+        /* spuriously moves by 0 or 1 pixels on Windows */
+        ok_ret( 1, GetCursorPos( &pos ) );
+        ok( abs( pos.x - 51 ) <= 1, "got x %ld\n", pos.x );
+        ok( abs( pos.y - 49 ) <= 1, "got y %ld\n", pos.y );
+
+        ok_ret( 1, SetCursorPos( 60, 60 ) );
+        hook_info->pt = hook_pos;
+    }
+
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
+static LRESULT CALLBACK ll_hook_getpos_proc( int code, WPARAM wparam, LPARAM lparam )
+{
+    if (code == HC_ACTION)
+    {
+        MSLLHOOKSTRUCT *hook_info = (MSLLHOOKSTRUCT *)lparam;
+        POINT pos, expect_pos = {60, 60}, hook_pos = {40, 40};
+        ok_point( hook_pos, hook_info->pt );
+        ok_ret( 1, GetCursorPos( &pos ) );
+        ok_point( expect_pos, pos );
+    }
+
+    return CallNextHookEx( 0, code, wparam, lparam );
+}
+
 static BOOL accept_mouse_messages_nomove( UINT msg )
 {
     return is_mouse_message( msg ) && msg != WM_MOUSEMOVE;
@@ -3682,6 +3519,11 @@ static void test_SendInput_mouse_messages(void)
 {
 #define WIN_MSG(m, h, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .hwnd = h, .wparam = w, .lparam = l}, ## __VA_ARGS__}
 #define MS_HOOK(m, x, y, ...) {.func = LL_HOOK_MOUSE, .ll_hook_ms = {.msg = m, .point = {x, y}, .flags = 1}, ## __VA_ARGS__}
+    struct user_call mouse_move[] =
+    {
+        MS_HOOK(WM_MOUSEMOVE, 40, 40),
+        {0},
+    };
     struct user_call button_down_hwnd[] =
     {
         MS_HOOK(WM_LBUTTONDOWN, 50, 50),
@@ -3731,11 +3573,12 @@ static void test_SendInput_mouse_messages(void)
 
     struct create_transparent_window_params params = {0};
     ULONG_PTR old_proc, old_other_proc;
+    RECT clip_rect = {55, 55, 55, 55};
     UINT dblclk_time;
     HWND hwnd, other;
     DWORD thread_id;
     HANDLE thread;
-    HHOOK hook;
+    HHOOK hook, hook_setpos, hook_getpos;
     POINT pt;
 
     params.start_event = CreateEventA( NULL, FALSE, FALSE, NULL );
@@ -3758,6 +3601,43 @@ static void test_SendInput_mouse_messages(void)
     hook = SetWindowsHookExW( WH_MOUSE_LL, ll_hook_ms_proc, GetModuleHandleW( NULL ), 0 );
     ok_ne( NULL, hook, HHOOK, "%p" );
 
+    /* test hooks only, WM_MOUSEMOVE messages are very brittle */
+    p_accept_message = is_mouse_message;
+    ok_seq( empty_sequence );
+
+    /* SetCursorPos or ClipCursor don't call mouse ll hooks */
+    ok_ret( 1, SetCursorPos( 60, 60 ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, ClipCursor( NULL ) );
+    wait_messages( 5, FALSE );
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    wait_messages( 100, FALSE );
+    todo_wine ok_seq( empty_sequence );
+
+    hook_getpos = SetWindowsHookExW( WH_MOUSE_LL, ll_hook_getpos_proc, GetModuleHandleW( NULL ), 0 );
+    ok_ne( NULL, hook_getpos, HHOOK, "%p" );
+    hook_setpos = SetWindowsHookExW( WH_MOUSE_LL, ll_hook_setpos_proc, GetModuleHandleW( NULL ), 0 );
+    ok_ne( NULL, hook_setpos, HHOOK, "%p" );
+
+    mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
+    /* recent Windows versions don't call the hooks with no movement */
+    if (current_sequence_len)
+    {
+        ok_seq( mouse_move );
+        ok_ret( 1, SetCursorPos( 50, 50 ) );
+    }
+    ok_seq( empty_sequence );
+
+    /* WH_MOUSE_LL hook is called even with 1 pixel moves */
+    mouse_event( MOUSEEVENTF_MOVE, +1, -1, 0, 0 );
+    ok_seq( mouse_move );
+
+    ok_ret( 1, UnhookWindowsHookEx( hook_getpos ) );
+    ok_ret( 1, UnhookWindowsHookEx( hook_setpos ) );
+
+
     append_message_hwnd = TRUE;
     p_accept_message = accept_mouse_messages_nomove;
     ok_seq( empty_sequence );
@@ -3770,7 +3650,7 @@ static void test_SendInput_mouse_messages(void)
 
     ok_ret( 1, SetCursorPos( 50, 50 ) );
     wait_messages( 100, FALSE );
-    ok_seq( empty_sequence );
+    todo_wine ok_seq( empty_sequence );
 
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
@@ -5305,6 +5185,147 @@ static void test_ClipCursor( char **argv )
     if (!EqualRect( &rect, &virtual_rect )) ok_ret( 1, ClipCursor( NULL ) );
 }
 
+static void test_SetCursorPos(void)
+{
+    RECT clip_rect = {50, 50, 51, 51};
+    POINT pos, expect_pos = {50, 50};
+
+    ok_ret( 0, GetCursorPos( NULL ) );
+    todo_wine ok_ret( ERROR_NOACCESS, GetLastError() );
+
+    /* immediate cursor position updates */
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    /* without MOUSEEVENTF_MOVE cursor doesn't move */
+    mouse_event( MOUSEEVENTF_LEFTUP, 123, 456, 0, 0 );
+    mouse_event( MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE, 123, 456, 0, 0 );
+    mouse_event( MOUSEEVENTF_RIGHTUP, 456, 123, 0, 0 );
+    mouse_event( MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_ABSOLUTE, 456, 123, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    /* need to move by at least 3 pixels to update, but not consistent */
+    mouse_event( MOUSEEVENTF_MOVE, -1, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    mouse_event( MOUSEEVENTF_MOVE, +1, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    /* spuriously moves by 1 or 2 pixels on Windows */
+    expect_pos.x -= 2;
+    mouse_event( MOUSEEVENTF_MOVE, -4, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok( abs( expect_pos.x - pos.x ) <= 1, "got pos %ld\n", pos.x );
+    expect_pos.x += 2;
+    mouse_event( MOUSEEVENTF_MOVE, +4, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok( abs( expect_pos.x - pos.x ) <= 1, "got pos %ld\n", pos.x );
+
+    /* test ClipCursor holding the cursor in place */
+    expect_pos.x = expect_pos.y = 50;
+    ok_ret( 1, SetCursorPos( 49, 51 ) );
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 49, 49 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 48, 48 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 51, 51 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 52, 52 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 49, 51 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 51, 49 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    mouse_event( MOUSEEVENTF_MOVE, -1, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    mouse_event( MOUSEEVENTF_MOVE, 0, +1, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    mouse_event( MOUSEEVENTF_MOVE, +1, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    mouse_event( MOUSEEVENTF_MOVE, 0, -1, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    /* weird behavior when ClipCursor rect is empty */
+    clip_rect.right = clip_rect.bottom = 50;
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    expect_pos.x = expect_pos.y = 49;
+    ok_ret( 1, ClipCursor( &clip_rect ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = expect_pos.y = 50;
+    ok_ret( 1, SetCursorPos( 49, 49 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    expect_pos.x = expect_pos.y = 49;
+    ok_ret( 1, SetCursorPos( 50, 50 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = expect_pos.y = 50;
+    ok_ret( 1, SetCursorPos( 48, 48 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+    expect_pos.x = expect_pos.y = 49;
+    ok_ret( 1, SetCursorPos( 51, 51 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    ok_ret( 1, SetCursorPos( 52, 52 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = 50;
+    expect_pos.y = 49;
+    ok_ret( 1, SetCursorPos( 49, 51 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = 49;
+    expect_pos.y = 50;
+    ok_ret( 1, SetCursorPos( 51, 49 ) );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+
+    expect_pos.x = 50;
+    expect_pos.y = 49;
+    mouse_event( MOUSEEVENTF_MOVE, -10, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = 49;
+    expect_pos.y = 49;
+    mouse_event( MOUSEEVENTF_MOVE, 0, +10, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = 49;
+    expect_pos.y = 50;
+    mouse_event( MOUSEEVENTF_MOVE, +10, 0, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    todo_wine ok_point( expect_pos, pos );
+    expect_pos.x = 50;
+    expect_pos.y = 50;
+    mouse_event( MOUSEEVENTF_MOVE, 0, -10, 0, 0 );
+    ok_ret( 1, GetCursorPos( &pos ) );
+    ok_point( expect_pos, pos );
+
+    ok_ret( 1, ClipCursor( NULL ) );
+}
+
 static HANDLE ll_keyboard_event;
 
 static LRESULT CALLBACK ll_keyboard_event_wait(int code, WPARAM wparam, LPARAM lparam)
@@ -5353,6 +5374,7 @@ static void test_input_desktop( char **argv )
 
     trace( "hkl %p\n", hkl );
     ok_ret( 1, GetCursorPos( &pos ) );
+    test_SetCursorPos();
 
     get_test_scan( 'F', &scan, &wch, &wch_shift );
     test_SendInput( 'F', wch );
@@ -5416,7 +5438,6 @@ START_TEST(input)
 
     run_in_desktop( argv, "test_input_desktop", 1 );
     test_keynames();
-    test_mouse_ll_hook();
     test_key_map();
     test_ToUnicode();
     test_ToAscii();
