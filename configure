@@ -6322,7 +6322,6 @@ printf "%s\n" "$wine_cv_cc_m32" >&6; }
       TARGETFLAGS="$TARGETFLAGS -m32"
       PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_LIBDIR
-      with_unwind=${with_unwind:-no}
     else
       CC="$CC -m64"
       CXX="$CXX -m64"
@@ -6418,9 +6417,6 @@ printf "%s\n" "$wine_cv_float_abi" >&6; }
     esac
     CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
     TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
-    ;;
-  i[3456789]86*)
-    with_unwind=${with_unwind:-no}
     ;;
 esac
 
@@ -17862,8 +17858,10 @@ esac
 
 fi
 
-if test "x$with_unwind" != xno
+if test $HOST_ARCH = x86_64
 then
+  if test "x$with_unwind" != xno
+  then
     rm -f conftest.err
 if ${UNWIND_CFLAGS:+false} :
 then :
@@ -17965,9 +17963,9 @@ printf "%s\n" "#define HAVE_LIBUNWIND 1" >>confdefs.h
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
-fi
-case $host in
-  aarch64*|*-darwin*)
+  fi
+  case $host in
+  *-darwin*)
     if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono
 then :
   case "x$with_unwind" in
@@ -17978,7 +17976,8 @@ This is an error since --with-unwind was requested." "$LINENO" 5 ;;
 esac
 
 fi ;;
-esac
+  esac
+fi
 
 if test "x$with_sdl" != "xno"
 then
