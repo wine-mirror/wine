@@ -253,6 +253,13 @@ NTSTATUS wg_init_gstreamer(void *arg)
     char **argv = args;
     GError *err;
 
+    /* GStreamer installs a temporary SEGV handler when it loads plugins
+     * to initialize its registry calling exit(-1) when any fault is caught.
+     * We need to make sure any signal reaches our signal handlers to catch
+     * and handle them, or eventually propagate the exceptions to the user.
+     */
+    gst_segtrap_set_enabled(false);
+
     if (!gst_init_check(&argc, &argv, &err))
     {
         fprintf(stderr, "winegstreamer: failed to initialize GStreamer: %s\n", err->message);
