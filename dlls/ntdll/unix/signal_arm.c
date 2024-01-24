@@ -51,10 +51,6 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
-#ifdef HAVE_LIBUNWIND
-# define UNW_LOCAL_ONLY
-# include <libunwind.h>
-#endif
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
@@ -259,8 +255,6 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
     return ((char *)SP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
             (char *)SP_sig(sigcontext) <= (char *)arm_thread_data()->syscall_frame);
 }
-
-extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
 
 struct exidx_entry
 {
@@ -559,11 +553,6 @@ static NTSTATUS ehabi_virtual_unwind( UINT ip, DWORD *frame, CONTEXT *context,
     if (!set_pc)
         context->Pc = context->Lr;
 
-    /* There's no need to check for raise_func_trampoline and manually restore
-     * Lr separately from Pc like with libunwind; the EHABI unwind info
-     * describes how both of them are restored separately, and as long as
-     * the unwind info restored Pc, it doesn't have to be set from Lr. */
-
     TRACE( "next function pc=%08lx\n", context->Pc );
     TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
           context->R0, context->R1, context->R2, context->R3 );
@@ -672,94 +661,6 @@ static const struct exidx_entry *find_exidx_entry( void *ip )
 }
 #endif
 
-#ifdef HAVE_LIBUNWIND
-static NTSTATUS libunwind_virtual_unwind( DWORD ip, DWORD *frame, CONTEXT *context,
-                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
-{
-    unw_context_t unw_context;
-    unw_cursor_t cursor;
-    unw_proc_info_t info;
-    int rc, i;
-
-    for (i = 0; i <= 12; i++)
-        unw_context.regs[i] = (&context->R0)[i];
-    unw_context.regs[13] = context->Sp;
-    unw_context.regs[14] = context->Lr;
-    unw_context.regs[15] = context->Pc;
-    rc = unw_init_local( &cursor, &unw_context );
-
-    if (rc != UNW_ESUCCESS)
-    {
-        WARN( "setup failed: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-    rc = unw_get_proc_info( &cursor, &info );
-    if (UNW_ENOINFO < 0) rc = -rc;  /* LLVM libunwind has negative error codes */
-    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
-    {
-        WARN( "failed to get info: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
-    {
-        NTSTATUS status = context->Pc != context->Lr ?
-                          STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
-        TRACE( "no info found for %x ip %x-%x, %s\n",
-               ip, info.start_ip, info.end_ip, status == STATUS_SUCCESS ?
-               "assuming leaf function" : "error, stuck" );
-        *handler = NULL;
-        *frame = context->Sp;
-        context->Pc = context->Lr;
-        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-        return status;
-    }
-
-    TRACE( "ip %#x function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
-           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
-           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
-
-    rc = unw_step( &cursor );
-    if (rc < 0)
-    {
-        WARN( "failed to unwind: %d %d\n", rc, UNW_ENOINFO );
-        return STATUS_INVALID_DISPOSITION;
-    }
-
-    *handler      = (void *)info.handler;
-    *handler_data = (void *)info.lsda;
-    *frame        = context->Sp;
-
-    for (i = 0; i <= 12; i++)
-        unw_get_reg( &cursor, UNW_ARM_R0 + i, (unw_word_t *)&(&context->R0)[i] );
-    unw_get_reg( &cursor, UNW_ARM_R13, (unw_word_t *)&context->Sp );
-    unw_get_reg( &cursor, UNW_ARM_R14, (unw_word_t *)&context->Lr );
-    unw_get_reg( &cursor, UNW_REG_IP,  (unw_word_t *)&context->Pc );
-    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-
-    if ((info.start_ip & ~(unw_word_t)1) ==
-        ((unw_word_t)raise_func_trampoline & ~(unw_word_t)1)) {
-        /* raise_func_trampoline stores the original Lr at the bottom of the
-         * stack. The unwinder normally can't restore both Pc and Lr to
-         * individual values, thus do that manually here.
-         * (The function we unwind to might be a leaf function that hasn't
-         * backed up its own original Lr value on the stack.) */
-        const DWORD *orig_lr = (const DWORD *) *frame;
-        context->Lr = *orig_lr;
-    }
-
-    TRACE( "next function pc=%08lx%s\n", context->Pc, rc ? "" : " (last frame)" );
-    TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
-          context->R0, context->R1, context->R2, context->R3 );
-    TRACE("  r4=%08lx  r5=%08lx  r6=%08lx  r7=%08lx\n",
-          context->R4, context->R5, context->R6, context->R7 );
-    TRACE("  r8=%08lx  r9=%08lx r10=%08lx r11=%08lx\n",
-          context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%08lx  sp=%08lx  lr=%08lx  pc=%08lx\n",
-          context->R12, context->Sp, context->Lr, context->Pc );
-    return STATUS_SUCCESS;
-}
-#endif
-
 /***********************************************************************
  *           unwind_builtin_dll
  */
@@ -771,16 +672,23 @@ NTSTATUS unwind_builtin_dll( void *args )
     DWORD ip = context->Pc - (dispatch->ControlPcIsUnwound ? 2 : 0);
 #ifdef linux
     const struct exidx_entry *entry = find_exidx_entry( (void *)ip );
+    NTSTATUS status;
 
     if (entry)
         return ehabi_virtual_unwind( ip, &dispatch->EstablisherFrame, context, entry,
                                      &dispatch->LanguageHandler, &dispatch->HandlerData );
-#endif
-#ifdef HAVE_LIBUNWIND
-    return libunwind_virtual_unwind( ip, &dispatch->EstablisherFrame, context,
-                                     &dispatch->LanguageHandler, &dispatch->HandlerData );
+
+    status = context->Pc != context->Lr ?
+             STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
+    TRACE( "no info found for %lx, %s\n", ip, status == STATUS_SUCCESS ?
+           "assuming leaf function" : "error, stuck" );
+    dispatch->LanguageHandler = NULL;
+    dispatch->EstablisherFrame = context->Sp;
+    context->Pc = context->Lr;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    return status;
 #else
-    ERR("libunwind not available, unable to unwind\n");
+    ERR("ARM EHABI unwinding available, unable to unwind\n");
     return STATUS_INVALID_DISPOSITION;
 #endif
 }
