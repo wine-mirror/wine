@@ -950,53 +950,861 @@ static void test_UrlEscapeW(void)
     }
 }
 
-/* ########################### */
+struct canonicalize_test
+{
+    const char *url;
+    DWORD flags;
+    const char *expect;
+};
 
 static void test_UrlCanonicalizeA(void)
 {
-    unsigned int i;
     CHAR szReturnUrl[4*INTERNET_MAX_URL_LENGTH];
     CHAR longurl[4*INTERNET_MAX_URL_LENGTH];
+    char url[200], expect[200];
+    unsigned int f, i, j;
     DWORD dwSize;
     DWORD urllen;
     HRESULT hr;
+
+    static const struct canonicalize_test unk_scheme_tests[] =
+    {
+        /* Single and double dots behave as one would expect, with the following
+         * notable rules:
+         *
+         * (1) A single or double dot as the first element (the "hostname") is
+         *     always emitted as-is.
+         *
+         * (2) If a double dot would undo the hostname, it is emitted as-is
+         *     instead.
+         *
+         * (3) If a single or double dot is the last element (either because of
+         *     the above rule or because of URL_DONT_SIMPLIFY), a trailing
+         *     backslash is appended.
+         *
+         * A trailing backslash is always appended after the hostname.
+         */
+
+        {"//", 0, "///"},
+        {"//a", 0, "//a/"},
+        {"//a/", 0, "//a/"},
+        {"//a/b", 0, "//a/b"},
+        {"//a/b/", 0, "//a/b/"},
+        {"//.", 0, "//./"},
+        {"//./", 0, "//./"},
+        {"//./a", 0, "//./a"},
+        {"//././a", 0, "//./a"},
+        {"//a/.", 0, "//a/"},
+        {"//a/./", 0, "//a/"},
+        {"//a/./b", 0, "//a/b"},
+        {"///./a", 0, "///a"},
+        {"//a/.b/", 0, "//a/.b/"},
+        {"//a/b./", 0, "//a/b./"},
+
+        {"//..", 0, "//../"},
+        {"//../", 0, "//../"},
+        {"//../a", 0, "//../a"},
+        {"//../a/..", 0, "//../"},
+        {"//.././..", 0, "//../../"},
+        {"//../a/../..", 0, "//../../"},
+        {"//./a/../..", 0, "//./../"},
+        {"//a/..", 0, "//a/../"},
+        {"//a/../../b/./c/..", 0, "//a/../../b/"},
+        {"//a/b/..", 0, "//a/"},
+        {"//a/b/...", 0, "//a/b/..."},
+        {"//a/b/../", 0, "//a/"},
+        {"//a/b/../c", 0, "//a/c"},
+        {"//a/b/../c/..", 0, "//a/"},
+        {"//a/b/../c/../..", 0, "//a/../"},
+        {"//a/b/../../../c", 0, "//a/../../c"},
+        {"///..", 0, "///../"},
+        {"////..", 0, "///"},
+        {"//a/..b/", 0, "//a/..b/"},
+        {"//a/b../", 0, "//a/b../"},
+        {"//A/B", 0, "//A/B"},
+
+        {"//././a", URL_DONT_SIMPLIFY, "//././a"},
+        {"//a/.", URL_DONT_SIMPLIFY, "//a/./"},
+        {"//a/./", URL_DONT_SIMPLIFY, "//a/./"},
+        {"//a/./b", URL_DONT_SIMPLIFY, "//a/./b"},
+        {"///./a", URL_DONT_SIMPLIFY, "///./a"},
+
+        {"//..", URL_DONT_SIMPLIFY, "//../"},
+        {"//../", URL_DONT_SIMPLIFY, "//../"},
+        {"//../a", URL_DONT_SIMPLIFY, "//../a"},
+        {"//../a/..", URL_DONT_SIMPLIFY, "//../a/../"},
+        {"//../a/...", URL_DONT_SIMPLIFY, "//../a/..."},
+        {"//.././..", URL_DONT_SIMPLIFY, "//.././../"},
+        {"//../a/../..", URL_DONT_SIMPLIFY, "//../a/../../"},
+        {"//./a/../..", URL_DONT_SIMPLIFY, "//./a/../../"},
+        {"//a/..", URL_DONT_SIMPLIFY, "//a/../"},
+        {"//a/../../b/./c/..", URL_DONT_SIMPLIFY, "//a/../../b/./c/../"},
+        {"//a/b/..", URL_DONT_SIMPLIFY, "//a/b/../"},
+        {"//a/b/../", URL_DONT_SIMPLIFY, "//a/b/../"},
+        {"//a/b/../c", URL_DONT_SIMPLIFY, "//a/b/../c"},
+        {"//a/b/../c/..", URL_DONT_SIMPLIFY, "//a/b/../c/../"},
+        {"//a/b/../c/../..", URL_DONT_SIMPLIFY, "//a/b/../c/../../"},
+        {"///..", URL_DONT_SIMPLIFY, "///../"},
+        {"////..", URL_DONT_SIMPLIFY, "////../"},
+
+        /* After ? or #, dots are not simplified. */
+        {"//a/b?c/./d", 0, "//a/b?c/./d"},
+        {"//a/b#c/./d", 0, "//a/b#c/./d"},
+        {"//a/b#c/.", 0, "//a/b#c/."},
+        /* ? and # can also be considered a boundary for trailing dots. */
+        {"//a/b/.?", 0, "//a/b/?"},
+        {"//a/b/..?", 0, "//a/?"},
+        {"//a/b/..?", URL_DONT_SIMPLIFY, "//a/b/../?"},
+        {"//a/b/.#", 0, "//a/b/#"},
+        {"//a/b/..#", 0, "//a/#"},
+        {"//a/b/..#", URL_DONT_SIMPLIFY, "//a/b/../#"},
+        {"//a/..?", 0, "//a/../?"},
+        {"//a/..#", 0, "//a/../#"},
+        {"//..?", 0, "//../?"},
+        {"//..#", 0, "//../#"},
+        {"//?/a/./", 0, "///?/a/./"},
+        {"//#/a/./", 0, "///#/a/./"},
+        /* The first ? is reordered before the first #. */
+        {"//a/b#c?d", 0, "//a/b?d#c"},
+        {"//a/b?c#d?e", 0, "//a/b?c#d?e"},
+        {"//a/b#c?d#e", 0, "//a/b?d#e#c"},
+        {"//a/b#c#d?e", 0, "//a/b?e#c#d"},
+        {"//a/b#c?d?e", 0, "//a/b?d?e#c"},
+
+        /* Backslashes are not treated as path separators. */
+        {"//a/b\\c/../.\\", 0, "//a/.\\"},
+        {"//a\\b/../", 0, "//a\\b/../"},
+        {"//a/b\\../", 0, "//a/b\\../"},
+        {"//a/b/..\\", 0, "//a/b/..\\"},
+
+        /* Whitespace and unsafe characters are not (by default) escaped. */
+        {"//a/b &c", 0, "//a/b &c"},
+
+        /* If one slash is omitted, the rules are much the same, except that
+         * there is no "hostname". Single dots are always collapsed; double dots
+         * are collapsed unless they would undo the "scheme". */
+
+        {"/a", 0, "/a"},
+        {"/a/", 0, "/a/"},
+        {"/.", 0, "/"},
+        {"/./", 0, "/"},
+        {"/././a", 0, "/a"},
+        {"/a/.", 0, "/a/"},
+        {"/a/./", 0, "/a/"},
+        {"/a/./b", 0, "/a/b"},
+
+        {"/..", 0, "/../"},
+        {"/../", 0, "/../"},
+        {"/../a", 0, "/../a"},
+        {"/../a/..", 0, "/../"},
+        {"/a/..", 0, "/"},
+        {"/a/../..", 0, "/../"},
+        {"/a/b/..", 0, "/a/"},
+        {"/a/b/../", 0, "/a/"},
+        {"/a/b/../c", 0, "/a/c"},
+        {"/a/b/../c/..", 0, "/a/"},
+        {"/a/b/../c/../..", 0, "/"},
+
+        {"/a/b?c/./d", 0, "/a/b?c/./d"},
+        {"/a/b#c/./d", 0, "/a/b#c/./d"},
+        {"/a/b#c?d", 0, "/a/b?d#c"},
+
+        /* Just as above, backslashes are not treated as path separators. */
+        {"/a/b\\c/../.\\", 0, "/a/.\\"},
+        {"/a/b\\/c", 0, "/a/b\\/c"},
+        {"/a/b\\.c", 0, "/a/b\\.c"},
+        /* If the first character after the slash is a backslash, it is skipped.
+         * It is not interpreted as a forward slash.
+         * The tests above show that this is not due to the backslash being
+         * interpreted as an escape character. */
+        {"/\\././a", 0, "/a"},
+        /* The sequence /\/ does not result in use of the double-slash rules.
+         * Rather, the resulting // is treated as an empty path element. */
+        {"/\\/././a", 0, "//a"},
+        {"/\\/././a/", 0, "//a/"},
+        {"/\\/..", 0, "/"},
+        {"//a/\\b", 0, "//a/\\b"},
+
+        {"/a/b &c", 0, "/a/b &c"},
+
+        {"//a/b%20%26c", URL_UNESCAPE, "//a/b &c"},
+    };
 
     static const struct
     {
         const char *url;
         DWORD flags;
         const char *expect;
+        const char *expect_ftp;
     }
-    tests[] =
+    http_tests[] =
     {
+        /* A set of schemes including http differs from the "default" behaviour
+         * in the following ways:
+         *
+         * (1) If a double dot would undo the hostname, it is dropped instead.
+         *
+         * (2) If the first element after the hostname is a single or double
+         *     dot, no further dots are simplified.
+         *
+         * (3) Trailing backslashes are not automatically appended after dots.
+         */
+
+        {"//", 0, "///"},
+        {"//a", 0, "//a/"},
+        {"//a/", 0, "//a/"},
+        {"//a/b", 0, "//a/b"},
+        {"//a/b/", 0, "//a/b/"},
+        {"//.", 0, "//./"},
+        {"//./", 0, "//./"},
+        {"//././a/.", 0, "//././a/."},
+        {"//a/.", 0, "//a/."},
+        {"//a/./b/./../", 0, "//a/./b/./../"},
+        {"//a/b/.", 0, "//a/b/"},
+        {"//a/b/.", URL_DONT_SIMPLIFY, "//a/b/."},
+        {"//a/b/./", 0, "//a/b/"},
+        {"//a/b/./c", 0, "//a/b/c"},
+        {"///./a", 0, "///./a"},
+        {"////./a", 0, "////a"},
+
+        {"//..", 0, "//../"},
+        {"//../", 0, "//../"},
+        {"//../a", 0, "//../a"},
+        {"//../a/..", 0, "//../"},
+        {"//../a/../..", 0, "//../"},
+        {"//./a/../..", 0, "//./"},
+        {"//a/../", 0, "//a/../"},
+        {"//a/../../b/./../", 0, "//a/../../b/./../"},
+        {"//a/.././", 0, "//a/.././"},
+        {"//a/b/..", 0, "//a/"},
+        {"//a/b/..", URL_DONT_SIMPLIFY, "//a/b/.."},
+        {"//a/b/../", 0, "//a/"},
+        {"//a/b/.././", 0, "//a/"},
+        {"//a/b/../c", 0, "//a/c"},
+        {"//a/b/../c/..", 0, "//a/"},
+        {"//a/b/../c/../..", 0, "//a/"},
+        {"//a/b/../../../c", 0, "//a/c"},
+        {"///a/.", 0, "///a/"},
+        {"///..", 0, "///.."},
+        {"////..", 0, "///"},
+        {"//a//../../..", 0, "//a/"},
+
+        {"//a/b?c/./d", 0, "//a/b?c/./d"},
+        {"//a/b#c/./d", 0, "//a/b#c/./d"},
+        {"//a/b#c?d", 0, "//a/b#c?d"},
+        {"//a/b?c#d", 0, "//a/b?c#d"},
+
+        {"//localhost/b", 0, "//localhost/b"},
+
+        /* Most of these schemes translates backslashes to forward slashes,
+         * including the initial pair, and interpret them appropriately.
+         *
+         * A few schemes, including ftp, don't translate backslashes to forward
+         * slashes, but still interpret them as path separators, with the
+         * exception that the hostname must end in a forward slash. */
+
+        {"//a/b\\", 0, "//a/b/", "//a/b\\"},
+        {"//a/b\\./c", 0, "//a/b/c", "//a/b\\c"},
+        {"//a/b/.\\c", 0, "//a/b/c"},
+        {"//a/b\\c/../.\\", 0, "//a/b/", "//a/b\\"},
+        {"//a\\b", 0, "//a/b", "//a\\b/"},
+        {"//a\\b/..", 0, "//a/", "//a\\b/.."},
+        {"//a/b\\c", 0, "//a/b/c", "//a/b\\c"},
+        {"/\\a\\..", 0, "//a/..", "/\\a\\../"},
+        {"\\/a\\..", 0, "//a/..", "\\/a\\../"},
+
+        {"//a/b &c", 0, "//a/b &c"},
+
+        /* If one or both slashes is missing, the portion after the colon is
+         * treated like a normal path, without a hostname. Single and double
+         * dots are always collapsed, and double dots which would rewind past
+         * the scheme are dropped instead. */
+
+        {"a", 0, "a"},
+        {"a/", 0, "a/"},
+        {"a/.", 0, "a/"},
+        {"a/..", 0, ""},
+        {"a/../..", 0, ""},
+        {"a/../..", URL_DONT_SIMPLIFY, "a/../.."},
         {"", 0, ""},
-        {"http://www.winehq.org/tests/../tests/../..", 0, "http://www.winehq.org/"},
-        {"http://www.winehq.org/..", 0, "http://www.winehq.org/.."},
-        {"http://www.winehq.org/tests/tests2/../../tests", 0, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests/../tests", 0, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests\n", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests\r", 0, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests\r", URL_DONT_SIMPLIFY, "http://www.winehq.org/tests"},
-        {"http://www.winehq.org/tests/../tests/", 0, "http://www.winehq.org/tests/"},
-        {"http://www.winehq.org/tests/../tests/..", 0, "http://www.winehq.org/"},
-        {"http://www.winehq.org/tests/../tests/../", 0, "http://www.winehq.org/"},
-        {"http://www.winehq.org/tests/..", 0, "http://www.winehq.org/"},
-        {"http://www.winehq.org/tests/../", 0, "http://www.winehq.org/"},
-        {"http://www.winehq.org/tests/..?query=x&return=y", 0, "http://www.winehq.org/?query=x&return=y"},
-        {"http://www.winehq.org/tests/../?query=x&return=y", 0, "http://www.winehq.org/?query=x&return=y"},
-        {"\tht\ttp\t://www\t.w\tineh\t\tq.or\tg\t/\ttests/..\t?\tquer\ty=x\t\t&re\tturn=y\t\t", 0, "http://www.winehq.org/?query=x&return=y"},
-        {"http://www.winehq.org/tests/..#example", 0, "http://www.winehq.org/#example"},
-        {"http://www.winehq.org/tests/../#example", 0, "http://www.winehq.org/#example"},
-        {"http://www.winehq.org/tests\\../#example", 0, "http://www.winehq.org/#example"},
-        {"http://www.winehq.org/tests/..\\#example", 0, "http://www.winehq.org/#example"},
-        {"http://www.winehq.org\\tests/../#example", 0, "http://www.winehq.org/#example"},
-        {"http://www.winehq.org/tests/../#example", URL_DONT_SIMPLIFY, "http://www.winehq.org/tests/../#example"},
-        {"http://www.winehq.org/tests/foo bar", URL_ESCAPE_SPACES_ONLY | URL_DONT_ESCAPE_EXTRA_INFO, "http://www.winehq.org/tests/foo%20bar"},
-        {"http://www.winehq.org/tests/foo%20bar", URL_UNESCAPE, "http://www.winehq.org/tests/foo bar"},
-        {"http://www.winehq.org", 0, "http://www.winehq.org/"},
-        {"http:///www.winehq.org", 0, "http:///www.winehq.org"},
-        {"http:////www.winehq.org", 0, "http:////www.winehq.org"},
+        {"/", 0, "/"},
+        {"/.", 0, "/"},
+        {"/..", 0, ""},
+        {"/../..", 0, ""},
+        {".", 0, ""},
+        {"..", 0, ""},
+        {"./", 0, ""},
+        {"../", 0, ""},
+
+        {"a/b?c/.\\d", 0, "a/b?c/.\\d"},
+        {"a/b#c/.\\d", 0, "a/b#c/.\\d"},
+
+        {"a\\b\\", 0, "a/b/", "a\\b\\"},
+
+        {"a/b &c", 0, "a/b &c"},
+
+        {"/foo/bar/baz", URL_ESCAPE_SEGMENT_ONLY, "/foo/bar/baz"},
+        {"/foo/bar/baz?a#b", URL_ESCAPE_SEGMENT_ONLY, "/foo/bar/baz?a#b"},
+
+        {"//www.winehq.org/tests\n", URL_ESCAPE_SPACES_ONLY | URL_ESCAPE_UNSAFE, "//www.winehq.org/tests"},
+        {"//www.winehq.org/tests\r", URL_ESCAPE_SPACES_ONLY | URL_ESCAPE_UNSAFE, "//www.winehq.org/tests"},
+        {"//www.winehq.org/tests/foo bar", URL_ESCAPE_SPACES_ONLY | URL_DONT_ESCAPE_EXTRA_INFO, "//www.winehq.org/tests/foo%20bar"},
+        {"//www.winehq.org/tests/foo%20bar", 0, "//www.winehq.org/tests/foo%20bar"},
+        {"//www.winehq.org/tests/foo%20bar", URL_UNESCAPE, "//www.winehq.org/tests/foo bar"},
+        {"//www.winehq.org/%E6%A1%9C.html", 0, "//www.winehq.org/%E6%A1%9C.html"},
+    };
+
+    static const struct canonicalize_test opaque_tests[] =
+    {
+        /* Opaque protocols, predictably, do not modify the portion after the
+         * scheme. */
+        {"//a/b/./c/../d\\e", 0, "//a/b/./c/../d\\e"},
+        {"/a/b/./c/../d\\e", 0, "/a/b/./c/../d\\e"},
+        {"a/b/./c/../d\\e", 0, "a/b/./c/../d\\e"},
+        {"", 0, ""},
+        {"//a/b &c", 0, "//a/b &c"},
+        {"//a/b%20%26c", URL_UNESCAPE, "//a/b &c"},
+    };
+
+    static const struct canonicalize_test file_tests[] =
+    {
+        /* file:// is almost identical to http://, except that a URL beginning
+         * with file://// (four or more slashes) is stripped down to two
+         * slashes. The first non-empty element is interpreted as a hostname;
+         * and the rest follows the usual rules.
+         *
+         * The intent here is probably to detect UNC paths, although it's
+         * unclear why an arbitrary number of slashes are skipped in that case.
+         */
+
+        {"file://", 0, "file:///"},
+        {"file://a", 0, "file://a/"},
+        {"file://a/", 0, "file://a/"},
+        {"file://a//", 0, "file://a//"},
+        {"file://a/b", 0, "file://a/b"},
+        {"file://a/b/", 0, "file://a/b/"},
+        {"file://.", 0, "file://./"},
+        {"file://./", 0, "file://./"},
+        {"file://././a/.", 0, "file://././a/."},
+        {"file://a/.", 0, "file://a/."},
+        {"file://a/./b/./../", 0, "file://a/./b/./../"},
+        {"file://a/b/.", 0, "file://a/b/"},
+        {"file://a/b/.", URL_DONT_SIMPLIFY, "file://a/b/."},
+        {"file://a/b/./", 0, "file://a/b/"},
+        {"file://a/b/./c", 0, "file://a/b/c"},
+        {"file:///./a", 0, "file:///./a"},
+        {"file:////./a", 0, "file://./a"},
+
+        {"file://..", 0, "file://../"},
+        {"file://../", 0, "file://../"},
+        {"file://../a", 0, "file://../a"},
+        {"file://../a/..", 0, "file://../"},
+        {"file://../a/../..", 0, "file://../"},
+        {"file://./a/../..", 0, "file://./"},
+        {"file://a/../", 0, "file://a/../"},
+        {"file://a/../../b/./../", 0, "file://a/../../b/./../"},
+        {"file://a/.././", 0, "file://a/.././"},
+        {"file://a/b/..", 0, "file://a/"},
+        {"file://a/b/../", 0, "file://a/"},
+        {"file://a/b/.././", 0, "file://a/"},
+        {"file://a/b/../c", 0, "file://a/c"},
+        {"file://a/b/../c/..", 0, "file://a/"},
+        {"file://a/b/../c/../..", 0, "file://a/"},
+        {"file://a/b/../../../c", 0, "file://a/c"},
+        {"file:///.", 0, "file:///."},
+        {"file:///..", 0, "file:///.."},
+        {"file:///a/.", 0, "file:///a/"},
+
+        {"file:////", 0, "file:///"},
+        {"file:////a/./b/../c", 0, "file://a/./b/../c"},
+        {"file://///a/./b/../c", 0, "file://a/./b/../c"},
+        {"file://////a/./b/../c", 0, "file://a/./b/../c"},
+        {"file:////a/b/./../c", 0, "file://a/c"},
+        {"file:////a/b/./../..", 0, "file://a/"},
+        {"file://///a/b/./../c", 0, "file://a/c"},
+        {"file://////a/b/./../c", 0, "file://a/c"},
+        {"file:////.", 0, "file://./"},
+        {"file:////..", 0, "file://../"},
+        {"file:////./b/./../c", 0, "file://./c"},
+        {"file:////./b/./../..", 0, "file://./"},
+        {"file://///./b/./../c", 0, "file://./c"},
+        {"file://////./b/./../c", 0, "file://./c"},
+
+        /* Drive-like paths get an extra slash (i.e. an empty hostname, to
+         * signal that the host is the local machine). The drive letter is
+         * treated as the path root. */
+        {"file://a:", 0, "file:///a:"},
+        {"file://a:/b", 0, "file:///a:/b"},
+        {"file://a:/b/../..", 0, "file:///a:/"},
+        {"file://a:/./../..", 0, "file:///a:/./../.."},
+        {"file://a|/b", 0, "file:///a|/b"},
+        {"file://ab:/c", 0, "file://ab:/c"},
+        {"file:///a:", 0, "file:///a:"},
+        {"file:////a:", 0, "file:///a:"},
+        {"file://///a:", 0, "file:///a:"},
+        {"file://host/a:/b/../..", 0, "file://host/a:/"},
+
+        /* URL_FILE_USE_PATHURL (and URL_WININET_COMPATIBILITY) have their own
+         * set of rules:
+         *
+         * (1) Dot processing works exactly like the "unknown scheme" rules,
+         *     instead of the file/http rules demonstrated above.
+         *
+         * (2) Some number of backslashes is appended after the two forward
+         *     slashes. The number basically corresponds to the detected path
+         *     type (two for a remote path, one for a local path, none for a
+         *     local drive path). A local path is one where the hostname is
+         *     empty or "localhost". If all path elements are empty then no
+         *     backslashes are appended.
+         */
+
+        {"file://", URL_FILE_USE_PATHURL, "file://"},
+        {"file://a", URL_FILE_USE_PATHURL, "file://\\\\a"},
+        {"file://a/", URL_FILE_USE_PATHURL, "file://\\\\a"},
+        {"file://a//", URL_FILE_USE_PATHURL, "file://\\\\a\\\\"},
+        {"file://a/b", URL_FILE_USE_PATHURL, "file://\\\\a\\b"},
+        {"file://a//b", URL_FILE_USE_PATHURL, "file://\\\\a\\\\b"},
+        {"file://a/.", URL_FILE_USE_PATHURL, "file://\\\\a\\"},
+        {"file://a/../../b/./c/..", URL_FILE_USE_PATHURL, "file://\\\\a\\..\\..\\b\\"},
+        {"file://./../../b/./c/..", URL_FILE_USE_PATHURL, "file://\\\\.\\..\\..\\b\\"},
+        {"file://../../../b/./c/..", URL_FILE_USE_PATHURL, "file://\\\\..\\..\\..\\b\\"},
+        {"file://a/b/.", URL_FILE_USE_PATHURL, "file://\\\\a\\b\\"},
+        {"file://a/b/.", URL_FILE_USE_PATHURL | URL_DONT_SIMPLIFY, "file://\\\\a\\b\\.\\"},
+        {"file://a/b/../../../c", URL_FILE_USE_PATHURL, "file://\\\\a\\..\\..\\c"},
+
+        {"file:///", URL_FILE_USE_PATHURL, "file://"},
+        {"file:///.", URL_FILE_USE_PATHURL, "file://\\"},
+        {"file:///..", URL_FILE_USE_PATHURL, "file://\\..\\"},
+        {"file:///../../b/./c/..", URL_FILE_USE_PATHURL, "file://\\..\\..\\b\\"},
+        {"file:///a/b/./c/..", URL_FILE_USE_PATHURL, "file://\\a\\b\\"},
+
+        {"file:////", URL_FILE_USE_PATHURL, "file://"},
+        {"file:////.", URL_FILE_USE_PATHURL, "file://\\\\."},
+        {"file:////a/./b/../c", URL_FILE_USE_PATHURL, "file://\\\\a\\c"},
+        {"file://///", URL_FILE_USE_PATHURL, "file://"},
+        {"file://///a/./b/../c", URL_FILE_USE_PATHURL, "file://\\\\a\\c"},
+
+        {"file://a:", URL_FILE_USE_PATHURL, "file://a:"},
+        {"file://a:/", URL_FILE_USE_PATHURL, "file://a:\\"},
+        {"file://a:/b", URL_FILE_USE_PATHURL, "file://a:\\b"},
+        {"file://a:/b/../..", URL_FILE_USE_PATHURL, "file://a:\\..\\"},
+        {"file://a|/b", URL_FILE_USE_PATHURL, "file://a|\\b"},
+        {"file:///a:", URL_FILE_USE_PATHURL, "file://a:"},
+        {"file:////a:", URL_FILE_USE_PATHURL, "file://a:"},
+
+        /* URL_WININET_COMPATIBILITY is almost identical, but ensures a trailing
+         * backslash in two cases:
+         *
+         * (1) if all path elements are empty,
+         *
+         * (2) if the path consists of just the hostname.
+         */
+
+        {"file://", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file://a", URL_WININET_COMPATIBILITY, "file://\\\\a\\"},
+        {"file://a/", URL_WININET_COMPATIBILITY, "file://\\\\a\\"},
+        {"file://a//", URL_WININET_COMPATIBILITY, "file://\\\\a\\\\"},
+        {"file://a/b", URL_WININET_COMPATIBILITY, "file://\\\\a\\b"},
+        {"file://a//b", URL_WININET_COMPATIBILITY, "file://\\\\a\\\\b"},
+        {"file://a/.", URL_WININET_COMPATIBILITY, "file://\\\\a\\"},
+        {"file://a/../../b/./c/..", URL_WININET_COMPATIBILITY, "file://\\\\a\\..\\..\\b\\"},
+        {"file://./../../b/./c/..", URL_WININET_COMPATIBILITY, "file://\\\\.\\..\\..\\b\\"},
+        {"file://../../../b/./c/..", URL_WININET_COMPATIBILITY, "file://\\\\..\\..\\..\\b\\"},
+        {"file://a/b/../../../c", URL_WININET_COMPATIBILITY, "file://\\\\a\\..\\..\\c"},
+
+        {"file:///", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file:///.", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file:///..", URL_WININET_COMPATIBILITY, "file://\\..\\"},
+        {"file:///../../b/./c/..", URL_WININET_COMPATIBILITY, "file://\\..\\..\\b\\"},
+        {"file:///a/b/./c/..", URL_WININET_COMPATIBILITY, "file://\\a\\b\\"},
+
+        {"file:////", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file:////.", URL_WININET_COMPATIBILITY, "file://\\\\.\\"},
+        {"file:////a/./b/../c", URL_WININET_COMPATIBILITY, "file://\\\\a\\c"},
+        {"file://///", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file://///a/./b/../c", URL_WININET_COMPATIBILITY, "file://\\\\a\\c"},
+
+        {"file://a:", URL_WININET_COMPATIBILITY, "file://a:"},
+
+        {"file://", URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY, "file://"},
+
+        {"file://localhost/a", 0, "file://localhost/a"},
+        {"file://localhost//a", 0, "file://localhost//a"},
+        {"file://localhost/a:", 0, "file://localhost/a:"},
+        {"file://localhost/a:/b/../..", 0, "file://localhost/a:/"},
+        {"file://localhost/a:/./../..", 0, "file://localhost/a:/./../.."},
+        {"file://localhost", URL_FILE_USE_PATHURL, "file://"},
+        {"file://localhost/", URL_FILE_USE_PATHURL, "file://"},
+        {"file://localhost/b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"file://127.0.0.1/b", URL_FILE_USE_PATHURL, "file://\\\\127.0.0.1\\b"},
+        {"file://localhost//b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"file://localhost///b", URL_FILE_USE_PATHURL, "file://\\\\b"},
+        {"file:///localhost/b", URL_FILE_USE_PATHURL, "file://\\localhost\\b"},
+        {"file:////localhost/b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"file://///localhost/b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"file://localhost/a:", URL_FILE_USE_PATHURL, "file://a:"},
+        {"file://localhost/a:/b/../..", URL_FILE_USE_PATHURL, "file://a:\\..\\"},
+        {"file://localhost?a/b", URL_FILE_USE_PATHURL, "file://"},
+        {"file://localhost#a/b", URL_FILE_USE_PATHURL, "file://\\\\localhost#a/b"},
+        {"file://localhostq", URL_FILE_USE_PATHURL, "file://\\\\localhostq"},
+
+        {"file://localhost", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file://localhost/", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file://localhost/b", URL_WININET_COMPATIBILITY, "file://\\b"},
+        {"file://localhost//b", URL_WININET_COMPATIBILITY, "file://\\b"},
+        {"file://127.0.0.1/b", URL_WININET_COMPATIBILITY, "file://\\\\127.0.0.1\\b"},
+        {"file://localhost/a:", URL_WININET_COMPATIBILITY, "file://a:"},
+        {"file://localhost?a/b", URL_WININET_COMPATIBILITY, "file://\\?a/b"},
+        {"file://localhost#a/b", URL_WININET_COMPATIBILITY, "file://\\\\localhost#a/b"},
+
+        /* # has some weird behaviour:
+         *
+         * - Dot processing happens normally after it, including rewinding past
+         *   the #. It's not treated as a path separator for the purposes of
+         *   rewinding.
+         *
+         * - However, if neither file flag is used, and the first character
+         *   after the hostname (plus an optional slash) is a hash, no dot
+         *   processing takes place.
+         *
+         * - If the previous path segment ends in .htm or .html, the rest of
+         *   the URL is emitted verbatim (no dot or slash canonicalization).
+         *   This does not apply to the hostname. If URL_FILE_USE_PATHURL is
+         *   used, though, the rest of the URL including the # is omitted.
+         *
+         * - It is treated as a path terminator for dots, but only if neither
+         *   file flag is used. It does not begin a path element.
+         *
+         * - If there is a # anywhere in the output string (and the string
+         *   doesn't fall under the .html exception), all subsequent slashes
+         *   are converted to forward slashes instead of backslashes.
+         *   This means that rewinding past the hash will revert to backslashes.
+         *   (This of course only affects the case where file flags are used;
+         *   if no file flags are used then slashes are converted to forward
+         *   slashes anyway.)
+         */
+        {"file://a/b#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b#c/./d\\e", 0, "file://a/b#c/d/e"},
+        {"file://a/b.htm#c/../d\\e", 0, "file://a/b.htm#c/../d\\e"},
+        {"file://a/b.html#c/../d\\e", 0, "file://a/b.html#c/../d\\e"},
+        {"file://a/b.hTmL#c/../d\\e", 0, "file://a/b.hTmL#c/../d\\e"},
+        {"file://a/b.xhtml#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.php#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.asp#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.aspx#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.ht#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.txt#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.htmlq#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.html/q#c/../d\\e", 0, "file://a/b.html/d/e"},
+        {"file://a/.html#c/../d\\e", 0, "file://a/.html#c/../d\\e"},
+        {"file://a/html#c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b#c/./d.html#e/../f", 0, "file://a/b#c/d.html#e/../f"},
+        {"file://a.html#/b/../c", 0, "file://a.html#/c"},
+        {"file://a/b#c/../d/e", URL_FILE_USE_PATHURL, "file://\\\\a\\d\\e"},
+        {"file://a/b#c/./d/e", URL_FILE_USE_PATHURL, "file://\\\\a\\b#c/d/e"},
+        {"file://a/b.html#c/../d\\e", URL_FILE_USE_PATHURL, "file://\\\\a\\b.html"},
+        {"file://a/b.html#c/../d\\e", URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY, "file://\\\\a\\b.html"},
+        {"file://a/b#c/../d/e", URL_WININET_COMPATIBILITY, "file://\\\\a\\d\\e"},
+        {"file://a/b#c/./d/e", URL_WININET_COMPATIBILITY, "file://\\\\a\\b#c/d/e"},
+        {"file://a/b.html#c/../d\\e", URL_WININET_COMPATIBILITY, "file://\\\\a\\b.html#c/../d\\e"},
+        {"file://a/c#/../d", 0, "file://a/d"},
+        {"file://a/c#/../d", URL_FILE_USE_PATHURL, "file://\\\\a\\d"},
+        {"file://a/c#/../d", URL_WININET_COMPATIBILITY, "file://\\\\a\\d"},
+        {"file://a/#c/../d\\e", 0, "file://a/#c/../d\\e"},
+        {"file://a/#c/../d/e", URL_FILE_USE_PATHURL, "file://\\\\a\\d\\e"},
+        {"file://a/#c/../d/e", URL_WININET_COMPATIBILITY, "file://\\\\a\\d\\e"},
+        {"file://a//#c/../d", 0, "file://a//#c/../d"},
+        {"file://a//#c/../d", URL_FILE_USE_PATHURL, "file://\\\\a\\\\d"},
+        {"file://a//#c/../d", URL_WININET_COMPATIBILITY, "file://\\\\a\\\\d"},
+        {"file://a/\\#c/../d", 0, "file://a//#c/../d"},
+        {"file://a///#c/../d", 0, "file://a///d"},
+        {"file://a/b/#c/../d", 0, "file://a/b/d"},
+        {"file://a/b/.#c", 0, "file://a/b/#c"},
+        {"file://a/b/..#c", 0, "file://a/#c"},
+        {"file://a/b/.#c", URL_FILE_USE_PATHURL, "file://\\\\a\\b\\.#c"},
+        {"file://a/b/..#c", URL_FILE_USE_PATHURL, "file://\\\\a\\b\\..#c"},
+        {"file://a/b/.#c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b\\.#c"},
+        {"file://a/b/..#c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b\\..#c"},
+        {"file://a/b#../c", 0, "file://a/b#../c"},
+        {"file://a/b/#../c", 0, "file://a/b/#../c"},
+        {"file://a/b#../c", URL_FILE_USE_PATHURL, "file://\\\\a\\b#../c"},
+        {"file://a/b#../c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b#../c"},
+        {"file://#/b\\./", 0, "file://#/b/"},
+        {"file://#/./b\\./", 0, "file://#/./b/./"},
+        {"file://#/b\\./", URL_FILE_USE_PATHURL, "file://\\\\#/b/"},
+        {"file://#/b\\./", URL_WININET_COMPATIBILITY, "file://\\\\#/b/"},
+        {"file://a#/b\\./", 0, "file://a#/b/"},
+        {"file://a#/./b\\./", 0, "file://a#/./b/./"},
+        {"file://a#/b\\./", URL_FILE_USE_PATHURL, "file://\\\\a#/b/"},
+        {"file://a#/b\\./", URL_WININET_COMPATIBILITY, "file://\\\\a#/b/"},
+        {"file://a#/b\\./", URL_FILE_USE_PATHURL | URL_DONT_SIMPLIFY, "file://\\\\a#/b/./"},
+        {"file://a#/b\\.", URL_FILE_USE_PATHURL | URL_DONT_SIMPLIFY, "file://\\\\a#/b/./"},
+        {"file://a#/b/../../", 0, "file://a#/"},
+
+        /* ? is similar, with the following exceptions:
+         *
+         * - URLs ending in .htm(l) are not treated specially.
+         *
+         * - With URL_FILE_USE_PATHURL, the rest of the URL including the ? is
+         *   just omitted (much like the .html case above).
+         *
+         * - With URL_WININET_COMPATIBILITY, the rest of the URL is always
+         *   emitted verbatim (completely opaque, like other schemes).
+         */
+
+        {"file://a/b?c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b.html?c/../d\\e", 0, "file://a/d/e"},
+        {"file://a/b?c/../d\\e", URL_FILE_USE_PATHURL, "file://\\\\a\\b"},
+        {"file://a/b.html?c/../d\\e", URL_FILE_USE_PATHURL, "file://\\\\a\\b.html"},
+        {"file://a/b?c/../d\\e", URL_WININET_COMPATIBILITY, "file://\\\\a\\b?c/../d\\e"},
+        {"file://a/b.html?c/../d\\e", URL_WININET_COMPATIBILITY, "file://\\\\a\\b.html?c/../d\\e"},
+        {"file://a/b?c/../d", URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY, "file://\\\\a\\b"},
+        {"file://a/?c/../d", 0, "file://a/?c/../d"},
+        {"file://a/?c/../d", URL_FILE_USE_PATHURL, "file://\\\\a"},
+        {"file://a/?c/../d", URL_WININET_COMPATIBILITY, "file://\\\\a\\?c/../d"},
+        {"file://a//?c/../d", 0, "file://a//?c/../d"},
+        {"file://a//?c/../d", URL_FILE_USE_PATHURL, "file://\\\\a\\\\"},
+        {"file://a//?c/../d", URL_WININET_COMPATIBILITY, "file://\\\\a\\\\?c/../d"},
+        {"file://a/\\?c/../d", 0, "file://a//?c/../d"},
+        {"file://a///?c/../d", 0, "file://a///d"},
+        {"file://a/b/?c/../d", 0, "file://a/b/d"},
+        {"file://a/b/.?c", 0, "file://a/b/?c"},
+        {"file://a/b/..?c", 0, "file://a/?c"},
+        {"file://a/b/.?c", URL_FILE_USE_PATHURL, "file://\\\\a\\b\\"},
+        {"file://a/b/..?c", URL_FILE_USE_PATHURL, "file://\\\\a\\"},
+        {"file://a/b/.?c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b\\?c"},
+        {"file://a/b/..?c", URL_WININET_COMPATIBILITY, "file://\\\\a\\?c"},
+        {"file://?/a\\./", 0, "file://?/a/"},
+        {"file://?/./a\\./", 0, "file://?/./a/./"},
+        {"file://?/a\\./", URL_FILE_USE_PATHURL, "file://"},
+        {"file://?/a\\./", URL_WININET_COMPATIBILITY, "file://\\?/a\\./"},
+        {"file://a?/a\\./", 0, "file://a?/a/"},
+        {"file://a?/./a\\./", 0, "file://a?/./a/./"},
+        {"file://a?/a\\./", URL_FILE_USE_PATHURL, "file://\\\\a"},
+        {"file://a?/a\\./", URL_WININET_COMPATIBILITY, "file://\\\\a\\?/a\\./"},
+
+        {"file://a/b.html?c#d/..", 0, "file://a/"},
+        {"file://a/b.html?c.html#d/..", 0, "file://a/b.html?c.html#d/.."},
+        {"file://a/b?\\#c\\d", 0, "file://a/b?/#c/d"},
+        {"file://a/b?\\#c\\d", URL_WININET_COMPATIBILITY, "file://\\\\a\\b?\\#c\\d"},
+        {"file://a/b?\\#c\\d", URL_FILE_USE_PATHURL, "file://\\\\a\\b"},
+        {"file://a/b#\\?c\\d", 0, "file://a/b#/?c/d"},
+        {"file://a/b#\\?c\\d", URL_WININET_COMPATIBILITY, "file://\\\\a\\b#/?c\\d"},
+        {"file://a/b#\\?c\\d", URL_FILE_USE_PATHURL, "file://\\\\a\\b#/"},
+        {"file://a/b.html#c?d", URL_WININET_COMPATIBILITY, "file://\\\\a\\b.html?d#c"},
+
+        /* file: treats backslashes like forward slashes, including the
+         * initial pair. */
+        {"file://a/b\\", 0, "file://a/b/"},
+        {"file://a/b\\c/../.\\", 0, "file://a/b/"},
+        {"file://a\\b", 0, "file://a/b"},
+        {"file:/\\a\\..", 0, "file://a/.."},
+        {"file:\\/a\\..", 0, "file://a/.."},
+        {"file:\\\\a\\b", URL_FILE_USE_PATHURL, "file://\\\\a\\b"},
+        {"file:\\\\a\\b", URL_WININET_COMPATIBILITY, "file://\\\\a\\b"},
+        {"file:\\///a/./b/../c", 0, "file://a/./b/../c"},
+        {"file:/\\//a/./b/../c", 0, "file://a/./b/../c"},
+        {"file://\\/a/./b/../c", 0, "file://a/./b/../c"},
+        {"file:///\\a/./b/../c", 0, "file://a/./b/../c"},
+
+        {"file://a/b &c", 0, "file://a/b &c"},
+        {"file://a/b &c", URL_FILE_USE_PATHURL, "file://\\\\a\\b &c"},
+        {"file://a/b &c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b &c"},
+        {"file://a/b !\"$%&'()*+,-:;<=>@[]^_`{|}~c", URL_ESCAPE_UNSAFE, "file://a/b%20!%22$%%26'()*+,-:;%3C=%3E@%5B%5D%5E_%60%7B%7C%7D~c"},
+        {"file://a/b%20%26c", 0, "file://a/b%20%26c"},
+        {"file://a/b%20%26c", URL_FILE_USE_PATHURL, "file://\\\\a\\b &c"},
+        {"file://a/b%20%26c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b%20%26c"},
+
+        /* Omitting one slash behaves as if the URL had been written with an
+         * empty hostname, and the output adds two slashes as such. */
+
+        {"file:/", 0, "file:///"},
+        {"file:/a", 0, "file:///a"},
+        {"file:/./a", 0, "file:///./a"},
+        {"file:/../a/..", 0, "file:///../a/.."},
+        {"file:/./..", 0, "file:///./.."},
+        {"file:/a/.", 0, "file:///a/"},
+        {"file:/a/../..", 0, "file:///"},
+        {"file:/a:", 0, "file:///a:"},
+        {"file:/a:/b/../..", 0, "file:///a:/"},
+
+        /* The same applies to the flags. */
+
+        {"file:/", URL_FILE_USE_PATHURL, "file://"},
+        {"file:/a", URL_FILE_USE_PATHURL, "file://\\a"},
+        {"file:/.", URL_FILE_USE_PATHURL, "file://\\"},
+        {"file:/./a", URL_FILE_USE_PATHURL, "file://\\a"},
+        {"file:/../a", URL_FILE_USE_PATHURL, "file://\\..\\a"},
+        {"file:/a/../..", URL_FILE_USE_PATHURL, "file://\\..\\"},
+        {"file:/a/.", URL_FILE_USE_PATHURL | URL_DONT_SIMPLIFY, "file://\\a\\.\\"},
+        {"file:/a:", URL_FILE_USE_PATHURL, "file://a:"},
+        {"file:/a:/b/../..", URL_FILE_USE_PATHURL, "file://a:\\..\\"},
+
+        {"file:/", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file:/a", URL_WININET_COMPATIBILITY, "file://\\a"},
+        {"file:/.", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"file:/a:", URL_WININET_COMPATIBILITY, "file://a:"},
+
+        {"file:/a/b#c/../d", 0, "file:///a/d"},
+        {"file:/a/b?c/../d", 0, "file:///a/d"},
+
+        {"file:/a\\b\\", 0, "file:///a/b/"},
+        {"file:\\a/b/", 0, "file:///a/b/"},
+        {"file:\\a\\b", URL_FILE_USE_PATHURL, "file://\\a\\b"},
+        {"file:\\a\\b", URL_WININET_COMPATIBILITY, "file://\\a\\b"},
+
+        {"file:/a/b &c", 0, "file:///a/b &c"},
+
+        /* Omitting both slashes causes all dots to be collapsed, in the same
+         * way as bare http. */
+
+        {"file:a", 0, "file:a"},
+        {"file:a/", 0, "file:a/"},
+        {"file:a/.", 0, "file:a/"},
+        {"file:a/..", 0, "file:"},
+        {"file:a/../..", 0, "file:"},
+        {"file:", 0, "file:"},
+        {"file:.", 0, "file:"},
+        {"file:..", 0, "file:"},
+        {"file:./", 0, "file:"},
+        {"file:../", 0, "file:"},
+
+        {"file:a:", 0, "file:///a:"},
+
+        /* URL_FILE_USE_PATHURL treats everything here as a local (relative?)
+         * path. In the case that the path resolves to the current directory
+         * a single backslash is emitted. */
+        {"file:", URL_FILE_USE_PATHURL, "file://"},
+        {"file:a", URL_FILE_USE_PATHURL, "file://a"},
+        {"file:a/.", URL_FILE_USE_PATHURL, "file://a\\"},
+        {"file:a/../..", URL_FILE_USE_PATHURL, "file://..\\"},
+        {"file:./a", URL_FILE_USE_PATHURL, "file://a"},
+        {"file:../a", URL_FILE_USE_PATHURL, "file://..\\a"},
+        {"file:a/.", URL_FILE_USE_PATHURL | URL_DONT_SIMPLIFY, "file://a\\.\\"},
+        {"file:a:", URL_FILE_USE_PATHURL, "file://a:"},
+
+        /* URL_WININET_COMPATIBILITY doesn't emit a double slash. */
+        {"file:", URL_WININET_COMPATIBILITY, "file:"},
+        {"file:a", URL_WININET_COMPATIBILITY, "file:a"},
+        {"file:./a", URL_WININET_COMPATIBILITY, "file:a"},
+        {"file:../a", URL_WININET_COMPATIBILITY, "file:..\\a"},
+        {"file:../b/./c/../d", URL_WININET_COMPATIBILITY | URL_DONT_SIMPLIFY, "file:..\\b\\.\\c\\..\\d"},
+        {"file:a:", URL_WININET_COMPATIBILITY, "file://a:"},
+
+        {"file:a/b?c/../d", 0, "file:a/d"},
+        {"file:a/b#c/../d", 0, "file:a/d"},
+
+        {"file:a\\b\\", 0, "file:a/b/"},
+
+        {"file:a/b &c", 0, "file:a/b &c"},
+
+        {"fIlE://A/B", 0, "file://A/B"},
+        {"fIlE://A/B", URL_FILE_USE_PATHURL, "file://\\\\A\\B"},
+        {"fIlE://A/B", URL_WININET_COMPATIBILITY, "file://\\\\A\\B"},
+        {"fIlE:A:/B", 0, "file:///A:/B"},
+        {"fIlE:A:/B", URL_FILE_USE_PATHURL, "file://A:\\B"},
+        {"fIlE:A:/B", URL_WININET_COMPATIBILITY, "file://A:\\B"},
+        {"fIlE://lOcAlHoSt/B", 0, "file://lOcAlHoSt/B"},
+        {"fIlE://lOcAlHoSt/B", URL_FILE_USE_PATHURL, "file://\\B"},
+
+        /* Drive paths are automatically converted to file paths. Dots are
+         * collapsed unless the first segment after q: or q:/ is a dot. */
+
+        {"q:a", 0, "file:///q:a"},
+        {"q:a/.", 0, "file:///q:a/"},
+        {"q:a/..", 0, "file:///q:"},
+        {"q:a/../..", 0, "file:///q:"},
+        {"q:./a/..", 0, "file:///q:./a/.."},
+        {"q:../a/..", 0, "file:///q:../a/.."},
+        {"q:/", 0, "file:///q:/"},
+        {"q:/a", 0, "file:///q:/a"},
+        {"q:/a/.", 0, "file:///q:/a/"},
+        {"q:/a/..", 0, "file:///q:/"},
+        {"q:/./a/..", 0, "file:///q:/./a/.."},
+        {"q:/../a/..", 0, "file:///q:/../a/.."},
+        {"q://./a", 0, "file:///q://a"},
+        {"q://../a", 0, "file:///q:/a"},
+
+        /* File flags use the "unknown scheme" rules, and the root of the path
+         * is the first slash. */
+
+        {"q:/a", URL_FILE_USE_PATHURL, "file://q:\\a"},
+        {"q:/a/../..", URL_FILE_USE_PATHURL, "file://q:\\..\\"},
+        {"q:a/../../b/..", URL_FILE_USE_PATHURL, "file://q:a\\..\\..\\"},
+        {"q:./../../b/..", URL_FILE_USE_PATHURL, "file://q:.\\..\\..\\"},
+        {"q:/a", URL_WININET_COMPATIBILITY, "file://q:\\a"},
+        {"q:/a/../..", URL_WININET_COMPATIBILITY, "file://q:\\..\\"},
+        {"q:a/../../b/..", URL_WININET_COMPATIBILITY, "file://q:a\\..\\..\\"},
+        {"q:./../../b/..", URL_WININET_COMPATIBILITY, "file://q:.\\..\\..\\"},
+
+        {"q:/a/b?c/../d", 0, "file:///q:/a/d"},
+        {"q:/a/b#c/../d", 0, "file:///q:/a/d"},
+        {"q:a?b", URL_FILE_USE_PATHURL, "file://q:a"},
+
+        {"q:a\\b\\", 0, "file:///q:a/b/"},
+        {"q:\\a/b", 0, "file:///q:/a/b"},
+
+        /* Drive paths are also unique in that unsafe characters (and spaces)
+         * are automatically escaped—but not if the file flags are used. */
+
+        {"q:/a/b !\"$%&'()*+,-:;<=>@[]^_`{|}~c", 0, "file:///q:/a/b%20!%22$%25%26'()*+,-:;%3C=%3E@%5B%5D%5E_%60%7B%7C%7D~c"},
+        {"q:/a/b &c", URL_FILE_USE_PATHURL, "file://q:\\a\\b &c"},
+        {"q:/a/b &c", URL_WININET_COMPATIBILITY, "file://q:\\a\\b &c"},
+
+        {"q:/a/b%20%26c", 0, "file:///q:/a/b%2520%2526c"},
+        {"q:/a/b%20%26c", URL_UNESCAPE, "file:///q:/a/b &c"},
+        {"q:/a/b%20%26c", URL_UNESCAPE | URL_ESCAPE_UNSAFE, "file:///q:/a/b%20%26c"},
+        {"q:/a/b%20%26c", URL_FILE_USE_PATHURL, "file://q:\\a\\b &c"},
+        {"q:/a/b%20%26c", URL_FILE_USE_PATHURL | URL_UNESCAPE, "file://q:\\a\\b &c"},
+        {"q:/a/b%20%26c", URL_WININET_COMPATIBILITY, "file://q:\\a\\b%20%26c"},
+        {"q:/a/b%20%26c", URL_WININET_COMPATIBILITY | URL_UNESCAPE, "file://q:\\a\\b &c"},
+
+        {"q|a", 0, "file:///q%7Ca"},
+        {"-:a", 0, "-:a"},
+        {"Q:A", 0, "file:///Q:A"},
+
+        /* A double initial backslash is also converted to a file path. The same
+         * rules for hostnames apply. */
+
+        {"\\\\", 0, "file:///"},
+        {"\\\\a", 0, "file://a/"},
+        {"\\\\../a\\b/..\\c/.\\", 0, "file://../a/c/"},
+        {"\\\\a/./b/../c", 0, "file://a/./b/../c"},
+        /* And, of course, four or more slashes gets collapsed... */
+        {"\\\\//./b/./../c", 0, "file://./c"},
+        {"\\\\///./b/./../c", 0, "file://./c"},
+
+        {"\\\\a/b?c/../d", 0, "file://a/d"},
+        {"\\\\a/b#c/../d", 0, "file://a/d"},
+
+        /* Drive paths are "recognized" too, though. The following isn't
+         * actually a local path, but UrlCanonicalize() doesn't seem to realize
+         * that. */
+        {"\\\\a:/b", 0, "file:///a:/b"},
+
+        {"\\\\", URL_FILE_USE_PATHURL, "file://"},
+        {"\\\\a", URL_FILE_USE_PATHURL, "file://\\\\a"},
+        {"\\\\a/./..", URL_FILE_USE_PATHURL, "file://\\\\a\\..\\"},
+        {"\\\\a:/b", URL_FILE_USE_PATHURL, "file://a:\\b"},
+        {"\\\\", URL_WININET_COMPATIBILITY, "file://\\"},
+        {"\\\\a", URL_WININET_COMPATIBILITY, "file://\\\\a\\"},
+        {"\\\\a/./..", URL_WININET_COMPATIBILITY, "file://\\\\a\\..\\"},
+        {"\\\\a:/b", URL_WININET_COMPATIBILITY, "file://a:\\b"},
+
+        /* And, as with drive paths, unsafe characters are escaped. */
+        {"\\\\a/b !\"$%&'()*+,-:;<=>@[]^_`{|}~c", 0, "file://a/b%20!%22$%25%26'()*+,-:;%3C=%3E@%5B%5D%5E_%60%7B%7C%7D~c"},
+        {"\\\\a/b &c", URL_FILE_USE_PATHURL, "file://\\\\a\\b &c"},
+        {"\\\\a/b &c", URL_WININET_COMPATIBILITY, "file://\\\\a\\b &c"},
+
+        {"\\\\/b", 0, "file:///b"},
+        {"\\\\/b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"\\\\localhost/b", URL_FILE_USE_PATHURL, "file://\\b"},
+        {"\\\\127.0.0.1/b", URL_FILE_USE_PATHURL, "file://\\\\127.0.0.1\\b"},
+        {"\\\\localhost/b", URL_WININET_COMPATIBILITY, "file://\\b"},
+        {"\\\\127.0.0.1/b", URL_WININET_COMPATIBILITY, "file://\\\\127.0.0.1\\b"},
+
+        {"\\\\A/B", 0, "file://A/B"},
+
         {"file:///c:/tests/foo%20bar", URL_UNESCAPE, "file:///c:/tests/foo bar"},
         {"file:///c:/tests\\foo%20bar", URL_UNESCAPE, "file:///c:/tests/foo bar"},
         {"file:///c:/tests/foo%20bar", 0, "file:///c:/tests/foo%20bar"},
@@ -1027,56 +1835,175 @@ static void test_UrlCanonicalizeA(void)
         {"file://C:/user/file", URL_WININET_COMPATIBILITY, "file://C:\\user\\file"},
         {"file:///C:/user/file", URL_WININET_COMPATIBILITY, "file://C:\\user\\file"},
         {"file:////C:/user/file", URL_WININET_COMPATIBILITY, "file://C:\\user\\file"},
-        {"http:///www.winehq.org", 0, "http:///www.winehq.org"},
-        {"http:///www.winehq.org", URL_WININET_COMPATIBILITY, "http:///www.winehq.org"},
-        {"http://www.winehq.org/site/about", URL_FILE_USE_PATHURL, "http://www.winehq.org/site/about"},
-        {"file_://www.winehq.org/site/about", URL_FILE_USE_PATHURL, "file_://www.winehq.org/site/about"},
-        {"c:\\dir\\file", 0, "file:///c:/dir/file"},
-        {"file:///c:\\dir\\file", 0, "file:///c:/dir/file"},
-        {"c:dir\\file", 0, "file:///c:dir/file"},
-        {"c:\\tests\\foo bar", URL_FILE_USE_PATHURL, "file://c:\\tests\\foo bar"},
-        {"c:\\tests\\foo bar", 0, "file:///c:/tests/foo%20bar"},
-        {"c\t:\t\\te\tsts\\fo\to \tbar\t", 0, "file:///c:/tests/foo%20bar"},
-        {"res://file", 0, "res://file/"},
-        {"res://file", URL_FILE_USE_PATHURL, "res://file/"},
-        {"res:///c:/tests/foo%20bar", URL_UNESCAPE, "res:///c:/tests/foo bar"},
-        {"res:///c:/tests\\foo%20bar", URL_UNESCAPE, "res:///c:/tests\\foo bar"},
-        {"res:///c:/tests/foo%20bar", 0, "res:///c:/tests/foo%20bar"},
-        {"res:///c:/tests/foo%20bar", URL_FILE_USE_PATHURL, "res:///c:/tests/foo%20bar"},
-        {"res://c:/tests/../tests/foo%20bar", URL_FILE_USE_PATHURL, "res://c:/tests/foo%20bar"},
-        {"res://c:/tests\\../tests/foo%20bar", URL_FILE_USE_PATHURL, "res://c:/tests/foo%20bar"},
-        {"res://c:/tests/foo%20bar", URL_FILE_USE_PATHURL, "res://c:/tests/foo%20bar"},
-        {"res:///c://tests/foo%20bar", URL_FILE_USE_PATHURL, "res:///c://tests/foo%20bar"},
-        {"res:///c:\\tests\\foo bar", 0, "res:///c:\\tests\\foo bar"},
-        {"res:///c:\\tests\\foo bar", URL_DONT_SIMPLIFY, "res:///c:\\tests\\foo bar"},
-        {"res://c:\\tests\\foo bar/res", URL_FILE_USE_PATHURL, "res://c:\\tests\\foo bar/res"},
-        {"res://c:\\tests/res\\foo%20bar/strange\\sth", 0, "res://c:\\tests/res\\foo%20bar/strange\\sth"},
-        {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_FILE_USE_PATHURL, "res://c:\\tests/res\\foo%20bar/strange\\sth"},
-        {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_UNESCAPE, "res://c:\\tests/res\\foo bar/strange\\sth"},
-        {"/A/../B/./C/../../test_remove_dot_segments", 0, "/test_remove_dot_segments"},
-        {"/A/../B/./C/../../test_remove_dot_segments", URL_FILE_USE_PATHURL, "/test_remove_dot_segments"},
-        {"/A/../B/./C/../../test_remove_dot_segments", URL_WININET_COMPATIBILITY, "/test_remove_dot_segments"},
-        {"/A/B\\C/D\\E", 0, "/A/B\\C/D\\E"},
-        {"/A/B\\C/D\\E", URL_FILE_USE_PATHURL, "/A/B\\C/D\\E"},
-        {"/A/B\\C/D\\E", URL_WININET_COMPATIBILITY, "/A/B\\C/D\\E"},
-        {"///A/../B", 0, "///B"},
-        {"///A/../B", URL_FILE_USE_PATHURL, "///B"},
-        {"///A/../B", URL_WININET_COMPATIBILITY, "///B"},
-        {"A", 0, "A"},
-        {"../A", 0, "../A"},
-        {"A/../B", 0, "B"},
-        {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, "/uri-res/N2R?urn:sha1:B3K"} /*LimeWire online installer calls this*/,
-        {"http:www.winehq.org/dir/../index.html", 0, "http:www.winehq.org/index.html"},
-        {"http://localhost/test.html", URL_FILE_USE_PATHURL, "http://localhost/test.html"},
-        {"http://localhost/te%20st.html", URL_FILE_USE_PATHURL, "http://localhost/te%20st.html"},
-        {"http://www.winehq.org/%E6%A1%9C.html", URL_FILE_USE_PATHURL, "http://www.winehq.org/%E6%A1%9C.html"},
-        {"mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", 0, "mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
-        {"ftp:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", 0, "ftp:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
-        {"file:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", 0, "file:@MSITStore:C:/Program Files/AutoCAD 2008/Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
-        {"http:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", 0, "http:@MSITStore:C:/Program Files/AutoCAD 2008/Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
-        {"http:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", URL_FILE_USE_PATHURL, "http:@MSITStore:C:/Program Files/AutoCAD 2008/Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
-        {"mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", URL_FILE_USE_PATHURL, "mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
     };
+
+    static const struct canonicalize_test misc_tests[] =
+    {
+        {"", 0, ""},
+
+        /* If both slashes are omitted, everything afterwards is replicated
+         * as-is, with the exception that the final period is dropped from
+         * "scheme:." */
+
+        {"wine:.", 0, "wine:"},
+        {"wine:.", URL_DONT_SIMPLIFY, "wine:."},
+        {"wine:./", 0, "wine:./"},
+        {"wine:..", 0, "wine:.."},
+        {"wine:../", 0, "wine:../"},
+        {"wine:a", 0, "wine:a"},
+        {"wine:a/", 0, "wine:a/"},
+        {"wine:a/b/./../c", 0, "wine:a/b/./../c"},
+
+        {"wine:a/b?c/./d", 0, "wine:a/b?c/./d"},
+        {"wine:a/b#c/./d", 0, "wine:a/b#c/./d"},
+        {"wine:a/b#c?d", 0, "wine:a/b?d#c"},
+        {"wine:.#c?d", 0, "wine:?d#c"},
+
+        /* A backslash directly after the colon is not treated specially. */
+        {"wine:\\././a", 0, "wine:\\././a"},
+
+        {"wine:a/b &c", 0, "wine:a/b &c"},
+
+        /* If there's no scheme or hostname, things mostly follow the "unknown
+         * scheme" rules, except that a would-be empty string results in a
+         * single slash instead. */
+
+        {"a", 0, "a"},
+        {"a/", 0, "a/"},
+        {".", 0, "/"},
+        {".", URL_DONT_SIMPLIFY, "./"},
+        {"./", 0, "/"},
+        {"./.", 0, "/"},
+        {"././a", 0, "a"},
+        {"a/.", 0, "a/"},
+        {"a/./", 0, "a/"},
+        {"a/./b", 0, "a/b"},
+
+        {"..", 0, "../"},
+        {"../", 0, "../"},
+        {"../a", 0, "../a"},
+        {"../a/..", 0, "../"},
+        {"a/..", 0, "/"},
+        {"a/../..", 0, "../"},
+        {"a/b/..", 0, "a/"},
+        {"a/b/../", 0, "a/"},
+        {"a/b/../c", 0, "a/c"},
+        {"a/b/../c/..", 0, "a/"},
+        {"a/b/../c/../..", 0, "/"},
+
+        {"a/b?c/./d", 0, "a/b?c/./d"},
+        {"a/b#c/./d", 0, "a/b#c/./d"},
+        {"a/b#c?d", 0, "a/b?d#c"},
+        {"?c", 0, "?c"},
+        {".?c", 0, "/?c"},
+
+        {"?c/./d", 0, "?c/./d"},
+        {"#c/./d", 0, "#c/./d"},
+
+        {"a\\b/..", 0, "/"},
+
+        {"a/b &c", 0, "a/b &c"},
+
+        /* A colon by itself is not interpreted as any sort of scheme. */
+        {"://../../a", 0, "a"},
+
+        /* mk: is another idiosyncratic scheme, although thankfully it behaves
+         * rather simply. It has no concept of a hostname; if two slashes follow
+         * the scheme it simply treats them as two empty path elements. */
+        {"mk:", 0, "mk:"},
+        {"mk:.", 0, "mk:"},
+        {"mk:..", 0, "mk:"},
+        {"mk:/", 0, "mk:/"},
+        {"mk:/.", 0, "mk:/"},
+        {"mk:/..", 0, "mk:"},
+        {"mk:a", 0, "mk:a"},
+        {"mk:a:", 0, "mk:a:"},
+        {"mk://", 0, "mk://"},
+        {"mk://.", 0, "mk://"},
+        {"mk://..", 0, "mk:/"},
+        {"mk://../..", 0, "mk:"},
+        {"mk://../..", URL_DONT_SIMPLIFY, "mk://../.."},
+        {"mk://../../..", 0, "mk:"},
+
+        /* Backslashes are not translated into forward slashes. They are treated
+         * as path separators, but in a somewhat buggy manner: only dots before
+         * a forward slash are collapsed, and a double dot rewinds to the
+         * previous forward slash. */
+        {"mk:a/.\\", 0, "mk:a/.\\"},
+        {"mk:a/.\\b", 0, "mk:a/.\\b"},
+        {"mk:a\\.\\b", 0, "mk:a\\.\\b"},
+        {"mk:a\\./b", 0, "mk:a\\b"},
+        {"mk:a./b", 0, "mk:a./b"},
+        {"mk:a\\b/..\\c", 0, "mk:a\\b/..\\c"},
+        {"mk:a\\b\\..\\c", 0, "mk:a\\b\\..\\c"},
+        {"mk:a/b\\../c", 0, "mk:a/c"},
+        {"mk:a\\b../c", 0, "mk:a\\b../c"},
+
+        /* Progids get a forward slash appended if there isn't one already, and
+         * dots don't rewind past them. Despite the fact that progids are
+         * supposed to end with a colon, UrlCanonicalize() considers them to
+         * end with the slash.
+         *
+         * If the first path segment is a dot or double dot, it's treated as
+         * a relative path, like http, but only before a forward slash. */
+
+        {"mk:@", 0, "mk:@/"},
+        {"mk:@progid", 0, "mk:@progid/"},
+        {"mk:@progid:a", 0, "mk:@progid:a/"},
+        {"mk:@progid:a/b", 0, "mk:@progid:a/b"},
+        {"mk:@Progid:a/b/../..", 0, "mk:@Progid:a/"},
+        {"mk:@progid/a", 0, "mk:@progid/a"},
+        {"mk:@progid\\a", 0, "mk:@progid\\a/"},
+        {"mk:@progid/a/../..", 0, "mk:@progid/"},
+        {"mk:@progid/.", 0, "mk:@progid/."},
+        {"mk:@progid/.?", 0, "mk:@progid/.?"},
+        {"mk:@progid/./..", 0, "mk:@progid/./.."},
+        {"mk:@progid/../..", 0, "mk:@progid/../.."},
+        {"mk:@progid/a\\.\\b", 0, "mk:@progid/a\\.\\b"},
+        {"mk:@progid/a\\..\\b", 0, "mk:@progid/a\\..\\b"},
+        {"mk:@progid/.\\..", 0, "mk:@progid/"},
+
+        {"mk:a/b?c/../d", 0, "mk:a/b?c/../d"},
+        {"mk:a/b#c/../d", 0, "mk:a/b#c/../d"},
+        {"mk:a/b#c?d", 0, "mk:a/b#c?d"},
+        {"mk:@progid/a/b?c/../d", 0, "mk:@progid/a/b?c/../d"},
+        {"mk:@progid?c/d/..", 0, "mk:@progid?c/"},
+
+        {"mk:a/b &c", 0, "mk:a/b &c"},
+
+        {"mk:@MSITStore:dir/test.chm::/file.html/..", 0, "mk:@MSITStore:dir/test.chm::/"},
+        {"mk:@MSITStore:dir/test.chm::/file.html/../..", 0, "mk:@MSITStore:dir/"},
+
+        /* Whitespace except for plain spaces are stripped before parsing. */
+        {" \t\n\rwi\t\n\rne\t\n\r:\t\n\r/\t\n\r/\t\n\r./../a/.\t\n\r./ \t\n\r", 0, "wine://./../"},
+        /* Initial and final spaces and C0 control characters are also stripped,
+         * but not 007F or C1 control characters. */
+        {" \a\t\x01 wine://./.. \x1f\n\v ", 0, "wine://./../"},
+        {" wine ://./..", 0, "wine :/"},
+        {" wine: //a/../b", 0, "wine: //a/../b"},
+        {" wine://a/b c/.. ", 0, "wine://a/"},
+        {"\x7f/\a/\v/\x01/\x1f/\x80", 0, "\x7f/\a/\v/\x01/\x1f/\x80"},
+
+        /* Schemes are not case-sensitive, but are flattened to lowercase.
+         * The hostname for http-like schemes is also flattened to lowercase
+         * (but not for file; see above). */
+        {"wInE://A/B", 0, "wine://A/B"},
+        {"hTtP://A/b/../../C", 0, "http://a/C"},
+        {"fTP://A/B\\./C", 0, "ftp://a/B\\C"},
+        {"aBoUT://A/B/./", 0, "about://A/B/./"},
+        {"mK://..", 0, "mk:/"},
+
+        /* Characters allowed in a scheme are alphanumeric, hyphen, plus, period. */
+        {"0Aa+-.://./..", 0, "0aa+-.://./../"},
+        {"a_://./..", 0, "a_:/"},
+        {"a,://./..", 0, "a,:/"},
+
+        {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY, "/uri-res/N2R?urn:sha1:B3K"} /* LimeWire online installer calls this */,
+        {"mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm", 0,
+         "mk:@MSITStore:C:\\Program Files/AutoCAD 2008\\Help/acad_acg.chm::/WSfacf1429558a55de1a7524c1004e616f8b-322b.htm"},
+    };
+
+    static const DWORD file_flags[] = {0, URL_FILE_USE_PATHURL, URL_WININET_COMPATIBILITY};
 
     urllen = lstrlenA(winehqA);
 
@@ -1084,10 +2011,12 @@ static void test_UrlCanonicalizeA(void)
     dwSize = ARRAY_SIZE(szReturnUrl);
     hr = UrlCanonicalizeA(NULL, szReturnUrl, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(dwSize == ARRAY_SIZE(szReturnUrl), "got size %lu\n", dwSize);
 
     dwSize = ARRAY_SIZE(szReturnUrl);
     hr = UrlCanonicalizeA(winehqA, NULL, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(dwSize == ARRAY_SIZE(szReturnUrl), "got size %lu\n", dwSize);
 
     hr = UrlCanonicalizeA(winehqA, szReturnUrl, NULL, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
@@ -1095,6 +2024,7 @@ static void test_UrlCanonicalizeA(void)
     dwSize = 0;
     hr = UrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!dwSize, "got size %lu\n", dwSize);
 
     /* buffer has no space for the result */
     dwSize=urllen-1;
@@ -1153,10 +2083,71 @@ static void test_UrlCanonicalizeA(void)
     longurl[sizeof(longurl)-1] = '\0';
     hr = UrlCanonicalizeA(longurl, szReturnUrl, &dwSize, URL_WININET_COMPATIBILITY | URL_ESCAPE_UNSAFE);
     ok(hr == S_OK, "hr = %lx\n", hr);
+    ok(dwSize == strlen(szReturnUrl), "got size %lu\n", dwSize);
 
-    /* test url-modification */
-    for (i = 0; i < ARRAY_SIZE(tests); i++)
-        check_url_canonicalize(tests[i].url, tests[i].flags, tests[i].expect);
+    for (f = 0; f < ARRAY_SIZE(file_flags); ++f)
+    {
+        for (i = 0; i < ARRAY_SIZE(unk_scheme_tests); ++i)
+        {
+            check_url_canonicalize(unk_scheme_tests[i].url,
+                    unk_scheme_tests[i].flags | file_flags[f], unk_scheme_tests[i].expect);
+            sprintf(url, "wine:%s", unk_scheme_tests[i].url);
+            sprintf(expect, "wine:%s", unk_scheme_tests[i].expect);
+            check_url_canonicalize(url, unk_scheme_tests[i].flags | file_flags[f], expect);
+        }
+
+        for (i = 0; i < ARRAY_SIZE(http_tests); ++i)
+        {
+            static const struct
+            {
+                const char *prefix;
+                BOOL ftp_like;
+            }
+            prefixes[] =
+            {
+                {"ftp", TRUE},
+                {"gopher"},
+                {"http"},
+                {"https"},
+                {"local", TRUE},
+                {"news"},
+                {"nntp"},
+                {"res", TRUE},
+                {"snews"},
+                {"telnet"},
+                {"wais", TRUE},
+            };
+
+            for (j = 0; j < ARRAY_SIZE(prefixes); ++j)
+            {
+                sprintf(url, "%s:%s", prefixes[j].prefix, http_tests[i].url);
+                if (prefixes[j].ftp_like && http_tests[i].expect_ftp)
+                    sprintf(expect, "%s:%s", prefixes[j].prefix, http_tests[i].expect_ftp);
+                else
+                    sprintf(expect, "%s:%s", prefixes[j].prefix, http_tests[i].expect);
+
+                check_url_canonicalize(url, http_tests[i].flags | file_flags[f], expect);
+            }
+        }
+
+        for (i = 0; i < ARRAY_SIZE(opaque_tests); ++i)
+        {
+            static const char *const prefixes[] = {"about", "javascript", "mailto", "shell", "vbscript"};
+
+            for (j = 0; j < ARRAY_SIZE(prefixes); ++j)
+            {
+                sprintf(url, "%s:%s", prefixes[j], opaque_tests[i].url);
+                sprintf(expect, "%s:%s", prefixes[j], opaque_tests[i].expect);
+                check_url_canonicalize(url, opaque_tests[i].flags | file_flags[f], expect);
+            }
+        }
+
+        for (i = 0; i < ARRAY_SIZE(misc_tests); i++)
+            check_url_canonicalize(misc_tests[i].url, misc_tests[i].flags | file_flags[f], misc_tests[i].expect);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(file_tests); i++)
+        check_url_canonicalize(file_tests[i].url, file_tests[i].flags, file_tests[i].expect);
 }
 
 /* ########################### */
@@ -1175,10 +2166,12 @@ static void test_UrlCanonicalizeW(void)
     dwSize = ARRAY_SIZE(szReturnUrl);
     hr = UrlCanonicalizeW(NULL, szReturnUrl, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(dwSize == ARRAY_SIZE(szReturnUrl), "got size %lu\n", dwSize);
 
     dwSize = ARRAY_SIZE(szReturnUrl);
     hr = UrlCanonicalizeW(winehqW, NULL, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(dwSize == ARRAY_SIZE(szReturnUrl), "got size %lu\n", dwSize);
 
     hr = UrlCanonicalizeW(winehqW, szReturnUrl, NULL, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
@@ -1186,6 +2179,7 @@ static void test_UrlCanonicalizeW(void)
     dwSize = 0;
     hr = UrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_UNESCAPE);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!dwSize, "got size %lu\n", dwSize);
 
     /* buffer has no space for the result */
     dwSize = (urllen-1);
@@ -1227,6 +2221,13 @@ static void test_UrlCanonicalizeW(void)
     ok( (hr == S_OK) && (dwSize == urllen),
         "got 0x%lx with %lu and size %lu for %u (expected 'S_OK' and size %lu)\n",
         hr, GetLastError(), dwSize, lstrlenW(szReturnUrl), urllen);
+
+    /* Only ASCII alphanumeric characters are allowed in a scheme. */
+    dwSize = ARRAY_SIZE(szReturnUrl);
+    hr = UrlCanonicalizeW(L"f\xe8ve://./..", szReturnUrl, &dwSize, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!wcscmp(szReturnUrl, L"f\xe8ve:/"), "Got URL %s.\n", debugstr_w(szReturnUrl));
+    ok(dwSize == wcslen(szReturnUrl), "got size %lu\n", dwSize);
 
     /* check that the characters 1..32 are chopped from the end of the string */
     for (i = 1; i < 65536; i++)
