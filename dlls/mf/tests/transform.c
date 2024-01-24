@@ -4262,7 +4262,7 @@ static void test_h264_decoder(void)
 
     check_mft_set_input_type_required(transform, input_type_desc);
     check_mft_set_input_type(transform, input_type_desc);
-    check_mft_get_input_current_type_(transform, expect_input_type_desc, TRUE, FALSE);
+    check_mft_get_input_current_type_(transform, expect_input_type_desc, FALSE, TRUE);
 
     check_mft_get_input_stream_info(transform, S_OK, &input_info);
     check_mft_get_output_stream_info(transform, S_OK, &output_info);

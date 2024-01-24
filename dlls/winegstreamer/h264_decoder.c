@@ -574,8 +574,18 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, type %p stub!\n", iface, id, type);
-    return E_NOTIMPL;
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, type %p\n", iface, id, type);
+
+    if (!decoder->input_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = MFCreateMediaType(type)))
+        return hr;
+
+    return IMFMediaType_CopyAllItems(decoder->input_type, (IMFAttributes *)*type);
 }
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
@@ -583,7 +593,7 @@ static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD 
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
     HRESULT hr;
 
-    FIXME("iface %p, id %#lx, type %p stub!\n", iface, id, type);
+    TRACE("iface %p, id %#lx, type %p\n", iface, id, type);
 
     if (!decoder->output_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;

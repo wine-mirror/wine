@@ -3622,15 +3622,11 @@ todo_wine {
                 IUnknown_Release(node_object);
 
                 hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-                todo_wine
                 ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
-                if (hr == S_OK)
-                {
                 hr = IMFMediaType_Compare(input_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
                 ok(ret, "Input type of first transform doesn't match source node type.\n");
                 IMFMediaType_Release(media_type);
-                }
 
                 hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
                 ok(hr == S_OK, "Failed to get transform input type, hr %#lx.\n", hr);
