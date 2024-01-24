@@ -214,6 +214,8 @@
 #define DW_OP_GNU_uninit           0xf0
 #define DW_OP_GNU_encoded_addr     0xf1
 
+#ifndef NTDLL_DWARF_H_NO_UNWINDER
+
 #define DW_EH_PE_native   0x00
 #define DW_EH_PE_uleb128  0x01
 #define DW_EH_PE_udata2   0x02
@@ -232,8 +234,6 @@
 #define DW_EH_PE_aligned  0x50
 #define DW_EH_PE_indirect 0x80
 #define DW_EH_PE_omit     0xff
-
-#ifndef NTDLL_DWARF_H_NO_UNWINDER
 
 struct dwarf_eh_bases
 {

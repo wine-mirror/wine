@@ -186,10 +186,7 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
     pc = context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0);
 
-    /* first look for PE exception information */
-
-    if ((dispatch->FunctionEntry = lookup_function_info(pc,
-             &dispatch->ImageBase, &module )))
+    if ((dispatch->FunctionEntry = lookup_function_info( pc, &dispatch->ImageBase, &module )))
     {
         dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc,
                                                       dispatch->FunctionEntry, context,
@@ -198,45 +195,18 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
         return STATUS_SUCCESS;
     }
 
-    /* then look for host system exception information */
-
-    if (!module || (module->Flags & LDR_WINE_INTERNAL))
-    {
-        struct unwind_builtin_dll_params params = { type, dispatch, context };
-
-        status = WINE_UNIX_CALL( unix_unwind_builtin_dll, &params );
-        if (status != STATUS_SUCCESS) return status;
-
-        if (dispatch->EstablisherFrame)
-        {
-            dispatch->FunctionEntry = NULL;
-            if (dispatch->LanguageHandler && !module)
-            {
-                FIXME( "calling personality routine in system library not supported yet\n" );
-                dispatch->LanguageHandler = NULL;
-            }
-            return STATUS_SUCCESS;
-        }
-    }
+    status = context->Pc != context->Lr ? STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
+    if (module)
+        WARN( "exception data not found in %s for pc %p, lr %p\n",
+              debugstr_w(module->BaseDllName.Buffer), (void *)context->Pc, (void *)context->Lr );
     else
-    {
-        status = context->Pc != context->Lr ?
-                 STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
-        WARN( "exception data not found in %s for %p, LR %p, status %lx\n",
-               debugstr_w(module->BaseDllName.Buffer), (void*) context->Pc,
-               (void*) context->Lr, status );
-        dispatch->EstablisherFrame = context->Sp;
-        dispatch->LanguageHandler = NULL;
-        context->Pc = context->Lr;
-        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-        return status;
-    }
-
-    dispatch->EstablisherFrame = context->Fp;
+        WARN( "no module found for pc %p, lr %p\n",
+              (void *)context->Pc, (void *)context->Lr );
+    dispatch->EstablisherFrame = context->Sp;
     dispatch->LanguageHandler = NULL;
     context->Pc = context->Lr;
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-    return STATUS_SUCCESS;
+    return status;
 }
 
 
