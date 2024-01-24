@@ -3890,7 +3890,7 @@ static void test_ImmGetProperty(void)
     {
         .fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET,
     };
-    static const IMEINFO expect_ime_info_0411 = /* MS Japanese IME */
+    static const IMEINFO expect_ime_info_ja_JP = /* MS Japanese IME */
     {
         .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
         .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_KATAKANA,
@@ -3899,7 +3899,7 @@ static void test_ImmGetProperty(void)
         .fdwSelectCaps = SELECT_CAP_CONVERSION | SELECT_CAP_SENTENCE,
         .fdwUICaps = UI_CAP_ROT90,
     };
-    static const IMEINFO expect_ime_info_0412 = /* MS Korean IME */
+    static const IMEINFO expect_ime_info_ko_KR = /* MS Korean IME */
     {
         .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
         .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
@@ -3908,7 +3908,7 @@ static void test_ImmGetProperty(void)
         .fdwSelectCaps = SELECT_CAP_CONVERSION,
         .fdwUICaps = UI_CAP_ROT90,
     };
-    static const IMEINFO expect_ime_info_0804 = /* MS Chinese IME */
+    static const IMEINFO expect_ime_info_zh_CN = /* MS Chinese IME */
     {
         .fdwProperty = IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE | IME_PROP_AT_CARET | 0xa,
         .fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
@@ -3926,21 +3926,24 @@ static void test_ImmGetProperty(void)
     ok_ret( 0, ImmGetProperty( 0, 0 ) );
     ok_ret( 0, ImmGetProperty( hkl, 0 ) );
 
-    if (hkl == (HKL)0x04110411) expect = &expect_ime_info_0411;
-    else if (hkl == (HKL)0x04120412) expect = &expect_ime_info_0412;
-    else if (hkl == (HKL)0x08040804) expect = &expect_ime_info_0804;
+    if (hkl == (HKL)0x04110411) expect = &expect_ime_info_ja_JP;
+    else if (hkl == (HKL)0x04120412) expect = &expect_ime_info_ko_KR;
+    else if (hkl == (HKL)0x08040804) expect = &expect_ime_info_zh_CN;
     else expect = &expect_ime_info;
 
     /* IME_PROP_COMPLETE_ON_UNSELECT seems to be sometimes set on CJK locales IMEs, sometimes not */
+    todo_wine_if( expect != &expect_ime_info )
     ok_ret( expect->fdwProperty,       ImmGetProperty( hkl, IGP_PROPERTY ) & ~IME_PROP_COMPLETE_ON_UNSELECT );
-    todo_wine
+    todo_wine_if( expect != &expect_ime_info_zh_CN && expect != &expect_ime_info_ko_KR )
     ok_ret( expect->fdwConversionCaps, ImmGetProperty( hkl, IGP_CONVERSION ) );
     todo_wine
     ok_ret( expect->fdwSentenceCaps,   ImmGetProperty( hkl, IGP_SENTENCE ) );
+    todo_wine_if( expect != &expect_ime_info )
     ok_ret( expect->fdwSCSCaps,        ImmGetProperty( hkl, IGP_SETCOMPSTR ) );
-    todo_wine
+    todo_wine_if( expect != &expect_ime_info_ko_KR )
     ok_ret( expect->fdwSelectCaps,     ImmGetProperty( hkl, IGP_SELECT ) );
     ok_ret( IMEVER_0400,               ImmGetProperty( hkl, IGP_GETIMEVERSION ) );
+    todo_wine_if( expect != &expect_ime_info )
     ok_ret( expect->fdwUICaps,         ImmGetProperty( hkl, IGP_UI ) );
     todo_wine
     ok_ret( 0xdeadbeef, GetLastError() );
@@ -7370,7 +7373,7 @@ static void test_ga_na_da(void)
     UINT i;
 
     /* this test doesn't work on Win32 / WoW64 */
-    if (sizeof(void *) == 4 || default_hkl != (HKL)0x04120412 /* MS Korean IME */)
+    if (broken(sizeof(void *) == 4) || default_hkl != (HKL)0x04120412 /* MS Korean IME */)
     {
         skip( "Got hkl %p, skipping Korean IME-specific test\n", default_hkl );
         process_messages();
@@ -7572,7 +7575,7 @@ static void test_nihongo_no(void)
     UINT i;
 
     /* this test doesn't work on Win32 / WoW64 */
-    if (sizeof(void *) == 4 || default_hkl != (HKL)0x04110411 /* MS Japanese IME */)
+    if (broken(sizeof(void *) == 4) || default_hkl != (HKL)0x04110411 /* MS Japanese IME */)
     {
         skip( "Got hkl %p, skipping Japanese IME-specific test\n", default_hkl );
         return;
