@@ -50,10 +50,6 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
-#ifdef HAVE_LIBUNWIND
-# define UNW_LOCAL_ONLY
-# include <libunwind.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -332,140 +328,6 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *conte
 }
 
 
-#ifdef HAVE_LIBUNWIND
-static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEXT *context,
-                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
-{
-    unw_context_t unw_context;
-    unw_cursor_t cursor;
-    unw_proc_info_t info;
-    int rc;
-
-#ifdef __APPLE__
-    rc = unw_getcontext( &unw_context );
-    if (rc == UNW_ESUCCESS)
-        rc = unw_init_local( &cursor, &unw_context );
-    if (rc == UNW_ESUCCESS)
-    {
-        int i;
-        for (i = 0; i <= 28; i++)
-            unw_set_reg( &cursor, UNW_ARM64_X0 + i, context->X[i] );
-        unw_set_reg( &cursor, UNW_ARM64_FP, context->Fp );
-        unw_set_reg( &cursor, UNW_ARM64_LR, context->Lr );
-        unw_set_reg( &cursor, UNW_ARM64_SP, context->Sp );
-        unw_set_reg( &cursor, UNW_REG_IP,   context->Pc );
-    }
-#else
-    memcpy( unw_context.uc_mcontext.regs, context->X, sizeof(context->X) );
-    unw_context.uc_mcontext.sp = context->Sp;
-    unw_context.uc_mcontext.pc = context->Pc;
-
-    rc = unw_init_local( &cursor, &unw_context );
-#endif
-    if (rc != UNW_ESUCCESS)
-    {
-        WARN( "setup failed: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-    rc = unw_get_proc_info( &cursor, &info );
-    if (UNW_ENOINFO < 0) rc = -rc;  /* LLVM libunwind has negative error codes */
-    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
-    {
-        WARN( "failed to get info: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip)
-    {
-        TRACE( "no info found for %lx ip %lx-%lx, assuming leaf function\n",
-               ip, info.start_ip, info.end_ip );
-        *handler = NULL;
-        *frame = context->Sp;
-        context->Pc = context->Lr;
-        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-        return STATUS_SUCCESS;
-    }
-
-    TRACE( "ip %#lx function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
-           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
-           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
-
-    rc = unw_step( &cursor );
-    if (rc < 0)
-    {
-        WARN( "failed to unwind: %d %d\n", rc, UNW_ENOINFO );
-        return STATUS_INVALID_DISPOSITION;
-    }
-
-    *handler      = (void *)info.handler;
-    *handler_data = (void *)info.lsda;
-    *frame        = context->Sp;
-#ifdef __APPLE__
-    {
-        int i;
-        for (i = 0; i <= 28; i++)
-            unw_get_reg( &cursor, UNW_ARM64_X0 + i, (unw_word_t *)&context->X[i] );
-    }
-    unw_get_reg( &cursor, UNW_ARM64_FP,    (unw_word_t *)&context->Fp );
-    unw_get_reg( &cursor, UNW_ARM64_X30,   (unw_word_t *)&context->Lr );
-    unw_get_reg( &cursor, UNW_ARM64_SP,    (unw_word_t *)&context->Sp );
-#else
-    unw_get_reg( &cursor, UNW_AARCH64_X0,  (unw_word_t *)&context->X0 );
-    unw_get_reg( &cursor, UNW_AARCH64_X1,  (unw_word_t *)&context->X1 );
-    unw_get_reg( &cursor, UNW_AARCH64_X2,  (unw_word_t *)&context->X2 );
-    unw_get_reg( &cursor, UNW_AARCH64_X3,  (unw_word_t *)&context->X3 );
-    unw_get_reg( &cursor, UNW_AARCH64_X4,  (unw_word_t *)&context->X4 );
-    unw_get_reg( &cursor, UNW_AARCH64_X5,  (unw_word_t *)&context->X5 );
-    unw_get_reg( &cursor, UNW_AARCH64_X6,  (unw_word_t *)&context->X6 );
-    unw_get_reg( &cursor, UNW_AARCH64_X7,  (unw_word_t *)&context->X7 );
-    unw_get_reg( &cursor, UNW_AARCH64_X8,  (unw_word_t *)&context->X8 );
-    unw_get_reg( &cursor, UNW_AARCH64_X9,  (unw_word_t *)&context->X9 );
-    unw_get_reg( &cursor, UNW_AARCH64_X10, (unw_word_t *)&context->X10 );
-    unw_get_reg( &cursor, UNW_AARCH64_X11, (unw_word_t *)&context->X11 );
-    unw_get_reg( &cursor, UNW_AARCH64_X12, (unw_word_t *)&context->X12 );
-    unw_get_reg( &cursor, UNW_AARCH64_X13, (unw_word_t *)&context->X13 );
-    unw_get_reg( &cursor, UNW_AARCH64_X14, (unw_word_t *)&context->X14 );
-    unw_get_reg( &cursor, UNW_AARCH64_X15, (unw_word_t *)&context->X15 );
-    unw_get_reg( &cursor, UNW_AARCH64_X16, (unw_word_t *)&context->X16 );
-    unw_get_reg( &cursor, UNW_AARCH64_X17, (unw_word_t *)&context->X17 );
-    unw_get_reg( &cursor, UNW_AARCH64_X18, (unw_word_t *)&context->X18 );
-    unw_get_reg( &cursor, UNW_AARCH64_X19, (unw_word_t *)&context->X19 );
-    unw_get_reg( &cursor, UNW_AARCH64_X20, (unw_word_t *)&context->X20 );
-    unw_get_reg( &cursor, UNW_AARCH64_X21, (unw_word_t *)&context->X21 );
-    unw_get_reg( &cursor, UNW_AARCH64_X22, (unw_word_t *)&context->X22 );
-    unw_get_reg( &cursor, UNW_AARCH64_X23, (unw_word_t *)&context->X23 );
-    unw_get_reg( &cursor, UNW_AARCH64_X24, (unw_word_t *)&context->X24 );
-    unw_get_reg( &cursor, UNW_AARCH64_X25, (unw_word_t *)&context->X25 );
-    unw_get_reg( &cursor, UNW_AARCH64_X26, (unw_word_t *)&context->X26 );
-    unw_get_reg( &cursor, UNW_AARCH64_X27, (unw_word_t *)&context->X27 );
-    unw_get_reg( &cursor, UNW_AARCH64_X28, (unw_word_t *)&context->X28 );
-    unw_get_reg( &cursor, UNW_AARCH64_X29, (unw_word_t *)&context->Fp );
-    unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->Lr );
-    unw_get_reg( &cursor, UNW_AARCH64_SP,  (unw_word_t *)&context->Sp );
-#endif
-    unw_get_reg( &cursor, UNW_REG_IP,      (unw_word_t *)&context->Pc );
-    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-
-    TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
-    TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
-          context->X0, context->X1, context->X2, context->X3 );
-    TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
-          context->X4, context->X5, context->X6, context->X7 );
-    TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
-          context->X8, context->X9, context->X10, context->X11 );
-    TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
-          context->X12, context->X13, context->X14, context->X15 );
-    TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
-          context->X16, context->X17, context->X18, context->X19 );
-    TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
-          context->X20, context->X21, context->X22, context->X23 );
-    TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
-          context->X24, context->X25, context->X26, context->X27 );
-    TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
-          context->X28, context->Fp, context->Lr, context->Sp );
-    return STATUS_SUCCESS;
-}
-#endif
-
 /***********************************************************************
  *           unwind_builtin_dll
  *
@@ -482,13 +344,14 @@ NTSTATUS unwind_builtin_dll( void *args )
     if (fde)
         return dwarf_virtual_unwind( context->Pc, &dispatch->EstablisherFrame, context, fde,
                                      &bases, &dispatch->LanguageHandler, &dispatch->HandlerData );
-#ifdef HAVE_LIBUNWIND
-    return libunwind_virtual_unwind( context->Pc, &dispatch->EstablisherFrame, context,
-                                     &dispatch->LanguageHandler, &dispatch->HandlerData );
-#else
-    ERR("libunwind not available, unable to unwind\n");
-    return STATUS_INVALID_DISPOSITION;
-#endif
+
+    TRACE( "no info found for %lx, assuming leaf function\n",
+           context->Pc );
+    dispatch->LanguageHandler = NULL;
+    dispatch->EstablisherFrame = context->Sp;
+    context->Pc = context->Lr;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    return STATUS_SUCCESS;
 }
 
 
