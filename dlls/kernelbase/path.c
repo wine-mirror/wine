@@ -4816,16 +4816,7 @@ BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
     case URLIS_OPAQUE:
         base.cbSize = sizeof(base);
         if (ParseURLA(url, &base) != S_OK) return FALSE;  /* invalid scheme */
-        switch (base.nScheme)
-        {
-        case URL_SCHEME_MAILTO:
-        case URL_SCHEME_SHELL:
-        case URL_SCHEME_JAVASCRIPT:
-        case URL_SCHEME_VBSCRIPT:
-        case URL_SCHEME_ABOUT:
-            return TRUE;
-        }
-        return FALSE;
+        return scheme_is_opaque( base.nScheme );
 
     case URLIS_FILEURL:
         return (CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, url, 5, "file:", 5) == CSTR_EQUAL);
