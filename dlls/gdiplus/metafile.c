@@ -2006,7 +2006,6 @@ static GpStatus metafile_deserialize_image(const BYTE *record_data, UINT data_si
 static GpStatus metafile_deserialize_path(const BYTE *record_data, UINT data_size, GpPath **path)
 {
     EmfPlusPath *data = (EmfPlusPath *)record_data;
-    GpStatus status;
     BYTE *types;
     UINT size;
     DWORD i;
@@ -2035,39 +2034,34 @@ static GpStatus metafile_deserialize_path(const BYTE *record_data, UINT data_siz
     if (data_size < size)
         return InvalidParameter;
 
-    status = GdipCreatePath(FillModeAlternate, path);
-    if (status != Ok)
-        return status;
-
-    (*path)->pathdata.Count = data->PathPointCount;
-    (*path)->pathdata.Points = malloc(data->PathPointCount * sizeof(*(*path)->pathdata.Points));
-    (*path)->pathdata.Types = malloc(data->PathPointCount * sizeof(*(*path)->pathdata.Types));
-    (*path)->datalen = (*path)->pathdata.Count;
-
-    if (!(*path)->pathdata.Points || !(*path)->pathdata.Types)
+    if (data->PathPointCount)
     {
-        GdipDeletePath(*path);
-        return OutOfMemory;
-    }
-
-    if (data->PathPointFlags & 0x4000) /* C */
-    {
-        EmfPlusPoint *points = (EmfPlusPoint *)data->data;
-        for (i = 0; i < data->PathPointCount; i++)
+        if (data->PathPointFlags & 0x4000) /* C */
         {
-            (*path)->pathdata.Points[i].X = points[i].X;
-            (*path)->pathdata.Points[i].Y = points[i].Y;
+            EmfPlusPoint *points = (EmfPlusPoint *)data->data;
+            GpPointF *temp = malloc(sizeof(GpPointF) * data->PathPointCount);
+
+            for (i = 0; i < data->PathPointCount; i++)
+            {
+                temp[i].X = points[i].X;
+                temp[i].Y = points[i].Y;
+            }
+
+            types = (BYTE *)(points + i);
+            GdipCreatePath2(temp, types, data->PathPointCount, FillModeAlternate, path);
+            free(temp);
         }
-        types = (BYTE *)(points + i);
+        else
+        {
+            EmfPlusPointF *points = (EmfPlusPointF *)data->data;
+            types = (BYTE *)(points + data->PathPointCount);
+            return GdipCreatePath2((GpPointF*)points, types, data->PathPointCount, FillModeAlternate, path);
+        }
     }
     else
     {
-        EmfPlusPointF *points = (EmfPlusPointF *)data->data;
-        memcpy((*path)->pathdata.Points, points, sizeof(*points) * data->PathPointCount);
-        types = (BYTE *)(points + data->PathPointCount);
+        return GdipCreatePath(FillModeAlternate, path);
     }
-
-    memcpy((*path)->pathdata.Types, types, sizeof(*types) * data->PathPointCount);
 
     return Ok;
 }
