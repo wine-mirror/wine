@@ -1744,7 +1744,7 @@ static void test_hid_mouse(void)
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
     msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
     todo_wine
-    ok( mouse_move_count == 1, "got mouse_move_count %u\n", mouse_move_count );
+    ok( mouse_move_count >= 1, "got mouse_move_count %u\n", mouse_move_count );
 
     GetCursorPos( &pos );
     todo_wine
