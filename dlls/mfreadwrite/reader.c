@@ -73,6 +73,7 @@ enum media_stream_flags
 
 struct transform_entry
 {
+    struct list entry;
     IMFTransform *transform;
     unsigned int min_buffer_size;
 };
@@ -81,7 +82,7 @@ struct media_stream
 {
     IMFMediaStream *stream;
     IMFMediaType *current;
-    struct transform_entry decoder;
+    struct list transforms;
     IMFVideoSampleAllocatorEx *allocator;
     DWORD id;
     unsigned int index;
@@ -202,6 +203,30 @@ static ULONG source_reader_addref(struct source_reader *reader)
     return InterlockedIncrement(&reader->refcount);
 }
 
+static void transform_entry_destroy(struct transform_entry *entry)
+{
+    IMFTransform_Release(entry->transform);
+    free(entry);
+}
+
+static void media_stream_destroy(struct media_stream *stream)
+{
+    struct transform_entry *entry, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &stream->transforms, struct transform_entry, entry)
+    {
+        list_remove(&entry->entry);
+        transform_entry_destroy(entry);
+    }
+
+    if (stream->stream)
+        IMFMediaStream_Release(stream->stream);
+    if (stream->current)
+        IMFMediaType_Release(stream->current);
+    if (stream->allocator)
+        IMFVideoSampleAllocatorEx_Release(stream->allocator);
+}
+
 static ULONG source_reader_release(struct source_reader *reader)
 {
     ULONG refcount = InterlockedDecrement(&reader->refcount);
@@ -222,15 +247,7 @@ static ULONG source_reader_release(struct source_reader *reader)
         for (i = 0; i < reader->stream_count; ++i)
         {
             struct media_stream *stream = &reader->streams[i];
-
-            if (stream->stream)
-                IMFMediaStream_Release(stream->stream);
-            if (stream->current)
-                IMFMediaType_Release(stream->current);
-            if (stream->decoder.transform)
-                IMFTransform_Release(stream->decoder.transform);
-            if (stream->allocator)
-                IMFVideoSampleAllocatorEx_Release(stream->allocator);
+            media_stream_destroy(stream);
         }
         source_reader_release_responses(reader, NULL);
         free(reader->streams);
@@ -749,9 +766,14 @@ static HRESULT source_reader_push_transform_samples(struct source_reader *reader
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
-    MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
+    MFT_OUTPUT_STREAM_INFO stream_info = {0};
+    struct transform_entry *next = NULL;
+    struct list *ptr;
     DWORD status;
     HRESULT hr;
+
+    if ((ptr = list_next(&stream->transforms, &entry->entry)))
+        next = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info)))
         return hr;
@@ -765,8 +787,13 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
                 && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
             break;
 
-        if (SUCCEEDED(hr = IMFTransform_ProcessOutput(stream->decoder.transform, 0, 1, &out_buffer, &status)))
-            hr = source_reader_queue_sample(reader, stream, out_buffer.pSample);
+        if (SUCCEEDED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
+        {
+            if (next)
+                hr = source_reader_push_transform_samples(reader, stream, next, out_buffer.pSample);
+            else
+                hr = source_reader_queue_sample(reader, stream, out_buffer.pSample);
+        }
 
         if (out_buffer.pSample)
             IMFSample_Release(out_buffer.pSample);
@@ -780,7 +807,12 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
 static HRESULT source_reader_drain_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
+    struct transform_entry *next = NULL;
+    struct list *ptr;
     HRESULT hr;
+
+    if ((ptr = list_next(&stream->transforms, &entry->entry)))
+        next = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_DRAIN, 0)))
         WARN("Failed to drain transform %p, hr %#lx\n", entry->transform, hr);
@@ -788,30 +820,38 @@ static HRESULT source_reader_drain_transform_samples(struct source_reader *reade
             && hr != MF_E_TRANSFORM_NEED_MORE_INPUT)
         WARN("Failed to pull pending samples, hr %#lx.\n", hr);
 
-    return S_OK;
+    return next ? source_reader_drain_transform_samples(reader, stream, next) : S_OK;
 }
 
 static HRESULT source_reader_flush_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
+    struct transform_entry *next = NULL;
+    struct list *ptr;
     HRESULT hr;
+
+    if ((ptr = list_next(&stream->transforms, &entry->entry)))
+        next = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, MFT_MESSAGE_COMMAND_FLUSH, 0)))
         WARN("Failed to flush transform %p, hr %#lx\n", entry->transform, hr);
 
-    return S_OK;
+    return next ? source_reader_flush_transform_samples(reader, stream, next) : S_OK;
 }
 
 static HRESULT source_reader_process_sample(struct source_reader *reader, struct media_stream *stream,
         IMFSample *sample)
 {
+    struct transform_entry *entry;
+    struct list *ptr;
     HRESULT hr;
 
-    if (!stream->decoder.transform)
+    if (!(ptr = list_head(&stream->transforms)))
         return source_reader_queue_sample(reader, stream, sample);
+    entry = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
-    if (SUCCEEDED(hr = source_reader_push_transform_samples(reader, stream, &stream->decoder, sample))
+    if (SUCCEEDED(hr = source_reader_push_transform_samples(reader, stream, entry, sample))
             || hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         hr = stream->requests ? source_reader_request_sample(reader, stream) : S_OK;
     else
@@ -895,12 +935,16 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
             switch (event_type)
             {
                 case MEEndOfStream:
+                {
+                    struct list *ptr;
+
                     stream->state = STREAM_STATE_EOS;
                     stream->flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
 
-                    if (stream->decoder.transform)
+                    if ((ptr = list_head(&stream->transforms)))
                     {
-                        if (FAILED(hr = source_reader_drain_transform_samples(reader, stream, &stream->decoder)))
+                        struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
+                        if (FAILED(hr = source_reader_drain_transform_samples(reader, stream, entry)))
                             WARN("Failed to drain pending samples, hr %#lx.\n", hr);
                     }
 
@@ -908,6 +952,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                         source_reader_queue_response(reader, stream, S_OK, MF_SOURCE_READERF_ENDOFSTREAM, 0, NULL);
 
                     break;
+                }
                 case MEStreamSeeked:
                 case MEStreamStarted:
                     stream->state = STREAM_STATE_READY;
@@ -1260,13 +1305,15 @@ static void source_reader_release_responses(struct source_reader *reader, struct
 static void source_reader_flush_stream(struct source_reader *reader, DWORD stream_index)
 {
     struct media_stream *stream = &reader->streams[stream_index];
+    struct list *ptr;
     HRESULT hr;
 
     source_reader_release_responses(reader, stream);
 
-    if (stream->decoder.transform)
+    if ((ptr = list_head(&stream->transforms)))
     {
-        if (FAILED(hr = source_reader_flush_transform_samples(reader, stream, &stream->decoder)))
+        struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
+        if (FAILED(hr = source_reader_flush_transform_samples(reader, stream, entry)))
             WARN("Failed to drain pending samples, hr %#lx.\n", hr);
     }
 
@@ -1701,6 +1748,8 @@ static HRESULT source_reader_get_source_type_handler(struct source_reader *reade
 
 static HRESULT source_reader_set_compatible_media_type(struct source_reader *reader, DWORD index, IMFMediaType *type)
 {
+    struct media_stream *stream = &reader->streams[index];
+    struct transform_entry *entry, *next;
     IMFMediaTypeHandler *type_handler;
     IMFMediaType *native_type;
     BOOL type_set = FALSE;
@@ -1708,7 +1757,7 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
     DWORD flags;
     HRESULT hr;
 
-    if (FAILED(hr = IMFMediaType_IsEqual(type, reader->streams[index].current, &flags)))
+    if (FAILED(hr = IMFMediaType_IsEqual(type, stream->current, &flags)))
         return hr;
 
     if (!(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
@@ -1717,6 +1766,12 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
     /* No need for a decoder or type change. */
     if (flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA)
         return S_OK;
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, next, &stream->transforms, struct transform_entry, entry)
+    {
+        list_remove(&entry->entry);
+        transform_entry_destroy(entry);
+    }
 
     if (FAILED(hr = source_reader_get_source_type_handler(reader, index, &type_handler)))
         return hr;
@@ -1728,7 +1783,7 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
         if (SUCCEEDED(IMFMediaType_IsEqual(native_type, type, &flags)) && (flags & compare_flags) == compare_flags)
         {
             if ((type_set = SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(type_handler, native_type))))
-                IMFMediaType_CopyAllItems(native_type, (IMFAttributes *)reader->streams[index].current);
+                IMFMediaType_CopyAllItems(native_type, (IMFAttributes *)stream->current);
         }
 
         IMFMediaType_Release(native_type);
@@ -1804,12 +1859,11 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     return hr;
 }
 
-static HRESULT source_reader_create_transform(struct source_reader *reader, DWORD index,
-        IMFMediaType *input_type, IMFMediaType *output_type)
+static HRESULT source_reader_create_transform(struct source_reader *reader,
+        IMFMediaType *input_type, IMFMediaType *output_type, struct transform_entry **out)
 {
-    struct media_stream *stream = &reader->streams[index];
-    struct transform_entry *entry = &stream->decoder;
     MFT_REGISTER_TYPE_INFO in_type, out_type;
+    struct transform_entry *entry;
     GUID *classes, category;
     IMFTransform *transform;
     UINT i, count;
@@ -1828,6 +1882,9 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, DWOR
         category = MFT_CATEGORY_AUDIO_DECODER;
     else
         return MF_E_TOPO_CODEC_NOT_FOUND;
+
+    if (!(entry = calloc(1, sizeof(*entry))))
+        return E_OUTOFMEMORY;
 
     if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
         IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT,
@@ -1855,6 +1912,7 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, DWOR
                 if (SUCCEEDED(hr))
                 {
                     entry->transform = transform;
+                    *out = entry;
                     return S_OK;
                 }
             }
@@ -1865,6 +1923,7 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, DWOR
         CoTaskMemFree(classes);
     }
 
+    free(entry);
     return hr;
 }
 
@@ -1877,9 +1936,13 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
 
     while (SUCCEEDED(hr = source_reader_get_native_media_type(reader, index, i++, &input_type)))
     {
-        if (SUCCEEDED(hr = source_reader_create_transform(reader, index, input_type, output_type)))
+        struct transform_entry *entry;
+
+        if (SUCCEEDED(hr = source_reader_create_transform(reader, input_type, output_type, &entry)))
         {
             IMFMediaTypeHandler *type_handler;
+
+            list_add_tail(&stream->transforms, &entry->entry);
 
             if (SUCCEEDED(source_reader_get_source_type_handler(reader, index, &type_handler)))
             {
@@ -1888,7 +1951,7 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
                 IMFMediaTypeHandler_Release(type_handler);
             }
 
-            if (FAILED(hr = IMFTransform_GetOutputCurrentType(stream->decoder.transform, 0, &output_type)))
+            if (FAILED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &output_type)))
                 WARN("Failed to get decoder output media type, hr %#lx\n", hr);
             else
             {
@@ -2181,6 +2244,7 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReaderEx *iface, D
         REFIID riid, void **object)
 {
     struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
+    struct media_stream *stream = &reader->streams[index];
     IUnknown *obj = NULL;
     HRESULT hr = S_OK;
 
@@ -2203,7 +2267,14 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReaderEx *iface, D
                 hr = MF_E_INVALIDSTREAMNUMBER;
             else
             {
-                obj = (IUnknown *)reader->streams[index].decoder.transform;
+                struct list *ptr;
+
+                if ((ptr = list_tail(&stream->transforms)))
+                {
+                    struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
+                    obj = (IUnknown *)entry->transform;
+                }
+
                 if (!obj) hr = E_NOINTERFACE;
             }
             break;
@@ -2425,6 +2496,8 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         IMFStreamDescriptor *sd;
         IMFMediaType *src_type;
         BOOL selected;
+
+        list_init(&object->streams[i].transforms);
 
         if (FAILED(hr = MFCreateMediaType(&object->streams[i].current)))
             break;
