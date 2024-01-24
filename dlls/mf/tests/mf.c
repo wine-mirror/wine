@@ -3705,17 +3705,13 @@ todo_wine {
             hr = IMFTopology_SetUINT32(full_topology, &IID_IMFTopology, 123);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
-            todo_wine_if(IsEqualGUID(&test->decoder_class, &CLSID_MSH264DecoderMFT))
             ok(hr == S_OK, "Failed to resolve topology, hr %#lx.\n", hr);
-            if (hr == S_OK)
-            {
             ok(full_topology != topology2, "Unexpected instance.\n");
             hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
             ref = IMFTopology_Release(topology2);
             ok(ref == 0, "Release returned %ld\n", ref);
-            }
             ref = IMFTopology_Release(full_topology);
             ok(ref == 0, "Release returned %ld\n", ref);
         }
