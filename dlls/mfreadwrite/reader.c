@@ -1825,56 +1825,53 @@ static HRESULT source_reader_configure_decoder(struct source_reader *reader, DWO
     return MF_E_TOPO_CODEC_NOT_FOUND;
 }
 
-static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
+static HRESULT source_reader_create_transform(struct source_reader *reader, DWORD index,
+        IMFMediaType *input_type, IMFMediaType *output_type)
 {
     MFT_REGISTER_TYPE_INFO in_type, out_type;
-    CLSID *clsids, mft_clsid, category;
-    unsigned int i = 0, count;
-    IMFMediaType *input_type;
+    GUID *classes, category;
     HRESULT hr;
+    UINT count;
 
-    /* TODO: should we check if the source type is compressed? */
-
-    if (FAILED(hr = IMFMediaType_GetMajorType(output_type, &out_type.guidMajorType)))
+    if (FAILED(hr = IMFMediaType_GetMajorType(input_type, &in_type.guidMajorType))
+            || FAILED(hr = IMFMediaType_GetGUID(input_type, &MF_MT_SUBTYPE, &in_type.guidSubtype)))
+        return hr;
+    if (FAILED(hr = IMFMediaType_GetMajorType(output_type, &out_type.guidMajorType))
+            || FAILED(hr = IMFMediaType_GetGUID(output_type, &MF_MT_SUBTYPE, &out_type.guidSubtype)))
         return hr;
 
     if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Video))
-    {
         category = MFT_CATEGORY_VIDEO_DECODER;
-    }
     else if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
-    {
         category = MFT_CATEGORY_AUDIO_DECODER;
-    }
     else
-    {
-        WARN("Unhandled major type %s.\n", debugstr_guid(&out_type.guidMajorType));
         return MF_E_TOPO_CODEC_NOT_FOUND;
+
+    count = 0;
+    if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, &out_type, NULL, &classes, &count)))
+    {
+        if (!count)
+            return MF_E_TOPO_CODEC_NOT_FOUND;
+        /* TODO: Should we iterate over all of them? */
+        hr = source_reader_configure_decoder(reader, index, &classes[0], input_type, output_type);
+        CoTaskMemFree(classes);
     }
 
-    if (FAILED(hr = IMFMediaType_GetGUID(output_type, &MF_MT_SUBTYPE, &out_type.guidSubtype)))
-        return hr;
+    return hr;
+}
 
-    in_type.guidMajorType = out_type.guidMajorType;
+static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
+{
+    IMFMediaType *input_type;
+    unsigned int i = 0;
+    HRESULT hr;
 
-    while (source_reader_get_native_media_type(reader, index, i++, &input_type) == S_OK)
+    while (SUCCEEDED(hr = source_reader_get_native_media_type(reader, index, i++, &input_type)))
     {
-        if (SUCCEEDED(IMFMediaType_GetGUID(input_type, &MF_MT_SUBTYPE, &in_type.guidSubtype)))
+        if (SUCCEEDED(hr = source_reader_create_transform(reader, index, input_type, output_type)))
         {
-            count = 0;
-            if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, &out_type, NULL, &clsids, &count)) && count)
-            {
-                mft_clsid = clsids[0];
-                CoTaskMemFree(clsids);
-
-                /* TODO: Should we iterate over all of them? */
-                if (SUCCEEDED(source_reader_configure_decoder(reader, index, &mft_clsid, input_type, output_type)))
-                {
-                    IMFMediaType_Release(input_type);
-                    return S_OK;
-                }
-
-            }
+            IMFMediaType_Release(input_type);
+            return S_OK;
         }
 
         IMFMediaType_Release(input_type);
