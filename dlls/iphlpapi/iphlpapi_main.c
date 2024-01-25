@@ -3734,6 +3734,18 @@ err:
     return err;
 }
 
+DWORD WINAPI GetAnycastIpAddressTable(ADDRESS_FAMILY family, MIB_ANYCASTIPADDRESS_TABLE **table)
+{
+    FIXME( "(%u, %p) stub\n", family, table );
+    if (!table || (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC))
+        return ERROR_INVALID_PARAMETER;
+
+    *table = heap_alloc_zero(sizeof(MIB_ANYCASTIPADDRESS_TABLE));
+    if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+    (*table)->NumEntries = 0;
+    return NO_ERROR;
+}
+
 /******************************************************************
  *    GetUniDirectionalAdapterInfo (IPHLPAPI.@)
  *
