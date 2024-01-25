@@ -34,20 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 #define TAG_CLI4 MAKE_TAG('C', 'L', 'I', '4')
 #define TAG_CTAB MAKE_TAG('C', 'T', 'A', 'B')
 
-#define D3D10_FX10_TYPE_COLUMN_SHIFT    11
-#define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
-
-#define D3D10_FX10_TYPE_ROW_SHIFT       8
-#define D3D10_FX10_TYPE_ROW_MASK        (0x7 << D3D10_FX10_TYPE_ROW_SHIFT)
-
-#define D3D10_FX10_TYPE_BASETYPE_SHIFT  3
-#define D3D10_FX10_TYPE_BASETYPE_MASK   (0x1f << D3D10_FX10_TYPE_BASETYPE_SHIFT)
-
-#define D3D10_FX10_TYPE_CLASS_SHIFT     0
-#define D3D10_FX10_TYPE_CLASS_MASK      (0x7 << D3D10_FX10_TYPE_CLASS_SHIFT)
-
-#define D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK 0x4000
-
 static inline struct d3d10_effect *impl_from_ID3D10EffectPool(ID3D10EffectPool *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d10_effect, ID3D10EffectPool_iface);
@@ -1897,9 +1883,25 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(uint32_t t, BOOL is_object
     }
 }
 
+struct numeric_type
+{
+    uint32_t type_class   : 3;
+    uint32_t base_type    : 5;
+    uint32_t rows         : 3;
+    uint32_t columns      : 3;
+    uint32_t column_major : 1;
+    uint32_t unknown      : 17;
+};
+
 static HRESULT parse_fx10_type(const char *data, size_t data_size, uint32_t offset, struct d3d10_effect_type *t)
 {
     uint32_t typeinfo, type_flags, type_kind;
+    union
+    {
+        struct numeric_type type;
+        uint32_t data;
+    } numeric;
+
     const char *ptr;
     unsigned int i;
 
@@ -1940,28 +1942,25 @@ static HRESULT parse_fx10_type(const char *data, size_t data_size, uint32_t offs
         case 1:
             TRACE("Type is numeric.\n");
 
-            if (!require_space(ptr - data, 1, sizeof(typeinfo), data_size))
+            if (!require_space(ptr - data, 1, sizeof(numeric), data_size))
             {
                 WARN("Invalid offset %#x (data size %#Ix).\n", offset, data_size);
                 return E_FAIL;
             }
 
-            typeinfo = read_u32(&ptr);
+            numeric.data = read_u32(&ptr);
             t->member_count = 0;
-            t->column_count = (typeinfo & D3D10_FX10_TYPE_COLUMN_MASK) >> D3D10_FX10_TYPE_COLUMN_SHIFT;
-            t->row_count = (typeinfo & D3D10_FX10_TYPE_ROW_MASK) >> D3D10_FX10_TYPE_ROW_SHIFT;
-            t->basetype = d3d10_variable_type((typeinfo & D3D10_FX10_TYPE_BASETYPE_MASK)
-                    >> D3D10_FX10_TYPE_BASETYPE_SHIFT, FALSE, &type_flags);
-            t->type_class = d3d10_variable_class((typeinfo & D3D10_FX10_TYPE_CLASS_MASK)
-                    >> D3D10_FX10_TYPE_CLASS_SHIFT, typeinfo & D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK);
+            t->column_count = numeric.type.columns;
+            t->row_count = numeric.type.rows;
+            t->basetype = d3d10_variable_type(numeric.type.base_type, FALSE, &type_flags);
+            t->type_class = d3d10_variable_class(numeric.type.type_class, numeric.type.column_major);
 
-            TRACE("Type description: %#x.\n", typeinfo);
+            TRACE("Type description: %#x.\n", numeric.data);
             TRACE("\tcolumns: %u.\n", t->column_count);
             TRACE("\trows: %u.\n", t->row_count);
             TRACE("\tbasetype: %s.\n", debug_d3d10_shader_variable_type(t->basetype));
             TRACE("\tclass: %s.\n", debug_d3d10_shader_variable_class(t->type_class));
-            TRACE("\tunknown bits: %#x.\n", typeinfo & ~(D3D10_FX10_TYPE_COLUMN_MASK | D3D10_FX10_TYPE_ROW_MASK
-                    | D3D10_FX10_TYPE_BASETYPE_MASK | D3D10_FX10_TYPE_CLASS_MASK | D3D10_FX10_TYPE_MATRIX_COLUMN_MAJOR_MASK));
+            TRACE("\tunknown bits: %#x.\n", numeric.type.unknown);
             break;
 
         case 2:
