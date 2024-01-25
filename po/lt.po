@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-12-08 23:56+0200\n"
+"PO-Revision-Date: 2024-01-26 00:51+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -7114,7 +7114,7 @@ msgstr "Neteisingas argumentas.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "Nepavyko priskirti užklausto adreso.\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
