@@ -5208,13 +5208,13 @@ done:
 }
 
 static HANDLE rawinput_device_added, rawinput_device_removed, rawinput_event;
-static char wm_input_buf[1024];
-static UINT wm_input_len;
+static UINT rawinput_len[64], rawbuffer_count[64], rawbuffer_size, rawinput_calls;
+static char rawbuffer[1024];
+static RAWINPUT *rawinput;
+static BOOL test_rawbuffer;
 
 static LRESULT CALLBACK rawinput_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    UINT size = sizeof(wm_input_buf);
-
     if (msg == WM_INPUT_DEVICE_CHANGE)
     {
         if (wparam == GIDC_ARRIVAL) ReleaseSemaphore( rawinput_device_added, 1, NULL );
@@ -5222,8 +5222,22 @@ static LRESULT CALLBACK rawinput_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LP
     }
     if (msg == WM_INPUT)
     {
-        wm_input_len = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, (RAWINPUT *)wm_input_buf,
-                                        &size, sizeof(RAWINPUTHEADER) );
+        UINT size = rawbuffer_size, i = rawinput_calls++;
+
+        if (test_rawbuffer)
+        {
+            rawbuffer_count[i] = GetRawInputBuffer( rawinput, &size, sizeof(RAWINPUTHEADER) );
+            ok( size == rawbuffer_size, "got size %u\n", size );
+        }
+        else
+        {
+            rawinput_len[i] = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, rawinput,
+                                               &size, sizeof(RAWINPUTHEADER) );
+            ok( size == rawbuffer_size, "got size %u\n", size );
+        }
+
+        rawinput = NEXTRAWINPUTBLOCK(rawinput);
+        rawbuffer_size = sizeof(rawbuffer) - ((char *)rawinput - rawbuffer);
         ReleaseSemaphore( rawinput_event, 1, NULL );
     }
 
@@ -5300,11 +5314,11 @@ static void test_rawinput(void)
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x01},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
-            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x00},
+            .report_buf = {1,0x10,0x10,0x01,0x01,0x10,0x10,0x10,0x02},
         },
         {
             .code = IOCTL_HID_READ_REPORT,
@@ -5315,11 +5329,11 @@ static void test_rawinput(void)
             .report_buf = {1,0x10,0x10,0x10,0xee,0x10,0x10,0x10,0x54},
         },
     };
-    RAWINPUT *rawinput = (RAWINPUT *)wm_input_buf;
     RAWINPUTDEVICELIST raw_device_list[16];
     RAWINPUTDEVICE raw_devices[16];
-    ULONG i, res, device_count;
+    ULONG i, j, res, device_count, size;
     WCHAR path[MAX_PATH] = {0};
+    char buffer[1024];
     HANDLE file;
     UINT count;
     HWND hwnd;
@@ -5454,7 +5468,7 @@ static void test_rawinput(void)
 
     file = CreateFileW( path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                        FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, NULL );
+                        0, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
 
     for (i = 0; i < ARRAY_SIZE(injected_input); ++i)
@@ -5462,7 +5476,14 @@ static void test_rawinput(void)
         winetest_push_context( "state[%ld]", i );
 
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
+        res = ReadFile( file, buffer, desc.caps.InputReportByteLength, &size, NULL );
+        ok( res, "ReadFile failed, error %lu\n", GetLastError() );
+        ok( size == desc.caps.InputReportByteLength, "got size %lu\n", size );
 
+        rawinput_calls = 0;
+        rawinput = (RAWINPUT *)rawbuffer;
+        rawbuffer_size = sizeof(rawbuffer);
+        memset( rawbuffer, 0, sizeof(rawbuffer) );
         res = msg_wait_for_events( 1, &rawinput_event, 1000 );
         ok( !res, "WaitForSingleObject returned %#lx\n", res );
 
@@ -5472,14 +5493,130 @@ static void test_rawinput(void)
         ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
         res = msg_wait_for_events( 1, &rawinput_event, 10 );
         ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+        ok( rawinput_calls == 1, "got %u WM_INPUT messages\n", rawinput_calls );
 
-        ok( wm_input_len == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength]),
-            "got wm_input_len %u\n", wm_input_len );
+        rawinput = (RAWINPUT *)rawbuffer;
+        ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+        ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+            "got header.dwSize %lu\n", rawinput->header.dwSize );
+        ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+        ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+        ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+        ok( rawinput->data.hid.dwCount == 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
         ok( !memcmp( rawinput->data.hid.bRawData, injected_input[i].report_buf, desc.caps.InputReportByteLength ),
             "got unexpected report data\n" );
+        ok( rawinput_len[0] == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+            "got rawinput_len[0] %u\n", rawinput_len[0] );
 
         winetest_pop_context();
     }
+
+
+    /* test reading multiple reports with GetRawInputData */
+
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    Sleep( 100 );
+
+    rawinput_calls = 0;
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    res = msg_wait_for_events( 1, &rawinput_event, 1000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+    ok( rawinput_calls >= 2, "got %u WM_INPUT messages\n", rawinput_calls );
+
+    rawinput = (RAWINPUT *)rawbuffer;
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    ok( rawinput->data.hid.dwCount == 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+    ok( rawinput_len[0] == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got rawinput_len[0] %u\n", rawinput_len[0] );
+    for (i = 0, j = 0; i < rawinput->data.hid.dwCount; i++, j++)
+    {
+        BYTE *report = rawinput->data.hid.bRawData + i * desc.caps.InputReportByteLength;
+        winetest_push_context( "%lu", i );
+        ok( !memcmp( report, injected_input[j].report_buf, desc.caps.InputReportByteLength ),
+            "got unexpected report data\n" );
+        winetest_pop_context();
+    }
+
+    rawinput = NEXTRAWINPUTBLOCK(rawinput);
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    todo_wine
+    ok( rawinput->data.hid.dwCount >= 5 || broken(rawinput->data.hid.dwCount == 1), "got dwCount %lu\n", rawinput->data.hid.dwCount );
+    ok( rawinput_len[1] == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got rawinput_len[1] %u\n", rawinput_len[1] );
+    for (i = 0; i < rawinput->data.hid.dwCount; i++, j++)
+    {
+        BYTE *report = rawinput->data.hid.bRawData + i * desc.caps.InputReportByteLength;
+        winetest_push_context( "%lu", i );
+        ok( !memcmp( report, injected_input[j % ARRAY_SIZE(injected_input)].report_buf, desc.caps.InputReportByteLength ),
+            "got unexpected report data\n" );
+        winetest_pop_context();
+    }
+
+
+    /* test reading multiple reports with GetRawInputBuffer */
+
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    send_hid_input( file, injected_input, sizeof(injected_input) );
+    wait_hid_input( file, 5000 );
+    Sleep( 100 );
+
+    test_rawbuffer = TRUE;
+    rawinput_calls = 0;
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    res = msg_wait_for_events( 1, &rawinput_event, 1000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+    ok( rawinput_calls == 1, "got rawinput_calls %u\n", rawinput_calls );
+    ok( rawbuffer_count[0] >= 2, "got rawbuffer_count %u\n", rawbuffer_count[0] );
+
+    rawinput = (RAWINPUT *)rawbuffer;
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    ok( rawinput->data.hid.dwCount >= 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+
+    rawinput = NEXTRAWINPUTBLOCK(rawinput);
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    ok( rawinput->data.hid.dwCount >= 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+
+
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_JOYSTICK;
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = 0;
+    count = ARRAY_SIZE(raw_devices);
+    ret = RegisterRawInputDevices( raw_devices, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
 
     CloseHandle( rawinput_device_added );
     CloseHandle( rawinput_device_removed );
