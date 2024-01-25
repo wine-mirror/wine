@@ -506,6 +506,42 @@ static inline BOOL is_mouse_message( UINT message )
     return (message >= WM_MOUSEFIRST && message <= WM_MOUSELAST);
 }
 
+#define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
+HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
+{
+    for (;;)
+    {
+        HWND hwnd;
+        BOOL ret;
+
+        hwnd = CreateWindowW( L"static", NULL, WS_POPUP | (fullscreen ? 0 : WS_VISIBLE),
+                              100, 100, 200, 200, NULL, NULL, NULL, NULL );
+        ok_(file, line)( hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+        if (fullscreen)
+        {
+            HMONITOR hmonitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+            MONITORINFO mi = {.cbSize = sizeof(MONITORINFO)};
+
+            ok_(file, line)( hmonitor != NULL, "MonitorFromWindow failed, error %lu\n", GetLastError() );
+            ret = GetMonitorInfoW( hmonitor, &mi );
+            ok_(file, line)( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+            ret = SetWindowPos( hwnd, 0, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left,
+                                mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW );
+            ok_(file, line)( ret, "SetWindowPos failed, error %lu\n", GetLastError() );
+        }
+        wait_messages( 100, FALSE );
+
+        if (GetForegroundWindow() == hwnd) return hwnd;
+        ok_(file, line)( retries > 0, "failed to create foreground window\n" );
+        if (!retries--) return hwnd;
+
+        ret = DestroyWindow( hwnd );
+        ok_(file, line)( ret, "DestroyWindow failed, error %lu\n", GetLastError() );
+        wait_messages( 0, FALSE );
+    }
+}
+
 /* try to make sure pending X events have been processed before continuing */
 static void empty_message_queue(void)
 {
@@ -1727,116 +1763,75 @@ static void test_GetRawInputDeviceList(void)
 
 static void test_GetRawInputData(void)
 {
-    UINT size;
-    UINT ret;
+    UINT size = 0;
 
     /* Null raw input handle */
-    SetLastError(0xdeadbeef);
-    ret = GetRawInputData(NULL, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
-    ok(ret == ~0U, "Expect ret %u, got %u\n", ~0U, ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetRawInputData returned %08lx\n", GetLastError());
+    SetLastError( 0xdeadbeef );
+    ok_ret( (UINT)-1, GetRawInputData( NULL, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER) ) );
+    ok_ret( ERROR_INVALID_HANDLE, GetLastError() );
 }
 
 static void test_RegisterRawInputDevices(void)
 {
     HWND hwnd;
-    RAWINPUTDEVICE raw_devices[2];
+    RAWINPUTDEVICE raw_devices[2] = {0};
     UINT count, raw_devices_count;
-    BOOL res;
 
-    memset(raw_devices, 0, sizeof(raw_devices));
-    raw_devices[0].usUsagePage = 0x01;
-    raw_devices[0].usUsage = 0x05;
-    raw_devices[1].usUsagePage = 0x01;
-    raw_devices[1].usUsage = 0x04;
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_GAMEPAD;
+    raw_devices[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[1].usUsage = HID_USAGE_GENERIC_JOYSTICK;
 
-    hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput", WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
-    ok(hwnd != NULL, "CreateWindowExA failed\n");
+    hwnd = create_foreground_window( FALSE );
 
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, RegisterRawInputDevices( NULL, 0, 0 ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
-    res = RegisterRawInputDevices(NULL, 0, 0);
-    ok(res == FALSE, "RegisterRawInputDevices succeeded\n");
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), 0 ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
 
-    SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), 0);
-    ok(res == FALSE, "RegisterRawInputDevices succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+    SetLastError( 0xdeadbeef );
+    ok_ret( (UINT)-1, GetRegisteredRawInputDevices( NULL, NULL, 0 ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
-    SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    ok(res == TRUE, "RegisterRawInputDevices failed\n");
-    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+    SetLastError( 0xdeadbeef );
+    ok_ret( (UINT)-1, GetRegisteredRawInputDevices( NULL, &raw_devices_count, 0 ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
-    SetLastError(0xdeadbeef);
-    count = GetRegisteredRawInputDevices(NULL, NULL, 0);
-    ok(count == ~0U, "GetRegisteredRawInputDevices returned %u\n", count);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
     raw_devices_count = 0;
-    count = GetRegisteredRawInputDevices(NULL, &raw_devices_count, 0);
-    ok(count == ~0U, "GetRegisteredRawInputDevices returned %u\n", count);
-    ok(raw_devices_count == 0, "Unexpected registered devices count: %u\n", raw_devices_count);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
+    ok_ret( 0, GetRegisteredRawInputDevices( NULL, &raw_devices_count, sizeof(RAWINPUTDEVICE) ) );
+    ok_eq( 2, raw_devices_count, UINT, "%u" );
 
-    SetLastError(0xdeadbeef);
+    SetLastError( 0xdeadbeef );
     raw_devices_count = 0;
-    count = GetRegisteredRawInputDevices(NULL, &raw_devices_count, sizeof(RAWINPUTDEVICE));
-    ok(count == 0, "GetRegisteredRawInputDevices returned %u\n", count);
-    ok(raw_devices_count == 2, "Unexpected registered devices count: %u\n", raw_devices_count);
-    ok(GetLastError() == 0xdeadbeef, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    raw_devices_count = 0;
-    count = GetRegisteredRawInputDevices(raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE));
+    count = GetRegisteredRawInputDevices( raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE) );
     if (broken(count == 0) /* depends on windows versions */)
-        win_skip("Ignoring GetRegisteredRawInputDevices success\n");
+        win_skip( "Ignoring GetRegisteredRawInputDevices success\n" );
     else
     {
-        ok(count == ~0U, "GetRegisteredRawInputDevices returned %u\n", count);
-        ok(raw_devices_count == 0, "Unexpected registered devices count: %u\n", raw_devices_count);
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
+        ok_eq( -1, count, int, "%d" );
+        ok_eq( 0, raw_devices_count, UINT, "%u" );
+        ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
     }
 
-    SetLastError(0xdeadbeef);
+    SetLastError( 0xdeadbeef );
     raw_devices_count = 1;
-    count = GetRegisteredRawInputDevices(raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE));
-    ok(count == ~0U, "GetRegisteredRawInputDevices returned %u\n", count);
-    ok(raw_devices_count == 2, "Unexpected registered devices count: %u\n", raw_devices_count);
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
+    ok_ret( (UINT)-1, GetRegisteredRawInputDevices( raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE) ) );
+    ok_eq( 2, raw_devices_count, UINT, "%u" );
+    ok_ret( ERROR_INSUFFICIENT_BUFFER, GetLastError() );
 
-    SetLastError(0xdeadbeef);
-    memset(raw_devices, 0, sizeof(raw_devices));
+    memset( raw_devices, 0, sizeof(raw_devices) );
     raw_devices_count = ARRAY_SIZE(raw_devices);
-    count = GetRegisteredRawInputDevices(raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE));
-    ok(count == 2, "GetRegisteredRawInputDevices returned %u\n", count);
-    ok(raw_devices_count == 2, "Unexpected registered devices count: %u\n", raw_devices_count);
-    ok(GetLastError() == 0xdeadbeef, "GetRegisteredRawInputDevices unexpected error %08lx\n", GetLastError());
-    ok(raw_devices[0].usUsagePage == 0x01, "Unexpected usage page: %x\n", raw_devices[0].usUsagePage);
-    ok(raw_devices[0].usUsage == 0x04, "Unexpected usage: %x\n", raw_devices[0].usUsage);
-    ok(raw_devices[1].usUsagePage == 0x01, "Unexpected usage page: %x\n", raw_devices[1].usUsagePage);
-    ok(raw_devices[1].usUsage == 0x05, "Unexpected usage: %x\n", raw_devices[1].usUsage);
-
-    /* RIDEV_REMOVE requires hwndTarget == NULL */
-    raw_devices[0].dwFlags = RIDEV_REMOVE;
-    raw_devices[0].hwndTarget = hwnd;
-    raw_devices[1].dwFlags = RIDEV_REMOVE;
-    raw_devices[1].hwndTarget = hwnd;
-
-    SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    ok(res == FALSE, "RegisterRawInputDevices succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RegisterRawInputDevices returned %08lx\n", GetLastError());
-
-    raw_devices[0].hwndTarget = 0;
-    raw_devices[1].hwndTarget = 0;
-
-    SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    ok(res == TRUE, "RegisterRawInputDevices failed\n");
-    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
-
+    ok_ret( 2, GetRegisteredRawInputDevices( raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE) ) );
+    ok_eq( 2, raw_devices_count, UINT, "%u" );
+    ok_eq( HID_USAGE_PAGE_GENERIC, raw_devices[0].usUsagePage, USHORT, "%#x" );
+    ok_eq( HID_USAGE_GENERIC_JOYSTICK, raw_devices[0].usUsage, USHORT, "%#x" );
+    ok_eq( HID_USAGE_PAGE_GENERIC, raw_devices[1].usUsagePage, USHORT, "%#x" );
+    ok_eq( HID_USAGE_GENERIC_GAMEPAD, raw_devices[1].usUsage, USHORT, "%#x" );
 
     /* RIDEV_INPUTSINK requires hwndTarget != NULL */
     raw_devices[0].dwFlags = RIDEV_INPUTSINK;
@@ -1845,19 +1840,28 @@ static void test_RegisterRawInputDevices(void)
     raw_devices[1].hwndTarget = 0;
 
     SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    ok(res == FALSE, "RegisterRawInputDevices failed\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+    ok_ret( 0, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
     raw_devices[0].hwndTarget = hwnd;
     raw_devices[1].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+
+    /* RIDEV_REMOVE requires hwndTarget == NULL */
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = hwnd;
+    raw_devices[1].dwFlags = RIDEV_REMOVE;
+    raw_devices[1].hwndTarget = hwnd;
 
     SetLastError(0xdeadbeef);
-    res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-    ok(res == TRUE, "RegisterRawInputDevices succeeded\n");
-    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+    ok_ret( 0, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
-    DestroyWindow(hwnd);
+    raw_devices[0].hwndTarget = 0;
+    raw_devices[1].hwndTarget = 0;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
 }
 
 static int rawinputbuffer_wndproc_count;
@@ -5528,6 +5532,9 @@ static void test_input_desktop( char **argv )
 
     test_keyboard_ll_hook_blocking();
 
+    test_RegisterRawInputDevices();
+    test_GetRawInputData();
+
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
 
@@ -5594,9 +5601,7 @@ START_TEST(input)
     test_attach_input();
     test_GetKeyState();
     test_OemKeyScan();
-    test_GetRawInputData();
     test_GetRawInputBuffer();
-    test_RegisterRawInputDevices();
     test_rawinput(argv[0]);
     test_DefRawInputProc();
 
