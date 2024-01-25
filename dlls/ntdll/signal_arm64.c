@@ -335,6 +335,26 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
 }
 
 
+/***********************************************************************
+ *		call_handler_wrapper
+ */
+extern DWORD WINAPI call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
+__ASM_GLOBAL_FUNC( call_handler_wrapper,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   ".seh_save_fplr_x 16\n\t"
+                   "mov x29, sp\n\t"
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler " __ASM_NAME("nested_exception_handler") ", @except\n\t"
+                   "mov x3, x2\n\t"           /* dispatch */
+                   "mov x2, x1\n\t"           /* context */
+                   "ldr x1, [x3, #0x18]\n\t"  /* dispatch->EstablisherFrame */
+                   "ldr x15, [x3, #0x30]\n\t" /* dispatch->LanguageHandler */
+                   "blr x15\n\t"
+                   "ldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+
+
 /**********************************************************************
  *           call_handler
  *
@@ -342,19 +362,14 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
  */
 static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    EXCEPTION_REGISTRATION_RECORD frame;
     DWORD res;
-
-    frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
-    __wine_push_frame( &frame );
 
     TRACE( "calling handler %p (rec=%p, frame=%I64x context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    res = call_handler_wrapper( rec, context, dispatch );
     TRACE( "handler at %p returned %lu\n", dispatch->LanguageHandler, res );
 
     rec->ExceptionFlags &= EH_NONCONTINUABLE;
-    __wine_pop_frame( &frame );
     return res;
 }
 

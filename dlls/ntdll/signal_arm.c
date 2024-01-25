@@ -304,6 +304,37 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
 }
 
 
+/***********************************************************************
+ *		call_handler_wrapper
+ */
+#ifdef __WINE_PE_BUILD
+extern DWORD WINAPI call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
+__ASM_GLOBAL_FUNC( call_handler_wrapper,
+                   "push {r4,lr}\n\t"
+                   ".seh_save_regs {r4,lr}\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler " __ASM_NAME("nested_exception_handler") ", %except\n\t"
+                   "mov r3, r2\n\t" /* dispatch */
+                   "mov r2, r1\n\t" /* context */
+                   "ldr r1, [r3, #0x0c]\n\t"  /* dispatch->EstablisherFrame */
+                   "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
+                   "blx ip\n\t"
+                   "pop {r4,pc}\n\t" )
+#else
+static DWORD call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    DWORD res;
+
+    frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
+    __wine_push_frame( &frame );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    __wine_pop_frame( &frame );
+    return res;
+}
+#endif
+
+
 /**********************************************************************
  *           call_handler
  *
@@ -311,19 +342,14 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
  */
 static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    EXCEPTION_REGISTRATION_RECORD frame;
     DWORD res;
-
-    frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
-    __wine_push_frame( &frame );
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    res = call_handler_wrapper( rec, context, dispatch );
     TRACE( "handler at %p returned %lu\n", dispatch->LanguageHandler, res );
 
     rec->ExceptionFlags &= EH_NONCONTINUABLE;
-    __wine_pop_frame( &frame );
     return res;
 }
 
