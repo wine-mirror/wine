@@ -357,15 +357,6 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "fxsave 0x100(%rcx)\n\t"         /* context->FltSave */
                    "ret" );
 
-DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
-{
-    if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        return ExceptionNestedException;
-
-    return ExceptionContinueSearch;
-}
-
 /***********************************************************************
  *		exception_handler_call_wrapper
  */
@@ -391,7 +382,7 @@ static DWORD exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
     EXCEPTION_REGISTRATION_RECORD wrapper_frame;
     DWORD res;
 
-    wrapper_frame.Handler = nested_exception_handler;
+    wrapper_frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
     __wine_push_frame( &wrapper_frame );
     res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
     __wine_pop_frame( &wrapper_frame );
