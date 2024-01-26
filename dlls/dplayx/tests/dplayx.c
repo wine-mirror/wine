@@ -24,6 +24,7 @@
 #include <dplay.h>
 #include <dplobby.h>
 #include <netfw.h>
+#include <winsock2.h>
 
 static HRESULT (WINAPI *pDirectPlayEnumerateA)( LPDPENUMDPCALLBACKA, void* );
 static HRESULT (WINAPI *pDirectPlayEnumerateW)( LPDPENUMDPCALLBACKW, void* );
@@ -653,6 +654,291 @@ static void check_messages( IDirectPlay4 *pDP, DPID *dpid, DWORD dpidSize,
 
 
     free( lpData );
+}
+
+typedef struct
+{
+    IDirectPlay4 *dp;
+    DPSESSIONDESC2 *dpsd;
+    DWORD timeout;
+    LPDPENUMSESSIONSCALLBACK2 callback;
+    void *context;
+    DWORD flags;
+
+    HRESULT hr;
+
+    HANDLE thread;
+} EnumSessionsParam;
+
+static CALLBACK DWORD enumSessionsProc( void *p )
+{
+    EnumSessionsParam *param = p;
+
+    param->hr = IDirectPlayX_EnumSessions( param->dp, param->dpsd, param->timeout, param->callback,
+                                           param->context, param->flags );
+
+    return 0;
+}
+
+static HANDLE enumSessionsAsync( IDirectPlay4 *dp, DPSESSIONDESC2 *dpsd, DWORD timeout,
+                                 LPDPENUMSESSIONSCALLBACK2 callback, void *context, DWORD flags )
+{
+    EnumSessionsParam *param;
+
+    param = calloc( 1, sizeof( EnumSessionsParam ) );
+
+    param->dp = dp;
+    param->dpsd = dpsd;
+    param->timeout = timeout;
+    param->callback = callback;
+    param->context = context;
+    param->flags = flags;
+
+    param->thread = CreateThread( NULL, 0, enumSessionsProc, param, 0, NULL );
+
+    return param;
+}
+
+static HRESULT enumSessionsAsyncWait( EnumSessionsParam *param, DWORD timeout )
+{
+    HRESULT hr = 0xdeadbeef;
+    DWORD waitResult;
+
+    waitResult = WaitForSingleObject( param->thread, timeout );
+    CloseHandle( param->thread );
+    if ( waitResult == WAIT_OBJECT_0 )
+    {
+        hr = param->hr;
+        free( param );
+    }
+
+    return hr;
+}
+
+#include "pshpack1.h"
+
+typedef struct
+{
+    DWORD mixed;
+    SOCKADDR_IN addr;
+} SpHeader;
+
+typedef struct
+{
+    DWORD magic;
+    WORD command;
+    WORD version;
+} MessageHeader;
+
+typedef struct
+{
+    MessageHeader header;
+    GUID appGuid;
+    DWORD passwordOffset;
+    DWORD flags;
+} EnumSessionsRequest;
+
+typedef struct
+{
+    MessageHeader header;
+    DPSESSIONDESC2 dpsd;
+    DWORD nameOffset;
+} EnumSessionsReply;
+
+#include "poppack.h"
+
+#define bindUdp( port ) bindUdp_( __LINE__, port )
+static SOCKET bindUdp_( int line, unsigned short port )
+{
+    u_long nbio = 1;
+    SOCKADDR_IN addr;
+    int wsResult;
+    SOCKET sock;
+
+    sock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    ok_( __FILE__, line) ( sock != INVALID_SOCKET, "got UDP socket %#Ix.\n", sock );
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons( port );
+    addr.sin_addr.s_addr = htonl( INADDR_ANY );
+    wsResult = bind( sock, (SOCKADDR *) &addr, sizeof( addr ) );
+    ok_( __FILE__, line)( !wsResult, "bind() returned %d.\n", wsResult );
+
+    wsResult = ioctlsocket( sock, FIONBIO, &nbio );
+    ok_( __FILE__, line)( !wsResult, "ioctlsocket() returned %d.\n", wsResult );
+
+    return sock;
+}
+
+#define connectTcp( port ) connectTcp_( __LINE__, port )
+static SOCKET connectTcp_( int line, unsigned short port )
+{
+    SOCKADDR_IN addr;
+    int wsResult;
+    SOCKET sock;
+
+    sock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+    ok_( __FILE__, line)( sock != INVALID_SOCKET, "got send socket %#Ix.\n", sock );
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons( port );
+    addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
+    wsResult = connect( sock, (SOCKADDR *) &addr, sizeof( addr ) );
+    todo_wine ok_( __FILE__, line)( !wsResult, "connect returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+    {
+        closesocket( sock );
+        return INVALID_SOCKET;
+    }
+
+    return sock;
+}
+
+#define receiveMessage( sock, buffer, size ) receiveMessage_( __LINE__, sock, buffer, size )
+static int receiveMessage_( int line, SOCKET sock, void *buffer, int size )
+{
+    struct timeval timeout;
+    int recvResult;
+    int wsResult;
+    fd_set fds;
+
+    FD_ZERO( &fds );
+    FD_SET( sock, &fds );
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+    wsResult = select( sock + 1, &fds, NULL, &fds, &timeout );
+    ok_( __FILE__, line )( wsResult != SOCKET_ERROR, "select() returned %d.\n", wsResult );
+
+    memset( buffer, 0xcc, size );
+    recvResult = recv( sock, buffer, size, 0 );
+
+    return recvResult;
+}
+
+#define checkNoMoreMessages( sock ) checkNoMoreMessages_( __LINE__, sock )
+static void checkNoMoreMessages_( int line, SOCKET sock )
+{
+    struct timeval timeout;
+    int wsResult;
+    fd_set fds;
+
+    FD_ZERO( &fds );
+    FD_SET( sock, &fds );
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+    wsResult = select( sock + 1, &fds, NULL, &fds, &timeout );
+    ok_( __FILE__, line )( !wsResult, "select() returned %d.\n", wsResult );
+}
+
+#define checkSpHeader( header, expectedSize, sizeTodo ) checkSpHeader_( __LINE__, header, expectedSize, sizeTodo )
+static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expectedSize, BOOL sizeTodo )
+{
+    todo_wine_if( sizeTodo ) ok_( __FILE__, line )( header->mixed == 0xfab00000 + expectedSize, "got mixed %#lx.\n",
+                                                    header->mixed );
+    ok_( __FILE__, line )( header->addr.sin_family == AF_INET, "got family %d.\n", header->addr.sin_family );
+    ok_( __FILE__, line )( 2300 <= ntohs( header->addr.sin_port ) && ntohs( header->addr.sin_port ) < 2350,
+                           "got port %d.\n", ntohs( header->addr.sin_port ) );
+    ok_( __FILE__, line )( !header->addr.sin_addr.s_addr, "got address %#lx.\n", header->addr.sin_addr.s_addr );
+
+    return ntohs( header->addr.sin_port );
+}
+
+#define checkMessageHeader( header, expectedCommand ) checkMessageHeader_( __LINE__, header, expectedCommand )
+static void checkMessageHeader_( int line, MessageHeader *header, WORD expectedCommand )
+{
+    ok_( __FILE__, line )( header->magic == 0x79616c70, "got magic %#lx.\n", header->magic );
+    ok_( __FILE__, line )( header->command == expectedCommand, "got command %d.\n", header->command );
+}
+
+#define receiveEnumSessionsRequest( sock, expectedAppGuid, expectedPassword, expectedFlags ) \
+        receiveEnumSessionsRequest_( __LINE__, sock, expectedAppGuid, expectedPassword, expectedFlags )
+static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const GUID *expectedAppGuid,
+                                                   const WCHAR *expectedPassword, DWORD expectedFlags )
+{
+    struct
+    {
+        SpHeader spHeader;
+        EnumSessionsRequest request;
+        WCHAR password[ 256 ];
+    } request;
+    DWORD expectedPasswordSize;
+    unsigned short port;
+    DWORD expectedSize;
+    int wsResult;
+
+    expectedPasswordSize = expectedPassword ? (lstrlenW( expectedPassword ) + 1) * sizeof( WCHAR ) : 0;
+    expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedPasswordSize;
+
+    wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
+    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n",
+                                     wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return 0;
+
+    port = checkSpHeader_( line, &request.spHeader, expectedSize, expectedPassword != NULL );
+    checkMessageHeader_( line, &request.request.header, 2 );
+    ok_( __FILE__, line )( IsEqualGUID( &request.request.appGuid, expectedAppGuid ), "got app guid %s.\n",
+                           wine_dbgstr_guid( &request.request.appGuid ) );
+    if ( expectedPassword )
+    {
+        ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
+                               request.request.passwordOffset );
+        ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
+                               wine_dbgstr_w( request.password ) );
+    }
+    else
+    {
+        ok_( __FILE__, line )( !request.request.passwordOffset, "got password offset %lu.\n",
+                               request.request.passwordOffset );
+    }
+    ok_( __FILE__, line )( request.request.flags == expectedFlags, "got flags %#lx.\n", request.request.flags );
+
+    return port;
+}
+
+#define sendEnumSessionsReply( sock, port, dpsd ) sendEnumSessionsReply_( __LINE__, sock, port, dpsd )
+static void sendEnumSessionsReply_( int line, SOCKET sock, unsigned short port, const DPSESSIONDESC2 *dpsd )
+{
+    struct
+    {
+        SpHeader spHeader;
+        EnumSessionsReply reply;
+        WCHAR name[ 256 ];
+    } reply =
+    {
+        .spHeader =
+        {
+            .mixed = 0xfab00000,
+            .addr =
+            {
+                .sin_family = AF_INET,
+                .sin_port = htons( port ),
+            },
+        },
+        .reply =
+        {
+            .header =
+            {
+                .magic = 0x79616c70,
+                .command = 1,
+                .version = 14,
+            },
+            .dpsd = *dpsd,
+            .nameOffset = sizeof( reply.reply ),
+        },
+    };
+    int wsResult;
+    DWORD size;
+
+    size = sizeof( reply ) + (lstrlenW( dpsd->lpszSessionName ) + 1) * sizeof( WCHAR );
+
+    reply.spHeader.mixed += size;
+    reply.reply.dpsd.lpszSessionName = NULL;
+    reply.reply.dpsd.lpszPassword = NULL;
+    lstrcpyW( reply.name, dpsd->lpszSessionName );
+
+    wsResult = send( sock, (char *) &reply, size, 0 );
+    ok_( __FILE__, line )( wsResult == size, "send() returned %d.\n", wsResult );
 }
 
 static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
@@ -1422,7 +1708,388 @@ static IDirectPlay4 *create_session(DPSESSIONDESC2 *lpdpsd)
 
 }
 
+typedef struct
+{
+    DPSESSIONDESC2 dpsd;
+    int actualCount;
+} ExpectedSession;
+
+typedef struct
+{
+    int line;
+    ExpectedSession *expectedSessions;
+    int expectedCount;
+    int actualCount;
+    int timeoutCount;
+    DWORD startTickCount;
+} CheckSessionListCallbackData;
+
+static BOOL CALLBACK checkSessionListCallback( const DPSESSIONDESC2 *thisSd, DWORD *timeout, DWORD flags, void *context )
+{
+    CheckSessionListCallbackData *data = context;
+    ExpectedSession *expectedSession;
+    int i;
+
+    if ( flags & DPESC_TIMEDOUT )
+    {
+        ++data->timeoutCount;
+
+        if ( data->actualCount >= data->expectedCount )
+            return FALSE;
+
+        if ( GetTickCount() - data->startTickCount >= 2000 )
+            return FALSE;
+
+        *timeout = 100;
+
+        return TRUE;
+    }
+
+    ++data->actualCount;
+
+    for ( i = 0; i < data->expectedCount; ++i )
+    {
+        expectedSession = &data->expectedSessions[ i ];
+        if ( !IsEqualGUID( &expectedSession->dpsd.guidInstance, &thisSd->guidInstance ) )
+            continue;
+
+        ok_( __FILE__, data->line )( !expectedSession->actualCount, "duplicate session %s.\n",
+                                     wine_dbgstr_guid( &thisSd->guidInstance ) );
+
+        ok_( __FILE__, data->line )( thisSd->dwSize == expectedSession->dpsd.dwSize, "got size %lu.\n",
+                                     thisSd->dwSize );
+        ok_( __FILE__, data->line )( thisSd->dwFlags == expectedSession->dpsd.dwFlags, "got flags %#lx.\n",
+                                     thisSd->dwFlags );
+        ok_( __FILE__, data->line )( IsEqualGUID( &thisSd->guidApplication, &expectedSession->dpsd.guidApplication ),
+                                     "got application GUID %s.\n", wine_dbgstr_guid( &thisSd->guidApplication ) );
+        ok_( __FILE__, data->line )( thisSd->dwMaxPlayers == expectedSession->dpsd.dwMaxPlayers,
+                                     "got current player count %lu.\n", thisSd->dwMaxPlayers );
+        ok_( __FILE__, data->line )( thisSd->dwCurrentPlayers == expectedSession->dpsd.dwCurrentPlayers,
+                                     "got max player count %lu.\n", thisSd->dwCurrentPlayers );
+        ok_( __FILE__, data->line )( !strcmp( thisSd->lpszSessionNameA, expectedSession->dpsd.lpszSessionNameA ),
+                                     "got session name %s.\n", wine_dbgstr_a( thisSd->lpszSessionNameA ) );
+        ok_( __FILE__, data->line )( !thisSd->lpszPasswordA, "got password %s.\n",
+                                     wine_dbgstr_a( thisSd->lpszPasswordA ) );
+        ok_( __FILE__, data->line )( thisSd->dwReserved1 == expectedSession->dpsd.dwReserved1, "got reserved1 %#lx.\n",
+                                     thisSd->dwReserved1 );
+        ok_( __FILE__, data->line )( thisSd->dwReserved2 == expectedSession->dpsd.dwReserved2, "got reserved2 %#lx.\n",
+                                     thisSd->dwReserved2 );
+        ok_( __FILE__, data->line )( thisSd->dwUser1 == expectedSession->dpsd.dwUser1, "got user1 %#lx.\n",
+                                     thisSd->dwUser1 );
+        ok_( __FILE__, data->line )( thisSd->dwUser2 == expectedSession->dpsd.dwUser2, "got user2 %#lx.\n",
+                                     thisSd->dwUser2 );
+        ok_( __FILE__, data->line )( thisSd->dwUser3 == expectedSession->dpsd.dwUser3, "got user3 %#lx.\n",
+                                     thisSd->dwUser3 );
+        ok_( __FILE__, data->line )( thisSd->dwUser4 == expectedSession->dpsd.dwUser4, "got user4 %#lx.\n",
+                                     thisSd->dwUser4 );
+
+        ++expectedSession->actualCount;
+
+        return TRUE;
+    }
+
+    ok_( __FILE__, data->line )( 0, "unexpected session %s.\n", wine_dbgstr_guid( &thisSd->guidInstance ) );
+
+    return TRUE;
+}
+
+#define check_EnumSessions( dp, dpsd, flags, expectedHr, expectedSessionCount, timeoutExpected, \
+                            requestExpected, expectedPassword, replyCount, hrTodo, timeoutTodo ) \
+        check_EnumSessions_( __LINE__, dp, dpsd, flags, expectedHr, expectedSessionCount, timeoutExpected, \
+                             requestExpected, expectedPassword, replyCount, hrTodo, timeoutTodo )
+static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dpsd, DWORD flags, HRESULT expectedHr,
+                                 DWORD expectedSessionCount, BOOL timeoutExpected, BOOL requestExpected,
+                                 const WCHAR *expectedPassword, DWORD replyCount, BOOL hrTodo, BOOL timeoutTodo )
+{
+    DPSESSIONDESC2 replyDpsds[] =
+    {
+        {
+            .dwSize = sizeof( DPSESSIONDESC2 ),
+            .dwFlags = 0,
+            .guidInstance = appGuid,
+            .guidApplication = appGuid,
+            .dwMaxPlayers = 10,
+            .dwCurrentPlayers = 0,
+            .lpszSessionName = (WCHAR *) L"normal",
+            .dwReserved1 = 0x11223344,
+            .dwReserved2 = 0,
+            .dwUser1 = 1,
+            .dwUser2 = 2,
+            .dwUser3 = 3,
+            .dwUser4 = 4,
+        },
+        {
+            .dwSize = sizeof( DPSESSIONDESC2 ),
+            .dwFlags = DPSESSION_JOINDISABLED | DPSESSION_PASSWORDREQUIRED | DPSESSION_PRIVATE,
+            .guidInstance = appGuid2,
+            .guidApplication = appGuid2,
+            .dwMaxPlayers = 10,
+            .dwCurrentPlayers = 10,
+            .lpszSessionName = (WCHAR *) L"private",
+            .dwReserved1 = 0xaabbccdd,
+            .dwReserved2 = 0,
+            .dwUser1 = 5,
+            .dwUser2 = 6,
+            .dwUser3 = 7,
+            .dwUser4 = 8,
+        },
+    };
+    ExpectedSession expectedSessions[ ARRAYSIZE( replyDpsds ) ];
+    CheckSessionListCallbackData callbackData;
+    EnumSessionsParam *param;
+    unsigned short port = 0;
+    WSADATA wsaData;
+    SOCKET enumSock;
+    int wsResult;
+    SOCKET sock;
+    HRESULT hr;
+    int i;
+
+    wsResult = WSAStartup( MAKEWORD( 2, 0 ), &wsaData );
+    ok_( __FILE__, line )( !wsResult, "WSAStartup() returned %d.\n", wsResult );
+
+    enumSock = bindUdp_( line, 47624 );
+
+    memset( &expectedSessions, 0, sizeof( expectedSessions ) );
+    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+    expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
+    expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
+
+    memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.startTickCount = GetTickCount();
+    callbackData.expectedSessions = expectedSessions;
+    callbackData.expectedCount = expectedSessionCount;
+
+    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, flags );
+
+    if ( requestExpected )
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, expectedPassword, flags );
+
+    for ( i = 0; i < replyCount; ++i )
+    {
+        sock = connectTcp_( line, port );
+        if ( sock == INVALID_SOCKET )
+            continue;
+
+        sendEnumSessionsReply_( line, sock, 2349 - i, &replyDpsds[ i ] );
+
+        closesocket( sock );
+    }
+
+    checkNoMoreMessages_( line, enumSock );
+
+    hr = enumSessionsAsyncWait( param, 2000 );
+    todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "got hr %#lx.\n", hr );
+
+    todo_wine_if( expectedSessionCount ) ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
+                                                                "got session count %d.\n", callbackData.actualCount );
+    todo_wine_if( timeoutTodo ) ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected,
+                                                       "got timeout count %d.\n", callbackData.timeoutCount );
+
+    closesocket( enumSock );
+    WSACleanup();
+}
+
+#define check_EnumSessions_async( dpsd, dp ) check_EnumSessions_async_( __LINE__, dpsd, dp )
+static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPlay4 *dp )
+{
+    DPSESSIONDESC2 replyDpsds[] =
+    {
+        {
+            .dwSize = sizeof( DPSESSIONDESC2 ),
+            .dwFlags = 0,
+            .guidInstance = appGuid,
+            .guidApplication = appGuid,
+            .dwMaxPlayers = 10,
+            .dwCurrentPlayers = 0,
+            .lpszSessionName = (WCHAR *) L"normal",
+            .dwReserved1 = 0x11223344,
+            .dwReserved2 = 0,
+            .dwUser1 = 1,
+            .dwUser2 = 2,
+            .dwUser3 = 3,
+            .dwUser4 = 4,
+        },
+        {
+            .dwSize = sizeof( DPSESSIONDESC2 ),
+            .dwFlags = DPSESSION_JOINDISABLED | DPSESSION_PASSWORDREQUIRED | DPSESSION_PRIVATE,
+            .guidInstance = appGuid2,
+            .guidApplication = appGuid2,
+            .dwMaxPlayers = 10,
+            .dwCurrentPlayers = 10,
+            .lpszSessionName = (WCHAR *) L"private",
+            .dwReserved1 = 0xaabbccdd,
+            .dwReserved2 = 0,
+            .dwUser1 = 5,
+            .dwUser2 = 6,
+            .dwUser3 = 7,
+            .dwUser4 = 8,
+        },
+    };
+    CheckSessionListCallbackData callbackData;
+    ExpectedSession expectedSessions[ 2 ];
+    EnumSessionsParam *param;
+    unsigned short port;
+    SOCKET enumSock;
+    SOCKET sock;
+    HRESULT hr;
+    int i;
+
+    enumSock = bindUdp_( line, 47624 );
+
+    memset( expectedSessions, 0, sizeof( expectedSessions ) );
+    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+
+    memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.expectedSessions = expectedSessions;
+    callbackData.expectedCount = 1;
+    callbackData.startTickCount = GetTickCount();
+
+    /* Do a sync enumeration first to fill the cache */
+    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, 0 );
+
+    port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0 );
+
+    sock = connectTcp_( line, port );
+
+    if ( sock != INVALID_SOCKET )
+    {
+        sendEnumSessionsReply_( line, sock, 2349, &replyDpsds[ 0 ] );
+
+        closesocket( sock );
+    }
+
+    checkNoMoreMessages_( line, enumSock );
+
+    hr = enumSessionsAsyncWait( param, 2000 );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                                     callbackData.actualCount );
+    ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+    memset( expectedSessions, 0, sizeof( expectedSessions ) );
+    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+
+    memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.expectedSessions = expectedSessions;
+    callbackData.expectedCount = 1;
+    callbackData.startTickCount = GetTickCount();
+
+    /* Read cache of last sync enumeration */
+    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
+
+    receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC );
+
+    hr = enumSessionsAsyncWait( param, 2000 );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                                     callbackData.actualCount );
+    ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+    /* Check that requests are sent periodically */
+    for ( i = 0; i < 2; ++i )
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC );
+
+    for ( i = 0; i < ARRAYSIZE( replyDpsds ); ++i )
+    {
+        sock = connectTcp_( line, port );
+        if ( sock == INVALID_SOCKET )
+            continue;
+
+        sendEnumSessionsReply_( line, sock, 2349 - i, &replyDpsds[ i ] );
+
+        closesocket( sock );
+    }
+
+    memset( expectedSessions, 0, sizeof( expectedSessions ) );
+    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+    expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
+    expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
+
+    memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.expectedSessions = expectedSessions;
+    callbackData.expectedCount = ARRAYSIZE( expectedSessions );
+    callbackData.startTickCount = GetTickCount();
+
+    /* Retrieve results */
+    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
+    hr = enumSessionsAsyncWait( param, 2000 );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
+                                     callbackData.actualCount );
+    ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+    memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.expectedSessions = NULL;
+    callbackData.expectedCount = 0;
+    callbackData.startTickCount = GetTickCount();
+
+    /* Stop enumeration */
+    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_STOPASYNC );
+    hr = enumSessionsAsyncWait( param, 2000 );
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    ok_( __FILE__, line )( !callbackData.actualCount, "got session count %d.\n", callbackData.actualCount );
+    todo_wine ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+    closesocket( enumSock );
+}
+
 static void test_EnumSessions(void)
+{
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+    };
+    DPSESSIONDESC2 dpsd;
+    IDirectPlay4 *dp;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    /* Service provider not initialized */
+    check_EnumSessions( dp, &appGuidDpsd, 0, DPERR_UNINITIALIZED, 0, FALSE, FALSE, NULL, 0, FALSE, FALSE );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    /* Session with no size */
+    dpsd = appGuidDpsd;
+    dpsd.dwSize = 0;
+    check_EnumSessions( dp, &dpsd, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE, TRUE );
+
+    /* No sessions */
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 0, TRUE, TRUE, NULL, 0, TRUE, FALSE );
+
+    /* Invalid params */
+    check_EnumSessions( dp, &appGuidDpsd, -1, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE, FALSE );
+    check_EnumSessions( dp, NULL, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE, FALSE );
+
+    /* All sessions are enumerated regardless of flags */
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, DPENUMSESSIONS_AVAILABLE, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE, FALSE );
+
+    /* Async enumeration */
+    check_EnumSessions_async( &appGuidDpsd, dp );
+
+    /* Enumeration with password */
+    dpsd = appGuidDpsd;
+    dpsd.lpszPasswordA = (char *) "password";
+    check_EnumSessions( dp, &dpsd, 0, DP_OK, 2, TRUE, TRUE, L"password", 2, TRUE, FALSE );
+
+    IDirectPlayX_Release( dp );
+}
+
+static void test_interactive_EnumSessions(void)
 {
 
 #define N_SESSIONS 6
@@ -6936,6 +7603,7 @@ START_TEST(dplayx)
     test_InitializeConnection();
     test_GetCaps();
     test_EnumAddressTypes();
+    test_EnumSessions();
 
     if (!winetest_interactive)
     {
@@ -6947,8 +7615,8 @@ START_TEST(dplayx)
 
     /* test_Open() takes almost a minute, */
     test_Open();
-    /* test_EnumSession takes three minutes */
-    test_EnumSessions();
+    /* test_interactive_EnumSessions takes three minutes */
+    test_interactive_EnumSessions();
     test_SessionDesc();
 
     /* test_CreatePlayer() takes over a minute */
