@@ -140,12 +140,12 @@ static ULONG WINAPI IDirectMusicAudioPathImpl_Release (IDirectMusicAudioPath *if
 }
 
 static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAudioPath *iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer,
-    REFGUID guidObject, WORD dwIndex, REFGUID iidInterface, void** ppObject)
+    REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject)
 {
 	struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
 	HRESULT hr;
 
-	FIXME("(%p, %ld, %ld, %ld, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject),
+	FIXME("(%p, %ld, %ld, %ld, %s, %ld, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject),
             dwIndex, debugstr_dmguid(iidInterface), ppObject);
 	    
 	switch (dwStage) {
