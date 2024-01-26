@@ -7772,6 +7772,193 @@ static void test_KiUserCallbackDispatcher(void)
     VirtualProtect( code_ptr, sizeof(saved_code), old_protect, &old_protect );
 }
 
+struct unwind_info
+{
+    DWORD function_length : 18;
+    DWORD version : 2;
+    DWORD x : 1;
+    DWORD e : 1;
+    DWORD f : 1;
+    DWORD epilog : 5;
+    DWORD codes : 4;
+};
+
+static void run_exception_test(void *handler, const void* context,
+                               const void *code, unsigned int code_size,
+                               unsigned int func2_offset, DWORD access, DWORD handler_flags)
+{
+    DWORD buf[11];
+    RUNTIME_FUNCTION runtime_func[2];
+    struct unwind_info unwind;
+    void (*func)(void) = (void *)((char *)code_mem + 1); /* thumb */
+    DWORD oldaccess, oldaccess2;
+
+    runtime_func[0].BeginAddress = 0;
+    runtime_func[0].UnwindData = 0x1000;
+    runtime_func[1].BeginAddress = func2_offset;
+    runtime_func[1].UnwindData = 0x1010;
+
+    unwind.function_length = func2_offset / 2;
+    unwind.version = 0;
+    unwind.x = 1;
+    unwind.e = 1;
+    unwind.f = 0;
+    unwind.epilog = 1;
+    unwind.codes = 1;
+    buf[0] = *(DWORD *)&unwind;
+    buf[1] = 0xfbfbffd4; /* push {r4, lr}; end; nop; nop */
+    buf[2] = 0x1021;
+    *(const void **)&buf[3] = context;
+    unwind.function_length = (code_size - func2_offset) / 2;
+    buf[4] = *(DWORD *)&unwind;
+    buf[5] = 0xfbfbffd4; /* push {r4, lr}; end; nop; nop */
+    buf[6] = 0x1021;
+    *(const void **)&buf[7] = context;
+    buf[8] = 0xc004f8df; /* ldr ip, 1f */
+    buf[9] = 0xbf004760; /* bx ip; nop */
+    *(const void **)&buf[10] = handler;
+
+    memcpy((unsigned char *)code_mem + 0x1000, buf, sizeof(buf));
+    memcpy(code_mem, code, code_size);
+    if (access) VirtualProtect(code_mem, code_size, access, &oldaccess);
+    FlushInstructionCache( GetCurrentProcess(), code_mem, 0x2000 );
+
+    RtlAddFunctionTable(runtime_func, ARRAY_SIZE(runtime_func), (ULONG_PTR)code_mem);
+    func();
+    pRtlDeleteFunctionTable(runtime_func);
+
+    if (access) VirtualProtect(code_mem, code_size, oldaccess, &oldaccess2);
+}
+
+static BOOL got_nested_exception, got_prev_frame_exception;
+static void *nested_exception_initial_frame;
+
+static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                      CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    trace("nested_exception_handler pc %p, sp %p, code %#lx, flags %#lx, ExceptionAddress %p.\n",
+          (void *)context->Pc, (void *)context->Sp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
+
+    if (rec->ExceptionCode == 0x80000003 && !(rec->ExceptionFlags & EH_NESTED_CALL))
+    {
+        ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
+        ok((char *)context->Sp == (char *)frame - 8, "Got unexpected frame %p / %p.\n", frame, (void *)context->Sp);
+        ok((char *)context->Lr == (char *)code_mem + 0x07, "Got unexpected lr %p.\n", (void *)context->Lr);
+        ok((char *)context->Pc == (char *)code_mem + 0x0b, "Got unexpected pc %p.\n", (void *)context->Pc);
+
+        nested_exception_initial_frame = frame;
+        RaiseException(0xdeadbeef, 0, 0, 0);
+        context->Pc += 2;
+        return ExceptionContinueExecution;
+    }
+
+    if (rec->ExceptionCode == 0xdeadbeef &&
+        (rec->ExceptionFlags == EH_NESTED_CALL ||
+         rec->ExceptionFlags == (EH_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
+    {
+        ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
+        got_nested_exception = TRUE;
+        ok(frame == nested_exception_initial_frame, "Got unexpected frame %p / %p.\n",
+           frame, nested_exception_initial_frame);
+        return ExceptionContinueSearch;
+    }
+
+    ok(rec->ExceptionCode == 0xdeadbeef && (!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE),
+       "Got unexpected exception code %#lx, flags %#lx.\n", rec->ExceptionCode, rec->ExceptionFlags);
+    ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
+    ok((char *)frame == (char *)nested_exception_initial_frame + 8, "Got unexpected frame %p / %p.\n",
+        frame, nested_exception_initial_frame);
+    got_prev_frame_exception = TRUE;
+    return ExceptionContinueExecution;
+}
+
+static const WORD nested_except_code[] =
+{
+    0xb510,         /* 00: push {r4, lr} */
+    0xf000, 0xf801, /* 02: bl 1f */
+    0xbd10,         /* 06: pop {r4, pc} */
+    0xb510,         /* 08: 1: push {r4, lr} */
+    0xdefe,         /* 0a: trap */
+    0xbf00,         /* 0c: nop */
+    0xbd10,         /* 0e: pop {r4, pc} */
+};
+
+static void test_nested_exception(void)
+{
+    got_nested_exception = got_prev_frame_exception = FALSE;
+    run_exception_test(nested_exception_handler, NULL, nested_except_code, sizeof(nested_except_code),
+                       4 * sizeof(WORD), PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER);
+    ok(got_nested_exception, "Did not get nested exception.\n");
+    ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
+}
+
+static unsigned int collided_unwind_exception_count;
+
+static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    CONTEXT ctx;
+
+    trace("collided_exception_handler pc %p, sp %p, code %#lx, flags %#lx, ExceptionAddress %p, frame %p.\n",
+          (void *)context->Pc, (void *)context->Sp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, frame);
+
+    switch(collided_unwind_exception_count++)
+    {
+        case 0:
+            /* Initial exception from nested_except_code. */
+            ok(rec->ExceptionCode == STATUS_BREAKPOINT, "got %#lx.\n", rec->ExceptionCode);
+            nested_exception_initial_frame = frame;
+            /* Start unwind. */
+            pRtlUnwindEx((char *)frame + 8, (char *)code_mem + 0x07, NULL, NULL, &ctx, NULL);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 1:
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == EH_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)context->Pc == (char *)code_mem + 0x0b, "got %p.\n", (void *)context->Pc);
+            /* generate exception in unwind handler. */
+            RaiseException(0xdeadbeef, 0, 0, 0);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 2:
+            /* Inner call frame, continue search. */
+            ok(rec->ExceptionCode == 0xdeadbeef, "got %#lx.\n", rec->ExceptionCode);
+            ok(!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE, "got %#lx.\n", rec->ExceptionFlags);
+            ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            break;
+        case 3:
+            /* Top level call frame, handle exception by unwinding. */
+            ok(rec->ExceptionCode == 0xdeadbeef, "got %#lx.\n", rec->ExceptionCode);
+            ok(!rec->ExceptionFlags || rec->ExceptionFlags == EXCEPTION_SOFTWARE_ORIGINATE, "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            pRtlUnwindEx((char *)nested_exception_initial_frame + 8, (char *)code_mem + 0x07, NULL, NULL, &ctx, NULL);
+            ok(0, "shouldn't be reached\n");
+            break;
+        case 4:
+            /* Collided unwind. */
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            break;
+        case 5:
+            /* EH_COLLIDED_UNWIND cleared for the following frames. */
+            ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
+            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
+            break;
+    }
+    return ExceptionContinueSearch;
+}
+
+static void test_collided_unwind(void)
+{
+    got_nested_exception = got_prev_frame_exception = FALSE;
+    collided_unwind_exception_count = 0;
+    run_exception_test(collided_exception_handler, NULL, nested_except_code, sizeof(nested_except_code),
+                       4 * sizeof(WORD), PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER);
+    ok(collided_unwind_exception_count == 6, "got %u.\n", collided_unwind_exception_count);
+}
+
 #elif defined(__aarch64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -12864,6 +13051,8 @@ START_TEST(exception)
 #elif defined(__arm__)
 
     test_virtual_unwind();
+    test_nested_exception();
+    test_collided_unwind();
 
 #endif
 
