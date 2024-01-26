@@ -161,6 +161,7 @@ static int env_set(char **env, wchar_t **wenv)
     *eq = '=';
     if (!eq[1])
     {
+        free(MSVCRT__environ[idx]);
         for(; MSVCRT__environ[idx]; idx++)
             MSVCRT__environ[idx] = MSVCRT__environ[idx + 1];
     }
@@ -187,6 +188,7 @@ static int env_set(char **env, wchar_t **wenv)
     *weq = '=';
     if (!weq[1])
     {
+        free(MSVCRT__wenviron[idx]);
         for(; MSVCRT__wenviron[idx]; idx++)
             MSVCRT__wenviron[idx] = MSVCRT__wenviron[idx + 1];
     }
