@@ -302,6 +302,9 @@ static void ok_seq_( const char *file, int line, const struct user_call *expecte
     current_sequence_len = 0;
 }
 
+static BOOL append_message_hwnd;
+static BOOL (*p_accept_message)( UINT msg );
+
 static void append_ll_hook_kbd( UINT msg, const KBDLLHOOKSTRUCT *info )
 {
     struct user_call call =
@@ -312,9 +315,12 @@ static void append_ll_hook_kbd( UINT msg, const KBDLLHOOKSTRUCT *info )
             .flags = info->flags, .extra = info->dwExtraInfo
         }
     };
-    ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
-    ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
-    current_sequence[index] = call;
+    if (!p_accept_message || p_accept_message( msg ))
+    {
+        ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
+        ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
+        current_sequence[index] = call;
+    }
 }
 
 static void append_ll_hook_ms( UINT msg, const MSLLHOOKSTRUCT *info )
@@ -327,13 +333,14 @@ static void append_ll_hook_ms( UINT msg, const MSLLHOOKSTRUCT *info )
             .time = info->time, .extra = info->dwExtraInfo
         }
     };
-    ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
-    ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
-    current_sequence[index] = call;
+    if (!p_accept_message || p_accept_message( msg ))
+    {
+        ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
+        ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
+        current_sequence[index] = call;
+    }
 }
 
-static BOOL append_message_hwnd;
-static BOOL (*p_accept_message)( UINT msg );
 static void append_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (!p_accept_message || p_accept_message( msg ))
@@ -3536,13 +3543,6 @@ static void test_SendInput_mouse_messages(void)
         WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50), .todo = TRUE),
         {0},
     };
-    struct user_call button_down_hwnd_todo_attached[] =
-    {
-        MS_HOOK(WM_LBUTTONDOWN, 50, 50),
-        WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50), .todo = TRUE),
-        {.todo = TRUE /* spurious message on Wine */},
-        {0},
-    };
     struct user_call button_up_hwnd[] =
     {
         MS_HOOK(WM_LBUTTONUP, 50, 50),
@@ -3793,8 +3793,8 @@ static void test_SendInput_mouse_messages(void)
 
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
-    button_down_hwnd_todo_attached[1].message.hwnd = hwnd;
-    ok_seq( button_down_hwnd_todo_attached );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
     mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
     button_up_hwnd[1].message.hwnd = hwnd;
