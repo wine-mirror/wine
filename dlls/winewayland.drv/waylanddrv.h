@@ -201,6 +201,7 @@ struct wayland_surface
     struct wayland_window_config window;
     struct wayland_client_surface *client;
     int buffer_width, buffer_height;
+    HCURSOR hcursor;
 };
 
 struct wayland_shm_buffer

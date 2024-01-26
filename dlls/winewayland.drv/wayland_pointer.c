@@ -670,6 +670,9 @@ static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
     if ((surface = wayland_surface_lock_hwnd(hwnd)))
     {
         scale = surface->window.scale;
+        if (use_hcursor) surface->hcursor = hcursor;
+        else hcursor = surface->hcursor;
+        use_hcursor = TRUE;
         pthread_mutex_unlock(&surface->mutex);
     }
     else
