@@ -1001,6 +1001,24 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_devi
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %lu\n", GetLastError() );
 }
 
+void wait_hid_input_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                      DWORD timeout, BOOL todo )
+{
+    char buffer[sizeof(*desc)];
+    SIZE_T size;
+
+    if (desc) memcpy( buffer, desc, sizeof(*desc) );
+    else memset( buffer, 0, sizeof(*desc) );
+    size = sizeof(*desc);
+
+    todo_wine_if(todo) {
+    BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_INPUT, buffer, size, NULL, 0, timeout );
+    ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_INPUT failed, last error %lu\n", GetLastError() );
+    }
+
+    set_hid_expect_( file, line, device, desc, NULL, 0 );
+}
+
 static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, PHIDP_PREPARSED_DATA preparsed )
 {
     struct hid_expect expect[] =

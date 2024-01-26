@@ -63,27 +63,13 @@ static void check_buffer_( int line, HID_XFER_PACKET *packet, struct hid_expect 
     }
 }
 
-struct expect_queue
+struct wait_queue
 {
     KSPIN_LOCK lock;
-    struct hid_expect *pos;
-    struct hid_expect *end;
-    struct hid_expect spurious;
-    struct hid_expect *buffer;
     IRP *pending_wait;
-    char context[64];
 };
 
-static void expect_queue_init( struct expect_queue *queue )
-{
-    KeInitializeSpinLock( &queue->lock );
-    queue->buffer = ExAllocatePool( PagedPool, EXPECT_QUEUE_BUFFER_SIZE );
-    RtlSecureZeroMemory( queue->buffer, EXPECT_QUEUE_BUFFER_SIZE );
-    queue->pos = queue->buffer;
-    queue->end = queue->buffer;
-}
-
-static void expect_queue_cleanup( struct expect_queue *queue )
+static void wait_queue_cleanup( struct wait_queue *queue )
 {
     KIRQL irql;
     IRP *irp;
@@ -101,7 +87,50 @@ static void expect_queue_cleanup( struct expect_queue *queue )
         irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
+}
 
+static void wait_queue_unlock( struct wait_queue *queue, KIRQL irql, BOOL empty )
+{
+    IRP *irp;
+
+    /* complete the pending wait IRP if the queue is now empty */
+    if ((irp = empty ? queue->pending_wait : NULL))
+    {
+        queue->pending_wait = NULL;
+        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+    }
+
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    if (irp)
+    {
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+}
+
+struct expect_queue
+{
+    struct wait_queue base;
+    struct hid_expect *pos;
+    struct hid_expect *end;
+    struct hid_expect spurious;
+    struct hid_expect *buffer;
+    char context[64];
+};
+
+static void expect_queue_init( struct expect_queue *queue )
+{
+    KeInitializeSpinLock( &queue->base.lock );
+    queue->buffer = ExAllocatePool( PagedPool, EXPECT_QUEUE_BUFFER_SIZE );
+    RtlSecureZeroMemory( queue->buffer, EXPECT_QUEUE_BUFFER_SIZE );
+    queue->pos = queue->buffer;
+    queue->end = queue->buffer;
+}
+
+static void expect_queue_cleanup( struct expect_queue *queue )
+{
+    wait_queue_cleanup( &queue->base );
     ExFreePool( queue->buffer );
 }
 
@@ -115,7 +144,7 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
     RtlSecureZeroMemory( missing, EXPECT_QUEUE_BUFFER_SIZE );
     missing_end = missing;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
     tmp = queue->pos;
     while (tmp < queue->end) *missing_end++ = *tmp++;
 
@@ -125,7 +154,7 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
     if (size) memcpy( queue->end, buffer, size );
     queue->end = queue->end + size / sizeof(struct hid_expect);
     memcpy( context, queue->context, sizeof(context) );
-    KeReleaseSpinLock( &queue->lock, irql );
+    KeReleaseSpinLock( &queue->base.lock, irql );
 
     tmp = missing;
     while (tmp != missing_end)
@@ -150,7 +179,7 @@ static void expect_queue_reset( struct expect_queue *queue, void *buffer, unsign
 
 static void WINAPI wait_cancel_routine( DEVICE_OBJECT *device, IRP *irp )
 {
-    struct expect_queue *queue = irp->Tail.Overlay.DriverContext[0];
+    struct wait_queue *queue = irp->Tail.Overlay.DriverContext[0];
     KIRQL irql;
 
     IoReleaseCancelSpinLock( irp->CancelIrql );
@@ -164,7 +193,7 @@ static void WINAPI wait_cancel_routine( DEVICE_OBJECT *device, IRP *irp )
     IoCompleteRequest( irp, IO_NO_INCREMENT );
 }
 
-static NTSTATUS expect_queue_add_pending_locked( struct expect_queue *queue, IRP *irp )
+static NTSTATUS wait_queue_add_pending_locked( struct wait_queue *queue, IRP *irp )
 {
     if (queue->pending_wait) return STATUS_INVALID_PARAMETER;
 
@@ -184,9 +213,9 @@ static NTSTATUS expect_queue_add_pending( struct expect_queue *queue, IRP *irp )
     NTSTATUS status;
     KIRQL irql;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
-    status = expect_queue_add_pending_locked( queue, irp );
-    KeReleaseSpinLock( &queue->lock, irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
+    status = wait_queue_add_pending_locked( &queue->base, irp );
+    KeReleaseSpinLock( &queue->base.lock, irql );
 
     return status;
 }
@@ -198,16 +227,16 @@ static NTSTATUS expect_queue_wait_pending( struct expect_queue *queue, IRP *irp 
     IRP *pending;
     KIRQL irql;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
-    if ((pending = queue->pending_wait))
+    KeAcquireSpinLock( &queue->base.lock, &irql );
+    if ((pending = queue->base.pending_wait))
     {
-        queue->pending_wait = NULL;
+        queue->base.pending_wait = NULL;
         if (!IoSetCancelRoutine( pending, NULL )) pending = NULL;
     }
 
     if (pending && queue->pos == queue->end) status = STATUS_SUCCESS;
-    else status = expect_queue_add_pending_locked( queue, irp );
-    KeReleaseSpinLock( &queue->lock, irql );
+    else status = wait_queue_add_pending_locked( &queue->base, irp );
+    KeReleaseSpinLock( &queue->base.lock, irql );
 
     if (pending)
     {
@@ -225,10 +254,10 @@ static NTSTATUS expect_queue_wait( struct expect_queue *queue, IRP *irp )
     KIRQL irql;
 
     irp->IoStatus.Information = 0;
-    KeAcquireSpinLock( &queue->lock, &irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
     if (queue->pos == queue->end) status = STATUS_SUCCESS;
-    else status = expect_queue_add_pending_locked( queue, irp );
-    KeReleaseSpinLock( &queue->lock, irql );
+    else status = wait_queue_add_pending_locked( &queue->base, irp );
+    KeReleaseSpinLock( &queue->base.lock, irql );
 
     return status;
 }
@@ -240,14 +269,13 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
     ULONG len = packet->reportBufferLen;
     BYTE *buf = packet->reportBuffer;
     BYTE id = packet->reportId;
-    IRP *irp = NULL;
     KIRQL irql;
 
     missing = ExAllocatePool( PagedPool, EXPECT_QUEUE_BUFFER_SIZE );
     RtlSecureZeroMemory( missing, EXPECT_QUEUE_BUFFER_SIZE );
     missing_end = missing;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
     tmp = queue->pos;
     while (tmp < queue->end)
     {
@@ -270,28 +298,12 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
         queue->pos++;
     }
 
-    if ((irp = queue->pending_wait))
-    {
-        /* don't mark the IRP as pending if someone's already waiting */
-        if (expect->ret_status == STATUS_PENDING) expect->ret_status = STATUS_SUCCESS;
-
-        /* complete the pending wait IRP if the queue is now empty */
-        if (queue->pos != queue->end) irp = NULL;
-        else
-        {
-            queue->pending_wait = NULL;
-            if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
-        }
-    }
+    /* don't mark the IRP as pending if someone's already waiting */
+    if (expect->ret_status == STATUS_PENDING && queue->base.pending_wait)
+        expect->ret_status = STATUS_SUCCESS;
 
     memcpy( context, queue->context, context_size );
-    KeReleaseSpinLock( &queue->lock, irql );
-
-    if (irp)
-    {
-        irp->IoStatus.Status = STATUS_SUCCESS;
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
-    }
+    wait_queue_unlock( &queue->base, irql, queue->pos == queue->end );
 
     ok( tmp != &queue->spurious, "%s got spurious packet\n", context );
 
@@ -368,7 +380,7 @@ static void irp_queue_init( struct irp_queue *queue )
 
 struct input_queue
 {
-    KSPIN_LOCK lock;
+    struct wait_queue base;
     BOOL is_polled;
     struct hid_expect *pos;
     struct hid_expect *end;
@@ -379,7 +391,7 @@ struct input_queue
 
 static void input_queue_init( struct input_queue *queue, BOOL is_polled )
 {
-    KeInitializeSpinLock( &queue->lock );
+    KeInitializeSpinLock( &queue->base.lock );
     queue->is_polled = is_polled;
     queue->buffer = ExAllocatePool( PagedPool, EXPECT_QUEUE_BUFFER_SIZE );
     RtlSecureZeroMemory( queue->buffer, EXPECT_QUEUE_BUFFER_SIZE );
@@ -391,6 +403,7 @@ static void input_queue_init( struct input_queue *queue, BOOL is_polled )
 
 static void input_queue_cleanup( struct input_queue *queue )
 {
+    wait_queue_cleanup( &queue->base );
     ExFreePool( queue->buffer );
 }
 
@@ -418,7 +431,7 @@ static NTSTATUS input_queue_read( struct input_queue *queue, IRP *irp )
     NTSTATUS status;
     KIRQL irql;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
     if (input_queue_read_locked( queue, irp ))
     {
         irp_queue_push( &queue->completed, irp );
@@ -430,7 +443,7 @@ static NTSTATUS input_queue_read( struct input_queue *queue, IRP *irp )
         irp_queue_push( &queue->pending, irp );
         status = STATUS_PENDING;
     }
-    KeReleaseSpinLock( &queue->lock, irql );
+    wait_queue_unlock( &queue->base, irql, queue->pos == queue->end );
 
     return status;
 }
@@ -441,7 +454,7 @@ static void input_queue_reset( struct input_queue *queue, void *in_buf, ULONG in
     KIRQL irql;
     IRP *irp;
 
-    KeAcquireSpinLock( &queue->lock, &irql );
+    KeAcquireSpinLock( &queue->base.lock, &irql );
     remaining = queue->end - queue->pos;
     queue->pos = queue->buffer;
     queue->end = queue->buffer;
@@ -453,11 +466,26 @@ static void input_queue_reset( struct input_queue *queue, void *in_buf, ULONG in
         input_queue_read_locked( queue, irp );
         irp_queue_push( &queue->completed, irp );
     }
-    KeReleaseSpinLock( &queue->lock, irql );
+    wait_queue_unlock( &queue->base, irql, queue->pos == queue->end );
 
     if (!queue->is_polled) ok( !remaining, "unread input\n" );
 
     irp_queue_complete( &queue->completed, FALSE );
+}
+
+/* wait for the input queue to empty */
+static NTSTATUS input_queue_wait( struct input_queue *queue, IRP *irp )
+{
+    NTSTATUS status;
+    KIRQL irql;
+
+    irp->IoStatus.Information = 0;
+    KeAcquireSpinLock( &queue->base.lock, &irql );
+    if (queue->pos == queue->end) status = STATUS_SUCCESS;
+    else status = wait_queue_add_pending_locked( &queue->base, irp );
+    KeReleaseSpinLock( &queue->base.lock, irql );
+
+    return status;
 }
 
 struct device
@@ -1277,11 +1305,13 @@ static NTSTATUS pdo_handle_ioctl( struct phys_device *impl, IRP *irp, ULONG code
         if (in_size > EXPECT_QUEUE_BUFFER_SIZE) return STATUS_BUFFER_OVERFLOW;
         input_queue_reset( &impl->input_queue, in_buffer, in_size );
         return STATUS_SUCCESS;
+    case IOCTL_WINETEST_HID_WAIT_INPUT:
+        return input_queue_wait( &impl->input_queue, irp );
     case IOCTL_WINETEST_HID_SET_CONTEXT:
         if (in_size > sizeof(impl->expect_queue.context)) return STATUS_BUFFER_OVERFLOW;
-        KeAcquireSpinLock( &impl->expect_queue.lock, &irql );
+        KeAcquireSpinLock( &impl->expect_queue.base.lock, &irql );
         memcpy( impl->expect_queue.context, in_buffer, in_size );
-        KeReleaseSpinLock( &impl->expect_queue.lock, irql );
+        KeReleaseSpinLock( &impl->expect_queue.base.lock, irql );
         return STATUS_SUCCESS;
     case IOCTL_WINETEST_REMOVE_DEVICE:
         KeAcquireSpinLock( &impl->base.lock, &irql );
@@ -1356,6 +1386,7 @@ static NTSTATUS fdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_WINETEST_HID_WAIT_EXPECT:
     case IOCTL_WINETEST_HID_SEND_INPUT:
     case IOCTL_WINETEST_HID_SET_CONTEXT:
+    case IOCTL_WINETEST_HID_WAIT_INPUT:
         if (in_size < sizeof(*desc))
             status = STATUS_INVALID_PARAMETER;
         else if (!(device = find_child_device( impl, desc )) || !(pdo = pdo_from_DEVICE_OBJECT( device )))

@@ -1738,6 +1738,7 @@ static void test_hid_mouse(void)
 
     mouse_move_count = 0;
     bus_send_hid_input( file, &desc, single_move, sizeof(single_move) );
+    bus_wait_hid_input( file, &desc, 100 );
 
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_MOUSEMOVE );
     todo_wine

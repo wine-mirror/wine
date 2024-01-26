@@ -188,6 +188,7 @@ static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_WINETEST_HID_WAIT_EXPECT:
     case IOCTL_WINETEST_HID_SEND_INPUT:
     case IOCTL_WINETEST_HID_SET_CONTEXT:
+    case IOCTL_WINETEST_HID_WAIT_INPUT:
         IoSkipCurrentIrpStackLocation( irp );
         return IoCallDriver( ext->PhysicalDeviceObject, irp );
 
