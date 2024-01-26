@@ -179,10 +179,6 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->ScopeIndex       = 0;
     dispatch->EstablisherFrame = 0;
     dispatch->ControlPc        = context->Pc;
-    /*
-     * TODO: CONTEXT_UNWOUND_TO_CALL should be cleared if unwound past a
-     * signal frame.
-     */
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
     pc = context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0);
 
@@ -786,6 +782,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
         {
             context->Pc = ((DWORD64 *)context->Sp)[1];
             context->Sp = ((DWORD64 *)context->Sp)[0];
+            context->ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
         }
         else if (*ptr == 0xea)  /* MSFT_OP_CONTEXT */
         {
@@ -1068,10 +1065,12 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     else
         handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
 
-    TRACE( "ret: lr=%I64x sp=%I64x handler=%p\n", context->Lr, context->Sp, handler );
+    TRACE( "ret: pc=%I64x lr=%I64x sp=%I64x handler=%p\n", context->Pc, context->Lr, context->Sp, handler );
     if (!context->Pc)
+    {
         context->Pc = context->Lr;
-    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    }
     *frame_ret = context->Sp;
     return handler;
 }

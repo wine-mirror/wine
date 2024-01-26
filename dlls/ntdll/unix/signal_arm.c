@@ -549,9 +549,12 @@ static NTSTATUS ehabi_virtual_unwind( UINT ip, DWORD *frame, CONTEXT *context,
     *handler      = NULL; /* personality */
     *handler_data = NULL; /* lsda */
 
-    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     if (!set_pc)
+    {
         context->Pc = context->Lr;
+        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+    }
+    else context->ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
 
     TRACE( "next function pc=%08lx\n", context->Pc );
     TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
