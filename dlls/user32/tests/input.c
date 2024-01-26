@@ -52,6 +52,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wingdi.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "ddk/hidsdi.h"
@@ -3462,6 +3463,28 @@ static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
+static LRESULT CALLBACK mouse_layered_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    append_message( hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        HBRUSH brush = CreateSolidBrush( RGB(50, 100, 255) );
+        PAINTSTRUCT paint;
+        RECT client_rect;
+
+        HDC hdc = BeginPaint( hwnd, &paint );
+        GetClientRect( hwnd, &client_rect );
+        FillRect( hdc, &client_rect, brush );
+        EndPaint( hwnd, &paint );
+
+        DeleteObject( brush );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
 struct send_input_mouse_test
 {
     BOOL set_cursor_pos;
@@ -3541,6 +3564,7 @@ static void test_SendInput_mouse_messages(void)
     {
         MS_HOOK(WM_LBUTTONDOWN, 50, 50),
         WIN_MSG(WM_LBUTTONDOWN, (HWND)-1/*hwnd*/, 0x1, MAKELONG(50, 50), .todo = TRUE),
+        {0/* placeholder for Wine spurious messages */},
         {0},
     };
     struct user_call button_up_hwnd[] =
@@ -3553,6 +3577,7 @@ static void test_SendInput_mouse_messages(void)
     {
         MS_HOOK(WM_LBUTTONUP, 50, 50),
         WIN_MSG(WM_LBUTTONUP, (HWND)-1/*hwnd*/, 0, MAKELONG(50, 50), .todo = TRUE),
+        {0/* placeholder for Wine spurious messages */},
         {0},
     };
     struct user_call button_down_no_message[] =
@@ -3571,10 +3596,28 @@ static void test_SendInput_mouse_messages(void)
 #undef MS_HOOK
     static const POINT expect_60x50 = {60, 50}, expect_50x50 = {50, 50};
 
+    static const struct layered_test
+    {
+        UINT color;
+        UINT alpha;
+        UINT flags;
+        BOOL expect_click;
+    }
+    layered_tests[] =
+    {
+        {.flags = LWA_ALPHA, .expect_click = FALSE},
+        {.alpha = 1, .flags = LWA_ALPHA, .expect_click = TRUE},
+        {.color = RGB(0, 255, 0), .flags = LWA_COLORKEY, .expect_click = TRUE},
+        {.color = RGB(50, 100, 255), .flags = LWA_COLORKEY, .expect_click = TRUE},
+        {.color = RGB(0, 255, 0), .flags = LWA_COLORKEY | LWA_ALPHA, .expect_click = FALSE},
+        {.color = RGB(0, 255, 0), .alpha = 1, .flags = LWA_COLORKEY | LWA_ALPHA, .expect_click = TRUE},
+        {.color = RGB(50, 100, 255), .alpha = 1, .flags = LWA_COLORKEY | LWA_ALPHA, .expect_click = TRUE},
+    };
+
     struct create_transparent_window_params params = {0};
     ULONG_PTR old_proc, old_other_proc;
     RECT clip_rect = {55, 55, 55, 55};
-    UINT dblclk_time;
+    UINT dblclk_time, i;
     HWND hwnd, other;
     DWORD thread_id;
     HANDLE thread;
@@ -3860,6 +3903,75 @@ static void test_SendInput_mouse_messages(void)
     wait_messages( 0, FALSE );
 
     SetCapture( 0 );
+
+
+
+    /* click through layered window with alpha channel / color key */
+
+    for (i = 0; i < ARRAY_SIZE(layered_tests); i++)
+    {
+        const struct layered_test *test = layered_tests + i;
+        BOOL ret;
+
+        winetest_push_context( "layered %u", i );
+
+        other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+        ok_ne( NULL, other, HWND, "%p" );
+        old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)mouse_layered_wndproc );
+        ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+        wait_messages( 100, FALSE );
+
+
+        SetWindowLongW( other, GWL_EXSTYLE, GetWindowLongW( other, GWL_EXSTYLE ) | WS_EX_LAYERED );
+        ret = SetLayeredWindowAttributes( other, test->color, test->alpha, test->flags );
+        if (broken(!ret)) /* broken on Win7 probably because of the separate desktop */
+        {
+            win_skip("Skipping broken SetLayeredWindowAttributes tests\n");
+            DestroyWindow( other );
+            break;
+        }
+
+        ok_ret( 1, RedrawWindow( other, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN ) );
+        wait_messages( 5, FALSE );
+        current_sequence_len = 0;
+
+        mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+        wait_messages( 5, FALSE );
+        button_down_hwnd_todo[1].message.hwnd = test->expect_click ? other : hwnd;
+        button_down_hwnd_todo[1].todo = !test->expect_click;
+        button_down_hwnd_todo[2].todo = !test->alpha && (test->flags & LWA_ALPHA);
+        ok_seq( button_down_hwnd_todo );
+        mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+        wait_messages( 5, FALSE );
+        button_up_hwnd_todo[1].message.hwnd = test->expect_click ? other : hwnd;
+        button_up_hwnd_todo[1].todo = !test->expect_click;
+        button_up_hwnd_todo[2].todo = !test->alpha && (test->flags & LWA_ALPHA);
+        ok_seq( button_up_hwnd_todo );
+
+
+        /* removing the attribute isn't enough to get mouse input again? */
+
+        SetWindowLongW( other, GWL_EXSTYLE, GetWindowLongW( other, GWL_EXSTYLE ) & ~WS_EX_LAYERED );
+        ok_ret( 1, RedrawWindow( other, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN ) );
+        wait_messages( 5, FALSE );
+
+        mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+        wait_messages( 5, FALSE );
+        button_down_hwnd_todo[1].message.hwnd = test->expect_click ? other : hwnd;
+        button_down_hwnd_todo[1].todo = !test->expect_click;
+        button_down_hwnd_todo[2].todo = !test->alpha && (test->flags & LWA_ALPHA);
+        ok_seq( button_down_hwnd_todo );
+        mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+        wait_messages( 5, FALSE );
+        button_up_hwnd_todo[1].message.hwnd = test->expect_click ? other : hwnd;
+        button_up_hwnd_todo[1].todo = !test->expect_click;
+        button_up_hwnd_todo[2].todo = !test->alpha && (test->flags & LWA_ALPHA);
+        ok_seq( button_up_hwnd_todo );
+
+        ok_ret( 1, DestroyWindow( other ) );
+
+        winetest_pop_context();
+    }
 
 
     /* warm up test case by moving cursor and window a bit first */
