@@ -49,10 +49,6 @@ struct segment
     DMUS_IO_SEGMENT_HEADER header;
     IDirectMusicGraph *pGraph;
     struct list tracks;
-
-    PCMWAVEFORMAT wave_format;
-    void *wave_data;
-    int data_size;
 };
 
 static struct segment *segment_create(void);
@@ -112,7 +108,6 @@ static ULONG WINAPI segment_Release(IDirectMusicSegment8 *iface)
             list_remove(&entry->entry);
             track_entry_destroy(entry);
         }
-        free(This->wave_data);
         free(This);
     }
 
