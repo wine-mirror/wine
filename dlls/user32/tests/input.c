@@ -3622,6 +3622,8 @@ static void test_SendInput_mouse_messages(void)
     DWORD thread_id;
     HANDLE thread;
     HHOOK hook, hook_setpos, hook_getpos;
+    HRGN hregion;
+    RECT region;
     POINT pt;
 
     params.start_event = CreateEventA( NULL, FALSE, FALSE, NULL );
@@ -3921,6 +3923,8 @@ static void test_SendInput_mouse_messages(void)
         ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
         wait_messages( 100, FALSE );
 
+        ok_ret( ERROR, GetWindowRgnBox( other, &region ) );
+
 
         SetWindowLongW( other, GWL_EXSTYLE, GetWindowLongW( other, GWL_EXSTYLE ) | WS_EX_LAYERED );
         ret = SetLayeredWindowAttributes( other, test->color, test->alpha, test->flags );
@@ -3972,6 +3976,35 @@ static void test_SendInput_mouse_messages(void)
 
         winetest_pop_context();
     }
+
+
+    /* click on top-level window with SetWindowRgn called */
+
+    other = CreateWindowW( L"static", NULL, WS_VISIBLE | WS_POPUP, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+    current_sequence_len = 0;
+
+    old_other_proc = SetWindowLongPtrW( other, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+    ok_ne( 0, old_other_proc, LONG_PTR, "%#Ix" );
+
+    hregion = CreateRectRgn( 0, 0, 10, 10 );
+    ok_ne( NULL, hregion, HRGN, "%p" );
+    ok_ret( 1, SetWindowRgn( other, hregion, TRUE ) );
+    DeleteObject( hregion );
+    ok_ret( SIMPLEREGION, GetWindowRgnBox( other, &region ) );
+
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_down_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 5, FALSE );
+    button_up_hwnd[1].message.hwnd = hwnd;
+    ok_seq( button_up_hwnd );
+
+    ok_ret( 1, DestroyWindow( other ) );
+    wait_messages( 0, FALSE );
 
 
     /* warm up test case by moving cursor and window a bit first */
