@@ -233,6 +233,13 @@ struct display_device
     WCHAR device_key[128];     /* DeviceKey in DISPLAY_DEVICEW */
 };
 
+struct gpu
+{
+    struct list entry;
+    LUID luid;
+    unsigned int adapter_count;
+};
+
 struct adapter
 {
     LONG refcount;
@@ -275,6 +282,7 @@ struct monitor
     struct edid_monitor_info edid_info;
 };
 
+static struct list gpus = LIST_INIT(gpus);
 static struct list adapters = LIST_INIT(adapters);
 static struct list monitors = LIST_INIT(monitors);
 static INT64 last_query_display_time;
@@ -1672,6 +1680,7 @@ static void clear_display_devices(void)
 {
     struct adapter *adapter;
     struct monitor *monitor;
+    struct gpu *gpu;
 
     if (list_head( &monitors ) == &virtual_monitor.entry)
     {
@@ -1693,19 +1702,32 @@ static void clear_display_devices(void)
         list_remove( &adapter->entry );
         adapter_release( adapter );
     }
+
+    while (!list_empty( &gpus ))
+    {
+        gpu = LIST_ENTRY( list_head( &gpus ), struct gpu, entry );
+        list_remove( &gpu->entry );
+        free( gpu );
+    }
 }
 
 static BOOL update_display_cache_from_registry(void)
 {
+    char buffer[1024];
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
-    KEY_BASIC_INFORMATION key;
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    KEY_BASIC_INFORMATION key, *key2 = (void *)buffer;
+    HKEY pci_key, device_key, gpu_key, prop_key;
     struct adapter *adapter;
     struct monitor *monitor, *monitor2;
     HANDLE mutex = NULL;
     NTSTATUS status;
+    struct gpu *gpu;
     BOOL ret;
 
     /* If user driver did initialize the registry, then exit */
+    if (!enum_key && !(enum_key = reg_open_key( NULL, enum_keyW, sizeof(enum_keyW) )))
+        return FALSE;
     if (!video_key && !(video_key = reg_open_key( NULL, devicemap_video_keyW,
                                                   sizeof(devicemap_video_keyW) )))
         return FALSE;
@@ -1759,6 +1781,60 @@ static BOOL update_display_cache_from_registry(void)
             monitor->handle = UlongToHandle( ++monitor_count );
             list_add_tail( &monitors, &monitor->entry );
         }
+    }
+
+    if ((pci_key = reg_open_key( enum_key, pciW, sizeof(pciW) )))
+    {
+        unsigned int i = 0;
+
+        while (!NtEnumerateKey( pci_key, i++, KeyBasicInformation, key2, sizeof(buffer), &size ))
+        {
+            unsigned int j = 0;
+
+            if (!(device_key = reg_open_key( pci_key, key2->Name, key2->NameLength )))
+                continue;
+
+            while (!NtEnumerateKey( device_key, j++, KeyBasicInformation, key2, sizeof(buffer), &size ))
+            {
+                if (!(gpu_key = reg_open_key( device_key, key2->Name, key2->NameLength )))
+                    continue;
+
+                size = query_reg_value( gpu_key, class_guidW, value, sizeof(buffer) );
+                if (size != sizeof(guid_devclass_displayW)
+                        || wcscmp( (WCHAR *)value->Data, guid_devclass_displayW ))
+                {
+                    NtClose( gpu_key );
+                    continue;
+                }
+
+                if (!(gpu = calloc( 1, sizeof(*gpu) )))
+                {
+                    NtClose( gpu_key );
+                    continue;
+                }
+
+                if ((prop_key = reg_open_key( gpu_key, devpropkey_gpu_luidW,
+                                              sizeof(devpropkey_gpu_luidW) )))
+                {
+                    if (query_reg_value( prop_key, NULL, value, sizeof(buffer) ) == sizeof(LUID))
+                        gpu->luid = *(const LUID *)value->Data;
+                    NtClose( prop_key );
+                }
+
+                LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+                {
+                    if (!memcmp( &adapter->gpu_luid, &gpu->luid, sizeof(LUID) ))
+                        gpu->adapter_count++;
+                }
+
+                list_add_tail( &gpus, &gpu->entry );
+                NtClose( gpu_key );
+            }
+
+            NtClose( device_key );
+        }
+
+        NtClose( pci_key );
     }
 
     if ((ret = !list_empty( &adapters ) && !list_empty( &monitors )))
