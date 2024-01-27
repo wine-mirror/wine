@@ -999,7 +999,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
         TRACE( "returning to handler\n" );
         REGn_sig(0, context) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
         REGn_sig(1, context) = 1;
-        PC_sig(context)      = (ULONG_PTR)__wine_longjmp;
+        PC_sig(context)      = (ULONG_PTR)longjmp;
         ntdll_get_thread_data()->jmp_buf = NULL;
     }
     else
@@ -1642,54 +1642,5 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    /* switch to user stack */
                    "mov sp, x16\n\t"
                    "ret x17" )
-
-
-/***********************************************************************
- *           __wine_setjmpex
- */
-__ASM_GLOBAL_FUNC( __wine_setjmpex,
-                   "str x1,       [x0]\n\t"        /* jmp_buf->Frame */
-                   "stp x19, x20, [x0, #0x10]\n\t" /* jmp_buf->X19, X20 */
-                   "stp x21, x22, [x0, #0x20]\n\t" /* jmp_buf->X21, X22 */
-                   "stp x23, x24, [x0, #0x30]\n\t" /* jmp_buf->X23, X24 */
-                   "stp x25, x26, [x0, #0x40]\n\t" /* jmp_buf->X25, X26 */
-                   "stp x27, x28, [x0, #0x50]\n\t" /* jmp_buf->X27, X28 */
-                   "stp x29, x30, [x0, #0x60]\n\t" /* jmp_buf->Fp,  Lr  */
-                   "mov x2,  sp\n\t"
-                   "str x2,       [x0, #0x70]\n\t" /* jmp_buf->Sp */
-                   "mrs x2,  fpcr\n\t"
-                   "str w2,       [x0, #0x78]\n\t" /* jmp_buf->Fpcr */
-                   "mrs x2,  fpsr\n\t"
-                   "str w2,       [x0, #0x7c]\n\t" /* jmp_buf->Fpsr */
-                   "stp d8,  d9,  [x0, #0x80]\n\t" /* jmp_buf->D[0-1] */
-                   "stp d10, d11, [x0, #0x90]\n\t" /* jmp_buf->D[2-3] */
-                   "stp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
-                   "stp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
-                   "mov x0, #0\n\t"
-                   "ret" )
-
-
-/***********************************************************************
- *           __wine_longjmp
- */
-__ASM_GLOBAL_FUNC( __wine_longjmp,
-                   "ldp x19, x20, [x0, #0x10]\n\t" /* jmp_buf->X19, X20 */
-                   "ldp x21, x22, [x0, #0x20]\n\t" /* jmp_buf->X21, X22 */
-                   "ldp x23, x24, [x0, #0x30]\n\t" /* jmp_buf->X23, X24 */
-                   "ldp x25, x26, [x0, #0x40]\n\t" /* jmp_buf->X25, X26 */
-                   "ldp x27, x28, [x0, #0x50]\n\t" /* jmp_buf->X27, X28 */
-                   "ldp x29, x30, [x0, #0x60]\n\t" /* jmp_buf->Fp,  Lr  */
-                   "ldr x2,       [x0, #0x70]\n\t" /* jmp_buf->Sp */
-                   "mov sp,  x2\n\t"
-                   "ldr w2,       [x0, #0x78]\n\t" /* jmp_buf->Fpcr */
-                   "msr fpcr, x2\n\t"
-                   "ldr w2,       [x0, #0x7c]\n\t" /* jmp_buf->Fpsr */
-                   "msr fpsr, x2\n\t"
-                   "ldp d8,  d9,  [x0, #0x80]\n\t" /* jmp_buf->D[0-1] */
-                   "ldp d10, d11, [x0, #0x90]\n\t" /* jmp_buf->D[2-3] */
-                   "ldp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
-                   "ldp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
-                   "mov x0, x1\n\t"                /* retval */
-                   "ret" )
 
 #endif  /* __aarch64__ */

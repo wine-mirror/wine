@@ -1834,13 +1834,13 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     if (ntdll_get_thread_data()->jmp_buf)
     {
         TRACE( "returning to handler\n" );
-        /* push stack frame for calling __wine_longjmp */
+        /* push stack frame for calling longjmp */
         stack = stack_ptr;
         *(--stack) = 1;
         *(--stack) = (DWORD)ntdll_get_thread_data()->jmp_buf;
         *(--stack) = 0xdeadbabe;  /* return address */
         ESP_sig(sigcontext) = (DWORD)stack;
-        EIP_sig(sigcontext) = (DWORD)__wine_longjmp;
+        EIP_sig(sigcontext) = (DWORD)longjmp;
         ntdll_get_thread_data()->jmp_buf = NULL;
     }
     else
@@ -2808,36 +2808,5 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "pushl %ecx\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "ret" )
-
-
-/***********************************************************************
- *           __wine_setjmpex
- */
-__ASM_GLOBAL_FUNC( __wine_setjmpex,
-                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
-                   "movl %ebp,0(%ecx)\n\t"   /* jmp_buf.Ebp */
-                   "movl %ebx,4(%ecx)\n\t"   /* jmp_buf.Ebx */
-                   "movl %edi,8(%ecx)\n\t"   /* jmp_buf.Edi */
-                   "movl %esi,12(%ecx)\n\t"  /* jmp_buf.Esi */
-                   "movl %esp,16(%ecx)\n\t"  /* jmp_buf.Esp */
-                   "movl 0(%esp),%eax\n\t"
-                   "movl %eax,20(%ecx)\n\t"  /* jmp_buf.Eip */
-                   "xorl %eax,%eax\n\t"
-                   "ret" )
-
-
-/***********************************************************************
- *           __wine_longjmp
- */
-__ASM_GLOBAL_FUNC( __wine_longjmp,
-                   "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
-                   "movl 8(%esp),%eax\n\t"   /* retval */
-                   "movl 0(%ecx),%ebp\n\t"   /* jmp_buf.Ebp */
-                   "movl 4(%ecx),%ebx\n\t"   /* jmp_buf.Ebx */
-                   "movl 8(%ecx),%edi\n\t"   /* jmp_buf.Edi */
-                   "movl 12(%ecx),%esi\n\t"  /* jmp_buf.Esi */
-                   "movl 16(%ecx),%esp\n\t"  /* jmp_buf.Esp */
-                   "addl $4,%esp\n\t"        /* get rid of return address */
-                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ )
 
 #endif  /* __i386__ */

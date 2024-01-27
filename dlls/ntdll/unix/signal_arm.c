@@ -1220,7 +1220,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
         TRACE( "returning to handler\n" );
         REGn_sig(0, context) = (DWORD)ntdll_get_thread_data()->jmp_buf;
         REGn_sig(1, context) = 1;
-        PC_sig(context)      = (DWORD)__wine_longjmp;
+        PC_sig(context)      = (DWORD)longjmp;
         ntdll_get_thread_data()->jmp_buf = NULL;
     }
     else
@@ -1721,41 +1721,5 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n\t"
                    "1:\tb " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
-
-
-/***********************************************************************
- *           __wine_setjmpex
- */
-__ASM_GLOBAL_FUNC( __wine_setjmpex,
-                   __ASM_EHABI(".cantunwind\n\t")
-                   "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
-                   "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
-                   "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
-                   "vmrs r2, fpscr\n\t"
-                   "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
-                   "add r0, r0, #0x30\n\t"
-                   "vstm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
-#endif
-                   "mov r0, #0\n\t"
-                   "bx lr" )
-
-
-/***********************************************************************
- *           __wine_longjmp
- */
-__ASM_GLOBAL_FUNC( __wine_longjmp,
-                   __ASM_EHABI(".cantunwind\n\t")
-                   "ldm r0, {r3-r11}\n\t"          /* jmp_buf->Frame,R4..R11 */
-                   "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
-                   "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
-                   "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
-                   "vmsr fpscr, r3\n\t"
-                   "add r0, r0, #0x30\n\t"
-                   "vldm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
-#endif
-                   "mov r0, r1\n\t"                /* retval */
-                   "bx r2" )
 
 #endif  /* __arm__ */
