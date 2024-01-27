@@ -70,6 +70,7 @@ struct desktop
     struct winstation   *winstation;       /* winstation this desktop belongs to */
     timeout_t            input_time;       /* last time this desktop had the input */
     struct list          entry;            /* entry in winstation list of desktops */
+    struct list          threads;          /* list of threads connected to this desktop */
     struct window       *top_window;       /* desktop window for this desktop */
     struct window       *msg_window;       /* HWND_MESSAGE top window */
     struct hook_table   *global_hooks;     /* table of global hooks on this desktop */

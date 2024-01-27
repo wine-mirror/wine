@@ -51,6 +51,7 @@ struct thread
     struct object          obj;           /* object header */
     struct list            entry;         /* entry in system-wide thread list */
     struct list            proc_entry;    /* entry in per-process thread list */
+    struct list            desktop_entry; /* entry in per-desktop thread list */
     struct process        *process;
     thread_id_t            id;            /* thread id */
     struct list            mutex_list;    /* list of currently owned mutexes */
