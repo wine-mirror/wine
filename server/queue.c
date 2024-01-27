@@ -1782,6 +1782,116 @@ static struct thread *get_foreground_thread( struct desktop *desktop, user_handl
     return NULL;
 }
 
+/* user32 reserves 1 & 2 for winemouse and winekeyboard,
+ * keep this in sync with user_private.h */
+#define WINE_MOUSE_HANDLE 1
+#define WINE_KEYBOARD_HANDLE 2
+
+static void rawmouse_init( struct rawinput *header, RAWMOUSE *rawmouse, int x, int y, unsigned int flags,
+                           unsigned int buttons, lparam_t info )
+{
+    static const unsigned int button_flags[] =
+    {
+        0,                              /* MOUSEEVENTF_MOVE */
+        RI_MOUSE_LEFT_BUTTON_DOWN,      /* MOUSEEVENTF_LEFTDOWN */
+        RI_MOUSE_LEFT_BUTTON_UP,        /* MOUSEEVENTF_LEFTUP */
+        RI_MOUSE_RIGHT_BUTTON_DOWN,     /* MOUSEEVENTF_RIGHTDOWN */
+        RI_MOUSE_RIGHT_BUTTON_UP,       /* MOUSEEVENTF_RIGHTUP */
+        RI_MOUSE_MIDDLE_BUTTON_DOWN,    /* MOUSEEVENTF_MIDDLEDOWN */
+        RI_MOUSE_MIDDLE_BUTTON_UP,      /* MOUSEEVENTF_MIDDLEUP */
+    };
+    unsigned int i;
+
+    header->type   = RIM_TYPEMOUSE;
+    header->device = WINE_MOUSE_HANDLE;
+    header->wparam = 0;
+    header->usage  = MAKELONG(HID_USAGE_GENERIC_MOUSE, HID_USAGE_PAGE_GENERIC);
+
+    rawmouse->usFlags       = MOUSE_MOVE_RELATIVE;
+    rawmouse->usButtonFlags = 0;
+    rawmouse->usButtonData  = 0;
+    for (i = 1; i < ARRAY_SIZE(button_flags); ++i)
+    {
+        if (flags & (1 << i)) rawmouse->usButtonFlags |= button_flags[i];
+    }
+    if (flags & MOUSEEVENTF_WHEEL)
+    {
+        rawmouse->usButtonFlags |= RI_MOUSE_WHEEL;
+        rawmouse->usButtonData   = buttons;
+    }
+    if (flags & MOUSEEVENTF_HWHEEL)
+    {
+        rawmouse->usButtonFlags |= RI_MOUSE_HORIZONTAL_WHEEL;
+        rawmouse->usButtonData   = buttons;
+    }
+    if (flags & MOUSEEVENTF_XDOWN)
+    {
+        if (buttons == XBUTTON1) rawmouse->usButtonFlags |= RI_MOUSE_BUTTON_4_DOWN;
+        if (buttons == XBUTTON2) rawmouse->usButtonFlags |= RI_MOUSE_BUTTON_5_DOWN;
+    }
+    if (flags & MOUSEEVENTF_XUP)
+    {
+        if (buttons == XBUTTON1) rawmouse->usButtonFlags |= RI_MOUSE_BUTTON_4_UP;
+        if (buttons == XBUTTON2) rawmouse->usButtonFlags |= RI_MOUSE_BUTTON_5_UP;
+    }
+
+    rawmouse->ulRawButtons       = 0;
+    rawmouse->lLastX             = x;
+    rawmouse->lLastY             = y;
+    rawmouse->ulExtraInformation = info;
+}
+
+static void rawkeyboard_init( struct rawinput *rawinput, RAWKEYBOARD *keyboard, unsigned short scan, unsigned short vkey,
+                              unsigned int flags, unsigned int message, lparam_t info )
+{
+    rawinput->type   = RIM_TYPEKEYBOARD;
+    rawinput->device = WINE_KEYBOARD_HANDLE;
+    rawinput->wparam = 0;
+    rawinput->usage  = MAKELONG(HID_USAGE_GENERIC_KEYBOARD, HID_USAGE_PAGE_GENERIC);
+
+    keyboard->MakeCode = scan;
+    keyboard->Flags    = (flags & KEYEVENTF_KEYUP) ? RI_KEY_BREAK : RI_KEY_MAKE;
+    if (flags & KEYEVENTF_EXTENDEDKEY) keyboard->Flags |= RI_KEY_E0;
+    keyboard->Reserved = 0;
+
+    switch (vkey)
+    {
+    case VK_LSHIFT:
+    case VK_RSHIFT:
+        keyboard->VKey   = VK_SHIFT;
+        keyboard->Flags &= ~RI_KEY_E0;
+        break;
+
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+        keyboard->VKey = VK_CONTROL;
+        break;
+
+    case VK_LMENU:
+    case VK_RMENU:
+        keyboard->VKey = VK_MENU;
+        break;
+
+    default:
+        keyboard->VKey = vkey;
+        break;
+    }
+
+    keyboard->Message          = message;
+    keyboard->ExtraInformation = info;
+}
+
+static void rawhid_init( struct rawinput *rawinput, RAWHID *hid, const hw_input_t *input )
+{
+    rawinput->type   = RIM_TYPEHID;
+    rawinput->device = input->hw.hid.device;
+    rawinput->wparam = input->hw.wparam;
+    rawinput->usage  = input->hw.hid.usage;
+
+    hid->dwCount   = input->hw.hid.count;
+    hid->dwSizeHid = input->hw.hid.length;
+}
+
 struct rawinput_message
 {
     struct thread           *foreground;
@@ -1789,30 +1899,48 @@ struct rawinput_message
     struct hw_msg_source     source;
     unsigned int             time;
     unsigned int             message;
-    lparam_t                 info;
     unsigned int             flags;
-    union rawinput           rawinput;
-    const void              *hid_report;
+    struct rawinput          rawinput;
+    union
+    {
+        RAWKEYBOARD         keyboard;
+        RAWMOUSE            mouse;
+        RAWHID              hid;
+    } data;
+    const void             *hid_report;
 };
 
 /* check if process is supposed to receive a WM_INPUT message and eventually queue it */
 static int queue_rawinput_message( struct process* process, void *arg )
 {
-    const struct rawinput_message* raw_msg = arg;
+    const struct rawinput_message *raw_msg = arg;
     const struct rawinput_device *device = NULL;
     struct desktop *target_desktop = NULL, *desktop = NULL;
     struct thread *target_thread = NULL, *foreground = NULL;
     struct hardware_msg_data *msg_data;
     struct message *msg;
-    data_size_t report_size;
+    data_size_t report_size = 0, data_size = 0;
     int wparam = RIM_INPUT;
+    lparam_t info = 0;
 
     if (raw_msg->rawinput.type == RIM_TYPEMOUSE)
+    {
         device = process->rawinput_mouse;
+        data_size = sizeof(raw_msg->data.mouse);
+        info = raw_msg->data.mouse.ulExtraInformation;
+    }
     else if (raw_msg->rawinput.type == RIM_TYPEKEYBOARD)
+    {
         device = process->rawinput_kbd;
+        data_size = sizeof(raw_msg->data.keyboard);
+        info = raw_msg->data.keyboard.ExtraInformation;
+    }
     else
-        device = find_rawinput_device( process, raw_msg->rawinput.hid.usage );
+    {
+        device = find_rawinput_device( process, raw_msg->rawinput.usage );
+        data_size = offsetof(RAWHID, bRawData[0]);
+        report_size = raw_msg->data.hid.dwCount * raw_msg->data.hid.dwSizeHid;
+    }
     if (!device) return 0;
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && !(device->flags & RIDEV_DEVNOTIFY)) return 0;
@@ -1832,10 +1960,7 @@ static int queue_rawinput_message( struct process* process, void *arg )
         wparam = RIM_INPUTSINK;
     }
 
-    if (raw_msg->rawinput.type != RIM_TYPEHID || !raw_msg->hid_report) report_size = 0;
-    else report_size = raw_msg->rawinput.hid.count * raw_msg->rawinput.hid.length;
-
-    if (!(msg = alloc_hardware_message( raw_msg->info, raw_msg->source, raw_msg->time, report_size ))) goto done;
+    if (!(msg = alloc_hardware_message( info, raw_msg->source, raw_msg->time, data_size + report_size ))) goto done;
     msg->win    = device->target;
     msg->msg    = raw_msg->message;
     msg->wparam = wparam;
@@ -1844,12 +1969,13 @@ static int queue_rawinput_message( struct process* process, void *arg )
     msg_data = msg->data;
     msg_data->flags = raw_msg->flags;
     msg_data->rawinput = raw_msg->rawinput;
-    if (report_size) memcpy( msg_data + 1, raw_msg->hid_report, report_size );
+    memcpy( msg_data + 1, &raw_msg->data, data_size );
+    if (report_size) memcpy( (char *)(msg_data + 1) + data_size, raw_msg->hid_report, report_size );
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && raw_msg->rawinput.type == RIM_TYPEHID)
     {
-        msg->wparam = raw_msg->rawinput.hid.wparam;
-        msg->lparam = raw_msg->rawinput.hid.device;
+        msg->wparam = raw_msg->rawinput.wparam;
+        msg->lparam = raw_msg->rawinput.device;
     }
 
     queue_hardware_message( desktop, msg, 1 );
@@ -1927,13 +2053,9 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         raw_msg.source     = source;
         raw_msg.time       = time;
         raw_msg.message    = WM_INPUT;
-
-        raw_msg.info                = input->mouse.info;
-        raw_msg.flags               = flags;
-        raw_msg.rawinput.type       = RIM_TYPEMOUSE;
-        raw_msg.rawinput.mouse.x    = x - desktop->cursor.x;
-        raw_msg.rawinput.mouse.y    = y - desktop->cursor.y;
-        raw_msg.rawinput.mouse.data = input->mouse.data;
+        raw_msg.flags      = flags;
+        rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, x - desktop->cursor.x, y - desktop->cursor.y,
+                       raw_msg.flags, input->mouse.data, input->mouse.info );
 
         enum_processes( queue_rawinput_message, &raw_msg );
         release_object( foreground );
@@ -2063,13 +2185,9 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         raw_msg.source     = source;
         raw_msg.time       = time;
         raw_msg.message    = WM_INPUT;
-
-        raw_msg.info                 = input->kbd.info;
-        raw_msg.flags                = input->kbd.flags;
-        raw_msg.rawinput.type        = RIM_TYPEKEYBOARD;
-        raw_msg.rawinput.kbd.message = message_code;
-        raw_msg.rawinput.kbd.vkey    = vkey;
-        raw_msg.rawinput.kbd.scan    = input->kbd.scan;
+        raw_msg.flags      = input->kbd.flags;
+        rawkeyboard_init( &raw_msg.rawinput, &raw_msg.data.keyboard, input->kbd.scan, vkey,
+                          raw_msg.flags, message_code, input->kbd.info );
 
         enum_processes( queue_rawinput_message, &raw_msg );
         release_object( foreground );
@@ -2134,13 +2252,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
-
-        raw_msg.rawinput.hid.type = RIM_TYPEHID;
-        raw_msg.rawinput.hid.device = input->hw.hid.device;
-        raw_msg.rawinput.hid.wparam = input->hw.wparam;
-        raw_msg.rawinput.hid.usage = input->hw.hid.usage;
-        raw_msg.rawinput.hid.count = input->hw.hid.count;
-        raw_msg.rawinput.hid.length = input->hw.hid.length;
+        rawhid_init( &raw_msg.rawinput, &raw_msg.data.hid, input );
 
         enum_processes( queue_rawinput_message, &raw_msg );
         return;

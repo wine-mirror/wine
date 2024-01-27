@@ -263,32 +263,12 @@ struct hw_msg_source
     unsigned int    origin;
 };
 
-union rawinput
+struct rawinput
 {
-    int type;
-    struct
-    {
-        int            type;
-        unsigned int   message;
-        unsigned short vkey;
-        unsigned short scan;
-    } kbd;
-    struct
-    {
-        int            type;
-        int            x;
-        int            y;
-        unsigned int   data;
-    } mouse;
-    struct
-    {
-        int            type;
-        unsigned int   device;
-        unsigned int   wparam;
-        unsigned int   usage;
-        unsigned int   count;
-        unsigned int   length;
-    } hid;
+    int                  type;
+    unsigned int         device;
+    unsigned int         wparam;
+    unsigned int         usage;
 };
 
 struct hardware_msg_data
@@ -299,7 +279,7 @@ struct hardware_msg_data
     unsigned int         hw_id;
     unsigned int         flags;
     struct hw_msg_source source;
-    union rawinput       rawinput;
+    struct rawinput      rawinput;
 };
 
 struct callback_msg_data
@@ -6512,7 +6492,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 791
+#define SERVER_PROTOCOL_VERSION 792
 
 /* ### protocol_version end ### */
 

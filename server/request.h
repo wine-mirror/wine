@@ -716,7 +716,7 @@ C_ASSERT( sizeof(ioctl_code_t) == 4 );
 C_ASSERT( sizeof(irp_params_t) == 32 );
 C_ASSERT( sizeof(lparam_t) == 8 );
 C_ASSERT( sizeof(mem_size_t) == 8 );
-C_ASSERT( sizeof(message_data_t) == 56 );
+C_ASSERT( sizeof(message_data_t) == 48 );
 C_ASSERT( sizeof(mod_handle_t) == 8 );
 C_ASSERT( sizeof(obj_handle_t) == 4 );
 C_ASSERT( sizeof(pe_image_info_t) == 88 );

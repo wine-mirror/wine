@@ -1915,7 +1915,6 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
 
         size = sizeof(buffer);
         memset( buffer, 0, sizeof(buffer) );
-        todo_wine_if(is_wow64 && iteration == 1)
         ok_ret( 3, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER))  );
         ok_eq( sizeof(buffer), size, UINT, "%u" );
 
@@ -1958,9 +1957,8 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
              * it needs one more byte to return success */
             size = sizeof(rawinput) + 1;
             memset( buffer, 0, sizeof(buffer) );
-            todo_wine_if(is_wow64)
             ok_ret( 1, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER) ) );
-            if (is_wow64) todo_wine ok_eq( 5, rawbuffer64->data.keyboard.MakeCode, WPARAM, "%Iu" );
+            if (is_wow64) ok_eq( 5, rawbuffer64->data.keyboard.MakeCode, WPARAM, "%Iu" );
             else ok_eq( 5, rawbuffer->data.keyboard.MakeCode, WPARAM, "%Iu" );
 
             /* peek the messages now, they should still arrive in the correct order */
@@ -2013,7 +2011,6 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
             SetLastError( 0xdeadbeef );
             size = sizeof(rawinput);
             ok_ret( rawinput_size, GetRawInputData( handle, RID_INPUT, &rawinput, &size, sizeof(RAWINPUTHEADER) ) );
-            todo_wine_if(is_wow64)
             ok_eq( 6, rawinput.data.keyboard.MakeCode, UINT, "%u" );
 
             SetLastError( 0xdeadbeef );
@@ -2027,7 +2024,6 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
             {
                 todo_wine
                 ok_ret( rawinput_size, GetRawInputData( handle, RID_INPUT, &rawinput, &size, sizeof(RAWINPUTHEADER64) ) );
-                todo_wine
                 ok_eq( 6, rawinput.data.keyboard.MakeCode, UINT, "%u" );
                 todo_wine
                 ok_ret( 0xdeadbeef, GetLastError() );
@@ -2184,7 +2180,6 @@ static void test_GetRawInputBuffer(void)
 
     size = 0;
     ok_ret( 0, GetRawInputBuffer( NULL, &size, sizeof(RAWINPUTHEADER) ) );
-    todo_wine
     ok_eq( rawinput_size, size, UINT, "%u" );
 
     size = sizeof(buffer);
@@ -2226,9 +2221,7 @@ static void test_GetRawInputBuffer(void)
     /* rawinput buffer survives registered device changes */
 
     size = rawinput_size + 1;
-    todo_wine
     ok_ret( 1, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER) ) );
-    todo_wine
     ok_eq( rawinput_size + 1, size, UINT, "%u" );
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
@@ -2244,9 +2237,7 @@ static void test_GetRawInputBuffer(void)
     ok_ret( 1, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER) ) );
     ok_eq( rawinput_size + 1, size, UINT, "%u" );
     size = sizeof(buffer);
-    todo_wine
     ok_ret( 0, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER) ) );
-    todo_wine
     ok_eq( 0, size, UINT, "%u" );
 
     raw_devices[0].dwFlags = RIDEV_REMOVE;
