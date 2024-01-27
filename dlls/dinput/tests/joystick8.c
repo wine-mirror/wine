@@ -49,6 +49,8 @@
 
 #include "initguid.h"
 
+#define DESKTOP_ALL_ACCESS 0x01ff
+
 DEFINE_GUID(GUID_action_mapping_1,0x00000001,0x0002,0x0003,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b);
 DEFINE_GUID(GUID_action_mapping_2,0x00010001,0x0002,0x0003,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b);
 DEFINE_GUID(GUID_map_other_device,0x00020001,0x0002,0x0003,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b);
@@ -76,6 +78,48 @@ static BOOL load_combase_functions(void)
 failed:
     win_skip("Failed to load combase.dll functions, skipping tests\n");
     return FALSE;
+}
+
+#define run_in_desktop( a, b, c ) run_in_desktop_( __FILE__, __LINE__, a, b, c )
+static void run_in_desktop_( const char *file, int line, char **argv,
+                             const char *args, BOOL input )
+{
+    const char *desktop_name = "WineTest Desktop";
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    HDESK old_desktop, desktop;
+    char cmdline[MAX_PATH * 2];
+    DWORD ret;
+
+    old_desktop = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+    ok_(file, line)( !!old_desktop, "OpenInputDesktop failed, error %lu\n", GetLastError() );
+    desktop = CreateDesktopA( desktop_name, NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok_(file, line)( !!desktop, "CreateDesktopA failed, error %lu\n", GetLastError() );
+    if (input)
+    {
+        ret = SwitchDesktop( desktop );
+        ok_(file, line)( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+    }
+
+    startup.lpDesktop = (char *)desktop_name;
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+
+    if (input)
+    {
+        ret = SwitchDesktop( old_desktop );
+        ok_(file, line)( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+    }
+    ret = CloseDesktop( desktop );
+    ok_(file, line)( ret, "CloseDesktop failed, error %lu\n", GetLastError() );
+    ret = CloseDesktop( old_desktop );
+    ok_(file, line)( ret, "CloseDesktop failed, error %lu\n", GetLastError() );
 }
 
 struct check_object_todo
@@ -5244,7 +5288,7 @@ static LRESULT CALLBACK rawinput_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LP
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
-static void test_rawinput(void)
+static void test_rawinput( char **argv )
 {
 #include "psh_hid_macros.h"
     static const unsigned char report_desc[] =
@@ -5623,6 +5667,13 @@ static void test_rawinput(void)
     CloseHandle( rawinput_event );
     CloseHandle( file );
 
+    /* test rawinput in a new, input and non-input desktop */
+    strcpy( buffer, "test_rawinput_desktop " );
+    WideCharToMultiByte( CP_ACP, 0, path, -1, buffer + 22, ARRAY_SIZE(buffer) - 22, NULL, NULL );
+    run_in_desktop( argv, buffer, 0 );
+    strcat( buffer, " input" );
+    run_in_desktop( argv, buffer, 1 );
+
 done:
     hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
@@ -5630,8 +5681,247 @@ done:
     DestroyWindow( hwnd );
 }
 
+struct rawinput_desktop_thread_params
+{
+    HANDLE file;
+    BOOL input;
+};
+
+static DWORD WINAPI test_rawinput_desktop_thread( void *args )
+{
+    struct hid_device_desc desc =
+    {
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 9 },
+        .attributes = default_attributes,
+    };
+    struct hid_expect injected_input =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_buf = {1,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0},
+    };
+    RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_JOYSTICK};
+    struct rawinput_desktop_thread_params *params = args;
+    HDESK desktop, old_desktop, old_input = 0;
+    char buffer[1024];
+    ULONG res, size;
+    HWND hwnd;
+    BOOL ret;
+
+    winetest_push_context( "input %u", params->input );
+
+    /* non-input desktop thread may receive rawinput if its process is connected to the input desktop */
+    old_desktop = GetThreadDesktop( GetCurrentThreadId() );
+    ok( !!old_desktop, "GetThreadDesktop failed, error %lu\n", GetLastError() );
+    desktop = CreateDesktopW( L"NonInput", NULL, NULL, 0, DESKTOP_ALL_ACCESS, 0 );
+    ok( !!desktop, "CreateDesktopW failed, error %lu\n", GetLastError() );
+    ret = SetThreadDesktop( desktop );
+    ok( ret, "SetThreadDesktop failed, error %lu\n", GetLastError() );
+
+    if (params->input)
+    {
+        /* registering before switching desktop works, as window will then be foreground */
+        ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+        ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+        /* input desktop thread will receive rawinput even if its process isn't connected to the input desktop */
+        old_input = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+        ok( !!old_input, "OpenInputDesktop failed, error %lu\n", GetLastError() );
+        ret = SwitchDesktop( desktop );
+        ok( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+    }
+
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE,
+                          100, 100, 200, 200, NULL, NULL, NULL, NULL );
+    ok( hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+    msg_wait_for_events( 0, NULL, 100 );
+
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (ULONG_PTR)rawinput_wndproc );
+
+    if (!params->input)
+    {
+        /* non-input desktop, needs to force the window */
+        rawdevice.hwndTarget = hwnd;
+        ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+        ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+    }
+
+
+    send_hid_input( params->file, &injected_input, sizeof(injected_input) );
+    res = ReadFile( params->file, buffer, desc.caps.InputReportByteLength, &size, NULL );
+    ok( res, "ReadFile failed, error %lu\n", GetLastError() );
+    ok( size == desc.caps.InputReportByteLength, "got size %lu\n", size );
+
+    rawinput_calls = 0;
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    res = msg_wait_for_events( 1, &rawinput_event, 100 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    todo_wine
+    ok( rawinput_calls == 1, "got %u WM_INPUT messages\n", rawinput_calls );
+
+    rawinput = (RAWINPUT *)rawbuffer;
+    todo_wine
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    todo_wine
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    todo_wine
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    todo_wine
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    todo_wine
+    ok( rawinput->data.hid.dwCount >= 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+
+
+    DestroyWindow( hwnd );
+    msg_wait_for_events( 0, NULL, 5 );
+
+    SetThreadDesktop( old_desktop );
+    CloseDesktop( desktop );
+
+    if (old_input)
+    {
+        ret = SwitchDesktop( old_input );
+        ok( ret, "SwitchDesktop failed, error %lu\n", GetLastError() );
+        CloseDesktop( old_input );
+        ok( ret, "CloseDesktop failed, error %lu\n", GetLastError() );
+    }
+
+    winetest_pop_context();
+
+    return 0;
+}
+
+static void test_rawinput_desktop( const char *path, BOOL input )
+{
+    struct hid_device_desc desc =
+    {
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 9 },
+        .attributes = default_attributes,
+    };
+    struct hid_expect injected_input =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_buf = {1,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0},
+    };
+    RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_JOYSTICK};
+    struct rawinput_desktop_thread_params params = {.input = !input};
+    char buffer[1024];
+    ULONG res, size;
+    HANDLE thread;
+    HDESK desktop;
+    HANDLE file;
+    HWND hwnd;
+    BOOL ret;
+
+    winetest_push_context( "input %u", input );
+
+    desktop = GetThreadDesktop( GetCurrentThreadId() );
+    ok( desktop != NULL, "GetThreadDesktop returned %p, error %lu\n", desktop, GetLastError() );
+
+    rawinput_device_added = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_device_added, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    rawinput_device_removed = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_device_removed, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    rawinput_event = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_event, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+
+    if (input) hwnd = create_foreground_window( FALSE );
+    else /* non-input desktops cannot have foreground windows */
+    {
+        hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE,
+                              100, 100, 200, 200, NULL, NULL, NULL, NULL );
+        ok( hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+    }
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (ULONG_PTR)rawinput_wndproc );
+
+    file = CreateFileA( path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                        0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+
+    /* non-input desktop don't receive WM_INPUT messages */
+
+    rawdevice.dwFlags = RIDEV_INPUTSINK;
+    rawdevice.hwndTarget = hwnd;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    send_hid_input( file, &injected_input, sizeof(injected_input) );
+    res = ReadFile( file, buffer, desc.caps.InputReportByteLength, &size, NULL );
+    ok( res, "ReadFile failed, error %lu\n", GetLastError() );
+    ok( size == desc.caps.InputReportByteLength, "got size %lu\n", size );
+
+    rawinput_calls = 0;
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    res = msg_wait_for_events( 1, &rawinput_event, 100 );
+    if (input)
+    {
+        todo_wine
+        ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+        todo_wine
+        ok( rawinput_calls == 1, "got %u WM_INPUT messages\n", rawinput_calls );
+
+        rawinput = (RAWINPUT *)rawbuffer;
+        todo_wine
+        ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+        todo_wine
+        ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+            "got header.dwSize %lu\n", rawinput->header.dwSize );
+        todo_wine
+        ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+        ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+        todo_wine
+        ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+        todo_wine
+        ok( rawinput->data.hid.dwCount >= 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+    }
+    else
+    {
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+        ok( rawinput_calls == 0, "got %u WM_INPUT messages\n", rawinput_calls );
+    }
+
+    rawdevice.dwFlags = RIDEV_REMOVE;
+    rawdevice.hwndTarget = 0;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    winetest_pop_context();
+
+    params.file = file;
+    thread = CreateThread( NULL, 0, test_rawinput_desktop_thread, &params, 0, NULL );
+    ok( thread != NULL, "CreateThread error %lu\n", GetLastError() );
+    res = WaitForSingleObject( thread, 5000 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %lu, error %lu\n", res, GetLastError() );
+    CloseHandle( thread );
+
+    CloseHandle( rawinput_device_added );
+    CloseHandle( rawinput_device_removed );
+    CloseHandle( rawinput_event );
+    CloseHandle( file );
+
+    DestroyWindow( hwnd );
+}
+
 START_TEST( joystick8 )
 {
+    char **argv;
+    int argc;
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc >= 3 && !strcmp( argv[2], "test_rawinput_desktop" ))
+        return test_rawinput_desktop( argv[3], argc > 4 && !strcmp( argv[4], "input" ) );
+
     dinput_test_init();
     if (!bus_device_start()) goto done;
 
@@ -5652,7 +5942,7 @@ START_TEST( joystick8 )
 
         test_many_axes_joystick();
         test_driving_wheel_axes();
-        test_rawinput();
+        test_rawinput( argv );
         test_windows_gaming_input();
     }
 
