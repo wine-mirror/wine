@@ -5438,8 +5438,8 @@ struct get_cursor_history_reply
 struct get_rawinput_buffer_request
 {
     struct request_header __header;
-    data_size_t rawinput_size;
-    data_size_t buffer_size;
+    data_size_t header_size;
+    int         read_data;
     char __pad_20[4];
 };
 struct get_rawinput_buffer_reply
@@ -6492,7 +6492,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 792
+#define SERVER_PROTOCOL_VERSION 793
 
 /* ### protocol_version end ### */
 

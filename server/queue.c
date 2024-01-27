@@ -1866,7 +1866,6 @@ static void rawkeyboard_init( struct rawinput *rawinput, RAWKEYBOARD *keyboard, 
     case VK_RCONTROL:
         keyboard->VKey = VK_CONTROL;
         break;
-
     case VK_LMENU:
     case VK_RMENU:
         keyboard->VKey = VK_MENU;
@@ -3541,52 +3540,81 @@ DECL_HANDLER(get_cursor_history)
 
 DECL_HANDLER(get_rawinput_buffer)
 {
+    const size_t align = is_machine_64bit( current->process->machine ) ? 7 : 3;
+    data_size_t buffer_size = get_reply_max_size() & ~align;
     struct thread_input *input = current->queue->input;
-    data_size_t size = 0, next_size = 0, pos = 0;
-    struct list *ptr;
-    char *buf, *tmp;
-    int count = 0, buf_size = 16 * sizeof(struct hardware_msg_data);
+    struct message *msg, *next_msg;
+    int count = 0;
+    char *buffer;
 
-    if (!req->buffer_size) buf = NULL;
-    else if (!(buf = mem_alloc( buf_size ))) return;
-
-    ptr = list_head( &input->msg_list );
-    while (ptr)
+    if (req->header_size != sizeof(RAWINPUTHEADER))
     {
-        struct message *msg = LIST_ENTRY( ptr, struct message, entry );
-        struct hardware_msg_data *data = msg->data;
-        data_size_t extra_size = data->size - sizeof(*data);
-
-        ptr = list_next( &input->msg_list, ptr );
-        if (msg->msg != WM_INPUT) continue;
-
-        next_size = req->rawinput_size + extra_size;
-        if (size + next_size > req->buffer_size) break;
-        if (pos + data->size > get_reply_max_size()) break;
-        if (pos + data->size > buf_size)
-        {
-            buf_size += buf_size / 2 + extra_size;
-            if (!(tmp = realloc( buf, buf_size )))
-            {
-                free( buf );
-                set_error( STATUS_NO_MEMORY );
-                return;
-            }
-            buf = tmp;
-        }
-
-        memcpy( buf + pos, data, data->size );
-        list_remove( &msg->entry );
-        free_message( msg );
-
-        size += next_size;
-        pos += sizeof(*data) + extra_size;
-        count++;
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
     }
 
-    reply->next_size = next_size;
-    reply->count = count;
-    set_reply_data_ptr( buf, pos );
+    if (!req->read_data)
+    {
+        LIST_FOR_EACH_ENTRY( msg, &input->msg_list, struct message, entry )
+        {
+            if (msg->msg == WM_INPUT)
+            {
+                struct hardware_msg_data *msg_data = msg->data;
+                data_size_t size = msg_data->size - sizeof(*msg_data);
+                reply->next_size = sizeof(RAWINPUTHEADER) + size;
+                break;
+            }
+        }
+
+    }
+    else if ((buffer = mem_alloc( buffer_size )))
+    {
+        size_t total_size = 0, next_size = 0;
+
+        reply->next_size = get_reply_max_size();
+
+        LIST_FOR_EACH_ENTRY_SAFE( msg, next_msg, &input->msg_list, struct message, entry )
+        {
+            if (msg->msg == WM_INPUT)
+            {
+                RAWINPUT *rawinput = (RAWINPUT *)(buffer + total_size);
+                struct hardware_msg_data *msg_data = msg->data;
+                data_size_t data_size = msg_data->size - sizeof(*msg_data);
+
+                if (total_size + sizeof(RAWINPUTHEADER) + data_size > buffer_size)
+                {
+                    next_size = sizeof(RAWINPUTHEADER) + data_size;
+                    break;
+                }
+
+                rawinput->header.dwSize  = sizeof(RAWINPUTHEADER) + data_size;
+                rawinput->header.dwType  = msg_data->rawinput.type;
+                rawinput->header.hDevice = UlongToHandle(msg_data->rawinput.device);
+                rawinput->header.wParam  = msg_data->rawinput.wparam;
+                memcpy( &rawinput->header + 1, msg_data + 1, data_size );
+
+                total_size += (rawinput->header.dwSize + align) & ~align;
+                list_remove( &msg->entry );
+                free_message( msg );
+                count++;
+            }
+        }
+
+        if (!next_size)
+        {
+            if (count) next_size = sizeof(RAWINPUT);
+            else reply->next_size = 0;
+        }
+
+        if (next_size && get_reply_max_size() <= next_size)
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            reply->next_size = next_size;
+        }
+
+        reply->count = count;
+        set_reply_data_ptr( buffer, total_size );
+    }
 }
 
 DECL_HANDLER(update_rawinput_devices)

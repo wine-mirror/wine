@@ -3768,8 +3768,8 @@ struct handle_info
 
 /* Batch read rawinput message data */
 @REQ(get_rawinput_buffer)
-    data_size_t rawinput_size; /* size of RAWINPUT structure */
-    data_size_t buffer_size;   /* size of output buffer */
+    data_size_t header_size;   /* size of RAWINPUTHEADER structure */
+    int         read_data;     /* read the rawinput buffer data */
 @REPLY
     data_size_t next_size; /* minimum size to get next message data */
     unsigned int count;

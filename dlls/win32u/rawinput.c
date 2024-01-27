@@ -42,7 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
 
 #ifdef _WIN64
 typedef RAWINPUTHEADER RAWINPUTHEADER64;
-typedef RAWINPUT RAWINPUT64;
 #else
 typedef struct
 {
@@ -51,17 +50,6 @@ typedef struct
     ULONGLONG hDevice;
     ULONGLONG wParam;
 } RAWINPUTHEADER64;
-
-typedef struct
-{
-    RAWINPUTHEADER64 header;
-    union
-    {
-        RAWMOUSE    mouse;
-        RAWKEYBOARD keyboard;
-        RAWHID      hid;
-    } data;
-} RAWINPUT64;
 #endif
 
 static struct rawinput_thread_data *get_rawinput_thread_data(void)
@@ -529,104 +517,35 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
  */
 UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT header_size )
 {
-    unsigned int count = 0, remaining, rawinput_size, next_size, overhead;
-    struct rawinput_thread_data *thread_data;
-    struct hardware_msg_data *msg_data;
-    RAWINPUT *rawinput;
-    int i;
+    UINT count;
 
-    if (NtCurrentTeb()->WowTebOffset)
-        rawinput_size = sizeof(RAWINPUTHEADER64);
-    else
-        rawinput_size = sizeof(RAWINPUTHEADER);
-    overhead = rawinput_size - sizeof(RAWINPUTHEADER);
+    TRACE( "data %p, data_size %p, header_size %u\n", data, data_size, header_size );
 
     if (header_size != sizeof(RAWINPUTHEADER))
     {
-        WARN( "Invalid structure size %u.\n", header_size );
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
-        return ~0u;
+        return -1;
     }
 
     if (!data_size)
     {
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
-        return ~0u;
+        return -1;
     }
 
-    if (!data)
-    {
-        TRACE( "data %p, data_size %p (%u), header_size %u\n", data, data_size, *data_size, header_size );
-        SERVER_START_REQ( get_rawinput_buffer )
-        {
-            req->rawinput_size = rawinput_size;
-            req->buffer_size = 0;
-            if (wine_server_call( req )) return ~0u;
-            *data_size = reply->next_size;
-        }
-        SERVER_END_REQ;
-        return 0;
-    }
+    /* with old WOW64 mode we didn't go through the WOW64 thunks, patch the header size here */
+    if (NtCurrentTeb()->WowTebOffset) header_size = sizeof(RAWINPUTHEADER64);
 
-    if (!(thread_data = get_rawinput_thread_data())) return ~0u;
-    rawinput = thread_data->buffer;
-
-    /* first RAWINPUT block in the buffer is used for WM_INPUT message data */
-    msg_data = (struct hardware_msg_data *)NEXTRAWINPUTBLOCK(rawinput);
     SERVER_START_REQ( get_rawinput_buffer )
     {
-        req->rawinput_size = rawinput_size;
-        req->buffer_size = *data_size;
-        wine_server_set_reply( req, msg_data, RAWINPUT_BUFFER_SIZE - rawinput->header.dwSize );
-        if (wine_server_call( req )) return ~0u;
-        next_size = reply->next_size;
-        count = reply->count;
+        req->header_size = header_size;
+        if ((req->read_data = !!data)) wine_server_set_reply( req, data, *data_size );
+        if (!wine_server_call_err( req )) count = reply->count;
+        else count = -1;
+        *data_size = reply->next_size;
     }
     SERVER_END_REQ;
 
-    remaining = *data_size;
-    for (i = 0; i < count; ++i)
-    {
-        data->header.dwSize = remaining;
-        if (!rawinput_from_hardware_message( data, msg_data )) break;
-        if (overhead)
-        {
-            /* Under WoW64, GetRawInputBuffer always gives 64-bit RAWINPUT structs. */
-            RAWINPUT64 *ri64 = (RAWINPUT64 *)data;
-            memmove( (char *)&data->data + overhead, &data->data,
-                     data->header.dwSize - sizeof(RAWINPUTHEADER) );
-            ri64->header.dwSize += overhead;
-
-            /* Need to copy wParam before hDevice so it's not overwritten. */
-            ri64->header.wParam = data->header.wParam;
-#ifdef _WIN64
-            ri64->header.hDevice = data->header.hDevice;
-#else
-            ri64->header.hDevice = HandleToULong(data->header.hDevice);
-#endif
-        }
-        remaining -= data->header.dwSize;
-        data = NEXTRAWINPUTBLOCK(data);
-        msg_data = (struct hardware_msg_data *)((char *)msg_data + msg_data->size);
-    }
-
-    if (!next_size)
-    {
-        if (!count)
-            *data_size = 0;
-        else
-            next_size = rawinput_size;
-    }
-
-    if (next_size && *data_size <= next_size)
-    {
-        RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
-        *data_size = next_size;
-        count = ~0u;
-    }
-
-    TRACE( "data %p, data_size %p (%u), header_size %u, count %u\n",
-           data, data_size, *data_size, header_size, count );
     return count;
 }
 

@@ -1924,12 +1924,9 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
             if (is_wow64)
             {
                 RAWINPUT64 *rawinput = (RAWINPUT64 *)(buffer + i * rawinput_size);
-                flaky_wine_if(is_wow64)
                 ok_eq( RIM_TYPEKEYBOARD, rawinput->header.dwType, UINT, "%u" );
-                flaky_wine_if(is_wow64)
                 ok_eq( rawinput_size, rawinput->header.dwSize, UINT, "%u" );
                 ok_eq( wparam, rawinput->header.wParam, WPARAM, "%Iu" );
-                flaky_wine_if(is_wow64)
                 ok_eq( i + 2, rawinput->data.keyboard.MakeCode, WPARAM, "%Iu" );
             }
             else

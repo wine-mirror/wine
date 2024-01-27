@@ -4482,8 +4482,8 @@ static void dump_get_cursor_history_reply( const struct get_cursor_history_reply
 
 static void dump_get_rawinput_buffer_request( const struct get_rawinput_buffer_request *req )
 {
-    fprintf( stderr, " rawinput_size=%u", req->rawinput_size );
-    fprintf( stderr, ", buffer_size=%u", req->buffer_size );
+    fprintf( stderr, " header_size=%u", req->header_size );
+    fprintf( stderr, ", read_data=%d", req->read_data );
 }
 
 static void dump_get_rawinput_buffer_reply( const struct get_rawinput_buffer_reply *req )
