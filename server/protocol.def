@@ -2769,6 +2769,12 @@ enum coords_relative
 @END
 
 
+/* Changes the current input desktop */
+@REQ(set_input_desktop)
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
 /* Close a desktop */
 @REQ(close_desktop)
     obj_handle_t handle;          /* handle to the desktop */

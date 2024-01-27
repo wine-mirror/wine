@@ -295,7 +295,15 @@ HDESK WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK acce
 
 BOOL WINAPI NtUserSwitchDesktop( HDESK desktop )
 {
-    FIXME( "desktop %p stub!\n", desktop );
+    TRACE( "desktop %p\n", desktop );
+
+    SERVER_START_REQ( set_input_desktop )
+    {
+        req->handle = wine_server_obj_handle( desktop );
+        if (wine_server_call_err( req )) return FALSE;
+    }
+    SERVER_END_REQ;
+
     return TRUE;
 }
 

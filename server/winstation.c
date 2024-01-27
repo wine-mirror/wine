@@ -144,6 +144,7 @@ static struct winstation *create_winstation( struct object *root, const struct u
         {
             /* initialize it if it didn't already exist */
             winstation->flags = flags;
+            winstation->input_desktop = NULL;
             winstation->clipboard = NULL;
             winstation->atom_table = NULL;
             list_add_tail( &winstation_list, &winstation->entry );
@@ -209,6 +210,23 @@ struct winstation *get_process_winstation( struct process *process, unsigned int
 {
     return (struct winstation *)get_handle_obj( process, process->winstation,
                                                 access, &winstation_ops );
+}
+
+/* retrieve the winstation current input desktop */
+static struct desktop *get_input_desktop( struct winstation *winstation )
+{
+    struct desktop *desktop;
+    if (!(desktop = winstation->input_desktop)) return NULL;
+    return (struct desktop *)grab_object( desktop );
+}
+
+/* changes the winstation current input desktop and update its input time */
+static int set_input_desktop( struct winstation *winstation, struct desktop *new_desktop )
+{
+    if (!(winstation->flags & WSF_VISIBLE)) return 0;
+    if (new_desktop) new_desktop->input_time = current_time;
+    winstation->input_desktop = new_desktop;
+    return 1;
 }
 
 /* retrieve a pointer to a desktop object */
@@ -300,6 +318,15 @@ static int desktop_close_handle( struct object *obj, struct process *process, ob
 static void desktop_destroy( struct object *obj )
 {
     struct desktop *desktop = (struct desktop *)obj;
+    struct winstation *winstation = desktop->winstation;
+
+    if (desktop == winstation->input_desktop)
+    {
+        struct desktop *other, *found = NULL;
+        LIST_FOR_EACH_ENTRY(other, &winstation->desktops, struct desktop, entry)
+            if (!found || other->input_time > found->input_time) found = other;
+        set_input_desktop( winstation, found );
+    }
 
     free_hotkeys( desktop, 0 );
     if (desktop->top_window) free_window_handle( desktop->top_window );
@@ -561,6 +588,7 @@ DECL_HANDLER(create_desktop)
     {
         if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
         {
+            if (!winstation->input_desktop) set_input_desktop( winstation, desktop );
             reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
             release_object( desktop );
         }
@@ -608,11 +636,29 @@ DECL_HANDLER(open_input_desktop)
         return;
     }
 
-    if ((desktop = get_desktop_obj( current->process, current->process->desktop, 0 )))
+    if ((desktop = get_input_desktop( winstation )))
     {
         reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
         release_object( desktop );
     }
+    release_object( winstation );
+}
+
+/* changes the current input desktop */
+DECL_HANDLER(set_input_desktop)
+{
+    /* FIXME: check access rights */
+    struct winstation *winstation;
+    struct desktop *desktop;
+
+    if (!(winstation = get_process_winstation( current->process, 0 ))) return;
+
+    if ((desktop = (struct desktop *)get_handle_obj( current->process, req->handle, 0, &desktop_ops )))
+    {
+        if (!set_input_desktop( winstation, desktop )) set_error( STATUS_ILLEGAL_FUNCTION );
+        release_object( desktop );
+    }
+
     release_object( winstation );
 }
 

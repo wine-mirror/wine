@@ -693,7 +693,6 @@ static void test_inputdesktop(void)
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
     ok(ret, "GetUserObjectInformation failed!\n");
-    todo_wine
     ok(!strcmp(name, "new_desk"), "unexpected desktop %s\n", name);
     ret = CloseDesktop(input_desk);
     ok(ret, "CloseDesktop failed!\n");
@@ -798,7 +797,6 @@ static void test_inputdesktop2(void)
     ok(hdesk != NULL, "OpenDesktop failed!\n");
     SetLastError(0xdeadbeef);
     ret = SwitchDesktop(hdesk);
-    todo_wine
     ok(!ret, "Switch to desktop belong to non default winstation should fail!\n");
     todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED || broken(GetLastError() == 0xdeadbeef), "last error %08lx\n", GetLastError());

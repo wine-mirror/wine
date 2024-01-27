@@ -3835,6 +3835,18 @@ struct open_input_desktop_reply
 
 
 
+struct set_input_desktop_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct set_input_desktop_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct close_desktop_request
 {
     struct request_header __header;
@@ -5799,6 +5811,7 @@ enum request
     REQ_create_desktop,
     REQ_open_desktop,
     REQ_open_input_desktop,
+    REQ_set_input_desktop,
     REQ_close_desktop,
     REQ_get_thread_desktop,
     REQ_set_thread_desktop,
@@ -6090,6 +6103,7 @@ union generic_request
     struct create_desktop_request create_desktop_request;
     struct open_desktop_request open_desktop_request;
     struct open_input_desktop_request open_input_desktop_request;
+    struct set_input_desktop_request set_input_desktop_request;
     struct close_desktop_request close_desktop_request;
     struct get_thread_desktop_request get_thread_desktop_request;
     struct set_thread_desktop_request set_thread_desktop_request;
@@ -6379,6 +6393,7 @@ union generic_reply
     struct create_desktop_reply create_desktop_reply;
     struct open_desktop_reply open_desktop_reply;
     struct open_input_desktop_reply open_input_desktop_reply;
+    struct set_input_desktop_reply set_input_desktop_reply;
     struct close_desktop_reply close_desktop_reply;
     struct get_thread_desktop_reply get_thread_desktop_reply;
     struct set_thread_desktop_reply set_thread_desktop_reply;
@@ -6492,7 +6507,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 793
+#define SERVER_PROTOCOL_VERSION 794
 
 /* ### protocol_version end ### */
 

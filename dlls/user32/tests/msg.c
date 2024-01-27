@@ -9806,7 +9806,6 @@ static DWORD WINAPI run_in_temp_desktop_thread_func(LPVOID param)
                                         curr_desktop_name, sizeof(curr_desktop_name), &length );
     ok_(file, line)( result, "GetUserObjectInformationA(post_inp_desktop=%p) error %lu [rl = %lu]\n",
                      post_inp_desktop, GetLastError(), length );
-    todo_wine
     ok_(file, line)( strcmp( curr_desktop_name, temp_desktop_name ) == 0,
                      "different desktop name: %s != %s (no switch or concurrent WineTest run?)\n",
                      debugstr_a( curr_desktop_name ), debugstr_a( temp_desktop_name ) );
