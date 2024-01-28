@@ -21861,6 +21861,7 @@ wine_fn_config_makefile dlls/gdiplus/tests enable_tests
 wine_fn_config_makefile dlls/geolocation enable_geolocation
 wine_fn_config_makefile dlls/geolocation/tests enable_tests
 wine_fn_config_makefile dlls/glu32 enable_glu32
+wine_fn_config_makefile dlls/glu32/tests enable_tests
 wine_fn_config_makefile dlls/gphoto2.ds enable_gphoto2_ds
 wine_fn_config_makefile dlls/gpkcsp enable_gpkcsp
 wine_fn_config_makefile dlls/graphicscapture enable_graphicscapture
