@@ -2250,7 +2250,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
 
     msg->win       = get_user_full_handle( win );
     msg->msg       = input->hw.msg;
-    msg->wparam    = 0;
+    msg->wparam    = input->hw.wparam;
     msg->lparam    = input->hw.lparam;
     msg->x         = desktop->cursor.x;
     msg->y         = desktop->cursor.y;

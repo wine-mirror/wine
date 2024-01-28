@@ -14,6 +14,7 @@
 
 #include <windef.h>
 #include <winbase.h>
+#include <ntuser.h>
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
@@ -325,13 +326,7 @@ typedef union
         unsigned int   msg;
         lparam_t       wparam;
         lparam_t       lparam;
-        struct
-        {
-            unsigned int device;
-            unsigned int usage;
-            unsigned int count;
-            unsigned int length;
-        } hid;
+        struct hid_input hid;
     } hw;
 } hw_input_t;
 
@@ -6507,7 +6502,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 794
+#define SERVER_PROTOCOL_VERSION 795
 
 /* ### protocol_version end ### */
 

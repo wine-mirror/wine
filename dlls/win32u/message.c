@@ -3486,7 +3486,6 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
 {
     struct send_message_info info;
     int prev_x, prev_y, new_x, new_y;
-    USAGE hid_usage_page, hid_usage;
     NTSTATUS ret;
     BOOL wait, affects_key_state = FALSE;
 
@@ -3499,25 +3498,6 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
 
     if (input->type == INPUT_MOUSE && (input->mi.dwFlags & (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_RIGHTDOWN)))
         clip_fullscreen_window( hwnd, FALSE );
-
-    if (input->type == INPUT_HARDWARE)
-    {
-        if (input->hi.uMsg == WM_INPUT_DEVICE_CHANGE)
-        {
-            const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
-            hid_usage_page = ((USAGE *)rawinput->data.hid.bRawData)[0];
-            hid_usage = ((USAGE *)rawinput->data.hid.bRawData)[1];
-        }
-        if (input->hi.uMsg == WM_INPUT)
-        {
-            const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
-            if (!rawinput_device_get_usages( rawinput->header.hDevice, &hid_usage_page, &hid_usage ))
-            {
-                WARN( "unable to get HID usages for device %p\n", rawinput->header.hDevice );
-                return STATUS_INVALID_HANDLE;
-            }
-        }
-    }
 
     SERVER_START_REQ( send_hardware_message )
     {
@@ -3548,29 +3528,20 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
             break;
         case INPUT_HARDWARE:
             req->input.hw.msg    = input->hi.uMsg;
-            req->input.hw.lparam = MAKELONG( input->hi.wParamL, input->hi.wParamH );
+            req->input.hw.wparam = MAKELONG( input->hi.wParamL, input->hi.wParamH );
             switch (input->hi.uMsg)
             {
             case WM_INPUT:
             case WM_INPUT_DEVICE_CHANGE:
             {
-                const RAWINPUT *rawinput = (const RAWINPUT *)lparam;
-                switch (rawinput->header.dwType)
-                {
-                case RIM_TYPEHID:
-                    req->input.hw.wparam = rawinput->header.wParam;
-                    req->input.hw.hid.device = HandleToUlong( rawinput->header.hDevice );
-                    req->input.hw.hid.usage = MAKELONG(hid_usage, hid_usage_page);
-                    req->input.hw.hid.count = rawinput->data.hid.dwCount;
-                    req->input.hw.hid.length = rawinput->data.hid.dwSizeHid;
-                    wine_server_add_data( req, rawinput->data.hid.bRawData,
-                                          rawinput->data.hid.dwCount * rawinput->data.hid.dwSizeHid );
-                    break;
-                default:
-                    assert( 0 );
-                    break;
-                }
+                struct hid_packet *hid = (struct hid_packet *)lparam;
+                req->input.hw.hid = hid->head;
+                wine_server_add_data( req, hid->data, hid->head.count * hid->head.length );
+                break;
             }
+            default:
+                req->input.hw.lparam = lparam;
+                break;
             }
             break;
         }

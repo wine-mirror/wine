@@ -1407,11 +1407,27 @@ static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )
     return NtUserCallHwndParam( hwnd, show, NtUserCallHwndParam_ShowOwnedPopups );
 }
 
+struct hid_input
+{
+    UINT device;
+    UINT usage;
+    UINT count;
+    UINT length;
+};
+
+struct hid_packet
+{
+    struct hid_input head;
+    BYTE data[];
+};
+
+C_ASSERT(sizeof(struct hid_packet) == offsetof(struct hid_packet, data[0]));
+
 struct send_hardware_input_params
 {
     UINT flags;
     const INPUT *input;
-    LPARAM lparam;  /* RAWINPUT pointer for WM_INPUT* messages */
+    LPARAM lparam;  /* struct hid_packet pointer for WM_INPUT* messages */
 };
 
 static inline BOOL NtUserSendHardwareInput( HWND hwnd, UINT flags, const INPUT *input, LPARAM lparam )

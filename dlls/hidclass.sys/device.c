@@ -225,7 +225,6 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     struct hid_report *last_report, *report;
     struct hid_queue *queue;
     LIST_ENTRY completed, *entry;
-    RAWINPUT *rawinput;
     KIRQL irql;
     IRP *irp;
 
@@ -233,28 +232,28 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
 
     if (IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID ))
     {
-        size = offsetof( RAWINPUT, data.hid.bRawData[report_len] );
-        if (!(rawinput = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
+        struct hid_packet *hid;
+
+        size = offsetof( struct hid_packet, data[report_len] );
+        if (!(hid = malloc( size ))) ERR( "Failed to allocate rawinput data!\n" );
         else
         {
-            INPUT input;
+            INPUT input = {.type = INPUT_HARDWARE};
 
-            rawinput->header.dwType = RIM_TYPEHID;
-            rawinput->header.dwSize = size;
-            rawinput->header.hDevice = ULongToHandle( ext->u.pdo.rawinput_handle );
-            rawinput->header.wParam = RIM_INPUT;
-            rawinput->data.hid.dwCount = 1;
-            rawinput->data.hid.dwSizeHid = report_len;
-            memcpy( rawinput->data.hid.bRawData, packet->reportBuffer, packet->reportBufferLen );
-            memset( rawinput->data.hid.bRawData + packet->reportBufferLen, 0, report_len - packet->reportBufferLen );
-
-            input.type = INPUT_HARDWARE;
             input.hi.uMsg = WM_INPUT;
-            input.hi.wParamH = 0;
-            input.hi.wParamL = 0;
-            NtUserSendHardwareInput( 0, 0, &input, (LPARAM)rawinput );
+            input.hi.wParamH = HIWORD(RIM_INPUT);
+            input.hi.wParamL = LOWORD(RIM_INPUT);
 
-            free( rawinput );
+            hid->head.device = ext->u.pdo.rawinput_handle;
+            hid->head.usage = MAKELONG(desc->Usage, desc->UsagePage);
+
+            hid->head.count = 1;
+            hid->head.length = report_len;
+            memcpy( hid->data, packet->reportBuffer, packet->reportBufferLen );
+            memset( hid->data + packet->reportBufferLen, 0, report_len - packet->reportBufferLen );
+            NtUserSendHardwareInput( 0, 0, &input, (LPARAM)hid );
+
+            free( hid );
         }
     }
 

@@ -30,6 +30,7 @@
 
 #include <windef.h>
 #include <winbase.h>
+#include <ntuser.h>
 
 typedef unsigned int obj_handle_t;
 typedef unsigned int user_handle_t;
@@ -341,13 +342,7 @@ typedef union
         unsigned int   msg;     /* message code */
         lparam_t       wparam;  /* parameters */
         lparam_t       lparam;  /* parameters */
-        struct
-        {
-            unsigned int device;  /* rawinput device index */
-            unsigned int usage;   /* HID device usage */
-            unsigned int count;   /* HID report count */
-            unsigned int length;  /* HID report length */
-        } hid;
+        struct hid_input hid;   /* defined in ntuser.h */
     } hw;
 } hw_input_t;
 

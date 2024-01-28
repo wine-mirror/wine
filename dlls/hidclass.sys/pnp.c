@@ -114,27 +114,20 @@ C_ASSERT(offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]) < sizeof(RAWIN
 static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param)
 {
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
-    RAWINPUT rawinput;
-    INPUT input;
+    INPUT input = {.type = INPUT_HARDWARE};
+    struct hid_packet hid = {0};
 
     TRACE("ext %p, lparam %p\n", ext, (void *)param);
 
     if (!IsEqualGUID( ext->class_guid, &GUID_DEVINTERFACE_HID )) return;
 
-    rawinput.header.dwType = RIM_TYPEHID;
-    rawinput.header.dwSize = offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]);
-    rawinput.header.hDevice = ULongToHandle(ext->u.pdo.rawinput_handle);
-    rawinput.header.wParam = param;
-    rawinput.data.hid.dwCount = 0;
-    rawinput.data.hid.dwSizeHid = 0;
-    ((USAGE *)rawinput.data.hid.bRawData)[0] = desc->UsagePage;
-    ((USAGE *)rawinput.data.hid.bRawData)[1] = desc->Usage;
-
-    input.type = INPUT_HARDWARE;
     input.hi.uMsg = WM_INPUT_DEVICE_CHANGE;
-    input.hi.wParamH = 0;
-    input.hi.wParamL = 0;
-    NtUserSendHardwareInput(0, 0, &input, (LPARAM)&rawinput);
+    input.hi.wParamH = HIWORD(param);
+    input.hi.wParamL = LOWORD(param);
+
+    hid.head.device = ext->u.pdo.rawinput_handle;
+    hid.head.usage = MAKELONG(desc->Usage, desc->UsagePage);
+    NtUserSendHardwareInput(0, 0, &input, (LPARAM)&hid);
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
