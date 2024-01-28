@@ -316,6 +316,9 @@ DWORD DOSVM_inport( int port, int size )
     case 0x201:
         res = ~0U; /* no joystick */
         break;
+    case 0x3da:
+        res = GetTickCount() % 17 == 0 ? 0x4 : 0; /* report vblank about 60 times per second */
+        break;
     default:
         WARN("Direct I/O read attempted from port %x\n", port);
         break;
