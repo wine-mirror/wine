@@ -394,12 +394,9 @@ struct x11drv_thread_data
     BOOL     clipping_cursor;      /* whether thread is currently clipping the cursor */
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
-    void    *xi2_devices;          /* list of XInput2 devices (valid when state is enabled) */
-    int      xi2_device_count;
     XIValuatorClassInfo x_valuator;
     XIValuatorClassInfo y_valuator;
-    int      xi2_core_pointer;     /* XInput2 core pointer id */
-    int      xi2_current_slave;    /* Current slave driving the Core pointer */
+    int      xinput2_pointer;      /* XInput2 master pointer device id */
 #endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
 };
 
