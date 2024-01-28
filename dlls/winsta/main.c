@@ -66,10 +66,12 @@ BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
     return FALSE;
 }
 
-BOOLEAN WINAPI WinStationGetProcessSid( HANDLE server, ULONG process_id, FILETIME *process_start_time,
+BOOLEAN WINAPI WinStationGetProcessSid( HANDLE server, ULONG process_id, FILETIME process_start_time,
                                         PVOID process_user_sid, PULONG sid_size )
 {
-    FIXME( "(%p, %ld, %p, %p, %p): stub\n", server, process_id, process_start_time, process_user_sid, sid_size);
+    FIXME( "(%p, %ld, %I64x, %p, %p): stub\n", server, process_id,
+           ((UINT64)process_start_time.dwHighDateTime << 32) | process_start_time.dwLowDateTime,
+           process_user_sid, sid_size);
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }

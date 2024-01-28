@@ -39,7 +39,7 @@
 @ stub WinStationGetLanAdapterNameA
 @ stub WinStationGetLanAdapterNameW
 @ stub WinStationGetMachinePolicy
-@ stdcall WinStationGetProcessSid(ptr long ptr ptr ptr)
+@ stdcall WinStationGetProcessSid(ptr long int64 ptr ptr)
 @ stub WinStationGetTermSrvCountersValue
 @ stub WinStationInstallLicense
 @ stub WinStationIsHelpAssistantSession
