@@ -477,67 +477,15 @@ struct module_find
 static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 {
     struct module_find* mf = user;
-    DWORD               timestamp;
     unsigned            matched = 0;
+    SYMSRV_INDEX_INFOW  info;
 
-    /* the matching weights:
-     * +1 if a file with same name is found and is a decent file of expected type
-     * +1 if first parameter and second parameter match
-     */
-
-    if (mf->is_pdb)
-    {
-        struct pdb_lookup           pdb_lookup;
-        char                        fn[MAX_PATH];
-
-        WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
-        pdb_lookup.filename = fn;
-
-        if (mf->guid)
-        {
-            pdb_lookup.kind = PDB_DS;
-            pdb_lookup.timestamp = 0;
-            pdb_lookup.guid = *mf->guid;
-        }
-        else
-        {
-            pdb_lookup.kind = PDB_JG;
-            pdb_lookup.timestamp = mf->dw1;
-            /* pdb_loopkup.guid = */
-        }
-        pdb_lookup.age = mf->dw2;
-
-        if (!pdb_fetch_file_info(&pdb_lookup, &matched)) return FALSE;
-    }
-    else
-    {
-        HANDLE  hFile, hMap;
-        void*   mapping;
-
-        timestamp = ~mf->dw1;
-        hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
-                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-        if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
-        {
-            if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
-            {
-                const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
-                hdr = mapping;
-
-                if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
-                {
-                    matched++;
-                    timestamp = hdr->TimeDateStamp;
-                }
-                UnmapViewOfFile(mapping);
-            }
-            CloseHandle(hMap);
-        }
-        CloseHandle(hFile);
-        if (timestamp == mf->dw1) matched++;
-        else WARN("Found %s, but wrong timestamp\n", debugstr_w(buffer));
-    }
+    info.sizeofstruct = sizeof(info);
+    if (!SymSrvGetFileIndexInfoW(buffer, &info, 0))
+        return FALSE;
+    if (!memcmp(&info.guid, mf->guid, sizeof(GUID))) matched++;
+    if (info.timestamp == mf->dw1) matched++;
+    if (info.age == mf->dw2) matched++;
 
     if (matched > mf->matched)
     {
@@ -547,7 +495,7 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
      */
-    return mf->matched == 2;
+    return mf->matched == 3;
 }
 
 BOOL path_find_symbol_file(const struct process* pcs, const struct module* module,

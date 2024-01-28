@@ -3996,34 +3996,6 @@ static BOOL pdb_process_file(const struct process* pcs,
     return ret;
 }
 
-BOOL pdb_fetch_file_info(const struct pdb_lookup* pdb_lookup, unsigned* matched)
-{
-    HANDLE              hFile, hMap = NULL;
-    char*               image = NULL;
-    BOOL                ret;
-    struct pdb_file_info pdb_file;
-
-    if ((hFile = CreateFileA(pdb_lookup->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE ||
-        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
-        ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
-    {
-        WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);
-        ret = FALSE;
-    }
-    else
-    {
-        ret = pdb_init(pdb_lookup, &pdb_file, image, matched);
-        pdb_free_file(&pdb_file);
-    }
-
-    if (image) UnmapViewOfFile(image);
-    if (hMap) CloseHandle(hMap);
-    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
-
-    return ret;
-}
-
 /*========================================================================
  * FPO unwinding code
  */

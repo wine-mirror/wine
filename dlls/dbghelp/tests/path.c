@@ -1592,7 +1592,7 @@ static void test_load_modules_path(void)
             todo_wine
             ok(im.PdbAge == test_files[test->found_file].age_or_timestamp,
                "Expected %lx as pdb-age, got %lx instead\n",  test_files[test->found_file].age_or_timestamp, im.PdbAge);
-            todo_wine_if(i == 11 || i == 16 || i == 17)
+            todo_wine_if(i == 11)
             ok(im.PdbUnmatched == !(test_files[test->found_file].age_or_timestamp == 0x0030cafe), "Expecting matched PDB\n");
         }
         todo_wine
@@ -1813,7 +1813,6 @@ static void test_load_modules_details(void)
            "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
         todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 10 || i == 12 || i == 14)
         ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
-        todo_wine_if(i == 8)
         ok(!im.TypeInfo, "No type info present\n");
         if (test->mismatch_in)
         {
