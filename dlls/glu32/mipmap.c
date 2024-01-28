@@ -3448,10 +3448,10 @@ GLint WINAPI gluScaleImage( GLenum format, GLint widthin, GLint heightin, GLenum
 	return GLU_INVALID_ENUM;
     }
     if (!isLegalFormatForPackedPixelType(format, typein)) {
-       return GLU_INVALID_OPERATION;
+       return GLU_INVALID_ENUM;
     }
     if (!isLegalFormatForPackedPixelType(format, typeout)) {
-       return GLU_INVALID_OPERATION;
+       return GLU_INVALID_ENUM;
     }
     if (!wglGetCurrentContext()) {
        return GL_OUT_OF_MEMORY; /* windows returns this if no gl context (not glu error) */

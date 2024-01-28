@@ -72,14 +72,12 @@ static void test_gluScaleImage(HDC hdc, HGLRC hglrc)
                         DIMOUT, DIMOUT, ~0, bufout);
     ok(err == GLU_INVALID_ENUM, "got %x\n", err);
 
-    todo_wine {
     err = gluScaleImage(GL_RGBA, DIMIN, DIMIN, GL_UNSIGNED_BYTE_3_3_2, bufin,
                         DIMOUT, DIMOUT, GL_UNSIGNED_BYTE, bufout);
     ok(err == GLU_INVALID_ENUM, "got %x\n", err);
     err = gluScaleImage(GL_RGBA, DIMIN, DIMIN, GL_UNSIGNED_BYTE, bufin,
                         DIMOUT, DIMOUT, GL_UNSIGNED_BYTE_3_3_2, bufout);
     ok(err == GLU_INVALID_ENUM, "got %x\n", err);
-    }
 
     /* valid arguments */
     memset(bufout, 0, SIZEOUT);
