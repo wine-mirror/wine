@@ -284,7 +284,7 @@ union rawinput
     {
         int            type;
         unsigned int   device;
-        unsigned int   param;
+        unsigned int   wparam;
         unsigned int   usage;
         unsigned int   count;
         unsigned int   length;
@@ -6512,7 +6512,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 790
+#define SERVER_PROTOCOL_VERSION 791
 
 /* ### protocol_version end ### */
 

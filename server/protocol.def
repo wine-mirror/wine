@@ -300,7 +300,7 @@ union rawinput
     {
         int            type;    /* RIM_TYPEHID */
         unsigned int   device;  /* rawinput device index */
-        unsigned int   param;   /* rawinput message param */
+        unsigned int   wparam;  /* rawinput message wparam */
         unsigned int   usage;   /* HID device usage */
         unsigned int   count;   /* HID report count */
         unsigned int   length;  /* HID report length */
