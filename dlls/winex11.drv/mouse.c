@@ -266,17 +266,6 @@ static void enable_xinput2(void)
 
     if (!xinput2_available) return;
 
-    if (data->xi2_state == xi_unknown)
-    {
-        int major = 2, minor = 2;
-        if (!pXIQueryVersion( data->display, &major, &minor )) data->xi2_state = xi_disabled;
-        else
-        {
-            data->xi2_state = xi_unavailable;
-            WARN( "X Input 2 not available\n" );
-        }
-    }
-    if (data->xi2_state == xi_unavailable) return;
     if (!pXIGetClientPointer( data->display, None, &data->xinput2_pointer )) return;
 
     mask.mask     = mask_bits;
@@ -292,8 +281,6 @@ static void enable_xinput2(void)
     pointer_info = pXIQueryDevice( data->display, data->xinput2_pointer, &count );
     update_relative_valuators( pointer_info->classes, pointer_info->num_classes );
     pXIFreeDeviceInfo( pointer_info );
-
-    data->xi2_state = xi_enabled;
 }
 
 #endif
@@ -307,10 +294,7 @@ static void disable_xinput2(void)
     struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
 
-    if (data->xi2_state != xi_enabled) return;
-
-    TRACE( "disabling\n" );
-    data->xi2_state = xi_disabled;
+    if (!xinput2_available) return;
 
     mask.mask = NULL;
     mask.mask_len = 0;
@@ -322,6 +306,26 @@ static void disable_xinput2(void)
     data->x_valuator.value = 0;
     data->y_valuator.value = 0;
     data->xinput2_pointer = 0;
+#endif
+}
+
+
+/***********************************************************************
+ *              x11drv_xinput_init
+ */
+void x11drv_xinput2_init( struct x11drv_thread_data *data )
+{
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    int major = 2, minor = 2;
+
+    if (!xinput2_available || pXIQueryVersion( data->display, &major, &minor ))
+    {
+        WARN( "XInput 2.0 not available\n" );
+        xinput2_available = FALSE;
+        return;
+    }
+
+    TRACE( "XInput2 %d.%d available\n", major, minor );
 #endif
 }
 
@@ -352,16 +356,15 @@ static BOOL grab_clipping_window( const RECT *clip )
         WARN( "refusing to clip to %s\n", wine_dbgstr_rect(clip) );
         return FALSE;
     }
-
-    /* enable XInput2 unless we are already clipping */
-    if (!data->clipping_cursor) enable_xinput2();
-
-    if (data->xi2_state != xi_enabled)
+    if (!xinput2_available)
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
         NtUserClipCursor( NULL );
         return TRUE;
     }
+
+    /* enable XInput2 unless we are already clipping */
+    if (!data->clipping_cursor) enable_xinput2();
 
     TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
@@ -1646,7 +1649,7 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
 
     if (x->number < 0 || y->number < 0) return FALSE;
     if (!event->valuators.mask_len) return FALSE;
-    if (thread_data->xi2_state != xi_enabled) return FALSE;
+    if (!xinput2_available) return FALSE;
     if (event->deviceid != thread_data->xinput2_pointer) return FALSE;
 
     virtual_rect = NtUserGetVirtualScreenRect();
@@ -1721,9 +1724,9 @@ static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
 
 
 /***********************************************************************
- *              X11DRV_XInput2_Init
+ *              x11drv_xinput2_load
  */
-void X11DRV_XInput2_Init(void)
+void x11drv_xinput2_load(void)
 {
 #if defined(SONAME_LIBXI) && defined(HAVE_X11_EXTENSIONS_XINPUT2_H)
     int event, error;
