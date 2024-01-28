@@ -40,12 +40,9 @@ static void test_gluScaleImage(HDC hdc, HGLRC hglrc)
     /* test without any context */
     wglMakeCurrent(hdc, 0);
 
-    /* test crashes on Wine */
-    if (!winetest_platform_is_wine) {
     err = gluScaleImage(GL_RGBA, DIMIN, DIMIN, GL_UNSIGNED_BYTE, bufin,
                         DIMOUT, DIMOUT, GL_UNSIGNED_BYTE, bufout);
     ok(err == GL_OUT_OF_MEMORY, "got %x\n", err);
-    }
 
     /* test with context */
     wglMakeCurrent(hdc, hglrc);
