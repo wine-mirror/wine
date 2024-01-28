@@ -1909,7 +1909,11 @@ static void test_hid_touch_screen(void)
         .todo = TRUE,
     };
 
+    RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_DIGITIZER, .usUsage = HID_USAGE_DIGITIZER_TOUCH_SCREEN};
+    UINT rawbuffer_count, rawbuffer_size;
     WCHAR device_path[MAX_PATH];
+    char rawbuffer[1024];
+    RAWINPUT *rawinput;
     HANDLE file;
     DWORD res;
     HWND hwnd;
@@ -1985,6 +1989,77 @@ static void test_hid_touch_screen(void)
     ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
     todo_wine
     ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
+
+
+    /* test that we receive HID rawinput type with the touchscreen */
+
+    rawdevice.dwFlags = RIDEV_INPUTSINK;
+    rawdevice.hwndTarget = hwnd;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
+    bus_wait_hid_input( file, &desc, 5000 );
+    bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
+    bus_wait_hid_input( file, &desc, 5000 );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    rawbuffer_count = GetRawInputBuffer( rawinput, &rawbuffer_size, sizeof(RAWINPUTHEADER) );
+    ok( rawbuffer_count == 2, "got rawbuffer_count %u\n", rawbuffer_count );
+    ok( rawbuffer_size == sizeof(rawbuffer), "got rawbuffer_size %u\n", rawbuffer_size );
+
+    rawinput = (RAWINPUT *)rawbuffer;
+    ok( rawinput->header.dwType == RIM_TYPEHID, "got dwType %lu\n", rawinput->header.dwType );
+    ok( rawinput->header.dwSize == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength * rawinput->data.hid.dwCount]),
+        "got header.dwSize %lu\n", rawinput->header.dwSize );
+    ok( rawinput->header.hDevice != 0, "got hDevice %p\n", rawinput->header.hDevice );
+    ok( rawinput->header.wParam == 0, "got wParam %#Ix\n", rawinput->header.wParam );
+    ok( rawinput->data.hid.dwSizeHid == desc.caps.InputReportByteLength, "got dwSizeHid %lu\n", rawinput->data.hid.dwSizeHid );
+    ok( rawinput->data.hid.dwCount == 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
+    ok( !memcmp( rawinput->data.hid.bRawData, touch_multiple.report_buf, desc.caps.InputReportByteLength ),
+        "got unexpected report data\n" );
+
+    rawdevice.dwFlags = RIDEV_REMOVE;
+    rawdevice.hwndTarget = 0;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+
+    /* test that we don't receive mouse rawinput type with the touchscreen */
+
+    memset( rawbuffer, 0, sizeof(rawbuffer) );
+    rawdevice.usUsagePage = HID_USAGE_PAGE_GENERIC;
+    rawdevice.usUsage = HID_USAGE_GENERIC_MOUSE;
+    rawdevice.dwFlags = RIDEV_INPUTSINK;
+    rawdevice.hwndTarget = hwnd;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
+
+    bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+
+    rawinput = (RAWINPUT *)rawbuffer;
+    rawbuffer_size = sizeof(rawbuffer);
+    rawbuffer_count = GetRawInputBuffer( rawinput, &rawbuffer_size, sizeof(RAWINPUTHEADER) );
+    ok( rawbuffer_count == 0, "got rawbuffer_count %u\n", rawbuffer_count );
+    ok( rawbuffer_size == 0, "got rawbuffer_size %u\n", rawbuffer_size );
+
+    rawdevice.dwFlags = RIDEV_REMOVE;
+    rawdevice.hwndTarget = 0;
+    ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
+    ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
 
 
     DestroyWindow( hwnd );
