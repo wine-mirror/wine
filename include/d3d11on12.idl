@@ -59,3 +59,32 @@ typedef HRESULT (__stdcall *PFN_D3D11ON12_CREATE_DEVICE)(IUnknown *device, UINT 
         IUnknown * const *queues, UINT queue_count, UINT node_mask,
         ID3D11Device **d3d11_device, ID3D11DeviceContext **d3d11_immediate_context,
         D3D_FEATURE_LEVEL *obtained_feature_level);
+
+[
+    uuid(bdb64df4-ea2f-4c70-b861-aaab1258bb5d),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11On12Device1 : ID3D11On12Device
+{
+    HRESULT GetD3D12Device(REFIID iid, ID3D12Device **d3d12_device);
+}
+
+[
+    uuid(dc90f331-4740-43fa-866e-67f12cb58223),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D11On12Device2 : ID3D11On12Device1
+{
+    HRESULT UnwrapUnderlyingResource(ID3D11Resource *d3d11_resource,
+            ID3D12CommandQueue *d3d12_command_queue,
+            REFIID iid, void **d3d12_resource);
+
+    HRESULT ReturnUnderlyingResource(ID3D11Resource *d3d11_resource,
+            UINT num_sync,
+            UINT64 *signal_values,
+            ID3D12Fence **fences);
+}
