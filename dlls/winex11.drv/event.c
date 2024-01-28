@@ -233,9 +233,6 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case ButtonPress:
     case ButtonRelease:
         return (mask & QS_MOUSEBUTTON) != 0;
-#ifdef GenericEvent
-    case GenericEvent:
-#endif
     case MotionNotify:
     case EnterNotify:
     case LeaveNotify:
@@ -250,6 +247,13 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case PropertyNotify:
     case ClientMessage:
         return (mask & QS_POSTMESSAGE) != 0;
+#ifdef GenericEvent
+    case GenericEvent:
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+        if (event->xcookie.extension == xinput2_opcode) return (mask & QS_INPUT) != 0;
+#endif
+        /* fallthrough */
+#endif
     default:
         return (mask & QS_SENDMESSAGE) != 0;
     }
