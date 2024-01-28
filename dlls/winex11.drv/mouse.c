@@ -273,6 +273,12 @@ void x11drv_xinput2_enable( Display *display, Window window )
         XISetMask( mask_bits, XI_RawMotion );
         XISetMask( mask_bits, XI_ButtonPress );
     }
+    else
+    {
+        XISetMask( mask_bits, XI_TouchBegin );
+        XISetMask( mask_bits, XI_TouchUpdate );
+        XISetMask( mask_bits, XI_TouchEnd );
+    }
 
     pXISelectEvents( display, window, &mask, 1 );
 }
@@ -1742,6 +1748,44 @@ static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
     return TRUE;
 }
 
+static BOOL X11DRV_TouchEvent( HWND hwnd, XGenericEventCookie *xev )
+{
+    RECT virtual = NtUserGetVirtualScreenRect();
+    INPUT input = {.type = INPUT_HARDWARE};
+    XIDeviceEvent *event = xev->data;
+    int flags = 0;
+    POINT pos;
+
+    input.mi.dx = event->event_x;
+    input.mi.dy = event->event_y;
+    map_event_coords( hwnd, event->event, event->root, event->root_x, event->root_y, &input );
+    pos.x = input.mi.dx * 65535 / (virtual.right - virtual.left);
+    pos.y = input.mi.dy * 65535 / (virtual.bottom - virtual.top);
+
+    switch (event->evtype)
+    {
+    case XI_TouchBegin:
+        input.hi.uMsg = WM_POINTERDOWN;
+        flags |= POINTER_MESSAGE_FLAG_NEW;
+        TRACE("XI_TouchBegin detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        break;
+    case XI_TouchEnd:
+        input.hi.uMsg = WM_POINTERUP;
+        TRACE("XI_TouchEnd detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        break;
+    case XI_TouchUpdate:
+        input.hi.uMsg = WM_POINTERUPDATE;
+        TRACE("XI_TouchUpdate detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        break;
+    }
+
+    input.hi.wParamL = event->detail;
+    input.hi.wParamH = POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT | flags;
+    NtUserSendHardwareInput( hwnd, 0, &input, MAKELPARAM( pos.x, pos.y ) );
+
+    return TRUE;
+}
+
 #endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
 
 
@@ -1805,6 +1849,12 @@ BOOL X11DRV_GenericEvent( HWND hwnd, XEvent *xev )
         break;
     case XI_RawMotion:
         ret = X11DRV_RawMotion( event );
+        break;
+
+    case XI_TouchBegin:
+    case XI_TouchUpdate:
+    case XI_TouchEnd:
+        ret = X11DRV_TouchEvent( hwnd, event );
         break;
 
     default:
