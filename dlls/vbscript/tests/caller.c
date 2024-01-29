@@ -74,6 +74,7 @@ extern const CLSID CLSID_VBScript;
     expect_ ## func = called_ ## func = FALSE
 
 DEFINE_EXPECT(sp_caller_QI_NULL);
+DEFINE_EXPECT(site_QI_NULL);
 DEFINE_EXPECT(testGetCaller);
 DEFINE_EXPECT(testGetCallerVBS);
 DEFINE_EXPECT(testGetCallerNested);
@@ -303,7 +304,9 @@ static HRESULT WINAPI Test_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WO
         break;
     }
 
-    case DISPID_TEST_TESTGETCALLERVBS:
+    case DISPID_TEST_TESTGETCALLERVBS: {
+        IUnknown *unk;
+
         CHECK_EXPECT(testGetCallerVBS);
 
         ok(wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
@@ -318,7 +321,14 @@ static HRESULT WINAPI Test_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WO
         hres = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, &IID_IServiceProvider, (void**)&caller);
         ok(hres == E_NOINTERFACE, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
         ok(caller == NULL, "caller != NULL\n");
+
+        SET_EXPECT(site_QI_NULL);
+        hres = IServiceProvider_QueryService(pspCaller, &IID_IActiveScriptSite, &IID_NULL, (void**)&unk);
+        ok(hres == E_NOINTERFACE, "QueryService(IActiveScriptSite->NULL) returned: %08lx\n", hres);
+        ok(!unk, "unk != NULL\n");
+        CHECK_CALLED(site_QI_NULL);
         break;
+    }
 
     case DISPID_TEST_TESTGETCALLERNESTED:
         CHECK_EXPECT(testGetCallerNested);
@@ -374,6 +384,8 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         *ppv = iface;
     }else {
+        if(IsEqualGUID(&IID_NULL, riid))
+            CHECK_EXPECT(site_QI_NULL);
         *ppv = NULL;
         return E_NOINTERFACE;
     }

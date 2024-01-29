@@ -421,6 +421,14 @@ static HRESULT WINAPI vbcaller_QueryService(IServiceProvider *iface, REFGUID gui
 {
     struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(guidService, &IID_IActiveScriptSite)) {
+        TRACE("(%p)->(IID_IActiveScriptSite)\n", This);
+        if(This->ctx->site)
+            return IActiveScriptSite_QueryInterface(This->ctx->site, riid, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     if(IsEqualGUID(guidService, &SID_GetCaller)) {
         TRACE("(%p)->(SID_GetCaller)\n", This);
         *ppv = NULL;
@@ -1224,6 +1232,7 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
         return E_OUTOFMEMORY;
     }
 
+    vbcaller->ctx = ctx;
     ctx->vbcaller = vbcaller;
     ctx->safeopt = INTERFACE_USES_DISPEX;
     list_init(&ctx->objects);
