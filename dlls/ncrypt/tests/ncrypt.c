@@ -382,7 +382,7 @@ static void test_get_property(void)
     ret = NCryptOpenStorageProvider(&prov, NULL, 0);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
-    ret = NCryptGetProperty(0, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, size, &size, 0);
+    ret = NCryptGetProperty(0, NCRYPT_LENGTH_PROPERTY, (BYTE *)&keylength, sizeof(keylength), &size, 0);
     ok(ret == NTE_INVALID_HANDLE, "got %#lx\n", ret);
 
     ret = NCryptImportKey(prov, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, &key, rsa_key_blob, sizeof(rsa_key_blob), 0);
