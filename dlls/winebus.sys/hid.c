@@ -233,7 +233,7 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
         LOGICAL_MAXIMUM(1, 8),
         REPORT_SIZE(1, 8),
         REPORT_COUNT(4, count),
-        UNIT(1, 0x0e /* none */),
+        UNIT(1, 0x0), /* None */
         INPUT(1, Data|Var|Abs|Null),
     };
 
