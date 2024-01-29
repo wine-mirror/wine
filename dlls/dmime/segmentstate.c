@@ -45,8 +45,10 @@ static void track_entry_destroy(struct track_entry *entry)
 struct segment_state
 {
     IDirectMusicSegmentState8 IDirectMusicSegmentState8_iface;
+    IDirectMusicGraph IDirectMusicGraph_iface;
     LONG ref;
 
+    IDirectMusicGraph *parent_graph;
     IDirectMusicSegment *segment;
     MUSIC_TIME start_time;
     MUSIC_TIME start_point;
@@ -82,7 +84,12 @@ static HRESULT WINAPI segment_state_QueryInterface(IDirectMusicSegmentState8 *if
         *ppobj = &This->IDirectMusicSegmentState8_iface;
         return S_OK;
     }
-
+    if (IsEqualIID(riid, &IID_IDirectMusicGraph))
+    {
+        IDirectMusicSegmentState8_AddRef(iface);
+        *ppobj = &This->IDirectMusicGraph_iface;
+        return S_OK;
+    }
     WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
     return E_NOINTERFACE;
 }
@@ -108,6 +115,7 @@ static ULONG WINAPI segment_state_Release(IDirectMusicSegmentState8 *iface)
     {
         segment_state_end_play((IDirectMusicSegmentState *)iface, NULL);
         if (This->segment) IDirectMusicSegment_Release(This->segment);
+        if (This->parent_graph) IDirectMusicGraph_Release(This->parent_graph);
         free(This);
     }
 
@@ -192,6 +200,73 @@ static const IDirectMusicSegmentState8Vtbl segment_state_vtbl =
     segment_state_GetObjectInPath,
 };
 
+static inline struct segment_state *impl_from_IDirectMusicGraph(IDirectMusicGraph *iface)
+{
+    return CONTAINING_RECORD(iface, struct segment_state, IDirectMusicGraph_iface);
+}
+
+static HRESULT WINAPI segment_state_graph_QueryInterface(IDirectMusicGraph *iface, REFIID riid, void **ret_iface)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicSegmentState8_QueryInterface(&This->IDirectMusicSegmentState8_iface, riid, ret_iface);
+}
+
+static ULONG WINAPI segment_state_graph_AddRef(IDirectMusicGraph *iface)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicSegmentState8_AddRef(&This->IDirectMusicSegmentState8_iface);
+}
+
+static ULONG WINAPI segment_state_graph_Release(IDirectMusicGraph *iface)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    return IDirectMusicSegmentState8_Release(&This->IDirectMusicSegmentState8_iface);
+}
+
+static HRESULT WINAPI segment_state_graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+
+    TRACE("(%p, %p)\n", This, msg);
+
+    if (!msg) return E_POINTER;
+
+    return IDirectMusicGraph_StampPMsg(This->parent_graph, msg);
+}
+
+static HRESULT WINAPI segment_state_graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
+        DWORD *channels, DWORD channels_count, LONG index)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    TRACE("(%p, %p, %p, %lu, %ld)\n", This, tool, channels, channels_count, index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI segment_state_graph_GetTool(IDirectMusicGraph *iface, DWORD index, IDirectMusicTool **tool)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    TRACE("(%p, %lu, %p)\n", This, index, tool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI segment_state_graph_RemoveTool(IDirectMusicGraph *iface, IDirectMusicTool *tool)
+{
+    struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    TRACE("(%p, %p)\n", This, tool);
+    return E_NOTIMPL;
+}
+
+static const IDirectMusicGraphVtbl segment_state_graph_vtbl =
+{
+    segment_state_graph_QueryInterface,
+    segment_state_graph_AddRef,
+    segment_state_graph_Release,
+    segment_state_graph_StampPMsg,
+    segment_state_graph_InsertTool,
+    segment_state_graph_GetTool,
+    segment_state_graph_RemoveTool,
+};
+
 /* for ClassFactory */
 HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface)
 {
@@ -201,6 +276,7 @@ HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface)
     *ret_iface = NULL;
     if (!(obj = calloc(1, sizeof(*obj)))) return E_OUTOFMEMORY;
     obj->IDirectMusicSegmentState8_iface.lpVtbl = &segment_state_vtbl;
+    obj->IDirectMusicGraph_iface.lpVtbl = &segment_state_graph_vtbl;
     obj->ref = 1;
     obj->start_time = -1;
     list_init(&obj->tracks);
@@ -216,6 +292,7 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
 {
     IDirectMusicSegmentState *iface;
     struct segment_state *This;
+    IDirectMusicGraph *graph;
     IDirectMusicTrack *track;
     HRESULT hr;
     UINT i;
@@ -228,7 +305,10 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
     This->segment = segment;
     IDirectMusicSegment_AddRef(This->segment);
 
-    if (SUCCEEDED(hr = IDirectMusicPerformance8_GetGlobalParam(performance, &GUID_PerfAutoDownload,
+    hr = IDirectMusicPerformance8_QueryInterface(performance, &IID_IDirectMusicGraph, (void **)&graph);
+
+    if (SUCCEEDED(hr) &&
+        SUCCEEDED(hr = IDirectMusicPerformance8_GetGlobalParam(performance, &GUID_PerfAutoDownload,
             &This->auto_download, sizeof(This->auto_download))) && This->auto_download)
         hr = IDirectMusicSegment_SetParam(segment, &GUID_DownloadToAudioPath, -1,
                     DMUS_SEG_ALLTRACKS, 0, performance);
@@ -268,8 +348,17 @@ HRESULT segment_state_create(IDirectMusicSegment *segment, MUSIC_TIME start_time
         }
     }
 
-    if (SUCCEEDED(hr)) *ret_iface = iface;
-    else IDirectMusicSegmentState_Release(iface);
+    if (SUCCEEDED(hr))
+    {
+        *ret_iface = iface;
+        This->parent_graph = graph;
+    }
+    else
+    {
+        IDirectMusicSegmentState_Release(iface);
+        IDirectMusicGraph_Release(graph);
+    }
+
     return hr;
 }
 

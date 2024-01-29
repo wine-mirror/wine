@@ -4577,7 +4577,6 @@ static void test_segment_state(void)
 
     graph = (void *)0xdeadbeef;
     hr = IDirectMusicSegmentState_QueryInterface(state, &IID_IDirectMusicGraph, (void **)&graph);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
     if (hr == S_OK)
     {
