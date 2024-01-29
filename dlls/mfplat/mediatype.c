@@ -4074,46 +4074,30 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
 
     if (IsEqualGUID(&am_type->majortype, &MEDIATYPE_Video))
     {
+        const GUID *subtype = get_mf_subtype_for_am_subtype(&am_type->subtype);
+
         if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo))
-        {
-            const VIDEOINFOHEADER *vih = (const VIDEOINFOHEADER *)am_type->pbFormat;
-            const GUID *subtype;
-            DWORD height;
-            LONG stride;
-
-            subtype = get_mf_subtype_for_am_subtype(&am_type->subtype);
-            height = abs(vih->bmiHeader.biHeight);
-
-            mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video, &hr);
-            mediatype_set_guid(media_type, &MF_MT_SUBTYPE, subtype, &hr);
-            mediatype_set_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1, &hr);
-            mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, &hr);
-            mediatype_set_uint64(media_type, &MF_MT_FRAME_SIZE, vih->bmiHeader.biWidth, height, &hr);
-            mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
-
-            if (SUCCEEDED(mf_get_stride_for_bitmap_info_header(subtype->Data1, &vih->bmiHeader, &stride)))
-            {
-                mediatype_set_uint32(media_type, &MF_MT_DEFAULT_STRIDE, stride, &hr);
-                mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, abs(stride) * height, &hr);
-                mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
-            }
-            else
-            {
-                if (am_type->bFixedSizeSamples)
-                    mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
-                if (am_type->lSampleSize)
-                    mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, am_type->lSampleSize, &hr);
-            }
-
-            return hr;
-        }
+            hr = MFInitMediaTypeFromVideoInfoHeader(media_type, (VIDEOINFOHEADER *)am_type->pbFormat, am_type->cbFormat, subtype);
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
+            hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, (VIDEOINFOHEADER2 *)am_type->pbFormat, am_type->cbFormat, subtype);
         else
         {
             FIXME("Unsupported format type %s.\n", debugstr_guid(&am_type->formattype));
+            return E_NOTIMPL;
         }
+
+        if (!am_type->bTemporalCompression && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
+            mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+        if (am_type->bFixedSizeSamples && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
+            mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+        if (am_type->lSampleSize && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_SAMPLE_SIZE, NULL)))
+            mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, am_type->lSampleSize, &hr);
     }
     else
+    {
         FIXME("Unsupported major type %s.\n", debugstr_guid(&am_type->majortype));
+        return E_NOTIMPL;
+    }
 
-    return E_NOTIMPL;
+    return hr;
 }
