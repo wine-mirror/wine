@@ -37,7 +37,12 @@
 
 typedef struct tagDPWS_DATA
 {
-    LPDIRECTPLAYSP  lpISP;
+    LPDIRECTPLAYSP        lpISP;
+
+    SOCKET                tcpSock;
+    SOCKADDR_IN           tcpAddr;
+
+    BOOL                  started;
 } DPWS_DATA, *LPDPWS_DATA;
 
 #include "pshpack1.h"

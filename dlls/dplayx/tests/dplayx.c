@@ -1964,7 +1964,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     checkNoMoreMessages_( line, enumSock );
 
     hr = enumSessionsAsyncWait( param, 2000 );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
     todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
                                      callbackData.actualCount );
@@ -1985,7 +1985,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC );
 
     hr = enumSessionsAsyncWait( param, 2000 );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
     todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
                                      callbackData.actualCount );
@@ -2020,7 +2020,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     /* Retrieve results */
     param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
     hr = enumSessionsAsyncWait( param, 2000 );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
     todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
                                      callbackData.actualCount );
@@ -2068,15 +2068,15 @@ static void test_EnumSessions(void)
     check_EnumSessions( dp, &dpsd, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE );
 
     /* No sessions */
-    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 0, TRUE, TRUE, NULL, 0, TRUE );
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 0, TRUE, TRUE, NULL, 0, FALSE );
 
     /* Invalid params */
     check_EnumSessions( dp, &appGuidDpsd, -1, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE );
     check_EnumSessions( dp, NULL, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE );
 
     /* All sessions are enumerated regardless of flags */
-    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE );
-    check_EnumSessions( dp, &appGuidDpsd, DPENUMSESSIONS_AVAILABLE, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE );
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 2, TRUE, TRUE, NULL, 2, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, DPENUMSESSIONS_AVAILABLE, DP_OK, 2, TRUE, TRUE, NULL, 2, FALSE );
 
     /* Async enumeration */
     check_EnumSessions_async( &appGuidDpsd, dp );
@@ -2084,7 +2084,7 @@ static void test_EnumSessions(void)
     /* Enumeration with password */
     dpsd = appGuidDpsd;
     dpsd.lpszPasswordA = (char *) "password";
-    check_EnumSessions( dp, &dpsd, 0, DP_OK, 2, TRUE, TRUE, L"password", 2, TRUE );
+    check_EnumSessions( dp, &dpsd, 0, DP_OK, 2, TRUE, TRUE, L"password", 2, FALSE );
 
     IDirectPlayX_Release( dp );
 }
