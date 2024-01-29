@@ -77,6 +77,7 @@ struct transform_entry
     IMFTransform *transform;
     unsigned int min_buffer_size;
     GUID category;
+    BOOL hidden;
 };
 
 struct media_stream
@@ -1998,6 +1999,15 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
                 {
                     stream->transform_service = entry->transform;
                     IMFTransform_AddRef(stream->transform_service);
+
+                    /* converters are hidden from the stream transforms */
+                    if (service != entry)
+                        service->hidden = TRUE;
+                }
+                else
+                {
+                    /* converters are hidden from the stream transforms */
+                    entry->hidden = TRUE;
                 }
             }
 
@@ -2432,12 +2442,48 @@ static HRESULT WINAPI src_reader_RemoveAllTransformsForStream(IMFSourceReaderEx 
     return E_NOTIMPL;
 }
 
+static struct transform_entry *get_transform_at_index(struct media_stream *stream, UINT index)
+{
+    struct transform_entry *entry;
+
+    LIST_FOR_EACH_ENTRY(entry, &stream->transforms, struct transform_entry, entry)
+        if (!entry->hidden && !index--)
+            return entry;
+
+    return NULL;
+}
+
 static HRESULT WINAPI src_reader_GetTransformForStream(IMFSourceReaderEx *iface, DWORD stream_index,
         DWORD transform_index, GUID *category, IMFTransform **transform)
 {
-    FIXME("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, category, transform);
+    struct source_reader *reader = impl_from_IMFSourceReaderEx(iface);
+    struct transform_entry *entry;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, category, transform);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (stream_index == MF_SOURCE_READER_FIRST_VIDEO_STREAM)
+        stream_index = reader->first_video_stream_index;
+    else if (stream_index == MF_SOURCE_READER_FIRST_AUDIO_STREAM)
+        stream_index = reader->first_audio_stream_index;
+
+    if (stream_index >= reader->stream_count)
+        hr = MF_E_INVALIDSTREAMNUMBER;
+    else if (!(entry = get_transform_at_index(&reader->streams[stream_index], transform_index)))
+        hr = MF_E_INVALIDINDEX;
+    else
+    {
+        *category = entry->category;
+        *transform = entry->transform;
+        IMFTransform_AddRef(*transform);
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&reader->cs);
+
+    return hr;
 }
 
 static const IMFSourceReaderExVtbl srcreader_vtbl =

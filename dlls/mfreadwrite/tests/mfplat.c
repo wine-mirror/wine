@@ -2011,9 +2011,9 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, &category, &transform);
     if (!enable_advanced)
-        todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+        ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -2030,7 +2030,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     }
 
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 1, &category, &transform);
-    todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     IMFSourceReaderEx_Release(reader_ex);
 
     IMFSourceReader_Release(reader);
@@ -2123,9 +2123,9 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, &category, &transform);
     if (!enable_processing && !enable_advanced)
-        todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+        ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -2144,9 +2144,9 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     /* the video processor can be accessed at index 1 with MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING  */
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 1, &category, &transform);
     if (!enable_advanced)
-        todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+        ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -2163,7 +2163,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     }
 
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 2, &category, &transform);
-    todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     IMFSourceReaderEx_Release(reader_ex);
 
     /* H264 -> NV12 conversion */
@@ -2212,7 +2212,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, &category, &transform);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -2242,7 +2242,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     }
 
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 1, &category, &transform);
-    todo_wine ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_INVALIDINDEX, "Unexpected hr %#lx.\n", hr);
     IMFSourceReaderEx_Release(reader_ex);
 
 skip_tests:
