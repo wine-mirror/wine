@@ -1229,7 +1229,7 @@ static BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name, PRINT_PTRA *PrintStru
 		    if(IsDefault)
 			SendMessageA(hQuality, CB_SETCURSEL, Index, 0);
 
-		    SendMessageA(hQuality, CB_SETITEMDATA, Index, MAKELONG(dpiX,dpiY));
+                    SendMessageA(hQuality, CB_SETITEMDATA, Index, MAKELONG(Resolutions[i], Resolutions[i+1]));
 		}
 		free(Resolutions);
 	    }
