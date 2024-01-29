@@ -2416,6 +2416,9 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     if ( This->dp2->connectionInitialized == NO_PROVIDER )
         return DPERR_UNINITIALIZED;
 
+    if ( !sdesc )
+        return DPERR_INVALIDPARAM;
+
     /* Can't enumerate if the interface is already open */
     if ( This->dp2->bConnectionOpen )
         return DPERR_GENERIC;
