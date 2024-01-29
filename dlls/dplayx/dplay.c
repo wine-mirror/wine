@@ -2419,6 +2419,9 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     if ( !sdesc )
         return DPERR_INVALIDPARAM;
 
+    if ( sdesc->dwSize != sizeof( DPSESSIONDESC2 ) )
+        return DPERR_INVALIDPARAM;
+
     /* Can't enumerate if the interface is already open */
     if ( This->dp2->bConnectionOpen )
         return DPERR_GENERIC;

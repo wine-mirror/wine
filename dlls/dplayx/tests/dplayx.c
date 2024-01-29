@@ -1794,12 +1794,12 @@ static BOOL CALLBACK checkSessionListCallback( const DPSESSIONDESC2 *thisSd, DWO
 }
 
 #define check_EnumSessions( dp, dpsd, flags, expectedHr, expectedSessionCount, timeoutExpected, \
-                            requestExpected, expectedPassword, replyCount, hrTodo, timeoutTodo ) \
+                            requestExpected, expectedPassword, replyCount, hrTodo ) \
         check_EnumSessions_( __LINE__, dp, dpsd, flags, expectedHr, expectedSessionCount, timeoutExpected, \
-                             requestExpected, expectedPassword, replyCount, hrTodo, timeoutTodo )
+                             requestExpected, expectedPassword, replyCount, hrTodo )
 static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dpsd, DWORD flags, HRESULT expectedHr,
                                  DWORD expectedSessionCount, BOOL timeoutExpected, BOOL requestExpected,
-                                 const WCHAR *expectedPassword, DWORD replyCount, BOOL hrTodo, BOOL timeoutTodo )
+                                 const WCHAR *expectedPassword, DWORD replyCount, BOOL hrTodo )
 {
     DPSESSIONDESC2 replyDpsds[] =
     {
@@ -1884,8 +1884,8 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
 
     todo_wine_if( expectedSessionCount ) ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
                                                                 "got session count %d.\n", callbackData.actualCount );
-    todo_wine_if( timeoutTodo ) ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected,
-                                                       "got timeout count %d.\n", callbackData.timeoutCount );
+    ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected, "got timeout count %d.\n",
+                           callbackData.timeoutCount );
 
     closesocket( enumSock );
     WSACleanup();
@@ -2058,25 +2058,25 @@ static void test_EnumSessions(void)
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
 
     /* Service provider not initialized */
-    check_EnumSessions( dp, &appGuidDpsd, 0, DPERR_UNINITIALIZED, 0, FALSE, FALSE, NULL, 0, FALSE, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, 0, DPERR_UNINITIALIZED, 0, FALSE, FALSE, NULL, 0, FALSE );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
     /* Session with no size */
     dpsd = appGuidDpsd;
     dpsd.dwSize = 0;
-    check_EnumSessions( dp, &dpsd, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE, TRUE );
+    check_EnumSessions( dp, &dpsd, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE );
 
     /* No sessions */
-    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 0, TRUE, TRUE, NULL, 0, TRUE, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 0, TRUE, TRUE, NULL, 0, TRUE );
 
     /* Invalid params */
-    check_EnumSessions( dp, &appGuidDpsd, -1, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE, FALSE );
-    check_EnumSessions( dp, NULL, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, -1, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, TRUE );
+    check_EnumSessions( dp, NULL, 0, DPERR_INVALIDPARAMS, 0, FALSE, FALSE, NULL, 0, FALSE );
 
     /* All sessions are enumerated regardless of flags */
-    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE, FALSE );
-    check_EnumSessions( dp, &appGuidDpsd, DPENUMSESSIONS_AVAILABLE, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE, FALSE );
+    check_EnumSessions( dp, &appGuidDpsd, 0, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE );
+    check_EnumSessions( dp, &appGuidDpsd, DPENUMSESSIONS_AVAILABLE, DP_OK, 2, TRUE, TRUE, NULL, 2, TRUE );
 
     /* Async enumeration */
     check_EnumSessions_async( &appGuidDpsd, dp );
@@ -2084,7 +2084,7 @@ static void test_EnumSessions(void)
     /* Enumeration with password */
     dpsd = appGuidDpsd;
     dpsd.lpszPasswordA = (char *) "password";
-    check_EnumSessions( dp, &dpsd, 0, DP_OK, 2, TRUE, TRUE, L"password", 2, TRUE, FALSE );
+    check_EnumSessions( dp, &dpsd, 0, DP_OK, 2, TRUE, TRUE, L"password", 2, TRUE );
 
     IDirectPlayX_Release( dp );
 }
