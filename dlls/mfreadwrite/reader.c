@@ -76,6 +76,7 @@ struct transform_entry
     struct list entry;
     IMFTransform *transform;
     unsigned int min_buffer_size;
+    UINT32 pending_flags;
     GUID category;
     BOOL hidden;
 };
@@ -484,14 +485,14 @@ static HRESULT source_reader_queue_response(struct source_reader *reader, struct
 }
 
 static HRESULT source_reader_queue_sample(struct source_reader *reader, struct media_stream *stream,
-        IMFSample *sample)
+        UINT flags, IMFSample *sample)
 {
     LONGLONG timestamp = 0;
 
     if (FAILED(IMFSample_GetSampleTime(sample, &timestamp)))
         WARN("Sample time wasn't set.\n");
 
-    return source_reader_queue_response(reader, stream, S_OK, 0, timestamp, sample);
+    return source_reader_queue_response(reader, stream, S_OK, flags, timestamp, sample);
 }
 
 static HRESULT source_reader_request_sample(struct source_reader *reader, struct media_stream *stream)
@@ -785,6 +786,7 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
     while (SUCCEEDED(hr))
     {
         MFT_OUTPUT_DATA_BUFFER out_buffer = {0};
+        IMFMediaType *output_type, *media_type;
 
         if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
                 && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
@@ -792,10 +794,46 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
 
         if (SUCCEEDED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
         {
-            if (next)
+            if ((entry->pending_flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+                    && SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &output_type)))
+            {
+                if (!next)
+                    hr = IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)stream->current);
+                else if (SUCCEEDED(hr = IMFTransform_SetInputType(next->transform, 0, output_type, 0)))
+                {
+                    /* check if transform output type is still valid or if we need to reset it as well */
+                    if (FAILED(hr = IMFTransform_GetOutputCurrentType(next->transform, 0, &media_type))
+                            && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(next->transform, 0, 0, &output_type)))
+                    {
+                        next->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
+                        hr = IMFTransform_SetOutputType(entry->transform, 0, media_type, 0);
+                        IMFMediaType_Release(media_type);
+                    }
+                }
+                IMFMediaType_Release(output_type);
+            }
+
+            if (FAILED(hr))
+                source_reader_queue_response(reader, stream, hr, MF_SOURCE_READERF_ERROR, 0, NULL);
+            else if (next)
                 hr = source_reader_push_transform_samples(reader, stream, next, out_buffer.pSample);
             else
-                hr = source_reader_queue_sample(reader, stream, out_buffer.pSample);
+                hr = source_reader_queue_sample(reader, stream, entry->pending_flags, out_buffer.pSample);
+
+            entry->pending_flags = 0;
+        }
+
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(entry->transform, 0, 0, &output_type)))
+        {
+            hr = IMFTransform_SetOutputType(entry->transform, 0, output_type, 0);
+            IMFMediaType_Release(output_type);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info);
+                stream_info.cbSize = max(stream_info.cbSize, entry->min_buffer_size);
+                entry->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
+            }
         }
 
         if (out_buffer.pSample)
@@ -850,7 +888,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
     HRESULT hr;
 
     if (!(ptr = list_head(&stream->transforms)))
-        return source_reader_queue_sample(reader, stream, sample);
+        return source_reader_queue_sample(reader, stream, 0, sample);
     entry = LIST_ENTRY(ptr, struct transform_entry, entry);
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
