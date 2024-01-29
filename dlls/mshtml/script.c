@@ -730,9 +730,34 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 {
     ScriptHost *This = impl_from_IOleCommandTarget(iface);
 
-    FIXME("(%p)->(%s %ld %ld %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
+    TRACE("(%p)->(%s %ld %ld %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
 
-    return E_NOTIMPL;
+    if(!pguidCmdGroup) {
+        FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+        return OLECMDERR_E_UNKNOWNGROUP;
+    }
+
+    if(IsEqualGUID(&CGID_ScriptSite, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case CMDID_SCRIPTSITE_SECURITY_WINDOW:
+            if(!This->window || !This->window->base.outer_window) {
+                FIXME("No window\n");
+                return E_FAIL;
+            }
+            V_VT(pvaOut) = VT_DISPATCH;
+            V_DISPATCH(pvaOut) = (IDispatch*)&This->window->base.outer_window->base.IHTMLWindow2_iface;
+            IDispatch_AddRef(V_DISPATCH(pvaOut));
+            break;
+
+        default:
+            FIXME("Unsupported nCmdID %ld of CGID_ScriptSite group\n", nCmdID);
+            return OLECMDERR_E_NOTSUPPORTED;
+        }
+        return S_OK;
+    }
+
+    FIXME("Unsupported pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+    return OLECMDERR_E_UNKNOWNGROUP;
 }
 
 static const IOleCommandTargetVtbl OleCommandTargetVtbl = {

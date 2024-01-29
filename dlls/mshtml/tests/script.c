@@ -3079,11 +3079,12 @@ static void test_ui(void)
 static void test_sp(void)
 {
     IServiceProvider *sp, *doc_sp, *doc_obj_sp, *window_sp;
+    IHTMLWindow2 *window, *cmdtarget_window;
     IOleCommandTarget *cmdtarget;
-    IHTMLWindow2 *window;
     IHTMLDocument2 *doc;
     IUnknown *unk;
     HRESULT hres;
+    VARIANT var;
 
     hres = IDispatchEx_QueryInterface(window_dispex, &IID_IHTMLWindow2, (void**)&window);
     ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
@@ -3160,6 +3161,19 @@ static void test_sp(void)
         IServiceProvider_Release(sp2);
         IUnknown_Release(unk);
     }
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IOleCommandTarget_Exec(cmdtarget, &CGID_ScriptSite, CMDID_SCRIPTSITE_SECURITY_WINDOW, 0, NULL, &var);
+    ok(hres == S_OK, "Exec failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(CMDID_SCRIPTSITE_SECURITY_WINDOW) = %d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(CMDID_SCRIPTSITE_SECURITY_WINDOW) = NULL\n");
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLWindow2, (void**)&cmdtarget_window);
+    ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
+    ok(cmdtarget_window != NULL, "cmdtarget_window is NULL\n");
+    ok(window == cmdtarget_window, "window != cmdtarget_window\n");
+    IHTMLWindow2_Release(cmdtarget_window);
+    VariantClear(&var);
 
     IOleCommandTarget_Release(cmdtarget);
     IServiceProvider_Release(window_sp);
