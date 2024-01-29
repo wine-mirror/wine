@@ -205,36 +205,66 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
 }
 
 
-struct unwind_exception_frame
-{
-    EXCEPTION_REGISTRATION_RECORD frame;
-    DISPATCHER_CONTEXT *dispatch;
-};
-
 /**********************************************************************
  *           unwind_exception_handler
  *
  * Handler for exceptions happening while calling an unwind handler.
  */
-static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+EXCEPTION_DISPOSITION WINAPI unwind_exception_handler( EXCEPTION_RECORD *record, void *frame,
+                                                       CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
-    DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
+    DISPATCHER_CONTEXT *orig_dispatch = ((DISPATCHER_CONTEXT **)frame)[-2];
 
     /* copy the original dispatcher into the current one, except for the TargetIp */
-    dispatch->ControlPc        = unwind_frame->dispatch->ControlPc;
-    dispatch->ImageBase        = unwind_frame->dispatch->ImageBase;
-    dispatch->FunctionEntry    = unwind_frame->dispatch->FunctionEntry;
-    dispatch->EstablisherFrame = unwind_frame->dispatch->EstablisherFrame;
-    dispatch->ContextRecord    = unwind_frame->dispatch->ContextRecord;
-    dispatch->LanguageHandler  = unwind_frame->dispatch->LanguageHandler;
-    dispatch->HandlerData      = unwind_frame->dispatch->HandlerData;
-    dispatch->HistoryTable     = unwind_frame->dispatch->HistoryTable;
-    dispatch->ScopeIndex       = unwind_frame->dispatch->ScopeIndex;
+    dispatch->ControlPc        = orig_dispatch->ControlPc;
+    dispatch->ImageBase        = orig_dispatch->ImageBase;
+    dispatch->FunctionEntry    = orig_dispatch->FunctionEntry;
+    dispatch->EstablisherFrame = orig_dispatch->EstablisherFrame;
+    dispatch->ContextRecord    = orig_dispatch->ContextRecord;
+    dispatch->LanguageHandler  = orig_dispatch->LanguageHandler;
+    dispatch->HandlerData      = orig_dispatch->HandlerData;
+    dispatch->HistoryTable     = orig_dispatch->HistoryTable;
+    dispatch->ScopeIndex       = orig_dispatch->ScopeIndex;
     TRACE( "detected collided unwind\n" );
     return ExceptionCollidedUnwind;
 }
+
+/**********************************************************************
+ *           unwind_handler_wrapper
+ */
+#ifdef __WINE_PE_BUILD
+extern DWORD WINAPI unwind_handler_wrapper( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch );
+__ASM_GLOBAL_FUNC( unwind_handler_wrapper,
+                   "push {r1,lr}\n\t"
+                   ".seh_save_regs {r1,lr}\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler " __ASM_NAME("unwind_exception_handler") ", %except, %unwind\n\t"
+                   "mov r3, r1\n\t"           /* dispatch */
+                   "ldr r1, [r3, #0x0c]\n\t"  /* dispatch->EstablisherFrame */
+                   "ldr r2, [r3, #0x14]\n\t"  /* dispatch->ContextRecord */
+                   "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
+                   "blx ip\n\t"
+                   "pop {r1,pc}\n\t" )
+#else
+static DWORD unwind_handler_wrapper( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
+{
+    struct
+    {
+        DISPATCHER_CONTEXT *dispatch;
+        ULONG lr;
+        EXCEPTION_REGISTRATION_RECORD frame;
+    } frame;
+    DWORD res;
+
+    frame.frame.Handler = (PEXCEPTION_HANDLER)unwind_exception_handler;
+    frame.dispatch = dispatch;
+    __wine_push_frame( &frame.frame );
+    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    __wine_pop_frame( &frame.frame );
+    return res;
+}
+#endif
+
 
 /**********************************************************************
  *           call_unwind_handler
@@ -243,19 +273,12 @@ static DWORD __cdecl unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_
  */
 static DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
 {
-    struct unwind_exception_frame frame;
     DWORD res;
-
-    frame.frame.Handler = unwind_exception_handler;
-    frame.dispatch = dispatch;
-    __wine_push_frame( &frame.frame );
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
          dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    res = unwind_handler_wrapper( rec, dispatch );
     TRACE( "handler %p returned %lx\n", dispatch->LanguageHandler, res );
-
-    __wine_pop_frame( &frame.frame );
 
     switch (res)
     {

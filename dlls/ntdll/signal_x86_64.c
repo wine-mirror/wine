@@ -367,9 +367,9 @@ DWORD WINAPI exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
 C_ASSERT( offsetof(DISPATCHER_CONTEXT, LanguageHandler) == 0x30 );
 
 __ASM_GLOBAL_FUNC( exception_handler_call_wrapper,
-                   ".seh_endprologue\n\t"
                    "subq $0x28, %rsp\n\t"
                    ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
                    "callq *0x30(%r9)\n\t"       /* dispatch->LanguageHandler */
                    "nop\n\t"                    /* avoid epilogue so handler is called */
                    "addq $0x28, %rsp\n\t"
@@ -1076,9 +1076,9 @@ C_ASSERT( offsetof(struct unwind_exception_frame, dispatch) == 0x20 );
 C_ASSERT( offsetof(DISPATCHER_CONTEXT, LanguageHandler) == 0x30 );
 
 __ASM_GLOBAL_FUNC( unwind_handler_call_wrapper,
-                   ".seh_endprologue\n\t"
                    "subq $0x28,%rsp\n\t"
                    ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
                    "movq %r9,0x20(%rsp)\n\t"   /* unwind_exception_frame->dispatch */
                    "callq *0x30(%r9)\n\t"      /* dispatch->LanguageHandler */
                    "nop\n\t"                   /* avoid epilogue so handler is called */
