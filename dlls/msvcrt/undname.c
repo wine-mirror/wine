@@ -70,6 +70,7 @@ struct parsed_symbol
     char*               result;         /* demangled string */
 
     struct array        names;          /* array of names for back reference */
+    struct array        args;           /* array of arguments for back reference */
     struct array        stack;          /* stack of parsed strings */
 
     void*               alloc_list;     /* linked list of allocated blocks */
@@ -362,12 +363,15 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
     char*               args_str = NULL;
     char*               last;
     unsigned int        i;
+    const char *p;
 
     str_array_init(&arg_collect);
 
     /* Now come the function arguments */
     while (*sym->current)
     {
+        p = sym->current;
+
         /* Decode each data type and append it to the argument list */
         if (*sym->current == '@')
         {
@@ -382,14 +386,20 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
                             &arg_collect))
             return NULL;
         if (!strcmp(ct.left, "...")) break;
+        if (z_term && sym->current - p > 1 && sym->args.num < 20)
+        {
+            if (!str_array_push(sym, ct.left ? ct.left : "", -1, &sym->args) ||
+                    !str_array_push(sym, ct.right ? ct.right : "", -1, &sym->args))
+                return NULL;
+        }
     }
     /* Functions are always terminated by 'Z'. If we made it this far and
      * don't find it, we have incorrectly identified a data type.
      */
     if (z_term && *sym->current++ != 'Z') return NULL;
 
-    if (arg_collect.num == 0 || 
-        (arg_collect.num == 1 && !strcmp(arg_collect.elts[0], "void")))        
+    if (arg_collect.num == 0 ||
+        (arg_collect.num == 1 && !strcmp(arg_collect.elts[0], "void")))
         return str_printf(sym, "%cvoid%c", open_char, close_char);
     for (i = 1; i < arg_collect.num; i++)
     {
@@ -398,12 +408,12 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
 
     last = args_str ? args_str : arg_collect.elts[0];
     if (close_char == '>' && last[strlen(last) - 1] == '>')
-        args_str = str_printf(sym, "%c%s%s %c", 
+        args_str = str_printf(sym, "%c%s%s %c",
                               open_char, arg_collect.elts[0], args_str, close_char);
     else
-        args_str = str_printf(sym, "%c%s%s%c", 
+        args_str = str_printf(sym, "%c%s%s%c",
                               open_char, arg_collect.elts[0], args_str, close_char);
-    
+
     return args_str;
 }
 
@@ -642,6 +652,7 @@ static char* get_template_name(struct parsed_symbol* sym)
     unsigned num_mark = sym->names.num;
     unsigned start_mark = sym->names.start;
     unsigned stack_mark = sym->stack.num;
+    unsigned args_mark = sym->args.num;
     struct array array_pmt;
 
     sym->names.start = sym->names.num;
@@ -656,6 +667,7 @@ static char* get_template_name(struct parsed_symbol* sym)
     sym->names.num = num_mark;
     sym->names.start = start_mark;
     sym->stack.num = stack_mark;
+    sym->args.num = args_mark;
     return name;
 }
 
@@ -1043,9 +1055,8 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case '5': case '6': case '7': case '8': case '9':
         /* Referring back to previously parsed type */
         /* left and right are pushed as two separate strings */
-        if (!pmt_ref) goto done;
-        ct->left = str_array_get_ref(pmt_ref, (dt - '0') * 2);
-        ct->right = str_array_get_ref(pmt_ref, (dt - '0') * 2 + 1);
+        ct->left = str_array_get_ref(&sym->args, (dt - '0') * 2);
+        ct->right = str_array_get_ref(&sym->args, (dt - '0') * 2 + 1);
         if (!ct->left) goto done;
         add_pmt = FALSE;
         break;
@@ -1636,12 +1647,14 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         sym->current++;
         if (in_template)
         {
+            unsigned args_mark = sym->args.num;
             const char *args;
             struct array array_pmt;
 
             str_array_init(&array_pmt);
             args = get_args(sym, &array_pmt, FALSE, '<', '>');
             if (args) function_name = function_name ? str_printf(sym, "%s%s", function_name, args) : args;
+            sym->args.num = args_mark;
             sym->names.num = 0;
         }
         if (!str_array_push(sym, function_name, -1, &sym->stack))

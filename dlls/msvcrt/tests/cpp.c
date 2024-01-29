@@ -1324,6 +1324,12 @@ static void test_demangle(void)
            "void __cdecl <CrtImplementationDetails>::RegisterModuleUninitializer(class System::EventHandler ^)"},
 /* 151 */ {"?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXBE$AAVEventHandler@System@@@Z",
            "void __cdecl <CrtImplementationDetails>::RegisterModuleUninitializer(class System::EventHandler % __ptr64 volatile)"},
+/* 152 */ {"??$forward@AEAUFFIValue@?1??call@FFIFunctionBinder@@CAHPEAUlua_State@@@Z@@std@@YAAEAUFFIValue@?1??call@"
+           "FFIFunctionBinder@@CAHPEAUxlua_State@@@Z@AEAU1?1??23@CAH0@Z@@Z",
+           "struct `private: static int __cdecl FFIFunctionBinder::call(struct xlua_State * __ptr64)'::`2'::FFIValue & "
+           "__ptr64 __cdecl std::forward<struct `private: static int __cdecl FFIFunctionBinder::call(struct lua_State "
+           "* __ptr64)'::`2'::FFIValue & __ptr64>(struct `private: static int __cdecl FFIFunctionBinder::call(struct "
+           "xlua_State * __ptr64)'::`2'::FFIValue & __ptr64)"},
     };
     int i, num_test = ARRAY_SIZE(test);
     char* name;
