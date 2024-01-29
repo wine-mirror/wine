@@ -124,8 +124,11 @@ static HRESULT WINAPI DPWSCB_CloseEx( LPDPSP_CLOSEDATA data )
 
 static HRESULT WINAPI DPWSCB_ShutdownEx( LPDPSP_SHUTDOWNDATA data )
 {
-    FIXME( "(%p) stub\n", data->lpISP );
-    return DPERR_UNSUPPORTED;
+    TRACE( "(%p)\n", data->lpISP );
+
+    WSACleanup();
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_GetAddressChoices( LPDPSP_GETADDRESSCHOICESDATA data )
