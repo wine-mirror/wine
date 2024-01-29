@@ -1912,9 +1912,14 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
     list_init(&entry->entry);
     entry->category = category;
 
-    if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
-        IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT,
-                &entry->min_buffer_size);
+    if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio)
+            && SUCCEEDED(IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &entry->min_buffer_size)))
+    {
+        UINT32 bytes_per_second;
+
+        if (SUCCEEDED(IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second)))
+            entry->min_buffer_size = max(entry->min_buffer_size, bytes_per_second);
+    }
 
     count = 0;
     if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, allow_processor ? NULL : &out_type, NULL, &classes, &count)))
