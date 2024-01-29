@@ -197,16 +197,16 @@ static BOOL skip_loadobject_tests;
 static IActiveScriptSite *site, *site2;
 static SCRIPTSTATE state, state2;
 
-static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+static BOOL iface_cmp(void *iface1, void *iface2)
 {
     IUnknown *unk1, *unk2;
 
     if(iface1 == iface2)
         return TRUE;
 
-    IUnknown_QueryInterface(iface1, &IID_IHTMLWindow2, (void**)&unk1);
+    IUnknown_QueryInterface((IUnknown*)iface1, &IID_IUnknown, (void**)&unk1);
     IUnknown_Release(unk1);
-    IUnknown_QueryInterface(iface2, &IID_IHTMLWindow2, (void**)&unk2);
+    IUnknown_QueryInterface((IUnknown*)iface2, &IID_IUnknown, (void**)&unk2);
     IUnknown_Release(unk2);
 
     return unk1 == unk2;
@@ -2265,8 +2265,10 @@ static void test_security_reg(IInternetHostSecurityManager *sec_mgr, DWORD polic
 
 static void test_security(void)
 {
-    IInternetHostSecurityManager *sec_mgr;
+    IInternetHostSecurityManager *sec_mgr, *sec_mgr2;
     IServiceProvider *sp;
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *doc;
     DWORD policy, policy_size;
     struct CONFIRMSAFETY cs;
     BYTE *ppolicy;
@@ -2279,6 +2281,21 @@ static void test_security(void)
             &IID_IInternetHostSecurityManager, (void**)&sec_mgr);
     IServiceProvider_Release(sp);
     ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
+
+    hres = IDispatchEx_QueryInterface(window_dispex, &IID_IHTMLWindow2, (void**)&window);
+    ok(hres == S_OK, "Could not get IHTMLWindow2 iface: %08lx\n", hres);
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+    IHTMLDocument2_Release(doc);
+
+    hres = IServiceProvider_QueryService(sp, &SID_SInternetHostSecurityManager, &IID_IInternetHostSecurityManager, (void**)&sec_mgr2);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
+    ok(iface_cmp(sec_mgr, sec_mgr2), "sec_mgr != sec_mgr2\n");
+    IInternetHostSecurityManager_Release(sec_mgr2);
+    IServiceProvider_Release(sp);
 
     hres = IInternetHostSecurityManager_ProcessUrlAction(sec_mgr, URLACTION_ACTIVEX_RUN, (BYTE*)&policy, sizeof(policy),
                                                          (BYTE*)&CLSID_TestActiveX, sizeof(CLSID), 0, 0);
@@ -4498,7 +4515,7 @@ static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHA
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
 
-    ok(iface_cmp((IUnknown *)window, (IUnknown *)window_dispex), "window != dispex_window\n");
+    ok(iface_cmp(window, window_dispex), "window != dispex_window\n");
 
     code = SysAllocString(codew);
     lang = SysAllocString(langw);

@@ -360,6 +360,11 @@ static HRESULT WINAPI DocNodeServiceProvider_QueryService(IServiceProvider *ifac
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
+        TRACE("SID_SInternetHostSecurityManager\n");
+        return IInternetHostSecurityManager_QueryInterface(&This->IInternetHostSecurityManager_iface, riid, ppv);
+    }
+
     if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
         TRACE("SID_SContainerDispatch\n");
         return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);

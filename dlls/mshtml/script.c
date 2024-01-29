@@ -675,27 +675,10 @@ static HRESULT WINAPI ASServiceProvider_QueryService(IServiceProvider *iface, RE
 {
     ScriptHost *This = impl_from_IServiceProvider(iface);
 
-    if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
-        TRACE("(%p)->(SID_SInternetHostSecurityManager)\n", This);
+    if(!This->window || !This->window->doc)
+        return E_NOINTERFACE;
 
-        if(!This->window || !This->window->doc)
-            return E_NOINTERFACE;
-
-        return IInternetHostSecurityManager_QueryInterface(&This->window->doc->IInternetHostSecurityManager_iface,
-                riid, ppv);
-    }
-
-    if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
-        TRACE("(%p)->(SID_SContainerDispatch)\n", This);
-
-        if(!This->window || !This->window->doc)
-            return E_NOINTERFACE;
-
-        return IHTMLDocument2_QueryInterface(&This->window->doc->IHTMLDocument2_iface, riid, ppv);
-    }
-
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    return IServiceProvider_QueryService(&This->window->doc->IServiceProvider_iface, guidService, riid, ppv);
 }
 
 static const IServiceProviderVtbl ASServiceProviderVtbl = {
