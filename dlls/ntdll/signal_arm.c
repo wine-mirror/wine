@@ -1685,6 +1685,26 @@ void WINAPI process_breakpoint(void)
 }
 #endif
 
+/***********************************************************************
+ *		DbgUiRemoteBreakin   (NTDLL.@)
+ */
+void WINAPI DbgUiRemoteBreakin( void *arg )
+{
+    if (NtCurrentTeb()->Peb->BeingDebugged)
+    {
+        __TRY
+        {
+            DbgBreakPoint();
+        }
+        __EXCEPT_ALL
+        {
+            /* do nothing */
+        }
+        __ENDTRY
+    }
+    RtlExitUserThread( STATUS_SUCCESS );
+}
+
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */

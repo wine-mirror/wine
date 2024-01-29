@@ -1582,6 +1582,26 @@ __ASM_GLOBAL_FUNC( process_breakpoint,
                    "mov w0, #0\n\t"           /* ExceptionContinueExecution */
                    "ret" )
 
+/***********************************************************************
+ *		DbgUiRemoteBreakin   (NTDLL.@)
+ */
+void WINAPI DbgUiRemoteBreakin( void *arg )
+{
+    if (NtCurrentTeb()->Peb->BeingDebugged)
+    {
+        __TRY
+        {
+            DbgBreakPoint();
+        }
+        __EXCEPT_ALL
+        {
+            /* do nothing */
+        }
+        __ENDTRY
+    }
+    RtlExitUserThread( STATUS_SUCCESS );
+}
+
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
