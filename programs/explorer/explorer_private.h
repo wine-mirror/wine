@@ -22,7 +22,7 @@
 #define __WINE_EXPLORER_PRIVATE_H
 
 extern void manage_desktop( WCHAR *arg );
-extern void initialize_systray( BOOL using_root, BOOL enable_shell );
+extern void initialize_systray( BOOL using_root, BOOL enable_shell, BOOL show_systray );
 extern void initialize_appbar(void);
 extern void handle_parent_notify( HWND hwnd, WPARAM wp );
 extern void do_startmenu( HWND owner );
