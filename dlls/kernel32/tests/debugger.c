@@ -1381,16 +1381,7 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
 
         /* Except for wxppro and w2008, the initial breakpoint is now somewhere else, possibly within LdrInitShimEngineDynamic,
          * It's also catching exceptions and ContinueDebugEvent(DBG_EXCEPTION_NOT_HANDLED) should not crash the child now */
-        if (broken(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint))
-        {
-            win_skip("Ignoring initial breakpoint address check\n");
-            pass_exception = FALSE;
-        }
-        else
-        {
-            todo_wine
-            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress != pDbgBreakPoint, "ExceptionAddress == pDbgBreakPoint\n");
-        }
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress != pDbgBreakPoint, "ExceptionAddress == pDbgBreakPoint\n");
 
         if (pass_exception)
         {
