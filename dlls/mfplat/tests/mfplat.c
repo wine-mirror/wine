@@ -7564,10 +7564,11 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
     ok(video_info->bmiHeader.biWidth == 123, "got %lu\n", video_info->bmiHeader.biWidth);
     ok(video_info->bmiHeader.biHeight == 456, "got %lu\n", video_info->bmiHeader.biHeight);
-    ok(video_info->bmiHeader.biSizeImage == 224352, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    ok(video_info->bmiHeader.biSizeImage == 123 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
 
+    /* MF_MT_MINIMUM_DISPLAY_APERTURE has no effect */
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
@@ -7576,7 +7577,7 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture));
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 123456);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 12345678);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7591,7 +7592,102 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(video_info->rcTarget.bottom == 0, "got %lu\n", video_info->rcTarget.bottom);
     ok(video_info->bmiHeader.biWidth == 123, "got %lu\n", video_info->bmiHeader.biWidth);
     ok(video_info->bmiHeader.biHeight == 456, "got %lu\n", video_info->bmiHeader.biHeight);
-    ok(video_info->bmiHeader.biSizeImage == 224352, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    ok(video_info->bmiHeader.biSizeImage == 123 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    CoTaskMemFree(am_type.pbFormat);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* MF_MT_DEFAULT_STRIDE / MF_MT_FRAME_SIZE mismatch is translated into rcSource / rcTarget */
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)123 << 32 | 456);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -246 * 4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 12345678);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
+    ok(video_info->rcSource.left == 0, "got %lu\n", video_info->rcSource.left);
+    todo_wine
+    ok(video_info->rcSource.right == 123, "got %lu\n", video_info->rcSource.right);
+    ok(video_info->rcSource.top == 0, "got %lu\n", video_info->rcSource.top);
+    todo_wine
+    ok(video_info->rcSource.bottom == 456, "got %lu\n", video_info->rcSource.bottom);
+    ok(video_info->rcTarget.left == 0, "got %lu\n", video_info->rcTarget.left);
+    todo_wine
+    ok(video_info->rcTarget.right == 123, "got %lu\n", video_info->rcTarget.right);
+    ok(video_info->rcTarget.top == 0, "got %lu\n", video_info->rcTarget.top);
+    todo_wine
+    ok(video_info->rcTarget.bottom == 456, "got %lu\n", video_info->rcTarget.bottom);
+    ok(video_info->bmiHeader.biWidth == 246, "got %lu\n", video_info->bmiHeader.biWidth);
+    ok(video_info->bmiHeader.biHeight == 456, "got %ld\n", video_info->bmiHeader.biHeight);
+    ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* positive stride only changes biHeight */
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 246 * 4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
+    ok(video_info->rcSource.left == 0, "got %lu\n", video_info->rcSource.left);
+    todo_wine
+    ok(video_info->rcSource.right == 123, "got %lu\n", video_info->rcSource.right);
+    ok(video_info->rcSource.top == 0, "got %lu\n", video_info->rcSource.top);
+    todo_wine
+    ok(video_info->rcSource.bottom == 456, "got %lu\n", video_info->rcSource.bottom);
+    ok(video_info->rcTarget.left == 0, "got %lu\n", video_info->rcTarget.left);
+    todo_wine
+    ok(video_info->rcTarget.right == 123, "got %lu\n", video_info->rcTarget.right);
+    ok(video_info->rcTarget.top == 0, "got %lu\n", video_info->rcTarget.top);
+    todo_wine
+    ok(video_info->rcTarget.bottom == 456, "got %lu\n", video_info->rcTarget.bottom);
+    ok(video_info->bmiHeader.biWidth == 246, "got %lu\n", video_info->bmiHeader.biWidth);
+    ok(video_info->bmiHeader.biHeight == -456, "got %ld\n", video_info->bmiHeader.biHeight);
+    ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    CoTaskMemFree(am_type.pbFormat);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* same thing happens with other formats */
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_NV12);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)123 << 32 | 456);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 246);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 12345678);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
+    ok(video_info->rcSource.left == 0, "got %lu\n", video_info->rcSource.left);
+    todo_wine
+    ok(video_info->rcSource.right == 123, "got %lu\n", video_info->rcSource.right);
+    ok(video_info->rcSource.top == 0, "got %lu\n", video_info->rcSource.top);
+    todo_wine
+    ok(video_info->rcSource.bottom == 456, "got %lu\n", video_info->rcSource.bottom);
+    ok(video_info->rcTarget.left == 0, "got %lu\n", video_info->rcTarget.left);
+    todo_wine
+    ok(video_info->rcTarget.right == 123, "got %lu\n", video_info->rcTarget.right);
+    ok(video_info->rcTarget.top == 0, "got %lu\n", video_info->rcTarget.top);
+    todo_wine
+    ok(video_info->rcTarget.bottom == 456, "got %lu\n", video_info->rcTarget.bottom);
+    ok(video_info->bmiHeader.biWidth == 246, "got %lu\n", video_info->bmiHeader.biWidth);
+    ok(video_info->bmiHeader.biHeight == 456, "got %ld\n", video_info->bmiHeader.biHeight);
+    ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 3 / 2, "got %lu\n", video_info->bmiHeader.biSizeImage);
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
 
@@ -7601,14 +7697,14 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)123 << 32 | 456);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -984);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -246 * 4);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
     ok(video_info->bmiHeader.biWidth == 246, "got %lu\n", video_info->bmiHeader.biWidth);
     ok(video_info->bmiHeader.biHeight == 456, "got %ld\n", video_info->bmiHeader.biHeight);
-    ok(video_info->bmiHeader.biSizeImage == 448704, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
 
@@ -7618,14 +7714,14 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)123 << 32 | 456);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 984);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 246 * 4);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     video_info = (VIDEOINFOHEADER *)am_type.pbFormat;
     ok(video_info->bmiHeader.biWidth == 246, "got %lu\n", video_info->bmiHeader.biWidth);
     ok(video_info->bmiHeader.biHeight == -456, "got %ld\n", video_info->bmiHeader.biHeight);
-    ok(video_info->bmiHeader.biSizeImage == 448704, "got %lu\n", video_info->bmiHeader.biSizeImage);
+    ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
 
@@ -9842,7 +9938,10 @@ static void test_MFCreateVideoMediaTypeFromVideoInfoHeader(void)
 
 static void test_MFInitMediaTypeFromVideoInfoHeader(void)
 {
+    static const MFVideoArea expect_aperture = {.OffsetX = {.value = 1}, .OffsetY = {.value = 2}, .Area = {.cx = 3, .cy = 5}};
+    static const RECT source = {1, 2, 4, 7}, target = {3, 2, 12, 9};
     IMFMediaType *media_type;
+    MFVideoArea aperture;
     VIDEOINFOHEADER vih;
     UINT32 value32;
     UINT64 value64;
@@ -9960,6 +10059,63 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value32);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    /* only rcSource is considered, translated into both MF_MT_MINIMUM_DISPLAY_APERTURE and MF_MT_PAN_SCAN_APERTURE */
+    value32 = 0xdeadbeef;
+    vih.rcSource = source;
+    vih.rcTarget = target;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value64 == ((UINT64)16 << 32 | 32), "Unexpected value %#I64x.\n", value64);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 12345, "Unexpected value %#x.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %d.\n", value32);
+    todo_wine
+    ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
+
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %d.\n", (UINT32)value32);
+
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %d.\n", value32);
+    todo_wine
+    ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
+
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_GEOMETRIC_APERTURE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+
     hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &MFVideoFormat_NV12);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value32);
@@ -10047,8 +10203,11 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
 
 static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
 {
+    static const MFVideoArea expect_aperture = {.OffsetX = {.value = 1}, .OffsetY = {.value = 2}, .Area = {.cx = 3, .cy = 5}};
+    static const RECT source = {1, 2, 4, 7}, target = {3, 2, 12, 9};
     IMFMediaType *media_type;
     VIDEOINFOHEADER2 vih;
+    MFVideoArea aperture;
     UINT32 value32;
     UINT64 value64;
     HRESULT hr;
@@ -10227,6 +10386,62 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value32 == 1, "Unexpected value %#x.\n", value32);
 
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    /* only rcSource is considered, translated into both MF_MT_MINIMUM_DISPLAY_APERTURE and MF_MT_PAN_SCAN_APERTURE */
+    value32 = 0xdeadbeef;
+    vih.rcSource = source;
+    vih.rcTarget = target;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value64 == ((UINT64)16 << 32 | 32), "Unexpected value %#I64x.\n", value64);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 12345, "Unexpected value %#x.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %d.\n", value32);
+    todo_wine
+    ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
+
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %d.\n", (UINT32)value32);
+
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %d.\n", value32);
+    todo_wine
+    ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
+
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_GEOMETRIC_APERTURE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
 
     /* biBitCount is used for implicit RGB format if GUID is NULL */
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), NULL);
@@ -10305,6 +10520,8 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
 
 static void test_MFInitMediaTypeFromAMMediaType(void)
 {
+    static const MFVideoArea expect_aperture = {.OffsetX = {.value = 13}, .OffsetY = {.value = 46}, .Area = {.cx = 110, .cy = 410}};
+    static const RECT source = {13, 46, 123, 456}, target = {25, 34, 107, 409};
     IMFMediaType *media_type;
     AM_MEDIA_TYPE mt;
     UINT32 value32;
@@ -10355,6 +10572,7 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         { &MEDIASUBTYPE_h264, &MEDIASUBTYPE_h264 },
         { &MEDIASUBTYPE_H264, &MFVideoFormat_H264 },
     };
+    MFVideoArea aperture;
     unsigned int i;
 
     hr = MFCreateMediaType(&media_type);
@@ -10473,6 +10691,36 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value32 == 128, "Unexpected value %d.\n", value32);
+
+    /* only rcSource is considered, lSampleSize is ignored if biSizeImage was present */
+    memcpy(&mt.subtype, &MEDIASUBTYPE_RGB32, sizeof(GUID));
+    vih.rcSource = source;
+    vih.rcTarget = target;
+    vih.bmiHeader.biWidth = 432;
+    vih.bmiHeader.biHeight = -654;
+    vih.bmiHeader.biSizeImage = 12345678;
+    mt.lSampleSize = 87654321;
+    hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok((UINT32)(value64 >> 32) == 432, "got %d.\n", (UINT32)(value64 >> 32));
+    ok((UINT32)value64 == 654, "got %d.\n", (UINT32)value64);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value32 == 432 * 4, "got %d.\n", (UINT32)value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 12345678, "got %d.\n", (UINT32)value32);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %d.\n", value32);
+    todo_wine
+    ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     vih.bmiHeader.biHeight = 24;
     for (i = 0; i < ARRAY_SIZE(guid_types); ++i)
