@@ -425,6 +425,11 @@ static HRESULT WINAPI DocObjServiceProvider_QueryService(IServiceProvider *iface
         return IOleUndoManager_QueryInterface(This->undomgr, riid, ppv);
     }
 
+    if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
+        TRACE("SID_SInternetHostSecurityManager\n");
+        return IInternetHostSecurityManager_QueryInterface(&This->doc_node->IInternetHostSecurityManager_iface, riid, ppv);
+    }
+
     if(IsEqualGUID(&SID_SContainerDispatch, guidService)) {
         TRACE("SID_SContainerDispatch\n");
         return IHTMLDocument2_QueryInterface(&This->IHTMLDocument2_iface, riid, ppv);

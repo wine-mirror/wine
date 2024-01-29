@@ -4541,7 +4541,9 @@ static void test_exec_script(IHTMLDocument2 *doc, const WCHAR *codew, const WCHA
 
 static void test_simple_script(void)
 {
+    IInternetHostSecurityManager *sec_mgr, *sec_mgr2;
     IHTMLDocument2 *doc_node;
+    IServiceProvider *sp;
     IHTMLWindow2 *window;
     IHTMLDocument2 *doc;
     HRESULT hres;
@@ -4620,6 +4622,21 @@ static void test_simple_script(void)
 
     hres = IHTMLWindow2_get_document(window, &doc_node);
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(sp, &SID_SInternetHostSecurityManager, &IID_IInternetHostSecurityManager, (void**)&sec_mgr);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
+    IServiceProvider_Release(sp);
+
+    hres = IHTMLDocument2_QueryInterface(doc_node, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(sp, &SID_SInternetHostSecurityManager, &IID_IInternetHostSecurityManager, (void**)&sec_mgr2);
+    ok(hres == S_OK, "QueryService failed: %08lx\n", hres);
+    ok(iface_cmp(sec_mgr, sec_mgr2), "sec_mgr != sec_mgr2\n");
+    IInternetHostSecurityManager_Release(sec_mgr2);
+    IInternetHostSecurityManager_Release(sec_mgr);
+    IServiceProvider_Release(sp);
 
     SET_EXPECT(SetScriptState_DISCONNECTED);
     SET_EXPECT(Close);
