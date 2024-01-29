@@ -313,6 +313,36 @@ fail:
     return SysAllocString(L"File");
 }
 
+static void test_sp_caller(IServiceProvider *sp)
+{
+    IOleCommandTarget *cmdtarget;
+    IServiceProvider *caller;
+    IHTMLWindow2 *window;
+    HRESULT hres;
+    VARIANT var;
+
+    hres = IServiceProvider_QueryService(sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&caller);
+    ok(hres == S_OK, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
+    ok(!caller, "caller != NULL\n");
+
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IActiveScriptSite->IOleCommandTarget) failed: %08lx\n", hres);
+    ok(cmdtarget != NULL, "IOleCommandTarget is NULL\n");
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IOleCommandTarget_Exec(cmdtarget, &CGID_ScriptSite, CMDID_SCRIPTSITE_SECURITY_WINDOW, 0, NULL, &var);
+    ok(hres == S_OK, "Exec failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_DISPATCH, "V_VT(CMDID_SCRIPTSITE_SECURITY_WINDOW) = %d\n", V_VT(&var));
+    ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(CMDID_SCRIPTSITE_SECURITY_WINDOW) = NULL\n");
+    IOleCommandTarget_Release(cmdtarget);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLWindow2, (void**)&window);
+    ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
+    ok(window != NULL, "window is NULL\n");
+    IHTMLWindow2_Release(window);
+    VariantClear(&var);
+}
+
 static void test_script_vars(unsigned argc, VARIANTARG *argv)
 {
     static const WCHAR *const jsobj_names[] = { L"abc", L"foO", L"bar", L"TostRing", L"hasownpropERty" };
@@ -1170,6 +1200,7 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         ok(!pvarRes, "pvarRes != NULL\n");
         ok(pei != NULL, "pei == NULL\n");
 
+        test_sp_caller(pspCaller);
         return S_OK;
 
     case DISPID_EXTERNAL_TODO_WINE_OK:

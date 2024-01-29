@@ -1035,6 +1035,14 @@ static HRESULT WINAPI JSCaller_QueryService(IServiceProvider *iface, REFGUID gui
 {
     JSCaller *This = impl_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(guidService, &IID_IActiveScriptSite)) {
+        TRACE("(%p)->(IID_IActiveScriptSite)\n", This);
+        if(This->ctx && This->ctx->site)
+            return IActiveScriptSite_QueryInterface(This->ctx->site, riid, ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     if(IsEqualGUID(guidService, &SID_GetCaller)) {
         TRACE("(%p)->(SID_GetCaller)\n", This);
         *ppv = NULL;

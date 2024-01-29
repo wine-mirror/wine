@@ -75,6 +75,7 @@ static const CLSID CLSID_JScript =
     expect_ ## func = called_ ## func = FALSE
 
 DEFINE_EXPECT(sp_caller_QI_NULL);
+DEFINE_EXPECT(site_QI_NULL);
 DEFINE_EXPECT(testArgConv);
 DEFINE_EXPECT(testGetCaller);
 DEFINE_EXPECT(testGetCallerJS);
@@ -254,6 +255,7 @@ static void test_change_types(IVariantChangeType *change_type, IDispatch *obj_di
 static void test_caller(IServiceProvider *caller, IDispatch *arg_obj)
 {
     IVariantChangeType *change_type;
+    IUnknown *unk;
     HRESULT hres;
 
     hres = IServiceProvider_QueryService(caller, &SID_VariantConversion, &IID_IVariantChangeType, (void**)&change_type);
@@ -263,6 +265,12 @@ static void test_caller(IServiceProvider *caller, IDispatch *arg_obj)
     test_change_types(change_type, arg_obj);
 
     IVariantChangeType_Release(change_type);
+
+    SET_EXPECT(site_QI_NULL);
+    hres = IServiceProvider_QueryService(caller, &IID_IActiveScriptSite, &IID_NULL, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "Querying for IActiveScriptSite->NULL returned: %08lx\n", hres);
+    ok(!unk, "unk != NULL\n");
+    CHECK_CALLED(site_QI_NULL);
 }
 
 static IServiceProvider sp_caller_obj;
@@ -567,6 +575,8 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         *ppv = iface;
     }else {
+        if(IsEqualGUID(&IID_NULL, riid))
+            CHECK_EXPECT(site_QI_NULL);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
