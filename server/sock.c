@@ -1231,7 +1231,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         event &= ~(POLLIN | POLLPRI);
     }
 
-    if ((event & POLLOUT) && async_queued( &sock->write_q ))
+    if ((event & POLLOUT) && async_queue_has_waiting_asyncs( &sock->write_q ))
     {
         if (async_waiting( &sock->write_q ))
         {
