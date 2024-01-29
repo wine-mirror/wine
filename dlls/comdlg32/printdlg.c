@@ -1840,8 +1840,8 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
 	     char   *PrinterName;
-	     INT index = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETCURSEL, 0, 0);
-	     INT length = SendDlgItemMessageW(hDlg, LOWORD(wParam), CB_GETLBTEXTLEN, index, 0);
+	     INT index = SendDlgItemMessageA(hDlg, LOWORD(wParam), CB_GETCURSEL, 0, 0);
+	     INT length = SendDlgItemMessageA(hDlg, LOWORD(wParam), CB_GETLBTEXTLEN, index, 0);
 	     PrinterName = malloc(length + 1);
 	     SendDlgItemMessageA(hDlg, LOWORD(wParam), CB_GETLBTEXT, index, (LPARAM)PrinterName);
 	     PRINTDLG_ChangePrinterA(hDlg, PrinterName, PrintStructures);
