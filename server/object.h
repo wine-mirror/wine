@@ -287,6 +287,10 @@ extern struct object *get_directory_obj( struct process *process, obj_handle_t h
 extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void init_directories( struct fd *intl_fd );
 
+/* thread functions */
+
+extern void init_threading(void);
+
 /* symbolic link functions */
 
 extern struct object *create_root_symlink( struct object *root, const struct unicode_str *name,
