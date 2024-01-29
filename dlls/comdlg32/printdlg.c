@@ -1988,7 +1988,10 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
         }
         break;
 
-    case cmb1: /* Printer Combobox in PRINT SETUP */
+    case cmb1: /* Printer Combobox in PRINT SETUP, quality combobox in PRINT16 */
+	 if (PrinterComboID != LOWORD(wParam)) {
+	     break;
+	 }
 	 /* FALLTHROUGH */
     case cmb4:                         /* Printer combobox */
          if (HIWORD(wParam)==CBN_SELCHANGE) {
