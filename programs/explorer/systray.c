@@ -249,6 +249,7 @@ static void balloon_create_timer( struct icon *icon )
 
 static BOOL show_balloon( struct icon *icon )
 {
+    if (!show_systray) return FALSE;  /* systray has been hidden */
     if (icon->display == ICON_DISPLAY_HIDDEN) return FALSE;  /* not displayed */
     if (!icon->info_text[0]) return FALSE;  /* no balloon */
     balloon_icon = icon;
@@ -1114,7 +1115,7 @@ void handle_parent_notify( HWND hwnd, WPARAM wp )
 }
 
 /* this function creates the listener window */
-void initialize_systray( BOOL using_root, BOOL arg_enable_shell )
+void initialize_systray( BOOL using_root, BOOL arg_enable_shell, BOOL arg_show_systray )
 {
     RECT work_rect, primary_rect, taskbar_rect;
 
@@ -1125,6 +1126,7 @@ void initialize_systray( BOOL using_root, BOOL arg_enable_shell )
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
+    show_systray = arg_show_systray;
     enable_shell = arg_enable_shell;
     enable_taskbar = enable_shell || !using_root;
 
