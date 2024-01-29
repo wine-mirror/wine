@@ -5690,6 +5690,16 @@ static void test_dxgi_device_manager(void)
         return;
     }
 
+    hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+                           NULL, 0, D3D11_SDK_VERSION, &d3d11_dev, NULL, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create D3D11 device object.\n");
+        return;
+    }
+    ok(hr == S_OK, "D3D11CreateDevice failed: %#lx.\n", hr);
+    EXPECT_REF(d3d11_dev, 1);
+
     hr = pMFCreateDXGIDeviceManager(NULL, &manager);
     ok(hr == E_POINTER, "MFCreateDXGIDeviceManager should failed: %#lx.\n", hr);
 
@@ -5720,11 +5730,6 @@ static void test_dxgi_device_manager(void)
 
     hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, 0);
     ok(hr == E_HANDLE, "Unexpected hr %#lx.\n", hr);
-
-    hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
-                           NULL, 0, D3D11_SDK_VERSION, &d3d11_dev, NULL, NULL);
-    ok(hr == S_OK, "D3D11CreateDevice failed: %#lx.\n", hr);
-    EXPECT_REF(d3d11_dev, 1);
 
     hr = IMFDXGIDeviceManager_ResetDevice(manager, (IUnknown *)d3d11_dev, token - 1);
     ok(hr == E_INVALIDARG, "IMFDXGIDeviceManager_ResetDevice should failed: %#lx.\n", hr);
