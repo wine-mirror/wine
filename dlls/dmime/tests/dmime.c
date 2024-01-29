@@ -4575,6 +4575,20 @@ static void test_segment_state(void)
     ok(state != tmp_state, "got %p\n", state);
     IDirectMusicSegmentState_Release(tmp_state);
 
+    graph = (void *)0xdeadbeef;
+    hr = IDirectMusicSegmentState_QueryInterface(state, &IID_IDirectMusicGraph, (void **)&graph);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr == S_OK)
+    {
+        IDirectMusicTool *segment_state_tool;
+
+        hr = IDirectMusicGraph_GetTool(graph, 0, &segment_state_tool);
+        ok(hr == E_NOTIMPL, "got %#lx\n", hr);
+        if (SUCCEEDED(hr)) IDirectMusicTool_Release(segment_state_tool);
+        IDirectMusicGraph_Release(graph);
+    }
+
     tmp_state = (void *)0xdeadbeef;
     hr = IDirectMusicPerformance_GetSegmentState(performance, &tmp_state, 0);
     ok(hr == S_OK || broken(hr == DMUS_E_NOT_FOUND) /* sometimes on Windows */, "got %#lx\n", hr);
