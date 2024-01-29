@@ -692,19 +692,21 @@ static void check_mft_set_input_type_required_(int line, IMFTransform *transform
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 
-static void check_mft_set_input_type(IMFTransform *transform, const struct attribute_desc *attributes)
+#define check_mft_set_input_type(a, b) check_mft_set_input_type_(__LINE__, a, b, FALSE)
+static void check_mft_set_input_type_(int line, IMFTransform *transform, const struct attribute_desc *attributes, BOOL todo)
 {
     IMFMediaType *media_type;
     HRESULT hr;
 
     hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
     init_media_type(media_type, attributes, -1);
 
     hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
-    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
     IMFMediaType_Release(media_type);
 }
@@ -7349,6 +7351,28 @@ static void test_video_processor(void)
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 2),
         {0},
     };
+    const struct attribute_desc nv12_no_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 82, 84),
+        {0},
+    };
+    const struct attribute_desc nv12_with_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        {0},
+    };
+    const struct attribute_desc rgb32_no_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 82, 84),
+        {0},
+    };
     const MFT_OUTPUT_STREAM_INFO initial_output_info = {0};
     const MFT_INPUT_STREAM_INFO initial_input_info = {0};
     MFT_OUTPUT_STREAM_INFO output_info = {0};
@@ -7909,6 +7933,29 @@ static void test_video_processor(void)
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %ld\n", ret);
+
+
+    /* check that it is possible to change input media type frame size using geometric aperture */
+
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    check_mft_set_input_type(transform, nv12_no_aperture);
+    check_mft_get_input_current_type(transform, nv12_no_aperture);
+
+    check_mft_set_output_type(transform, rgb32_no_aperture, S_OK);
+    check_mft_get_output_current_type(transform, rgb32_no_aperture);
+
+    check_mft_set_input_type_(__LINE__, transform, nv12_with_aperture, TRUE);
+    check_mft_get_input_current_type_(__LINE__, transform, nv12_with_aperture, TRUE, FALSE);
+
+    /* output type is the same as before */
+    check_mft_get_output_current_type(transform, rgb32_no_aperture);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %ld\n", ret);
+
 
 failed:
     winetest_pop_context();
