@@ -53,6 +53,7 @@ DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 DEFINE_GUID(SID_SContainerDispatch,0xb722be00,0x4e68,0x101b,0xa2,0xbc,0x00,0xaa,0x00,0x40,0x47,0x70);
 DEFINE_GUID(outer_test_iid,0xabcabc00,0,0,0,0,0,0,0,0,0,0x66);
+extern const IID IID_IActiveScriptSite;
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -8730,8 +8731,11 @@ static void test_submit(void)
 static void test_QueryService(IHTMLDocument2 *doc, BOOL success)
 {
     IHTMLWindow2 *window, *sp_window;
+    IOleCommandTarget *cmdtarget;
+    IHTMLDocument2 *doc_node;
     IServiceProvider *sp;
     IHlinkFrame *hf;
+    IUnknown *unk;
     HRESULT hres;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&sp);
@@ -8747,6 +8751,9 @@ static void test_QueryService(IHTMLDocument2 *doc, BOOL success)
     ok(hres == S_OK, "QueryService(IID_IHlinkFrame) failed: %08lx\n", hres);
     ok(hf == &HlinkFrame, "hf != HlinkFrame\n");
     IHlinkFrame_Release(hf);
+
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == E_NOINTERFACE, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) returned: %08lx\n", hres);
 
     IServiceProvider_Release(sp);
 
@@ -8766,8 +8773,28 @@ static void test_QueryService(IHTMLDocument2 *doc, BOOL success)
     ok(hf == &HlinkFrame, "hf != HlinkFrame\n");
     IHlinkFrame_Release(hf);
 
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == E_NOINTERFACE, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) returned: %08lx\n", hres);
+
     IServiceProvider_Release(sp);
+
+    hres = IHTMLWindow2_get_document(window, &doc_node);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
     IHTMLWindow2_Release(window);
+
+    hres = IHTMLDocument2_QueryInterface(doc_node, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    IHTMLDocument2_Release(doc_node);
+
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) failed: %08lx\n", hres);
+    ok(cmdtarget != NULL, "cmdtarget == NULL\n");
+    hres = IOleCommandTarget_QueryInterface(cmdtarget, &IID_IActiveScriptSite, (void**)&unk);
+    ok(hres == S_OK, "Command Target QI for IActiveScriptSite failed: %08lx\n", hres);
+    IUnknown_Release(unk);
+
+    IOleCommandTarget_Release(cmdtarget);
+    IServiceProvider_Release(sp);
 }
 
 static void test_HTMLDocument_StreamLoad(void)
@@ -9281,8 +9308,10 @@ static BOOL check_ie(void)
 static void test_ServiceProvider(void)
 {
     IHTMLDocument3 *doc3, *doc3_2;
+    IOleCommandTarget *cmdtarget;
     IServiceProvider *provider;
     IHTMLDocument2 *doc, *doc2;
+    IHTMLWindow2 *window;
     IUnknown *unk;
     HRESULT hres;
 
@@ -9318,6 +9347,29 @@ static void test_ServiceProvider(void)
     ok(hres == S_OK, "QueryService(HTMLEditServices) failed: %08lx\n", hres);
     IUnknown_Release(unk);
 
+    hres = IServiceProvider_QueryService(provider, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == E_NOINTERFACE, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) returned: %08lx\n", hres);
+    IServiceProvider_Release(provider);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &doc2);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    hres = IHTMLDocument2_QueryInterface(doc2, &IID_IServiceProvider, (void**)&provider);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    IHTMLDocument2_Release(doc2);
+
+    hres = IServiceProvider_QueryService(provider, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) failed: %08lx\n", hres);
+    ok(cmdtarget != NULL, "cmdtarget == NULL\n");
+    hres = IOleCommandTarget_QueryInterface(cmdtarget, &IID_IActiveScriptSite, (void**)&unk);
+    ok(hres == S_OK, "Command Target QI for IActiveScriptSite failed: %08lx\n", hres);
+    IUnknown_Release(unk);
+
+    IOleCommandTarget_Release(cmdtarget);
     IServiceProvider_Release(provider);
     release_document(doc);
 }

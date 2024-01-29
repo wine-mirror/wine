@@ -74,6 +74,7 @@ struct ScriptHost {
     IActiveScriptSiteUIControl     IActiveScriptSiteUIControl_iface;
     IActiveScriptSiteDebug         IActiveScriptSiteDebug_iface;
     IServiceProvider               IServiceProvider_iface;
+    IOleCommandTarget              IOleCommandTarget_iface;
 
     LONG ref;
 
@@ -308,6 +309,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
+        *ppv = &This->IOleCommandTarget_iface;
     }else if(IsEqualGUID(&IID_ICanHandleException, riid)) {
         TRACE("(%p)->(IID_ICanHandleException not supported %p)\n", This, ppv);
         return E_NOINTERFACE;
@@ -688,6 +692,57 @@ static const IServiceProviderVtbl ASServiceProviderVtbl = {
     ASServiceProvider_QueryService
 };
 
+static inline ScriptHost *impl_from_IOleCommandTarget(IOleCommandTarget *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IOleCommandTarget_iface);
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
+{
+    ScriptHost *This = impl_from_IOleCommandTarget(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, ppv);
+}
+
+static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    ScriptHost *This = impl_from_IOleCommandTarget(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    ScriptHost *This = impl_from_IOleCommandTarget(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    ScriptHost *This = impl_from_IOleCommandTarget(iface);
+
+    FIXME("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    ScriptHost *This = impl_from_IOleCommandTarget(iface);
+
+    FIXME("(%p)->(%s %ld %ld %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
+
+    return E_NOTIMPL;
+}
+
+static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    OleCommandTarget_QueryInterface,
+    OleCommandTarget_AddRef,
+    OleCommandTarget_Release,
+    OleCommandTarget_QueryStatus,
+    OleCommandTarget_Exec
+};
+
 static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
 {
     IActiveScript *script;
@@ -704,6 +759,7 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     ret->IActiveScriptSiteUIControl_iface.lpVtbl = &ActiveScriptSiteUIControlVtbl;
     ret->IActiveScriptSiteDebug_iface.lpVtbl = &ActiveScriptSiteDebugVtbl;
     ret->IServiceProvider_iface.lpVtbl = &ASServiceProviderVtbl;
+    ret->IOleCommandTarget_iface.lpVtbl = &OleCommandTargetVtbl;
     ret->ref = 1;
     ret->window = window;
     ret->script_state = SCRIPTSTATE_UNINITIALIZED;
@@ -1455,6 +1511,16 @@ IDispatch *get_script_disp(ScriptHost *script_host)
         return NULL;
 
     return disp;
+}
+
+IActiveScriptSite *get_first_script_site(HTMLInnerWindow *window)
+{
+    if(list_empty(&window->script_hosts)) {
+        ScriptHost *script_host = create_script_host(window, &CLSID_JScript);
+        if(!script_host)
+            return NULL;
+    }
+    return &LIST_ENTRY(list_head(&window->script_hosts), ScriptHost, entry)->IActiveScriptSite_iface;
 }
 
 static EventTarget *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *script_elem)

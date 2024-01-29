@@ -186,6 +186,7 @@ static BOOL is_ie9plus, is_english;
 static IHTMLDocument2 *notif_doc;
 static IOleDocumentView *view;
 static IDispatchEx *window_dispex;
+static IHTMLDocument2 *doc_obj;
 static BOOL doc_complete;
 static IDispatch *script_disp;
 static BOOL ax_objsafe;
@@ -1924,7 +1925,8 @@ static IHTMLDocument2 *create_document(void)
     todo_wine
 #endif
     ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
-    return SUCCEEDED(hres) ? doc : NULL;
+    doc_obj = SUCCEEDED(hres) ? doc : NULL;
+    return doc_obj;
 }
 
 static void load_string(IHTMLDocument2 *doc, const char *str)
@@ -3076,9 +3078,33 @@ static void test_ui(void)
 
 static void test_sp(void)
 {
-    IServiceProvider *sp;
+    IServiceProvider *sp, *doc_sp, *doc_obj_sp, *window_sp;
+    IOleCommandTarget *cmdtarget;
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *doc;
     IUnknown *unk;
     HRESULT hres;
+
+    hres = IDispatchEx_QueryInterface(window_dispex, &IID_IHTMLWindow2, (void**)&window);
+    ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
+    ok(window != NULL, "window is NULL\n");
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IServiceProvider, (void**)&window_sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    ok(window_sp != NULL, "window service provider is NULL\n");
+
+    hres = IHTMLWindow2_get_document(window, &doc);
+    ok(hres == S_OK, "QueryInterface(IHTMLDocument2) failed: %08lx\n", hres);
+    ok(doc != NULL, "doc is NULL\n");
+    ok(doc != doc_obj, "doc node == doc obj\n");
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IServiceProvider, (void**)&doc_sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    ok(doc_sp != NULL, "doc service provider is NULL\n");
+    IHTMLDocument2_Release(doc);
+    hres = IHTMLDocument2_QueryInterface(doc_obj, &IID_IServiceProvider, (void**)&doc_obj_sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    ok(doc_obj_sp != NULL, "doc_obj service provider is NULL\n");
 
     hres = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
     ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
@@ -3087,7 +3113,60 @@ static void test_sp(void)
     ok(hres == S_OK, "Could not get SID_SContainerDispatch service: %08lx\n", hres);
     IUnknown_Release(unk);
 
+    hres = IServiceProvider_QueryService(sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(doc_sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(doc_obj_sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(window_sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IActiveScriptSite->IOleCommandTarget) failed: %08lx\n", hres);
+    ok(cmdtarget != NULL, "IOleCommandTarget is NULL\n");
+
+    hres = IActiveScriptSite_QueryInterface(site, &IID_IOleCommandTarget, (void**)&unk);
+    ok(hres == S_OK, "QueryInterface(IOleCommandTarget) failed: %08lx\n", hres);
+    ok(unk != NULL, "QueryInterface(IOleCommandTarget) is NULL\n");
+    ok(cmdtarget == (IOleCommandTarget*)unk, "cmdtarget from QS not same as from QI\n");
+    IUnknown_Release(unk);
+    hres = IServiceProvider_QueryService(doc_sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&unk);
+    ok(hres == S_OK, "QueryService(IActiveScriptSite->IOleCommandTarget) failed: %08lx\n", hres);
+    ok(cmdtarget == (IOleCommandTarget*)unk, "IActiveScriptSite service from document provider not same as site's\n");
+    IUnknown_Release(unk);
+    hres = IServiceProvider_QueryService(doc_obj_sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(IActiveScriptSite->IOleCommandTarget) returned: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(window_sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "QueryService(IActiveScriptSite->IOleCommandTarget) returned: %08lx\n", hres);
+
+    if(site2) {
+        IOleCommandTarget *cmdtarget2;
+        IServiceProvider *sp2;
+
+        hres = IActiveScriptSite_QueryInterface(site2, &IID_IServiceProvider, (void**)&sp2);
+        ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+
+        hres = IServiceProvider_QueryService(sp2, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget2);
+        ok(hres == S_OK, "QueryService(IActiveScriptSite->IOleCommandTarget) failed: %08lx\n", hres);
+        ok(cmdtarget2 != NULL, "IOleCommandTarget is NULL\n");
+
+        hres = IActiveScriptSite_QueryInterface(site2, &IID_IOleCommandTarget, (void**)&unk);
+        ok(hres == S_OK, "QueryInterface(IOleCommandTarget) failed: %08lx\n", hres);
+        ok(unk != NULL, "QueryInterface(IOleCommandTarget) is NULL\n");
+        ok(cmdtarget2 != (IOleCommandTarget*)unk, "cmdtarget from site2's QS same as from QI\n");
+        ok(cmdtarget2 == cmdtarget, "site1's cmdtarget not same as site2's\n");
+        IOleCommandTarget_Release(cmdtarget2);
+        IServiceProvider_Release(sp2);
+        IUnknown_Release(unk);
+    }
+
+    IOleCommandTarget_Release(cmdtarget);
+    IServiceProvider_Release(window_sp);
+    IServiceProvider_Release(doc_obj_sp);
+    IServiceProvider_Release(doc_sp);
     IServiceProvider_Release(sp);
+    IHTMLWindow2_Release(window);
 }
 
 static void test_script_run(void)
@@ -3712,6 +3791,7 @@ static HRESULT WINAPI ActiveScriptParse2_ParseScriptText(IActiveScriptParse *ifa
         ok(!lstrcmpW(pstrItemName, L"window"), "pstrItemName = %s\n", wine_dbgstr_w(pstrItemName));
         ok(!lstrcmpW(pstrDelimiter, L"</SCRIPT>"), "pstrDelimiter = %s\n", wine_dbgstr_w(pstrDelimiter));
         ok(dwFlags == (SCRIPTTEXT_ISVISIBLE | SCRIPTTEXT_HOSTMANAGESSOURCE), "dwFlags = %08lx\n", dwFlags);
+        test_sp();
         return S_OK;
     }
 
@@ -4610,13 +4690,6 @@ static void test_simple_script(void)
 
     test_exec_script(doc, L"execScript call", L"TestScript1");
 
-    if(site)
-        IActiveScriptSite_Release(site);
-    if(site2)
-        IActiveScriptSite_Release(site2);
-    if(window_dispex)
-        IDispatchEx_Release(window_dispex);
-
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
 
@@ -4647,6 +4720,16 @@ static void test_simple_script(void)
     CHECK_CALLED(SetScriptState_DISCONNECTED);
     CHECK_CALLED(Close);
     CHECK_CALLED(Close2);
+
+    if(site)
+        IActiveScriptSite_Release(site);
+    if(site2)
+        IActiveScriptSite_Release(site2);
+    if(window_dispex)
+        IDispatchEx_Release(window_dispex);
+    site = NULL;
+    site2 = NULL;
+    window_dispex = NULL;
 
     hres = IHTMLWindow2_get_document(window, &doc);
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);

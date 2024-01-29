@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlscript.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -359,6 +360,21 @@ static HRESULT WINAPI DocNodeServiceProvider_QueryService(IServiceProvider *ifac
         REFIID riid, void **ppv)
 {
     HTMLDocumentNode *This = HTMLDocumentNode_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(&IID_IActiveScriptSite, guidService)) {
+        IActiveScriptSite *site;
+
+        TRACE("IID_IActiveScriptSite\n");
+
+        if(!This->window) {
+            FIXME("No window\n");
+            return E_NOTIMPL;
+        }
+
+        if(!(site = get_first_script_site(This->window)))
+            return E_OUTOFMEMORY;
+        return IActiveScriptSite_QueryInterface(site, riid, ppv);
+    }
 
     if(IsEqualGUID(&SID_SInternetHostSecurityManager, guidService)) {
         TRACE("SID_SInternetHostSecurityManager\n");

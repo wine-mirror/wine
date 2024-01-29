@@ -35,6 +35,8 @@
 #include "shdeprecated.h"
 #include "dispex.h"
 
+extern const IID IID_IActiveScriptSite;
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -3398,12 +3400,15 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLPerformance *perf, *perf2;
     IOmHistory *history, *history2;
     IHTMLScreen *screen, *screen2;
+    IOleCommandTarget *cmdtarget;
     IHTMLWindow2 *self, *window2;
     IEventTarget *event_target;
+    IUnknown *site, *site2;
     DISPPARAMS dp = { 0 };
     IHTMLWindow7 *window7;
     IHTMLWindow6 *window6;
     IHTMLWindow5 *window5;
+    IServiceProvider *sp;
     IDispatchEx *dispex;
     IHTMLElement *body;
     VARIANT res, arg;
@@ -3565,6 +3570,16 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_self failed: %08lx\n", hres);
     ok(self != NULL, "self == NULL\n");
 
+    /* And script sites */
+    hres = IHTMLDocument2_QueryInterface(doc_node, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) failed: %08lx\n", hres);
+    hres = IOleCommandTarget_QueryInterface(cmdtarget, &IID_IActiveScriptSite, (void**)&site);
+    ok(hres == S_OK, "Command Target QI for IActiveScriptSite failed: %08lx\n", hres);
+    IOleCommandTarget_Release(cmdtarget);
+    IServiceProvider_Release(sp);
+
     /* Add props to location, since it gets lost on navigation, despite being same object */
     bstr = SysAllocString(L"wineTestProp");
     hres = IHTMLLocation_QueryInterface(location, &IID_IDispatchEx, (void**)&dispex);
@@ -3631,15 +3646,27 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_document(window, &doc_node2);
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
     ok(doc_node != doc_node2, "doc_node == doc_node2\n");
-    IHTMLDocument2_Release(doc_node2);
 
     hres = IHTMLDocument2_get_parentWindow(doc_node, &window2);
     todo_wine
     ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
     todo_wine
     ok(window == window2, "window != window2\n");
-    IHTMLDocument2_Release(doc_node);
     if(hres == S_OK) IHTMLWindow2_Release(window2);
+
+    hres = IHTMLDocument2_QueryInterface(doc_node2, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    hres = IServiceProvider_QueryService(sp, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    ok(hres == S_OK, "QueryService(IID_IActiveScriptSite->IID_IOleCommandTarget) failed: %08lx\n", hres);
+    hres = IOleCommandTarget_QueryInterface(cmdtarget, &IID_IActiveScriptSite, (void**)&site2);
+    ok(hres == S_OK, "Command Target QI for IActiveScriptSite failed: %08lx\n", hres);
+    ok(site != site2, "site == site2\n");
+    IOleCommandTarget_Release(cmdtarget);
+    IHTMLDocument2_Release(doc_node2);
+    IHTMLDocument2_Release(doc_node);
+    IServiceProvider_Release(sp);
+    IUnknown_Release(site2);
+    IUnknown_Release(site);
 
     hres = IHTMLWindow2_get_location(window, &location2);
     ok(hres == S_OK, "get_location failed: %08lx\n", hres);
