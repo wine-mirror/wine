@@ -551,6 +551,16 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
     }
 }
 
+int async_queue_has_waiting_asyncs( struct async_queue *queue )
+{
+    struct async *async;
+
+    LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
+        if (!async->unknown_status) return 1;
+
+    return 0;
+}
+
 /* check if an async operation is waiting to be alerted */
 int async_waiting( struct async_queue *queue )
 {

@@ -237,6 +237,7 @@ extern void set_async_pending( struct async *async );
 extern void async_set_initial_status( struct async *async, unsigned int status );
 extern void async_wake_obj( struct async *async );
 extern int async_waiting( struct async_queue *queue );
+extern int async_queue_has_waiting_asyncs( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
 extern void async_request_complete( struct async *async, unsigned int status, data_size_t result,
                                     data_size_t out_size, void *out_data );

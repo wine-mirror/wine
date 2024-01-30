@@ -3106,6 +3106,29 @@ static test_setup tests [] =
     }
 };
 
+struct send_udp_thread_param
+{
+    int sock;
+    HANDLE start_event;
+};
+
+static DWORD WINAPI send_udp_thread( void *param )
+{
+    struct send_udp_thread_param *p = param;
+    static char buf[256];
+    unsigned int i;
+    int ret;
+
+    WaitForSingleObject( p->start_event, INFINITE );
+    for (i = 0; i < 256; ++i)
+    {
+        ret = send( p->sock, buf, sizeof(buf), 0 );
+        ok( ret == sizeof(buf), "got %d, error %u, i %u.\n", ret, WSAGetLastError(), i );
+    }
+
+    return 0;
+}
+
 static void test_UDP(void)
 {
     /* This function tests UDP sendto() and recvfrom(). UDP is unreliable, so it is
@@ -3117,6 +3140,9 @@ static void test_UDP(void)
     int ss, i, n_recv, n_sent, ret;
     struct sockaddr_in addr;
     int sock;
+    struct send_udp_thread_param udp_thread_param;
+    HANDLE thread;
+
 
     memset (buf,0,sizeof(buf));
     for ( i = NUM_UDP_PEERS - 1; i >= 0; i-- ) {
@@ -3173,6 +3199,22 @@ static void test_UDP(void)
         ret = send( sock, buf, sizeof(buf), 0 );
         ok( ret == sizeof(buf), "got %d, error %u.\n", ret, WSAGetLastError() );
     }
+
+    /* Test sending packets in parallel (mostly a regression test for Wine async handling race conditions). */
+    set_blocking( sock, FALSE );
+
+    udp_thread_param.sock = sock;
+    udp_thread_param.start_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    thread = CreateThread( NULL, 0, send_udp_thread, &udp_thread_param, 0, NULL );
+    SetEvent( udp_thread_param.start_event );
+    for (i = 0; i < 256; ++i)
+    {
+        ret = send( sock, buf, sizeof(buf), 0 );
+        ok( ret == sizeof(buf), "got %d, error %u, i %u.\n", ret, WSAGetLastError(), i );
+    }
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+    CloseHandle( udp_thread_param.start_event );
 
     closesocket(sock);
 }
