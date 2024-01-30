@@ -185,6 +185,30 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     return true;
 }
 
+static gboolean transform_sink_query_caps(struct wg_transform *transform, GstQuery *query)
+{
+    GstCaps *caps, *filter, *temp;
+
+    GST_LOG("transform %p, query %"GST_PTR_FORMAT, transform, query);
+
+    gst_query_parse_caps(query, &filter);
+    if (!(caps = wg_format_to_caps(&transform->output_format)))
+        return false;
+
+    if (filter)
+    {
+        temp = gst_caps_intersect(caps, filter);
+        gst_caps_unref(caps);
+        caps = temp;
+    }
+
+    GST_INFO("Returning caps %" GST_PTR_FORMAT, caps);
+
+    gst_query_set_caps_result(query, caps);
+    gst_caps_unref(caps);
+    return true;
+}
+
 static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
@@ -198,27 +222,9 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
                 return true;
             break;
         case GST_QUERY_CAPS:
-        {
-            GstCaps *caps, *filter, *temp;
-
-            gst_query_parse_caps(query, &filter);
-            if (!(caps = wg_format_to_caps(&transform->output_format)))
-                break;
-
-            if (filter)
-            {
-                temp = gst_caps_intersect(caps, filter);
-                gst_caps_unref(caps);
-                caps = temp;
-            }
-
-            GST_INFO("Returning caps %" GST_PTR_FORMAT, caps);
-
-            gst_query_set_caps_result(query, caps);
-            gst_caps_unref(caps);
-            return true;
-        }
-
+            if (transform_sink_query_caps(transform, query))
+                return true;
+            break;
         default:
             GST_WARNING("Ignoring \"%s\" query.", gst_query_type_get_name(query->type));
             break;
