@@ -688,37 +688,46 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 
 
 /***********************************************************************
+ *           setup_raise_exception
+ */
+static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    struct exc_stack_layout *stack;
+    void *stack_ptr = (void *)(SP_sig(sigcontext) & ~15);
+    NTSTATUS status;
+
+    status = send_debug_event( rec, context, TRUE );
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( context, sigcontext );
+        return;
+    }
+
+    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Pc -= 4;
+
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+    stack->rec = *rec;
+    stack->context = *context;
+
+    SP_sig(sigcontext) = (ULONG_PTR)stack;
+    PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
+    REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
+}
+
+
+/***********************************************************************
  *           setup_exception
  *
  * Modify the signal context to call the exception raise function.
  */
 static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    struct exc_stack_layout *stack;
-    void *stack_ptr = (void *)(SP_sig(sigcontext) & ~15);
     CONTEXT context;
-    NTSTATUS status;
 
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
     save_context( &context, sigcontext );
-
-    status = send_debug_event( rec, &context, TRUE );
-    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
-    {
-        restore_context( &context, sigcontext );
-        return;
-    }
-
-    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc -= 4;
-
-    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
-    stack->rec = *rec;
-    stack->context = context;
-
-    SP_sig(sigcontext) = (ULONG_PTR)stack;
-    PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
-    REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
+    setup_raise_exception( sigcontext, rec, &context );
 }
 
 
@@ -1069,6 +1078,10 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
     ucontext_t *context = sigcontext;
+    CONTEXT ctx;
+
+    rec.ExceptionAddress = (void *)PC_sig(context);
+    save_context( &ctx, sigcontext );
 
     switch (siginfo->si_code)
     {
@@ -1082,22 +1095,20 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             !(PC_sig( context ) & 3) &&
             *(ULONG *)PC_sig( context ) == 0xd43e0060UL) /* brk #0xf003 -> __fastfail */
         {
-            CONTEXT ctx;
-            save_context( &ctx, sigcontext );
             rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            rec.ExceptionAddress = (void *)ctx.Pc;
             rec.ExceptionFlags = EH_NONCONTINUABLE;
             rec.NumberParameters = 1;
             rec.ExceptionInformation[0] = ctx.X[0];
             NtRaiseException( &rec, &ctx, FALSE );
             return;
         }
-        PC_sig( context ) += 4;  /* skip the brk instruction */
+        ctx.Pc += 4;  /* skip the brk instruction */
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         rec.NumberParameters = 1;
         break;
     }
-    setup_exception( sigcontext, &rec );
+
+    setup_raise_exception( sigcontext, &rec, &ctx );
 }
 
 
