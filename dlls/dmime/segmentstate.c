@@ -56,6 +56,7 @@ struct segment_state
     MUSIC_TIME played;
     BOOL auto_download;
     DWORD repeats, actual_repeats;
+    DWORD track_flags;
 
     struct list tracks;
 };
@@ -385,12 +386,13 @@ static HRESULT segment_state_play_until(struct segment_state *This, IDirectMusic
     }
 
     This->played = played;
+    This->track_flags &= ~(DMUS_TRACKF_START|DMUS_TRACKF_DIRTY);
     if (This->start_point + This->played >= This->end_point) return S_FALSE;
     return S_OK;
 }
 
 static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusicPerformance8 *performance,
-        REFERENCE_TIME duration, DWORD track_flags)
+        REFERENCE_TIME duration)
 {
     IDirectMusicSegmentState *iface = (IDirectMusicSegmentState *)&This->IDirectMusicSegmentState8_iface;
     MUSIC_TIME next_time;
@@ -404,7 +406,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             time + duration, &next_time)))
         return hr;
 
-    while ((hr = segment_state_play_until(This, performance, next_time, track_flags)) == S_FALSE)
+    while ((hr = segment_state_play_until(This, performance, next_time, This->track_flags)) == S_FALSE)
     {
         if (!This->actual_repeats)
         {
@@ -424,6 +426,7 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
             break;
         This->start_time += This->end_point - This->start_point;
         This->actual_repeats--;
+        This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
 
         if (next_time <= This->start_time || This->end_point <= This->start_point) break;
     }
@@ -444,8 +447,8 @@ HRESULT segment_state_play(IDirectMusicSegmentState *iface, IDirectMusicPerforma
         return hr;
     }
 
-    if (FAILED(hr = segment_state_play_chunk(This, performance, 10000000,
-            DMUS_TRACKF_START | DMUS_TRACKF_SEEK | DMUS_TRACKF_DIRTY)))
+    This->track_flags = DMUS_TRACKF_START | DMUS_TRACKF_SEEK | DMUS_TRACKF_DIRTY;
+    if (FAILED(hr = segment_state_play_chunk(This, performance, 10000000)))
         return hr;
 
     if (hr == S_FALSE) return S_OK;
@@ -458,7 +461,7 @@ HRESULT segment_state_tick(IDirectMusicSegmentState *iface, IDirectMusicPerforma
 
     TRACE("%p %p\n", iface, performance);
 
-    return segment_state_play_chunk(This, performance, 10000000, 0);
+    return segment_state_play_chunk(This, performance, 10000000);
 }
 
 HRESULT segment_state_stop(IDirectMusicSegmentState *iface, IDirectMusicPerformance8 *performance)

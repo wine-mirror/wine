@@ -147,6 +147,7 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_dat
         MUSIC_TIME start_time, MUSIC_TIME end_time, MUSIC_TIME time_offset, DWORD track_flags,
         IDirectMusicPerformance *performance, IDirectMusicSegmentState *segment_state, DWORD track_id)
 {
+    static const DWORD handled_track_flags = DMUS_TRACKF_START | DMUS_TRACKF_SEEK | DMUS_TRACKF_DIRTY | DMUS_TRACKF_LOOP;
     struct wave_track *This = impl_from_IDirectMusicTrack8(iface);
     LONG volume = This->header.lVolume;
     IDirectMusicGraph *graph;
@@ -157,9 +158,11 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_dat
     TRACE("(%p, %p, %ld, %ld, %ld, %#lx, %p, %p, %ld)\n", This, state_data, start_time, end_time,
             time_offset, track_flags, performance, segment_state, track_id);
 
-    if (track_flags) FIXME("track_flags %#lx not implemented\n", track_flags);
+    if (track_flags & ~handled_track_flags)
+        FIXME("track_flags %#lx not implemented\n", track_flags & ~handled_track_flags);
     if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
-    if (!(track_flags & DMUS_TRACKF_START)) return S_OK;
+
+    if (!(track_flags & (DMUS_TRACKF_START | DMUS_TRACKF_LOOP))) return S_OK;
 
     if (FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
             &IID_IDirectMusicGraph, (void **)&graph)))
