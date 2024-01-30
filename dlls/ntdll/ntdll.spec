@@ -711,6 +711,7 @@
 @ stdcall RtlFreeThreadActivationContextStack()
 @ stdcall RtlFreeUnicodeString(ptr)
 @ stdcall RtlFreeUserStack(ptr)
+@ stdcall RtlGetDeviceFamilyInfoEnum(ptr ptr ptr)
 @ stdcall RtlGUIDFromString(ptr ptr)
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
