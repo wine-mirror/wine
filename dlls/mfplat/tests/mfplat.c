@@ -7765,9 +7765,13 @@ static void test_MFCreateDXSurfaceBuffer(void)
         return;
     }
 
-    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!d3d)
+    {
+        skip("Failed to create a D3D9 object, skipping tests.\n");
+        return;
+    }
+    window = create_window();
     if (!(device = create_d3d9_device(d3d, window)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
@@ -9124,9 +9128,13 @@ static void test_sample_allocator_d3d9(void)
     if (!pMFCreateVideoSampleAllocatorEx)
         return;
 
-    window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!d3d9, "Failed to create a D3D9 object.\n");
+    if (!d3d9)
+    {
+        skip("Failed to create a D3D9 object, skipping tests.\n");
+        return;
+    }
+    window = create_window();
     if (!(d3d9_device = create_d3d9_device(d3d9, window)))
     {
         skip("Failed to create a D3D9 device, skipping tests.\n");
