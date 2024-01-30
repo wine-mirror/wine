@@ -67,3 +67,16 @@ CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *conte
 
     return CR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           CM_Get_Device_Interface_PropertyW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, const DEVPROPKEY *property_key,
+                                                    DEVPROPTYPE *property_type, BYTE *property_buffer,
+                                                    ULONG *property_buffer_size, ULONG flags )
+{
+    FIXME("%s %p %p %p %p %ld stub!\n", debugstr_w(device_interface), property_key, property_type,
+          property_buffer, property_buffer_size, flags);
+
+    return CR_CALL_NOT_IMPLEMENTED;
+}
