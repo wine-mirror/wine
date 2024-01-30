@@ -233,6 +233,19 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
     return gst_pad_query_default(pad, parent, query);
 }
 
+static void transform_sink_event_caps(struct wg_transform *transform, GstEvent *event)
+{
+    GstCaps *caps;
+
+    gst_event_parse_caps(event, &caps);
+
+    transform->output_caps_changed = transform->output_caps_changed
+            || !gst_caps_is_always_compatible(transform->output_caps, caps);
+
+    gst_caps_unref(transform->output_caps);
+    transform->output_caps = gst_caps_ref(caps);
+}
+
 static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
@@ -241,22 +254,12 @@ static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent
 
     switch (event->type)
     {
-        case GST_EVENT_CAPS:
-        {
-            GstCaps *caps;
-
-            gst_event_parse_caps(event, &caps);
-
-            transform->output_caps_changed = transform->output_caps_changed
-                    || !gst_caps_is_always_compatible(transform->output_caps, caps);
-
-            gst_caps_unref(transform->output_caps);
-            transform->output_caps = gst_caps_ref(caps);
-            break;
-        }
-        default:
-            GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
-            break;
+    case GST_EVENT_CAPS:
+        transform_sink_event_caps(transform, event);
+        break;
+    default:
+        GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
+        break;
     }
 
     gst_event_unref(event);
