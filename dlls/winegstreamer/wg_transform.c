@@ -87,7 +87,7 @@ static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, Gst
     struct wg_transform *transform = gst_pad_get_element_private(pad);
     GstSample *sample;
 
-    GST_LOG("transform %p, buffer %p.", transform, buffer);
+    GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, buffer);
 
     if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, NULL)))
     {
@@ -107,7 +107,7 @@ static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, Gst
 
 static gboolean transform_src_query_latency(struct wg_transform *transform, GstQuery *query)
 {
-    GST_LOG("transform %p, query %p", transform, query);
+    GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, query);
     gst_query_set_latency(query, transform->attrs.low_latency, 0, 0);
     return true;
 }
@@ -121,6 +121,7 @@ static gboolean transform_src_query_cb(GstPad *pad, GstObject *parent, GstQuery 
     case GST_QUERY_LATENCY:
         return transform_src_query_latency(transform, query);
     default:
+        GST_TRACE("transform %p, ignoring %"GST_PTR_FORMAT, transform, query);
         return gst_pad_query_default(pad, parent, query);
     }
 }
@@ -134,6 +135,8 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     GstBufferPool *pool;
     GstVideoInfo info;
     GstCaps *caps;
+
+    GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, query);
 
     gst_query_parse_allocation(query, &caps, &needs_pool);
     if (stream_type_from_caps(caps) != GST_STREAM_TYPE_VIDEO || !needs_pool)
@@ -157,7 +160,7 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     }
 
     if (!(config = gst_buffer_pool_get_config(pool)))
-        GST_ERROR("Failed to get pool %p config.", pool);
+        GST_ERROR("Failed to get %"GST_PTR_FORMAT" config.", pool);
     else
     {
         gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
@@ -168,17 +171,17 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
                 info.size, 0, 0);
         gst_buffer_pool_config_set_allocator(config, transform->allocator, NULL);
         if (!gst_buffer_pool_set_config(pool, config))
-            GST_ERROR("Failed to set pool %p config.", pool);
+            GST_ERROR("Failed to set %"GST_PTR_FORMAT" config.", pool);
     }
 
     /* Prevent pool reconfiguration, we don't want another alignment. */
     if (!gst_buffer_pool_set_active(pool, true))
-        GST_ERROR("Pool %p failed to activate.", pool);
+        GST_ERROR("%"GST_PTR_FORMAT" failed to activate.", pool);
 
     gst_query_add_allocation_pool(query, pool, info.size, 0, 0);
     gst_query_add_allocation_param(query, transform->allocator, NULL);
 
-    GST_INFO("Proposing pool %p, buffer size %#zx, allocator %p, for query %p.",
+    GST_INFO("Proposing %"GST_PTR_FORMAT", buffer size %#zx, %"GST_PTR_FORMAT", for %"GST_PTR_FORMAT,
             pool, info.size, transform->allocator, query);
 
     g_object_unref(pool);
@@ -189,7 +192,7 @@ static gboolean transform_sink_query_caps(struct wg_transform *transform, GstQue
 {
     GstCaps *caps, *filter, *temp;
 
-    GST_LOG("transform %p, query %"GST_PTR_FORMAT, transform, query);
+    GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, query);
 
     gst_query_parse_caps(query, &filter);
     if (!(caps = wg_format_to_caps(&transform->output_format)))
@@ -213,29 +216,29 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
 
-    GST_LOG("transform %p, type \"%s\".", transform, gst_query_type_get_name(query->type));
-
     switch (query->type)
     {
-        case GST_QUERY_ALLOCATION:
-            if (transform_sink_query_allocation(transform, query))
-                return true;
-            break;
-        case GST_QUERY_CAPS:
-            if (transform_sink_query_caps(transform, query))
-                return true;
-            break;
-        default:
-            GST_WARNING("Ignoring \"%s\" query.", gst_query_type_get_name(query->type));
-            break;
+    case GST_QUERY_ALLOCATION:
+        if (transform_sink_query_allocation(transform, query))
+            return true;
+        break;
+    case GST_QUERY_CAPS:
+        if (transform_sink_query_caps(transform, query))
+            return true;
+        break;
+    default:
+        break;
     }
 
+    GST_TRACE("transform %p, ignoring %"GST_PTR_FORMAT, transform, query);
     return gst_pad_query_default(pad, parent, query);
 }
 
 static void transform_sink_event_caps(struct wg_transform *transform, GstEvent *event)
 {
     GstCaps *caps;
+
+    GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, event);
 
     gst_event_parse_caps(event, &caps);
 
@@ -250,15 +253,13 @@ static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
 
-    GST_LOG("transform %p, type \"%s\".", transform, GST_EVENT_TYPE_NAME(event));
-
     switch (event->type)
     {
     case GST_EVENT_CAPS:
         transform_sink_event_caps(transform, event);
         break;
     default:
-        GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
+        GST_TRACE("transform %p, ignoring %"GST_PTR_FORMAT, transform, event);
         break;
     }
 
@@ -601,7 +602,7 @@ NTSTATUS wg_transform_push_data(void *args)
     else
     {
         InterlockedIncrement(&sample->refcount);
-        GST_INFO("Wrapped %u/%u bytes from sample %p to buffer %p", sample->size, sample->max_size, sample, buffer);
+        GST_INFO("Wrapped %u/%u bytes from sample %p to %"GST_PTR_FORMAT, sample->size, sample->max_size, sample, buffer);
     }
 
     if (sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
@@ -708,7 +709,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
     if (!gst_buffer_map(buffer, &info, GST_MAP_READ))
     {
-        GST_ERROR("Failed to map buffer %p", buffer);
+        GST_ERROR("Failed to map buffer %"GST_PTR_FORMAT, buffer);
         sample->size = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -725,7 +726,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
     if (status)
     {
-        GST_ERROR("Failed to copy buffer %p", buffer);
+        GST_ERROR("Failed to copy buffer %"GST_PTR_FORMAT, buffer);
         sample->size = 0;
         return status;
     }
