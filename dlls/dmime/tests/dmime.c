@@ -3660,11 +3660,21 @@ static void test_wave_pmsg(unsigned num_repeats)
 
     for (i = 0; i <= num_repeats; i++)
     {
-        ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&wave);
-        todo_wine_if(num_repeats && ret)
-        ok(!ret, "got %#lx\n", ret);
-        if (ret) continue;
-        ok(wave->dwType == DMUS_PMSGT_WAVE, "got %p\n", wave);
+        /* Both native and builtin dmime queue messages for a given amount of time,
+         * then wait for these messages to be processed before queuing additional messages.
+         * However, Wine "wait" time is way smaller than native, and is hit before the 10
+         * reiterations in loop here.
+         * And moreover, Wine uses internal messages for this "wait" operation.
+         * Discard Wine's internal messages to be on par with native.
+         */
+        do
+        {
+            ret = test_tool_wait_message(tool, 2000, (DMUS_PMSG **)&wave);
+            ok(!ret, "got %#lx\n", ret);
+        } while (num_repeats && !ret && (wave->dwType >= 0x10 || wave->dwType == DMUS_PMSGT_DIRTY));
+        if (ret) break;
+
+        ok(wave->dwType == DMUS_PMSGT_WAVE, "got %p %lu\n", wave, wave->dwType);
         ok(wave->dwSize == sizeof(*wave), "got %lu\n", wave->dwSize);
         ok(!!wave->punkUser, "got %p\n", wave->punkUser);
         ok((wave->dwFlags & DMUS_PMSGF_REFTIME) && (wave->dwFlags & DMUS_PMSGF_MUSICTIME),
@@ -3672,7 +3682,6 @@ static void test_wave_pmsg(unsigned num_repeats)
         if (i == 0)
             mt_start_ref = wave->mtTime;
         else
-            todo_wine
             ok(wave->mtTime == mt_start_ref + length * i, "got %lu (%lu,%lu)\n", wave->mtTime, mt_start_ref, i * length);
         ok(wave->rtStartOffset == 0, "got %I64d\n", wave->rtStartOffset);
         ok(wave->rtDuration == 1000000, "got %I64d\n", wave->rtDuration);
@@ -3685,7 +3694,6 @@ static void test_wave_pmsg(unsigned num_repeats)
     }
 
     ret = test_tool_wait_message(tool, 500, &msg);
-    todo_wine_if(num_repeats)
     ok(!ret, "got %#lx\n", ret);
     if (!ret)
     {

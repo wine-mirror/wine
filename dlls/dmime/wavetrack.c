@@ -160,11 +160,11 @@ static HRESULT WINAPI wave_track_Play(IDirectMusicTrack8 *iface, void *state_dat
 
     if (track_flags & ~handled_track_flags)
         FIXME("track_flags %#lx not implemented\n", track_flags & ~handled_track_flags);
-    if (segment_state) FIXME("segment_state %p not implemented\n", segment_state);
-
     if (!(track_flags & (DMUS_TRACKF_START | DMUS_TRACKF_LOOP))) return S_OK;
 
-    if (FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
+    if (FAILED(hr = IDirectMusicSegmentState_QueryInterface(segment_state,
+            &IID_IDirectMusicGraph, (void **)&graph)) &&
+        FAILED(hr = IDirectMusicPerformance_QueryInterface(performance,
             &IID_IDirectMusicGraph, (void **)&graph)))
         return hr;
 

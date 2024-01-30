@@ -54,6 +54,10 @@ struct segment_state
     MUSIC_TIME start_point;
     MUSIC_TIME end_point;
     MUSIC_TIME played;
+
+    REFERENCE_TIME actual_duration;
+    MUSIC_TIME actual_end_point;
+
     BOOL auto_download;
     DWORD repeats, actual_repeats;
     DWORD track_flags;
@@ -227,12 +231,29 @@ static ULONG WINAPI segment_state_graph_Release(IDirectMusicGraph *iface)
 static HRESULT WINAPI segment_state_graph_StampPMsg(IDirectMusicGraph *iface, DMUS_PMSG *msg)
 {
     struct segment_state *This = impl_from_IDirectMusicGraph(iface);
+    HRESULT hr;
 
     TRACE("(%p, %p)\n", This, msg);
 
     if (!msg) return E_POINTER;
 
-    return IDirectMusicGraph_StampPMsg(This->parent_graph, msg);
+    hr = IDirectMusicGraph_StampPMsg(This->parent_graph, msg);
+    if (SUCCEEDED(hr))
+    {
+        switch (msg->dwType)
+        {
+        case DMUS_PMSGT_WAVE:
+            if (msg->dwFlags & (DMUS_PMSGF_REFTIME | DMUS_PMSGF_MUSICTIME))
+            {
+                if (((DMUS_WAVE_PMSG *)msg)->rtDuration > This->actual_duration)
+                    This->actual_duration = ((DMUS_WAVE_PMSG *)msg)->rtDuration;
+            }
+            break;
+        default: ;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI segment_state_graph_InsertTool(IDirectMusicGraph *iface, IDirectMusicTool *tool,
@@ -373,6 +394,9 @@ static HRESULT segment_state_play_until(struct segment_state *This, IDirectMusic
 
     played = min(end_time - This->start_time, This->end_point - This->start_point);
 
+    if (This->track_flags & DMUS_TRACKF_DIRTY)
+        This->actual_duration = 0;
+
     LIST_FOR_EACH_ENTRY(entry, &This->tracks, struct track_entry, entry)
     {
         if (FAILED(hr = IDirectMusicTrack_Play(entry->track, entry->state_data,
@@ -424,6 +448,17 @@ static HRESULT segment_state_play_chunk(struct segment_state *This, IDirectMusic
         if (FAILED(hr = IDirectMusicSegment_GetLoopPoints(This->segment, &This->played,
                 &This->end_point)))
             break;
+        if (!This->played && !This->end_point)
+        {
+            if (!This->actual_end_point && This->actual_duration)
+            {
+                IDirectMusicPerformance_ReferenceToMusicTime(performance, time + This->actual_duration, &This->actual_end_point);
+                This->actual_end_point -= This->start_time + This->played;
+            }
+            This->end_point = This->actual_end_point;
+            if (next_time < This->start_time + This->end_point)
+                next_time += This->end_point - This->start_point;
+        }
         This->start_time += This->end_point - This->start_point;
         This->actual_repeats--;
         This->track_flags |= DMUS_TRACKF_LOOP | DMUS_TRACKF_SEEK;
