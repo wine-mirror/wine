@@ -84,9 +84,6 @@ static HRESULT try_create_wg_transform(struct video_decoder *decoder)
     if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
         return MF_E_INVALIDMEDIATYPE;
 
-    output_format.u.video.fps_d = 0;
-    output_format.u.video.fps_n = 0;
-
     if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
     {
         ERR("Failed to create transform with input major_type %u.\n", input_format.major_type);
@@ -310,9 +307,6 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     if (decoder->wg_transform)
     {
         mf_media_type_to_wg_format(decoder->output_type, &output_format);
-
-        output_format.u.video.fps_d = 0;
-        output_format.u.video.fps_n = 0;
 
         if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN
             || !wg_transform_set_output_format(decoder->wg_transform, &output_format))

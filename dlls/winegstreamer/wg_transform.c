@@ -188,6 +188,16 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     return true;
 }
 
+static GstCaps *transform_format_to_caps(struct wg_transform *transform, const struct wg_format *format)
+{
+    struct wg_format copy = *format;
+
+    if (format->major_type == WG_MAJOR_TYPE_VIDEO)
+        copy.u.video.fps_n = copy.u.video.fps_d = 0;
+
+    return wg_format_to_caps(&copy);
+}
+
 static gboolean transform_sink_query_caps(struct wg_transform *transform, GstQuery *query)
 {
     GstCaps *caps, *filter, *temp;
@@ -195,7 +205,7 @@ static gboolean transform_sink_query_caps(struct wg_transform *transform, GstQue
     GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, query);
 
     gst_query_parse_caps(query, &filter);
-    if (!(caps = wg_format_to_caps(&transform->output_format)))
+    if (!(caps = transform_format_to_caps(transform, &transform->output_format)))
         return false;
 
     if (filter)
@@ -234,6 +244,23 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
     return gst_pad_query_default(pad, parent, query);
 }
 
+static gboolean transform_output_caps_is_compatible(struct wg_transform *transform, GstCaps *caps)
+{
+    GstCaps *copy = gst_caps_copy(caps);
+    gboolean ret;
+    gsize i;
+
+    for (i = 0; i < gst_caps_get_size(copy); ++i)
+    {
+        GstStructure *structure = gst_caps_get_structure(copy, i);
+        gst_structure_remove_fields(structure, "framerate", NULL);
+    }
+
+    ret = gst_caps_is_always_compatible(transform->output_caps, copy);
+    gst_caps_unref(copy);
+    return ret;
+}
+
 static void transform_sink_event_caps(struct wg_transform *transform, GstEvent *event)
 {
     GstCaps *caps;
@@ -243,7 +270,7 @@ static void transform_sink_event_caps(struct wg_transform *transform, GstEvent *
     gst_event_parse_caps(event, &caps);
 
     transform->output_caps_changed = transform->output_caps_changed
-            || !gst_caps_is_always_compatible(transform->output_caps, caps);
+            || !transform_output_caps_is_compatible(transform, caps);
 
     gst_caps_unref(transform->output_caps);
     transform->output_caps = gst_caps_ref(caps);
@@ -329,7 +356,7 @@ NTSTATUS wg_transform_create(void *args)
     transform->attrs = *params->attrs;
     transform->output_format = output_format;
 
-    if (!(src_caps = wg_format_to_caps(&input_format)))
+    if (!(src_caps = transform_format_to_caps(transform, &input_format)))
         goto out;
     if (!(template = gst_pad_template_new("src", GST_PAD_SRC, GST_PAD_ALWAYS, src_caps)))
         goto out;
@@ -343,7 +370,7 @@ NTSTATUS wg_transform_create(void *args)
     gst_pad_set_element_private(transform->my_src, transform);
     gst_pad_set_query_function(transform->my_src, transform_src_query_cb);
 
-    if (!(transform->output_caps = wg_format_to_caps(&output_format)))
+    if (!(transform->output_caps = transform_format_to_caps(transform, &output_format)))
         goto out;
     if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, transform->output_caps)))
         goto out;
@@ -516,7 +543,7 @@ NTSTATUS wg_transform_set_output_format(void *args)
     GstSample *sample;
     GstCaps *caps;
 
-    if (!(caps = wg_format_to_caps(format)))
+    if (!(caps = transform_format_to_caps(transform, format)))
     {
         GST_ERROR("Failed to convert format %p to caps.", format);
         return STATUS_UNSUCCESSFUL;
@@ -525,7 +552,7 @@ NTSTATUS wg_transform_set_output_format(void *args)
 
     GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, caps);
 
-    if (gst_caps_is_always_compatible(transform->output_caps, caps))
+    if (transform_output_caps_is_compatible(transform, caps))
     {
         gst_caps_unref(caps);
         return STATUS_SUCCESS;
