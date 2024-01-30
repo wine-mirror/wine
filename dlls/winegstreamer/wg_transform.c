@@ -324,6 +324,8 @@ NTSTATUS wg_transform_create(void *args)
     if (!transform->my_src)
         goto out;
 
+    GST_INFO("transform %p input caps %"GST_PTR_FORMAT, transform, src_caps);
+
     gst_pad_set_element_private(transform->my_src, transform);
     gst_pad_set_query_function(transform->my_src, transform_src_query_cb);
 
@@ -335,6 +337,8 @@ NTSTATUS wg_transform_create(void *args)
     g_object_unref(template);
     if (!transform->my_sink)
         goto out;
+
+    GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, transform->output_caps);
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_event_function(transform->my_sink, transform_sink_event_cb);
@@ -504,6 +508,8 @@ NTSTATUS wg_transform_set_output_format(void *args)
         return STATUS_UNSUCCESSFUL;
     }
     transform->output_format = *format;
+
+    GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, caps);
 
     if (gst_caps_is_always_compatible(transform->output_caps, caps))
     {
@@ -794,6 +800,8 @@ NTSTATUS wg_transform_read_data(void *args)
     if (GST_MINI_OBJECT_FLAG_IS_SET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED))
     {
         GST_MINI_OBJECT_FLAG_UNSET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
+
+        GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, output_caps);
 
         if (format)
         {
