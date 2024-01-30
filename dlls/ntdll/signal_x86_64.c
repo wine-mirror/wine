@@ -1748,6 +1748,23 @@ void WINAPI process_breakpoint(void)
 /***********************************************************************
  *		DbgUiRemoteBreakin   (NTDLL.@)
  */
+#ifdef __WINE_PE_BUILD
+__ASM_GLOBAL_FUNC( DbgUiRemoteBreakin,
+                   "subq $0x28,%rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler DbgUiRemoteBreakin_handler, @except\n\t"
+                   "mov %gs:0x30,%rax\n\t"
+                   "mov 0x60(%rax),%rax\n\t"
+                   "cmpb $0,2(%rax)\n\t"
+                   "je 1f\n\t"
+                   "call " __ASM_NAME("DbgBreakPoint") "\n"
+                   "1:\txorl %ecx,%ecx\n\t"
+                   "call " __ASM_NAME("RtlExitUserThread") "\n"
+                   "DbgUiRemoteBreakin_handler:\n\t"
+                   "movq %rdx,%rsp\n\t"  /* frame */
+                   "jmp 1b" )
+#else
 void WINAPI DbgUiRemoteBreakin( void *arg )
 {
     if (NtCurrentTeb()->Peb->BeingDebugged)
@@ -1764,7 +1781,7 @@ void WINAPI DbgUiRemoteBreakin( void *arg )
     }
     RtlExitUserThread( STATUS_SUCCESS );
 }
-
+#endif
 
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
