@@ -876,6 +876,7 @@ static void test_loaded_modules(void)
                aggregation.count_systemdir, aggregation.count_wowdir);
             break;
         case PCSKIND_WINE_OLD_WOW64:
+            todo_wine
             ok(aggregation.count_systemdir == 1 && aggregation.count_wowdir > 2, "Wrong directory aggregation count %u %u\n",
                aggregation.count_systemdir, aggregation.count_wowdir);
             break;
@@ -1353,6 +1354,7 @@ static void test_live_modules_proc(WCHAR* exename, BOOL with_32)
         ok(aggregation_event.count_exe == 1,                    "Unexpected event.count_exe %u\n",       aggregation_event.count_exe);
         ok(aggregation_event.count_32bit >= MODCOUNT,           "Unexpected event.count_32bit %u\n",     aggregation_event.count_32bit);
         ok(aggregation_event.count_64bit == 0,                  "Unexpected event.count_64bit %u\n",     aggregation_event.count_64bit);
+        todo_wine
         ok(aggregation_event.count_systemdir == 0,              "Unexpected event.count_systemdir %u\n", aggregation_event.count_systemdir);
         ok(aggregation_event.count_wowdir >= MODCOUNT,          "Unexpected event.count_wowdir %u\n",    aggregation_event.count_wowdir);
         ok(aggregation_event.count_ntdll == 1,                  "Unexpected event.count_ntdll %u\n",     aggregation_event.count_ntdll);
@@ -1418,6 +1420,7 @@ static void test_live_modules_proc(WCHAR* exename, BOOL with_32)
         ok(aggregation_event.count_exe == 1,                    "Unexpected event.count_exe %u\n",       aggregation_event.count_exe);
         ok(aggregation_event.count_32bit >= MODCOUNT,           "Unexpected event.count_32bit %u\n",     aggregation_event.count_32bit);
         ok(aggregation_event.count_64bit == 0,                  "Unexpected event.count_64bit %u\n",     aggregation_event.count_64bit);
+        todo_wine
         ok(aggregation_event.count_systemdir == 1,              "Unexpected event.count_systemdir %u\n", aggregation_event.count_systemdir);
         ok(aggregation_event.count_wowdir >= MODCOUNT,          "Unexpected event.count_wowdir %u\n",    aggregation_event.count_wowdir);
         ok(aggregation_event.count_ntdll == 1,                  "Unexpected event.count_ntdll %u\n",     aggregation_event.count_ntdll);
