@@ -5197,7 +5197,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT w
     return GdipIsVisibleRect(graphics, (REAL)x, (REAL)y, (REAL)width, (REAL)height, result);
 }
 
-GpStatus gdip_format_string(HDC hdc,
+GpStatus gdip_format_string(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data)
@@ -5279,7 +5279,7 @@ GpStatus gdip_format_string(HDC hdc,
     halign = format->align;
 
     while(sum < length){
-        GetTextExtentExPointW(hdc, stringdup + sum, length - sum,
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, length - sum,
                               nwidth, &fit, NULL, &size);
         fitcpy = fit;
 
@@ -5328,7 +5328,7 @@ GpStatus gdip_format_string(HDC hdc,
         else
             lineend = fit;
 
-        GetTextExtentExPointW(hdc, stringdup + sum, lineend,
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, lineend,
                               nwidth, &j, NULL, &size);
 
         bounds.Width = size.cx;
@@ -5362,7 +5362,7 @@ GpStatus gdip_format_string(HDC hdc,
             if (hotkeyprefix_offsets[hotkeyprefix_end_pos] >= sum + lineend)
                 break;
 
-        stat = callback(hdc, stringdup, sum, lineend,
+        stat = callback(graphics, stringdup, sum, lineend,
             font, rect, format, lineno, &bounds,
             &hotkeyprefix_offsets[hotkeyprefix_pos],
             hotkeyprefix_end_pos-hotkeyprefix_pos, user_data);
@@ -5428,7 +5428,7 @@ struct measure_ranges_args {
     REAL rel_width, rel_height;
 };
 
-static GpStatus measure_ranges_callback(HDC hdc,
+static GpStatus measure_ranges_callback(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, INT *underlined_indexes,
@@ -5450,11 +5450,11 @@ static GpStatus measure_ranges_callback(HDC hdc,
             range_rect.Y = bounds->Y / args->rel_height;
             range_rect.Height = bounds->Height / args->rel_height;
 
-            GetTextExtentExPointW(hdc, string + index, range_start - index,
+            GetTextExtentExPointW(graphics->hdc, string + index, range_start - index,
                                   INT_MAX, NULL, NULL, &range_size);
             range_rect.X = (bounds->X + range_size.cx) / args->rel_width;
 
-            GetTextExtentExPointW(hdc, string + index, range_end - index,
+            GetTextExtentExPointW(graphics->hdc, string + index, range_end - index,
                                   INT_MAX, NULL, NULL, &range_size);
             range_rect.Width = (bounds->X + range_size.cx) / args->rel_width - range_rect.X;
 
@@ -5532,7 +5532,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     gdi_transform_acquire(graphics);
 
-    stat = gdip_format_string(hdc, string, length, font, &scaled_rect, stringFormat,
+    stat = gdip_format_string(graphics, string, length, font, &scaled_rect, stringFormat,
         (stringFormat->attr & StringFormatFlagsNoClip) != 0, measure_ranges_callback, &args);
 
     gdi_transform_release(graphics);
@@ -5553,7 +5553,7 @@ struct measure_string_args {
     REAL rel_width, rel_height;
 };
 
-static GpStatus measure_string_callback(HDC hdc,
+static GpStatus measure_string_callback(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, INT *underlined_indexes,
@@ -5646,7 +5646,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     gdi_transform_acquire(graphics);
 
-    gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
+    gdip_format_string(graphics, string, length, font, &scaled_rect, format, TRUE,
         measure_string_callback, &args);
 
     gdi_transform_release(graphics);
@@ -5667,12 +5667,11 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 }
 
 struct draw_string_args {
-    GpGraphics *graphics;
     GDIPCONST GpBrush *brush;
     REAL x, y, rel_width, rel_height, ascent;
 };
 
-static GpStatus draw_string_callback(HDC hdc,
+static GpStatus draw_string_callback(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, INT *underlined_indexes,
@@ -5685,7 +5684,7 @@ static GpStatus draw_string_callback(HDC hdc,
     position.X = args->x + bounds->X / args->rel_width;
     position.Y = args->y + bounds->Y / args->rel_height + args->ascent;
 
-    stat = draw_driver_string(args->graphics, &string[index], length, font, format,
+    stat = draw_driver_string(graphics, &string[index], length, font, format,
         args->brush, &position,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, NULL);
 
@@ -5695,7 +5694,7 @@ static GpStatus draw_string_callback(HDC hdc,
         REAL underline_y, underline_height;
         int i;
 
-        GetOutlineTextMetricsW(hdc, sizeof(otm), &otm);
+        GetOutlineTextMetricsW(graphics->hdc, sizeof(otm), &otm);
 
         underline_height = otm.otmsUnderscoreSize / args->rel_height;
         underline_y = position.Y - otm.otmsUnderscorePosition / args->rel_height - underline_height / 2;
@@ -5706,13 +5705,13 @@ static GpStatus draw_string_callback(HDC hdc,
             SIZE text_size;
             INT ofs = underlined_indexes[i] - index;
 
-            GetTextExtentExPointW(hdc, string + index, ofs, INT_MAX, NULL, NULL, &text_size);
+            GetTextExtentExPointW(graphics->hdc, string + index, ofs, INT_MAX, NULL, NULL, &text_size);
             start_x = text_size.cx / args->rel_width;
 
-            GetTextExtentExPointW(hdc, string + index, ofs+1, INT_MAX, NULL, NULL, &text_size);
+            GetTextExtentExPointW(graphics->hdc, string + index, ofs+1, INT_MAX, NULL, NULL, &text_size);
             end_x = text_size.cx / args->rel_width;
 
-            GdipFillRectangle(args->graphics, (GpBrush*)args->brush, position.X+start_x, underline_y, end_x-start_x, underline_height);
+            GdipFillRectangle(graphics, (GpBrush*)args->brush, position.X+start_x, underline_y, end_x-start_x, underline_height);
         }
     }
 
@@ -5810,7 +5809,6 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     get_font_hfont(graphics, font, format, &gdifont, NULL, NULL);
     SelectObject(hdc, gdifont);
 
-    args.graphics = graphics;
     args.brush = brush;
 
     args.x = rect->X;
@@ -5824,7 +5822,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     GetTextMetricsW(hdc, &textmetric);
     args.ascent = textmetric.tmAscent / rel_height;
 
-    gdip_format_string(hdc, string, length, font, &scaled_rect, format, TRUE,
+    gdip_format_string(graphics, string, length, font, &scaled_rect, format, TRUE,
         draw_string_callback, &args);
 
     gdi_transform_release(graphics);

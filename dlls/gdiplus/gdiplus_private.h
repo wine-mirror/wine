@@ -606,13 +606,13 @@ static inline const void *buffer_read(struct memory_buffer *mbuf, INT size)
     return NULL;
 }
 
-typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
+typedef GpStatus (*gdip_format_string_callback)(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, INT *underlined_indexes,
     INT underlined_index_count, void *user_data);
 
-GpStatus gdip_format_string(HDC hdc,
+GpStatus gdip_format_string(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data);
