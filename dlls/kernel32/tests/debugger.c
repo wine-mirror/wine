@@ -1151,7 +1151,7 @@ static void test_debug_loop_wow64(void)
             if (!pGetMappedFileNameW( pi.hProcess, ev.u.LoadDll.lpBaseOfDll, buffer, ARRAY_SIZE(buffer) )) buffer[0] = L'\0';
             if ((p = wcsrchr( buffer, '\\' ))) p++;
             else p = buffer;
-            if (!memcmp( p, L"wow64", 5 * sizeof(WCHAR) ))
+            if (!wcsnicmp( p, L"wow64", 5 ) || !wcsicmp( p, L"xtajit.dll" ))
             {
                 /* on Win10, wow64cpu's load dll event is received after first exception */
                 ok(bpwx_order == 0, "loaddll for wow64 DLLs should appear before exception\n");
@@ -1700,7 +1700,7 @@ static void test_debugger(const char *argv0)
 
         expect_event(&ctx, EXIT_THREAD_DEBUG_EVENT);
     }
-    else win_skip("loop_code not supported on this architecture\n");
+    else todo_wine win_skip("loop_code not supported on this architecture\n");
 
     if (sizeof(call_debug_service_code) > 1)
     {
@@ -1726,7 +1726,7 @@ static void test_debugger(const char *argv0)
         if (sizeof(void *) == 4 && ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT, "unexpected debug event %lu\n", ctx.ev.dwDebugEventCode);
     }
-    else win_skip("call_debug_service_code not supported on this architecture\n");
+    else todo_wine win_skip("call_debug_service_code not supported on this architecture\n");
 
     if (skip_reply_later)
         win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
@@ -2410,6 +2410,11 @@ START_TEST(debugger)
     pDbgUiConnectToDbg = (void*)GetProcAddress(ntdll, "DbgUiConnectToDbg");
     pDbgUiGetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiGetThreadDebugObject");
     pDbgUiSetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiSetThreadDebugObject");
+
+#ifdef __arm__
+    /* mask thumb bit for address comparisons */
+    pDbgBreakPoint = (void *)((ULONG_PTR)pDbgBreakPoint & ~1);
+#endif
 
     if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
 
