@@ -31,7 +31,7 @@
 #define WIN32_NO_STATUS
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
-#include "devpropdef.h"
+#include "winreg.h"
 #include "cfgmgr32.h"
 #include "d3dkmdt.h"
 #include "wine/wingdi16.h"

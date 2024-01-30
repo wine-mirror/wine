@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "winreg.h"
 #include "ddk/wdm.h"
 #include "hidusage.h"
 #include "ddk/hidport.h"

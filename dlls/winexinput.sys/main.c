@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "winioctl.h"
+#include "winreg.h"
 
 #include "cfgmgr32.h"
 #include "ddk/wdm.h"

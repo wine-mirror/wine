@@ -17,6 +17,7 @@
  */
 
 #include "wine/debug.h"
+#include "winreg.h"
 #include "cfgmgr32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);

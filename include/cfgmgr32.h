@@ -19,14 +19,12 @@
 #ifndef _CFGMGR32_H_
 #define _CFGMGR32_H_
 
-/* FIXME: #include <cfg.h> */
+#include <cfg.h>
+#include <devpropdef.h>
 
 #ifndef GUID_DEFINED
 # include <guiddef.h>
 #endif
-
-#include <winreg.h>
-#include <devpropdef.h>
 
 /* cfgmgr32 doesn't use the normal convention, it adds an underscore before A/W */
 #ifdef WINE_NO_UNICODE_MACROS
@@ -192,23 +190,6 @@ typedef HANDLE HCMNOTIFICATION, *PHCMNOTIFICATION;
 typedef CHAR *DEVNODEID_A, *DEVINSTID_A;
 typedef WCHAR *DEVNODEID_W, *DEVINSTID_W;
 typedef ULONG REGDISPOSITION;
-
-typedef enum _PNP_VETO_TYPE
-{
-    PNP_VetoTypeUnknown,
-    PNP_VetoLegacyDevice,
-    PNP_VetoPendingClose,
-    PNP_VetoWindowsApp,
-    PNP_VetoWindowsService,
-    PNP_VetoOutstandingOpen,
-    PNP_VetoDevice,
-    PNP_VetoDriver,
-    PNP_VetoIllegalDeviceRequest,
-    PNP_VetoInsufficientPower,
-    PNP_VetoNonDisableable,
-    PNP_VetoLegacyDriver,
-    PNP_VetoInsufficientRights
-} PNP_VETO_TYPE, *PPNP_VETO_TYPE;
 
 typedef enum _CM_NOTIFY_FILTER_TYPE
 {
