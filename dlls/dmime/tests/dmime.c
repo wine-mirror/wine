@@ -1554,6 +1554,49 @@ static void test_segment(void)
     while (IDirectMusicSegment_Release(dms));
 }
 
+static void test_midi(void)
+{
+    IDirectMusicSegment8 *segment = NULL;
+    IDirectMusicTrack *track = NULL;
+    IDirectMusicLoader8 *loader;
+    WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
+    HRESULT hr;
+
+    load_resource(L"test.mid", test_mid);
+    /* This is a MIDI file with wrong track length. */
+    load_resource(L"bogus.mid", bogus_mid);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicLoader8, (void **)&loader);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IDirectMusicLoader8_LoadObjectFromFile(loader, &CLSID_DirectMusicSegment,
+            &IID_IDirectMusicSegment, test_mid, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    /* test.mid has 1 seq track, 1 tempo track, and 1 band track */
+    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicBandTrack, 0xffffffff, 0, &track);
+    todo_wine ok(hr == S_OK, "unable to get band track from midi file: %#lx\n", hr);
+    if (track)IDirectMusicTrack_Release(track);
+    track = NULL;
+    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicSeqTrack, 0xffffffff, 0, &track);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (track) IDirectMusicTrack_Release(track);
+    track = NULL;
+    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicTempoTrack, 0xffffffff, 0, &track);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (track) IDirectMusicTrack_Release(track);
+    track = NULL;
+    if (segment) IDirectMusicSegment8_Release(segment);
+    segment = NULL;
+
+    hr = IDirectMusicLoader8_LoadObjectFromFile(loader, &CLSID_DirectMusicSegment,
+            &IID_IDirectMusicSegment, bogus_mid, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (segment) IDirectMusicSegment8_Release(segment);
+
+    IDirectMusicLoader8_Release(loader);
+}
+
 static void _add_track(IDirectMusicSegment8 *seg, REFCLSID class, const char *name, DWORD group)
 {
     IDirectMusicTrack *track;
@@ -4724,6 +4767,7 @@ START_TEST(dmime)
     test_audiopathconfig();
     test_graph();
     test_segment();
+    test_midi();
     test_gettrack();
     test_segment_param();
     test_track();

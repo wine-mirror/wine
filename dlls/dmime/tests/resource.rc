@@ -21,3 +21,7 @@
 /* ffmpeg -f lavfi -i "sine=frequency=600" -t 0.1 -ar 44100 -f wav -acodec pcm_u8 test.wav */
 /* @makedep: test.wav */
 test.wav RCDATA test.wav
+/* @makedep: test.mid */
+test.mid RCDATA test.mid
+/* @makedep: bogus.mid */
+bogus.mid RCDATA bogus.mid
