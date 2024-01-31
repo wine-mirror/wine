@@ -508,10 +508,10 @@ struct syscall_frame
     /* Leave space for the whole set of YMM registers. They're not used in
      * 32-bit mode, but some processors fault if they're not in writable memory.
      */
-    DECLSPEC_ALIGN(64) XSTATE xstate;     /* 240 */
+    DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate; /* 240 */
 };
 
-C_ASSERT( sizeof(struct syscall_frame) == 0x380 );
+C_ASSERT( sizeof(struct syscall_frame) == 0x280 );
 
 struct x86_thread_data
 {
@@ -526,12 +526,14 @@ struct x86_thread_data
     SYSTEM_SERVICE_TABLE *syscall_table; /* 1f4 syscall table */
     struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
     UINT64             xstate_features_mask;   /* 1fc  */
+    UINT               xstate_features_size;   /* 204 */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_table ) == 0x1f4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstate_features_size ) == 0x204 );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
@@ -938,12 +940,13 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-        XSTATE *xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+        XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
 
-        if (context_ex->XState.Length < offsetof(XSTATE, YmmContext) ||
-            context_ex->XState.Length > sizeof(XSTATE))
+        if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
+            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
             return STATUS_INVALID_PARAMETER;
-        if ((xs->Mask & xstate_extended_features()) && (context_ex->XState.Length < sizeof(XSTATE)))
+        if ((xs->Mask & xstate_extended_features())
+            && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
             return STATUS_BUFFER_OVERFLOW;
     }
     else flags &= ~CONTEXT_XSTATE;
@@ -1019,14 +1022,9 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (flags & CONTEXT_XSTATE)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-        XSTATE *xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+        XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
 
-        if (xs->Mask & XSTATE_MASK_GSSE)
-        {
-            frame->xstate.Mask |= XSTATE_MASK_GSSE;
-            frame->xstate.YmmContext = xs->YmmContext;
-        }
-        else frame->xstate.Mask &= ~XSTATE_MASK_GSSE;
+        copy_xstate( &frame->xstate, xs, xs->Mask );
     }
 
     frame->restore_flags |= flags & ~CONTEXT_INTEGER;
@@ -1140,21 +1138,22 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features())
         {
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-            XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
-            unsigned int mask;
+            XSAVE_AREA_HEADER *xstate = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
+            UINT64 mask;
 
-            if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
-                || context_ex->XState.Length > sizeof(XSTATE))
+            if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
+                context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
                 return STATUS_INVALID_PARAMETER;
 
             mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
             xstate->Mask = frame->xstate.Mask & mask;
             xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
-            memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
+            memset( xstate->Reserved2, 0, sizeof(xstate->Reserved2) );
             if (xstate->Mask)
             {
-                if (context_ex->XState.Length < sizeof(XSTATE)) return STATUS_BUFFER_OVERFLOW;
-                xstate->YmmContext = frame->xstate.YmmContext;
+                if (context_ex->XState.Length < xstate_get_size( xstate->CompactionMask, xstate->Mask ))
+                    return STATUS_BUFFER_OVERFLOW;
+                copy_xstate( xstate, &frame->xstate, xstate->Mask );
             }
         }
         /* update the cached version of the debug registers */
@@ -1483,7 +1482,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
         XSTATE *dst_xs = (XSTATE *)(((ULONG_PTR)stack->xstate + 63) & ~63);
 
         context_init_xstate( &stack->context, dst_xs );
-        memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
+        memset( dst_xs, 0, sizeof(XSAVE_AREA_HEADER) );
         dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
         if (src_xs->Mask & 4)
         {
@@ -1623,7 +1622,8 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    "movl 0x18(%ebp),%edx\n\t"  /* teb */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
-                   "subl $0x380,%esp\n\t"      /* sizeof(struct syscall_frame) */
+                   "subl $0x280,%esp\n\t"      /* sizeof(struct syscall_frame) */
+                   "subl %fs:0x204,%esp\n\t"   /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%esp\n\t"
                    "leal 8(%ebp),%eax\n\t"
                    "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
@@ -2403,6 +2403,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     else thread_data->fs = gdt_fs_sel;
 
     teb->WOW32Reserved = __wine_syscall_dispatcher;
+    thread_data->xstate_features_size = xstate_features_size;
     return STATUS_SUCCESS;
 }
 
@@ -2431,7 +2432,9 @@ void signal_init_process(void)
     struct sigaction sig_act;
     void *kernel_stack = (char *)ntdll_get_thread_data()->kernel_stack + kernel_stack_size;
 
-    x86_thread_data()->syscall_frame = (struct syscall_frame *)kernel_stack - 1;
+    x86_thread_data()->syscall_frame = (struct syscall_frame *)((ULONG_PTR)((char *)kernel_stack
+                                       - sizeof(struct syscall_frame) - xstate_features_size) & ~(ULONG_PTR)63);
+    x86_thread_data()->xstate_features_size = xstate_features_size;
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
@@ -2481,6 +2484,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     thread_data->gs = get_gs();
     thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->xstate_features_mask = xstate_supported_features_mask;
+    assert( thread_data->xstate_features_size == xstate_features_size );
 
     context.SegCs  = get_cs();
     context.SegDs  = get_ds();
@@ -2547,7 +2551,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl 0x1f8(%ecx),%eax\n\t"  /* x86_thread_data()->syscall_frame */
                    "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
-                   "leal -0x380(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
+                   "leal -0x280(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
+                   "subl %fs:0x204,%eax\n\t"    /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
                    /* switch to kernel stack */

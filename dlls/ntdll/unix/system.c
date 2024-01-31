@@ -248,6 +248,23 @@ static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 BOOL xstate_compaction_enabled = FALSE;
 UINT64 xstate_supported_features_mask;
+UINT64 xstate_features_size;
+
+unsigned int xstate_get_size( UINT64 compaction_mask, UINT64 mask )
+{
+    if (!(mask & ((UINT64)1 << XSTATE_AVX))) return sizeof(XSAVE_AREA_HEADER);
+    return sizeof(XSAVE_AREA_HEADER) + sizeof(YMMCONTEXT);
+}
+
+void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask )
+{
+    mask &= xstate_extended_features() & src->Mask;
+    if (src->CompactionMask) mask &= src->CompactionMask;
+    if (dst->CompactionMask) mask &= dst->CompactionMask;
+    dst->Mask = (dst->Mask & ~xstate_extended_features()) | mask;
+    if (mask & ((UINT64)1 << XSTATE_AVX))
+        *(YMMCONTEXT *)(dst + 1) = *(YMMCONTEXT *)(src + 1);
+}
 
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
@@ -400,6 +417,10 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             xstate_supported_features_mask = 3;
             if (features & CPU_FEATURE_AVX)
                 xstate_supported_features_mask |= (UINT64)1 << XSTATE_AVX;
+            xstate_features_size = xstate_get_size( xstate_compaction_enabled ? 0x8000000000000000
+                                   | xstate_supported_features_mask : 0, xstate_supported_features_mask )
+                                   - sizeof(XSAVE_AREA_HEADER);
+            xstate_features_size = (xstate_features_size + 15) & ~15;
         }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)

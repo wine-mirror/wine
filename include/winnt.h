@@ -1483,6 +1483,14 @@ typedef struct _XSTATE_CONFIGURATION
     ULONG64 EnabledUserVisibleSupervisorFeatures;
 } XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
 
+typedef struct _XSAVE_AREA_HEADER
+{
+    DWORD64 Mask;
+    DWORD64 CompactionMask;
+    DWORD64 Reserved2[6];
+}
+XSAVE_AREA_HEADER, *PXSAVE_AREA_HEADER;
+
 typedef struct _YMMCONTEXT
 {
     M128A Ymm0;
