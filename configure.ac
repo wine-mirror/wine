@@ -922,7 +922,7 @@ do
     if test -z "$target"
     then
         AS_VAR_SET_IF([enable_archs],
-            [AC_MSG_ERROR([MinGW $wine_arch compiler not found.
+            [AC_MSG_ERROR([$wine_arch PE cross-compiler not found.
 This is an error since --enable-archs=$wine_arch was requested.])])
         continue
     fi
@@ -946,7 +946,7 @@ This is an error since --enable-archs=$wine_arch was requested.])])
       x) AC_MSG_RESULT([none needed]) ;;
       xno) AC_MSG_RESULT([unsupported])
            AS_VAR_SET_IF([enable_archs],
-                [AC_MSG_ERROR([MinGW $wine_arch compiler supporting C99 not found.
+                [AC_MSG_ERROR([$wine_arch PE cross-compiler supporting C99 not found.
 This is an error since --enable-archs=$wine_arch was requested.])])
            continue
            ;;
@@ -963,7 +963,7 @@ This is an error since --enable-archs=$wine_arch was requested.])])
                AS_VAR_POPDEF([wine_cv_seh_support])
                AS_VAR_IF([res],[yes],[],
                          [AS_VAR_SET_IF([enable_archs],
-                             [AC_MSG_ERROR([The $wine_arch cross-compiler doesn't support SEH directives.
+                             [AC_MSG_ERROR([The $wine_arch PE cross-compiler doesn't support SEH directives.
 This is an error since --enable-archs=$wine_arch was requested.])])
                           continue])])
 
@@ -1040,11 +1040,11 @@ CC=$saved_CC
 CFLAGS=$saved_CFLAGS
 LDFLAGS=$saved_LDFLAGS
 
-if test $HOST_ARCH = aarch64
-then
-    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw.])
-    DLLEXT=""
-fi
+case $HOST_ARCH in
+  arm|aarch64)
+    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw.])
+    DLLEXT="" ;;
+esac
 
 dnl **** External libraries ****
 

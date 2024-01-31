@@ -10765,7 +10765,7 @@ fi
     then
         if test ${enable_archs+y}
 then :
-  as_fn_error $? "MinGW $wine_arch compiler not found.
+  as_fn_error $? "$wine_arch PE cross-compiler not found.
 This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
 fi
         continue
@@ -10813,7 +10813,7 @@ printf "%s\n" "none needed" >&6; } ;;
 printf "%s\n" "unsupported" >&6; }
            if test ${enable_archs+y}
 then :
-  as_fn_error $? "MinGW $wine_arch compiler supporting C99 not found.
+  as_fn_error $? "$wine_arch PE cross-compiler supporting C99 not found.
 This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
 fi
            continue
@@ -10865,7 +10865,7 @@ then :
 else $as_nop
   if test ${enable_archs+y}
 then :
-  as_fn_error $? "The $wine_arch cross-compiler doesn't support SEH directives.
+  as_fn_error $? "The $wine_arch PE cross-compiler doesn't support SEH directives.
 This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
 fi
                           continue
@@ -11964,11 +11964,11 @@ CC=$saved_CC
 CFLAGS=$saved_CFLAGS
 LDFLAGS=$saved_LDFLAGS
 
-if test $HOST_ARCH = aarch64
-then
-    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for ARM64, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
-    DLLEXT=""
-fi
+case $HOST_ARCH in
+  arm|aarch64)
+    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+    DLLEXT="" ;;
+esac
 
 
 if test "x$with_system_dllpath" != "x" -a -n "$PE_ARCHS"
