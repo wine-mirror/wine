@@ -557,6 +557,7 @@ static void ok_seq_( const char *file, int line, const struct ime_call *expected
 }
 
 static BOOL check_WM_SHOWWINDOW;
+static BOOL ignore_IME_NOTIFY;
 static BOOL ignore_WM_IME_NOTIFY;
 static BOOL ignore_WM_IME_REQUEST;
 
@@ -3581,7 +3582,7 @@ static BOOL WINAPI ime_NotifyIME( HIMC himc, DWORD action, DWORD index, DWORD va
         .func = IME_NOTIFY, .notify = {.action = action, .index = index, .value = value}
     };
     ime_trace( "himc %p, action %#lx, index %lu, value %lu\n", himc, action, index, value );
-    ime_calls[ime_call_count++] = call;
+    if (!ignore_IME_NOTIFY) ime_calls[ime_call_count++] = call;
     return FALSE;
 }
 
@@ -7237,6 +7238,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
 
 
     ignore_WM_IME_NOTIFY = TRUE;
+    ignore_IME_NOTIFY = TRUE;
 
     keybd_event( 'Q', 0x10, 0, 0 );
     flush_events();
@@ -7249,6 +7251,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
     ok_seq( key_up_seq );
 
     ignore_WM_IME_NOTIFY = FALSE;
+    ignore_IME_NOTIFY = FALSE;
 
 
     ok_ret( 1, ImmUnlockIMC( himc ) );
@@ -7606,6 +7609,7 @@ static void test_ga_na_da(void)
 
 
     ignore_WM_IME_NOTIFY = TRUE;
+    ignore_IME_NOTIFY = TRUE;
 
     /* cancelling clears the composition string */
 
@@ -7680,6 +7684,7 @@ static void test_ga_na_da(void)
     todo_wine ok_seq( closed_seq );
 
     ignore_WM_IME_NOTIFY = FALSE;
+    ignore_IME_NOTIFY = FALSE;
 
 
 
@@ -7849,6 +7854,7 @@ static void test_nihongo_no(void)
     for (i = 0; i < ARRAY_SIZE(closed_seq); i++) closed_seq[i].himc = himc;
     ignore_WM_IME_REQUEST = TRUE;
     ignore_WM_IME_NOTIFY = TRUE;
+    ignore_IME_NOTIFY = TRUE;
 
 
     keybd_event( 'N', 0x31, 0, 0 );
@@ -7900,6 +7906,7 @@ static void test_nihongo_no(void)
 
     ignore_WM_IME_REQUEST = FALSE;
     ignore_WM_IME_NOTIFY = FALSE;
+    ignore_IME_NOTIFY = FALSE;
 
     /* Japanese IME doesn't take input from ImmProcessKey */
 
@@ -7916,6 +7923,7 @@ static void test_nihongo_no(void)
 
     ignore_WM_IME_REQUEST = TRUE;
     ignore_WM_IME_NOTIFY = TRUE;
+    ignore_IME_NOTIFY = TRUE;
 
 
     /* cancelling clears the composition string */
@@ -7992,6 +8000,7 @@ static void test_nihongo_no(void)
 
     ignore_WM_IME_REQUEST = FALSE;
     ignore_WM_IME_NOTIFY = FALSE;
+    ignore_IME_NOTIFY = FALSE;
 
 
     ok_ret( 1, ImmSetConversionStatus( himc, 0, IME_SMODE_PHRASEPREDICT ) );
