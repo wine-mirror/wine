@@ -247,6 +247,7 @@ static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
 #if defined(__i386__) || defined(__x86_64__)
 
 BOOL xstate_compaction_enabled = FALSE;
+UINT64 xstate_supported_features_mask;
 
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
@@ -396,6 +397,9 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         {
             do_cpuid( 0x0000000d, 1, regs3 ); /* get XSAVE details */
             if (regs3[0] & 2) xstate_compaction_enabled = TRUE;
+            xstate_supported_features_mask = 3;
+            if (features & CPU_FEATURE_AVX)
+                xstate_supported_features_mask |= (UINT64)1 << XSTATE_AVX;
         }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)

@@ -525,6 +525,7 @@ struct x86_thread_data
     UINT               dr7;           /* 1f0 */
     SYSTEM_SERVICE_TABLE *syscall_table; /* 1f4 syscall table */
     struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
+    UINT64             xstate_features_mask;   /* 1fc  */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -608,8 +609,6 @@ struct xcontext
     CONTEXT_EX c_ex;
     ULONG64 host_compaction_mask;
 };
-
-extern BOOL xstate_compaction_enabled;
 
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
 {
@@ -832,7 +831,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(fpux)))
+        if (xstate_extended_features() && (xs = XState_sig(fpux)))
         {
             context_init_xstate( context, xs );
             xcontext->host_compaction_mask = xs->CompactionMask;
@@ -936,7 +935,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
-    if ((flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
+    if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSTATE *xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
@@ -944,7 +943,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         if (context_ex->XState.Length < offsetof(XSTATE, YmmContext) ||
             context_ex->XState.Length > sizeof(XSTATE))
             return STATUS_INVALID_PARAMETER;
-        if ((xs->Mask & XSTATE_MASK_GSSE) && (context_ex->XState.Length < sizeof(XSTATE)))
+        if ((xs->Mask & xstate_extended_features()) && (context_ex->XState.Length < sizeof(XSTATE)))
             return STATUS_BUFFER_OVERFLOW;
     }
     else flags &= ~CONTEXT_XSTATE;
@@ -1138,7 +1137,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
             context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
-        if ((needed_flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
+        if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features())
         {
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
             XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
@@ -1148,7 +1147,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 || context_ex->XState.Length > sizeof(XSTATE))
                 return STATUS_INVALID_PARAMETER;
 
-            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
+            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
             xstate->Mask = frame->xstate.Mask & mask;
             xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
             memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
@@ -1485,7 +1484,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
 
         context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
         if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;
@@ -1587,7 +1586,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 
         context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
         if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;
@@ -2481,6 +2480,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();
     thread_data->syscall_table = KeServiceDescriptorTable;
+    thread_data->xstate_features_mask = xstate_supported_features_mask;
 
     context.SegCs  = get_cs();
     context.SegDs  = get_ds();
@@ -2504,6 +2504,8 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
     memset( frame, 0, sizeof(*frame) );
+    if (xstate_compaction_enabled)
+        frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
     NtSetContextThread( GetCurrentThread(), ctx );
 
     stack = (DWORD *)ctx;
@@ -2605,26 +2607,27 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "addl %fs:0x1f4,%ebx\n\t"       /* x86_thread_data()->syscall_table */
                    "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
                    "jz 2f\n\t"
-                   "movl $7,%eax\n\t"
-                   "xorl %edx,%edx\n\t"
-                   "movl %edx,0x240(%ecx)\n\t"
-                   "movl %edx,0x244(%ecx)\n\t"
-                   "movl %edx,0x248(%ecx)\n\t"
-                   "movl %edx,0x24c(%ecx)\n\t"
-                   "movl %edx,0x250(%ecx)\n\t"
-                   "movl %edx,0x254(%ecx)\n\t"
+                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
+                   "movl %fs:0x200,%edx\n\t"       /* x86_thread_data()->xstate_features_mask high dword */
+                   "xorl %edi,%edi\n\t"
+                   "movl %edi,0x240(%ecx)\n\t"
+                   "movl %edi,0x244(%ecx)\n\t"
+                   "movl %edi,0x248(%ecx)\n\t"
+                   "movl %edi,0x24c(%ecx)\n\t"
+                   "movl %edi,0x250(%ecx)\n\t"
+                   "movl %edi,0x254(%ecx)\n\t"
                    "testl $2,(%ecx)\n\t"           /* frame->syscall_flags & SYSCALL_HAVE_XSAVEC */
                    "jz 1f\n\t"
-                   "movl %edx,0x258(%ecx)\n\t"
-                   "movl %edx,0x25c(%ecx)\n\t"
-                   "movl %edx,0x260(%ecx)\n\t"
-                   "movl %edx,0x264(%ecx)\n\t"
-                   "movl %edx,0x268(%ecx)\n\t"
-                   "movl %edx,0x26c(%ecx)\n\t"
-                   "movl %edx,0x270(%ecx)\n\t"
-                   "movl %edx,0x274(%ecx)\n\t"
-                   "movl %edx,0x278(%ecx)\n\t"
-                   "movl %edx,0x27c(%ecx)\n\t"
+                   "movl %edi,0x258(%ecx)\n\t"
+                   "movl %edi,0x25c(%ecx)\n\t"
+                   "movl %edi,0x260(%ecx)\n\t"
+                   "movl %edi,0x264(%ecx)\n\t"
+                   "movl %edi,0x268(%ecx)\n\t"
+                   "movl %edi,0x26c(%ecx)\n\t"
+                   "movl %edi,0x270(%ecx)\n\t"
+                   "movl %edi,0x274(%ecx)\n\t"
+                   "movl %edi,0x278(%ecx)\n\t"
+                   "movl %edi,0x27c(%ecx)\n\t"
                    /* The xsavec instruction is not supported by
                     * binutils < 2.25. */
                    ".byte 0x0f, 0xc7, 0x61, 0x40\n\t" /* xsavec 0x40(%ecx) */
@@ -2669,8 +2672,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 1f\n\t"
                    "movl %eax,%esi\n\t"
-                   "movl $7,%eax\n\t"
-                   "xorl %edx,%edx\n\t"
+                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
+                   "movl %fs:0x200,%edx\n\t"       /* x86_thread_data()->xstate_features_mask high dword */
                    "xrstor 0x40(%esp)\n\t"
                    "movl %esi,%eax\n\t"
                    "jmp 3f\n"
