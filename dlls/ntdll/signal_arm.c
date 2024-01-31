@@ -445,7 +445,7 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
             }
         }
         /* hack: call wine handlers registered in the tib list */
-        else while ((DWORD)teb_frame < context.Sp)
+        else while (is_valid_frame( (ULONG_PTR)teb_frame ) && (DWORD)teb_frame < context.Sp)
         {
             TRACE( "found wine frame %p rsp %lx handler %p\n",
                     teb_frame, context.Sp, teb_frame->Handler );
@@ -1294,7 +1294,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     }
 
     /* hack: remove no longer accessible TEB frames */
-    while ((DWORD)teb_frame < context->Sp)
+    while (is_valid_frame( (ULONG_PTR)teb_frame ) && (DWORD)teb_frame < context->Sp)
     {
         TRACE( "removing TEB frame: %p\n", teb_frame );
         teb_frame = __wine_pop_frame( teb_frame );
@@ -1394,7 +1394,9 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         else  /* hack: call builtin handlers registered in the tib list */
         {
             DWORD backup_frame = dispatch.EstablisherFrame;
-            while ((DWORD)teb_frame < new_context.Sp && (DWORD)teb_frame < (DWORD)end_frame)
+            while (is_valid_frame( (ULONG_PTR)teb_frame ) &&
+                   (DWORD)teb_frame < new_context.Sp &&
+                   (DWORD)teb_frame < (DWORD)end_frame)
             {
                 TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
                 dispatch.EstablisherFrame = (DWORD)teb_frame;
