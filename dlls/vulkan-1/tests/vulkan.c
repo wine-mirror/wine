@@ -460,8 +460,10 @@ static const char *test_win32_surface_extensions[] =
 static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_device,
         VkDevice device, VkSurfaceKHR surface, HWND hwnd)
 {
+    PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR pvkGetPhysicalDeviceSurfaceCapabilities2KHR;
     PFN_vkGetPhysicalDeviceSurfacePresentModesKHR pvkGetPhysicalDeviceSurfacePresentModesKHR;
     PFN_vkGetPhysicalDevicePresentRectanglesKHR pvkGetPhysicalDevicePresentRectanglesKHR;
+    PFN_vkGetPhysicalDeviceSurfaceFormats2KHR pvkGetPhysicalDeviceSurfaceFormats2KHR;
     VkDeviceGroupPresentModeFlagsKHR present_mode_flags;
     VkSurfaceCapabilitiesKHR surf_caps;
     VkSurfaceFormatKHR *formats;
@@ -476,10 +478,14 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     if (!GetClientRect(hwnd, &client_rect))
         SetRect(&client_rect, 0, 0, 0, 0);
 
+    pvkGetPhysicalDeviceSurfaceCapabilities2KHR = (void *)vkGetInstanceProcAddr(vk_instance,
+            "vkGetPhysicalDeviceSurfaceCapabilities2KHR");
     pvkGetPhysicalDeviceSurfacePresentModesKHR = (void *)vkGetInstanceProcAddr(vk_instance,
             "vkGetPhysicalDeviceSurfacePresentModesKHR");
     pvkGetPhysicalDevicePresentRectanglesKHR = (void *)vkGetInstanceProcAddr(vk_instance,
             "vkGetPhysicalDevicePresentRectanglesKHR");
+    pvkGetPhysicalDeviceSurfaceFormats2KHR = (void *)vkGetInstanceProcAddr(vk_instance,
+            "vkGetPhysicalDeviceSurfaceFormats2KHR");
 
     bval = find_queue_family(vk_physical_device, VK_QUEUE_GRAPHICS_BIT, &queue_family_index);
     ok(bval, "Could not find presentation queue.\n");
@@ -491,6 +497,49 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     formats = malloc(sizeof(*formats) * count);
     vr = vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, surface, &count, formats);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    todo_wine
+    ok(formats[0].format == VK_FORMAT_B8G8R8A8_UNORM, "Got formats[0].format %#x\n", formats[0].format);
+    ok(formats[0].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            "Got formats[0].colorSpace %#x\n", formats[0].colorSpace);
+    todo_wine
+    ok(formats[1].format == VK_FORMAT_B8G8R8A8_SRGB, "Got formats[1].format %#x\n", formats[1].format);
+    ok(formats[1].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            "Got formats[1].colorSpace %#x\n", formats[1].colorSpace);
+
+    if (!pvkGetPhysicalDeviceSurfaceFormats2KHR)
+        win_skip("vkGetPhysicalDeviceSurfaceFormats2KHR not found, skipping tests\n");
+    else
+    {
+        VkPhysicalDeviceSurfaceInfo2KHR surface_info = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR};
+        VkSurfaceFormat2KHR *formats2;
+        UINT i;
+
+        surface_info.surface = surface;
+
+        vr = pvkGetPhysicalDeviceSurfaceFormats2KHR(vk_physical_device, &surface_info, &count, NULL);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        ok(count, "Got zero count.\n");
+
+        formats2 = calloc(count, sizeof(*formats2));
+        for (i = 0; i < count; i++) formats2[i].sType = VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR;
+        vr = pvkGetPhysicalDeviceSurfaceFormats2KHR(vk_physical_device, &surface_info, &count, formats2);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        ok(count, "Got zero count.\n");
+
+        while (count--)
+        {
+            ok(formats2[count].surfaceFormat.format == formats[count].format,
+                    "Got formats2[%u].surfaceFormat.format %#x\n", count,
+                    formats2[count].surfaceFormat.format);
+            ok(formats2[count].surfaceFormat.colorSpace == formats[count].colorSpace,
+                    "Got formats2[%u].surfaceFormat.colorSpace %#x\n", count,
+                    formats2[count].surfaceFormat.colorSpace);
+        }
+
+        free(formats2);
+    }
+
     free(formats);
 
     vr = vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, queue_family_index, surface, &bval);
@@ -498,10 +547,65 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
 
     vr = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, surface, &surf_caps);
     if (!IsWindow(hwnd))
+    {
         ok(vr == VK_ERROR_SURFACE_LOST_KHR /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */,
                 "Got unexpected vr %d.\n", vr);
+        memset(&surf_caps, 0, sizeof(surf_caps));
+    }
     else
+    {
         ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+        ok(surf_caps.minImageCount > 0, "Got minImageCount %u\n", surf_caps.minImageCount);
+        ok(surf_caps.maxImageCount > 2, "Got minImageCount %u\n", surf_caps.maxImageCount);
+        ok(surf_caps.minImageCount <= surf_caps.maxImageCount, "Got maxImageCount %u\n", surf_caps.maxImageCount);
+
+        todo_wine_if(IsRectEmpty(&client_rect))
+        ok(surf_caps.currentExtent.width == client_rect.right - client_rect.left,
+                "Got currentExtent.width %d\n", surf_caps.currentExtent.width);
+        todo_wine_if(IsRectEmpty(&client_rect))
+        ok(surf_caps.currentExtent.height == client_rect.bottom - client_rect.top,
+                "Got currentExtent.height %d\n", surf_caps.currentExtent.height);
+
+        ok(surf_caps.minImageExtent.width == surf_caps.currentExtent.width,
+                "Got minImageExtent.width %d\n", surf_caps.minImageExtent.width);
+        ok(surf_caps.minImageExtent.height == surf_caps.currentExtent.height,
+                "Got minImageExtent.height %d\n", surf_caps.minImageExtent.height);
+        ok(surf_caps.maxImageExtent.width == surf_caps.currentExtent.width,
+                "Got maxImageExtent.width %d\n", surf_caps.maxImageExtent.width);
+        ok(surf_caps.maxImageExtent.height == surf_caps.currentExtent.height,
+                "Got maxImageExtent.height %d\n", surf_caps.maxImageExtent.height);
+
+        ok(surf_caps.maxImageArrayLayers == 1, "Got maxImageArrayLayers %u\n", surf_caps.maxImageArrayLayers);
+        ok(surf_caps.supportedTransforms == VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+                "Got supportedTransforms %#x\n", surf_caps.supportedTransforms);
+        ok(surf_caps.currentTransform == VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+                "Got currentTransform %#x\n", surf_caps.currentTransform);
+        todo_wine
+        ok(surf_caps.supportedCompositeAlpha == VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+                "Got supportedCompositeAlpha %#x\n", surf_caps.supportedCompositeAlpha);
+        todo_wine
+        ok(surf_caps.supportedUsageFlags == 0x9f, "Got supportedUsageFlags %#x\n", surf_caps.supportedUsageFlags);
+    }
+
+    if (!pvkGetPhysicalDeviceSurfaceCapabilities2KHR)
+        win_skip("vkGetPhysicalDeviceSurfaceCapabilities2KHR not found, skipping tests\n");
+    else
+    {
+        VkPhysicalDeviceSurfaceInfo2KHR surface_info = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR};
+        VkSurfaceCapabilities2KHR surface_capabilities = {.sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR};
+        surface_info.surface = surface;
+
+        vr = pvkGetPhysicalDeviceSurfaceCapabilities2KHR(vk_physical_device, &surface_info, &surface_capabilities);
+        if (IsWindow(hwnd))
+            ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        else
+        {
+            todo_wine
+            ok(vr == VK_ERROR_SURFACE_LOST_KHR /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */,
+                    "Got unexpected vr %d.\n", vr);
+        }
+    }
 
     count = 0;
     vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, NULL);
@@ -516,6 +620,16 @@ static void test_win32_surface_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_
     vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, NULL);
     ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
     ok(count == 1, "Got unexpected count %u.\n", count);
+
+    memset(&rect, 0xcc, sizeof(rect));
+    vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, &rect);
+    if (IsWindow(hwnd))
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    else
+    {
+        todo_wine
+        ok(vr == VK_SUCCESS /* Nvidia */ || vr == VK_ERROR_UNKNOWN /* AMD */, "Got unexpected vr %d.\n", vr);
+    }
 
     memset(&rect, 0xcc, sizeof(rect));
     vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, &rect);
