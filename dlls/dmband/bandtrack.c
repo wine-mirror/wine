@@ -17,6 +17,7 @@
  */
 
 #include "dmband_private.h"
+#include "dmusic_band.h"
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);

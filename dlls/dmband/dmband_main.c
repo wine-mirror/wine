@@ -20,6 +20,7 @@
 #include "initguid.h"
 #include "dmband_private.h"
 #include "rpcproxy.h"
+#include "dmusic_band.h"
 #include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);

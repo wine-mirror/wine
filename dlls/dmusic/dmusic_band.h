@@ -1,6 +1,6 @@
 /* DirectMusicBand Private Include
  *
- * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2024 Yuxuan Shui for CodeWeavers
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,28 +17,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_DMBAND_PRIVATE_H
-#define __WINE_DMBAND_PRIVATE_H
-
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "winnt.h"
-
-#include "wine/debug.h"
-#include "wine/list.h"
-#include "objbase.h"
-
 #include "dmusici.h"
-#include "dmusicf.h"
-#include "dmusics.h"
 
-/*****************************************************************************
- * ClassFactory
- */
-extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface);
-
-#endif	/* __WINE_DMBAND_PRIVATE_H */
+extern HRESULT create_dmband(REFIID riid, void **ret_iface);
+extern HRESULT band_connect_to_collection(IDirectMusicBand *iface, IDirectMusicCollection *collection);
+extern HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *performance,
+        IDirectMusicGraph *graph, MUSIC_TIME time, DWORD track_id);

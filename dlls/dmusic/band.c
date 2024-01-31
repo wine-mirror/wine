@@ -17,8 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "dmband_private.h"
-#include "dmobject.h"
+#include "dmusic_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
