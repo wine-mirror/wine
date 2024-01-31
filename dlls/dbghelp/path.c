@@ -860,6 +860,8 @@ BOOL WINAPI SymSrvGetFileIndexInfoW(const WCHAR *file, SYMSRV_INDEX_INFOW* info,
         ret = pe_get_file_indexinfo(image, fsize, info);
         if (ret == ERROR_BAD_FORMAT)
             ret = pdb_get_file_indexinfo(image, fsize, info);
+        if (ret == ERROR_BAD_FORMAT)
+            ret = dbg_get_file_indexinfo(image, fsize, info);
     }
     else ret = ERROR_FILE_NOT_FOUND;
 
