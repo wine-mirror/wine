@@ -455,9 +455,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     unwind_done:
         if (!dispatch.EstablisherFrame) break;
 
-        if ((dispatch.EstablisherFrame & 7) ||
-            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
-            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        if (!is_valid_frame( dispatch.EstablisherFrame ))
         {
             ERR_(seh)( "invalid frame %p (%p-%p)\n", (void *)dispatch.EstablisherFrame,
                        NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
@@ -1389,9 +1387,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     unwind_done:
         if (!dispatch.EstablisherFrame) break;
 
-        if ((dispatch.EstablisherFrame & 7) ||
-            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
-            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        if (!is_valid_frame( dispatch.EstablisherFrame ))
         {
             ERR( "invalid frame %p (%p-%p)\n", (void *)dispatch.EstablisherFrame,
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
@@ -1634,9 +1630,7 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 
         if (!dispatch.EstablisherFrame) break;
 
-        if ((dispatch.EstablisherFrame & 7) ||
-            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
-            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        if (!is_valid_frame( dispatch.EstablisherFrame ))
         {
             ERR( "invalid frame %p (%p-%p)\n", (void *)dispatch.EstablisherFrame,
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );

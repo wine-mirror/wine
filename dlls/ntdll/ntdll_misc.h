@@ -58,6 +58,13 @@ extern void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *r
 extern LONG WINAPI call_unhandled_exception_filter( PEXCEPTION_POINTERS eptr );
 extern void WINAPI process_breakpoint(void);
 
+static inline BOOL is_valid_frame( ULONG_PTR frame )
+{
+    if (frame & (sizeof(void*) - 1)) return FALSE;
+    return ((void *)frame >= NtCurrentTeb()->Tib.StackLimit &&
+            (void *)frame <= NtCurrentTeb()->Tib.StackBase);
+}
+
 extern void WINAPI LdrInitializeThunk(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR);
 extern NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
 extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC);

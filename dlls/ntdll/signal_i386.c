@@ -107,16 +107,6 @@ DEFINE_SYSCALL_HELPER32()
 
 
 /*******************************************************************
- *         is_valid_frame
- */
-static inline BOOL is_valid_frame( void *frame )
-{
-    if ((ULONG_PTR)frame & 3) return FALSE;
-    return (frame >= NtCurrentTeb()->Tib.StackLimit &&
-            (void **)frame < (void **)NtCurrentTeb()->Tib.StackBase - 1);
-}
-
-/*******************************************************************
  *         raise_handler
  *
  * Handler for exceptions happening inside a handler.
@@ -163,7 +153,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     while (frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL)
     {
         /* Check frame address */
-        if (!is_valid_frame( frame ))
+        if (!is_valid_frame( (ULONG_PTR)frame ))
         {
             rec->ExceptionFlags |= EH_STACK_INVALID;
             break;
@@ -433,7 +423,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID ta
         if (pEndFrame && (frame > pEndFrame))
             raise_status( STATUS_INVALID_UNWIND_TARGET, pRecord );
 
-        if (!is_valid_frame( frame )) raise_status( STATUS_BAD_STACK, pRecord );
+        if (!is_valid_frame( (ULONG_PTR)frame )) raise_status( STATUS_BAD_STACK, pRecord );
 
         /* Call handler */
         TRACE( "calling handler at %p code=%lx flags=%lx\n",
@@ -545,13 +535,13 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 
     while (skip--)
     {
-        if (!is_valid_frame( frame )) return 0;
+        if (!is_valid_frame( (ULONG_PTR)frame )) return 0;
         frame = (ULONG *)*frame;
     }
 
     for (i = 0; i < count; i++)
     {
-        if (!is_valid_frame( frame )) break;
+        if (!is_valid_frame( (ULONG_PTR)frame )) break;
         buffer[i] = (void *)frame[1];
         if (hash) *hash += frame[1];
         frame = (ULONG *)*frame;

@@ -83,17 +83,6 @@ static void dump_scope_table( ULONG base, const SCOPE_TABLE *table )
 }
 
 /*******************************************************************
- *         is_valid_frame
- */
-static inline BOOL is_valid_frame( ULONG_PTR frame )
-{
-    if (frame & 3) return FALSE;
-    return ((void *)frame >= NtCurrentTeb()->Tib.StackLimit &&
-            (void *)frame <= NtCurrentTeb()->Tib.StackBase);
-}
-
-
-/*******************************************************************
  *         syscalls
  */
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name, args )
