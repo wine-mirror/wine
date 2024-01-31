@@ -198,19 +198,35 @@ static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_dat
 }
 
 static HRESULT WINAPI band_track_GetParam(IDirectMusicTrack8 *iface, REFGUID type, MUSIC_TIME time,
-        MUSIC_TIME *next, void *param)
+        MUSIC_TIME *out_next, void *param)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8(iface);
+    struct band_entry *band, *next_band;
+    DMUS_BAND_PARAM *bandparam;
 
-    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
+    TRACE("(%p, %s, %ld, %p, %p)\n", This, debugstr_dmguid(type), time, out_next, param);
 
     if (!type)
         return E_POINTER;
     if (!IsEqualGUID(type, &GUID_BandParam))
         return DMUS_E_GET_UNSUPPORTED;
+    if (list_empty(&This->bands))
+        return DMUS_E_NOT_FOUND;
 
-    FIXME("GUID_BandParam not handled yet\n");
+    bandparam = param;
+    if (out_next) *out_next = 0;
 
+    LIST_FOR_EACH_ENTRY_SAFE(band, next_band, &This->bands, struct band_entry, entry)
+    {
+        /* we want to return the first band even when there's nothing with lBandTime <= time */
+        bandparam->pBand = band->band;
+        bandparam->mtTimePhysical = band->head.lBandTimePhysical;
+        if (band->entry.next == &This->bands) break;
+        if (out_next) *out_next = next_band->head.lBandTimeLogical;
+        if (next_band->head.lBandTimeLogical > time) break;
+    }
+
+    IDirectMusicBand_AddRef(bandparam->pBand);
     return S_OK;
 }
 
@@ -227,7 +243,29 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         return DMUS_E_TYPE_UNSUPPORTED;
 
     if (IsEqualGUID(type, &GUID_BandParam))
-        FIXME("GUID_BandParam not handled yet\n");
+    {
+        struct band_entry *new_entry = NULL, *entry, *next_entry;
+        DMUS_BAND_PARAM *band_param = param;
+        if (!band_param || !band_param->pBand)
+            return E_POINTER;
+        if (!(new_entry = calloc(1, sizeof(*new_entry))))
+            return E_OUTOFMEMORY;
+        new_entry->band = band_param->pBand;
+        new_entry->head.lBandTimeLogical = time;
+        new_entry->head.lBandTimePhysical = band_param->mtTimePhysical;
+        IDirectMusicBand_AddRef(new_entry->band);
+        if (list_empty(&This->bands))
+            list_add_tail(&This->bands, &new_entry->entry);
+        else
+        {
+            LIST_FOR_EACH_ENTRY_SAFE(entry, next_entry, &This->bands, struct band_entry, entry)
+                if (entry->entry.next == &This->bands || next_entry->head.lBandTimeLogical > time)
+                {
+                    list_add_after(&entry->entry, &new_entry->entry);
+                    break;
+                }
+        }
+    }
     else if (IsEqualGUID(type, &GUID_Clear_All_Bands))
         FIXME("GUID_Clear_All_Bands not handled yet\n");
     else if (IsEqualGUID(type, &GUID_ConnectToDLSCollection))

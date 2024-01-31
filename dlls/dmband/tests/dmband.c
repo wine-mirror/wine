@@ -176,9 +176,12 @@ static void test_dmband(void)
 
 static void test_bandtrack(void)
 {
+    DMUS_BAND_PARAM bandparam = { 0 };
     IDirectMusicTrack8 *dmt8;
+    IDirectMusicBand *dmb[3];
     IPersistStream *ps;
     CLSID class;
+    MUSIC_TIME mt;
     ULARGE_INTEGER size;
     char buf[64] = { 0 };
     HRESULT hr;
@@ -265,6 +268,81 @@ static void test_bandtrack(void)
                     param_types[i].name, hr);
         }
     }
+
+    for (i = 0; i < 3; i++)
+    {
+        hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IDirectMusicBand, (void **)&dmb[i]);
+        ok(hr == S_OK, "DirectMusicBand create failed: %#lx, expected S_OK\n", hr);
+    }
+
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 0, &mt, &bandparam);
+    ok(hr == DMUS_E_NOT_FOUND, "hr %#lx, expected not found\n", hr);
+    ok(bandparam.pBand == NULL, "Got band %p, expected NULL\n", bandparam.pBand);
+
+    bandparam.mtTimePhysical = 10;
+    bandparam.pBand = dmb[0];
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_BandParam, 10, &bandparam);
+    ok(hr == S_OK, "SetParam failed: %#lx, expected S_OK\n", hr);
+
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 10, &mt, &bandparam);
+    ok(hr == S_OK, "GetParam failed: %#lx, expected S_OK\n", hr);
+    ok(mt == 0, "Got time %lu, expected 0\n", mt);
+    ok(bandparam.mtTimePhysical == 10, "Got physical time %lu, expected 10\n", bandparam.mtTimePhysical);
+    IDirectMusicBand_Release(bandparam.pBand);
+    bandparam.pBand = NULL;
+    bandparam.mtTimePhysical = 0;
+
+    /* get with time before the first band. */
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 1, &mt, &bandparam);
+    ok(hr == S_OK, "GetParam failed: %#lx, expected S_OK\n", hr);
+    ok(mt == 0, "Got time %lu, expected 0\n", mt);
+    ok(bandparam.mtTimePhysical == 10, "Got physical time %lu, expected 10\n", bandparam.mtTimePhysical);
+    IDirectMusicBand_Release(bandparam.pBand);
+    bandparam.pBand = NULL;
+    bandparam.mtTimePhysical = 0;
+
+    bandparam.mtTimePhysical = 100;
+    bandparam.pBand = dmb[1];
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_BandParam, 100, &bandparam);
+    ok(hr == S_OK, "SetParam failed: %#lx, expected S_OK\n", hr);
+
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 10, &mt, &bandparam);
+    ok(hr == S_OK, "GetParam failed: %#lx, expected S_OK\n", hr);
+    ok(mt == 100, "Got time %lu, expected 100\n", mt);
+    ok(bandparam.mtTimePhysical == 10, "Got physical time %lu, expected 10\n", bandparam.mtTimePhysical);
+    IDirectMusicBand_Release(bandparam.pBand);
+    bandparam.pBand = NULL;
+    bandparam.mtTimePhysical = 0;
+
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 20, &mt, &bandparam);
+    ok(hr == S_OK, "GetParam failed: %#lx, expected S_OK\n", hr);
+    ok(mt == 100, "Got time %lu, expected 100\n", mt);
+    ok(bandparam.mtTimePhysical == 10, "Got physical time %lu, expected 10\n", bandparam.mtTimePhysical);
+    IDirectMusicBand_Release(bandparam.pBand);
+    bandparam.pBand = NULL;
+    bandparam.mtTimePhysical = 0;
+
+    /* time return by GetParam is actually not a relative time. */
+    bandparam.mtTimePhysical = 250;
+    bandparam.pBand = dmb[2];
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_BandParam, 250, &bandparam);
+    ok(hr == S_OK, "SetParam failed: %#lx, expected S_OK\n", hr);
+
+    hr = IDirectMusicTrack8_GetParam(dmt8, &GUID_BandParam, 120, &mt, &bandparam);
+    ok(hr == S_OK, "GetParam failed: %#lx, expected S_OK\n", hr);
+    ok(mt == 250, "Got time %lu, expected 250\n", mt);
+    ok(bandparam.mtTimePhysical == 100, "Got physical time %lu, expected 0\n", bandparam.mtTimePhysical);
+    IDirectMusicBand_Release(bandparam.pBand);
+    bandparam.pBand = NULL;
+    bandparam.mtTimePhysical = 0;
+
+    for (i = 0; i < 3; i++)
+        IDirectMusicBand_Release(dmb[i]);
+
+    bandparam.pBand = NULL;
+    hr = IDirectMusicTrack8_SetParam(dmt8, &GUID_BandParam, 0, &bandparam);
+    ok(hr == E_POINTER, "hr %#lx, expected E_POINTER\n", hr);
 
     hr = IDirectMusicTrack8_AddNotificationType(dmt8, NULL);
     ok(hr == E_NOTIMPL, "IDirectMusicTrack8_AddNotificationType failed: %#lx\n", hr);
