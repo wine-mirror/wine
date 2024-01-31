@@ -4576,6 +4576,97 @@ static void test_VarBstrFromR4(void)
   }
 }
 
+struct r8_test
+{
+  double val;
+  const wchar_t *expect;
+  BOOL todo;
+};
+
+static void test_VarBstrFromR8(void)
+{
+  static const struct r8_test tests_en[] =
+  {
+    { 0.5, L"0.5" },
+    { 0.05, L"0.05" },
+    { 0.005, L"0.005" },
+    { 0.0005, L"0.0005" },
+    { 0.00005, L"0.00005", TRUE },
+    { 0.000005, L"0.000005", TRUE },
+
+    { 1.0e8, L"100000000" },
+    { 1.0e12, L"1000000000000" },
+    { 1.0e14, L"100000000000000" },
+    { 999999999999999.0, L"999999999999999" },
+    { 1000000000000000.0, L"1E+15" },
+    { 1200000000000000.0, L"1.2E+15" },
+    { 1.0e15, L"1E+15" },
+
+    { 1.000e16, L"1E+16" },
+    { 1.234e16, L"1.234E+16" },
+
+    { 0.0, NULL }
+  };
+  static const struct r8_test tests_es[] =
+  {
+    { 0.5, L"0,5" },
+    { 0.05, L"0,05" },
+    { 0.005, L"0,005" },
+    { 0.0005, L"0,0005" },
+    { 0.00005, L"0,00005", TRUE },
+    { 0.000005, L"0,000005", TRUE },
+
+    { 1.0e8, L"100000000" },
+    { 1.0e12, L"1000000000000" },
+    { 1.0e14, L"100000000000000" },
+    { 999999999999999.0, L"999999999999999" },
+    { 1000000000000000.0, L"1E+15" },
+    { 1200000000000000.0, L"1,2E+15", TRUE },
+    { 1.0e15, L"1E+15" },
+
+    { 1.000e16, L"1E+16" },
+    { 1.234e16, L"1,234E+16", TRUE },
+
+    { 0.0, NULL }
+  };
+  const struct r8_test *cur;
+  HRESULT hres;
+  BSTR bstr;
+  LCID lcid;
+
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  cur = tests_en;
+  while (cur->expect)
+  {
+    bstr = NULL;
+    hres = VarBstrFromR8(cur->val, lcid, 0, &bstr);
+    ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+    if (bstr)
+    {
+      todo_wine_if(cur->todo)
+      ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
+      SysFreeString(bstr);
+    }
+    ++cur;
+  }
+
+  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT);
+  cur = tests_es;
+  while (cur->expect)
+  {
+    bstr = NULL;
+    hres = VarBstrFromR8(cur->val, lcid, 0, &bstr);
+    ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+    if (bstr)
+    {
+      todo_wine_if(cur->todo)
+      ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
+      SysFreeString(bstr);
+    }
+    ++cur;
+  }
+}
+
 static void _BSTR_DATE(DATE dt, const char *str, int line)
 {
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
@@ -6325,6 +6416,7 @@ START_TEST(vartype)
 
   test_VarBstrFromI4();
   test_VarBstrFromR4();
+  test_VarBstrFromR8();
   test_VarBstrFromDate();
   test_VarBstrFromCy();
   test_VarBstrFromDec();
