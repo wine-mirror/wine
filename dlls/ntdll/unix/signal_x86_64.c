@@ -140,7 +140,7 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
 #define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 #define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
-#define XState_sig(fpu)      (((unsigned int *)fpu->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSTATE *)(fpu + 1) : NULL)
+#define XState_sig(fpu)      (((unsigned int *)fpu->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(fpu + 1) : NULL)
 
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
 
@@ -359,11 +359,10 @@ struct exc_stack_layout
     ULONG64              align;          /* 588 */
     struct machine_frame machine_frame;  /* 590 */
     ULONG64              align2;         /* 5b8 */
-    XSTATE               xstate;         /* 5c0 */
 };
 C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x4f0 );
 C_ASSERT( offsetof(struct exc_stack_layout, machine_frame) == 0x590 );
-C_ASSERT( sizeof(struct exc_stack_layout) == 0x700 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x5c0 );
 
 /* stack layout when calling KiUserApcDispatcher */
 struct apc_stack_layout
@@ -483,12 +482,12 @@ struct xcontext
     ULONG64 host_compaction_mask;
 };
 
-static inline XSTATE *xstate_from_context( const CONTEXT *context )
+static inline XSAVE_AREA_HEADER *xstate_from_context( const CONTEXT *context )
 {
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
 
     if ((context->ContextFlags & CONTEXT_XSTATE) != CONTEXT_XSTATE) return NULL;
-    return (XSTATE *)((char *)xctx + xctx->XState.Offset);
+    return (XSAVE_AREA_HEADER *)((char *)xctx + xctx->XState.Offset);
 }
 
 static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
@@ -501,7 +500,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 
     if (xstate_buffer)
     {
-        xctx->XState.Length = sizeof(XSTATE);
+        xctx->XState.Length = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
         xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
         context->ContextFlags |= CONTEXT_XSTATE;
 
@@ -897,7 +896,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
     context->Dr7    = amd64_thread_data()->dr7;
     if (FPU_sig(sigcontext))
     {
-        XSTATE *xs;
+        XSAVE_AREA_HEADER *xs;
 
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
         context->FltSave = *FPU_sig(sigcontext);
@@ -922,7 +921,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
 static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcontext )
 {
     const CONTEXT *context = &xcontext->c;
-    XSTATE *xs;
+    XSAVE_AREA_HEADER *xs;
 
     amd64_thread_data()->dr0 = context->Dr0;
     amd64_thread_data()->dr1 = context->Dr1;
@@ -1398,7 +1397,8 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     struct exc_stack_layout *stack;
     size_t stack_size;
     NTSTATUS status;
-    XSTATE *src_xs;
+    XSAVE_AREA_HEADER *src_xs;
+    unsigned int xstate_size;
 
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
@@ -1427,7 +1427,8 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
-    stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack)) & ~(ULONG_PTR)63);
+    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+    stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack = virtual_setup_exception( stack_ptr, stack_size, rec );
     stack->rec               = *rec;
     stack->context           = *context;
@@ -1436,15 +1437,12 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
 
     if ((src_xs = xstate_from_context( context )))
     {
-        assert( !((ULONG_PTR)&stack->xstate & 63) );
-        context_init_xstate( &stack->context, &stack->xstate );
-        memset( &stack->xstate, 0, offsetof(XSTATE, YmmContext) );
-        stack->xstate.CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
-        if (src_xs->Mask & 4)
-        {
-            stack->xstate.Mask = 4;
-            memcpy( &stack->xstate.YmmContext, &src_xs->YmmContext, sizeof(stack->xstate.YmmContext) );
-        }
+        XSAVE_AREA_HEADER *dst_xs = (XSAVE_AREA_HEADER *)(stack + 1);
+        assert( !((ULONG_PTR)dst_xs & 63) );
+        context_init_xstate( &stack->context, dst_xs );
+        memset( dst_xs, 0, sizeof(*dst_xs) );
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
+        copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
     {
@@ -1531,16 +1529,19 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     struct exc_stack_layout *stack;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
+    unsigned int xstate_size;
 
     if (status) return status;
-    stack = (struct exc_stack_layout *)((context->Rsp - sizeof(*stack)) & ~(ULONG_PTR)63);
+    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+    stack = (struct exc_stack_layout *)((context->Rsp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     memmove( &stack->context, context, sizeof(*context) );
 
     if ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
     {
-        assert( !((ULONG_PTR)&stack->xstate & 63) );
-        context_init_xstate( &stack->context, &stack->xstate );
-        memcpy( &stack->xstate, &frame->xstate, sizeof(XSAVE_AREA_HEADER) + xstate_features_size );
+        XSAVE_AREA_HEADER *dst_xs = (XSAVE_AREA_HEADER *)(stack + 1);
+        assert( !((ULONG_PTR)dst_xs & 63) );
+        context_init_xstate( &stack->context, dst_xs );
+        memcpy( dst_xs, &frame->xstate, sizeof(XSAVE_AREA_HEADER) + xstate_features_size );
     }
     else context_init_xstate( &stack->context, NULL );
 
