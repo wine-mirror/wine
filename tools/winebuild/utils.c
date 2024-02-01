@@ -193,6 +193,7 @@ static const char *find_clang_tool( struct strarray clang, const char *tool )
     size_t cnt;
 
     strarray_addall( &args, clang );
+    if (!args.count) strarray_add( &args, "clang" );
     strarray_add( &args, strmake( "-print-prog-name=%s", tool ));
     if (verbose) strarray_add( &args, "-v" );
 
@@ -247,11 +248,7 @@ struct strarray find_tool( const char *name, const char * const *names )
     {
         if (cc_command.count) file = find_clang_tool( cc_command, name );
         if (!file && !(file = find_binary( "llvm", name )))
-        {
-            struct strarray clang = empty_strarray;
-            strarray_add( &clang, "clang" );
-            file = find_clang_tool( clang, strmake( "llvm-%s", name ));
-        }
+            file = find_clang_tool( empty_strarray, strmake( "llvm-%s", name ));
     }
     if (!file) fatal_error( "cannot find the '%s' tool\n", name );
 
@@ -267,12 +264,7 @@ struct strarray find_link_tool(void)
 
     if (cc_command.count) file = find_clang_tool( cc_command, "lld-link" );
     if (!file) file = find_binary( NULL, "lld-link" );
-    if (!file)
-    {
-        struct strarray clang = empty_strarray;
-        strarray_add( &clang, "clang" );
-        file = find_clang_tool( clang, "lld-link" );
-    }
+    if (!file) file = find_clang_tool( empty_strarray, "lld-link" );
 
     if (!file) fatal_error( "cannot find the 'lld-link' tool\n" );
     strarray_add( &ret, file );
