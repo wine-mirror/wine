@@ -38,16 +38,6 @@ enum system_timer_id
     SYSTEM_TIMER_KEY_REPEAT = 0xfff0,
 };
 
-struct rawinput_thread_data
-{
-    UINT     hw_id;     /* current rawinput message id */
-    RAWINPUT buffer[1]; /* rawinput message data buffer */
-};
-
-/* on windows the buffer capacity is quite large as well, enough to */
-/* hold up to 10s of 1kHz mouse rawinput events */
-#define RAWINPUT_BUFFER_SIZE (512 * 1024)
-
 struct user_object
 {
     HANDLE       handle;
@@ -133,7 +123,7 @@ struct user_thread_info
     MSG                           key_repeat_msg;         /* Last WM_KEYDOWN message to repeat */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
-    struct rawinput_thread_data  *rawinput;               /* RawInput thread local data / buffer */
+    struct hardware_msg_data     *rawinput;               /* Current rawinput message data */
     UINT                          spy_indent;             /* Current spy indent */
     BOOL                          clipping_cursor;        /* thread is currently clipping */
     DWORD                         clipping_reset;         /* time when clipping was last reset */

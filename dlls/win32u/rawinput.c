@@ -52,51 +52,6 @@ typedef struct
 } RAWINPUTHEADER64;
 #endif
 
-static struct rawinput_thread_data *get_rawinput_thread_data(void)
-{
-    struct user_thread_info *thread_info = get_user_thread_info();
-    struct rawinput_thread_data *data = thread_info->rawinput;
-    if (data) return data;
-    data = thread_info->rawinput = calloc( 1, RAWINPUT_BUFFER_SIZE + sizeof(struct user_thread_info) );
-    return data;
-}
-
-static BOOL rawinput_from_hardware_message( RAWINPUT *rawinput, const struct hardware_msg_data *msg_data )
-{
-    SIZE_T size = msg_data->size - sizeof(*msg_data);
-    if (sizeof(RAWINPUTHEADER) + size > rawinput->header.dwSize) return FALSE;
-
-    rawinput->header.dwType  = msg_data->rawinput.type;
-    rawinput->header.dwSize  = sizeof(RAWINPUTHEADER) + size;
-    rawinput->header.hDevice = UlongToHandle( msg_data->rawinput.device );
-    rawinput->header.wParam  = msg_data->rawinput.wparam;
-
-    if (msg_data->rawinput.type == RIM_TYPEMOUSE)
-    {
-        if (size != sizeof(RAWMOUSE)) return FALSE;
-        rawinput->data.mouse = *(RAWMOUSE *)(msg_data + 1);
-    }
-    else if (msg_data->rawinput.type == RIM_TYPEKEYBOARD)
-    {
-        if (size != sizeof(RAWKEYBOARD)) return FALSE;
-        rawinput->data.keyboard = *(RAWKEYBOARD *)(msg_data + 1);
-    }
-    else if (msg_data->rawinput.type == RIM_TYPEHID)
-    {
-        RAWHID *hid = (RAWHID *)(msg_data + 1);
-        if (size < offsetof(RAWHID, bRawData[0])) return FALSE;
-        if (size != offsetof(RAWHID, bRawData[hid->dwCount * hid->dwSizeHid])) return FALSE;
-        memcpy( &rawinput->data.hid, msg_data + 1, size );
-    }
-    else
-    {
-        FIXME( "Unhandled rawinput type %#x.\n", msg_data->rawinput.type );
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 struct device
 {
     HANDLE file;
@@ -552,69 +507,83 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
 /**********************************************************************
  *         NtUserGetRawInputData   (win32u.@)
  */
-UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data, UINT *data_size, UINT header_size )
+UINT WINAPI NtUserGetRawInputData( HRAWINPUT handle, UINT command, void *data, UINT *data_size, UINT header_size )
 {
-    struct rawinput_thread_data *thread_data;
-    UINT size;
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct hardware_msg_data *msg_data;
+    RAWINPUT *rawinput = data;
+    UINT size = 0;
 
-    TRACE( "rawinput %p, command %#x, data %p, data_size %p, header_size %u.\n",
-           rawinput, command, data, data_size, header_size );
+    TRACE( "handle %p, command %#x, data %p, data_size %p, header_size %u.\n",
+           handle, command, data, data_size, header_size );
 
-    if (!(thread_data = get_rawinput_thread_data()))
-    {
-        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
-        return ~0u;
-    }
-
-    if (!rawinput || thread_data->hw_id != (UINT_PTR)rawinput)
+    if (!(msg_data = thread_info->rawinput) || msg_data->hw_id != (UINT_PTR)handle)
     {
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return ~0u;
+        return -1;
     }
 
     if (header_size != sizeof(RAWINPUTHEADER))
     {
         WARN( "Invalid structure size %u.\n", header_size );
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
-        return ~0u;
+        return -1;
     }
-
-    switch (command)
-    {
-    case RID_INPUT:
-        size = thread_data->buffer->header.dwSize;
-        break;
-
-    case RID_HEADER:
-        size = sizeof(RAWINPUTHEADER);
-        break;
-
-    default:
-        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
-        return ~0u;
-    }
+    if (command != RID_HEADER && command != RID_INPUT) goto failed;
+    if (command == RID_INPUT) size = msg_data->size - sizeof(*msg_data);
 
     if (!data)
     {
-        *data_size = size;
+        *data_size = sizeof(RAWINPUTHEADER) + size;
         return 0;
     }
 
-    if (*data_size < size)
+    if (*data_size < sizeof(RAWINPUTHEADER) + size)
     {
         RtlSetLastWin32Error( ERROR_INSUFFICIENT_BUFFER );
-        return ~0u;
+        return -1;
     }
-    memcpy( data, thread_data->buffer, size );
-    return size;
+
+    rawinput->header.dwType  = msg_data->rawinput.type;
+    rawinput->header.dwSize  = sizeof(RAWINPUTHEADER) + msg_data->size - sizeof(*msg_data);
+    rawinput->header.hDevice = UlongToHandle( msg_data->rawinput.device );
+    rawinput->header.wParam  = msg_data->rawinput.wparam;
+    if (command == RID_HEADER) return sizeof(RAWINPUTHEADER);
+
+    if (msg_data->rawinput.type == RIM_TYPEMOUSE)
+    {
+        if (size != sizeof(RAWMOUSE)) goto failed;
+        rawinput->data.mouse = *(RAWMOUSE *)(msg_data + 1);
+    }
+    else if (msg_data->rawinput.type == RIM_TYPEKEYBOARD)
+    {
+        if (size != sizeof(RAWKEYBOARD)) goto failed;
+        rawinput->data.keyboard = *(RAWKEYBOARD *)(msg_data + 1);
+    }
+    else if (msg_data->rawinput.type == RIM_TYPEHID)
+    {
+        RAWHID *hid = (RAWHID *)(msg_data + 1);
+        if (size < offsetof(RAWHID, bRawData[0])) goto failed;
+        if (size != offsetof(RAWHID, bRawData[hid->dwCount * hid->dwSizeHid])) goto failed;
+        memcpy( &rawinput->data.hid, msg_data + 1, size );
+    }
+    else
+    {
+        FIXME( "Unhandled rawinput type %#x.\n", msg_data->rawinput.type );
+        goto failed;
+    }
+
+    return rawinput->header.dwSize;
+
+failed:
+    WARN( "Invalid command %u or data size %u.\n", command, size );
+    RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+    return -1;
 }
 
 BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
 {
-    struct rawinput_thread_data *thread_data;
-
-    if (!(thread_data = get_rawinput_thread_data()))
-        return FALSE;
+    struct user_thread_info *thread_info = get_user_thread_info();
 
     if (msg->message == WM_INPUT_DEVICE_CHANGE)
     {
@@ -624,9 +593,10 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
     }
     else
     {
-        thread_data->buffer->header.dwSize = RAWINPUT_BUFFER_SIZE;
-        if (!rawinput_from_hardware_message( thread_data->buffer, msg_data )) return FALSE;
-        thread_data->hw_id = hw_id;
+        struct hardware_msg_data *tmp;
+        if (!(tmp = realloc( thread_info->rawinput, msg_data->size ))) return FALSE;
+        memcpy( tmp, msg_data, msg_data->size );
+        thread_info->rawinput = tmp;
         msg->lParam = (LPARAM)hw_id;
     }
 
