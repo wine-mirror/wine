@@ -93,23 +93,30 @@ void destroy_view( struct view *view )
     free( view );
 }
 
-static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
+static BOOL eval_like( const WCHAR *text, const WCHAR *pattern )
 {
-    const WCHAR *p = lstr, *q = rstr;
+    if (wcsstr( pattern, L"[" )) FIXME( "character ranges (i.e. [abc], [^a-z]) are not supported\n" );
 
-    while (*p && *q)
+    while (*text)
     {
-        if (q[0] == '\\' && q[1] == '\\') q++;
-        if (*q == '%')
+        if (pattern[0] == '\\' && pattern[1] == '\\') pattern++;
+
+        if (*pattern == '%')
         {
-            while (*q == '%') q++;
-            if (!*q) return TRUE;
-            while (*p && *q && towupper( *p ) == towupper( *q )) { p++; q++; };
-            if (!*p && !*q) return TRUE;
+            while (*pattern == '%') pattern++;
+            if (!*pattern) return TRUE;
+            while (!eval_like( text, pattern ) && *text) text++;
+
+            return !!*text;
         }
-        if (*q != '%' && towupper( *p++ ) != towupper( *q++ )) return FALSE;
+
+        if (*pattern != '_' && towupper( *text ) != towupper( *pattern )) return FALSE;
+        text++; pattern++;
     }
-    return TRUE;
+
+    while (*pattern == '%') pattern++;
+
+    return *pattern == '\0';
 }
 
 static HRESULT eval_strcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGLONG *val )

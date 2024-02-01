@@ -140,7 +140,7 @@ static void test_select( IWbemServices *services )
     SysFreeString( query );
 }
 
-static void check_explorer_like_query( IWbemServices *services, const WCHAR *str, BOOL expect_success, BOOL todo)
+static void check_explorer_like_query( IWbemServices *services, const WCHAR *str, BOOL expect_success)
 {
     HRESULT hr;
     IWbemClassObject *obj[2];
@@ -155,7 +155,6 @@ static void check_explorer_like_query( IWbemServices *services, const WCHAR *str
         VARIANT var;
         IEnumWbemClassObject_Next( result, 10000, 2, obj, &count );
 
-        todo_wine_if(todo)
         ok( count == (expect_success ? 1 : 0), "expected to get %d results but got %lu\n",
                 (expect_success ? 1 : 0), count);
 
@@ -184,36 +183,35 @@ static void test_like_query( IWbemServices *services )
     WCHAR query[250];
 
     struct {
-        BOOL todo;
         BOOL expect_success;
         const WCHAR *str;
     } queries[] = {
-        { FALSE, TRUE,  L"explorer%" },
-        { FALSE, FALSE, L"xplorer.exe" },
-        { TRUE,  FALSE, L"explorer.ex" },
-        { FALSE, TRUE,  L"%explorer%" },
-        { FALSE, TRUE,  L"explorer.exe%" },
-        { FALSE, TRUE,  L"%explorer.exe%" },
-        { TRUE,  TRUE,  L"%plorer.exe" },
-        { TRUE,  TRUE,  L"%plorer.exe%" },
-        { TRUE,  TRUE,  L"__plorer.exe" },
-        { TRUE,  TRUE,  L"e_plorer.exe" },
-        { FALSE, FALSE, L"_plorer.exe" },
-        { TRUE,  TRUE,  L"%%%plorer.e%" },
-        { TRUE,  TRUE,  L"%plorer.e%" },
-        { TRUE,  TRUE,  L"%plorer.e_e" },
-        { TRUE,  TRUE,  L"%plorer.e_e" },
-        { TRUE,  TRUE,  L"explore%exe" },
-        { FALSE, FALSE, L"fancy_explore.exe" },
-        { FALSE, FALSE, L"fancy%xplore%exe" },
-        { FALSE, FALSE, L"%%%f%xplore%exe" },
+        { TRUE,  L"explorer%" },
+        { FALSE, L"xplorer.exe" },
+        { FALSE, L"explorer.ex" },
+        { TRUE,  L"%explorer%" },
+        { TRUE,  L"explorer.exe%" },
+        { TRUE,  L"%explorer.exe%" },
+        { TRUE,  L"%plorer.exe" },
+        { TRUE,  L"%plorer.exe%" },
+        { TRUE,  L"__plorer.exe" },
+        { TRUE,  L"e_plorer.exe" },
+        { FALSE, L"_plorer.exe" },
+        { TRUE,  L"%%%plorer.e%" },
+        { TRUE,  L"%plorer.e%" },
+        { TRUE,  L"%plorer.e_e" },
+        { TRUE,  L"%plorer.e_e" },
+        { TRUE,  L"explore%exe" },
+        { FALSE, L"fancy_explore.exe" },
+        { FALSE, L"fancy%xplore%exe" },
+        { FALSE, L"%%%f%xplore%exe" },
     };
 
     for (i = 0; i < ARRAYSIZE(queries); i++)
     {
         wsprintfW( query, L"SELECT * FROM Win32_Process WHERE Caption LIKE '%ls'", queries[i].str );
         trace("%s\n", wine_dbgstr_w(query));
-        check_explorer_like_query( services, query, queries[i].expect_success, queries[i].todo );
+        check_explorer_like_query( services, query, queries[i].expect_success );
     }
 }
 
