@@ -3796,10 +3796,13 @@ static HRESULT create_buffer_object(struct d3d10_effect_variable *v)
 static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char **ptr,
         BOOL local, struct d3d10_effect_variable *l)
 {
+    enum buffer_flags
+    {
+        IS_TBUFFER = 1,
+    };
     const char *prefix = local ? "Local" : "Shared";
+    uint32_t offset, flags;
     unsigned int i;
-    uint32_t offset;
-    D3D10_CBUFFER_TYPE d3d10_cbuffer_type;
     HRESULT hr;
     unsigned int stride = 0;
 
@@ -3826,32 +3829,30 @@ static HRESULT parse_fx10_buffer(const char *data, size_t data_size, const char 
     l->data_size = read_u32(ptr);
     TRACE("%s buffer data size: %#x.\n", prefix, l->data_size);
 
-    d3d10_cbuffer_type = read_u32(ptr);
-    TRACE("%s buffer type: %#x.\n", prefix, d3d10_cbuffer_type);
+    flags = read_u32(ptr);
+    TRACE("%s buffer flags: %#x.\n", prefix, flags);
 
-    switch(d3d10_cbuffer_type)
+    if (flags & IS_TBUFFER)
     {
-        case D3D10_CT_CBUFFER:
-            l->type->basetype = D3D10_SVT_CBUFFER;
-            if (!copy_name("cbuffer", &l->type->name))
-            {
-                ERR("Failed to copy name.\n");
-                return E_OUTOFMEMORY;
-            }
-            break;
+        l->type->basetype = D3D10_SVT_TBUFFER;
+        copy_name("tbuffer", &l->type->name);
+    }
+    else
+    {
+        l->type->basetype = D3D10_SVT_CBUFFER;
+        copy_name("cbuffer", &l->type->name);
+    }
+    if (!l->type->name)
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
 
-        case D3D10_CT_TBUFFER:
-            l->type->basetype = D3D10_SVT_TBUFFER;
-            if (!copy_name("tbuffer", &l->type->name))
-            {
-                ERR("Failed to copy name.\n");
-                return E_OUTOFMEMORY;
-            }
-            break;
-
-        default:
-            ERR("Unexpected D3D10_CBUFFER_TYPE %#x!\n", d3d10_cbuffer_type);
-            return E_FAIL;
+    flags &= ~IS_TBUFFER;
+    if (flags)
+    {
+        ERR("Unexpected buffer flags %#x.\n", flags);
+        return E_FAIL;
     }
 
     l->type->member_count = read_u32(ptr);
