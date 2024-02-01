@@ -882,6 +882,8 @@ do
         while test $# -ge 1
         do
             case "$1" in
+                */*-gcc) target=`expr "$1" : '.*/\(.*\)-gcc'` ;;
+                */*-clang) target=`expr "$1" : '.*/\(.*\)-clang'` ;;
                 *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
                 *-clang) target=`expr "$1" : '\(.*\)-clang'` ;;
             esac
