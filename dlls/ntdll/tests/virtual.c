@@ -2007,18 +2007,19 @@ static void test_user_shared_data(void)
         return;
     }
 
-    trace("XState EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
+    trace("XState EnabledFeatures %#I64x, EnabledSupervisorFeatures %#I64x, EnabledVolatileFeatures %I64x.\n",
+            xstate.EnabledFeatures, xstate.EnabledSupervisorFeatures, xstate.EnabledVolatileFeatures);
     feature_mask = pRtlGetEnabledExtendedFeatures(0);
     ok(!feature_mask, "Got unexpected feature_mask %s.\n", wine_dbgstr_longlong(feature_mask));
     feature_mask = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
-    ok(feature_mask == xstate.EnabledFeatures, "Got unexpected feature_mask %s.\n",
+    ok(feature_mask == (xstate.EnabledFeatures | xstate.EnabledSupervisorFeatures), "Got unexpected feature_mask %s.\n",
             wine_dbgstr_longlong(feature_mask));
     feature_mask = pGetEnabledXStateFeatures();
-    ok(feature_mask == xstate.EnabledFeatures, "Got unexpected feature_mask %s.\n",
+    ok(feature_mask == (xstate.EnabledFeatures | xstate.EnabledSupervisorFeatures), "Got unexpected feature_mask %s.\n",
             wine_dbgstr_longlong(feature_mask));
     ok((xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES) == SUPPORTED_XSTATE_FEATURES,
             "Got unexpected EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
-    ok((xstate.EnabledVolatileFeatures & SUPPORTED_XSTATE_FEATURES) == xstate.EnabledFeatures,
+    ok((xstate.EnabledVolatileFeatures & SUPPORTED_XSTATE_FEATURES) == (xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES),
             "Got unexpected EnabledVolatileFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledVolatileFeatures));
     ok(xstate.Size >= 512 + sizeof(XSTATE), "Got unexpected Size %lu.\n", xstate.Size);
     if (xstate.CompactionEnabled)
