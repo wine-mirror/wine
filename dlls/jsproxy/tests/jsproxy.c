@@ -104,7 +104,9 @@ static void test_InternetInitializeAutoProxyDll(void)
 static void test_InternetGetProxyInfo(void)
 {
     const char url[] = "http://localhost";
-    char script[] = "function FindProxyForURL(url, host) { return \"DIRECT\"; }";
+    char script[] = "function FindProxyForURL(url, host) { "
+        "if (url.substring(0, 4) === 'test') return url + ' ' + host; "
+        "return \"DIRECT\"; }";
     char *proxy, host[] = "localhost";
     AUTO_PROXY_SCRIPT_BUFFER buf;
     DWORD len, err;
@@ -157,6 +159,14 @@ static void test_InternetGetProxyInfo(void)
     ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
     ok( len == strlen("DIRECT") + 1, "got %lu\n", len );
+    GlobalFree( proxy );
+
+    len = 0;
+    proxy = NULL;
+    ret = pInternetGetProxyInfo( "testa", 4, host, 4, &proxy, &len);
+    ok( ret, "got %lu\n", GetLastError() );
+    ok( !strcmp( proxy, "test loca" ), "got \"%s\"\n", proxy );
+    ok( len == 10, "got %lu\n", len );
     GlobalFree( proxy );
 
     ret = pInternetDeInitializeAutoProxyDll( NULL, 0 );

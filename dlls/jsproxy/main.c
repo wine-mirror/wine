@@ -576,13 +576,8 @@ BOOL WINAPI InternetGetProxyInfo( LPCSTR url, DWORD len_url, LPCSTR hostname, DW
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         goto done;
     }
-    if (hostname && len_hostname < strlen( hostname ))
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        goto done;
-    }
-    if (!(urlW = strdupAW( url, -1 ))) goto done;
-    if (hostname && !(hostnameW = strdupAW( hostname, -1 ))) goto done;
+    if (!(urlW = strdupAW( url, len_url ))) goto done;
+    if (hostname && !(hostnameW = strdupAW( hostname, len_hostname ))) goto done;
 
     TRACE( "%s\n", debugstr_w(global_script->text) );
     ret = run_script( global_script->text, urlW, hostnameW, proxy, len_proxy );
