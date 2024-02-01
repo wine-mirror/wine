@@ -1645,17 +1645,27 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     const struct unwind_info_arm64 *info;
     const struct unwind_info_ext_arm64 *infoex;
     const struct unwind_info_epilog_arm64 *infoepi;
+    const struct runtime_function_arm64 *parent_func;
     const BYTE *ptr;
     unsigned int i, rva, codes, epilogs;
 
-    if (func->Flag)
+    switch (func->Flag)
     {
+    case 1:
+    case 2:
         printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
                 func->BeginAddress + func->FunctionLength * 4 );
         printf( "    len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
                 func->FunctionLength, func->Flag, func->RegF, func->RegI,
                 func->H, func->CR, func->FrameSize );
         dump_arm64_packed_info( func );
+        return;
+    case 3:
+        rva = func->UnwindData & ~3;
+        parent_func = RVA( rva, sizeof(*parent_func) );
+        printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
+                func->BeginAddress + 12 /* adrl x16, <dest>; br x16 */ );
+        printf( "    forward to parent %08x\n", parent_func->BeginAddress );
         return;
     }
 
