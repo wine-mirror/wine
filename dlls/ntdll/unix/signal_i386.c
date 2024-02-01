@@ -2107,24 +2107,46 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct xcontext xcontext;
+    ucontext_t *ucontext = sigcontext;
 
     init_handler( sigcontext );
-    if (is_inside_syscall( sigcontext ))
-    {
-        DECLSPEC_ALIGN(64) XSTATE xs;
-        xcontext.c.ContextFlags = CONTEXT_FULL;
-        context_init_xstate( &xcontext.c, &xs );
 
-        NtGetContextThread( GetCurrentThread(), &xcontext.c );
-        wait_suspend( &xcontext.c );
-        NtSetContextThread( GetCurrentThread(), &xcontext.c );
+    if (is_inside_syscall( ucontext ))
+    {
+        struct syscall_frame *frame = x86_thread_data()->syscall_frame;
+        ULONG64 saved_compaction = 0;
+        struct xcontext *context;
+
+        context = (struct xcontext *)(((ULONG_PTR)ESP_sig(ucontext) - sizeof(*context)) & ~15);
+        if ((char *)context < (char *)ntdll_get_thread_data()->kernel_stack)
+        {
+            ERR_(seh)( "kernel stack overflow.\n" );
+            return;
+        }
+        context->c.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &context->c );
+        if (xstate_extended_features())
+        {
+            context_init_xstate( &context->c, &frame->xstate );
+            saved_compaction = frame->xstate.CompactionMask;
+        }
+        wait_suspend( &context->c );
+        if (xstate_extended_features()) frame->xstate.CompactionMask = saved_compaction;
+        if (context->c.ContextFlags & 0x40)
+        {
+            /* xstate is updated directly in frame's xstate */
+            context->c.ContextFlags &= ~0x40;
+            frame->restore_flags |= 0x40;
+        }
+        NtSetContextThread( GetCurrentThread(), &context->c );
     }
     else
     {
-        save_context( &xcontext, sigcontext );
-        wait_suspend( &xcontext.c );
-        restore_context( &xcontext, sigcontext );
+        struct xcontext context;
+
+        save_context( &context, ucontext );
+        wait_suspend( &context.c );
+        restore_context( &context, ucontext );
     }
 }
 

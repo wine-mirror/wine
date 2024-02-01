@@ -2145,20 +2145,40 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
-    struct xcontext context;
 
     if (is_inside_syscall( ucontext ))
     {
-        DECLSPEC_ALIGN(64) XSTATE xs;
-        context.c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS;
-        context_init_xstate( &context.c, &xs );
+        struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+        ULONG64 saved_compaction = 0;
+        struct xcontext *context;
 
-        NtGetContextThread( GetCurrentThread(), &context.c );
-        wait_suspend( &context.c );
-        NtSetContextThread( GetCurrentThread(), &context.c );
+        context = (struct xcontext *)(((ULONG_PTR)RSP_sig(ucontext) - sizeof(*context)) & ~15);
+        if ((char *)context < (char *)ntdll_get_thread_data()->kernel_stack)
+        {
+            ERR_(seh)( "kernel stack overflow.\n" );
+            return;
+        }
+        context->c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS;
+        NtGetContextThread( GetCurrentThread(), &context->c );
+        if (xstate_extended_features())
+        {
+            context_init_xstate( &context->c, &frame->xstate );
+            saved_compaction = frame->xstate.CompactionMask;
+        }
+        wait_suspend( &context->c );
+        if (xstate_extended_features()) frame->xstate.CompactionMask = saved_compaction;
+        if (context->c.ContextFlags & 0x40)
+        {
+            /* xstate is updated directly in frame's xstate */
+            context->c.ContextFlags &= ~0x40;
+            frame->restore_flags |= 0x40;
+        }
+        NtSetContextThread( GetCurrentThread(), &context->c );
     }
     else
     {
+        struct xcontext context;
+
         save_context( &context, ucontext );
         wait_suspend( &context.c );
         restore_context( &context, ucontext );
