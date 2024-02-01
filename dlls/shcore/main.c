@@ -2532,6 +2532,18 @@ HRESULT WINAPI RegisterScaleChangeEvent(HANDLE handle, DWORD_PTR *cookie)
 }
 
 /*************************************************************************
+ * RegisterScaleChangeNotifications        [SHCORE.@]
+ */
+HRESULT WINAPI RegisterScaleChangeNotifications(DISPLAY_DEVICE_TYPE display_device, HWND hwnd, UINT msg, DWORD *cookie)
+{
+    FIXME("(%d, %p, %u, %p) stub\n", display_device, hwnd, msg, cookie);
+
+    if (cookie) *cookie = 0;
+
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
  * CreateRandomAccessStreamOverStream        [SHCORE.@]
  */
 HRESULT WINAPI CreateRandomAccessStreamOverStream(IStream *stream, BSOS_OPTIONS options, REFIID riid, void **ppv)
