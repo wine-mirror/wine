@@ -42,7 +42,7 @@ especially the wealth of information found at https://www.winehq.org.
 
 To compile and run Wine, you must have one of the following:
 
-- Linux version 2.0.36 or later
+- Linux version 2.6.22 or later
 - FreeBSD 12.4 or later
 - Solaris x86 9 or later
 - NetBSD-current

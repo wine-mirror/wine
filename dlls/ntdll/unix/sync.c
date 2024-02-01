@@ -103,10 +103,7 @@ static inline ULONGLONG monotonic_counter(void)
 
 #ifdef __linux__
 
-#define FUTEX_WAIT 0
-#define FUTEX_WAKE 1
-
-static int futex_private = 128;
+#include <linux/futex.h>
 
 static inline int futex_wait( const LONG *addr, int val, struct timespec *timeout )
 {
@@ -118,32 +115,15 @@ static inline int futex_wait( const LONG *addr, int val, struct timespec *timeou
             long tv_nsec;
         } timeout32 = { timeout->tv_sec, timeout->tv_nsec };
 
-        return syscall( __NR_futex, addr, FUTEX_WAIT | futex_private, val, &timeout32, 0, 0 );
+        return syscall( __NR_futex, addr, FUTEX_WAIT_PRIVATE, val, &timeout32, 0, 0 );
     }
 #endif
-    return syscall( __NR_futex, addr, FUTEX_WAIT | futex_private, val, timeout, 0, 0 );
+    return syscall( __NR_futex, addr, FUTEX_WAIT_PRIVATE, val, timeout, 0, 0 );
 }
 
 static inline int futex_wake( const LONG *addr, int val )
 {
-    return syscall( __NR_futex, addr, FUTEX_WAKE | futex_private, val, NULL, 0, 0 );
-}
-
-static inline int use_futexes(void)
-{
-    static LONG supported = -1;
-
-    if (supported == -1)
-    {
-        futex_wait( &supported, 10, NULL );
-        if (errno == ENOSYS)
-        {
-            futex_private = 0;
-            futex_wait( &supported, 10, NULL );
-        }
-        supported = (errno != ENOSYS);
-    }
-    return supported;
+    return syscall( __NR_futex, addr, FUTEX_WAKE_PRIVATE, val, NULL, 0, 0 );
 }
 
 #endif
@@ -2356,11 +2336,10 @@ union tid_alert_entry
 {
 #ifdef HAVE_KQUEUE
     int kq;
+#elif defined(__linux__)
+    LONG futex;
 #else
     HANDLE event;
-#ifdef __linux__
-    LONG futex;
-#endif
 #endif
 };
 
@@ -2426,12 +2405,9 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
         if (InterlockedCompareExchange( (LONG *)&entry->kq, kq, 0 ))
             close( kq );
     }
+#elif defined(__linux__)
+    return entry;
 #else
-#ifdef __linux__
-    if (use_futexes())
-        return entry;
-#endif
-
     if (!entry->event)
     {
         HANDLE event;
@@ -2473,17 +2449,14 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
         kevent( entry->kq, &signal_event, 1, NULL, 0, NULL );
         return STATUS_SUCCESS;
     }
-#else
-#ifdef __linux__
-    if (use_futexes())
+#elif defined(__linux__)
     {
         LONG *futex = &entry->futex;
         if (!InterlockedExchange( futex, 1 ))
             futex_wake( futex, 1 );
         return STATUS_SUCCESS;
     }
-#endif
-
+#else
     return NtSetEvent( entry->event, NULL );
 #endif
 }
@@ -2571,14 +2544,12 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEGER *timeout )
 {
     union tid_alert_entry *entry = get_tid_alert_entry( NtCurrentTeb()->ClientId.UniqueThread );
-    NTSTATUS status;
 
     TRACE( "%p %s\n", address, debugstr_timeout( timeout ) );
 
     if (!entry) return STATUS_INVALID_CID;
 
 #ifdef __linux__
-    if (use_futexes())
     {
         LONG *futex = &entry->futex;
         ULONGLONG end;
@@ -2610,11 +2581,13 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
         }
         return STATUS_ALERTED;
     }
+#else
+    {
+        NTSTATUS status = NtWaitForSingleObject( entry->event, FALSE, timeout );
+        if (!status) return STATUS_ALERTED;
+        return status;
+    }
 #endif
-
-    status = NtWaitForSingleObject( entry->event, FALSE, timeout );
-    if (!status) return STATUS_ALERTED;
-    return status;
 }
 
 #endif
