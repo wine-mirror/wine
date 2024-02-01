@@ -4521,8 +4521,65 @@ static void test_VarBstrFromI4(void)
   }
 }
 
+struct r4_test
+{
+  float val;
+  const wchar_t *expect;
+  BOOL todo;
+};
+
 static void test_VarBstrFromR4(void)
 {
+  static const struct r4_test tests_en[] =
+  {
+    { 0.5, L"0.5" },
+    { 0.05, L"0.05" },
+    { 0.005, L"0.005" },
+    { 0.0005, L"0.0005" },
+    { 0.00005, L"0.00005", TRUE },
+    { 0.000005, L"0.000005", TRUE },
+
+    { 1.0e8, L"1E+08" },
+    { 1.0e12, L"1E+12" },
+    { 1.0e14, L"1E+14" },
+    { 999999999999999.0, L"1E+15" },
+    { 1000000000000000.0, L"1E+15" },
+    { 1200000000000000.0, L"1.2E+15" },
+    { 1.0e15, L"1E+15" },
+
+    { 1.000e16, L"1E+16" },
+    { 1.234e16, L"1.234E+16" },
+    { M_PI, L"3.141593" },
+    { 37.86626157, L"37.86626" },
+    { 137.86626157, L"137.8663" },
+    { 1137.86626157, L"1137.866" },
+
+    { 0.0, NULL }
+  };
+  static const struct r4_test tests_es[] =
+  {
+    { 0.5, L"0,5" },
+    { 0.05, L"0,05" },
+    { 0.005, L"0,005" },
+    { 0.0005, L"0,0005" },
+    { 0.00005, L"0,00005", TRUE },
+    { 0.000005, L"0,000005", TRUE },
+
+    { 1.0e8, L"1E+08" },
+    { 1.0e12, L"1E+12" },
+    { 1.0e14, L"1E+14" },
+    { 999999999999999.0, L"1E+15" },
+    { 1000000000000000.0, L"1E+15" },
+    { 1200000000000000.0, L"1,2E+15", TRUE },
+    { 1.0e15, L"1E+15" },
+
+    { 1.000e16, L"1E+16" },
+    { 1.234e16, L"1,234E+16", TRUE },
+    { M_PI, L"3,141593" },
+
+    { 0.0, NULL }
+  };
+  const struct r4_test *cur;
   static const WCHAR szNative[] = { '6','5','4','3','2','2','.','3','\0' };
   static const WCHAR szZero[] = {'0', '\0'};
   static const WCHAR szOneHalf_English[] = { '0','.','5','\0' };    /* uses period */
@@ -4573,6 +4630,38 @@ static void test_VarBstrFromR4(void)
   {
     ok(memcmp(bstr, szOneHalf_Spanish, sizeof(szOneHalf_Spanish)) == 0, "Spanish locale failed (got %s)\n", wtoascii(bstr));
     SysFreeString(bstr);
+  }
+
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  cur = tests_en;
+  while (cur->expect)
+  {
+    bstr = NULL;
+    hres = VarBstrFromR4(cur->val, lcid, 0, &bstr);
+    ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+    if (bstr)
+    {
+      todo_wine_if(cur->todo)
+      ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
+      SysFreeString(bstr);
+    }
+    ++cur;
+  }
+
+  lcid = MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH), SORT_DEFAULT);
+  cur = tests_es;
+  while (cur->expect)
+  {
+    bstr = NULL;
+    hres = VarBstrFromR4(cur->val, lcid, 0, &bstr);
+    ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+    if (bstr)
+    {
+      todo_wine_if(cur->todo)
+      ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
+      SysFreeString(bstr);
+    }
+    ++cur;
   }
 }
 
