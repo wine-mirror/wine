@@ -691,7 +691,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
 
             xs->Mask &= ~4;
-            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            if (xs->CompactionMask) xs->CompactionMask = 0x8000000000000004;
             for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
                 if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
@@ -765,7 +765,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
 
             xs->Mask &= ~4;
-            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            if (xs->CompactionMask) xs->CompactionMask = 0x8000000000000004;
             for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
                 if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
@@ -840,7 +840,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
 
             xs->Mask &= ~4;
-            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            if (xs->CompactionMask) xs->CompactionMask = 0x8000000000000004;
             for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
                 if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
@@ -922,7 +922,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
 
             xs->Mask &= ~4;
-            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            if (xs->CompactionMask) xs->CompactionMask = 0x8000000000000004;
             for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
                 if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;

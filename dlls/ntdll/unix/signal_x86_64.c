@@ -479,7 +479,6 @@ struct xcontext
 {
     CONTEXT c;
     CONTEXT_EX c_ex;
-    ULONG64 host_compaction_mask;
 };
 
 static inline XSAVE_AREA_HEADER *xstate_from_context( const CONTEXT *context )
@@ -907,7 +906,6 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
              * just reference sigcontext without overflowing 32 bit XState.Offset */
             context_init_xstate( context, xs );
             assert( xcontext->c_ex.XState.Offset == (BYTE *)xs - (BYTE *)&xcontext->c_ex );
-            xcontext->host_compaction_mask = xs->CompactionMask;
         }
     }
 }
@@ -921,7 +919,6 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
 static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcontext )
 {
     const CONTEXT *context = &xcontext->c;
-    XSAVE_AREA_HEADER *xs;
 
     amd64_thread_data()->dr0 = context->Dr0;
     amd64_thread_data()->dr1 = context->Dr1;
@@ -931,8 +928,6 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->FltSave;
-    if (xstate_extended_features() && (xs = XState_sig(FPU_sig(sigcontext))))
-        xs->CompactionMask = xcontext->host_compaction_mask;
     leave_handler( sigcontext );
 }
 

@@ -607,7 +607,6 @@ struct xcontext
 {
     CONTEXT c;
     CONTEXT_EX c_ex;
-    ULONG64 host_compaction_mask;
 };
 
 static inline XSAVE_AREA_HEADER *xstate_from_context( const CONTEXT *context )
@@ -831,11 +830,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if (xstate_extended_features() && (xs = XState_sig(fpux)))
-        {
-            context_init_xstate( context, xs );
-            xcontext->host_compaction_mask = xs->CompactionMask;
-        }
+        if (xstate_extended_features() && (xs = XState_sig(fpux))) context_init_xstate( context, xs );
     }
     if (!fpu && !fpux) save_fpu( context );
 }
@@ -876,15 +871,7 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
     SS_sig(sigcontext)  = context->SegSs;
 
     if (fpu) *fpu = context->FloatSave;
-    if (fpux)
-    {
-        XSAVE_AREA_HEADER *xs;
-
-        memcpy( fpux, context->ExtendedRegisters, sizeof(*fpux) );
-
-        if (xstate_extended_features() && (xs = XState_sig(fpux)))
-            xs->CompactionMask = xcontext->host_compaction_mask;
-    }
+    if (fpux) memcpy( fpux, context->ExtendedRegisters, sizeof(*fpux) );
     if (!fpu && !fpux) restore_fpu( context );
 }
 
