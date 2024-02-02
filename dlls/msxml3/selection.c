@@ -788,6 +788,7 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     ctxt->error = query_serror;
     ctxt->node = node;
     registerNamespaces(ctxt);
+    xmlXPathContextSetCache(ctxt, 1, -1, 0);
 
     if (is_xpathmode(This->node->doc))
     {
