@@ -604,12 +604,39 @@ static void test_object_token(void)
     static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Wine\\Winetest\\sapi\\TestToken";
 
     ISpObjectToken *token;
+    IDispatch *disp;
+    ISpeechObjectToken *speech_token;
     ISpDataKey *sub_key;
     HRESULT hr;
     LPWSTR tempW, token_id;
     ISpObjectTokenCategory *cat;
     DWORD regid;
     IUnknown *obj;
+
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectToken, (void **)&token );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectToken_QueryInterface( token, &IID_IDispatch, (void **)&disp );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    IDispatch_Release( disp );
+
+    hr = ISpObjectToken_QueryInterface( token, &IID_ISpeechObjectToken, (void **)&speech_token );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpeechObjectToken_Release( speech_token );
+
+    ISpObjectToken_Release( token );
+
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IDispatch, (void **)&disp );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    IDispatch_Release( disp );
+
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpeechObjectToken, (void **)&speech_token );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpeechObjectToken_Release( speech_token );
+
 
     hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpObjectToken, (void **)&token );

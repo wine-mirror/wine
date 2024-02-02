@@ -1293,7 +1293,7 @@ library SpeechLib
     coclass SpObjectToken
     {
         interface ISpObjectToken;
-        [default] interface ISpDataKey;
+        [default] interface ISpeechObjectToken;
     }
 
     [
