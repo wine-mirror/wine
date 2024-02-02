@@ -246,11 +246,41 @@ static void test_token_enum(void)
 {
     ISpObjectTokenEnumBuilder *token_enum;
     HRESULT hr;
+    IDispatch *disp;
+    ISpeechObjectTokens *speech_tokens;
     ISpObjectToken *tokens[5];
     ISpObjectToken *out_tokens[5];
     WCHAR token_id[MAX_PATH];
     ULONG count;
     int i;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_QueryInterface( token_enum,
+                                                   &IID_IDispatch, (void **)&disp );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    IDispatch_Release( disp );
+
+    hr = ISpObjectTokenEnumBuilder_QueryInterface( token_enum,
+                                                   &IID_ISpeechObjectTokens,
+                                                   (void **)&speech_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpeechObjectTokens_Release( speech_tokens );
+
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IDispatch, (void **)&disp );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    IDispatch_Release( disp );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpeechObjectTokens, (void **)&speech_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ISpeechObjectTokens_Release( speech_tokens );
+
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );

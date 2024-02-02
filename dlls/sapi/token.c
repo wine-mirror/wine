@@ -579,6 +579,7 @@ struct token_with_score
 struct token_enum
 {
     ISpObjectTokenEnumBuilder ISpObjectTokenEnumBuilder_iface;
+    ISpeechObjectTokens ISpeechObjectTokens_iface;
     LONG ref;
 
     BOOL init;
@@ -591,6 +592,11 @@ struct token_enum
 static struct token_enum *impl_from_ISpObjectTokenEnumBuilder( ISpObjectTokenEnumBuilder *iface )
 {
     return CONTAINING_RECORD( iface, struct token_enum, ISpObjectTokenEnumBuilder_iface );
+}
+
+static struct token_enum *impl_from_ISpeechObjectTokens( ISpeechObjectTokens *iface )
+{
+    return CONTAINING_RECORD( iface, struct token_enum, ISpeechObjectTokens_iface );
 }
 
 static HRESULT WINAPI token_category_EnumTokens( ISpObjectTokenCategory *iface,
@@ -765,15 +771,19 @@ static HRESULT WINAPI token_enum_QueryInterface( ISpObjectTokenEnumBuilder *ifac
     if (IsEqualIID( iid, &IID_IUnknown ) ||
         IsEqualIID( iid, &IID_IEnumSpObjectTokens ) ||
         IsEqualIID( iid, &IID_ISpObjectTokenEnumBuilder ))
+        *obj = &This->ISpObjectTokenEnumBuilder_iface;
+    else if (IsEqualIID( iid, &IID_IDispatch ) ||
+             IsEqualIID( iid, &IID_ISpeechObjectTokens ))
+        *obj = &This->ISpeechObjectTokens_iface;
+    else
     {
-        ISpObjectTokenEnumBuilder_AddRef( iface );
-        *obj = iface;
-        return S_OK;
+        *obj = NULL;
+        FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+        return E_NOINTERFACE;
     }
 
-    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef( (IUnknown *)*obj );
+    return S_OK;
 }
 
 static ULONG WINAPI token_enum_AddRef( ISpObjectTokenEnumBuilder *iface )
@@ -1135,6 +1145,112 @@ const struct ISpObjectTokenEnumBuilderVtbl token_enum_vtbl =
     token_enum_Sort
 };
 
+static HRESULT WINAPI speech_tokens_QueryInterface( ISpeechObjectTokens *iface,
+                                                    REFIID iid, void **obj )
+{
+    struct token_enum *This = impl_from_ISpeechObjectTokens( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    return ISpObjectTokenEnumBuilder_QueryInterface(
+        &This->ISpObjectTokenEnumBuilder_iface, iid, obj );
+}
+
+static ULONG WINAPI speech_tokens_AddRef( ISpeechObjectTokens *iface )
+{
+    struct token_enum *This = impl_from_ISpeechObjectTokens( iface );
+
+    TRACE( "(%p)\n", This );
+
+    return ISpObjectTokenEnumBuilder_AddRef( &This->ISpObjectTokenEnumBuilder_iface );
+}
+
+static ULONG WINAPI speech_tokens_Release( ISpeechObjectTokens *iface )
+{
+    struct token_enum *This = impl_from_ISpeechObjectTokens( iface );
+
+    TRACE( "(%p)\n", This );
+
+    return ISpObjectTokenEnumBuilder_Release( &This->ISpObjectTokenEnumBuilder_iface );
+}
+
+static HRESULT WINAPI speech_tokens_GetTypeInfoCount( ISpeechObjectTokens *iface,
+                                                      UINT *count )
+{
+
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_GetTypeInfo( ISpeechObjectTokens *iface,
+                                                 UINT index,
+                                                 LCID lcid,
+                                                 ITypeInfo **type_info )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_GetIDsOfNames( ISpeechObjectTokens *iface,
+                                                   REFIID iid,
+                                                   LPOLESTR *names,
+                                                   UINT count,
+                                                   LCID lcid,
+                                                   DISPID *dispids )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_Invoke( ISpeechObjectTokens *iface,
+                                            DISPID dispid,
+                                            REFIID iid,
+                                            LCID lcid,
+                                            WORD flags,
+                                            DISPPARAMS *params,
+                                            VARIANT *result,
+                                            EXCEPINFO *excepinfo,
+                                            UINT *argerr )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_get_Count( ISpeechObjectTokens *iface,
+                                               LONG *count )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_Item( ISpeechObjectTokens *iface,
+                                          LONG index, ISpeechObjectToken **token )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI speech_tokens_get__NewEnum( ISpeechObjectTokens *iface,
+                                                  IUnknown **new_enum )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static const ISpeechObjectTokensVtbl speech_tokens_vtbl =
+{
+    speech_tokens_QueryInterface,
+    speech_tokens_AddRef,
+    speech_tokens_Release,
+    speech_tokens_GetTypeInfoCount,
+    speech_tokens_GetTypeInfo,
+    speech_tokens_GetIDsOfNames,
+    speech_tokens_Invoke,
+    speech_tokens_get_Count,
+    speech_tokens_Item,
+    speech_tokens_get__NewEnum
+};
+
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
 {
     struct token_enum *This = malloc( sizeof(*This) );
@@ -1142,6 +1258,7 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
 
     if (!This) return E_OUTOFMEMORY;
     This->ISpObjectTokenEnumBuilder_iface.lpVtbl = &token_enum_vtbl;
+    This->ISpeechObjectTokens_iface.lpVtbl = &speech_tokens_vtbl;
     This->ref = 1;
     This->req = NULL;
     This->opt = NULL;
