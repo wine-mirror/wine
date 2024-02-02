@@ -248,6 +248,8 @@ static void test_token_enum(void)
     HRESULT hr;
     IDispatch *disp;
     ISpeechObjectTokens *speech_tokens;
+    IUnknown *unk;
+    IEnumVARIANT *enumvar;
     ISpObjectToken *tokens[5];
     ISpObjectToken *out_tokens[5];
     WCHAR token_id[MAX_PATH];
@@ -342,6 +344,30 @@ static void test_token_enum(void)
     ok( out_tokens[1] == tokens[1], "got %p\n", out_tokens[1] );
     ok( out_tokens[2] == tokens[2], "got %p\n", out_tokens[2] );
 
+    ISpObjectTokenEnumBuilder_Release( token_enum );
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenEnumBuilder, (void **)&token_enum );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_QueryInterface( token_enum,
+                                                   &IID_ISpeechObjectTokens,
+                                                   (void **)&speech_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectTokenEnumBuilder_SetAttribs( token_enum, NULL, NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 3, tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpeechObjectTokens_get__NewEnum( speech_tokens, &unk );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = IUnknown_QueryInterface( unk, &IID_IEnumVARIANT, (void **)&enumvar );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    IUnknown_Release( unk );
+    IEnumVARIANT_Release( enumvar );
+
+    ISpeechObjectTokens_Release( speech_tokens );
     ISpObjectTokenEnumBuilder_Release( token_enum );
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
