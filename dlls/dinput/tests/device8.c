@@ -1765,16 +1765,15 @@ done:
 }
 
 static UINT pointer_enter_count;
-static UINT pointer_down_count;
 static UINT pointer_up_count;
-static UINT pointer_leave_count;
+static HANDLE touchdown_event, touchleave_event;
 
 static LRESULT CALLBACK touch_screen_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (msg == WM_POINTERENTER) pointer_enter_count++;
-    if (msg == WM_POINTERDOWN) pointer_down_count++;
+    if (msg == WM_POINTERDOWN) ReleaseSemaphore( touchdown_event, 1, NULL );
     if (msg == WM_POINTERUP) pointer_up_count++;
-    if (msg == WM_POINTERLEAVE) pointer_leave_count++;
+    if (msg == WM_POINTERLEAVE) ReleaseSemaphore( touchleave_event, 1, NULL );
     return DefWindowProcA( hwnd, msg, wparam, lparam );
 }
 
@@ -1916,6 +1915,11 @@ static void test_hid_touch_screen(void)
     HWND hwnd;
     BOOL ret;
 
+    touchdown_event = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!touchdown_event, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    touchleave_event = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!touchleave_event, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.expect_size = sizeof(expect_max_count);
@@ -1962,65 +1966,113 @@ static void test_hid_touch_screen(void)
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)touch_screen_wndproc );
 
 
-    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    /* a single touch is automatically released if we don't send continuous updates */
+
+    pointer_enter_count = pointer_up_count = 0;
     bus_send_hid_input( file, &desc, &touch_single, sizeof(touch_single) );
 
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
     todo_wine
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
-    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+
+    res = msg_wait_for_events( 1, &touchdown_event, 10 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchleave_event, 100 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     todo_wine
     ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
     todo_wine
-    ok( pointer_down_count == 1, "got pointer_down_count %u\n", pointer_down_count );
+    ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
+
+
+    DestroyWindow( hwnd );
+
+    CloseHandle( file );
+    hid_device_stop( &desc, 1 );
+
+
+    /* create a polled device instead so updates are sent continuously */
+
+    desc.is_polled = TRUE;
+    desc.input_size = sizeof(touch_release);
+    memcpy( desc.input, &touch_release, sizeof(touch_release) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start( &desc, 1 )) goto done;
+
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
+              desc.attributes.ProductID );
+    ret = find_hid_device_path( device_path );
+    ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
+
+    file = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                        NULL, OPEN_EXISTING, 0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+
+    hwnd = create_foreground_window( TRUE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)touch_screen_wndproc );
+
+
+    /* now the touch is continuously updated */
+
+    pointer_enter_count = pointer_up_count = 0;
+    bus_send_hid_input( file, &desc, &touch_single, sizeof(touch_single) );
+
+    res = msg_wait_for_events( 1, &touchdown_event, 1000 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchleave_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    todo_wine
+    ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
     ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
-    ok( pointer_leave_count == 0, "got pointer_leave_count %u\n", pointer_leave_count );
 
 
-    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    pointer_enter_count = pointer_up_count = 0;
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
 
-    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    res = msg_wait_for_events( 1, &touchleave_event, 1000 );
     todo_wine
-    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
-    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchdown_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
-    ok( pointer_down_count == 0, "got pointer_down_count %u\n", pointer_down_count );
     todo_wine
     ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
-    todo_wine
-    ok( pointer_leave_count == 1, "got pointer_leave_count %u\n", pointer_leave_count );
 
 
-
-    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    pointer_enter_count = pointer_up_count = 0;
     bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
 
-    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    res = msg_wait_for_events( 1, &touchdown_event, 1000 );
     todo_wine
-    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
-    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchdown_event, 1000 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchleave_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     todo_wine
     ok( pointer_enter_count == 2, "got pointer_enter_count %u\n", pointer_enter_count );
-    todo_wine
-    ok( pointer_down_count == 2, "got pointer_down_count %u\n", pointer_down_count );
     ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
-    ok( pointer_leave_count == 0, "got pointer_leave_count %u\n", pointer_leave_count );
 
 
-    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    pointer_enter_count = pointer_up_count = 0;
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
 
-    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    res = msg_wait_for_events( 1, &touchleave_event, 1000 );
     todo_wine
-    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
-    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchleave_event, 1000 );
+    todo_wine
+    ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &touchdown_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
     ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
-    ok( pointer_down_count == 0, "got pointer_down_count %u\n", pointer_down_count );
     todo_wine
     ok( pointer_up_count == 2, "got pointer_up_count %u\n", pointer_up_count );
-    todo_wine
-    ok( pointer_leave_count == 2, "got pointer_leave_count %u\n", pointer_leave_count );
 
 
     DestroyWindow( hwnd );
@@ -2029,6 +2081,9 @@ static void test_hid_touch_screen(void)
 
 done:
     hid_device_stop( &desc, 1 );
+
+    CloseHandle( touchdown_event );
+    CloseHandle( touchleave_event );
 }
 
 static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwnd, DWORD version )
