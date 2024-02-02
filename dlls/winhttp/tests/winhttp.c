@@ -5406,7 +5406,6 @@ static void test_WinHttpGetProxyForUrl(int port)
     ok(ret, "expected success\n" );
     ok(info.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY,
             "info.dwAccessType = %lu\n", info.dwAccessType);
-    todo_wine
     ok(!wcscmp(info.lpszProxy, L"http___WINEHQ.ORG_Test.html_WINEHQ.ORG:8080") ||
             broken(old_winhttp && !wcscmp(info.lpszProxy, L"HTTP___WINEHQ.ORG_Test.html_WINEHQ.ORG:8080")),
             "info.Proxy = %s\n", wine_dbgstr_w(info.lpszProxy));
@@ -5420,7 +5419,6 @@ static void test_WinHttpGetProxyForUrl(int port)
     ok(ret, "expected success\n" );
     ok(info.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY,
             "info.dwAccessType = %lu\n", info.dwAccessType);
-    todo_wine
     ok(!wcscmp(info.lpszProxy, L"http___winehq.org_Test.html_winehq.org:8080") ||
             broken(old_winhttp && !wcscmp(info.lpszProxy, L"HTTP___winehq.org_Test.html_winehq.org:8080")),
             "info.Proxy = %s\n", wine_dbgstr_w(info.lpszProxy));
@@ -5436,7 +5434,6 @@ static void test_WinHttpGetProxyForUrl(int port)
         ok(ret, "expected success\n" );
         ok(info.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY,
                 "info.dwAccessType = %lu\n", info.dwAccessType);
-        todo_wine
         ok(!wcscmp(info.lpszProxy, L"http___WINEHQ.ORG_Test.html_WINEHQ.ORG:8080"),
                 "info.Proxy = %s\n", wine_dbgstr_w(info.lpszProxy));
         ok(!info.lpszProxyBypass, "info.ProxyBypass = %s\n",
