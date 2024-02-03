@@ -300,6 +300,7 @@ static const struct column col_physicalmemory[] =
 };
 static const struct column col_pnpentity[] =
 {
+    { L"Caption",              CIM_STRING },
     { L"DeviceId",             CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Manufacturer",         CIM_STRING },
     { L"Name",                 CIM_STRING },
@@ -753,6 +754,7 @@ struct record_physicalmemory
 };
 struct record_pnpentity
 {
+    const WCHAR *caption;
     const WCHAR *device_id;
     const WCHAR *manufacturer;
     const WCHAR *name;
@@ -3178,6 +3180,7 @@ static enum fill_status fill_pnpentity( struct table *table, const struct expr *
         if (SetupDiGetDeviceInstanceIdW( device_info_set, &devinfo, device_id,
                     ARRAY_SIZE(device_id), NULL ))
         {
+            rec->caption = L"Wine PnP Device";
             rec->device_id = wcsdup( device_id );
             rec->manufacturer = L"The Wine Project";
             rec->name = L"Wine PnP Device";
