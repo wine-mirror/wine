@@ -401,6 +401,17 @@ static void test_CoInternetParseUrl(void)
         if(parse_tests[i].rootdocument)
             ok(!lstrcmpW(parse_tests[i].rootdocument, buf), "[%d] wrong rootdocument, received %s\n", i, wine_dbgstr_w(buf));
     }
+
+    size = 0xdeadbeef;
+    hres = pCoInternetParseUrl(L"http://a/b/../c", PARSE_CANONICALIZE, 0, buf, 3, &size, 0);
+    ok(hres == E_POINTER, "got %#lx\n", hres);
+    ok(size == wcslen(L"http://a/c") + 1, "got %lu\n", size);
+
+    size = 0xdeadbeef;
+    hres = pCoInternetParseUrl(L"http://a/b/../c", PARSE_CANONICALIZE, 0, buf, sizeof(buf), &size, 0);
+    ok(hres == S_OK, "got %#lx\n", hres);
+    ok(!wcscmp(buf, L"http://a/c"), "got %s\n", debugstr_w(buf));
+    ok(size == wcslen(buf), "got %lu\n", size);
 }
 
 static void test_CoInternetCompareUrl(void)
