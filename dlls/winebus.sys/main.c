@@ -412,6 +412,9 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid)
 
     if (check_bus_option(L"DisableHidraw", FALSE)) return FALSE;
 
+    if (!check_bus_option(L"Enable SDL", 1) && check_bus_option(L"DisableInput", 0))
+        prefer_hidraw = TRUE;
+
     if (is_dualshock4_gamepad(vid, pid)) prefer_hidraw = TRUE;
     if (is_dualsense_gamepad(vid, pid)) prefer_hidraw = TRUE;
 
