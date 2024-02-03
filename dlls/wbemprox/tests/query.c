@@ -140,6 +140,84 @@ static void test_select( IWbemServices *services )
     SysFreeString( query );
 }
 
+static void check_explorer_like_query( IWbemServices *services, const WCHAR *str, BOOL expect_success, BOOL todo)
+{
+    HRESULT hr;
+    IWbemClassObject *obj[2];
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( str );
+    LONG flags = WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY;
+    ULONG count;
+    IEnumWbemClassObject *result;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, flags, NULL, &result );
+    if (hr == S_OK)
+    {
+        VARIANT var;
+        IEnumWbemClassObject_Next( result, 10000, 2, obj, &count );
+
+        todo_wine_if(todo)
+        ok( count == (expect_success ? 1 : 0), "expected to get %d results but got %lu\n",
+                (expect_success ? 1 : 0), count);
+
+        if (count)
+        {
+            BSTR caption;
+            hr = IWbemClassObject_Get( obj[0], L"Caption", 0, &var, NULL, NULL );
+            ok( hr == WBEM_S_NO_ERROR, "IWbemClassObject_Get failed %#lx", hr);
+            caption = V_BSTR(&var);
+            ok( !wcscmp( caption, L"explorer.exe" ), "%s is not explorer.exe\n", debugstr_w(caption));
+            VariantClear( &var );
+        }
+
+        while (count--)
+            IWbemClassObject_Release( obj[count] );
+    }
+
+    SysFreeString( wql );
+    SysFreeString( query );
+}
+
+
+static void test_like_query( IWbemServices *services )
+{
+    int i;
+    WCHAR query[250];
+
+    struct {
+        BOOL todo;
+        BOOL expect_success;
+        const WCHAR *str;
+    } queries[] = {
+        { FALSE, TRUE,  L"explorer%" },
+        { FALSE, FALSE, L"xplorer.exe" },
+        { TRUE,  FALSE, L"explorer.ex" },
+        { FALSE, TRUE,  L"%explorer%" },
+        { FALSE, TRUE,  L"explorer.exe%" },
+        { FALSE, TRUE,  L"%explorer.exe%" },
+        { TRUE,  TRUE,  L"%plorer.exe" },
+        { TRUE,  TRUE,  L"%plorer.exe%" },
+        { TRUE,  TRUE,  L"__plorer.exe" },
+        { TRUE,  TRUE,  L"e_plorer.exe" },
+        { FALSE, FALSE, L"_plorer.exe" },
+        { TRUE,  TRUE,  L"%%%plorer.e%" },
+        { TRUE,  TRUE,  L"%plorer.e%" },
+        { TRUE,  TRUE,  L"%plorer.e_e" },
+        { TRUE,  TRUE,  L"%plorer.e_e" },
+        { TRUE,  TRUE,  L"explore%exe" },
+        { FALSE, FALSE, L"fancy_explore.exe" },
+        { FALSE, FALSE, L"fancy%xplore%exe" },
+        { FALSE, FALSE, L"%%%f%xplore%exe" },
+    };
+
+    for (i = 0; i < ARRAYSIZE(queries); i++)
+    {
+        wsprintfW( query, L"SELECT * FROM Win32_Process WHERE Caption LIKE '%ls'", queries[i].str );
+        trace("%s\n", wine_dbgstr_w(query));
+        check_explorer_like_query( services, query, queries[i].expect_success, queries[i].todo );
+    }
+}
+
+
 static void test_associators( IWbemServices *services )
 {
     static const WCHAR *test[] =
@@ -2366,6 +2444,7 @@ START_TEST(query)
     test_query_async( services );
     test_query_semisync( services );
     test_select( services );
+    test_like_query( services );
 
     /* classes */
     test_SoftwareLicensingProduct( services );
