@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.3.272"
+VK_XML_VERSION = "1.3.277"
 WINE_VK_VERSION = (1, 3)
 
 # Filenames to create.
@@ -102,6 +102,7 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_KHR_external_semaphore_win32",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_shared_presentable_image", # Needs WSI work.
+    "VK_KHR_video_encode_queue",
     "VK_KHR_video_queue", # TODO Video extensions use separate headers + xml
     "VK_KHR_win32_keyed_mutex",
     "VK_NV_external_memory_rdma", # Needs shared resources work.
@@ -244,11 +245,13 @@ MANUAL_UNIX_THUNKS = {
     "vkFreeCommandBuffers",
     "vkFreeMemory",
     "vkGetCalibratedTimestampsEXT",
+    "vkGetCalibratedTimestampsKHR",
     "vkGetDeviceProcAddr",
     "vkGetDeviceQueue",
     "vkGetDeviceQueue2",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT",
+    "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR",
     "vkGetPhysicalDeviceExternalBufferProperties",
     "vkGetPhysicalDeviceExternalBufferPropertiesKHR",
     "vkGetPhysicalDeviceExternalFenceProperties",
