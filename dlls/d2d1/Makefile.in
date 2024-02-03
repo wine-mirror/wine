@@ -1,6 +1,6 @@
 MODULE    = d2d1.dll
 IMPORTLIB = d2d1
-IMPORTS   = d3d10_1 dxguid uuid gdi32 user32 advapi32
+IMPORTS   = d3d10_1 dxguid uuid gdi32 user32 advapi32 d3dcompiler
 DELAYIMPORTS = dwrite xmllite ole32
 
 SOURCES = \
