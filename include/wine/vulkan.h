@@ -571,6 +571,8 @@
 #define VK_EXT_DEPTH_CLAMP_ZERO_ONE_EXTENSION_NAME "VK_EXT_depth_clamp_zero_one"
 #define VK_EXT_NON_SEAMLESS_CUBE_MAP_SPEC_VERSION 1
 #define VK_EXT_NON_SEAMLESS_CUBE_MAP_EXTENSION_NAME "VK_EXT_non_seamless_cube_map"
+#define VK_ARM_RENDER_PASS_STRIPED_SPEC_VERSION 1
+#define VK_ARM_RENDER_PASS_STRIPED_EXTENSION_NAME "VK_ARM_render_pass_striped"
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_SPEC_VERSION 1
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_EXTENSION_NAME "VK_QCOM_fragment_density_map_offset"
 #define VK_NV_COPY_MEMORY_INDIRECT_SPEC_VERSION 1
@@ -4642,6 +4644,11 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_HOST_MAPPING_INFO_VALVE = 1000420002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT = 1000421000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT = 1000422000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM = 1000424000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM = 1000424001,
+    VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM = 1000424002,
+    VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_INFO_ARM = 1000424003,
+    VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_SUBMIT_INFO_ARM = 1000424004,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM = 1000425000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM = 1000425001,
     VK_STRUCTURE_TYPE_SUBPASS_FRAGMENT_DENSITY_MAP_OFFSET_END_INFO_QCOM = 1000425002,
@@ -9317,6 +9324,21 @@ typedef struct VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG
     VkBool32 relaxedLineRasterization;
 } VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG;
 
+typedef struct VkPhysicalDeviceRenderPassStripedFeaturesARM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 renderPassStriped;
+} VkPhysicalDeviceRenderPassStripedFeaturesARM;
+
+typedef struct VkPhysicalDeviceRenderPassStripedPropertiesARM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkExtent2D renderPassStripeGranularity;
+    uint32_t maxRenderPassStripes;
+} VkPhysicalDeviceRenderPassStripedPropertiesARM;
+
 typedef struct VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV
 {
     VkStructureType sType;
@@ -10874,6 +10896,13 @@ typedef struct VkRenderPassMultiviewCreateInfo
     const uint32_t *pCorrelationMasks;
 } VkRenderPassMultiviewCreateInfo;
 typedef VkRenderPassMultiviewCreateInfo VkRenderPassMultiviewCreateInfoKHR;
+
+typedef struct VkRenderPassStripeInfoARM
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRect2D stripeArea;
+} VkRenderPassStripeInfoARM;
 
 typedef struct VkRenderPassSubpassFeedbackInfoEXT
 {
@@ -12623,6 +12652,22 @@ typedef struct VkRenderPassSampleLocationsBeginInfoEXT
     uint32_t postSubpassSampleLocationsCount;
     const VkSubpassSampleLocationsEXT *pPostSubpassSampleLocations;
 } VkRenderPassSampleLocationsBeginInfoEXT;
+
+typedef struct VkRenderPassStripeBeginInfoARM
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t stripeInfoCount;
+    const VkRenderPassStripeInfoARM *pStripeInfos;
+} VkRenderPassStripeBeginInfoARM;
+
+typedef struct VkRenderPassStripeSubmitInfoARM
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t stripeSemaphoreInfoCount;
+    const VkSemaphoreSubmitInfo *pStripeSemaphoreInfos;
+} VkRenderPassStripeSubmitInfoARM;
 
 typedef struct VkRenderPassSubpassFeedbackCreateInfoEXT
 {

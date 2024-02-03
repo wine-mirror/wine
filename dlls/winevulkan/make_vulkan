@@ -95,7 +95,6 @@ UNSUPPORTED_EXTENSIONS = [
 
     # Device extensions
     "VK_AMD_display_native_hdr",
-    "VK_ARM_render_pass_striped", # XML bug, see https://github.com/KhronosGroup/Vulkan-Docs/pull/2279
     "VK_EXT_full_screen_exclusive",
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",

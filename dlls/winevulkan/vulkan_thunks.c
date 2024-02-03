@@ -470,6 +470,13 @@ typedef struct VkSubpassSampleLocationsEXT32
     VkSampleLocationsInfoEXT32 sampleLocationsInfo;
 } VkSubpassSampleLocationsEXT32;
 
+typedef struct VkRenderPassStripeInfoARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkRect2D stripeArea;
+} VkRenderPassStripeInfoARM32;
+
 typedef struct VkDeviceGroupRenderPassBeginInfo32
 {
     VkStructureType sType;
@@ -513,6 +520,14 @@ typedef struct VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32
     uint32_t perViewRenderAreaCount;
     PTR32 pPerViewRenderAreas;
 } VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM32;
+
+typedef struct VkRenderPassStripeBeginInfoARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t stripeInfoCount;
+    PTR32 pStripeInfos;
+} VkRenderPassStripeBeginInfoARM32;
 
 typedef struct VkRenderPassBeginInfo32
 {
@@ -3231,6 +3246,13 @@ typedef struct VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32
     PTR32 pNext;
     VkBool32 relaxedLineRasterization;
 } VkPhysicalDeviceRelaxedLineRasterizationFeaturesIMG32;
+
+typedef struct VkPhysicalDeviceRenderPassStripedFeaturesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 renderPassStriped;
+} VkPhysicalDeviceRenderPassStripedFeaturesARM32;
 
 typedef struct VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32
 {
@@ -6355,6 +6377,14 @@ typedef struct VkPhysicalDeviceSchedulingControlsPropertiesARM32
     VkPhysicalDeviceSchedulingControlsFlagsARM DECLSPEC_ALIGN(8) schedulingControlsFlags;
 } VkPhysicalDeviceSchedulingControlsPropertiesARM32;
 
+typedef struct VkPhysicalDeviceRenderPassStripedPropertiesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkExtent2D renderPassStripeGranularity;
+    uint32_t maxRenderPassStripes;
+} VkPhysicalDeviceRenderPassStripedPropertiesARM32;
+
 typedef struct VkPhysicalDeviceProperties232
 {
     VkStructureType sType;
@@ -6843,6 +6873,14 @@ typedef struct VkSemaphoreSubmitInfo32
     uint32_t deviceIndex;
 } VkSemaphoreSubmitInfo32;
 typedef VkSemaphoreSubmitInfo32 VkSemaphoreSubmitInfoKHR32;
+
+typedef struct VkRenderPassStripeSubmitInfoARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t stripeSemaphoreInfoCount;
+    PTR32 pStripeSemaphoreInfos;
+} VkRenderPassStripeSubmitInfoARM32;
 
 typedef struct VkCommandBufferSubmitInfo32
 {
@@ -8036,6 +8074,33 @@ static inline const VkSubpassSampleLocationsEXT *convert_VkSubpassSampleLocation
     return out;
 }
 
+static inline void convert_VkRenderPassStripeInfoARM_win32_to_host(const VkRenderPassStripeInfoARM32 *in, VkRenderPassStripeInfoARM *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->stripeArea = in->stripeArea;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline const VkRenderPassStripeInfoARM *convert_VkRenderPassStripeInfoARM_array_win32_to_host(struct conversion_context *ctx, const VkRenderPassStripeInfoARM32 *in, uint32_t count)
+{
+    VkRenderPassStripeInfoARM *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkRenderPassStripeInfoARM_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion_context *ctx, const VkRenderPassBeginInfo32 *in, VkRenderPassBeginInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -8113,6 +8178,18 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion
             out_ext->pNext = NULL;
             out_ext->perViewRenderAreaCount = in_ext->perViewRenderAreaCount;
             out_ext->pPerViewRenderAreas = (const VkRect2D *)UlongToPtr(in_ext->pPerViewRenderAreas);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM:
+        {
+            VkRenderPassStripeBeginInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderPassStripeBeginInfoARM32 *in_ext = (const VkRenderPassStripeBeginInfoARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->stripeInfoCount = in_ext->stripeInfoCount;
+            out_ext->pStripeInfos = convert_VkRenderPassStripeInfoARM_array_win32_to_host(ctx, (const VkRenderPassStripeInfoARM32 *)UlongToPtr(in_ext->pStripeInfos), in_ext->stripeInfoCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -8261,6 +8338,18 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
             out_ext->pNext = NULL;
             out_ext->perViewRenderAreaCount = in_ext->perViewRenderAreaCount;
             out_ext->pPerViewRenderAreas = (const VkRect2D *)UlongToPtr(in_ext->pPerViewRenderAreas);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM:
+        {
+            VkRenderPassStripeBeginInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderPassStripeBeginInfoARM32 *in_ext = (const VkRenderPassStripeBeginInfoARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->stripeInfoCount = in_ext->stripeInfoCount;
+            out_ext->pStripeInfos = convert_VkRenderPassStripeInfoARM_array_win32_to_host(ctx, (const VkRenderPassStripeInfoARM32 *)UlongToPtr(in_ext->pStripeInfos), in_ext->stripeInfoCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13363,6 +13452,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRenderPassStripedFeaturesARM *in_ext = (const VkPhysicalDeviceRenderPassStripedFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->renderPassStriped = in_ext->renderPassStriped;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -15607,6 +15707,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RELAXED_LINE_RASTERIZATION_FEATURES_IMG;
             out_ext->pNext = NULL;
             out_ext->relaxedLineRasterization = in_ext->relaxedLineRasterization;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRenderPassStripedFeaturesARM32 *in_ext = (const VkPhysicalDeviceRenderPassStripedFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->renderPassStriped = in_ext->renderPassStriped;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -22856,6 +22967,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRenderPassStripedFeaturesARM32 *in_ext = (const VkPhysicalDeviceRenderPassStripedFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->renderPassStriped = in_ext->renderPassStriped;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -24680,6 +24802,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedFeaturesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM);
+            const VkPhysicalDeviceRenderPassStripedFeaturesARM *in_ext = (const VkPhysicalDeviceRenderPassStripedFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_FEATURES_ARM;
+            out_ext->renderPassStriped = in_ext->renderPassStriped;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR);
@@ -26172,6 +26303,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -27334,6 +27474,16 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             const VkPhysicalDeviceSchedulingControlsPropertiesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsPropertiesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
             out_ext->schedulingControlsFlags = in_ext->schedulingControlsFlags;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedPropertiesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM);
+            const VkPhysicalDeviceRenderPassStripedPropertiesARM *in_ext = (const VkPhysicalDeviceRenderPassStripedPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM;
+            out_ext->renderPassStripeGranularity = in_ext->renderPassStripeGranularity;
+            out_ext->maxRenderPassStripes = in_ext->maxRenderPassStripes;
             out_header = (void *)out_ext;
             break;
         }
@@ -29066,16 +29216,39 @@ static inline void convert_VkCommandBufferSubmitInfo_win64_to_host(const VkComma
 }
 #endif /* _WIN64 */
 
-static inline void convert_VkCommandBufferSubmitInfo_win32_to_host(const VkCommandBufferSubmitInfo32 *in, VkCommandBufferSubmitInfo *out)
+static inline void convert_VkCommandBufferSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo32 *in, VkCommandBufferSubmitInfo *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
     out->commandBuffer = wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(in->commandBuffer))->host_command_buffer;
     out->deviceMask = in->deviceMask;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_SUBMIT_INFO_ARM:
+        {
+            VkRenderPassStripeSubmitInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderPassStripeSubmitInfoARM32 *in_ext = (const VkRenderPassStripeSubmitInfoARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_SUBMIT_INFO_ARM;
+            out_ext->pNext = NULL;
+            out_ext->stripeSemaphoreInfoCount = in_ext->stripeSemaphoreInfoCount;
+            out_ext->pStripeSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, (const VkSemaphoreSubmitInfo32 *)UlongToPtr(in_ext->pStripeSemaphoreInfos), in_ext->stripeSemaphoreInfoCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 #ifdef _WIN64
@@ -29106,7 +29279,7 @@ static inline const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkCommandBufferSubmitInfo_win32_to_host(&in[i], &out[i]);
+        convert_VkCommandBufferSubmitInfo_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -45747,6 +45920,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_trinary_minmax",
     "VK_AMD_texture_gather_bias_lod",
     "VK_ARM_rasterization_order_attachment_access",
+    "VK_ARM_render_pass_striped",
     "VK_ARM_scheduling_controls",
     "VK_ARM_shader_core_builtins",
     "VK_ARM_shader_core_properties",
