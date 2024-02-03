@@ -1325,17 +1325,19 @@ static inline uint64_t convert_timestamp(VkTimeDomainEXT host_domain, VkTimeDoma
     return value;
 }
 
-VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice handle, uint32_t timestamp_count,
-                                           const VkCalibratedTimestampInfoEXT *timestamp_infos,
-                                           uint64_t *timestamps, uint64_t *max_deviation)
+static VkResult wine_vk_get_timestamps(struct wine_device *device, uint32_t timestamp_count,
+                                       const VkCalibratedTimestampInfoEXT *timestamp_infos,
+                                       uint64_t *timestamps, uint64_t *max_deviation,
+                                       VkResult (*get_timestamps)(VkDevice, uint32_t, const VkCalibratedTimestampInfoEXT *, uint64_t *, uint64_t *))
 {
-    struct wine_device *device = wine_device_from_handle(handle);
     VkCalibratedTimestampInfoEXT* host_timestamp_infos;
     unsigned int i;
     VkResult res;
-    TRACE("%p, %u, %p, %p, %p\n", device, timestamp_count, timestamp_infos, timestamps, max_deviation);
 
-    if (!(host_timestamp_infos = malloc(sizeof(VkCalibratedTimestampInfoEXT) * timestamp_count)))
+    if (timestamp_count == 0)
+        return VK_SUCCESS;
+
+    if (!(host_timestamp_infos = calloc(sizeof(VkCalibratedTimestampInfoEXT), timestamp_count)))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     for (i = 0; i < timestamp_count; i++)
@@ -1345,24 +1347,23 @@ VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice handle, uint32_t timestamp_c
         host_timestamp_infos[i].timeDomain = map_to_host_time_domain(timestamp_infos[i].timeDomain);
     }
 
-    res = device->funcs.p_vkGetCalibratedTimestampsEXT(device->host_device, timestamp_count, host_timestamp_infos,
-                                                       timestamps, max_deviation);
-    if (res != VK_SUCCESS)
-        return res;
-
-    for (i = 0; i < timestamp_count; i++)
-        timestamps[i] = convert_timestamp(host_timestamp_infos[i].timeDomain, timestamp_infos[i].timeDomain, timestamps[i]);
+    res = get_timestamps(device->host_device, timestamp_count, host_timestamp_infos, timestamps, max_deviation);
+    if (res == VK_SUCCESS)
+    {
+        for (i = 0; i < timestamp_count; i++)
+            timestamps[i] = convert_timestamp(host_timestamp_infos[i].timeDomain, timestamp_infos[i].timeDomain, timestamps[i]);
+    }
 
     free(host_timestamp_infos);
 
     return res;
 }
 
-VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice handle,
-                                                             uint32_t *time_domain_count,
-                                                             VkTimeDomainEXT *time_domains)
+static VkResult wine_vk_get_time_domains(struct wine_phys_dev *phys_dev,
+                                         uint32_t *time_domain_count,
+                                         VkTimeDomainEXT *time_domains,
+                                         VkResult (*get_domains)(VkPhysicalDevice, uint32_t *, VkTimeDomainEXT *))
 {
-    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
     BOOL supports_device = FALSE, supports_monotonic = FALSE, supports_monotonic_raw = FALSE;
     const VkTimeDomainEXT performance_counter_domain = get_performance_counter_time_domain();
     VkTimeDomainEXT *host_time_domains;
@@ -1373,16 +1374,14 @@ VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice ha
     VkResult res;
 
     /* Find out the time domains supported on the host */
-    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev->host_physical_device,
-                                                                                     &host_time_domain_count, NULL);
+    res = get_domains(phys_dev->host_physical_device, &host_time_domain_count, NULL);
     if (res != VK_SUCCESS)
         return res;
 
     if (!(host_time_domains = malloc(sizeof(VkTimeDomainEXT) * host_time_domain_count)))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev->host_physical_device,
-                                                                                     &host_time_domain_count, host_time_domains);
+    res = get_domains(phys_dev->host_physical_device, &host_time_domain_count, host_time_domains);
     if (res != VK_SUCCESS)
     {
         free(host_time_domains);
@@ -1430,6 +1429,30 @@ VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice ha
     res = *time_domain_count < out_time_domain_count ? VK_INCOMPLETE : VK_SUCCESS;
     *time_domain_count = out_time_domain_count;
     return res;
+}
+
+VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice handle, uint32_t timestamp_count,
+                                           const VkCalibratedTimestampInfoEXT *timestamp_infos,
+                                           uint64_t *timestamps, uint64_t *max_deviation)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+
+    TRACE("%p, %u, %p, %p, %p\n", device, timestamp_count, timestamp_infos, timestamps, max_deviation);
+
+    return wine_vk_get_timestamps(device, timestamp_count, timestamp_infos, timestamps, max_deviation,
+                                  device->funcs.p_vkGetCalibratedTimestampsEXT);
+}
+
+VkResult wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice handle,
+                                                             uint32_t *time_domain_count,
+                                                             VkTimeDomainEXT *time_domains)
+{
+    struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
+
+    TRACE("%p, %p, %p\n", phys_dev, time_domain_count, time_domains);
+
+    return wine_vk_get_time_domains(phys_dev, time_domain_count, time_domains,
+                                    phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT);
 }
 
 void wine_vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys_dev,
