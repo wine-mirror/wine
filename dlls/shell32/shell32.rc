@@ -160,8 +160,6 @@ STRINGTABLE
 	IDS_VIEW_SMALL		"S&mall Icons"
 	IDS_VIEW_LIST		"&List"
 	IDS_VIEW_DETAILS	"&Details"
-	IDS_SELECT		"Select"
-	IDS_OPEN		"Open"
 
 	IDS_CREATEFOLDER_DENIED "Unable to create new Folder: Permission denied."
 	IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"

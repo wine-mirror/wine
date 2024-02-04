@@ -49,8 +49,6 @@
 #define IDS_MYCOMPUTER		21
 #define IDS_CONTROLPANEL        22
 
-#define IDS_SELECT		23
-#define IDS_OPEN		24
 #define IDS_VIEW_LARGE		25
 #define IDS_VIEW_SMALL		26
 #define IDS_VIEW_LIST		27

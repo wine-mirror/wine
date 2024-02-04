@@ -99,8 +99,8 @@ msgstr "Support information"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:274 dlls/shell32/shell32.rc:298
-#: dlls/shell32/shell32.rc:320 dlls/shell32/shell32.rc:339
+#: dlls/shell32/shell32.rc:272 dlls/shell32/shell32.rc:296
+#: dlls/shell32/shell32.rc:318 dlls/shell32/shell32.rc:337
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
@@ -203,9 +203,9 @@ msgstr "&Installer"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:275
-#: dlls/shell32/shell32.rc:299 dlls/shell32/shell32.rc:310
-#: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:273
+#: dlls/shell32/shell32.rc:297 dlls/shell32/shell32.rc:308
+#: dlls/shell32/shell32.rc:338 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
@@ -289,7 +289,7 @@ msgid "Not specified"
 msgstr "Ikke specificeret"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:239
+#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:237
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "Navn"
@@ -311,7 +311,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
-#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:197
+#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:195
 #: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
@@ -518,12 +518,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:307
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:305
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "&Ja"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:309
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:307
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "&Nej"
@@ -562,8 +562,7 @@ msgstr "Gå til i dag"
 
 #: dlls/comdlg32/comdlg32.rc:158 dlls/comdlg32/comdlg32.rc:171
 #: dlls/comdlg32/comdlg32.rc:462 dlls/comdlg32/comdlg32.rc:487
-#: dlls/comdlg32/comdlg32.rc:514 dlls/shell32/shell32.rc:165
-#: programs/oleview/oleview.rc:101
+#: dlls/comdlg32/comdlg32.rc:514 programs/oleview/oleview.rc:101
 msgid "Open"
 msgstr "Åbn"
 
@@ -584,7 +583,7 @@ msgid "Dri&ves:"
 msgstr "&Drev:"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
+#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "Sk&rivebeskyttet"
@@ -2275,8 +2274,8 @@ msgid "Notice Text="
 msgstr "Notits tekst="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:346
-#: dlls/shell32/shell32.rc:375
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:344
+#: dlls/shell32/shell32.rc:373
 msgid "General"
 msgstr "Generel fejl"
 
@@ -2780,7 +2779,7 @@ msgstr "Udvidet nøgle brug (egenskab)"
 msgid "Friendly name"
 msgstr "Venlig navn"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:240
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:238
 #: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Beskrivelse"
@@ -8665,7 +8664,7 @@ msgstr "Udvidelse fra:"
 msgid "choose which folder contains %s"
 msgstr "Vælg mappen som indeholder '%s'"
 
-#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:236
+#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:234
 msgid "New Folder"
 msgstr "Ny mappe"
 
@@ -9984,7 +9983,7 @@ msgstr ""
 "Indsæt filens indhold som objekt ind i dokumentet, så du kan aktivere det "
 "med programmet som har lavet det."
 
-#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:195
+#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:193
 msgid "Browse"
 msgstr "Gennemse"
 
@@ -10568,49 +10567,49 @@ msgstr "&Afslut"
 msgid "&About Control Panel"
 msgstr "&Om Kontrolpanelet"
 
-#: dlls/shell32/shell32.rc:271 dlls/shell32/shell32.rc:286
+#: dlls/shell32/shell32.rc:269 dlls/shell32/shell32.rc:284
 msgid "Browse for Folder"
 msgstr "Søg efter mappe"
 
-#: dlls/shell32/shell32.rc:291
+#: dlls/shell32/shell32.rc:289
 msgid "Folder:"
 msgstr "Mappe:"
 
-#: dlls/shell32/shell32.rc:297
+#: dlls/shell32/shell32.rc:295
 msgid "&Make New Folder"
 msgstr "&Lav ny mappe"
 
-#: dlls/shell32/shell32.rc:304
+#: dlls/shell32/shell32.rc:302
 msgid "Message"
 msgstr "Meddelelse"
 
-#: dlls/shell32/shell32.rc:308
+#: dlls/shell32/shell32.rc:306
 msgid "Yes to &all"
 msgstr "Ja to &alt"
 
-#: dlls/shell32/shell32.rc:317
+#: dlls/shell32/shell32.rc:315
 msgid "About %s"
 msgstr "Om %s"
 
-#: dlls/shell32/shell32.rc:321
+#: dlls/shell32/shell32.rc:319
 msgid "Wine &license"
 msgstr "Wine &licens"
 
-#: dlls/shell32/shell32.rc:326
+#: dlls/shell32/shell32.rc:324
 msgid "Running on %s"
 msgstr "Kører på %s"
 
-#: dlls/shell32/shell32.rc:327
+#: dlls/shell32/shell32.rc:325
 msgid "Wine was brought to you by:"
 msgstr "Wine havde ikke været mulig uden hjælp fra disse personer:"
 
-#: dlls/shell32/shell32.rc:332
+#: dlls/shell32/shell32.rc:330
 #, fuzzy
 #| msgid "&Run..."
 msgid "Run"
 msgstr "Kø&r..."
 
-#: dlls/shell32/shell32.rc:336
+#: dlls/shell32/shell32.rc:334
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -10618,73 +10617,73 @@ msgstr ""
 "Skriv navnet på et program, en mappe, et dokument eller Internet ressource, "
 "og Wine åbner det for dig."
 
-#: dlls/shell32/shell32.rc:337
+#: dlls/shell32/shell32.rc:335
 msgid "&Open:"
 msgstr "&Åbn:"
 
-#: dlls/shell32/shell32.rc:341 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:339 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "&Gennemse..."
 
-#: dlls/shell32/shell32.rc:353 dlls/shell32/shell32.rc:382
+#: dlls/shell32/shell32.rc:351 dlls/shell32/shell32.rc:380
 #, fuzzy
 #| msgid "File type"
 msgid "File type:"
 msgstr "Filtype"
 
-#: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
+#: dlls/shell32/shell32.rc:355 dlls/shell32/shell32.rc:388
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "Placering:"
 
-#: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
+#: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "Størrelse:"
 
-#: dlls/shell32/shell32.rc:363 dlls/shell32/shell32.rc:396
+#: dlls/shell32/shell32.rc:361 dlls/shell32/shell32.rc:394
 #, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Creation date:"
 msgstr "Åbning mislykkede.\n"
 
-#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
+#: dlls/shell32/shell32.rc:365 dlls/shell32/shell32.rc:402
 #, fuzzy
 #| msgid "&Attributes:"
 msgid "Attributes:"
 msgstr "&Attributter:"
 
-#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
+#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "Sk&jult"
 
-#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
+#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "&Arkiv"
 
-#: dlls/shell32/shell32.rc:384
+#: dlls/shell32/shell32.rc:382
 #, fuzzy
 #| msgid "Open:"
 msgid "Open with:"
 msgstr "Åbn:"
 
-#: dlls/shell32/shell32.rc:387
+#: dlls/shell32/shell32.rc:385
 #, fuzzy
 #| msgid "Change &Icon..."
 msgid "&Change..."
 msgstr "Ændre &ikon..."
 
-#: dlls/shell32/shell32.rc:398
+#: dlls/shell32/shell32.rc:396
 #, fuzzy
 #| msgid "Modified"
 msgid "Last modified:"
 msgstr "Modificeret"
 
-#: dlls/shell32/shell32.rc:400
+#: dlls/shell32/shell32.rc:398
 #, fuzzy
 #| msgid "Last Change:"
 msgid "Last accessed:"
@@ -10738,109 +10737,105 @@ msgstr "Min computer"
 msgid "Control Panel"
 msgstr "Kontrolpanel"
 
-#: dlls/shell32/shell32.rc:164
-msgid "Select"
-msgstr "Vælg"
-
-#: dlls/shell32/shell32.rc:187
+#: dlls/shell32/shell32.rc:185
 msgid "Restart"
 msgstr "Genstart"
 
-#: dlls/shell32/shell32.rc:188
+#: dlls/shell32/shell32.rc:186
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Vil du simulere en genstart af Windows?"
 
-#: dlls/shell32/shell32.rc:189
+#: dlls/shell32/shell32.rc:187
 msgid "Shutdown"
 msgstr "Luk ned"
 
-#: dlls/shell32/shell32.rc:190
+#: dlls/shell32/shell32.rc:188
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Vil du lukke din Wine session?"
 
-#: dlls/shell32/shell32.rc:201 programs/progman/progman.rc:83
+#: dlls/shell32/shell32.rc:199 programs/progman/progman.rc:83
 msgid "Programs"
 msgstr "Programmer"
 
-#: dlls/shell32/shell32.rc:202 dlls/shell32/shell32.rc:217
-#: dlls/shell32/shell32.rc:148 dlls/shell32/shell32.rc:233
+#: dlls/shell32/shell32.rc:200 dlls/shell32/shell32.rc:215
+#: dlls/shell32/shell32.rc:148 dlls/shell32/shell32.rc:231
 msgid "Documents"
 msgstr "Dokumenter"
 
-#: dlls/shell32/shell32.rc:203
+#: dlls/shell32/shell32.rc:201
 msgid "Favorites"
 msgstr "Favoritter"
 
-#: dlls/shell32/shell32.rc:204
+#: dlls/shell32/shell32.rc:202
 msgid "StartUp"
 msgstr "Start op"
 
-#: dlls/shell32/shell32.rc:205
+#: dlls/shell32/shell32.rc:203
 msgid "Start Menu"
 msgstr "Start menu"
 
-#: dlls/shell32/shell32.rc:206 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:217
 msgid "Music"
 msgstr "Min Musik"
 
-#: dlls/shell32/shell32.rc:207 dlls/shell32/shell32.rc:221
+#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:219
 msgid "Videos"
 msgstr "Mine Film"
 
-#: dlls/shell32/shell32.rc:208
+#: dlls/shell32/shell32.rc:206
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Skrivebord"
 
-#: dlls/shell32/shell32.rc:209
+#: dlls/shell32/shell32.rc:207
 msgid "NetHood"
 msgstr "Nabonetværk"
 
-#: dlls/shell32/shell32.rc:210
+#: dlls/shell32/shell32.rc:208
 msgid "Templates"
 msgstr "Skabeloner"
 
-#: dlls/shell32/shell32.rc:211
+#: dlls/shell32/shell32.rc:209
 msgid "PrintHood"
 msgstr "Printnetværk"
 
-#: dlls/shell32/shell32.rc:212 programs/winhlp32/winhlp32.rc:49
+#: dlls/shell32/shell32.rc:210 programs/winhlp32/winhlp32.rc:49
 msgid "History"
 msgstr "Historie"
 
-#: dlls/shell32/shell32.rc:213
+#: dlls/shell32/shell32.rc:211
 msgid "Program Files"
 msgstr "Programmer"
 
-#: dlls/shell32/shell32.rc:215 dlls/shell32/shell32.rc:220
+#: dlls/shell32/shell32.rc:213 dlls/shell32/shell32.rc:218
 msgid "Pictures"
 msgstr "Mine Billeder"
 
-#: dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:214
 msgid "Common Files"
 msgstr "Almindelige filer"
 
-#: dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:216
 msgid "Administrative Tools"
 msgstr "Administrative Værktøjer"
 
-#: dlls/shell32/shell32.rc:214
+#: dlls/shell32/shell32.rc:212
 msgid "Program Files (x86)"
 msgstr "Programmer"
 
-#: dlls/shell32/shell32.rc:222
+#: dlls/shell32/shell32.rc:220
 msgid "Contacts"
 msgstr "Kontakter"
 
-#: dlls/shell32/shell32.rc:223 programs/winefile/winefile.rc:112
+#: dlls/shell32/shell32.rc:221 programs/winefile/winefile.rc:112
 msgid "Links"
 msgstr "Genveje"
 
-#: dlls/shell32/shell32.rc:224
+#: dlls/shell32/shell32.rc:222
 msgid "Slide Shows"
 msgstr "Slideshows"
 
-#: dlls/shell32/shell32.rc:225
+#: dlls/shell32/shell32.rc:223
 msgid "Playlists"
 msgstr "Afspilningslister"
 
@@ -10852,67 +10847,67 @@ msgstr "Status"
 msgid "Model"
 msgstr "Model"
 
-#: dlls/shell32/shell32.rc:226
+#: dlls/shell32/shell32.rc:224
 msgid "Sample Music"
 msgstr "Eksempel musik"
 
-#: dlls/shell32/shell32.rc:227
+#: dlls/shell32/shell32.rc:225
 msgid "Sample Pictures"
 msgstr "Eksempel billeder"
 
-#: dlls/shell32/shell32.rc:228
+#: dlls/shell32/shell32.rc:226
 msgid "Sample Playlists"
 msgstr "Eksempel afspilningslister"
 
-#: dlls/shell32/shell32.rc:229
+#: dlls/shell32/shell32.rc:227
 msgid "Sample Videos"
 msgstr "Eksempel videoer"
 
-#: dlls/shell32/shell32.rc:230
+#: dlls/shell32/shell32.rc:228
 msgid "Saved Games"
 msgstr "Gemte spil"
 
-#: dlls/shell32/shell32.rc:231
+#: dlls/shell32/shell32.rc:229
 msgid "Searches"
 msgstr "Søgninger"
 
-#: dlls/shell32/shell32.rc:232
+#: dlls/shell32/shell32.rc:230
 msgid "Users"
 msgstr "Brugere"
 
-#: dlls/shell32/shell32.rc:234
+#: dlls/shell32/shell32.rc:232
 msgid "Downloads"
 msgstr "Nedhentninger"
 
-#: dlls/shell32/shell32.rc:167
+#: dlls/shell32/shell32.rc:165
 msgid "Unable to create new Folder: Permission denied."
 msgstr "Kunne ikke oprette en ny mappe: Adgang nægtet."
 
-#: dlls/shell32/shell32.rc:168
+#: dlls/shell32/shell32.rc:166
 msgid "Error during creation of a new folder"
 msgstr "Fejl ved oprettelse af ny mappe"
 
-#: dlls/shell32/shell32.rc:169
+#: dlls/shell32/shell32.rc:167
 msgid "Confirm file deletion"
 msgstr "Bekræft sletning af fil"
 
-#: dlls/shell32/shell32.rc:170
+#: dlls/shell32/shell32.rc:168
 msgid "Confirm folder deletion"
 msgstr "Bekræft sletning af mappe"
 
-#: dlls/shell32/shell32.rc:171
+#: dlls/shell32/shell32.rc:169
 msgid "Are you sure you want to delete '%1'?"
 msgstr "Er du sikker på du vil slette '%1'?"
 
-#: dlls/shell32/shell32.rc:172
+#: dlls/shell32/shell32.rc:170
 msgid "Are you sure you want to delete these %1 items?"
 msgstr "Er du sikker på du vil slette disse %1 filer?"
 
-#: dlls/shell32/shell32.rc:179
+#: dlls/shell32/shell32.rc:177
 msgid "Confirm file overwrite"
 msgstr "Bekræft overskrivning af fil"
 
-#: dlls/shell32/shell32.rc:178
+#: dlls/shell32/shell32.rc:176
 msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
@@ -10922,31 +10917,31 @@ msgstr ""
 "\n"
 "Vil du overskrive den?"
 
-#: dlls/shell32/shell32.rc:173
+#: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete the selected item(s)?"
 msgstr "Er du sikker på du vil slette de(n) valgte fil(er)?"
 
-#: dlls/shell32/shell32.rc:175
+#: dlls/shell32/shell32.rc:173
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
 "Er du sikker på at du vil sende '%1' og alt dens indhold til papirkurven?"
 
-#: dlls/shell32/shell32.rc:174
+#: dlls/shell32/shell32.rc:172
 msgid "Are you sure that you want to send '%1' to the Trash?"
 msgstr "Er du sikker på at du vil sende '%1' til papirkurven?"
 
-#: dlls/shell32/shell32.rc:176
+#: dlls/shell32/shell32.rc:174
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr "Er du sikker på at du vil sende disse %1 filer til papirkurven?"
 
-#: dlls/shell32/shell32.rc:177
+#: dlls/shell32/shell32.rc:175
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
 "Filen '%1' kunne ikke sendes til papirkurven. Ønsker du at slette den "
 "permanent i stedet for?"
 
-#: dlls/shell32/shell32.rc:184
+#: dlls/shell32/shell32.rc:182
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -10961,42 +10956,42 @@ msgstr ""
 "eller kopiere\n"
 "mappen?"
 
-#: dlls/shell32/shell32.rc:238
+#: dlls/shell32/shell32.rc:236
 msgid "Wine Control Panel"
 msgstr "Wine Kontrolpanel"
 
-#: dlls/shell32/shell32.rc:193
+#: dlls/shell32/shell32.rc:191
 #, fuzzy
 #| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Kan ikke vise Kør Fil dialogboksen (intern fejl)"
 
-#: dlls/shell32/shell32.rc:194
+#: dlls/shell32/shell32.rc:192
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Kan ikke vise Gennemse dialogboksen (intern fejl)"
 
-#: dlls/shell32/shell32.rc:196
+#: dlls/shell32/shell32.rc:194
 msgid "Executable files (*.exe)"
 msgstr "Program Filer (*.exe)"
 
-#: dlls/shell32/shell32.rc:242
+#: dlls/shell32/shell32.rc:240
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 "Der er ikke konfigureret noget Windows program til at åbne denne type af fil."
 
-#: dlls/shell32/shell32.rc:244
+#: dlls/shell32/shell32.rc:242
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Er du sikker på, at du permanent vil slette '%1'?"
 
-#: dlls/shell32/shell32.rc:245
+#: dlls/shell32/shell32.rc:243
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Er du sikker på, at du permanent vil slette disse %1 filer?"
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:244
 msgid "Confirm deletion"
 msgstr "Bekræft filsletning"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:245
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -11006,7 +11001,7 @@ msgstr ""
 "\n"
 "Vil du erstatte den?"
 
-#: dlls/shell32/shell32.rc:248
+#: dlls/shell32/shell32.rc:246
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -11016,11 +11011,11 @@ msgstr ""
 "\n"
 "Vil du erstatte den?"
 
-#: dlls/shell32/shell32.rc:249
+#: dlls/shell32/shell32.rc:247
 msgid "Confirm overwrite"
 msgstr "Bekræft overskrivning"
 
-#: dlls/shell32/shell32.rc:266
+#: dlls/shell32/shell32.rc:264
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -11049,7 +11044,7 @@ msgstr ""
 "sammen med dette program; hvis ikke, skriv til: the Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: dlls/shell32/shell32.rc:254
+#: dlls/shell32/shell32.rc:252
 msgid "Wine License"
 msgstr "Wine Licensbetingelser"
 
