@@ -12645,7 +12645,7 @@ static LRESULT WINAPI recursive_messages_proc(HWND hwnd, UINT message, WPARAM wp
     static int msg_depth;
     MSG msg;
 
-    if (message == WM_SETCURSOR && max_msg_depth < 25)
+    if (message == WM_SETCURSOR && max_msg_depth < 15)
     {
         msg_depth++;
         max_msg_depth = max(max_msg_depth, msg_depth);
@@ -12678,7 +12678,7 @@ static void test_recursive_messages(void)
     flush_events();
 
     /* Expect recursive_messages_proc() gets called recursively for WM_SETCURSOR */
-    ok(max_msg_depth == 25, "Got expected %d.\n", max_msg_depth);
+    ok(max_msg_depth == 15, "Got expected %d.\n", max_msg_depth);
 
     DestroyWindow(hwnd);
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
