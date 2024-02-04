@@ -529,11 +529,13 @@ typedef struct {
     HINTERNET request;
 } test_request_t;
 
-#define open_simple_request(a,b,c,d,e) _open_simple_request(__LINE__,a,b,c,d,e)
+#define open_simple_request(a,b,c,d,e) _open_simple_request(__LINE__,a,b,c,d,e,FALSE)
+#define open_simple_request_proxy(a,b,c,d,e) _open_simple_request(__LINE__,a,b,c,d,e,TRUE)
 static void _open_simple_request(unsigned line, test_request_t *req, const char *host,
-        int port, const char *verb, const char *url)
+        int port, const char *verb, const char *url, BOOL use_proxy)
 {
-    req->session = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    req->session = InternetOpenA(NULL, use_proxy ? INTERNET_OPEN_TYPE_PRECONFIG : INTERNET_OPEN_TYPE_DIRECT,
+                                 NULL, NULL, 0);
     ok_(__FILE__,line)(req->session != NULL, "InternetOpenA failed: %lu\n", GetLastError());
 
     req->connection = InternetConnectA(req->session, host, port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -2445,6 +2447,11 @@ static const char ok_with_length2[] =
 "Content-Length: 19\r\n\r\n"
 "HTTP/1.1 211 OK\r\n\r\n";
 
+static const char proxy_pac[] =
+"function FindProxyForURL(url, host) {\r\n"
+"    return 'PROXY localhost:%d';\r\n"
+"}\r\n\r\n";
+
 struct server_info {
     HANDLE hEvent;
     int port;
@@ -2857,6 +2864,18 @@ static DWORD CALLBACK server_thread(LPVOID param)
             char msg[sizeof(largemsg) + 16];
             sprintf(msg, largemsg, content_length);
             send(c, msg, strlen(msg), 0);
+        }
+        if (strstr(buffer, "GET /proxy.pac"))
+        {
+            char script[sizeof(proxy_pac) + 16];
+            sprintf(script, proxy_pac, si->port);
+            send(c, okmsg, sizeof(okmsg)-1, 0);
+            send(c, script, strlen(script), 0);
+        }
+        if (strstr(buffer, "GET http://test.winehq.org/tests/hello.html"))
+        {
+            send(c, okmsg, sizeof(okmsg)-1, 0);
+            send(c, page1, sizeof(page1)-1, 0);
         }
         shutdown(c, 2);
         closesocket(c);
@@ -6625,6 +6644,52 @@ static void test_header_length(int port)
     close_request(&req);
 }
 
+static void test_pac(int port)
+{
+    static const WCHAR autoconf_url_fmt[] = L"http://localhost:%d/proxy.pac?ver=1";
+    INTERNET_PER_CONN_OPTION_LISTW option_list;
+    INTERNET_PER_CONN_OPTIONW options[2];
+    WCHAR autoconf_url[64];
+    test_request_t req;
+    char buf[1000];
+    DWORD len;
+    BOOL r;
+
+    open_simple_request_proxy(&req, "test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, "GET", "/tests/hello.html");
+
+    swprintf(autoconf_url, ARRAY_SIZE(autoconf_url), autoconf_url_fmt, port);
+    memset(&option_list, 0, sizeof(option_list));
+    option_list.dwSize = sizeof(option_list);
+    option_list.dwOptionCount = ARRAY_SIZE(options);
+    option_list.pOptions = options;
+    options[0].dwOption = INTERNET_PER_CONN_AUTOCONFIG_URL;
+    options[0].Value.pszValue = autoconf_url;
+    options[1].dwOption = INTERNET_PER_CONN_FLAGS;
+    options[1].Value.dwValue = PROXY_TYPE_AUTO_PROXY_URL;
+    r = InternetSetOptionW(req.session, INTERNET_OPTION_PER_CONNECTION_OPTION, (void*)&option_list, sizeof(option_list));
+    ok(r, "InternetSetOptionW failed: %lu\n", GetLastError());
+
+    r = HttpSendRequestW(req.request, NULL, 0, NULL, 0);
+    ok(r, "HttpSendRequestW failed: %lu\n", GetLastError());
+
+    test_status_code(req.request, 200);
+    len = receive_simple_request(req.request, buf, sizeof(buf));
+    todo_wine
+    ok(len == sizeof(page1) - 1, "unexpected buffer size\n");
+    buf[len] = 0;
+    todo_wine
+    ok(!strcmp(buf, page1), "unexpected buffer content\n");
+
+    len = sizeof(option_list);
+    r = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION, (void*)&option_list, &len);
+    ok(r, "InternetGetOptionW failed: %lu\n", GetLastError());
+    r = InternetSetOptionW(req.session, INTERNET_OPTION_PER_CONNECTION_OPTION, (void*)&option_list, sizeof(option_list));
+    ok(r, "InternetSetOptionW failed: %lu\n", GetLastError());
+    GlobalFree(options[0].Value.pszValue);
+
+    close_request(&req);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -6692,6 +6757,7 @@ static void test_http_connection(void)
     test_remove_dot_segments(si.port);
     test_large_content(si.port);
     test_header_length(si.port);
+    test_pac(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
