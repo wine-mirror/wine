@@ -284,7 +284,12 @@ function test_attach_in_attach() {
 }
 
 function test_event_obj_props(e) {
-    var i, props;
+    var i, props = [
+        "altKey", "button", "cancelBubble", "clientX", "clientY", "ctrlKey", "data", "fromElement", "keyCode", "offsetX", "offsetY",
+        "origin", "qualifier", "reason", "returnValue", "screenX", "screenY", "shiftKey", "source", "srcElement", "srcFilter",
+        "toElement", "type", "url", "x", "y" ];
+    for(i = 0; i < props.length; i++)
+        ok(props[i] in e, props[i] + " not in event obj");
 
     props = [ "imeCompositionChange", "imeNotifyCommand", "imeNotifyData", "imeRequest", "imeRequestData", "issession", "keyboardLayout" ];
     for(i = 0; i < props.length; i++)
