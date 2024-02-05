@@ -466,11 +466,6 @@ void output_standard_file_header(void)
         output( "\t.globl  @feat.00\n" );
         output( ".set @feat.00, 1\n" );
     }
-    if (thumb_mode)
-    {
-        output( "\t.syntax unified\n" );
-        output( "\t.thumb\n" );
-    }
 }
 
 /* dump a byte stream into the assembly code */
@@ -849,22 +844,9 @@ void output_function_header( const char *func, int global )
         if (target.cpu == CPU_ARM64EC) output( ".section .text,\"xr\",discard,%s\n\t", name );
         output( "\t.def %s\n\t.scl 2\n\t.type 32\n\t.endef\n", name );
         if (global) output( "\t.globl %s\n", name );
-        if (thumb_mode) output( "\t.thumb_func\n" );
         break;
     default:
-        switch (target.cpu)
-        {
-        case CPU_ARM:
-            output( "\t.type %s,%%function\n", name );
-            if (thumb_mode) output( "\t.thumb_func\n" );
-            break;
-        case CPU_ARM64:
-            output( "\t.type %s,%%function\n", name );
-            break;
-        default:
-            output( "\t.type %s,@function\n", name );
-            break;
-        }
+        output( "\t.type %s,@function\n", name );
         if (global) output( "\t.globl %s\n\t.hidden %s\n", name, name );
         break;
     }

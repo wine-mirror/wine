@@ -245,7 +245,6 @@ static void output_relay_debug( DLLSPEC *spec )
     /* then the relay thunks */
 
     output( "\t.text\n" );
-    if (thumb_mode) output( "\t.thumb_func\n" );
     output( "__wine_spec_relay_entry_points:\n" );
     output( "\tnop\n" );  /* to avoid 0 offset */
 
@@ -296,9 +295,8 @@ static void output_relay_debug( DLLSPEC *spec )
         {
             int j, has_float = 0;
 
-            if (strcmp( float_abi_option, "soft" ))
-                for (j = 0; j < odp->u.func.nb_args && !has_float; j++)
-                    has_float = is_float_arg( odp, j );
+            for (j = 0; j < odp->u.func.nb_args && !has_float; j++)
+                has_float = is_float_arg( odp, j );
 
             output( "\t.balign 4\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
@@ -309,22 +307,13 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tsub SP, #4\n");
             output( "\tmovw r1,#%u\n", i - spec->base );
             output( "\tmovt r1,#%u\n", odp->u.func.args_str_offset );
-            if (UsePIC)
-            {
-                output( "\tldr r0, 2f\n");
-                output( "1:\tadd r0, PC\n");
-            }
-            else
-            {
-                output( "\tmovw r0, :lower16:.L__wine_spec_relay_descr\n" );
-                output( "\tmovt r0, :upper16:.L__wine_spec_relay_descr\n" );
-            }
+            output( "\tmovw r0, :lower16:.L__wine_spec_relay_descr\n" );
+            output( "\tmovt r0, :upper16:.L__wine_spec_relay_descr\n" );
             output( "\tldr IP, [r0, #4]\n");
             output( "\tblx IP\n");
             output( "\tldr IP, [SP, #4]\n" );
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
-            if (UsePIC) output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
             break;
         }
 
