@@ -1537,6 +1537,11 @@ static HRESULT WINAPI onmessage(IDispatchEx *iface, DISPID id, LCID lcid, WORD w
         ok(hres == S_OK, "get_url failed: %08lx\n", hres);
         ok(!bstr, "url = %s\n", wine_dbgstr_w(bstr));
 
+        hres = IHTMLEventObj5_get_data(event_obj5, &bstr);
+        ok(hres == S_OK, "get_data failed: %08lx\n", hres);
+        ok(!wcscmp(bstr, L"foobar"), "data = %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
         hres = IHTMLEventObj5_get_source(event_obj5, &disp);
         ok(hres == S_OK, "get_source failed: %08lx\n", hres);
 

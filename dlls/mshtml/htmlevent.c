@@ -1831,11 +1831,19 @@ static HRESULT WINAPI HTMLEventObj5_put_data(IHTMLEventObj5 *iface, BSTR v)
 static HRESULT WINAPI HTMLEventObj5_get_data(IHTMLEventObj5 *iface, BSTR *p)
 {
     HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
+    IDOMMessageEvent *message_event;
+    HRESULT hres;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = NULL;
-    return S_OK;
+    if(!This->event || FAILED(IDOMEvent_QueryInterface(&This->event->IDOMEvent_iface, &IID_IDOMMessageEvent, (void**)&message_event))) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = IDOMMessageEvent_get_data(message_event, p);
+    IDOMMessageEvent_Release(message_event);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLEventObj5_get_source(IHTMLEventObj5 *iface, IDispatch **p)
