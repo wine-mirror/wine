@@ -2929,6 +2929,7 @@ async_test("postMessage", function() {
         else {
             ok(e.data === (v < 10 ? "10" : 10), "e.data = " + e.data);
             ok(e.source === window, "e.source = " + e.source);
+            ok(e.origin === "http://winetest.example.org", "e.origin = " + e.origin);
             next_test();
         }
     }

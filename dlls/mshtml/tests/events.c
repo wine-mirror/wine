@@ -1542,6 +1542,11 @@ static HRESULT WINAPI onmessage(IDispatchEx *iface, DISPID id, LCID lcid, WORD w
         ok(!wcscmp(bstr, L"foobar"), "data = %s\n", wine_dbgstr_w(bstr));
         SysFreeString(bstr);
 
+        hres = IHTMLEventObj5_get_origin(event_obj5, &bstr);
+        ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+        ok(!wcscmp(bstr, L"about:"), "origin = %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
         hres = IHTMLEventObj5_get_source(event_obj5, &disp);
         ok(hres == S_OK, "get_source failed: %08lx\n", hres);
 
@@ -1558,6 +1563,9 @@ static HRESULT WINAPI onmessage(IDispatchEx *iface, DISPID id, LCID lcid, WORD w
         bstr = SysAllocString(L"foobar");
         hres = IHTMLEventObj5_put_url(event_obj5, bstr);
         ok(hres == DISP_E_MEMBERNOTFOUND, "put_url returned: %08lx\n", hres);
+
+        hres = IHTMLEventObj5_put_origin(event_obj5, bstr);
+        ok(hres == DISP_E_MEMBERNOTFOUND, "put_origin returned: %08lx\n", hres);
         SysFreeString(bstr);
 
         IHTMLEventObj5_Release(event_obj5);
@@ -1570,6 +1578,11 @@ static HRESULT WINAPI onmessage(IDispatchEx *iface, DISPID id, LCID lcid, WORD w
         hres = IDOMMessageEvent_get_data(msg, &bstr);
         ok(hres == S_OK, "get_data failed: %08lx\n", hres);
         ok(!wcscmp(bstr, L"foobar"), "data = %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        hres = IDOMMessageEvent_get_origin(msg, &bstr);
+        ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+        ok(!wcscmp(bstr, L"about:"), "origin = %s\n", wine_dbgstr_w(bstr));
         SysFreeString(bstr);
 
         hres = IDOMMessageEvent_get_source(msg, &source);
