@@ -2928,6 +2928,7 @@ async_test("postMessage", function() {
             ok(e === undefined, "e = " + e);
         else {
             ok(e.data === (v < 10 ? "10" : 10), "e.data = " + e.data);
+            ok(e.source === window, "e.source = " + e.source);
             next_test();
         }
     }

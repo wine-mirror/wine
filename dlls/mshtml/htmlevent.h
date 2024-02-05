@@ -116,7 +116,7 @@ void dispatch_event(EventTarget*,DOMEvent*);
 HRESULT create_document_event(HTMLDocumentNode*,eventid_t,DOMEvent**);
 HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**);
 HRESULT create_event_from_nsevent(nsIDOMEvent*,compat_mode_t,DOMEvent**);
-HRESULT create_message_event(HTMLDocumentNode*,VARIANT*,DOMEvent**);
+HRESULT create_message_event(HTMLDocumentNode*,IHTMLWindow2*,VARIANT*,DOMEvent**);
 HRESULT create_storage_event(HTMLDocumentNode*,BSTR,BSTR,BSTR,const WCHAR*,BOOL,DOMEvent**);
 
 void init_nsevents(HTMLDocumentNode*);

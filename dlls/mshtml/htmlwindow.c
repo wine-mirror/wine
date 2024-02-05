@@ -28,6 +28,7 @@
 #include "wininet.h"
 #include "shlguid.h"
 #include "shobjidl.h"
+#include "activscp.h"
 #include "exdispid.h"
 
 #define NO_SHLWAPI_REG
@@ -2315,6 +2316,61 @@ done:
     return hres;
 }
 
+static IHTMLWindow2 *get_source_window(IServiceProvider *caller, compat_mode_t compat_mode)
+{
+    IOleCommandTarget *cmdtarget, *parent_cmdtarget;
+    IServiceProvider *parent;
+    IHTMLWindow2 *source;
+    HRESULT hres;
+    VARIANT var;
+
+    if(!caller)
+        return NULL;
+
+    hres = IServiceProvider_QueryService(caller, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&cmdtarget);
+    if(hres != S_OK)
+        cmdtarget = NULL;
+
+    if(compat_mode < COMPAT_MODE_IE9) {
+        /* Legacy modes query caller unconditionally, and use it instead, if it has a command target */
+        hres = IServiceProvider_QueryService(caller, &SID_GetCaller, &IID_IServiceProvider, (void**)&parent);
+        if(hres == S_OK && parent) {
+            hres = IServiceProvider_QueryService(parent, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&parent_cmdtarget);
+            IServiceProvider_Release(parent);
+            if(hres == S_OK && parent_cmdtarget) {
+                if(cmdtarget)
+                    IOleCommandTarget_Release(cmdtarget);
+                cmdtarget = parent_cmdtarget;
+            }
+        }
+    }
+
+    if(!cmdtarget)
+        return NULL;
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IOleCommandTarget_Exec(cmdtarget, &CGID_ScriptSite, CMDID_SCRIPTSITE_SECURITY_WINDOW, 0, NULL, &var);
+    IOleCommandTarget_Release(cmdtarget);
+    if(hres != S_OK)
+        return NULL;
+
+    /* Native assumes it's VT_DISPATCH and doesn't check it */
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLWindow2, (void**)&source);
+    IDispatch_Release(V_DISPATCH(&var));
+    if(hres != S_OK)
+        return NULL;
+
+    if(compat_mode < COMPAT_MODE_IE9) {
+        IHTMLWindow2 *tmp;
+        hres = IHTMLWindow2_get_self(source, &tmp);
+        if(hres == S_OK) {
+            IHTMLWindow2_Release(source);
+            source = tmp;
+        }
+    }
+    return source;
+}
+
 struct post_message_task {
     event_task_t header;
     DOMEvent *event;
@@ -2335,6 +2391,7 @@ static void post_message_destr(event_task_t *_task)
 static HRESULT post_message(HTMLInnerWindow *window, VARIANT msg, BSTR targetOrigin, VARIANT transfer,
         IServiceProvider *caller, compat_mode_t compat_mode)
 {
+    IHTMLWindow2 *source;
     DOMEvent *event;
     HRESULT hres;
 
@@ -2344,6 +2401,13 @@ static HRESULT post_message(HTMLInnerWindow *window, VARIANT msg, BSTR targetOri
     hres = check_target_origin(window, targetOrigin);
     if(hres != S_OK)
         return SUCCEEDED(hres) ? S_OK : hres;
+
+    source = get_source_window(caller, compat_mode);
+    if(!source) {
+        if(compat_mode < COMPAT_MODE_IE9)
+            return E_ABORT;
+        IHTMLWindow2_AddRef(source = &window->base.outer_window->base.IHTMLWindow2_iface);
+    }
 
     switch(V_VT(&msg)) {
         case VT_EMPTY:
@@ -2373,15 +2437,18 @@ static HRESULT post_message(HTMLInnerWindow *window, VARIANT msg, BSTR targetOri
             break;
         default:
             FIXME("Unsupported vt %d\n", V_VT(&msg));
+            IHTMLWindow2_Release(source);
             return E_NOTIMPL;
     }
 
     if(!window->doc) {
         FIXME("No document\n");
+        IHTMLWindow2_Release(source);
         return E_FAIL;
     }
 
-    hres = create_message_event(window->doc, &msg, &event);
+    hres = create_message_event(window->doc, source, &msg, &event);
+    IHTMLWindow2_Release(source);
     if(FAILED(hres))
         return hres;
 

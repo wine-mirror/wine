@@ -824,14 +824,24 @@ async_test("img_wrong_content_type", function() {
 });
 
 async_test("message event", function() {
-    var listener_called = false;
+    var listener_called = false, iframe = document.createElement("iframe");
 
     window.addEventListener("message", function(e) {
+        if(listener_called) {
+            ok(e.data === "echo", "e.data (diff origin) = " + e.data);
+            ok(e.source === iframe.contentWindow, "e.source (diff origin) not iframe.contentWindow");
+            next_test();
+            return;
+        }
         listener_called = true;
         ok(e.data === "test", "e.data = " + e.data);
         ok(e.bubbles === false, "bubbles = " + e.bubbles);
         ok(e.cancelable === false, "cancelable = " + e.cancelable);
-        next_test();
+        ok(e.source === window, "e.source = " + e.source);
+
+        iframe.onload = function() { iframe.contentWindow.postMessage("echo", "hTtP://WinEtesT.difFerent.ORG:1234"); }
+        iframe.src = "http://winetest.different.org:1234/xhr_iframe.html";
+        document.body.appendChild(iframe);
     });
 
     window.postMessage("test", "httP://wineTest.example.org");
