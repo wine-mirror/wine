@@ -1108,7 +1108,10 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                     case CombineModeXor: case CombineModeExclude:
                         left = CreateRectRgn(-(1 << 22), -(1 << 22), 1 << 22, 1 << 22);
                         break;
-                    case CombineModeUnion: case CombineModeComplement:
+                    case CombineModeComplement:
+                        *hrgn = CreateRectRgn(0, 0, 0, 0);
+                        return *hrgn ? Ok : OutOfMemory;
+                    case CombineModeUnion:
                         *hrgn = NULL;
                         return Ok;
                 }
@@ -1133,7 +1136,11 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                     case CombineModeXor: case CombineModeComplement:
                         right = CreateRectRgn(-(1 << 22), -(1 << 22), 1 << 22, 1 << 22);
                         break;
-                    case CombineModeUnion: case CombineModeExclude:
+                    case CombineModeExclude:
+                        DeleteObject(left);
+                        *hrgn = CreateRectRgn(0, 0, 0, 0);
+                        return *hrgn ? Ok : OutOfMemory;
+                    case CombineModeUnion:
                         DeleteObject(left);
                         *hrgn = NULL;
                         return Ok;
