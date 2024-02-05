@@ -2333,6 +2333,204 @@ static void test_GdipCreateRegionRgnData(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_incombinedregion(void)
+{
+    struct testrgn
+    {
+        const char* desc;
+        BOOL origin_in_region;
+        GpRegion *region;
+    };
+
+    struct testrgn test_regions[] = {
+        { "infinite region", TRUE },
+        { "infinite region inverted", FALSE },
+        { "empty region", FALSE },
+        { "empty region inverted", TRUE },
+        { "inside rectangle", TRUE },
+        { "inside rectangle inverted", FALSE },
+        { "outside rectangle", FALSE },
+        { "outside rectangle inverted", TRUE },
+        { "inside path", TRUE },
+        { "inside path inverted", FALSE },
+        { "outside path but in bounding rect", FALSE },
+        { "outside path but in bounding rect inverted", TRUE },
+        { "outside path", FALSE },
+        { "outside path inverted", TRUE },
+    };
+
+    GpStatus stat;
+    GpRectF rect;
+    const GpPointF inside_path_points[] = { { -1, -2 }, { 2, 1 }, { -1, 1 } };
+    const GpPointF outside_path_bounding_points[] = { { -2, -1 }, { 1, 2 }, { -2, 2 } };
+    const GpPointF outside_path_points[] = { { 5, 5 }, { 5, 10 }, { 10, 10 } };
+    GpPath *path;
+    int i, j;
+    BOOL in_region;
+
+    /* Prepare test regions: */
+
+    /* infinite */
+    stat = GdipCreateRegion(&test_regions[0].region);
+    expect(Ok, stat);
+
+    /* empty */
+    stat = GdipCreateRegion(&test_regions[2].region);
+    expect(Ok, stat);
+    stat = GdipSetEmpty(test_regions[2].region);
+    expect(Ok, stat);
+
+    /* inside rectangle */
+    rect.X = -5;
+    rect.Y = -2;
+    rect.Width = 10;
+    rect.Height = 4;
+    stat = GdipCreateRegionRect(&rect, &test_regions[4].region);
+    expect(Ok, stat);
+
+    /* outside rectangle */
+    rect.X = -10;
+    rect.Y = -10;
+    rect.Width = 7;
+    rect.Height = 7;
+    stat = GdipCreateRegionRect(&rect, &test_regions[6].region);
+    expect(Ok, stat);
+
+    /* inside path */
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathPolygon(path, inside_path_points, ARRAY_SIZE(inside_path_points));
+    expect(Ok, stat);
+    stat = GdipCreateRegion(&test_regions[8].region);
+    expect(Ok, stat);
+    stat = GdipCombineRegionPath(test_regions[8].region, path, CombineModeReplace);
+    expect(Ok, stat);
+    stat = GdipDeletePath(path);
+    expect(Ok, stat);
+
+    /* outside path but in bounding rect */
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathPolygon(path, outside_path_bounding_points, ARRAY_SIZE(outside_path_bounding_points));
+    expect(Ok, stat);
+    stat = GdipCreateRegion(&test_regions[10].region);
+    expect(Ok, stat);
+    stat = GdipCombineRegionPath(test_regions[10].region, path, CombineModeReplace);
+    expect(Ok, stat);
+    stat = GdipDeletePath(path);
+    expect(Ok, stat);
+
+    /* outside path */
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathPolygon(path, outside_path_points, ARRAY_SIZE(outside_path_points));
+    expect(Ok, stat);
+    stat = GdipCreateRegion(&test_regions[12].region);
+    expect(Ok, stat);
+    stat = GdipCombineRegionPath(test_regions[12].region, path, CombineModeReplace);
+    expect(Ok, stat);
+    stat = GdipDeletePath(path);
+    expect(Ok, stat);
+
+    for (i = 1; i < ARRAY_SIZE(test_regions); i += 2)
+    {
+        winetest_push_context("%s", test_regions[i].desc);
+        stat = GdipCreateRegion(&test_regions[i].region);
+        expect(Ok, stat);
+        stat = GdipCombineRegionRegion(test_regions[i].region, test_regions[i-1].region, CombineModeExclude);
+        expect(Ok, stat);
+        winetest_pop_context();
+    }
+
+    /* Check regions individually */
+    for (i = 0; i < ARRAY_SIZE(test_regions); i++)
+    {
+        winetest_push_context("%s", test_regions[i].desc);
+        stat = GdipIsVisibleRegionPoint(test_regions[i].region, 0, 0, NULL, &in_region);
+        expect(Ok, stat);
+        expect(test_regions[i].origin_in_region, in_region);
+        winetest_pop_context();
+    }
+
+    /* Check combined regions */
+    for (i = 0; i < ARRAY_SIZE(test_regions); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(test_regions); j++)
+        {
+            GpRegion *region;
+            BOOL expected_result;
+
+            winetest_push_context("%s + %s", test_regions[i].desc, test_regions[j].desc);
+
+            stat = GdipCreateRegion(&region);
+            expect(Ok, stat);
+
+            /* CombineModeIntersect */
+            stat = GdipCombineRegionRegion(region, test_regions[i].region, CombineModeReplace);
+            expect(Ok, stat);
+            stat = GdipCombineRegionRegion(region, test_regions[j].region, CombineModeIntersect);
+            expect(Ok, stat);
+
+            expected_result = test_regions[i].origin_in_region & test_regions[j].origin_in_region;
+            stat = GdipIsVisibleRegionPoint(region, 0, 0, NULL, &in_region);
+            expect(Ok, stat);
+            ok(expected_result == in_region, "CombineModeIntersect: expected %i, got %i\n", expected_result, in_region);
+
+            /* CombineModeUnion */
+            stat = GdipCombineRegionRegion(region, test_regions[i].region, CombineModeReplace);
+            expect(Ok, stat);
+            stat = GdipCombineRegionRegion(region, test_regions[j].region, CombineModeUnion);
+            expect(Ok, stat);
+
+            expected_result = test_regions[i].origin_in_region | test_regions[j].origin_in_region;
+            stat = GdipIsVisibleRegionPoint(region, 0, 0, NULL, &in_region);
+            expect(Ok, stat);
+            ok(expected_result == in_region, "CombineModeUnion: expected %i, got %i\n", expected_result, in_region);
+
+            /* CombineModeXor */
+            stat = GdipCombineRegionRegion(region, test_regions[i].region, CombineModeReplace);
+            expect(Ok, stat);
+            stat = GdipCombineRegionRegion(region, test_regions[j].region, CombineModeXor);
+            expect(Ok, stat);
+
+            expected_result = test_regions[i].origin_in_region ^ test_regions[j].origin_in_region;
+            stat = GdipIsVisibleRegionPoint(region, 0, 0, NULL, &in_region);
+            expect(Ok, stat);
+            ok(expected_result == in_region, "CombineModeXor: expected %i, got %i\n", expected_result, in_region);
+
+            /* CombineModeExclude */
+            stat = GdipCombineRegionRegion(region, test_regions[i].region, CombineModeReplace);
+            expect(Ok, stat);
+            stat = GdipCombineRegionRegion(region, test_regions[j].region, CombineModeExclude);
+            expect(Ok, stat);
+
+            expected_result = test_regions[i].origin_in_region & !test_regions[j].origin_in_region;
+            stat = GdipIsVisibleRegionPoint(region, 0, 0, NULL, &in_region);
+            expect(Ok, stat);
+            ok(expected_result == in_region, "CombineModeExclude: expected %i, got %i\n", expected_result, in_region);
+
+            /* CombineModeComplement */
+            stat = GdipCombineRegionRegion(region, test_regions[i].region, CombineModeReplace);
+            expect(Ok, stat);
+            stat = GdipCombineRegionRegion(region, test_regions[j].region, CombineModeComplement);
+            expect(Ok, stat);
+
+            expected_result = (!test_regions[i].origin_in_region) & test_regions[j].origin_in_region;
+            stat = GdipIsVisibleRegionPoint(region, 0, 0, NULL, &in_region);
+            expect(Ok, stat);
+            ok(expected_result == in_region, "CombineModeComplement: expected %i, got %i\n", expected_result, in_region);
+
+            winetest_pop_context();
+        }
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_regions); i++)
+    {
+        stat = GdipDeleteRegion(test_regions[i].region);
+        expect(Ok, stat);
+    }
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2367,6 +2565,7 @@ START_TEST(region)
     test_isvisiblerect();
     test_excludeinfinite();
     test_GdipCreateRegionRgnData();
+    test_incombinedregion();
 
     GdiplusShutdown(gdiplusToken);
 }
