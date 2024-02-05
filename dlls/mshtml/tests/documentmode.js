@@ -2919,6 +2919,32 @@ sync_test("MutationObserver", function() {
     test_exposed("takeRecords");
 });
 
+sync_test("initMessageEvent", function() {
+    var e, v = document.documentMode;
+    if(!document.createEvent)
+        return;
+    e = document.createEvent("MessageEvent");
+    ok(e.data === (v < 10 ? "" : undefined), "e.data = " + e.data);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.cancelable === false, "cancelable = " + e.cancelable);
+    ok(e.source === null, "e.source = " + e.source);
+    ok(e.origin === "", "e.origin = " + e.origin);
+
+    e.initMessageEvent("blah", true, true, 137, "wine", 1234, window);
+    ok(e.data === "137", "e.data = " + e.data);
+    ok(e.bubbles === true, "bubbles = " + e.bubbles);
+    ok(e.cancelable === true, "cancelable = " + e.cancelable);
+    ok(e.source === window, "e.source = " + e.source);
+    ok(e.origin === "wine", "e.origin = " + e.origin);
+
+    e.initMessageEvent("abcd", false, false, "testdata", "origin", 42, null);
+    ok(e.data === "testdata", "e.data = " + e.data);
+    ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.cancelable === false, "cancelable = " + e.cancelable);
+    ok(e.source === null, "e.source = " + e.source);
+    ok(e.origin === "origin", "e.origin = " + e.origin);
+});
+
 async_test("postMessage", function() {
     var v = document.documentMode;
     var onmessage_called = false;
@@ -2930,6 +2956,9 @@ async_test("postMessage", function() {
             ok(e.data === (v < 10 ? "10" : 10), "e.data = " + e.data);
             ok(e.source === window, "e.source = " + e.source);
             ok(e.origin === "http://winetest.example.org", "e.origin = " + e.origin);
+
+            e = document.createEvent("MessageEvent");
+            ok(e.data === (v < 10 ? "" : undefined), "created e.data = " + e.data);
             next_test();
         }
     }

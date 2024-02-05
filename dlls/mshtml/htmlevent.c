@@ -3741,6 +3741,11 @@ static HRESULT WINAPI DOMMessageEvent_get_data(IDOMMessageEvent *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(V_VT(&This->data) == VT_EMPTY) {
+        *p = SysAllocString(L"");
+        return S_OK;
+    }
+
     if(V_VT(&This->data) != VT_BSTR) {
         FIXME("non-string data\n");
         return E_NOTIMPL;
@@ -3792,9 +3797,48 @@ static HRESULT WINAPI DOMMessageEvent_initMessageEvent(IDOMMessageEvent *iface, 
                                                        BSTR last_event_id, IHTMLWindow2 *source)
 {
     DOMMessageEvent *This = impl_from_IDOMMessageEvent(iface);
-    FIXME("(%p)->(%s %x %x %s %s %s %p)\n", This, debugstr_w(type), can_bubble, cancelable,
+    BSTR new_origin = NULL;
+    BSTR new_data = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %x %x %s %s %s %p)\n", This, debugstr_w(type), can_bubble, cancelable,
           debugstr_w(data), debugstr_w(origin), debugstr_w(last_event_id), source);
-    return E_NOTIMPL;
+
+    if(This->event.target) {
+        TRACE("called on already dispatched event\n");
+        return S_OK;
+    }
+
+    if((data && !(new_data = SysAllocString(data))) ||
+       (origin && !(new_origin = SysAllocString(origin)))) {
+        hres = E_OUTOFMEMORY;
+        goto fail;
+    }
+
+    hres = IDOMEvent_initEvent(&This->event.IDOMEvent_iface, type, can_bubble, cancelable);
+    if(FAILED(hres))
+        goto fail;
+
+    if(new_data) {
+        VariantClear(&This->data);
+        V_VT(&This->data) = VT_BSTR;
+        V_BSTR(&This->data) = new_data;
+    }
+    if(new_origin) {
+        SysFreeString(This->origin);
+        This->origin = new_origin;
+    }
+    if(This->source)
+        IHTMLWindow2_Release(This->source);
+    This->source = source;
+    if(source)
+        IHTMLWindow2_AddRef(source);
+    return S_OK;
+
+fail:
+    SysFreeString(new_origin);
+    SysFreeString(new_data);
+    return hres;
 }
 
 static const IDOMMessageEventVtbl DOMMessageEventVtbl = {

@@ -835,6 +835,7 @@ async_test("message event", function() {
             return;
         }
         listener_called = true;
+        e.initMessageEvent("blah", true, true, "barfoo", "wine", 1234, window);
         ok(e.data === "test", "e.data = " + e.data);
         ok(e.bubbles === false, "bubbles = " + e.bubbles);
         ok(e.cancelable === false, "cancelable = " + e.cancelable);

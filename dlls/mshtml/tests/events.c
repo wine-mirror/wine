@@ -3345,6 +3345,136 @@ static void test_message_event(IHTMLDocument2 *doc)
     VariantClear(&v[1]);
     IHTMLWindow2_Release(child);
     IDispatchEx_Release(dispex);
+
+    if(document_mode >= 9) {
+        IDOMMessageEvent *msg_event = NULL;
+        IDocumentEvent *doc_event;
+        IHTMLWindow2 *source;
+        IDOMEvent *event;
+        UINT argerr;
+
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IDocumentEvent, (void**)&doc_event);
+        ok(hres == S_OK, "Could not get IDocumentEvent iface: %08lx\n", hres);
+
+        bstr = SysAllocString(L"MessageEvent");
+        hres = IDocumentEvent_createEvent(doc_event, bstr, &event);
+        ok(hres == S_OK, "createEvent failed: %08lx\n", hres);
+        IDocumentEvent_Release(doc_event);
+        SysFreeString(bstr);
+
+        hres = IDOMEvent_QueryInterface(event, &IID_IDOMMessageEvent, (void**)&msg_event);
+        ok(hres == S_OK, "Could not get IDOMMessageEvent iface: %08lx\n", hres);
+        ok(msg_event != NULL, "msg_event = NULL\n");
+        IDOMEvent_Release(event);
+
+        hres = IDOMMessageEvent_get_source(msg_event, &source);
+        ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+        ok(source == NULL, "uninitialized source != NULL\n");
+
+        hres = IDOMMessageEvent_get_origin(msg_event, &bstr);
+        ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+        ok(!bstr, "uninitialized origin = %s\n", wine_dbgstr_w(bstr));
+
+        /* IE10+ crash when using the get_data from the interface (because it's not a string yet?) */
+        if(document_mode < 10) {
+            hres = IDOMMessageEvent_get_data(msg_event, &bstr);
+            ok(hres == S_OK, "get_data failed: %08lx\n", hres);
+            ok(!wcscmp(bstr, L""), "uninitialized data = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+
+            bstr = SysAllocString(L"foobar");
+            hres = IDOMMessageEvent_initMessageEvent(msg_event, bstr, VARIANT_FALSE, VARIANT_FALSE, bstr, bstr, NULL, window);
+            ok(hres == S_OK, "initMessageEvent failed: %08lx\n", hres);
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_get_data(msg_event, &bstr);
+            ok(hres == S_OK, "get_data failed: %08lx\n", hres);
+            ok(!wcscmp(bstr, L"foobar"), "data = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_get_source(msg_event, &source);
+            ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+            ok(source == window, "source != window\n");
+            IHTMLWindow2_Release(source);
+
+            hres = IDOMMessageEvent_get_origin(msg_event, &bstr);
+            ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+            ok(!wcscmp(bstr, L"foobar"), "origin = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+
+            bstr = SysAllocString(L"barfoo");
+            hres = IDOMMessageEvent_initMessageEvent(msg_event, bstr, VARIANT_FALSE, VARIANT_FALSE, NULL, NULL, NULL, NULL);
+            ok(hres == S_OK, "initMessageEvent failed: %08lx\n", hres);
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_get_data(msg_event, &bstr);
+            ok(hres == S_OK, "get_data failed: %08lx\n", hres);
+            ok(!wcscmp(bstr, L"foobar"), "data = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_get_source(msg_event, &source);
+            ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+            ok(source == NULL, "source != NULL\n");
+
+            hres = IDOMMessageEvent_get_origin(msg_event, &bstr);
+            ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+            ok(broken(!bstr) /* win10-21h2 */ || !wcscmp(bstr, L"foobar"), "origin = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+        }else {
+            bstr = SysAllocString(L"data");
+            hres = IDOMMessageEvent_GetIDsOfNames(msg_event, &IID_NULL, &bstr, 1, 0, &dispid);
+            ok(hres == S_OK, "GetIDsOfNames(data) failed: %08lx\n", hres);
+            SysFreeString(bstr);
+
+            dp.cArgs = 0;
+            dp.rgvarg = NULL;
+            hres = IDOMMessageEvent_Invoke(msg_event, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v[0], NULL, &argerr);
+            ok(hres == S_OK, "Invoke(data) failed: %08lx\n", hres);
+            ok(V_VT(&v[0]) == VT_EMPTY, "V_VT(uninitialized data) = %d\n", V_VT(&v[0]));
+
+            bstr = SysAllocString(L"foobar");
+            hres = IDOMMessageEvent_initMessageEvent(msg_event, bstr, VARIANT_FALSE, VARIANT_FALSE, bstr, bstr, NULL, window);
+            ok(hres == S_OK, "initMessageEvent failed: %08lx\n", hres);
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_Invoke(msg_event, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v[0], NULL, &argerr);
+            ok(hres == S_OK, "Invoke(data) failed: %08lx\n", hres);
+            ok(V_VT(&v[0]) == VT_BSTR, "V_VT(data) = %d\n", V_VT(&v[0]));
+            ok(!wcscmp(V_BSTR(&v[0]), L"foobar"), "V_BSTR(data) = %s\n", wine_dbgstr_w(V_BSTR(&v[0])));
+            VariantClear(&v[0]);
+
+            hres = IDOMMessageEvent_get_source(msg_event, &source);
+            ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+            ok(source == window, "source != window\n");
+            IHTMLWindow2_Release(source);
+
+            hres = IDOMMessageEvent_get_origin(msg_event, &bstr);
+            ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+            ok(!wcscmp(bstr, L"foobar"), "origin = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+
+            bstr = SysAllocString(L"barfoo");
+            hres = IDOMMessageEvent_initMessageEvent(msg_event, bstr, VARIANT_FALSE, VARIANT_FALSE, NULL, NULL, NULL, NULL);
+            ok(hres == S_OK, "initMessageEvent failed: %08lx\n", hres);
+            SysFreeString(bstr);
+
+            hres = IDOMMessageEvent_Invoke(msg_event, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v[0], NULL, &argerr);
+            ok(hres == S_OK, "Invoke(data) failed: %08lx\n", hres);
+            ok(V_VT(&v[0]) == VT_BSTR, "V_VT(data) = %d\n", V_VT(&v[0]));
+            ok(!wcscmp(V_BSTR(&v[0]), L"foobar"), "V_BSTR(data) = %s\n", wine_dbgstr_w(V_BSTR(&v[0])));
+
+            hres = IDOMMessageEvent_get_source(msg_event, &source);
+            ok(hres == S_OK, "get_source failed: %08lx\n", hres);
+            ok(source == NULL, "source != NULL\n");
+
+            hres = IDOMMessageEvent_get_origin(msg_event, &bstr);
+            ok(hres == S_OK, "get_origin failed: %08lx\n", hres);
+            ok(broken(!bstr) /* win10-21h2 */ || !wcscmp(bstr, L"foobar"), "origin = %s\n", wine_dbgstr_w(bstr));
+            SysFreeString(bstr);
+        }
+
+        IDOMMessageEvent_Release(msg_event);
+    }
 }
 
 static void test_visibilitychange(IHTMLDocument2 *doc)
