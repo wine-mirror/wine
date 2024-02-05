@@ -3218,7 +3218,6 @@ static void test_message_event(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_onmessage failed: %08lx\n", hres);
     ok(V_VT(&v[0]) == VT_DISPATCH, "V_VT(onmessage) = %d\n", V_VT(&v[0]));
     ok(V_DISPATCH(&v[0]) == (IDispatch*)&onmessage_obj, "V_DISPATCH(onmessage) = %p\n", V_DISPATCH(&v[0]));
-    IHTMLWindow6_Release(window6);
 
     if(document_mode >= 9)
         add_event_listener((IUnknown*)doc, L"message", (IDispatch*)&onmessage_obj, VARIANT_TRUE);
@@ -3227,6 +3226,10 @@ static void test_message_event(IHTMLDocument2 *doc)
     V_BSTR(&v[1]) = SysAllocString(L"foobar");
     V_VT(&v[0]) = VT_BSTR;
     V_BSTR(&v[0]) = SysAllocString(L"*");
+    bstr = SysAllocString(L"foobar");
+    hres = IHTMLWindow6_postMessage(window6, V_BSTR(&v[1]), v[0]);
+    ok(hres == E_ABORT, "postMessage returned: %08lx\n", hres);
+    IHTMLWindow6_Release(window6);
 
     hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
     ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);

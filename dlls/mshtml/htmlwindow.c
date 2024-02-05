@@ -2473,18 +2473,14 @@ static HRESULT post_message(HTMLInnerWindow *window, VARIANT msg, BSTR targetOri
 static HRESULT WINAPI HTMLWindow6_postMessage(IHTMLWindow6 *iface, BSTR msg, VARIANT targetOrigin)
 {
     HTMLWindow *This = impl_from_IHTMLWindow6(iface);
-    VARIANT var, transfer;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(msg), debugstr_variant(&targetOrigin));
 
     if(V_VT(&targetOrigin) != VT_BSTR)
         return E_INVALIDARG;
 
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = msg;
-    V_VT(&transfer) = VT_EMPTY;
-    return post_message(This->inner_window, var, V_BSTR(&targetOrigin), transfer, NULL,
-                        dispex_compat_mode(&This->inner_window->event_target.dispex));
+    /* This can't obtain the source, and never works even in IE9+ modes... */
+    return E_ABORT;
 }
 
 static HRESULT WINAPI HTMLWindow6_toStaticHTML(IHTMLWindow6 *iface, BSTR bstrHTML, BSTR *pbstrStaticHTML)
