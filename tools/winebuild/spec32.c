@@ -300,11 +300,17 @@ static void output_relay_debug( DLLSPEC *spec )
 
             output( "\t.balign 4\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
+            output( "\t.seh_proc __wine_spec_relay_entry_point_%d\n", i );
             output( "\tpush {r0-r3}\n" );
-            output( "\tmov r2, SP\n");
-            if (has_float) output( "\tvpush {s0-s15}\n" );
-            output( "\tpush {LR}\n" );
-            output( "\tsub SP, #4\n");
+            output( "\t.seh_save_regs {r0-r3}\n" );
+            if (has_float)
+            {
+                output( "\tvpush {d0-d7}\n" );
+                output( "\t.seh_save_fregs {d0-d7}\n" );
+            }
+            output( "\tpush {r4,lr}\n" );
+            output( "\t.seh_save_regs {r4,lr}\n" );
+            output( "\t.seh_endprologue\n" );
             output( "\tmovw r1,#%u\n", i - spec->base );
             output( "\tmovt r1,#%u\n", odp->u.func.args_str_offset );
             output( "\tmovw r0, :lower16:.L__wine_spec_relay_descr\n" );
@@ -314,6 +320,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tldr IP, [SP, #4]\n" );
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
+            output( "\t.seh_endproc\n" );
             break;
         }
 
@@ -323,12 +330,12 @@ static void output_relay_debug( DLLSPEC *spec )
 
             output( "\t.balign 4\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
-            output_seh( ".seh_proc __wine_spec_relay_entry_point_%d", i );
+            output( "\t.seh_proc __wine_spec_relay_entry_point_%d\n", i );
             output( "\tstp x29, x30, [sp, #-%u]!\n", stack_size + 16 );
-            output_seh( ".seh_save_fplr_x %u", stack_size + 16 );
+            output( "\t.seh_save_fplr_x %u\n", stack_size + 16 );
             output( "\tmov x29, sp\n" );
-            output_seh( ".seh_set_fp" );
-            output_seh( ".seh_endprologue" );
+            output( "\t.seh_set_fp\n" );
+            output( "\t.seh_endprologue\n" );
             switch (stack_size)
             {
             case 64: output( "\tstp x6, x7, [sp, #64]\n" );
@@ -352,7 +359,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tmov sp, x29\n" );
             output( "\tldp x29, x30, [sp], #%u\n", stack_size + 16 );
             output( "\tret\n");
-            output_seh( ".seh_endproc" );
+            output( "\t.seh_endproc\n" );
             break;
         }
 
