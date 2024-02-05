@@ -147,8 +147,11 @@ DEFINE_EXPECT(external_success);
 DEFINE_EXPECT(QS_VariantConversion);
 DEFINE_EXPECT(QS_IActiveScriptSite);
 DEFINE_EXPECT(QS_GetCaller);
+DEFINE_EXPECT(QS_IActiveScriptSite2);
+DEFINE_EXPECT(QS_GetCaller2);
 DEFINE_EXPECT(ChangeType_bstr);
 DEFINE_EXPECT(ChangeType_dispatch);
+DEFINE_EXPECT(cmdtarget_Exec);
 DEFINE_EXPECT(GetTypeInfo);
 
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7faf80646}"
@@ -489,6 +492,8 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
+static IOleCommandTarget cmdtarget;
+
 static HRESULT WINAPI VariantChangeType_QueryInterface(IVariantChangeType *iface, REFIID riid, void **ppv)
 {
     ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
@@ -594,6 +599,52 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 };
 
 static IServiceProvider caller_sp = { &ServiceProviderVtbl };
+
+static HRESULT WINAPI ServiceProvider2_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ServiceProvider2_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider2_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider2_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(guidService, &IID_IActiveScriptSite)) {
+        CHECK_EXPECT(QS_IActiveScriptSite2);
+        ok(IsEqualGUID(riid, &IID_IOleCommandTarget), "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        *ppv = &cmdtarget;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(guidService, &SID_GetCaller)) {
+        CHECK_EXPECT(QS_GetCaller2);
+        ok(IsEqualGUID(riid, &IID_IServiceProvider), "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return S_OK;
+    }
+
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProvider2Vtbl = {
+    ServiceProvider2_QueryInterface,
+    ServiceProvider2_AddRef,
+    ServiceProvider2_Release,
+    ServiceProvider2_QueryService
+};
+
+static IServiceProvider caller_sp2 = { &ServiceProvider2Vtbl };
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
@@ -1464,6 +1515,88 @@ static IDispatchExVtbl externalDispVtbl = {
 };
 
 static IDispatchEx externalDisp = { &externalDispVtbl };
+
+static HRESULT WINAPI DispatchExStub_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static IDispatchExVtbl DispatchExStubVtbl = {
+    DispatchExStub_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx DispatchExStub = { &DispatchExStubVtbl };
+
+static HRESULT WINAPI cmdtarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleCommandTarget))
+        *ppv = &cmdtarget;
+    else {
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    return S_OK;
+}
+
+static ULONG WINAPI cmdtarget_AddRef(IOleCommandTarget *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI cmdtarget_Release(IOleCommandTarget *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI cmdtarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    ok(0, "unexpected call\n");
+    return OLECMDERR_E_UNKNOWNGROUP;
+}
+
+static HRESULT WINAPI cmdtarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    CHECK_EXPECT2(cmdtarget_Exec);
+    ok(pguidCmdGroup && IsEqualGUID(pguidCmdGroup, &CGID_ScriptSite), "pguidCmdGroup = %s\n", wine_dbgstr_guid(pguidCmdGroup));
+    ok(nCmdID == CMDID_SCRIPTSITE_SECURITY_WINDOW, "nCmdID = %lu\n", nCmdID);
+    ok(!nCmdexecopt, "nCmdexecopt = %lu\n", nCmdexecopt);
+    ok(!pvaIn, "pvaIn != NULL\n");
+    ok(pvaOut != NULL, "pvaOut = NULL\n");
+
+    /* Looks like native just uses this for some sort of hardcoded security check
+     * without actually using the IDispatchEx interface or QI? (for ACCESSDENIED) */
+    V_VT(pvaOut) = VT_DISPATCH;
+    V_DISPATCH(pvaOut) = (IDispatch*)&DispatchExStub;
+    return S_OK;
+}
+
+static const IOleCommandTargetVtbl cmdtarget_vtbl = {
+    cmdtarget_QueryInterface,
+    cmdtarget_AddRef,
+    cmdtarget_Release,
+    cmdtarget_QueryStatus,
+    cmdtarget_Exec
+};
+
+static IOleCommandTarget cmdtarget = { &cmdtarget_vtbl };
 
 static HRESULT QueryInterface(REFIID,void**);
 
@@ -2739,6 +2872,19 @@ static void test_func(IDispatchEx *obj)
     VariantClear(&var);
     todo_wine CHECK_CALLED(QS_IActiveScriptSite);
     todo_wine CHECK_CALLED(QS_GetCaller);
+
+    SET_EXPECT(QS_IActiveScriptSite2);
+    SET_EXPECT(QS_GetCaller2);
+    SET_EXPECT(cmdtarget_Exec);
+    hres = dispex_propget(dispex, DISPID_VALUE, &var, &caller_sp2);
+    ok(hres == S_OK, "InvokeEx returned: %08lx, expected S_OK\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var) = %d\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"\nfunction toString() {\n    [native code]\n}\n"),
+       "V_BSTR(var) = %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+    todo_wine CHECK_CALLED(QS_IActiveScriptSite2);
+    todo_wine CHECK_CALLED(QS_GetCaller2);
+    todo_wine CHECK_CALLED(cmdtarget_Exec);
 
     IDispatchEx_Release(dispex);
 }
