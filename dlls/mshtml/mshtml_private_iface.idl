@@ -131,8 +131,6 @@ interface IWineHTMLWindowPrivate : IDispatch
     HRESULT console([retval, out] IDispatch **console);
     [id(53)]
     HRESULT matchMedia([in] BSTR media_query, [retval, out] IDispatch **media_query_list);
-    [id(54)]
-    HRESULT postMessage([in] VARIANT msg, [in] BSTR targetOrigin, [in, optional] VARIANT transfer);
     [propget, id(DISPID_IWINEHTMLWINDOWPRIVATE_MUTATIONOBSERVER)]
     HRESULT MutationObserver([retval, out] IDispatch **observer_ctor);
 }
