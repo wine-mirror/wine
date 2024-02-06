@@ -472,16 +472,13 @@ static void FreeProxyInfo( proxyinfo_t *lpwpi )
     free(lpwpi->proxyPassword);
 }
 
-static proxyinfo_t *global_proxy;
+static proxyinfo_t global_proxy;
 
 static void free_global_proxy( void )
 {
     EnterCriticalSection( &WININET_cs );
-    if (global_proxy)
-    {
-        FreeProxyInfo( global_proxy );
-        free( global_proxy );
-    }
+    FreeProxyInfo( &global_proxy );
+    memset( &global_proxy, 0, sizeof(global_proxy) );
     LeaveCriticalSection( &WININET_cs );
 }
 
@@ -542,11 +539,11 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     memset( lpwpi, 0, sizeof(*lpwpi) );
 
     EnterCriticalSection( &WININET_cs );
-    if (global_proxy)
+    if (global_proxy.flags)
     {
-        lpwpi->flags = global_proxy->flags;
-        lpwpi->proxy = wcsdup( global_proxy->proxy );
-        lpwpi->proxyBypass = wcsdup( global_proxy->proxyBypass );
+        lpwpi->flags = global_proxy.flags;
+        lpwpi->proxy = wcsdup( global_proxy.proxy );
+        lpwpi->proxyBypass = wcsdup( global_proxy.proxyBypass );
     }
     LeaveCriticalSection( &WININET_cs );
 
@@ -3024,20 +3021,16 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         {
             EnterCriticalSection( &WININET_cs );
             free_global_proxy();
-            global_proxy = malloc(sizeof(proxyinfo_t));
-            if (global_proxy)
+            if (info->dwAccessType == INTERNET_OPEN_TYPE_PROXY)
             {
-                if (info->dwAccessType == INTERNET_OPEN_TYPE_PROXY)
-                {
-                    global_proxy->flags = PROXY_TYPE_PROXY;
-                    global_proxy->proxy = wcsdup(info->lpszProxy);
-                    global_proxy->proxyBypass = wcsdup(info->lpszProxyBypass);
-                }
-                else
-                {
-                    global_proxy->flags = PROXY_TYPE_DIRECT;
-                    global_proxy->proxy = global_proxy->proxyBypass = NULL;
-                }
+                global_proxy.flags = PROXY_TYPE_PROXY;
+                global_proxy.proxy = wcsdup(info->lpszProxy);
+                global_proxy.proxyBypass = wcsdup(info->lpszProxyBypass);
+            }
+            else
+            {
+                global_proxy.flags = PROXY_TYPE_DIRECT;
+                global_proxy.proxy = global_proxy.proxyBypass = NULL;
             }
             LeaveCriticalSection( &WININET_cs );
         }
