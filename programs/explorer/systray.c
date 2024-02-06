@@ -543,6 +543,15 @@ static LRESULT WINAPI tray_icon_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         break;
     }
 
+    case WM_WINDOWPOSCHANGING:
+        if (icon->display == ICON_DISPLAY_HIDDEN)
+        {
+            /* Changing the icon's parent via SetParent would activate it, stealing the focus. */
+            WINDOWPOS *wp = (WINDOWPOS*)lparam;
+            wp->flags |= SWP_NOACTIVATE;
+        }
+        break;
+
     case WM_WINDOWPOSCHANGED:
         update_systray_balloon_position();
         break;
@@ -566,9 +575,9 @@ static void systray_add_icon( struct icon *icon )
 
     if (icon->display != ICON_DISPLAY_HIDDEN) return;  /* already added */
 
-    icon->display = nb_displayed++;
     SetWindowLongW( icon->window, GWL_STYLE, GetWindowLongW( icon->window, GWL_STYLE ) | WS_CHILD );
     SetParent( icon->window, tray_window );
+    icon->display = nb_displayed++;
     pos = get_icon_pos( icon );
     SetWindowPos( icon->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
 
