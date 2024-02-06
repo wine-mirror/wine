@@ -256,6 +256,7 @@ static void test_token_enum(void)
     ISpObjectToken *out_tokens[5];
     WCHAR token_id[MAX_PATH];
     ULONG count;
+    VARIANT vars[3];
     int i;
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
@@ -372,6 +373,33 @@ static void test_token_enum(void)
     hr = IUnknown_QueryInterface( unk, &IID_IEnumVARIANT, (void **)&enumvar );
     ok( hr == S_OK, "got %08lx\n", hr );
     IUnknown_Release( unk );
+
+    V_VT( &vars[0] ) = VT_ILLEGAL;
+    V_DISPATCH( &vars[0] ) = (IDispatch *)0xdeadbeef;
+    hr = IEnumVARIANT_Next( enumvar, 1, vars, NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( V_VT( &vars[0] ) == VT_DISPATCH, "got %#x\n", V_VT( &vars[0] ) );
+    ok( V_DISPATCH( &vars[0] ) != (IDispatch *)0xdeadbeef && V_DISPATCH( &vars[0] ) != NULL,
+        "got %p\n", V_DISPATCH( &vars[0] ) );
+    VariantClear( &vars[0] );
+
+    for ( i = 0; i < 3; i++ ) {
+        V_VT( &vars[i] ) = VT_ILLEGAL;
+        V_DISPATCH( &vars[i] ) = (IDispatch *)0xdeadbeef;
+    }
+    count = 0xdeadbeef;
+
+    hr = IEnumVARIANT_Next( enumvar, 3, vars, &count );
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( count == 2, "got %lu\n", count );
+    for ( i = 0; i < 2; i++ ) {
+        ok( V_VT( &vars[i] ) == VT_DISPATCH, "got %#x\n", V_VT( &vars[i] ) );
+        ok( V_DISPATCH( &vars[i] ) != (IDispatch *)0xdeadbeef && V_DISPATCH( &vars[i] ) != NULL,
+            "got %p\n", V_DISPATCH( &vars[i] ) );
+        VariantClear( &vars[i] );
+    }
+    ok( V_VT( &vars[2] ) == VT_ILLEGAL, "got %#x\n", V_VT( &vars[2] ) );
+
     IEnumVARIANT_Release( enumvar );
 
     ISpeechObjectTokens_Release( speech_tokens );

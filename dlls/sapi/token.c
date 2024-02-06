@@ -1206,8 +1206,41 @@ static ULONG WINAPI enum_var_Release( IEnumVARIANT *iface )
 static HRESULT WINAPI enum_var_Next( IEnumVARIANT *iface, ULONG count,
                                      VARIANT *vars, ULONG *fetched )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct enum_var *This = impl_from_IEnumVARIANT( iface );
+    ULONG i, total;
+    HRESULT hr;
+
+    TRACE( "(%p)->(%lu %p %p)\n", This, count, vars, fetched );
+
+    if (fetched) *fetched = 0;
+
+    if (FAILED(hr = ISpObjectTokenEnumBuilder_GetCount( This->token_enum, &total )))
+        return hr;
+
+    for ( i = 0; i < count && This->index < total; i++, This->index++ )
+    {
+        ISpObjectToken *token;
+        IDispatch *disp;
+
+        if (FAILED(hr = ISpObjectTokenEnumBuilder_Item( This->token_enum, This->index, &token )))
+            goto fail;
+
+        hr = ISpObjectToken_QueryInterface( token, &IID_IDispatch, (void **)&disp );
+        ISpObjectToken_Release( token );
+        if (FAILED(hr)) goto fail;
+
+        VariantInit( &vars[i] );
+        V_VT( &vars[i] ) = VT_DISPATCH;
+        V_DISPATCH( &vars[i] ) = disp;
+    }
+
+    if (fetched) *fetched = i;
+    return i == count ? S_OK : S_FALSE;
+
+fail:
+    while (i--)
+        VariantClear( &vars[i] );
+    return hr;
 }
 
 static HRESULT WINAPI enum_var_Skip( IEnumVARIANT *iface, ULONG count )
