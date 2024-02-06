@@ -86,6 +86,7 @@ typedef struct
     LPWSTR proxyBypass;
     LPWSTR proxyUsername;
     LPWSTR proxyPassword;
+    LPWSTR autoconf_url;
 } proxyinfo_t;
 
 static ULONG max_conns = 2, max_1_0_conns = 4;
@@ -470,6 +471,7 @@ static void FreeProxyInfo( proxyinfo_t *lpwpi )
     free(lpwpi->proxyBypass);
     free(lpwpi->proxyUsername);
     free(lpwpi->proxyPassword);
+    free(lpwpi->autoconf_url);
 }
 
 static proxyinfo_t global_proxy;
@@ -603,6 +605,23 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     else
     {
         TRACE("No proxy bypass server settings in registry.\n");
+    }
+
+    if (!RegQueryValueExW( key, L"AutoConfigURL", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
+    {
+        LPWSTR autoconf_url;
+
+        if (!(autoconf_url = malloc( len )))
+        {
+            RegCloseKey( key );
+            FreeProxyInfo( lpwpi );
+            return ERROR_OUTOFMEMORY;
+        }
+        RegQueryValueExW( key, L"AutoConfigURL", NULL, &type, (BYTE*)autoconf_url, &len );
+
+        lpwpi->flags |= PROXY_TYPE_AUTO_PROXY_URL;
+        lpwpi->autoconf_url = autoconf_url;
+        TRACE("AutoConfigURL = %s\n", debugstr_w(lpwpi->autoconf_url));
     }
 
     RegCloseKey( key );
