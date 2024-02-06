@@ -81,7 +81,7 @@ static UINT_PTR handle_table_size;
 
 typedef struct
 {
-    DWORD  proxyEnabled;
+    DWORD  flags;
     LPWSTR proxy;
     LPWSTR proxyBypass;
     LPWSTR proxyUsername;
@@ -326,12 +326,14 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
 {
     HKEY key;
+    DWORD val;
     LONG ret;
 
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
         return ret;
 
-    if ((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE*)&lpwpi->proxyEnabled, sizeof(DWORD))))
+    val = !!(lpwpi->flags & PROXY_TYPE_PROXY);
+    if ((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE*)&val, sizeof(DWORD))))
     {
         RegCloseKey( key );
         return ret;
@@ -533,7 +535,7 @@ static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
 static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 {
     HKEY key;
-    DWORD type, len;
+    DWORD type, len, val;
     const WCHAR *envproxy;
     LONG ret;
 
@@ -542,7 +544,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     EnterCriticalSection( &WININET_cs );
     if (global_proxy)
     {
-        lpwpi->proxyEnabled = global_proxy->proxyEnabled;
+        lpwpi->flags = global_proxy->flags;
         lpwpi->proxy = wcsdup( global_proxy->proxy );
         lpwpi->proxyBypass = wcsdup( global_proxy->proxyBypass );
     }
@@ -555,18 +557,22 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     }
 
     len = sizeof(DWORD);
-    if (RegQueryValueExW( key, L"ProxyEnable", NULL, &type, (BYTE *)&lpwpi->proxyEnabled, &len ) || type != REG_DWORD)
+    if (RegQueryValueExW( key, L"ProxyEnable", NULL, &type, (BYTE *)&val, &len ) || type != REG_DWORD)
     {
-        lpwpi->proxyEnabled = 0;
-        if((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE *)&lpwpi->proxyEnabled, sizeof(DWORD) )))
+        val = 0;
+        if((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE *)&val, sizeof(DWORD) )))
         {
             FreeProxyInfo( lpwpi );
             RegCloseKey( key );
             return ret;
         }
     }
+    else
+    {
+        lpwpi->flags |= (val ? PROXY_TYPE_PROXY : PROXY_TYPE_DIRECT);
+    }
 
-    if (!(envproxy = _wgetenv( L"http_proxy" )) || lpwpi->proxyEnabled)
+    if (!(envproxy = _wgetenv( L"http_proxy" )) || (lpwpi->flags & PROXY_TYPE_PROXY))
     {
         /* figure out how much memory the proxy setting takes */
         if (!RegQueryValueExW( key, L"ProxyServer", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
@@ -611,19 +617,19 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         if (parse_proxy_url( lpwpi, envproxy ))
         {
             TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
-            lpwpi->proxyEnabled = 1;
+            lpwpi->flags |= PROXY_TYPE_PROXY;
             lpwpi->proxyBypass = NULL;
         }
         else
         {
             WARN("failed to parse http_proxy value %s\n", debugstr_w(envproxy));
-            lpwpi->proxyEnabled = 0;
+            lpwpi->flags &= ~PROXY_TYPE_PROXY;
             lpwpi->proxy = NULL;
             lpwpi->proxyBypass = NULL;
         }
     }
 
-    if (lpwpi->proxyEnabled)
+    if (lpwpi->flags & PROXY_TYPE_PROXY)
     {
         TRACE("Proxy is enabled.\n");
 
@@ -689,7 +695,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
     if (INTERNET_LoadProxySettings( &wpi ))
         return FALSE;
 
-    if (wpi.proxyEnabled)
+    if (wpi.flags & PROXY_TYPE_PROXY)
     {
         TRACE("http proxy = %s bypass = %s\n", debugstr_w(wpi.proxy), debugstr_w(wpi.proxyBypass));
 
@@ -2696,10 +2702,7 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
 
             switch (optionW->dwOption) {
             case INTERNET_PER_CONN_FLAGS:
-                if(pi.proxyEnabled)
-                    optionW->Value.dwValue = PROXY_TYPE_PROXY;
-                else
-                    optionW->Value.dwValue = PROXY_TYPE_DIRECT;
+                optionW->Value.dwValue = pi.flags;
                 if (url)
                     /* native includes PROXY_TYPE_DIRECT even if PROXY_TYPE_PROXY is set */
                     optionW->Value.dwValue |= PROXY_TYPE_DIRECT|PROXY_TYPE_AUTO_PROXY_URL;
@@ -3026,13 +3029,13 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
             {
                 if (info->dwAccessType == INTERNET_OPEN_TYPE_PROXY)
                 {
-                    global_proxy->proxyEnabled = 1;
+                    global_proxy->flags = PROXY_TYPE_PROXY;
                     global_proxy->proxy = wcsdup(info->lpszProxy);
                     global_proxy->proxyBypass = wcsdup(info->lpszProxyBypass);
                 }
                 else
                 {
-                    global_proxy->proxyEnabled = 0;
+                    global_proxy->flags = PROXY_TYPE_DIRECT;
                     global_proxy->proxy = global_proxy->proxyBypass = NULL;
                 }
             }
@@ -3188,14 +3191,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                 break;
 
             case INTERNET_PER_CONN_FLAGS:
-                if(option->Value.dwValue & PROXY_TYPE_PROXY)
-                    pi.proxyEnabled = 1;
-                else
-                {
-                    if(option->Value.dwValue != PROXY_TYPE_DIRECT)
-                        FIXME("Unhandled flags: 0x%lx\n", option->Value.dwValue);
-                    pi.proxyEnabled = 0;
-                }
+                if(option->Value.dwValue & ~(PROXY_TYPE_PROXY | PROXY_TYPE_DIRECT))
+                    FIXME("Unhandled flags: 0x%lx\n", option->Value.dwValue);
+                pi.flags = option->Value.dwValue;
                 break;
 
             case INTERNET_PER_CONN_PROXY_BYPASS:
