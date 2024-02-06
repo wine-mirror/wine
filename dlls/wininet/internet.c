@@ -376,6 +376,24 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
         }
     }
 
+    if (lpwpi->autoconf_url)
+    {
+        if ((ret = RegSetValueExW( key, L"AutoConfigURL", 0, REG_SZ, (BYTE*)lpwpi->autoconf_url,
+                        sizeof(WCHAR) * (lstrlenW(lpwpi->autoconf_url) + 1))))
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+    else
+    {
+        if ((ret = RegDeleteValueW( key, L"AutoConfigURL" )) && ret != ERROR_FILE_NOT_FOUND)
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+
     RegCloseKey(key);
     return ERROR_SUCCESS;
 }
