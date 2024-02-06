@@ -345,6 +345,7 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     struct wave *This;
     IStream *stream = NULL;
     IDirectMusicObject *iface;
+    const LARGE_INTEGER zero = { .QuadPart = 0 };
 
     TRACE("(%p, %u, %p)\n", soundfont, index, ret_iface);
 
@@ -368,6 +369,7 @@ HRESULT wave_create_from_soundfont(struct soundfont *soundfont, UINT index, IDir
     if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &stream))) goto failed;
     offset = sf_sample->start * format->nBlockAlign / format->nChannels;
     if (FAILED(hr = IStream_Write(stream, soundfont->sdta + offset, data_size, &data_size))) goto failed;
+    if (FAILED(hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL))) goto failed;
 
     if (FAILED(hr = wave_create(&iface))) goto failed;
 
