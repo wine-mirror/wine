@@ -520,8 +520,7 @@ static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
 /***********************************************************************
  *          INTERNET_LoadProxySettings
  *
- * Loads proxy information from process-wide global settings, the registry,
- * or the environment into lpwpi.
+ * Loads proxy information from the registry into lpwpi.
  *
  * The caller should call FreeProxyInfo when done with lpwpi.
  *
@@ -531,27 +530,14 @@ static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
  */
 static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 {
-    HKEY key;
     DWORD type, len, val;
-    const WCHAR *envproxy;
+    HKEY key;
     LONG ret;
 
     memset( lpwpi, 0, sizeof(*lpwpi) );
 
-    EnterCriticalSection( &WININET_cs );
-    if (global_proxy.flags)
-    {
-        lpwpi->flags = global_proxy.flags;
-        lpwpi->proxy = wcsdup( global_proxy.proxy );
-        lpwpi->proxyBypass = wcsdup( global_proxy.proxyBypass );
-    }
-    LeaveCriticalSection( &WININET_cs );
-
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
-    {
-        FreeProxyInfo( lpwpi );
         return ret;
-    }
 
     len = sizeof(DWORD);
     if (RegQueryValueExW( key, L"ProxyEnable", NULL, &type, (BYTE *)&val, &len ) || type != REG_DWORD)
@@ -559,7 +545,6 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         val = 0;
         if((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE *)&val, sizeof(DWORD) )))
         {
-            FreeProxyInfo( lpwpi );
             RegCloseKey( key );
             return ret;
         }
@@ -569,116 +554,101 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         lpwpi->flags |= (val ? PROXY_TYPE_PROXY : PROXY_TYPE_DIRECT);
     }
 
-    if (!(envproxy = _wgetenv( L"http_proxy" )) || (lpwpi->flags & PROXY_TYPE_PROXY))
+    /* figure out how much memory the proxy setting takes */
+    if (!RegQueryValueExW( key, L"ProxyServer", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
     {
-        /* figure out how much memory the proxy setting takes */
-        if (!RegQueryValueExW( key, L"ProxyServer", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
+        LPWSTR szProxy, p;
+
+        if (!(szProxy = malloc( len )))
         {
-            LPWSTR szProxy, p;
-
-            if (!(szProxy = malloc( len )))
-            {
-                RegCloseKey( key );
-                FreeProxyInfo( lpwpi );
-                return ERROR_OUTOFMEMORY;
-            }
-            RegQueryValueExW( key, L"ProxyServer", NULL, &type, (BYTE*)szProxy, &len );
-
-            /* find the http proxy, and strip away everything else */
-            p = wcsstr( szProxy, L"http=" );
-            if (p)
-            {
-                p += lstrlenW( L"http=" );
-                lstrcpyW( szProxy, p );
-            }
-            p = wcschr( szProxy, ';' );
-            if (p) *p = 0;
-
-            FreeProxyInfo( lpwpi );
-            lpwpi->proxy = szProxy;
-            lpwpi->proxyBypass = NULL;
-
-            TRACE("http proxy (from registry) = %s\n", debugstr_w(lpwpi->proxy));
+            RegCloseKey( key );
+            return ERROR_OUTOFMEMORY;
         }
-        else
+        RegQueryValueExW( key, L"ProxyServer", NULL, &type, (BYTE*)szProxy, &len );
+
+        /* find the http proxy, and strip away everything else */
+        p = wcsstr( szProxy, L"http=" );
+        if (p)
         {
-            TRACE("No proxy server settings in registry.\n");
-            FreeProxyInfo( lpwpi );
-            lpwpi->proxy = NULL;
-            lpwpi->proxyBypass = NULL;
+            p += lstrlenW( L"http=" );
+            lstrcpyW( szProxy, p );
         }
+        p = wcschr( szProxy, ';' );
+        if (p) *p = 0;
+
+        lpwpi->proxy = szProxy;
+        TRACE("http proxy (from registry%s) = %s\n", lpwpi->flags & PROXY_TYPE_PROXY ? "" : ", disabled",
+                debugstr_w(lpwpi->proxy));
     }
-    else if (envproxy)
+    else
     {
-        FreeProxyInfo( lpwpi );
+        TRACE("No proxy server settings in registry.\n");
+    }
+
+    if (!RegQueryValueExW( key, L"ProxyOverride", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
+    {
+        LPWSTR szProxy;
+
+        if (!(szProxy = malloc( len )))
+        {
+            RegCloseKey( key );
+            FreeProxyInfo( lpwpi );
+            return ERROR_OUTOFMEMORY;
+        }
+        RegQueryValueExW( key, L"ProxyOverride", NULL, &type, (BYTE*)szProxy, &len );
+
+        lpwpi->proxyBypass = szProxy;
+        TRACE("http proxy bypass (from registry) = %s\n", debugstr_w(lpwpi->proxyBypass));
+    }
+    else
+    {
+        TRACE("No proxy bypass server settings in registry.\n");
+    }
+
+    RegCloseKey( key );
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *           INTERNET_GetProxySettings
+ *
+ * Loads proxy information from registry, enironment or process-wide settings
+ * into lpwpi.
+ */
+static LONG INTERNET_GetProxySettings( proxyinfo_t *lpwpi )
+{
+    const WCHAR *envproxy;
+    LONG ret;
+
+    if ((ret = INTERNET_LoadProxySettings( lpwpi )) || (lpwpi->flags & PROXY_TYPE_PROXY))
+        return ret;
+    FreeProxyInfo( lpwpi );
+
+    if ((envproxy = _wgetenv( L"http_proxy" )))
+    {
+        memset( lpwpi, 0, sizeof(*lpwpi) );
+        lpwpi->flags = PROXY_TYPE_DIRECT;
         if (parse_proxy_url( lpwpi, envproxy ))
         {
+            lpwpi->flags = PROXY_TYPE_PROXY;
+            lpwpi->proxyBypass = wcsdup(_wgetenv( L"no_proxy" ));
             TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
-            lpwpi->flags |= PROXY_TYPE_PROXY;
-            lpwpi->proxyBypass = NULL;
+            TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
         }
         else
         {
             WARN("failed to parse http_proxy value %s\n", debugstr_w(envproxy));
-            lpwpi->flags &= ~PROXY_TYPE_PROXY;
-            lpwpi->proxy = NULL;
-            lpwpi->proxyBypass = NULL;
         }
+        return ERROR_SUCCESS;
     }
 
-    if (lpwpi->flags & PROXY_TYPE_PROXY)
-    {
-        TRACE("Proxy is enabled.\n");
+    EnterCriticalSection( &WININET_cs );
+    lpwpi->flags = global_proxy.flags;
+    lpwpi->proxy = wcsdup( global_proxy.proxy );
+    lpwpi->proxyBypass = wcsdup( global_proxy.proxyBypass );
+    LeaveCriticalSection( &WININET_cs );
 
-        if (!(envproxy = _wgetenv( L"no_proxy" )))
-        {
-            /* figure out how much memory the proxy setting takes */
-            if (!RegQueryValueExW( key, L"ProxyOverride", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
-            {
-                LPWSTR szProxy;
-
-                if (!(szProxy = malloc( len )))
-                {
-                    RegCloseKey( key );
-                    FreeProxyInfo( lpwpi );
-                    return ERROR_OUTOFMEMORY;
-                }
-                RegQueryValueExW( key, L"ProxyOverride", NULL, &type, (BYTE*)szProxy, &len );
-
-                free( lpwpi->proxyBypass );
-                lpwpi->proxyBypass = szProxy;
-
-                TRACE("http proxy bypass (from registry) = %s\n", debugstr_w(lpwpi->proxyBypass));
-            }
-            else
-            {
-                free( lpwpi->proxyBypass );
-                lpwpi->proxyBypass = NULL;
-
-                TRACE("No proxy bypass server settings in registry.\n");
-            }
-        }
-        else
-        {
-            WCHAR *envproxyW;
-
-            if (!(envproxyW = malloc( wcslen(envproxy) * sizeof(WCHAR) )))
-            {
-                RegCloseKey( key );
-                FreeProxyInfo( lpwpi );
-                return ERROR_OUTOFMEMORY;
-            }
-            lstrcpyW( envproxyW, envproxy );
-
-            free( lpwpi->proxyBypass );
-            lpwpi->proxyBypass = envproxyW;
-
-            TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
-        }
-    }
-    else TRACE("Proxy is disabled.\n");
-
-    RegCloseKey( key );
+    lpwpi->flags |= PROXY_TYPE_DIRECT;
     return ERROR_SUCCESS;
 }
 
@@ -689,7 +659,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 {
     proxyinfo_t wpi;
 
-    if (INTERNET_LoadProxySettings( &wpi ))
+    if (INTERNET_GetProxySettings( &wpi ))
         return FALSE;
 
     if (wpi.flags & PROXY_TYPE_PROXY)
@@ -2681,7 +2651,7 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
         LONG ret;
 
         TRACE("Getting global proxy info\n");
-        if((ret = INTERNET_LoadProxySettings(&pi)))
+        if((ret = INTERNET_GetProxySettings(&pi)))
             return ret;
 
         FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
@@ -3172,7 +3142,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         unsigned int i;
         proxyinfo_t pi;
 
-        if (INTERNET_LoadProxySettings(&pi)) return FALSE;
+        if (INTERNET_GetProxySettings(&pi)) return FALSE;
 
         for (i = 0; i < con->dwOptionCount; i++) {
             INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
