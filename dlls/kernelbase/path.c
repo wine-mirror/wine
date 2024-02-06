@@ -1769,7 +1769,7 @@ UINT WINAPI PathGetCharTypeW(WCHAR ch)
     {
         if (ch < 126)
         {
-            if (((ch & 0x1) && ch != ';') || !ch || isalnum(ch) || ch == '$' || ch == '&' || ch == '(' ||
+            if (((ch & 0x1) && ch != ';') || !ch || iswalnum(ch) || ch == '$' || ch == '&' || ch == '(' ||
                     ch == '.' || ch == '@' || ch == '^' || ch == '\'' || ch == '`')
             {
                 flags |= GCT_SHORTCHAR; /* All these are valid for DOS */
@@ -2824,7 +2824,7 @@ HRESULT WINAPI ParseURLW(const WCHAR *url, PARSEDURLW *result)
     if (result->cbSize != sizeof(*result))
         return E_INVALIDARG;
 
-    while (*ptr && (isalnum(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
+    while (*ptr && (iswalnum(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '.'))
         ptr++;
 
     if (*ptr != ':' || ptr <= url + 1)
@@ -3260,7 +3260,7 @@ static BOOL url_needs_escape(WCHAR ch, DWORD flags, DWORD int_flags)
     if (ch <= 31 || (ch >= 127 && ch <= 255) )
         return TRUE;
 
-    if (isalnum(ch))
+    if (iswalnum(ch))
         return FALSE;
 
     switch (ch) {
@@ -3655,9 +3655,9 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
         switch (state)
         {
         case 0:
-            if (!isalnum(*wk1)) {state = 3; break;}
+            if (!iswalnum(*wk1)) {state = 3; break;}
             *wk2++ = *wk1++;
-            if (!isalnum(*wk1)) {state = 3; break;}
+            if (!iswalnum(*wk1)) {state = 3; break;}
             *wk2++ = *wk1++;
             state = 1;
             break;
@@ -3743,12 +3743,12 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
             }
             break;
         case 4:
-            if (!isalnum(*wk1) && (*wk1 != '-') && (*wk1 != '.') && (*wk1 != ':'))
+            if (!iswalnum(*wk1) && (*wk1 != '-') && (*wk1 != '.') && (*wk1 != ':'))
             {
                 state = 3;
                 break;
             }
-            while (isalnum(*wk1) || (*wk1 == '-') || (*wk1 == '.') || (*wk1 == ':'))
+            while (iswalnum(*wk1) || (*wk1 == '-') || (*wk1 == '.') || (*wk1 == ':'))
                 *wk2++ = *wk1++;
             state = 5;
             if (!*wk1)
@@ -4225,7 +4225,7 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
 
 static const WCHAR *parse_scheme( const WCHAR *p )
 {
-    while (isalnum( *p ) || *p == '+' || *p == '-' || *p == '.')
+    while (iswalnum( *p ) || *p == '+' || *p == '-' || *p == '.')
         ++p;
     return p;
 }
