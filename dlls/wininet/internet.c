@@ -609,46 +609,50 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     return ERROR_SUCCESS;
 }
 
+static void init_global_proxy(void)
+{
+    const WCHAR *envproxy;
+
+    EnterCriticalSection( &WININET_cs );
+    if (global_proxy.flags) goto done;
+
+    INTERNET_LoadProxySettings( &global_proxy );
+    if (global_proxy.flags & PROXY_TYPE_PROXY || !(envproxy = _wgetenv( L"http_proxy" )))
+        goto done;
+
+    if (parse_proxy_url( &global_proxy, envproxy ))
+    {
+        global_proxy.flags |= PROXY_TYPE_PROXY;
+        global_proxy.proxyBypass = wcsdup(_wgetenv( L"no_proxy" ));
+        TRACE("http proxy (from environment) = %s\n", debugstr_w(global_proxy.proxy));
+        TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(global_proxy.proxyBypass));
+    }
+    else
+    {
+        WARN("failed to parse http_proxy value %s\n", debugstr_w(envproxy));
+    }
+
+done:
+    LeaveCriticalSection( &WININET_cs );
+}
+
 /***********************************************************************
  *           INTERNET_GetProxySettings
  *
- * Loads proxy information from registry, enironment or process-wide settings
- * into lpwpi.
+ * Loads process-wide proxy settings into lpwpi.
  */
 static LONG INTERNET_GetProxySettings( proxyinfo_t *lpwpi )
 {
-    const WCHAR *envproxy;
-    LONG ret;
+    init_global_proxy();
 
-    if ((ret = INTERNET_LoadProxySettings( lpwpi )) || (lpwpi->flags & PROXY_TYPE_PROXY))
-        return ret;
-    FreeProxyInfo( lpwpi );
-
-    if ((envproxy = _wgetenv( L"http_proxy" )))
-    {
-        memset( lpwpi, 0, sizeof(*lpwpi) );
-        lpwpi->flags = PROXY_TYPE_DIRECT;
-        if (parse_proxy_url( lpwpi, envproxy ))
-        {
-            lpwpi->flags = PROXY_TYPE_PROXY;
-            lpwpi->proxyBypass = wcsdup(_wgetenv( L"no_proxy" ));
-            TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
-            TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
-        }
-        else
-        {
-            WARN("failed to parse http_proxy value %s\n", debugstr_w(envproxy));
-        }
-        return ERROR_SUCCESS;
-    }
-
+    memset(lpwpi, 0, sizeof(*lpwpi));
     EnterCriticalSection( &WININET_cs );
     lpwpi->flags = global_proxy.flags;
     lpwpi->proxy = wcsdup( global_proxy.proxy );
     lpwpi->proxyBypass = wcsdup( global_proxy.proxyBypass );
+    lpwpi->proxyUsername = wcsdup( global_proxy.proxyUsername );
+    lpwpi->proxyPassword = wcsdup( global_proxy.proxyPassword );
     LeaveCriticalSection( &WININET_cs );
-
-    lpwpi->flags |= PROXY_TYPE_DIRECT;
     return ERROR_SUCCESS;
 }
 
@@ -2651,7 +2655,7 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
         LONG ret;
 
         TRACE("Getting global proxy info\n");
-        if((ret = INTERNET_GetProxySettings(&pi)))
+        if((ret = INTERNET_LoadProxySettings(&pi)))
             return ret;
 
         FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
@@ -3142,7 +3146,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         unsigned int i;
         proxyinfo_t pi;
 
-        if (INTERNET_GetProxySettings(&pi)) return FALSE;
+        if (INTERNET_LoadProxySettings(&pi)) return FALSE;
 
         for (i = 0; i < con->dwOptionCount; i++) {
             INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
