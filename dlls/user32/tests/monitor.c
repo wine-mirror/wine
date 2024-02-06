@@ -291,8 +291,8 @@ struct device_info
     DEVMODEA original_mode;
 };
 
-#define expect_dm(a, b, c) _expect_dm(__LINE__, a, b, c)
-static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, DWORD test)
+#define expect_dm(a, b, c, d) _expect_dm(__LINE__, a, b, c, d)
+static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, DWORD test, BOOL todo)
 {
     DEVMODEA dm;
     BOOL ret;
@@ -307,9 +307,9 @@ static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, D
             "Device %s test %ld expect dmFields to contain %#lx, got %#lx\n", device, test, expected->dmFields, dm.dmFields);
     ok_(__FILE__, line)(!(expected->dmFields & DM_BITSPERPEL) || dm.dmBitsPerPel == expected->dmBitsPerPel,
             "Device %s test %ld expect dmBitsPerPel %lu, got %lu\n", device, test, expected->dmBitsPerPel, dm.dmBitsPerPel);
-    ok_(__FILE__, line)(!(expected->dmFields & DM_PELSWIDTH) || dm.dmPelsWidth == expected->dmPelsWidth,
+    todo_wine_if(todo) ok_(__FILE__, line)(!(expected->dmFields & DM_PELSWIDTH) || dm.dmPelsWidth == expected->dmPelsWidth,
             "Device %s test %ld expect dmPelsWidth %lu, got %lu\n", device, test, expected->dmPelsWidth, dm.dmPelsWidth);
-    ok_(__FILE__, line)(!(expected->dmFields & DM_PELSHEIGHT) || dm.dmPelsHeight == expected->dmPelsHeight,
+    todo_wine_if(todo) ok_(__FILE__, line)(!(expected->dmFields & DM_PELSHEIGHT) || dm.dmPelsHeight == expected->dmPelsHeight,
             "Device %s test %ld expect dmPelsHeight %lu, got %lu\n", device, test, expected->dmPelsHeight, dm.dmPelsHeight);
     ok_(__FILE__, line)(!(expected->dmFields & DM_POSITION) || dm.dmPosition.x == expected->dmPosition.x,
             "Device %s test %ld expect dmPosition.x %ld, got %ld\n", device, test, expected->dmPosition.x, dm.dmPosition.x);
@@ -325,18 +325,79 @@ static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, D
             dm.dmDisplayOrientation);
 }
 
-static void test_ChangeDisplaySettingsEx(void)
+#define wait_for_dm(a, b, c, d) wait_for_dm_(__LINE__, a, b, c, d)
+static void wait_for_dm_(int line, const char *device, DWORD expected_width, DWORD expected_height, BOOL todo)
+{
+    DEVMODEA dm;
+    BOOL ret;
+    int i;
+
+    for (i = 0; i < 50; ++i)
+    {
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        SetLastError(0xdeadbeef);
+        ret = EnumDisplaySettingsA(device, ENUM_CURRENT_SETTINGS, &dm);
+        ok_(__FILE__, line)(ret, "Device %s EnumDisplaySettingsA failed, error %#lx\n", device, GetLastError());
+
+        if (dm.dmPelsWidth == expected_width && dm.dmPelsHeight == expected_height)
+            break;
+
+        Sleep(100);
+    }
+
+    todo_wine_if(todo) ok_(__FILE__, line)(dm.dmPelsWidth == expected_width,
+            "Device %s expect dmPelsWidth %lu, got %lu\n", device, expected_width, dm.dmPelsWidth);
+    todo_wine_if(todo) ok_(__FILE__, line)(dm.dmPelsHeight == expected_height,
+            "Device %s expect dmPelsHeight %lu, got %lu\n", device, expected_height, dm.dmPelsHeight);
+}
+
+static HANDLE test_child_process_ChangeDisplaySettingsEx(const char *argv0, const char *device, DWORD flags, const char *exit_event_name)
+{
+    static const char *cds_event_name = "test_child_process_cds_event";
+    PROCESS_INFORMATION info;
+    char buffer[MAX_PATH];
+    STARTUPINFOA startup;
+    DWORD wait_result;
+    HANDLE cds_event;
+    LONG res;
+
+    cds_event = CreateEventA(NULL, FALSE, FALSE, cds_event_name);
+    ok(!!cds_event, "CreateEventA failed, error %#lx\n", GetLastError());
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+
+    snprintf(buffer, sizeof(buffer), "%s monitor fullscreen %s %#lx %s %s", argv0, device, flags,
+            cds_event_name, exit_event_name);
+    res = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
+    ok(res, "CreateProcessA returned unexpected %ld\n", res);
+    wait_result = WaitForSingleObject(cds_event, 5000);
+    ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+    CloseHandle(cds_event);
+    CloseHandle(info.hThread);
+
+    return info.hProcess;
+}
+
+static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 {
     static const DWORD registry_fields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
             DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+    static const char *exit_event0_name = "test_cds_exit_event0";
+    static const char *exit_event1_name = "test_cds_exit_event1";
     static const DWORD depths[] = {8, 16, 32};
     DPI_AWARENESS_CONTEXT context = NULL;
     UINT primary, device, test, mode;
+    HANDLE exit_event0, exit_event1;
     UINT device_size, device_count;
     struct device_info *devices;
+    HANDLE process0, process1;
     DEVMODEA dm, dm2, dm3;
     INT count, old_count;
     DISPLAY_DEVICEA dd;
+    DWORD wait_result;
     POINTL position;
     DEVMODEW dmW;
     BOOL found;
@@ -668,7 +729,7 @@ static void test_ChangeDisplaySettingsEx(void)
                 continue;
             }
             flush_events();
-            expect_dm(&dm3, devices[device].name, test);
+            expect_dm(&dm3, devices[device].name, test, FALSE);
 
             /* Change the registry mode to the second mode */
             res = ChangeDisplaySettingsExA(devices[device].name, &dm2, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
@@ -802,7 +863,7 @@ static void test_ChangeDisplaySettingsEx(void)
             }
 
             flush_events();
-            expect_dm(&dm, devices[device].name, mode);
+            expect_dm(&dm, devices[device].name, mode, FALSE);
         }
 
         /* Restore settings */
@@ -875,7 +936,7 @@ static void test_ChangeDisplaySettingsEx(void)
         }
 
         flush_events();
-        expect_dm(&dm, devices[device].name, 0);
+        expect_dm(&dm, devices[device].name, 0, FALSE);
 
         /* Test specifying only position, width and height */
         memset(&dm, 0, sizeof(dm));
@@ -920,7 +981,7 @@ static void test_ChangeDisplaySettingsEx(void)
         ok(dm.dmBitsPerPel, "Expected dmBitsPerPel not zero.\n");
         ok(dm.dmDisplayFrequency, "Expected dmDisplayFrequency not zero.\n");
 
-        expect_dm(&dm, devices[device].name, 0);
+        expect_dm(&dm, devices[device].name, 0, FALSE);
     }
 
     /* Test dmPosition */
@@ -992,7 +1053,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %ld\n", devices[1].name, res);
 
             dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth;
-            expect_dm(&dm2, devices[1].name, 0);
+            expect_dm(&dm2, devices[1].name, 0, FALSE);
 
             /* Test placing the secondary adapter to all sides of the primary adapter */
             for (test = 0; test < 8; ++test)
@@ -1051,7 +1112,7 @@ static void test_ChangeDisplaySettingsEx(void)
                 }
 
                 flush_events();
-                expect_dm(&dm2, devices[1].name, test);
+                expect_dm(&dm2, devices[1].name, test, FALSE);
             }
 
             /* Test automatic position update when other adapters change resolution */
@@ -1116,7 +1177,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s mode %d returned unexpected %ld.\n",
                     devices[device].name, mode, res);
             flush_events();
-            expect_dm(&dm2, devices[device].name, mode);
+            expect_dm(&dm2, devices[device].name, mode, FALSE);
 
             /* EnumDisplaySettingsEx without EDS_ROTATEDMODE reports modes with current orientation */
             memset(&dm3, 0, sizeof(dm3));
@@ -1148,6 +1209,170 @@ static void test_ChangeDisplaySettingsEx(void)
         ok(mode > 0, "Expected at least one display mode found.\n");
     }
 
+    /* Restore all adapters to the current registry settings */
+    res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL ||
+            broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
+            "ChangeDisplaySettingsExA returned unexpected %ld\n", res);
+
+    if (res == DISP_CHANGE_FAILED)
+    {
+        win_skip("Failed to restore dispay mode.\n");
+    }
+    else if (!device_count)
+    {
+        win_skip("No suitable devices found.\n");
+    }
+    else
+    {
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+        exit_event0 = CreateEventA(NULL, FALSE, FALSE, exit_event0_name);
+        ok(!!exit_event0, "CreateEventA failed, error %#lx\n", GetLastError());
+        exit_event1 = CreateEventA(NULL, FALSE, FALSE, exit_event1_name);
+        ok(!!exit_event1, "CreateEventA failed, error %#lx\n", GetLastError());
+
+        /* Test that if the most recent ChangeDisplaySettingsEx call had
+        * CDS_FULLSCREEN set, then the settings are restored when the caller
+        * process exits */
+
+        process0 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event0_name);
+        process1 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event1_name);
+
+        /* Verify that the settings are restored to the current registry settings */
+        for (device = 0; device < device_count; ++device)
+        {
+            dm.dmPelsWidth = 800;
+            dm.dmPelsHeight = 600;
+            res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned %ld.\n", devices[device].name, res);
+        }
+
+        SetEvent(exit_event0);
+        wait_result = WaitForSingleObject(process0, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        Sleep(100);
+
+        dm.dmPelsWidth = 640;
+        dm.dmPelsHeight = 480;
+        expect_dm(&dm, devices[0].name, 0, TRUE);
+
+        SetEvent(exit_event1);
+        wait_result = WaitForSingleObject(process1, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        wait_for_dm(devices[0].name, 800, 600, TRUE);
+
+        CloseHandle(process1);
+        CloseHandle(process0);
+
+        /* Test processes exiting in reverse order */
+
+        process0 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event0_name);
+        process1 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event1_name);
+
+        SetEvent(exit_event1);
+        wait_result = WaitForSingleObject(process1, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        wait_for_dm(devices[0].name, 800, 600, TRUE);
+
+        SetEvent(exit_event0);
+        wait_result = WaitForSingleObject(process0, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        CloseHandle(process1);
+        CloseHandle(process0);
+
+        /* Test that ChangeDisplaySettingsEx without CDS_FULLSCREEN cancels the restoration */
+
+        process0 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event0_name);
+        process1 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, 0, exit_event1_name);
+
+        SetEvent(exit_event0);
+        wait_result = WaitForSingleObject(process0, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        Sleep(100);
+
+        dm.dmPelsWidth = 640;
+        dm.dmPelsHeight = 480;
+        expect_dm(&dm, devices[0].name, 0, TRUE);
+
+        SetEvent(exit_event1);
+        wait_result = WaitForSingleObject(process1, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        Sleep(100);
+
+        dm.dmPelsWidth = 640;
+        dm.dmPelsHeight = 480;
+        expect_dm(&dm, devices[0].name, 0, TRUE);
+
+        CloseHandle(process1);
+        CloseHandle(process0);
+
+        /* Test processes exiting in reverse order */
+
+        process0 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event0_name);
+        process1 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, 0, exit_event1_name);
+
+        SetEvent(exit_event1);
+        wait_result = WaitForSingleObject(process1, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        Sleep(100);
+
+        dm.dmPelsWidth = 640;
+        dm.dmPelsHeight = 480;
+        expect_dm(&dm, devices[0].name, 0, TRUE);
+
+        SetEvent(exit_event0);
+        wait_result = WaitForSingleObject(process0, 5000);
+        ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+        Sleep(100);
+
+        dm.dmPelsWidth = 640;
+        dm.dmPelsHeight = 480;
+        expect_dm(&dm, devices[0].name, 0, TRUE);
+
+        CloseHandle(process1);
+        CloseHandle(process0);
+
+        if (device_count < 2)
+        {
+            skip("Only one device found.\n");
+        }
+        else
+        {
+            /* Test that the settings are restored for all devices, regardless of
+            * the process that changed them */
+
+            dm.dmPelsWidth = 640;
+            dm.dmPelsHeight = 480;
+            res = ChangeDisplaySettingsExA(devices[1].name, &dm, NULL, CDS_FULLSCREEN, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned %ld.\n", devices[1].name, res);
+
+            process0 = test_child_process_ChangeDisplaySettingsEx(argv[0], devices[0].name, CDS_FULLSCREEN, exit_event0_name);
+
+            SetEvent(exit_event0);
+            wait_result = WaitForSingleObject(process0, 5000);
+            ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+
+            wait_for_dm(devices[0].name, 800, 600, TRUE);
+            wait_for_dm(devices[1].name, 800, 600, TRUE);
+
+            CloseHandle(process0);
+        }
+
+        CloseHandle(exit_event1);
+        CloseHandle(exit_event0);
+    }
+
     /* Restore all adapters to their original settings */
     for (device = 0; device < device_count; ++device)
     {
@@ -1162,7 +1387,7 @@ static void test_ChangeDisplaySettingsEx(void)
             broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
             "ChangeDisplaySettingsExA returned unexpected %ld\n", res);
     for (device = 0; device < device_count; ++device)
-        expect_dm(&devices[device].original_mode, devices[device].name, 0);
+        expect_dm(&devices[device].original_mode, devices[device].name, 0, FALSE);
 
     free(devices);
 }
@@ -2663,6 +2888,45 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor,
     return TRUE;
 }
 
+static void test_fullscreen(int argc, char **argv)
+{
+    HANDLE event0, event1;
+    DWORD wait_result;
+    DWORD flags = 0;
+    DEVMODEA dm;
+    LONG res;
+
+    if (argc < 7)
+    {
+        ok(0, "too few arguments.\n");
+        return;
+    }
+
+    res = sscanf(argv[4], "%lx", &flags);
+    ok(res == 1, "sscanf returned unexpected %ld.\n", res);
+
+    event0 = OpenEventA(EVENT_MODIFY_STATE, FALSE, argv[5]);
+    ok(!!event0, "OpenEventA failed, error %#lx\n", GetLastError());
+    event1 = OpenEventA(SYNCHRONIZE, FALSE, argv[6]);
+    ok(!!event1, "OpenEventA failed, error %#lx\n", GetLastError());
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    dm.dmPelsWidth = 640;
+    dm.dmPelsHeight = 480;
+    res = ChangeDisplaySettingsExA(argv[3], &dm, NULL, flags, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL,
+            "ChangeDisplaySettingsExA %s returned unexpected %ld.\n", argv[3], res);
+
+    SetEvent(event0);
+    CloseHandle(event0);
+
+    wait_result = WaitForSingleObject(event1, 7000);
+    ok(wait_result == WAIT_OBJECT_0, "WaitForSingleObject returned %lx.\n", wait_result);
+    CloseHandle(event1);
+}
+
 START_TEST(monitor)
 {
     char** myARGV;
@@ -2670,15 +2934,23 @@ START_TEST(monitor)
 
     init_function_pointers();
 
-    if (myARGC >= 3 && strcmp(myARGV[2], "info") == 0)
+    if (myARGC >= 3)
     {
-        printf("Monitor information:\n");
-        EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, 0);
-        return;
+        if (strcmp(myARGV[2], "info") == 0)
+        {
+            printf("Monitor information:\n");
+            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, 0);
+            return;
+        }
+        else if (strcmp(myARGV[2], "fullscreen") == 0)
+        {
+            test_fullscreen(myARGC, myARGV);
+            return;
+        }
     }
 
     test_enumdisplaydevices();
-    test_ChangeDisplaySettingsEx();
+    test_ChangeDisplaySettingsEx(myARGC, myARGV);
     test_DisplayConfigSetDeviceInfo();
     test_EnumDisplayMonitors();
     test_monitors();
