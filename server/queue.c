@@ -2130,13 +2130,8 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
         raw_msg.source     = source;
         raw_msg.time       = get_tick_count();
         raw_msg.message    = input->hw.msg;
-
-        if (input->hw.rawinput.type == RIM_TYPEHID)
-        {
-            raw_msg.hid_report = get_req_data();
-            report_size = input->hw.rawinput.hid.length * input->hw.rawinput.hid.count;
-        }
-
+        raw_msg.hid_report = get_req_data();
+        report_size = input->hw.hid.length * input->hw.hid.count;
         if (report_size != get_req_data_size())
         {
             set_error( STATUS_INVALID_PARAMETER );
@@ -2144,8 +2139,13 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
         }
 
         msg_data = &raw_msg.data;
-        msg_data->size     = sizeof(*msg_data) + report_size;
-        msg_data->rawinput = input->hw.rawinput;
+        msg_data->size = sizeof(*msg_data) + report_size;
+        msg_data->rawinput.hid.type = RIM_TYPEHID;
+        msg_data->rawinput.hid.device = input->hw.hid.device;
+        msg_data->rawinput.hid.param = input->hw.wparam;
+        msg_data->rawinput.hid.usage = input->hw.hid.usage;
+        msg_data->rawinput.hid.count = input->hw.hid.count;
+        msg_data->rawinput.hid.length = input->hw.hid.length;
 
         enum_processes( queue_rawinput_message, &raw_msg );
         return;

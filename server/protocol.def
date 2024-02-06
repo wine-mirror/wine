@@ -359,8 +359,15 @@ typedef union
     {
         int            type;    /* INPUT_HARDWARE */
         unsigned int   msg;     /* message code */
-        lparam_t       lparam;  /* message param */
-        union rawinput rawinput;/* rawinput message data */
+        lparam_t       wparam;  /* parameters */
+        lparam_t       lparam;  /* parameters */
+        struct
+        {
+            unsigned int device;  /* rawinput device index */
+            unsigned int usage;   /* HID device usage */
+            unsigned int count;   /* HID report count */
+            unsigned int length;  /* HID report length */
+        } hid;
     } hw;
 } hw_input_t;
 

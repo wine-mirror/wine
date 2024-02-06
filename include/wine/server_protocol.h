@@ -343,8 +343,15 @@ typedef union
     {
         int            type;
         unsigned int   msg;
+        lparam_t       wparam;
         lparam_t       lparam;
-        union rawinput rawinput;
+        struct
+        {
+            unsigned int device;
+            unsigned int usage;
+            unsigned int count;
+            unsigned int length;
+        } hid;
     } hw;
 } hw_input_t;
 
@@ -6505,7 +6512,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 789
+#define SERVER_PROTOCOL_VERSION 790
 
 /* ### protocol_version end ### */
 
