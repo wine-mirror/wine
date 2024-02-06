@@ -13031,6 +13031,7 @@ static void test_WM_NCCALCSIZE(void)
 }
 
 #define TRAY_MINIMIZE_ALL 419
+#define TRAY_MINIMIZE_ALL_UNDO 416
 
 static void test_shell_tray(void)
 {
@@ -13052,6 +13053,10 @@ static void test_shell_tray(void)
     SendMessageA( traywnd, WM_COMMAND, TRAY_MINIMIZE_ALL, 0xdeadbeef );
     flush_events( TRUE );
     todo_wine ok( IsIconic( hwnd ), "window is not minimized.\n" );
+
+    SendMessageA( traywnd, WM_COMMAND, TRAY_MINIMIZE_ALL_UNDO, 0xdeadbeef );
+    flush_events( TRUE );
+    ok( !IsIconic( hwnd ), "window is minimized.\n" );
 
     DestroyWindow(hwnd);
 }
