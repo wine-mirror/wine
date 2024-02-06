@@ -1251,8 +1251,8 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     if (!ctx->mutex)
     {
-        ctx->mutex = get_display_device_init_mutex();
         pthread_mutex_lock( &display_lock );
+        ctx->mutex = get_display_device_init_mutex();
         prepare_devices();
     }
 
@@ -1717,8 +1717,8 @@ static BOOL update_display_cache_from_registry(void)
 
     if (key.LastWriteTime.QuadPart <= last_query_display_time) return TRUE;
 
-    mutex = get_display_device_init_mutex();
     pthread_mutex_lock( &display_lock );
+    mutex = get_display_device_init_mutex();
 
     clear_display_devices();
 
