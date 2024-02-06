@@ -89,6 +89,21 @@ typedef struct
     LPWSTR autoconf_url;
 } proxyinfo_t;
 
+#define CONNECTION_SETTINGS_VERSION 0x46
+typedef struct {
+    DWORD version;
+    DWORD id;
+    DWORD flags;
+    BYTE data[1];
+    /* DWORD proxy_server_len; */
+    /* UTF8 proxy_server[proxy_server_len]; */
+    /* DWORD bypass_list_len; */
+    /* UTF8 bypass_list[bypass_list_len]; */
+    /* DWORD configuration_script_len; */
+    /* UTF8 configuration_script[configuration_script_len]; */
+    /* DWORD unk[8]; set to 0 */
+} connection_settings;
+
 static ULONG max_conns = 2, max_1_0_conns = 4;
 static ULONG connect_timeout = 60000;
 
@@ -316,6 +331,48 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
     return S_OK;
 }
 
+static void connection_settings_write( connection_settings *settings, DWORD *pos, DWORD size, const WCHAR *str )
+{
+    int len = 0;
+
+    if (str)
+    {
+        len = wcslen( str );
+        len = WideCharToMultiByte( CP_UTF8, 0, str, len, settings ? (char*)settings->data + *pos + sizeof(len) : NULL,
+                settings ? size - *pos - sizeof(len) : 0, NULL, NULL );
+    }
+    if (settings)
+        memcpy(settings->data + *pos, &len, sizeof(len));
+    *pos += sizeof(len) + len;
+}
+
+static LONG save_connection_settings( HKEY key, const WCHAR *connection, proxyinfo_t *lpwpi )
+{
+    connection_settings *settings;
+    DWORD size = 0, pos = 0;
+    LONG ret;
+
+    connection_settings_write( NULL, &size, 0, lpwpi->proxy );
+    connection_settings_write( NULL, &size, 0, lpwpi->proxyBypass );
+    connection_settings_write( NULL, &size, 0, lpwpi->autoconf_url );
+    size += sizeof(DWORD) * 10; /* unknown fields */
+
+    settings = calloc( 1, FIELD_OFFSET(connection_settings, data[size]) );
+    if (!settings)
+        return ERROR_OUTOFMEMORY;
+
+    settings->version = CONNECTION_SETTINGS_VERSION;
+    settings->flags = lpwpi->flags;
+    connection_settings_write( settings, &pos, size, lpwpi->proxy );
+    connection_settings_write( settings, &pos, size, lpwpi->proxyBypass );
+    connection_settings_write( settings, &pos, size, lpwpi->autoconf_url );
+
+    ret = RegSetValueExW(key, connection, 0, REG_BINARY, (BYTE*)settings,
+            FIELD_OFFSET(connection_settings, data[size]));
+    free(settings);
+    return ret;
+}
+
 /***********************************************************************
  *           INTERNET_SaveProxySettings
  *
@@ -326,12 +383,25 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
  */
 static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
 {
-    HKEY key;
+    HKEY key, con;
     DWORD val;
     LONG ret;
 
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
         return ret;
+
+    if ((ret = RegCreateKeyExW( key, L"Connections", 0, NULL, 0, KEY_WRITE, NULL, &con, NULL )))
+    {
+        RegCloseKey( key );
+        return ret;
+    }
+    ret = save_connection_settings( con, L"DefaultConnectionSettings", lpwpi );
+    RegCloseKey( con );
+    if (ret)
+    {
+        RegCloseKey( key );
+        return ret;
+    }
 
     val = !!(lpwpi->flags & PROXY_TYPE_PROXY);
     if ((ret = RegSetValueExW( key, L"ProxyEnable", 0, REG_DWORD, (BYTE*)&val, sizeof(DWORD))))
