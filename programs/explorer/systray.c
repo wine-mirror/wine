@@ -624,6 +624,7 @@ static BOOL show_icon(struct icon *icon)
     {
         icon->display = ICON_DISPLAY_DOCKED;
         icon->layered = TRUE;
+        SetWindowLongW( icon->window, GWL_EXSTYLE, GetWindowLongW( icon->window, GWL_EXSTYLE ) | WS_EX_LAYERED );
         SendMessageW( icon->window, WM_SIZE, SIZE_RESTORED, MAKELONG( icon_cx, icon_cy ) );
     }
     systray_add_icon( icon );
@@ -645,6 +646,7 @@ static BOOL hide_icon(struct icon *icon)
     {
         icon->display = ICON_DISPLAY_HIDDEN;
         icon->layered = FALSE;
+        SetWindowLongW( icon->window, GWL_EXSTYLE, GetWindowLongW( icon->window, GWL_EXSTYLE ) & ~WS_EX_LAYERED );
     }
     ShowWindow( icon->window, SW_HIDE );
     systray_remove_icon( icon );
@@ -732,7 +734,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = ICON_DISPLAY_HIDDEN;
 
-    CreateWindowExW( WS_EX_LAYERED, tray_icon_class.lpszClassName, NULL, WS_CLIPSIBLINGS | WS_POPUP,
+    CreateWindowExW( 0, tray_icon_class.lpszClassName, NULL, WS_CLIPSIBLINGS | WS_POPUP,
                      0, 0, icon_cx, icon_cy, 0, NULL, NULL, icon );
     if (!icon->window) ERR( "Failed to create systray icon window\n" );
 
