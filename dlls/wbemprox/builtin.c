@@ -301,6 +301,7 @@ static const struct column col_physicalmemory[] =
 static const struct column col_pnpentity[] =
 {
     { L"Caption",              CIM_STRING },
+    { L"ClassGuid",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",             CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Manufacturer",         CIM_STRING },
     { L"Name",                 CIM_STRING },
@@ -755,6 +756,7 @@ struct record_physicalmemory
 struct record_pnpentity
 {
     const WCHAR *caption;
+    const WCHAR *class_guid;
     const WCHAR *device_id;
     const WCHAR *manufacturer;
     const WCHAR *name;
@@ -3176,11 +3178,13 @@ static enum fill_status fill_pnpentity( struct table *table, const struct expr *
     idx = 0;
     while (SetupDiEnumDeviceInfo( device_info_set, idx++, &devinfo ))
     {
-        WCHAR device_id[MAX_PATH];
+        WCHAR device_id[MAX_PATH], guid[GUID_SIZE];
         if (SetupDiGetDeviceInstanceIdW( device_info_set, &devinfo, device_id,
                     ARRAY_SIZE(device_id), NULL ))
         {
+            StringFromGUID2( &devinfo.ClassGuid, guid, ARRAY_SIZE(guid) );
             rec->caption = L"Wine PnP Device";
+            rec->class_guid = wcsdup( wcslwr(guid) );
             rec->device_id = wcsdup( device_id );
             rec->manufacturer = L"The Wine Project";
             rec->name = L"Wine PnP Device";
