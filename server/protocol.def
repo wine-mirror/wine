@@ -301,8 +301,7 @@ union rawinput
         int            type;    /* RIM_TYPEHID */
         unsigned int   device;  /* rawinput device index */
         unsigned int   param;   /* rawinput message param */
-        unsigned short usage_page;/* HID usage page */
-        unsigned short usage;   /* HID usage */
+        unsigned int   usage;   /* HID device usage */
         unsigned int   count;   /* HID report count */
         unsigned int   length;  /* HID report length */
     } hid;
@@ -879,8 +878,7 @@ typedef struct
 
 struct rawinput_device
 {
-    unsigned short usage_page;
-    unsigned short usage;
+    unsigned int   usage;
     unsigned int   flags;
     user_handle_t  target;
 };

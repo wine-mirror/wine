@@ -35,6 +35,7 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "ntuser.h"
+#include "hidusage.h"
 
 #include "handle.h"
 #include "file.h"
@@ -1637,13 +1638,13 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     return win;
 }
 
-static struct rawinput_device *find_rawinput_device( struct process *process, unsigned short usage_page, unsigned short usage )
+static struct rawinput_device *find_rawinput_device( struct process *process, unsigned int usage )
 {
     struct rawinput_device *device, *end;
 
     for (device = process->rawinput_devices, end = device + process->rawinput_device_count; device != end; device++)
     {
-        if (device->usage_page != usage_page || device->usage != usage) continue;
+        if (device->usage != usage) continue;
         return device;
     }
 
@@ -1808,7 +1809,7 @@ static int queue_rawinput_message( struct process* process, void *arg )
     else if (raw_msg->data.rawinput.type == RIM_TYPEKEYBOARD)
         device = process->rawinput_kbd;
     else
-        device = find_rawinput_device( process, raw_msg->data.rawinput.hid.usage_page, raw_msg->data.rawinput.hid.usage );
+        device = find_rawinput_device( process, raw_msg->data.rawinput.hid.usage );
     if (!device) return 0;
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && !(device->flags & RIDEV_DEVNOTIFY)) return 0;
@@ -3505,6 +3506,6 @@ DECL_HANDLER(update_rawinput_devices)
     process->rawinput_device_count = device_count;
     memcpy( process->rawinput_devices, devices, size );
 
-    process->rawinput_mouse = find_rawinput_device( process, 1, 2 );
-    process->rawinput_kbd = find_rawinput_device( process, 1, 6 );
+    process->rawinput_mouse = find_rawinput_device( process, MAKELONG(HID_USAGE_GENERIC_MOUSE, HID_USAGE_PAGE_GENERIC) );
+    process->rawinput_kbd = find_rawinput_device( process, MAKELONG(HID_USAGE_GENERIC_KEYBOARD, HID_USAGE_PAGE_GENERIC) );
 }

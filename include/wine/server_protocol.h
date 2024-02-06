@@ -285,8 +285,7 @@ union rawinput
         int            type;
         unsigned int   device;
         unsigned int   param;
-        unsigned short usage_page;
-        unsigned short usage;
+        unsigned int   usage;
         unsigned int   count;
         unsigned int   length;
     } hid;
@@ -863,8 +862,7 @@ typedef struct
 
 struct rawinput_device
 {
-    unsigned short usage_page;
-    unsigned short usage;
+    unsigned int   usage;
     unsigned int   flags;
     user_handle_t  target;
 };
@@ -6507,7 +6505,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 788
+#define SERVER_PROTOCOL_VERSION 789
 
 /* ### protocol_version end ### */
 

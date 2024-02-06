@@ -899,8 +899,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
 
     for (i = 0; i < device_count; ++i)
     {
-        server_devices[i].usage_page = registered_devices[i].usUsagePage;
-        server_devices[i].usage = registered_devices[i].usUsage;
+        server_devices[i].usage = MAKELONG(registered_devices[i].usUsage, registered_devices[i].usUsagePage);
         server_devices[i].flags = registered_devices[i].dwFlags;
         server_devices[i].target = wine_server_user_handle( registered_devices[i].hwndTarget );
     }

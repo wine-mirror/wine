@@ -434,9 +434,9 @@ static void dump_rawinput( const char *prefix, const union rawinput *rawinput )
                  rawinput->kbd.message, rawinput->kbd.vkey, rawinput->kbd.scan );
         break;
     case RIM_TYPEHID:
-        fprintf( stderr, "%s{type=HID,device=%04x,param=%04x,page=%04hx,usage=%04hx,count=%u,length=%u}",
-                 prefix, rawinput->hid.device, rawinput->hid.param, rawinput->hid.usage_page,
-                 rawinput->hid.usage, rawinput->hid.count, rawinput->hid.length );
+        fprintf( stderr, "%s{type=HID,device=%04x,param=%04x,usage=%04x:%04x,count=%u,length=%u}",
+                 prefix, rawinput->hid.device, rawinput->hid.param, HIWORD(rawinput->hid.usage),
+                 LOWORD(rawinput->hid.usage), rawinput->hid.count, rawinput->hid.length );
         break;
     default:
         fprintf( stderr, "%s{type=%04x}", prefix, rawinput->type );
@@ -1357,8 +1357,8 @@ static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )
     while (size >= sizeof(*device))
     {
         device = cur_data;
-        fprintf( stderr, "{usage_page=%04x,usage=%04x,flags=%08x,target=%08x}",
-                 device->usage_page, device->usage, device->flags, device->target );
+        fprintf( stderr, "{usage=%08x,flags=%08x,target=%08x}",
+                 device->usage, device->flags, device->target );
         size -= sizeof(*device);
         remove_data( sizeof(*device) );
         if (size) fputc( ',', stderr );
