@@ -342,7 +342,8 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
 
     if (lpwpi->proxy)
     {
-        if ((ret = RegSetValueExW( key, L"ProxyServer", 0, REG_SZ, (BYTE*)lpwpi->proxy, sizeof(WCHAR) * (lstrlenW(lpwpi->proxy) + 1))))
+        if ((ret = RegSetValueExW( key, L"ProxyServer", 0, REG_SZ, (BYTE*)lpwpi->proxy,
+                        sizeof(WCHAR) * (lstrlenW(lpwpi->proxy) + 1))))
         {
             RegCloseKey( key );
             return ret;
@@ -519,6 +520,23 @@ static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
     return TRUE;
 }
 
+static WCHAR *get_http_proxy( const WCHAR *proxy )
+{
+    const WCHAR *p, *end;
+    WCHAR *ret;
+
+    p = wcsstr( proxy, L"http=" );
+    if (p) p += 5;
+    else p = proxy;
+    end = wcschr( p, ';' );
+    if (!end) end = p + wcslen( p );
+
+    ret = malloc( (end - p + 1) * sizeof(WCHAR) );
+    memcpy(ret, p, (end - p) * sizeof(WCHAR) );
+    ret[end - p] = 0;
+    return ret;
+}
+
 /***********************************************************************
  *          INTERNET_LoadProxySettings
  *
@@ -559,7 +577,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     /* figure out how much memory the proxy setting takes */
     if (!RegQueryValueExW( key, L"ProxyServer", NULL, &type, NULL, &len ) && len && (type == REG_SZ))
     {
-        LPWSTR szProxy, p;
+        LPWSTR szProxy;
 
         if (!(szProxy = malloc( len )))
         {
@@ -568,18 +586,8 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         }
         RegQueryValueExW( key, L"ProxyServer", NULL, &type, (BYTE*)szProxy, &len );
 
-        /* find the http proxy, and strip away everything else */
-        p = wcsstr( szProxy, L"http=" );
-        if (p)
-        {
-            p += lstrlenW( L"http=" );
-            lstrcpyW( szProxy, p );
-        }
-        p = wcschr( szProxy, ';' );
-        if (p) *p = 0;
-
         lpwpi->proxy = szProxy;
-        TRACE("http proxy (from registry%s) = %s\n", lpwpi->flags & PROXY_TYPE_PROXY ? "" : ", disabled",
+        TRACE("proxy server (from registry%s) = %s\n", lpwpi->flags & PROXY_TYPE_PROXY ? "" : ", disabled",
                 debugstr_w(lpwpi->proxy));
     }
     else
@@ -690,10 +698,11 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
         TRACE("http proxy = %s bypass = %s\n", debugstr_w(wpi.proxy), debugstr_w(wpi.proxyBypass));
 
         lpwai->accessType    = INTERNET_OPEN_TYPE_PROXY;
-        lpwai->proxy         = wpi.proxy;
+        lpwai->proxy         = get_http_proxy( wpi.proxy );
         lpwai->proxyBypass   = wpi.proxyBypass;
         lpwai->proxyUsername = wpi.proxyUsername;
         lpwai->proxyPassword = wpi.proxyPassword;
+        free( wpi.proxy );
         return TRUE;
     }
 
