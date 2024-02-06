@@ -358,6 +358,24 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
         }
     }
 
+    if (lpwpi->proxyBypass)
+    {
+        if ((ret = RegSetValueExW( key, L"ProxyOverride", 0, REG_SZ, (BYTE*)lpwpi->proxyBypass,
+                        sizeof(WCHAR) * (lstrlenW(lpwpi->proxyBypass) + 1))))
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+    else
+    {
+        if ((ret = RegDeleteValueW( key, L"ProxyOverride" )) && ret != ERROR_FILE_NOT_FOUND)
+        {
+            RegCloseKey( key );
+            return ret;
+        }
+    }
+
     RegCloseKey(key);
     return ERROR_SUCCESS;
 }
