@@ -1313,8 +1313,11 @@ static HRESULT WINAPI speech_tokens_Invoke( ISpeechObjectTokens *iface,
 static HRESULT WINAPI speech_tokens_get_Count( ISpeechObjectTokens *iface,
                                                LONG *count )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_enum *This = impl_from_ISpeechObjectTokens( iface );
+
+    TRACE( "(%p)->(%p)\n", This, count );
+
+    return ISpObjectTokenEnumBuilder_GetCount( &This->ISpObjectTokenEnumBuilder_iface, (ULONG *)count );
 }
 
 static HRESULT WINAPI speech_tokens_Item( ISpeechObjectTokens *iface,

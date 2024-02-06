@@ -362,6 +362,11 @@ static void test_token_enum(void)
     hr = ISpObjectTokenEnumBuilder_AddTokens( token_enum, 3, tokens );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    count = 0xdeadbeef;
+    hr = ISpeechObjectTokens_get_Count( speech_tokens, (LONG *)&count );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( count == 3, "got %lu\n", count );
+
     hr = ISpeechObjectTokens_get__NewEnum( speech_tokens, &unk );
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = IUnknown_QueryInterface( unk, &IID_IEnumVARIANT, (void **)&enumvar );
