@@ -613,6 +613,18 @@ static void initialize_launchers( HWND hwnd )
     }
 }
 
+static void wait_named_mutex( const WCHAR *name )
+{
+    HANDLE mutex;
+
+    mutex = CreateMutexW( NULL, TRUE, name );
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        TRACE( "waiting for mutex %s\n", debugstr_w( name ));
+        WaitForSingleObject( mutex, INFINITE );
+    }
+}
+
 /**************************************************************************
  *		wait_clipboard_mutex
  *
@@ -622,7 +634,6 @@ static BOOL wait_clipboard_mutex(void)
 {
     static const WCHAR prefix[] = L"__wine_clipboard_";
     WCHAR buffer[MAX_PATH + ARRAY_SIZE( prefix )];
-    HANDLE mutex;
 
     memcpy( buffer, prefix, sizeof(prefix) );
     if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
@@ -632,12 +643,7 @@ static BOOL wait_clipboard_mutex(void)
         ERR( "failed to get winstation name\n" );
         return FALSE;
     }
-    mutex = CreateMutexW( NULL, TRUE, buffer );
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        TRACE( "waiting for mutex %s\n", debugstr_w( buffer ));
-        WaitForSingleObject( mutex, INFINITE );
-    }
+    wait_named_mutex( buffer );
     return TRUE;
 }
 
@@ -695,6 +701,87 @@ static DWORD WINAPI clipboard_thread( void *arg )
     }
 
     while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
+    return 0;
+}
+
+static HANDLE fullscreen_process;
+
+static LRESULT WINAPI display_settings_restorer_wndproc( HWND hwnd, UINT message, WPARAM wp, LPARAM lp )
+{
+    TRACE( "got msg %04x wp %Ix lp %Ix\n", message, wp, lp );
+
+    switch(message)
+    {
+    case WM_USER + 0:
+        TRACE( "fullscreen process id %Iu.\n", lp );
+
+        if (fullscreen_process)
+        {
+            CloseHandle( fullscreen_process );
+            fullscreen_process = NULL;
+        }
+
+        if (lp)
+            fullscreen_process = OpenProcess( SYNCHRONIZE, FALSE, lp );
+
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, message, wp, lp );
+}
+
+static DWORD WINAPI display_settings_restorer_thread( void *param )
+{
+    static const WCHAR *display_settings_restorer_classname = L"__wine_display_settings_restorer";
+    DWORD wait_result;
+    WNDCLASSW class;
+    MSG msg;
+
+    SetThreadDescription( GetCurrentThread(), L"wine_explorer_display_settings_restorer" );
+
+    wait_named_mutex( L"__wine_display_settings_restorer_mutex" );
+
+    memset( &class, 0, sizeof(class) );
+    class.lpfnWndProc   = display_settings_restorer_wndproc;
+    class.lpszClassName = display_settings_restorer_classname;
+
+    if (!RegisterClassW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    {
+        ERR( "could not register display settings restorer window class err %lu\n", GetLastError() );
+        return 0;
+    }
+    if (!CreateWindowW( display_settings_restorer_classname, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, NULL ))
+    {
+        WARN( "failed to create display settings restorer window err %lu\n", GetLastError() );
+        UnregisterClassW( display_settings_restorer_classname, NULL );
+        return 0;
+    }
+
+    for (;;)
+    {
+        if (PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
+        {
+            if (msg.message == WM_QUIT)
+                break;
+            DispatchMessageW( &msg );
+            continue;
+        }
+
+        wait_result = MsgWaitForMultipleObjects( fullscreen_process ? 1 : 0, &fullscreen_process,
+                                                 FALSE, INFINITE, QS_ALLINPUT );
+        if (wait_result == WAIT_FAILED)
+            break;
+        if (!fullscreen_process || wait_result != WAIT_OBJECT_0)
+            continue;
+
+        TRACE( "restoring display settings on process exit\n" );
+
+        ChangeDisplaySettingsExW( NULL, NULL, NULL, 0, NULL );
+
+        CloseHandle( fullscreen_process );
+        fullscreen_process = NULL;
+    }
+
     return 0;
 }
 
@@ -970,6 +1057,7 @@ static void initialize_display_settings( unsigned int width, unsigned int height
 {
     DISPLAY_DEVICEW device = {.cb = sizeof(DISPLAY_DEVICEW)};
     DWORD i = 0, flags = CDS_GLOBAL | CDS_UPDATEREGISTRY;
+    HANDLE thread;
 
     /* Store current display mode in the registry */
     while (EnumDisplayDevicesW( NULL, i++, &device, 0 ))
@@ -1002,6 +1090,9 @@ static void initialize_display_settings( unsigned int width, unsigned int height
         if (ChangeDisplaySettingsExW( NULL, &devmode, 0, flags, NULL ))
             ERR( "Failed to set primary display settings.\n" );
     }
+
+    thread = CreateThread( NULL, 0, display_settings_restorer_thread, NULL, 0, NULL );
+    if (thread) CloseHandle( thread );
 }
 
 static void set_desktop_window_title( HWND hwnd, const WCHAR *name )

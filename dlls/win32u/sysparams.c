@@ -3149,9 +3149,13 @@ static BOOL all_detached_settings( const DEVMODEW *displays )
 static LONG apply_display_settings( struct source *target, const DEVMODEW *devmode,
                                     HWND hwnd, DWORD flags, void *lparam )
 {
+    static const WCHAR restorerW[] = {'_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
+                                      's','e','t','t','i','n','g','s','_','r','e','s','t','o','r','e','r',0};
+    UNICODE_STRING restoter_str = RTL_CONSTANT_STRING( restorerW );
     WCHAR primary_name[CCHDEVICENAME];
     struct source *primary, *source;
     DEVMODEW *mode, *displays;
+    HWND restorer_window;
     LONG ret;
 
     if (!lock_display_devices()) return DISP_CHANGE_FAILED;
@@ -3199,6 +3203,15 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
 
     free( displays );
     if (ret) return ret;
+
+    if ((restorer_window = NtUserFindWindowEx( NULL, NULL, &restoter_str, NULL, 0 )))
+    {
+        if (NtUserGetWindowThread( restorer_window, NULL ) != GetCurrentThreadId())
+        {
+            DWORD fullscreen_process_id = (flags & CDS_FULLSCREEN) ? GetCurrentProcessId() : 0;
+            send_message( restorer_window, WM_USER + 0, 0, fullscreen_process_id );
+        }
+    }
 
     if (!update_display_cache( TRUE ))
         WARN( "Failed to update display cache after mode change.\n" );
