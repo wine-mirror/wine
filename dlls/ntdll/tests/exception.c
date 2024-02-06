@@ -175,8 +175,17 @@ static int      my_argc;
 static char**   my_argv;
 static BOOL     is_wow64;
 static BOOL old_wow64;  /* Wine old-style wow64 */
+static UINT apc_count;
 static BOOL have_vectored_api;
 static enum debugger_stages test_stage;
+
+static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
+    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
+    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
+    apc_count++;
+}
 
 #if defined(__i386__) || defined(__x86_64__)
 static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, enum debugger_stages stage)
@@ -2089,15 +2098,6 @@ static void test_KiUserExceptionDispatcher(void)
 }
 
 static BYTE saved_KiUserApcDispatcher[7];
-static UINT apc_count;
-
-static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
-{
-    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
-    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
-    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
-    apc_count++;
-}
 
 static void * CDECL hook_KiUserApcDispatcher( void *func, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
 {
@@ -4963,15 +4963,6 @@ static void test_KiUserExceptionDispatcher(void)
 
 
 static BYTE saved_KiUserApcDispatcher[12];
-static BOOL apc_called;
-
-static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
-{
-    ok( arg1 == 0x1234, "wrong arg1 %Ix\n", arg1 );
-    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
-    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
-    apc_called = TRUE;
-}
 
 static void * WINAPI hook_KiUserApcDispatcher(CONTEXT *context)
 {
@@ -5037,10 +5028,10 @@ static void test_KiUserApcDispatcher(void)
     memcpy( pKiUserApcDispatcher, patched_KiUserApcDispatcher, sizeof(patched_KiUserApcDispatcher) );
 
     hook_called = FALSE;
-    apc_called = FALSE;
+    apc_count = 0;
     pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
     SleepEx( 0, TRUE );
-    ok( apc_called, "APC was not called\n" );
+    ok( apc_count == 1, "APC was not called\n" );
     /* hooking is bypassed on arm64ec */
     ok( is_arm64ec ? !hook_called : hook_called, "hook was not called\n" );
 
@@ -5661,13 +5652,13 @@ static void test_instrumentation_callback(void)
     ok( pass == 5, "got %ld.\n", pass );
     RemoveVectoredExceptionHandler( vectored_handler );
 
+    apc_count = 0;
     status = pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
     ok( !status, "got %#lx.\n", status );
     init_instrumentation_data( &curr_data );
-    apc_called = FALSE;
     SleepEx( 0, TRUE );
     data = curr_data;
-    ok( apc_called, "APC was not called.\n" );
+    ok( apc_count == 1, "APC was not called.\n" );
     ok( data.call_count == 1, "got %u.\n", data.call_count );
     ok( data.call_data[0].r10 == pKiUserApcDispatcher, "got %p, expected %p.\n", data.call_data[0].r10, pKiUserApcDispatcher );
 
@@ -6219,16 +6210,7 @@ static void test_KiUserExceptionDispatcher(void)
     VirtualProtect(code_ptr, sizeof(saved_code), old_protect, &old_protect);
 }
 
-static UINT apc_count;
 static UINT alertable_supported;
-
-static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
-{
-    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
-    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
-    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
-    apc_count++;
-}
 
 static void * WINAPI hook_KiUserApcDispatcher(void *stack)
 {
@@ -7531,17 +7513,6 @@ static void test_KiUserExceptionDispatcher(void)
 
     RemoveVectoredExceptionHandler(vectored_handler);
     VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_code), old_protect, &old_protect);
-}
-
-
-static UINT apc_count;
-
-static void CALLBACK apc_func( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
-{
-    ok( arg1 == 0x1234 + apc_count, "wrong arg1 %Ix\n", arg1 );
-    ok( arg2 == 0x5678, "wrong arg2 %Ix\n", arg2 );
-    ok( arg3 == 0xdeadbeef, "wrong arg3 %Ix\n", arg3 );
-    apc_count++;
 }
 
 static void * WINAPI hook_KiUserApcDispatcher(void *stack)
@@ -9146,13 +9117,6 @@ static void test_vectored_continue_handler(void)
     ok(!ret, "RtlRemoveVectoredContinueHandler succeeded\n");
 }
 
-static BOOL test_apc_called;
-
-static void CALLBACK test_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
-{
-    test_apc_called = TRUE;
-}
-
 static void test_user_apc(void)
 {
     NTSTATUS status;
@@ -9215,13 +9179,13 @@ static void test_user_apc(void)
 
         c[0] = context;
 
-        test_apc_called = FALSE;
-        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        apc_count = 0;
+        status = pNtQueueApcThread(GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef);
         ok(!status, "Got unexpected status %#lx.\n", status);
         SleepEx(0, TRUE);
-        ok(test_apc_called, "Test user APC was not called.\n");
-        test_apc_called = FALSE;
-        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        ok(apc_count == 1, "Test user APC was not called.\n");
+        apc_count = 0;
+        status = pNtQueueApcThread(GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef);
         ok(!status, "Got unexpected status %#lx.\n", status);
         status = NtContinue(&c[0], TRUE );
 
@@ -9230,7 +9194,7 @@ static void test_user_apc(void)
     }
     ok(ret == 0xabacab, "Got return value %#x.\n", ret);
     ok(pass == 3, "Got unexpected pass %ld.\n", pass);
-    ok(test_apc_called, "Test user APC was not called.\n");
+    ok(apc_count > 0, "Test user APC was not called.\n");
 }
 
 static void test_user_callback(void)
