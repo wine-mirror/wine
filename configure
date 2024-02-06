@@ -7861,6 +7861,9 @@ rm -rf conftest*
   fi
 fi
 
+test "$ac_cv_sys_file_offset_bits" = 64 &&
+printf "%s\n" "#define _TIME_BITS 64" >>confdefs.h
+
 
 ac_header= ac_cache=
 for ac_item in $ac_header_c_list
@@ -10104,9 +10107,6 @@ fi
   *)
 
 printf "%s\n" "#define _GNU_SOURCE 1" >>confdefs.h
-
-    test "$ac_cv_sys_file_offset_bits" = 64 &&
-printf "%s\n" "#define _TIME_BITS 64" >>confdefs.h
 
     if test $HOST_ARCH = i386
     then
