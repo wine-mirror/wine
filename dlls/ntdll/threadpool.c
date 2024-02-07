@@ -1265,6 +1265,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                                   u.wait.wait_entry )
         {
             assert( wait->type == TP_OBJECT_TYPE_WAIT );
+            assert( wait->u.wait.wait_pending );
             if (wait->u.wait.timeout <= now.QuadPart)
             {
                 /* Wait object timed out. */
@@ -1272,6 +1273,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                 {
                     list_remove( &wait->u.wait.wait_entry );
                     list_add_tail( &bucket->reserved, &wait->u.wait.wait_entry );
+                    wait->u.wait.wait_pending = FALSE;
                 }
                 if ((wait->u.wait.flags & (WT_EXECUTEINWAITTHREAD | WT_EXECUTEINIOTHREAD)))
                 {
@@ -1329,6 +1331,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                     {
                         list_remove( &wait->u.wait.wait_entry );
                         list_add_tail( &bucket->reserved, &wait->u.wait.wait_entry );
+                        wait->u.wait.wait_pending = FALSE;
                     }
                     if ((wait->u.wait.flags & (WT_EXECUTEINWAITTHREAD | WT_EXECUTEINIOTHREAD)))
                     {
