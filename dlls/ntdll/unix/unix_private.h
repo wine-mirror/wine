@@ -185,7 +185,8 @@ extern char **build_envp( const WCHAR *envW );
 extern char *get_alternate_wineloader( WORD machine );
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info );
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHORT machine,
-                              void **addr_ptr, SIZE_T *size_ptr, ULONG_PTR limit_low, ULONG_PTR limit_high );
+                              SECTION_IMAGE_INFORMATION *info, void **module, SIZE_T *size,
+                              ULONG_PTR limit_low, ULONG_PTR limit_high );
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine );
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
                                USHORT load_machine, WCHAR **image, void **module );

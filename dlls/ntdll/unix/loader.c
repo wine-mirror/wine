@@ -1277,11 +1277,11 @@ done:
  * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
  */
 NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHORT machine,
-                       void **module, SIZE_T *size, ULONG_PTR limit_low, ULONG_PTR limit_high )
+                       SECTION_IMAGE_INFORMATION *info, void **module, SIZE_T *size,
+                       ULONG_PTR limit_low, ULONG_PTR limit_high )
 {
     NTSTATUS status;
     UNICODE_STRING nt_name;
-    SECTION_IMAGE_INFORMATION info;
     enum loadorder loadorder;
 
     init_unicode_string( &nt_name, filename );
@@ -1307,10 +1307,10 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename, USHOR
     case LO_NATIVE_BUILTIN:
         return STATUS_IMAGE_ALREADY_LOADED;
     case LO_BUILTIN:
-        return find_builtin_dll( &nt_name, module, size, &info, limit_low, limit_high,
+        return find_builtin_dll( &nt_name, module, size, info, limit_low, limit_high,
                                  image_info->machine, machine, FALSE );
     default:
-        status = find_builtin_dll( &nt_name, module, size, &info, limit_low, limit_high,
+        status = find_builtin_dll( &nt_name, module, size, info, limit_low, limit_high,
                                    image_info->machine, machine, (loadorder == LO_DEFAULT) );
         if (status == STATUS_DLL_NOT_FOUND || status == STATUS_NOT_SUPPORTED)
             return STATUS_IMAGE_ALREADY_LOADED;

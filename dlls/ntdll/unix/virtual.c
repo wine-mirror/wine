@@ -3161,9 +3161,12 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
 
     if (image_info)
     {
+        SECTION_IMAGE_INFORMATION info;
+
         filename = (WCHAR *)(image_info + 1);
         /* check if we can replace that mapping with the builtin */
-        res = load_builtin( image_info, filename, machine, addr_ptr, size_ptr, limit_low, limit_high );
+        res = load_builtin( image_info, filename, machine, &info,
+                            addr_ptr, size_ptr, limit_low, limit_high );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
             res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit_low, limit_high,
                                      alloc_type, machine, image_info, filename, FALSE );
@@ -3462,12 +3465,13 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
     filename = (WCHAR *)(image_info + 1);
 
     /* check if we can replace that mapping with the builtin */
-    status = load_builtin( image_info, filename, machine, module, size, limit_low, limit_high );
+    status = load_builtin( image_info, filename, machine, info, module, size, limit_low, limit_high );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
+    {
         status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
                                     machine, image_info, filename, FALSE );
-
-    virtual_fill_image_information( image_info, info );
+        virtual_fill_image_information( image_info, info );
+    }
     if (shared_file) NtClose( shared_file );
     free( image_info );
     return status;
