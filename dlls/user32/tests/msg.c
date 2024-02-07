@@ -13197,7 +13197,7 @@ static const struct message sl_edit_lbutton_down[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EM_GETPASSWORDCHAR, sent|optional }, /* Sent on some Win10 machines */
+    { EM_GETPASSWORDCHAR, sent|defwinproc|optional }, /* Sent on some Win10 machines */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
@@ -13222,7 +13222,7 @@ static const struct message ml_edit_lbutton_down[] =
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { EM_GETPASSWORDCHAR, sent|optional }, /* Sent on some Win10 machines */
+    { EM_GETPASSWORDCHAR, sent|defwinproc|optional }, /* Sent on some Win10 machines */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 10 },
