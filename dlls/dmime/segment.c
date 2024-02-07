@@ -791,7 +791,10 @@ static inline struct segment *impl_from_IPersistStream(IPersistStream *iface)
 static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream *stream)
 {
     struct segment *This = impl_from_IPersistStream(iface);
+    IDirectMusicTrack *track;
+    MUSIC_TIME length;
     struct chunk_entry chunk = {0};
+    struct midi_parser *midi_parser;
     HRESULT hr;
 
     TRACE("(%p, %p): Loading\n", This, stream);
@@ -807,7 +810,18 @@ static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream
             break;
 
         case mmioFOURCC('M','T','h','d'):
-            FIXME("MIDI file loading not supported\n");
+            hr = midi_parser_new(stream, &midi_parser);
+            if (FAILED(hr)) break;
+            This->header.mtLength = 0;
+            while ((hr = midi_parser_next_track(midi_parser, &track, &length)) == S_OK)
+            {
+                hr = segment_append_track(This, track, 1, 0);
+                IDirectMusicTrack_Release(track);
+                if (FAILED(hr)) break;
+                if (length > This->header.mtLength)
+                    This->header.mtLength = length;
+            }
+            midi_parser_destroy(midi_parser);
             break;
 
         case MAKE_IDTYPE(FOURCC_RIFF, mmioFOURCC('W','A','V','E')):

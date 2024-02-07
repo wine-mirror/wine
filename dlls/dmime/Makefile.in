@@ -10,6 +10,7 @@ SOURCES = \
 	graph.c \
 	lyricstrack.c \
 	markertrack.c \
+	midi.c \
 	paramcontroltrack.c \
 	performance.c \
 	segment.c \
