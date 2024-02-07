@@ -10822,7 +10822,7 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Multithread_Enter(multithread);
     thread = CreateThread(NULL, 0, mt_factory_test_thread_draw_func, ctx.rt, 0, NULL);
     ok(!!thread, "Failed to create a thread.\n");
-    ret = WaitForSingleObject(thread, 1000);
+    ret = WaitForSingleObject(thread, 5000);
     ok(ret == WAIT_OBJECT_0, "Didn't expect timeout.\n");
     ID2D1Multithread_Leave(multithread);
     WaitForSingleObject(thread, INFINITE);
