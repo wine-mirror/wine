@@ -4525,7 +4525,6 @@ struct r4_test
 {
   float val;
   const wchar_t *expect;
-  BOOL todo;
 };
 
 static void test_VarBstrFromR4(void)
@@ -4536,8 +4535,8 @@ static void test_VarBstrFromR4(void)
     { 0.05, L"0.05" },
     { 0.005, L"0.005" },
     { 0.0005, L"0.0005" },
-    { 0.00005, L"0.00005", TRUE },
-    { 0.000005, L"0.000005", TRUE },
+    { 0.00005, L"0.00005" },
+    { 0.000005, L"0.000005" },
 
     { 1.0e8, L"1E+08" },
     { 1.0e12, L"1E+12" },
@@ -4564,8 +4563,8 @@ static void test_VarBstrFromR4(void)
     { 0.05, L"0,05" },
     { 0.005, L"0,005" },
     { 0.0005, L"0,0005" },
-    { 0.00005, L"0,00005", TRUE },
-    { 0.000005, L"0,000005", TRUE },
+    { 0.00005, L"0,00005" },
+    { 0.000005, L"0,000005" },
 
     { 1.0e8, L"1E+08" },
     { 1.0e12, L"1E+12" },
@@ -4648,7 +4647,6 @@ static void test_VarBstrFromR4(void)
     ok(hres == S_OK, "got hres 0x%08lx\n", hres);
     if (bstr)
     {
-      todo_wine_if(cur->todo)
       ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
       SysFreeString(bstr);
     }
@@ -4664,7 +4662,6 @@ static void test_VarBstrFromR4(void)
     ok(hres == S_OK, "got hres 0x%08lx\n", hres);
     if (bstr)
     {
-      todo_wine_if(cur->todo)
       ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
       SysFreeString(bstr);
     }
@@ -4676,7 +4673,6 @@ struct r8_test
 {
   double val;
   const wchar_t *expect;
-  BOOL todo;
 };
 
 static void test_VarBstrFromR8(void)
@@ -4687,8 +4683,8 @@ static void test_VarBstrFromR8(void)
     { 0.05, L"0.05" },
     { 0.005, L"0.005" },
     { 0.0005, L"0.0005" },
-    { 0.00005, L"0.00005", TRUE },
-    { 0.000005, L"0.000005", TRUE },
+    { 0.00005, L"0.00005" },
+    { 0.000005, L"0.000005" },
 
     { 1.0e8, L"100000000" },
     { 1.0e12, L"1000000000000" },
@@ -4715,8 +4711,8 @@ static void test_VarBstrFromR8(void)
     { 0.05, L"0,05" },
     { 0.005, L"0,005" },
     { 0.0005, L"0,0005" },
-    { 0.00005, L"0,00005", TRUE },
-    { 0.000005, L"0,000005", TRUE },
+    { 0.00005, L"0,00005" },
+    { 0.000005, L"0,000005" },
 
     { 1.0e8, L"100000000" },
     { 1.0e12, L"1000000000000" },
@@ -4751,7 +4747,6 @@ static void test_VarBstrFromR8(void)
     ok(hres == S_OK, "got hres 0x%08lx\n", hres);
     if (bstr)
     {
-      todo_wine_if(cur->todo)
       ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
       SysFreeString(bstr);
     }
@@ -4767,7 +4762,6 @@ static void test_VarBstrFromR8(void)
     ok(hres == S_OK, "got hres 0x%08lx\n", hres);
     if (bstr)
     {
-      todo_wine_if(cur->todo)
       ok(wcscmp(bstr, cur->expect) == 0, "expected '%ls', got '%ls'\n", cur->expect, bstr);
       SysFreeString(bstr);
     }

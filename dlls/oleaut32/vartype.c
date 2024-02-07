@@ -6538,16 +6538,24 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
 }
 
 static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
-                                    BSTR* pbstrOut, LPCWSTR lpszFormat)
+                                    BSTR* pbstrOut, int ndigits)
 {
   _locale_t locale;
-  WCHAR buff[256];
+  WCHAR *e, buff[256];
+  int len;
 
   if (!pbstrOut)
     return E_INVALIDARG;
 
   if (!(locale = _create_locale(LC_ALL, "C"))) return E_OUTOFMEMORY;
-  _swprintf_l(buff, ARRAY_SIZE(buff), lpszFormat, locale, dblIn);
+  len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*G", locale, ndigits, dblIn);
+  e = wcschr(buff, 'E');
+  if (e && labs(wcstol(e+1, NULL, 10)) < ndigits)
+  {
+    len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*f", locale, ndigits, dblIn);
+    while (len > 0 && (buff[len-1] == '0')) len--;
+  }
+  buff[len] = 0;
   _free_locale(locale);
 
   /* Negative zeroes are disallowed (some applications depend on this).
@@ -6598,7 +6606,7 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
  */
 HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-    return VARIANT_BstrFromReal(fltIn, lcid, dwFlags, pbstrOut, L"%.7G");
+    return VARIANT_BstrFromReal(fltIn, lcid, dwFlags, pbstrOut, 7);
 }
 
 /******************************************************************************
@@ -6619,7 +6627,7 @@ HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
  */
 HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-    return VARIANT_BstrFromReal(dblIn, lcid, dwFlags, pbstrOut, L"%.15G");
+    return VARIANT_BstrFromReal(dblIn, lcid, dwFlags, pbstrOut, 15);
 }
 
 /******************************************************************************
