@@ -446,7 +446,7 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
         }
     }
 
-    if (lpwpi->autoconf_url)
+    if (lpwpi->autoconf_url && lpwpi->flags & PROXY_TYPE_AUTO_PROXY_URL)
     {
         if ((ret = RegSetValueExW( key, L"AutoConfigURL", 0, REG_SZ, (BYTE*)lpwpi->autoconf_url,
                         sizeof(WCHAR) * (lstrlenW(lpwpi->autoconf_url) + 1))))
@@ -3395,6 +3395,10 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                 break;
 
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
+                free(pi.autoconf_url);
+                pi.autoconf_url = wcsdup(option->Value.pszValue);
+                break;
+
             case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
             case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
             case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
