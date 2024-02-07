@@ -2979,7 +2979,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 return;
             }
 
-            if (session->presentation.flags & SESSION_FLAG_NEEDS_PREROLL)
+            if ((session->presentation.flags & SESSION_FLAG_NEEDS_PREROLL) && session_is_output_nodes_state(session, OBJ_STATE_STOPPED))
             {
                 MFTIME preroll_time = 0;
 
