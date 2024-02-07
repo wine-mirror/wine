@@ -134,6 +134,7 @@ static const struct column col_directory[] =
 };
 static const struct column col_diskdrive[] =
 {
+    { L"Caption",       CIM_STRING },
     { L"DeviceId",      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"Index",         CIM_UINT32 },
     { L"InterfaceType", CIM_STRING },
@@ -589,6 +590,7 @@ struct record_directory
 };
 struct record_diskdrive
 {
+    const WCHAR *caption;
     const WCHAR *device_id;
     UINT32       index;
     const WCHAR *interfacetype;
@@ -2344,6 +2346,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
             rec = (struct record_diskdrive *)(table->data + offset);
+            rec->caption       = L"Wine Disk Drive";
             swprintf( device_id, ARRAY_SIZE( device_id ), fmtW, index );
             rec->device_id     = wcsdup( device_id );
             rec->index         = index++;
