@@ -6497,7 +6497,7 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
   }
   else
   {
-    WCHAR *p;
+    WCHAR *p, *e;
     WCHAR numbuff[256];
     WCHAR empty[] = L"";
     NUMBERFMTW minFormat;
@@ -6512,9 +6512,11 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
                    (WCHAR *)&minFormat.LeadingZero, sizeof(DWORD)/sizeof(WCHAR) );
 
     /* count number of decimal digits in string */
-    p = wcschr( buff, '.' );
-    if (p) minFormat.NumDigits = lstrlenW(p + 1);
+    p = wcschr(buff, '.');
+    e = wcschr(p ? ++p : buff, 'E');
+    if (p) minFormat.NumDigits = e ? e - p : lstrlenW(p);
 
+    if (e) *e = '\0';
     numbuff[0] = '\0';
     if (!GetNumberFormatW(lcid, 0, buff, &minFormat, numbuff, ARRAY_SIZE(numbuff)))
     {
@@ -6523,6 +6525,11 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
     }
     else
     {
+      if (e)
+      {
+        *e = 'E';
+        wcscat(numbuff, e);
+      }
       TRACE("created minimal NLS string %s\n", debugstr_w(numbuff));
       bstrOut = SysAllocString(numbuff);
     }
