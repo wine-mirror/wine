@@ -160,6 +160,7 @@ struct threadpool_object
     LONG                    num_pending_callbacks;
     LONG                    num_running_callbacks;
     LONG                    num_associated_callbacks;
+    LONG                    update_serial;
     /* arguments for callback */
     union
     {
@@ -1243,6 +1244,7 @@ static void tp_timerqueue_unlock( struct threadpool_object *timer )
 static void CALLBACK waitqueue_thread_proc( void *param )
 {
     struct threadpool_object *objects[MAXIMUM_WAITQUEUE_OBJECTS];
+    LONG update_serials[MAXIMUM_WAITQUEUE_OBJECTS];
     HANDLE handles[MAXIMUM_WAITQUEUE_OBJECTS + 1];
     struct waitqueue_bucket *bucket = param;
     struct threadpool_object *wait, *next;
@@ -1295,6 +1297,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                 InterlockedIncrement( &wait->refcount );
                 objects[num_handles] = wait;
                 handles[num_handles] = wait->u.wait.handle;
+                update_serials[num_handles] = wait->update_serial;
                 num_handles++;
             }
         }
@@ -1323,7 +1326,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
             {
                 wait = objects[status - STATUS_WAIT_0];
                 assert( wait->type == TP_OBJECT_TYPE_WAIT );
-                if (wait->u.wait.bucket)
+                if (wait->u.wait.bucket && wait->update_serial == update_serials[status - STATUS_WAIT_0])
                 {
                     /* Wait object signaled. */
                     assert( wait->u.wait.bucket == bucket );
@@ -1344,7 +1347,10 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                     else tp_object_submit( wait, TRUE );
                 }
                 else
-                    WARN("wait object %p triggered while object was destroyed\n", wait);
+                {
+                    WARN("wait object %p triggered while object was %s.\n",
+                            wait, wait->u.wait.bucket ? "updated" : "destroyed");
+                }
             }
 
             /* Release temporary references to wait objects. */
@@ -1917,6 +1923,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     object->num_pending_callbacks   = 0;
     object->num_running_callbacks   = 0;
     object->num_associated_callbacks = 0;
+    object->update_serial           = 0;
 
     if (environment)
     {
@@ -3051,12 +3058,15 @@ VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
 {
     struct threadpool_object *this = impl_from_TP_WAIT( wait );
     ULONGLONG timestamp = MAXLONGLONG;
+    BOOL same_handle;
 
     TRACE( "%p %p %p\n", wait, handle, timeout );
 
     RtlEnterCriticalSection( &waitqueue.cs );
 
     assert( this->u.wait.bucket );
+
+    same_handle = this->u.wait.handle == handle;
     this->u.wait.handle = handle;
 
     if (handle || this->u.wait.wait_pending)
@@ -3090,6 +3100,8 @@ VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
         }
 
         /* Wake up the wait queue thread. */
+        if (!same_handle)
+            ++this->update_serial;
         NtSetEvent( bucket->update_event, NULL );
     }
 
