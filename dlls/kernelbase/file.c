@@ -579,8 +579,8 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
     }
     ret =  TRUE;
 done:
-    /* Maintain the timestamp of source file to destination file */
-    info.FileAttributes = 0;
+    /* Maintain the timestamp of source file to destination file and read-only attribute */
+    info.FileAttributes &= FILE_ATTRIBUTE_READONLY;
     NtSetInformationFile( h2, &io, &info, sizeof(info), FileBasicInformation );
     HeapFree( GetProcessHeap(), 0, buffer );
     CloseHandle( h1 );

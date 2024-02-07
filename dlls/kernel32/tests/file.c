@@ -850,6 +850,56 @@ static void test_CopyFileA(void)
     CloseHandle(hmapfile);
     CloseHandle(hfile);
 
+    /* check read-only attribute */
+    ret = GetFileAttributesA(source);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(!(ret & FILE_ATTRIBUTE_READONLY), "source is read-only\n");
+    ret = GetFileAttributesA(dest);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(!(ret & FILE_ATTRIBUTE_READONLY), "dest is read-only\n");
+
+    /* make source read-only */
+    ret = SetFileAttributesA(source, FILE_ATTRIBUTE_READONLY);
+    ok(ret, "SetFileAttributesA: error %ld\n", GetLastError());
+    ret = GetFileAttributesA(source);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(ret & FILE_ATTRIBUTE_READONLY, "source is not read-only\n");
+    ret = GetFileAttributesA(dest);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(!(ret & FILE_ATTRIBUTE_READONLY), "dest is read-only\n");
+
+    /* dest becomes read-only after copied from read-only source */
+    ret = SetFileAttributesA(source, FILE_ATTRIBUTE_READONLY);
+    ok(ret, "SetFileAttributesA: error %ld\n", GetLastError());
+    ret = GetFileAttributesA(source);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(ret & FILE_ATTRIBUTE_READONLY, "source is not read-only\n");
+    ret = GetFileAttributesA(dest);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(!(ret & FILE_ATTRIBUTE_READONLY), "dest is read-only\n");
+
+    ret = CopyFileA(source, dest, FALSE);
+    ok(ret, "CopyFileA: error %ld\n", GetLastError());
+    ret = GetFileAttributesA(dest);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(ret & FILE_ATTRIBUTE_READONLY, "dest is not read-only\n");
+
+    /* same when dest does not exist */
+    ret = SetFileAttributesA(dest, FILE_ATTRIBUTE_NORMAL);
+    ok(ret, "SetFileAttributesA: error %ld\n", GetLastError());
+    ret = DeleteFileA(dest);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+    ret = CopyFileA(source, dest, TRUE);
+    ok(ret, "CopyFileA: error %ld\n", GetLastError());
+    ret = GetFileAttributesA(dest);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "GetFileAttributesA: error %ld\n", GetLastError());
+    ok(ret & FILE_ATTRIBUTE_READONLY, "dest is not read-only\n");
+
+    ret = SetFileAttributesA(source, FILE_ATTRIBUTE_NORMAL);
+    ok(ret, "SetFileAttributesA: error %ld\n", GetLastError());
+    ret = SetFileAttributesA(dest, FILE_ATTRIBUTE_NORMAL);
+    ok(ret, "SetFileAttributesA: error %ld\n", GetLastError());
+
     ret = DeleteFileA(source);
     ok(ret, "DeleteFileA: error %ld\n", GetLastError());
     ret = DeleteFileA(dest);
