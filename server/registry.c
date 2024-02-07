@@ -1857,10 +1857,9 @@ static void init_supported_machines(void)
     if (prefix_type == PREFIX_64BIT)
     {
         supported_machines[count++] = IMAGE_FILE_MACHINE_ARM64;
-        supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
         supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
+        /* supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;  not supported yet */
     }
-    supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
 #else
 #error Unsupported machine
 #endif
@@ -1877,15 +1876,9 @@ void init_registry(void)
     static const WCHAR classes_i386[] = {'S','o','f','t','w','a','r','e','\\',
                                          'C','l','a','s','s','e','s','\\',
                                          'W','o','w','6','4','3','2','N','o','d','e'};
-    static const WCHAR classes_amd64[] = {'S','o','f','t','w','a','r','e','\\',
-                                          'C','l','a','s','s','e','s','\\',
-                                          'W','o','w','6','4','6','4','N','o','d','e'};
     static const WCHAR classes_arm[] = {'S','o','f','t','w','a','r','e','\\',
                                         'C','l','a','s','s','e','s','\\',
                                         'W','o','w','A','A','3','2','N','o','d','e'};
-    static const WCHAR classes_arm64[] = {'S','o','f','t','w','a','r','e','\\',
-                                          'C','l','a','s','s','e','s','\\',
-                                          'W','o','w','A','A','6','4','N','o','d','e'};
     static const WCHAR perflib[] = {'S','o','f','t','w','a','r','e','\\',
                                     'M','i','c','r','o','s','o','f','t','\\',
                                     'W','i','n','d','o','w','s',' ','N','T','\\',
@@ -1956,8 +1949,7 @@ void init_registry(void)
         {
         case IMAGE_FILE_MACHINE_I386:  name.str = classes_i386;  name.len = sizeof(classes_i386);  break;
         case IMAGE_FILE_MACHINE_ARMNT: name.str = classes_arm;   name.len = sizeof(classes_arm);   break;
-        case IMAGE_FILE_MACHINE_AMD64: name.str = classes_amd64; name.len = sizeof(classes_amd64); break;
-        case IMAGE_FILE_MACHINE_ARM64: name.str = classes_arm64; name.len = sizeof(classes_arm64); break;
+        default: continue;
         }
         if ((key = create_key_recursive( hklm, &name, current_time )))
         {
