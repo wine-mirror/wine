@@ -1052,7 +1052,10 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
  */
 void call_raise_user_exception_dispatcher(void)
 {
-    arm_thread_data()->syscall_frame->pc = (DWORD)pKiRaiseUserExceptionDispatcher;
+    struct syscall_frame *frame = arm_thread_data()->syscall_frame;
+
+    frame->sp += 16;
+    frame->pc = (DWORD)pKiRaiseUserExceptionDispatcher;
 }
 
 
@@ -1608,8 +1611,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr r1, [r2, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
                    "add r0, r1, #0x10\n\t"
                    "stm r0, {r4-r12,lr}\n\t"
-                   "add r0, sp, #0x10\n\t"
-                   "str r0, [r1, #0x38]\n\t"
+                   "str sp, [r1, #0x38]\n\t"
                    "str r3, [r1, #0x3c]\n\t"
                    "mrs r0, CPSR\n\t"
                    "bfi r0, lr, #5, #1\n\t"         /* set thumb bit */
@@ -1682,7 +1684,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
-                   "add sp, sp, #0x10\n\t"
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"

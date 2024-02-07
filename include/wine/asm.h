@@ -268,34 +268,19 @@
 # define __ASM_SYSCALL_FUNC(id,name,args) \
     __ASM_GLOBAL_FUNC( name, \
                        "push {r0-r3}\n\t" \
+                       ".seh_save_regs {r0-r3}\n\t" \
+                       ".seh_endprologue\n\t" \
                        "movw ip, #(" #id ")\n\t" \
                        "mov r3, lr\n\t" \
                        "bl " __ASM_NAME("__wine_syscall") "\n\t" \
+                       "add sp, #16\n\t" \
                        "bx lr" )
-# ifndef __PIC__
-#  define DEFINE_SYSCALL_HELPER32() \
+# define DEFINE_SYSCALL_HELPER32() \
     __ASM_GLOBAL_FUNC( __wine_syscall, \
                        "movw r0, :lower16:" __ASM_NAME("__wine_syscall_dispatcher") "\n\t" \
                        "movt r0, :upper16:" __ASM_NAME("__wine_syscall_dispatcher") "\n\t" \
                        "ldr r0, [r0]\n\t" \
                        "bx r0" )
-# elif defined __thumb__
-#  define DEFINE_SYSCALL_HELPER32() \
-    __ASM_GLOBAL_FUNC( __wine_syscall, \
-                       "ldr r0, 2f\n" \
-                       "1:\tadd r0, pc\n\t" \
-                       "ldr r0, [r0]\n\t" \
-                       "bx r0\n" \
-                       "2:\t.long " __ASM_NAME("__wine_syscall_dispatcher") "-1b-4" )
-# else
-#  define DEFINE_SYSCALL_HELPER32() \
-    __ASM_GLOBAL_FUNC( __wine_syscall, \
-                       "ldr r0, 2f\n" \
-                       "1:\tadd r0, pc\n\t" \
-                       "ldr r0, [r0]\n\t" \
-                       "bx r0\n" \
-                       "2:\t.long " __ASM_NAME("__wine_syscall_dispatcher") "-1b-8" )
-# endif
 #endif
 
 #endif  /* __WINE_WINE_ASM_H */
