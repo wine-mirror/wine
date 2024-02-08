@@ -2488,7 +2488,7 @@ static void alloc_arm64ec_map(void)
  *           update_arm64ec_ranges
  */
 static void update_arm64ec_ranges( struct file_view *view, IMAGE_NT_HEADERS *nt,
-                                   const IMAGE_DATA_DIRECTORY *dir )
+                                   const IMAGE_DATA_DIRECTORY *dir, UINT *entry_point )
 {
     const IMAGE_ARM64EC_METADATA *metadata;
     const IMAGE_CHPE_RANGE_ENTRY *map;
@@ -2501,6 +2501,7 @@ static void update_arm64ec_ranges( struct file_view *view, IMAGE_NT_HEADERS *nt,
     if (!arm64ec_view) alloc_arm64ec_map();
     commit_arm64ec_map( view );
     metadata = (void *)(base + (cfg->CHPEMetadataPointer - nt->OptionalHeader.ImageBase));
+    *entry_point = redirect_arm64ec_rva( base, nt->OptionalHeader.AddressOfEntryPoint, metadata );
     if (!metadata->CodeMap) return;
     map = (void *)(base + metadata->CodeMap);
 
@@ -2865,11 +2866,11 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
              (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64)))
         {
             update_arm64x_mapping( view, nt, dir, sections );
-            /* reload changed data from NT header */
-            image_info->machine     = nt->FileHeader.Machine;
-            image_info->entry_point = nt->OptionalHeader.AddressOfEntryPoint;
+            /* reload changed machine from NT header */
+            image_info->machine = nt->FileHeader.Machine;
         }
-        if (image_info->machine == IMAGE_FILE_MACHINE_AMD64) update_arm64ec_ranges( view, nt, dir );
+        if (image_info->machine == IMAGE_FILE_MACHINE_AMD64)
+            update_arm64ec_ranges( view, nt, dir, &image_info->entry_point );
     }
 #endif
     if (machine && machine != nt->FileHeader.Machine) return STATUS_NOT_SUPPORTED;

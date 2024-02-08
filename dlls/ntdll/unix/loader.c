@@ -1585,24 +1585,23 @@ static void load_ntdll_wow64_functions( HMODULE module )
 
 
 /***********************************************************************
- *           redirect_arm64ec_ptr
+ *           redirect_arm64ec_rva
  *
- * Redirect a function pointer through the arm64ec redirection table.
+ * Redirect an address through the arm64ec redirection table.
  */
-static void *redirect_arm64ec_ptr( void *module, void *ptr,
-                                   const IMAGE_ARM64EC_REDIRECTION_ENTRY *map, ULONG map_count )
+ULONG_PTR redirect_arm64ec_rva( void *base, ULONG_PTR rva, const IMAGE_ARM64EC_METADATA *metadata )
 {
-    int min = 0, max = map_count - 1;
-    ULONG_PTR rva = (char *)ptr - (char *)module;
+    const IMAGE_ARM64EC_REDIRECTION_ENTRY *map = get_rva( base, metadata->RedirectionMetadata );
+    int min = 0, max = metadata->RedirectionMetadataCount - 1;
 
     while (min <= max)
     {
         int pos = (min + max) / 2;
-        if (map[pos].Source == rva) return get_rva( module, map[pos].Destination );
+        if (map[pos].Source == rva) return map[pos].Destination;
         if (map[pos].Source < rva) min = pos + 1;
         else max = pos - 1;
     }
-    return ptr;
+    return rva;
 }
 
 
@@ -1615,13 +1614,11 @@ static void redirect_ntdll_functions( HMODULE module )
 {
     const IMAGE_LOAD_CONFIG_DIRECTORY *loadcfg;
     const IMAGE_ARM64EC_METADATA *metadata;
-    const IMAGE_ARM64EC_REDIRECTION_ENTRY *map;
 
     if (!(loadcfg = get_module_data_dir( module, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, NULL ))) return;
     if (!(metadata = (void *)loadcfg->CHPEMetadataPointer)) return;
-    if (!(map = get_rva( module, metadata->RedirectionMetadata ))) return;
 #define REDIRECT(name) \
-        p##name = redirect_arm64ec_ptr( module, p##name, map, metadata->RedirectionMetadataCount )
+    p##name = get_rva( module, redirect_arm64ec_rva( module, (char *)p##name - (char *)module, metadata ))
     REDIRECT( DbgUiRemoteBreakin );
     REDIRECT( KiRaiseUserExceptionDispatcher );
     REDIRECT( KiUserExceptionDispatcher );

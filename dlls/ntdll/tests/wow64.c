@@ -275,7 +275,6 @@ static void test_process_machine( HANDLE process, HANDLE thread,
            win32_entry is the redirected x86-64 -> ARM64EC one */
         ok( image.TransferAddress != entry_point, "wrong entry %p\n", image.TransferAddress );
         ok( image.TransferAddress != win32_entry, "wrong entry %p\n", image.TransferAddress );
-        todo_wine
         ok( win32_entry != entry_point, "wrong win32 entry %p\n", win32_entry );
     }
 }
