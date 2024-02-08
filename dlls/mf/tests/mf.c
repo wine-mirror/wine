@@ -3951,7 +3951,7 @@ static void test_topology_loader(void)
     IMFTopoLoader *loader;
     IUnknown *node_object;
     WORD node_count;
-    TOPOID node_id;
+    TOPOID node_id, oldtopoid, newtopoid;
     DWORD index;
     HRESULT hr;
     BOOL ret;
@@ -4177,6 +4177,11 @@ static void test_topology_loader(void)
         }
         else if (test->expected_result == S_OK)
         {
+            IMFTopology_GetTopologyID(topology, &oldtopoid);
+            IMFTopology_GetTopologyID(full_topology, &newtopoid);
+            todo_wine ok(oldtopoid == newtopoid, "Expected the same topology id. %llu == %llu\n", oldtopoid, newtopoid);
+            ok(topology != full_topology, "Expected a different object for the resolved topology.\n");
+
             hr = IMFTopology_GetCount(full_topology, &count);
             ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
             todo_wine
@@ -4324,6 +4329,9 @@ todo_wine {
             hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
             ok(hr == S_OK, "Failed to resolve topology, hr %#lx.\n", hr);
             ok(full_topology != topology2, "Unexpected instance.\n");
+            IMFTopology_GetTopologyID(topology2, &oldtopoid);
+            IMFTopology_GetTopologyID(full_topology, &newtopoid);
+            todo_wine ok(oldtopoid == newtopoid, "Expected the same topology id. %llu == %llu\n", oldtopoid, newtopoid);
             hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
