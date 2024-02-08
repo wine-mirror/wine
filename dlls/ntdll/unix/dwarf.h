@@ -912,7 +912,7 @@ static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context,
         case DW_OP_pick:        stack[sp + 1] = stack[sp - dwarf_get_u1(&p)]; sp++; break;
         case DW_OP_swap:        tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = tmp; break;
         case DW_OP_rot:         tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = stack[sp-2]; stack[sp-2] = tmp; break;
-        case DW_OP_abs:         stack[sp] = labs(stack[sp]); break;
+        case DW_OP_abs:         stack[sp] = labs((LONG_PTR)stack[sp]); break;
         case DW_OP_neg:         stack[sp] = -stack[sp]; break;
         case DW_OP_not:         stack[sp] = ~stack[sp]; break;
         case DW_OP_and:         stack[sp-1] &= stack[sp]; sp--; break;
