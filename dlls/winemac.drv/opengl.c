@@ -4170,17 +4170,26 @@ static void load_extensions(void)
 }
 
 
-static void init_opengl(void)
+/**********************************************************************
+ *              macdrv_wine_get_wgl_driver
+ */
+struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
 {
     unsigned int i;
 
     TRACE("()\n");
 
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_WGL_DRIVER_VERSION);
+        return NULL;
+    }
+
     dc_pbuffers = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
     if (!dc_pbuffers)
     {
         WARN("CFDictionaryCreateMutable failed\n");
-        return;
+        return NULL;
     }
 
     opengl_handle = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD);
@@ -4188,7 +4197,7 @@ static void init_opengl(void)
     {
         ERR("Failed to load OpenGL: %s\n", dlerror());
         ERR("OpenGL support is disabled.\n");
-        return;
+        return NULL;
     }
 
     for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
@@ -4229,11 +4238,12 @@ static void init_opengl(void)
     if (!init_pixel_formats())
         goto failed;
 
-    return;
+    return &opengl_funcs;
 
 failed:
     dlclose(opengl_handle);
     opengl_handle = NULL;
+    return NULL;
 }
 
 
@@ -4580,20 +4590,3 @@ static struct opengl_funcs opengl_funcs =
         macdrv_get_pixel_formats,       /* p_get_pixel_formats */
     }
 };
-
-/**********************************************************************
- *              macdrv_wine_get_wgl_driver
- */
-struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
-{
-    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_WGL_DRIVER_VERSION);
-        return NULL;
-    }
-
-    pthread_once(&init_once, init_opengl);
-    return opengl_handle ? &opengl_funcs : (void *)-1;
-}
