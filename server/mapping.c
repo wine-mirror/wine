@@ -654,11 +654,10 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     return 0;
 }
 
-/* load the CLR header from its section */
-static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int unix_fd,
-                            IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+/* load a data directory header from its section */
+static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, int unix_fd,
+                          IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
-    ssize_t ret;
     size_t map_size, file_size;
     off_t file_start;
     unsigned int i;
@@ -672,16 +671,39 @@ static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int
         get_section_sizes( &sec[i], &map_size, &file_start, &file_size );
         if (size >= map_size) continue;
         if (va - sec[i].VirtualAddress >= map_size - size) continue;
-        file_size = min( file_size, map_size );
-        size = min( size, sizeof(*hdr) );
-        ret = pread( unix_fd, hdr, min( size, file_size ), file_start + va - sec[i].VirtualAddress );
-        if (ret <= 0) break;
-        if (ret < sizeof(*hdr)) memset( (char *)hdr + ret, 0, sizeof(*hdr) - ret );
-        return (hdr->MajorRuntimeVersion > COR_VERSION_MAJOR_V2 ||
-                (hdr->MajorRuntimeVersion == COR_VERSION_MAJOR_V2 &&
-                 hdr->MinorRuntimeVersion >= COR_VERSION_MINOR));
+        if (size > dir_size) size = dir_size;
+        if (size > file_size) size = file_size;
+        return pread( unix_fd, dir, size, file_start + va - sec[i].VirtualAddress );
     }
     return 0;
+}
+
+/* load the CLR header from its section */
+static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int unix_fd,
+                            IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+{
+    int ret = load_data_dir( hdr, sizeof(*hdr), va, size, unix_fd, sec, nb_sec );
+
+    if (ret <= 0) return 0;
+    if (ret < sizeof(*hdr)) memset( (char *)hdr + ret, 0, sizeof(*hdr) - ret );
+    return (hdr->MajorRuntimeVersion > COR_VERSION_MAJOR_V2 ||
+            (hdr->MajorRuntimeVersion == COR_VERSION_MAJOR_V2 &&
+             hdr->MinorRuntimeVersion >= COR_VERSION_MINOR));
+}
+
+/* load the LOAD_CONFIG header from its section */
+static int load_cfg_header( IMAGE_LOAD_CONFIG_DIRECTORY64 *cfg, size_t va, size_t size,
+                            int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+{
+    unsigned int cfg_size;
+    int ret = load_data_dir( cfg, sizeof(*cfg), va, size, unix_fd, sec, nb_sec );
+
+    if (ret <= 0) return 0;
+    cfg_size = ret;
+    if (cfg_size < offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, Size ) + sizeof(cfg_size)) return 0;
+    if (cfg_size > cfg->Size) cfg_size = cfg->Size;
+    if (cfg_size < sizeof(*cfg)) memset( (char *)cfg + cfg_size, 0, sizeof(*cfg) - cfg_size );
+    return 1;
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
@@ -707,9 +729,14 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             IMAGE_OPTIONAL_HEADER64 hdr64;
         } opt;
     } nt;
+    union
+    {
+        IMAGE_LOAD_CONFIG_DIRECTORY32 cfg32;
+        IMAGE_LOAD_CONFIG_DIRECTORY64 cfg64;
+    } cfg;
     off_t pos;
     int size, has_relocs;
-    size_t mz_size, clr_va = 0, clr_size = 0;
+    size_t mz_size, clr_va = 0, clr_size = 0, cfg_va, cfg_size;
     unsigned int i;
 
     /* load the headers */
@@ -753,6 +780,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             clr_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
             clr_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
         }
+        cfg_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress;
+        cfg_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
+
         mapping->image.base            = nt.opt.hdr32.ImageBase;
         mapping->image.entry_point     = nt.opt.hdr32.AddressOfEntryPoint;
         mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
@@ -801,6 +831,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             clr_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
             clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
         }
+        cfg_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress;
+        cfg_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
+
         mapping->image.base            = nt.opt.hdr64.ImageBase;
         mapping->image.entry_point     = nt.opt.hdr64.AddressOfEntryPoint;
         mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
@@ -834,6 +867,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
+    mapping->image.is_hybrid     = 0;
     mapping->image.padding       = 0;
     mapping->image.map_addr      = get_fd_map_address( mapping->fd );
     mapping->image.image_charact = nt.FileHeader.Characteristics;
@@ -873,6 +907,14 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             if (clr.Flags & COMIMAGE_FLAGS_32BITPREFERRED)
                 mapping->image.image_flags |= IMAGE_FLAGS_ComPlusPrefer32bit;
         }
+    }
+
+    if (load_cfg_header( &cfg.cfg64, cfg_va, cfg_size, unix_fd, sec, nt.FileHeader.NumberOfSections ))
+    {
+        if (nt.opt.hdr32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            mapping->image.is_hybrid = !!cfg.cfg32.CHPEMetadataPointer;
+        else
+            mapping->image.is_hybrid = !!cfg.cfg64.CHPEMetadataPointer;
     }
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections ))
