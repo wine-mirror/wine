@@ -744,6 +744,17 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
             }
         }
         break;
+    case WM_APPCOMMAND:
+        switch(GET_APPCOMMAND_LPARAM(lParam))
+        {
+            case APPCOMMAND_BROWSER_BACKWARD:
+                IExplorerBrowser_BrowseToObject(browser,NULL,SBSP_NAVIGATEBACK);
+                break;
+            case APPCOMMAND_BROWSER_FORWARD:
+                IExplorerBrowser_BrowseToObject(browser,NULL,SBSP_NAVIGATEFORWARD);
+                break;
+        }
+        break;
     case WM_SIZE:
         update_window_size(info,HIWORD(lParam),LOWORD(lParam));
         break;
