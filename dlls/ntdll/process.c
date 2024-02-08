@@ -94,10 +94,11 @@ NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG disable, ULONG *old_value )
  */
 USHORT WINAPI RtlWow64GetCurrentMachine(void)
 {
-    USHORT current, native;
-
-    RtlWow64GetProcessMachines( GetCurrentProcess(), &current, &native );
-    return current ? current : native;
+    USHORT machine = current_machine;
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset) RtlWow64GetCurrentCpuArea( &machine, NULL, NULL );
+#endif
+    return machine;
 }
 
 

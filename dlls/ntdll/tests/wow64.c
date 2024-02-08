@@ -289,7 +289,7 @@ static void test_query_architectures(void)
     STARTUPINFOA si = { sizeof(si) };
     NTSTATUS status;
     HANDLE process;
-    ULONG len;
+    ULONG i, len;
 #ifdef __arm64ec__
     BOOL is_arm64ec = TRUE;
 #else
@@ -383,27 +383,21 @@ static void test_query_architectures(void)
     }
     if (pRtlWow64IsWowGuestMachineSupported)
     {
-        BOOLEAN ret = 0xcc;
-        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_I386, &ret );
-        ok( !status, "failed %lx\n", status );
-        ok( ret == (native_machine == IMAGE_FILE_MACHINE_AMD64 ||
-                    native_machine == IMAGE_FILE_MACHINE_ARM64), "wrong result %u\n", ret );
-        ret = 0xcc;
-        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_ARMNT, &ret );
-        ok( !status, "failed %lx\n", status );
-        ok( !ret || native_machine == IMAGE_FILE_MACHINE_ARM64, "wrong result %u\n", ret );
-        ret = 0xcc;
-        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_AMD64, &ret );
-        ok( !status, "failed %lx\n", status );
-        ok( !ret || native_machine == IMAGE_FILE_MACHINE_ARM64, "wrong result %u\n", ret );
-        ret = 0xcc;
-        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_ARM64, &ret );
-        ok( !status, "failed %lx\n", status );
-        ok( !ret, "wrong result %u\n", ret );
-        ret = 0xcc;
-        status = pRtlWow64IsWowGuestMachineSupported( 0xdead, &ret );
-        ok( !status, "failed %lx\n", status );
-        ok( !ret, "wrong result %u\n", ret );
+        static const WORD machines[] = { IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_ARMNT,
+                                         IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_ARM64, 0xdead };
+
+        for (i = 0; i < ARRAY_SIZE(machines); i++)
+        {
+            BOOLEAN ret = 0xcc;
+            status = pRtlWow64IsWowGuestMachineSupported( machines[i], &ret );
+            ok( !status, "failed %lx\n", status );
+            if (is_machine_32bit( machines[i] ) && !is_machine_32bit( native_machine ))
+                ok( ret || machines[i] == IMAGE_FILE_MACHINE_ARMNT ||
+                    broken(current_machine == IMAGE_FILE_MACHINE_I386), /* win10-1607 wow64 */
+                    "%04x: got %u\n", machines[i], ret );
+            else
+                ok( !ret, "%04x: got %u\n", machines[i], ret );
+        }
     }
 }
 

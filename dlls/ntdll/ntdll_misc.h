@@ -41,6 +41,18 @@
 
 #define NTDLL_TLS_ERRNO 16  /* TLS slot for _errno() */
 
+#ifdef __i386__
+static const USHORT current_machine = IMAGE_FILE_MACHINE_I386;
+#elif defined(__x86_64__)
+static const USHORT current_machine = IMAGE_FILE_MACHINE_AMD64;
+#elif defined(__arm__)
+static const USHORT current_machine = IMAGE_FILE_MACHINE_ARMNT;
+#elif defined(__aarch64__)
+static const USHORT current_machine = IMAGE_FILE_MACHINE_ARM64;
+#else
+static const USHORT current_machine = IMAGE_FILE_MACHINE_UNKNOWN;
+#endif
+
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 static const UINT_PTR page_size = 0x1000;
 #else
