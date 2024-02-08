@@ -958,7 +958,6 @@ typedef struct
     client_ptr_t peb;          /* PEB of new process (in process address space) */
     client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
 @REPLY
-    client_ptr_t entry;        /* process entry point */
     int          suspend;      /* is process suspended? */
 @END
 

@@ -1393,9 +1393,9 @@ DECL_HANDLER(map_image_view)
         view->committed = NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
         view->image     = mapping->image;
-        view->image.entry_point = req->entry;
         if (add_process_view( current, view ))
         {
+            current->entry_point = view->base + req->entry;
             current->process->machine = (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady) ?
                                          native_machine : req->machine;
         }
@@ -1438,7 +1438,11 @@ DECL_HANDLER(map_builtin_view)
         view->image   = *image;
         view->namelen = namelen;
         memcpy( view->name, image + 1, namelen );
-        if (add_process_view( current, view )) current->process->machine = image->machine;
+        if (add_process_view( current, view ))
+        {
+            current->entry_point = view->base + image->entry_point;
+            current->process->machine = image->machine;
+        }
     }
 }
 

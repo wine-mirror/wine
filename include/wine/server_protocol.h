@@ -974,9 +974,8 @@ struct init_process_done_request
 struct init_process_done_reply
 {
     struct reply_header __header;
-    client_ptr_t entry;
     int          suspend;
-    char __pad_20[4];
+    char __pad_12[4];
 };
 
 
@@ -6507,7 +6506,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 786
+#define SERVER_PROTOCOL_VERSION 787
 
 /* ### protocol_version end ### */
 

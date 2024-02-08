@@ -174,6 +174,7 @@ static BOOL create_process_machine( char *cmdline, DWORD flags, USHORT machine, 
     ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE,
                           EXTENDED_STARTUPINFO_PRESENT | flags, NULL, NULL, &si.StartupInfo, pi );
     DeleteProcThreadAttributeList( list );
+    free( list );
     return ret;
 }
 
@@ -226,7 +227,8 @@ static void test_process_architecture( HANDLE process, USHORT expect_machine, US
     }
 }
 
-static void test_process_machine( HANDLE process, USHORT expect_machine, USHORT expect_image )
+static void test_process_machine( HANDLE process, HANDLE thread,
+                                  USHORT expect_machine, USHORT expect_image )
 {
     PROCESS_BASIC_INFORMATION basic;
     SECTION_IMAGE_INFORMATION image;
@@ -236,6 +238,8 @@ static void test_process_machine( HANDLE process, USHORT expect_machine, USHORT 
     ULONG len;
     SIZE_T size;
     NTSTATUS status;
+    void *entry_point = NULL;
+    void *win32_entry = NULL;
 
     status = NtQueryInformationProcess( process, ProcessBasicInformation, &basic, sizeof(basic), &len );
     ok( !status, "ProcessBasicInformation failed %lx\n", status );
@@ -245,11 +249,35 @@ static void test_process_machine( HANDLE process, USHORT expect_machine, USHORT 
     {
         ok( nt.FileHeader.Machine == expect_machine, "wrong nt machine %x / %x\n",
             nt.FileHeader.Machine, expect_machine );
+        entry_point = (char *)peb.ImageBaseAddress + nt.OptionalHeader.AddressOfEntryPoint;
     }
 
     status = NtQueryInformationProcess( process, ProcessImageInformation, &image, sizeof(image), &len );
     ok( !status, "ProcessImageInformation failed %lx\n", status );
     ok( image.Machine == expect_image, "wrong image info %x / %x\n", image.Machine, expect_image );
+
+    status = NtQueryInformationThread( thread, ThreadQuerySetWin32StartAddress,
+                                       &win32_entry, sizeof(win32_entry), &len );
+    ok( !status, "ThreadQuerySetWin32StartAddress failed %lx\n", status );
+
+    if (!entry_point) return;
+
+    if (image.Machine == expect_machine)
+    {
+        ok( image.TransferAddress == entry_point, "wrong entry %p / %p\n",
+            image.TransferAddress, entry_point );
+        ok( win32_entry == entry_point, "wrong win32 entry %p / %p\n",
+            win32_entry, entry_point );
+    }
+    else
+    {
+        /* image.TransferAddress is the ARM64 entry, entry_point is the x86-64 one,
+           win32_entry is the redirected x86-64 -> ARM64EC one */
+        ok( image.TransferAddress != entry_point, "wrong entry %p\n", image.TransferAddress );
+        ok( image.TransferAddress != win32_entry, "wrong entry %p\n", image.TransferAddress );
+        todo_wine
+        ok( win32_entry != entry_point, "wrong win32 entry %p\n", win32_entry );
+    }
 }
 
 static void test_query_architectures(void)
@@ -302,7 +330,7 @@ static void test_query_architectures(void)
     winetest_push_context( "current" );
     test_process_architecture( GetCurrentProcess(), is_win64 ? native_machine : current_machine,
                                native_machine );
-    test_process_machine( GetCurrentProcess(), current_machine,
+    test_process_machine( GetCurrentProcess(), GetCurrentThread(), current_machine,
                           is_arm64ec ? native_machine : current_machine );
     winetest_pop_context();
 
@@ -315,7 +343,8 @@ static void test_query_architectures(void)
     {
         winetest_push_context( "system32" );
         test_process_architecture( pi.hProcess, native_machine, native_machine );
-        test_process_machine( pi.hProcess, is_win64 ? current_machine : native_machine, native_machine );
+        test_process_machine( pi.hProcess, pi.hThread,
+                              is_win64 ? current_machine : native_machine, native_machine );
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
         CloseHandle( pi.hThread );
@@ -326,7 +355,7 @@ static void test_query_architectures(void)
     {
         winetest_push_context( "syswow64" );
         test_process_architecture( pi.hProcess, IMAGE_FILE_MACHINE_I386, native_machine );
-        test_process_machine( pi.hProcess, IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_I386 );
+        test_process_machine( pi.hProcess, pi.hThread, IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_I386 );
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
         CloseHandle( pi.hThread );
@@ -340,7 +369,7 @@ static void test_query_architectures(void)
         {
             winetest_push_context( "%04x", machine );
             test_process_architecture( pi.hProcess, native_machine, native_machine );
-            test_process_machine( pi.hProcess, machine, native_machine );
+            test_process_machine( pi.hProcess, pi.hThread, machine, native_machine );
             TerminateProcess( pi.hProcess, 0 );
             CloseHandle( pi.hProcess );
             CloseHandle( pi.hThread );
