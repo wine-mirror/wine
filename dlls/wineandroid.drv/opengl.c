@@ -958,24 +958,28 @@ static void init_extensions(void)
 #undef REDIRECT
 }
 
-static BOOL egl_init(void)
+/**********************************************************************
+ *           ANDROID_wine_get_wgl_driver
+ */
+struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
 {
-    static int retval = -1;
     EGLConfig *configs;
     EGLint major, minor, count, i, pass;
 
-    if (retval != -1) return retval;
-    retval = 0;
-
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
+        return NULL;
+    }
     if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))
     {
         ERR( "failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
-        return FALSE;
+        return NULL;
     }
     if (!(opengl_handle = dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL )))
     {
         ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, dlerror() );
-        return FALSE;
+        return NULL;
     }
 
 #define LOAD_FUNCPTR(func) do { \
@@ -1042,8 +1046,7 @@ static BOOL egl_init(void)
     }
 
     init_extensions();
-    retval = 1;
-    return TRUE;
+    return &egl_funcs;
 }
 
 
@@ -1078,14 +1081,3 @@ static struct opengl_funcs egl_funcs =
     { ALL_WGL_FUNCS }
 #undef USE_GL_FUNC
 };
-
-struct opengl_funcs *get_wgl_driver( UINT version )
-{
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
-        return NULL;
-    }
-    if (!egl_init()) return NULL;
-    return &egl_funcs;
-}
