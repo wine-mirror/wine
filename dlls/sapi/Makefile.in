@@ -5,6 +5,7 @@ DELAYIMPORTS = winmm
 SOURCES = \
 	async.c \
 	automation.c \
+	dispatch.c \
 	main.c \
 	mmaudio.c \
 	resource.c \

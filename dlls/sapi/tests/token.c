@@ -26,6 +26,8 @@
 
 #include "wine/test.h"
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 static void test_data_key(void)
 {
     ISpRegDataKey *data_key;
@@ -669,6 +671,8 @@ static void test_object_token(void)
     ISpObjectTokenCategory *cat;
     DWORD regid;
     IUnknown *obj;
+    DISPPARAMS params;
+    VARIANT arg, ret;
 
     hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
                            &IID_ISpObjectToken, (void **)&token );
@@ -914,6 +918,22 @@ static void test_object_token(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( tempB && !wcscmp( tempB, L"TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
     SysFreeString( tempB );
+
+    memset( &params, 0, sizeof(params) );
+    params.cArgs = 1;
+    params.cNamedArgs = 0;
+    params.rgvarg = &arg;
+    VariantInit( &arg );
+    V_VT( &arg ) = VT_I4;
+    V_I4( &arg ) = 0x409;
+    VariantInit( &ret );
+    hr = ISpeechObjectToken_Invoke( speech_token, DISPID_SOTGetDescription, &IID_NULL,
+                                    0, DISPATCH_METHOD, &params, &ret, NULL, NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( V_VT( &ret ) == VT_BSTR, "got %#x\n", V_VT( &ret ) );
+    ok( V_BSTR( &ret ) && !wcscmp( V_BSTR( &ret ), L"409 - TestToken" ),
+        "got %s\n", wine_dbgstr_w( V_BSTR( &ret ) ) );
+    VariantClear( &ret );
 
     ISpeechObjectToken_Release( speech_token );
 
