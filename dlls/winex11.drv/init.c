@@ -371,14 +371,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
     return 0;
 }
 
-/**********************************************************************
- *           X11DRV_wine_get_wgl_driver
- */
-static struct opengl_funcs *X11DRV_wine_get_wgl_driver( UINT version )
-{
-    return get_glx_driver( version );
-}
-
 
 static const struct user_driver_funcs x11drv_funcs =
 {
