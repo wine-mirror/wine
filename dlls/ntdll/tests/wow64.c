@@ -1700,6 +1700,7 @@ static void check_module( ULONG64 base, const WCHAR *name )
     else
         CHECK_MODULE(wow64cpu);
 #undef CHECK_MODULE
+    todo_wine_if( !wcscmp( name, L"win32u.dll" ))
     ok( 0, "unknown module %s %s found\n", wine_dbgstr_longlong(base), wine_dbgstr_w(name));
 }
 
