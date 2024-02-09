@@ -2347,6 +2347,13 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
       }
     }
 
+    if (curDepth > lineCurDepth) {
+        WINE_TRACE("Brackets do not match, error out without executing.\n");
+        WCMD_free_commands(*output);
+        *output = NULL;
+        errorlevel = 255;
+    }
+
     /* Dump out the parsed output */
     WCMD_DumpCommands(*output);
 

@@ -1055,6 +1055,30 @@ if 1 == 0 (
 @tab@
 @tab@
 ) else echo block containing two lines with just tab seems to work
+::
+echo @if 1 == 1 (> blockclosing.cmd
+echo   echo with closing bracket>> blockclosing.cmd
+echo )>> blockclosing.cmd
+cmd.exe /Q /C blockclosing.cmd
+echo %ERRORLEVEL% ok
+::
+echo @if 1 == 1 (> blockclosing.cmd
+echo   echo without closing bracket first>> blockclosing.cmd
+echo   echo without closing bracket second>> blockclosing.cmd
+cmd.exe /Q /C blockclosing.cmd
+echo %ERRORLEVEL% two lines
+::
+echo echo before both blocks> blockclosing.cmd
+echo @if 1 == 1 (>> blockclosing.cmd
+echo   echo before nested block without closing bracket>> blockclosing.cmd
+echo   @if 2 == 2 (>> blockclosing.cmd
+echo     echo without closing bracket>> blockclosing.cmd
+echo )>> blockclosing.cmd
+echo echo outside of block without closing bracket>> blockclosing.cmd
+cmd.exe /Q /C blockclosing.cmd
+echo %ERRORLEVEL% nested
+::
+del blockclosing.cmd
 echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity
