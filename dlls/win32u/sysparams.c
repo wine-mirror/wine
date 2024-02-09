@@ -2370,6 +2370,7 @@ RECT get_virtual_screen_rect( UINT dpi )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
         union_rect( &rect, &rect, &monitor->rc_monitor );
     }
 
