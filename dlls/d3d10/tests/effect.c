@@ -9147,7 +9147,7 @@ static void test_effect_value_expression(void)
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
     for (idx = 0; idx < ARRAY_SIZE(blend_factor); ++idx)
-        ok(blend_factor[idx] == UINT_MAX, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
+        ok(blend_factor[idx] == (float)UINT_MAX, "Got unexpected blend_factor[%u] %.8e.\n", idx, blend_factor[idx]);
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     /* movc */
