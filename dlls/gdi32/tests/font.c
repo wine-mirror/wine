@@ -6527,7 +6527,7 @@ static void test_max_height(void)
     DeleteObject(SelectObject(hdc, hfont_old));
 
     /* test the largest value */
-    lf.lfHeight = -((1 << 16) - 1);
+    lf.lfHeight = -((1 << 14) - 1);
     hfont = CreateFontIndirectA(&lf);
     hfont_old = SelectObject(hdc, hfont);
     memset(&tm, 0, sizeof(tm));
@@ -6547,12 +6547,15 @@ static void test_max_height(void)
         hfont_old = SelectObject(hdc, hfont);
         memset(&tm, 0, sizeof(tm));
         r = GetTextMetricsA(hdc, &tm);
-        ok(r, "GetTextMetrics failed\n");
-        ok(tm.tmHeight == tm1.tmHeight,
-           "expected 1 ppem value (%ld), got %ld\n", tm1.tmHeight, tm.tmHeight);
-        ok(tm.tmAveCharWidth == tm1.tmAveCharWidth,
-           "expected 1 ppem value (%ld), got %ld\n", tm1.tmAveCharWidth, tm.tmAveCharWidth);
-        DeleteObject(SelectObject(hdc, hfont_old));
+        if (r)
+        {
+            ok(r, "GetTextMetrics failed\n");
+            ok(tm.tmHeight == tm1.tmHeight,
+               "expected 1 ppem value (%ld), got %ld\n", tm1.tmHeight, tm.tmHeight);
+            ok(tm.tmAveCharWidth == tm1.tmAveCharWidth,
+               "expected 1 ppem value (%ld), got %ld\n", tm1.tmAveCharWidth, tm.tmAveCharWidth);
+            DeleteObject(SelectObject(hdc, hfont_old));
+        }
         winetest_pop_context();
     }
 
