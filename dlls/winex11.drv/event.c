@@ -405,7 +405,7 @@ static inline BOOL call_event_handler( Display *display, XEvent *event )
 /***********************************************************************
  *           process_events
  */
-static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,XPointer), ULONG_PTR arg )
+BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,XPointer), ULONG_PTR arg )
 {
     XEvent event, prev_event;
     int count = 0;

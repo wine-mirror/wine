@@ -1258,7 +1258,7 @@ static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 
         dm.dmPelsWidth = 640;
         dm.dmPelsHeight = 480;
-        expect_dm(&dm, devices[0].name, 0, TRUE);
+        expect_dm(&dm, devices[0].name, 0, FALSE);
 
         SetEvent(exit_event1);
         wait_result = WaitForSingleObject(process1, 5000);
@@ -1300,7 +1300,7 @@ static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 
         dm.dmPelsWidth = 640;
         dm.dmPelsHeight = 480;
-        expect_dm(&dm, devices[0].name, 0, TRUE);
+        expect_dm(&dm, devices[0].name, 0, FALSE);
 
         SetEvent(exit_event1);
         wait_result = WaitForSingleObject(process1, 5000);
@@ -1310,7 +1310,7 @@ static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 
         dm.dmPelsWidth = 640;
         dm.dmPelsHeight = 480;
-        expect_dm(&dm, devices[0].name, 0, TRUE);
+        expect_dm(&dm, devices[0].name, 0, FALSE);
 
         CloseHandle(process1);
         CloseHandle(process0);
@@ -1328,7 +1328,7 @@ static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 
         dm.dmPelsWidth = 640;
         dm.dmPelsHeight = 480;
-        expect_dm(&dm, devices[0].name, 0, TRUE);
+        expect_dm(&dm, devices[0].name, 0, FALSE);
 
         SetEvent(exit_event0);
         wait_result = WaitForSingleObject(process0, 5000);
@@ -1338,7 +1338,7 @@ static void test_ChangeDisplaySettingsEx(int argc, char **argv)
 
         dm.dmPelsWidth = 640;
         dm.dmPelsHeight = 480;
-        expect_dm(&dm, devices[0].name, 0, TRUE);
+        expect_dm(&dm, devices[0].name, 0, FALSE);
 
         CloseHandle(process1);
         CloseHandle(process0);
