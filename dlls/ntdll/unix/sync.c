@@ -2593,7 +2593,6 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 #endif
 
 /* Notify direct completion of async and close the wait handle if it is no longer needed.
- * This function is a no-op (returns status as-is) if the supplied handle is NULL.
  */
 void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULONG_PTR information, BOOL mark_pending )
 {
