@@ -1029,6 +1029,32 @@ if not exist %windir% (
 ) else (
   echo windir does exist
 )
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@space@
+) else echo block containing a line with just space seems to work
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@tab@
+) else echo block containing a line with just tab seems to work
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@space@@tab@
+) else echo block containing a line with just space and tab seems to work
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@tab@@space@
+) else echo block containing a line with just tab and space seems to work
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@space@
+@space@
+) else echo block containing two lines with just space seems to work
+if 1 == 0 (
+   echo 1 == 0 should not be true
+@tab@
+@tab@
+) else echo block containing two lines with just tab seems to work
 echo --- case sensitivity with and without /i option
 if bar==BAR echo if does not default to case sensitivity
 if not bar==BAR echo if seems to default to case sensitivity
