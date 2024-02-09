@@ -251,9 +251,6 @@ extern int macdrv_clip_cursor(CGRect rect);
 /* Used DISPLAY_DEVICE.StateFlags for adapters */
 #define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP      0x00000001
 #define DISPLAY_DEVICE_PRIMARY_DEVICE           0x00000004
-/* Used DISPLAY_DEVICE.StateFlags for monitors */
-#define DISPLAY_DEVICE_ACTIVE                   0x00000001
-#define DISPLAY_DEVICE_ATTACHED                 0x00000002
 
 /* Represent a physical GPU in the PCI slots */
 struct macdrv_gpu
@@ -285,8 +282,6 @@ struct macdrv_monitor
     CGRect rc_monitor;
     /* as RcWork in MONITORINFO struct after conversion by rect_from_cgrect */
     CGRect rc_work;
-    /* StateFlags in DISPLAY_DEVICE struct */
-    uint32_t state_flags;
 };
 
 extern int macdrv_get_displays(struct macdrv_display** displays, int* count);

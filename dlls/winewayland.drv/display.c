@@ -237,11 +237,8 @@ static void wayland_add_device_monitor(const struct gdi_device_manager *device_m
     /* We don't have a direct way to get the work area in Wayland. */
     monitor.rc_work = monitor.rc_monitor;
 
-    monitor.state_flags = DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE;
-
-    TRACE("name=%s rc_monitor=rc_work=%s state_flags=0x%x\n",
-          output_info->output->name, wine_dbgstr_rect(&monitor.rc_monitor),
-          (UINT)monitor.state_flags);
+    TRACE("name=%s rc_monitor=rc_work=%s\n",
+          output_info->output->name, wine_dbgstr_rect(&monitor.rc_monitor));
 
     device_manager->add_monitor(&monitor, param);
 }

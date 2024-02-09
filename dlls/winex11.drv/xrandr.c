@@ -1066,7 +1066,6 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
     /* Inactive but attached monitor, no need to check for mirrored/replica monitors */
     if (!output_info->crtc || !crtc_info->mode)
     {
-        monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED;
         monitors[monitor_count].edid_len = get_edid( adapter_id, &monitors[monitor_count].edid );
         monitor_count = 1;
     }
@@ -1113,10 +1112,6 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
                     SetRect( &monitors[monitor_count].rc_monitor, crtc_info->x, crtc_info->y,
                              crtc_info->x + crtc_info->width, crtc_info->y + crtc_info->height );
                     monitors[monitor_count].rc_work = get_work_area( &monitors[monitor_count].rc_monitor );
-
-                    monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED;
-                    if (!IsRectEmpty( &monitors[monitor_count].rc_monitor ))
-                        monitors[monitor_count].state_flags |= DISPLAY_DEVICE_ACTIVE;
 
                     if (is_crtc_primary( primary_rect, crtc_info ))
                         primary_index = monitor_count;

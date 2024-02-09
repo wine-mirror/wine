@@ -1195,7 +1195,6 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                 {
                     .rc_monitor = rect_from_cgrect(monitor->rc_monitor),
                     .rc_work = rect_from_cgrect(monitor->rc_work),
-                    .state_flags = monitor->state_flags,
                 };
                 device_manager->add_monitor( &gdi_monitor, param );
             }

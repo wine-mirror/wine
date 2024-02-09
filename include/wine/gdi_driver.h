@@ -264,7 +264,6 @@ struct gdi_monitor
 {
     RECT rc_monitor;      /* RcMonitor in MONITORINFO struct */
     RECT rc_work;         /* RcWork in MONITORINFO struct */
-    DWORD state_flags;    /* StateFlags in DISPLAY_DEVICE struct */
     unsigned char *edid;  /* Extended Device Identification Data */
     UINT edid_len;
 };

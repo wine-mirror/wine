@@ -282,7 +282,6 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
         {
             .rc_monitor = virtual_screen_rect,
             .rc_work = monitor_rc_work,
-            .state_flags = DISPLAY_DEVICE_ACTIVE | DISPLAY_DEVICE_ATTACHED,
         };
         const DEVMODEW mode =
         {

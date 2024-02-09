@@ -319,11 +319,8 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
             monitor[index].rc_monitor = monitors[i].rcMonitor;
             monitor[index].rc_work = monitors[i].rcWork;
             /* Xinerama only reports monitors already attached */
-            monitor[index].state_flags = DISPLAY_DEVICE_ATTACHED;
             monitor[index].edid_len = 0;
             monitor[index].edid = NULL;
-            if (!IsRectEmpty( &monitors[i].rcMonitor ))
-                monitor[index].state_flags |= DISPLAY_DEVICE_ACTIVE;
 
             index++;
         }
