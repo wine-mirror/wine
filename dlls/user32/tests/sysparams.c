@@ -3940,7 +3940,6 @@ static void test_dpi_context(void)
             ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i, awareness );
             break;
         case 0x22:
-            todo_wine
             ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
                 "%Ix: wrong value %u\n", i, awareness );
             break;
@@ -3967,7 +3966,6 @@ static void test_dpi_context(void)
             ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i | 0x80000000, awareness );
             break;
         case 0x22:
-            todo_wine
             ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken ( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
                 "%Ix: wrong value %u\n", i, awareness );
             break;
@@ -3989,7 +3987,6 @@ static void test_dpi_context(void)
             ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%Ix: not valid\n", ~i );
             break;
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
-            todo_wine
             ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken ( awareness == DPI_AWARENESS_INVALID ), "%Ix: wrong value %u\n", ~i, awareness );
             break;
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED:

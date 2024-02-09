@@ -656,14 +656,18 @@ DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT 
     case 0x10:
     case 0x11:
     case 0x12:
+    case 0x22:
     case 0x80000010:
     case 0x80000011:
     case 0x80000012:
+    case 0x80000022:
         return (ULONG_PTR)context & 3;
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
         return ~(ULONG_PTR)context;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
+        return ~(ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
     default:
         return DPI_AWARENESS_INVALID;
     }
