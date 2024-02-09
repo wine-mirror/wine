@@ -1829,8 +1829,27 @@ static HRESULT WINAPI speech_token_get_Category( ISpeechObjectToken *iface,
 static HRESULT WINAPI speech_token_GetDescription( ISpeechObjectToken *iface,
                                                    LONG locale, BSTR *desc )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpeechObjectToken( iface );
+    WCHAR langid[5];
+    WCHAR *desc_wstr = NULL;
+    HRESULT hr;
+
+    TRACE( "(%p)->(%#lx %p)\n", This, locale, desc );
+
+    if (!desc) return E_POINTER;
+
+    swprintf( langid, ARRAY_SIZE( langid ), L"%X", LANGIDFROMLCID( locale ) );
+
+    hr = ISpObjectToken_GetStringValue( &This->ISpObjectToken_iface, langid, &desc_wstr );
+    if (hr == SPERR_NOT_FOUND)
+        hr = ISpObjectToken_GetStringValue( &This->ISpObjectToken_iface, NULL, &desc_wstr );
+    if (FAILED(hr))
+        return hr;
+
+    *desc = SysAllocString( desc_wstr );
+
+    CoTaskMemFree( desc_wstr );
+    return *desc ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI speech_token_SetId( ISpeechObjectToken *iface,

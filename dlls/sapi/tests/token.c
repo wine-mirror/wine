@@ -657,7 +657,7 @@ static IClassFactory test_class_cf = { &ClassFactoryVtbl };
 
 static void test_object_token(void)
 {
-    static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Wine\\Winetest\\sapi\\TestToken";
+    static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Winetest\\sapi\\TestToken";
 
     ISpObjectToken *token;
     IDispatch *disp;
@@ -665,6 +665,7 @@ static void test_object_token(void)
     ISpDataKey *sub_key;
     HRESULT hr;
     LPWSTR tempW, token_id;
+    BSTR tempB;
     ISpObjectTokenCategory *cat;
     DWORD regid;
     IUnknown *obj;
@@ -863,11 +864,64 @@ static void test_object_token(void)
         CoTaskMemFree( tempW );
     }
 
+    hr = ISpObjectToken_SetStringValue( token, L"409", L"409 - TestToken" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectToken_SetStringValue( token, L"407", L"407 - TestToken" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = ISpObjectToken_SetStringValue( token, L"E40C", L"E40C - TestToken" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpObjectToken_QueryInterface( token, &IID_ISpeechObjectToken, (void **)&speech_token );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x409, NULL );
+    ok( hr == E_POINTER, "got %08lx\n", hr );
+
+    tempB = NULL;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x409, &tempB );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempB && !wcscmp( tempB, L"409 - TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
+    SysFreeString( tempB );
+
+    tempB = NULL;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x10407, &tempB );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempB && !wcscmp( tempB, L"407 - TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
+    SysFreeString( tempB );
+
+    tempB = NULL;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0xE40C, &tempB );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempB && !wcscmp( tempB, L"E40C - TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
+    SysFreeString( tempB );
+
+    tempB = (BSTR)0xdeadbeef;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x406, &tempB );
+    ok( hr == SPERR_NOT_FOUND, "got %08lx\n", hr );
+    ok( tempB == (BSTR)0xdeadbeef || broken(tempB == NULL) /* < win7 */, "got %p\n", tempB );
+
+    hr = ISpObjectToken_SetStringValue( token, NULL, L"TestToken" );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    tempB = NULL;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x406, &tempB );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempB && !wcscmp( tempB, L"TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
+    SysFreeString( tempB );
+
+    tempB = NULL;
+    hr = ISpeechObjectToken_GetDescription( speech_token, 0x0, &tempB );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( tempB && !wcscmp( tempB, L"TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
+    SysFreeString( tempB );
+
+    ISpeechObjectToken_Release( speech_token );
+
     ISpObjectToken_Release( test_class_token );
     IUnknown_Release( obj );
     ISpObjectToken_Release( token );
 
-    RegDeleteTreeA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Winetest\\sapi" );
+    RegDeleteTreeA( HKEY_LOCAL_MACHINE, "Software\\Winetest\\sapi" );
 }
 
 START_TEST(token)
