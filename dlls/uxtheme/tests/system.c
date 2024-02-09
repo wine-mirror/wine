@@ -50,8 +50,8 @@ static HDC (WINAPI *pGetBufferedPaintTargetDC)(HPAINTBUFFER);
 static HRESULT (WINAPI *pGetBufferedPaintTargetRect)(HPAINTBUFFER, RECT *);
 static HRESULT (WINAPI *pGetThemeIntList)(HTHEME, int, int, int, INTLIST *);
 static HRESULT (WINAPI *pGetThemeTransitionDuration)(HTHEME, int, int, int, int, DWORD *);
-static BOOL (WINAPI *pShouldSystemUseDarkMode)(void);
-static BOOL (WINAPI *pShouldAppsUseDarkMode)(void);
+static BOOLEAN (WINAPI *pShouldSystemUseDarkMode)(void);
+static BOOLEAN (WINAPI *pShouldAppsUseDarkMode)(void);
 
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER *);
@@ -2680,7 +2680,7 @@ static void test_theme(void)
 static void test_ShouldSystemUseDarkMode(void)
 {
     DWORD light_theme, light_theme_size = sizeof(light_theme), last_error;
-    BOOL result;
+    BOOLEAN result;
     LSTATUS ls;
 
     if (!pShouldSystemUseDarkMode)
@@ -2709,7 +2709,7 @@ static void test_ShouldSystemUseDarkMode(void)
 static void test_ShouldAppsUseDarkMode(void)
 {
     DWORD light_theme, light_theme_size = sizeof(light_theme), last_error;
-    BOOL result;
+    BOOLEAN result;
     LSTATUS ls;
 
     if (!pShouldAppsUseDarkMode)
