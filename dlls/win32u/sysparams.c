@@ -3564,10 +3564,11 @@ HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
 
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
-        RECT intersect;
-        RECT monitor_rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
-                                          system_dpi );
+        RECT intersect, monitor_rect;
 
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+
+        monitor_rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ), system_dpi );
         if (intersect_rect( &intersect, &monitor_rect, &r ))
         {
             /* check for larger intersecting area */
