@@ -1746,14 +1746,15 @@ static BOOL update_display_cache_from_registry(void)
             if (adapter->dev.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
             {
                 if (!IsRectEmpty(&monitor->rc_monitor)) monitor->dev.state_flags |= DISPLAY_DEVICE_ACTIVE;
-            }
 
-            LIST_FOR_EACH_ENTRY(monitor2, &monitors, struct monitor, entry)
-            {
-                if (EqualRect(&monitor2->rc_monitor, &monitor->rc_monitor))
+                LIST_FOR_EACH_ENTRY( monitor2, &monitors, struct monitor, entry )
                 {
-                    monitor->is_clone = TRUE;
-                    break;
+                    if (!(monitor2->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+                    if (EqualRect( &monitor2->rc_monitor, &monitor->rc_monitor ))
+                    {
+                        monitor->is_clone = TRUE;
+                        break;
+                    }
                 }
             }
 
