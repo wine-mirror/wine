@@ -2745,6 +2745,19 @@ static struct display_device *find_adapter_device_by_id( UINT index )
 }
 
 /* display_lock mutex must be held */
+static struct display_device *find_primary_adapter_device(void)
+{
+    struct adapter *adapter;
+
+    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        if (adapter->dev.state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+            return &adapter->dev;
+
+    WARN( "Failed to find primary adapter.\n" );
+    return NULL;
+}
+
+/* display_lock mutex must be held */
 static struct display_device *find_adapter_device_by_name( UNICODE_STRING *name )
 {
     SIZE_T len = name->Length / sizeof(WCHAR);
@@ -2769,7 +2782,7 @@ static struct adapter *find_adapter( UNICODE_STRING *name )
     if (!lock_display_devices()) return NULL;
 
     if (name && name->Length) device = find_adapter_device_by_name( name );
-    else device = find_adapter_device_by_id( 0 ); /* use primary adapter */
+    else device = find_primary_adapter_device();
 
     if (!device) adapter = NULL;
     else adapter = adapter_acquire( CONTAINING_RECORD( device, struct adapter, dev ) );
@@ -3226,7 +3239,7 @@ static LONG apply_display_settings( const WCHAR *devname, const DEVMODEW *devmod
 
     place_all_displays( displays );
 
-    if (!(primary = find_adapter_device_by_id( 0 ))) primary_name[0] = 0;
+    if (!(primary = find_primary_adapter_device())) primary_name[0] = 0;
     else wcscpy( primary_name, primary->device_name );
 
     /* use the default implementation in virtual desktop mode */
@@ -3396,7 +3409,7 @@ INT get_display_depth( UNICODE_STRING *name )
     if (name && name->Length)
         device = find_adapter_device_by_name( name );
     else
-        device = find_adapter_device_by_id( 0 ); /* use primary adapter */
+        device = find_primary_adapter_device();
 
     if (!device)
     {
