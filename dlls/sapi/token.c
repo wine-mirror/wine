@@ -1787,8 +1787,18 @@ static HRESULT WINAPI speech_token_GetIDsOfNames( ISpeechObjectToken *iface,
                                                   LCID lcid,
                                                   DISPID *dispids )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE( "(%p)->(%s %p %u %#lx %p)\n",
+           iface, debugstr_guid( iid ), names, count, lcid, dispids );
+
+    if (FAILED(hr = get_typeinfo( ISpeechObjectToken_tid, &ti )))
+        return hr;
+    hr = ITypeInfo_GetIDsOfNames( ti, names, count, dispids );
+    ITypeInfo_Release( ti );
+
+    return hr;
 }
 
 static HRESULT WINAPI speech_token_Invoke( ISpeechObjectToken *iface,

@@ -660,6 +660,7 @@ static IClassFactory test_class_cf = { &ClassFactoryVtbl };
 static void test_object_token(void)
 {
     static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Winetest\\sapi\\TestToken";
+    static const WCHAR *get_description = L"GetDescription";
 
     ISpObjectToken *token;
     IDispatch *disp;
@@ -671,6 +672,7 @@ static void test_object_token(void)
     ISpObjectTokenCategory *cat;
     DWORD regid;
     IUnknown *obj;
+    DISPID dispid;
     DISPPARAMS params;
     VARIANT arg, ret;
 
@@ -918,6 +920,11 @@ static void test_object_token(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( tempB && !wcscmp( tempB, L"TestToken" ), "got %s\n", wine_dbgstr_w( tempB ) );
     SysFreeString( tempB );
+
+    dispid = 0xdeadbeef;
+    hr = ISpeechObjectToken_GetIDsOfNames( speech_token, &IID_NULL, (WCHAR **)&get_description, 1, 0x409, &dispid );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( dispid == DISPID_SOTGetDescription, "got %08lx\n", dispid );
 
     memset( &params, 0, sizeof(params) );
     params.cArgs = 1;
