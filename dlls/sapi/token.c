@@ -1339,8 +1339,18 @@ static HRESULT WINAPI speech_tokens_Invoke( ISpeechObjectTokens *iface,
                                             EXCEPINFO *excepinfo,
                                             UINT *argerr )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE( "(%p)->(%ld %s %#lx %#x %p %p %p %p)\n", iface, dispid,
+           debugstr_guid( iid ), lcid, flags, params, result, excepinfo, argerr );
+
+    if (FAILED(hr = get_typeinfo( ISpeechObjectTokens_tid, &ti )))
+        return hr;
+    hr = ITypeInfo_Invoke( ti, iface, dispid, flags, params, result, excepinfo, argerr );
+    ITypeInfo_Release( ti );
+
+    return hr;
 }
 
 static HRESULT WINAPI speech_tokens_get_Count( ISpeechObjectTokens *iface,

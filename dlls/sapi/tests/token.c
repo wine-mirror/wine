@@ -256,7 +256,8 @@ static void test_token_enum(void)
     ISpObjectToken *out_tokens[5];
     WCHAR token_id[MAX_PATH];
     ULONG count;
-    VARIANT vars[3];
+    VARIANT vars[3], ret;
+    DISPPARAMS params;
     int i;
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenEnum, NULL, CLSCTX_INPROC_SERVER,
@@ -401,6 +402,14 @@ static void test_token_enum(void)
     ok( V_VT( &vars[2] ) == VT_ILLEGAL, "got %#x\n", V_VT( &vars[2] ) );
 
     IEnumVARIANT_Release( enumvar );
+
+    memset( &params, 0, sizeof(params) );
+    VariantInit( &ret );
+    hr = ISpeechObjectTokens_Invoke( speech_tokens, DISPID_SOTsCount, &IID_NULL, 0,
+                                     DISPATCH_PROPERTYGET, &params, &ret, NULL, NULL );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( V_VT( &ret ) == VT_I4, "got %#x\n", V_VT( &ret ) );
+    ok( V_I4( &ret ) == 3, "got %ld\n", V_I4( &ret ) );
 
     ISpeechObjectTokens_Release( speech_tokens );
     ISpObjectTokenEnumBuilder_Release( token_enum );

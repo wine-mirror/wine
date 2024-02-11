@@ -56,6 +56,7 @@ HRESULT token_create( IUnknown *outer, REFIID iid, void **obj );
 enum type_id
 {
     ISpeechObjectToken_tid,
+    ISpeechObjectTokens_tid,
     last_tid
 };
 
