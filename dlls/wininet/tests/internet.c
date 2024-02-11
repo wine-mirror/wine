@@ -1308,6 +1308,13 @@ static void test_Option_PerConnectionOption(void)
     ok(ret, "HeapValidate failed, last error %lu\n", GetLastError());
     GlobalFree(options[0].Value.pszValue);
 
+    /* verify that global proxy settings were not changed */
+    ret = InternetQueryOptionW(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, &size);
+    ok(ret, "InternetQueryOption should've succeeded\n");
+    ok(lstrcmpW(options[0].Value.pszValue, proxy_srvW),
+            "Retrieved proxy server should've been %s, was: %s\n",
+            wine_dbgstr_w(proxy_srvW), wine_dbgstr_w(options[0].Value.pszValue));
+
     /* disable the proxy server */
     list.dwOptionCount = 1;
     options[0].dwOption = INTERNET_PER_CONN_FLAGS;
