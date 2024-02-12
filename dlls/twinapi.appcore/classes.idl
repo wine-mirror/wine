@@ -28,6 +28,7 @@ import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.globalization.idl";
+import "windows.storage.streams.idl";
 
 #define DO_NO_IMPORTS
 #define _TWINAPI_APPCORE

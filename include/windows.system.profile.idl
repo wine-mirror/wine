@@ -31,13 +31,27 @@ import "windows.system.idl";
 #endif
 
 namespace Windows.System.Profile {
-
+    typedef enum SystemIdentificationSource SystemIdentificationSource;
     interface IAnalyticsInfoStatics;
     interface IAnalyticsInfoStatics2;
     interface IAnalyticsVersionInfo;
     interface IAnalyticsVersionInfo2;
+    interface ISystemIdentificationInfo;
+    interface ISystemIdentificationStatics;
     runtimeclass AnalyticsVersionInfo;
     runtimeclass AnalyticsInfo;
+    runtimeclass SystemIdentification;
+    runtimeclass SystemIdentificationInfo;
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum SystemIdentificationSource
+    {
+        None     = 0,
+        Tpm      = 1,
+        Uefi     = 2,
+        [contract(Windows.Foundation.UniversalApiContract, 5.0)]
+        Registry = 3,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -62,6 +76,28 @@ namespace Windows.System.Profile {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.System.Profile.SystemIdentificationInfo),
+        uuid(0c659e7d-c3c2-4d33-a2df-21bc41916eb3)
+    ]
+    interface ISystemIdentificationInfo : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] Windows.Storage.Streams.IBuffer **value);
+        [propget] HRESULT Source([out, retval] Windows.System.Profile.SystemIdentificationSource *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.System.Profile.SystemIdentification),
+        uuid(5581f42a-d3df-4d93-a37d-c41a616c6d01)
+    ]
+    interface ISystemIdentificationStatics : IInspectable
+    {
+        HRESULT GetSystemIdForPublisher([out, retval] Windows.System.Profile.SystemIdentificationInfo **result);
+        HRESULT GetSystemIdForUser([in] Windows.System.User *user, [out, retval] Windows.System.Profile.SystemIdentificationInfo **result);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         threading(both)
@@ -83,4 +119,25 @@ namespace Windows.System.Profile {
     {
     }
 
+#ifndef _TWINAPI_APPCORE
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        static(Windows.System.Profile.ISystemIdentificationStatics, Windows.Foundation.UniversalApiContract, 3.0),
+        threading(both)
+    ]
+    runtimeclass SystemIdentification
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass SystemIdentificationInfo
+    {
+        [default] interface Windows.System.Profile.ISystemIdentificationInfo;
+    }
+#endif
 }
