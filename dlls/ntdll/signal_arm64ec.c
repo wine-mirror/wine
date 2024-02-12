@@ -1782,6 +1782,35 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 }
 
 
+/**********************************************************************
+ *              RtlLookupFunctionTable   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, ULONG *len )
+{
+    LDR_DATA_TABLE_ENTRY *module;
+
+    if (LdrFindEntryForAddress( (void *)pc, &module )) return NULL;
+    *base = (ULONG_PTR)module->DllBase;
+
+    if (RtlIsEcCode( (void *)pc ))
+    {
+        IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
+        IMAGE_ARM64EC_METADATA *metadata;
+        ULONG size;
+
+        if (!(cfg = RtlImageDirectoryEntryToData( module->DllBase, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size )))
+            return NULL;
+        size = min( size, cfg->Size );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return NULL;
+        metadata = (IMAGE_ARM64EC_METADATA *)cfg->CHPEMetadataPointer;
+        *len = metadata->ExtraRFETableSize;
+        return (RUNTIME_FUNCTION *)(*base + metadata->ExtraRFETable);
+    }
+    return RtlImageDirectoryEntryToData( module->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, len );
+}
+
+
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */

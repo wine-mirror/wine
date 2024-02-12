@@ -878,6 +878,7 @@
 @ stdcall RtlLookupElementGenericTable(ptr ptr)
 # @ stub RtlLookupElementGenericTableAvl
 @ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr)
+@ stdcall -arch=!i386 RtlLookupFunctionTable(long ptr ptr)
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall RtlMapGenericMask(ptr ptr)
 # @ stub RtlMapSecurityErrorToNtStatus

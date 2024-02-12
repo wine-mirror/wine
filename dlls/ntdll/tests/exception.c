@@ -187,6 +187,7 @@ typedef struct _UNWIND_INFO
 
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
+static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionTable)(ULONG64, ULONG64*, ULONG*);
 static DWORD     (WINAPI *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
 static void      (WINAPI *pRtlGrowFunctionTable)(void*, DWORD);
 static void      (WINAPI *pRtlDeleteGrowableFunctionTable)(void*);
@@ -196,6 +197,7 @@ static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
+static NTSTATUS  (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 
@@ -2793,11 +2795,13 @@ static void test_dynamic_unwind(void)
 {
     static const int code_offset = 1024;
     char buf[2 * sizeof(RUNTIME_FUNCTION) + 4];
+    SYSTEM_CPU_INFORMATION info;
     RUNTIME_FUNCTION *runtime_func, *func;
     ULONG_PTR table, base;
-    void *growable_table;
+    void *growable_table, *ptr;
     NTSTATUS status;
     DWORD count;
+    ULONG len, len2;
 
     if (!pRtlInstallFunctionTableCallback || !pRtlLookupFunctionEntry)
     {
@@ -2976,7 +2980,46 @@ static void test_dynamic_unwind(void)
     ok( base == (ULONG_PTR)code_mem,
         "RtlLookupFunctionEntry returned invalid base, expected: %Ix, got: %Ix\n", (ULONG_PTR)code_mem, base );
 
+    base = 0xdeadbeef;
+    func = pRtlLookupFunctionTable( (ULONG_PTR)code_mem + code_offset + 8, &base, &len );
+    ok( func == NULL, "RtlLookupFunctionTable wrong table, got: %p\n", func );
+    ok( base == 0xdeadbeef, "RtlLookupFunctionTable wrong base, got: %Ix\n", base );
+
+    base = 0xdeadbeef;
+    func = pRtlLookupFunctionTable( (ULONG_PTR)pRtlLookupFunctionEntry, &base, &len );
+    ok( base == (ULONG_PTR)GetModuleHandleA("ntdll.dll"),
+        "RtlLookupFunctionTable wrong base, got: %Ix / %p\n", base, GetModuleHandleA("ntdll.dll") );
+    ptr = RtlImageDirectoryEntryToData( (void *)base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &len2 );
+    ok( func == ptr, "RtlLookupFunctionTable wrong table, got: %p / %p\n", func, ptr );
+    ok( len == len2, "RtlLookupFunctionTable wrong len, got: %lu / %lu\n", len, len2 );
+
     pRtlDeleteGrowableFunctionTable( growable_table );
+
+    if (pRtlGetNativeSystemInformation &&
+        !pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len ) &&
+        info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+    {
+        static const BYTE fast_forward[] = { 0x48, 0x8b, 0xc4, 0x48, 0x89, 0x58, 0x20, 0x55, 0x5d, 0xe9 };
+        IMAGE_ARM64EC_METADATA *metadata;
+
+        if (!memcmp( pRtlLookupFunctionEntry, fast_forward, sizeof(fast_forward) ))
+        {
+            ptr = (char *)pRtlLookupFunctionEntry + sizeof(fast_forward);
+            ptr = (char *)ptr + 4 + *(int *)ptr;
+            base = 0xdeadbeef;
+            func = pRtlLookupFunctionTable( (ULONG_PTR)ptr, &base, &len );
+            ok( base == (ULONG_PTR)GetModuleHandleA("ntdll.dll"),
+                "RtlLookupFunctionTable wrong base, got: %Ix / %p\n", base, GetModuleHandleA("ntdll.dll") );
+            ptr = RtlImageDirectoryEntryToData( (void *)base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &len2 );
+            ok( func != ptr, "RtlLookupFunctionTable wrong table, got: %p / %p\n", func, ptr );
+            ptr = RtlImageDirectoryEntryToData( (void *)base, TRUE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &len2 );
+            metadata = (void *)((IMAGE_LOAD_CONFIG_DIRECTORY *)ptr)->CHPEMetadataPointer;
+            ok( (char *)func == (char *)base + metadata->ExtraRFETable,
+                "RtlLookupFunctonTable wrong table, got: %p / %p\n", func, (char *)base + metadata->ExtraRFETable );
+            ok( len == metadata->ExtraRFETableSize, "RtlLookupFunctionTable wrong len, got: %lu / %lu\n",
+                len, metadata->ExtraRFETableSize );
+        }
+    }
 }
 
 static int termination_handler_called;
@@ -13006,6 +13049,7 @@ START_TEST(exception)
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
     X(RtlInstallFunctionTableCallback);
     X(RtlLookupFunctionEntry);
+    X(RtlLookupFunctionTable);
     X(RtlAddGrowableFunctionTable);
     X(RtlGrowFunctionTable);
     X(RtlDeleteGrowableFunctionTable);
@@ -13015,6 +13059,7 @@ START_TEST(exception)
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
     X(RtlWow64GetCpuAreaInfo);
+    X(RtlGetNativeSystemInformation);
 #undef X
     p_setjmp = (void *)GetProcAddress( hmsvcrt, "_setjmp" );
 

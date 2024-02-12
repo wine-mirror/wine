@@ -1029,6 +1029,20 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     return (char *)base + handler_data->handler;
 }
 
+
+/**********************************************************************
+ *              RtlLookupFunctionTable   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, ULONG *len )
+{
+    LDR_DATA_TABLE_ENTRY *module;
+
+    if (LdrFindEntryForAddress( (void *)pc, &module )) return NULL;
+    *base = (ULONG_PTR)module->DllBase;
+    return RtlImageDirectoryEntryToData( module->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, len );
+}
+
+
 struct unwind_exception_frame
 {
     EXCEPTION_REGISTRATION_RECORD frame;

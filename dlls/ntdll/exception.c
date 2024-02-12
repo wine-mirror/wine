@@ -640,15 +640,9 @@ RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_
     ULONG size;
 
     /* PE module or wine module */
-    if (!LdrFindEntryForAddress( (void *)pc, module ))
+    if ((func = RtlLookupFunctionTable( pc, base, &size )))
     {
-        *base = (ULONG_PTR)(*module)->DllBase;
-        if ((func = RtlImageDirectoryEntryToData( (*module)->DllBase, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-        {
-            /* lookup in function table */
-            func = find_function_info( pc, (ULONG_PTR)(*module)->DllBase, func, size/sizeof(*func) );
-        }
+        func = find_function_info( pc, (ULONG_PTR)(*module)->DllBase, func, size/sizeof(*func) );
     }
     else
     {
