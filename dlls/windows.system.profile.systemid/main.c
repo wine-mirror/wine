@@ -114,12 +114,120 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct system_identification_info
+{
+    ISystemIdentificationInfo ISystemIdentificationInfo_iface;
+    LONG ref;
+
+    SystemIdentificationSource system_id_source;
+};
+
+static inline struct system_identification_info *impl_from_ISystemIdentificationInfo( ISystemIdentificationInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct system_identification_info, ISystemIdentificationInfo_iface );
+}
+
+static HRESULT WINAPI system_identification_info_QueryInterface( ISystemIdentificationInfo *iface, REFIID iid, void **out )
+{
+    struct system_identification_info *impl = impl_from_ISystemIdentificationInfo( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_ISystemIdentificationInfo ))
+    {
+        *out = &impl->ISystemIdentificationInfo_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI system_identification_info_AddRef( ISystemIdentificationInfo *iface )
+{
+    struct system_identification_info *impl = impl_from_ISystemIdentificationInfo( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI system_identification_info_Release( ISystemIdentificationInfo *iface )
+{
+    struct system_identification_info *impl = impl_from_ISystemIdentificationInfo( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI system_identification_info_GetIids( ISystemIdentificationInfo *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI system_identification_info_GetRuntimeClassName( ISystemIdentificationInfo *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI system_identification_info_GetTrustLevel( ISystemIdentificationInfo *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI system_identification_info_get_Id( ISystemIdentificationInfo *iface, IBuffer **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI system_identification_info_get_Source( ISystemIdentificationInfo *iface, SystemIdentificationSource *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct ISystemIdentificationInfoVtbl system_identification_info_vtbl =
+{
+    system_identification_info_QueryInterface,
+    system_identification_info_AddRef,
+    system_identification_info_Release,
+    /* IInspectable methods */
+    system_identification_info_GetIids,
+    system_identification_info_GetRuntimeClassName,
+    system_identification_info_GetTrustLevel,
+    /* ISystemIdentificationInfo methods */
+    system_identification_info_get_Id,
+    system_identification_info_get_Source,
+};
+
 DEFINE_IINSPECTABLE( system_id_statics, ISystemIdentificationStatics, struct system_id_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI system_id_statics_GetSystemIdForPublisher( ISystemIdentificationStatics *iface, ISystemIdentificationInfo **result )
 {
-    FIXME( "iface %p, result %p stub!\n", iface, result );
-    return E_NOTIMPL;
+    struct system_identification_info *impl;
+
+    FIXME( "iface %p, result %p semi-stub!\n", iface, result );
+
+    if (!result) return E_INVALIDARG;
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+
+    impl->ISystemIdentificationInfo_iface.lpVtbl = &system_identification_info_vtbl;
+    impl->system_id_source = SystemIdentificationSource_None;
+    impl->ref = 1;
+
+    *result = &impl->ISystemIdentificationInfo_iface;
+    TRACE( "created ISystemIdentificationInfo %p.\n", *result );
+    return S_OK;
 }
 
 static HRESULT WINAPI system_id_statics_GetSystemIdForUser( ISystemIdentificationStatics *iface, __x_ABI_CWindows_CSystem_CIUser *user, ISystemIdentificationInfo **result )

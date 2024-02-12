@@ -72,19 +72,14 @@ static void test_SystemIdentification_Statics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = ISystemIdentificationStatics_GetSystemIdForPublisher( system_id_statics, NULL );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemIdentificationStatics_GetSystemIdForPublisher( system_id_statics, &system_id_info );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (SUCCEEDED(hr))
-    {
-        check_interface( system_id_info, &IID_IAgileObject, FALSE );
 
-        ref = ISystemIdentificationInfo_Release( system_id_info );
-        ok( ref == 0, "got ref %ld.\n", ref );
-    }
+    check_interface( system_id_info, &IID_IAgileObject, FALSE );
 
+    ref = ISystemIdentificationInfo_Release( system_id_info );
+    ok( ref == 0, "got ref %ld.\n", ref );
     ref = ISystemIdentificationStatics_Release( system_id_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );

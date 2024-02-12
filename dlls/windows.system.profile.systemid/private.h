@@ -30,7 +30,9 @@
 #include "wine/debug.h"
 
 #define WIDL_using_Windows_System_Profile
+#define WIDL_using_Windows_Storage_Streams
 #include "windows.system.profile.h"
+#include "windows.storage.streams.h"
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
