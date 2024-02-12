@@ -260,13 +260,9 @@ static void enable_xinput2(void)
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
-    XIDeviceInfo *pointer_info;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
-    int count;
 
     if (!xinput2_available) return;
-
-    if (!pXIGetClientPointer( data->display, None, &data->xinput2_pointer )) return;
 
     mask.mask     = mask_bits;
     mask.mask_len = sizeof(mask_bits);
@@ -275,12 +271,7 @@ static void enable_xinput2(void)
     XISetMask( mask_bits, XI_DeviceChanged );
     XISetMask( mask_bits, XI_RawMotion );
     XISetMask( mask_bits, XI_ButtonPress );
-
     pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
-
-    pointer_info = pXIQueryDevice( data->display, data->xinput2_pointer, &count );
-    update_relative_valuators( pointer_info->classes, pointer_info->num_classes );
-    pXIFreeDeviceInfo( pointer_info );
 }
 
 #endif
@@ -292,20 +283,17 @@ static void disable_xinput2(void)
 {
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
+    unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     XIEventMask mask;
 
     if (!xinput2_available) return;
 
-    mask.mask = NULL;
-    mask.mask_len = 0;
+    mask.mask     = mask_bits;
+    mask.mask_len = sizeof(mask_bits);
     mask.deviceid = XIAllMasterDevices;
-
+    memset( mask_bits, 0, sizeof(mask_bits) );
+    XISetMask( mask_bits, XI_DeviceChanged );
     pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
-    data->x_valuator.number = -1;
-    data->y_valuator.number = -1;
-    data->x_valuator.value = 0;
-    data->y_valuator.value = 0;
-    data->xinput2_pointer = 0;
 #endif
 }
 
@@ -316,13 +304,32 @@ static void disable_xinput2(void)
 void x11drv_xinput2_init( struct x11drv_thread_data *data )
 {
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     int major = 2, minor = 2;
+    XIEventMask mask;
+    int count;
 
     if (!xinput2_available || pXIQueryVersion( data->display, &major, &minor ))
     {
         WARN( "XInput 2.0 not available\n" );
         xinput2_available = FALSE;
         return;
+    }
+
+    mask.mask     = mask_bits;
+    mask.mask_len = sizeof(mask_bits);
+    mask.deviceid = XIAllMasterDevices;
+    memset( mask_bits, 0, sizeof(mask_bits) );
+    XISetMask( mask_bits, XI_DeviceChanged );
+    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
+
+    if (!pXIGetClientPointer( data->display, None, &data->xinput2_pointer ))
+        WARN( "Failed to get xinput2 master pointer device\n" );
+    else
+    {
+        XIDeviceInfo *pointer_info = pXIQueryDevice( data->display, data->xinput2_pointer, &count );
+        update_relative_valuators( pointer_info->classes, pointer_info->num_classes );
+        pXIFreeDeviceInfo( pointer_info );
     }
 
     TRACE( "XInput2 %d.%d available\n", major, minor );
